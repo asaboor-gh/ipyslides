@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="ipyslides",
-    version="0.0.1",
+    version="0.0.2",
     author="Abdul Saboor",
     author_email="mass_qau@outlook.com",
     description="Live rich content slides in jupyter notebook",
@@ -20,7 +20,8 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "ipyslides"},
-    packages=setuptools.find_packages(where="ipyslides"),
+    packages = setuptools.find_packages(),
+    keywords        = ['Jupyter', 'Widgets', 'IPython'],
+    include_package_data = True,
     python_requires=">=3.6",
 )
