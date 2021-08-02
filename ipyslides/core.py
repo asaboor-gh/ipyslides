@@ -79,7 +79,7 @@ class LiveSlides:
             btn.layout.min_width = 'max-content' #very important parameter
         
         self.slider_html = _intslider_html(self.progressbar,fill_color=accent_color,empty_color='whitesmoke')
-        self.count_label = ipw.HTML(f'/ {self.N}', layout= Layout(min_width='30px'))
+        self.count_label = ipw.HTML(f'/ {self.N}', layout= Layout(min_width='30px',width='max-content'))
         self.nav_bar_children = (self.progressbar, self.slider_html, self.count_label,self.btn_prev, self.btn_next)
         self.nav_bar =  HBox(self.nav_bar_children ,layout= Layout(width='100%',min_height='40px',display='flex',justify_content='flex-end'))
         self.style_html = ipw.HTML('''<style>

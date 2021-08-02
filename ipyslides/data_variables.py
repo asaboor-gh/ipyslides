@@ -66,6 +66,12 @@ style_html = '''%%html
 .SlidesWrapper ol,ul{
 	color:inherit;
 }
+.SlidesWrapper table {
+    min-width:auto;
+    width:100%;
+    word-break:break-all;
+    overflow: auto;
+}
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar
