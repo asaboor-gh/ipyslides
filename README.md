@@ -1,5 +1,5 @@
 # ipyslides
-Create Interactive Slides in Jupyter Notebook with all kind of rich content. 
+Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
 
 # Install
 ```shell
@@ -30,3 +30,11 @@ isd.build() #This will build the presentation cell. After this go top and set __
 > For jupyterlab >= 3, do pip install sidecar for better presenting mode.
 
 ![LiveSlides](liveslides.gif)
+
+## Content Types to Embed
+You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! I am not kidding, see ![JupyterLab inside ipyslides](jlabslides.gif)
+> Note: Websites may refuse to load in iframe. Jupyterlab was loaded inside itself, but refused in Voila. 
+
+# Full Screen Presentation
+- Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by [Voila](https://voila.readthedocs.io/en/stable/).     
+[Jupyterlab-Sidecar](https://github.com/jupyter-widgets/jupyterlab-sidecar) does not give 100% full screen experience but it is more useful in context of content types you can use e.g. showing magic of codeing inside slides!

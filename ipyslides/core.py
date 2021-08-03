@@ -74,6 +74,7 @@ class LiveSlides:
         self.btn_prev =  Button(description='◀',layout= Layout(width='auto',height='auto')).add_class('menu')
         self.btn_next =  Button(description='▶',layout= Layout(width='auto',height='auto')).add_class('menu')
         self.btn_setting =  Button(description='≡',layout= Layout(width='auto',height='auto')).add_class('menu')
+        self.btn_setting.add_class('voila-sidecar-hidden') #This is for full scale display, no settings required
         for btn in [self.btn_next, self.btn_prev, self.btn_setting]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
@@ -96,6 +97,18 @@ class LiveSlides:
                                         .jupyterlab-sidecar .SlidesWrapper {{width: 100% !important; height: 100% !important;}}
                                         .SlidesWrapper pre, code{{ background:inherit !important; color: inherit !important;
                                                         height: auto !important; overflow:hidden;}}
+                                        .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden {{display: none;}}
+                                        #rendered_cells .SlidesWrapper .voila-sidecar-hidden {{display: none;}}
+                                        #rendered_cells .SlidesWrapper {{
+                                            position: absolute;
+                                            width:100% !important;
+                                            height: 100% !important;
+                                            bottom: 0px !important;
+                                            top: 0px !important;
+                                            tight: 0px !important;
+                                            left: 0px !important;
+                                        }}
+                                        .SlidesWrapper {{z-index: 10 !important;}}
                                         <style>'''.format(accent_color=accent_color))
         self.height_slider = ipw.IntSlider(min=200,max=1000, value = 480,continuous_update=False,description='Height (px)')
         self.width_slider = ipw.IntSlider(min=40,max=100, value = 60,continuous_update=False,description='Width (vw)')

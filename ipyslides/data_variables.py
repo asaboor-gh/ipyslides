@@ -46,18 +46,18 @@ style_html = '''%%html
     
 .SlidesWrapper {
 	margin: auto;
-	padding: 16px 0px 0px 16px;
+	padding: 0px;
 	background:var(--text-bg);
  }
-    
+ 
 .SlidesWrapper h1,h2,h3,h4,h5,h6{
 	color:var(--heading-fg);
+ 	text-align:center;
 }
     
 .SlidesWrapper p{
-	 color: var(--text-fg)!important;
+	color: var(--text-fg)!important;
 }
-    
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--quote-bg);
 	color: var(--quote-fg) !important;
