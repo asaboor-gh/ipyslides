@@ -22,15 +22,11 @@ class SlidesMagics(Magics):
             self.shell.run_cell(cell)
     
     @cell_magic
-    def dynamicslides(self,line,cell):
-        if line and not line.isnumeric():
-            return print(f'You should use %%dynamicslides integer, not %%dynamicslides {line}')
+    def title(self,line,cell):
+        if line:
+            return print(f'%%title does not accept any argument, got {line}')
         if '__slides_mode' in self.shell.user_ns.keys() and self.shell.user_ns['__slides_mode']:
-            key = 'd' + line if line else line #Only keep slides with line number
-            self.shell.run_cell_magic('capture',key,cell)
-            if key:  
-                self.shell.user_ns['__dynamicslides_dict'][key] = self.shell.user_ns[key]
-                del self.shell.user_ns[key]
+            self.shell.run_cell_magic('capture','__slides_title_page',cell)
         else:
             self.shell.run_cell(cell)
 
@@ -47,6 +43,10 @@ def initialize():
     ipython.register_magics(SlidesMagics)
     code_after = __filter_cell_code('initialize')
     ipython.set_next_input(f'{code_after}\n\n{dv.title_page}', replace= True)
+
+def insert_title():
+    code_after = __filter_cell_code('insert_title')
+    get_ipython().set_next_input(f"%%title\n" + code_after, replace=True)
     
 def insert(slide_number):
     if not isinstance(slide_number,int):
@@ -70,7 +70,5 @@ def build(): #Set Next full input
         code_after = __filter_cell_code('build')
         ipython.set_next_input(code_after + "\n"+ dv.build_cell, replace=True)
 
-def insert_style():
-    get_ipython().set_next_input(dv.style_html, replace=True)
     
     

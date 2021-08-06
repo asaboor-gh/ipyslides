@@ -17,9 +17,9 @@ import ipyslides as isd
 
 isd.initilize() #This will create a title page and parameters in same cell
 
-isd.insert(1) #This will create a slide in same cell where you run it 
+isd.insert_title() #This will capture the title page with magice %%title 
 
-isd.insert_style() #This will create a %%html cell with custom style
+isd.insert(1) #This will create a slide in same cell where you run it 
 
 isd.insert_after(1) #This will create as many slides after the slide number 1 as length of list/tuple at cell end
 
