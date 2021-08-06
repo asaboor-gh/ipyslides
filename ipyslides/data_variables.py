@@ -3,7 +3,7 @@ title_page = '''__slides_mode = False #Set this to True and run all cells below
 __slides_dict = {} #Don't edit
 __dynamicslides_dict = {} #Don't edit
 
-from IPython.display import display, Markdown, display_html, display_markdown
+from IPython.display import display, Markdown
 from ipyslides import load_magics
 
 # Command below registers all the ipyslides magics that are used in this file
@@ -107,7 +107,7 @@ def display_item(item):
         item.show() # displays output of %%slide
     
 ls = LiveSlides(func=display_item,iterable=slides_iterable, 
-                    title_page_md=title_page_md,color_fg='#3D4450',color_bg='whitesmoke)
+                    title_page_md=title_page_md,color_fg='#3D4450',color_bg='whitesmoke')
 ls.set_footer()
 ls.show()"""
 
