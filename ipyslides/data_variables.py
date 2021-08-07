@@ -58,36 +58,33 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
 	background:var(--text-bg);
 	font-size: var(--text-size);
  }
-
+.jp-RenderedHTMLCommon {font-size: var(--text-size);}
 .SlidesWrapper h1,h2,h3,h4,h5,h6{
 	color:var(--heading-fg);
  	text-align:center;
 }
-.SlidesWrapper h1 {font-size: 4em;}
-.SlidesWrapper h2 {font-size: 3.5em;}
-.SlidesWrapper h3 {font-size: 3em;}
-.SlidesWrapper h4 {font-size: 2em;}
+.SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--text-fg) !important;}
+.SlidesWrapper .textfonts h1 {font-size: 4em;}
+.SlidesWrapper .textfonts h2 {font-size: 3.5em;}
+.SlidesWrapper .textfonts h3 {font-size: 3em;}
+.SlidesWrapper .textfonts h4 {font-size: 2em;}
   
 .SlidesWrapper p{
 	color: var(--text-fg)!important;
-	font-size: 1.2em;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--quote-bg);
 	color: var(--quote-fg) !important;
- 	font-size: 1em;
 }
     
 .SlidesWrapper ol,ul{
 	color:var(--text-fg)!important;
- 	font-size: 1.2em;
 }
 .SlidesWrapper table {
     min-width:auto;
     width:100%;
     word-break:break-all;
     overflow: auto;
-	font-size: 1em;
 	color: var(--text-fg)!important;
 }
 </style>'''

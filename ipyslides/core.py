@@ -86,8 +86,10 @@ class NavBar:
                 btn.layout.min_width = 'max-content' #very important parameter
                 
         self.info_html = ipw.HTML('Put Your Info Here using `self.info_html.value`')
-        self.group_1 =  HBox([self.btn_setting,self.info_html],layout=Layout(justify_content='flex-start',align_items='center'))
-        self.group_2 = HBox([self.btn_prev,self.btn_next],layout=Layout(justify_content='flex-end',align_items='center'))
+        self.group_1 =  HBox([self.btn_setting,self.info_html],
+                             layout=Layout(justify_content='flex-start',align_items='center'))
+        self.group_2 = HBox([self.btn_prev,self.btn_next],
+                            layout=Layout(justify_content='flex-end',align_items='center',min_width='max-content'))
         self.build_navbar() # this is the main function to build the navbar
         
         self.btn_prev.on_click(self.__shift_left)
@@ -139,7 +141,7 @@ class LiveSlides(NavBar):
         self.func = func
         self.iterable = iterable
         self.user_ns = get_ipython().user_ns 
-        self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto'))
+        self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
         
         _max = len(self.iterable) if self.iterable else 1
         super().__init__(N=_max,color_fg=color_fg,color_bg=color_bg)
@@ -191,7 +193,25 @@ class LiveSlides(NavBar):
                 display(self.box)
         except:
             return self.box
-            
+        
+    def set_font_scale(self,font_scale=1):
+        self.font_scale= font_scale
+        # Will be triggered by  theme change
+        old_value = self.setting.theme_dd.value
+        temp_value,*_ = [v for v in ('Inherit','Light','Dark') if v != old_value]
+        self.setting.theme_dd.value = temp_value #Trigger change
+        self.setting.theme_dd.value = old_value #Apply back
+        
+    def get_theme_colors(self):
+        return self.theme_colors
+    
+    def set_theme_colors(self, theme_colors= None):
+        if theme_colors:
+            self.theme_colors = theme_colors
+            self.setting.theme_dd.value = 'Light' #Trigger the change
+            self.setting.theme_dd.value = 'Inherit' #Apply theme with inherit colors
+        
+           
     def __update_content(self,change):
         if self.iterable and change:
             self.info_html.value = self.info_html.value.replace('</p>', '| Loading...</p>')
@@ -201,14 +221,15 @@ class LiveSlides(NavBar):
                 if self.progressbar.value == 0:
                     if '__slides_title_page' in self.user_ns.keys():
                         try:
-                            self.user_ns['__slides_title_page'].show()
+                            self.user_ns['__slides_title_page'].show() #Ipython Captured
                         except:
-                            display(Markdown(self.user_ns['__slides_title_page']))
+                            display(Markdown(self.user_ns['__slides_title_page'])) #Markdown String
                     else:
                         display(Markdown('## No Title page found. Create one using %%title in a cell.'))
                 else:
                     self.func(self.iterable[self.progressbar.value-1])
             self.info_html.value = self.info_html.value.replace('| Loading...','')
+            
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">myemail@company.com</a>', show_slide_number=True, show_date=True):
         out_str = text
         if show_date:
@@ -223,12 +244,14 @@ class Customize:
         self.master = instance_LiveSlides
         self.height_slider = ipw.IntSlider(min=200,max=1000, value = 480,continuous_update=False,layout = Layout(width='200px'))
         self.width_slider = ipw.IntSlider(min=40,max=100, value = 50,continuous_update=False,layout = Layout(width='200px'))
+        self.scale_slider = ipw.FloatSlider(min=0.2,max=4, value = 1.0,continuous_update=False,layout = Layout(width='200px'))
         self.theme_dd = ipw.Dropdown(options=['Inherit','Light','Dark'],layout = Layout(width='200px'))
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto'))
         layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
         self.box = VBox([ipw.HTML('<h3>Settings</h3>'), 
                         ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Height (px):</p>'),self.height_slider],layout=layout).add_class('voila-sidecar-hidden'), 
                         ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Width (vw):</p>'),self.width_slider],layout=layout).add_class('voila-sidecar-hidden'),
+                        ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Font Scale:</p>'),self.scale_slider],layout=layout),
                         ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Theme :</p>'),self.theme_dd],layout=layout),
                         self.__instructions
                         ],layout=Layout(width='0px',height='100%',padding='0px',overflow='hidden'))
@@ -238,6 +261,7 @@ class Customize:
         self.theme_dd.observe(self.__update_theme)
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
+        self.scale_slider.observe(self.__update_text_scale,names=['value'])
         self.master.btn_setting.on_click(self.__toggle_panel)
         self.__update_theme(True) #Trigger
         
@@ -248,12 +272,16 @@ class Customize:
     def __toggle_panel(self,change):
         if self.master.btn_setting.icon == 'bars':
             self.master.btn_setting.icon = 'close'
-            self.box.layout.width = '360px'
+            self.box.layout.width = '50%'
             self.box.layout.padding = '10px'
         else:
             self.master.btn_setting.icon = 'bars'
             self.box.layout.width = '0px'
             self.box.layout.padding = '0px'
+            
+    def __update_text_scale(self,change):
+        self.master.set_font_scale(self.scale_slider.value)
+        
     def __update_theme(self,change):
         text_size = '{}px'.format(int(self.master.font_scale*16))
         if self.theme_dd.value == 'Inherit':
