@@ -146,9 +146,8 @@ class LiveSlides(NavBar):
         _max = len(self.iterable) if self.iterable else 1
         super().__init__(N=_max,color_fg=color_fg,color_bg=color_bg)
         self.theme_colors = dv.style_colors
-        self.font_scale = 1
-        text_size = '{}px'.format(int(self.font_scale*16))
-        self.theme_html = ipw.HTML(dv.style_html(dv.style_root.format(**self.theme_colors,text_size=text_size)))
+        self.font_scale = 1 #Scale 1 corresponds to 16px
+        self.theme_html = ipw.HTML(dv.style_html(dv.style_root.format(**self.theme_colors,text_size='16px')))
         self.main_style_html = ipw.HTML('''<style>
             .SlidesWrapper .textfonts { align-items: center;}
             a.jp-InternalAnchorLink { display: none !important;}
@@ -196,21 +195,16 @@ class LiveSlides(NavBar):
         
     def set_font_scale(self,font_scale=1):
         self.font_scale= font_scale
-        # Will be triggered by  theme change
-        old_value = self.setting.theme_dd.value
-        temp_value,*_ = [v for v in ('Inherit','Light','Dark') if v != old_value]
-        self.setting.theme_dd.value = temp_value #Trigger change
-        self.setting.theme_dd.value = old_value #Apply back
+        self.setting.update_theme()
         
     def get_theme_colors(self):
         return self.theme_colors
     
     def set_theme_colors(self, theme_colors= None):
-        if theme_colors:
+        if theme_colors and theme_colors.keys() == self.theme_colors.keys():
             self.theme_colors = theme_colors
-            self.setting.theme_dd.value = 'Light' #Trigger the change
-            self.setting.theme_dd.value = 'Inherit' #Apply theme with inherit colors
-        
+            self.setting.theme_dd.value = 'Inherit' #Custom Changes only effect this mode. 
+            self.setting.update_theme()   
            
     def __update_content(self,change):
         if self.iterable and change:
@@ -244,7 +238,7 @@ class Customize:
         self.master = instance_LiveSlides
         self.height_slider = ipw.IntSlider(min=200,max=1000, value = 480,continuous_update=False,layout = Layout(width='200px'))
         self.width_slider = ipw.IntSlider(min=40,max=100, value = 50,continuous_update=False,layout = Layout(width='200px'))
-        self.scale_slider = ipw.FloatSlider(min=0.2,max=4, value = 1.0,continuous_update=False,layout = Layout(width='200px'))
+        self.scale_slider = ipw.FloatSlider(min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False,layout = Layout(width='200px'))
         self.theme_dd = ipw.Dropdown(options=['Inherit','Light','Dark'],layout = Layout(width='200px'))
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto'))
         layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
@@ -258,12 +252,12 @@ class Customize:
         with self.__instructions:
             display(Markdown(dv.settings_instructions))
             
-        self.theme_dd.observe(self.__update_theme)
+        self.theme_dd.observe(self.update_theme)
+        self.scale_slider.observe(self.__set_font_scale)
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
-        self.scale_slider.observe(self.__update_text_scale,names=['value'])
         self.master.btn_setting.on_click(self.__toggle_panel)
-        self.__update_theme(True) #Trigger
+        self.update_theme() #Trigger
         
     def __update_size(self,change):
             self.master.box.layout.height = '{}px'.format(self.height_slider.value)
@@ -277,12 +271,13 @@ class Customize:
         else:
             self.master.btn_setting.icon = 'bars'
             self.box.layout.width = '0px'
-            self.box.layout.padding = '0px'
-            
-    def __update_text_scale(self,change):
+            self.box.layout.padding = '0px' 
+                     
+    def __set_font_scale(self,change):
+        # Below line should not be in update_theme to avoid loop call.
         self.master.set_font_scale(self.scale_slider.value)
         
-    def __update_theme(self,change):
+    def update_theme(self,change=None):  
         text_size = '{}px'.format(int(self.master.font_scale*16))
         if self.theme_dd.value == 'Inherit':
             root = dv.style_root.format(**self.master.theme_colors,text_size = text_size)
@@ -317,3 +312,5 @@ def collect_slides():
             slides_iterable = [*slides_iterable,*ns['__dynamicslides_dict'][f'd{i}']]
             
     return tuple(slides_iterable)
+
+# Add display_code and multicols commands and try to have kaggle notebook

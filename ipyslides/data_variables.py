@@ -64,10 +64,10 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
  	text-align:center;
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--text-fg) !important;}
-.SlidesWrapper .textfonts h1 {font-size: 4em;}
-.SlidesWrapper .textfonts h2 {font-size: 3.5em;}
-.SlidesWrapper .textfonts h3 {font-size: 3em;}
-.SlidesWrapper .textfonts h4 {font-size: 2em;}
+.SlidesWrapper .textfonts h1 {font-size: 3em;}
+.SlidesWrapper .textfonts h2 {font-size: 2.5em;}
+.SlidesWrapper .textfonts h3 {font-size: 2em;}
+.SlidesWrapper .textfonts h4 {font-size: 1.5em;}
   
 .SlidesWrapper p{
 	color: var(--text-fg)!important;
@@ -77,7 +77,7 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
 	color: var(--quote-fg) !important;
 }
     
-.SlidesWrapper ol,ul{
+.SlidesWrapper ol,ul {
 	color:var(--text-fg)!important;
 }
 .SlidesWrapper table {
@@ -113,8 +113,10 @@ settings_instructions = '''
 For custom themes, change colors in instance attribute of `ipyslides.LivSlides.theme_colors`
 ```python
 # if you did set ls = LivSlides()
-ls.theme_colors = {'heading_fg': 'inherit', 'text_fg': 'inherit', 'text_bg': 'inherit', 'quote_bg': 'inherit', 'quote_fg': 'inherit'}
-# Change color values and assign back to ls.theme_colors and change Theme selector above to trigger changes. 
+theme_colors = ls.get_theme_colors()
+# edit values of colors you want, don't edit keys.
+ls.set_theme_colors(theme_colors)
+ls.set_font_scale(font_scale:float) #changes layout fonts scaling. 
 ```          
 
 --------
