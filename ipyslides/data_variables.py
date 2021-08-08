@@ -70,11 +70,11 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
  	text-align:center;
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--text-fg) !important;}
-.SlidesWrapper .textfonts h1 {font-size: 3em;line-height: 3.2em;}
-.SlidesWrapper .textfonts h2 {font-size: 2.5em;line-height: 2.7em;}
-.SlidesWrapper .textfonts h3 {font-size: 2em;line-height: 2.2em;}
-.SlidesWrapper .textfonts h4 {font-size: 1.5em;line-height: 1.7em;}
-.SlidesWrapper .textfonts h5 {font-size: 1em;line-height: 1.2em;}
+.SlidesWrapper .textfonts h1 {font-size: 3em;line-height: 3em;}
+.SlidesWrapper .textfonts h2 {font-size: 2.5em;line-height: 2.5em;}
+.SlidesWrapper .textfonts h3 {font-size: 2em;line-height: 2em;}
+.SlidesWrapper .textfonts h4 {font-size: 1.5em;line-height: 1.5em;}
+.SlidesWrapper .textfonts h5 {font-size: 1em;line-height: 1em;}
 
   
 .SlidesWrapper p{
@@ -100,6 +100,10 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
     word-break:break-all;
     overflow: auto;
 	color: var(--text-fg)!important;
+}
+.widget-hbox {
+    display: inline-flex important;
+    flex-direction: row !important;
 }
 </style>'''
 

@@ -3,11 +3,12 @@ import numpy as np
 from IPython.display import display, Markdown, HTML
 import ipywidgets as ipw
 from ipywidgets import Layout,Label,Button,Box,HBox,VBox
+from numpy.lib.function_base import iterable
 from . import data_variables as dv
 import datetime, re #re for updating font-size
 
 
-def _custom_progressbar(intslider,uid,color_fg='red',color_bg = 'whitesmoke'):
+def _custom_progressbar(intslider,uid,accent_color='red'):
     "This has a box as children[0] where you can put navigation buttons."
     html = ipw.HTML()
     uclass = 'custom-nav-'+ uid
@@ -24,7 +25,7 @@ def _custom_progressbar(intslider,uid,color_fg='red',color_bg = 'whitesmoke'):
         height: 4px;
         overflow:hidden;
         border-radius: 0px;
-        background: linear-gradient(to right, {color_fg} 0%, {color_fg} {moving_pos}%, {color_bg} {moving_pos}%, {color_bg} 100%) !important;
+        background: linear-gradient(to right, {accent_color} 0%, {accent_color} {moving_pos}%, transparent {moving_pos}%, transparent 100%) !important;
     }}
     .{uclass}:hover, .{uclass}:focus{{height: 20px;padding:auto;opacity:0.8;margin-top:-16px;}}
     .widget-inline-hbox {{border-radius;4px;}}
@@ -33,8 +34,8 @@ def _custom_progressbar(intslider,uid,color_fg='red',color_bg = 'whitesmoke'):
         min-width:auto !important;margin: 13.5px 2px 0px 8px;opacity:1;}}
     
     .{uclass} .ui-slider .ui-slider-handle, .{uclass} .ui-slider .ui-slider-handle:hover, .{uclass} .ui-slider .ui-slider-handle:focus {{
-        background: {color_bg}; 
-        border: 5px solid {color_fg};
+        background: transparent; 
+        border: 5px solid {accent_color};
         height: 20px;
         width: 40px;
         margin:-1px 0px 0px 0px;
@@ -45,7 +46,7 @@ def _custom_progressbar(intslider,uid,color_fg='red',color_bg = 'whitesmoke'):
          border: transparent;
          height:18px;
      }}
-     .NavWrapper .{navclass} .menu, .NavWrapper .{navclass} .menu.big-menu  {{ color:{color_fg}; font-size:24px !important; overflow:hidden;}}
+     .NavWrapper .{navclass} .menu, .NavWrapper .{navclass} .menu.big-menu  {{ color:{accent_color}; font-size:24px !important; overflow:hidden;}}
      .NavWrapper .{navclass} .menu.big-menu {{font-size:32px !important;}}
      .NavWrapper .{navclass} .menu:hover {{ 
             overflow: hidden;
@@ -57,10 +58,10 @@ def _custom_progressbar(intslider,uid,color_fg='red',color_bg = 'whitesmoke'):
             to {{opacity: 1;}}
     }}
     .NavWrapper .{navclass} {{z-index:50;overflow: hidden;}}
-    </style><p style="margin-top:-7px;color:{color_fg};width:max-content;"><b>{text}</b></p>'''
+    </style><p style="margin-top:-7px;color:{accent_color};width:max-content;"><b>{text}</b></p>'''
     def update(change):
         value = np.rint((intslider.value)/intslider.max*100).astype(int)
-        html.value = style_str.format(uclass = uclass, navclass=navclass, color_fg=color_fg,color_bg=color_bg,moving_pos=value,text=f'∕  {intslider.max}')
+        html.value = style_str.format(uclass = uclass, navclass=navclass, accent_color=accent_color,moving_pos=value,text=f'∕  {intslider.max}')
     intslider.observe(update)
     intslider.layout.height='16px'
     intslider.layout.margin= '-5px 2px 0px -6px'
@@ -70,10 +71,9 @@ def _custom_progressbar(intslider,uid,color_fg='red',color_bg = 'whitesmoke'):
                                     HBox([ intslider, html]).add_class(uclass) ]).add_class('NavWrapper') #class is must
 
 class NavBar:
-    def __init__(self,N=10, color_fg='red',color_bg='whitesmoke'):
+    def __init__(self,N=10, accent_color='red'):
         "N is number of slides here."
-        self.color_bg = color_bg
-        self.color_fg = color_fg
+        self.accent_color = accent_color
         self.N = N
         
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
@@ -97,7 +97,7 @@ class NavBar:
         self.btn_next.on_click(self.__shift_right)
     
     def build_navbar(self):
-        self.nav_bar = _custom_progressbar(self.progressbar, self.uid, color_fg=self.color_fg,color_bg=self.color_bg)
+        self.nav_bar = _custom_progressbar(self.progressbar, self.uid, accent_color=self.accent_color)
         self.nav_bar.children[0].children = (self.group_1, self.group_2)
         self.nav_bar.children[0].layout.height = '50px'
        
@@ -117,15 +117,14 @@ class LiveSlides(NavBar):
     def __init__(self,
                  func=lambda x: display(Markdown(x)), 
                  iterable=['# First Slide','# Second Slide'],
-                 color_fg='#3D4450',
-                 color_bg='whitesmoke'):
+                 accent_color='olive'):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
             - func : An outside defined function which act on elements of `iterable`  and handle required situations. 
                     Return value is not guranteed for output rendering except for IPython.display.display object. Use display
                     inside the function for rich formats rending as many time as you want.
             - iterable: Anything from list/tuple/dict etc whose each element is given as argument to `func`.
-            - color_[fg,bg]: Valid CSS color. Applies to buttons, progressbar etc.
+            - accent_color: Valid CSS color. Applies to buttons, progressbar etc.
         - **Example**
             ```python
             from IPython.display import display, Markdown
@@ -142,10 +141,11 @@ class LiveSlides(NavBar):
         self.func = func
         self.iterable = iterable
         self.user_ns = get_ipython().user_ns 
+        self.accent_color = accent_color 
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
         
         _max = len(self.iterable) if self.iterable else 1
-        super().__init__(N=_max,color_fg=color_fg,color_bg=color_bg)
+        super().__init__(N=_max,accent_color=self.accent_color)
         self.theme_colors = dv.style_colors
         self.font_scale = 1 #Scale 1 corresponds to 16px
         self.theme_html = ipw.HTML(dv.style_html(dv.style_root.format(**self.theme_colors,text_size='16px')))
@@ -226,9 +226,9 @@ class LiveSlides(NavBar):
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">myemail@company.com</a>', show_slide_number=True, show_date=True):
         out_str = text
         if show_date:
-            out_str += f' | <text style="color:{self.color_fg};">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
+            out_str += f' | <text style="color:{self.accent_color};">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
         if show_slide_number:
-            out_str += f' | <b style="color:{self.color_fg};">{self.progressbar.value} / {self.N}<b>'
+            out_str += f' | <b style="color:{self.accent_color};">{self.progressbar.value} / {self.N}<b>'
         self.info_html.value = f'<p style="white-space:nowrap;"> {out_str} </p>'
 
 class Customize:
@@ -281,10 +281,10 @@ class Customize:
         if self.theme_dd.value == 'Inherit':
             root = dv.style_root.format(**self.master.theme_colors,text_size = text_size)
         elif self.theme_dd.value == 'Light':
-            light_c = {'heading_fg': 'gray', 'text_fg': 'black', 'text_bg': '#F3F3F3', 'quote_bg': 'white', 'quote_fg': 'purple'}
+            light_c = {'heading_fg': 'navy', 'text_fg': 'black', 'text_bg': '#F3F3F3', 'quote_bg': 'snow', 'quote_fg': 'purple'}
             root = dv.style_root.format(**light_c,text_size = text_size)
         elif self.theme_dd.value == 'Dark':
-            dark_c = {'heading_fg': 'skyblue', 'text_fg': 'white', 'text_bg': '#21252B', 'quote_bg': 'black', 'quote_fg': 'powderblue'}
+            dark_c = {'heading_fg': 'snow', 'text_fg': 'white', 'text_bg': '#21252B', 'quote_bg': '#22303C', 'quote_fg': 'powderblue'}
             root = dv.style_root.format(**dark_c,text_size = text_size)
         self.master.theme_html.value = dv.style_html(root)   
      
@@ -323,7 +323,7 @@ def display_cell_code(this_line=False,magics=False,comments=False,lines=None):
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
     if not comments:
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
-    return display(Markdown("""```python\n\n{}\n```""".format('\n'.join(current_cell_code))))
+    return display(Markdown("""```python\n{}\n```""".format('\n'.join(current_cell_code))))
     
 def multicols(width_ratios = [1,1],width = None,height=None):
     """Create a grid of columns with defined widths.
@@ -343,10 +343,8 @@ def multicols(width_ratios = [1,1],width = None,height=None):
         height = '100%'
     if not width:
         width = '100%'
-    
-    grid = ipw.GridspecLayout(1,len(width_ratios),layout=ipw.Layout(height=height,width=width,padding='8px',justify_content='space-between'))
-    children = tuple([ipw.Output(clear_output=False,layout=ipw.Layout(width='auto',max_height=height,overflow='auto')) for w in width_ratios])  
-    for i,child in enumerate(children):
-        grid[:,i] = ipw.Box([child],layout=ipw.Layout(overflow='auto')) 
-    return grid, children
+    widths = [f"{int(i*100/sum(width_ratios))}" for i in width_ratios]
+    children = tuple([ipw.Output(layout=Layout(width='auto',height='auto',overflow='auto')) for w in widths])  
+    box = HBox(children=children,layout=Layout(width=width,height=height,display='inline-flex',flex_flow='row nowrap'))
+    return box, children
 

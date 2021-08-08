@@ -10,6 +10,8 @@ For development install, clone this repository and then
 > cd ipyslides
 > pip install -e .
 ```
+# Demo
+See a [Demo Notebook](https://www.kaggle.com/massgh/ipyslides)
 
 # Usage
 ```python
