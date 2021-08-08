@@ -47,7 +47,7 @@ def _custom_progressbar(intslider,uid,accent_color='red'):
          height:18px;
      }}
      .NavWrapper .{navclass} .menu, .NavWrapper .{navclass} .menu.big-menu  {{ color:{accent_color}; font-size:24px !important; overflow:hidden;}}
-     .NavWrapper .{navclass} .menu.big-menu {{font-size:32px !important;}}
+     .NavWrapper .{navclass} .menu.big-menu {{font-size:55px !important;}}
      .NavWrapper .{navclass} .menu:hover {{ 
             overflow: hidden;
             animation-name: example; animation-duration: 2s;
@@ -79,8 +79,8 @@ class NavBar:
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
         self.progressbar = ipw.IntSlider(max = self.N,continuous_update=False,readout=True,layout =  Layout(width='100%'))
         
-        self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
-        self.btn_next =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
+        self.btn_prev =  Button(icon='angle-left',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
+        self.btn_next =  Button(icon='angle-right',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
         self.btn_setting =  Button(icon='bars',layout= Layout(width='auto',height='auto')).add_class('menu')
         for btn in [self.btn_next, self.btn_prev, self.btn_setting]:
                 btn.style.button_color= 'transparent'
