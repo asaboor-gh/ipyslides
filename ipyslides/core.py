@@ -1,3 +1,4 @@
+from ipywidgets.widgets.widget_output import Output
 import numpy as np
 from IPython.display import display, Markdown, HTML
 import ipywidgets as ipw
@@ -213,13 +214,11 @@ class LiveSlides(NavBar):
             self.out.clear_output(wait=True)
             with self.out:
                 if self.progressbar.value == 0:
-                    if '__slides_title_page' in self.user_ns.keys():
-                        try:
-                            self.user_ns['__slides_title_page'].show() #Ipython Captured
-                        except:
-                            display(Markdown(self.user_ns['__slides_title_page'])) #Markdown String
+                    title = self.user_ns.get('__slides_title_page','#### No Title page found. Create one using %%title in a cell.')
+                    if isinstance(title,str):
+                        display(Markdown(title)) #Markdown String
                     else:
-                        display(Markdown('## No Title page found. Create one using %%title in a cell.'))
+                        title.show() #Ipython Captured Output
                 else:
                     self.func(self.iterable[self.progressbar.value-1])
             self.info_html.value = self.info_html.value.replace('| Loading...','')
@@ -282,10 +281,10 @@ class Customize:
         if self.theme_dd.value == 'Inherit':
             root = dv.style_root.format(**self.master.theme_colors,text_size = text_size)
         elif self.theme_dd.value == 'Light':
-            light_c = {'heading_fg': 'black', 'text_fg': 'black', 'text_bg': '#F3F3F3', 'quote_bg': 'transparent', 'quote_fg': 'purple'}
+            light_c = {'heading_fg': 'gray', 'text_fg': 'black', 'text_bg': '#F3F3F3', 'quote_bg': 'white', 'quote_fg': 'purple'}
             root = dv.style_root.format(**light_c,text_size = text_size)
         elif self.theme_dd.value == 'Dark':
-            dark_c = {'heading_fg': 'skyblue', 'text_fg': 'white', 'text_bg': '#21252B', 'quote_bg': 'transparent', 'quote_fg': 'powderblue'}
+            dark_c = {'heading_fg': 'skyblue', 'text_fg': 'white', 'text_bg': '#21252B', 'quote_bg': 'black', 'quote_fg': 'powderblue'}
             root = dv.style_root.format(**dark_c,text_size = text_size)
         self.master.theme_html.value = dv.style_html(root)   
      
@@ -313,4 +312,41 @@ def collect_slides():
             
     return tuple(slides_iterable)
 
-# Add display_code and multicols commands and try to have kaggle notebook
+def display_cell_code(this_line=False,magics=False,comments=False,lines=None):
+    "Display current cell's code in slides for educational purpose. `lines` should be list/tuple of line numbers to include if filtered."
+    current_cell_code = get_ipython().get_parent()['content']['code'].splitlines()
+    if isinstance(lines,(list,tuple)):
+        current_cell_code = [line for i, line in enumerate(current_cell_code) if i+1 in lines]
+    if not this_line:
+        current_cell_code = [line for line in current_cell_code if 'display_cell_code' not in line]
+    if not magics:
+        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
+    if not comments:
+        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
+    return display(Markdown("""```python\n\n{}\n```""".format('\n'.join(current_cell_code))))
+    
+def multicols(width_ratios = [1,1],width = None,height=None):
+    """Create a grid of columns with defined widths.
+    width_ratios: list of width ratios for each column. By default, two columns are created with same width.
+    height: str, height of the main grid.
+    width: str, width of the main grid.
+    
+    **Usage**
+    > grid, (col1,col2) = multicols()
+    > with col1:
+    >     display(Markdown("This is column 1"))
+    > with col2:
+    >     display(Markdown("This is column 2"))
+    > display(grid)
+    """
+    if not height:
+        height = '100%'
+    if not width:
+        width = '100%'
+    
+    grid = ipw.GridspecLayout(1,len(width_ratios),layout=ipw.Layout(height=height,width=width,padding='8px',justify_content='space-between'))
+    children = tuple([ipw.Output(clear_output=False,layout=ipw.Layout(width='auto',max_height=height,overflow='auto')) for w in width_ratios])  
+    for i,child in enumerate(children):
+        grid[:,i] = ipw.Box([child],layout=ipw.Layout(overflow='auto')) 
+    return grid, children
+

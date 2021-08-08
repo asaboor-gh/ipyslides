@@ -3,14 +3,15 @@ __version__ = '0.0.3'
 from IPython.core.magic import Magics, magics_class, cell_magic
 from . import data_variables as dv
 
-# __slides_mode = False
-# __slides_dict = {}
-# __dynamicslides_dict = {}
+from .core import display_cell_code, multicols
+
+__all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build','display_cell_code','multicols']
  
 @magics_class
 class SlidesMagics(Magics):
     @cell_magic 
     def slide(self,line,cell):
+        line = line.strip() #VSCode bug to inclue \r in line
         if line and not line.isnumeric():
             return print(f'You should use %%slide integer, not %%slide {line}')
         if '__slides_mode' in self.shell.user_ns.keys() and self.shell.user_ns['__slides_mode']:

@@ -58,19 +58,33 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
 	background:var(--text-bg);
 	font-size: var(--text-size);
  }
-.jp-RenderedHTMLCommon {font-size: var(--text-size);}
+ .SlidesWrapper .MultiCols {
+	display: flex !important;
+  	column-gap: 2em;
+  	column-rule: 1px solid #ccc;
+ }
+ 
+.jp-RenderedHTMLCommon {font-size: var(--text-size);} /* For Voila */
 .SlidesWrapper h1,h2,h3,h4,h5,h6{
 	color:var(--heading-fg);
  	text-align:center;
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--text-fg) !important;}
-.SlidesWrapper .textfonts h1 {font-size: 3em;}
-.SlidesWrapper .textfonts h2 {font-size: 2.5em;}
-.SlidesWrapper .textfonts h3 {font-size: 2em;}
-.SlidesWrapper .textfonts h4 {font-size: 1.5em;}
+.SlidesWrapper .textfonts h1 {font-size: 3em;line-height: 3.2em;}
+.SlidesWrapper .textfonts h2 {font-size: 2.5em;line-height: 2.7em;}
+.SlidesWrapper .textfonts h3 {font-size: 2em;line-height: 2.2em;}
+.SlidesWrapper .textfonts h4 {font-size: 1.5em;line-height: 1.7em;}
+.SlidesWrapper .textfonts h5 {font-size: 1em;line-height: 1.2em;}
+
   
 .SlidesWrapper p{
 	color: var(--text-fg)!important;
+}
+.SlidesWrapper pre,code {
+    background: var(--quote-bg) !important;
+    color: var(--text-fg)!important;
+    padding: 2px 8px;
+    overflow-x: auto;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--quote-bg);
