@@ -183,10 +183,10 @@ class LiveSlides(NavBar):
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important   
-        self.footer_text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">myemail@company.com</a>'
     
      
     def show(self):
+        self.setting.theme_dd.value = 'Light' #default theme is light, also Voila makes issue with inherit theme
         try:   #JupyterLab Case, Interesting in SideCar
             from sidecar import Sidecar 
             sc = Sidecar(title='Live Presentation')
@@ -211,7 +211,6 @@ class LiveSlides(NavBar):
     def __update_content(self,change):
         if self.iterable and change:
             self.info_html.value = self.info_html.value.replace('</p>', '| Loading...</p>')
-            self.set_footer()
             self.out.clear_output(wait=True)
             with self.out:
                 if self.progressbar.value == 0:
@@ -224,31 +223,33 @@ class LiveSlides(NavBar):
                     self.func(self.iterable[self.progressbar.value-1])
             self.info_html.value = self.info_html.value.replace('| Loading...','')
             
-    def set_footer(self, text = None, show_slide_number=True, show_date=True):
-        if text:
-            self.footer_text = text
-        out_str = self.footer_text
+    def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
         if show_date:
-            out_str += f' | <text style="color:{self.accent_color};">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
+            text += f' | <text style="color:{self.accent_color};">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
         if show_slide_number:
-            out_str += f' | <b style="color:{self.accent_color};">{self.progressbar.value} / {self.N}<b>'
-        self.info_html.value = f'<p style="white-space:nowrap;"> {out_str} </p>'
+            text += f' | <b style="color:{self.accent_color};">{self.progressbar.value} / {self.N}<b>'
+        self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
 
 class Customize:
     def __init__(self,instance_LiveSlides):
         "Provide instance of LivSlides to work."
         self.master = instance_LiveSlides
-        self.height_slider = ipw.IntSlider(min=200,max=1000, value = 480,continuous_update=False,layout = Layout(width='200px'))
-        self.width_slider = ipw.IntSlider(min=40,max=100, value = 50,continuous_update=False,layout = Layout(width='200px'))
-        self.scale_slider = ipw.FloatSlider(min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False,layout = Layout(width='200px'))
-        self.theme_dd = ipw.Dropdown(options=['Inherit','Light','Dark'],layout = Layout(width='200px'))
+        describe = lambda value: {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
+        
+        self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False)
+        self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 70,continuous_update=False)
+        self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
+        for slider in [self.height_slider,self.width_slider,self.scale_slider]:
+            slider.style.handle_color = self.master.accent_color
+            
+        self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto'))
         layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
         self.box = VBox([ipw.HTML('<h3>Settings</h3>'), 
-                        ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Height (px):</p>'),self.height_slider],layout=layout).add_class('voila-sidecar-hidden'), 
-                        ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Width (vw):</p>'),self.width_slider],layout=layout).add_class('voila-sidecar-hidden'),
-                        ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Font Scale:</p>'),self.scale_slider],layout=layout),
-                        ipw.HBox([ipw.HTML('<p style="white-space: nowrap;">Theme :</p>'),self.theme_dd],layout=layout),
+                        self.height_slider.add_class('voila-sidecar-hidden'), 
+                        self.width_slider.add_class('voila-sidecar-hidden'),
+                        self.scale_slider,
+                        self.theme_dd,
                         self.__instructions
                         ],layout=Layout(width='0px',height='100%',padding='0px',overflow='hidden'))
         with self.__instructions:
@@ -326,7 +327,7 @@ def display_cell_code(this_line=False,magics=False,comments=False,lines=None):
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
     if not comments:
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
-    return display(Markdown("""```python\n{}\n```""".format('\n'.join(current_cell_code))))
+    return display(Markdown("""```python\n\r{}\n\r```""".format('\n'.join(current_cell_code))))
     
 def multicols(width_ratios = [1,1],width = None,height=None):
     """Create a grid of columns with defined widths.

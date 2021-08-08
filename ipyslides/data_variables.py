@@ -70,12 +70,16 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
  	text-align:center;
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--text-fg) !important;}
-.SlidesWrapper .textfonts h1 {font-size: 3em;line-height: 3em;}
-.SlidesWrapper .textfonts h2 {font-size: 2.5em;line-height: 2.5em;}
-.SlidesWrapper .textfonts h3 {font-size: 2em;line-height: 2em;}
-.SlidesWrapper .textfonts h4 {font-size: 1.5em;line-height: 1.5em;}
-.SlidesWrapper .textfonts h5 {font-size: 1em;line-height: 1em;}
+.SlidesWrapper .textfonts h1 {margin-block: unset;font-size: 3em;  line-height: 1.5em;}
+.SlidesWrapper .textfonts h2 {margin-block: unset;font-size: 2.5em;line-height: 1.5em;}
+.SlidesWrapper .textfonts h3 {margin-block: unset;font-size: 2em;  line-height: 1.5em;}
+.SlidesWrapper .textfonts h4 {margin-block: unset;font-size: 1.5em;line-height: 1.5em;}
+.SlidesWrapper .textfonts h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
 
+.SlidesWrapper .widget-inline-hbox .widget-label,
+.SlidesWrapper .widget-inline-hbox .widget-readout  {
+    color:var(--text-fg);
+}
   
 .SlidesWrapper p{
 	color: var(--text-fg)!important;
@@ -83,8 +87,8 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
 .SlidesWrapper pre,code {
     background: var(--quote-bg) !important;
     color: var(--text-fg)!important;
-    padding: 2px 8px;
-    overflow-x: auto;
+    padding: 2px 4px !important;
+    overflow-x: auto !important;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--quote-bg);
