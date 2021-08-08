@@ -182,7 +182,8 @@ class LiveSlides(NavBar):
                           ],layout= Layout(width='100%',height='100%',margin='auto')),
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
-        self.box.add_class('SlidesWrapper') #Very Important
+        self.box.add_class('SlidesWrapper') #Very Important   
+        self.footer_text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">myemail@company.com</a>'
     
      
     def show(self):
@@ -223,8 +224,10 @@ class LiveSlides(NavBar):
                     self.func(self.iterable[self.progressbar.value-1])
             self.info_html.value = self.info_html.value.replace('| Loading...','')
             
-    def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">myemail@company.com</a>', show_slide_number=True, show_date=True):
-        out_str = text
+    def set_footer(self, text = None, show_slide_number=True, show_date=True):
+        if text:
+            self.footer_text = text
+        out_str = self.footer_text
         if show_date:
             out_str += f' | <text style="color:{self.accent_color};">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
         if show_slide_number:
