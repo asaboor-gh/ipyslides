@@ -5,6 +5,7 @@ __dynamicslides_dict = {} #Don't edit
 
 from IPython.display import display, Markdown
 from ipyslides import load_magics
+from ipyslides.utils import write,plt2html,print_context
 
 # Command below registers all the ipyslides magics that are used in this file
 load_magics()
@@ -84,12 +85,13 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
 .SlidesWrapper p{
 	color: var(--text-fg)!important;
 }
-.SlidesWrapper pre,code {
-    background: var(--quote-bg) !important;
+.SlidesWrapper pre, .SlidesWrapper code {
     color: var(--text-fg)!important;
-    padding: 2px 4px !important;
+    padding: 0px 4px !important;
     overflow-x: auto !important;
+    background: var(--quote-bg) !important;
 }
+
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--quote-bg);
 	color: var(--quote-fg) !important;
@@ -125,8 +127,7 @@ def display_item(item):
     else:
         item.show() # displays output of %%slide
     
-ls = LiveSlides(func=display_item,iterable=slides_iterable, 
-                    title_page_md=title_page_md,color_fg='#3D4450',color_bg='whitesmoke')
+ls = LiveSlides(func=display_item,iterable=slides_iterable,accent_color='olive')
 ls.set_footer()
 ls.show()"""
 

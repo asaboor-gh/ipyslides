@@ -3,9 +3,9 @@ __version__ = '0.1.0'
 from IPython.core.magic import Magics, magics_class, cell_magic
 from . import data_variables as dv
 
-from .core import display_cell_code, multicols
+from .core import display_cell_code, get_cell_code
 
-__all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build','display_cell_code','multicols']
+__all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build','display_cell_code','get_cell_code']
  
 @magics_class
 class SlidesMagics(Magics):
