@@ -3,9 +3,9 @@ title_page = '''__slides_mode = False #Set this to True and run all cells below
 __slides_dict = {} #Don't edit
 __dynamicslides_dict = {} #Don't edit
 
-from IPython.display import display, Markdown
+from IPython.display import display, Markdown # HTML, SVG, PNG #whatever you like
 from ipyslides import load_magics
-from ipyslides.utils import write,plt2html,print_context
+from ipyslides.utils import write, plt2html, print_context, plotly2html
 
 # Command below registers all the ipyslides magics that are used in this file
 load_magics()

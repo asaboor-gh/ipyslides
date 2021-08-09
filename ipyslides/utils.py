@@ -21,7 +21,17 @@ def syntax_css():
     return "<style>\n{}\n</style>".format(css)
     
     
-def write(*colums,width_percents=None):   
+def write(*colums,width_percents=None): 
+    '''Writes markdown strings in each column of same with. If width_percents is given, column width is adjusted.
+    
+    You can given a code object from ipyslides.get_cell_code() to it, syntax highlight is enabled.
+    You can give a matplotlib figure to it using ipyslides.utils.plt2html().
+    You can give an interactive plotly figure to it ipyslides.utils.plotly2html().
+    You can give a pandas dataframe after converting to HTML.
+    
+    Note: You can give your own type of data provided that it is converted to an HTML string, so you can
+    extent beyond matplotlib or plotly.
+    ''' 
     style = syntax_css()
     if not width_percents:
         width_percents = [int(100/len(colums)) for _ in colums]

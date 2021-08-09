@@ -317,13 +317,13 @@ def collect_slides():
             
     return tuple(slides_iterable)
 
-def get_cell_code(this_line=False,magics=False,comments=False,lines=None):
+def get_cell_code(this_line=True,magics=False,comments=False,lines=None):
     "Return current cell's code in slides for educational purpose. `lines` should be list/tuple of line numbers to include if filtered."
-    current_cell_code = [line.strip() for line in get_ipython().get_parent()['content']['code'].splitlines() if line]
+    current_cell_code = get_ipython().get_parent()['content']['code'].splitlines()
     if isinstance(lines,(list,tuple,range)):
         current_cell_code = [line for i, line in enumerate(current_cell_code) if i+1 in lines]
     if not this_line:
-        current_cell_code = [line for line in current_cell_code if 'display_cell_code' not in line]
+        current_cell_code = [line for line in current_cell_code if '_cell_code' not in line]
     if not magics:
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
     if not comments:
