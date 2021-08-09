@@ -13,9 +13,9 @@ def print_context():
     display(Markdown(f'```shell\n{cap.stdout}\n{cap.stderr}```'))
 
 def syntax_css():
-    keywords = 'n k mi kn nn p c1 o nf sa s1 si nb nc se'.split()
-    weights = ['bold' if k in ['k'] else 'normal' for k in keywords]
-    colors = 'inherit #008000 #080 #ff7f0e #2ca02c #d62728 #5650b5 #AA22FF olive #7f7f7f #BA2121 #2800ff #1175cb #337ab7 red'.split()
+    keywords = 'n k kc mi mf kn nn p c1 o nf sa s1 si nb nc se'.split()
+    weights = ['bold' if k in ['k','kc'] else 'normal' for k in keywords]
+    colors = 'inherit #008000 #008000 #080 #080 #ff7f0e #2ca02c #d62728 #5650b5 #AA22FF olive #7f7f7f #BA2121 #2800ff #1175cb #337ab7 red'.split()
     css = [f'.codehilite .{k} {{color:{c};font-weight:{w};}}' for k,c,w in zip(keywords,colors,weights)]
     css = '.codehighlite span {font-family: Monaco,"Lucida Console","Courier New";}\n' + '\n'.join(css)
     return "<style>\n{}\n</style>".format(css)
