@@ -5,7 +5,7 @@ import ipywidgets as ipw
 from ipywidgets import Layout,Label,Button,Box,HBox,VBox
 from numpy.lib.function_base import iterable
 from . import data_variables as dv
-import datetime, re #re for updating font-size
+import datetime, re #re for updating font-size and slide number
 from .utils import write 
 
 
@@ -211,6 +211,7 @@ class LiveSlides(NavBar):
            
     def __update_content(self,change):
         if self.iterable and change:
+            self.info_html.value = re.sub('>\d+\s+/',f'>{self.progressbar.value} /',self.info_html.value) #Slide Number
             self.info_html.value = self.info_html.value.replace('</p>', '| Loading...</p>')
             self.out.clear_output(wait=True)
             with self.out:
@@ -227,7 +228,7 @@ class LiveSlides(NavBar):
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
         if show_date:
             text += f' | <text style="color:{self.accent_color};">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
-        if show_slide_number:
+        if show_slide_number: #Slide number should be  exactlly like '>Int /' for regex substitutioon.  
             text += f' | <b style="color:{self.accent_color};">{self.progressbar.value} / {self.N}<b>'
         self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
 

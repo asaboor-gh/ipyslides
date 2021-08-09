@@ -1,5 +1,6 @@
 # ipyslides
 Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
+![Overview](overview.jpg)
 
 # Install
 ```shell
