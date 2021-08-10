@@ -3,9 +3,10 @@ __version__ = '0.1.2'
 from IPython.core.magic import Magics, magics_class, cell_magic
 from . import data_variables as dv
 
-from .core import display_cell_code, get_cell_code
-
-__all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build','display_cell_code','get_cell_code']
+from .core import display_cell_code, get_cell_code, MultiCols
+multicols = MultiCols #Aliasing
+__all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build',
+           'display_cell_code','get_cell_code','MultiCols','multicols']
  
 @magics_class
 class SlidesMagics(Magics):
@@ -60,7 +61,7 @@ def insert_after(slide_number):
         return print(f'slide_number expects integer, got {slide_number!r}')
     
     code_after = __filter_cell_code('insert_after')
-    code_after += f'\n\n#Below variable should be list or tuple on which func in LiveSlides act\n__dynamicslides_dict["d{slide_number}"] = []'
+    code_after += f'\n\n#Below variable should be list/tuple on which func in LiveSlides act or a MultiCols instance\n__dynamicslides_dict["d{slide_number}"] = []'
     get_ipython().set_next_input(code_after, replace=True)
     
 def build(): #Set Next full input

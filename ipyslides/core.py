@@ -1,12 +1,14 @@
 from ipywidgets.widgets.widget_output import Output
 import numpy as np
 from IPython.display import display, Markdown, HTML
+import IPython #for type checking in %%slide
 import ipywidgets as ipw
 from ipywidgets import Layout,Label,Button,Box,HBox,VBox
 from numpy.lib.function_base import iterable
 from . import data_variables as dv
 import datetime, re #re for updating font-size and slide number
-from .utils import write 
+from .utils import write
+import ipyslides 
 
 
 def _custom_progressbar(intslider,uid,accent_color='red'):
@@ -222,7 +224,10 @@ class LiveSlides(NavBar):
                     else:
                         title.show() #Ipython Captured Output
                 else:
-                    self.func(self.iterable[self.progressbar.value-1])
+                    item = self.iterable[self.progressbar.value-1]
+                    try: item.show() #show ipython capture/MultiCols or if item has a show method with display.
+                    except: self.func(item)
+                    
             self.info_html.value = self.info_html.value.replace('| Loading...','')
             
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
@@ -293,7 +298,33 @@ class Customize:
             dark_c = {'heading_fg': 'snow', 'text_fg': 'white', 'text_bg': '#21252B', 'quote_bg': '#22303C', 'quote_fg': 'powderblue'}
             root = dv.style_root.format(**dark_c,text_size = text_size)
         self.master.theme_html.value = dv.style_html(root)   
-     
+
+class MultiCols:
+    def __init__(self,width_percents=[50,50]):
+        """Creat multicolumns with width spcified for each. Defuslt is two columns with equal width.
+        This object is not displayed properly under %%slide, so you need to set it in `__dynamicslides_dict`.
+        - **Example**
+            > mc = Multicols()
+            > with mc.header:
+            >   write('## H2')
+            > with mc.footer:
+            >   write('## Footer')
+            > with mc.c1: #and with c2,c3 etc
+            >   print('Something')
+            > mc.show() or mc.slide #displays it"""
+        self.slide = VBox([],layout=Layout(width='100%'))
+        self.header = ipw.Output(layout=Layout(margin='auto',padding='2px 8px'))
+        self.footer = ipw.Output(layout=self.header.layout)
+        for i,wp in enumerate(width_percents):
+            setattr(self,f'c{i+1}',ipw.Output(layout=Layout(margin='2px 8px',width='100%')))
+        self.columns = HBox([Box([getattr(self,f'c{i+1}')],layout=Layout(width=f'{wp}%',overflow='auto')).add_class('column')
+                                                for i,wp in enumerate(width_percents)],
+                                layout=Layout(margin='0px',justify_content = 'center',column_border='2px solid red')) # No need to set width. Its alright
+        
+        self.slide.children = [self.header,self.columns,self.footer]
+        
+    def show(self):
+        return display(self.slide)     
     
 def collect_slides():
     """Collect cells with variables `__slide_[N]` and `__next_to_[N]` in user's namespace."""
@@ -314,7 +345,10 @@ def collect_slides():
         if f'{i}' in ns['__slides_dict'].keys():
             slides_iterable.append(ns['__slides_dict'][f'{i}']) 
         if f'd{i}' in ns['__dynamicslides_dict'].keys():
-            slides_iterable = [*slides_iterable,*ns['__dynamicslides_dict'][f'd{i}']]
+            items = ns['__dynamicslides_dict'][f'd{i}']
+            if not isinstance(items,(list,tuple)):
+                items = [items]
+            slides_iterable = [*slides_iterable,*items]
             
     return tuple(slides_iterable)
 
@@ -335,5 +369,4 @@ def display_cell_code(this_line=False,magics=False,comments=False,lines=None):
     "Display cell data. `lines` should be list/tuple of line numbers to include if filtered."
     code = get_cell_code(this_line=this_line,magics=magics,comments=comments,lines=lines)
     return write(code)
-
 

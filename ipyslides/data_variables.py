@@ -30,7 +30,6 @@ isd.build() #This will build the presentation cell. After this go top and set __
 ```
 
 > Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-
 > For JupyterLab >=3, do `pip install sidecar`. 
 """
 '''
@@ -59,11 +58,8 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
 	background:var(--text-bg);
 	font-size: var(--text-size);
  }
- .SlidesWrapper .MultiCols {
-	display: flex !important;
-  	column-gap: 2em;
-  	column-rule: 1px solid #ccc;
- }
+ .SlidesWrapper .column:not(:first-child) {
+	border-left: 2px solid var(--quote-bg);}
  
 .jp-RenderedHTMLCommon {font-size: var(--text-size);} /* For Voila */
 .SlidesWrapper h1,h2,h3,h4,h5,h6{
@@ -107,10 +103,7 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
     overflow: auto;
 	color: var(--text-fg)!important;
 }
-.widget-hbox {
-    display: inline-flex important;
-    flex-direction: row !important;
-}
+
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar
@@ -123,9 +116,9 @@ slides_iterable = collect_slides() #Get all slides content in order
 # Edit this function to act on all dynmaically generated slides
 def display_item(item):
     if isinstance(item,(str,dict,list,tuple,int,float)):
-        display(Markdown(f'### Given {type(item)}: {item}'))
+        write(f'### Given {type(item)}: {item}')
     else:
-        item.show() # displays output of %%slide
+        item.show() # displays output of %%slide or if iterable has show method
     
 ls = LiveSlides(func=display_item,iterable=slides_iterable,accent_color='olive')
 ls.set_footer()
