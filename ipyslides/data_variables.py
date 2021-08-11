@@ -1,56 +1,71 @@
-title_page = '''__slides_mode = False #Set this to True and run all cells below
-#Fixed Parameters Initialization
-__slides_dict = {} #Don't edit
-__dynamicslides_dict = {} #Don't edit
-
-from IPython.display import display, Markdown # HTML, SVG, PNG #whatever you like
-from ipyslides import load_magics
-from ipyslides.utils import write, plt2html, print_context, plotly2html
+title_page = '''from IPython.display import display, Markdown
+from ipyslides import load_magics, convert2slides, write_title
+from ipyslides.utils import write,plt2html,print_context
 
 # Command below registers all the ipyslides magics that are used in this file
 load_magics()
+# Set this to True for Slides output
+convert2slides(False) #Set this to True for Slides output
 
-# Do NOT change variable name, just edit value or create title slide using %%title in a cell
-# %%title cell should only be used once and should contain display statements instead of returning anything
-__slides_title_page=""" # Interactive Slides  
+
+write_title("<div style='width:10px;height:100%;background:olive;'></div>",
+"""# Interactive Slides  
 <em> Author: Abdul Saboor</em>
 
-- Edit and test cells in `__slides_mode = False` mode
+- Edit and test cells in `convert2slides(False)` mode.
 - Run cells in `__slides_mode = True` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide or you can use `ipysildes.insert(slide_number)`
-- List or tuple assigned to \_\_dynamicslides_dict['d\{slide_number\}'] generates slides dynamically
+- ipyslides.insert_after(slide_number,*objs) generates slides dynamically handled by function `display_item`.
 
 ```python
 import ipyslides as isd 
 isd.initilize() #This will create a title page and parameters in same cell
-isd.insert_title() #This will capture the title page with magice %%title
+isd.write_title() #create a rich content multicols title page.
 isd.insert(1) #This will create a slide in same cell where you run it 
-isd.insert_after(1) #This will create as many slides after the slide number 1 as length of list/tuple at cell end
-isd.build() #This will build the presentation cell. After this go top and set __slides_mode = True and run all below.
+isd.insert_after(1,*objs) #This will create as many slides after the slide number 1 as length(objs)
+isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
 ```
 
 > Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
 > For JupyterLab >=3, do `pip install sidecar`. 
-"""
+""",width_percents = [5,95])
 '''
-
-style_root = ''':root {{
-	--heading-fg: {heading_fg};
-	--text-fg: {text_fg};
-	--text-bg: {text_bg};
-	--quote-bg: {quote_bg};
-	--quote-fg: {quote_fg};
+# CSS for ipyslides
+light_root = ''':root {{
+	--heading-fg: navy;
+	--text-fg: black;
+	--text-bg: #F3F3F3;
+	--quote-bg: white;
+	--quote-fg: purple;
+	--tr-odd-bg: white;
+	--tr-hover-bg: lightblue;
 	--text-size: {text_size};
 }}
 '''
-style_colors = {
-    'heading_fg': 'inherit',
-    'text_fg' : 'inherit',
-    'text_bg' : 'inherit',
-    'quote_bg': 'inherit',
-    'quote_fg': 'inherit'
-}
-def style_html(style_root_formatted = style_root.format(**style_colors,text_size='16px')):
+dark_root = ''':root {{
+	--heading-fg: snow;
+	--text-fg: white;
+	--text-bg: #21252B;
+	--quote-bg: #22303C;
+	--quote-fg: powderblue;
+	--tr-odd-bg: black;
+	--tr-hover-bg: gray;
+	--text-size: {text_size};
+}}
+'''
+inherit_root = ''':root {{
+	--heading-fg: inherit;
+	--text-fg: inherit;
+	--text-bg: inherit;
+	--quote-bg: inherit;
+	--quote-fg: inherit;
+	--tr-odd-bg: inherit;
+	--tr-hover-bg:skyblue;
+	--text-size: {text_size};
+}}
+'''
+
+def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 	return '<style>\n' + style_root_formatted + '''    
 .SlidesWrapper {
 	margin: auto;
@@ -97,13 +112,18 @@ def style_html(style_root_formatted = style_root.format(**style_colors,text_size
 	color:var(--text-fg)!important;
 }
 .SlidesWrapper table {
+ 	border-collapse: collapse !important;
     min-width:auto;
     width:100%;
+    font-size: small;
     word-break:break-all;
     overflow: auto;
 	color: var(--text-fg)!important;
+	background: var(--text-bg)!important;
 }
-
+.SlidesWrapper tbody>tr:nth-child(odd) {background: var(--tr-odd-bg)!important;}
+.SlidesWrapper tbody>tr:nth-child(even) {background: var(--text-bg)!important;}
+.SlidesWrapper tbody>tr:hover {background: var(--tr-hover-bg)!important;}
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar
@@ -118,7 +138,7 @@ def display_item(item):
     if isinstance(item,(str,dict,list,tuple,int,float)):
         write(f'### Given {type(item)}: {item}')
     else:
-        item.show() # displays output of %%slide or if iterable has show method
+        display(item) # You will get idea what is it and modify this function to handle it.
     
 ls = LiveSlides(func=display_item,iterable=slides_iterable,accent_color='olive')
 ls.set_footer()
@@ -129,9 +149,9 @@ settings_instructions = '''
 For custom themes, change colors in instance attribute of `ipyslides.LivSlides.theme_colors`
 ```python
 # if you did set ls = LivSlides()
-theme_colors = ls.get_theme_colors()
+theme_root = ls.get_theme_root()
 # edit values of colors you want, don't edit keys.
-ls.set_theme_colors(theme_colors)
+ls.set_theme_root(theme_root)
 ls.set_font_scale(font_scale:float) #changes layout fonts scaling. 
 ```          
 

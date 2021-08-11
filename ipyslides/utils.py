@@ -36,7 +36,8 @@ def write(*colums,width_percents=None):
     if not width_percents:
         width_percents = [int(100/len(colums)) for _ in colums]
     colums = [c.replace('\n','     \n') for c in colums] #Markdown doesn't like newlines without spaces
-    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{markdown(c,extensions=['fenced_code','tables','codehilite'])}</div>\n" for c,w in zip(colums,width_percents)])
+    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{markdown(c,extensions=['fenced_code','tables','codehilite'])}</div>\n" 
+                            for c,w in zip(colums,width_percents)])
     if len(colums) == 1:
         return display(HTML(style + _cols))
     return display(HTML(f'''<div style="max-width:95%;display:inline-flex;flew-direction:row;column-gap:2em;">

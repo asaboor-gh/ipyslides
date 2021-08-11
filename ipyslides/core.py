@@ -149,9 +149,9 @@ class LiveSlides(NavBar):
         
         _max = len(self.iterable) if self.iterable else 1
         super().__init__(N=_max,accent_color=self.accent_color)
-        self.theme_colors = dv.style_colors
+        self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
-        self.theme_html = ipw.HTML(dv.style_html(dv.style_root.format(**self.theme_colors,text_size='16px')))
+        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.format(text_size='16px')))
         self.main_style_html = ipw.HTML('''<style>
             .SlidesWrapper .textfonts { align-items: center;}
             a.jp-InternalAnchorLink { display: none !important;}
@@ -202,14 +202,13 @@ class LiveSlides(NavBar):
         self.font_scale= font_scale
         self.setting.update_theme()
         
-    def get_theme_colors(self):
-        return self.theme_colors
+    def get_theme_root(self):
+        return dv.inherit_root
     
-    def set_theme_colors(self, theme_colors= None):
-        if theme_colors and theme_colors.keys() == self.theme_colors.keys():
-            self.theme_colors = theme_colors
-            self.setting.theme_dd.value = 'Inherit' #Custom Changes only effect this mode. 
-            self.setting.update_theme()   
+    def set_theme_root(self, theme_root= None):
+        self.theme_root = theme_root
+        self.setting.theme_dd.value = 'Inherit' #Custom Changes only effect this mode. 
+        self.setting.update_theme()   
            
     def __update_content(self,change):
         if self.iterable and change:
@@ -218,11 +217,11 @@ class LiveSlides(NavBar):
             self.out.clear_output(wait=True)
             with self.out:
                 if self.progressbar.value == 0:
-                    title = self.user_ns.get('__slides_title_page','#### No Title page found. Create one using %%title in a cell.')
+                    title = self.user_ns.get('__slides_title_page','#### No Title page found. Create one using `write_title` in a cell.')
                     if isinstance(title,str):
-                        display(Markdown(title)) #Markdown String
+                        write(title) #Markdown String
                     else:
-                        title.show() #Ipython Captured Output
+                        write(*title['args'],**title['kwargs']) #Ipython Captured Output
                 else:
                     item = self.iterable[self.progressbar.value-1]
                     try: item.show() #show ipython capture/MultiCols or if item has a show method with display.
@@ -290,13 +289,11 @@ class Customize:
     def update_theme(self,change=None):  
         text_size = '{}px'.format(int(self.master.font_scale*16))
         if self.theme_dd.value == 'Inherit':
-            root = dv.style_root.format(**self.master.theme_colors,text_size = text_size)
+            root = self.master.theme_root.format(text_size = text_size)
         elif self.theme_dd.value == 'Light':
-            light_c = {'heading_fg': 'navy', 'text_fg': 'black', 'text_bg': '#F3F3F3', 'quote_bg': 'white', 'quote_fg': 'purple'}
-            root = dv.style_root.format(**light_c,text_size = text_size)
+            root = dv.light_root.format(text_size = text_size)
         elif self.theme_dd.value == 'Dark':
-            dark_c = {'heading_fg': 'snow', 'text_fg': 'white', 'text_bg': '#21252B', 'quote_bg': '#22303C', 'quote_fg': 'powderblue'}
-            root = dv.style_root.format(**dark_c,text_size = text_size)
+            root = dv.dark_root.format(text_size = text_size)
         self.master.theme_html.value = dv.style_html(root)   
 
 class MultiCols:
@@ -330,7 +327,7 @@ def collect_slides():
     """Collect cells with variables `__slide_[N]` and `__next_to_[N]` in user's namespace."""
     ns = get_ipython().user_ns
     if not '__slides_mode' in ns.keys() or not ns['__slides_mode']:
-        return print('Set "__slides_mode = True" in top cell and run again.')
+        return print('Set "convert2slides(True)" in top cell and run again.')
     
     dynamic_slides = [k.replace('d','') for k in ns['__dynamicslides_dict'].keys()]
     # If slide number is mistaken, still include that. 
@@ -345,10 +342,7 @@ def collect_slides():
         if f'{i}' in ns['__slides_dict'].keys():
             slides_iterable.append(ns['__slides_dict'][f'{i}']) 
         if f'd{i}' in ns['__dynamicslides_dict'].keys():
-            items = ns['__dynamicslides_dict'][f'd{i}']
-            if not isinstance(items,(list,tuple)):
-                items = [items]
-            slides_iterable = [*slides_iterable,*items]
+            slides_iterable = [*slides_iterable,*ns['__dynamicslides_dict'][f'd{i}']]
             
     return tuple(slides_iterable)
 
