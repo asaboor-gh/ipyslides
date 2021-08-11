@@ -16,6 +16,7 @@ write_title("<div style='width:10px;height:100%;background:olive;'></div>",
 - Run cells in `convert2slides(True)` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide or you can use `ipysildes.insert(slide_number)`
 - ipyslides.insert_after(slide_number,*objs) generates slides dynamically handled by function `display_item`.
+- Use `ls.align8center(False)` assuming `ls=LiveLSides()` to align slide's content top-left.
 
 ```python
 import ipyslides as isd 
@@ -141,6 +142,7 @@ def display_item(item):
         display(item) # You will get idea what is it and modify this function to handle it.
     
 ls = LiveSlides(func=display_item,iterable=slides_iterable,accent_color='olive')
+ls.align8center(True) # Set False to align top-left corner
 ls.set_footer()
 ls.show()"""
 

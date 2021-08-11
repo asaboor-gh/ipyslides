@@ -197,6 +197,16 @@ class LiveSlides(NavBar):
                 display(self.box)
         except:
             return self.box
+    
+    def align8center(self,b=True):
+        "Central aligment of slide by default. If False, left-top aligned."
+        if b:
+            self.out.layout.margin = 'auto'
+            self.out.layout.width = 'auto'
+            self.out.layout.max_width = '100%'
+        else:
+            self.out.layout.margin = '2px 8px 2px 8px'
+            self.out.layout.width = '100%'
         
     def set_font_scale(self,font_scale=1):
         self.font_scale= font_scale
@@ -251,14 +261,14 @@ class Customize:
             
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto'))
-        layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
+        # layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
         self.box = VBox([ipw.HTML('<h3>Settings</h3>'), 
                         self.height_slider.add_class('voila-sidecar-hidden'), 
                         self.width_slider.add_class('voila-sidecar-hidden'),
                         self.scale_slider,
                         self.theme_dd,
                         self.__instructions
-                        ],layout=Layout(width='0px',height='100%',padding='0px',overflow='hidden'))
+                        ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto'))
         with self.__instructions:
             display(Markdown(dv.settings_instructions))
             
