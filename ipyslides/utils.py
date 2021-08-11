@@ -72,5 +72,6 @@ def plt2html(plt_fig=None,transparent=True):
     plot_bytes = BytesIO()
     plt.savefig(plot_bytes,format='svg',transparent=transparent)
     plt.clf() # Clear image to avoid other display
+    plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     return f"<div>{svg}</div>"

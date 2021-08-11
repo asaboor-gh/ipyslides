@@ -12,7 +12,8 @@ For development install, clone this repository and then
 > pip install -e .
 ```
 # Demo
-See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides)
+See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides),
+[Version>0.2.0]https://www.kaggle.com/massgh/ipyslides-0-2-0)
 ![Slides2Video](kaggle.gif)
 
 # Usage

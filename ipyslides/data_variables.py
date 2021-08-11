@@ -10,10 +10,10 @@ convert2slides(False) #Set this to True for Slides output
 
 write_title("<div style='width:10px;height:100%;background:olive;'></div>",
 """# Interactive Slides  
-<em> Author: Abdul Saboor</em>
+<em style='color:red;'> Author: Abdul Saboor</em>
 
 - Edit and test cells in `convert2slides(False)` mode.
-- Run cells in `__slides_mode = True` mode from top to bottom. 
+- Run cells in `convert2slides(True)` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide or you can use `ipysildes.insert(slide_number)`
 - ipyslides.insert_after(slide_number,*objs) generates slides dynamically handled by function `display_item`.
 

@@ -203,7 +203,8 @@ class LiveSlides(NavBar):
         self.setting.update_theme()
         
     def get_theme_root(self):
-        return dv.inherit_root
+        "Prints Inherit theme root. Use set_theme_root after editing color, don`t edit {{text_size}}"
+        print(f'Copy string below,edit colors and give to set_theme_root, do NOT edit {{text_size}}!\n"""\n{dv.inherit_root}"""')
     
     def set_theme_root(self, theme_root= None):
         self.theme_root = theme_root
