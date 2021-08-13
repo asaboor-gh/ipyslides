@@ -114,6 +114,12 @@ class NavBar:
     
     def show(self):
         return self.nav_bar
+    __call__ = show
+    
+    def player(self,interval=1000):
+        play = ipw.Play(min=self.progressbar.min,max=self.progressbar.max,interval=interval)
+        ipw.dlink((play, 'value'), (self.progressbar, 'value'))
+        return play
         
          
 class LiveSlides(NavBar):
@@ -197,6 +203,7 @@ class LiveSlides(NavBar):
                 display(self.box)
         except:
             return self.box
+    __call__ = show
     
     def align8center(self,b=True):
         "Central aligment of slide by default. If False, left-top aligned."
@@ -267,7 +274,8 @@ class Customize:
                         self.width_slider.add_class('voila-sidecar-hidden'),
                         self.scale_slider,
                         self.theme_dd,
-                        self.__instructions
+                        self.__instructions,
+                        self.master.player()
                         ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto'))
         with self.__instructions:
             display(Markdown(dv.settings_instructions))
@@ -332,7 +340,8 @@ class MultiCols:
         self.slide.children = [self.header,self.columns,self.footer]
         
     def show(self):
-        return display(self.slide)     
+        return display(self.slide)   
+    __call__ = show  
     
 def collect_slides():
     """Collect cells with variables `__slide_[N]` and `__next_to_[N]` in user's namespace."""
