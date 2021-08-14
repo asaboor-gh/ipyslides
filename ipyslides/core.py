@@ -24,7 +24,7 @@ def custom_progressbar(intprogress):
     .NavWrapper .widget-hprogress {height:4px; !impportant;}
     .NavWrapper, .NavWrapper>div {padding:0px;margin:0px;overflow:hidden;}
     .NavWrapper .progress, .NavWrapper .progress .progress-bar {
-        border-radius:0px; margin:0px;padding:0px;height:4px !important;overflow:hidden;left:0px;bottom:0px;}
+        border-radius:0px; margin:0px;padding:0px;height:6px !important;overflow:hidden;left:0px;bottom:0px;}
     .NavWrapper .progress {width:100% !important;}
     </style>''')
     return VBox([HBox(layout=Layout(height='0px',justify_content='space-between',align_items='center')).add_class('nav-box'),
@@ -230,7 +230,7 @@ class Customize:
                         self.scale_slider,
                         self.theme_dd,
                         ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        ipw.HBox([self.master.player(),self.master.go2slide()],layout=Layout(width='100%',min_height='32px',padding='2px 0px'))
+                        ipw.HBox([self.master.player(),self.master.go2slide()],layout=Layout(width='100%',min_height='36px',margin='2px 0px'))
                         ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto')
                         ).add_class('panel')
         with self.__instructions:

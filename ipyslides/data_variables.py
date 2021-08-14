@@ -141,7 +141,9 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .SlidesWrapper tbody>tr:nth-child(odd) {background: var(--tr-odd-bg)!important;}
 .SlidesWrapper tbody>tr:nth-child(even) {background: var(--text-bg)!important;}
 .SlidesWrapper tbody>tr:hover {background: var(--tr-hover-bg)!important;}
-.NavWrapper .progress {background: var(--quote-bg)!important;}
+
+
+.NavWrapper .progress {background: var(--quote-bg)!important;transform: translate(-2px,2px)}
 .NavWrapper .progress .progress-bar {background: var(--accent-color)!important;}
 .NavWrapper button {color: var(--accent-color)!important;border-radius:0px;}
 
