@@ -1,87 +1,42 @@
-from ipywidgets.widgets.widget_output import Output
 import numpy as np
-from IPython.display import display, Markdown, HTML
-import IPython #for type checking in %%slide
+from IPython.display import display, Markdown
 import ipywidgets as ipw
-from ipywidgets import Layout,Label,Button,Box,HBox,VBox
-from numpy.lib.function_base import iterable
+from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
 import datetime, re #re for updating font-size and slide number
 from .utils import write
-import ipyslides 
 
-
-def _custom_progressbar(intslider,uid,accent_color='red'):
+def custom_progressbar(intprogress):
     "This has a box as children[0] where you can put navigation buttons."
-    html = ipw.HTML()
-    uclass = 'custom-nav-'+ uid
-    navclass = 'btn-'+ uid
-    style_str = '''
-        <style>
-    .{uclass} .widget-inline-hbox .widget-readout  {{min-width:auto !important;}}
-    .{uclass} {{
-        z-index: 20;
-        width:100%;
-        right: 0px;
-        left: 0px;
-        vertical-align: bottom;
-        height: 4px;
-        overflow:hidden;
-        border-radius: 0px;
-        background: linear-gradient(to right, {accent_color} 0%, {accent_color} {moving_pos}%, transparent {moving_pos}%, transparent 100%) !important;
-    }}
-    .{uclass}:hover, .{uclass}:focus{{height: 20px;padding:auto;opacity:0.8;margin-top:-16px;}}
-    .widget-inline-hbox {{border-radius;4px;}}
-    
-    .NavWrapper .widget-inline-hbox .widget-readout  {{z-index:30;color:inherit;
-        min-width:auto !important;margin: 13.5px 2px 0px 8px;opacity:1;}}
-    
-    .{uclass} .ui-slider .ui-slider-handle, .{uclass} .ui-slider .ui-slider-handle:hover, .{uclass} .ui-slider .ui-slider-handle:focus {{
-        background: transparent; 
-        border: 5px solid {accent_color};
-        height: 20px;
-        width: 40px;
-        margin:-1px 0px 0px 0px;
-        border-radius: 0px;
-    }}
-     .{uclass} .ui-slider {{
-         background: transparent; 
-         border: transparent;
-         height:18px;
-     }}
-     .NavWrapper .{navclass} .menu, .NavWrapper .{navclass} .menu.big-menu  {{ color:{accent_color}; font-size:24px !important; overflow:hidden;}}
-     .NavWrapper .{navclass} .menu.big-menu {{font-size:55px !important;}}
-     .NavWrapper .{navclass} .menu:hover {{ 
+    html = ipw.HTML('''<style>
+     .NavWrapper .nav-box .menu, .NavWrapper .nav-box .menu.big-menu  {font-size:24px !important; overflow:hidden;}
+     .NavWrapper .nav-box .menu.big-menu {font-size:55px !important;}
+     .NavWrapper .nav-box .menu:hover {
             overflow: hidden;
             animation-name: example; animation-duration: 2s;
             animation-timing-function: ease-in-out;
-    }}
-    @keyframes example {{
-            from {{ opacity: 0.2;}}
-            to {{opacity: 1;}}
-    }}
-    .NavWrapper .{navclass} {{z-index:50;overflow: hidden;}}
-    </style><p style="margin-top:-7px;color:{accent_color};width:max-content;"><b>{text}</b></p>'''
-    def update(change):
-        value = np.rint((intslider.value)/intslider.max*100).astype(int)
-        html.value = style_str.format(uclass = uclass, navclass=navclass, accent_color=accent_color,moving_pos=value,text=f'∕  {intslider.max}')
-    intslider.observe(update)
-    intslider.layout.height='16px'
-    intslider.layout.margin= '-5px 2px 0px -6px'
-    
-    update(True) #First trigger
-    return VBox([HBox(layout=Layout(height='20px',justify_content='space-between',align_items='center')).add_class(navclass),
-                                    HBox([ intslider, html]).add_class(uclass) ]).add_class('NavWrapper') #class is must
-
+    }
+    @keyframes example {
+            from { opacity: 0.2;}
+            to {opacity: 1;}
+    }
+    .NavWrapper .nav-box {z-index:50;overflow: hidden;}
+    .NavWrapper .widget-hprogress {height:4px; !impportant;}
+    .NavWrapper, .NavWrapper>div {padding:0px;margin:0px;overflow:hidden;}
+    .NavWrapper .progress, .NavWrapper .progress .progress-bar {
+        border-radius:0px; margin:0px;padding:0px;height:4px !important;overflow:hidden;left:0px;bottom:0px;}
+    .NavWrapper .progress {width:100% !important;}
+    </style>''')
+    return VBox([HBox(layout=Layout(height='0px',justify_content='space-between',align_items='center')).add_class('nav-box'),
+                            VBox([ html,intprogress]) ]).add_class('NavWrapper') #class is must
 class NavBar:
-    def __init__(self,N=10, accent_color='red'):
+    def __init__(self,N=10):
         "N is number of slides here."
-        self.accent_color = accent_color
         self.N = N
         
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
-        self.progressbar = ipw.IntSlider(max = self.N,continuous_update=False,readout=True,layout =  Layout(width='100%'))
-        
+        #self.progressbar = ipw.IntSlider(max = self.N,continuous_update=False,readout=True,layout =  Layout(width='100%'))
+        self.progressbar = ipw.IntProgress(min=0,max = self.N,layout =  Layout(width='100%'))
         self.btn_prev =  Button(icon='angle-left',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
         self.btn_next =  Button(icon='angle-right',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
         self.btn_setting =  Button(icon='bars',layout= Layout(width='auto',height='auto')).add_class('menu')
@@ -90,17 +45,17 @@ class NavBar:
                 btn.layout.min_width = 'max-content' #very important parameter
                 
         self.info_html = ipw.HTML('Put Your Info Here using `self.info_html.value`')
-        self.group_1 =  HBox([self.btn_setting,self.info_html],
+        self.group_1 =  HBox([self.btn_setting,ipw.Box([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden'))],
                              layout=Layout(justify_content='flex-start',align_items='center'))
         self.group_2 = HBox([self.btn_prev,self.btn_next],
                             layout=Layout(justify_content='flex-end',align_items='center',min_width='max-content'))
         self.build_navbar() # this is the main function to build the navbar
-        
+         
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
     
     def build_navbar(self):
-        self.nav_bar = _custom_progressbar(self.progressbar, self.uid, accent_color=self.accent_color)
+        self.nav_bar = custom_progressbar(self.progressbar)
         self.nav_bar.children[0].children = (self.group_1, self.group_2)
         self.nav_bar.children[0].layout.height = '50px'
        
@@ -120,20 +75,24 @@ class NavBar:
         play = ipw.Play(min=self.progressbar.min,max=self.progressbar.max,interval=interval)
         ipw.dlink((play, 'value'), (self.progressbar, 'value'))
         return play
+    
+    def go2slide(self):
+        options = [(f'Slide {n}',n) for n in range(self.progressbar.max + 1)]
+        dd = ipw.Dropdown(description='Jump To: ',options=options,value=0,layout=Layout(width='auto',height='auto'))
+        ipw.link((dd, 'value'), (self.progressbar, 'value'))
+        return dd
         
          
 class LiveSlides(NavBar):
     def __init__(self,
                  func=lambda x: display(Markdown(x)), 
-                 iterable=['# First Slide','# Second Slide'],
-                 accent_color='olive'):
+                 iterable=['# First Slide','# Second Slide']):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
             - func : An outside defined function which act on elements of `iterable`  and handle required situations. 
                     Return value is not guranteed for output rendering except for IPython.display.display object. Use display
                     inside the function for rich formats rending as many time as you want.
             - iterable: Anything from list/tuple/dict etc whose each element is given as argument to `func`.
-            - accent_color: Valid CSS color. Applies to buttons, progressbar etc.
         - **Example**
             ```python
             from IPython.display import display, Markdown
@@ -150,11 +109,10 @@ class LiveSlides(NavBar):
         self.func = func
         self.iterable = iterable
         self.user_ns = get_ipython().user_ns 
-        self.accent_color = accent_color 
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
         
         _max = len(self.iterable) if self.iterable else 1
-        super().__init__(N=_max,accent_color=self.accent_color)
+        super().__init__(N=_max)
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
         self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.format(text_size='16px')))
@@ -187,7 +145,7 @@ class LiveSlides(NavBar):
         
         self.box =  VBox([self.main_style_html, 
                           self.theme_html,
-                          HBox([self.box_setting,self.out.add_class('textfonts')
+                          HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')]),
                           ],layout= Layout(width='100%',height='100%',margin='auto')),
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
@@ -249,9 +207,9 @@ class LiveSlides(NavBar):
             
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
         if show_date:
-            text += f' | <text style="color:{self.accent_color};">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
+            text += f' | <text style="color:var(--accent-color);">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
         if show_slide_number: #Slide number should be  exactlly like '>Int /' for regex substitutioon.  
-            text += f' | <b style="color:{self.accent_color};">{self.progressbar.value} / {self.N}<b>'
+            text += f' | <b style="color:var(--accent-color);">{self.progressbar.value} / {self.N}<b>'
         self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
 
 class Customize:
@@ -263,22 +221,20 @@ class Customize:
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False)
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 65,continuous_update=False)
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
-        for slider in [self.height_slider,self.width_slider,self.scale_slider]:
-            slider.style.handle_color = self.master.accent_color
-            
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark'])
-        self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto'))
+        self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto')).add_class('panel-text')
         # layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
         self.box = VBox([ipw.HTML('<h3>Settings</h3>'), 
                         self.height_slider.add_class('voila-sidecar-hidden'), 
                         self.width_slider.add_class('voila-sidecar-hidden'),
                         self.scale_slider,
                         self.theme_dd,
-                        self.__instructions,
-                        self.master.player()
-                        ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto'))
+                        ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
+                        ipw.HBox([self.master.player(),self.master.go2slide()],layout=Layout(width='100%',min_height='32px',padding='2px 0px'))
+                        ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto')
+                        ).add_class('panel')
         with self.__instructions:
-            display(Markdown(dv.settings_instructions))
+            write(dv.settings_instructions)
             
         self.theme_dd.observe(self.update_theme)
         self.scale_slider.observe(self.__set_font_scale)
@@ -294,11 +250,13 @@ class Customize:
     def __toggle_panel(self,change):
         if self.master.btn_setting.icon == 'bars':
             self.master.btn_setting.icon = 'close'
-            self.box.layout.width = '50%'
+            self.box.layout.width = '70%' #Use both width & min_width to make sure it works.
+            self.box.layout.min_width = '70%'
             self.box.layout.padding = '10px'
         else:
             self.master.btn_setting.icon = 'bars'
             self.box.layout.width = '0px'
+            self.box.layout.min_width = '0px'
             self.box.layout.padding = '0px' 
                      
     def __set_font_scale(self,change):

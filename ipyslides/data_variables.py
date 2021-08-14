@@ -40,6 +40,7 @@ light_root = ''':root {{
 	--quote-fg: purple;
 	--tr-odd-bg: white;
 	--tr-hover-bg: lightblue;
+	--accent-color: navy;
 	--text-size: {text_size};
 }}
 '''
@@ -51,6 +52,7 @@ dark_root = ''':root {{
 	--quote-fg: powderblue;
 	--tr-odd-bg: black;
 	--tr-hover-bg: gray;
+	--accent-color: snow;
 	--text-size: {text_size};
 }}
 '''
@@ -62,6 +64,7 @@ inherit_root = ''':root {{
 	--quote-fg: inherit;
 	--tr-odd-bg: inherit;
 	--tr-hover-bg:skyblue;
+ 	--accent-color:skyblue;
 	--text-size: {text_size};
 }}
 '''
@@ -74,6 +77,19 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 	background:var(--text-bg);
 	font-size: var(--text-size);
  }
+.SlidesWrapper .panel { background: var(--quote-bg);border:4px solid var(--text-bg);}
+.SlidesWrapper .panel .panel-text { background: var(--text-bg);}
+
+@media screen and (max-width: 700px) {
+  	.NavWrapper .nav-box {
+    	display:block;
+    	height: max-content !important;
+    	padding-bottom:32px;
+	}
+	.NavWrapper .nav-box>div:not(:first-child) button {
+        width:50% !important;
+    }
+}
  .SlidesWrapper .column:not(:first-child) {
 	border-left: 2px solid var(--quote-bg);}
  
@@ -125,6 +141,20 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .SlidesWrapper tbody>tr:nth-child(odd) {background: var(--tr-odd-bg)!important;}
 .SlidesWrapper tbody>tr:nth-child(even) {background: var(--text-bg)!important;}
 .SlidesWrapper tbody>tr:hover {background: var(--tr-hover-bg)!important;}
+.NavWrapper .progress {background: var(--quote-bg)!important;}
+.NavWrapper .progress .progress-bar {background: var(--accent-color)!important;}
+.NavWrapper button {color: var(--accent-color)!important;border-radius:0px;}
+
+.SlidesWrapper .widget-dropdown > select, 
+.SlidesWrapper .widget-dropdown > select > option {
+	color: var(--text-fg)!important;
+	background: var(--text-bg)!important;
+}
+.SlidesWrapper .widget-play .jupyter-button {
+    background: var(--quote-bg)!important;
+    color: var(--accent-color)!important;
+    boder-radius: 0px;
+} 
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar
@@ -141,13 +171,12 @@ def display_item(item):
     else:
         display(item) # You will get idea what is it and modify this function to handle it.
     
-ls = LiveSlides(func=display_item,iterable=slides_iterable,accent_color='olive')
+ls = LiveSlides(func=display_item,iterable=slides_iterable)
 ls.align8center(True) # Set False to align top-left corner
 ls.set_footer()
 ls.show()"""
 
-settings_instructions = '''
-#### Custom Theme
+settings_instructions = '''#### Custom Theme
 For custom themes, change colors in instance attribute of `ipyslides.LivSlides.theme_colors`
 ```python
 # if you did set ls = LivSlides()
