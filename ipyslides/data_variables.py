@@ -146,7 +146,10 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 
 .NavWrapper .progress {background: var(--quote-bg)!important;}
 .NavWrapper .progress .progress-bar {background: var(--accent-color)!important;}
-.NavWrapper button {color: var(--accent-color)!important;border-radius:0px;}
+.SlidesWrapper button {
+    color: var(--accent-color)!important;
+    border-radius:0px;
+    background: transparent !important;}
 
 .SlidesWrapper .widget-dropdown > select, 
 .SlidesWrapper .widget-dropdown > select > option {

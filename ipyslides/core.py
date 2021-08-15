@@ -223,6 +223,7 @@ class Customize:
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto')).add_class('panel-text')
+        self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='auto',height='auto',margin='auto')).add_class('sidecar-only')
         # layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
         self.box = VBox([ipw.HTML('<h3>Settings</h3>'), 
                         self.height_slider.add_class('voila-sidecar-hidden'), 
@@ -230,7 +231,7 @@ class Customize:
                         self.scale_slider,
                         self.theme_dd,
                         ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        ipw.HBox([self.master.player(),self.master.go2slide()],layout=Layout(width='100%',min_height='36px',margin='2px 0px'))
+                        ipw.HBox([self.master.player(),self.master.go2slide(),self.btn_fs],layout=Layout(width='100%',min_height='36px',margin='2px 0px'))
                         ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto')
                         ).add_class('panel')
         with self.__instructions:
@@ -241,6 +242,7 @@ class Customize:
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
         self.master.btn_setting.on_click(self.__toggle_panel)
+        self.btn_fs.observe(self.__jupyter_sidecar_fullscreen)
         self.update_theme() #Trigger
         
     def __update_size(self,change):
@@ -271,7 +273,29 @@ class Customize:
             root = dv.light_root.format(text_size = text_size)
         elif self.theme_dd.value == 'Dark':
             root = dv.dark_root.format(text_size = text_size)
-        self.master.theme_html.value = dv.style_html(root)   
+        self.master.theme_html.value = dv.style_html(root)  
+        
+    def __jupyter_sidecar_fullscreen(self,change):
+        theme_value = self.master.theme_html.value.replace('</style>','\n') + '''
+        .jupyterlab-sidecar > .jp-OutputArea-child {
+            flex: 1;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
+            margin: 0;
+            padding: 0;
+        }
+        .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
+        .jp-LabShell { border: 3px solid var(--text-bg) !important;}
+        </style>'''
+        if self.btn_fs.value:
+            self.master.theme_html.value = theme_value
+        else:
+            self.update_theme(True) #Push CSS without Fullscreen
+            self.btn_fs.icon = 'expand'
 
 class MultiCols:
     def __init__(self,width_percents=[50,50]):
