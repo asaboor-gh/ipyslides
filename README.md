@@ -3,6 +3,8 @@ Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voi
   
 Launch example slides at [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides-0-2-0.ipynb)
 
+Launch in notebook mode [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?filepath=notebooks%2Fipyslides-0-2-0.ipynb)
+
 ![Overview](overview.jpg)
 
 # Install
@@ -39,7 +41,7 @@ isd.build() #This will build the presentation cell. After this go top and set `c
 
 ## Content Types to Embed
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 
-[JupyterLab inside ipyslides](jlabslides.gif)
+![JupyterLab inside ipyslides](jlabslides.gif)
 > Note: Websites may refuse to load in iframe.
 
 # Full Screen Presentation
