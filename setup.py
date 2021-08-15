@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="ipyslides",
-    version="0.3.0",
+    version="0.4.0",
     author="Abdul Saboor",
     author_email="mass_qau@outlook.com",
     description="Live rich content slides in jupyter notebook",

@@ -76,6 +76,7 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 	padding: 0px;
 	background:var(--text-bg);
 	font-size: var(--text-size);
+	max-width:100vw; /* This is very important */
  }
 .SlidesWrapper .panel { background: var(--quote-bg);border:4px solid var(--text-bg);}
 .SlidesWrapper .panel .panel-text { background: var(--text-bg);}
@@ -111,9 +112,11 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
     color:var(--text-fg);
 }
   
-.SlidesWrapper p{
-	color: var(--text-fg)!important;
+.SlidesWrapper p {
+	color: var(--text-fg);
 }
+#jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
+
 .SlidesWrapper pre, .SlidesWrapper code {
     color: var(--text-fg)!important;
     padding: 0px 4px !important;
@@ -143,7 +146,7 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .SlidesWrapper tbody>tr:nth-child(even) {background: var(--text-bg)!important;}
 .SlidesWrapper tbody>tr:hover {background: var(--tr-hover-bg)!important;}
 
-
+.NavWrapper {max-width:100% !important;}
 .NavWrapper .progress {background: var(--quote-bg)!important;}
 .NavWrapper .progress .progress-bar {background: var(--accent-color)!important;}
 .SlidesWrapper button {
@@ -161,6 +164,10 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
     color: var(--accent-color)!important;
     boder-radius: 0px;
 } 
+.sidecar-only {font-size: 24px !important;background: transparent;border-shadow: none;}
+.sidecar-only:hover, .sidecar-only:focus {
+    animation-name: example; animation-duration: 2s;
+    animation-timing-function: ease-in-out;}
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar

@@ -1,3 +1,4 @@
+from ssl import ALERT_DESCRIPTION_NO_RENEGOTIATION
 import numpy as np
 from IPython.display import display, Markdown
 import ipywidgets as ipw
@@ -22,7 +23,7 @@ def custom_progressbar(intprogress):
     }
     .NavWrapper .nav-box {z-index:50;overflow: hidden;}
     .NavWrapper .widget-hprogress {height:4px; !impportant;}
-    .NavWrapper, .NavWrapper>div {padding:0px;margin:0px;overflow:hidden;}
+    .NavWrapper, .NavWrapper>div {padding:0px;margin:0px;overflow:hidden;max-width:100%;}
     .NavWrapper .progress, .NavWrapper .progress .progress-bar {
         border-radius:0px; margin:0px;padding:0px;height:4px !important;overflow:hidden;left:0px;bottom:0px;}
     .NavWrapper .progress {width:100% !important;transform:translate(-2px,1px) !important;}
@@ -124,6 +125,8 @@ class LiveSlides(NavBar):
             .SlidesWrapper pre, code { background:inherit !important; color: inherit !important;
                             height: auto !important; overflow:hidden;}
             .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden {display: none;}
+            .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
+            .jupyterlab-sidecar .sidecar-only {display: block;}
             #rendered_cells .SlidesWrapper .voila-sidecar-hidden {display: none;}
             #rendered_cells .SlidesWrapper {
                 position: absolute;
@@ -145,8 +148,8 @@ class LiveSlides(NavBar):
         
         self.box =  VBox([self.main_style_html, 
                           self.theme_html,
-                          HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')]),
-                          ],layout= Layout(width='100%',height='100%',margin='auto')),
+                          HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')],layout= Layout(width='auto',overflow='auto')),
+                          ],layout= Layout(width='auto',max_width='100%',height='100%',margin='auto')),
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important   
@@ -223,15 +226,16 @@ class Customize:
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto')).add_class('panel-text')
-        self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='auto',height='auto',margin='auto')).add_class('sidecar-only')
+        self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='max-content',height='auto',margin='auto')).add_class('sidecar-only')
+        self.btn_fs.style.button_color = 'transparent'
         # layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
-        self.box = VBox([ipw.HTML('<h3>Settings</h3>'), 
+        self.box = VBox([ipw.HBox([ipw.HTML('<h2>Settings</h2>'),self.btn_fs],layout=Layout(justify_content='space-between',align_items='center',min_width='max-content',min_height='50px',overflow='hidden')),
                         self.height_slider.add_class('voila-sidecar-hidden'), 
                         self.width_slider.add_class('voila-sidecar-hidden'),
                         self.scale_slider,
                         self.theme_dd,
                         ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        ipw.HBox([self.master.player(),self.master.go2slide(),self.btn_fs],layout=Layout(width='100%',min_height='36px',margin='2px 0px'))
+                        ipw.HBox([self.master.player(),self.master.go2slide(),self.btn_fs],layout=Layout(width='100%',min_height='50px',justify_content='flex-start',align_items='center'))
                         ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto')
                         ).add_class('panel')
         with self.__instructions:
@@ -253,7 +257,7 @@ class Customize:
         if self.master.btn_setting.icon == 'bars':
             self.master.btn_setting.icon = 'close'
             self.box.layout.width = '70%' #Use both width & min_width to make sure it works.
-            self.box.layout.min_width = '70%'
+            self.box.layout.min_width = '50%'
             self.box.layout.padding = '10px'
         else:
             self.master.btn_setting.icon = 'bars'
@@ -280,19 +284,25 @@ class Customize:
         .jupyterlab-sidecar > .jp-OutputArea-child {
             flex: 1;
             position: fixed;
-            top: 0;
-            left: 0;
+            bottom: -2px;
+            left: -2px;
             width: 100vw;
             height: 100vh;
             z-index: 100;
-            margin: 0;
+            margin: 0px;
             padding: 0;
         }
         .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
-        .jp-LabShell { border: 3px solid var(--text-bg) !important;}
+        .jp-LabShell { 
+            border-right: 4px solid var(--text-bg) !important;
+            border-top: 4px solid var(--text-bg) !important;
+            }
+        #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
+        
         </style>'''
         if self.btn_fs.value:
             self.master.theme_html.value = theme_value
+            self.btn_fs.icon = 'compress'
         else:
             self.update_theme(True) #Push CSS without Fullscreen
             self.btn_fs.icon = 'expand'
@@ -310,7 +320,7 @@ class MultiCols:
             > with mc.c1: #and with c2,c3 etc
             >   print('Something')
             > mc.show() or mc.slide #displays it"""
-        self.slide = VBox([],layout=Layout(width='100%'))
+        self.slide = VBox([],layout=Layout(width='auto',overflow_x='auto'))
         self.header = ipw.Output(layout=Layout(margin='auto',padding='2px 8px'))
         self.footer = ipw.Output(layout=self.header.layout)
         for i,wp in enumerate(width_percents):
