@@ -3,7 +3,8 @@ Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voi
   
 Launch example slides at [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides-0-2-0.ipynb)
 
-Launch in notebook mode [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?filepath=notebooks%2Fipyslides-0-2-0.ipynb)
+Launch in notebook mode 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://hub.gke2.mybinder.org/user/massgh-ipyslides-voila-s80b9whb/lab/tree/notebooks/ipyslides-0-2-0.ipynb)
 
 ![Overview](overview.jpg)
 
