@@ -246,7 +246,7 @@ class Customize:
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
         self.master.btn_setting.on_click(self.__toggle_panel)
-        self.btn_fs.observe(self.__jupyter_sidecar_fullscreen)
+        self.btn_fs.observe(self.update_theme)
         self.update_theme() #Trigger
         
     def __update_size(self,change):
@@ -277,10 +277,18 @@ class Customize:
             root = dv.light_root.format(text_size = text_size)
         elif self.theme_dd.value == 'Dark':
             root = dv.dark_root.format(text_size = text_size)
-        self.master.theme_html.value = dv.style_html(root)  
+        theme_css = dv.style_html(root)
+        # Catch Fullscreen too.
+        if self.btn_fs.value:
+            fs_css = self.__jupyter_sidecar_fullscreen_css().replace('<style>','')
+            self.master.theme_html.value = theme_css.replace('</style>','\n') + fs_css
+            self.btn_fs.icon = 'compress'
+        else:
+            self.master.theme_html.value = theme_css #Push CSS without Fullscreen
+            self.btn_fs.icon = 'expand' 
         
-    def __jupyter_sidecar_fullscreen(self,change):
-        theme_value = self.master.theme_html.value.replace('</style>','\n') + '''
+    def __jupyter_sidecar_fullscreen_css(self):
+        return '''<style>
         .jupyterlab-sidecar > .jp-OutputArea-child {
             flex: 1;
             position: fixed;
@@ -296,16 +304,9 @@ class Customize:
         .jp-LabShell { 
             border-right: 4px solid var(--text-bg) !important;
             border-top: 4px solid var(--text-bg) !important;
-            }
+        }
         #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
-        
         </style>'''
-        if self.btn_fs.value:
-            self.master.theme_html.value = theme_value
-            self.btn_fs.icon = 'compress'
-        else:
-            self.update_theme(True) #Push CSS without Fullscreen
-            self.btn_fs.icon = 'expand'
 
 class MultiCols:
     def __init__(self,width_percents=[50,50]):

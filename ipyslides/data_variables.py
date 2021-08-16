@@ -81,7 +81,7 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .SlidesWrapper .panel { background: var(--quote-bg);border:4px solid var(--text-bg);}
 .SlidesWrapper .panel .panel-text { background: var(--text-bg);}
 
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 702px) {
   	.NavWrapper .nav-box {
     	display:block;
     	height: max-content !important;
