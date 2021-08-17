@@ -1,4 +1,5 @@
 from ssl import ALERT_DESCRIPTION_NO_RENEGOTIATION
+from IPython.core.display import HTML
 import numpy as np
 from IPython.display import display, Markdown
 import ipywidgets as ipw
@@ -87,13 +88,15 @@ class NavBar:
 class LiveSlides(NavBar):
     def __init__(self,
                  func=lambda x: display(Markdown(x)), 
-                 iterable=['# First Slide','# Second Slide']):
+                 iterable=['# First Slide','# Second Slide'],
+                 animation_css = dv.animation_css):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
             - func : An outside defined function which act on elements of `iterable`  and handle required situations. 
                     Return value is not guranteed for output rendering except for IPython.display.display object. Use display
                     inside the function for rich formats rending as many time as you want.
             - iterable: Anything from list/tuple/dict etc whose each element is given as argument to `func`.
+            - animation_css: CSS for animation. Set to '' if not animating. You can define yourself by editing `ipysildes.data_variables.animation_css`.
         - **Example**
             ```python
             from IPython.display import display, Markdown
@@ -146,7 +149,7 @@ class LiveSlides(NavBar):
         self.setting = Customize(self)
         self.box_setting = self.setting.box
         
-        self.box =  VBox([self.main_style_html, 
+        self.box =  VBox([self.main_style_html, ipw.HTML(animation_css),
                           self.theme_html,
                           HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')],layout= Layout(width='auto',overflow='auto')),
                           ],layout= Layout(width='auto',max_width='100%',height='100%',margin='auto')),

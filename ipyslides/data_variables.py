@@ -96,6 +96,7 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 	border-left: 2px solid var(--quote-bg);}
  
 .jp-RenderedHTMLCommon {font-size: var(--text-size);} /* For Voila */
+
 .SlidesWrapper h1,h2,h3,h4,h5,h6{
 	color:var(--heading-fg);
  	text-align:center;
@@ -112,7 +113,8 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
     color:var(--text-fg);
 }
   
-.SlidesWrapper p {
+.SlidesWrapper :is(.textfonts,.panel,.NavWrapper) :is(p,ul,ol,li),
+.SlidesWrapper>:not(div){  /* Do not change jupyterlab nav items */
 	color: var(--text-fg);
 }
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
@@ -129,9 +131,6 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 	color: var(--quote-fg) !important;
 }
     
-.SlidesWrapper ol,ul {
-	color:var(--text-fg)!important;
-}
 .SlidesWrapper table {
  	border-collapse: collapse !important;
     min-width:auto;
@@ -215,3 +214,17 @@ pio.templates.default = "plotly_white"
 ```
 > Tip: Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
 '''
+
+animation_css = '''<style>
+.textfonts :is(h1,h2,h3,h4,h5,h6,p,ul,li,ol,blockquote,q,table,pre) {
+    animation-name: zoom; animation-duration: 600ms;
+    animation-timing-function: linear;
+}
+@keyframes zoom {
+     0% { transform: scale(0.05); }
+    25% { transform: scale(0.35); }
+    50% { transform: scale(0.55); }
+	75% { transform: scale(0.85); }
+   100% { transform: scale(1); }
+}
+</style>'''
