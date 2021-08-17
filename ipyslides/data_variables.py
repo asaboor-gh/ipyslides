@@ -80,6 +80,7 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
  }
 .SlidesWrapper .panel { background: var(--quote-bg);border:4px solid var(--text-bg);}
 .SlidesWrapper .panel .panel-text { background: var(--text-bg);}
+.SlidesWrapper .columns {max-width:95%;display:inline-flex;flex-direction:row;column-gap:2em;}
 
 @media screen and (max-width: 702px) {
   	.NavWrapper .nav-box {
@@ -91,9 +92,9 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
         width:50% !important;
     }
     .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
+    .SlidesWrapper .columns {max-width:98%;display:flex;flex-direction:column;}
+    .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
 }
- .SlidesWrapper .column:not(:first-child) {
-	border-left: 2px solid var(--quote-bg);}
  
 .jp-RenderedHTMLCommon {font-size: var(--text-size);} /* For Voila */
 

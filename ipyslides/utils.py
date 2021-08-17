@@ -40,8 +40,7 @@ def write(*colums,width_percents=None):
                             for c,w in zip(colums,width_percents)])
     if len(colums) == 1:
         return display(HTML(style + _cols))
-    return display(HTML(f'''<div style="max-width:95%;display:inline-flex;flew-direction:row;column-gap:2em;">
-    {style}{_cols}\n</div>'''))
+    return display(HTML(f'''<div class="columns">\n{style}{_cols}\n</div>'''))
     
 
 def plotly2html(fig):

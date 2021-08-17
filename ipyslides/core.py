@@ -329,9 +329,10 @@ class MultiCols:
         self.footer = ipw.Output(layout=self.header.layout)
         for i,wp in enumerate(width_percents):
             setattr(self,f'c{i+1}',ipw.Output(layout=Layout(margin='2px 8px',width='100%')))
-        self.columns = HBox([Box([getattr(self,f'c{i+1}')],layout=Layout(width=f'{wp}%',overflow='auto')).add_class('column')
+        self.columns = HBox([Box([getattr(self,f'c{i+1}')],layout=Layout(width=f'{wp}%',overflow='auto'))
                                                 for i,wp in enumerate(width_percents)],
-                                layout=Layout(margin='0px',justify_content = 'center',column_border='2px solid red')) # No need to set width. Its alright
+                        layout=Layout(margin='0px',justify_content = 'center',column_border='2px solid red')
+                        ).add_class('columns') # No need to set width. Its alright
         
         self.slide.children = [self.header,self.columns,self.footer]
         
