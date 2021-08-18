@@ -8,7 +8,7 @@ from . import data_variables as dv
 import datetime, re #re for updating font-size and slide number
 from .utils import write
 
-def custom_progressbar(intprogress):
+def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
     html = ipw.HTML('''<style>
      .NavWrapper .nav-box .menu, .NavWrapper .nav-box .menu.big-menu  {font-size:24px !important; overflow:hidden;}
@@ -29,6 +29,8 @@ def custom_progressbar(intprogress):
         border-radius:0px; margin:0px;padding:0px;height:4px !important;overflow:hidden;left:0px;bottom:0px;}
     .NavWrapper .progress {width:100% !important;transform:translate(-2px,1px) !important;}
     </style>''')
+    intprogress = ipw.IntProgress(min=intslider.min, max=intslider.max, layout=Layout(width='100%'))
+    ipw.link((intprogress, 'value'), (intslider, 'value'))
     return VBox([HBox(layout=Layout(height='0px',justify_content='space-between',align_items='center')).add_class('nav-box'),
                             VBox([ html,intprogress]) ]).add_class('NavWrapper') #class is must
 class NavBar:
@@ -37,8 +39,7 @@ class NavBar:
         self.N = N
         
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
-        #self.progressbar = ipw.IntSlider(max = self.N,continuous_update=False,readout=True,layout =  Layout(width='100%'))
-        self.progressbar = ipw.IntProgress(min=0,max = self.N,layout =  Layout(width='100%'))
+        self.prog_slider = ipw.IntSlider(max = self.N,continuous_update=False,readout=True)
         self.btn_prev =  Button(icon='angle-left',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
         self.btn_next =  Button(icon='angle-right',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
         self.btn_setting =  Button(icon='bars',layout= Layout(width='auto',height='auto')).add_class('menu')
@@ -49,7 +50,7 @@ class NavBar:
         self.info_html = ipw.HTML('Put Your Info Here using `self.info_html.value`')
         self.group_1 =  HBox([self.btn_setting,ipw.Box([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden'))],
                              layout=Layout(justify_content='flex-start',align_items='center'))
-        self.group_2 = HBox([self.btn_prev,self.btn_next],
+        self.group_2 = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
                             layout=Layout(justify_content='flex-end',align_items='center',min_width='max-content'))
         self.build_navbar() # this is the main function to build the navbar
          
@@ -57,32 +58,26 @@ class NavBar:
         self.btn_next.on_click(self.__shift_right)
     
     def build_navbar(self):
-        self.nav_bar = custom_progressbar(self.progressbar)
+        self.nav_bar = custom_progressbar(self.prog_slider)
         self.nav_bar.children[0].children = (self.group_1, self.group_2)
         self.nav_bar.children[0].layout.height = '50px'
        
     def __shift_right(self,change):
         if change:
-            self.progressbar.value = (self.progressbar.value + 1) % (self.N + 1)     
+            self.prog_slider.value = (self.prog_slider.value + 1) % (self.N + 1)     
     
     def __shift_left(self,change):
         if change:
-            self.progressbar.value = (self.progressbar.value - 1) % (self.N + 1)
+            self.prog_slider.value = (self.prog_slider.value - 1) % (self.N + 1)
     
     def show(self):
         return self.nav_bar
     __call__ = show
     
     def player(self,interval=1000):
-        play = ipw.Play(min=self.progressbar.min,max=self.progressbar.max,interval=interval)
-        ipw.dlink((play, 'value'), (self.progressbar, 'value'))
+        play = ipw.Play(min=self.prog_slider.min,max=self.prog_slider.max,interval=interval)
+        ipw.dlink((play, 'value'), (self.prog_slider, 'value'))
         return play
-    
-    def go2slide(self):
-        options = [(f'Slide {n}',n) for n in range(self.progressbar.max + 1)]
-        dd = ipw.Dropdown(description='Jump To: ',options=options,value=0,layout=Layout(width='auto',height='auto'))
-        ipw.link((dd, 'value'), (self.progressbar, 'value'))
-        return dd
         
          
 class LiveSlides(NavBar):
@@ -143,7 +138,7 @@ class LiveSlides(NavBar):
             .SlidesWrapper {z-index: 10 !important;}
             <style>''')
         
-        self.progressbar.observe(self.__update_content,names=['value'])
+        self.prog_slider.observe(self.__update_content,names=['value'])
         self.__update_content(True)
         
         self.setting = Customize(self)
@@ -194,18 +189,18 @@ class LiveSlides(NavBar):
            
     def __update_content(self,change):
         if self.iterable and change:
-            self.info_html.value = re.sub('>\d+\s+/',f'>{self.progressbar.value} /',self.info_html.value) #Slide Number
+            self.info_html.value = re.sub('>\d+\s+/',f'>{self.prog_slider.value} /',self.info_html.value) #Slide Number
             self.info_html.value = self.info_html.value.replace('</p>', '| Loading...</p>')
             self.out.clear_output(wait=True)
             with self.out:
-                if self.progressbar.value == 0:
+                if self.prog_slider.value == 0:
                     title = self.user_ns.get('__slides_title_page','#### No Title page found. Create one using `write_title` in a cell.')
                     if isinstance(title,str):
                         write(title) #Markdown String
                     else:
                         write(*title['args'],**title['kwargs']) #Ipython Captured Output
                 else:
-                    item = self.iterable[self.progressbar.value-1]
+                    item = self.iterable[self.prog_slider.value-1]
                     try: item.show() #show ipython capture/MultiCols or if item has a show method with display.
                     except: self.func(item)
                     
@@ -215,7 +210,7 @@ class LiveSlides(NavBar):
         if show_date:
             text += f' | <text style="color:var(--accent-color);">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
         if show_slide_number: #Slide number should be  exactlly like '>Int /' for regex substitutioon.  
-            text += f' | <b style="color:var(--accent-color);">{self.progressbar.value} / {self.N}<b>'
+            text += f' | <b style="color:var(--accent-color);">{self.prog_slider.value} / {self.N}<b>'
         self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
 
 class Customize:
@@ -229,7 +224,7 @@ class Customize:
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto')).add_class('panel-text')
-        self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='max-content',height='auto',margin='auto')).add_class('sidecar-only')
+        self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='auto',height='auto',margin='auto',overflow='hidden')).add_class('sidecar-only')
         self.btn_fs.style.button_color = 'transparent'
         # layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
         self.box = VBox([ipw.HBox([ipw.HTML('<h2>Settings</h2>'),self.btn_fs],layout=Layout(justify_content='space-between',align_items='center',min_width='max-content',min_height='50px',overflow='hidden')),
@@ -238,7 +233,7 @@ class Customize:
                         self.scale_slider,
                         self.theme_dd,
                         ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        ipw.HBox([self.master.player(),self.master.go2slide(),self.btn_fs],layout=Layout(width='100%',min_height='50px',justify_content='flex-start',align_items='center'))
+                        ipw.HBox([self.btn_fs,self.master.player(),self.master.prog_slider],layout=Layout(width='95%',min_height='50px',justify_content='flex-start',align_items='center',margin='auto'))
                         ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto')
                         ).add_class('panel')
         with self.__instructions:

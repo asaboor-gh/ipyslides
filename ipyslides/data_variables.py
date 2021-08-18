@@ -82,6 +82,25 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .SlidesWrapper .panel .panel-text { background: var(--text-bg);}
 .SlidesWrapper .columns {max-width:95%;display:inline-flex;flex-direction:row;column-gap:2em;}
 
+.SlidesWrapper .widget-hslider .ui-slider,
+.SlidesWrapper .widget-hslider .ui-slider .ui-slider-handle {
+    background: var(--accent-color);
+    border: 1px solid var(--accent-color);
+}
+
+.prog_slider_box {
+    width: 4px;
+    padding-left: 4px;
+    overflow:hidden;
+}
+.prog_slider_box:hover, .prog_slider_box:focus {
+    width: 90%;
+    min-width: 30%; /* This is very important to force it */
+    padding-left: unset;
+    justify-content: center;
+    background: var(--quote-bg);
+}
+
 @media screen and (max-width: 702px) {
   	.NavWrapper .nav-box {
     	display:block;
@@ -89,11 +108,15 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
     	padding-bottom:32px;
 	}
 	.NavWrapper .nav-box>div:not(:first-child) button {
-        width:50% !important;
+        width:40% !important;
     }
     .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
     .SlidesWrapper .columns {max-width:98%;display:flex;flex-direction:column;}
     .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
+    .prog_slider_box {
+    	width: 20%;
+    	padding-left: 20%;
+	}
 }
  
 .jp-RenderedHTMLCommon {font-size: var(--text-size);} /* For Voila */
