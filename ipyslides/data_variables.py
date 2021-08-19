@@ -70,7 +70,14 @@ inherit_root = """:root {
 """
 
 def style_html(style_root = inherit_root):
-	return '<style>\n' + style_root + '''    
+	return '<style>\n' + style_root + ''' 
+.SlidesWrapper *:not(.fa):not(i):not(span) {
+   font-family: sans-serif, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
+}
+.SlidesWrapper code>span {
+   font-family: "Cascadia Code","Ubuntu Mono","Courier New";
+}
+   
 .SlidesWrapper {
 	margin: auto;
 	padding: 0px;
