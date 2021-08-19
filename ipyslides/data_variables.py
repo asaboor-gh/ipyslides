@@ -56,18 +56,18 @@ dark_root = ''':root {{
 	--text-size: {text_size};
 }}
 '''
-inherit_root = ''':root {{
-	--heading-fg: inherit;
-	--text-fg: inherit;
-	--text-bg: inherit;
-	--quote-bg: inherit;
-	--quote-fg: inherit;
-	--tr-odd-bg: inherit;
-	--tr-hover-bg:skyblue;
- 	--accent-color:skyblue;
+inherit_root = """:root {{
+	--heading-fg: var(--jp-inverse-layout-color1,navy);
+	--text-fg:  var(--jp-inverse-layout-color0,black);
+	--text-bg: var(--jp-layout-color0,#F3F3F3);
+	--quote-bg:var(--jp-layout-color2,white);
+	--quote-fg: var(--jp-inverse-layout-color4,purple);
+	--tr-odd-bg: var(--jp-layout-color2,white);
+	--tr-hover-bg:var(--jp-border-color1,lightblue);
+ 	--accent-color:var(--jp-brand-color2,navy);
 	--text-size: {text_size};
 }}
-'''
+"""
 
 def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 	return '<style>\n' + style_root_formatted + '''    
@@ -191,6 +191,18 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .sidecar-only:hover, .sidecar-only:focus {
     animation-name: example; animation-duration: 2s;
     animation-timing-function: ease-in-out;}
+/* Make Scrollbars beautifu */
+:not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+    background: none;
+}
+:not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar-thumb {
+    background: var(--jp-border-color0);
+}
+:not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar-corner {
+    background: none;
+}        
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar

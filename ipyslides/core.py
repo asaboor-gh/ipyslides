@@ -154,7 +154,6 @@ class LiveSlides(NavBar):
     
      
     def show(self):
-        self.setting.theme_dd.value = 'Light' #default theme is light, also Voila makes issue with inherit theme
         try:   #JupyterLab Case, Interesting in SideCar
             from sidecar import Sidecar 
             sc = Sidecar(title='Live Presentation')
