@@ -124,6 +124,7 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .SlidesWrapper h1,h2,h3,h4,h5,h6{
 	color:var(--heading-fg);
  	text-align:center;
+	overflow:hidden; /* FireFox */
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--text-fg) !important;}
 .SlidesWrapper .textfonts h1 {margin-block: unset;font-size: 3em;  line-height: 1.5em;}
@@ -191,7 +192,12 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .sidecar-only:hover, .sidecar-only:focus {
     animation-name: example; animation-duration: 2s;
     animation-timing-function: ease-in-out;}
-/* Make Scrollbars beautifu */
+/* Make Scrollbars beautiful */
+.SlidesWrapper, .SlidesWrapper  * { /* FireFox <3*/
+    scrollbar-width: thin;
+    scrollbar-color:var(--tr-odd-bg) transparent;
+}
+/* Other monsters */
 :not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar {
     height: 4px;
     width: 4px;
