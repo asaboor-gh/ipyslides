@@ -5,7 +5,7 @@ from IPython.display import display, Markdown
 import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
-import datetime, re #re for updating font-size and slide number
+import datetime, re, os #re for updating font-size and slide number
 from .utils import write
 
 def custom_progressbar(intslider):
@@ -114,7 +114,7 @@ class LiveSlides(NavBar):
         super().__init__(N=_max)
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
-        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.format(text_size='16px')))
+        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')))
         self.main_style_html = ipw.HTML('''<style>
             .SlidesWrapper .textfonts { align-items: center;}
             a.jp-InternalAnchorLink { display: none !important;}
@@ -175,15 +175,6 @@ class LiveSlides(NavBar):
         
     def set_font_scale(self,font_scale=1):
         self.font_scale= font_scale
-        self.setting.update_theme()
-        
-    def get_theme_root(self):
-        "Prints Inherit theme root. Use set_theme_root after editing color, don`t edit {{text_size}}"
-        print(f'Copy string below,edit colors and give to set_theme_root, do NOT edit {{text_size}}!\n"""\n{dv.inherit_root}"""')
-    
-    def set_theme_root(self, theme_root= None):
-        self.theme_root = theme_root
-        self.setting.theme_dd.value = 'Inherit' #Custom Changes only effect this mode. 
         self.setting.update_theme()   
            
     def __update_content(self,change):
@@ -221,7 +212,7 @@ class Customize:
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False)
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 65,continuous_update=False)
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
-        self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark'])
+        self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto')).add_class('panel-text')
         self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='auto',height='auto',margin='auto',overflow='hidden')).add_class('sidecar-only')
         self.btn_fs.style.button_color = 'transparent'
@@ -269,12 +260,22 @@ class Customize:
     def update_theme(self,change=None):  
         text_size = '{}px'.format(int(self.master.font_scale*16))
         if self.theme_dd.value == 'Inherit':
-            root = self.master.theme_root.format(text_size = text_size)
+            theme_css = dv.style_html(self.master.theme_root)
         elif self.theme_dd.value == 'Light':
-            root = dv.light_root.format(text_size = text_size)
+            theme_css = dv.style_html(dv.light_root)
         elif self.theme_dd.value == 'Dark':
-            root = dv.dark_root.format(text_size = text_size)
-        theme_css = dv.style_html(root)
+            theme_css = dv.style_html(dv.dark_root)
+        elif self.theme_dd.value == 'Custom': # In case of Custom CSS
+            if not os.path.isfile('custom.css'):
+                with open('custom.css','w') as f:
+                    _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')
+                    f.writelines(['/* Author: Abdul Saboor */'])
+                    f.write(_str)
+            # Read CSS from file
+            with open('custom.css','r') as f:
+                theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
+        # Replace font-size
+        theme_css = theme_css.replace('__text_size__',text_size)   
         # Catch Fullscreen too.
         if self.btn_fs.value:
             fs_css = self.__jupyter_sidecar_fullscreen_css().replace('<style>','')
@@ -286,22 +287,18 @@ class Customize:
         
     def __jupyter_sidecar_fullscreen_css(self):
         return '''<style>
-        .jupyterlab-sidecar > .jp-OutputArea-child {
+        .jupyterlab-sidecar > .jp-OutputArea-child, .SlidesWrapper {
             flex: 1;
             position: fixed;
-            bottom: -2px;
-            left: -2px;
+            bottom: 0px;
+            left: 0px;
             width: 100vw;
             height: 100vh;
             z-index: 100;
             margin: 0px;
             padding: 0;
-        }
+        }    
         .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
-        .jp-LabShell { 
-            border-right: 4px solid var(--text-bg) !important;
-            border-top: 4px solid var(--text-bg) !important;
-        }
         #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
         </style>'''
 

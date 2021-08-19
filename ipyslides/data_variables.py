@@ -32,7 +32,7 @@ isd.build() #This will build the presentation cell. After this go top and set `c
 """,width_percents = [5,95])
 '''
 # CSS for ipyslides
-light_root = ''':root {{
+light_root = ''':root {
 	--heading-fg: navy;
 	--text-fg: black;
 	--text-bg: #F3F3F3;
@@ -41,10 +41,10 @@ light_root = ''':root {{
 	--tr-odd-bg: white;
 	--tr-hover-bg: lightblue;
 	--accent-color: navy;
-	--text-size: {text_size};
-}}
+	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
+}
 '''
-dark_root = ''':root {{
+dark_root = ''':root {
 	--heading-fg: snow;
 	--text-fg: white;
 	--text-bg: #21252B;
@@ -53,10 +53,10 @@ dark_root = ''':root {{
 	--tr-odd-bg: black;
 	--tr-hover-bg: gray;
 	--accent-color: snow;
-	--text-size: {text_size};
-}}
+	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
+}
 '''
-inherit_root = """:root {{
+inherit_root = """:root {
 	--heading-fg: var(--jp-inverse-layout-color1,navy);
 	--text-fg:  var(--jp-inverse-layout-color0,black);
 	--text-bg: var(--jp-layout-color0,#F3F3F3);
@@ -65,12 +65,12 @@ inherit_root = """:root {{
 	--tr-odd-bg: var(--jp-layout-color2,white);
 	--tr-hover-bg:var(--jp-border-color1,lightblue);
  	--accent-color:var(--jp-brand-color2,navy);
-	--text-size: {text_size};
-}}
+	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
+}
 """
 
-def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
-	return '<style>\n' + style_root_formatted + '''    
+def style_html(style_root = inherit_root):
+	return '<style>\n' + style_root + '''    
 .SlidesWrapper {
 	margin: auto;
 	padding: 0px;
@@ -90,14 +90,15 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 
 .prog_slider_box {
     width: 4px;
-    padding-left: 4px;
+    padding: 0px 4px;
+    opacity:0;
     overflow:hidden;
 }
 .prog_slider_box:hover, .prog_slider_box:focus {
-    width: 90%;
+    width: 50%;
     min-width: 30%; /* This is very important to force it */
-    padding-left: unset;
     justify-content: center;
+    opacity: 1;
     background: var(--quote-bg);
 }
 
@@ -107,15 +108,20 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
     	height: max-content !important;
     	padding-bottom:32px;
 	}
-	.NavWrapper .nav-box>div:not(:first-child) button {
-        width:40% !important;
+	.NavWrapper .nav-box>div:last-child button {
+        width:30% !important;
+    }
+    .NavWrapper .nav-box>div:last-child {
+        max-width:100%;
+        width: 100%;
+        justify-content: center;
     }
     .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
     .SlidesWrapper .columns {max-width:98%;display:flex;flex-direction:column;}
     .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
     .prog_slider_box {
-    	width: 20%;
-    	padding-left: 20%;
+    	width: 40%;
+    	opacity:0;
 	}
 }
  
@@ -186,9 +192,9 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
 .SlidesWrapper .widget-play .jupyter-button {
     background: var(--quote-bg)!important;
     color: var(--accent-color)!important;
-    boder-radius: 0px;
+    border-radius: 0px;
 } 
-.sidecar-only {font-size: 24px !important;background: transparent;border-shadow: none;}
+.sidecar-only {font-size: 24px !important;background: transparent;box-shadow: none;min-width:max-content;}
 .sidecar-only:hover, .sidecar-only:focus {
     animation-name: example; animation-duration: 2s;
     animation-timing-function: ease-in-out;}
@@ -197,18 +203,19 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
     scrollbar-width: thin;
     scrollbar-color:var(--tr-odd-bg) transparent;
 }
-/* Other monsters */
-:not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar {
+/* Other monsters */  
+:not(.jp-Notebook, .CodeMirror-hscrollbar, .CodeMirror-vscrollbar)::-webkit-scrollbar {
     height: 4px;
     width: 4px;
     background: none;
 }
-:not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar-thumb {
+:not(.jp-Notebook, .CodeMirror-hscrollbar, .CodeMirror-vscrollbar)::-webkit-scrollbar-thumb {
     background: var(--tr-odd-bg);
 }
-:not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar-corner {
+:not(.jp-Notebook, .CodeMirror-hscrollbar, .CodeMirror-vscrollbar)::-webkit-scrollbar-corner {
+    display:none;
     background: none;
-}        
+}       
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar
@@ -230,25 +237,21 @@ ls.align8center(True) # Set False to align top-left corner
 ls.set_footer()
 ls.show()"""
 
-settings_instructions = '''#### Custom Theme
-For custom themes, change colors in instance attribute of `ipyslides.LivSlides.theme_colors`
-```python
-# if you did set ls = LivSlides()
-theme_root = ls.get_theme_root()
-# edit values of colors you want, don't edit keys.
-ls.set_theme_root(theme_root)
-ls.set_font_scale(font_scale:float) #changes layout fonts scaling. 
-```          
-
+settings_instructions = '''### Custom Theme
+For custom themes, change above theme dropdown to `Custom`.
+You will see a `custom.css` in current folder,edit it and chnage
+font scale or set theme to another value and back to `Custom` to take effect. 
+> Note: `custom.css` is only picked from current directory.
+          
 --------
 For matching plots style with theme, run following code in a cell above slides.
-#### Matplotlib
+### Matplotlib
 ```python
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 #plt.style.available() #gives styles list
 ```
-#### Plotly
+### Plotly
 ```python
 import plotly.io as pio
 pio.templates.default = "plotly_white"
