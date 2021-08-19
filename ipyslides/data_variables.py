@@ -198,7 +198,7 @@ def style_html(style_root_formatted = inherit_root.format(text_size='16px')):
     background: none;
 }
 :not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar-thumb {
-    background: var(--jp-border-color0);
+    background: var(--tr-odd-bg);
 }
 :not([data-jp-theme-scrollbars='true'])::-webkit-scrollbar-corner {
     background: none;
