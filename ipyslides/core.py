@@ -51,7 +51,7 @@ class NavBar:
         self.group_1 =  HBox([self.btn_setting,ipw.Box([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden'))],
                              layout=Layout(justify_content='flex-start',align_items='center'))
         self.group_2 = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
-                            layout=Layout(justify_content='flex-end',align_items='center',min_width='max-content'))
+                            layout=Layout(justify_content='center',align_items='center'))
         self.build_navbar() # this is the main function to build the navbar
          
         self.btn_prev.on_click(self.__shift_left)

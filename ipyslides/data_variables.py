@@ -112,9 +112,9 @@ def style_html(style_root = inherit_root):
         width:30% !important;
     }
     .NavWrapper .nav-box>div:last-child {
-        max-width:100%;
+        min-width:100%;
         width: 100%;
-        justify-content: center;
+        justify-content: center !important;
     }
     .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
     .SlidesWrapper .columns {max-width:98%;display:flex;flex-direction:column;}
