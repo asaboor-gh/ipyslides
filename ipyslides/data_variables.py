@@ -96,7 +96,7 @@ def style_html(style_root = inherit_root):
 }
 
 .prog_slider_box {
-    width: 4px;
+    width: 16px;
     padding: 0px 4px;
     opacity:0;
     overflow:hidden;
@@ -108,7 +108,7 @@ def style_html(style_root = inherit_root):
     opacity: 1;
     background: var(--quote-bg);
 }
-
+.NavWrapper .nav-box>div:last-child {justify-content: flex-end !important;}
 @media screen and (max-width: 702px) {
   	.NavWrapper .nav-box {
     	display:block;
