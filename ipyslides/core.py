@@ -132,8 +132,9 @@ class LiveSlides(NavBar):
                 display: none;
             }
             .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
-            .jupyterlab-sidecar .sidecar-only {display: block;}
+            .jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only {display: block;}
              {display: none;}
+            .jp-LinkedOutputView>div {overflow:hidden !important;}
             #rendered_cells .SlidesWrapper {
                 position: absolute;
                 width:100% !important;
@@ -295,7 +296,8 @@ class Customize:
         
     def __jupyter_sidecar_fullscreen_css(self):
         return '''<style>
-        .jupyterlab-sidecar > .jp-OutputArea-child, .SlidesWrapper {
+        /* Works in Sidecar and Linked Output View */
+        .jupyterlab-sidecar > .jp-OutputArea-child, .SlidesWrapper, .jp-LinkedOutputView>div {
             flex: 1;
             position: fixed;
             bottom: 0px;
@@ -308,6 +310,7 @@ class Customize:
         }    
         .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
         #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
+        .lm-DockPanel-tabBar {display:none;}
         </style>'''
 
 class MultiCols:

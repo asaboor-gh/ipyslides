@@ -48,7 +48,7 @@ You can embed anything that you can include in Jupyter notebook like ipywidgets,
 - Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by [Voila](https://voila.readthedocs.io/en/stable/).     
 - Install [Jupyterlab-Sidecar](https://github.com/jupyter-widgets/jupyterlab-sidecar). Fullscreen support is added natively in version > 0.4!
 - Version >= 0.5.1 is Jupyter Notebook theme aware in `Inherit` theme, so theme of slides changes based on editor theme.
-- Version >= 0.6.2 enables full size output in Jupyterlab's `Create New Output View` command, although it is not full screen but useful. 
+- Version >= 0.6.3 enables full size output in Jupyterlab's `Create New Output View` command. Then in Setting panel, you can toggle fullscreen.
 
 # Multi Column Support
 Starting version 0.2.0, you can use `MultiCols` class to display connected content like `ipwidgets` in columns. 
