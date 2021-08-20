@@ -1,4 +1,3 @@
-from ssl import ALERT_DESCRIPTION_NO_RENEGOTIATION
 from IPython.core.display import HTML
 import numpy as np
 from IPython.display import display, Markdown
@@ -82,7 +81,7 @@ class NavBar:
          
 class LiveSlides(NavBar):
     def __init__(self,
-                 func=lambda x: display(Markdown(x)), 
+                 func=write, 
                  iterable=['# First Slide','# Second Slide'],
                  animation_css = dv.animation_css):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
@@ -115,37 +114,7 @@ class LiveSlides(NavBar):
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
         self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')))
-        self.main_style_html = ipw.HTML('''<style>
-            .SlidesWrapper .textfonts { align-items: center;}
-            a.jp-InternalAnchorLink { display: none !important;}
-            .widget-inline-hbox .widget-readout  { min-width:auto !important;}
-            .jupyterlab-sidecar .SlidesWrapper,
-            .jp-LinkedOutputView .SlidesWrapper {
-                width: 100% !important; height: 100% !important;
-            }
-            .SlidesWrapper pre, code { background:inherit !important; color: inherit !important;
-                            height: auto !important; overflow:hidden;}
-                            
-            .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden,
-            .jp-LinkedOutputView .SlidesWrapper .voila-sidecar-hidden,
-            #rendered_cells .SlidesWrapper .voila-sidecar-hidden{
-                display: none;
-            }
-            .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
-            .jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only {display: block;}
-             {display: none;}
-            .jp-LinkedOutputView>div {overflow:hidden !important;}
-            #rendered_cells .SlidesWrapper {
-                position: absolute;
-                width:100% !important;
-                height: 100% !important;
-                bottom: 0px !important;
-                top: 0px !important;
-                tight: 0px !important;
-                left: 0px !important;
-            }
-            .SlidesWrapper {z-index: 10 !important;}
-            <style>''')
+        self.main_style_html = ipw.HTML(dv.main_layout_css)
         
         self.prog_slider.observe(self.__update_content,names=['value'])
         self.__update_content(True)
@@ -160,7 +129,6 @@ class LiveSlides(NavBar):
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important   
-    
      
     def show(self):
         try:   #JupyterLab Case, Interesting in SideCar
@@ -216,7 +184,7 @@ class Customize:
     def __init__(self,instance_LiveSlides):
         "Provide instance of LivSlides to work."
         self.master = instance_LiveSlides
-        describe = lambda value: {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
+        def describe(value): return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
         
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False)
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 65,continuous_update=False)
@@ -287,31 +255,11 @@ class Customize:
         theme_css = theme_css.replace('__text_size__',text_size)   
         # Catch Fullscreen too.
         if self.btn_fs.value:
-            fs_css = self.__jupyter_sidecar_fullscreen_css().replace('<style>','')
-            self.master.theme_html.value = theme_css.replace('</style>','\n') + fs_css
+            self.master.theme_html.value = theme_css.replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
             self.btn_fs.icon = 'compress'
         else:
             self.master.theme_html.value = theme_css #Push CSS without Fullscreen
             self.btn_fs.icon = 'expand' 
-        
-    def __jupyter_sidecar_fullscreen_css(self):
-        return '''<style>
-        /* Works in Sidecar and Linked Output View */
-        .jupyterlab-sidecar > .jp-OutputArea-child, .SlidesWrapper, .jp-LinkedOutputView>div {
-            flex: 1;
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            width: 100vw;
-            height: 100vh;
-            z-index: 100;
-            margin: 0px;
-            padding: 0;
-        }    
-        .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
-        #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
-        .lm-DockPanel-tabBar {display:none;}
-        </style>'''
 
 class MultiCols:
     def __init__(self,width_percents=[50,50]):

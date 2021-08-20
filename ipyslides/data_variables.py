@@ -77,7 +77,7 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper code>span {
    font-family: "Cascadia Code","Ubuntu Mono","Courier New";
 }
-   
+.textfonts .SlidesWrapper {max-height:calc(90vh - 100px);} /* in case of embed slides */ 
 .SlidesWrapper {
 	margin: auto;
 	padding: 0px;
@@ -279,4 +279,57 @@ animation_css = '''<style>
 	75% { transform: scale(0.85); }
    100% { transform: scale(1); }
 }
+</style>'''
+
+main_layout_css = '''<style>
+.SlidesWrapper .textfonts { align-items: center;}
+a.jp-InternalAnchorLink { display: none !important;}
+.widget-inline-hbox .widget-readout  { min-width:auto !important;}
+.jupyterlab-sidecar .SlidesWrapper,
+.jp-LinkedOutputView .SlidesWrapper {
+    width: 100% !important; height: 100% !important;
+}
+.SlidesWrapper pre, code { background:inherit !important; color: inherit !important;
+                height: auto !important; overflow:hidden;}
+                
+.jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden,
+.jp-LinkedOutputView .SlidesWrapper .voila-sidecar-hidden,
+#rendered_cells .SlidesWrapper .voila-sidecar-hidden{
+    display: none;
+}
+/* next Three things should be in given order */
+.sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
+.jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only {display: block;}
+.textfonts .SlidesWrapper .sidecar-only {display: none;} /* No fullscreen for embeded slides */ 
+.jp-LinkedOutputView>div {overflow:hidden !important;}
+#rendered_cells .SlidesWrapper {
+    position: absolute;
+    width:100% !important;
+    height: 100% !important;
+    bottom: 0px !important;
+    top: 0px !important;
+    tight: 0px !important;
+    left: 0px !important;
+}
+.SlidesWrapper {z-index: 10 !important;}
+<style>'''
+
+fullscreen_css = '''<style>
+/* Works in Sidecar and Linked Output View */
+.jupyterlab-sidecar > .jp-OutputArea-child, .SlidesWrapper, .jp-LinkedOutputView>div {
+    flex: 1;
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    margin: 0px;
+    padding: 0;
+    background:var(--text-bg);
+} 
+.textfonts .SlidesWrapper { position:relative;width:90%;max-width:100%;height:unset;left:unset;bottom:unset;}  
+.jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
+#jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
+.lm-DockPanel-tabBar {display:none;}
 </style>'''

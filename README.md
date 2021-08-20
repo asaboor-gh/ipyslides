@@ -43,6 +43,7 @@ isd.build() #This will build the presentation cell. After this go top and set `c
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 
 ![JupyterLab inside ipyslides](jlabslides.gif)
 > Note: Websites may refuse to load in iframe.
+> Note: You can embed slides inside other slides using `ipyslides.insert_after(<N>,other_slides.box)`. This is very cool.
 
 # Full Screen Presentation
 - Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by [Voila](https://voila.readthedocs.io/en/stable/).     
