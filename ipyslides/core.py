@@ -119,13 +119,21 @@ class LiveSlides(NavBar):
             .SlidesWrapper .textfonts { align-items: center;}
             a.jp-InternalAnchorLink { display: none !important;}
             .widget-inline-hbox .widget-readout  { min-width:auto !important;}
-            .jupyterlab-sidecar .SlidesWrapper {width: 100% !important; height: 100% !important;}
+            .jupyterlab-sidecar .SlidesWrapper,
+            .jp-LinkedOutputView .SlidesWrapper {
+                width: 100% !important; height: 100% !important;
+            }
             .SlidesWrapper pre, code { background:inherit !important; color: inherit !important;
                             height: auto !important; overflow:hidden;}
-            .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden {display: none;}
+                            
+            .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden,
+            .jp-LinkedOutputView .SlidesWrapper .voila-sidecar-hidden,
+            #rendered_cells .SlidesWrapper .voila-sidecar-hidden{
+                display: none;
+            }
             .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
             .jupyterlab-sidecar .sidecar-only {display: block;}
-            #rendered_cells .SlidesWrapper .voila-sidecar-hidden {display: none;}
+             {display: none;}
             #rendered_cells .SlidesWrapper {
                 position: absolute;
                 width:100% !important;
