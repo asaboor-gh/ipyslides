@@ -1,4 +1,4 @@
-__version__ = '0.6.3'
+__version__ = '0.7.1'
 
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import display

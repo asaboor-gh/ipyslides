@@ -187,7 +187,7 @@ class Customize:
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 65,continuous_update=False)
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
-        self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto')).add_class('panel-text')
+        self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='auto',height='auto',margin='auto',overflow='hidden')).add_class('sidecar-only')
         self.btn_fs.style.button_color = 'transparent'
         # layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
@@ -198,7 +198,7 @@ class Customize:
                         self.theme_dd,
                         ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         ipw.HBox([self.btn_fs,self.master.player(),self.master.prog_slider],layout=Layout(width='95%',min_height='50px',justify_content='flex-start',align_items='center',margin='auto'))
-                        ],layout=Layout(width='0px',height='100%',padding='0px',overflow='auto')
+                        ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto')
                         ).add_class('panel')
         with self.__instructions:
             write(dv.settings_instructions)
@@ -218,14 +218,10 @@ class Customize:
     def __toggle_panel(self,change):
         if self.master.btn_setting.icon == 'bars':
             self.master.btn_setting.icon = 'close'
-            self.box.layout.width = '70%' #Use both width & min_width to make sure it works.
-            self.box.layout.min_width = '50%'
-            self.box.layout.padding = '10px'
+            self.box.layout.display = 'flex'
         else:
-            self.master.btn_setting.icon = 'bars'
-            self.box.layout.width = '0px'
-            self.box.layout.min_width = '0px'
-            self.box.layout.padding = '0px' 
+            self.master.btn_setting.icon = 'bars' 
+            self.box.layout.display = 'none'
                      
     def __set_font_scale(self,change):
         # Below line should not be in update_theme to avoid loop call.

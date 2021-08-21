@@ -1,9 +1,7 @@
 # ipyslides
 Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
-  
-Launch example slides at [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides-0-2-0.ipynb)
 
-Launch in notebook mode [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides-0-2-0.ipynb)
+Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides-0-2-0.ipynb)
 
 ![Overview](overview.jpg)
 
@@ -12,7 +10,7 @@ Launch in notebook mode [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 - You can elevate simple cell output to fullscreen in Jupyterlab >= 3.
 - You can use `with slide(<N>)` context manager to build multiple slides in for loop from a single cell. This
 context manager is equivalent to `%%slide` so make sure none of them overwrite each other.
-- Widgets display is persistent in `%%slide`,`with slide` and `insert_after`, however `multicols` display ipywidgets once and then they disappear (No idea yet why it happens), so avoid displaying widgets in mutlicols mode.
+- Widgets display is persistent in `%%slide`,`with slide` and `insert_after` mode, however `multicols` display ipywidgets once and then they disappear (No idea yet why it happens), so avoid displaying widgets in mutlicols mode.
 
 # Install
 ```shell
@@ -25,7 +23,8 @@ For development install, clone this repository and then
 ```
 # Demo
 See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides),
-[Version>0.2.0]https://www.kaggle.com/massgh/ipyslides-0-2-0)
+[Version 0.2+](https://www.kaggle.com/massgh/ipyslides-0-2-0),
+[Version 0.7+](https://www.kaggle.com/massgh/ipyslides-0-7). You can edit it yourself.
 ![Slides2Video](kaggle.gif)
 
 # Usage
