@@ -7,6 +7,13 @@ Launch in notebook mode [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
+# New in Version >= 0.7
+- LiveSlides now collect slides internally, so removing a lot of code user had to put. 
+- You can elevate simple cell output to fullscreen in Jupyterlab >= 3.
+- You can use `with slide(<N>)` context manager to build multiple slides in for loop from a single cell. This
+context manager is equivalent to `%%slide` so make sure none of them overwrite each other.
+- Widgets display is persistent in `%%slide`,`with slide` and `insert_after`, however `multicols` display ipywidgets once and then they disappear (No idea yet why it happens), so avoid displaying widgets in mutlicols mode.
+
 # Install
 ```shell
 > pip install ipyslides
@@ -31,7 +38,7 @@ isd.write_title() #create a rich content multicols title page.
 
 isd.insert(1) #This will create a slide in same cell where you run it 
 
-isd.insert_after(1,*objs) #This will create as many slides after the slide number 1 as length(objs)
+isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
 
 isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
 ```
@@ -47,9 +54,10 @@ You can embed anything that you can include in Jupyter notebook like ipywidgets,
 
 # Full Screen Presentation
 - Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by [Voila](https://voila.readthedocs.io/en/stable/).     
-- Install [Jupyterlab-Sidecar](https://github.com/jupyter-widgets/jupyterlab-sidecar). Fullscreen support is added natively in version > 0.4!
+- Install [Jupyterlab-Sidecar](https://github.com/jupyter-widgets/jupyterlab-sidecar) for version < 4. Fullscreen support is added natively in version > 0.4!
 - Version >= 0.5.1 is Jupyter Notebook theme aware in `Inherit` theme, so theme of slides changes based on editor theme.
 - Version >= 0.6.3 enables full size output in Jupyterlab's `Create New Output View` command. Then in Setting panel, you can toggle fullscreen.
+- Version >= 0.7.0 do not require to install sidecar or New Output view. You can make slides fullscreen just from cell output! Note that all this is currently supported only in Jupyterlab, other editors or classic notebook are not supported. 
 
 # Multi Column Support
 Starting version 0.2.0, you can use `MultiCols` class to display connected content like `ipwidgets` in columns. 

@@ -1,6 +1,7 @@
 __version__ = '0.6.3'
 
 from IPython.core.magic import Magics, magics_class, cell_magic
+from IPython.display import display
 from . import data_variables as dv
 
 from .core import display_cell_code, get_cell_code, MultiCols
@@ -62,16 +63,18 @@ def insert(slide_number):
     code_after = __filter_cell_code('insert')
     get_ipython().set_next_input(f"%%slide {slide_number}\n" + code_after, replace=True)
     
-def insert_after(slide_number,*objs):
-    """Creates as many dynamic slides as many number of `objs` are.
+def insert_after(slide_number,*objs,func=display):
+    """Creates as many dynamic slides as many number of `objs` are with a `func` acting on each object.
+    func should handle all displays inside and no return is required, if any, only should be display/show etc.
     Any object which is handled by function `display_item` at end or have a method `show` is valid."""
     if not isinstance(slide_number,int):
         return print(f'slide_number expects integer, got {slide_number!r}')
     shell = get_ipython()
     shell.user_ns['__dynamicslides_dict'] = shell.user_ns.get('__dynamicslides_dict',{}) #make Sure to get it form shell
-    shell.user_ns['__dynamicslides_dict'][f'd{slide_number}'] = objs
+    shell.user_ns['__dynamicslides_dict'][f'd{slide_number}'] = {'objs': objs,'func':func}
+    
     if not shell.user_ns['__slides_mode']:
-        print('Showing raw form of given objects, will be displayed in slides using `display_item` function dynamically')
+        print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
         return objs
     
 def build(): #Set Next full input

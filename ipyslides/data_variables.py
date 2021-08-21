@@ -1,6 +1,6 @@
 title_page = '''from IPython.display import display, Markdown
 from ipyslides import load_magics, convert2slides, write_title
-from ipyslides.utils import write,plt2html,print_context
+from ipyslides.utils import write,plt2html,print_context, slide
 
 # Command below registers all the ipyslides magics that are used in this file
 load_magics()
@@ -15,15 +15,14 @@ write_title("<div style='width:10px;height:100%;background:olive;'></div>",
 - Edit and test cells in `convert2slides(False)` mode.
 - Run cells in `convert2slides(True)` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide or you can use `ipysildes.insert(slide_number)`
-- ipyslides.insert_after(slide_number,*objs) generates slides dynamically handled by function `display_item`.
-- Use `ls.align8center(False)` assuming `ls=LiveLSides()` to align slide's content top-left.
+- ipyslides.insert_after(slide_number,*objs,func) generates slides dynamically handled by `func`.
 
 ```python
 import ipyslides as isd 
 isd.initilize() #This will create a title page and parameters in same cell
 isd.write_title() #create a rich content multicols title page.
 isd.insert(1) #This will create a slide in same cell where you run it 
-isd.insert_after(1,*objs) #This will create as many slides after the slide number 1 as length(objs)
+isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
 isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
 ```
 
@@ -225,23 +224,14 @@ def style_html(style_root = inherit_root):
 }       
 </style>'''
 
-build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar
+build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar for fullscreen access
+# You can also double click on output and select `Create New View for Output` that will let you enable fullscreen.
+# You can simply bring a cell output to fullscreen in jupyterlab with ipyslides >= 0.7
 # ------ Slides End Here -------- 
-
-from ipyslides.core import collect_slides, LiveSlides
-
-slides_iterable = collect_slides() #Get all slides content in order
-
-# Edit this function to act on all dynmaically generated slides
-def display_item(item):
-    if isinstance(item,(str,dict,list,tuple,int,float)):
-        write(f'### Given {type(item)}: {item}')
-    else:
-        display(item) # You will get idea what is it and modify this function to handle it.
-    
-ls = LiveSlides(func=display_item,iterable=slides_iterable)
+from ipyslides.core import  LiveSlides 
+ls = LiveSlides()
+ls.set_footer('Author: Abdul Saboor')
 ls.align8center(True) # Set False to align top-left corner
-ls.set_footer()
 ls.show()"""
 
 settings_instructions = '''### Custom Theme
@@ -299,7 +289,8 @@ a.jp-InternalAnchorLink { display: none !important;}
 }
 /* next Three things should be in given order */
 .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
-.jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only {display: block;}
+.jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only,
+.jp-Cell-outputArea>div .sidecar-only {display: block;}
 .textfonts .SlidesWrapper .sidecar-only {display: none;} /* No fullscreen for embeded slides */ 
 .jp-LinkedOutputView>div {overflow:hidden !important;}
 #rendered_cells .SlidesWrapper {
@@ -316,13 +307,16 @@ a.jp-InternalAnchorLink { display: none !important;}
 
 fullscreen_css = '''<style>
 /* Works in Sidecar and Linked Output View */
-.jupyterlab-sidecar > .jp-OutputArea-child, .SlidesWrapper, .jp-LinkedOutputView>div {
+.jupyterlab-sidecar > .jp-OutputArea-child, 
+.SlidesWrapper, 
+.jp-LinkedOutputView>div,
+.jp-Cell-outputArea>div {
     flex: 1;
     position: fixed;
     bottom: 0px;
     left: 0px;
-    width: 100vw;
-    height: 100vh;
+    width: 100vw !important;
+    height: 100vh !important;
     z-index: 100;
     margin: 0px;
     padding: 0;
@@ -332,4 +326,5 @@ fullscreen_css = '''<style>
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
+.SlidesWrapper .voila-sidecar-hidden{display: none;}
 </style>'''

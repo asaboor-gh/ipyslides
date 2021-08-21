@@ -1,9 +1,12 @@
+from IPython.core.display import clear_output
+from IPython.core.getipython import get_ipython
 from markdown import markdown
 from IPython.display import HTML, display, Markdown
 import matplotlib.pyplot as plt
 from io import BytesIO
 from IPython.utils.io import capture_output
 from contextlib import contextmanager
+import ipywidgets as ipw
 
 @contextmanager
 def print_context():
@@ -11,6 +14,21 @@ def print_context():
     with capture_output() as cap:
         yield
     display(Markdown(f'```shell\n{cap.stdout}\n{cap.stderr}```'))
+    
+@contextmanager
+def slide(slide_number):
+    "Use this context manager to generate any number of slides from a cell"
+    if not isinstance(slide_number,int):
+        return print(f'slide_number expects integer, got {slide_number!r}')
+    with capture_output() as cap:
+        yield
+    # Now Handle What is captured
+    ns = get_ipython().user_ns
+    mode = ns.get('__slides_mode',False)
+    if not mode:
+        cap.show()
+    else:
+        ns['__slides_dict'][f'{slide_number}'] = cap 
 
 def syntax_css():
     keywords = 'n k kc mi mf kn nn p c1 o nf sa s1 si nb nc se'.split()

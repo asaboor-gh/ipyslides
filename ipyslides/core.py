@@ -80,32 +80,23 @@ class NavBar:
         
          
 class LiveSlides(NavBar):
-    def __init__(self,
-                 func=write, 
-                 iterable=['# First Slide','# Second Slide'],
-                 animation_css = dv.animation_css):
+    def __init__(self,animation_css = dv.animation_css):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
-            - func : An outside defined function which act on elements of `iterable`  and handle required situations. 
-                    Return value is not guranteed for output rendering except for IPython.display.display object. Use display
-                    inside the function for rich formats rending as many time as you want.
-            - iterable: Anything from list/tuple/dict etc whose each element is given as argument to `func`.
             - animation_css: CSS for animation. Set to '' if not animating. You can define yourself by editing `ipysildes.data_variables.animation_css`.
         - **Example**
             ```python
-            from IPython.display import display, Markdown
-            def fn(x):
-                if isinstance(x,int):
-                    display(Markdown(f'{x**2}'))
-                if isinstance(x, str):
-                    display(Markdown(x*10))
-            slides = LiveSlides(fn, [0,2,5,'Python '],height=200)
-            slides.show()
-            #See result as ![Slides](https://github.com/massgh/pivotpy/tree/master/slides.gif)
+            #Run each line in separate cell, you need to run cell again when a cell code chnages. 
+            import ipyslides as isd 
+            isd.initilize() #This will create a title page and parameters in same cell
+            isd.write_title() #create a rich content multicols title page.
+            isd.insert(1) #This will create a slide in same cell where you run it 
+            isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
+            isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
+            #Last command will put this LiveSlide in cell automatically, or you can put it yourself. 
             ```
         """
-        self.func = func
-        self.iterable = iterable
+        self.iterable = collect_slides() # Collect internally
         self.user_ns = get_ipython().user_ns 
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
         
@@ -153,6 +144,13 @@ class LiveSlides(NavBar):
     def set_font_scale(self,font_scale=1):
         self.font_scale= font_scale
         self.setting.update_theme()   
+    
+    def __display_slide(self):
+        item = self.iterable[self.prog_slider.value-1]
+        if 'func' in item.keys():
+            item['func'](item['slide']) #Show dynamic slides
+        else:
+            item['slide'].show() #show ipython capture/MultiCols/slide context or if item has a show method with display. 
            
     def __update_content(self,change):
         if self.iterable and change:
@@ -167,9 +165,7 @@ class LiveSlides(NavBar):
                     else:
                         write(*title['args'],**title['kwargs']) #Ipython Captured Output
                 else:
-                    item = self.iterable[self.prog_slider.value-1]
-                    try: item.show() #show ipython capture/MultiCols or if item has a show method with display.
-                    except: self.func(item)
+                    self.__display_slide()
                     
             self.info_html.value = self.info_html.value.replace('| Loading...','')
             
@@ -179,6 +175,7 @@ class LiveSlides(NavBar):
         if show_slide_number: #Slide number should be  exactlly like '>Int /' for regex substitutioon.  
             text += f' | <b style="color:var(--accent-color);">{self.prog_slider.value} / {self.N}<b>'
         self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
+        
 
 class Customize:
     def __init__(self,instance_LiveSlides):
@@ -264,7 +261,7 @@ class Customize:
 class MultiCols:
     def __init__(self,width_percents=[50,50]):
         """Creat multicolumns with width spcified for each. Defuslt is two columns with equal width.
-        This object is not displayed properly under %%slide, so you need to set it in `__dynamicslides_dict`.
+        This object currently shows widgets only once, so be aware of that.
         - **Example**
             > mc = Multicols()
             > with mc.header:
@@ -307,10 +304,11 @@ def collect_slides():
     slides_iterable = []
     for i in range(_min,_max):
         if f'{i}' in ns['__slides_dict'].keys():
-            slides_iterable.append(ns['__slides_dict'][f'{i}']) 
+            slides_iterable.append({'slide':ns['__slides_dict'][f'{i}']}) 
         if f'd{i}' in ns['__dynamicslides_dict'].keys():
-            slides_iterable = [*slides_iterable,*ns['__dynamicslides_dict'][f'd{i}']]
-            
+            __dynamic = ns['__dynamicslides_dict'][f'd{i}']
+            slides = [{'slide':obj,'func':__dynamic['func']} for obj in __dynamic['objs']]
+            slides_iterable = [*slides_iterable,*slides]        
     return tuple(slides_iterable)
 
 def get_cell_code(this_line=True,magics=False,comments=False,lines=None):
