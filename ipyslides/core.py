@@ -198,7 +198,7 @@ class Customize:
                         self.theme_dd,
                         ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         ipw.HBox([self.btn_fs,self.master.player(),self.master.prog_slider],layout=Layout(width='95%',min_height='50px',justify_content='flex-start',align_items='center',margin='auto'))
-                        ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto')
+                        ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
         with self.__instructions:
             write(dv.settings_instructions)
