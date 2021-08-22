@@ -71,6 +71,9 @@ inherit_root = """:root {
 
 def style_html(style_root = inherit_root):
 	return '<style>\n' + style_root + ''' 
+.cell-output-ipywidget-background {
+    background: var(--theme-background,inherit) !important;
+    margin: 8px 0px;} /* VS Code */
 .SlidesWrapper *:not(.fa):not(i):not(span) {
    font-family: sans-serif, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
 }
