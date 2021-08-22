@@ -12,6 +12,10 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 context manager is equivalent to `%%slide` so make sure none of them overwrite each other.
 - Widgets display is persistent in `%%slide`,`with slide` and `insert_after` mode, however `multicols` display ipywidgets once and then they disappear (No idea yet why it happens), so avoid displaying widgets in mutlicols mode.
 
+> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
+> `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
+> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.
+
 # Install
 ```shell
 > pip install ipyslides

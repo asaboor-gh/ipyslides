@@ -7,11 +7,12 @@ load_magics()
 # Set this to True for Slides output
 convert2slides(False) #Set this to True for Slides output
 
-
 write_title("<div style='width:10px;height:100%;background:olive;'></div>",
 """# Interactive Slides  
 <em style='color:red;'> Author: Abdul Saboor</em>
-
+> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
+> `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
+> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.
 - Edit and test cells in `convert2slides(False)` mode.
 - Run cells in `convert2slides(True)` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide or you can use `ipysildes.insert(slide_number)`
@@ -227,6 +228,8 @@ def style_html(style_root = inherit_root):
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar for fullscreen access
 # You can also double click on output and select `Create New View for Output` that will let you enable fullscreen.
 # You can simply bring a cell output to fullscreen in jupyterlab with ipyslides >= 0.7
+# From version >= 0.7.2, you can run this cell anywhere,even in start. Whenever you execute a cell containing 
+# write_title, %%slide, with slide or insert_after, slides get updated so, no need to build again.
 # ------ Slides End Here -------- 
 from ipyslides.core import  LiveSlides 
 ls = LiveSlides()

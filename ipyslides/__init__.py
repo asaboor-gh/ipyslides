@@ -1,4 +1,4 @@
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import display
@@ -9,7 +9,10 @@ from .utils import write
 multicols = MultiCols #Aliasing
 __all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build',
            'display_cell_code','get_cell_code','MultiCols','multicols']
- 
+
+def _refresh_slides(user_ns):
+    if '__LiveSlides__' in user_ns.keys():
+        user_ns['__LiveSlides__'].refresh()
 @magics_class
 class SlidesMagics(Magics):
     @cell_magic 
@@ -23,6 +26,7 @@ class SlidesMagics(Magics):
                 self.shell.user_ns['__slides_dict'] = self.shell.user_ns.get('__slides_dict',{}) #make Sure to get it form shell
                 self.shell.user_ns['__slides_dict'][line] = self.shell.user_ns[line]
                 del self.shell.user_ns[line] # delete the line from shell
+                _refresh_slides(self.shell.user_ns) # Content chnage refreshes it.
         else:
             self.shell.run_cell(cell)
 
@@ -54,6 +58,7 @@ def write_title(*colums,width_percents=None):
     mode = shell.user_ns.get('__slides_mode',False)
     if mode:
         shell.user_ns['__slides_title_page'] = {'args':colums, 'kwargs':{'width_percents':width_percents}} 
+        _refresh_slides(shell.user_ns) # Content change refreshes it. 
     else:
         write(*colums,width_percents=width_percents)
 
@@ -72,6 +77,7 @@ def insert_after(slide_number,*objs,func=display):
     shell = get_ipython()
     shell.user_ns['__dynamicslides_dict'] = shell.user_ns.get('__dynamicslides_dict',{}) #make Sure to get it form shell
     shell.user_ns['__dynamicslides_dict'][f'd{slide_number}'] = {'objs': objs,'func':func}
+    _refresh_slides(shell.user_ns) # Content chnage refreshes it.
     
     if not shell.user_ns['__slides_mode']:
         print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')

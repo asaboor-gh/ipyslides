@@ -29,7 +29,8 @@ def custom_progressbar(intslider):
     .NavWrapper .progress {width:100% !important;transform:translate(-2px,1px) !important;}
     </style>''')
     intprogress = ipw.IntProgress(min=intslider.min, max=intslider.max, layout=Layout(width='100%'))
-    ipw.link((intprogress, 'value'), (intslider, 'value'))
+    for prop in ('min','max','value'):
+        ipw.link((intprogress, prop), (intslider, prop)) # These links enable auto refresh from outside
     return VBox([HBox(layout=Layout(height='0px',justify_content='space-between',align_items='center')).add_class('nav-box'),
                             VBox([ html,intprogress]) ]).add_class('NavWrapper') #class is must
 class NavBar:
@@ -98,6 +99,7 @@ class LiveSlides(NavBar):
         """
         self.iterable = collect_slides() # Collect internally
         self.user_ns = get_ipython().user_ns 
+        self.user_ns['__LiveSlides__'] = self # Inject variable that refresh slide on content change
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
         
         _max = len(self.iterable) if self.iterable else 1
@@ -154,7 +156,7 @@ class LiveSlides(NavBar):
            
     def __update_content(self,change):
         if self.iterable and change:
-            self.info_html.value = re.sub('>\d+\s+/',f'>{self.prog_slider.value} /',self.info_html.value) #Slide Number
+            self.info_html.value = re.sub('>\d+\s+/\s+\d+<',f'>{self.prog_slider.value} / {self.N}<',self.info_html.value) #Slide Number
             self.info_html.value = self.info_html.value.replace('</p>', '| Loading...</p>')
             self.out.clear_output(wait=True)
             with self.out:
@@ -172,9 +174,16 @@ class LiveSlides(NavBar):
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
         if show_date:
             text += f' | <text style="color:var(--accent-color);">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
-        if show_slide_number: #Slide number should be  exactlly like '>Int /' for regex substitutioon.  
+        if show_slide_number: #Slide number should be  exactlly like '>Int / Int<' for regex substitutioon.  
             text += f' | <b style="color:var(--accent-color);">{self.prog_slider.value} / {self.N}<b>'
         self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
+        
+    def refresh(self):
+        "Auto Refresh whenever you create new slide through __LiveSlides__ in user namespace or you can force refresh it"
+        self.iterable = collect_slides()
+        self.N = len(self.iterable) if self.iterable else 1
+        self.prog_slider.max = self.N
+        self.__update_content(True) # Force Refresh
         
 
 class Customize:

@@ -29,6 +29,9 @@ def slide(slide_number):
         cap.show()
     else:
         ns['__slides_dict'][f'{slide_number}'] = cap 
+        # Refresh changes there.
+        if '__LiveSlides__' in ns.keys():
+            ns['__LiveSlides__'].refresh()
 
 def syntax_css():
     keywords = 'n k kc mi mf kn nn p c1 o nf sa s1 si nb nc se'.split()
