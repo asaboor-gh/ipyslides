@@ -26,7 +26,7 @@ class SlidesMagics(Magics):
                 self.shell.user_ns['__slides_dict'] = self.shell.user_ns.get('__slides_dict',{}) #make Sure to get it form shell
                 self.shell.user_ns['__slides_dict'][line] = self.shell.user_ns[line]
                 del self.shell.user_ns[line] # delete the line from shell
-                _refresh_slides(self.shell.user_ns) # Content chnage refreshes it.
+                _refresh_slides(self.shell.user_ns) # Content change refreshes it.
         else:
             self.shell.run_cell(cell)
 

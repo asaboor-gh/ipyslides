@@ -181,7 +181,7 @@ class LiveSlides(NavBar):
     def refresh(self):
         "Auto Refresh whenever you create new slide through __LiveSlides__ in user namespace or you can force refresh it"
         self.iterable = collect_slides()
-        self.N = len(self.iterable) if self.iterable else 1
+        self.N = len(self.iterable) if self.iterable else 1 #N an max both need to be updated
         self.prog_slider.max = self.N
         self.__update_content(True) # Force Refresh
         
