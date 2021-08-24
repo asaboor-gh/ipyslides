@@ -281,12 +281,18 @@ class MultiCols:
         self.footer = ipw.Output(layout=self.header.layout)
         for i,wp in enumerate(width_percents):
             setattr(self,f'c{i+1}',ipw.Output(layout=Layout(margin='2px 8px',width='100%')))
-        self.columns = HBox([Box([getattr(self,f'c{i+1}')],layout=Layout(width=f'{wp}%',overflow='auto'))
+        self.columns = Box([Box([getattr(self,f'c{i+1}')],layout=Layout(width=f'{wp}%',overflow='auto'))
                                                 for i,wp in enumerate(width_percents)],
-                        layout=Layout(margin='0px',justify_content = 'center',column_border='2px solid red')
+                        layout=Layout(margin='0px',justify_content = 'center')
                         ).add_class('columns') # No need to set width. Its alright
         
         self.slide.children = [self.header,self.columns,self.footer]
+        from warnings import warn
+        with self.header:
+            warn('''`Multicols` will be deprecated in future, since it really can not do what is expected, \
+i.e. column layout. Also due to some issue in ipywidgets.Output, it does not save state for widgets, so when you \
+swich to other slides and return back, you see widgets lost! Use ipwyidgets boxes explicity for desired layouts of \
+widgets. Other all content can be handled via `write` and `slide`''')
         
     def show(self):
         return display(self.slide)   

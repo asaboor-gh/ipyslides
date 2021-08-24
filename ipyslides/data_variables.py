@@ -1,18 +1,22 @@
 title_page = '''from IPython.display import display, Markdown
 from ipyslides import load_magics, convert2slides, write_title
-from ipyslides.utils import write,plt2html,print_context, slide
+from ipyslides.utils import write,plt2html,print_context, slide, fmt2cols
 
 # Command below registers all the ipyslides magics that are used in this file
 load_magics()
 # Set this to True for Slides output
 convert2slides(False) #Set this to True for Slides output
 
-write_title("<div style='width:10px;height:100%;background:olive;'></div>",
-"""# Interactive Slides  
-<em style='color:red;'> Author: Abdul Saboor</em>
-> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
+cols = fmt2cols("""> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
 > `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
-> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.
+> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.""",
+"""> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
+> For JupyterLab >=3, do `pip install sidecar`.""",60,40)
+
+write_title("<div style='width:10px;height:100%;background:olive;'></div>",
+f"""# Interactive Slides  
+<em style='color:red;'> Author: Abdul Saboor</em>
+{cols}
 - Edit and test cells in `convert2slides(False)` mode.
 - Run cells in `convert2slides(True)` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide or you can use `ipysildes.insert(slide_number)`
@@ -26,9 +30,6 @@ isd.insert(1) #This will create a slide in same cell where you run it
 isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
 isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
 ```
-
-> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-> For JupyterLab >=3, do `pip install sidecar`. 
 """,width_percents = [5,95])
 '''
 # CSS for ipyslides
@@ -90,7 +91,7 @@ def style_html(style_root = inherit_root):
  }
 .SlidesWrapper .panel { background: var(--quote-bg);border:4px solid var(--text-bg);}
 .SlidesWrapper .panel .panel-text { background: var(--text-bg);}
-.SlidesWrapper .columns {max-width:95%;display:inline-flex;flex-direction:row;column-gap:2em;}
+.SlidesWrapper .columns {width:max-content;max-width:95%;display:inline-flex;flex-direction:row;column-gap:2em;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
 .SlidesWrapper .widget-hslider .ui-slider .ui-slider-handle {
@@ -127,7 +128,7 @@ def style_html(style_root = inherit_root):
         justify-content: center !important;
     }
     .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
-    .SlidesWrapper .columns {max-width:98%;display:flex;flex-direction:column;}
+    .SlidesWrapper .columns {max-width:95%;display:flex;flex-direction:column;}
     .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
     .prog_slider_box {
     	width: 40%;

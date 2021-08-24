@@ -4,7 +4,7 @@ from markdown import markdown
 from IPython.display import HTML, display, Markdown
 import matplotlib.pyplot as plt
 from io import BytesIO
-from IPython.utils.io import capture_output
+from IPython.utils.capture import capture_output
 from contextlib import contextmanager
 import ipywidgets as ipw
 
@@ -56,12 +56,22 @@ def write(*colums,width_percents=None):
     style = syntax_css()
     if not width_percents:
         width_percents = [int(100/len(colums)) for _ in colums]
-    colums = [c.replace('\n','     \n') for c in colums] #Markdown doesn't like newlines without spaces
+    colums = [c.replace('\n','  \n') for c in colums] #Markdown doesn't like newlines without spaces
     _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{markdown(c,extensions=['fenced_code','tables','codehilite'])}</div>\n" 
                             for c,w in zip(colums,width_percents)])
     if len(colums) == 1:
         return display(HTML(style + _cols))
     return display(HTML(f'''<div class="columns">\n{style}{_cols}\n</div>'''))
+
+def fmt2cols(c1,c2,w1=50,w2=50):
+    """Useful when you want to split a column in `write` command in small 2 columns, e.g displaying a firgure with text on left.
+    Both `c1` and c2` should be in text/markdown format and `w1, w2` as their respective widths(int) in percents."""
+    c1, c2 = c1.replace('\n','  \n'), c2.replace('\n','  \n') #Markdown Lines issue
+    exts = ['fenced_code','tables','codehilite']
+    return f"""<div class='columns'>
+        <div style='width:{w1}%;overflow-x:auto;'>{markdown(c1,extensions=exts)}</div>
+        <div style='width:{w2}%;overflow-x:auto;'>{markdown(c2,extensions=exts)}</div></div>"""
+    
     
 
 def plotly2html(fig):
@@ -95,3 +105,5 @@ def plt2html(plt_fig=None,transparent=True):
     plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     return f"<div>{svg}</div>"
+
+
