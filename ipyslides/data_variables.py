@@ -226,7 +226,13 @@ def style_html(style_root = inherit_root):
 :not(.jp-Notebook, .CodeMirror-hscrollbar, .CodeMirror-vscrollbar)::-webkit-scrollbar-corner {
     display:none;
     background: none;
-}       
+}   
+
+/* Matplotlib figure SVG */
+div.fig-container>svg{
+  background: var(--text-bg);
+  transition: transform .2s; /* Animation */
+}   
 </style>'''
 
 build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar for fullscreen access
@@ -334,4 +340,23 @@ fullscreen_css = '''<style>
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
 .SlidesWrapper .voila-sidecar-hidden{display: none;}
+
+/* Pop out matplotlib's SVG on click/hover */
+div.fig-container>svg:focus, div.fig-container>svg:hover{
+    position:fixed;
+    left:100px;
+    top:0px;
+    z-index:100;
+    width: calc(100vw - 200px);
+    height: 100%;
+    box-shadow: 500px 500px 1000px 1000px rgba(0.8,0.9,0.7,0.8); 
+}  
+@media screen and (max-width: 702px) {
+    div.fig-container>svg:focus, div.fig-container>svg:hover{
+    width:100%;
+    height: calc(100vh - 200px);
+    top: 100px;
+    left:0px;
+    }
+} 
 </style>'''

@@ -81,7 +81,7 @@ def plotly2html(fig):
     import uuid # Unique div-id required,otherwise jupyterlab renders at one place only and overwite it.
     div_id = "graph-{}".format(uuid.uuid1())
     fig_json = fig.to_json()
-    return  f"""<div>
+    return  f"""<div class='fig-container'>
         <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
         <div id='{div_id}'><!-- Plotly chart DIV --></div>
         <script>
@@ -104,6 +104,6 @@ def plt2html(plt_fig=None,transparent=True):
     plt.clf() # Clear image to avoid other display
     plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
-    return f"<div>{svg}</div>"
+    return f"<div class='fig-container'>{svg}</div>"
 
 
