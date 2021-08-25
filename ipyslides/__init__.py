@@ -1,14 +1,13 @@
-__version__ = '0.7.4'
+__version__ = '0.7.5'
 
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.display import display
 from . import data_variables as dv
 
-from .core import display_cell_code, get_cell_code, MultiCols
+from .core import display_cell_code, get_cell_code, LiveSlides
 from .utils import write
-multicols = MultiCols #Aliasing
 __all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build',
-           'display_cell_code','get_cell_code','MultiCols','multicols']
+           'display_cell_code','get_cell_code','LiveSlides','write']
 
 def _refresh_slides(user_ns):
     if '__LiveSlides__' in user_ns.keys():
@@ -63,11 +62,8 @@ def write_title(*colums,width_percents=None):
         write(*colums,width_percents=width_percents)
 
 def insert(slide_number):
-    if not isinstance(slide_number,int):
-        return print(f'slide_number expects integer, got {slide_number!r}')
-    code_after = __filter_cell_code('insert')
-    get_ipython().set_next_input(f"%%slide {slide_number}\n" + code_after, replace=True)
-    
+    print("`ipyslides.insert` is deprecated. Use `%%slide` magic or `with slide` context manager explicitly!")
+
 def insert_after(slide_number,*objs,func=display):
     """Creates as many dynamic slides as many number of `objs` are with a `func` acting on each object.
     func should handle all displays inside and no return is required, if any, only should be display/show etc.
@@ -83,13 +79,10 @@ def insert_after(slide_number,*objs,func=display):
         print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
         return objs
     
-def build(): #Set Next full input
-    ipython = get_ipython()
-    if not '__slides_mode' in ipython.user_ns.keys() or not ipython.user_ns['__slides_mode']:
-        return print('Set "convert2slides(True)" in top cell and run all cells below again.')
-    else:
-        code_after = __filter_cell_code('build')
-        ipython.set_next_input(code_after + "\n"+ dv.build_cell, replace=True)
-
-    
-    
+def build():
+    print("""`ipyslides.build` is depreacted, write following lines of code yourself\n
+from ipyslides.core import LiveSlides   
+ls = LiveSlides()
+ls.set_footer('You name, email etc.')
+ls.show()
+""")

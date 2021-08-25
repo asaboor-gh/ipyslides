@@ -1,4 +1,5 @@
 from IPython.core.display import HTML
+from ipywidgets.widgets.widget_string import Label
 import numpy as np
 from IPython.display import display, Markdown
 import ipywidgets as ipw
@@ -48,8 +49,10 @@ class NavBar:
                 btn.layout.min_width = 'max-content' #very important parameter
                 
         self.info_html = ipw.HTML('Put Your Info Here using `self.info_html.value`')
-        self.group_1 =  HBox([self.btn_setting,ipw.Box([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden'))],
-                             layout=Layout(justify_content='flex-start',align_items='center'))
+        self.group_1 =  HBox([self.btn_setting,
+                              ipw.Box([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
+                              ipw.Box([self.player()]).add_class('slides-player')
+                              ],layout=Layout(justify_content='flex-start',align_items='center'))
         self.group_2 = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
                             layout=Layout(justify_content='center',align_items='center'))
         self.build_navbar() # this is the main function to build the navbar
@@ -75,7 +78,7 @@ class NavBar:
     __call__ = show
     
     def player(self,interval=1000):
-        play = ipw.Play(min=self.prog_slider.min,max=self.prog_slider.max,interval=interval)
+        play = ipw.Play(description='Play Slides',min=self.prog_slider.min,max=self.prog_slider.max,interval=interval)
         ipw.dlink((play, 'value'), (self.prog_slider, 'value'))
         return play
         
@@ -117,13 +120,15 @@ class LiveSlides(NavBar):
         
         self.box =  VBox([self.main_style_html, ipw.HTML(animation_css),
                           self.theme_html,
-                          HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')],layout= Layout(width='auto',overflow='auto')),
-                          ],layout= Layout(width='auto',max_width='100%',height='100%',margin='auto')),
+                          HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')],layout= Layout(min_width='100%',overflow='auto')).add_class('main-box'),
+                          ],layout= Layout(width='100%',max_width='100%',height='100%')),
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important   
      
-    def show(self):
+    def show(self): 
+        if not '__slides_mode' in self.user_ns.keys() or not self.user_ns['__slides_mode']:
+            return print('Set "convert2slides(True)", then it will work.')
         try:   #JupyterLab Case, Interesting in SideCar
             from sidecar import Sidecar 
             sc = Sidecar(title='Live Presentation')
@@ -197,16 +202,16 @@ class Customize:
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
-        self.btn_fs = ipw.ToggleButton(icon='expand',value = False,layout=Layout(width='auto',height='auto',margin='auto',overflow='hidden')).add_class('sidecar-only')
-        self.btn_fs.style.button_color = 'transparent'
-        # layout = Layout(width='100%',height='70px',margin='auto',overflow_y='hidden',align_items='center',justify_content='space-between')
-        self.box = VBox([ipw.HBox([ipw.HTML('<h2>Settings</h2>'),self.btn_fs],layout=Layout(justify_content='space-between',align_items='center',min_width='max-content',min_height='50px',overflow='hidden')),
-                        self.height_slider.add_class('voila-sidecar-hidden'), 
-                        self.width_slider.add_class('voila-sidecar-hidden'),
-                        self.scale_slider,
-                        self.theme_dd,
-                        ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        ipw.HBox([self.btn_fs,self.master.player(),self.master.prog_slider],layout=Layout(width='95%',min_height='50px',justify_content='flex-start',align_items='center',margin='auto'))
+        self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only')
+        self.btn_mpl = ipw.ToggleButton(description='Matplotlib SVG Zoom',icon='toggle-off',value = False).add_class('sidecar-only')
+        self.box = VBox([ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
+                        ipw.VBox([
+                            ipw.HBox([self.btn_fs,self.btn_mpl],layout=Layout(padding='4px',height='max-content',min_height='30px')),
+                            self.height_slider.add_class('voila-sidecar-hidden'), 
+                            self.width_slider.add_class('voila-sidecar-hidden'),
+                            self.scale_slider,
+                            self.theme_dd
+                            ],layout=Layout(width='100%',height='max-content',min_height='200px'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
         with self.__instructions:
@@ -218,6 +223,7 @@ class Customize:
         self.width_slider.observe(self.__update_size,names=['value'])
         self.master.btn_setting.on_click(self.__toggle_panel)
         self.btn_fs.observe(self.update_theme)
+        self.btn_mpl.observe(self.update_theme)
         self.update_theme() #Trigger
         
     def __update_size(self,change):
@@ -257,46 +263,25 @@ class Customize:
         theme_css = theme_css.replace('__text_size__',text_size)   
         # Catch Fullscreen too.
         if self.btn_fs.value:
-            self.master.theme_html.value = theme_css.replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
+            theme_css = theme_css.replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
             self.btn_fs.icon = 'compress'
         else:
             self.master.theme_html.value = theme_css #Push CSS without Fullscreen
-            self.btn_fs.icon = 'expand' 
+            self.btn_fs.icon = 'expand'
+        # Matplotlib's SVG Zoom 
+        if self.btn_mpl.value:
+            self.btn_mpl.icon= 'toggle-on'
+            theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
+        else:
+            self.btn_mpl.icon= 'toggle-off'
+        
+        # Now Set Theme
+        self.master.theme_html.value = theme_css
 
 class MultiCols:
     def __init__(self,width_percents=[50,50]):
-        """Creat multicolumns with width spcified for each. Defuslt is two columns with equal width.
-        This object currently shows widgets only once, so be aware of that.
-        - **Example**
-            > mc = Multicols()
-            > with mc.header:
-            >   write('## H2')
-            > with mc.footer:
-            >   write('## Footer')
-            > with mc.c1: #and with c2,c3 etc
-            >   print('Something')
-            > mc.show() or mc.slide #displays it"""
-        self.slide = VBox([],layout=Layout(width='auto',overflow_x='auto'))
-        self.header = ipw.Output(layout=Layout(margin='auto',padding='2px 8px'))
-        self.footer = ipw.Output(layout=self.header.layout)
-        for i,wp in enumerate(width_percents):
-            setattr(self,f'c{i+1}',ipw.Output(layout=Layout(margin='2px 8px',width='100%')))
-        self.columns = Box([Box([getattr(self,f'c{i+1}')],layout=Layout(width=f'{wp}%',overflow='auto'))
-                                                for i,wp in enumerate(width_percents)],
-                        layout=Layout(margin='0px',justify_content = 'center')
-                        ).add_class('columns') # No need to set width. Its alright
-        
-        self.slide.children = [self.header,self.columns,self.footer]
-        from warnings import warn
-        with self.header:
-            warn('''`Multicols` will be deprecated in future, since it really can not do what is expected, \
-i.e. column layout. Also due to some issue in ipywidgets.Output, it does not save state for widgets, so when you \
-swich to other slides and return back, you see widgets lost! Use ipwyidgets boxes explicity for desired layouts of \
-widgets. Other all content can be handled via `write` and `slide`''')
-        
-    def show(self):
-        return display(self.slide)   
-    __call__ = show  
+        print("`Multicols` is deprecated. Use `write` or ipywidgets' boxes for desired layouts!")
+
     
 def collect_slides():
     """Collect cells with variables `__slide_[N]` and `__next_to_[N]` in user's namespace."""

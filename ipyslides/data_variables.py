@@ -1,5 +1,5 @@
 title_page = '''from IPython.display import display, Markdown
-from ipyslides import load_magics, convert2slides, write_title
+from ipyslides import load_magics, convert2slides, write_title, insert_after
 from ipyslides.utils import write,plt2html,print_context, slide, fmt2cols
 
 # Command below registers all the ipyslides magics that are used in this file
@@ -7,31 +7,24 @@ load_magics()
 # Set this to True for Slides output
 convert2slides(False) #Set this to True for Slides output
 
-cols = fmt2cols("""> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
-> `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
-> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.""",
-"""> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-> For JupyterLab >=3, do `pip install sidecar`.""",60,40)
-
 write_title("<div style='width:10px;height:100%;background:olive;'></div>",
 f"""# Interactive Slides  
 <em style='color:red;'> Author: Abdul Saboor</em>
-{cols}
-- Edit and test cells in `convert2slides(False)` mode.
-- Run cells in `convert2slides(True)` mode from top to bottom. 
-- `%%slide integer` on cell top auto picks slide or you can use `ipysildes.insert(slide_number)`
-- ipyslides.insert_after(slide_number,*objs,func) generates slides dynamically handled by `func`.
-
-```python
-import ipyslides as isd 
-isd.initilize() #This will create a title page and parameters in same cell
-isd.write_title() #create a rich content multicols title page.
-isd.insert(1) #This will create a slide in same cell where you run it 
-isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
-isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
-```
+> Read instructions in left panel by clicking on left-bottom button.
 """,width_percents = [5,95])
+for i in range(1,5):
+    with slide(i):
+        write(f'## Slide {i} Title')
+
+# Build
+from ipyslides.core import  LiveSlides 
+ls = LiveSlides()
+ls.set_footer('Author: Abdul Saboor')
+ls.align8center(True) # Set False to align top-left corner
+ls.show() #Use this only once in case you use Voila. 
+#Create slides with %%slide, insert_after now, will be updated on cell run.
 '''
+
 # CSS for ipyslides
 light_root = ''':root {
 	--heading-fg: navy;
@@ -89,8 +82,21 @@ def style_html(style_root = inherit_root):
 	font-size: var(--text-size);
 	max-width:100vw; /* This is very important */
  }
-.SlidesWrapper .panel { background: var(--quote-bg);border:4px solid var(--text-bg);}
-.SlidesWrapper .panel .panel-text { background: var(--text-bg);}
+.SlidesWrapper .panel {
+    background:var(--text-bg) !important;
+    position:absolute;
+    border:none;
+    padding: 8px !important;
+    width: 60% !important;
+    z-index:101;
+    top:0px !important;
+    left:0px !important;
+    box-shadow: 0 0 20px 20px var(--quote-bg);
+}
+.SlidesWrapper .panel>div:first-child {
+    box-shadow: inset 0 0 8px var(--quote-bg);
+    padding:4px;
+}
 .SlidesWrapper .columns {width:max-content;max-width:95%;display:inline-flex;flex-direction:row;column-gap:2em;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
@@ -112,8 +118,18 @@ def style_html(style_root = inherit_root):
     opacity: 1;
     background: var(--quote-bg);
 }
+.slides-player {
+    padding-left:32px;
+    width:32px;
+    opacity:0;
+}
+.slides-player:hover, .slides-player:focus {
+    opacity:1;
+    width:auto;
+}
 .NavWrapper .nav-box>div:last-child {justify-content: flex-end !important;}
 @media screen and (max-width: 702px) {
+    .SlidesWrapper .panel {width:100% !important;}
   	.NavWrapper .nav-box {
     	display:block;
     	height: max-content !important;
@@ -201,11 +217,11 @@ def style_html(style_root = inherit_root):
 	background: var(--text-bg)!important;
 }
 .SlidesWrapper .widget-play .jupyter-button {
-    background: var(--quote-bg)!important;
+    background: var(--quote-bg);
     color: var(--accent-color)!important;
     border-radius: 0px;
 } 
-.sidecar-only {font-size: 24px !important;background: transparent;box-shadow: none;min-width:max-content;}
+.sidecar-only {background: transparent;box-shadow: none;min-width:max-content;}
 .sidecar-only:hover, .sidecar-only:focus {
     animation-name: example; animation-duration: 2s;
     animation-timing-function: ease-in-out;}
@@ -234,41 +250,6 @@ div.fig-container>svg{
   transition: transform .2s; /* Animation */
 }   
 </style>'''
-
-build_cell = """# Only this cell should show output. For JupyterLab >=3, pip install sidecar for fullscreen access
-# You can also double click on output and select `Create New View for Output` that will let you enable fullscreen.
-# You can simply bring a cell output to fullscreen in jupyterlab with ipyslides >= 0.7
-# From version >= 0.7.2, you can run this cell anywhere,even in start. Whenever you execute a cell containing 
-# write_title, %%slide, with slide or insert_after, slides get updated so, no need to build again.
-# ------ Slides End Here -------- 
-from ipyslides.core import  LiveSlides 
-ls = LiveSlides()
-ls.set_footer('Author: Abdul Saboor')
-ls.align8center(True) # Set False to align top-left corner
-ls.show()"""
-
-settings_instructions = '''### Custom Theme
-For custom themes, change above theme dropdown to `Custom`.
-You will see a `custom.css` in current folder,edit it and chnage
-font scale or set theme to another value and back to `Custom` to take effect. 
-> Note: `custom.css` is only picked from current directory.
-          
---------
-For matching plots style with theme, run following code in a cell above slides.
-### Matplotlib
-```python
-import matplotlib.pyplot as plt
-plt.style.use('ggplot')
-#plt.style.available() #gives styles list
-```
-### Plotly
-```python
-import plotly.io as pio
-pio.templates.default = "plotly_white"
-#pio.templates #gives list of styles
-```
-> Tip: Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
-'''
 
 animation_css = '''<style>
 .textfonts :is(h1,h2,h3,h4,h5,h6,p,ul,li,ol,blockquote,q,table,pre) {
@@ -339,8 +320,10 @@ fullscreen_css = '''<style>
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
-.SlidesWrapper .voila-sidecar-hidden{display: none;}
+.SlidesWrapper .voila-sidecar-hidden{display: none;} 
+</style>'''
 
+mpl_fs_css = '''<style>
 /* Pop out matplotlib's SVG on click/hover */
 div.fig-container>svg:focus, div.fig-container>svg:hover{
     position:fixed;
@@ -349,7 +332,7 @@ div.fig-container>svg:focus, div.fig-container>svg:hover{
     z-index:100;
     width: calc(100vw - 200px);
     height: 100%;
-    box-shadow: 500px 500px 1000px 1000px rgba(0.8,0.9,0.7,0.8); 
+    box-shadow: 0px 0px 200px 200px rgba(15,20,10,0.8); 
 }  
 @media screen and (max-width: 702px) {
     div.fig-container>svg:focus, div.fig-container>svg:hover{
@@ -359,4 +342,52 @@ div.fig-container>svg:focus, div.fig-container>svg:hover{
     left:0px;
     }
 } 
-</style>'''
+</style>
+'''
+
+# ONLY INSTRUCTIONS BELOW
+
+more_instructions =f'''# How to Use
+- Edit and test cells in `convert2slides(False)` mode.
+- Run cells in `convert2slides(True)` mode from top to bottom. 
+- `%%slide integer` on cell top auto picks slide.
+- ipyslides.insert_after(slide_number,*objs,func) generates slides dynamically handled by `func`.
+
+```python
+import ipyslides as isd 
+isd.initilize() #This will create a title page and parameters in same cell
+isd.write_title() #create a rich content multicols title page.
+isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
+slides = isd.core.LiveSlides() #Collects and build slides, auto refresh when content of slide is changed.
+slides.show() # Use it once to see slides
+```
+> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
+> `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
+> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.""",
+"""> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
+> For JupyterLab >=3, do `pip install sidecar`.
+'''
+
+settings_instructions = f'''{more_instructions}
+### Custom Theme
+For custom themes, change above theme dropdown to `Custom`.
+You will see a `custom.css` in current folder,edit it and chnage
+font scale or set theme to another value and back to `Custom` to take effect. 
+> Note: `custom.css` is only picked from current directory.
+          
+--------
+For matching plots style with theme, run following code in a cell above slides.
+### Matplotlib
+```python
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+#plt.style.available() #gives styles list
+```
+### Plotly
+```python
+import plotly.io as pio
+pio.templates.default = "plotly_white"
+#pio.templates #gives list of styles
+```
+> Tip: Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
+'''

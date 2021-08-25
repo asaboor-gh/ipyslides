@@ -10,15 +10,13 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 - You can elevate simple cell output to fullscreen in Jupyterlab >= 3.
 - You can use `with slide(<N>)` context manager to build multiple slides in for loop from a single cell. This
 context manager is equivalent to `%%slide` so make sure none of them overwrite each other.
-- Widgets display is persistent in `%%slide`,`with slide` and `insert_after` mode, however `multicols` display ipywidgets once and then they disappear (No idea yet why it happens), so avoid displaying widgets in mutlicols mode.
 
-> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
-> `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
-> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.
-
+- From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
+    > As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.
+- From Version >= 0.7.5, slides building is simplified to only single command `ipyslides.initialize()`. You can zoom in matplotlib figures embed via `ipyslides.utils.plt2html`.
 # Install
 ```shell
-> pip install ipyslides
+> pip install ipyslides>=0.7.5
 ```
 For development install, clone this repository and then
 ```shell
@@ -39,11 +37,12 @@ isd.initilize() #This will create a title page and parameters in same cell
 
 isd.write_title() #create a rich content multicols title page.
 
-isd.insert(1) #This will create a slide in same cell where you run it 
+#with slide(<slide number>) or %%slide <slide number> for slides building
 
 isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
 
-isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
+slides = isd.core.LiveSlides()
+slides.show()
 ```
 > Each command is replaced by its output, so that when you run next time, you don't get duplicate slides. 
 
@@ -62,7 +61,5 @@ You can embed anything that you can include in Jupyter notebook like ipywidgets,
 - Version >= 0.6.3 enables full size output in Jupyterlab's `Create New Output View` command. Then in Setting panel, you can toggle fullscreen.
 - Version >= 0.7.0 do not require to install sidecar or New Output view. You can make slides fullscreen just from cell output! Note that all this is currently supported only in Jupyterlab, other editors or classic notebook are not supported. 
 
-# Multi Column Support
-Starting version 0.2.0, you can use `MultiCols` class to display connected content like `ipwidgets` in columns. 
 
 > Very thankful to [Python-Markdown](https://python-markdown.github.io/) which enabled to create `write` command as well as syntax highliting.
