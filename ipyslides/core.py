@@ -6,6 +6,8 @@ import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
 import datetime, re, os #re for updating font-size and slide number
+from IPython.utils.capture import capture_output
+from contextlib import contextmanager
 from .utils import write
 
 def custom_progressbar(intslider):
@@ -84,25 +86,28 @@ class NavBar:
         
          
 class LiveSlides(NavBar):
-    def __init__(self,animation_css = dv.animation_css):
+    def __init__(self,magic_suffix='',animation_css = dv.animation_css):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
+            - magic_suffix: str, append a string to %%slide and %%title in case you have many instances of this class, they do not overwrite each other's magics.
+                    So for LiveSlides('A'), use %%slideA, %%titleA, for LiveSlides('B'), use %%slideB, %%titleB and so on.
             - animation_css: CSS for animation. Set to '' if not animating. You can define yourself by editing `ipysildes.data_variables.animation_css`.
         - **Example**
-            ```python
-            #Run each line in separate cell, you need to run cell again when a cell code chnages. 
+            ```python 
             import ipyslides as isd 
-            isd.initilize() #This will create a title page and parameters in same cell
-            isd.write_title() #create a rich content multicols title page.
-            isd.insert(1) #This will create a slide in same cell where you run it 
-            isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
-            isd.build() #This will build the presentation cell. After this go top and set `convert2slides(True)` and run all below.
-            #Last command will put this LiveSlide in cell automatically, or you can put it yourself. 
+            isd.initilize() #This will generate code in same cell including this class, which is self explainatory 
             ```
         """
-        self.iterable = collect_slides() # Collect internally
-        self.user_ns = get_ipython().user_ns 
-        self.user_ns['__LiveSlides__'] = self # Inject variable that refresh slide on content change
+        self.shell = get_ipython()
+        self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
+        self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
+        self.user_ns = self.shell.user_ns 
+        self.__slides_mode = False
+        self.__slides_title_page = '#### Create title page using `%%title` magic or `self.title` context manager.'
+        self.__slides_dict = {} # Initialize slide dictionary
+        self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
+        
+        self.iterable = self.__collect_slides() # Collect internally
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
         
         _max = len(self.iterable) if self.iterable else 1
@@ -127,8 +132,8 @@ class LiveSlides(NavBar):
         self.box.add_class('SlidesWrapper') #Very Important   
      
     def show(self): 
-        if not '__slides_mode' in self.user_ns.keys() or not self.user_ns['__slides_mode']:
-            return print('Set "convert2slides(True)", then it will work.')
+        if not self.__slides_mode:
+            return print('Set "self.convert2slides(True)", then it will work.')
         try:   #JupyterLab Case, Interesting in SideCar
             from sidecar import Sidecar 
             sc = Sidecar(title='Live Presentation')
@@ -166,11 +171,10 @@ class LiveSlides(NavBar):
             self.out.clear_output(wait=True)
             with self.out:
                 if self.prog_slider.value == 0:
-                    title = self.user_ns.get('__slides_title_page','#### No Title page found. Create one using `write_title` in a cell.')
-                    if isinstance(title,str):
-                        write(title) #Markdown String
+                    if isinstance(self.__slides_title_page, str):
+                        write(self.__slides_title_page) #Markdown String 
                     else:
-                        write(*title['args'],**title['kwargs']) #Ipython Captured Output
+                        self.__slides_title_page.show() #Ipython Captured Output
                 else:
                     self.__display_slide()
                     
@@ -184,12 +188,104 @@ class LiveSlides(NavBar):
         self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
         
     def refresh(self):
-        "Auto Refresh whenever you create new slide through __LiveSlides__ in user namespace or you can force refresh it"
-        self.iterable = collect_slides()
+        "Auto Refresh whenever you create new slide or you can force refresh it"
+        self.iterable = self.__collect_slides()
         self.N = len(self.iterable) if self.iterable else 1 #N an max both need to be updated
         self.prog_slider.max = self.N
         self.__update_content(True) # Force Refresh
+    
+    # defining magics and context managers
+    
+    def __slide(self,line,cell):
+        "Turns to cell magic `slide` to capture slide. Moves to this slide when executed."
+        line = line.strip() #VSCode bug to inclue \r in line
+        if line and not line.isnumeric():
+            return print(f'You should use %%slide integer, not %%slide {line}')
+        if self.__slides_mode:
+            self.shell.run_cell_magic('capture',line,cell)
+            if line: #Only keep slides with line number
+                self.__slides_dict[line] = self.shell.user_ns[line]
+                del self.shell.user_ns[line] # delete the line from shell
+                self.refresh()
+                self.prog_slider.value = int(line) # Move there
+        else:
+            self.shell.run_cell(cell)
+    
+    @contextmanager
+    def slide(self,slide_number):
+        "Use this context manager to generate any number of slides from a cell"
+        if not isinstance(slide_number,int):
+            return print(f'slide_number expects integer, got {slide_number!r}')
+        with capture_output() as cap:
+            yield
+        # Now Handle What is captured
+        if not self.__slides_mode:
+            cap.show()
+        else:
+            self.__slides_dict[f'{slide_number}'] = cap 
+            self.refresh()
+    
+    def __title(self,line,cell):
+        "Turns to cell magic `title` to capture title"
+        if self.__slides_mode:
+            self.shell.run_cell_magic('capture','title_output',cell)
+            self.__slides_title_page = self.shell.user_ns['title_output']
+            del self.shell.user_ns['title_output'] # delete from shell
+            self.refresh()
+        else:
+            self.shell.run_cell(cell)
+            
+    @contextmanager
+    def title(self):
+        "Use this context manager to write title"
+        with capture_output() as cap:
+            yield
+        # Now Handle What is captured
+        if not self.__slides_mode:
+            cap.show()
+        else:
+            self.__slides_title_page = cap 
+            self.refresh()
         
+    def insert_after(self,slide_number,*objs,func=display):
+        """Creates as many dynamic slides as many number of `objs` are with a `func` acting on each object.
+        `func` should handle all displays inside and no return is required, if any, only should be display/show etc."""
+        if not isinstance(slide_number,int):
+            return print(f'slide_number expects integer, got {slide_number!r}')
+        
+        self.__dynamicslides_dict[f'd{slide_number}'] = {'objs': objs,'func':func}
+        self.refresh() # Content chnage refreshes it.
+
+        if not self.__slides_mode:
+            print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
+            return objs
+        
+    def convert2slides(self,b=False):
+        "Turn ON/OFF slides vs editing mode. Should be in same cell as `LiveSLides`"
+        self.__slides_mode = b
+        
+    def __collect_slides(self):
+        """Collect cells for an instance of LiveSlides."""
+        if not self.__slides_mode:
+            return [] # return empty in any case
+
+        dynamic_slides = [k.replace('d','') for k in self.__dynamicslides_dict.keys()]
+        # If slide number is mistaken, still include that. 
+        all_slides = [int(k) for k in [*self.__slides_dict.keys(), *dynamic_slides]]
+
+        try: #handle dynamic slides if empty
+            _min, _max = min(all_slides), max(all_slides) + 1
+        except:
+            _min, _max = 0, 0
+        slides_iterable = []
+        for i in range(_min,_max):
+            if f'{i}' in self.__slides_dict.keys():
+                slides_iterable.append({'slide':self.__slides_dict[f'{i}']}) 
+            if f'd{i}' in self.__dynamicslides_dict.keys():
+                __dynamic = self.__dynamicslides_dict[f'd{i}']
+                slides = [{'slide':obj,'func':__dynamic['func']} for obj in __dynamic['objs']]
+                slides_iterable = [*slides_iterable,*slides]        
+        return tuple(slides_iterable)
 
 class Customize:
     def __init__(self,instance_LiveSlides):
@@ -282,30 +378,6 @@ class MultiCols:
     def __init__(self,width_percents=[50,50]):
         print("`Multicols` is deprecated. Use `write` or ipywidgets' boxes for desired layouts!")
 
-    
-def collect_slides():
-    """Collect cells with variables `__slide_[N]` and `__next_to_[N]` in user's namespace."""
-    ns = get_ipython().user_ns
-    if not '__slides_mode' in ns.keys() or not ns['__slides_mode']:
-        return print('Set "convert2slides(True)" in top cell and run again.')
-    
-    dynamic_slides = [k.replace('d','') for k in ns['__dynamicslides_dict'].keys()]
-    # If slide number is mistaken, still include that. 
-    all_slides = [int(k) for k in [*ns['__slides_dict'].keys(), *dynamic_slides]]
-    
-    try: #handle dynamic slides if empty
-        _min, _max = min(all_slides), max(all_slides) + 1
-    except:
-        _min, _max = 0, 0
-    slides_iterable = []
-    for i in range(_min,_max):
-        if f'{i}' in ns['__slides_dict'].keys():
-            slides_iterable.append({'slide':ns['__slides_dict'][f'{i}']}) 
-        if f'd{i}' in ns['__dynamicslides_dict'].keys():
-            __dynamic = ns['__dynamicslides_dict'][f'd{i}']
-            slides = [{'slide':obj,'func':__dynamic['func']} for obj in __dynamic['objs']]
-            slides_iterable = [*slides_iterable,*slides]        
-    return tuple(slides_iterable)
 
 def get_cell_code(this_line=True,magics=False,comments=False,lines=None):
     "Return current cell's code in slides for educational purpose. `lines` should be list/tuple of line numbers to include if filtered."

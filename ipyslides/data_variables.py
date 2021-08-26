@@ -1,30 +1,4 @@
-title_page = '''from IPython.display import display, Markdown
-from ipyslides import load_magics, convert2slides, write_title, insert_after
-from ipyslides.utils import write,plt2html,print_context, slide, fmt2cols
-
-# Command below registers all the ipyslides magics that are used in this file
-load_magics()
-# Set this to True for Slides output
-convert2slides(False) #Set this to True for Slides output
-
-write_title("<div style='width:10px;height:100%;background:olive;'></div>",
-f"""# Interactive Slides  
-<em style='color:red;'> Author: Abdul Saboor</em>
-> Read instructions in left panel by clicking on left-bottom button.
-""",width_percents = [5,95])
-for i in range(1,5):
-    with slide(i):
-        write(f'## Slide {i} Title')
-
-# Build
-from ipyslides.core import  LiveSlides 
-ls = LiveSlides()
-ls.set_footer('Author: Abdul Saboor')
-ls.align8center(True) # Set False to align top-left corner
-ls.show() #Use this only once in case you use Voila. 
-#Create slides with %%slide, insert_after now, will be updated on cell run.
-'''
-
+# Author: Abdul Saboor
 # CSS for ipyslides
 light_root = ''':root {
 	--heading-fg: navy;
@@ -361,9 +335,9 @@ isd.insert_after(1,*objs,func) #This will create as many slides after the slide 
 slides = isd.core.LiveSlides() #Collects and build slides, auto refresh when content of slide is changed.
 slides.show() # Use it once to see slides
 ```
-> From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing 
-> `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
-> As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.""",
+- From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing a slide, slides get updated, so no need to build again.
+- From version >= 0.8.0, LiveSlides should be only in top cell as it collects slides too in local namespace.
+> Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.""",
 """> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
 > For JupyterLab >=3, do `pip install sidecar`.
 '''

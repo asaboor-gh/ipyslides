@@ -1,88 +1,34 @@
-__version__ = '0.7.5'
+__version__ = '0.8.0'
 
-from IPython.core.magic import Magics, magics_class, cell_magic
-from IPython.display import display
 from . import data_variables as dv
 
-from .core import display_cell_code, get_cell_code, LiveSlides
-from .utils import write
-__all__ = ['initialize', 'insert_title', 'insert', 'insert_after', 'build',
-           'display_cell_code','get_cell_code','LiveSlides','write']
+__all__ = ['initialize','initial_code']
 
-def _refresh_slides(user_ns):
-    if '__LiveSlides__' in user_ns.keys():
-        user_ns['__LiveSlides__'].refresh()
-@magics_class
-class SlidesMagics(Magics):
-    @cell_magic 
-    def slide(self,line,cell):
-        line = line.strip() #VSCode bug to inclue \r in line
-        if line and not line.isnumeric():
-            return print(f'You should use %%slide integer, not %%slide {line}')
-        if '__slides_mode' in self.shell.user_ns.keys() and self.shell.user_ns['__slides_mode']:
-            self.shell.run_cell_magic('capture',line,cell)
-            if line: #Only keep slides with line number
-                self.shell.user_ns['__slides_dict'] = self.shell.user_ns.get('__slides_dict',{}) #make Sure to get it form shell
-                self.shell.user_ns['__slides_dict'][line] = self.shell.user_ns[line]
-                del self.shell.user_ns[line] # delete the line from shell
-                _refresh_slides(self.shell.user_ns) # Content change refreshes it.
-        else:
-            self.shell.run_cell(cell)
+initial_code = '''import ipyslides as isd
+from ipyslides.utils import write, plt2html, print_context, fmt2cols
 
+from ipyslides.core import  LiveSlides, display_cell_code, get_cell_code
+ls = LiveSlides() # This registers %%slide and %%title magics as bonus
+
+# Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB
+# so that they do not overwite each other's slides.
+
+ls.convert2slides(False) #Set this to True for Slides output
+ls.set_footer('Author: Abdul Saboor')
+ls.align8center(True) # Set False to align top-left corner
+
+with ls.title():
+    write('# Title Page')
     
-def load_magics():
-    get_ipython().register_magics(SlidesMagics)
-    
-def convert2slides(b=False):
-    "Turn ON/OFF slides vs editing mode. Should be in a cell above title and slides."
-    shell = get_ipython()
-    # Initialize slides collectors but don't overwite to avoid losing already done cells
-    shell.user_ns['__dynamicslides_dict'] = shell.user_ns.get('__dynamicslides_dict',{})
-    shell.user_ns['__slides_dict'] = shell.user_ns.get('__slides_dict',{})
-    shell.user_ns['__slides_mode'] = b
-    
-def __filter_cell_code(remove_tag):
-    current_cell_code = get_ipython().get_parent()['content']['code'].splitlines()
-    return '\n'.join([line for line in current_cell_code if remove_tag not in line])
-            
+for i in range(1,5):
+    with ls.slide(i):
+        write(f'## Slide {i} Title')
+
+ls.show() #Use this only once in case you use Voila. 
+#Create slides with %%slide, insert_after now, will be updated on cell run.
+'''            
 def initialize():
     ipython = get_ipython()
-    ipython.register_magics(SlidesMagics)
-    code_after = __filter_cell_code('initialize')
-    ipython.set_next_input(f'{code_after}\n\n{dv.title_page}', replace= True)
-
-def write_title(*colums,width_percents=None):
-    "Write title page, supports multicolumns and inline HTML in markdown of each column." 
-    shell = get_ipython()
-    mode = shell.user_ns.get('__slides_mode',False)
-    if mode:
-        shell.user_ns['__slides_title_page'] = {'args':colums, 'kwargs':{'width_percents':width_percents}} 
-        _refresh_slides(shell.user_ns) # Content change refreshes it. 
-    else:
-        write(*colums,width_percents=width_percents)
-
-def insert(slide_number):
-    print("`ipyslides.insert` is deprecated. Use `%%slide` magic or `with slide` context manager explicitly!")
-
-def insert_after(slide_number,*objs,func=display):
-    """Creates as many dynamic slides as many number of `objs` are with a `func` acting on each object.
-    func should handle all displays inside and no return is required, if any, only should be display/show etc.
-    Any object which is handled by function `display_item` at end or have a method `show` is valid."""
-    if not isinstance(slide_number,int):
-        return print(f'slide_number expects integer, got {slide_number!r}')
-    shell = get_ipython()
-    shell.user_ns['__dynamicslides_dict'] = shell.user_ns.get('__dynamicslides_dict',{}) #make Sure to get it form shell
-    shell.user_ns['__dynamicslides_dict'][f'd{slide_number}'] = {'objs': objs,'func':func}
-    _refresh_slides(shell.user_ns) # Content chnage refreshes it.
-    
-    if not shell.user_ns['__slides_mode']:
-        print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
-        return objs
-    
-def build():
-    print("""`ipyslides.build` is depreacted, write following lines of code yourself\n
-from ipyslides.core import LiveSlides   
-ls = LiveSlides()
-ls.set_footer('You name, email etc.')
-ls.show()
-""")
+    current_cell_code = get_ipython().get_parent()['content']['code'].splitlines()
+    code_after = '\n'.join([line for line in current_cell_code if 'initialize' not in line])
+    ipython.set_next_input(f'{code_after}\n{initial_code}', replace= True)

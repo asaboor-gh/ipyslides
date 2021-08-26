@@ -5,6 +5,23 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
+# Changes in Version 0.8
+- Before this version, slides were collected using global namespace, which only allowed one presentation per
+notebook. Now slides are stored in local namespace, so no restriction on number of slides per notebook.
+- To acheive local namespace, functions are moved under class LiveSlide and it registers magics too. So now you will
+be able to use `%%slide, %%title` magics. Now you will use context managers as follows
+```python
+ls = LiveSlides()
+ls.convert2slides(True)
+
+with ls.title():
+    ...
+with ls.slide(<slide number>):
+    ...
+ls.insert_after(<slide number>,*objs, func)
+```
+- `ipyslides.initialize()` can write all above code in same cell. 
+> Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.
 # New in Version >= 0.7
 - LiveSlides now collect slides internally, so removing a lot of code user had to put. 
 - You can elevate simple cell output to fullscreen in Jupyterlab >= 3.
@@ -12,7 +29,7 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 context manager is equivalent to `%%slide` so make sure none of them overwrite each other.
 
 - From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing `write_title`, `%%slide`, `with slide` or `insert_after`, slides get updated, so no need to build again.
-    > As a side effect of this, you can run `LiveSlides` or `build` command anywhere, no order required anymore.
+- From version >= 0.8.0, LiveSlides should be only in top cell as it collects slides too in local namespace.
 - From Version >= 0.7.5, slides building is simplified to only single command `ipyslides.initialize()`. You can zoom in matplotlib figures embed via `ipyslides.utils.plt2html`.
 # Install
 ```shell
@@ -29,22 +46,6 @@ See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides),
 [Version 0.7+](https://www.kaggle.com/massgh/ipyslides-0-7). You can edit it yourself.
 ![Slides2Video](kaggle.gif)
 
-# Usage
-```python
-import ipyslides as isd 
-
-isd.initilize() #This will create a title page and parameters in same cell
-
-isd.write_title() #create a rich content multicols title page.
-
-#with slide(<slide number>) or %%slide <slide number> for slides building
-
-isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
-
-slides = isd.core.LiveSlides()
-slides.show()
-```
-> Each command is replaced by its output, so that when you run next time, you don't get duplicate slides. 
 
 > For jupyterlab >= 3, do pip install sidecar for better presenting mode.
 

@@ -14,24 +14,6 @@ def print_context():
     with capture_output() as cap:
         yield
     display(Markdown(f'```shell\n{cap.stdout}\n{cap.stderr}```'))
-    
-@contextmanager
-def slide(slide_number):
-    "Use this context manager to generate any number of slides from a cell"
-    if not isinstance(slide_number,int):
-        return print(f'slide_number expects integer, got {slide_number!r}')
-    with capture_output() as cap:
-        yield
-    # Now Handle What is captured
-    ns = get_ipython().user_ns
-    mode = ns.get('__slides_mode',False)
-    if not mode:
-        cap.show()
-    else:
-        ns['__slides_dict'][f'{slide_number}'] = cap 
-        # Refresh changes there.
-        if '__LiveSlides__' in ns.keys():
-            ns['__LiveSlides__'].refresh()
 
 def syntax_css():
     keywords = 'n k kc mi mf kn nn p c1 o nf sa s1 si nb nc se'.split()
