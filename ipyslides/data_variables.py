@@ -322,23 +322,26 @@ div.fig-container>svg:focus, div.fig-container>svg:hover{
 # ONLY INSTRUCTIONS BELOW
 
 more_instructions =f'''# How to Use
-- Edit and test cells in `convert2slides(False)` mode.
-- Run cells in `convert2slides(True)` mode from top to bottom. 
-- `%%slide integer` on cell top auto picks slide.
-- ipyslides.insert_after(slide_number,*objs,func) generates slides dynamically handled by `func`.
+Assuming you have `ls = LiveSlides()`
+- Edit and test cells in `ls.convert2slides(False)` mode.
+- Run cells in `ls.convert2slides(True)` mode from top to bottom. 
+- `%%slide integer` on cell top auto picks slide and %%title auto picks title page.
+- You can use context managers like `ls.slide()` and `ls.title()` in place of `%%slide` and `%%title` respectively.
 
 ```python
 import ipyslides as isd 
 isd.initilize() #This will create a title page and parameters in same cell
-isd.write_title() #create a rich content multicols title page.
-isd.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
 slides = isd.core.LiveSlides() #Collects and build slides, auto refresh when content of slide is changed.
+slides.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
+#create a rich content title page with `%%title` or \n`with title():\n    ...`\n context manager.
 slides.show() # Use it once to see slides
 ```
 - From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing a slide, slides get updated, so no need to build again.
 - From version >= 0.8.0, LiveSlides should be only in top cell as it collects slides too in local namespace.
-> Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.""",
-"""> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
+> Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.
+
+> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
+
 > For JupyterLab >=3, do `pip install sidecar`.
 '''
 

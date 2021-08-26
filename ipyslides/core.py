@@ -50,7 +50,7 @@ class NavBar:
                 btn.style.button_color= 'transparent'
                 btn.layout.min_width = 'max-content' #very important parameter
                 
-        self.info_html = ipw.HTML('Put Your Info Here using `self.info_html.value`')
+        self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
         self.group_1 =  HBox([self.btn_setting,
                               ipw.Box([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
                               ipw.Box([self.player()]).add_class('slides-player')
