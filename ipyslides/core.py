@@ -1,7 +1,5 @@
-from IPython.core.display import HTML
-from ipywidgets.widgets.widget_string import Label
 import numpy as np
-from IPython.display import display, Markdown
+from IPython.display import display
 import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
@@ -103,14 +101,17 @@ class LiveSlides(NavBar):
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
         self.user_ns = self.shell.user_ns 
         self.__slides_mode = False
-        self.__slides_title_page = '#### Create title page using `%%title` magic or `self.title` context manager.'
+        self.__slides_title_page = '''## Create title page using `%%title` magic or `self.title()` context manager.\n> Author: Abdul Saboor\n<div>
+        <h4 style="color:green;">Create Slides using <pre>%%slide</pre> or with <pre>self.slide(<slide number>)</pre> context manager.</h4>
+        <h4 style="color:olive;">Read instructions by clicking on left-bottom button</h4></div>
+        '''
         self.__slides_dict = {} # Initialize slide dictionary
         self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
         
         self.iterable = self.__collect_slides() # Collect internally
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
         
-        _max = len(self.iterable) if self.iterable else 1
+        _max = len(self.iterable) if self.iterable else 0
         super().__init__(N=_max)
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
@@ -165,7 +166,7 @@ class LiveSlides(NavBar):
             item['slide'].show() #show ipython capture/MultiCols/slide context or if item has a show method with display. 
            
     def __update_content(self,change):
-        if self.iterable and change:
+        if self.__slides_title_page or (self.iterable and change):
             self.info_html.value = re.sub('>\d+\s+/\s+\d+<',f'>{self.prog_slider.value} / {self.N}<',self.info_html.value) #Slide Number
             self.info_html.value = self.info_html.value.replace('</p>', '| Loading...</p>')
             self.out.clear_output(wait=True)
@@ -190,7 +191,7 @@ class LiveSlides(NavBar):
     def refresh(self):
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self.iterable = self.__collect_slides()
-        self.N = len(self.iterable) if self.iterable else 1 #N an max both need to be updated
+        self.N = len(self.iterable) if self.iterable else 0 #N an max both need to be updated
         self.prog_slider.max = self.N
         self.__update_content(True) # Force Refresh
     

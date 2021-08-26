@@ -336,13 +336,15 @@ slides.insert_after(1,*objs,func) #This will create as many slides after the sli
 #create a rich content title page with `%%title` or \n`with title():\n    ...`\n context manager.
 slides.show() # Use it once to see slides
 ```
-- From version >= 0.7.2, auto refresh is enabled. Whenever you execute a cell containing a slide, slides get updated, so no need to build again.
-- From version >= 0.8.0, LiveSlides should be only in top cell as it collects slides too in local namespace.
+- LiveSlides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 > Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.
 
 > Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
 
-> For JupyterLab >=3, do `pip install sidecar`.
+> For JupyterLab >=3, you can do `pip install sidecar` as bonus.
+
+> Hover between slide switching buttons to see a slider, if you click on circle move mouse without clicking anywhere,
+> you can use keyboard to navigate slide. 
 '''
 
 settings_instructions = f'''{more_instructions}

@@ -1,12 +1,9 @@
-from IPython.core.display import clear_output
-from IPython.core.getipython import get_ipython
 from markdown import markdown
 from IPython.display import HTML, display, Markdown
 import matplotlib.pyplot as plt
 from io import BytesIO
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
-import ipywidgets as ipw
 
 @contextmanager
 def print_context():
