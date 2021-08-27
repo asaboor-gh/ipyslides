@@ -70,7 +70,7 @@ def plotly2html(fig):
         </script>
         </div>"""
         
-def plt2html(plt_fig=None,transparent=True):
+def plt2html(plt_fig=None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
     - **Parameters**
         - plt_fig    : Matplotlib's figure instance, auto picks as well.
@@ -83,6 +83,8 @@ def plt2html(plt_fig=None,transparent=True):
     plt.clf() # Clear image to avoid other display
     plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
+    if caption:
+        svg = svg + f'<p style="font-size:70% !important;">{caption}</p>'
     return f"<div class='fig-container'>{svg}</div>"
 
 

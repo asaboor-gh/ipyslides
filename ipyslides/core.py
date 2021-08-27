@@ -11,17 +11,11 @@ from .utils import write
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
     html = ipw.HTML('''<style>
-     .NavWrapper .nav-box .menu, .NavWrapper .nav-box .menu.big-menu  {font-size:24px !important; overflow:hidden;}
+     .NavWrapper .nav-box .menu, .NavWrapper .nav-box .menu.big-menu  {
+         font-size:24px !important; overflow:hidden;opacity:0.4;z-index:55;}
      .NavWrapper .nav-box .menu.big-menu {font-size:55px !important;}
-     .NavWrapper .nav-box .menu:hover {
-            overflow: hidden;
-            animation-name: example; animation-duration: 2s;
-            animation-timing-function: ease-in-out;
-    }
-    @keyframes example {
-            from { opacity: 0.2;}
-            to {opacity: 1;}
-    }
+     .NavWrapper .nav-box .menu:hover {opacity:1;}
+
     .NavWrapper .nav-box {z-index:50;overflow: hidden;}
     .NavWrapper .widget-hprogress {height:4px; !impportant;}
     .NavWrapper, .NavWrapper>div {padding:0px;margin:0px;overflow:hidden;max-width:100%;}
