@@ -20,47 +20,48 @@ def syntax_css():
     css = '.codehighlite span {font-family: Monaco,"Lucida Console","Courier New";}\n' + '\n'.join(css)
     return "<style>\n{}\n</style>".format(css)
     
-    
-def write(*colums,width_percents=None): 
-    '''Writes markdown strings or IPython object with method `_repr_html_` in each column of same with. If width_percents is given, column width is adjusted.
+def __fix_repr(obj):
+    if not isinstance(obj,str):
+        _reprs_ = ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex')
+        _repr_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in _reprs_] if rep]   
+        if _repr_:
+            return _repr_[0]()
+        else:
+            return f"<p style='color:red;'>Can't write object {obj} it is not a string or does not have `_repr_{_reprs_!r}_` method</p>"
+    else:
+        _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
+        return markdown(_obj.replace('\n','  \n'),extensions=['fenced_code','tables','codehilite']) 
+        
+def write(*columns,width_percents=None): 
+    '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
     
     You can given a code object from ipyslides.get_cell_code() to it, syntax highlight is enabled.
     You can give a matplotlib figure to it using ipyslides.utils.plt2html().
     You can give an interactive plotly figure to it ipyslides.utils.plotly2html().
     You can give a pandas dataframe after converting to HTML.
-    You can give an IPython object which has `_repr_html_` method like Markdown, Code etc.
+    You can give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
     
     Note: You can give your own type of data provided that it is converted to an HTML string, so you can
     extent beyond matplotlib or plotly.
     ''' 
     style = syntax_css()
     if not width_percents:
-        width_percents = [int(100/len(colums)) for _ in colums]
-    columns = list(colums) # For fixing data
-    for i,col in enumerate(colums):
-        if not isinstance(col,str):
-            try:
-                colums[i] = col._repr_html_().strip()
-            except:
-                return print(f"Can't write object {col} at index {i}, it is not a string or does not have `_repr_html_` method.")
-                
-    colums = [c.replace('\n','  \n') for c in colums] #Markdown doesn't like newlines without spaces
-    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{markdown(c,extensions=['fenced_code','tables','codehilite'])}</div>\n" 
-                            for c,w in zip(colums,width_percents)])
-    if len(colums) == 1:
+        width_percents = [int(100/len(columns)) for _ in columns]
+        
+    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{__fix_repr(c)}</div>\n" 
+                            for c,w in zip(columns,width_percents)])
+    if len(columns) == 1:
         return display(HTML(style + _cols))
     return display(HTML(f'''<div class="columns">\n{style}{_cols}\n</div>'''))
 
 def fmt2cols(c1,c2,w1=50,w2=50):
     """Useful when you want to split a column in `write` command in small 2 columns, e.g displaying a firgure with text on left.
-    Both `c1` and c2` should be in text/markdown format and `w1, w2` as their respective widths(int) in percents."""
-    c1, c2 = c1.replace('\n','  \n'), c2.replace('\n','  \n') #Markdown Lines issue
-    exts = ['fenced_code','tables','codehilite']
+    Both `c1` and c2` should be in text format or have  `_repr_<repr>_` method where <repr> is one of 
+    ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
+    `w1, w2` as their respective widths(int) in percents."""
     return f"""<div class='columns'>
-        <div style='width:{w1}%;overflow-x:auto;'>{markdown(c1,extensions=exts)}</div>
-        <div style='width:{w2}%;overflow-x:auto;'>{markdown(c2,extensions=exts)}</div></div>"""
-    
-    
+        <div style='width:{w1}%;overflow-x:auto;'>{__fix_repr(c1)}</div>
+        <div style='width:{w2}%;overflow-x:auto;'>{__fix_repr(c2)}</div></div>"""  
 
 def plotly2html(fig):
     """Writes plotly's figure as HTML string to use in `ipyslide.utils.write`.
