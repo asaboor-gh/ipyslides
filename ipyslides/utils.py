@@ -22,12 +22,13 @@ def syntax_css():
     
     
 def write(*colums,width_percents=None): 
-    '''Writes markdown strings in each column of same with. If width_percents is given, column width is adjusted.
+    '''Writes markdown strings or IPython object with method `_repr_html_` in each column of same with. If width_percents is given, column width is adjusted.
     
     You can given a code object from ipyslides.get_cell_code() to it, syntax highlight is enabled.
     You can give a matplotlib figure to it using ipyslides.utils.plt2html().
     You can give an interactive plotly figure to it ipyslides.utils.plotly2html().
     You can give a pandas dataframe after converting to HTML.
+    You can give an IPython object which has `_repr_html_` method like Markdown, Code etc.
     
     Note: You can give your own type of data provided that it is converted to an HTML string, so you can
     extent beyond matplotlib or plotly.
@@ -35,6 +36,14 @@ def write(*colums,width_percents=None):
     style = syntax_css()
     if not width_percents:
         width_percents = [int(100/len(colums)) for _ in colums]
+    columns = list(colums) # For fixing data
+    for i,col in enumerate(colums):
+        if not isinstance(col,str):
+            try:
+                colums[i] = col._repr_html_().strip()
+            except:
+                return print(f"Can't write object {col} at index {i}, it is not a string or does not have `_repr_html_` method.")
+                
     colums = [c.replace('\n','  \n') for c in colums] #Markdown doesn't like newlines without spaces
     _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{markdown(c,extensions=['fenced_code','tables','codehilite'])}</div>\n" 
                             for c,w in zip(colums,width_percents)])
