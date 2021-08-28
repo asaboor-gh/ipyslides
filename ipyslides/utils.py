@@ -5,7 +5,7 @@ from io import BytesIO
 from IPython.utils.capture import capture_output
 from IPython.core.display import __all__
 from contextlib import contextmanager
-__reprs__ = [rep.replace('display_','') for rep in __all__ if 'display_' in rep] # Can display these in write command
+__reprs__ = [rep.replace('display_','') for rep in __all__ if rep.startswith('display_')] # Can display these in write command
 
 @contextmanager
 def print_context():
@@ -28,7 +28,7 @@ def __fix_repr(obj):
         if _reprs_:
             return _reprs_[0]()
         else:
-            return f"<p style='color:red;'>Can't write object {obj} it is not a string or does not have `_repr_{_reprs_!r}_` method</p>"
+            return f"<p style='color:red;'>Can't write object {obj} it is not a string or does not have `_repr_{__reprs__!r}_` method</p>"
     else:
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
         return markdown(_obj.replace('\n','  \n'),extensions=['fenced_code','tables','codehilite']) 
