@@ -11,9 +11,7 @@ from .utils import write
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
     html = ipw.HTML('''<style>
-     .NavWrapper .nav-box .menu, .NavWrapper .nav-box .menu.big-menu  {
-         font-size:24px !important; overflow:hidden;opacity:0.4;z-index:55;}
-     .NavWrapper .nav-box .menu.big-menu {font-size:55px !important;}
+     .NavWrapper .nav-box .menu {font-size:24px !important; overflow:hidden;opacity:0.4;z-index:55;}
      .NavWrapper .nav-box .menu:hover {opacity:1;}
 
     .NavWrapper .nav-box {z-index:50;overflow: hidden;}
@@ -26,7 +24,7 @@ def custom_progressbar(intslider):
     intprogress = ipw.IntProgress(min=intslider.min, max=intslider.max, layout=Layout(width='100%'))
     for prop in ('min','max','value'):
         ipw.link((intprogress, prop), (intslider, prop)) # These links enable auto refresh from outside
-    return VBox([HBox(layout=Layout(height='0px',justify_content='space-between',align_items='center')).add_class('nav-box'),
+    return VBox([HBox(layout=Layout(height='0px')).add_class('nav-box'),
                             VBox([ html,intprogress]) ]).add_class('NavWrapper') #class is must
 class NavBar:
     def __init__(self,N=10):
@@ -35,20 +33,19 @@ class NavBar:
         
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
         self.prog_slider = ipw.IntSlider(max = self.N,continuous_update=False,readout=True)
-        self.btn_prev =  Button(icon='angle-left',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
-        self.btn_next =  Button(icon='angle-right',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('big-menu')
-        self.btn_setting =  Button(icon='bars',layout= Layout(width='auto',height='auto')).add_class('menu')
+        self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
+        self.btn_next =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
+        self.btn_setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu')
         for btn in [self.btn_next, self.btn_prev, self.btn_setting]:
                 btn.style.button_color= 'transparent'
                 btn.layout.min_width = 'max-content' #very important parameter
                 
         self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
-        self.group_1 =  HBox([self.btn_setting,
-                              ipw.Box([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
-                              ipw.Box([self.player()]).add_class('slides-player')
-                              ],layout=Layout(justify_content='flex-start',align_items='center'))
-        self.group_2 = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
-                            layout=Layout(justify_content='center',align_items='center'))
+        self.nav_footer =  HBox([self.btn_setting,
+                              HBox([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
+                              ])
+        self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
+                            ).add_class('controls')
         self.build_navbar() # this is the main function to build the navbar
          
         self.btn_prev.on_click(self.__shift_left)
@@ -56,8 +53,8 @@ class NavBar:
     
     def build_navbar(self):
         self.nav_bar = custom_progressbar(self.prog_slider)
-        self.nav_bar.children[0].children = (self.group_1, self.group_2)
-        self.nav_bar.children[0].layout.height = '50px'
+        self.nav_bar.children[0].children = (self.nav_footer,)
+        self.nav_bar.children[0].layout.height = '32px'
        
     def __shift_right(self,change):
         if change:
@@ -70,12 +67,6 @@ class NavBar:
     def show(self):
         return self.nav_bar
     __call__ = show
-    
-    def player(self,interval=1000):
-        play = ipw.Play(description='Play Slides',min=self.prog_slider.min,max=self.prog_slider.max,interval=interval)
-        ipw.dlink((play, 'value'), (self.prog_slider, 'value'))
-        return play
-        
          
 class LiveSlides(NavBar):
     def __init__(self,magic_suffix='',animation_css = dv.animation_css):
@@ -111,24 +102,37 @@ class LiveSlides(NavBar):
         self.font_scale = 1 #Scale 1 corresponds to 16px
         self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')))
         self.main_style_html = ipw.HTML(dv.main_layout_css)
-        
+        self.loading_html = ipw.HTML() #SVG Animation in it
         self.prog_slider.observe(self.__update_content,names=['value'])
         self.__update_content(True)
         
         self.setting = Customize(self)
         self.box_setting = self.setting.box
         
-        self.box =  VBox([self.main_style_html, ipw.HTML(animation_css),
+        self.box =  VBox([self.loading_html, self.main_style_html, ipw.HTML(animation_css),
                           self.theme_html,
                           HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')],layout= Layout(min_width='100%',overflow='auto')).add_class('main-box'),
                           ],layout= Layout(width='100%',max_width='100%',height='100%')),
+                          self.controls,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important   
      
-    def show(self): 
+    def show(self,fix_buttons=False): 
+        "Display Slides, If icons do not show, try with `fix_buttons=True`."
         if not self.__slides_mode:
             return print('Set "self.convert2slides(True)", then it will work.')
+        if fix_buttons:
+            self.btn_next.description = '⮞'
+            self.btn_prev.description = '⮜'
+            self.btn_prev.icon = ''
+            self.btn_next.icon = ''
+        else: # Important as showing again with False will not update buttons. 
+            self.btn_next.description = ''
+            self.btn_prev.description = ''
+            self.btn_prev.icon = 'chevron-left'
+            self.btn_next.icon = 'chevron-right'
+            
         try:   #JupyterLab Case, Interesting in SideCar
             from sidecar import Sidecar 
             sc = Sidecar(title='Live Presentation')
@@ -162,7 +166,7 @@ class LiveSlides(NavBar):
     def __update_content(self,change):
         if self.__slides_title_page or (self.iterable and change):
             self.info_html.value = re.sub('>\d+\s+/\s+\d+<',f'>{self.prog_slider.value} / {self.N}<',self.info_html.value) #Slide Number
-            self.info_html.value = self.info_html.value.replace('</p>', '| Loading...</p>')
+            self.loading_html.value = dv.loading_svg
             self.out.clear_output(wait=True)
             with self.out:
                 if self.prog_slider.value == 0:
@@ -172,8 +176,7 @@ class LiveSlides(NavBar):
                         self.__slides_title_page.show() #Ipython Captured Output
                 else:
                     self.__display_slide()
-                    
-            self.info_html.value = self.info_html.value.replace('| Loading...','')
+            self.loading_html.value = ''        
             
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
         if show_date:
@@ -295,13 +298,14 @@ class Customize:
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only')
         self.btn_mpl = ipw.ToggleButton(description='Matplotlib SVG Zoom',icon='toggle-off',value = False).add_class('sidecar-only')
-        self.box = VBox([ipw.Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        ipw.VBox([
-                            ipw.HBox([self.btn_fs,self.btn_mpl],layout=Layout(padding='4px',height='max-content',min_height='30px')),
+        self.box = VBox([Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
+                        VBox([
                             self.height_slider.add_class('voila-sidecar-hidden'), 
                             self.width_slider.add_class('voila-sidecar-hidden'),
                             self.scale_slider,
-                            self.theme_dd
+                            self.theme_dd,
+                            HBox([self.btn_fs,self.btn_mpl],layout=Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px')),
+                            Box([self.master.btn_setting],layout=Layout(width='auto',margin='auto'))
                             ],layout=Layout(width='100%',height='max-content',min_height='200px'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
@@ -322,11 +326,11 @@ class Customize:
             self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
             
     def __toggle_panel(self,change):
-        if self.master.btn_setting.icon == 'bars':
-            self.master.btn_setting.icon = 'close'
+        if self.master.btn_setting.description == '\u2630':
+            self.master.btn_setting.description  = '⨉'
             self.box.layout.display = 'flex'
         else:
-            self.master.btn_setting.icon = 'bars' 
+            self.master.btn_setting.description = '\u2630'
             self.box.layout.display = 'none'
                      
     def __set_font_scale(self,change):

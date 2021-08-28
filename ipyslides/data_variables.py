@@ -70,7 +70,11 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .panel>div:first-child {
     box-shadow: inset 0 0 8px var(--quote-bg);
     padding:4px;
+    height:32px!important;
 }
+.SlidesWrapper .panel>div:first-child:hover,
+.SlidesWrapper .panel>div:first-child:focus {height: 50% !important;}
+.SlidesWrapper .panel>div:last-child {padding-top:16px;}
 .SlidesWrapper .columns {width:max-content;max-width:95%;display:inline-flex;flex-direction:row;column-gap:2em;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
@@ -90,33 +94,32 @@ def style_html(style_root = inherit_root):
     min-width: 30%; /* This is very important to force it */
     justify-content: center;
     opacity: 1;
-    background: var(--quote-bg);
 }
-.slides-player {
-    padding-left:32px;
-    width:32px;
-    opacity:0;
+.NavWrapper nav-box {
+    align-items: bottom;
+    height: max-content;
+    justify-content: flex-start;
+    }
+.SlidesWrapper .arrows {opacity:0.4;font-size: 36px;padding:4px;}
+.SlidesWrapper .arrows:hover, .SlidesWrapper .arrows:focus { opacity:1;}
+.SlidesWrapper .controls {
+    position:absolute;
+    right:0px !important;
+    bottom:0px !important;
+    z-index:98; /* below mpl */
+    padding;0 !important;
+    justify-content: flex-end !important;
+    align-items:center !important;
+    margin-bottom:16px !important;
+    color: var(--accent-color);
+    
 }
-.slides-player:hover, .slides-player:focus {
-    opacity:1;
-    width:auto;
-}
-.NavWrapper .nav-box>div:last-child {justify-content: flex-end !important;}
+
 @media screen and (max-width: 702px) {
     .SlidesWrapper .panel {width:100% !important;}
-  	.NavWrapper .nav-box {
-    	display:block;
-    	height: max-content !important;
-    	padding-bottom:32px;
-	}
-	.NavWrapper .nav-box>div:last-child button {
-        width:30% !important;
-    }
-    .NavWrapper .nav-box>div:last-child {
-        min-width:100%;
-        width: 100%;
-        justify-content: center !important;
-    }
+    .SlidesWrapper .controls {bottom:30px!important;right:0 !important;width:100%;justify-content: space-around !important;}
+	.SlidesWrapper .controls button {width:30% !important;}
+    .SlidesWrapper .textfonts {padding-bottom: 50px !important;}
     .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
     .SlidesWrapper .columns {max-width:95%;display:flex;flex-direction:column;}
     .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
@@ -194,9 +197,11 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .widget-play .jupyter-button {
     background: var(--quote-bg);
     color: var(--accent-color)!important;
-    border-radius: 0px;
 }
-
+.SlidesWrapper .panel button, .SlidesWrapper .panel .jupyter-button{ 
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    }
 .SlidesWrapper .jupyter-button:hover:enabled,
 .SlidesWrapper .jupyter-button:focus:enabled {
     outline:none !important;
@@ -229,7 +234,7 @@ def style_html(style_root = inherit_root):
 div.fig-container>svg{
   background: var(--text-bg);
   transition: transform .2s; /* Animation */
-}   
+}      
 </style>'''
 
 animation_css = '''<style>
@@ -326,6 +331,11 @@ div.fig-container>svg:focus, div.fig-container>svg:hover{
 </style>
 '''
 
+loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 50 50">
+  <path fill="var(--accent-color,navy)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z">
+    <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.5s" repeatCount="indefinite"/>
+  </path></svg></div>'''
 # ONLY INSTRUCTIONS BELOW
 
 more_instructions =f'''# How to Use
@@ -350,8 +360,8 @@ slides.show() # Use it once to see slides
 
 > For JupyterLab >=3, you can do `pip install sidecar` as bonus.
 
-> Hover between slide switching buttons to see a slider, if you click on circle move mouse without clicking anywhere,
-> you can use keyboard to navigate slide. 
+> After clicking a button you can use Enter key to forward/backward slides. If you click on slider handle between two buttons,
+> (by hovering between buttons) you can use keyboard to navigate slides. 
 '''
 
 settings_instructions = f'''{more_instructions}

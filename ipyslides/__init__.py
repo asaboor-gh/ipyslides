@@ -1,4 +1,4 @@
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 __all__ = ['initialize','initial_code']
 from .core import LiveSlides, get_cell_code, display_cell_code
