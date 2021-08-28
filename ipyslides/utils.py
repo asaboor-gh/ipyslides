@@ -3,7 +3,9 @@ from IPython.display import HTML, display, Markdown
 import matplotlib.pyplot as plt
 from io import BytesIO
 from IPython.utils.capture import capture_output
+from IPython.core.display import __all__
 from contextlib import contextmanager
+__reprs__ = [rep.replace('display_','') for rep in __all__ if 'display_' in rep] # Can display these in write command
 
 @contextmanager
 def print_context():
@@ -22,10 +24,9 @@ def syntax_css():
     
 def __fix_repr(obj):
     if not isinstance(obj,str):
-        _reprs_ = ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex')
-        _repr_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in _reprs_] if rep]   
-        if _repr_:
-            return _repr_[0]()
+        _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
+        if _reprs_:
+            return _reprs_[0]()
         else:
             return f"<p style='color:red;'>Can't write object {obj} it is not a string or does not have `_repr_{_reprs_!r}_` method</p>"
     else:
