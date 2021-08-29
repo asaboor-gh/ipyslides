@@ -75,7 +75,7 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .panel>div:first-child:hover,
 .SlidesWrapper .panel>div:first-child:focus {height: 50% !important;}
 .SlidesWrapper .panel>div:last-child {padding-top:16px;}
-.SlidesWrapper .columns {width:max-content;max-width:95%;display:inline-flex;flex-direction:row;column-gap:2em;}
+.SlidesWrapper .columns {width:96%;max-width:98%;display:inline-flex;flex-direction:row;column-gap:2em;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
 .SlidesWrapper .widget-hslider .ui-slider .ui-slider-handle {

@@ -28,10 +28,11 @@ def __fix_repr(obj):
         if _reprs_:
             return _reprs_[0]()
         else:
-            return f"<p style='color:red;'>Can't write object {obj} it is not a string or does not have `_repr_{__reprs__!r}_` method</p>"
+            _methods = '<br/>'.join([f'<code>_repr_{rep}_</code>' for rep in __reprs__])
+            return f"<blockquote>Can't write object <code>{obj}</code><br/> Expects a string or object with anyone of follwing methods:<br/>{_methods}</blockquote>"
     else:
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
-        return markdown(_obj.replace('\n','  \n'),extensions=['fenced_code','tables','codehilite']) 
+        return markdown(_obj,extensions=['fenced_code','tables','codehilite']) 
         
 def write(*columns,width_percents=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
@@ -49,11 +50,11 @@ def write(*columns,width_percents=None):
     if not width_percents:
         width_percents = [int(100/len(columns)) for _ in columns]
         
-    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{__fix_repr(c)}</div>\n" 
+    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{__fix_repr(c)}</div>" 
                             for c,w in zip(columns,width_percents)])
     if len(columns) == 1:
         return display(HTML(style + _cols))
-    return display(HTML(f'''<div class="columns">\n{style}{_cols}\n</div>'''))
+    return display(HTML(f'''<div class="columns">{style}{_cols}</div>'''))
 
 def fmt2cols(c1,c2,w1=50,w2=50):
     """Useful when you want to split a column in `write` command in small 2 columns, e.g displaying a firgure with text on left.
