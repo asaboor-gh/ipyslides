@@ -4,7 +4,6 @@ Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voi
 Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
 
 ![Overview](overview.jpg)
-
 # Changes in Version 0.8+
 > Note: All these points may not or only partially apply to earlier versions. So use stable API above version 8.
 - Before this version, slides were collected using global namespace, which only allowed one presentation per

@@ -150,7 +150,7 @@ def style_html(style_root = inherit_root):
   
 .SlidesWrapper :is(.textfonts,.panel,.NavWrapper) :is(p,ul,ol,li),
 .SlidesWrapper>:not(div), /* Do not change jupyterlab nav items */
-.SlidesWrapper footer {  
+.SlidesWrapper footer,summary,details {  
 	color: var(--text-fg);
 }
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
@@ -208,6 +208,7 @@ def style_html(style_root = inherit_root):
     opacity:1 !important;
     box-shadow:none !important;
     background:var(--hover-bg);
+    text-shadow: 0 0 2px var(--text-bg), 0 0 4px var(--accent-color);
 }
 .sidecar-only {background: transparent;box-shadow: none;min-width:max-content; opacity:0.6;}
 .sidecar-only:hover, .sidecar-only:focus {opacity:1;}

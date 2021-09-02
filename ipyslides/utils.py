@@ -1,5 +1,5 @@
 from markdown import markdown
-from IPython.display import HTML, display, Markdown
+from IPython.display import HTML, display, Markdown, Code
 import matplotlib.pyplot as plt
 from io import BytesIO
 from IPython.utils.capture import capture_output
@@ -64,6 +64,28 @@ def fmt2cols(c1,c2,w1=50,w2=50):
     return f"""<div class='columns'>
         <div style='width:{w1}%;overflow-x:auto;'>{__fix_repr(c1)}</div>
         <div style='width:{w2}%;overflow-x:auto;'>{__fix_repr(c2)}</div></div>"""  
+        
+def details(str_html,summary='Click to show content'):
+    "Show/Hide Content in collapsed html."
+    return f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>"""
+
+def file2img(filename,width='100%'):
+    "Displays png/jpeg/jpg etc. images from file"
+    return f'<img src="{filename}" alt="{filename}" width="{width}" height="auto">'
+
+def file2text(filename):
+    "Only reads plain text, not bytes"
+    with open(filename,'r') as f:
+        text = ''.join(f.readlines())   
+    return text
+
+def file2code(filename,language='python',max_height='400px'):
+    "Only reads plain text"
+    if 'ython' in language:
+        code = markdown(f'```{language}\n{file2text(filename)}\n```',extensions=['fenced_code','tables','codehilite'])
+    else:
+        code = Code(filename=filename,language=language)._repr_html_()
+    return f'<div style="max-height:{max_height};overflow:auto;">{code}</div>'
 
 def plotly2html(fig):
     """Writes plotly's figure as HTML string to use in `ipyslide.utils.write`.
@@ -96,7 +118,7 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
     plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     if caption:
-        svg = svg + f'<p style="font-size:70% !important;">{caption}</p>'
+        svg = svg + f'<p style="font-size:80% !important;">{caption}</p>'
     return f"<div class='fig-container'>{svg}</div>"
 
 

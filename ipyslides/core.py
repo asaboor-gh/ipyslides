@@ -117,7 +117,7 @@ class LiveSlides(NavBar):
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important   
-     
+    
     def show(self,fix_buttons=False): 
         "Display Slides, If icons do not show, try with `fix_buttons=True`."
         if not self.__slides_mode:
@@ -141,6 +141,10 @@ class LiveSlides(NavBar):
         except:
             return self.box
     __call__ = show
+    
+    def _ipython_display_(self):
+        'Auto display when self is on last line of a cell'
+        return display(self.box)
     
     def align8center(self,b=True):
         "Central aligment of slide by default. If False, left-top aligned."
