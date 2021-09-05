@@ -6,7 +6,7 @@ from . import data_variables as dv
 import datetime, re, os #re for updating font-size and slide number
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
-from .utils import write
+from .utils import write, _cell_code
 
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
@@ -85,6 +85,8 @@ class LiveSlides(NavBar):
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
         self.user_ns = self.shell.user_ns 
+        self.animation_css = animation_css
+        self.__citations = {} # Initialize citations
         self.__slides_mode = False
         self.__slides_title_page = '''## Create title page using `%%title` magic or `self.title()` context manager.\n> Author: Abdul Saboor\n<div>
         <h4 style="color:green;">Create Slides using <pre>%%slide</pre> or with <pre>self.slide(<slide number>)</pre> context manager.</h4>
@@ -109,14 +111,24 @@ class LiveSlides(NavBar):
         self.setting = Customize(self)
         self.box_setting = self.setting.box
         
-        self.box =  VBox([self.loading_html, self.main_style_html, ipw.HTML(animation_css),
+        self.box =  VBox([self.loading_html, self.main_style_html,
                           self.theme_html,
-                          HBox([self.box_setting,ipw.Box([self.out.add_class('textfonts')],layout= Layout(min_width='100%',overflow='auto')).add_class('main-box'),
+                          HBox([self.box_setting,ipw.Box([self.out.add_class('SlideArea')],layout= Layout(min_width='100%',overflow='auto')).add_class('main-box'),
                           ],layout= Layout(width='100%',max_width='100%',height='100%')),
                           self.controls,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
-        self.box.add_class('SlidesWrapper') #Very Important   
+        self.box.add_class('SlidesWrapper') #Very Important 
+    
+    def cite(self,key, citation):
+        "Add citation in presentation, both key and citation are text/markdown/HTML."
+        self.__citations[key] = citation
+        _id = list(self.__citations.keys()).index(key)
+        return f'<sup style="color:var(--accent-color);">{_id + 1}</sup>'
+    
+    def write_citations(self,title='### References'):     
+        collection = [f'<span><sup style="color:var(--accent-color);">{i+1}</sup>{v}</span>' for i,(k,v) in enumerate(self.__citations.items())]
+        return write(title + '\n' +'\n'.join(collection))      
     
     def show(self,fix_buttons=False): 
         "Display Slides, If icons do not show, try with `fix_buttons=True`."
@@ -165,7 +177,7 @@ class LiveSlides(NavBar):
         if 'func' in item.keys():
             item['func'](item['slide']) #Show dynamic slides
         else:
-            item['slide'].show() #show ipython capture/MultiCols/slide context or if item has a show method with display. 
+            item['slide'].show() #show ipython capture/slide context or if item has a show method with display. 
            
     def __update_content(self,change):
         if self.__slides_title_page or (self.iterable and change):
@@ -173,6 +185,7 @@ class LiveSlides(NavBar):
             self.loading_html.value = dv.loading_svg
             self.out.clear_output(wait=True)
             with self.out:
+                write(self.animation_css) # Per Slide makes it uniform
                 if self.prog_slider.value == 0:
                     if isinstance(self.__slides_title_page, str):
                         write(self.__slides_title_page) #Markdown String 
@@ -204,6 +217,7 @@ class LiveSlides(NavBar):
         if line and not line.isnumeric():
             return print(f'You should use %%slide integer, not %%slide {line}')
         if self.__slides_mode:
+            self.__current_slide = int(line)
             self.shell.run_cell_magic('capture',line,cell)
             if line: #Only keep slides with line number
                 self.__slides_dict[line] = self.shell.user_ns[line]
@@ -218,6 +232,7 @@ class LiveSlides(NavBar):
         "Use this context manager to generate any number of slides from a cell"
         if not isinstance(slide_number,int):
             return print(f'slide_number expects integer, got {slide_number!r}')
+        self.__current_slide = slide_number
         with capture_output() as cap:
             yield
         # Now Handle What is captured
@@ -250,17 +265,22 @@ class LiveSlides(NavBar):
             self.refresh()
         
     def insert_after(self,slide_number,*objs,func=display):
-        """Creates as many dynamic slides as many number of `objs` are with a `func` acting on each object.
-        `func` should handle all displays inside and no return is required, if any, only should be display/show etc."""
-        if not isinstance(slide_number,int):
-            return print(f'slide_number expects integer, got {slide_number!r}')
+        return print("`insert_after` is deprecated, use decorator `slides` instead!")
+    
+    def slides(self, after_slide_number, *objs):
+        """Decorator for inserting slides dynamically, define a function with one argument acting on each obj in objs.
+        No return of function required, if any, only should be display/show etc."""
+        def decorator(func):
+            if not isinstance(after_slide_number,int):
+                return print(f'after_slide_number expects integer, got {after_slide_number!r}')
         
-        self.__dynamicslides_dict[f'd{slide_number}'] = {'objs': objs,'func':func}
-        self.refresh() # Content chnage refreshes it.
+            self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':func}
+            self.refresh() # Content chnage refreshes it.
 
-        if not self.__slides_mode:
-            print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
-            return objs
+            if not self.__slides_mode:
+                print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
+                return objs
+        return decorator
         
     def convert2slides(self,b=False):
         "Turn ON/OFF slides vs editing mode. Should be in same cell as `LiveSLides`"
@@ -288,6 +308,10 @@ class LiveSlides(NavBar):
                 slides = [{'slide':obj,'func':__dynamic['func']} for obj in __dynamic['objs']]
                 slides_iterable = [*slides_iterable,*slides]        
         return tuple(slides_iterable)
+    
+    def get_cell_code(self,this_line=True,magics=False,comments=False,lines=None):
+        "Get current cell's code. `lines` should be list/tuple of line numbers to include if filtered."
+        return _cell_code(shell=self.shell,this_line=this_line,magics=magics,comments=comments,lines=lines)
 
 class Customize:
     def __init__(self,instance_LiveSlides):
@@ -377,26 +401,5 @@ class Customize:
         # Now Set Theme
         self.master.theme_html.value = theme_css
 
-class MultiCols:
-    def __init__(self,width_percents=[50,50]):
-        print("`Multicols` is deprecated. Use `write` or ipywidgets' boxes for desired layouts!")
 
-
-def get_cell_code(this_line=True,magics=False,comments=False,lines=None):
-    "Return current cell's code in slides for educational purpose. `lines` should be list/tuple of line numbers to include if filtered."
-    current_cell_code = get_ipython().get_parent()['content']['code'].splitlines()
-    if isinstance(lines,(list,tuple,range)):
-        current_cell_code = [line for i, line in enumerate(current_cell_code) if i+1 in lines]
-    if not this_line:
-        current_cell_code = [line for line in current_cell_code if '_cell_code' not in line]
-    if not magics:
-        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
-    if not comments:
-        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
-    return "```python\n{}\n```".format('\n'.join(current_cell_code))
-
-def display_cell_code(this_line=False,magics=False,comments=False,lines=None):
-    "Display cell data. `lines` should be list/tuple of line numbers to include if filtered."
-    code = get_cell_code(this_line=this_line,magics=magics,comments=comments,lines=lines)
-    return write(code)
 

@@ -122,3 +122,19 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
     return f"<div class='fig-container'>{svg}</div>"
 
 
+def _cell_code(shell,line_number=True,this_line=True,magics=False,comments=False,lines=None):
+    "Return current cell's code in slides for educational purpose. `lines` should be list/tuple of line numbers to include if filtered."
+    try:
+        current_cell_code = shell.get_parent()['content']['code'].splitlines()
+    except:
+        return '<pre>get_cell_code / _cell_code</pre><p style="color:red;">can only return code from a cell execution, not from a function at run time</p>'
+        
+    if isinstance(lines,(list,tuple,range)):
+        current_cell_code = [line for i, line in enumerate(current_cell_code) if i+1 in lines]
+    if not this_line:
+        current_cell_code = [line for line in current_cell_code if '_cell_code' not in line]
+    if not magics:
+        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
+    if not comments:
+        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
+    return markdown("```python\n{}\n```".format('\n'.join(current_cell_code)),extensions=['fenced_code','tables','codehilite'])

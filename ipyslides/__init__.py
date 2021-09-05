@@ -1,15 +1,14 @@
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 
 __all__ = ['initialize','initial_code']
-from .core import LiveSlides, get_cell_code, display_cell_code
+from .core import LiveSlides
 from .utils import write, fmt2cols, plt2html, plotly2html, print_context
-__all__.extend(['LiveSlides', 'get_cell_code', 'display_cell_code',
-                'write', 'fmt2cols', 'plt2html', 'plotly2html', 'print_context'])
+__all__.extend(['LiveSlides', 'write', 'fmt2cols', 'plt2html', 'plotly2html', 'print_context'])
 
 initial_code = '''import ipyslides as isd
-from ipyslides.utils import write, plt2html, print_context, fmt2cols, details, file2img, file2text, file2code
+from ipyslides.utils import write, plt2html, print_context, fmt2cols, details, file2img, file2code
 
-from ipyslides.core import  LiveSlides, display_cell_code, get_cell_code
+from ipyslides.core import  LiveSlides
 ls = LiveSlides() # This registers %%slide and %%title magics as bonus
 
 # Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB

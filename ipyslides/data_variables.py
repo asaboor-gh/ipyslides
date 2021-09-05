@@ -2,11 +2,11 @@
 # CSS for ipyslides
 light_root = ''':root {
 	--heading-fg: navy;
-	--text-fg: black;
-	--text-bg: #F3F3F3;
-	--quote-bg: white;
-	--quote-fg: purple;
-	--tr-odd-bg: white;
+	--primary-fg: black;
+	--primary-bg: white;
+	--secondary-bg: #dce5e7;
+	--secondary-fg: #454545;
+	--tr-odd-bg: whitesmoke;
 	--tr-hover-bg: lightblue;
 	--accent-color: navy;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
@@ -14,23 +14,23 @@ light_root = ''':root {
 '''
 dark_root = ''':root {
 	--heading-fg: snow;
-	--text-fg: white;
-	--text-bg: #21252B;
-	--quote-bg: #22303C;
-	--quote-fg: powderblue;
-	--tr-odd-bg: black;
-	--tr-hover-bg: gray;
-	--accent-color: snow;
+	--primary-fg: white;
+	--primary-bg: black;
+	--secondary-bg: #121212;
+	--secondary-fg: powderblue;
+	--tr-odd-bg: #181818;
+	--tr-hover-bg: #264348;
+	--accent-color: #d9e0e3;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 '''
 inherit_root = """:root {
 	--heading-fg: var(--jp-inverse-layout-color1,navy);
-	--text-fg:  var(--jp-inverse-layout-color0,black);
-	--text-bg: var(--jp-layout-color0,#F3F3F3);
-	--quote-bg:var(--jp-layout-color2,white);
-	--quote-fg: var(--jp-inverse-layout-color4,purple);
-	--tr-odd-bg: var(--jp-layout-color2,white);
+	--primary-fg:  var(--jp-inverse-layout-color0,black);
+	--primary-bg: var(--jp-layout-color0,#cad3d3);
+	--secondary-bg:var(--jp-layout-color2,#dce5e7);
+	--secondary-fg: var(--jp-inverse-layout-color4,#454545);
+	--tr-odd-bg: var(--jp-layout-color2,#e6e7e1);
 	--tr-hover-bg:var(--jp-border-color1,lightblue);
  	--accent-color:var(--jp-brand-color2,navy);
 	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
@@ -45,19 +45,22 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper *:not(.fa):not(i):not(span) {
    font-family: sans-serif, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
 }
+
 .SlidesWrapper code>span {
-   font-family: "Cascadia Code","Ubuntu Mono","Courier New";
+   font-family: "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
+   font-size: 80% !important;
 }
-.textfonts .SlidesWrapper {max-height:calc(90vh - 100px);} /* in case of embed slides */ 
+.SlideArea .SlidesWrapper {max-height:calc(90vh - 100px);} /* in case of embed slides */ 
 .SlidesWrapper {
 	margin: auto;
 	padding: 0px;
-	background:var(--text-bg);
+	background:var(--primary-bg);
 	font-size: var(--text-size);
+    color:var(--primary-fg)
 	max-width:100vw; /* This is very important */
  }
 .SlidesWrapper .panel {
-    background:var(--text-bg) !important;
+    background:var(--primary-bg) !important;
     position:absolute;
     border:none;
     padding: 8px !important;
@@ -65,10 +68,10 @@ def style_html(style_root = inherit_root):
     z-index:101;
     top:0px !important;
     left:0px !important;
-    box-shadow: 0 0 20px 20px var(--quote-bg);
+    box-shadow: 0 0 20px 20px var(--secondary-bg);
 }
 .SlidesWrapper .panel>div:first-child {
-    box-shadow: inset 0 0 8px var(--quote-bg);
+    box-shadow: inset 0 0 8px var(--secondary-bg);
     padding:4px;
     height:32px!important;
 }
@@ -104,7 +107,7 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .arrows:hover, .SlidesWrapper .arrows:focus { opacity:1;}
 .SlidesWrapper .controls {
     position:absolute;
-    right:0px !important;
+    right:16px !important;
     bottom:0px !important;
     z-index:98; /* below mpl */
     padding;0 !important;
@@ -119,9 +122,9 @@ def style_html(style_root = inherit_root):
     .SlidesWrapper .panel {width:100% !important;}
     .SlidesWrapper .controls {bottom:30px!important;right:0 !important;width:100%;justify-content: space-around !important;}
 	.SlidesWrapper .controls button {width:30% !important;}
-    .SlidesWrapper .textfonts {padding-bottom: 50px !important;}
+    .SlidesWrapper .SlideArea {padding-bottom: 50px !important;}
     .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
-    .SlidesWrapper .columns {max-width:95%;display:flex;flex-direction:column;}
+    .SlidesWrapper .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
     .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
     .prog_slider_box {
     	width: 40%;
@@ -136,35 +139,35 @@ def style_html(style_root = inherit_root):
  	text-align:center;
 	overflow:hidden; /* FireFox */
 }
-.SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--text-fg) !important;}
-.SlidesWrapper .textfonts h1 {margin-block: unset;font-size: 3em;  line-height: 1.5em;}
-.SlidesWrapper .textfonts h2 {margin-block: unset;font-size: 2.5em;line-height: 1.5em;}
-.SlidesWrapper .textfonts h3 {margin-block: unset;font-size: 2em;  line-height: 1.5em;}
-.SlidesWrapper .textfonts h4 {margin-block: unset;font-size: 1.5em;line-height: 1.5em;}
-.SlidesWrapper .textfonts h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
+.SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--primary-fg) !important;}
+.SlidesWrapper .SlideArea h1 {margin-block: unset;font-size: 3em;  line-height: 1.5em;}
+.SlidesWrapper .SlideArea h2 {margin-block: unset;font-size: 2.5em;line-height: 1.5em;}
+.SlidesWrapper .SlideArea h3 {margin-block: unset;font-size: 2em;  line-height: 1.5em;}
+.SlidesWrapper .SlideArea h4 {margin-block: unset;font-size: 1.5em;line-height: 1.5em;}
+.SlidesWrapper .SlideArea h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
 
 .SlidesWrapper .widget-inline-hbox .widget-label,
 .SlidesWrapper .widget-inline-hbox .widget-readout  {
-    color:var(--text-fg);
+    color:var(--primary-fg);
 }
   
-.SlidesWrapper :is(.textfonts,.panel,.NavWrapper) :is(p,ul,ol,li),
+.SlidesWrapper :is(.SlideArea,.panel,.NavWrapper) :is(p,ul,ol,li),
 .SlidesWrapper>:not(div), /* Do not change jupyterlab nav items */
 .SlidesWrapper footer,summary,details {  
-	color: var(--text-fg);
+	color: var(--primary-fg);
 }
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
 .SlidesWrapper pre, .SlidesWrapper code {
-    color: var(--text-fg)!important;
+    color: var(--primary-fg)!important;
     padding: 0px 4px !important;
     overflow-x: auto !important;
-    background: var(--quote-bg) !important;
+    background: var(--secondary-bg) !important;
 }
 
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
-	background: var(--quote-bg);
-	color: var(--quote-fg) !important;
+	background: var(--secondary-bg);
+	color: var(--secondary-fg) !important;
 }
     
 .SlidesWrapper table {
@@ -174,15 +177,15 @@ def style_html(style_root = inherit_root):
     font-size: small;
     word-break:break-all;
     overflow: auto;
-	color: var(--text-fg)!important;
-	background: var(--text-bg)!important;
+	color: var(--primary-fg)!important;
+	background: var(--primary-bg)!important;
 }
 .SlidesWrapper tbody>tr:nth-child(odd) {background: var(--tr-odd-bg)!important;}
-.SlidesWrapper tbody>tr:nth-child(even) {background: var(--text-bg)!important;}
+.SlidesWrapper tbody>tr:nth-child(even) {background: var(--primary-bg)!important;}
 .SlidesWrapper tbody>tr:hover {background: var(--tr-hover-bg)!important;}
 
 .NavWrapper {max-width:100% !important;}
-.NavWrapper .progress {background: var(--quote-bg)!important;}
+.NavWrapper .progress {background: var(--secondary-bg)!important;}
 .NavWrapper .progress .progress-bar {background: var(--accent-color)!important;}
 .SlidesWrapper button {
     color: var(--accent-color)!important;
@@ -191,11 +194,11 @@ def style_html(style_root = inherit_root):
 
 .SlidesWrapper .widget-dropdown > select, 
 .SlidesWrapper .widget-dropdown > select > option {
-	color: var(--text-fg)!important;
-	background: var(--text-bg)!important;
+	color: var(--primary-fg)!important;
+	background: var(--primary-bg)!important;
 }
 .SlidesWrapper .widget-play .jupyter-button {
-    background: var(--quote-bg);
+    background: var(--secondary-bg);
     color: var(--accent-color)!important;
 }
 .SlidesWrapper .panel button, .SlidesWrapper .panel .jupyter-button{ 
@@ -208,7 +211,7 @@ def style_html(style_root = inherit_root):
     opacity:1 !important;
     box-shadow:none !important;
     background:var(--hover-bg);
-    text-shadow: 0 0 2px var(--text-bg), 0 0 4px var(--accent-color);
+    text-shadow: 0 0 2px var(--primary-bg), 0 0 4px var(--accent-color);
 }
 .sidecar-only {background: transparent;box-shadow: none;min-width:max-content; opacity:0.6;}
 .sidecar-only:hover, .sidecar-only:focus {opacity:1;}
@@ -233,13 +236,13 @@ def style_html(style_root = inherit_root):
 
 /* Matplotlib figure SVG */
 div.fig-container>svg{
-  background: var(--text-bg);
+  background: var(--primary-bg);
   transition: transform .2s; /* Animation */
 }      
 </style>'''
 
 animation_css = '''<style>
-.textfonts :is(h1,h2,h3,h4,h5,h6,p,ul,li,ol,blockquote,q,table,pre) {
+.SlideArea {
     animation-name: zoom; animation-duration: 600ms;
     animation-timing-function: linear;
 }
@@ -253,7 +256,7 @@ animation_css = '''<style>
 </style>'''
 
 main_layout_css = '''<style>
-.SlidesWrapper .textfonts { align-items: center;}
+.SlidesWrapper .SlideArea { align-items: center;}
 a.jp-InternalAnchorLink { display: none !important;}
 .widget-inline-hbox .widget-readout  { min-width:auto !important;}
 .jupyterlab-sidecar .SlidesWrapper,
@@ -272,7 +275,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
 .jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only,
 .jp-Cell-outputArea>div .sidecar-only {display: block;}
-.textfonts .SlidesWrapper .sidecar-only {display: none;} /* No fullscreen for embeded slides */ 
+.SlideArea .SlidesWrapper .sidecar-only {display: none;} /* No fullscreen for embeded slides */ 
 .jp-LinkedOutputView>div {overflow:hidden !important;}
 #rendered_cells .SlidesWrapper {
     position: absolute;
@@ -301,9 +304,9 @@ fullscreen_css = '''<style>
     z-index: 100;
     margin: 0px;
     padding: 0;
-    background:var(--text-bg);
+    background:var(--primary-bg);
 } 
-.textfonts .SlidesWrapper { position:relative;width:90%;max-width:100%;height:unset;left:unset;bottom:unset;}  
+.SlideArea .SlidesWrapper { position:relative;width:90%;max-width:100%;height:unset;left:unset;bottom:unset;}  
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
@@ -350,7 +353,9 @@ Assuming you have `ls = LiveSlides()`
 import ipyslides as isd 
 isd.initilize() #This will create a title page and parameters in same cell
 slides = isd.core.LiveSlides() #Collects and build slides, auto refresh when content of slide is changed.
-slides.insert_after(1,*objs,func) #This will create as many slides after the slide number 1 as length(objs)
+@slides.slides(1,*objs)
+def func(obj):
+    write(obj) #This will create as many slides after the slide number 1 as length(objs)
 #create a rich content title page with `%%title` or \n`with title():\n    ...`\n context manager.
 slides.show() # Use it once to see slides
 ```

@@ -4,7 +4,18 @@ Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voi
 Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
 
 ![Overview](overview.jpg)
-# Changes in Version 0.8+
+
+# 0.8.3 Changelog
+If you have `ls = LiveSlides()`:
+- You can now use `ls.cite` method to create citations which you can write at end by `ls.write_citations` command.
+- `ls.insert_after` no longer works, use 
+```python
+@ls.slides(after_slide_number,*objs)
+def func(obj):
+    write(obj) #etc. for each obj in objs
+```
+decorator which is more pythonic way. 
+# Changes in Version 0.8
 > Note: All these points may not or only partially apply to earlier versions. So use stable API above version 8.
 - Before this version, slides were collected using global namespace, which only allowed one presentation per
 notebook. Now slides are stored in local namespace, so no restriction on number of slides per notebook.
