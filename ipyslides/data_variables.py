@@ -158,13 +158,13 @@ def style_html(style_root = inherit_root):
 }
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
-.SlidesWrapper pre, .SlidesWrapper code {
+.SlidesWrapper pre {
     color: var(--primary-fg)!important;
     padding: 0px 4px !important;
     overflow-x: auto !important;
     background: var(--secondary-bg) !important;
 }
-
+.SlidesWrapper pre>code {background:transparent !important;color: var(--primary-fg)!important;}
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--secondary-bg);
 	color: var(--secondary-fg) !important;
@@ -262,10 +262,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 .jupyterlab-sidecar .SlidesWrapper,
 .jp-LinkedOutputView .SlidesWrapper {
     width: 100% !important; height: 100% !important;
-}
-.SlidesWrapper pre, code { background:inherit !important; color: inherit !important;
-                height: auto !important; overflow:hidden;}
-                
+}               
 .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden,
 .jp-LinkedOutputView .SlidesWrapper .voila-sidecar-hidden,
 #rendered_cells .SlidesWrapper .voila-sidecar-hidden{

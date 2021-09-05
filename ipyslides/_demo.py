@@ -15,7 +15,7 @@ slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 #slide 2    
 slides.shell.run_cell_magic('slide','2','write("## I am created using magic `%%slide 2`")')
 #slide 3
-@slides.slides(2,'## I am created using `@slides.slides`)')
+@slides.slides(2,'## I am created using `@slides.slides`')
 def func(item):
     write(item)
 
