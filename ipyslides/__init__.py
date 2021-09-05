@@ -2,11 +2,11 @@ __version__ = '0.8.3'
 
 __all__ = ['initialize','initial_code']
 from .core import LiveSlides
-from .utils import write, fmt2cols, plt2html, plotly2html, print_context
-__all__.extend(['LiveSlides', 'write', 'fmt2cols', 'plt2html', 'plotly2html', 'print_context'])
+from .utils import write, fmt2cols, plt2html, plotly2html, print_context, set_dir
+__all__.extend(['LiveSlides', 'write', 'fmt2cols', 'plt2html', 'plotly2html', 'print_context','set_dir'])
 
 initial_code = '''import ipyslides as isd
-from ipyslides.utils import write, plt2html, print_context, fmt2cols, details, file2img, file2code
+from ipyslides.utils import write, plt2html, print_context, fmt2cols, details, file2img, file2code, set_dir
 
 from ipyslides.core import  LiveSlides
 ls = LiveSlides() # This registers %%slide and %%title magics as bonus

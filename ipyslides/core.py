@@ -6,7 +6,7 @@ from . import data_variables as dv
 import datetime, re, os #re for updating font-size and slide number
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
-from .utils import write, _cell_code
+from .utils import write, _cell_code, set_dir
 
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
@@ -84,7 +84,7 @@ class LiveSlides(NavBar):
         self.shell = get_ipython()
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
-        self.user_ns = self.shell.user_ns 
+        self.user_ns = self.shell.user_ns #important for set_dir
         self.animation_css = animation_css
         self.__citations = {} # Initialize citations
         self.__slides_mode = False
@@ -217,7 +217,6 @@ class LiveSlides(NavBar):
         if line and not line.isnumeric():
             return print(f'You should use %%slide integer, not %%slide {line}')
         if self.__slides_mode:
-            self.__current_slide = int(line)
             self.shell.run_cell_magic('capture',line,cell)
             if line: #Only keep slides with line number
                 self.__slides_dict[line] = self.shell.user_ns[line]
@@ -232,7 +231,6 @@ class LiveSlides(NavBar):
         "Use this context manager to generate any number of slides from a cell"
         if not isinstance(slide_number,int):
             return print(f'slide_number expects integer, got {slide_number!r}')
-        self.__current_slide = slide_number
         with capture_output() as cap:
             yield
         # Now Handle What is captured
@@ -270,17 +268,17 @@ class LiveSlides(NavBar):
     def slides(self, after_slide_number, *objs):
         """Decorator for inserting slides dynamically, define a function with one argument acting on each obj in objs.
         No return of function required, if any, only should be display/show etc."""
-        def decorator(func):
+        def _slides(func):
             if not isinstance(after_slide_number,int):
                 return print(f'after_slide_number expects integer, got {after_slide_number!r}')
-        
-            self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':func}
-            self.refresh() # Content chnage refreshes it.
 
             if not self.__slides_mode:
                 print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
                 return objs
-        return decorator
+            else:
+                self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':func}
+                self.refresh() # Content chnage refreshes it.
+        return _slides
         
     def convert2slides(self,b=False):
         "Turn ON/OFF slides vs editing mode. Should be in same cell as `LiveSLides`"
@@ -374,14 +372,15 @@ class Customize:
         elif self.theme_dd.value == 'Dark':
             theme_css = dv.style_html(dv.dark_root)
         elif self.theme_dd.value == 'Custom': # In case of Custom CSS
-            if not os.path.isfile('custom.css'):
-                with open('custom.css','w') as f:
-                    _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')
-                    f.writelines(['/* Author: Abdul Saboor */'])
-                    f.write(_str)
-            # Read CSS from file
-            with open('custom.css','r') as f:
-                theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
+            with set_dir(self.master.user_ns['_dh'][0]):
+                if not os.path.isfile('custom.css'):
+                    with open('custom.css','w') as f:
+                        _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')
+                        f.writelines(['/* Author: Abdul Saboor */'])
+                        f.write(_str)
+                # Read CSS from file
+                with open('custom.css','r') as f:
+                    theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
         # Replace font-size
         theme_css = theme_css.replace('__text_size__',text_size)   
         # Catch Fullscreen too.

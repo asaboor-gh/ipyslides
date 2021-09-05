@@ -1,6 +1,6 @@
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt, os
 from io import BytesIO
 from IPython.utils.capture import capture_output
 from IPython.core.display import __all__
@@ -13,6 +13,15 @@ def print_context():
     with capture_output() as cap:
         yield
     display(Markdown(f'```shell\n{cap.stdout}\n{cap.stderr}```'))
+    
+@contextmanager
+def set_dir(path):
+    current = os.getcwd()
+    try:
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(current)
 
 def syntax_css():
     keywords = 'n k kc mi mf kn nn p c1 o nf sa s1 si nb nc se'.split()
