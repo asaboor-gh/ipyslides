@@ -241,7 +241,7 @@ div.fig-container>svg{
 }      
 </style>'''
 
-animation_css = '''<style>
+animation_css = {'zoom':'''<style>
 .SlideArea {
     animation-name: zoom; animation-duration: 600ms;
     animation-timing-function: linear;
@@ -253,7 +253,19 @@ animation_css = '''<style>
 	75% { transform: scale(0.85); }
    100% { transform: scale(1); }
 }
-</style>'''
+</style>''',
+'slide': '''<style>
+.SlideArea {
+    animation-name: slide; animation-duration: 600ms;
+    animation-timing-function: fade-in;
+}
+@keyframes slide {
+     from { transform: translateX(200%);}
+    to { transform: translateX(0); }
+}
+</style>
+'''
+}
 
 main_layout_css = '''<style>
 .SlidesWrapper .SlideArea { align-items: center;}
@@ -308,7 +320,27 @@ fullscreen_css = '''<style>
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
 .SlidesWrapper .voila-sidecar-hidden{display: none;} 
-</style>'''
+</style>''' 
+
+navigation_js = '''
+let arrows = document.getElementsByClassName('arrows');
+document.onkeydown = function(e) {
+    switch (e.keyCode) {
+        case 37:
+            arrows[0].click();
+            break;
+        case 38:
+            arrows[0].click();
+            break;
+        case 39:
+            arrows[1].click();
+            break;
+        case 40:
+            arrows[1].click();
+            break;
+    };
+};
+'''
 
 mpl_fs_css = '''<style>
 /* Pop out matplotlib's SVG on click/hover */

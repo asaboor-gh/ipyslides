@@ -1,5 +1,5 @@
 import numpy as np
-from IPython.display import display
+from IPython.display import display, Javascript
 import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
@@ -69,7 +69,7 @@ class NavBar:
     __call__ = show
          
 class LiveSlides(NavBar):
-    def __init__(self,magic_suffix='',animation_css = dv.animation_css):
+    def __init__(self,magic_suffix='',animation_css = dv.animation_css['slide']):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
             - magic_suffix: str, append a string to %%slide and %%title in case you have many instances of this class, they do not overwrite each other's magics.
@@ -119,6 +119,10 @@ class LiveSlides(NavBar):
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
+    
+    def enable_navigation_javascript(self):
+        "Allows you to navigate using keyboard. Add it at end of slides"
+        return display(Javascript(dv.navigation_js))
     
     def cite(self,key, citation):
         "Add citation in presentation, both key and citation are text/markdown/HTML."
@@ -175,9 +179,11 @@ class LiveSlides(NavBar):
     def __display_slide(self):
         item = self.iterable[self.prog_slider.value-1]
         if 'func' in item.keys():
-            item['func'](item['slide']) #Show dynamic slides
+            if item['func'] == None:
+                return item['slide'].show() # Pre-Calculated Slides
+            return item['func'](item['slide']) #Show dynamic slides
         else:
-            item['slide'].show() #show ipython capture/slide context or if item has a show method with display. 
+            return item['slide'].show() #show ipython capture/slide context or if item has a show method with display. 
            
     def __update_content(self,change):
         if self.__slides_title_page or (self.iterable and change):
@@ -265,9 +271,10 @@ class LiveSlides(NavBar):
     def insert_after(self,slide_number,*objs,func=display):
         return print("`insert_after` is deprecated, use decorator `slides` instead!")
     
-    def slides(self, after_slide_number, *objs):
+    def slides(self, after_slide_number, *objs, calculate_now=True):
         """Decorator for inserting slides dynamically, define a function with one argument acting on each obj in objs.
-        No return of function required, if any, only should be display/show etc."""
+        No return of function required, if any, only should be display/show etc.\
+        `calculate_now = True` build slides in advance and `False` calculate when slide appears."""
         def _slides(func):
             if not isinstance(after_slide_number,int):
                 return print(f'after_slide_number expects integer, got {after_slide_number!r}')
@@ -276,7 +283,16 @@ class LiveSlides(NavBar):
                 print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
                 return objs
             else:
-                self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':func}
+                if calculate_now:
+                    _slides = []
+                    for obj in objs:
+                        with capture_output() as cap:
+                            func(obj)
+                        _slides.append(cap)
+                    
+                    self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': _slides,'func':None}
+                else:
+                    self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':func}
                 self.refresh() # Content chnage refreshes it.
         return _slides
         
@@ -323,7 +339,7 @@ class Customize:
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only')
-        self.btn_mpl = ipw.ToggleButton(description='Matplotlib SVG Zoom',icon='toggle-off',value = False).add_class('sidecar-only')
+        self.btn_mpl = ipw.ToggleButton(description='Matplotlib SVG Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
         self.box = VBox([Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         VBox([
                             self.height_slider.add_class('voila-sidecar-hidden'), 
