@@ -5,6 +5,7 @@ from io import BytesIO
 from IPython.utils.capture import capture_output
 from IPython.core.display import __all__
 from contextlib import contextmanager
+import ipywidgets as ipw
 __reprs__ = [rep.replace('display_','') for rep in __all__ if rep.startswith('display_')] # Can display these in write command
 
 @contextmanager
@@ -42,6 +43,17 @@ def __fix_repr(obj):
     else:
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
         return markdown(_obj,extensions=['fenced_code','tables','codehilite']) 
+    
+def _fmt_write(*columns,width_percents=None):
+    if not width_percents:
+        width_percents = [int(100/len(columns)) for _ in columns]
+        
+    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{__fix_repr(c)}</div>" 
+                            for c,w in zip(columns,width_percents)])
+    _cols = syntax_css() + _cols if 'codehilite' in _cols else _cols
+    if len(columns) == 1:
+        return _cols
+    return f'''<div class="columns">{_cols}</div>'''
         
 def write(*columns,width_percents=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
@@ -55,15 +67,23 @@ def write(*columns,width_percents=None):
     Note: You can give your own type of data provided that it is converted to an HTML string, so you can
     extent beyond matplotlib or plotly.
     ''' 
-    style = syntax_css()
+    return display(HTML(_fmt_write(*columns,width_percents=width_percents)))
+
+def ihtml(*columns,width_percents=None):
+    "Returns an ipywidgets.HTML widget. Accepts content types same as in `write` command and can be changed on fly as `ihtml.value = 'content'` "
+    return ipw.HTML(_fmt_write(*columns,width_percents=width_percents))
+
+def _fmt_iwrite(*columns,width_percents=None):
     if not width_percents:
         width_percents = [int(100/len(columns)) for _ in columns]
         
-    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{__fix_repr(c)}</div>" 
-                            for c,w in zip(columns,width_percents)])
-    if len(columns) == 1:
-        return display(HTML(style + _cols))
-    return display(HTML(f'''<div class="columns">{style}{_cols}</div>'''))
+    _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] #Make list if single element
+    children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}%')) for _c, _w in zip(_cols,width_percents)]
+    return ipw.HBox(children = children).add_class('columns')
+
+def iwrite(*columns,width_percents=None):
+    "Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple of widgets. Text can be added with `ihtml`"
+    display(_fmt_iwrite(*columns,width_percents=width_percents))
 
 def fmt2cols(c1,c2,w1=50,w2=50):
     """Useful when you want to split a column in `write` command in small 2 columns, e.g displaying a firgure with text on left.

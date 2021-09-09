@@ -1,7 +1,7 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 from .core import LiveSlides
-from .utils import write, plt2html
+from .utils import write, plt2html, iwrite
 slides = LiveSlides()
 slides.convert2slides(True)
 slides.set_footer('Author: Abdul Saboor')
@@ -71,9 +71,16 @@ with slides.slide(10):
 
 # Interactive widgets can't be used in write command, but still they are displayed.   
 import ipywidgets as ipw
+btn = ipw.Button(description='Click Me To see Progress',layout=ipw.Layout(width='auto'))
+prog = ipw.IntProgress(value=10)
+def onclick(btn):
+    prog.value = prog.value + 1
+
+btn.on_click(onclick)
+
 with slides.slide(11):
     write('## All IPython widgets support\n`ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc.')
-    display(ipw.IntSlider(),ipw.IntProgress(value=50),ipw.Button(description='Click Me, I do nothing'))
+    iwrite([ipw.IntSlider(),prog],btn)
 
 # Dynamic Slides   
 @slides.slides(12,*range(13,20))
