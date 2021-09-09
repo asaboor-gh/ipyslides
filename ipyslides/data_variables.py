@@ -333,6 +333,9 @@ document.onkeydown = function(e) {
         case 39:
             arrows[1].click();
             break;
+        case 32:
+            arrows[1].click(); // spacebar 
+            break;
     };
 };
 /* Touch Screens */
