@@ -241,8 +241,8 @@ div.fig-container>svg{
 }      
 </style>'''
 
-animation_css = {'zoom':'''<style>
-.SlideArea {
+animations = {'zoom':'''<style>
+.SlideBox {
     animation-name: zoom; animation-duration: 600ms;
     animation-timing-function: linear;
 }
@@ -255,13 +255,13 @@ animation_css = {'zoom':'''<style>
 }
 </style>''',
 'slide': '''<style>
-.SlideArea {
+.SlideBox {
     animation-name: slide; animation-duration: 600ms;
-    animation-timing-function: fade-in;
+    animation-timing-function: cubic-bezier(0.1, -0.6, 0.2, 0);
 }
 @keyframes slide {
-     from { transform: translateX(200%);}
-    to { transform: translateX(0); }
+     from { transform: translateX(120%);}
+     to { transform: translateX(0); }
 }
 </style>
 '''
@@ -324,21 +324,50 @@ fullscreen_css = '''<style>
 
 navigation_js = '''
 let arrows = document.getElementsByClassName('arrows');
+/* Keyboard events */
 document.onkeydown = function(e) {
     switch (e.keyCode) {
         case 37:
             arrows[0].click();
             break;
-        case 38:
-            arrows[0].click();
-            break;
         case 39:
             arrows[1].click();
             break;
-        case 40:
-            arrows[1].click();
-            break;
     };
+};
+/* Touch Screens */
+let boxes = document.getElementsByClassName('SlidesWrapper');
+for (let i = 0; i < boxes.length; i++) {
+   boxes[i].addEventListener('touchstart', handleTouchStart, false);        
+    boxes[i].addEventListener('touchmove', handleTouchMove, false);
+};
+
+var xi = null;                                                        
+
+function getTouches(e) {
+  return e.touches ||             // browser API
+         e.originalEvent.touches; // jQuery
+}                                                     
+                                                                         
+function handleTouchStart(e) {
+    const firstTouch = getTouches(e)[0];                                      
+    xi = firstTouch.clientX;                                                                     
+};                                                
+                                                                        
+function handleTouchMove(e) {
+    if ( ! xi) {
+        return;
+    }
+    var xf = e.touches[0].clientX;                                    
+    var dx = xf - xi;
+
+    if ( dx > 20 ) {
+        arrows[0].click();
+    }
+    if ( dx < -20 ){
+        arrows[1].click();
+    }                       
+    xi = null;    // reset back                                   
 };
 '''
 
@@ -395,8 +424,7 @@ slides.show() # Use it once to see slides
 
 > For JupyterLab >=3, you can do `pip install sidecar` as bonus.
 
-> After clicking a button you can use Enter key to forward/backward slides. If you click on slider handle between two buttons,
-> (by hovering between buttons) you can use keyboard to navigate slides. 
+> Version 0.8.4+ enables keyboard and touch navigation!. 
 '''
 
 settings_instructions = f'''{more_instructions}

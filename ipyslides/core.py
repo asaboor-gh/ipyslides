@@ -69,12 +69,12 @@ class NavBar:
     __call__ = show
          
 class LiveSlides(NavBar):
-    def __init__(self,magic_suffix='',animation_css = dv.animation_css['slide']):
+    def __init__(self,magic_suffix='',animation_css = dv.animations['slide']):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
             - magic_suffix: str, append a string to %%slide and %%title in case you have many instances of this class, they do not overwrite each other's magics.
                     So for LiveSlides('A'), use %%slideA, %%titleA, for LiveSlides('B'), use %%slideB, %%titleB and so on.
-            - animation_css: CSS for animation. Set to '' if not animating. You can define yourself by editing `ipysildes.data_variables.animation_css`.
+            - animation_css: CSS for animation. Set to '' if not animating. You can define yourself by editing `ipysildes.data_variables.animations`.
         - **Example**
             ```python 
             import ipyslides as isd 
@@ -113,8 +113,8 @@ class LiveSlides(NavBar):
         
         self.box =  VBox([self.loading_html, self.main_style_html,
                           self.theme_html,
-                          HBox([self.box_setting,ipw.Box([self.out.add_class('SlideArea')],layout= Layout(min_width='100%',overflow='auto')).add_class('main-box'),
-                          ],layout= Layout(width='100%',max_width='100%',height='100%')),
+                          HBox([self.box_setting,ipw.Box([self.out.add_class('SlideArea')],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox'),
+                          ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
                           self.controls,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))

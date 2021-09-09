@@ -1,4 +1,4 @@
-__version__ = '0.8.3'
+__version__ = '0.8.4'
 
 __all__ = ['initialize','initial_code']
 from .core import LiveSlides
@@ -51,4 +51,4 @@ def demo():
         write('## This is all code to generate slides')
         write(_code)
     slides.prog_slider.value = 0 # back to title
-    return slides.show()
+    return slides

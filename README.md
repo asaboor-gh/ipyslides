@@ -5,6 +5,10 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
+# 0.8.4 Cangelog
+- Keyboard and touchscreen navigation could be enabled using `LiveSlides.enable_navigation_javascript()`.
+- `@slides(...,calculate_now=True)` could be used to calculate slides in advance or just in time. Default is `True`.   
+
 # 0.8.3 Changelog
 If you have `ls = LiveSlides()`:
 - You can now use `ls.cite` method to create citations which you can write at end by `ls.write_citations` command.
