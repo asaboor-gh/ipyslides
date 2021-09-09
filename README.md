@@ -5,9 +5,10 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
-# 0.8.4 Cangelog
+# 0.8.5 Cangelog
 - Keyboard and touchscreen navigation could be enabled using `LiveSlides.enable_navigation_javascript()`.
-- `@slides(...,calculate_now=True)` could be used to calculate slides in advance or just in time. Default is `True`.   
+- `@ls.slides(...,calculate_now=True)` could be used to calculate slides in advance or just in time. Default is `True`. 
+- You can now use `ipyslides.utils.iwrite` to build complex layout of widgets like ipywidgets, bqplot etc. (and text using `ipyslides.utils.ihtml`).  
 
 # 0.8.3 Changelog
 If you have `ls = LiveSlides()`:

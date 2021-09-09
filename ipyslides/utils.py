@@ -82,7 +82,7 @@ def _fmt_iwrite(*columns,width_percents=None):
     return ipw.HBox(children = children).add_class('columns')
 
 def iwrite(*columns,width_percents=None):
-    "Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple of widgets. Text can be added with `ihtml`"
+    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple of widgets to display as rows in a column. Text can be added with `ihtml`"""
     display(_fmt_iwrite(*columns,width_percents=width_percents))
 
 def fmt2cols(c1,c2,w1=50,w2=50):

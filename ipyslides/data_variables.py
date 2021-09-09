@@ -364,10 +364,10 @@ function handleTouchMove(e) {
     var xf = e.touches[0].clientX;                                    
     var dx = xf - xi;
 
-    if ( dx > 20 ) {
+    if ( dx > 10 ) {
         arrows[0].click();
     }
-    if ( dx < -20 ){
+    if ( dx < -10 ){
         arrows[1].click();
     }                       
     xi = null;    // reset back                                   

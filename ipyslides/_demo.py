@@ -75,6 +75,8 @@ btn = ipw.Button(description='Click Me To see Progress',layout=ipw.Layout(width=
 prog = ipw.IntProgress(value=10)
 def onclick(btn):
     prog.value = prog.value + 1
+    if prog.value == 100:
+        prog.value = 0
 
 btn.on_click(onclick)
 
