@@ -1,9 +1,9 @@
-__version__ = '0.8.5'
+__version__ = '0.8.6'
 
 __all__ = ['initialize','initial_code']
 from .core import LiveSlides
-from .utils import write, fmt2cols, plt2html, plotly2html, print_context, set_dir
-__all__.extend(['LiveSlides', 'write', 'fmt2cols', 'plt2html', 'plotly2html', 'print_context','set_dir'])
+from .utils import write, fmt2cols, plt2html, print_context, set_dir
+__all__.extend(['LiveSlides', 'write', 'fmt2cols', 'plt2html', 'print_context','set_dir'])
 
 initial_code = '''import ipyslides as isd
 from ipyslides.utils import write, plt2html, print_context, fmt2cols, details, file2img, file2code, set_dir

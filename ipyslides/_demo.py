@@ -52,12 +52,29 @@ with slides.slide(8):
 # Plotly and Pandas DataFrame only show if you have installed
 try:
     import pandas as pd 
+    import altair as alt
+    alt.themes.enable('dark')
     df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv')
+    chart = alt.Chart(df,width=300,height=260).mark_circle(size=60).encode(
+        x='sepal_length',
+        y='sepal_width',
+        color='species',
+        size = 'petal_width',
+        tooltip=['species', 'sepal_length', 'sepal_width','petal_width','petal_length']
+        ).interactive()
 except:
     df = '### Install `pandas` to view output'
+    chart = '### Install Altair to see chart'
 with slides.slide(9):
-    write('## Writing Pandas DataFrame\nSince it has `_repr_html_` method')
-    write(df)
+    write(('## Writing Pandas DataFrame\nSince it has `_repr_html_` method',df),
+          ('## Writing Altair Chart\nSince it has `to_html` method',chart)
+          )
+    write("""```python
+with slides.slide(9):
+    write(('## Writing Pandas DataFrame\\nSince it has `_repr_html_` method',df),
+          ('## Writing Altair Chart\\nSince it has `to_html` method',chart)
+          )\n```"""
+          )
     
 try:
     import plotly.graph_objects as go
@@ -66,30 +83,29 @@ try:
 except:
     fig = '### Install `plotly` to view output'
 with slides.slide(10):
-    write('## Writing Plotly Figure\nSince it has `_repr_html_` method')
-    write(fig)
+    write(('## Writing Plotly Figure\nSince it has `_repr_html_` method',fig))
 
 # Interactive widgets can't be used in write command, but still they are displayed.   
 import ipywidgets as ipw
 btn = ipw.Button(description='Click Me To see Progress',layout=ipw.Layout(width='auto'))
 prog = ipw.IntProgress(value=10)
 def onclick(btn):
-    prog.value = prog.value + 1
-    if prog.value == 100:
+    prog.value = prog.value + 10
+    if prog.value > 90:
         prog.value = 0
 
 btn.on_click(onclick)
 
 with slides.slide(11):
     write('## All IPython widgets support\n`ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc.')
-    iwrite([ipw.IntSlider(),prog],btn)
+    iwrite([ipw.IntSlider(value=10),prog],btn)
 
-# Dynamic Slides   
-@slides.slides(12,*range(13,20))
+# Animat plot in slides  
+@slides.slides(12,*range(13,18))
 def func(item):
     fig, ax = plt.subplots()
     x = np.linspace(0,item+1,50+10*(item - 12))
     ax.plot(x,np.sin(x));
     ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {item - 12}')
     ax.set_axis_off()
-    write(f'### This is Slide {item}\n and we are plotting dynamically',plt2html(),width_percents=[30,70])
+    write(f'### This is Slide {item}\n and we are animating matplotlib',plt2html(),width_percents=[30,70])

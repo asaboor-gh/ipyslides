@@ -5,6 +5,9 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
+# 0.8.6 Changelog
+- Support added for objects with methods `to_html` such as Altair Charts.
+- `write` command now can accept `list/tuple` of content, items are place in rows.
 # 0.8.5 Cangelog
 - Keyboard and touchscreen navigation could be enabled using `LiveSlides.enable_navigation_javascript()`.
 - `@ls.slides(...,calculate_now=True)` could be used to calculate slides in advance or just in time. Default is `True`. 

@@ -34,12 +34,17 @@ def syntax_css():
     
 def __fix_repr(obj):
     if not isinstance(obj,str):
+        # Check _repr_<method>_ first
         _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
         if _reprs_:
             return _reprs_[0]()
-        else:
-            _methods = '<br/>'.join([f'<code>_repr_{rep}_</code>' for rep in __reprs__])
-            return f"<blockquote>Can't write object <code>{obj}</code><br/> Expects a string or object with anyone of follwing methods:<br/>{_methods}</blockquote>"
+        # Check to_<method> later
+        _tos_ = [rep for rep in [getattr(obj,f'to_{r}',None) for r in __reprs__] if rep]
+        if _tos_:
+            return _tos_[0]()
+        # Return info if nothing above
+        _methods = '<br/>'.join([f'<code>_repr_{rep}_</code>' for rep in ['to_html',*__reprs__]])
+        return f"<blockquote>Can't write object <code>{obj}</code><br/> Expects a string or object with anyone of follwing methods:<br/>{_methods}</blockquote>"
     else:
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
         return markdown(_obj,extensions=['fenced_code','tables','codehilite']) 
@@ -47,9 +52,10 @@ def __fix_repr(obj):
 def _fmt_write(*columns,width_percents=None):
     if not width_percents:
         width_percents = [int(100/len(columns)) for _ in columns]
-        
-    _cols = ''.join([f"<div style='width:{w}%;overflow-x:auto;'>{__fix_repr(c)}</div>" 
-                            for c,w in zip(columns,width_percents)])
+    _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] 
+    _cols = ''.join([f"""<div style='width:{w}%;overflow-x:auto;'>
+                     {''.join([__fix_repr(row) for row in _col])}
+                     </div>""" for _col,w in zip(_cols,width_percents)])
     _cols = syntax_css() + _cols if 'codehilite' in _cols else _cols
     if len(columns) == 1:
         return _cols
@@ -57,15 +63,17 @@ def _fmt_write(*columns,width_percents=None):
         
 def write(*columns,width_percents=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
-    
+    Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows. 
     You can given a code object from ipyslides.get_cell_code() to it, syntax highlight is enabled.
     You can give a matplotlib figure to it using ipyslides.utils.plt2html().
-    You can give an interactive plotly figure to it ipyslides.utils.plotly2html().
-    You can give a pandas dataframe after converting to HTML.
+    You can give an interactive plotly figure.
+    You can give a pandas dataframe `df` or `df.to_html()`.
+    You can give any object which has `to_html` method like Altair chart. 
     You can give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
     
-    Note: You can give your own type of data provided that it is converted to an HTML string, so you can
-    extent beyond matplotlib or plotly.
+    Note: You can give your own type of data provided that it is converted to an HTML string.
+    Note: `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
+    
     ''' 
     return display(HTML(_fmt_write(*columns,width_percents=width_percents)))
 
@@ -82,7 +90,8 @@ def _fmt_iwrite(*columns,width_percents=None):
     return ipw.HBox(children = children).add_class('columns')
 
 def iwrite(*columns,width_percents=None):
-    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple of widgets to display as rows in a column. Text can be added with `ihtml`"""
+    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple of widgets to display as rows in a column. 
+    Text and other rich IPython content like charts can be added with `ihtml`"""
     display(_fmt_iwrite(*columns,width_percents=width_percents))
 
 def fmt2cols(c1,c2,w1=50,w2=50):
@@ -115,23 +124,6 @@ def file2code(filename,language='python',max_height='400px'):
     else:
         code = Code(filename=filename,language=language)._repr_html_()
     return f'<div style="max-height:{max_height};overflow:auto;">{code}</div>'
-
-def plotly2html(fig):
-    """Writes plotly's figure as HTML string to use in `ipyslide.utils.write`.
-    - fig : A plotly's figure object.
-    """
-    import uuid # Unique div-id required,otherwise jupyterlab renders at one place only and overwite it.
-    div_id = "graph-{}".format(uuid.uuid1())
-    fig_json = fig.to_json()
-    return  f"""<div class='fig-container'>
-        <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-        <div id='{div_id}'><!-- Plotly chart DIV --></div>
-        <script>
-            var data = {fig_json};
-            var config = {{displayModeBar: true,scrollZoom: true}};
-            Plotly.newPlot('{div_id}', data.data,data.layout,config);
-        </script>
-        </div>"""
         
 def plt2html(plt_fig=None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.

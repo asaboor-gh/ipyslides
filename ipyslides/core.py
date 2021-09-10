@@ -139,8 +139,8 @@ class LiveSlides(NavBar):
         if not self.__slides_mode:
             return print('Set "self.convert2slides(True)", then it will work.')
         if fix_buttons:
-            self.btn_next.description = '⮞'
-            self.btn_prev.description = '⮜'
+            self.btn_next.description = 'Next ⮞'
+            self.btn_prev.description = '⮜ Prev'
             self.btn_prev.icon = ''
             self.btn_next.icon = ''
         else: # Important as showing again with False will not update buttons. 

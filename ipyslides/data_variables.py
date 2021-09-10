@@ -201,7 +201,10 @@ def style_html(style_root = inherit_root):
     background: var(--secondary-bg);
     color: var(--accent-color)!important;
 }
-.SlidesWrapper .panel button, .SlidesWrapper .panel .jupyter-button{ 
+.SlidesWrapper .SlideBox button,
+.SlidesWrapper .SlideBox .jupyter-button,
+.SlidesWrapper .panel button, 
+.SlidesWrapper .panel .jupyter-button{ 
     border: 1px solid var(--accent-color);
     border-radius: 4px;
     }
@@ -221,19 +224,19 @@ def style_html(style_root = inherit_root):
     scrollbar-color:var(--tr-odd-bg) transparent;
 }
 /* Other monsters */  
-:not(.jp-Notebook, .CodeMirror-hscrollbar, .CodeMirror-vscrollbar)::-webkit-scrollbar {
+::-webkit-scrollbar {
     height: 4px;
     width: 4px;
     background: none;
 }
-:not(.jp-Notebook, .CodeMirror-hscrollbar, .CodeMirror-vscrollbar)::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background: var(--tr-odd-bg);
 }
-:not(.jp-Notebook, .CodeMirror-hscrollbar, .CodeMirror-vscrollbar)::-webkit-scrollbar-corner {
+::-webkit-scrollbar-corner {
     display:none;
     background: none;
 }   
-
+.CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
 /* Matplotlib figure SVG */
 div.fig-container>svg{
   background: var(--primary-bg);
@@ -452,4 +455,10 @@ pio.templates.default = "plotly_white"
 #pio.templates #gives list of styles
 ```
 > Tip: Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
+### Altair
+```python
+import altair as alt
+alt.themes.enable('dark')
+#alt.themes #gives available themes
+```
 '''
