@@ -78,7 +78,7 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .panel>div:first-child:hover,
 .SlidesWrapper .panel>div:first-child:focus {height: 50% !important;}
 .SlidesWrapper .panel>div:last-child {padding-top:16px;}
-.SlidesWrapper .columns {width:99%;max-width:99%;display:inline-flex;flex-direction:row;column-gap:2em;}
+.SlidesWrapper .columns {width:99%;max-width:99%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
 .SlidesWrapper .widget-hslider .ui-slider .ui-slider-handle {
@@ -309,9 +309,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 fullscreen_css = '''<style>
 /* Works in Sidecar and Linked Output View */
 .jupyterlab-sidecar > .jp-OutputArea-child, 
-.SlidesWrapper, 
-.jp-LinkedOutputView>div,
-.jp-Cell-outputArea>div {
+.SlidesWrapper{      /* jp-OutputArea-output>div.SlidesWrapper, .jp-LinkedOutputView>div */
     flex: 1;
     position: fixed;
     bottom: 0px;

@@ -22,41 +22,49 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
         svg = svg + f'<p style="font-size:80% !important;">{caption}</p>'
     return f"<div class='fig-container'>{svg}</div>"
 
+def bokeh2html(bokeh_fig,title=""):
+    from bokeh.resources import CDN
+    from bokeh.embed import file_html
+    return file_html(bokeh_fig, CDN, title)
+
+
+# ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
+
 libraries = [
     {'name':'matplotlib.pyplot','obj':'Figure','func':plt2html,'args':(),'kwargs': {}},
     {'name':'altair','obj':'Chart','func': 'to_html','args':(),'kwargs': {}},
     {'name':'pygal','obj':'Graph','func':'render','args':{},'kwargs':{'is_unicode':True}},
     {'name':'pydeck','obj':'Deck','func':'to_html','args':(),'kwargs': {'as_string':True}},
     {'name':'pandas','obj':'DataFrame','func':'to_html','args':(),'kwargs': {}},
-    {'name':'IPython.display','obj':'HTML','func':'_repr_html_','args':(),'kwargs': {}},
-    {'name':'IPython.display','obj':'Markdown','func':'_repr_html_','args':(),'kwargs': {}},
-    {'name':'IPython.display','obj':'Code','func':'_repr_html_','args':(),'kwargs': {}},
-    {'name':'IPython.display','obj':'SVG','func':'_repr_svg_','args':(),'kwargs': {}},
-    {'name':'IPython.display','obj':'YouTubeVideo','func':'_repr_html_','args':(),'kwargs': {}},
-    {'name':'plotly.graph_objects','obj':'Figure','func':'_repr_html_','args':(),'kwargs': {}},
-    {'name':'plotly.graph_objects','obj':'FigureWidget','func':'_repr_html_','args':(),'kwargs': {}},
-    
+    {'name':'bokeh.plotting','obj':'Figure','func':bokeh2html,'args':(),'kwargs':{'title':''}}
     
 ]
 
 def format_object(obj):
-    if isinstance(obj,plt.Axes):
-        obj_in = obj.get_figure()
-    else:
-        obj_in = obj
+    try: # If matplotlib axes given
+        _fig = obj.get_figure()
+        return True,plt2html(_fig)
+    except: pass
+        
+    try: module_name = obj.__module__
+    except: module_name = '' #str, int etc don't have __module__
+    
     for lib in libraries:
-        _module = sys.modules.get(lib['name'],None)
-        if _module:
+        if lib['name'].split('.')[0] in module_name: #MATCH NAMES
+            _module = sys.modules.get(lib['name'],None) # Already imported
+            
+            if not _module:
+                get_ipython().run_cell(f"import {lib['name']} as _module") # Need import to compare
+                
             _obj = getattr(_module,lib['obj'],None)
-            if isinstance(obj_in, _obj):
-                _func = getattr(obj_in,lib['func'],None)
-                if _func:
-                    return True, _func(*lib['args'],**lib['kwargs'])
-                else: # Handle Matplotlib, bokeh etc here by making handling functions
-                    try:
-                        return True, lib['func'](obj_in)
-                    except:
-                        pass
+            if isinstance(obj, _obj):
+                if not isinstance(lib['func'],str): # Handle Matplotlib, bokeh, df etc here by making handling functions
+                    return True, lib['func'](obj, *lib['args'],**lib['kwargs'])
+                else:
+                    _func = getattr(obj, lib['func'],None)
+                    if _func:
+                        return True, _func(*lib['args'],**lib['kwargs'])
+
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       
     

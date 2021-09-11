@@ -5,8 +5,8 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
-# 0.8.6 Changelog
-- Support added for objects with methods `to_html` such as Altair Charts.
+# 0.8.7 Changelog
+- Support added for objects `matplotlib.pyplot.Figure`, `altair.Chart`, `pygal.Graph`, `pydeck.Deck`, `pandas.DataFrame`, `bokeh.plotting.Figure` to be directly in `write` command.
 - `write` command now can accept `list/tuple` of content, items are place in rows.
 # 0.8.5 Cangelog
 - `@ls.slides(...,calculate_now=True)` could be used to calculate slides in advance or just in time. Default is `True`. 
@@ -67,7 +67,19 @@ You can embed anything that you can include in Jupyter notebook like ipywidgets,
 
 > Note: Websites may refuse to load in iframe.
 > Note: You can embed one intsnace of slides `ls1' inside other instance `ls2' using `ls2.insert_after(<N>,ls1.box)`. This is very cool.
+## IPython Display Objects
+Any object with following methods could be in `write` command:
+`_repr_pretty_`, `_repr_html_`, `_repr_markdown_`, `_repr_svg_`, `_repr_png_`, `_repr_jpeg_`, `_repr_latex_`, `_repr_json_`, `_repr_javascript_`, `_repr_pdf_`
+Such as `IPython.display.<HTML,SVG,Markdown,Code>` etc. or third party such as `plotly.graph_objects.Figure`.
 
+## Plots and Other Data Types (0.8.7+)
+These objects are implemented to be writable in `write` command:
+`matplotlib.pyplot.Figure`, `altair.Chart`, `pygal.Graph`, `pydeck.Deck`, `pandas.DataFrame`, `bokeh.plotting.Figure`.
+Many will be extentended in future. If an object is not implemented, use `display(obj)` to show inline or use library's specific command to show in Notebook outside `write`.
+
+## Interactive Widgets
+Any object in `ipywidgets` or libraries based on `ipywidgtes` such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`
+can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made available through `ihtml` command.
 # Full Screen Presentation
 - Jupyterlab 3.0+ has full screen eneabled from any view:
     - Direct output of cell can be turned into fullscreen.

@@ -1,7 +1,8 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 from .core import LiveSlides
-from .utils import write, plt2html, iwrite
+from .utils import ihtml, write, plt2html, iwrite, __reprs__
+from .objs_formatter import libraries
 slides = LiveSlides()
 slides.convert2slides(True)
 slides.set_footer('Author: Abdul Saboor')
@@ -20,9 +21,24 @@ def func(item):
     write(item)
 
 #Now generate many slides in a loop
+__contents = [f"""## IPython Display Objects
+#### Any object with following methods could be in`write` command:
+{', '.join([f'`_repr_{rep}_`' for rep in __reprs__])}
+Such as `IPython.display.<HTML,SVG,Markdown,Code>` etc. or third party such as `plotly.graph_objects.Figure`.            
+""",
+f"""## Plots and Other Data Types
+#### These objects are implemented to be writable in `write` command:
+{', '.join([f"`{lib['name']}.{lib['obj']}`" for lib in libraries])}
+Many will be extentended in future. If an object is not implemented, use `display(obj)` to show inline or use library's specific
+command to show in Notebook outside `write`.
+""",
+"""## Interactive Widgets
+### Any object in `ipywidgets` or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`
+can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made available through `ihtml` command.
+"""]
 for i in range(3,6):
     with slides.slide(i):
-        write(f'## Slide {i} Title\n### Created in a loop')
+        write(__contents[i-3])
 
 # Matplotlib
 import numpy as np, matplotlib.pyplot as plt
@@ -54,7 +70,7 @@ try:
     import pandas as pd 
     import altair as alt
     alt.themes.enable('dark')
-    df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv').head()
+    df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv')
     chart = alt.Chart(df,width=300,height=260).mark_circle(size=60).encode(
         x='sepal_length',
         y='sepal_width',
@@ -62,18 +78,13 @@ try:
         size = 'petal_width',
         tooltip=['species', 'sepal_length', 'sepal_width','petal_width','petal_length']
         ).interactive()
+    df = df.describe() #Small for display
 except:
     df = '### Install `pandas` to view output'
     chart = '### Install Altair to see chart'
 with slides.slide(9):
-    write(('## Writing Pandas DataFrame\nSince it has `_repr_html_` method',df),
-          ('## Writing Altair Chart\nSince it has `to_html` method',chart)
-          )
-    write("""```python
-with slides.slide(9):
-    write(('## Writing Pandas DataFrame\\nSince it has `_repr_html_` method',df),
-          ('## Writing Altair Chart\\nSince it has `to_html` method',chart)
-          )\n```"""
+    write(('## Writing Pandas DataFrame',df),
+          ('## Writing Altair Chart',chart)
           )
     
 try:
@@ -83,22 +94,25 @@ try:
 except:
     fig = '### Install `plotly` to view output'
 with slides.slide(10):
-    write(('## Writing Plotly Figure\nSince it has `_repr_html_` method',fig))
+    write(('## Writing Plotly Figure',fig))
 
 # Interactive widgets can't be used in write command, but still they are displayed.   
 import ipywidgets as ipw
 btn = ipw.Button(description='Click Me To see Progress',layout=ipw.Layout(width='auto'))
 prog = ipw.IntProgress(value=10)
+html = ihtml(f"Current Value is {prog.value}")
 def onclick(btn):
     prog.value = prog.value + 10
     if prog.value > 90:
         prog.value = 0
+    html.value = f"Current Value is {prog.value}"
 
 btn.on_click(onclick)
 
 with slides.slide(11):
-    write('## All IPython widgets support\n`ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc.')
-    iwrite([ipw.IntSlider(value=10),prog],btn)
+    write('## Interactive Apps on Slide\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
+    iwrite(prog,[btn,html])
+    write("[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)")
 
 # Animat plot in slides  
 @slides.slides(12,*range(13,18))
@@ -108,4 +122,4 @@ def func(item):
     ax.plot(x,np.sin(x));
     ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {item - 12}')
     ax.set_axis_off()
-    write(f'### This is Slide {item}\n and we are animating matplotlib',plt2html(),width_percents=[30,70])
+    write(f'### This is Slide {item}\n and we are animating matplotlib',ax,width_percents=[30,70])

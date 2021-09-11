@@ -43,15 +43,18 @@ def _fix_repr(obj):
             return _html
         # Ipython objects
         _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
-        if _reprs_:
-            return _reprs_[0]()
+        for _rep_ in _reprs_:
+            _out_ = _rep_()
+            if _out_: # If there is object in _repr_<>_, don't return None
+                return _out_
         
         # Return info if nothing above
-        _objects = '<br/>'.join([f"<code>{lib['name']}.{lib['obj']}</code>" for lib in libraries])
-        _methods = '<br/>'.join([f'<code>_repr_{rep}_</code>' for rep in __reprs__])
+        _objects = ', '.join([f"<code>{lib['name']}.{lib['obj']}</code>" for lib in libraries])
+        _methods = ', '.join([f'<code>_repr_{rep}_</code>' for rep in __reprs__])
         return f"""<blockquote>Can't write object <code>{obj}</code><br/> 
-                Expects any of :<br/> <code>Text/Markdown/HTML</code> <br/> <code>matplotlib.pyplot.Axes</code> <br/>{_objects}<br/>
-                or any object with anyone of follwing methods:<br/>{_methods}
+                Expects any of :<br/> <code>Text/Markdown/HTML</code>, <code>matplotlib.pyplot.Axes</code>, {_objects}<br/>
+                or any object with anyone of follwing methods:<br/>{_methods}<br/>
+                Use <code>display(*objs)</code> or library's specific method used to display in Notebook. 
                 </blockquote>"""
     else:
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
@@ -61,7 +64,7 @@ def _fmt_write(*columns,width_percents=None):
     if not width_percents:
         width_percents = [int(100/len(columns)) for _ in columns]
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] 
-    _cols = ''.join([f"""<div style='width:{w}%;overflow-x:auto;'>
+    _cols = ''.join([f"""<div style='width:{w}%;overflow-x:auto;height:auto'>
                      {''.join([_fix_repr(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,width_percents)])
     _cols = syntax_css() + _cols if 'codehilite' in _cols else _cols
