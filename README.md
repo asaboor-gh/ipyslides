@@ -9,7 +9,6 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 - Support added for objects with methods `to_html` such as Altair Charts.
 - `write` command now can accept `list/tuple` of content, items are place in rows.
 # 0.8.5 Cangelog
-- Keyboard and touchscreen navigation could be enabled using `LiveSlides.enable_navigation_javascript()`.
 - `@ls.slides(...,calculate_now=True)` could be used to calculate slides in advance or just in time. Default is `True`. 
 - You can now use `ipyslides.utils.iwrite` to build complex layout of widgets like ipywidgets, bqplot etc. (and text using `ipyslides.utils.ihtml`).  
 

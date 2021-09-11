@@ -241,7 +241,12 @@ def style_html(style_root = inherit_root):
 div.fig-container>svg{
   background: var(--primary-bg);
   transition: transform .2s; /* Animation */
-}      
+}    
+.pygal-chart {  /* it doesnt show otherwise */
+    min-width:300px;
+    width:100%;
+    height:auto;
+}  
 </style>'''
 
 animations = {'zoom':'''<style>
@@ -367,10 +372,10 @@ function handleTouchMove(e) {
     var xf = e.touches[0].clientX;                                    
     var dx = xf - xi;
 
-    if ( dx > 10 ) {
+    if ( dx > 20 ) {
         arrows[0].click();
     }
-    if ( dx < -10 ){
+    if ( dx < -20 ){
         arrows[1].click();
     }                       
     xi = null;    // reset back                                   

@@ -6,6 +6,9 @@ from IPython.utils.capture import capture_output
 from IPython.core.display import __all__
 from contextlib import contextmanager
 import ipywidgets as ipw
+from .objs_formatter import format_object , libraries
+from .objs_formatter import plt2html # For backward cimpatibility
+
 __reprs__ = [rep.replace('display_','') for rep in __all__ if rep.startswith('display_')] # Can display these in write command
 
 @contextmanager
@@ -31,20 +34,25 @@ def syntax_css():
     css = [f'.codehilite .{k} {{color:{c};font-weight:{w};}}' for k,c,w in zip(keywords,colors,weights)]
     css = '.codehighlite span {font-family: Monaco,"Lucida Console","Courier New";}\n' + '\n'.join(css)
     return "<style>\n{}\n</style>".format(css)
-    
-def __fix_repr(obj):
+
+def _fix_repr(obj):
     if not isinstance(obj,str):
-        # Check _repr_<method>_ first
+        # Prefer their own methods
+        is_true, _html = format_object(obj)
+        if is_true:
+            return _html
+        # Ipython objects
         _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
         if _reprs_:
             return _reprs_[0]()
-        # Check to_<method> later
-        _tos_ = [rep for rep in [getattr(obj,f'to_{r}',None) for r in __reprs__] if rep]
-        if _tos_:
-            return _tos_[0]()
+        
         # Return info if nothing above
-        _methods = '<br/>'.join([f'<code>_repr_{rep}_</code>' for rep in ['to_html',*__reprs__]])
-        return f"<blockquote>Can't write object <code>{obj}</code><br/> Expects a string or object with anyone of follwing methods:<br/>{_methods}</blockquote>"
+        _objects = '<br/>'.join([f"<code>{lib['name']}.{lib['obj']}</code>" for lib in libraries])
+        _methods = '<br/>'.join([f'<code>_repr_{rep}_</code>' for rep in __reprs__])
+        return f"""<blockquote>Can't write object <code>{obj}</code><br/> 
+                Expects any of :<br/> <code>Text/Markdown/HTML</code> <br/> <code>matplotlib.pyplot.Axes</code> <br/>{_objects}<br/>
+                or any object with anyone of follwing methods:<br/>{_methods}
+                </blockquote>"""
     else:
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
         return markdown(_obj,extensions=['fenced_code','tables','codehilite']) 
@@ -54,7 +62,7 @@ def _fmt_write(*columns,width_percents=None):
         width_percents = [int(100/len(columns)) for _ in columns]
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] 
     _cols = ''.join([f"""<div style='width:{w}%;overflow-x:auto;'>
-                     {''.join([__fix_repr(row) for row in _col])}
+                     {''.join([_fix_repr(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,width_percents)])
     _cols = syntax_css() + _cols if 'codehilite' in _cols else _cols
     if len(columns) == 1:
@@ -100,8 +108,8 @@ def fmt2cols(c1,c2,w1=50,w2=50):
     ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
     `w1, w2` as their respective widths(int) in percents."""
     return f"""<div class='columns'>
-        <div style='width:{w1}%;overflow-x:auto;'>{__fix_repr(c1)}</div>
-        <div style='width:{w2}%;overflow-x:auto;'>{__fix_repr(c2)}</div></div>"""  
+        <div style='width:{w1}%;overflow-x:auto;'>{_fix_repr(c1)}</div>
+        <div style='width:{w2}%;overflow-x:auto;'>{_fix_repr(c2)}</div></div>"""  
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
@@ -124,24 +132,6 @@ def file2code(filename,language='python',max_height='400px'):
     else:
         code = Code(filename=filename,language=language)._repr_html_()
     return f'<div style="max-height:{max_height};overflow:auto;">{code}</div>'
-        
-def plt2html(plt_fig=None,transparent=True,caption=None):
-    """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
-    - **Parameters**
-        - plt_fig    : Matplotlib's figure instance, auto picks as well.
-        - transparent: True of False for fig background.
-    """
-    if plt_fig==None:
-        plt_fig = plt.gcf()
-    plot_bytes = BytesIO()
-    plt.savefig(plot_bytes,format='svg',transparent=transparent)
-    plt.clf() # Clear image to avoid other display
-    plt.close() #AVoids throwing text outside figure
-    svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
-    if caption:
-        svg = svg + f'<p style="font-size:80% !important;">{caption}</p>'
-    return f"<div class='fig-container'>{svg}</div>"
-
 
 def _cell_code(shell,line_number=True,this_line=True,magics=False,comments=False,lines=None):
     "Return current cell's code in slides for educational purpose. `lines` should be list/tuple of line numbers to include if filtered."

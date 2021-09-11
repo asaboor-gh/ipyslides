@@ -120,10 +120,6 @@ class LiveSlides(NavBar):
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
     
-    def enable_navigation_javascript(self):
-        "Allows you to navigate using keyboard. Add it at end of slides"
-        return display(Javascript(dv.navigation_js))
-    
     def cite(self,key, citation):
         "Add citation in presentation, both key and citation are text/markdown/HTML."
         self.__citations[key] = citation
@@ -412,7 +408,14 @@ class Customize:
             theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
         else:
             self.btn_mpl.icon= 'toggle-off'
-        
+            
+        # Add Javscript only in full screen mode
+        with self.__instructions:
+            self.__instructions.clear_output()
+            write(dv.settings_instructions)
+            # Must unregister events in edit mode to avoid slides switch while editing, leave touch as it is
+            nav_js = dv.navigation_js if self.btn_fs.value else dv.navigation_js + "\ndocument.onkeydown = null"
+            display(Javascript(nav_js))
         # Now Set Theme
         self.master.theme_html.value = theme_css
 

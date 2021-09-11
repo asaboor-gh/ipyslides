@@ -54,7 +54,7 @@ try:
     import pandas as pd 
     import altair as alt
     alt.themes.enable('dark')
-    df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv')
+    df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv').head()
     chart = alt.Chart(df,width=300,height=260).mark_circle(size=60).encode(
         x='sepal_length',
         y='sepal_width',
