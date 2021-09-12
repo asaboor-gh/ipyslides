@@ -399,9 +399,13 @@ class Customize:
         if self.btn_fs.value:
             theme_css = theme_css.replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
             self.btn_fs.icon = 'compress'
+            try:self.master.box.add_class('FullScreen')
+            except:pass
         else:
             self.master.theme_html.value = theme_css #Push CSS without Fullscreen
             self.btn_fs.icon = 'expand'
+            try:self.master.box.remove_class('FullScreen')
+            except: pass
         # Matplotlib's SVG Zoom 
         if self.btn_mpl.value:
             self.btn_mpl.icon= 'toggle-on'

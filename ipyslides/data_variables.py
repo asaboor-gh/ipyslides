@@ -50,7 +50,7 @@ def style_html(style_root = inherit_root):
    font-family: "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
    font-size: 80% !important;
 }
-.SlideArea .SlidesWrapper {max-height:calc(90vh - 100px);} /* in case of embed slides */ 
+.SlideArea .SlidesWrapper {max-height:calc(95vh - 100px);} /* in case of embed slides */ 
 .SlidesWrapper {
 	margin: auto;
 	padding: 0px;
@@ -201,13 +201,11 @@ def style_html(style_root = inherit_root):
     background: var(--secondary-bg);
     color: var(--accent-color)!important;
 }
-.SlidesWrapper .SlideBox button,
-.SlidesWrapper .SlideBox .jupyter-button,
-.SlidesWrapper .panel button, 
-.SlidesWrapper .panel .jupyter-button{ 
+.SlidesWrapper :is(.SlideBox, .panel) :is(button, .jupyter-button) { 
     border: 1px solid var(--accent-color);
     border-radius: 4px;
-    }
+}
+
 .SlidesWrapper .jupyter-button:hover:enabled,
 .SlidesWrapper .jupyter-button:focus:enabled {
     outline:none !important;
@@ -216,8 +214,10 @@ def style_html(style_root = inherit_root):
     background:var(--hover-bg);
     text-shadow: 0 0 2px var(--primary-bg), 0 0 4px var(--accent-color);
 }
+.SlideArea .SlidesWrapper :is(.NavWrapper, .controls) button{ border: none !important;} /* embeded slides */
 .sidecar-only {background: transparent;box-shadow: none;min-width:max-content; opacity:0.6;}
 .sidecar-only:hover, .sidecar-only:focus {opacity:1;}
+
 /* Make Scrollbars beautiful */
 .SlidesWrapper, .SlidesWrapper  * { /* FireFox <3*/
     scrollbar-width: thin;
@@ -308,8 +308,10 @@ a.jp-InternalAnchorLink { display: none !important;}
 
 fullscreen_css = '''<style>
 /* Works in Sidecar and Linked Output View */
-.jupyterlab-sidecar > .jp-OutputArea-child, 
-.SlidesWrapper{      /* jp-OutputArea-output>div.SlidesWrapper, .jp-LinkedOutputView>div */
+/*.jupyterlab-sidecar > .jp-OutputArea-child,*/ 
+/* jp-OutputArea-output>div, .jp-LinkedOutputView>div */
+/* No need of above now, works everywhere */
+.SlidesWrapper.FullScreen {      
     flex: 1;
     position: fixed;
     bottom: 0px;
@@ -370,10 +372,10 @@ function handleTouchMove(e) {
     var xf = e.touches[0].clientX;                                    
     var dx = xf - xi;
 
-    if ( dx > 20 ) {
+    if ( dx > 40 ) {
         arrows[0].click();
     }
-    if ( dx < -20 ){
+    if ( dx < -40 ){
         arrows[1].click();
     }                       
     xi = null;    // reset back                                   
