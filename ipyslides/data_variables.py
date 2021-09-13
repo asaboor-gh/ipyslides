@@ -39,6 +39,7 @@ inherit_root = """:root {
 
 def style_html(style_root = inherit_root):
 	return '<style>\n' + style_root + ''' 
+.jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
 .cell-output-ipywidget-background {
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
