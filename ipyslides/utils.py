@@ -89,7 +89,7 @@ def write(*columns,width_percents=None):
     return display(HTML(_fmt_write(*columns,width_percents=width_percents)))
 
 def ihtml(*columns,width_percents=None):
-    "Returns an ipywidgets.HTML widget. Accepts content types same as in `write` command and can be changed on fly as `ihtml.value = 'content'` "
+    "Returns an ipywidgets.HTML widget. Accepts content types same as in `write` command but does not allow javascript, so interactive graphs may not render."
     return ipw.HTML(_fmt_write(*columns,width_percents=width_percents))
 
 def _fmt_iwrite(*columns,width_percents=None):

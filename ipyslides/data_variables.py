@@ -39,8 +39,10 @@ inherit_root = """:root {
 
 def style_html(style_root = inherit_root):
 	return '<style>\n' + style_root + ''' 
+.SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
+.jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
-.cell-output-ipywidget-background {
+.cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
 .SlidesWrapper *:not(.fa):not(i):not(span) {
@@ -110,7 +112,7 @@ def style_html(style_root = inherit_root):
     position:absolute;
     right:16px !important;
     bottom:0px !important;
-    z-index:98; /* below mpl */
+    z-index:98; /* below matplotlib fullsreen */
     padding;0 !important;
     justify-content: flex-end !important;
     align-items:center !important;
@@ -132,8 +134,6 @@ def style_html(style_root = inherit_root):
     	opacity:0;
 	}
 }
- 
-.jp-RenderedHTMLCommon {font-size: var(--text-size);} /* For Voila */
 
 .SlidesWrapper h1,h2,h3,h4,h5,h6{
 	color:var(--heading-fg);
@@ -324,7 +324,7 @@ fullscreen_css = '''<style>
     padding: 0;
     background:var(--primary-bg);
 } 
-.SlideArea .SlidesWrapper { position:relative;width:90%;max-width:100%;height:unset;left:unset;bottom:unset;}  
+.SlideArea .SlidesWrapper { position:relative;width:90%;max-width:95%;height:unset;left:unset;bottom:unset;}  
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
