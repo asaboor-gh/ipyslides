@@ -39,6 +39,14 @@ inherit_root = """:root {
 
 def style_html(style_root = inherit_root):
 	return '<style>\n' + style_root + ''' 
+.SlideArea .TextBox { /* general text box for writing inline refrences etc. */
+    font-size: 70% !important; 
+    position:relative; 
+    left:initial;
+    top:initial;
+    padding:2px 4px;
+    color: var(--secondary-fg);
+}
 .SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}

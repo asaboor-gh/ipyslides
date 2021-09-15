@@ -152,3 +152,10 @@ def _cell_code(shell,line_number=True,this_line=True,magics=False,comments=False
     if not comments:
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
     return markdown("```python\n{}\n```".format('\n'.join(current_cell_code)),extensions=['fenced_code','tables','codehilite'])
+
+def textbox(text, **css_props):
+    """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
+    `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `TextBox`."""
+    _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
+    return f"<span class='TextBox' style = {_style!r}> {text} </span>"  # markdown="span" will avoid inner parsing
+    

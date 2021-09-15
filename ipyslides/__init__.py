@@ -6,7 +6,7 @@ from .utils import write, fmt2cols, plt2html, print_context, set_dir
 __all__.extend(['LiveSlides', 'write', 'fmt2cols', 'plt2html', 'print_context','set_dir'])
 
 initial_code = '''import ipyslides as isd
-from ipyslides.utils import write, plt2html, print_context, fmt2cols, details, file2img, file2code, set_dir
+from ipyslides.utils import write, plt2html, print_context, fmt2cols, details, file2img, file2code, set_dir, textbox
 
 from ipyslides.core import  LiveSlides
 ls = LiveSlides() # This registers %%slide and %%title magics as bonus
