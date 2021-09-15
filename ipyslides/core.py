@@ -96,7 +96,8 @@ class LiveSlides(NavBar):
         self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
         
         self.iterable = self.__collect_slides() # Collect internally
-        self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px'))
+        self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px')
+                              ).add_class('SlideArea')
         
         _max = len(self.iterable) if self.iterable else 0
         super().__init__(N=_max)
@@ -106,19 +107,21 @@ class LiveSlides(NavBar):
         self.main_style_html = ipw.HTML(dv.main_layout_css)
         self.loading_html = ipw.HTML() #SVG Animation in it
         self.prog_slider.observe(self.__update_content,names=['value'])
-        self.__update_content(True)
         
         self.setting = Customize(self)
-        self.box_setting = self.setting.box
+        self.panel_box = self.setting.box
+        self.slide_box = ipw.Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
         
         self.box =  VBox([self.loading_html, self.main_style_html,
                           self.theme_html,
-                          HBox([self.box_setting,ipw.Box([self.out.add_class('SlideArea')],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox'),
+                          HBox([self.panel_box,
+                                self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
                           self.controls,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
+        self.__update_content(True) # First attmpt
     
     def cite(self,key, citation):
         "Add citation in presentation, both key and citation are text/markdown/HTML."
@@ -195,6 +198,7 @@ class LiveSlides(NavBar):
                         self.__slides_title_page.show() #Ipython Captured Output
                 else:
                     self.__display_slide()
+
             self.loading_html.value = ''        
             
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
