@@ -156,6 +156,8 @@ def _cell_code(shell,line_number=True,this_line=True,magics=False,comments=False
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `TextBox`."""
+    css_props = {'display':'inline-block','white-space': 'pre', **css_props} # very important to apply text styles in order
+    # white-space:pre preserves whitspacing, text will be viewed as written. 
     _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
     return f"<span class='TextBox' style = {_style!r}> {text} </span>"  # markdown="span" will avoid inner parsing
     

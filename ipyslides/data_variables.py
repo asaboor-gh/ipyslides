@@ -41,6 +41,7 @@ def style_html(style_root = inherit_root):
 	return '<style>\n' + style_root + ''' 
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 70% !important; 
+    line-height: 80% !important;
     position:relative; 
     left:initial;
     top:initial;

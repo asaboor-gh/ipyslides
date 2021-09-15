@@ -6,7 +6,7 @@ from . import data_variables as dv
 import datetime, re, os #re for updating font-size and slide number
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
-from .utils import write, _cell_code, set_dir
+from .utils import write, _cell_code, set_dir, textbox
 
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
@@ -123,8 +123,10 @@ class LiveSlides(NavBar):
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
     
-    def cite(self,key, citation):
+    def cite(self,key, citation,here=False):
         "Add citation in presentation, both key and citation are text/markdown/HTML."
+        if here:
+            return textbox(citation,left='initial',top='initial') # Just write here
         self.__citations[key] = citation
         _id = list(self.__citations.keys()).index(key)
         return f'<sup style="color:var(--accent-color);">{_id + 1}</sup>'
