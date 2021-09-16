@@ -1,3 +1,4 @@
+from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np
 from IPython.display import display, Javascript
 import ipywidgets as ipw
@@ -6,7 +7,9 @@ from . import data_variables as dv
 import datetime, re, os #re for updating font-size and slide number
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
-from .utils import write, _cell_code, set_dir, textbox
+from .utils import _cell_code, write, textbox
+from . import utils
+_under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
@@ -81,6 +84,10 @@ class LiveSlides(NavBar):
             isd.initilize() #This will generate code in same cell including this class, which is self explainatory 
             ```
         """
+        for k,v in _under_slides.items(): # Make All methods available in slides
+            setattr(self,k,v)
+        self.plt2html = plt2html
+        self.bokeh2html = bokeh2html
         self.shell = get_ipython()
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
@@ -141,13 +148,6 @@ class LiveSlides(NavBar):
                 try: s['slide'].show() # Pre-Calculated Slides
                 except: s['func'](s['slide']) #Show dynamic slides
         return slides
-    
-    def alert(self,text):
-        return f"<span style='color:#DC143C;'>{text}</span>"
-    
-    def colored(self,text,fg='blue',bg=None):
-        "Colored text, `fg` and `bg` should be valid CSS colors"
-        return f"<span style='background:{bg};color:{fg};'>{text}</span>"
     
     def cite(self,key, citation,here=False):
         "Add citation in presentation, both key and citation are text/markdown/HTML."

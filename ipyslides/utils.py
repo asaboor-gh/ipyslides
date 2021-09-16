@@ -1,15 +1,17 @@
+__all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox','file2image','file2tex','file2code','fmt2cols','alert','colored']
+
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code
 import matplotlib.pyplot as plt, os
 from io import BytesIO
 from IPython.utils.capture import capture_output
-from IPython.core.display import __all__
+from IPython.core.display import __all__ as __all
 from contextlib import contextmanager
 import ipywidgets as ipw
 from .objs_formatter import format_object , libraries
-from .objs_formatter import plt2html # For backward cimpatibility
+from .objs_formatter import plt2html # For backward cimpatibility and inside class
 
-__reprs__ = [rep.replace('display_','') for rep in __all__ if rep.startswith('display_')] # Can display these in write command
+__reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
 
 @contextmanager
 def print_context():
@@ -160,5 +162,13 @@ def textbox(text, **css_props):
     # white-space:pre preserves whitspacing, text will be viewed as written. 
     _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
     return f"<span class='TextBox' style = {_style!r}> {text} </span>"  # markdown="span" will avoid inner parsing
+
+def alert(text):
+    "Alerts text!"
+    return f"<span style='color:#DC143C;'>{text}</span>"
+    
+def colored(text,fg='blue',bg=None):
+    "Colored text, `fg` and `bg` should be valid CSS colors"
+    return f"<span style='background:{bg};color:{fg};'>{text}</span>"
 
     

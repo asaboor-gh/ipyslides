@@ -22,7 +22,7 @@ slides.shell.run_cell_magic('slide','2','write("## I am created using magic `%%s
 #slide 3
 @slides.slides(2,'## I am created using `@slides.slides`')
 def func(item):
-    write(item)
+    slides.write(item)
 
 #Now generate many slides in a loop
 __contents = [f"""## IPython Display Objects
@@ -127,4 +127,4 @@ def func(item):
     ax.plot(x,np.sin(x));
     ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {item - 12}')
     ax.set_axis_off()
-    write(f'### This is Slide {item}\n and we are animating matplotlib',ax,width_percents=[30,70])
+    slides.write(f'### This is Slide {item}\n and we are animating matplotlib',ax,width_percents=[30,70])
