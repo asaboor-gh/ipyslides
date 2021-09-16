@@ -1,7 +1,7 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 from .core import LiveSlides
-from .utils import ihtml, write, plt2html, iwrite, __reprs__, textbox
+from .utils import write, ihtml,plt2html, iwrite, __reprs__, textbox
 from .objs_formatter import libraries
 slides = LiveSlides()
 slides.convert2slides(True)

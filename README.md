@@ -5,21 +5,26 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
-# 0.8.10 Changelog
-- You can add two slides together like `slides1 + slides2`, title of `slides2` is converted to a slide inplace. 
-- You can now change style of each slide usig `**css_props` in commands like `@slides`, `with slide` and `with title`. 
+# Changelog
+Content below assumes you have `ls = LiveSlides()`.
+
+## 0.8.11
+- All utilities commnads are now under `LiveSlides` class too, so you can use either 
+`ipyslides.utils.command` or `ls.command` for `command` in `write`,`iwrite`,`file2code` etc.
+## 0.8.10
+- You can add two slides together like `ls1 + ls2`, title of `ls2` is converted to a slide inplace. 
+- You can now change style of each slide usig `**css_props` in commands like `@ls.slides`, `with ls.slide` and `with ls.title`. 
 - A new command `textbox` is added which is useful to write inline references. Same can be acheived with `slides.cite(...here=True)`. 
 - You can use `ls.alert('text')`, `ls.colored('text',fg,bg)` to highlight text.
 
-# 0.8.7 Changelog
+## 0.8.7
 - Support added for objects `matplotlib.pyplot.Figure`, `altair.Chart`, `pygal.Graph`, `pydeck.Deck`, `pandas.DataFrame`, `bokeh.plotting.Figure` to be directly in `write` command.
 - `write` command now can accept `list/tuple` of content, items are place in rows.
-# 0.8.5 Cangelog
+## 0.8.5
 - `@ls.slides(...,calculate_now=True)` could be used to calculate slides in advance or just in time. Default is `True`. 
 - You can now use `ipyslides.utils.iwrite` to build complex layout of widgets like ipywidgets, bqplot etc. (and text using `ipyslides.utils.ihtml`).  
 
-# 0.8.3 Changelog
-If you have `ls = LiveSlides()`:
+## 0.8.3
 - You can now use `ls.cite` method to create citations which you can write at end by `ls.write_citations` command.
 - `ls.insert_after` no longer works, use 
 ```python
@@ -28,7 +33,7 @@ def func(obj):
     write(obj) #etc. for each obj in objs
 ```
 decorator which is more pythonic way. 
-# Changes in Version 0.8
+## 0.8.0 +
 > Note: All these points may not or only partially apply to earlier versions. So use stable API above version 8.
 - Before this version, slides were collected using global namespace, which only allowed one presentation per
 notebook. Now slides are stored in local namespace, so no restriction on number of slides per notebook.
