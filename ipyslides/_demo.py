@@ -1,7 +1,7 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 from .core import LiveSlides
-from .utils import ihtml, write, plt2html, iwrite, __reprs__
+from .utils import ihtml, write, plt2html, iwrite, __reprs__, textbox
 from .objs_formatter import libraries
 slides = LiveSlides()
 slides.convert2slides(True)
@@ -32,12 +32,13 @@ f"""## Plots and Other Data Types
 Many will be extentended in future. If an object is not implemented, use `display(obj)` to show inline or use library's specific
 command to show in Notebook outside `write`.
 """,
-"""## Interactive Widgets
-### Any object in `ipywidgets` or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`
+f"""## Interactive Widgets
+### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using `textbox` command</a>')} 
+or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf','This is refernce to FigureWidget using `slides.cite` command')}(reference at end)
 can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made available through `ihtml` command.
 """]
 for i in range(3,6):
-    with slides.slide(i):
+    with slides.slide(i,background='#556B2F',color='white'):
         write(__contents[i-3])
 
 # Matplotlib
@@ -82,9 +83,9 @@ try:
 except:
     df = '### Install `pandas` to view output'
     chart = '### Install Altair to see chart'
-with slides.slide(9):
+with slides.slide(9,background='#800000'):
     write(('## Writing Pandas DataFrame',df),
-          ('## Writing Altair Chart',chart)
+          ('## Writing Altair Chart\nMay not work everywhere, needs javascript',chart)
           )
     
 try:

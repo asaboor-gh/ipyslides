@@ -216,6 +216,10 @@ class LiveSlides(NavBar):
         self.N = len(self.iterable) if self.iterable else 0 #N an max both need to be updated
         self.prog_slider.max = self.N
         self.__update_content(True) # Force Refresh
+        
+    def __per_slide_css(self,**css_props):
+        props_str = ''.join([f"{k.replace('_','-')}:{v};" for k,v in css_props.items()])
+        return write("<style>\n.SlidesWrapper {" + props_str + "}\n</style>") # return a write object for actual write
     
     # defining magics and context managers
     
@@ -235,11 +239,13 @@ class LiveSlides(NavBar):
             self.shell.run_cell(cell)
     
     @contextmanager
-    def slide(self,slide_number):
-        "Use this context manager to generate any number of slides from a cell"
+    def slide(self,slide_number,**css_props):
+        """Use this context manager to generate any number of slides from a cell
+        `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
         if not isinstance(slide_number,int):
             return print(f'slide_number expects integer, got {slide_number!r}')
         with capture_output() as cap:
+            self.__per_slide_css(**css_props)
             yield
         # Now Handle What is captured
         if not self.__slides_mode:
@@ -259,9 +265,11 @@ class LiveSlides(NavBar):
             self.shell.run_cell(cell)
             
     @contextmanager
-    def title(self):
-        "Use this context manager to write title"
+    def title(self,**css_props):
+        """Use this context manager to write title.
+        `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
         with capture_output() as cap:
+            self.__per_slide_css(**css_props)
             yield
         # Now Handle What is captured
         if not self.__slides_mode:
@@ -269,14 +277,12 @@ class LiveSlides(NavBar):
         else:
             self.__slides_title_page = cap 
             self.refresh()
-        
-    def insert_after(self,slide_number,*objs,func=display):
-        return print("`insert_after` is deprecated, use decorator `slides` instead!")
     
-    def slides(self, after_slide_number, *objs, calculate_now=True):
+    def slides(self, after_slide_number, *objs, calculate_now=True,**css_props):
         """Decorator for inserting slides dynamically, define a function with one argument acting on each obj in objs.
         No return of function required, if any, only should be display/show etc.\
-        `calculate_now = True` build slides in advance and `False` calculate when slide appears."""
+        `calculate_now = True` build slides in advance and `False` calculate when slide appears.
+        `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
         def _slides(func):
             if not isinstance(after_slide_number,int):
                 return print(f'after_slide_number expects integer, got {after_slide_number!r}')
@@ -289,12 +295,16 @@ class LiveSlides(NavBar):
                     _slides = []
                     for obj in objs:
                         with capture_output() as cap:
+                            self.__per_slide_css(**css_props)
                             func(obj)
                         _slides.append(cap)
                     
                     self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': _slides,'func':None}
                 else:
-                    self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':func}
+                    def new_func(item):
+                        self.__per_slide_css(**css_props)
+                        return func(item)
+                    self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':new_func}
                 self.refresh() # Content chnage refreshes it.
         return _slides
         

@@ -68,9 +68,13 @@ def style_html(style_root = inherit_root):
 	padding: 0px;
 	background:var(--primary-bg);
 	font-size: var(--text-size);
-    color:var(--primary-fg)
+    color:var(--primary-fg);
 	max-width:100vw; /* This is very important */
  }
+.SlidesWrapper>:not(div), /* Do not change jupyterlab nav items */
+.SlidesWrapper * {  
+	color: var(--primary-fg);
+}
 .SlidesWrapper .panel {
     background:var(--primary-bg) !important;
     position:absolute;
@@ -156,16 +160,12 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .SlideArea h4 {margin-block: unset;font-size: 1.5em;line-height: 1.5em;}
 .SlidesWrapper .SlideArea h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
 
+
 .SlidesWrapper .widget-inline-hbox .widget-label,
 .SlidesWrapper .widget-inline-hbox .widget-readout  {
     color:var(--primary-fg);
-}
-  
-.SlidesWrapper :is(.SlideArea,.panel,.NavWrapper) :is(p,ul,ol,li),
-.SlidesWrapper>:not(div), /* Do not change jupyterlab nav items */
-.SlidesWrapper footer,summary,details {  
-	color: var(--primary-fg);
-}
+} 
+
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
 .SlidesWrapper pre {
@@ -177,7 +177,7 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper pre>code {background:transparent !important;color: var(--primary-fg)!important;}
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--secondary-bg);
-	color: var(--secondary-fg) !important;
+	color: var(--secondary-fg);
 }
     
 .SlidesWrapper table {

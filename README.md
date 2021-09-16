@@ -5,6 +5,10 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
+# 0.8.9 Changelog
+- You can now change style of each slide usig `**css_props` in commands like `@slides`, `with slide` and `with title`. 
+- A new command `textbox` is added which is useful to write inline references. Same can be acheived with `slides.cite(...here=True)`. 
+
 # 0.8.7 Changelog
 - Support added for objects `matplotlib.pyplot.Figure`, `altair.Chart`, `pygal.Graph`, `pydeck.Deck`, `pandas.DataFrame`, `bokeh.plotting.Figure` to be directly in `write` command.
 - `write` command now can accept `list/tuple` of content, items are place in rows.
