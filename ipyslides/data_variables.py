@@ -135,7 +135,7 @@ def style_html(style_root = inherit_root):
     .SlidesWrapper .controls {bottom:30px!important;right:0 !important;width:100%;justify-content: space-around !important;}
 	.SlidesWrapper .controls button {width:30% !important;}
     .SlidesWrapper .SlideArea {padding-bottom: 50px !important;}
-    .NavWrapper .progress {height:4px !important;margin-top:-2px !important;}
+    .NavWrapper .progress {height:4px !important;}
     .SlidesWrapper .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
     .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
     .prog_slider_box {
@@ -237,14 +237,14 @@ def style_html(style_root = inherit_root):
 ::-webkit-scrollbar {
     height: 4px;
     width: 4px;
-    background: none;
+    background: var(--primary-bg) !important;
 }
 ::-webkit-scrollbar-thumb {
-    background: var(--tr-odd-bg);
+    background: var(--tr-odd-bg) !important;
 }
 ::-webkit-scrollbar-corner {
-    display:none;
-    background: none;
+    display:none !important;
+    background: var(--primary-bg)  !important;
 }   
 .CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
 /* Matplotlib figure SVG */
