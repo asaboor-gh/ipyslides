@@ -160,4 +160,5 @@ def textbox(text, **css_props):
     # white-space:pre preserves whitspacing, text will be viewed as written. 
     _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
     return f"<span class='TextBox' style = {_style!r}> {text} </span>"  # markdown="span" will avoid inner parsing
+
     

@@ -10,6 +10,10 @@ slides.set_footer('Author: Abdul Saboor')
 #title is skipped to show instructions  
 with slides.slide(1): #slide 1
     write('## I am created using `with slides.slide(1)` context manager!')
+    write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
+    write("""```python
+write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("Colored and italic text","magenta","whitesmoke")}*')
+```""")
     
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 

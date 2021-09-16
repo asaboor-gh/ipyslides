@@ -123,6 +123,32 @@ class LiveSlides(NavBar):
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
     
+    def __add__(self,other):
+        "Add two slides instance, title page of other is taken as a slide."
+        slides = LiveSlides()
+        slides.convert2slides(True)
+        slides.set_footer() #starting text
+        with slides.title():
+            if isinstance(self.__slides_title_page, str):
+                write(self.__slides_title_page) #Markdown String 
+            else:
+                self.__slides_title_page.show() #Ipython Captured Output 
+        # Make slide from other slides' title page
+        _slide = {'slide': other.__slides_title_page, 'func':write if isinstance(other.__slides_title_page, str) else None}
+            
+        for i, s in enumerate([*self.iterable, _slide, *other.iterable]):
+            with slides.slide(i+1):
+                try: s['slide'].show() # Pre-Calculated Slides
+                except: s['func'](s['slide']) #Show dynamic slides
+        return slides
+    
+    def alert(self,text):
+        return f"<span style='color:#DC143C;'>{text}</span>"
+    
+    def colored(self,text,fg='blue',bg=None):
+        "Colored text, `fg` and `bg` should be valid CSS colors"
+        return f"<span style='background:{bg};color:{fg};'>{text}</span>"
+    
     def cite(self,key, citation,here=False):
         "Add citation in presentation, both key and citation are text/markdown/HTML."
         if here:
@@ -179,12 +205,9 @@ class LiveSlides(NavBar):
     
     def __display_slide(self):
         item = self.iterable[self.prog_slider.value-1]
-        if 'func' in item.keys():
-            if item['func'] == None:
-                return item['slide'].show() # Pre-Calculated Slides
-            return item['func'](item['slide']) #Show dynamic slides
-        else:
-            return item['slide'].show() #show ipython capture/slide context or if item has a show method with display. 
+        if item['func'] == None:
+            return item['slide'].show() # Pre-Calculated Slides
+        return item['func'](item['slide']) #Show dynamic slides 
            
     def __update_content(self,change):
         if self.__slides_title_page or (self.iterable and change):
@@ -219,7 +242,10 @@ class LiveSlides(NavBar):
         
     def __per_slide_css(self,**css_props):
         props_str = ''.join([f"{k.replace('_','-')}:{v};" for k,v in css_props.items()])
-        return write("<style>\n.SlidesWrapper {" + props_str + "}\n</style>") # return a write object for actual write
+        out_str = "<style>\n.SlidesWrapper {" + props_str + "}\n"
+        if 'color' in css_props:
+            out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {css_props['color']};}}"
+        return write(out_str + "\n</style>") # return a write object for actual write
     
     # defining magics and context managers
     
@@ -328,7 +354,7 @@ class LiveSlides(NavBar):
         slides_iterable = []
         for i in range(_min,_max):
             if f'{i}' in self.__slides_dict.keys():
-                slides_iterable.append({'slide':self.__slides_dict[f'{i}']}) 
+                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'func':None}) 
             if f'd{i}' in self.__dynamicslides_dict.keys():
                 __dynamic = self.__dynamicslides_dict[f'd{i}']
                 slides = [{'slide':obj,'func':__dynamic['func']} for obj in __dynamic['objs']]

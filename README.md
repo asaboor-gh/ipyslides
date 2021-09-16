@@ -5,9 +5,11 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 ![Overview](overview.jpg)
 
-# 0.8.9 Changelog
+# 0.8.10 Changelog
+- You can add two slides together like `slides1 + slides2`, title of `slides2` is converted to a slide inplace. 
 - You can now change style of each slide usig `**css_props` in commands like `@slides`, `with slide` and `with title`. 
 - A new command `textbox` is added which is useful to write inline references. Same can be acheived with `slides.cite(...here=True)`. 
+- You can use `ls.alert('text')`, `ls.colored('text',fg,bg)` to highlight text.
 
 # 0.8.7 Changelog
 - Support added for objects `matplotlib.pyplot.Figure`, `altair.Chart`, `pygal.Graph`, `pydeck.Deck`, `pandas.DataFrame`, `bokeh.plotting.Figure` to be directly in `write` command.
