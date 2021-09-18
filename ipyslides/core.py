@@ -1,6 +1,6 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np
-from IPython.display import display, Javascript
+from IPython.display import display, Javascript, HTML
 import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
@@ -38,7 +38,7 @@ class NavBar:
         self.prog_slider = ipw.IntSlider(max = self.N,continuous_update=False,readout=True)
         self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
         self.btn_next =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
-        self.btn_setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu')
+        self.btn_setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('float-cross-btn')
         for btn in [self.btn_next, self.btn_prev, self.btn_setting]:
                 btn.style.button_color= 'transparent'
                 btn.layout.min_width = 'max-content' #very important parameter
@@ -145,8 +145,10 @@ class LiveSlides(NavBar):
             
         for i, s in enumerate([*self.iterable, _slide, *other.iterable]):
             with slides.slide(i+1):
-                try: s['slide'].show() # Pre-Calculated Slides
-                except: s['func'](s['slide']) #Show dynamic slides
+                if s['func'] == None:
+                    s['slide'].show() # Pre-Calculated Slides
+                else:
+                    s['func'](s['slide']) #Show dynamic slides 
         return slides
     
     def cite(self,key, citation,here=False):
@@ -175,14 +177,15 @@ class LiveSlides(NavBar):
             self.btn_prev.description = ''
             self.btn_prev.icon = 'chevron-left'
             self.btn_next.icon = 'chevron-right'
-            
-        try:   #JupyterLab Case, Interesting in SideCar
-            from sidecar import Sidecar 
-            sc = Sidecar(title='Live Presentation')
-            with sc:
-                display(self.box)
-        except:
-            return self.box
+        
+        # Console does not work in SideCar,so avoid using it.     
+        # try:   #JupyterLab Case, Interesting in SideCar
+        #     from sidecar import Sidecar 
+        #     sc = Sidecar(title='Live Presentation')
+        #     with sc:
+        #         display(self.box)
+        # except: pass
+        return self.box
     __call__ = show
     
     def _ipython_display_(self):
@@ -376,16 +379,19 @@ class Customize:
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
+        self.out_js_css = ipw.Output(layout=Layout(width='50%',height='0'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only')
-        self.btn_mpl = ipw.ToggleButton(description='Matplotlib SVG Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
+        self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
+        self.btn_console = ipw.ToggleButton(description='Console',icon='toggle-off',value = False).add_class('sidecar-only').add_class('voila-sidecar-hidden').add_class('console-btn')
         self.box = VBox([Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
+                        self.master.btn_setting, # Must be in middle so that others dont get disturbed. 
+                        self.out_js_css, # Must be in middle so that others dont get disturbed.
                         VBox([
                             self.height_slider.add_class('voila-sidecar-hidden'), 
                             self.width_slider.add_class('voila-sidecar-hidden'),
                             self.scale_slider,
                             self.theme_dd,
-                            HBox([self.btn_fs,self.btn_mpl],layout=Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px')),
-                            Box([self.master.btn_setting],layout=Layout(width='auto',margin='auto'))
+                            HBox([self.btn_fs,self.btn_mpl, self.btn_console],layout=Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')),
                             ],layout=Layout(width='100%',height='max-content',min_height='200px'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
@@ -397,8 +403,10 @@ class Customize:
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
         self.master.btn_setting.on_click(self.__toggle_panel)
-        self.btn_fs.observe(self.update_theme)
-        self.btn_mpl.observe(self.update_theme)
+        self.btn_fs.observe(self.update_theme,names=['value'])
+        self.btn_mpl.observe(self.update_theme,names=['value'])
+        self.btn_console.observe(self.add_css_js,names=['value'])
+        self.btn_fs.observe(self.add_css_js,names=['value'])
         self.update_theme() #Trigger
         
     def __update_size(self,change):
@@ -426,7 +434,7 @@ class Customize:
         elif self.theme_dd.value == 'Dark':
             theme_css = dv.style_html(dv.dark_root)
         elif self.theme_dd.value == 'Custom': # In case of Custom CSS
-            with set_dir(self.master.user_ns['_dh'][0]):
+            with self.set_dir(self.master.user_ns['_dh'][0]):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
                         _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')
@@ -454,16 +462,23 @@ class Customize:
             theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
         else:
             self.btn_mpl.icon= 'toggle-off'
-            
-        # Add Javscript only in full screen mode
-        with self.__instructions:
-            self.__instructions.clear_output()
-            write(dv.settings_instructions)
-            # Must unregister events in edit mode to avoid slides switch while editing, leave touch as it is
-            nav_js = dv.navigation_js if self.btn_fs.value else dv.navigation_js + "\ndocument.onkeydown = null"
-            display(Javascript(nav_js))
+        
         # Now Set Theme
         self.master.theme_html.value = theme_css
+    
+    def add_css_js(self,change=None):
+        # Add Javscript only in full screen mode
+        with self.out_js_css:
+            self.out_js_css.clear_output()
+            # Must unregister events in edit mode to avoid slides switch while editing, leave touch as it is
+            nav_js = dv.navigation_js if self.btn_fs.value and not self.btn_console.value else dv.navigation_js + "\ndocument.onkeydown = null"
+            display(Javascript(nav_js))
+            con_css = dv.console_css if self.btn_console.value and self.btn_fs.value else ''
+            self.btn_console.icon = 'toggle-on' if self.btn_console.value else 'toggle-off'
+            display(HTML(con_css))
+            if self.btn_fs.value == False:
+                if self.btn_console.value and change:
+                    display(Javascript('alert("Console can only be launched in full window span mode!")'))
 
 
 

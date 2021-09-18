@@ -82,19 +82,27 @@ def style_html(style_root = inherit_root):
     border:none;
     padding: 8px !important;
     width: 60% !important;
-    z-index:101;
+    z-index:102;
     top:0px !important;
     left:0px !important;
     box-shadow: 0 0 20px 20px var(--secondary-bg);
 }
-.SlidesWrapper .panel>div:first-child {
-    box-shadow: inset 0 0 8px var(--secondary-bg);
-    padding:4px;
-    height:32px!important;
+.SlidesWrapper .panel .float-cross-btn {
+    position: absolute;
+    top:8px;
+    right:4px;
+    width: 36px;
+    height: 36px;
+    border:none !important;
+    outline:none !important;
+    font-size: 24px;
+    background: var(--primary-bg) !important;
 }
-.SlidesWrapper .panel>div:first-child:hover,
-.SlidesWrapper .panel>div:first-child:focus {height: 50% !important;}
-.SlidesWrapper .panel>div:last-child {padding-top:16px;}
+.SlidesWrapper .panel>div:first-child {
+    height:auto;
+}
+.SlidesWrapper .panel>div:last-child {padding-top:16px;min-height:max-content;} 
+
 .SlidesWrapper .columns {width:99%;max-width:99%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
@@ -215,6 +223,7 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper :is(.SlideBox, .panel) :is(button, .jupyter-button) { 
     border: 1px solid var(--accent-color);
     border-radius: 4px;
+    min-height: 28px;
 }
 
 .SlidesWrapper .jupyter-button:hover:enabled,
@@ -296,7 +305,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 }               
 .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden,
 .jp-LinkedOutputView .SlidesWrapper .voila-sidecar-hidden,
-#rendered_cells .SlidesWrapper .voila-sidecar-hidden{
+#rendered_cells .SlidesWrapper .voila-sidecar-hidden {
     display: none;
 }
 /* next Three things should be in given order */
@@ -305,6 +314,8 @@ a.jp-InternalAnchorLink { display: none !important;}
 .jp-Cell-outputArea>div .sidecar-only {display: block;}
 .SlideArea .SlidesWrapper .sidecar-only {display: none;} /* No fullscreen for embeded slides */ 
 .jp-LinkedOutputView>div {overflow:hidden !important;}
+
+
 #rendered_cells .SlidesWrapper {
     position: absolute;
     width:100% !important;
@@ -339,7 +350,34 @@ fullscreen_css = '''<style>
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
 .SlidesWrapper .voila-sidecar-hidden{display: none;} 
+.jp-ConsolePanel, lm-SplitPanel-handle.p-SplitPanel-handle {visibility: hidden;} # Hide consoles in full screen mode
+.SlidesWrapper.FullScreen .console-btn {display:block;} /* Show console button in fullscreen in jupyterlab only*/
+.jupyterlab-sidecar .console-btn {display:none;} /* Hide console button in sidecar as not works there */
 </style>''' 
+
+console_css = '''<style>
+.jp-CodeConsole:last-of-type {
+    visibility: visible;
+    position:fixed !important;
+    box-shadow: 0 0 10px gray;
+    left:0px !important;
+    top:0px !important;
+    width:100vw;
+    height:70vh;
+    z-index:101 !important;
+}
+.SlidesWrapper .panel .console-btn {
+    visibility: visible;
+    position:fixed !important;
+    box-shadow: 0 0 10px gray;
+    right:0px !important;
+    top:70vh !important;
+    width:50px;
+    height:30px;
+    z-index:102 !important;
+    background:var(--primary-bg) !important;
+}
+</style>'''
 
 navigation_js = '''
 let arrows = document.getElementsByClassName('arrows');
