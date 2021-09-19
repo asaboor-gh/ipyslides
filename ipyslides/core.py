@@ -405,8 +405,8 @@ class Customize:
         self.master.btn_setting.on_click(self.__toggle_panel)
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_mpl.observe(self.update_theme,names=['value'])
-        self.btn_console.observe(self.add_css_js,names=['value'])
-        self.btn_fs.observe(self.add_css_js,names=['value'])
+        self.btn_console.observe(self.add_js_css,names=['value'])
+        self.btn_fs.observe(self.add_js_css,names=['value'])
         self.update_theme() #Trigger
         
     def __update_size(self,change):
@@ -466,7 +466,7 @@ class Customize:
         # Now Set Theme
         self.master.theme_html.value = theme_css
     
-    def add_css_js(self,change=None):
+    def add_js_css(self,change):
         # Add Javscript only in full screen mode
         with self.out_js_css:
             self.out_js_css.clear_output()
@@ -476,9 +476,20 @@ class Customize:
             con_css = dv.console_css if self.btn_console.value and self.btn_fs.value else ''
             self.btn_console.icon = 'toggle-on' if self.btn_console.value else 'toggle-off'
             display(HTML(con_css))
-            if self.btn_fs.value == False:
-                if self.btn_console.value and change:
-                    display(Javascript('alert("Console can only be launched in full window span mode!")'))
+            if change['new'] and self.btn_console.value: #change['new'] is True when any button is clicked this prevent alert while exiting fullscreen
+                notifier_js = '''let cons = document.getElementsByClassName("jp-CodeConsole")
+                let slidesFS = document.getElementsByClassName("SlidesWrapper FullScreen")
+                if ( cons.length === 0 && slidesFS.length >= 1 ) { // If console is not present and slides are fullscreen
+                    alert("No active console found! Create one by `right click > Create New Console for Notebook`")       
+                }
+                if ( slidesFS.length === 0 ) {
+                    alert("Console can only be launched in full window span mode!")
+                    let btn = document.getElementsByClassName("console-btn")
+                    btn[0].click(); // Toggle Console Button
+                }'''
+                display(Javascript(notifier_js))
+            else: # Make console button off afer exiting fullscreen
+                self.btn_console.value = False
 
 
 

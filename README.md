@@ -7,6 +7,8 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
+## 0.9.0
+- Now you can launch an overlay console for live coding right in slides when working in Jupyterlab (currently not working if launched from sidecar). A dedicated `Console` button is added in side panel. I consider it a very unique addition. 
 
 ## 0.8.11
 - All utilities commnads are now under `LiveSlides` class too, so you can use either 
