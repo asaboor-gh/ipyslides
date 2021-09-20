@@ -120,7 +120,7 @@ class LiveSlides(NavBar):
         self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
         
         self.box =  VBox([self.loading_html, self.main_style_html,
-                          self.theme_html,
+                          self.theme_html, ipw.HTML("<div tabindex=0 id='focusHereFS',style='opacity:0;'></div>"),
                           HBox([self.panel_box,
                                 self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
@@ -398,7 +398,7 @@ class Customize:
             write(dv.settings_instructions)
             
         with self.out_js_css:
-            display(Javascript(dv.navigation_js)) # Javascript for navigation, do not add CSS of console here
+            display(Javascript(dv.navigation_js)) # Javascript for navigation
             
         self.theme_dd.observe(self.update_theme)
         self.scale_slider.observe(self.__set_font_scale)
@@ -407,7 +407,6 @@ class Customize:
         self.master.btn_setting.on_click(self.__toggle_panel)
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_mpl.observe(self.update_theme,names=['value'])
-        self.btn_fs.observe(self.add_js_css,names=['value'])
         self.update_theme() #Trigger
         
     def __update_size(self,change):
@@ -466,14 +465,6 @@ class Customize:
         
         # Now Set Theme
         self.master.theme_html.value = theme_css
-    
-    def add_js_css(self,change):
-        # Add Javscript only in full screen mode
-        if change['new']: # Only Triggers while going to fullscreen, not when exiting fullscreen
-            with self.out_js_css:
-                self.out_js_css.clear_output()
-                display(Javascript(dv.navigation_js))
-                display(HTML(dv.console_css))
 
 
 

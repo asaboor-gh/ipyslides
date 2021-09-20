@@ -359,51 +359,42 @@ fullscreen_css = '''<style>
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
-.SlidesWrapper .voila-sidecar-hidden{display: none;} 
-.jp-ConsolePanel, lm-SplitPanel-handle.p-SplitPanel-handle {visibility: hidden;} # Hide consoles in full screen mode
+.SlidesWrapper .voila-sidecar-hidden{display: none;}
 .SlidesWrapper.FullScreen .console-btn {display:block;} /* Show console button in fullscreen in jupyterlab only*/
 .jupyterlab-sidecar .console-btn {display:none;} /* Hide console button in sidecar as not works there */
+html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + Shift + ],[ pressed */
 </style>''' 
 
-console_css = '''<style>
-.jp-CodeConsole:last-of-type {
-    visibility: visible;
-    opacity: 0;
-    position:fixed !important;
-    box-shadow: 0 0 10px gray;
-    left:0px !important;
-    top:0px !important;
-    width:50px;
-    height:100px;
-    z-index:101 !important;
-    padding-bottom:50px;
-    background:var(--primary-bg); /* for console padding*/
-}
-.jp-CodeConsole:last-of-type:hover,
-.jp-CodeConsole:last-of-type:focus,
-.jp-CodeConsole:last-of-type:focus:enabled{
-    opacity: 1;
-    width:100vw;
-    height:70vh;
-}
-</style>'''
 
 navigation_js = '''
 let arrows = document.getElementsByClassName('arrows');
 let boxes = document.getElementsByClassName('SlidesWrapper');
 let mplBtn = document.getElementsByClassName('mpl-zoom');
 let winFs = document.getElementsByClassName('window-fs');
+let focusHere = document.getElementById('focusHereFS'); // required to abondon random key clicks
 /* Keyboard events */
 // Find solution for background issues
 function keyOnSlides(e) {
     e.preventDefault(); // let's not add defualt actions
     let key = e.keyCode;
-    if (key === 37) { arrows[0].click(); // Prev
-    } else if (key === 39) { arrows[1].click(); // Next
-    } else if (key === 32) { arrows[1].click(); // space
-    } else if (key === 90) { mplBtn[0].click(); // Z 
-    } else if (key === 70) { winFs[0].click(); // F
+    if (key === 37) { 
+        arrows[0].click(); // Prev
+        arrows[0].focus();
+    } else if (key === 39 || key === 32) { 
+        arrows[1].click(); // Next or Spacebar
+        arrows[1].focus();
+    } else if (key === 90) { 
+        mplBtn[0].click(); // Z 
+        focusHere.focus();
+    } else if (key === 88 || key === 68) {
+        alert("Pressing X or D,D may cut selected cell! Move cursor away from slides to capture these keys!");
+        focusHere.focus(); // Redirect Focus
+    } else if (key === 70) { 
+        winFs[0].click(); // F
+        focusHere.focus(); // focus on next button to avoid receving keys in notebook in fullscreen mode
     } else {
+        e.preventDefault(); // let's not add defualt actions, but can't effect jupyterlab events
+        focusHere.focus(); // focus on focusHere to avoid receving keys in notebook in fullscreen mode
         return false; // Do not pass other keys
     };   
 };
@@ -482,10 +473,20 @@ loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
 # ONLY INSTRUCTIONS BELOW
 
 more_instructions =f'''# How to Use
-##### Press `F` to toggle fullscreen mode, `Z` to toggle matplotlib zoom mode.
-##### Press `Space` or right arrow key `>` to advance to next slide, left arrow key `<` to go back.
-##### Hover over top left corner to launch coding console (only JupyterLab), if no console is opened, right click and select `New Console for Notebook` and hover again.
-Assuming you have `ls = LiveSlides()`
+### Jupyter Lab Only
+Having your cursor over slides:
+
+- Press `Ctrl + Shift + C` to change the theme, create console/terminal etc.
+- Press `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch to other tabs like console/terminal/notebooks and do coding without leaving slides!
+- Press `F` to toggle fullscreen mode.
+
+### Jupyter Lab + Others (Notebook, VSCode, Voila etc.)
+May not work in others but Lab is optimized.
+
+- Press `Z` to toggle matplotlib zoom mode.
+- Press `Space` or right arrow key `>` to advance to next slide, left arrow key `<` to go back.
+
+#### Assuming you have `ls = LiveSlides()`
 - Edit and test cells in `ls.convert2slides(False)` mode.
 - Run cells in `ls.convert2slides(True)` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide and %%title auto picks title page.
@@ -505,10 +506,6 @@ slides.show() # Use it once to see slides
 > Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.
 
 > Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-
-> For JupyterLab >=3, you can do `pip install sidecar` as bonus.
-
-> Version 0.8.4+ enables keyboard and touch navigation!. 
 '''
 
 settings_instructions = f'''{more_instructions}

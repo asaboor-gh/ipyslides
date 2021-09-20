@@ -7,8 +7,9 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
-## 0.9.0
-- Now you can launch an overlay console for live coding right in slides when working in Jupyterlab (currently not working if launched from sidecar). A dedicated `Console` button is added in side panel. I consider it a very unique addition. 
+## 0.9.1
+- In Jupyterlab (only inline cell output way), you can use `Ctrl + Shift + C` to create consoles/terminals, set themes etc.
+- Use `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch back and forth between notebooks/console/terminals and enjoy coding without leaving slides!
 > Note: Only most recently opened console is launched. 
 
 ## 0.8.11
