@@ -169,6 +169,16 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .SlideArea h4 {margin-block: unset;font-size: 1.5em;line-height: 1.5em;}
 .SlidesWrapper .SlideArea h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
 
+.SlideArea .footnote *,  .SlideArea .footnote li::marker {
+    font-size:0.8em;
+    line-height: 0.6em;
+}
+.SlideArea hr {
+    margin:0 !important;
+}
+.SlideArea .footnote ol {
+    margin-top: 0.5em !important;
+}
 
 .SlidesWrapper .widget-inline-hbox .widget-label,
 .SlidesWrapper .widget-inline-hbox .widget-readout  {
@@ -358,45 +368,56 @@ fullscreen_css = '''<style>
 console_css = '''<style>
 .jp-CodeConsole:last-of-type {
     visibility: visible;
+    opacity: 0;
     position:fixed !important;
     box-shadow: 0 0 10px gray;
     left:0px !important;
     top:0px !important;
+    width:50px;
+    height:100px;
+    z-index:101 !important;
+    padding-bottom:50px;
+    background:var(--primary-bg); /* for console padding*/
+}
+.jp-CodeConsole:last-of-type:hover,
+.jp-CodeConsole:last-of-type:focus,
+.jp-CodeConsole:last-of-type:focus:enabled{
+    opacity: 1;
     width:100vw;
     height:70vh;
-    z-index:101 !important;
-}
-.SlidesWrapper .panel .console-btn {
-    visibility: visible;
-    position:fixed !important;
-    box-shadow: 0 0 10px gray;
-    right:0px !important;
-    top:70vh !important;
-    width:50px;
-    height:30px;
-    z-index:102 !important;
-    background:var(--primary-bg) !important;
 }
 </style>'''
 
 navigation_js = '''
 let arrows = document.getElementsByClassName('arrows');
-/* Keyboard events */
-document.onkeydown = function(e) {
-    switch (e.keyCode) {
-        case 37:
-            arrows[0].click();
-            break;
-        case 39:
-            arrows[1].click();
-            break;
-        case 32:
-            arrows[1].click(); // spacebar 
-            break;
-    };
-};
-/* Touch Screens */
 let boxes = document.getElementsByClassName('SlidesWrapper');
+let mplBtn = document.getElementsByClassName('mpl-zoom');
+let winFs = document.getElementsByClassName('window-fs');
+/* Keyboard events */
+// Find solution for background issues
+function keyOnSlides(e) {
+    e.preventDefault(); // let's not add defualt actions
+    let key = e.keyCode;
+    if (key === 37) { arrows[0].click(); // Prev
+    } else if (key === 39) { arrows[1].click(); // Next
+    } else if (key === 32) { arrows[1].click(); // space
+    } else if (key === 90) { mplBtn[0].click(); // Z 
+    } else if (key === 70) { winFs[0].click(); // F
+    } else {
+        return false; // Do not pass other keys
+    };   
+};
+for (let i = 0; i < boxes.length; i++) {
+    boxes[i].onmouseenter = function() {
+      document.onkeydown = keyOnSlides; 
+    }; 
+    boxes[i].onmouseleave = function() {
+      document.onkeydown = null; 
+    };       
+};
+
+/* Touch Screens */
+
 for (let i = 0; i < boxes.length; i++) {
    boxes[i].addEventListener('touchstart', handleTouchStart, false);        
     boxes[i].addEventListener('touchmove', handleTouchMove, false);
@@ -461,6 +482,9 @@ loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
 # ONLY INSTRUCTIONS BELOW
 
 more_instructions =f'''# How to Use
+##### Press `F` to toggle fullscreen mode, `Z` to toggle matplotlib zoom mode.
+##### Press `Space` or right arrow key `>` to advance to next slide, left arrow key `<` to go back.
+##### Hover over top left corner to launch coding console (only JupyterLab), if no console is opened, right click and select `New Console for Notebook` and hover again.
 Assuming you have `ls = LiveSlides()`
 - Edit and test cells in `ls.convert2slides(False)` mode.
 - Run cells in `ls.convert2slides(True)` mode from top to bottom. 

@@ -1,4 +1,4 @@
-__all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox','file2image','file2tex','file2code','fmt2cols','alert','colored']
+__all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox','file2image','file2tex','file2code','fmt2cols','alert','colored','keep_format']
 
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code
@@ -13,6 +13,7 @@ from .objs_formatter import plt2html # For backward cimpatibility and inside cla
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
 
+__md_extensions = ['fenced_code','tables','codehilite','footnotes'] # For MArkdown Parser
 @contextmanager
 def print_context():
     "Use `print` or function printing with onside in this context manager to display in order."
@@ -39,7 +40,10 @@ def syntax_css():
 
 def _fix_repr(obj):
     if not isinstance(obj,str):
-        # Prefer their own methods
+        # First prefer keep_format method. 
+        if isinstance(obj,dict) and '__keep_format__' in obj:
+            return obj['__keep_format__']
+        # Next prefer custom methods of objects. 
         is_true, _html = format_object(obj)
         if is_true:
             return _html
@@ -60,7 +64,7 @@ def _fix_repr(obj):
                 </blockquote>"""
     else:
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
-        return markdown(_obj,extensions=['fenced_code','tables','codehilite']) 
+        return markdown(_obj,extensions=__md_extensions) 
     
 def _fmt_write(*columns,width_percents=None):
     if not width_percents:
@@ -84,6 +88,7 @@ def write(*columns,width_percents=None):
     You can give any object which has `to_html` method like Altair chart. 
     You can give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
     
+    Note: Use `keep_format` method to keep format of object for example `keep_format(altair_chart.to_html())`.
     Note: You can give your own type of data provided that it is converted to an HTML string.
     Note: `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
     
@@ -133,7 +138,7 @@ def file2text(filename):
 def file2code(filename,language='python',max_height='400px'):
     "Only reads plain text"
     if 'ython' in language:
-        code = markdown(f'```{language}\n{file2text(filename)}\n```',extensions=['fenced_code','tables','codehilite'])
+        code = markdown(f'```{language}\n{file2text(filename)}\n```',extensions=__md_extensions)
     else:
         code = Code(filename=filename,language=language)._repr_html_()
     return f'<div style="max-height:{max_height};overflow:auto;">{code}</div>'
@@ -153,7 +158,7 @@ def _cell_code(shell,line_number=True,this_line=True,magics=False,comments=False
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
     if not comments:
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
-    return markdown("```python\n{}\n```".format('\n'.join(current_cell_code)),extensions=['fenced_code','tables','codehilite'])
+    return markdown("```python\n{}\n```".format('\n'.join(current_cell_code)),extensions=__md_extensions)
 
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
@@ -170,5 +175,11 @@ def alert(text):
 def colored(text,fg='blue',bg=None):
     "Colored text, `fg` and `bg` should be valid CSS colors"
     return f"<span style='background:{bg};color:{fg};'>{text}</span>"
+
+def keep_format(plaintext_or_html):
+    "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_raw(obj.to_html()) preserves its actual form."
+    if not isinstance(plaintext_or_html,str):
+        return plaintext_or_html # if not string, return as is
+    return {'__keep_format__':plaintext_or_html}
 
     

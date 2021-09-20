@@ -117,7 +117,7 @@ class LiveSlides(NavBar):
         
         self.setting = Customize(self)
         self.panel_box = self.setting.box
-        self.slide_box = ipw.Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
+        self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
         
         self.box =  VBox([self.loading_html, self.main_style_html,
                           self.theme_html,
@@ -380,9 +380,8 @@ class Customize:
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.out_js_css = ipw.Output(layout=Layout(width='50%',height='0'))
-        self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only')
+        self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
-        self.btn_console = ipw.ToggleButton(description='Console',icon='toggle-off',value = False).add_class('sidecar-only').add_class('voila-sidecar-hidden').add_class('console-btn')
         self.box = VBox([Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         self.master.btn_setting, # Must be in middle so that others dont get disturbed. 
                         self.out_js_css, # Must be in middle so that others dont get disturbed.
@@ -391,12 +390,15 @@ class Customize:
                             self.width_slider.add_class('voila-sidecar-hidden'),
                             self.scale_slider,
                             self.theme_dd,
-                            HBox([self.btn_fs,self.btn_mpl, self.btn_console],layout=Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')),
+                            HBox([self.btn_fs,self.btn_mpl],layout=Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')),
                             ],layout=Layout(width='100%',height='max-content',min_height='200px'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
         with self.__instructions:
             write(dv.settings_instructions)
+            
+        with self.out_js_css:
+            display(Javascript(dv.navigation_js)) # Javascript for navigation, do not add CSS of console here
             
         self.theme_dd.observe(self.update_theme)
         self.scale_slider.observe(self.__set_font_scale)
@@ -405,7 +407,6 @@ class Customize:
         self.master.btn_setting.on_click(self.__toggle_panel)
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_mpl.observe(self.update_theme,names=['value'])
-        self.btn_console.observe(self.add_js_css,names=['value'])
         self.btn_fs.observe(self.add_js_css,names=['value'])
         self.update_theme() #Trigger
         
@@ -468,28 +469,11 @@ class Customize:
     
     def add_js_css(self,change):
         # Add Javscript only in full screen mode
-        with self.out_js_css:
-            self.out_js_css.clear_output()
-            # Must unregister events in edit mode to avoid slides switch while editing, leave touch as it is
-            nav_js = dv.navigation_js if self.btn_fs.value and not self.btn_console.value else dv.navigation_js + "\ndocument.onkeydown = null"
-            display(Javascript(nav_js))
-            con_css = dv.console_css if self.btn_console.value and self.btn_fs.value else ''
-            self.btn_console.icon = 'toggle-on' if self.btn_console.value else 'toggle-off'
-            display(HTML(con_css))
-            if change['new'] and self.btn_console.value: #change['new'] is True when any button is clicked this prevent alert while exiting fullscreen
-                notifier_js = '''let cons = document.getElementsByClassName("jp-CodeConsole")
-                let slidesFS = document.getElementsByClassName("SlidesWrapper FullScreen")
-                if ( cons.length === 0 && slidesFS.length >= 1 ) { // If console is not present and slides are fullscreen
-                    alert("No active console found! Create one by `right click > Create New Console for Notebook`")       
-                }
-                if ( slidesFS.length === 0 ) {
-                    alert("Console can only be launched in full window span mode!")
-                    let btn = document.getElementsByClassName("console-btn")
-                    btn[0].click(); // Toggle Console Button
-                }'''
-                display(Javascript(notifier_js))
-            else: # Make console button off afer exiting fullscreen
-                self.btn_console.value = False
+        if change['new']: # Only Triggers while going to fullscreen, not when exiting fullscreen
+            with self.out_js_css:
+                self.out_js_css.clear_output()
+                display(Javascript(dv.navigation_js))
+                display(HTML(dv.console_css))
 
 
 
