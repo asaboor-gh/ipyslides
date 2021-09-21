@@ -10,7 +10,6 @@ Content below assumes you have `ls = LiveSlides()`.
 ## 0.9.1
 - In Jupyterlab (only inline cell output way), you can use `Ctrl + Shift + C` to create consoles/terminals, set themes etc.
 - Use `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch back and forth between notebooks/console/terminals and enjoy coding without leaving slides!
-> Note: Only most recently opened console is launched. 
 
 ## 0.8.11
 - All utilities commnads are now under `LiveSlides` class too, so you can use either 
