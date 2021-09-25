@@ -254,17 +254,17 @@ def style_html(style_root = inherit_root):
     scrollbar-color:var(--tr-odd-bg) transparent;
 }
 /* Other monsters */  
-::-webkit-scrollbar {
+.SlidesWrapper ::-webkit-scrollbar {
     height: 4px;
     width: 4px;
-    background: var(--primary-bg) !important;
+    background: none !important;
 }
-::-webkit-scrollbar-thumb {
+.SlidesWrapper ::-webkit-scrollbar-thumb {
     background: var(--tr-odd-bg) !important;
 }
-::-webkit-scrollbar-corner {
+.SlidesWrapper ::-webkit-scrollbar-corner {
     display:none !important;
-    background: var(--primary-bg)  !important;
+    background: none  !important;
 }   
 .CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
 /* Matplotlib figure SVG */
@@ -343,13 +343,13 @@ def editing_layout_css(span_percent = 40):
     return f'''<style>
 div.jp-NotebookPanel-notebook div.SlidesWrapper {{
     position:fixed !important;
-    right:40px;
-    height:calc(100% - 122px) !important;
-    width:calc({span_percent}% - 42px) !important;
-    bottom:32px !important;
+    right:39px;
+    height:calc(100% - 118px) !important;
+    width:calc({span_percent}vw - 2px) !important;
+    bottom:30px !important;
 }}
 div.jp-NotebookPanel-notebook {{
-    width: {100 - span_percent}% !important;
+    padding-right: {span_percent}vw !important;
 }}
 div.jp-NotebookPanel-notebook .height-slider {{
     display: none !important;
