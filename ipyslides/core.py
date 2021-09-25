@@ -110,7 +110,7 @@ class LiveSlides(NavBar):
         super().__init__(N=_max)
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
-        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')))
+        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')) + dv.editing_layout_css())
         self.main_style_html = ipw.HTML(dv.main_layout_css)
         self.loading_html = ipw.HTML() #SVG Animation in it
         self.prog_slider.observe(self.__update_content,names=['value'])
@@ -374,12 +374,12 @@ class Customize:
         self.master = instance_LiveSlides
         def describe(value): return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
         
-        self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False)
-        self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 65,continuous_update=False)
+        self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False).add_class('height-slider')
+        self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 50,continuous_update=False)
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
-        self.out_js_css = ipw.Output(layout=Layout(width='50%',height='0'))
+        self.out_js_css = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
         self.box = VBox([Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
@@ -410,8 +410,9 @@ class Customize:
         self.update_theme() #Trigger
         
     def __update_size(self,change):
-            self.master.box.layout.height = '{}px'.format(self.height_slider.value)
-            self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
+        self.master.box.layout.height = '{}px'.format(self.height_slider.value)
+        self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
+        self.update_theme(change=None) # For updating size
             
     def __toggle_panel(self,change):
         if self.master.btn_setting.description == '\u2630':
@@ -452,6 +453,8 @@ class Customize:
             try:self.master.box.add_class('FullScreen')
             except:pass
         else:
+            edit_mode_css = dv.editing_layout_css(self.width_slider.value)
+            theme_css = theme_css.replace('</style>','\n') + edit_mode_css.replace('<style>','')
             self.master.theme_html.value = theme_css #Push CSS without Fullscreen
             self.btn_fs.icon = 'expand'
             try:self.master.box.remove_class('FullScreen')

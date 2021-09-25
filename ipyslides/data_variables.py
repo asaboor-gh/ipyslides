@@ -338,6 +338,25 @@ a.jp-InternalAnchorLink { display: none !important;}
 .SlidesWrapper {z-index: 10 !important;}
 <style>'''
 
+
+def editing_layout_css(span_percent = 40):
+    return f'''<style>
+div.jp-NotebookPanel-notebook div.SlidesWrapper {{
+    position:fixed !important;
+    right:40px;
+    height:calc(100% - 122px) !important;
+    width:calc({span_percent}% - 42px) !important;
+    bottom:32px !important;
+}}
+div.jp-NotebookPanel-notebook {{
+    width: {100 - span_percent}% !important;
+}}
+div.jp-NotebookPanel-notebook .height-slider {{
+    display: none !important;
+}}
+</style>
+'''
+
 fullscreen_css = '''<style>
 /* Works in Sidecar and Linked Output View */
 /*.jupyterlab-sidecar > .jp-OutputArea-child,*/ 
