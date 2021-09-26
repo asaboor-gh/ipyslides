@@ -51,7 +51,7 @@ or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWi
 can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made available through `ihtml` command.
 """]
 for i in range(3,6):
-    with slides.slide(i,background='#556B2F'):
+    with slides.slide(i,background=f'linear-gradient(to right, olive 0%, olive {i*5}%, crimson {i*15}%, orange 100%)'):
         write(__contents[i-3])
 
 # Matplotlib

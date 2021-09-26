@@ -7,6 +7,10 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
+
+# 0.9.3
+- Add custom css under %%slide as well using `ls.write_slide_css`.
+- Slides now open in a side area in Jupyterlab, so editing cells and output can be seen side by side. No more need of Output View or Sidecar.
 ## 0.9.1
 - In Jupyterlab (only inline cell output way), you can use `Ctrl + Shift + C` to create consoles/terminals, set themes etc.
 - Use `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch back and forth between notebooks/console/terminals and enjoy coding without leaving slides!

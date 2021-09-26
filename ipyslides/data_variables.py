@@ -345,8 +345,9 @@ div.jp-NotebookPanel-notebook div.SlidesWrapper {{
     position:fixed !important;
     right:39px;
     height:calc(100% - 118px) !important;
-    width:calc({span_percent}vw - 2px) !important;
+    width:{span_percent}vw !important;
     bottom:30px !important;
+    box-shadow: -2px 0px 2px -1px var(--jp-toolbar-border-color,gray);
 }}
 div.jp-NotebookPanel-notebook {{
     padding-right: {span_percent}vw !important;
@@ -408,14 +409,15 @@ function keyOnSlides(e) {
     } else if (key === 88 || key === 68) {
         alert("Pressing X or D,D may cut selected cell! Move cursor away from slides to capture these keys!");
         focusHere.focus(); // Redirect Focus
+        e.stopPropagation(); // stop propagation to jupyterlab events
     } else if (key === 70) { 
         winFs[0].click(); // F
         focusHere.focus(); // focus on next button to avoid receving keys in notebook in fullscreen mode
     } else {
-        e.preventDefault(); // let's not add defualt actions, but can't effect jupyterlab events
         focusHere.focus(); // focus on focusHere to avoid receving keys in notebook in fullscreen mode
         return false; // Do not pass other keys
-    };   
+    }; 
+    e.stopPropagation(); // stop propagation to jupyterlab events  
 };
 for (let i = 0; i < boxes.length; i++) {
     boxes[i].onmouseenter = function() {
@@ -424,41 +426,6 @@ for (let i = 0; i < boxes.length; i++) {
     boxes[i].onmouseleave = function() {
       document.onkeydown = null; 
     };       
-};
-
-/* Touch Screens */
-
-for (let i = 0; i < boxes.length; i++) {
-   boxes[i].addEventListener('touchstart', handleTouchStart, false);        
-    boxes[i].addEventListener('touchmove', handleTouchMove, false);
-};
-
-var xi = null;                                                        
-
-function getTouches(e) {
-  return e.touches ||             // browser API
-         e.originalEvent.touches; // jQuery
-}                                                     
-                                                                         
-function handleTouchStart(e) {
-    const firstTouch = getTouches(e)[0];                                      
-    xi = firstTouch.clientX;                                                                     
-};                                                
-                                                                        
-function handleTouchMove(e) {
-    if ( ! xi) {
-        return;
-    }
-    var xf = e.touches[0].clientX;                                    
-    var dx = xf - xi;
-
-    if ( dx > 40 ) {
-        arrows[0].click();
-    }
-    if ( dx < -40 ){
-        arrows[1].click();
-    }                       
-    xi = null;    // reset back                                   
 };
 '''
 

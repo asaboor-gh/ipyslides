@@ -243,11 +243,13 @@ class LiveSlides(NavBar):
         self.prog_slider.max = self.N
         self.__update_content(True) # Force Refresh
         
-    def __per_slide_css(self,**css_props):
-        props_str = ''.join([f"{k.replace('_','-')}:{v};" for k,v in css_props.items()])
+    def write_slide_css(self,**css_props):
+        _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
+        _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
+        props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
         out_str = "<style>\n.SlidesWrapper {" + props_str + "}\n"
-        if 'color' in css_props:
-            out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {css_props['color']};}}"
+        if 'color' in _css_props:
+            out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {_css_props['color']}}}"
         return write(out_str + "\n</style>") # return a write object for actual write
     
     # defining magics and context managers
@@ -274,7 +276,7 @@ class LiveSlides(NavBar):
         if not isinstance(slide_number,int):
             return print(f'slide_number expects integer, got {slide_number!r}')
         with capture_output() as cap:
-            self.__per_slide_css(**css_props)
+            self.write_slide_css(**css_props)
             yield
         # Now Handle What is captured
         if not self.__slides_mode:
@@ -298,7 +300,7 @@ class LiveSlides(NavBar):
         """Use this context manager to write title.
         `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
         with capture_output() as cap:
-            self.__per_slide_css(**css_props)
+            self.write_slide_css(**css_props)
             yield
         # Now Handle What is captured
         if not self.__slides_mode:
@@ -324,14 +326,14 @@ class LiveSlides(NavBar):
                     _slides = []
                     for obj in objs:
                         with capture_output() as cap:
-                            self.__per_slide_css(**css_props)
+                            self.write_slide_css(**css_props)
                             func(obj)
                         _slides.append(cap)
                     
                     self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': _slides,'func':None}
                 else:
                     def new_func(item):
-                        self.__per_slide_css(**css_props)
+                        self.write_slide_css(**css_props)
                         return func(item)
                     self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':new_func}
                 self.refresh() # Content chnage refreshes it.
