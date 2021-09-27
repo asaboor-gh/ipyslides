@@ -422,15 +422,23 @@ function keyOnSlides(e) {
 
 for (let i = 0; i < boxes.length; i++) {
     boxes[i].onmouseenter = function() {
-      // Remove focus from selected cells to avoid random keyboard events
-      let selected = document.getElementsByClassName("jp-mod-active jp-mod-selected")[0];
-      selected.classList.remove('jp-mod-active');
-      selected.classList.remove('jp-mod-selected');
       document.onkeydown = keyOnSlides; 
     }; 
     boxes[i].onmouseleave = function() {
       document.onkeydown = null; 
-    };   
+    };
+    boxes[i].onclick = function() {
+      document.onkeydown = null; 
+    }; 
+    boxes[i].ondblclick = function() {
+      document.onkeydown = null; 
+    };
+    boxes[i].onmousedown = function() {
+      document.onkeydown = null; 
+    };
+    boxes[i].onmousemove = function() {
+      document.onkeydown = keyOnSlides; 
+    };  
 };
 '''
 
