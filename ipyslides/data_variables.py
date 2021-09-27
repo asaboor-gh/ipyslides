@@ -433,9 +433,6 @@ for (let i = 0; i < boxes.length; i++) {
     boxes[i].ondblclick = function() {
       document.onkeydown = null; 
     };
-    boxes[i].onmousedown = function() {
-      document.onkeydown = null; 
-    };
     boxes[i].onmousemove = function() {
       document.onkeydown = keyOnSlides; 
     };  
