@@ -426,15 +426,6 @@ for (let i = 0; i < boxes.length; i++) {
     }; 
     boxes[i].onmouseleave = function() {
       document.onkeydown = null; 
-    };
-    boxes[i].onclick = function() {
-      document.onkeydown = null; 
-    }; 
-    boxes[i].ondblclick = function() {
-      document.onkeydown = null; 
-    };
-    boxes[i].onmousemove = function() {
-      document.onkeydown = keyOnSlides; 
     };  
 };
 '''
