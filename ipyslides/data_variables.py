@@ -423,9 +423,11 @@ function keyOnSlides(e) {
 for (let i = 0; i < boxes.length; i++) {
     boxes[i].onmouseenter = function() {
       document.onkeydown = keyOnSlides; 
+      arrows[1].focus(); // prevents cells to get focus 
     }; 
     boxes[i].onmouseleave = function() {
       document.onkeydown = null; 
+      arrows[1].blur();
     };  
 };
 '''
