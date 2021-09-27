@@ -120,7 +120,7 @@ class LiveSlides(NavBar):
         self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
         
         self.box =  VBox([self.loading_html, self.main_style_html,
-                          self.theme_html, ipw.HTML("<div tabindex=0 id='focusHereFS',style='opacity:0;'></div>"),
+                          self.theme_html,
                           HBox([self.panel_box,
                                 self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
@@ -178,13 +178,6 @@ class LiveSlides(NavBar):
             self.btn_prev.icon = 'chevron-left'
             self.btn_next.icon = 'chevron-right'
         
-        # Console does not work in SideCar,so avoid using it.     
-        # try:   #JupyterLab Case, Interesting in SideCar
-        #     from sidecar import Sidecar 
-        #     sc = Sidecar(title='Live Presentation')
-        #     with sc:
-        #         display(self.box)
-        # except: pass
         return self.box
     __call__ = show
     
@@ -244,6 +237,7 @@ class LiveSlides(NavBar):
         self.__update_content(True) # Force Refresh
         
     def write_slide_css(self,**css_props):
+        "Prove CSS values with - replaced by _ e.g. font-size to font_size."
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])

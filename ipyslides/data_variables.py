@@ -391,11 +391,10 @@ let arrows = document.getElementsByClassName('arrows');
 let boxes = document.getElementsByClassName('SlidesWrapper');
 let mplBtn = document.getElementsByClassName('mpl-zoom');
 let winFs = document.getElementsByClassName('window-fs');
-let focusHere = document.getElementById('focusHereFS'); // required to abondon random key clicks
 /* Keyboard events */
 // Find solution for background issues
 function keyOnSlides(e) {
-    e.preventDefault(); // let's not add defualt actions
+    e.preventDefault();
     let key = e.keyCode;
     if (key === 37) { 
         arrows[0].click(); // Prev
@@ -405,27 +404,33 @@ function keyOnSlides(e) {
         arrows[1].focus();
     } else if (key === 90) { 
         mplBtn[0].click(); // Z 
-        focusHere.focus();
     } else if (key === 88 || key === 68) {
         alert("Pressing X or D,D may cut selected cell! Move cursor away from slides to capture these keys!");
-        focusHere.focus(); // Redirect Focus
         e.stopPropagation(); // stop propagation to jupyterlab events
+        e.cut = false;
+        e.deleteCell = false;
+        return false;
     } else if (key === 70) { 
         winFs[0].click(); // F
-        focusHere.focus(); // focus on next button to avoid receving keys in notebook in fullscreen mode
     } else {
-        focusHere.focus(); // focus on focusHere to avoid receving keys in notebook in fullscreen mode
+        e.stopPropagation(); // stop propagation to jupyterlab events
         return false; // Do not pass other keys
     }; 
     e.stopPropagation(); // stop propagation to jupyterlab events  
 };
+
+
 for (let i = 0; i < boxes.length; i++) {
     boxes[i].onmouseenter = function() {
+      // Remove focus from selected cells to avoid random keyboard events
+      let selected = document.getElementsByClassName("jp-mod-active jp-mod-selected")[0];
+      selected.classList.remove('jp-mod-active');
+      selected.classList.remove('jp-mod-selected');
       document.onkeydown = keyOnSlides; 
     }; 
     boxes[i].onmouseleave = function() {
       document.onkeydown = null; 
-    };       
+    };   
 };
 '''
 
