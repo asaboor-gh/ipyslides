@@ -1,4 +1,6 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox','file2image','file2tex','file2code','fmt2cols','alert','colored','keep_format']
+__all__.extend(['block'])
+__all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code
@@ -67,12 +69,15 @@ def _fix_repr(obj):
         return markdown(_obj,extensions=__md_extensions) 
     
 def _fmt_write(*columns,width_percents=None):
-    if not width_percents:
-        width_percents = [int(100/len(columns)) for _ in columns]
+    if not width_percents and len(columns) >= 1:
+        widths = [f'{int(100/len(columns))}%' for _ in columns]
+    else:
+        widths = [f'{w}%' for w in width_percents]
+        
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] 
-    _cols = ''.join([f"""<div style='width:{w}%;overflow-x:auto;height:auto'>
+    _cols = ''.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
                      {''.join([_fix_repr(row) for row in _col])}
-                     </div>""" for _col,w in zip(_cols,width_percents)])
+                     </div>""" for _col,w in zip(_cols,widths)])
     _cols = syntax_css() + _cols if 'codehilite' in _cols else _cols
     if len(columns) == 1:
         return _cols
@@ -101,10 +106,12 @@ def ihtml(*columns,width_percents=None):
 
 def _fmt_iwrite(*columns,width_percents=None):
     if not width_percents:
-        width_percents = [int(100/len(columns)) for _ in columns]
+        widths = ['auto' for _ in columns]
+    else:
+        widths = [f'{w}%' for w in width_percents]
         
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] #Make list if single element
-    children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}%')) for _c, _w in zip(_cols,width_percents)]
+    children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}')) for _c, _w in zip(_cols,widths)]
     return ipw.HBox(children = children).add_class('columns')
 
 def iwrite(*columns,width_percents=None):
@@ -181,5 +188,47 @@ def keep_format(plaintext_or_html):
     if not isinstance(plaintext_or_html,str):
         return plaintext_or_html # if not string, return as is
     return {'__keep_format__':plaintext_or_html}
+
+def block(title,*objs,bg='olive'):
+    "Format a block like in LATEX beamer. *objs expect to be writable with `write` command."
+    _title = f"""<center style='background:var(--secondary-bg);margin:0px -4px;'>
+                <b>{title}</b></center>"""
+    _out = _fmt_write(objs) # single column
+    return keep_format(f"""<div style='padding:4px'>
+        <div style='border-top:4px solid {bg};box-shadow: 0px 0px 4px {bg};border-radius:4px;padding:0 4px;'>
+        {_title}
+        {_out}
+        </div></div>""")
+    
+def block_r(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='red')
+def block_b(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='blue')
+def block_g(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='green')
+def block_y(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='yellow')
+def block_o(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='orange')
+def block_p(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='purple')
+def block_c(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='cyan')
+def block_m(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='magenta')
+def block_w(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='white')
+def block_k(title,*objs):
+    "See documentation of `block`."
+    return block(title,*objs,bg='black')
 
     

@@ -6,6 +6,8 @@ from .objs_formatter import libraries
 slides = LiveSlides()
 slides.convert2slides(True)
 slides.set_footer('Author: Abdul Saboor')
+slides.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="50" fill="red"/></svg>''',width=50)
 
 #title is skipped to show instructions  
 with slides.slide(1): #slide 1
@@ -62,7 +64,7 @@ with plt.style.context('ggplot'):
     _ = ax.plot(x,np.cos(x))
 with slides.slide(6):
     write('## Plotting with Matplotlib')
-    write(plt2html(caption='No need to save me in file, I directly show up here!'))
+    write(slides.block_g('Matplotlib inside block!',slides.alert('Alerting inside block!'),plt2html(caption='No need to save me in file, I directly show up here!')))
 
 # Youtube
 from IPython.display import YouTubeVideo
@@ -72,18 +74,20 @@ with slides.slide(7):
     
 # Data Table
 with slides.slide(8):
-    write('''## Data Tables
+    write('## Data Tables')
+    write(slides.block_o('Here is Table','''|h1|h2|h3|
+|---|---|---|
+|d1|d2|d3|
+|r1|r2|r3|
+'''),
+'''```python
+slides.block_o("""
 |h1|h2|h3|
 |---|---|---|
 |d1|d2|d3|
 |r1|r2|r3|
-''',
-'''```shell
-|h1|h2|h3|
-|---|---|---|
-|d1|d2|d3|
-|r1|r2|r3|
-```''')
+""")
+```''',width_percents=[50,50])
 
 # Plotly and Pandas DataFrame only show if you have installed
 try:

@@ -8,6 +8,10 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 0.9.4
+- Now you can set logo image using `ls.set_logo` function.
+- LaTeX's Beamer style blcoks are defined. Use `ls.block(...,bg='color')`, or with few defined colors like `ls.block_r`, `ls.block_g` etc.
+- `@ls.slides` no more support live calculating slides, this is to avoid lags while presenting. 
 # 0.9.3
 - Add custom css under %%slide as well using `ls.write_slide_css`.
 - Slides now open in a side area in Jupyterlab, so editing cells and output can be seen side by side. No more need of Output View or Sidecar.

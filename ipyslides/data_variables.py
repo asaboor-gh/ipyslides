@@ -412,6 +412,8 @@ function keyOnSlides(e) {
         return false;
     } else if (key === 70) { 
         winFs[0].click(); // F
+    } else if (key === 13) {
+        return true; // Enter key
     } else {
         e.stopPropagation(); // stop propagation to jupyterlab events
         return false; // Do not pass other keys

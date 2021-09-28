@@ -1,6 +1,6 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np
-from IPython.display import display, Javascript, HTML
+from IPython.display import display, Javascript, HTML, Image
 import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
@@ -118,9 +118,9 @@ class LiveSlides(NavBar):
         self.setting = Customize(self)
         self.panel_box = self.setting.box
         self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
-        
+        self.logo_html = ipw.HTML()
         self.box =  VBox([self.loading_html, self.main_style_html,
-                          self.theme_html,
+                          self.theme_html,self.logo_html,
                           HBox([self.panel_box,
                                 self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
@@ -129,6 +129,18 @@ class LiveSlides(NavBar):
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
+        
+    def set_logo(self,src,width=80,top=0,right=16):
+        "`src` should be PNG/JPEG file name or SVG string. width,top,right are pixels, should be integer."
+        if '<svg' in src and '</svg>' in src:
+            image = src
+        else:
+            img = Image(src,width=width)._repr_mimebundle_() # Picks PNG/JPEG
+            _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
+            image = f"<img src='{_src}' width='{width}px'/>"
+            
+        self.logo_html.value = f"""<div style='position:absolute;right:{right}px;top:{top}px;width:{width}px;height:auto;'>
+                                    {image}</div>"""
     
     def __add__(self,other):
         "Add two slides instance, title page of other is taken as a slide."
@@ -303,10 +315,9 @@ class LiveSlides(NavBar):
             self.__slides_title_page = cap 
             self.refresh()
     
-    def slides(self, after_slide_number, *objs, calculate_now=True,**css_props):
+    def slides(self, after_slide_number, *objs, **css_props):
         """Decorator for inserting slides dynamically, define a function with one argument acting on each obj in objs.
         No return of function required, if any, only should be display/show etc.\
-        `calculate_now = True` build slides in advance and `False` calculate when slide appears.
         `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
         def _slides(func):
             if not isinstance(after_slide_number,int):
@@ -316,20 +327,15 @@ class LiveSlides(NavBar):
                 print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
                 return objs
             else:
-                if calculate_now:
-                    _slides = []
-                    for obj in objs:
-                        with capture_output() as cap:
-                            self.write_slide_css(**css_props)
-                            func(obj)
-                        _slides.append(cap)
-                    
-                    self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': _slides,'func':None}
-                else:
-                    def new_func(item):
+                _slides = []
+                for obj in objs:
+                    with capture_output() as cap:
                         self.write_slide_css(**css_props)
-                        return func(item)
-                    self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': objs,'func':new_func}
+                        func(obj)
+                    _slides.append(cap)
+                
+                self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': _slides,'func':None}
+                    
                 self.refresh() # Content chnage refreshes it.
         return _slides
         
