@@ -194,7 +194,7 @@ def block(title,*objs,bg='olive'):
     _title = f"""<center style='background:var(--secondary-bg);margin:0px -4px;'>
                 <b>{title}</b></center>"""
     _out = _fmt_write(objs) # single column
-    return keep_format(f"""<div style='padding:4px'>
+    return keep_format(f"""<div style='padding:4px' class='block'>
         <div style='border-top:4px solid {bg};box-shadow: 0px 0px 4px {bg};border-radius:4px;padding:0 4px;'>
         {_title}
         {_out}
@@ -202,16 +202,16 @@ def block(title,*objs,bg='olive'):
     
 def block_r(title,*objs):
     "See documentation of `block`."
-    return block(title,*objs,bg='red')
+    return block(title,*objs,bg='crimson')
 def block_b(title,*objs):
     "See documentation of `block`."
-    return block(title,*objs,bg='blue')
+    return block(title,*objs,bg='navy')
 def block_g(title,*objs):
     "See documentation of `block`."
-    return block(title,*objs,bg='green')
+    return block(title,*objs,bg='#006400')
 def block_y(title,*objs):
     "See documentation of `block`."
-    return block(title,*objs,bg='yellow')
+    return block(title,*objs,bg='#E4D00A')
 def block_o(title,*objs):
     "See documentation of `block`."
     return block(title,*objs,bg='orange')
@@ -220,15 +220,15 @@ def block_p(title,*objs):
     return block(title,*objs,bg='purple')
 def block_c(title,*objs):
     "See documentation of `block`."
-    return block(title,*objs,bg='cyan')
+    return block(title,*objs,bg='#48d1cc')
 def block_m(title,*objs):
     "See documentation of `block`."
     return block(title,*objs,bg='magenta')
 def block_w(title,*objs):
     "See documentation of `block`."
-    return block(title,*objs,bg='white')
+    return block(title,*objs,bg='whitesmoke')
 def block_k(title,*objs):
     "See documentation of `block`."
-    return block(title,*objs,bg='black')
+    return block(title,*objs,bg='#343434')
 
     

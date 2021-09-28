@@ -191,7 +191,7 @@ def style_html(style_root = inherit_root):
     color: var(--primary-fg)!important;
     padding: 0px 4px !important;
     overflow-x: auto !important;
-    background: var(--secondary-bg) !important;
+    background: var(--primary-bg) !important;
 }
 .SlidesWrapper pre>code {background:transparent !important;color: var(--primary-fg)!important;}
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
@@ -277,6 +277,9 @@ div.fig-container>svg{
     width:100%;
     height:auto;
 }  
+.SlideArea .block {
+    background: var(--primary-bg);
+}
 </style>'''
 
 animations = {'zoom':'''<style>

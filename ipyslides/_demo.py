@@ -7,15 +7,16 @@ slides = LiveSlides()
 slides.convert2slides(True)
 slides.set_footer('Author: Abdul Saboor')
 slides.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="50" fill="red"/></svg>''',width=50)
+                    <circle cx="50" cy="50" r="50" fill="green"/>
+                    <text x="35" y="50" fill="white">Logo</text></svg>''',width=50)
 
 #title is skipped to show instructions  
 with slides.slide(1): #slide 1
     write('## I am created using `with slides.slide(1)` context manager!')
     write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
-    write("""```python
+    write(slides.block_b("Code","""```python
 write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("Colored and italic text","magenta","whitesmoke")}*')
-```""")
+```"""))
     
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
@@ -75,19 +76,19 @@ with slides.slide(7):
 # Data Table
 with slides.slide(8):
     write('## Data Tables')
-    write(slides.block_o('Here is Table','''|h1|h2|h3|
+    write(slides.block_r('Here is Table','''|h1|h2|h3|
 |---|---|---|
 |d1|d2|d3|
 |r1|r2|r3|
 '''),
-'''```python
+slides.block_b('Here is Code','''```python
 slides.block_o("""
 |h1|h2|h3|
 |---|---|---|
 |d1|d2|d3|
 |r1|r2|r3|
 """)
-```''',width_percents=[50,50])
+```'''),width_percents=[50,50])
 
 # Plotly and Pandas DataFrame only show if you have installed
 try:
