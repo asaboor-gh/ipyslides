@@ -190,8 +190,16 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper pre {
     color: var(--primary-fg)!important;
     padding: 0px 4px !important;
-    overflow-x: auto !important;
-    background: var(--primary-bg) !important;
+    overflow: auto !important;
+    background: var(--secondary-bg) !important;
+}
+.SlidesWrapper div.codehilite {  
+    margin: 4px 0px !important; /* Opposite to padding to balance it */
+    border: 1px solid var(--tr-hover-bg) !important;
+    border-radius: 4px !important;
+    max-height: 300px !important;
+    height: auto !important;
+    overflow: auto !important;
 }
 .SlidesWrapper pre>code {background:transparent !important;color: var(--primary-fg)!important;}
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
@@ -410,8 +418,6 @@ function keyOnSlides(e) {
     } else if (key === 88 || key === 68) {
         alert("Pressing X or D,D may cut selected cell! Move cursor away from slides to capture these keys!");
         e.stopPropagation(); // stop propagation to jupyterlab events
-        e.cut = false;
-        e.deleteCell = false;
         return false;
     } else if (key === 70) { 
         winFs[0].click(); // F
@@ -429,6 +435,7 @@ for (let i = 0; i < boxes.length; i++) {
     boxes[i].onmouseenter = function() {
       document.onkeydown = keyOnSlides; 
       arrows[1].focus(); // prevents cells to get focus 
+      arrows[1].blur(); // prevents all time focus
     }; 
     boxes[i].onmouseleave = function() {
       document.onkeydown = null; 

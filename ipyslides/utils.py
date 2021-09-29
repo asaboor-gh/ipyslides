@@ -142,7 +142,7 @@ def file2text(filename):
         text = ''.join(f.readlines())   
     return text
 
-def file2code(filename,language='python',max_height='400px'):
+def file2code(filename,language='python',max_height='300px'):
     "Only reads plain text"
     if 'ython' in language:
         code = markdown(f'```{language}\n{file2text(filename)}\n```',extensions=__md_extensions)
