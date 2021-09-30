@@ -2,10 +2,10 @@ __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', '
 __all__.extend(['block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
+from IPython.core.getipython import get_ipython
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code
 import matplotlib.pyplot as plt, os
-from io import BytesIO
 from IPython.utils.capture import capture_output
 from IPython.core.display import __all__ as __all
 from contextlib import contextmanager
@@ -41,10 +41,11 @@ def syntax_css():
     return "<style>\n{}\n</style>".format(css)
 
 def _fix_repr(obj):
-    if not isinstance(obj,str):
-        # First prefer keep_format method. 
-        if isinstance(obj,dict) and '__keep_format__' in obj:
-            return obj['__keep_format__']
+    if isinstance(obj,str):
+        _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
+        return markdown(_obj,extensions=__md_extensions) 
+        
+    else:
         # Next prefer custom methods of objects. 
         is_true, _html = format_object(obj)
         if is_true:
@@ -64,9 +65,6 @@ def _fix_repr(obj):
                 or any object with anyone of follwing methods:<br/>{_methods}<br/>
                 Use <code>display(*objs)</code> or library's specific method used to display in Notebook. 
                 </blockquote>"""
-    else:
-        _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
-        return markdown(_obj,extensions=__md_extensions) 
     
 def _fmt_write(*columns,width_percents=None):
     if not width_percents and len(columns) >= 1:
@@ -86,12 +84,14 @@ def _fmt_write(*columns,width_percents=None):
 def write(*columns,width_percents=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
     Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows. 
-    You can given a code object from ipyslides.get_cell_code() to it, syntax highlight is enabled.
-    You can give a matplotlib figure to it using ipyslides.utils.plt2html().
-    You can give an interactive plotly figure.
-    You can give a pandas dataframe `df` or `df.to_html()`.
-    You can give any object which has `to_html` method like Altair chart. 
-    You can give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
+    Pass int,float,dict,function etc. Pass list/tuple in a wrapped list for correct print as they used for rows writing too.
+    Given a code object from ipyslides.get_cell_code() to it, syntax highlight is enabled.
+    Give a matplotlib figure/Axes to it or use ipyslides.utils.plt2html().
+    Give an interactive plotly figure.
+    Give a pandas dataframe `df` or `df.to_html()`.
+    Give any object which has `to_html` method like Altair chart. 
+    Give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
+    Give a function/class/module (without calling) and it will be displayed as a pretty printed code block.
     
     Note: Use `keep_format` method to keep format of object for example `keep_format(altair_chart.to_html())`.
     Note: You can give your own type of data provided that it is converted to an HTML string.
@@ -142,7 +142,7 @@ def file2text(filename):
         text = ''.join(f.readlines())   
     return text
 
-def file2code(filename,language='python',max_height='300px'):
+def file2code(filename,language='python',max_height='350px'):
     "Only reads plain text"
     if 'ython' in language:
         code = markdown(f'```{language}\n{file2text(filename)}\n```',extensions=__md_extensions)

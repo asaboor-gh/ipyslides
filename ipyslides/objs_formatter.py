@@ -2,8 +2,10 @@
 
 """
 import sys
+import inspect, re, json
 from io import BytesIO
 import matplotlib.pyplot as plt
+from markdown import markdown
 
 def plt2html(plt_fig=None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
@@ -45,7 +47,25 @@ def format_object(obj):
         _fig = obj.get_figure()
         return True,plt2html(_fig)
     except: pass
-        
+    
+    # Some builtin types
+    if isinstance(obj,dict):
+        # First prefer keep_format method. 
+        if '__keep_format__' in obj:
+            return True, obj['__keep_format__']
+        else:
+            return  True, f"<pre>{json.dumps(obj,indent=4)}</pre>"    
+    elif isinstance(obj,(list,tuple,int,float)): # Then prefer other builtins
+        return True, f"<pre>{obj}</pre>"
+    
+    # If Code object given
+    for _type in ['class','function','module','method','builtin','generator']:
+        if getattr(inspect,f'is{_type}')(obj):
+            source = inspect.getsource(obj)
+            source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
+            return True, markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
+    
+    # Other Libraries   
     try: module_name = obj.__module__
     except: module_name = '' #str, int etc don't have __module__
     
@@ -67,8 +87,6 @@ def format_object(obj):
 
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       
-    
 
-
-
+ 
             

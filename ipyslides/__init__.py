@@ -45,11 +45,11 @@ def demo():
     import os
     from . import _demo, utils
     
-    _code = utils.file2code(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)),'_demo.py'))
     slides = _demo.slides 
     with slides.slide(1000):
         write('## This is all code to generate slides')
-        write(_code)
+        write(_demo)
+        write(demo)
     with slides.slide(1001,background='#9ACD32'):
         slides.write_citations()
         

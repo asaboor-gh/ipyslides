@@ -197,7 +197,7 @@ def style_html(style_root = inherit_root):
     margin: 4px 0px !important; /* Opposite to padding to balance it */
     border: 1px solid var(--tr-hover-bg) !important;
     border-radius: 4px !important;
-    max-height: 300px !important;
+    max-height: 350px !important;
     height: auto !important;
     overflow: auto !important;
 }
