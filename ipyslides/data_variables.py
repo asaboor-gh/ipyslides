@@ -201,6 +201,13 @@ def style_html(style_root = inherit_root):
     height: auto !important;
     overflow: auto !important;
 }
+.SlidesWrapper div.PyRepr {
+    margin: 4px !important;
+    white-space:pre !important;
+    max-height: 350px !important;
+    height: auto !important;
+    overflow: auto !important;
+}
 .SlidesWrapper pre>code {background:transparent !important;color: var(--primary-fg)!important;}
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--secondary-bg);

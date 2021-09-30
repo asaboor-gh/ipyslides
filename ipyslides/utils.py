@@ -1,4 +1,4 @@
-__all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox','file2image','file2tex','file2code','fmt2cols','alert','colored','keep_format']
+__all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox','file2image','file2text','file2code','fmt2cols','alert','colored','keep_format']
 __all__.extend(['block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
@@ -10,7 +10,7 @@ from IPython.utils.capture import capture_output
 from IPython.core.display import __all__ as __all
 from contextlib import contextmanager
 import ipywidgets as ipw
-from .objs_formatter import format_object , libraries
+from .objs_formatter import format_object
 from .objs_formatter import plt2html # For backward cimpatibility and inside class
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
@@ -57,14 +57,8 @@ def _fix_repr(obj):
             if _out_: # If there is object in _repr_<>_, don't return None
                 return _out_
         
-        # Return info if nothing above
-        _objects = ', '.join([f"<code>{lib['name']}.{lib['obj']}</code>" for lib in libraries])
-        _methods = ', '.join([f'<code>_repr_{rep}_</code>' for rep in __reprs__])
-        return f"""<blockquote>Can't write object <code>{obj}</code><br/> 
-                Expects any of :<br/> <code>Text/Markdown/HTML</code>, <code>matplotlib.pyplot.Axes</code>, {_objects}<br/>
-                or any object with anyone of follwing methods:<br/>{_methods}<br/>
-                Use <code>display(*objs)</code> or library's specific method used to display in Notebook. 
-                </blockquote>"""
+        # Return __repr__ if nothing above
+        return f"<div class='PyRepr'>{obj.__repr__()}</div>"
     
 def _fmt_write(*columns,width_percents=None):
     if not width_percents and len(columns) >= 1:
@@ -84,14 +78,18 @@ def _fmt_write(*columns,width_percents=None):
 def write(*columns,width_percents=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
     Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows. 
-    Pass int,float,dict,function etc. Pass list/tuple in a wrapped list for correct print as they used for rows writing too.
-    Given a code object from ipyslides.get_cell_code() to it, syntax highlight is enabled.
-    Give a matplotlib figure/Axes to it or use ipyslides.utils.plt2html().
-    Give an interactive plotly figure.
-    Give a pandas dataframe `df` or `df.to_html()`.
-    Give any object which has `to_html` method like Altair chart. 
-    Give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
-    Give a function/class/module (without calling) and it will be displayed as a pretty printed code block.
+    
+    - Pass int,float,dict,function etc. Pass list/tuple in a wrapped list for correct print as they used for rows writing too.
+    - Give a code object from `ipyslides.get_cell_code()` to it, syntax highlight is enabled.
+    - Give a matplotlib `figure/Axes` to it or use `ipyslides.utils.plt2html()`.
+    - Give an interactive plotly figure.
+    - Give a pandas dataframe `df` or `df.to_html()`.
+    - Give any object which has `to_html` method like Altair chart. 
+    - Give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
+    - Give a function/class/module (without calling) and it will be displayed as a pretty printed code block.
+    
+    If an object is not in above listed things, `obj.__repr__()` will be printed. If you need to show other than __repr__, use `display(obj)` outside `write` command or use
+    methods specific to that library to show in jupyter notebook.
     
     Note: Use `keep_format` method to keep format of object for example `keep_format(altair_chart.to_html())`.
     Note: You can give your own type of data provided that it is converted to an HTML string.

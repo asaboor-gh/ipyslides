@@ -52,10 +52,17 @@ f"""## Interactive Widgets
 ### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using `textbox` command</a>')} 
 or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf','This is refernce to FigureWidget using `slides.cite` command')}(reference at end)
 can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made available through `ihtml` command.
-"""]
-for i in range(3,6):
+""",
+'## Commands which do all Magic!']
+for i in range(3,7):
     with slides.slide(i,background=f'linear-gradient(to right, olive 0%, olive {i*5}%, crimson {i*15}%, orange 100%)'):
         write(__contents[i-3])
+        if i == 6:
+            write(slides.block_r('slides.write/ipyslide.utils.write',write),
+                  (slides.block_b('slides.iwrite/ipyslide.utils.iwrite',iwrite),
+                   slides.block_b('slides.ihtml/ipyslide.utils.ihtml',ihtml)
+                   )
+                )
 
 # Matplotlib
 import numpy as np, matplotlib.pyplot as plt
@@ -63,18 +70,18 @@ x = np.linspace(0,2*np.pi)
 with plt.style.context('ggplot'):
     fig, ax = plt.subplots(figsize=(3.4,2.6))
     _ = ax.plot(x,np.cos(x))
-with slides.slide(6):
+with slides.slide(7):
     write('## Plotting with Matplotlib')
     write(slides.block_g('Matplotlib inside block!',slides.alert('Alerting inside block!'),plt2html(caption='No need to save me in file, I directly show up here!')))
 
 # Youtube
 from IPython.display import YouTubeVideo
-with slides.slide(7):
+with slides.slide(8):
     write(f"### Watching Youtube Video?")
     write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
     
 # Data Table
-with slides.slide(8):
+with slides.slide(9):
     write('## Data Tables')
     write(slides.block_r('Here is Table','''|h1|h2|h3|
 |---|---|---|
@@ -107,7 +114,7 @@ try:
 except:
     df = '### Install `pandas` to view output'
     chart = '### Install Altair to see chart'
-with slides.slide(9,background='#800000'):
+with slides.slide(10,background='#800000'):
     write(('## Writing Pandas DataFrame',df),
           ('## Writing Altair Chart\nMay not work everywhere, needs javascript',chart)
           )
@@ -118,7 +125,7 @@ try:
     fig.add_trace(go.Bar([1,5,8,9]))
 except:
     fig = '### Install `plotly` to view output'
-with slides.slide(10):
+with slides.slide(11):
     write(('## Writing Plotly Figure',fig))
 
 # Interactive widgets can't be used in write command, but still they are displayed.   
@@ -134,7 +141,7 @@ def onclick(btn):
 
 btn.on_click(onclick)
 
-with slides.slide(11):
+with slides.slide(12):
     write('## Interactive Apps on Slide\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
     iwrite(prog,[btn,html])
     write("[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)")

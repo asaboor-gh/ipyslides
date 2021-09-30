@@ -8,6 +8,11 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 0.9.5
+- You can now give `function/class/modules` etc. (without calling) in `write` and source code is printed.
+- Objects like `dict/set/list/numpy.ndarray/int/float` etc. are well formatted now.
+- Any object that is not implemented yet returns its `__repr__`. You can alternatively show that object using `display` or library's specific method. 
+
 # 0.9.4
 - Now you can set logo image using `ls.set_logo` function.
 - LaTeX's Beamer style blcoks are defined. Use `ls.block(...,bg='color')`, or with few defined colors like `ls.block_r`, `ls.block_g` etc.

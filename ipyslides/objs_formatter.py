@@ -54,15 +54,18 @@ def format_object(obj):
         if '__keep_format__' in obj:
             return True, obj['__keep_format__']
         else:
-            return  True, f"<pre>{json.dumps(obj,indent=4)}</pre>"    
-    elif isinstance(obj,(list,tuple,int,float)): # Then prefer other builtins
-        return True, f"<pre>{obj}</pre>"
+            return  True, f"<div class='PyRepr'>{json.dumps(obj,indent=4)}</div>"    
+    elif isinstance(obj,(set,list,tuple,int,float)): # Then prefer other builtins
+        return True, f"<div class='PyRepr'>{obj}</div>"
     
     # If Code object given
     for _type in ['class','function','module','method','builtin','generator']:
         if getattr(inspect,f'is{_type}')(obj):
-            source = inspect.getsource(obj)
-            source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
+            try:
+                source = inspect.getsource(obj)
+                source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
+            except:
+                source = f'Can not get source code of:\n{obj} '
             return True, markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
     
     # Other Libraries   
