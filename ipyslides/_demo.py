@@ -55,11 +55,11 @@ can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made 
 """,
 '## Commands which do all Magic!']
 for i in range(3,7):
-    with slides.slide(i,background=f'linear-gradient(to right, olive 0%, olive {i*5}%, crimson {i*15}%, orange 100%)'):
+    with slides.slide(i, background=f'linear-gradient(to right, olive 0%, olive {i*5}%, crimson {i*15}%, orange 100%)'):
         write(__contents[i-3])
         if i == 6:
             write(slides.block_r('slides.write/ipyslide.utils.write',write),
-                  (slides.block_b('slides.iwrite/ipyslide.utils.iwrite',iwrite),
+                  slides.rows(slides.block_b('slides.iwrite/ipyslide.utils.iwrite',iwrite),
                    slides.block_b('slides.ihtml/ipyslide.utils.ihtml',ihtml)
                    )
                 )

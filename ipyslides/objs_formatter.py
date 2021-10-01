@@ -29,6 +29,28 @@ def bokeh2html(bokeh_fig,title=""):
     from bokeh.embed import file_html
     return file_html(bokeh_fig, CDN, title)
 
+def syntax_css():
+    color_keys = {
+        'inherit': 'n',
+        '#008000': 'k ow kc',
+        '#080': 'mi mf',
+        '#ff7f0e': 'kn',
+        '#2ca02c': 'nn',
+        '#d62728': 'p',
+        '#5650b5': 'c1 sd',
+        '#AA22FF': 'o',
+        'olive': 'nf',
+        'red': 'se',
+        '#337ab7': 'nc',
+        '#1175cb': 'nb',
+        '#BA2121': 's1 s2',
+        '#7f7f7f': 'sa',
+        '#2800ff': 'si',   
+    }
+    kcw = [[(_v,c,'bold') if _v in ['k','kc'] else (_v,c,'normal') for _v in k.split()] for c,k in color_keys.items()]
+    kcw = [v for vs in kcw for v in vs] # Flatten
+    css = '\n'.join([f'.codehilite .{k} {{color:{c};font-weight:{w};}}' for k,c,w in kcw]) # Fonts are declared in main CSS
+    return "<style>\n{}\n</style>".format(css)
 
 # ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
 
@@ -64,9 +86,12 @@ def format_object(obj):
             try:
                 source = inspect.getsource(obj)
                 source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
+                # Create HTML
+                source = syntax_css() + markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
             except:
-                source = f'Can not get source code of:\n{obj} '
-            return True, markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
+                source = f'Can not get source code of:\n{obj}'
+            
+            return (True, source)
     
     # Other Libraries   
     try: module_name = obj.__module__

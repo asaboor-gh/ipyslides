@@ -1,5 +1,5 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox','file2image','file2text','file2code','fmt2cols','alert','colored','keep_format']
-__all__.extend(['block'])
+__all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
 from IPython.core.getipython import get_ipython
@@ -10,7 +10,7 @@ from IPython.utils.capture import capture_output
 from IPython.core.display import __all__ as __all
 from contextlib import contextmanager
 import ipywidgets as ipw
-from .objs_formatter import format_object
+from .objs_formatter import format_object, syntax_css
 from .objs_formatter import plt2html # For backward cimpatibility and inside class
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
@@ -31,14 +31,6 @@ def set_dir(path):
         yield
     finally:
         os.chdir(current)
-
-def syntax_css():
-    keywords = 'n k kc mi mf kn nn p c1 o nf sa s1 si nb nc se'.split()
-    weights = ['bold' if k in ['k','kc'] else 'normal' for k in keywords]
-    colors = 'inherit #008000 #008000 #080 #080 #ff7f0e #2ca02c #d62728 #5650b5 #AA22FF olive #7f7f7f #BA2121 #2800ff #1175cb #337ab7 red'.split()
-    css = [f'.codehilite .{k} {{color:{c};font-weight:{w};}}' for k,c,w in zip(keywords,colors,weights)]
-    css = '.codehighlite span {font-family: Monaco,"Lucida Console","Courier New";}\n' + '\n'.join(css)
-    return "<style>\n{}\n</style>".format(css)
 
 def _fix_repr(obj):
     if isinstance(obj,str):
@@ -77,7 +69,7 @@ def _fmt_write(*columns,width_percents=None):
         
 def write(*columns,width_percents=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
-    Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows. 
+    Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows or explictly call `rows`. 
     
     - Pass int,float,dict,function etc. Pass list/tuple in a wrapped list for correct print as they used for rows writing too.
     - Give a code object from `ipyslides.get_cell_code()` to it, syntax highlight is enabled.
@@ -113,7 +105,7 @@ def _fmt_iwrite(*columns,width_percents=None):
     return ipw.HBox(children = children).add_class('columns')
 
 def iwrite(*columns,width_percents=None):
-    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple of widgets to display as rows in a column. 
+    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
     Text and other rich IPython content like charts can be added with `ihtml`"""
     display(_fmt_iwrite(*columns,width_percents=width_percents))
 
@@ -186,6 +178,10 @@ def keep_format(plaintext_or_html):
     if not isinstance(plaintext_or_html,str):
         return plaintext_or_html # if not string, return as is
     return {'__keep_format__':plaintext_or_html}
+
+def rows(*objs):
+    "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
+    return objs # Its already a tuple
 
 def block(title,*objs,bg='olive'):
     "Format a block like in LATEX beamer. *objs expect to be writable with `write` command."

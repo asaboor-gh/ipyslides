@@ -4,10 +4,10 @@ light_root = ''':root {
 	--heading-fg: navy;
 	--primary-fg: black;
 	--primary-bg: white;
-	--secondary-bg: #dce5e7;
+	--secondary-bg: whitesmoke;
 	--secondary-fg: #454545;
 	--tr-odd-bg: whitesmoke;
-	--tr-hover-bg: lightblue;
+	--tr-hover-bg: #D1D9E1;
 	--accent-color: navy;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
@@ -60,8 +60,8 @@ def style_html(style_root = inherit_root):
 }
 
 .SlidesWrapper code>span {
-   font-family: "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
-   font-size: 80% !important;
+   font-family: var(--jp-code-font-family), "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
+   font-size: 90% !important;
 }
 .SlideArea .SlidesWrapper {max-height:calc(95vh - 100px);} /* in case of embed slides */ 
 .SlidesWrapper {
@@ -170,8 +170,8 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .SlideArea h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
 
 .SlideArea .footnote *,  .SlideArea .footnote li::marker {
-    font-size:0.8em;
-    line-height: 0.6em;
+    font-size:0.9em;
+    line-height: 0.7em;
 }
 .SlideArea hr {
     margin:0 !important;
@@ -294,6 +294,7 @@ div.fig-container>svg{
 }  
 .SlideArea .block {
     background: var(--primary-bg);
+    border-radius: 4px;
 }
 </style>'''
 
