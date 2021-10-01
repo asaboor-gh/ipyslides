@@ -46,11 +46,11 @@ def demo():
     from . import _demo, utils
     
     slides = _demo.slides 
-    with slides.slide(1000):
+    with slides.slide(100):
         write('## This is all code to generate slides')
         write(_demo)
         write(demo)
-    with slides.slide(1001,background='#9ACD32'):
+    with slides.slide(101,background='#9ACD32'):
         slides.write_citations()
         
     slides.prog_slider.value = 0 # back to title

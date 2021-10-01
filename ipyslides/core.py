@@ -291,6 +291,16 @@ class LiveSlides(NavBar):
             self.__slides_dict[f'{slide_number}'] = cap 
             self.refresh()
     
+    def enum_slides(self,start,stop,step=1,**css_props):
+        """Enumeration shortcurt for adding slides through a loop. start, stop, step are passed to `range`.
+        It can overwrite slides created with `with slide`  and `%%slide`. css_props are applied to each slide.
+        - **Example**
+            for i,s in enum_slides(50,55):
+            with s:
+                print(f'Slide {i}')
+        """
+        return ((i , self.slide(i,**css_props)) for i in range(start,stop,step))
+    
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
         if self.__slides_mode:

@@ -154,4 +154,9 @@ def func(item):
     ax.plot(x,np.sin(x));
     ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {item - 12}')
     ax.set_axis_off()
-    slides.write(f'### This is Slide {item}\n and we are animating matplotlib',ax,width_percents=[30,70])
+    slides.write(f'### This is Slide {item+2}\n and we are animating matplotlib',ax,width_percents=[30,70])
+
+# Use enumerate to iterate over slides
+for i,s in slides.enum_slides(13,15,background='var(--secondary-bg)'):
+    with s:
+        write(f'### This is Slide {i+7} added with `enum_slides`')
