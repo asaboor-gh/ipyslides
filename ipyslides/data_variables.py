@@ -208,7 +208,11 @@ def style_html(style_root = inherit_root):
     height: auto !important;
     overflow: auto !important;
 }
-.SlidesWrapper pre>code {background:transparent !important;color: var(--primary-fg)!important;}
+.SlidesWrapper pre>code {
+    background:transparent !important;
+    color: var(--primary-fg)!important;
+    white-space:pre !important;
+}
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--secondary-bg);
 	color: var(--secondary-fg);
