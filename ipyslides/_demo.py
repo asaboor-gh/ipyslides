@@ -88,7 +88,8 @@ with slides.slide(9):
 |d1|d2|d3|
 |r1|r2|r3|
 '''),
-slides.block_b('Here is Code','''```python
+slides.block_b('Here is Code',
+'''```python
 slides.block_o("""
 |h1|h2|h3|
 |---|---|---|

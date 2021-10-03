@@ -187,11 +187,33 @@ def style_html(style_root = inherit_root):
 
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
-.SlidesWrapper pre {
+.SlidesWrapper div.codehilite pre {
     color: var(--primary-fg)!important;
     padding: 0px 4px !important;
     overflow: auto !important;
     background: var(--secondary-bg) !important;
+    counter-reset: line; /* important to add line numbers */
+}
+.SlidesWrapper div.codehilite code {
+    counter-increment: line;
+    display:block; /* should be on new line */
+    width:auto;
+    min-width:100%;
+}
+.SlidesWrapper div.codehilite code:before{
+    content: counter(line,decimal);
+    position: sticky;
+    top:initial;
+    left:-4px;
+    padding: 0 8px;
+    background:var(--secondary-bg);
+    color: var(--secondary-fg);
+    display:inline-block; /* should be inline */
+    width:1.5em;
+    text-align:right;
+    border-right: 1px solid var(--tr-hover-bg);
+    margin-right:4px;
+    -webkit-user-select: none;
 }
 .SlidesWrapper div.codehilite {  
     margin: 4px 0px !important; /* Opposite to padding to balance it */
@@ -208,10 +230,13 @@ def style_html(style_root = inherit_root):
     height: auto !important;
     overflow: auto !important;
 }
-.SlidesWrapper pre>code {
+.SlidesWrapper div.codehilite pre>code {
     background:transparent !important;
     color: var(--primary-fg)!important;
     white-space:pre !important;
+}
+.SlidesWrapper div.codehilite pre>code:hover {
+    background: var(--tr-hover-bg) !important;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--secondary-bg);

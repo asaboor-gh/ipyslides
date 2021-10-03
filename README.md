@@ -8,6 +8,10 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 0.9.6
+- Code line numbering is ON by default. You can set `ls.code_line_numbering(False)` to turn OFF.
+- Add slides in for loop using `slides.enum_slides` function. It create pairs of index and slides. 
+
 # 0.9.5
 - You can now give `function/class/modules` etc. (without calling) in `write` and source code is printed.
 - Objects like `dict/set/list/numpy.ndarray/int/float` etc. are well formatted now.

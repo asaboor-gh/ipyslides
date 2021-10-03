@@ -3,6 +3,7 @@ __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', '
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
+import re
 from IPython.core.getipython import get_ipython
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code
@@ -11,7 +12,7 @@ from IPython.utils.capture import capture_output
 from IPython.core.display import __all__ as __all
 from contextlib import contextmanager
 import ipywidgets as ipw
-from .objs_formatter import format_object, syntax_css
+from .objs_formatter import format_object, syntax_css, _fix_code
 from .objs_formatter import plt2html # For backward cimpatibility and inside class
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
@@ -33,10 +34,12 @@ def set_dir(path):
     finally:
         os.chdir(current)
 
+
 def _fix_repr(obj):
     if isinstance(obj,str):
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
-        return markdown(_obj,extensions=__md_extensions) 
+        _html = markdown(_obj,extensions=__md_extensions) 
+        return _fix_code(_html)
         
     else:
         # Next prefer custom methods of objects. 
@@ -156,7 +159,8 @@ def _cell_code(shell,line_number=True,this_line=True,magics=False,comments=False
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
     if not comments:
         current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
-    return markdown("```python\n{}\n```".format('\n'.join(current_cell_code)),extensions=__md_extensions)
+    source = markdown("```python\n{}\n```".format('\n'.join(current_cell_code)),extensions=__md_extensions)
+    return _fix_code(source)
 
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 

@@ -52,6 +52,14 @@ def syntax_css():
     css = '\n'.join([f'.codehilite .{k} {{color:{c};font-weight:{w};}}' for k,c,w in kcw]) # Fonts are declared in main CSS
     return "<style>\n{}\n</style>".format(css)
 
+def _fix_code(_html):
+    "Fix code highlighting for given _html string"
+    _arr = [_h.split('</code>') for _h in _html.split('<code>')]
+    _arr = [v for vs in _arr for v in vs] # Flatten
+    _arr = ['<code>'+_a.replace('\n','</code><code>') + '</code>' if i % 2 != 0 else _a for i, _a in enumerate(_arr)] 
+    return ''.join(_arr).replace('<span></span>','').replace('<code></code></pre>','</pre>') # Remove empty spans and last code line
+
+
 # ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
 
 libraries = [
@@ -88,6 +96,7 @@ def format_object(obj):
                 source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
                 # Create HTML
                 source = syntax_css() + markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
+                source = _fix_code(source) # Avoid empty spans/last empty line and make linenumbering possible
             except:
                 source = f'Can not get source code of:\n{obj}'
             

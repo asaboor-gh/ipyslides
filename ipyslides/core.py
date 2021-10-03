@@ -301,6 +301,11 @@ class LiveSlides(NavBar):
         """
         return ((i , self.slide(i,**css_props)) for i in range(start,stop,step))
     
+    def code_line_numbering(self,b=True):
+        if b:
+            return display(HTML('<style> code:before{ display:inline-block !important; } </style>'))
+        return display(HTML('<style> code:before{ display:none !important; } </style>'))
+    
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
         if self.__slides_mode:
