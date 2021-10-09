@@ -8,9 +8,11 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
-# 0.9.6
+# 0.9.6 (working)
 - Code line numbering is ON by default. You can set `ls.code_line_numbering(False)` to turn OFF.
 - Add slides in for loop using `slides.enum_slides` function. It create pairs of index and slides. 
+- PDF printing now available. Always print in full screen. Read instructions in side panel. 
+- Slides in Jupyterlab now have updated layout on right side.
 
 # 0.9.5
 - You can now give `function/class/modules` etc. (without calling) in `write` and source code is printed.

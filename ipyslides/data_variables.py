@@ -366,6 +366,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 #rendered_cells .SlidesWrapper .voila-sidecar-hidden {
     display: none;
 }
+.jp-LabShell .height-slider {display:none;}
 /* next Three things should be in given order */
 .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
 .jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only,
@@ -383,28 +384,35 @@ a.jp-InternalAnchorLink { display: none !important;}
     tight: 0px !important;
     left: 0px !important;
 }
+#rendered_cells .window-fs {display:none;}
 .SlidesWrapper {z-index: 10 !important;}
 <style>'''
 
 
 def editing_layout_css(span_percent = 40):
     return f'''<style>
-div.jp-NotebookPanel-notebook div.SlidesWrapper {{
-    position:fixed !important;
-    right:39px;
-    height:calc(100% - 118px) !important;
-    width:{span_percent}vw !important;
-    bottom:30px !important;
-    box-shadow: -2px 0px 2px -1px var(--jp-toolbar-border-color,gray);
+.jp-LabShell {{
+    right: {span_percent}vw !important;
+    margin-right:1px !important;
+    min-width: 0 !important;
 }}
-div.jp-NotebookPanel-notebook {{
-    padding-right: {span_percent}vw !important;
+
+.jp-LabShell .SlidesWrapper {{
+    position:fixed;
+    top:0px !important;
+    right:0px !important;
+    height: 100% !important;
+    width: {span_percent}vw !important; 
 }}
-div.jp-NotebookPanel-notebook .height-slider {{
-    display: none !important;
+/* Very important to keep slides ON even Notebook hidden */
+.jp-LabShell .jp-NotebookPanel.p-mod-hidden {{
+    display:block !important;
+    height:0 !important;
+    min-height:0 !important;
+    border:none !important;
 }}
-</style>
-'''
+</style>'''
+
 
 fullscreen_css = '''<style>
 /* Works in Sidecar and Linked Output View */
@@ -439,6 +447,11 @@ let arrows = document.getElementsByClassName('arrows');
 let boxes = document.getElementsByClassName('SlidesWrapper');
 let mplBtn = document.getElementsByClassName('mpl-zoom');
 let winFs = document.getElementsByClassName('window-fs');
+let capSc = document.getElementsByClassName('screenshot-btn');
+let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
+main.onmouseup = function() {
+    window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important
+}; 
 /* Keyboard events */
 // Find solution for background issues
 function keyOnSlides(e) {
@@ -458,8 +471,11 @@ function keyOnSlides(e) {
         return false;
     } else if (key === 70) { 
         winFs[0].click(); // F
+        window.dispatchEvent(new Event('resize'));
     } else if (key === 13) {
         return true; // Enter key
+    } else if (key === 80) {
+        capSc[0].click();  // P for print screen
     } else {
         e.stopPropagation(); // stop propagation to jupyterlab events
         return false; // Do not pass other keys
@@ -523,6 +539,13 @@ May not work in others but Lab is optimized.
 
 - Press `Z` to toggle matplotlib zoom mode.
 - Press `Space` or right arrow key `>` to advance to next slide, left arrow key `<` to go back.
+- Press `P` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
+but captures of multiple times in a slides are first to last in order in time.
+
+### PDF Printing
+There are two ways of printing to PDF.
+- Capturing each screenshot based on slide's state (in order) and later using `Save Slides Screenshots to PDF`. This is a manual process but you have full control of view of slide.
+- Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `ls.loading_time` value and then print.
 
 #### Assuming you have `ls = LiveSlides()`
 - Edit and test cells in `ls.convert2slides(False)` mode.
@@ -548,7 +571,7 @@ slides.show() # Use it once to see slides
 
 settings_instructions = f'''{more_instructions}
 ### Custom Theme
-For custom themes, change above theme dropdown to `Custom`.
+For custom themes, change below `Theme` dropdown to `Custom`.
 You will see a `custom.css` in current folder,edit it and chnage
 font scale or set theme to another value and back to `Custom` to take effect. 
 > Note: `custom.css` is only picked from current directory.

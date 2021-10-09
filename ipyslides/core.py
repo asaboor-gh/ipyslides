@@ -1,5 +1,8 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np
+import itertools
+from time import sleep
+from PIL import ImageGrab
 from IPython.display import display, Javascript, HTML, Image
 import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
@@ -33,18 +36,26 @@ class NavBar:
     def __init__(self,N=10):
         "N is number of slides here."
         self.N = N
-        
+        self.images = {} #Store screenshots
+        self.loading_time = 0.5 # 0.5 seconds
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
         self.prog_slider = ipw.IntSlider(max = self.N,continuous_update=False,readout=True)
         self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
         self.btn_next =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
         self.btn_setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('float-cross-btn')
-        for btn in [self.btn_next, self.btn_prev, self.btn_setting]:
+        self.btn_capture =  Button(description='\u2913',layout= Layout(width='auto',height='auto'),
+                                   tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
+                                   ).add_class('menu').add_class('screenshot-btn')
+        for btn in [self.btn_next, self.btn_prev, self.btn_setting,self.btn_capture]:
                 btn.style.button_color= 'transparent'
                 btn.layout.min_width = 'max-content' #very important parameter
+        
+        self.dd_clear = ipw.Dropdown(description='Delete',options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
+        self.btn_pdf = Button(description='Save Slides Screenshots to PDF',layout= Layout(width='auto',height='auto'))
+        self.btn_print = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
                 
         self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
-        self.nav_footer =  HBox([self.btn_setting,
+        self.nav_footer =  HBox([self.btn_setting,self.btn_capture,
                               HBox([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
                               ])
         self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
@@ -53,6 +64,10 @@ class NavBar:
          
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
+        self.btn_capture.on_click(self.capture_screen)
+        self.btn_pdf.on_click(self.__save_pdf)
+        self.btn_print.on_click(self.__print_pdf)
+        self.dd_clear.observe(self.__clear_images)
     
     def build_navbar(self):
         self.nav_bar = custom_progressbar(self.prog_slider)
@@ -70,7 +85,72 @@ class NavBar:
     def show(self):
         return self.nav_bar
     __call__ = show
-         
+    
+    def __before_print(self):
+        self.controls.layout.visibility = 'hidden'
+        self.btn_setting.layout.visibility = 'hidden'
+        self.btn_capture.layout.visibility = 'hidden'
+    
+    def __after_print(self):
+        self.controls.layout.visibility = 'visible'
+        self.btn_setting.layout.visibility = 'visible'
+        self.btn_capture.layout.visibility = 'visible'    
+        
+    
+    def capture_screen(self,btn):
+        "Saves screenshot of current slide into self.images dictionary when corresponding button clicked. Use in fullscreen mode"
+        self.__before_print()
+        sleep(0.05) # Just for above clearance
+        img = ImageGrab.grab(bbox=None) # Full Screen Image
+        for i in itertools.count():
+            if not f'im-{self.prog_slider.value}-{i}' in self.images:
+                self.images[f'im-{self.prog_slider.value}-{i}'] =  img 
+                self.__after_print()
+                return # Exit loop
+            
+    def save_pdf(self,filename='IPySlides.pdf'):
+        "Converts saved screenshots to PDF!"
+        ims = [v for k,v in sorted(self.images.items(), key=lambda item: item[0])] # images sorted list
+        if ims: # make sure not empty
+            self.btn_pdf.description = 'Generatingting PDF...'
+            ims[0].save(filename,'PDF',save_all=True,append_images=ims[1:])
+            self.btn_pdf.description = 'Save Slides Screenshots to PDF'
+        else:
+            print('No images found to convert. Take screenshots of slides in full screen mode.')
+    
+    def __save_pdf(self,btn):
+        self.save_pdf() # Runs on button
+        
+    def __print_pdf(self,btn):
+        "Quick Print"
+        self.btn_setting.click() # Close side panel
+        self.__before_print()
+        imgs = []
+        for i in range(self.prog_slider.max + 1):
+            self.prog_slider.value = i
+            sleep(self.loading_time) #keep waiting here until it almost loads 
+            imgs.append(ImageGrab.grab(bbox=None))
+                  
+        self.__after_print()
+        if imgs:
+            imgs[0].save('IPySlides-Print.pdf','PDF',save_all=True,append_images=imgs[1:])
+        # Clear images at end
+        for img in imgs:
+            img.close()     
+            
+    
+    def __clear_images(self,change):
+        if 'Current' in self.dd_clear.value:
+            self.images = {k:v for k,v in self.images.items() if f'-{self.prog_slider.value}-' not in k}
+            for k,img in self.images.items():
+                if f'-{self.prog_slider.value}-' in k:
+                    img.close() # Close image to save mememory
+        elif 'All' in self.dd_clear.value:
+            for k,img in self.images.items():
+                img.close() # Close image to save mememory
+            self.images = {} # Cleaned up
+    
+        
 class LiveSlides(NavBar):
     def __init__(self,magic_suffix='',animation_css = dv.animations['slide']):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
@@ -129,6 +209,7 @@ class LiveSlides(NavBar):
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
+    
         
     def set_logo(self,src,width=80,top=0,right=16):
         "`src` should be PNG/JPEG file name or SVG string. width,top,right are pixels, should be integer."
@@ -189,13 +270,17 @@ class LiveSlides(NavBar):
             self.btn_prev.description = ''
             self.btn_prev.icon = 'chevron-left'
             self.btn_next.icon = 'chevron-right'
-        
+        self.__jlab_in_cell_display()
         return self.box
     __call__ = show
     
     def _ipython_display_(self):
         'Auto display when self is on last line of a cell'
+        self.__jlab_in_cell_display()
         return display(self.box)
+    
+    def __jlab_in_cell_display(self): 
+        return display(ipw.HTML("""<h2 style='color:var(--accent-color);'>IPySlides ⇲</h2>"""))
     
     def align8center(self,b=True):
         "Central aligment of slide by default. If False, left-top aligned."
@@ -223,7 +308,9 @@ class LiveSlides(NavBar):
             self.loading_html.value = dv.loading_svg
             self.out.clear_output(wait=True)
             with self.out:
-                write(self.animation_css) # Per Slide makes it uniform
+                if not self.controls.layout.visibility == 'hidden': #could be None too, so not hidden is better
+                    write(self.animation_css) # Per Slide makes it uniform only when not printing
+                    
                 if self.prog_slider.value == 0:
                     if isinstance(self.__slides_title_page, str):
                         write(self.__slides_title_page) #Markdown String 
@@ -232,7 +319,7 @@ class LiveSlides(NavBar):
                 else:
                     self.__display_slide()
 
-            self.loading_html.value = ''        
+            self.loading_html.value = ''       
             
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
         if show_date:
@@ -392,13 +479,15 @@ class Customize:
         def describe(value): return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
         
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False).add_class('height-slider')
-        self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 50,continuous_update=False)
+        self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 50,continuous_update=False).add_class('width-slider')
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
+        self.master.dd_clear.layout = self.theme_dd.layout # Fix same
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.out_js_css = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
+        btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
         self.box = VBox([Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         self.master.btn_setting, # Must be in middle so that others dont get disturbed. 
                         self.out_js_css, # Must be in middle so that others dont get disturbed.
@@ -407,16 +496,19 @@ class Customize:
                             self.width_slider.add_class('voila-sidecar-hidden'),
                             self.scale_slider,
                             self.theme_dd,
-                            HBox([self.btn_fs,self.btn_mpl],layout=Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')),
-                            ],layout=Layout(width='100%',height='max-content',min_height='200px'))
+                            ipw.HTML('<hr/><span>Take screenshot in FULLSCREEN mode only!</span>'),
+                            self.master.dd_clear,
+                            HBox([self.master.btn_pdf, self.master.btn_print], layout=btns_layout),
+                            ipw.HTML('<hr/>'),
+                            HBox([self.btn_fs,self.btn_mpl], layout=btns_layout),
+                            ],layout=Layout(width='100%',height='max-content',min_height='300px'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
         with self.__instructions:
             write(dv.settings_instructions)
-            
-        with self.out_js_css:
-            display(Javascript(dv.navigation_js)) # Javascript for navigation
-            
+        
+        self.__add_js() # Add js in start to load LabShell in required size    
+        
         self.theme_dd.observe(self.update_theme)
         self.scale_slider.observe(self.__set_font_scale)
         self.height_slider.observe(self.__update_size,names=['value'])
@@ -425,11 +517,19 @@ class Customize:
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_mpl.observe(self.update_theme,names=['value'])
         self.update_theme() #Trigger
+    
+    def __add_js(self):
+        with self.out_js_css: 
+            self.out_js_css.clear_output(wait=True)
+            display(Javascript(dv.navigation_js))
+            # For LabShell Resizing on width change, very important
+            display(Javascript("window.dispatchEvent(new Event('resize'))"))
         
     def __update_size(self,change):
         self.master.box.layout.height = '{}px'.format(self.height_slider.value)
         self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
         self.update_theme(change=None) # For updating size
+        self.__add_js() # For LabShell Resize, very important
             
     def __toggle_panel(self,change):
         if self.master.btn_setting.description == '\u2630':
@@ -444,6 +544,7 @@ class Customize:
         self.master.set_font_scale(self.scale_slider.value)
         
     def update_theme(self,change=None):  
+        self.__add_js()
         text_size = '{}px'.format(int(self.master.font_scale*16))
         if self.theme_dd.value == 'Inherit':
             theme_css = dv.style_html(self.master.theme_root)
@@ -452,7 +553,7 @@ class Customize:
         elif self.theme_dd.value == 'Dark':
             theme_css = dv.style_html(dv.dark_root)
         elif self.theme_dd.value == 'Custom': # In case of Custom CSS
-            with self.set_dir(self.master.user_ns['_dh'][0]):
+            with self.master.set_dir(self.master.user_ns['_dh'][0]):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
                         _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')
