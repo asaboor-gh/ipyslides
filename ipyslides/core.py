@@ -37,7 +37,7 @@ class NavBar:
         "N is number of slides here."
         self.N = N
         self.images = {} #Store screenshots
-        self.print_settings = {'load_time':0.5,'quality':100,'bbox':None}
+        self.__print_settings = {'load_time':0.5,'quality':100,'bbox':None}
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
         self.prog_slider = ipw.IntSlider(max = self.N,continuous_update=False,readout=True)
         self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
@@ -88,7 +88,7 @@ class NavBar:
     
         
     @contextmanager
-    def __print_settings(self):
+    def __print_context(self):
         hide_widgets = [self.controls,self.btn_setting,self.btn_capture]
         for w in hide_widgets:
             w.layout.visibility = 'hidden'
@@ -107,28 +107,30 @@ class NavBar:
             return (0, 0, user.GetSystemMetrics(0), user.GetSystemMetrics(1))
         except:
             return None
-    
-    def set_print_settings(self,load_time=0.5,quality=100,bbox = self.screen_bbox()):
+
+    def set_print_settings(self,load_time=0.5,quality=95,bbox = None):
         """Print settings. 
         - load_time: 0.5; time in seconds for each slide to load before print, only applied to Print PDF, not on manual screenshot. 
-        - quality: 100; In term of current screen. 
-        - bbox: None or tuple on Windows screen size; None for full screen on any platform. Given screen position of slides in pixels as [left,top,right,bottom].
+        - quality: 95; In term of current screen. Will not chnage too much above 95. 
+        - bbox: None; None for full screen on any platform. Given screen position of slides in pixels as [left,top,right,bottom].
         > Note: Auto detection of bbox in frontends where javascript runs is under progress. """
         if bbox and len(bbox) != 4:
             return print("bbox expects [left,top,right,bottom] in integers")
-        self.print_settings = {'load_time':load_time,'quality':quality,'bbox':bbox}
+        self.__print_settings = {'load_time':load_time,'quality':quality,'bbox':bbox if bbox else self.screen_bbox()} # better to get on windows
         # Display what user sets
         if bbox:
             img = ImageGrab.grab(bbox=bbox)
             _ = plt.figure(figsize=(4, 3), dpi=480) # For clear view
             return plt.imshow(img)     
-            
+    
+    def get_print_settings(self):
+        return self.__print_settings       
     
     def capture_screen(self,btn):
         "Saves screenshot of current slide into self.images dictionary when corresponding button clicked. Use in fullscreen mode"
-        with self.__print_settings():
+        with self.__print_context():
             sleep(0.05) # Just for above clearance of widgets views
-            img = ImageGrab.grab(bbox=self.print_settings['bbox']) 
+            img = ImageGrab.grab(bbox=self.__print_settings['bbox']) 
         for i in itertools.count():
             if not f'im-{self.prog_slider.value}-{i}' in self.images:
                 self.images[f'im-{self.prog_slider.value}-{i}'] =  img 
@@ -139,7 +141,7 @@ class NavBar:
         ims = [v for k,v in sorted(self.images.items(), key=lambda item: item[0])] # images sorted list
         if ims: # make sure not empty
             self.btn_pdf.description = 'Generatingting PDF...'
-            ims[0].save(filename,'PDF',quality= self.print_settings['quality'] ,save_all=True,append_images=ims[1:])
+            ims[0].save(filename,'PDF',quality= self.__print_settings['quality'] ,save_all=True,append_images=ims[1:])
             self.btn_pdf.description = 'Save Slides Screenshots to PDF'
         else:
             print('No images found to convert. Take screenshots of slides in full screen mode.')
@@ -152,13 +154,13 @@ class NavBar:
         self.btn_setting.click() # Close side panel
         imgs = []
         for i in range(self.prog_slider.max + 1):  
-            with self.__print_settings():
+            with self.__print_context():
                 self.prog_slider.value = i #keep inside context manger to avoid slide transitions
-                sleep(self.print_settings['load_time']) #keep waiting here until it almost loads 
-                imgs.append(ImageGrab.grab(bbox=self.print_settings['bbox']))
+                sleep(self.__print_settings['load_time']) #keep waiting here until it almost loads 
+                imgs.append(ImageGrab.grab(bbox=self.__print_settings['bbox']))
                   
         if imgs:
-            imgs[0].save('IPySlides-Print.pdf','PDF',quality= self.print_settings['quality'],save_all=True,append_images=imgs[1:])
+            imgs[0].save('IPySlides-Print.pdf','PDF',quality= self.__print_settings['quality'],save_all=True,append_images=imgs[1:])
         # Clear images at end
         for img in imgs:
             img.close()     
@@ -217,7 +219,9 @@ class LiveSlides(NavBar):
         super().__init__(N=_max)
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
-        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')) + dv.editing_layout_css())
+        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace(
+                                '__text_size__','16px').replace(
+                                '__breakpoint_width__','650px')) + dv.editing_layout_css())
         self.main_style_html = ipw.HTML(dv.main_layout_css)
         self.loading_html = ipw.HTML() #SVG Animation in it
         self.prog_slider.observe(self.__update_content,names=['value'])
@@ -506,7 +510,7 @@ class Customize:
         def describe(value): return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
         
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 500,continuous_update=False).add_class('height-slider') #2160 for 4K screens
-        self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 50,continuous_update=False).add_class('width-slider')
+        self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.master.dd_clear.layout = self.theme_dd.layout # Fix same
@@ -555,7 +559,7 @@ class Customize:
     def __update_size(self,change):
         self.master.box.layout.height = '{}px'.format(self.height_slider.value)
         self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
-        self.update_theme(change=None) # For updating size
+        self.update_theme(change=None) # For updating size and breakpoints
         self.__add_js() # For LabShell Resize, very important
             
     def __toggle_panel(self,change):
@@ -589,8 +593,9 @@ class Customize:
                 # Read CSS from file
                 with open('custom.css','r') as f:
                     theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
-        # Replace font-size
-        theme_css = theme_css.replace('__text_size__',text_size)   
+        # Replace font-size and breakpoint size
+        bp_value = f'{int(100*650/self.width_slider.value)}px' #Will break when slides is 650px not just window
+        theme_css = theme_css.replace('__text_size__',text_size).replace('__breakpoint_width__',bp_value) 
         # Catch Fullscreen too.
         if self.btn_fs.value:
             theme_css = theme_css.replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
