@@ -12,7 +12,7 @@ Content below assumes you have `ls = LiveSlides()`.
 # 0.9.6
 - Code line numbering is ON by default. You can set `ls.code_line_numbering(False)` to turn OFF.
 - Add slides in for loop using `slides.enum_slides` function. It create pairs of index and slides. 
-#### PDF Printing
+#### PDF Printing (Tested on Windows)
 - PDF printing is now available. Always print in full screen or set `bbox` of slides. Read instructions in side panel. [PDF-Slides](IPySlides-Print.pdf)
 
 # 0.9.5
