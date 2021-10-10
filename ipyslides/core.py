@@ -108,7 +108,7 @@ class NavBar:
         except:
             return None
     
-    def set_print_settings(self,load_time=0.5,quality=100,bbox = screen_bbox()):
+    def set_print_settings(self,load_time=0.5,quality=100,bbox = self.screen_bbox()):
         """Print settings. 
         - load_time: 0.5; time in seconds for each slide to load before print, only applied to Print PDF, not on manual screenshot. 
         - quality: 100; In term of current screen. 
