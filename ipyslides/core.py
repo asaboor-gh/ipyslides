@@ -92,11 +92,11 @@ class NavBar:
         hide_widgets = [self.controls,self.btn_setting,self.btn_capture]
         for w in hide_widgets:
             w.layout.visibility = 'hidden'
-            
-        yield
-        
-        for w in hide_widgets:
-            w.layout.visibility = 'visible'  
+        try:    
+            yield
+        finally:
+            for w in hide_widgets:
+                w.layout.visibility = 'visible'  
     
     def set_print_settings(self,load_time=0.5,quality=100,bbox=None):
         """Print settings. 
