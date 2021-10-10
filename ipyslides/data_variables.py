@@ -396,7 +396,10 @@ def editing_layout_css(span_percent = 40):
     margin-right:1px !important;
     min-width: 0 !important;
 }}
-
+.kLqJVm .jp-Notebook {{ /* For Kaggle */
+    width: {100 - span_percent}vw !important;
+    min-width: 0 !important;
+}}
 .jp-LabShell .SlidesWrapper {{
     position:fixed;
     top:0px !important;
