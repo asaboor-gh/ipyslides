@@ -545,7 +545,7 @@ but captures of multiple times in a slides are first to last in order in time.
 ### PDF Printing
 There are two ways of printing to PDF.
 - Capturing each screenshot based on slide's state (in order) and later using `Save Slides Screenshots to PDF`. This is a manual process but you have full control of view of slide.
-- Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `ls.loading_time` value and then print.
+- Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `load_time` in `ls.print_settings` value and then print.
 
 #### Assuming you have `ls = LiveSlides()`
 - Edit and test cells in `ls.convert2slides(False)` mode.

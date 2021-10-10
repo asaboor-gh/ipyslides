@@ -1,5 +1,5 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
-import numpy as np
+import numpy as np, matplotlib.pyplot as plt # plt for imshow here
 import itertools
 from time import sleep
 from PIL import ImageGrab
@@ -37,7 +37,7 @@ class NavBar:
         "N is number of slides here."
         self.N = N
         self.images = {} #Store screenshots
-        self.loading_time = 0.5 # 0.5 seconds
+        self.print_settings = {'load_time':0.5,'quality':100,'bbox':None}
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
         self.prog_slider = ipw.IntSlider(max = self.N,continuous_update=False,readout=True)
         self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
@@ -86,26 +86,42 @@ class NavBar:
         return self.nav_bar
     __call__ = show
     
-    def __before_print(self):
-        self.controls.layout.visibility = 'hidden'
-        self.btn_setting.layout.visibility = 'hidden'
-        self.btn_capture.layout.visibility = 'hidden'
-    
-    def __after_print(self):
-        self.controls.layout.visibility = 'visible'
-        self.btn_setting.layout.visibility = 'visible'
-        self.btn_capture.layout.visibility = 'visible'    
         
+    @contextmanager
+    def __print_settings(self):
+        hide_widgets = [self.controls,self.btn_setting,self.btn_capture]
+        for w in hide_widgets:
+            w.layout.visibility = 'hidden'
+            
+        yield
+        
+        for w in hide_widgets:
+            w.layout.visibility = 'visible'  
+    
+    def set_print_settings(self,load_time=0.5,quality=100,bbox=None):
+        """Print settings. 
+        - load_time: 0.5; time in seconds for each slide to load before print, only applied to Print PDF, not on manual screenshot. 
+        - quality: 100; In term of current screen. 
+        - bbox: None; None for full screen. Given screen position of slides in pixels as [left,top,right,bottom].
+        > Note: Auto detection of bbox in frontends where javascript runs is under progress. """
+        if bbox and len(bbox) != 4:
+            return print("bbox expects [left,top,right,bottom] in integers")
+        self.print_settings = {'load_time':load_time,'quality':quality,'bbox':bbox}
+        # Display what user sets
+        if bbox:
+            img = ImageGrab.grab(bbox=bbox)
+            _ = plt.figure(figsize=(4, 3), dpi=480) # For clear view
+            return plt.imshow(img)     
+            
     
     def capture_screen(self,btn):
         "Saves screenshot of current slide into self.images dictionary when corresponding button clicked. Use in fullscreen mode"
-        self.__before_print()
-        sleep(0.05) # Just for above clearance
-        img = ImageGrab.grab(bbox=None) # Full Screen Image
+        with self.__print_settings():
+            sleep(0.05) # Just for above clearance of widgets views
+            img = ImageGrab.grab(bbox=self.print_settings['bbox']) 
         for i in itertools.count():
             if not f'im-{self.prog_slider.value}-{i}' in self.images:
                 self.images[f'im-{self.prog_slider.value}-{i}'] =  img 
-                self.__after_print()
                 return # Exit loop
             
     def save_pdf(self,filename='IPySlides.pdf'):
@@ -113,7 +129,7 @@ class NavBar:
         ims = [v for k,v in sorted(self.images.items(), key=lambda item: item[0])] # images sorted list
         if ims: # make sure not empty
             self.btn_pdf.description = 'Generatingting PDF...'
-            ims[0].save(filename,'PDF',save_all=True,append_images=ims[1:])
+            ims[0].save(filename,'PDF',quality= self.print_settings['quality'] ,save_all=True,append_images=ims[1:])
             self.btn_pdf.description = 'Save Slides Screenshots to PDF'
         else:
             print('No images found to convert. Take screenshots of slides in full screen mode.')
@@ -124,16 +140,15 @@ class NavBar:
     def __print_pdf(self,btn):
         "Quick Print"
         self.btn_setting.click() # Close side panel
-        self.__before_print()
         imgs = []
-        for i in range(self.prog_slider.max + 1):
-            self.prog_slider.value = i
-            sleep(self.loading_time) #keep waiting here until it almost loads 
-            imgs.append(ImageGrab.grab(bbox=None))
+        for i in range(self.prog_slider.max + 1):  
+            with self.__print_settings():
+                self.prog_slider.value = i #keep inside context manger to avoid slide transitions
+                sleep(self.print_settings['load_time']) #keep waiting here until it almost loads 
+                imgs.append(ImageGrab.grab(bbox=self.print_settings['bbox']))
                   
-        self.__after_print()
         if imgs:
-            imgs[0].save('IPySlides-Print.pdf','PDF',save_all=True,append_images=imgs[1:])
+            imgs[0].save('IPySlides-Print.pdf','PDF',quality= self.print_settings['quality'],save_all=True,append_images=imgs[1:])
         # Clear images at end
         for img in imgs:
             img.close()     
@@ -149,6 +164,8 @@ class NavBar:
             for k,img in self.images.items():
                 img.close() # Close image to save mememory
             self.images = {} # Cleaned up
+        
+        self.dd_clear.value = 'None' # important to get back after operation
     
         
 class LiveSlides(NavBar):
@@ -478,7 +495,7 @@ class Customize:
         self.master = instance_LiveSlides
         def describe(value): return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
         
-        self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=1000, value = 500,continuous_update=False).add_class('height-slider')
+        self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 500,continuous_update=False).add_class('height-slider') #2160 for 4K screens
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=40,max=100, value = 50,continuous_update=False).add_class('width-slider')
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
@@ -496,12 +513,12 @@ class Customize:
                             self.width_slider.add_class('voila-sidecar-hidden'),
                             self.scale_slider,
                             self.theme_dd,
-                            ipw.HTML('<hr/><span>Take screenshot in FULLSCREEN mode only!</span>'),
+                            ipw.HTML('<hr/><span>Take screenshot in FULLSCREEN mode only or set `bbox` using `set_print_settings` method!</span>'),
                             self.master.dd_clear,
                             HBox([self.master.btn_pdf, self.master.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
                             HBox([self.btn_fs,self.btn_mpl], layout=btns_layout),
-                            ],layout=Layout(width='100%',height='max-content',min_height='300px'))
+                            ],layout=Layout(width='100%',height='max-content',min_height='400px'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
         with self.__instructions:
