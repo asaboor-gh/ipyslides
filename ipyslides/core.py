@@ -97,12 +97,22 @@ class NavBar:
         finally:
             for w in hide_widgets:
                 w.layout.visibility = 'visible'  
+                
+    def screen_bbox(self):
+        "Return screen's bounding box on windows, return None on other platforms which works as full screen too in screenshot."
+        try:
+            import ctypes
+            user = ctypes.windll.user32
+            user.SetProcessDPIAware()
+            return (0, 0, user.GetSystemMetrics(0), user.GetSystemMetrics(1))
+        except:
+            return None
     
-    def set_print_settings(self,load_time=0.5,quality=100,bbox=None):
+    def set_print_settings(self,load_time=0.5,quality=100,bbox = screen_bbox()):
         """Print settings. 
         - load_time: 0.5; time in seconds for each slide to load before print, only applied to Print PDF, not on manual screenshot. 
         - quality: 100; In term of current screen. 
-        - bbox: None; None for full screen. Given screen position of slides in pixels as [left,top,right,bottom].
+        - bbox: None or tuple on Windows screen size; None for full screen on any platform. Given screen position of slides in pixels as [left,top,right,bottom].
         > Note: Auto detection of bbox in frontends where javascript runs is under progress. """
         if bbox and len(bbox) != 4:
             return print("bbox expects [left,top,right,bottom] in integers")
