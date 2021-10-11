@@ -124,7 +124,20 @@ class NavBar:
             return plt.imshow(img)     
     
     def get_print_settings(self):
-        return self.__print_settings       
+        return self.__print_settings    
+    
+    def __set_resolution(self,image):
+        "Returns resolution to make PDF printable on letter/A4 page."
+        w, h = image.size
+        if w > h:
+            long, short, res = w, h, w/11  # letter page long size
+        else:
+            long, short, res = h, w, h/11
+        
+        if short/res > 8.5: # short side if out page, bring in
+            res = res*long/short  # increase resolution to shrink pages size to fit for print
+        
+        return res   
     
     def capture_screen(self,btn):
         "Saves screenshot of current slide into self.images dictionary when corresponding button clicked. Use in fullscreen mode"
@@ -141,7 +154,8 @@ class NavBar:
         ims = [v for k,v in sorted(self.images.items(), key=lambda item: item[0])] # images sorted list
         if ims: # make sure not empty
             self.btn_pdf.description = 'Generatingting PDF...'
-            ims[0].save(filename,'PDF',quality= self.__print_settings['quality'] ,save_all=True,append_images=ims[1:])
+            ims[0].save(filename,'PDF',quality= self.__print_settings['quality'] ,save_all=True,append_images=ims[1:],
+                        resolution=self.__set_resolution(ims[0]),subsampling=0)
             self.btn_pdf.description = 'Save Slides Screenshots to PDF'
         else:
             print('No images found to convert. Take screenshots of slides in full screen mode.')
@@ -160,7 +174,8 @@ class NavBar:
                 imgs.append(ImageGrab.grab(bbox=self.__print_settings['bbox']))
                   
         if imgs:
-            imgs[0].save('IPySlides-Print.pdf','PDF',quality= self.__print_settings['quality'],save_all=True,append_images=imgs[1:])
+            imgs[0].save('IPySlides-Print.pdf','PDF',quality= self.__print_settings['quality'],save_all=True,append_images=imgs[1:],
+                         resolution=self.__set_resolution(imgs[0]),subsampling=0)
         # Clear images at end
         for img in imgs:
             img.close()     
@@ -205,7 +220,7 @@ class LiveSlides(NavBar):
         self.__citations = {} # Initialize citations
         self.__slides_mode = False
         self.__slides_title_page = '''## Create title page using `%%title` magic or `self.title()` context manager.\n> Author: Abdul Saboor\n<div>
-        <h4 style="color:green;">Create Slides using <pre>%%slide</pre> or with <pre>self.slide(<slide number>)</pre> context manager.</h4>
+        <h4 style="color:green;">Create Slides using <pre>%%slide</pre> or with <pre>self.slide(slide_number)</pre> context manager.</h4>
         <h4 style="color:olive;">Read instructions by clicking on left-bottom button</h4></div>
         '''
         self.__slides_dict = {} # Initialize slide dictionary
