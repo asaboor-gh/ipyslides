@@ -134,7 +134,7 @@ class NavBar:
         else:
             long, short, res = h, w, h/11
         
-        if short/res > 8.5: # short side if out page, bring in
+        if short/res > 8.25: # short side if out page, bring inside A4 size so work for both
             res = res*long/short  # increase resolution to shrink pages size to fit for print
         
         return res   
@@ -609,15 +609,15 @@ class Customize:
                 with open('custom.css','r') as f:
                     theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
         # Replace font-size and breakpoint size
-        bp_value = f'{int(100*650/self.width_slider.value)}px' #Will break when slides is 650px not just window
-        theme_css = theme_css.replace('__text_size__',text_size).replace('__breakpoint_width__',bp_value) 
+        theme_css = theme_css.replace('__text_size__',text_size) 
         # Catch Fullscreen too.
         if self.btn_fs.value:
-            theme_css = theme_css.replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
+            theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
             self.btn_fs.icon = 'compress'
             try:self.master.box.add_class('FullScreen')
             except:pass
         else:
+            theme_css = theme_css.replace('__breakpoint_width__',f'{int(100*650/self.width_slider.value)}px') #Will break when slides is 650px not just window
             edit_mode_css = dv.editing_layout_css(self.width_slider.value)
             theme_css = theme_css.replace('</style>','\n') + edit_mode_css.replace('<style>','')
             self.master.theme_html.value = theme_css #Push CSS without Fullscreen

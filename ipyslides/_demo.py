@@ -63,6 +63,7 @@ for i in range(3,7):
                    slides.block_b('slides.ihtml/ipyslide.utils.ihtml',ihtml)
                    )
                 )
+            write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
 
 # Matplotlib
 import numpy as np, matplotlib.pyplot as plt
