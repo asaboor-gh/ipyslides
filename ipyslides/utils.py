@@ -1,16 +1,17 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
-            'file2img','file2text','file2code','fmt2cols','alert','colored','keep_format']
+            'file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','show_code']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
 import re
+import traceback, textwrap
+from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code
 import matplotlib.pyplot as plt, os
 from IPython.utils.capture import capture_output
 from IPython.core.display import __all__ as __all
-from contextlib import contextmanager
 import ipywidgets as ipw
 from .objs_formatter import format_object, syntax_css, _fix_code
 from .objs_formatter import plt2html # For backward cimpatibility and inside class
@@ -229,3 +230,25 @@ def block_w(title,*objs):
 def block_k(title,*objs):
     "See documentation of `block`."
     return block(title,*objs,bg='#343434')
+
+@contextmanager
+def show_code(collapsed=False):
+    "Displays code in the context manager. Set `collapsed=True` to display in collapse."
+    tb = traceback.extract_stack()[-3]
+    try:
+        yield
+    finally:
+        tb1 = traceback.extract_stack()[-3]  
+        try:
+            with open(tb.filename,'r') as f: # First Try to open file, don't work in other order
+                lines = f.read().splitlines() # Don't use realines here, no need of \n
+        except:
+            lines = list(get_ipython().history_manager.get_range())[-1][2].splitlines()
+                
+        code = textwrap.dedent('\n'.join(lines[tb.lineno:tb1.lineno]))
+        out_code = _fix_code(markdown("```python\n{}\n```".format(code),extensions=__md_extensions))
+        if collapsed:
+            write(details(out_code,summary='Show Code'))
+        else:
+            write(keep_format(out_code))
+

@@ -85,21 +85,19 @@ def style_html(style_root = inherit_root):
     z-index:102;
     top:0px !important;
     left:0px !important;
+    height: calc(100% - 48px) !important;
     box-shadow: 0 0 20px 20px var(--secondary-bg);
 }
+
 .SlidesWrapper .panel .float-cross-btn {
-    position: absolute;
-    top:8px;
-    right:4px;
-    width: 36px;
-    height: 36px;
     border:none !important;
     outline:none !important;
     font-size: 24px;
     background: var(--primary-bg) !important;
-}
+} 
 .SlidesWrapper .panel>div:first-child {
     height:auto;
+    min-height:50px;
 }
 .SlidesWrapper .panel>div:last-child {padding-top:16px;min-height:max-content;} 
 
@@ -386,6 +384,42 @@ a.jp-InternalAnchorLink { display: none !important;}
 }
 #rendered_cells .window-fs {display:none;}
 .SlidesWrapper {z-index: 10 !important;}
+
+@media print {
+   .controls, .NavWrapper button, .floating-area, .float-control {
+       display:none;
+   }
+    .NavWrapper p {
+        margin-left:16px;
+    }
+    pre, .SlideBox, .SlidesWrapper, .SlideArea {
+        height: auto !important;
+    }
+}
+.floating-area {
+    position: absolute;
+    left:0;
+    width:100%;
+    bottom:32px;
+    z-index: 50;
+    background:var(--primary-bg);
+}
+.float-control {
+    position: absolute;
+    right:0;
+    top:0;
+    width:32px;
+    height:32px;
+    z-index: 51;
+    background:var(--primary-bg);
+    opacity:0;
+    overflow:hidden;
+}
+.float-control:hover,.float-control:focus {
+    width:max-content;
+    height:50%;
+    opacity:1;
+}
 <style>'''
 
 
@@ -477,8 +511,10 @@ function keyOnSlides(e) {
         window.dispatchEvent(new Event('resize'));
     } else if (key === 13) {
         return true; // Enter key
+    } else if (key === 83) {
+        capSc[0].click();  // S for screenshot
     } else if (key === 80) {
-        capSc[0].click();  // P for print screen
+        window.print(); // P for PDF print
     } else {
         e.stopPropagation(); // stop propagation to jupyterlab events
         return false; // Do not pass other keys
@@ -542,8 +578,9 @@ May not work in others but Lab is optimized.
 
 - Press `Z` to toggle matplotlib zoom mode.
 - Press `Space` or right arrow key `>` to advance to next slide, left arrow key `<` to go back.
-- Press `P` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
+- Press `S` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
 but captures of multiple times in a slides are first to last in order in time.
+- Press `P` to print PDF of current slide in full screen mode. You can collect all PDFs yourself. Its manual but high quality.
 
 ### PDF Printing
 There are two ways of printing to PDF.

@@ -61,6 +61,8 @@ class NavBar:
         self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
                             ).add_class('controls')
         self.build_navbar() # this is the main function to build the navbar
+        self.float_box = Box().add_class('floating-area') #For hiding contet in pr
+        self.float_ctrl = ipw.IntSlider(description='Hidden Height (px)',min=0,value=0,max=400,orientation='vertical').add_class('float-control')
          
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
@@ -68,6 +70,7 @@ class NavBar:
         self.btn_pdf.on_click(self.__save_pdf)
         self.btn_print.on_click(self.__print_pdf)
         self.dd_clear.observe(self.__clear_images)
+        self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
     
     def build_navbar(self):
         self.nav_bar = custom_progressbar(self.prog_slider)
@@ -89,7 +92,7 @@ class NavBar:
         
     @contextmanager
     def __print_context(self):
-        hide_widgets = [self.controls,self.btn_setting,self.btn_capture]
+        hide_widgets = [self.controls,self.btn_setting,self.btn_capture,self.float_ctrl]
         for w in hide_widgets:
             w.layout.visibility = 'hidden'
         try:    
@@ -194,6 +197,9 @@ class NavBar:
         
         self.dd_clear.value = 'None' # important to get back after operation
     
+    def __set_hidden_height(self,change):
+        self.float_box.layout.height = f'{self.float_ctrl.value}px'
+    
         
 class LiveSlides(NavBar):
     def __init__(self,magic_suffix='',animation_css = dv.animations['slide']):
@@ -247,15 +253,16 @@ class LiveSlides(NavBar):
         self.logo_html = ipw.HTML()
         self.box =  VBox([self.loading_html, self.main_style_html,
                           self.theme_html,self.logo_html,
-                          HBox([self.panel_box,
-                                self.slide_box,
+                          self.panel_box,
+                          HBox([ #Slide_box must be in a box to have animations work
+                            self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
                           self.controls,
+                          self.float_box,self.float_ctrl,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
-    
         
     def set_logo(self,src,width=80,top=0,right=16):
         "`src` should be PNG/JPEG file name or SVG string. width,top,right are pixels, should be integer."
@@ -386,7 +393,7 @@ class LiveSlides(NavBar):
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-        out_str = "<style>\n.SlidesWrapper {" + props_str + "}\n"
+        out_str = "<style>\n.SlidesWrapper, .floating-area{" + props_str + "}\n"
         if 'color' in _css_props:
             out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {_css_props['color']}}}"
         return write(out_str + "\n</style>") # return a write object for actual write
@@ -534,8 +541,7 @@ class Customize:
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
         btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
-        self.box = VBox([Box([self.__instructions],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        self.master.btn_setting, # Must be in middle so that others dont get disturbed. 
+        self.box = VBox([Box([self.__instructions,self.master.btn_setting,],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         self.out_js_css, # Must be in middle so that others dont get disturbed.
                         VBox([
                             self.height_slider.add_class('voila-sidecar-hidden'), 
@@ -547,7 +553,7 @@ class Customize:
                             HBox([self.master.btn_pdf, self.master.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
                             HBox([self.btn_fs,self.btn_mpl], layout=btns_layout),
-                            ],layout=Layout(width='100%',height='max-content',min_height='400px'))
+                            ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
         with self.__instructions:
