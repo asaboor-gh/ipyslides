@@ -61,9 +61,6 @@ class NavBar:
         self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
                             ).add_class('controls')
         self.build_navbar() # this is the main function to build the navbar
-        self.float_box = Box().add_class('floating-area') #For hiding contet in pr
-        self.float_box_up = Box().add_class('floating-area-up')
-        self.float_ctrl = ipw.IntRangeSlider(description='View (%)',min=0,value=(0,100),max=100,orientation='vertical').add_class('float-control')
          
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
@@ -71,7 +68,6 @@ class NavBar:
         self.btn_pdf.on_click(self.__save_pdf)
         self.btn_print.on_click(self.__print_pdf)
         self.dd_clear.observe(self.__clear_images)
-        self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
     
     def build_navbar(self):
         self.nav_bar = custom_progressbar(self.prog_slider)
@@ -203,10 +199,6 @@ class NavBar:
         
         self.dd_clear.value = 'None' # important to get back after operation
     
-    def __set_hidden_height(self,change):
-        self.float_box.layout.height = f'{self.float_ctrl.value[0]}%'
-        self.float_box_up.layout.height = f'{100 - self.float_ctrl.value[1]}%'
-    
         
 class LiveSlides(NavBar):
     def __init__(self,magic_suffix='',animation_css = dv.animations['slide']):
@@ -259,6 +251,9 @@ class LiveSlides(NavBar):
         self.panel_box = self.setting.box
         self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
         self.logo_html = ipw.HTML()
+        self.float_ctrl = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
+        self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
+        # All Box of Slides
         self.box =  VBox([self.loading_html, self.main_style_html,
                           self.theme_html,self.logo_html,
                           self.panel_box,
@@ -266,7 +261,7 @@ class LiveSlides(NavBar):
                             self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
                           self.controls,
-                          self.float_box,self.float_ctrl,self.float_box_up,
+                          self.float_ctrl,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
@@ -274,7 +269,11 @@ class LiveSlides(NavBar):
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
-        
+    
+    def __set_hidden_height(self,change):
+        self.slide_box.layout.height = f'{self.float_ctrl.value}%'
+        self.slide_box.layout.margin='auto 4px'
+            
     def set_logo(self,src,width=80,top=0,right=16):
         "`src` should be PNG/JPEG file name or SVG string. width,top,right are pixels, should be integer."
         if '<svg' in src and '</svg>' in src:
@@ -404,7 +403,7 @@ class LiveSlides(NavBar):
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-        out_str = "<style>\n.SlidesWrapper, .floating-area, .floating-area-up{" + props_str + "}\n"
+        out_str = "<style>\n.SlidesWrapper {" + props_str + "}\n"
         if 'color' in _css_props:
             out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {_css_props['color']}}}"
         return write(out_str + "\n</style>") # return a write object for actual write

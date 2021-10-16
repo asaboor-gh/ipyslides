@@ -1,4 +1,4 @@
-__version__ = '0.9.7'
+__version__ = '0.9.8'
 
 __all__ = ['initialize','initial_code']
 from .core import LiveSlides
@@ -47,11 +47,13 @@ def demo():
     
     slides = _demo.slides 
     with slides.slide(100):
-        write('## This is all code to generate slides')
-        write(_demo)
-        write(demo)
+        with slides.source():
+            write('## This is all code to generate slides')
+            write(_demo)
+            write(demo)
     with slides.slide(101,background='#9ACD32'):
-        slides.write_citations()
+        with slides.source():
+            slides.write_citations()
         
     slides.prog_slider.value = 0 # back to title
     return slides

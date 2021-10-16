@@ -8,6 +8,10 @@ See [PDF-Slides](IPySlides-Print.pdf)
 
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
+# 0.9.8
+- PDF printing is optimized. See [PDF-Slides](IPySlides-Print.pdf). You can hover over top right corner to reveal a slider to change view area while taking screenshot. Also you can select a checkbox from side panel to remove scrolling in output like code.
+- You can now display source code using context manager `slides.source`.
+- You can (not recommended) use browser's print PDF by pressing key `P` in jupyterlab but it only gives you current slide with many limitations, e.g. you need to collect all pages manually.
 
 # 0.9.6
 - Code line numbering is ON by default. You can set `ls.code_line_numbering(False)` to turn OFF.

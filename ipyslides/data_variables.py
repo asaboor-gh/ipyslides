@@ -389,7 +389,7 @@ a.jp-InternalAnchorLink { display: none !important;}
    .SlidesWrapper, .SlidesWrapper.FullScreen {
        height: auto !important;
    }
-   .controls, .NavWrapper button, .floating-area, .float-control {
+   .controls, .NavWrapper button, .float-control {
        display:none;
    }
     .NavWrapper p {
@@ -403,22 +403,6 @@ a.jp-InternalAnchorLink { display: none !important;}
     }
 }
 
-.floating-area {
-    position: absolute;
-    left:0;
-    width:100%;
-    bottom:32px;
-    z-index: 50;
-    background:var(--primary-bg);
-}
-.floating-area-up {
-    position: absolute;
-    left:0;
-    width:100%;
-    top:0;
-    z-index: 50;
-    background:var(--primary-bg);
-}
 .float-control {
     position: absolute;
     right:0;
@@ -503,7 +487,7 @@ let winFs = document.getElementsByClassName('window-fs __uid__');
 let capSc = document.getElementsByClassName('screenshot-btn __uid__');
 let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
 main.onmouseup = function() {
-    window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important
+    window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
 }; 
 /* Keyboard events */
 // Find solution for background issues
