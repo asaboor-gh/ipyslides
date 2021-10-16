@@ -1,5 +1,5 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
-            'file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','show_code']
+            'file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
@@ -232,8 +232,8 @@ def block_k(title,*objs):
     return block(title,*objs,bg='#343434')
 
 @contextmanager
-def show_code(collapsed=False):
-    "Displays code in the context manager. Set `collapsed=True` to display in collapse."
+def source(collapsed=False):
+    "Excute and displays source code in the context manager. Set `collapsed=True` to display in collapse."
     tb = traceback.extract_stack()[-3]
     try:
         yield

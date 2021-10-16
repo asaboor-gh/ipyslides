@@ -62,7 +62,8 @@ class NavBar:
                             ).add_class('controls')
         self.build_navbar() # this is the main function to build the navbar
         self.float_box = Box().add_class('floating-area') #For hiding contet in pr
-        self.float_ctrl = ipw.IntSlider(description='Hidden Height (px)',min=0,value=0,max=400,orientation='vertical').add_class('float-control')
+        self.float_box_up = Box().add_class('floating-area-up')
+        self.float_ctrl = ipw.IntRangeSlider(description='View (%)',min=0,value=(0,100),max=100,orientation='vertical').add_class('float-control')
          
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
@@ -154,7 +155,12 @@ class NavBar:
             
     def save_pdf(self,filename='IPySlides.pdf'):
         "Converts saved screenshots to PDF!"
-        ims = [v for k,v in sorted(self.images.items(), key=lambda item: item[0])] # images sorted list
+        ims = [] #sorting
+        for i in range(self.prog_slider.max + 1): # That's maximum number of slides
+            for j in range(len(self.images)): # To be on safe side, no idea how many captures
+                if f'im-{i}-{j}' in self.images:
+                    ims.append(self.images[f'im-{i}-{j}'])
+                
         if ims: # make sure not empty
             self.btn_pdf.description = 'Generatingting PDF...'
             ims[0].save(filename,'PDF',quality= self.__print_settings['quality'] ,save_all=True,append_images=ims[1:],
@@ -198,7 +204,8 @@ class NavBar:
         self.dd_clear.value = 'None' # important to get back after operation
     
     def __set_hidden_height(self,change):
-        self.float_box.layout.height = f'{self.float_ctrl.value}px'
+        self.float_box.layout.height = f'{self.float_ctrl.value[0]}%'
+        self.float_box_up.layout.height = f'{100 - self.float_ctrl.value[1]}%'
     
         
 class LiveSlides(NavBar):
@@ -214,6 +221,7 @@ class LiveSlides(NavBar):
             isd.initilize() #This will generate code in same cell including this class, which is self explainatory 
             ```
         """
+        self.uid = f'{id(self)}' # For uniqueness in javascript
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
         self.plt2html = plt2html
@@ -258,11 +266,14 @@ class LiveSlides(NavBar):
                             self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
                           self.controls,
-                          self.float_box,self.float_ctrl,
+                          self.float_box,self.float_ctrl,self.float_box_up,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
+        
+        for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
+            w.add_class(self.uid)
         
     def set_logo(self,src,width=80,top=0,right=16):
         "`src` should be PNG/JPEG file name or SVG string. width,top,right are pixels, should be integer."
@@ -393,7 +404,7 @@ class LiveSlides(NavBar):
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-        out_str = "<style>\n.SlidesWrapper, .floating-area{" + props_str + "}\n"
+        out_str = "<style>\n.SlidesWrapper, .floating-area, .floating-area-up{" + props_str + "}\n"
         if 'color' in _css_props:
             out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {_css_props['color']}}}"
         return write(out_str + "\n</style>") # return a write object for actual write
@@ -535,6 +546,7 @@ class Customize:
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
+        self.reflow_check = ipw.Checkbox(value=False,description='Set auto height of components for better screenshots',layout=self.theme_dd.layout)
         self.master.dd_clear.layout = self.theme_dd.layout # Fix same
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.out_js_css = ipw.Output(layout=Layout(width='auto',height='0px'))
@@ -548,7 +560,8 @@ class Customize:
                             self.width_slider.add_class('voila-sidecar-hidden'),
                             self.scale_slider,
                             self.theme_dd,
-                            ipw.HTML('<hr/><span>Take screenshot in FULLSCREEN mode only or set `bbox` using `set_print_settings` method!</span>'),
+                            ipw.HTML('<hr/><span>Take screenshot in FULLSCREEN or set `bbox` using `set_print_settings` method!</span>'),
+                            self.reflow_check,
                             self.master.dd_clear,
                             HBox([self.master.btn_pdf, self.master.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
@@ -556,10 +569,10 @@ class Customize:
                             ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel')
-        with self.__instructions:
-            write(dv.settings_instructions)
+        self.box.on_displayed(lambda change: self.__add_js()) # First attempt of Javascript to work
         
-        self.__add_js() # Add js in start to load LabShell in required size    
+        with self.__instructions:
+            write(dv.settings_instructions) 
         
         self.theme_dd.observe(self.update_theme)
         self.scale_slider.observe(self.__set_font_scale)
@@ -568,12 +581,17 @@ class Customize:
         self.master.btn_setting.on_click(self.__toggle_panel)
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_mpl.observe(self.update_theme,names=['value'])
-        self.update_theme() #Trigger
+        self.reflow_check.observe(self.update_theme)
+        self.update_theme() #Trigger Theme and Javascript init
+        
+        for w in (self.btn_mpl,self.btn_fs,self.box):
+            w.add_class(self.master.uid)
+            
     
     def __add_js(self):
         with self.out_js_css: 
             self.out_js_css.clear_output(wait=True)
-            display(Javascript(dv.navigation_js))
+            display(Javascript(dv.navigation_js.replace('__uid__',self.master.uid)))
             # For LabShell Resizing on width change, very important
             display(Javascript("window.dispatchEvent(new Event('resize'))"))
         
@@ -596,7 +614,7 @@ class Customize:
         self.master.set_font_scale(self.scale_slider.value)
         
     def update_theme(self,change=None):  
-        self.__add_js()
+        self.__add_js() # Must be here
         text_size = '{}px'.format(int(self.master.font_scale*16))
         if self.theme_dd.value == 'Inherit':
             theme_css = dv.style_html(self.master.theme_root)
@@ -616,6 +634,8 @@ class Customize:
                     theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
         # Replace font-size and breakpoint size
         theme_css = theme_css.replace('__text_size__',text_size) 
+        if self.reflow_check.value:
+            theme_css = theme_css.replace('</style>','') + ".SlideArea * {max-height:max-content !important;}\n</style>"
         # Catch Fullscreen too.
         if self.btn_fs.value:
             theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')

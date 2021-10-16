@@ -217,14 +217,14 @@ def style_html(style_root = inherit_root):
     margin: 4px 0px !important; /* Opposite to padding to balance it */
     border: 1px solid var(--tr-hover-bg) !important;
     border-radius: 4px !important;
-    max-height: 350px !important;
+    max-height: 400px; /* Try avoiding important here */
     height: auto !important;
     overflow: auto !important;
 }
 .SlidesWrapper div.PyRepr {
     margin: 4px !important;
     white-space:pre !important;
-    max-height: 350px !important;
+    max-height: 400px;
     height: auto !important;
     overflow: auto !important;
 }
@@ -386,6 +386,9 @@ a.jp-InternalAnchorLink { display: none !important;}
 .SlidesWrapper {z-index: 10 !important;}
 
 @media print {
+   .SlidesWrapper, .SlidesWrapper.FullScreen {
+       height: auto !important;
+   }
    .controls, .NavWrapper button, .floating-area, .float-control {
        display:none;
    }
@@ -395,12 +398,24 @@ a.jp-InternalAnchorLink { display: none !important;}
     pre, .SlideBox, .SlidesWrapper, .SlideArea {
         height: auto !important;
     }
+    .SlidesWrapper div.codehilite, .SlidesWrapper div.PyRepr {
+        max-height:auto !important; /* Flow itself */
+    }
 }
+
 .floating-area {
     position: absolute;
     left:0;
     width:100%;
     bottom:32px;
+    z-index: 50;
+    background:var(--primary-bg);
+}
+.floating-area-up {
+    position: absolute;
+    left:0;
+    width:100%;
+    top:0;
     z-index: 50;
     background:var(--primary-bg);
 }
@@ -414,6 +429,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     background:var(--primary-bg);
     opacity:0;
     overflow:hidden;
+    padding:4px;
 }
 .float-control:hover,.float-control:focus {
     width:max-content;
@@ -480,11 +496,11 @@ html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + 
 
 
 navigation_js = '''
-let arrows = document.getElementsByClassName('arrows');
-let boxes = document.getElementsByClassName('SlidesWrapper');
-let mplBtn = document.getElementsByClassName('mpl-zoom');
-let winFs = document.getElementsByClassName('window-fs');
-let capSc = document.getElementsByClassName('screenshot-btn');
+let arrows = document.getElementsByClassName('arrows __uid__');
+let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
+let mplBtn = document.getElementsByClassName('mpl-zoom __uid__');
+let winFs = document.getElementsByClassName('window-fs __uid__');
+let capSc = document.getElementsByClassName('screenshot-btn __uid__');
 let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
 main.onmouseup = function() {
     window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important
