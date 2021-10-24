@@ -340,11 +340,11 @@ animations = {'zoom':'''<style>
 </style>''',
 'slide': '''<style>
 .SlideBox {
-    animation-name: slide; animation-duration: 600ms;
-    animation-timing-function: cubic-bezier(0.1, -0.6, 0.2, 0);
+    animation-name: slide; animation-duration: 400ms;
+    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
 }
 @keyframes slide {
-     from { transform: translateX(120%);}
+     from { transform: translateX(100%);}
      to { transform: translateX(0); }
 }
 </style>
@@ -480,60 +480,51 @@ html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + 
 
 
 navigation_js = '''
+function resizeWindow() {
+    window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
+}; 
+resizeWindow(); // resize on first display
 let arrows = document.getElementsByClassName('arrows __uid__');
 let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
+boxes[0].tabIndex = -1; // Need for event listeners
 let mplBtn = document.getElementsByClassName('mpl-zoom __uid__');
 let winFs = document.getElementsByClassName('window-fs __uid__');
 let capSc = document.getElementsByClassName('screenshot-btn __uid__');
 let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
-main.onmouseup = function() {
-    window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
-}; 
+main.onmouseup = resizeWindow;
+
 /* Keyboard events */
 // Find solution for background issues
 function keyOnSlides(e) {
     e.preventDefault();
+    resizeWindow(); // Resize before key press
     let key = e.keyCode;
     if (key === 37 || (e.shiftKey && key === 32)) { 
         arrows[0].click(); // Prev or Shift + Spacebar
-        arrows[0].focus();
     } else if (key === 39 || key === 32) { 
         arrows[1].click(); // Next or Spacebar
-        arrows[1].focus();
     } else if (key === 90) { 
         mplBtn[0].click(); // Z 
     } else if (key === 88 || key === 68) {
-        alert("Pressing X or D,D may cut selected cell! Move cursor away from slides to capture these keys!");
+        alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
         e.stopPropagation(); // stop propagation to jupyterlab events
         return false;
     } else if (key === 70) { 
         winFs[0].click(); // F
-        window.dispatchEvent(new Event('resize'));
     } else if (key === 13) {
         return true; // Enter key
     } else if (key === 83) {
         capSc[0].click();  // S for screenshot
     } else if (key === 80) {
         window.print(); // P for PDF print
-    } else {
-        e.stopPropagation(); // stop propagation to jupyterlab events
-        return false; // Do not pass other keys
     }; 
+    resizeWindow(); // Resize after key press, good for F key
     e.stopPropagation(); // stop propagation to jupyterlab events  
 };
 
-
-for (let i = 0; i < boxes.length; i++) {
-    boxes[i].onmouseenter = function() {
-      document.onkeydown = keyOnSlides; 
-      arrows[1].focus(); // prevents cells to get focus 
-      arrows[1].blur(); // prevents all time focus
-    }; 
-    boxes[i].onmouseleave = function() {
-      document.onkeydown = null; 
-      arrows[1].blur();
-    };  
-};
+boxes[0].addEventListener("keydown",keyOnSlides); 
+boxes[0].onmouseenter = function(){boxes[0].focus();};
+boxes[0].onmouseleave = function(){boxes[0].blur();};
 '''
 
 mpl_fs_css = '''<style>
@@ -577,7 +568,7 @@ Having your cursor over slides:
 May not work in others but Lab is optimized.
 
 - Press `Z` to toggle matplotlib zoom mode.
-- Press `Space` or right arrow key `>` to advance to next slide, left arrow key `<` to go back.
+- Press `Space` or right arrow key `>` to advance to next slide, `Shift + Space` or left arrow key `<` to go back.
 - Press `S` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
 but captures of multiple times in a slides are first to last in order in time.
 - Press `P` to print PDF of current slide in full screen mode. You can collect all PDFs yourself. Its manual but high quality.

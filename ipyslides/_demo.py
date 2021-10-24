@@ -6,7 +6,7 @@ from .utils import write, ihtml,plt2html, iwrite, __reprs__, textbox
 from .objs_formatter import libraries
 slides = LiveSlides()
 slides.convert2slides(True)
-slides.set_footer('Author: Abdul Saboor')
+slides.set_footer('Author: Abdul Saboor عبدالصبور')
 slides.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="50" fill="green"/>
                     <text x="35" y="50" fill="white">Logo</text></svg>''',width=50)

@@ -366,8 +366,10 @@ class LiveSlides(NavBar):
     def __display_slide(self):
         item = self.iterable[self.prog_slider.value-1]
         self.info_html.value = self.__footer_text.replace('__number__',f'{item["n"]} / {self.nslides}') #Slide Number
-        if not '.' in item["n"] and not self.controls.layout.visibility == 'hidden':
-            write(self.animation_css) # Avoids animations in frames or while printing to make consistent look
+        if not self.controls.layout.visibility == 'hidden': # No animations while printing
+            check = round(float(item["n"]) - int(float(item["n"])), 2) # Must be rounded
+            if check <= 0.1: # First frame should slide only to make consistent look
+                write(self.animation_css) 
         return item['slide'].show() 
            
     def __update_content(self,change):
@@ -377,6 +379,8 @@ class LiveSlides(NavBar):
             with self.out:
                 if self.prog_slider.value == 0:
                     self.info_html.value = self.__footer_text.replace('__number__','')
+                    if not self.controls.layout.visibility == 'hidden': # No animations while printing
+                        write(self.animation_css)
                     if isinstance(self.__slides_title_page, str):
                         write(self.__slides_title_page) #Markdown String 
                     else:
@@ -608,14 +612,14 @@ class Customize:
         with self.out_js_css: 
             self.out_js_css.clear_output(wait=True)
             display(Javascript(dv.navigation_js.replace('__uid__',self.master.uid)))
-            # For LabShell Resizing on width change, very important
-            display(Javascript("window.dispatchEvent(new Event('resize'))"))
+
         
     def __update_size(self,change):
         self.master.box.layout.height = '{}px'.format(self.height_slider.value)
         self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
         self.update_theme(change=None) # For updating size and breakpoints
-        self.__add_js() # For LabShell Resize, very important
+        with self.out_js_css:
+            display(Javascript("window.dispatchEvent(new Event('resize'));")) # Resize on width change
             
     def __toggle_panel(self,change):
         if self.master.btn_setting.description == '\u2630':
@@ -634,7 +638,6 @@ class Customize:
         self.master.set_font_scale(self.scale_slider.value)
         
     def update_theme(self,change=None):  
-        self.__add_js() # Must be here
         text_size = '{}px'.format(int(self.master.font_scale*16))
         if self.theme_dd.value == 'Inherit':
             theme_css = dv.style_html(self.master.theme_root)
@@ -670,6 +673,8 @@ class Customize:
             self.btn_fs.icon = 'expand'
             try:self.master.box.remove_class('FullScreen')
             except: pass
+            with self.out_js_css:
+                display(Javascript("window.dispatchEvent(new Event('resize'));")) # Resize on minimizing window
         # Matplotlib's SVG Zoom 
         if self.btn_mpl.value:
             self.btn_mpl.icon= 'toggle-on'

@@ -8,6 +8,9 @@ See [PDF-Slides](IPySlides-Print.pdf)
 
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
+# 0.9.9
+- Javascript navigation is improved for Jupyterlab.
+- The decorator `ls.slides` is renamed as `ls.frames` and now it adds one slide with many frames. This is useful to reveal slide contents in steps e.g. bullet points one by one.
 # 0.9.8
 - PDF printing is optimized. See [PDF-Slides](IPySlides-Print.pdf). You can hover over top right corner to reveal a slider to change view area while taking screenshot. Also you can select a checkbox from side panel to remove scrolling in output like code.
 - You can now display source code using context manager `slides.source`.
@@ -127,5 +130,9 @@ can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made 
 
 - Slides in Jupyter Lab are theme aware in `Inherit` theme mode, so theme of slides changes based on editor theme.
 
-
+# Known Limitations
+- Since `ipyslides` is built on ipywidgets and slides are displayed using `Output` widget, We do not have option to launch two windows to make speakernotes. If `Output` widget get enabled to function in multiwindows, we will introduce `speaker notes`.
+- There is no drawing board like plugin yet.
+- Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. 
+- Bounding box of slides for screenshots should be set by user (if not in fullscreen), because javascript only works in Jupyterlab. 
 > Very thankful to [Python-Markdown](https://python-markdown.github.io/) which enabled to create `write` command as well as syntax highliting.
