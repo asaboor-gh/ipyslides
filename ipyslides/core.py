@@ -235,7 +235,7 @@ class LiveSlides(NavBar):
         
         self.iterable = self.__collect_slides() # Collect internally
         self.nslides = self.iterable[-1]['n'].split('.')[0] if self.iterable else 0
-        self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px')
+        self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 36px')
                               ).add_class('SlideArea')
         
         _max = len(self.iterable) if self.iterable else 0
