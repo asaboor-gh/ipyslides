@@ -494,8 +494,8 @@ main.onmouseup = function() {
 function keyOnSlides(e) {
     e.preventDefault();
     let key = e.keyCode;
-    if (key === 37) { 
-        arrows[0].click(); // Prev
+    if (key === 37 || (e.shiftKey && key === 32)) { 
+        arrows[0].click(); // Prev or Shift + Spacebar
         arrows[0].focus();
     } else if (key === 39 || key === 32) { 
         arrows[1].click(); // Next or Spacebar

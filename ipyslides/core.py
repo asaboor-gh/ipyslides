@@ -39,13 +39,13 @@ class NavBar:
         self.images = {} #Store screenshots
         self.__print_settings = {'load_time':0.5,'quality':100,'bbox':None}
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
-        self.prog_slider = ipw.IntSlider(max = self.N,continuous_update=False,readout=True)
+        self.prog_slider = ipw.IntSlider(options= [(f'{i}',i) for i in range(N)],continuous_update=False,readout=True)
         self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
         self.btn_next =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
         self.btn_setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('float-cross-btn')
-        self.btn_capture =  Button(description='\u2913',layout= Layout(width='auto',height='auto'),
+        self.btn_capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
                                    tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
-                                   ).add_class('menu').add_class('screenshot-btn')
+                                   ).add_class('screenshot-btn') # .add_class('menu')
         for btn in [self.btn_next, self.btn_prev, self.btn_setting,self.btn_capture]:
                 btn.style.button_color= 'transparent'
                 btn.layout.min_width = 'max-content' #very important parameter
@@ -55,8 +55,9 @@ class NavBar:
         self.btn_print = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
                 
         self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
-        self.nav_footer =  HBox([self.btn_setting,self.btn_capture,
+        self.nav_footer =  HBox([self.btn_setting,
                               HBox([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
+                              self.btn_capture
                               ])
         self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
                             ).add_class('controls')
@@ -233,6 +234,7 @@ class LiveSlides(NavBar):
         self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
         
         self.iterable = self.__collect_slides() # Collect internally
+        self.nslides = self.iterable[-1]['n'].split('.')[0] if self.iterable else 0
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 16px')
                               ).add_class('SlideArea')
         
@@ -253,6 +255,7 @@ class LiveSlides(NavBar):
         self.logo_html = ipw.HTML()
         self.float_ctrl = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
         self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
+        self.__footer_text = ""
         # All Box of Slides
         self.box =  VBox([self.loading_html, self.main_style_html,
                           self.theme_html,self.logo_html,
@@ -269,6 +272,7 @@ class LiveSlides(NavBar):
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
+    
     
     def __set_hidden_height(self,change):
         self.slide_box.layout.height = f'{self.float_ctrl.value}%'
@@ -361,20 +365,18 @@ class LiveSlides(NavBar):
     
     def __display_slide(self):
         item = self.iterable[self.prog_slider.value-1]
-        if item['func'] == None:
-            return item['slide'].show() # Pre-Calculated Slides
-        return item['func'](item['slide']) #Show dynamic slides 
+        self.info_html.value = self.__footer_text.replace('__number__',f'{item["n"]} / {self.nslides}') #Slide Number
+        if not '.' in item["n"] and not self.controls.layout.visibility == 'hidden':
+            write(self.animation_css) # Avoids animations in frames or while printing to make consistent look
+        return item['slide'].show() 
            
     def __update_content(self,change):
         if self.__slides_title_page or (self.iterable and change):
-            self.info_html.value = re.sub('>\d+\s+/\s+\d+<',f'>{self.prog_slider.value} / {self.N}<',self.info_html.value) #Slide Number
             self.loading_html.value = dv.loading_svg
             self.out.clear_output(wait=True)
             with self.out:
-                if not self.controls.layout.visibility == 'hidden': #could be None too, so not hidden is better
-                    write(self.animation_css) # Per Slide makes it uniform only when not printing
-                    
                 if self.prog_slider.value == 0:
+                    self.info_html.value = self.__footer_text.replace('__number__','')
                     if isinstance(self.__slides_title_page, str):
                         write(self.__slides_title_page) #Markdown String 
                     else:
@@ -386,15 +388,21 @@ class LiveSlides(NavBar):
             
     def set_footer(self, text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>', show_slide_number=True, show_date=True):
         if show_date:
-            text += f' | <text style="color:var(--accent-color);">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
-        if show_slide_number: #Slide number should be  exactlly like '>Int / Int<' for regex substitutioon.  
-            text += f' | <b style="color:var(--accent-color);">{self.prog_slider.value} / {self.N}<b>'
-        self.info_html.value = f'<p style="white-space:nowrap;"> {text} </p>'
+            text += f' | <text style="color:var(--secondary-fg);">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
+        if show_slide_number: #Slide number should be replaced from __number__ 
+            text += '<b style="color:var(--accent-color);white-space:pre;">  __number__<b>'
+        self.__footer_text = f'<p style="white-space:nowrap;"> {text} </p>'
+        self.info_html.value = self.__footer_text.replace('__number__','')
         
-    def refresh(self):
+    def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self.iterable = self.__collect_slides()
-        self.N = len(self.iterable) if self.iterable else 0 #N an max both need to be updated
+        if self.iterable:
+            self.nslides = self.iterable[-1]['n'].split('.')[0] # Avoid frames number
+            self.N = len(self.iterable)
+        else:
+            self.nslides = 0
+            self.N = 0
         self.prog_slider.max = self.N
         self.__update_content(True) # Force Refresh
         
@@ -480,13 +488,17 @@ class LiveSlides(NavBar):
             self.__slides_title_page = cap 
             self.refresh()
     
-    def slides(self, after_slide_number, *objs, **css_props):
-        """Decorator for inserting slides dynamically, define a function with one argument acting on each obj in objs.
-        No return of function required, if any, only should be display/show etc.\
+    def slides(self, slide_number, *objs, **css_props):
+        print("This context manager is deprecated, use `frames` instead.")
+        return self.frames(slide_number, *objs, **css_props)
+    
+    def frames(self, slide_number, *objs, **css_props):
+        """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
+        Every `obj` is shown on it's own frame. No return of function required, if any, only should be display/show etc.
         `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
         def _slides(func):
-            if not isinstance(after_slide_number,int):
-                return print(f'after_slide_number expects integer, got {after_slide_number!r}')
+            if not isinstance(slide_number,int):
+                return print(f'slide_number expects integer, got {slide_number!r}')
 
             if not self.__slides_mode:
                 print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
@@ -499,7 +511,7 @@ class LiveSlides(NavBar):
                         func(obj)
                     _slides.append(cap)
                 
-                self.__dynamicslides_dict[f'd{after_slide_number}'] = {'objs': _slides,'func':None}
+                self.__dynamicslides_dict[f'd{slide_number}'] = {'objs': _slides}
                     
                 self.refresh() # Content chnage refreshes it.
         return _slides
@@ -521,14 +533,19 @@ class LiveSlides(NavBar):
             _min, _max = min(all_slides), max(all_slides) + 1
         except:
             _min, _max = 0, 0
-        slides_iterable = []
+        slides_iterable,n = [], 1 # n is start of slides, no other way
         for i in range(_min,_max):
             if f'{i}' in self.__slides_dict.keys():
-                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'func':None}) 
+                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':f'{n}'}) 
+                n = n + 1
             if f'd{i}' in self.__dynamicslides_dict.keys():
                 __dynamic = self.__dynamicslides_dict[f'd{i}']
-                slides = [{'slide':obj,'func':__dynamic['func']} for obj in __dynamic['objs']]
-                slides_iterable = [*slides_iterable,*slides]        
+                slides = [{'slide':obj,'n':f'{n}.{j}'} for j, obj in enumerate(__dynamic['objs'],start=1)]
+                if len(slides) == 1:
+                    slides[0]['n'] = slides[0]['n'].split('.')[0] # No float in single frame
+                slides_iterable = [*slides_iterable,*slides] 
+                n = n + 1
+                   
         return tuple(slides_iterable)
     
     def get_cell_code(self,this_line=True,magics=False,comments=False,lines=None):
@@ -604,9 +621,13 @@ class Customize:
         if self.master.btn_setting.description == '\u2630':
             self.master.btn_setting.description  = '⨉'
             self.box.layout.display = 'flex'
+            self.master.btn_next.disabled = True
+            self.master.btn_prev.disabled = True
         else:
             self.master.btn_setting.description = '\u2630'
             self.box.layout.display = 'none'
+            self.master.btn_next.disabled = False
+            self.master.btn_prev.disabled = False
                      
     def __set_font_scale(self,change):
         # Below line should not be in update_theme to avoid loop call.
