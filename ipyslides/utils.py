@@ -3,8 +3,8 @@ __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', '
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
-import re
-import traceback, textwrap
+import re, sys, linecache
+import textwrap
 from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
 from markdown import markdown
@@ -234,29 +234,19 @@ def block_k(title,*objs):
 @contextmanager
 def source(collapsed=False):
     "Excute and displays source code in the context manager. Set `collapsed=True` to display in collapse."
-    tb = traceback.extract_stack()
+    def frame():
+        "This is better than traceback as it works same for IPython and script.py"
+        return (sys._getframe().f_back.f_back.f_back.f_code.co_filename,
+                sys._getframe().f_back.f_back.f_back.f_lineno) #should be in function and go back three times
+        
+    file, l1 = frame()
     try:
         yield
     finally:
-        tb1 = traceback.extract_stack()
-        try:
-            file,start,end = tb[-3].filename,tb[-3].lineno,tb1[-3].lineno
-            with open(file,'r') as f: # First Try to open file, don't work in other order
-                lines = f.read().splitlines() # Don't use realines here, no need of \n
-        except:
-            start, = [t.lineno for t in tb if 'ipython' in t.filename][:1]
-            end, = [t.lineno for t in tb1 if 'ipython' in t.filename][:1]
-            lines = list(get_ipython().history_manager.get_range())[-1][2].splitlines()
-            if lines and '%%' in lines[0]: #Traceback skips cell magic line
-                lines = lines[1:]
-                
-            for line in lines: # Traceback skips initial empty lines in Notebook, not in file
-                if line.strip(): # empty sapce as well to go
-                    StopIteration
-                else:
-                    lines = lines[1:]
+        file, l2 = frame()
+        lines = linecache.getlines(file)[l1:l2]
     
-        code = textwrap.dedent('\n'.join(lines[start:end]))
+        code = textwrap.dedent(''.join(lines))
         out_code = _fix_code(markdown("```python\n{}\n```".format(code),extensions=__md_extensions))
         if collapsed:
             write(details(out_code,summary='Show Code'))
