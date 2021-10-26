@@ -36,7 +36,7 @@ class NavBar:
     def __init__(self,N=10):
         "N is number of slides here."
         self.N = N
-        self.images = {} #Store screenshots
+        self.__images = {} #Store screenshots
         self.__print_settings = {'load_time':0.5,'quality':100,'bbox':None}
         self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
         self.prog_slider = ipw.IntSlider(options= [(f'{i}',i) for i in range(N)],continuous_update=False,readout=True)
@@ -141,22 +141,22 @@ class NavBar:
         return res   
     
     def capture_screen(self,btn):
-        "Saves screenshot of current slide into self.images dictionary when corresponding button clicked. Use in fullscreen mode"
+        "Saves screenshot of current slide into self.__images dictionary when corresponding button clicked. Use in fullscreen mode"
         with self.__print_context():
             sleep(0.05) # Just for above clearance of widgets views
             img = ImageGrab.grab(bbox=self.__print_settings['bbox']) 
         for i in itertools.count():
-            if not f'im-{self.prog_slider.value}-{i}' in self.images:
-                self.images[f'im-{self.prog_slider.value}-{i}'] =  img 
+            if not f'im-{self.prog_slider.value}-{i}' in self.__images:
+                self.__images[f'im-{self.prog_slider.value}-{i}'] =  img 
                 return # Exit loop
             
     def save_pdf(self,filename='IPySlides.pdf'):
         "Converts saved screenshots to PDF!"
         ims = [] #sorting
         for i in range(self.prog_slider.max + 1): # That's maximum number of slides
-            for j in range(len(self.images)): # To be on safe side, no idea how many captures
-                if f'im-{i}-{j}' in self.images:
-                    ims.append(self.images[f'im-{i}-{j}'])
+            for j in range(len(self.__images)): # To be on safe side, no idea how many captures
+                if f'im-{i}-{j}' in self.__images:
+                    ims.append(self.__images[f'im-{i}-{j}'])
                 
         if ims: # make sure not empty
             self.btn_pdf.description = 'Generatingting PDF...'
@@ -185,18 +185,22 @@ class NavBar:
         # Clear images at end
         for img in imgs:
             img.close()     
-            
+    
+    @property
+    def images(self):
+        "Get all captured screenshots"
+        return self.__images       
     
     def __clear_images(self,change):
         if 'Current' in self.dd_clear.value:
-            self.images = {k:v for k,v in self.images.items() if f'-{self.prog_slider.value}-' not in k}
-            for k,img in self.images.items():
+            self.__images = {k:v for k,v in self.__images.items() if f'-{self.prog_slider.value}-' not in k}
+            for k,img in self.__images.items():
                 if f'-{self.prog_slider.value}-' in k:
                     img.close() # Close image to save mememory
         elif 'All' in self.dd_clear.value:
-            for k,img in self.images.items():
+            for k,img in self.__images.items():
                 img.close() # Close image to save mememory
-            self.images = {} # Cleaned up
+            self.__images = {} # Cleaned up
         
         self.dd_clear.value = 'None' # important to get back after operation
     

@@ -234,18 +234,29 @@ def block_k(title,*objs):
 @contextmanager
 def source(collapsed=False):
     "Excute and displays source code in the context manager. Set `collapsed=True` to display in collapse."
-    tb = traceback.extract_stack()[-3]
+    tb = traceback.extract_stack()
     try:
         yield
     finally:
-        tb1 = traceback.extract_stack()[-3]  
+        tb1 = traceback.extract_stack()
         try:
-            with open(tb.filename,'r') as f: # First Try to open file, don't work in other order
+            file,start,end = tb[-3].filename,tb[-3].lineno,tb1[-3].lineno
+            with open(file,'r') as f: # First Try to open file, don't work in other order
                 lines = f.read().splitlines() # Don't use realines here, no need of \n
         except:
+            start, = [t.lineno for t in tb if 'ipython' in t.filename][:1]
+            end, = [t.lineno for t in tb1 if 'ipython' in t.filename][:1]
             lines = list(get_ipython().history_manager.get_range())[-1][2].splitlines()
+            if lines and '%%' in lines[0]: #Traceback skips cell magic line
+                lines = lines[1:]
                 
-        code = textwrap.dedent('\n'.join(lines[tb.lineno:tb1.lineno]))
+            for line in lines: # Traceback skips initial empty lines in Notebook, not in file
+                if line.strip(): # empty sapce as well to go
+                    StopIteration
+                else:
+                    lines = lines[1:]
+    
+        code = textwrap.dedent('\n'.join(lines[start:end]))
         out_code = _fix_code(markdown("```python\n{}\n```".format(code),extensions=__md_extensions))
         if collapsed:
             write(details(out_code,summary='Show Code'))

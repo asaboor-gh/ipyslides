@@ -29,6 +29,7 @@ ls.show() #Use this only once in case you use Voila.
 #Create slides with %%slide, insert_after now, will be updated on cell run.
 '''            
 def initialize():
+    "TODO: Make this function as initial default parameters, instead of cell code chnager"
     try:
         ipython = get_ipython()
         current_cell_code = get_ipython().get_parent()['content']['code'].splitlines()
