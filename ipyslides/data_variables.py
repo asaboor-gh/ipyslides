@@ -364,6 +364,10 @@ a.jp-InternalAnchorLink { display: none !important;}
 #rendered_cells .SlidesWrapper .voila-sidecar-hidden {
     display: none;
 }
+#rendered_cells div.jp-OutputArea.jp-Cell-outputArea,
+#rendered_cells div.jp-RenderedMarkdown.jp-MarkdownOutput{
+    height:0 !important;
+} /* Suppress other outputs and markdown output in Voila */
 .jp-LabShell .height-slider {display:none;}
 /* next Three things should be in given order */
 .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
@@ -490,8 +494,6 @@ boxes[0].tabIndex = -1; // Need for event listeners
 let mplBtn = document.getElementsByClassName('mpl-zoom __uid__');
 let winFs = document.getElementsByClassName('window-fs __uid__');
 let capSc = document.getElementsByClassName('screenshot-btn __uid__');
-let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
-main.onmouseup = resizeWindow;
 
 /* Keyboard events */
 // Find solution for background issues
@@ -525,6 +527,14 @@ function keyOnSlides(e) {
 boxes[0].addEventListener("keydown",keyOnSlides); 
 boxes[0].onmouseenter = function(){boxes[0].focus();};
 boxes[0].onmouseleave = function(){boxes[0].blur();};
+
+// Do this at end so that at least other things work in Voila
+try {
+    let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
+    main.onmouseup = resizeWindow; // So that Voila works
+} catch (error) {
+  
+}
 '''
 
 mpl_fs_css = '''<style>
@@ -586,8 +596,7 @@ There are two ways of printing to PDF.
 
 ```python
 import ipyslides as isd 
-isd.initilize() #This will create a title page and parameters in same cell
-slides = isd.core.LiveSlides() #Collects and build slides, auto refresh when content of slide is changed.
+slides = isd.initilize() # >= 1.0.0, changes cell content blow this version
 @slides.slides(1,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)

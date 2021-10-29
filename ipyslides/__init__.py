@@ -1,46 +1,51 @@
-__version__ = '0.9.9'
+__version__ = '1.0.0'
 
-__all__ = ['initialize','initial_code']
+
 from .core import LiveSlides
 from .utils import write
+from .data_variables import animations
+
+__all__ = ['initialize','init','demo']
 __all__.extend(['LiveSlides', 'write'])
-
-initial_code = '''import ipyslides as isd
-from ipyslides.utils import write
-
-from ipyslides.core import  LiveSlides
-ls = LiveSlides() # This registers %%slide and %%title magics as bonus
-
-# Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB
-# so that they do not overwite each other's slides.
-
-ls.convert2slides(False) #Set this to True for Slides output
-ls.set_footer('Author: Abdul Saboor')
-ls.align8center(True) # Set False to align top-left corner
-
-with ls.title():
-    write('# Title Page')
-    
-for i in range(1,5):
-    with ls.slide(i):
-        write(f'## Slide {i} Title')
-
-ls.show() #Use this only once in case you use Voila. 
-#Create slides with %%slide, insert_after now, will be updated on cell run.
-'''            
-def initialize():
-    "TODO: Make this function as initial default parameters, instead of cell code chnager"
-    try:
-        ipython = get_ipython()
-        current_cell_code = get_ipython().get_parent()['content']['code'].splitlines()
-        code_after = '\n'.join([line for line in current_cell_code if 'initialize' not in line])
-        ipython.set_next_input(f'{code_after}\n{initial_code}', replace= True)
-    except:
-        print('Copy lines below in a cell and execute\n',initial_code)
-        
+      
         
 if __name__ == '__main__':
     print('Use this package in Jupyter notebook!')
+    
+def initialize(magic_suffix = '',
+               centering = True,
+               dark_theme = False,
+               footer_text = 'Author Name',
+               show_slide_number = True,
+               show_date = True,
+               code_line_numbering = True,
+               font_scale = 1.0,
+               logo_src = '''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="50" fill="blue"/>
+        <text x="45%" y="45%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↑</text>
+        <text x="55%" y="60%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↓</text></svg>''',
+               animation_css = animations['slide'],
+              ):
+    """Creates insrance of `LiveSlides` with much of defualt settings enabled. 
+    `magic_suffix` add value to slide's magic, e.g. if `magic_suffix='A'`, slides should be
+    created using `%%slideA` magic. Other arguments are just settings of slides. 
+    """
+    slides = LiveSlides(animation_css=animation_css,magic_suffix=magic_suffix)
+    slides.convert2slides(True)
+    slides.set_font_scale(font_scale)
+    slides.align8center(centering)
+    slides.code_line_numbering(code_line_numbering)
+    slides.set_footer(footer_text,show_date=show_date,show_slide_number=show_slide_number)
+    
+    if dark_theme:
+        slides.setting.theme_dd.value = 'Dark'
+    slides.set_logo(logo_src,width=50)
+    
+    with slides.slide(1):
+        slides.write('# Slide 1\nOverwrite this using \n`with slide(1):`\n\t`    ...`\n or \n `%%slide 1`')
+    return slides
+
+init = initialize # Aliase
     
 def demo():
     import os

@@ -8,8 +8,9 @@ slides = LiveSlides()
 slides.convert2slides(True)
 slides.set_footer('Author: Abdul Saboor عبدالصبور')
 slides.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="50" fill="green"/>
-                    <text x="35" y="50" fill="white">Logo</text></svg>''',width=50)
+        <circle cx="50" cy="50" r="50" fill="blue"/>
+        <text x="45%" y="45%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↑</text>
+        <text x="55%" y="60%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↓</text></svg>''',width=50)
 
 #title is skipped to show instructions  
 with slides.slide(1): #slide 1

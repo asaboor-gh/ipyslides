@@ -1,6 +1,6 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np, matplotlib.pyplot as plt # plt for imshow here
-import itertools
+import itertools, sys
 from time import sleep
 from PIL import ImageGrab
 from IPython.display import display, Javascript, HTML, Image
@@ -223,7 +223,13 @@ class LiveSlides(NavBar):
             setattr(self,k,v)
         self.plt2html = plt2html
         self.bokeh2html = bokeh2html
-        self.shell = get_ipython()
+        
+        try:  # Handle python IDLE etc.
+            self.shell = get_ipython()
+        except:
+            print("Slides only work in IPython Notebook!")
+            sys.exit()
+            
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
         self.user_ns = self.shell.user_ns #important for set_dir
@@ -504,7 +510,7 @@ class LiveSlides(NavBar):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
         Every `obj` is shown on it's own frame. No return of function required, if any, only should be display/show etc.
         `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
-        def _slides(func):
+        def _frames(func):
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
 
@@ -518,11 +524,11 @@ class LiveSlides(NavBar):
                         self.write_slide_css(**css_props)
                         func(obj)
                     _slides.append(cap)
-                
+                 
                 self.__dynamicslides_dict[f'd{slide_number}'] = {'objs': _slides}
                     
                 self.refresh() # Content chnage refreshes it.
-        return _slides
+        return _frames
         
     def convert2slides(self,b=False):
         "Turn ON/OFF slides vs editing mode. Should be in same cell as `LiveSLides`"
@@ -606,7 +612,7 @@ class Customize:
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_mpl.observe(self.update_theme,names=['value'])
         self.reflow_check.observe(self.update_theme)
-        self.update_theme() #Trigger Theme and Javascript init
+        self.update_theme() #Trigger Theme and Javascript in it
         
         for w in (self.btn_mpl,self.btn_fs,self.box):
             w.add_class(self.master.uid)
@@ -616,14 +622,17 @@ class Customize:
         with self.out_js_css: 
             self.out_js_css.clear_output(wait=True)
             display(Javascript(dv.navigation_js.replace('__uid__',self.master.uid)))
-
+    
+    def __emit_resize_event(self):
+        with self.out_js_css: 
+            self.out_js_css.clear_output(wait=True)
+            display(Javascript("window.dispatchEvent(new Event('resize'));"))
         
     def __update_size(self,change):
         self.master.box.layout.height = '{}px'.format(self.height_slider.value)
         self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
         self.update_theme(change=None) # For updating size and breakpoints
-        with self.out_js_css:
-            display(Javascript("window.dispatchEvent(new Event('resize'));")) # Resize on width change
+        self.__emit_resize_event() # Resize on width change
             
     def __toggle_panel(self,change):
         if self.master.btn_setting.description == '\u2630':
@@ -677,8 +686,7 @@ class Customize:
             self.btn_fs.icon = 'expand'
             try:self.master.box.remove_class('FullScreen')
             except: pass
-            with self.out_js_css:
-                display(Javascript("window.dispatchEvent(new Event('resize'));")) # Resize on minimizing window
+            self.__emit_resize_event() # Resize on minimizing window
         # Matplotlib's SVG Zoom 
         if self.btn_mpl.value:
             self.btn_mpl.icon= 'toggle-on'
