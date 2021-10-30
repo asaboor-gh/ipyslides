@@ -548,7 +548,7 @@ div.fig-container>svg:focus, div.fig-container>svg:hover{
     height: 100%;
     box-shadow: 0px 0px 200px 200px rgba(15,20,10,0.8); 
 }  
-@media screen and (max-width: __breakpoint_width__) { /* computed dynamically */
+@media screen and (max-width: __breakpoint_width__) { /* Computed dynamically */
     div.fig-container>svg:focus, div.fig-container>svg:hover{
     width:100%;
     height: calc(100vh - 200px);

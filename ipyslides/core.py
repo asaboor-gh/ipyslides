@@ -1,3 +1,4 @@
+from numpy.core.numeric import full
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np, matplotlib.pyplot as plt # plt for imshow here
 import itertools, sys
@@ -121,8 +122,11 @@ class NavBar:
         # Display what user sets
         if bbox:
             img = ImageGrab.grab(bbox=bbox)
-            _ = plt.figure(figsize=(4, 3), dpi=480) # For clear view
-            return plt.imshow(img)     
+            _ = plt.figure(figsize = (3, 3*img.height/img.height), dpi=720) # For clear view
+            _ = plt.imshow(img)
+            plt.gca().set_axis_off()
+            plt.subplots_adjust(left=0,bottom=0,top=1,right=1)
+            plt.show() # Display in Output widget too.     
     
     def get_print_settings(self):
         return self.__print_settings    
@@ -333,8 +337,10 @@ class LiveSlides(NavBar):
         collection = [f'<span><sup style="color:var(--accent-color);">{i+1}</sup>{v}</span>' for i,(k,v) in enumerate(self.__citations.items())]
         return write(title + '\n' +'\n'.join(collection))      
     
-    def show(self,fix_buttons=False): 
-        "Display Slides, If icons do not show, try with `fix_buttons=True`."
+    def show(self,fullscreen=False,fix_buttons=False): 
+        "Display Slides. Set `fullscreen=True` for proper display in Voila. If icons do not show, try with `fix_buttons=True`."
+        if fullscreen:
+            self.setting.width_slider.value = 100 # Fix for breakpoint
         if not self.__slides_mode:
             return print('Set "self.convert2slides(True)", then it will work.')
         if fix_buttons:
@@ -421,7 +427,7 @@ class LiveSlides(NavBar):
         self.__update_content(True) # Force Refresh
         
     def write_slide_css(self,**css_props):
-        "Prove CSS values with - replaced by _ e.g. font-size to font_size."
+        "Provide CSS values with - replaced by _ e.g. font-size to font_size."
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
@@ -577,6 +583,7 @@ class Customize:
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.reflow_check = ipw.Checkbox(value=False,description='Set auto height of components for better screenshots',layout=self.theme_dd.layout)
+        self.bbox_input = ipw.Text(description='L,T,R,B (px)',layout=self.theme_dd.layout,value='Type left,top,right,bottom pixel values and press ↲')
         self.master.dd_clear.layout = self.theme_dd.layout # Fix same
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.out_js_css = ipw.Output(layout=Layout(width='auto',height='0px'))
@@ -590,7 +597,8 @@ class Customize:
                             self.width_slider.add_class('voila-sidecar-hidden'),
                             self.scale_slider,
                             self.theme_dd,
-                            ipw.HTML('<hr/><span>Take screenshot in FULLSCREEN or set `bbox` using `set_print_settings` method!</span>'),
+                            ipw.HTML('<hr/>'),
+                            self.bbox_input,
                             self.reflow_check,
                             self.master.dd_clear,
                             HBox([self.master.btn_pdf, self.master.btn_print], layout=btns_layout),
@@ -613,10 +621,18 @@ class Customize:
         self.btn_mpl.observe(self.update_theme,names=['value'])
         self.reflow_check.observe(self.update_theme)
         self.update_theme() #Trigger Theme and Javascript in it
+        self.bbox_input.on_submit(self.__set_bbox)
         
         for w in (self.btn_mpl,self.btn_fs,self.box):
             w.add_class(self.master.uid)
-            
+    
+    def __set_bbox(self,change):
+        bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]    
+        print_settings = {**self.master.get_print_settings(), 'bbox':bbox}
+        with self.__instructions:
+            self.__instructions.clear_output(wait=True)
+            self.master.set_print_settings(**print_settings)
+            write(dv.settings_instructions) 
     
     def __add_js(self):
         with self.out_js_css: 

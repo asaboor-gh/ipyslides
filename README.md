@@ -8,11 +8,14 @@ See [PDF-Slides](IPySlides-Print.pdf)
 
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
-# 1.0.0 (Working...)
+# 1.0.0 
 - `ipyslides.initialize(**kwargs)` now returns a `LiveSlides` instance instead of changing cell contents. This works everywhere including Google Colab.
 - `LiveSlides`,`initialize` and  `init` cause exit from a terminal which is not based on `IPython`.
 - Markdown and other than slides output now does not appear (height suppressed using CSS) in Voila.
 - Keyboard vavigation now works in Voila. (Tested on Voila == 0.2.16)
+- Display using `ls.show(fullscreen=True)` for better experience in Voila.
+- Test and add slides bounding box form slides left panel's box using `L,T,R,B` input and see screenshot immediately there. This is in addition and independent to `ls.set_print_settings(bbox)`.
+
 # 0.9.9
 - Javascript navigation is improved for Jupyterlab.
 - The decorator `ls.slides` is renamed as `ls.frames` and now it adds one slide with many frames. This is useful to reveal slide contents in steps e.g. bullet points one by one.
@@ -138,5 +141,5 @@ can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made 
 # Known Limitations
 - Since `ipyslides` is built on ipywidgets and slides are displayed using `Output` widget, We do not have option to launch two windows to make speakernotes. If `Output` widget get enabled to function in multiwindows, we will introduce `speaker notes`.
 - Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. 
-- Bounding box of slides for screenshots should be set by user (if not in fullscreen), because javascript may return incorrect value on scaled displays.  
+- Bounding box of slides for screenshots should be set by user (if not in fullscreen), because javascript returns browser window cooordinates only.  
 > Very thankful to [Python-Markdown](https://python-markdown.github.io/) which enabled to create `write` command as well as syntax highliting.
