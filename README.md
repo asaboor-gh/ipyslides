@@ -12,8 +12,7 @@ Content below assumes you have `ls = LiveSlides()`.
 - `ipyslides.initialize(**kwargs)` now returns a `LiveSlides` instance instead of changing cell contents. This works everywhere including Google Colab.
 - `LiveSlides`,`initialize` and  `init` cause exit from a terminal which is not based on `IPython`.
 - Markdown and other than slides output now does not appear (height suppressed using CSS) in Voila.
-- Keyboard vavigation now works in Voila. (Tested on Voila == 0.2.16)
-- Display using `ls.show(fullscreen=True)` for better experience in Voila.
+- Keyboard vavigation now works in Voila. (Tested on Voila == 0.2.16) `F` key toggles here coulmn layout instead of display size on medium viewport sizes. 
 - Test and add slides bounding box form slides left panel's box using `L,T,R,B` input and see screenshot immediately there. This is in addition and independent to `ls.set_print_settings(bbox)`.
 
 # 0.9.9

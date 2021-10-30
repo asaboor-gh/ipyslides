@@ -141,7 +141,7 @@ def style_html(style_root = inherit_root):
     
 }
 
-@media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically */
+@media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in Notebook*/
     .SlidesWrapper .panel {width:100% !important;}
     .SlidesWrapper .controls {bottom:30px!important;right:0 !important;width:100%;justify-content: space-around !important;}
 	.SlidesWrapper .controls button {width:30% !important;}
@@ -511,8 +511,11 @@ function keyOnSlides(e) {
         alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
         e.stopPropagation(); // stop propagation to jupyterlab events
         return false;
+    } else if (key===77){
+        alert("Pressing M could change cell to Markdown and vanish away slides!");
+        e.stopPropagation();   // M key
     } else if (key === 70) { 
-        winFs[0].click(); // F
+        winFs[0].click(); // F 
     } else if (key === 13) {
         return true; // Enter key
     } else if (key === 83) {
@@ -572,7 +575,7 @@ Having your cursor over slides:
 
 - Press `Ctrl + Shift + C` to change the theme, create console/terminal etc.
 - Press `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch to other tabs like console/terminal/notebooks and do coding without leaving slides!
-- Press `F` to toggle fullscreen mode.
+- Press `F` to toggle fullscreen mode in Notebook and toggle column layout in Voila in medium viewport range.
 
 ### Jupyter Lab + Others (Notebook, VSCode, Voila etc.)
 May not work in others but Lab is optimized.

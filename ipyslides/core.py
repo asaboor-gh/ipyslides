@@ -337,10 +337,8 @@ class LiveSlides(NavBar):
         collection = [f'<span><sup style="color:var(--accent-color);">{i+1}</sup>{v}</span>' for i,(k,v) in enumerate(self.__citations.items())]
         return write(title + '\n' +'\n'.join(collection))      
     
-    def show(self,fullscreen=False,fix_buttons=False): 
-        "Display Slides. Set `fullscreen=True` for proper display in Voila. If icons do not show, try with `fix_buttons=True`."
-        if fullscreen:
-            self.setting.width_slider.value = 100 # Fix for breakpoint
+    def show(self, fix_buttons = False): 
+        "Display Slides. If icons do not show, try with `fix_buttons=True`."
         if not self.__slides_mode:
             return print('Set "self.convert2slides(True)", then it will work.')
         if fix_buttons:
@@ -449,7 +447,6 @@ class LiveSlides(NavBar):
                 self.__slides_dict[line] = self.shell.user_ns[line]
                 del self.shell.user_ns[line] # delete the line from shell
                 self.refresh()
-                self.prog_slider.value = int(line) # Move there
         else:
             self.shell.run_cell(cell)
     
@@ -533,7 +530,7 @@ class LiveSlides(NavBar):
                  
                 self.__dynamicslides_dict[f'd{slide_number}'] = {'objs': _slides}
                     
-                self.refresh() # Content chnage refreshes it.
+                self.refresh() # Content change refreshes it.
         return _frames
         
     def convert2slides(self,b=False):
