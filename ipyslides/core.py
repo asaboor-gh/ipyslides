@@ -134,9 +134,9 @@ class NavBar:
     def __set_resolution(self,image):
         "Returns resolution to make PDF printable on letter/A4 page."
         w, h = image.size
-        long, short, res = (w, h, w/11) if w > h else (h, w, h/11) # letter page size landscape else portrait
+        short, res = (h, w/11) if w > h else (w, h/11) # letter page size landscape else portrait
         
-        if short/res > 8.25: # if short side out page, bring inside A4 size so work for both A4/Letter
+        if short/res > 8.25: # if short side out of page, bring inside A4 size so work for both A4/Letter
             return short/8.25  # change resolution to shrink pages size to fit for print,long side already inside page
         
         return res   # Return previous resolution
@@ -358,8 +358,13 @@ class LiveSlides(NavBar):
         return display(self.box)
     
     def __jlab_in_cell_display(self): 
+        # Can test Voila here too
+        if 'voila' in self.shell.config['IPKernelApp']['connection_file']:
+            self.setting.width_slider.value = 100 # This fixes dynamic breakpoint in Voila
+            
         return display(ipw.HTML("""<h2 style='color:var(--accent-color);'>IPySlides ⇲</h2>"""))
     
+
     def align8center(self,b=True):
         "Central aligment of slide by default. If False, left-top aligned."
         if b:
@@ -669,7 +674,7 @@ class Customize:
         elif self.theme_dd.value == 'Dark':
             theme_css = dv.style_html(dv.dark_root)
         elif self.theme_dd.value == 'Custom': # In case of Custom CSS
-            with self.main.set_dir(self.main.user_ns['_dh'][0]):
+            with self.main.set_dir(self.main.shell.starting_dir):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
                         _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')

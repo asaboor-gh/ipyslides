@@ -575,7 +575,7 @@ Having your cursor over slides:
 
 - Press `Ctrl + Shift + C` to change the theme, create console/terminal etc.
 - Press `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch to other tabs like console/terminal/notebooks and do coding without leaving slides!
-- Press `F` to toggle fullscreen mode in Notebook and toggle column layout in Voila in medium viewport range.
+- Press `F` to toggle fullscreen mode.
 
 ### Jupyter Lab + Others (Notebook, VSCode, Voila etc.)
 May not work in others but Lab is optimized.
