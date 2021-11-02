@@ -134,15 +134,12 @@ class NavBar:
     def __set_resolution(self,image):
         "Returns resolution to make PDF printable on letter/A4 page."
         w, h = image.size
-        if w > h:
-            long, short, res = w, h, w/11  # letter page long size
-        else:
-            long, short, res = h, w, h/11
+        long, short, res = (w, h, w/11) if w > h else (h, w, h/11) # letter page size landscape else portrait
         
-        if short/res > 8.25: # short side if out page, bring inside A4 size so work for both
-            res = res*long/short  # increase resolution to shrink pages size to fit for print
+        if short/res > 8.25: # if short side out page, bring inside A4 size so work for both A4/Letter
+            return short/8.25  # change resolution to shrink pages size to fit for print,long side already inside page
         
-        return res   
+        return res   # Return previous resolution
     
     def capture_screen(self,btn):
         "Saves screenshot of current slide into self.__images dictionary when corresponding button clicked. Use in fullscreen mode"
@@ -572,7 +569,7 @@ class LiveSlides(NavBar):
 class Customize:
     def __init__(self,instance_LiveSlides):
         "Provide instance of LivSlides to work."
-        self.master = instance_LiveSlides
+        self.main = instance_LiveSlides
         def describe(value): return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
         
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 500,continuous_update=False).add_class('height-slider') #2160 for 4K screens
@@ -581,13 +578,13 @@ class Customize:
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.reflow_check = ipw.Checkbox(value=False,description='Set auto height of components for better screenshots',layout=self.theme_dd.layout)
         self.bbox_input = ipw.Text(description='L,T,R,B (px)',layout=self.theme_dd.layout,value='Type left,top,right,bottom pixel values and press ↲')
-        self.master.dd_clear.layout = self.theme_dd.layout # Fix same
+        self.main.dd_clear.layout = self.theme_dd.layout # Fix same
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.out_js_css = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
         btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
-        self.box = VBox([Box([self.__instructions,self.master.btn_setting,],layout=Layout(width='100%',height='auto',overflow='hidden')),
+        self.box = VBox([Box([self.__instructions,self.main.btn_setting,],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         self.out_js_css, # Must be in middle so that others dont get disturbed.
                         VBox([
                             self.height_slider.add_class('voila-sidecar-hidden'), 
@@ -597,8 +594,8 @@ class Customize:
                             ipw.HTML('<hr/>'),
                             self.bbox_input,
                             self.reflow_check,
-                            self.master.dd_clear,
-                            HBox([self.master.btn_pdf, self.master.btn_print], layout=btns_layout),
+                            self.main.dd_clear,
+                            HBox([self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
                             HBox([self.btn_fs,self.btn_mpl], layout=btns_layout),
                             ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
@@ -613,7 +610,7 @@ class Customize:
         self.scale_slider.observe(self.__set_font_scale)
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
-        self.master.btn_setting.on_click(self.__toggle_panel)
+        self.main.btn_setting.on_click(self.__toggle_panel)
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_mpl.observe(self.update_theme,names=['value'])
         self.reflow_check.observe(self.update_theme)
@@ -621,20 +618,20 @@ class Customize:
         self.bbox_input.on_submit(self.__set_bbox)
         
         for w in (self.btn_mpl,self.btn_fs,self.box):
-            w.add_class(self.master.uid)
+            w.add_class(self.main.uid)
     
     def __set_bbox(self,change):
         bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]    
-        print_settings = {**self.master.get_print_settings(), 'bbox':bbox}
+        print_settings = {**self.main.get_print_settings(), 'bbox':bbox}
         with self.__instructions:
             self.__instructions.clear_output(wait=True)
-            self.master.set_print_settings(**print_settings)
+            self.main.set_print_settings(**print_settings)
             write(dv.settings_instructions) 
     
     def __add_js(self):
         with self.out_js_css: 
             self.out_js_css.clear_output(wait=True)
-            display(Javascript(dv.navigation_js.replace('__uid__',self.master.uid)))
+            display(Javascript(dv.navigation_js.replace('__uid__',self.main.uid)))
     
     def __emit_resize_event(self):
         with self.out_js_css: 
@@ -642,37 +639,37 @@ class Customize:
             display(Javascript("window.dispatchEvent(new Event('resize'));"))
         
     def __update_size(self,change):
-        self.master.box.layout.height = '{}px'.format(self.height_slider.value)
-        self.master.box.layout.width = '{}vw'.format(self.width_slider.value)
+        self.main.box.layout.height = '{}px'.format(self.height_slider.value)
+        self.main.box.layout.width = '{}vw'.format(self.width_slider.value)
         self.update_theme(change=None) # For updating size and breakpoints
         self.__emit_resize_event() # Resize on width change
             
     def __toggle_panel(self,change):
-        if self.master.btn_setting.description == '\u2630':
-            self.master.btn_setting.description  = '⨉'
+        if self.main.btn_setting.description == '\u2630':
+            self.main.btn_setting.description  = '⨉'
             self.box.layout.display = 'flex'
-            self.master.btn_next.disabled = True
-            self.master.btn_prev.disabled = True
+            self.main.btn_next.disabled = True
+            self.main.btn_prev.disabled = True
         else:
-            self.master.btn_setting.description = '\u2630'
+            self.main.btn_setting.description = '\u2630'
             self.box.layout.display = 'none'
-            self.master.btn_next.disabled = False
-            self.master.btn_prev.disabled = False
+            self.main.btn_next.disabled = False
+            self.main.btn_prev.disabled = False
                      
     def __set_font_scale(self,change):
         # Below line should not be in update_theme to avoid loop call.
-        self.master.set_font_scale(self.scale_slider.value)
+        self.main.set_font_scale(self.scale_slider.value)
         
     def update_theme(self,change=None):  
-        text_size = '{}px'.format(int(self.master.font_scale*16))
+        text_size = '{}px'.format(int(self.main.font_scale*16))
         if self.theme_dd.value == 'Inherit':
-            theme_css = dv.style_html(self.master.theme_root)
+            theme_css = dv.style_html(self.main.theme_root)
         elif self.theme_dd.value == 'Light':
             theme_css = dv.style_html(dv.light_root)
         elif self.theme_dd.value == 'Dark':
             theme_css = dv.style_html(dv.dark_root)
         elif self.theme_dd.value == 'Custom': # In case of Custom CSS
-            with self.master.set_dir(self.master.user_ns['_dh'][0]):
+            with self.main.set_dir(self.main.user_ns['_dh'][0]):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
                         _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')
@@ -689,15 +686,15 @@ class Customize:
         if self.btn_fs.value:
             theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
             self.btn_fs.icon = 'compress'
-            try:self.master.box.add_class('FullScreen')
+            try:self.main.box.add_class('FullScreen')
             except:pass
         else:
             theme_css = theme_css.replace('__breakpoint_width__',f'{int(100*650/self.width_slider.value)}px') #Will break when slides is 650px not just window
             edit_mode_css = dv.editing_layout_css(self.width_slider.value)
             theme_css = theme_css.replace('</style>','\n') + edit_mode_css.replace('<style>','')
-            self.master.theme_html.value = theme_css #Push CSS without Fullscreen
+            self.main.theme_html.value = theme_css #Push CSS without Fullscreen
             self.btn_fs.icon = 'expand'
-            try:self.master.box.remove_class('FullScreen')
+            try:self.main.box.remove_class('FullScreen')
             except: pass
             self.__emit_resize_event() # Resize on minimizing window
         # Matplotlib's SVG Zoom 
@@ -708,7 +705,7 @@ class Customize:
             self.btn_mpl.icon= 'toggle-off'
         
         # Now Set Theme
-        self.master.theme_html.value = theme_css
+        self.main.theme_html.value = theme_css
 
 
 
