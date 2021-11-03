@@ -377,6 +377,7 @@ animations = {'zoom':'''<style>
 </style>
 '''
 }
+animations['slide'] = animations['slide_h']# Backward compatibility
 
 main_layout_css = '''<style>
 .SlidesWrapper .SlideArea { align-items: center;}

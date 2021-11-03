@@ -519,10 +519,6 @@ class LiveSlides(NavBar):
             self.__slides_title_page = cap 
             self.refresh()
     
-    def slides(self, slide_number, *objs, **css_props):
-        print("This context manager is deprecated, use `frames` instead.")
-        return self.frames(slide_number, *objs, **css_props)
-    
     def frames(self, slide_number, *objs, **css_props):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
         Every `obj` is shown on it's own frame. No return of function required, if any, only should be display/show etc.
