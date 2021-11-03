@@ -359,8 +359,10 @@ class LiveSlides(NavBar):
     
     def __jlab_in_cell_display(self): 
         # Can test Voila here too
-        if 'voila' in self.shell.config['IPKernelApp']['connection_file']:
-            self.setting.width_slider.value = 100 # This fixes dynamic breakpoint in Voila
+        try: # SHould try, so error should not block it
+            if 'voila' in self.shell.config['IPKernelApp']['connection_file']:
+                self.setting.width_slider.value = 100 # This fixes dynamic breakpoint in Voila
+        except: pass # Do Nothing
             
         return display(ipw.HTML("""<h2 style='color:var(--accent-color);'>IPySlides ⇲</h2>"""))
     
