@@ -207,7 +207,7 @@ class NavBar:
     
         
 class LiveSlides(NavBar):
-    def __init__(self,magic_suffix='',animation_css = dv.animations['slide']):
+    def __init__(self,magic_suffix='',animation_css = dv.animations['slide_h']):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
             - magic_suffix: str, append a string to %%slide and %%title in case you have many instances of this class, they do not overwrite each other's magics.
@@ -258,7 +258,9 @@ class LiveSlides(NavBar):
                                 '__breakpoint_width__','650px')) + dv.editing_layout_css())
         self.main_style_html = ipw.HTML(dv.main_layout_css)
         self.loading_html = ipw.HTML() #SVG Animation in it
+        self.prog_slider.observe(self.__set_class,names=['value'])
         self.prog_slider.observe(self.__update_content,names=['value'])
+        
         
         self.setting = Customize(self)
         self.panel_box = self.setting.box
@@ -379,7 +381,15 @@ class LiveSlides(NavBar):
         
     def set_font_scale(self,font_scale=1):
         self.font_scale= font_scale
-        self.setting.update_theme()   
+        self.setting.update_theme()  
+        
+    def __set_class(self,change):
+        "Set Opposite animation for backward navigation"
+        self.slide_box.remove_class('Prev') # Safely Removes without error
+        if change['new'] == self.prog_slider.max and change['old'] == 0:
+            self.slide_box.add_class('Prev')
+        elif (change['new'] < change['old']) and (change['old'] - change['new'] != self.prog_slider.max):
+            self.slide_box.add_class('Prev')
     
     def __display_slide(self):
         item = self.iterable[self.prog_slider.value-1]

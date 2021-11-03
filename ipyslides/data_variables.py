@@ -338,14 +338,41 @@ animations = {'zoom':'''<style>
    100% { transform: scale(1); }
 }
 </style>''',
-'slide': '''<style>
+'slide_h': '''<style>
 .SlideBox {
     animation-name: slide; animation-duration: 400ms;
+    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+}
+.SlideBox.Prev { /* .Prev acts when moving slides backward */
+    animation-name: slidePrev; animation-duration: 400ms;
     animation-timing-function: cubic-bezier(.2,.7,.8,.9);
 }
 @keyframes slide {
      from { transform: translateX(100%);}
      to { transform: translateX(0); }
+}
+@keyframes slidePrev {
+     from { transform: translateX(-100%);}
+     to { transform: translateX(0); }
+}
+</style>
+''',
+'slide_v': '''<style>
+.SlideBox {
+    animation-name: slide; animation-duration: 400ms;
+    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+}
+.SlideBox.Prev { /* .Prev acts when moving slides backward */
+    animation-name: slidePrev; animation-duration: 400ms;
+    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+}
+@keyframes slide {
+     from { transform: translateY(100%);}
+     to { transform: translateY(0); }
+}
+@keyframes slidePrev {
+     from { transform: translateY(-100%);}
+     to { transform: translateY(0); }
 }
 </style>
 '''

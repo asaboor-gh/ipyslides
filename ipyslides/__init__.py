@@ -24,7 +24,7 @@ def initialize(magic_suffix = '',
         <circle cx="50" cy="50" r="50" fill="blue"/>
         <text x="45%" y="45%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↑</text>
         <text x="55%" y="60%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↓</text></svg>''',
-               animation_css = animations['slide'],
+               animation_css = animations['slide_h'],
               ):
     """Creates insrance of `LiveSlides` with much of defualt settings enabled. 
     `magic_suffix` add value to slide's magic, e.g. if `magic_suffix='A'`, slides should be
