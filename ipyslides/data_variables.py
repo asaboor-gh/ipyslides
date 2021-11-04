@@ -55,12 +55,12 @@ def style_html(style_root = inherit_root):
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
-.SlidesWrapper *:not(.fa):not(i):not(span) {
-   font-family: sans-serif, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
+.SlidesWrapper *:not(.fa):not(i):not(span) { /* Do not edit __textfont__, code does this. */
+   font-family: __textfont__, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
 }
 
-.SlidesWrapper code>span {
-   font-family: var(--jp-code-font-family), "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
+.SlidesWrapper code>span { /* Do not edit __codefont__, code does this. */
+   font-family: __codefont__, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
    font-size: 90% !important;
 }
 .SlideArea .SlidesWrapper {max-height:calc(95vh - 100px);} /* in case of embed slides */ 

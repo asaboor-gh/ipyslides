@@ -8,6 +8,11 @@ See [PDF-Slides](IPySlides-Print.pdf)
 
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
+
+# 1.0.1
+- Animations now have slide direction based on going left or right. `ipysides.data_variables.animations` now have `slide_h` and `slide_v` for horizontal and vertical sliding respectively. 
+- You can now set text and code fonts using `ls.set_font_family(text_font, code_font)`.
+- Many bugs fixed including Voila's static breakpoint. 
 # 1.0.0 
 - `ipyslides.initialize(**kwargs)` now returns a `LiveSlides` instance instead of changing cell contents. This works everywhere including Google Colab.
 - `LiveSlides`,`initialize` and  `init` cause exit from a terminal which is not based on `IPython`.

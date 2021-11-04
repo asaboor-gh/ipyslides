@@ -253,13 +253,16 @@ class LiveSlides(NavBar):
         super().__init__(N=_max)
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
-        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace(
-                                '__text_size__','16px').replace(
-                                '__breakpoint_width__','650px')) + dv.editing_layout_css())
+        self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
+        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')).replace(
+                                '__breakpoint_width__','650px').replace(
+                                '__textfont__',self._font_family['text']).replace(
+                                '__codefont__',self._font_family['code']) + dv.editing_layout_css())
         self.main_style_html = ipw.HTML(dv.main_layout_css)
         self.loading_html = ipw.HTML() #SVG Animation in it
         self.prog_slider.observe(self.__set_class,names=['value'])
         self.prog_slider.observe(self.__update_content,names=['value'])
+        
         
         
         self.setting = Customize(self)
@@ -286,6 +289,13 @@ class LiveSlides(NavBar):
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
     
+    def set_font_family(self,text_font=None,code_font=None):
+        "Set main fonts for text and code."
+        if text_font:
+            self._font_family['text'] = text_font
+        if code_font:
+            self._font_family['code'] = code_font  
+        self.setting.update_theme() # Changes Finally  
     
     def __set_hidden_height(self,change):
         self.slide_box.layout.height = f'{self.float_ctrl.value}%'
@@ -593,12 +603,13 @@ class Customize:
         self.bbox_input = ipw.Text(description='L,T,R,B (px)',layout=self.theme_dd.layout,value='Type left,top,right,bottom pixel values and press ↲')
         self.main.dd_clear.layout = self.theme_dd.layout # Fix same
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
-        self.out_js_css = ipw.Output(layout=Layout(width='auto',height='0px'))
+        self.out_js_fix = ipw.Output(layout=Layout(width='auto',height='0px'))
+        self.out_js_var = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
         btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
         self.box = VBox([Box([self.__instructions,self.main.btn_setting,],layout=Layout(width='100%',height='auto',overflow='hidden')),
-                        self.out_js_css, # Must be in middle so that others dont get disturbed.
+                        self.out_js_fix, self.out_js_var, # Must be in middle so that others dont get disturbed.
                         VBox([
                             self.height_slider.add_class('voila-sidecar-hidden'), 
                             self.width_slider.add_class('voila-sidecar-hidden'),
@@ -642,13 +653,12 @@ class Customize:
             write(dv.settings_instructions) 
     
     def __add_js(self):
-        with self.out_js_css: 
-            self.out_js_css.clear_output(wait=True)
+        with self.out_js_fix: 
             display(Javascript(dv.navigation_js.replace('__uid__',self.main.uid)))
     
     def __emit_resize_event(self):
-        with self.out_js_css: 
-            self.out_js_css.clear_output(wait=True)
+        with self.out_js_var: 
+            self.out_js_var.clear_output(wait=True)
             display(Javascript("window.dispatchEvent(new Event('resize'));"))
         
     def __update_size(self,change):
@@ -692,7 +702,10 @@ class Customize:
                 with open('custom.css','r') as f:
                     theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
         # Replace font-size and breakpoint size
-        theme_css = theme_css.replace('__text_size__',text_size) 
+        theme_css = theme_css.replace(
+                        '__text_size__',text_size).replace(
+                        '__textfont__',self.main._font_family['text']).replace(
+                        '__codefont__',self.main._font_family['code'])
         if self.reflow_check.value:
             theme_css = theme_css.replace('</style>','') + ".SlideArea * {max-height:max-content !important;}\n</style>"
         # Catch Fullscreen too.
