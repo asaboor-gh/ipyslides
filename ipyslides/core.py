@@ -39,7 +39,6 @@ class NavBar:
         self.N = N
         self.__images = {} #Store screenshots
         self.__print_settings = {'load_time':0.5,'quality':100,'bbox':None}
-        self.uid = ''.join(np.random.randint(9, size=(20)).astype(str)) #To use in _custom_progressbar
         self.prog_slider = ipw.IntSlider(options= [(f'{i}',i) for i in range(N)],continuous_update=False,readout=True)
         self.btn_prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
         self.btn_next =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
@@ -219,7 +218,7 @@ class LiveSlides(NavBar):
             isd.initilize() #This will generate code in same cell including this class, which is self explainatory 
             ```
         """
-        self.uid = f'{id(self)}' # For uniqueness in javascript
+        self.uid = f's{id(self)}' # For uniqueness in javascript
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
         self.plt2html = plt2html
@@ -234,6 +233,8 @@ class LiveSlides(NavBar):
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
         self.user_ns = self.shell.user_ns #important for set_dir
+        self.user_ns['__slides__'] = self.user_ns.get('__slides__',{}) # Collect all slides instances
+        self.user_ns['__slides__'][self.uid] = self # Add to user_ns for later use
         self.animation_css = animation_css
         self.__citations = {} # Initialize citations
         self.__slides_mode = False
@@ -257,15 +258,14 @@ class LiveSlides(NavBar):
         self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')).replace(
                                 '__breakpoint_width__','650px').replace(
                                 '__textfont__',self._font_family['text']).replace(
-                                '__codefont__',self._font_family['code']) + dv.editing_layout_css())
+                                '__codefont__',self._font_family['code']))
         self.main_style_html = ipw.HTML(dv.main_layout_css)
+        self.edit_mode_html = ipw.HTML(dv.editing_layout_css()) # Should be separate CSS
         self.loading_html = ipw.HTML() #SVG Animation in it
         self.prog_slider.observe(self.__set_class,names=['value'])
         self.prog_slider.observe(self.__update_content,names=['value'])
         
-        
-        
-        self.setting = Customize(self)
+        self.setting = Customize(self) 
         self.panel_box = self.setting.box
         self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
         self.logo_html = ipw.HTML()
@@ -274,7 +274,7 @@ class LiveSlides(NavBar):
         self.__footer_text = ""
         # All Box of Slides
         self.box =  VBox([self.loading_html, self.main_style_html,
-                          self.theme_html,self.logo_html,
+                          self.theme_html,self.logo_html, self.edit_mode_html,
                           self.panel_box,
                           HBox([ #Slide_box must be in a box to have animations work
                             self.slide_box,
@@ -288,7 +288,15 @@ class LiveSlides(NavBar):
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
+        # For controlling slide's display mode
+        self.display_dd = ipw.Dropdown(description='Display',options=[('Inline',0),('SideBar',1)],value=1)
     
+    def set_edit_mode(self,span_percent = 50): # Value should be same as width_slider's initial value
+        if isinstance(span_percent,int):
+            self.edit_mode_html.value = dv.editing_layout_css(span_percent=span_percent).replace('__uid__',self.uid)
+        else:
+            self.edit_mode_html.value = '' # Should be empty to avoid competition of style
+            
     def set_font_family(self,text_font=None,code_font=None):
         "Set main fonts for text and code."
         if text_font:
@@ -375,8 +383,21 @@ class LiveSlides(NavBar):
             if 'voila' in self.shell.config['IPKernelApp']['connection_file']:
                 self.setting.width_slider.value = 100 # This fixes dynamic breakpoint in Voila
         except: pass # Do Nothing
+        
+        def toggle_display(change):
+            "Change Inline and SideBar display modes for all slides in current session."
+            for other in self.user_ns['__slides__'].values():    
+                if (other is self) and (self.display_dd.value == 1):
+                    self.set_edit_mode(span_percent = self.setting.width_slider.value)
+                elif (other is self) and (self.display_dd.value == 0):  
+                    self.set_edit_mode(None) # Needs this separately, so that dropdown is not changed
+                else:
+                    other.display_dd.value = 0 # Turn off and it will trigger and go to second condition back 
+                self.setting.emit_resize_event() # Fix size
             
-        return display(ipw.HTML("""<h2 style='color:var(--accent-color);'>IPySlides ⇲</h2>"""))
+        self.display_dd.observe(toggle_display,names=['value'])        
+        toggle_display(None) # Initialize once
+        return display(ipw.HBox([ipw.HTML("""<b style='color:var(--accent-color);'>IPySlides</b>"""),self.display_dd]))
     
 
     def align8center(self,b=True):
@@ -656,7 +677,7 @@ class Customize:
         with self.out_js_fix: 
             display(Javascript(dv.navigation_js.replace('__uid__',self.main.uid)))
     
-    def __emit_resize_event(self):
+    def emit_resize_event(self):
         with self.out_js_var: 
             self.out_js_var.clear_output(wait=True)
             display(Javascript("window.dispatchEvent(new Event('resize'));"))
@@ -664,8 +685,10 @@ class Customize:
     def __update_size(self,change):
         self.main.box.layout.height = '{}px'.format(self.height_slider.value)
         self.main.box.layout.width = '{}vw'.format(self.width_slider.value)
+        if self.main.display_dd.value: # Only chnage if in sidebar
+            self.main.set_edit_mode(span_percent = self.width_slider.value) # Change size
+        self.emit_resize_event() # Resize on width change
         self.update_theme(change=None) # For updating size and breakpoints
-        self.__emit_resize_event() # Resize on width change
             
     def __toggle_panel(self,change):
         if self.main.btn_setting.description == '\u2630':
@@ -716,13 +739,10 @@ class Customize:
             except:pass
         else:
             theme_css = theme_css.replace('__breakpoint_width__',f'{int(100*650/self.width_slider.value)}px') #Will break when slides is 650px not just window
-            edit_mode_css = dv.editing_layout_css(self.width_slider.value)
-            theme_css = theme_css.replace('</style>','\n') + edit_mode_css.replace('<style>','')
-            self.main.theme_html.value = theme_css #Push CSS without Fullscreen
             self.btn_fs.icon = 'expand'
             try:self.main.box.remove_class('FullScreen')
             except: pass
-            self.__emit_resize_event() # Resize on minimizing window
+            self.emit_resize_event() # Resize on minimizing window
         # Matplotlib's SVG Zoom 
         if self.btn_mpl.value:
             self.btn_mpl.icon= 'toggle-on'

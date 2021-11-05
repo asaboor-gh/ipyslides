@@ -466,7 +466,7 @@ def editing_layout_css(span_percent = 40):
     width: {100 - span_percent}vw !important;
     min-width: 0 !important;
 }}
-.jp-LabShell .SlidesWrapper {{
+.jp-LabShell .SlidesWrapper.__uid__ {{
     position:fixed;
     top:0px !important;
     right:0px !important;
@@ -564,8 +564,12 @@ try {
     let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
     main.onmouseup = resizeWindow; // So that Voila works
 } catch (error) {
-  
+    
 }
+let loc = window.location.toString()
+if (loc.includes("voila")) {
+    winFs[0].click(); // Turn ON fullscreen for voila anywhare.
+};
 '''
 
 mpl_fs_css = '''<style>
