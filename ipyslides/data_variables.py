@@ -396,7 +396,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 #rendered_cells div.jp-RenderedMarkdown.jp-MarkdownOutput{
     height:0 !important;
 } /* Suppress other outputs and markdown output in Voila */
-.jp-LabShell .height-slider {display:none;}
+/*.jp-LabShell .SlidesWrapper .height-slider {display:none;}*/
 /* next Three things should be in given order */
 .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
 .jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only,
@@ -452,6 +452,35 @@ a.jp-InternalAnchorLink { display: none !important;}
     height:50%;
     opacity:1;
 }
+/* Order of below two lines matters */
+:not(.jp-LabShell) .DisplaySwitch {display:none;} 
+.jp-LabShell .DisplaySwitch {display:block;}
+
+.jp-LabShell .DisplaySwitch {
+    width:max-content;
+    display:flex;
+    flex-direction:row !important;
+    padding-left:16px !important;
+}
+.jp-LabShell .DisplaySwitch>div>button {
+    background:transparent;
+    border: none;
+    color: var(--accent-color);
+    width:auto;
+    border-radius:0;
+    min-width:36px;
+}
+.jp-LabShell .DisplaySwitch>div>button.mod-active {
+    color:var(--primary-bg);
+    background:var(--accent-color);
+}
+.jp-LabShell .DisplaySwitch>div {
+    display:inline-flex;
+    flex-direction:row;
+    width:max-content;
+    border: 1px solid var(--accent-color);
+    padding: 2px 0px;
+}
 <style>'''
 
 
@@ -504,7 +533,7 @@ fullscreen_css = '''<style>
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
-.SlidesWrapper .voila-sidecar-hidden{display: none;}
+.SlidesWrapper .voila-sidecar-hidden {display: none;}
 .SlidesWrapper.FullScreen .console-btn {display:block;} /* Show console button in fullscreen in jupyterlab only*/
 .jupyterlab-sidecar .console-btn {display:none;} /* Hide console button in sidecar as not works there */
 html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + Shift + ],[ pressed */
@@ -512,63 +541,78 @@ html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + 
 
 
 navigation_js = '''
-function resizeWindow() {
-    window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
-}; 
-resizeWindow(); // resize on first display
-let arrows = document.getElementsByClassName('arrows __uid__');
-let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
-boxes[0].tabIndex = -1; // Need for event listeners
-let mplBtn = document.getElementsByClassName('mpl-zoom __uid__');
-let winFs = document.getElementsByClassName('window-fs __uid__');
-let capSc = document.getElementsByClassName('screenshot-btn __uid__');
-
-/* Keyboard events */
-// Find solution for background issues
-function keyOnSlides(e) {
-    e.preventDefault();
-    resizeWindow(); // Resize before key press
-    let key = e.keyCode;
-    if (key === 37 || (e.shiftKey && key === 32)) { 
-        arrows[0].click(); // Prev or Shift + Spacebar
-    } else if (key === 39 || key === 32) { 
-        arrows[1].click(); // Next or Spacebar
-    } else if (key === 90) { 
-        mplBtn[0].click(); // Z 
-    } else if (key === 88 || key === 68) {
-        alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
-        e.stopPropagation(); // stop propagation to jupyterlab events
-        return false;
-    } else if (key===77){
-        alert("Pressing M could change cell to Markdown and vanish away slides!");
-        e.stopPropagation();   // M key
-    } else if (key === 70) { 
-        winFs[0].click(); // F 
-    } else if (key === 13) {
-        return true; // Enter key
-    } else if (key === 83) {
-        capSc[0].click();  // S for screenshot
-    } else if (key === 80) {
-        window.print(); // P for PDF print
+function main(){
+    function resizeWindow() {
+        window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
     }; 
-    resizeWindow(); // Resize after key press, good for F key
-    e.stopPropagation(); // stop propagation to jupyterlab events  
+    resizeWindow(); // resize on first display
+    let arrows = document.getElementsByClassName('arrows __uid__');
+    let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
+    boxes[0].tabIndex = -1; // Need for event listeners
+    let mplBtn = document.getElementsByClassName('mpl-zoom __uid__');
+    let winFs = document.getElementsByClassName('window-fs __uid__');
+    let capSc = document.getElementsByClassName('screenshot-btn __uid__');
+
+    /* Keyboard events */
+    // Find solution for background issues
+    function keyOnSlides(e) {
+        e.preventDefault();
+        resizeWindow(); // Resize before key press
+        let key = e.keyCode;
+        if (key === 37 || (e.shiftKey && key === 32)) { 
+            arrows[0].click(); // Prev or Shift + Spacebar
+        } else if (key === 39 || key === 32) { 
+            arrows[1].click(); // Next or Spacebar
+        } else if (key === 90) { 
+            mplBtn[0].click(); // Z 
+        } else if (key === 88 || key === 68) {
+            alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
+            e.stopPropagation(); // stop propagation to jupyterlab events
+            return false;
+        } else if (key===77){
+            alert("Pressing M could change cell to Markdown and vanish away slides!");
+            e.stopPropagation();   // M key
+        } else if (key === 70) { 
+            winFs[0].click(); // F 
+        } else if (key === 13) {
+            return true; // Enter key
+        } else if (key === 83) {
+            capSc[0].click();  // S for screenshot
+        } else if (key === 80) {
+            window.print(); // P for PDF print
+        }; 
+        resizeWindow(); // Resize after key press, good for F key
+        e.stopPropagation(); // stop propagation to jupyterlab events  
+    };
+
+    boxes[0].addEventListener("keydown",keyOnSlides); 
+    boxes[0].onmouseenter = function(){boxes[0].focus();};
+    boxes[0].onmouseleave = function(){boxes[0].blur();};
+
+    // Do this at end so that at least other things work in Voila
+    try {
+        let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
+        main.onmouseup = resizeWindow; // So that Voila works
+    } catch (error) {
+
+    }
+    let loc = window.location.toString()
+    if (loc.includes("voila")) {
+        winFs[0].click(); // Turn ON fullscreen for voila anywhare.
+    };
 };
-
-boxes[0].addEventListener("keydown",keyOnSlides); 
-boxes[0].onmouseenter = function(){boxes[0].focus();};
-boxes[0].onmouseleave = function(){boxes[0].blur();};
-
-// Do this at end so that at least other things work in Voila
+// Now execute function to work, handle browser refresh too
 try {
-    let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
-    main.onmouseup = resizeWindow; // So that Voila works
-} catch (error) {
+    var waitLoading = setInterval(function() {
+        let box = document.getElementsByClassName('SlidesWrapper __uid__');
+        if (box.length === 1) {
+            main(); // Refresh does work in this case
+            clearInterval(waitLoading);
+        }
+    }, 500); // check every 500ms, I do not need be hurry
     
-}
-let loc = window.location.toString()
-if (loc.includes("voila")) {
-    winFs[0].click(); // Turn ON fullscreen for voila anywhare.
+} catch (error) {
+   alert("Restart Kernel and run again for Keyboard Navigation to work. Avoid refreshing browser!") 
 };
 '''
 
