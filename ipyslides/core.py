@@ -391,9 +391,9 @@ class LiveSlides(NavBar):
         except: pass # Do Nothing
          
         self.display_switch.observe(self._toggle_display,names=['value'])        
-        self.display_switch.value = 0 # Initial Call
-        self.display_switch.value = 1 # Next call to put on right and reize
-        return display(HBox([ipw.HTML("""<b style='color:var(--accent-color);'>IPySlides</b>"""),self.display_switch]))
+        self.display_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
+        return display(HBox([ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
+                             self.display_switch]))
     
     def _toggle_display(self,change):
         "Change Inline and SideBar display modes for all slides in current session."
@@ -698,6 +698,7 @@ class Customize:
         self.main.box.layout.height = '{}px'.format(self.height_slider.value)
         self.main.box.layout.width = '{}vw'.format(self.width_slider.value)  
         self.main.set_edit_mode(span_percent = self.width_slider.value)
+        self.emit_resize_event() # Although its in set_edit_mode, but for being safe, do this
         self.update_theme(change=None) # For updating size and breakpoints
             
     def __toggle_panel(self,change):
@@ -765,10 +766,7 @@ class Customize:
         else:
             self.btn_mpl.icon= 'toggle-off'
         
-        # Now Set Theme
-        self.main.theme_html.value = theme_css.replace('SlidesWrapper',f'SlidesWrapper.{self.main.uid}').replace(
-                                                        'SlideArea',f'SlideArea.{self.main.uid}')
-
-
-
+        # Now Set Theme and emit a resize event just for being smooth in GUI transformations
+        self.main.theme_html.value = theme_css
+        self.emit_resize_event()
 

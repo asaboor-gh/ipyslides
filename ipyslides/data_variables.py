@@ -97,7 +97,7 @@ def style_html(style_root = inherit_root):
 } 
 .SlidesWrapper .panel>div:first-child {
     height:auto;
-    min-height:50px;
+    min-height:250px;
 }
 .SlidesWrapper .panel>div:last-child {padding-top:16px;min-height:max-content;} 
 
