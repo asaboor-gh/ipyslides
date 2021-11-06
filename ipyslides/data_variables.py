@@ -484,7 +484,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 <style>'''
 
 
-def editing_layout_css(span_percent = 40):
+def sidebar_layout_css(span_percent = 40):
     return f'''<style>
 .jp-LabShell {{
     right: {span_percent}vw !important;
@@ -546,15 +546,13 @@ function main(){
         window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
     }; 
     resizeWindow(); // resize on first display
-    let arrows = document.getElementsByClassName('arrows __uid__');
-    let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
-    boxes[0].tabIndex = -1; // Need for event listeners
-    let mplBtn = document.getElementsByClassName('mpl-zoom __uid__');
-    let winFs = document.getElementsByClassName('window-fs __uid__');
-    let capSc = document.getElementsByClassName('screenshot-btn __uid__');
-
-    /* Keyboard events */
-    // Find solution for background issues
+    // Only get buttons of first view, otherwise it will becomes multiclicks
+    let arrows = document.getElementsByClassName('arrows __uid__'); // These are 2*instances
+    let mplBtn = document.getElementsByClassName('mpl-zoom __uid__')[0];
+    let winFs = document.getElementsByClassName('window-fs __uid__')[0];
+    let capSc = document.getElementsByClassName('screenshot-btn __uid__')[0];
+    
+    // Keyboard events
     function keyOnSlides(e) {
         e.preventDefault();
         resizeWindow(); // Resize before key press
@@ -564,7 +562,7 @@ function main(){
         } else if (key === 39 || key === 32) { 
             arrows[1].click(); // Next or Spacebar
         } else if (key === 90) { 
-            mplBtn[0].click(); // Z 
+            mplBtn.click(); // Z 
         } else if (key === 88 || key === 68) {
             alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
             e.stopPropagation(); // stop propagation to jupyterlab events
@@ -573,39 +571,45 @@ function main(){
             alert("Pressing M could change cell to Markdown and vanish away slides!");
             e.stopPropagation();   // M key
         } else if (key === 70) { 
-            winFs[0].click(); // F 
+            winFs.click(); // F 
         } else if (key === 13) {
             return true; // Enter key
         } else if (key === 83) {
-            capSc[0].click();  // S for screenshot
+            capSc.click();  // S for screenshot
         } else if (key === 80) {
             window.print(); // P for PDF print
         }; 
         resizeWindow(); // Resize after key press, good for F key
-        e.stopPropagation(); // stop propagation to jupyterlab events  
+        e.stopPropagation(); // stop propagation to jupyterlab events and other views 
     };
-
-    boxes[0].addEventListener("keydown",keyOnSlides); 
-    boxes[0].onmouseenter = function(){boxes[0].focus();};
-    boxes[0].onmouseleave = function(){boxes[0].blur();};
-
+    
+    let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
+    // Do All things in loop so that Javscript acts on all views of slides
+    Array.from(boxes).forEach(box => {
+        box.tabIndex = -1; // Need for event listeners, should be at top
+        box.onkeydown = keyOnSlides; // This is better than event listners as they register multiple times
+        box.onmouseenter = function(){box.focus();};
+        box.onmouseleave = function(){box.blur();};
+    });
+    
+    let loc = window.location.toString()
+    if (loc.includes("voila")) {
+        winFs.click(); // Turn ON fullscreen for voila anywhare.
+    };
     // Do this at end so that at least other things work in Voila
     try {
         let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
         main.onmouseup = resizeWindow; // So that Voila works
-    } catch (error) {
-
+    } catch (error) { 
+    
     }
-    let loc = window.location.toString()
-    if (loc.includes("voila")) {
-        winFs[0].click(); // Turn ON fullscreen for voila anywhare.
-    };
+    
 };
 // Now execute function to work, handle browser refresh too
 try {
     var waitLoading = setInterval(function() {
-        let box = document.getElementsByClassName('SlidesWrapper __uid__');
-        if (box.length === 1) {
+        let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
+        if (boxes.length >= 1) {
             main(); // Refresh does work in this case
             clearInterval(waitLoading);
         }

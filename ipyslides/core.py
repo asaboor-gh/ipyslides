@@ -206,6 +206,7 @@ class NavBar:
     
         
 class LiveSlides(NavBar):
+    __slides__ = {} # Collect all instances here
     def __init__(self,magic_suffix='',animation_css = dv.animations['slide_h']):
         """Interactive Slides in IPython Notebook. Use `display(Markdown('text'))` instead of `print` in slides.
         - **Parameters**
@@ -233,8 +234,7 @@ class LiveSlides(NavBar):
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
         self.user_ns = self.shell.user_ns #important for set_dir
-        self.shell.config['__slides__'] = self.shell.config.get('__slides__',{}) # Collect all slides instances
-        self.shell.config['__slides__'][self.uid] = self # Add to user_ns for later use
+        LiveSlides.__slides__[self.uid] = self # Collect all instances
         self.animation_css = animation_css
         self.__citations = {} # Initialize citations
         self.__slides_mode = False
@@ -260,12 +260,12 @@ class LiveSlides(NavBar):
                                 '__textfont__',self._font_family['text']).replace(
                                 '__codefont__',self._font_family['code']))
         self.main_style_html = ipw.HTML(dv.main_layout_css)
-        self.edit_mode_html = ipw.HTML(dv.editing_layout_css()) # Should be separate CSS
+        self.sidebar_html = ipw.HTML(dv.sidebar_layout_css()) # Should be separate CSS
         self.loading_html = ipw.HTML() #SVG Animation in it
         self.prog_slider.observe(self.__set_class,names=['value'])
         self.prog_slider.observe(self.__update_content,names=['value'])
         # For controlling slide's display mode, should be before Customize call
-        self.display_switch =  ipw.ToggleButtons(description='Display Mode',options=[('Inline',0),('SideBar',1)],value = 1).add_class('DisplaySwitch')
+        self.display_switch =  ipw.ToggleButtons(description='Display Mode',options=[('Inline',0),('Sidebar',1)],value = 1).add_class('DisplaySwitch')
         
         self.setting = Customize(self)  # Call settings now
         self.panel_box = self.setting.box
@@ -276,7 +276,7 @@ class LiveSlides(NavBar):
         self.__footer_text = ""
         # All Box of Slides
         self.box =  VBox([self.loading_html, self.main_style_html,
-                          self.theme_html,self.logo_html, self.edit_mode_html,
+                          self.theme_html,self.logo_html, self.sidebar_html,
                           self.panel_box,
                           HBox([ #Slide_box must be in a box to have animations work
                             self.slide_box,
@@ -291,16 +291,26 @@ class LiveSlides(NavBar):
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
         
-    def set_edit_mode(self,span_percent = 50): # Value should be same as width_slider's initial value
+    def _push2sidebar(self,span_percent = 50, force=False): # Value should be same as width_slider's initial value
+        """Pushes this instance of LiveSlides to sidebar and other instances inline. 
+        Use `force = True` only when executing from cell, otherwise its terrible."""
+        if not getattr(self,'setting',False):
+            return None # Do not process unless setting is displayed is done
+        if force and self.display_switch.value == 0:
+            self.display_switch.value = 1
+            return # Should return as widget itself will trigger same event again
+        # Now Work on process
         if isinstance(span_percent,int) and self.display_switch.value == 1:
-            self.edit_mode_html.value = dv.editing_layout_css(span_percent=span_percent).replace('__uid__',self.uid)
-            if getattr(self,'setting',False):
-                self.setting.height_slider.layout.display = 'none'
+            self.sidebar_html.value = dv.sidebar_layout_css(span_percent=span_percent).replace('__uid__',self.uid)
+            self.setting.height_slider.layout.display = 'none'
+            
+            for other in LiveSlides.__slides__.values():    
+                if other.uid != self.uid: # Add robust check 
+                    other.display_switch.value = 0 # This will trigger many events but in else block,so nothing to worry
         else:
-            self.edit_mode_html.value = '' # Should be empty to avoid competition of style
-            if getattr(self,'setting',False):
-                self.setting.emit_resize_event() # Change Size only after setting attribute assigned
-                self.setting.height_slider.layout.display = 'inline-flex' #Very impprtant
+            self.sidebar_html.value = '' # Should be empty to avoid competition of style
+            self.setting.height_slider.layout.display = 'inline-flex' #Very impprtant
+        return self.setting.emit_resize_event() # Must return this event so it work in other functions.
             
             
     def set_font_family(self,text_font=None,code_font=None):
@@ -390,26 +400,16 @@ class LiveSlides(NavBar):
                 self.setting.width_slider.value = 100 # This fixes dynamic breakpoint in Voila
         except: pass # Do Nothing
          
-        self.display_switch.observe(self._toggle_display,names=['value'])        
+        self.display_switch.observe(self.__relocate_displays,names=['value'])        
         self.display_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
         return display(HBox([ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
                              self.display_switch]))
     
-    def _toggle_display(self,change):
-        "Change Inline and SideBar display modes for all slides in current session."
+    def __relocate_displays(self,change):
         if change and change['new']: # Turns ON at value 1 of display_switch
-            self.set_edit_mode(span_percent = self.setting.width_slider.value)
+            self._push2sidebar(span_percent = self.setting.width_slider.value, force=False)
         else:
-            self.set_edit_mode(False)
-            
-        for other in self.shell.config['__slides__'].values():    
-            if other.uid != self.uid: # Add robust check 
-                other.set_edit_mode(False) # Bring others Inline
-                other.display_switch.unobserve(other._toggle_display)
-                other.display_switch.value = 0 # Turn off and it will trigger and go to second condition back 
-                other.display_switch.observe(other._toggle_display,names=['value'])
-                
-        self.setting.emit_resize_event()
+            self._push2sidebar(False, force=False)
 
     def align8center(self,b=True):
         "Central aligment of slide by default. If False, left-top aligned."
@@ -697,8 +697,8 @@ class Customize:
     def __update_size(self,change):
         self.main.box.layout.height = '{}px'.format(self.height_slider.value)
         self.main.box.layout.width = '{}vw'.format(self.width_slider.value)  
-        self.main.set_edit_mode(span_percent = self.width_slider.value)
-        self.emit_resize_event() # Although its in set_edit_mode, but for being safe, do this
+        self.main._push2sidebar(span_percent = self.width_slider.value)
+        self.emit_resize_event() # Although its in _push2sidebar, but for being safe, do this
         self.update_theme(change=None) # For updating size and breakpoints
             
     def __toggle_panel(self,change):
@@ -746,7 +746,7 @@ class Customize:
         if self.btn_fs.value:
             theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
             self.btn_fs.icon = 'compress'
-            self.main.set_edit_mode(False) # Remove edit mode style safely
+            self.main._push2sidebar(False) # Remove edit mode style safely
             
             if getattr(self.main,'box',False): # Wait for main.__init__ to complete
                 self.main.box.add_class('FullScreen')
@@ -754,7 +754,7 @@ class Customize:
         else:
             theme_css = theme_css.replace('__breakpoint_width__',f'{int(100*650/self.width_slider.value)}px') #Will break when slides is 650px not just window
             self.btn_fs.icon = 'expand'
-            self.main.set_edit_mode(self.width_slider.value) #Bring in edit mode back
+            self.main._push2sidebar(self.width_slider.value) #Bring in edit mode back
             
             if getattr(self.main,'box',False): # Wait for main.__init__ to complete
                 self.main.box.remove_class('FullScreen')
