@@ -9,6 +9,12 @@ See [PDF-Slides](IPySlides-Print.pdf)
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.0.2
+- Javascript navigation works now after browser's refresh.
+- User can now decide whether to display slides inline or in sidebar using a button in Jupyterlab. (Sorry other IDEs, you are not flexible to do this, use Voila in that case.)
+- Multiple views of slides can capture keyboard events separately.
+- All instances of LivSlides are now aware of each other for theme switch and inline/sidebar toggle. If one instance go in sidebar, others fall to inline. If one go fullscreen, others go minimized. 
+- Bugs fixed and improvements added.
 # 1.0.1
 - Animations now have slide direction based on going left or right. `ipysides.data_variables.animations` now have `slide_h` and `slide_v` for horizontal and vertical sliding respectively. 
 - You can now set text and code fonts using `ls.set_font_family(text_font, code_font)`.

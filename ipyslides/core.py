@@ -59,7 +59,7 @@ class NavBar:
                               HBox([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
                               self.btn_capture
                               ])
-        self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('prog_slider_box'),self.btn_next],
+        self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('ProgBox'),self.btn_next],
                             ).add_class('controls')
         self.build_navbar() # this is the main function to build the navbar
          
@@ -234,7 +234,7 @@ class LiveSlides(NavBar):
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name=f'slide{magic_suffix}')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name=f'title{magic_suffix}')
         self.user_ns = self.shell.user_ns #important for set_dir
-        LiveSlides.__slides__[self.uid] = self # Collect all instances
+        self.__class__.__slides__[self.uid] = self # Collect all instances
         self.animation_css = animation_css
         self.__citations = {} # Initialize citations
         self.__slides_mode = False
@@ -252,6 +252,7 @@ class LiveSlides(NavBar):
         
         _max = len(self.iterable) if self.iterable else 0
         super().__init__(N=_max)
+        self.controls.children[1].add_class(self.uid) # Add to pro_slider_box, 
         self.theme_root = dv.inherit_root
         self.font_scale = 1 #Scale 1 corresponds to 16px
         self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
@@ -269,7 +270,7 @@ class LiveSlides(NavBar):
         
         self.setting = Customize(self)  # Call settings now
         self.panel_box = self.setting.box
-        self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox')
+        self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox').add_class(self.uid)
         self.logo_html = ipw.HTML()
         self.float_ctrl = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
         self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
@@ -281,30 +282,28 @@ class LiveSlides(NavBar):
                           HBox([ #Slide_box must be in a box to have animations work
                             self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
-                          self.controls,
+                          self.controls.add_class(self.uid), # Importnat for unique display
                           self.float_ctrl,
                           self.nav_bar
                           ],layout= Layout(width=f'{self.setting.width_slider.value}vw', height=f'{self.setting.height_slider.value}px',margin='auto'))
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
+        self.app = self.box # Alias 
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
         
-    def _push2sidebar(self,span_percent = 50, force=False): # Value should be same as width_slider's initial value
-        """Pushes this instance of LiveSlides to sidebar and other instances inline. 
-        Use `force = True` only when executing from cell, otherwise its terrible."""
+    def _push2sidebar(self,span_percent = 50): # Value should be same as width_slider's initial value
+        """Pushes this instance of LiveSlides to sidebar and other instances inline."""
         if not getattr(self,'setting',False):
             return None # Do not process unless setting is displayed is done
-        if force and self.display_switch.value == 0:
-            self.display_switch.value = 1
-            return # Should return as widget itself will trigger same event again
+        
         # Now Work on process
         if isinstance(span_percent,int) and self.display_switch.value == 1:
             self.sidebar_html.value = dv.sidebar_layout_css(span_percent=span_percent).replace('__uid__',self.uid)
             self.setting.height_slider.layout.display = 'none'
             
-            for other in LiveSlides.__slides__.values():    
+            for other in self.__class__.__slides__.values():    
                 if other.uid != self.uid: # Add robust check 
                     other.display_switch.value = 0 # This will trigger many events but in else block,so nothing to worry
         else:
@@ -407,9 +406,9 @@ class LiveSlides(NavBar):
     
     def __relocate_displays(self,change):
         if change and change['new']: # Turns ON at value 1 of display_switch
-            self._push2sidebar(span_percent = self.setting.width_slider.value, force=False)
+            self._push2sidebar(span_percent = self.setting.width_slider.value)
         else:
-            self._push2sidebar(False, force=False)
+            self._push2sidebar(False)
 
     def align8center(self,b=True):
         "Central aligment of slide by default. If False, left-top aligned."
@@ -588,6 +587,7 @@ class LiveSlides(NavBar):
     def convert2slides(self,b=False):
         "Turn ON/OFF slides vs editing mode. Should be in same cell as `LiveSLides`"
         self.__slides_mode = b
+
         
     def __collect_slides(self):
         """Collect cells for an instance of LiveSlides."""
@@ -656,7 +656,7 @@ class Customize:
                             HBox([self.btn_fs,self.btn_mpl], layout=btns_layout),
                             ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
-                        ).add_class('panel')
+                        ).add_class('panel').add_class(self.main.uid)
         
         self.box.on_displayed(lambda change: self.__add_js()) # First attempt of Javascript to work
         
@@ -664,6 +664,7 @@ class Customize:
             write(dv.settings_instructions) 
         
         self.theme_dd.observe(self.update_theme)
+        self.theme_dd.observe(self.__sync_other_themes,names=['value']) # Change themes of other, thats only way to troubleshoot it
         self.scale_slider.observe(self.__set_font_scale)
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
@@ -676,6 +677,11 @@ class Customize:
         
         for w in (self.btn_mpl,self.btn_fs,self.box):
             w.add_class(self.main.uid)
+    
+    def __sync_other_themes(self,change): 
+        # Only way to have a better experience with themes
+        for other in self.main.__class__.__slides__.values():
+            other.setting.theme_dd.value = self.theme_dd.value # This will change theme everywhere 
     
     def __set_bbox(self,change):
         bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]    
@@ -741,7 +747,7 @@ class Customize:
                         '__textfont__',self.main._font_family['text']).replace(
                         '__codefont__',self.main._font_family['code'])
         if self.reflow_check.value:
-            theme_css = theme_css.replace('</style>','') + ".SlideArea * {max-height:max-content !important;}\n</style>"
+            theme_css = theme_css.replace('</style>','') + f".SlideArea.{self.main.uid} * "+ "{max-height:max-content !important;}\n</style>"
         # Catch Fullscreen too.
         if self.btn_fs.value:
             theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
@@ -749,7 +755,9 @@ class Customize:
             self.main._push2sidebar(False) # Remove edit mode style safely
             
             if getattr(self.main,'box',False): # Wait for main.__init__ to complete
-                self.main.box.add_class('FullScreen')
+                for other in self.main.__class__.__slides__.values():
+                    other.box.remove_class('FullScreen') # Bring them down if this goes fullscrren
+                self.main.box.add_class('FullScreen') # Add this to fullscreen
             
         else:
             theme_css = theme_css.replace('__breakpoint_width__',f'{int(100*650/self.width_slider.value)}px') #Will break when slides is 650px not just window
@@ -767,6 +775,9 @@ class Customize:
             self.btn_mpl.icon= 'toggle-off'
         
         # Now Set Theme and emit a resize event just for being smooth in GUI transformations
+        for selector in ['.controls', '.SlideArea', '.SlideBox', '.ProgBox', '.panel']:
+            theme_css = theme_css.replace(selector, f'{selector}.{self.main.uid}')
+        
         self.main.theme_html.value = theme_css
         self.emit_resize_event()
 

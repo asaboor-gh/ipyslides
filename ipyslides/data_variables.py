@@ -101,7 +101,7 @@ def style_html(style_root = inherit_root):
 }
 .SlidesWrapper .panel>div:last-child {padding-top:16px;min-height:max-content;} 
 
-.SlidesWrapper .columns {width:99%;max-width:99%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
+.SlideArea .columns {width:99%;max-width:99%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
 .SlidesWrapper .widget-hslider .ui-slider .ui-slider-handle {
@@ -109,13 +109,13 @@ def style_html(style_root = inherit_root):
     border: 1px solid var(--accent-color);
 }
 
-.prog_slider_box {
+.ProgBox {
     width: 16px;
     padding: 0px 4px;
     opacity:0;
     overflow:hidden;
 }
-.prog_slider_box:hover, .prog_slider_box:focus {
+.ProgBox:hover, .ProgBox:focus {
     width: 50%;
     min-width: 30%; /* This is very important to force it */
     justify-content: center;
@@ -147,9 +147,9 @@ def style_html(style_root = inherit_root):
 	.SlidesWrapper .controls button {width:30% !important;}
     .SlidesWrapper .SlideArea {padding-bottom: 50px !important;}
     .NavWrapper .progress {height:4px !important;}
-    .SlidesWrapper .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
-    .SlidesWrapper .columns>div[style] {width:100%!important;} /* important to override inline CSS */
-    .prog_slider_box {
+    .SlideArea .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
+    .SlideArea .columns>div[style] {width:100%!important;} /* important to override inline CSS */
+    .ProgBox {
     	width: 40%;
     	opacity:0;
 	}
@@ -166,6 +166,10 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper .SlideArea h3 {margin-block: unset;font-size: 2em;  line-height: 1.5em;}
 .SlidesWrapper .SlideArea h4 {margin-block: unset;font-size: 1.5em;line-height: 1.5em;}
 .SlidesWrapper .SlideArea h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
+.SlidesWrapper .widget-text input {
+    background: var(--primary-bg);
+    color:var(--primary-fg);
+}
 
 .SlideArea .footnote *,  .SlideArea .footnote li::marker {
     font-size:0.9em;
@@ -453,8 +457,8 @@ a.jp-InternalAnchorLink { display: none !important;}
     opacity:1;
 }
 /* Order of below two lines matters */
-:not(.jp-LabShell) .DisplaySwitch {display:none;} 
-.jp-LabShell .DisplaySwitch {display:block;}
+:not(.jp-LabShell) .DisplaySwitch, .SlideArea .DisplaySwitch {display:none !important;} /* No switch for embeded slides */
+.jp-LabShell .DisplaySwitch {display:block !important;}
 
 .jp-LabShell .DisplaySwitch {
     width:max-content;
@@ -492,8 +496,8 @@ def sidebar_layout_css(span_percent = 40):
     min-width: 0 !important;
 }}
 .kLqJVm .jp-Notebook {{ /* For Kaggle */
-    width: {100 - span_percent}vw !important;
     min-width: 0 !important;
+    padding-right: {span_percent}vw !importnat;
 }}
 .jp-LabShell .SlidesWrapper.__uid__ {{
     position:fixed;
@@ -513,10 +517,7 @@ def sidebar_layout_css(span_percent = 40):
 
 
 fullscreen_css = '''<style>
-/* Works in Sidecar and Linked Output View */
-/*.jupyterlab-sidecar > .jp-OutputArea-child,*/ 
-/* jp-OutputArea-output>div, .jp-LinkedOutputView>div */
-/* No need of above now, works everywhere */
+.SlidesWrapper:not(.FullScreen) { display:none;} /*Hide All and display, leave only one */
 .SlidesWrapper.FullScreen {      
     flex: 1;
     position: fixed;
@@ -529,7 +530,8 @@ fullscreen_css = '''<style>
     padding: 0;
     background:var(--primary-bg);
 } 
-.SlideArea .SlidesWrapper { position:relative;width:90%;max-width:95%;height:unset;left:unset;bottom:unset;}  
+.SlideArea .SlidesWrapper, .SlideArea .SlidesWrapper.FullScreen { /* Do Not apply Fullscreen in embed mode */
+        display:unset;position:relative;width:90%;max-width:95%;height:unset;left:unset;bottom:unset;}  
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}
