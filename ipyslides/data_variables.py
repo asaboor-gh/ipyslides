@@ -664,7 +664,7 @@ def notification(content,title='IPySlides Notification',timeout=5):
         .NotePop {{
             display:flex;
             flex-direction:row;
-            background: var(--secondary-bg);
+            background: linear-gradient(to right, var(--tr-hover-bg) 0%, var(--secondary-bg) 100%);
             border-radius: 4px;
             padding:8px;
             opacity:0.98;
@@ -683,8 +683,8 @@ def notification(content,title='IPySlides Notification',timeout=5):
             }}
         }}
         </style>
-        <div style="position:absolute;left:16px;top:16px;z-index:1000;" class="NotePop">
-        <div style="width:4px;background: var(--accent-color);margin-right:8px;"></div>
+        <div style="position:absolute;left:8px;top:8px;z-index:1000;" class="NotePop">
+        <div style="width:4px;background: var(--accent-color);margin-left:-8px;margin-right:8px"></div>
         <div>{_title}<p>{content}</p></div></div>'''
 # ONLY INSTRUCTIONS BELOW
 

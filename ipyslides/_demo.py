@@ -1,6 +1,6 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
-import textwrap
+import textwrap, time
 from .core import LiveSlides
 from .utils import write, ihtml,plt2html, iwrite, __reprs__, textbox
 from .objs_formatter import libraries
@@ -17,6 +17,7 @@ with slides.slide(1): #slide 1
     with slides.source():
         write('## I am created using `with slides.slide(1)` context manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
+        
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
 #slide 2    
@@ -67,7 +68,7 @@ for i in range(4,8):
                 write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
 
 # Matplotlib
-with slides.slide(8,background=f'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'):
+with slides.slide(8,background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'):
     with slides.source():
         import numpy as np, matplotlib.pyplot as plt
         x = np.linspace(0,2*np.pi)
@@ -163,3 +164,10 @@ def func(obj):
 for i,s in slides.enum_slides(15,17,background='var(--secondary-bg)'):
     with s:
         write(f'### This is Slide {i} added with `enum_slides`')
+
+# Let's test notification API
+for i in range(len(slides.iterable)):
+    @slides.notify_at(i,timeout=2)
+    def push_notification(item):
+        t = time.localtime()
+        return f'Slide-{item}<br/> Time-{t.tm_hour:02}:{t.tm_min:02}'       

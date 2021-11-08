@@ -48,9 +48,7 @@ def initialize(magic_suffix = '',
 init = initialize # Aliase
     
 def demo():
-    import os
-    from . import _demo, utils
-    
+    from . import _demo
     slides = _demo.slides 
     with slides.slide(100):
         with slides.source():
