@@ -51,7 +51,8 @@ class NavBar:
                 btn.layout.min_width = 'max-content' #very important parameter
         
         self.dd_clear = ipw.Dropdown(description='Delete',options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
-        self.btn_pdf = Button(description='Save Slides Screenshots to PDF',layout= Layout(width='auto',height='auto'))
+        self.btn_pdf = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
+        self.btn_png = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
         self.btn_print = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
                 
         self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
@@ -67,6 +68,7 @@ class NavBar:
         self.btn_next.on_click(self.__shift_right)
         self.btn_capture.on_click(self.capture_screen)
         self.btn_pdf.on_click(self.__save_pdf)
+        self.btn_png.on_click(self.__save_images)
         self.btn_print.on_click(self.__print_pdf)
         self.dd_clear.observe(self.__clear_images)
     
@@ -149,20 +151,23 @@ class NavBar:
             if not f'im-{self.prog_slider.value}-{i}' in self.__images:
                 self.__images[f'im-{self.prog_slider.value}-{i}'] =  img 
                 return # Exit loop
-            
-    def save_pdf(self,filename='IPySlides.pdf'):
-        "Converts saved screenshots to PDF!"
+    
+    def __sort_images(self):
         ims = [] #sorting
         for i in range(self.prog_slider.max + 1): # That's maximum number of slides
             for j in range(len(self.__images)): # To be on safe side, no idea how many captures
                 if f'im-{i}-{j}' in self.__images:
                     ims.append(self.__images[f'im-{i}-{j}'])
-                
+        return tuple(ims)
+            
+    def save_pdf(self,filename='IPySlides.pdf'):
+        "Converts saved screenshots to PDF!"
+        ims = self.__sort_images()       
         if ims: # make sure not empty
             self.btn_pdf.description = 'Generatingting PDF...'
             ims[0].save(filename,'PDF',quality= self.__print_settings['quality'] ,save_all=True,append_images=ims[1:],
                         resolution=self.__set_resolution(ims[0]),subsampling=0)
-            self.btn_pdf.description = 'Save Slides Screenshots to PDF'
+            self.btn_pdf.description = 'Save PDF'
         else:
             print('No images found to convert. Take screenshots of slides in full screen mode.')
     
@@ -188,8 +193,22 @@ class NavBar:
     
     @property
     def images(self):
-        "Get all captured screenshots"
-        return self.__images       
+        "Get all captured screenshots in order."
+        return self.__sort_images()
+    
+    def save_images(self,directory='ipyslides-images'):
+        "Save all screenshots as PNG in given `directory`. Names are auto ordered"
+        self.btn_png.description = 'Saving PNGs...'
+        if not os.path.isdir(directory):
+            os.mkdir(directory)
+            
+        for i,im in enumerate(self.images):
+            im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= 100,subsampling=0,optimize=True)  # Do not lose image quality at least here
+        self.btn_png.description = 'Save PNG'
+        
+    def __save_images(self,btn):
+        "With Button call"
+        self.save_images()
     
     def __clear_images(self,change):
         if 'Current' in self.dd_clear.value:
@@ -651,7 +670,7 @@ class Customize:
                             self.bbox_input,
                             self.reflow_check,
                             self.main.dd_clear,
-                            HBox([self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
+                            HBox([self.main.btn_png, self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
                             HBox([self.btn_fs,self.btn_mpl], layout=btns_layout),
                             ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
