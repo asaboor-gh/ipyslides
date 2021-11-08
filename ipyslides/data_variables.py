@@ -303,14 +303,22 @@ def style_html(style_root = inherit_root):
 .SlidesWrapper ::-webkit-scrollbar {
     height: 4px;
     width: 4px;
-    background: var(--primary-bg) !important;
+    background: transparent !important;
+}
+.codehilite::-webkit-scrollbar { /* important for good display */
+    background: var(--secondary-bg) !important;
+}
+.SlidesWrapper ::-webkit-scrollbar:hover {
+    background: var(--secondary-bg) !important;
 }
 .SlidesWrapper ::-webkit-scrollbar-thumb {
-    background: var(--tr-odd-bg) !important;
+    background: transparent !important;
+}
+.SlidesWrapper ::-webkit-scrollbar-thumb:hover{
+    background: var(--tr-hover-bg) !important;
 }
 .SlidesWrapper ::-webkit-scrollbar-corner {
     display:none !important;
-    background: var(--primary-bg)  !important;
 }   
 .CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
 /* Matplotlib figure SVG */

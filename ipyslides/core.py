@@ -484,7 +484,7 @@ class LiveSlides(NavBar):
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-        out_str = "<style>\n.SlidesWrapper." + self.uid + "{" + props_str + "}\n"
+        out_str = "<style>\n" + f".SlidesWrapper.{self.uid}, .SlideArea.{self.uid} .block " + "{" + props_str + "}\n"
         if 'color' in _css_props:
             out_str += f".SlidesWrapper.{self.uid} p, .SlidesWrapper.{self.uid}>:not(div){{ color: {_css_props['color']}}}"
         return write(out_str + "\n</style>") # return a write object for actual write

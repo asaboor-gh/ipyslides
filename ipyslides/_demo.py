@@ -67,7 +67,7 @@ for i in range(4,8):
                 write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
 
 # Matplotlib
-with slides.slide(8):
+with slides.slide(8,background=f'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'):
     with slides.source():
         import numpy as np, matplotlib.pyplot as plt
         x = np.linspace(0,2*np.pi)
