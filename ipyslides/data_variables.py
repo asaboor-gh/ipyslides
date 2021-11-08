@@ -657,6 +657,35 @@ loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
   <path fill="var(--accent-color,navy)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z">
     <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.5s" repeatCount="indefinite"/>
   </path></svg></div>'''
+  
+def notification(content,title='IPySlides Notification',timeout=5):
+    _title = f'<b>{title}</b>' if title else '' # better for inslides notification
+    return f'''<style>
+        .NotePop {{
+            display:flex;
+            flex-direction:row;
+            background: var(--secondary-bg);
+            border-radius: 4px;
+            padding:8px;
+            opacity:0.98;
+            width:auto;
+            max-width:400px;
+            box-shadow: 0 0 2px 2px var(--tr-hover-bg);
+            animation: popup 0s ease-in {timeout}s;
+            animation-fill-mode: forwards;
+        }}
+        .NotePop>div>b {{color: var(--accent-color);}}
+        @keyframes popup {{
+            to {{
+                visibility:hidden;
+                width:0;
+                height:0;
+            }}
+        }}
+        </style>
+        <div style="position:absolute;left:16px;top:16px;z-index:1000;" class="NotePop">
+        <div style="width:4px;background: var(--accent-color);margin-right:8px;"></div>
+        <div>{_title}<p>{content}</p></div></div>'''
 # ONLY INSTRUCTIONS BELOW
 
 more_instructions =f'''# How to Use

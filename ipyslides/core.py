@@ -56,6 +56,7 @@ class NavBar:
         self.btn_print = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
                 
         self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
+        self.note_html = ipw.HTML() # For notifications
         self.nav_footer =  HBox([self.btn_setting,
                               HBox([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
                               self.btn_capture
@@ -88,6 +89,11 @@ class NavBar:
     def show(self):
         return self.nav_bar
     __call__ = show
+    
+    def notify(self,content,title='IPySlides Notification',timeout=5):
+        "Send inside notifications for user to know whats happened on some button click. Set `title = None` if need only content."
+        self.note_html.value = '' # Set first to '', otherwise may not trigger for same value again.
+        self.note_html.value = dv.notification(content=content,title=title,timeout=timeout)
     
         
     @contextmanager
@@ -168,8 +174,9 @@ class NavBar:
             ims[0].save(filename,'PDF',quality= self.__print_settings['quality'] ,save_all=True,append_images=ims[1:],
                         resolution=self.__set_resolution(ims[0]),subsampling=0)
             self.btn_pdf.description = 'Save PDF'
+            self.notify(f'File "{filename}" is created')
         else:
-            print('No images found to convert. Take screenshots of slides in full screen mode.')
+            self.notify('No images found to convert. Take screenshots of slides, then use this option.')
     
     def __save_pdf(self,btn):
         self.save_pdf() # Runs on button
@@ -203,8 +210,9 @@ class NavBar:
             os.mkdir(directory)
             
         for i,im in enumerate(self.images):
-            im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= 100,subsampling=0,optimize=True)  # Do not lose image quality at least here
+            im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= self.__print_settings['quality'],subsampling=0,optimize=True)  # Do not lose image quality at least here
         self.btn_png.description = 'Save PNG'
+        self.notify(f'All captured images are saved in "{directory}"')
         
     def __save_images(self,btn):
         "With Button call"
@@ -216,12 +224,15 @@ class NavBar:
             for k,img in self.__images.items():
                 if f'-{self.prog_slider.value}-' in k:
                     img.close() # Close image to save mememory
+            self.notify('Deleted screenshots of current slide')
         elif 'All' in self.dd_clear.value:
             for k,img in self.__images.items():
                 img.close() # Close image to save mememory
             self.__images = {} # Cleaned up
+            self.notify('Deleted screenshots of all slides')
         
         self.dd_clear.value = 'None' # important to get back after operation
+    
     
         
 class LiveSlides(NavBar):
@@ -295,7 +306,7 @@ class LiveSlides(NavBar):
         self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
         self.__footer_text = ""
         # All Box of Slides
-        self.box =  VBox([self.loading_html, self.main_style_html,
+        self.box =  VBox([self.loading_html, self.note_html,self.main_style_html,
                           self.theme_html,self.logo_html, self.sidebar_html,
                           self.panel_box,
                           HBox([ #Slide_box must be in a box to have animations work
