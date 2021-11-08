@@ -9,6 +9,9 @@ See [PDF-Slides](IPySlides-Print.pdf)
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.0.3
+- Now you can send notificatios based on slide using `@ls.notify_at` decorator. This is dynamic operation, so if you need to show time during slides(look at demo slide), it will show current time. Notifications are hidden during screenshot by app's mechanism, not external ones. You can turn ON/OFF notifications from settings panel. 
+- Use `Save PNG` button to save all screenshots in a folder in sequence. You can create a `Powerpoint Presentation` from these picture by following instructions in side panel or from the generated file `Make-PPT.md` along pictures.
 # 1.0.2
 - Javascript navigation works now after browser's refresh.
 - User can now decide whether to display slides inline or in sidebar using a button in Jupyterlab. (Sorry other IDEs, you are not flexible to do this, use Voila in that case.)

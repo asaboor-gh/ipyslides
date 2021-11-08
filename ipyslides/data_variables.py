@@ -688,6 +688,18 @@ def notification(content,title='IPySlides Notification',timeout=5):
         <div>{_title}<p>{content}</p></div></div>'''
 # ONLY INSTRUCTIONS BELOW
 
+how_to_ppt = '''### How to make Powerpoint Presentation from Bunch of Images
+- Save all screenshots using `Save PNG` button and go to folder just created.
+- You know the aspect ratio while taking screenshots, if not, read details of any of picture to find it.
+- Open Powerpoint, got to `Design` tab and select `Slide Size`. If pictures here are of aspect ration 4:3 or 16:9, select that,
+otherwise select `Custom Slide Size` and change size there according to found aspect ratio. 
+- You will see a slide of your prefered size now. Go to `Insert` tab and select `Photo Album > New Photo Album`.
+- Select `File/Disk` option to insert pictures and make sure `Picture Layout` option is `Fit to slide`.
+- Now click `Create` and you will see all pictures as slides.
+
+> Note: Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
+'''
+
 more_instructions =f'''# How to Use
 ### Jupyter Lab Only
 Having your cursor over slides:
@@ -732,6 +744,7 @@ slides.show() # Use it once to see slides
 '''
 
 settings_instructions = f'''{more_instructions}
+{how_to_ppt}
 ### Custom Theme
 For custom themes, change below `Theme` dropdown to `Custom`.
 You will see a `custom.css` in current folder,edit it and chnage
