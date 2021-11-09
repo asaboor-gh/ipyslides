@@ -1,4 +1,3 @@
-from numpy.core.numeric import full
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np, matplotlib.pyplot as plt # plt for imshow here
 import itertools, sys
@@ -56,18 +55,18 @@ class NavBar:
         self.btn_print = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
                 
         self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
-        self.note_html = ipw.HTML() # For notifications
+        self.toast_html = ipw.HTML() # For notifications
         self.nav_footer =  HBox([self.btn_setting,
                               HBox([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
                               self.btn_capture
                               ])
         self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('ProgBox'),self.btn_next],
                             ).add_class('controls')
-        self.note_check = ipw.Checkbox(value = False, description='Hide Notifications')
+        self.toast_check = ipw.Checkbox(value = False, description='Hide Notifications')
         
         self.build_navbar() # this is the main function to build the navbar
          
-        self.note_check.observe(self.__toggle_notify,names=['value'])
+        self.toast_check.observe(self.__toggle_notify,names=['value'])
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
         self.btn_capture.on_click(self.capture_screen)
@@ -93,23 +92,23 @@ class NavBar:
         return self.nav_bar
     __call__ = show
     
-    def _notify(self,content,title='IPySlides Notification',timeout=5):
+    def notify(self,content,title='IPySlides Notification',timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Set `title = None` if need only content. Remain invisible in screenshot."
-        self.note_html.value = '' # Set first to '', otherwise may not trigger for same value again.
-        self.note_html.value = dv.notification(content=content,title=title,timeout=timeout)
+        self.toast_html.value = '' # Set first to '', otherwise may not trigger for same value again.
+        self.toast_html.value = dv.notification(content=content,title=title,timeout=timeout)
     
     def __toggle_notify(self,change):
         "Blocks notifications."
-        if self.note_check.value:
-            self.note_html.layout.visibility = 'hidden' 
+        if self.toast_check.value:
+            self.toast_html.layout.visibility = 'hidden' 
         else:
-            self.note_html.layout.visibility = 'visible'
+            self.toast_html.layout.visibility = 'visible'
         
         
     @contextmanager
     def __print_context(self):
-        hide_widgets = [self.controls,self.btn_setting,self.btn_capture,self.float_ctrl,self.note_html]
-        old_pref = self.note_html.layout.visibility # To keep user prefernce back after screenshot
+        hide_widgets = [self.controls,self.btn_setting,self.btn_capture,self.float_ctrl,self.toast_html]
+        old_pref = self.toast_html.layout.visibility # To keep user prefernce back after screenshot
         for w in hide_widgets:
             w.layout.visibility = 'hidden'
         try:    
@@ -117,7 +116,7 @@ class NavBar:
         finally:
             for w in hide_widgets:
                 w.layout.visibility = 'visible' 
-            self.note_html.layout.visibility = old_pref 
+            self.toast_html.layout.visibility = old_pref 
                 
     def screen_bbox(self):
         "Return screen's bounding box on windows, return None on other platforms which works as full screen too in screenshot."
@@ -186,9 +185,9 @@ class NavBar:
             ims[0].save(filename,'PDF',quality= self.__print_settings['quality'] ,save_all=True,append_images=ims[1:],
                         resolution=self.__set_resolution(ims[0]),subsampling=0)
             self.btn_pdf.description = 'Save PDF'
-            self._notify(f'File "{filename}" is created')
+            self.notify(f'File "{filename}" is created')
         else:
-            self._notify('No images found to convert. Take screenshots of slides, then use this option.')
+            self.notify('No images found to convert. Take screenshots of slides, then use this option.')
     
     def __save_pdf(self,btn):
         self.save_pdf() # Runs on button
@@ -206,7 +205,7 @@ class NavBar:
         if imgs:
             imgs[0].save('IPySlides-Print.pdf','PDF',quality= self.__print_settings['quality'],save_all=True,append_images=imgs[1:],
                          resolution=self.__set_resolution(imgs[0]),subsampling=0)
-            self._notify("File 'IPySlides-Print.pdf' saved.") 
+            self.notify("File 'IPySlides-Print.pdf' saved.") 
         # Clear images at end
         for img in imgs:
             img.close()    
@@ -229,10 +228,10 @@ class NavBar:
             md_file = os.path.join(directory,'Make-PPT.md')
             with open(md_file,'w') as f:
                 f.write(dv.how_to_ppt)
-            self._notify(f'''All captured images are saved in "{directory}"<br/> 
+            self.notify(f'''All captured images are saved in "{directory}"<br/> 
                          <em>See file "{md_file}" as bonus option!</em>''',timeout=10)
         else:
-            self._notify('No images found to save. Take screenshots of slides, then use this option.')
+            self.notify('No images found to save. Take screenshots of slides, then use this option.')
         
         self.btn_png.description = 'Save PNG'
         
@@ -246,12 +245,12 @@ class NavBar:
             for k,img in self.__images.items():
                 if f'-{self.prog_slider.value}-' in k:
                     img.close() # Close image to save mememory
-            self._notify('Deleted screenshots of current slide')
+            self.notify('Deleted screenshots of current slide')
         elif 'All' in self.dd_clear.value:
             for k,img in self.__images.items():
                 img.close() # Close image to save mememory
             self.__images = {} # Cleaned up
-            self._notify('Deleted screenshots of all slides')
+            self.notify('Deleted screenshots of all slides')
         
         self.dd_clear.value = 'None' # important to get back after operation
     
@@ -328,7 +327,7 @@ class LiveSlides(NavBar):
         self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
         self.__footer_text = ""
         # All Box of Slides
-        self.box =  VBox([self.loading_html, self.note_html,self.main_style_html,
+        self.box =  VBox([self.loading_html, self.toast_html,self.main_style_html,
                           self.theme_html,self.logo_html, self.sidebar_html,
                           self.panel_box,
                           HBox([ #Slide_box must be in a box to have animations work
@@ -341,6 +340,7 @@ class LiveSlides(NavBar):
         self.box.add_class('SlidesWrapper') #Very Important 
         self.__update_content(True) # First attmpt
         self.app = self.box # Alias 
+        self.__toasts = {} # Collecting slides' notification toasts
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
@@ -389,18 +389,31 @@ class LiveSlides(NavBar):
                                     {image}</div>"""
     
     def notify_at(self, slide, title='IPySlides Notification', timeout=5):
-        """Decorartor to push notification at given slide. `slide` here is what you see on slides's footer like 3.1, not just int.
-        The content is dynamically generated by underlying function, so you can set timer as well. Remain invisible in screenshot.
+        """Decorartor to push notification at given slide. It should return as string. `slide` here is what you see on slides's footer like 3.1, not just int.
+        The content is dynamically generated by underlying function, so you can set timer as well. Remains invisible in screenshot through app itself.
         
         @notify_at(slide=1)
-        def push(item): #item is slide from decorator, so you can refer slide number in noteification.
+        def push_to(slide): #you can refer slide number in noteification function. 
             ..."""
         def _notify(func): 
-            def _push_notification(change):
-                if self.iterable[self.prog_slider.value - 1]['n'] == f'{slide}':
-                    self._notify(content = func(slide), title=title, timeout=timeout)
-            self.prog_slider.observe(_push_notification,names=['value'])
+            self.__toasts[f'{slide}'] = dict(func = func,arg = slide,kwargs = dict(title=title, timeout=timeout))
         return _notify
+    
+    def clear_notifications(self):
+        "Remove all redundent notifications that show up."
+        self.__toasts = {} # Free up
+    
+    @property
+    def notifications(self):
+        "See all stored notifications."
+        return self.__toasts
+    
+    def __display_toast(self):
+        slide_id = self.iterable[self.prog_slider.value - 1]['n']
+        try:
+            toast = self.__toasts[slide_id]
+            self.notify(content=toast['func'](toast['arg']),**toast['kwargs'])
+        except:pass 
     
     def __add__(self,other):
         "Add two slides instance, title page of other is taken as a slide."
@@ -499,6 +512,7 @@ class LiveSlides(NavBar):
             self.slide_box.add_class('Prev')
     
     def __display_slide(self):
+        self.__display_toast() # Display in start is fine
         item = self.iterable[self.prog_slider.value-1]
         self.info_html.value = self.__footer_text.replace('__number__',f'{item["n"]} / {self.nslides}') #Slide Number
         if not self.controls.layout.visibility == 'hidden': # No animations while printing
@@ -699,7 +713,7 @@ class Customize:
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
         self.reflow_check = ipw.Checkbox(value=False,description='Set auto height of components for better screenshots',layout=self.theme_dd.layout)
         self.bbox_input = ipw.Text(description='L,T,R,B (px)',layout=self.theme_dd.layout,value='Type left,top,right,bottom pixel values and press ↲')
-        self.main.note_check.layout = self.theme_dd.layout # Fix same
+        self.main.toast_check.layout = self.theme_dd.layout # Fix same
         self.main.dd_clear.layout = self.theme_dd.layout # Fix same
         self.__instructions = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
         self.out_js_fix = ipw.Output(layout=Layout(width='auto',height='0px'))
@@ -717,7 +731,7 @@ class Customize:
                             ipw.HTML('<hr/>'),
                             self.bbox_input,
                             self.reflow_check,
-                            self.main.note_check,
+                            self.main.toast_check,
                             self.main.dd_clear,
                             HBox([self.main.btn_png, self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),

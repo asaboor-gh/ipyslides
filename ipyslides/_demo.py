@@ -168,6 +168,6 @@ for i,s in slides.enum_slides(15,17,background='var(--secondary-bg)'):
 # Let's test notification API
 for i in range(len(slides.iterable)):
     @slides.notify_at(i,timeout=2)
-    def push_notification(item):
+    def push_notification(idx): # idx is will pick i from decorator, just to show these are dummy varibales
         t = time.localtime()
-        return f'Slide-{item}<br/> Time-{t.tm_hour:02}:{t.tm_min:02}'       
+        return f'Slide-{idx}<br/> Time-{t.tm_hour:02}:{t.tm_min:02}'       

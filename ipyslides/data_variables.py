@@ -667,9 +667,10 @@ def notification(content,title='IPySlides Notification',timeout=5):
             background: linear-gradient(to right, var(--tr-hover-bg) 0%, var(--secondary-bg) 100%);
             border-radius: 4px;
             padding:8px;
-            opacity:0.98;
+            opacity:0.9;
             width:auto;
             max-width:400px;
+            height:max-content;
             box-shadow: 0 0 2px 2px var(--tr-hover-bg);
             animation: popup 0s ease-in {timeout}s;
             animation-fill-mode: forwards;
