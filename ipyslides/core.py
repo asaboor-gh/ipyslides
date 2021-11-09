@@ -94,8 +94,9 @@ class NavBar:
     
     def notify(self,content,title='IPySlides Notification',timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Set `title = None` if need only content. Remain invisible in screenshot."
-        self.toast_html.value = '' # Set first to '', otherwise may not trigger for same value again.
-        self.toast_html.value = dv.notification(content=content,title=title,timeout=timeout)
+        if content and isinstance(content,str):
+            self.toast_html.value = '' # Set first to '', otherwise may not trigger for same value again.
+            self.toast_html.value = dv.notification(content=content,title=title,timeout=timeout)
     
     def __toggle_notify(self,change):
         "Blocks notifications."
@@ -772,7 +773,7 @@ class Customize:
             self.__instructions.clear_output(wait=True)
             self.main.set_print_settings(**print_settings)
             write(dv.settings_instructions) 
-        self.main._notify(f'See Screenshot of your selected bbox = {bbox} 👇')
+        self.main.notify(f'See Screenshot of your selected bbox = {bbox} 👇')
     
     def __add_js(self):
         with self.out_js_fix: 
@@ -854,7 +855,7 @@ class Customize:
         if self.btn_mpl.value:
             self.btn_mpl.icon= 'toggle-on'
             theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
-            self.main._notify('Hover over a matplotlib figure to zoom it!',timeout=3)
+            self.main.notify('Hover over a matplotlib figure to zoom it!',timeout=3)
         else:
             self.btn_mpl.icon= 'toggle-off'
         
