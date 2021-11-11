@@ -1,6 +1,7 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import numpy as np, matplotlib.pyplot as plt # plt for imshow here
 import itertools, sys
+from threading import Event, Thread
 from time import sleep
 from PIL import ImageGrab
 from IPython.display import display, Javascript, HTML, Image
@@ -63,6 +64,7 @@ class NavBar:
         self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('ProgBox'),self.btn_next],
                             ).add_class('controls')
         self.toast_check = ipw.Checkbox(value = False, description='Hide Notifications')
+        self.__threads = [] # Assign as list
         
         self.build_navbar() # this is the main function to build the navbar
          
@@ -97,6 +99,47 @@ class NavBar:
         if content and isinstance(content,str):
             self.toast_html.value = '' # Set first to '', otherwise may not trigger for same value again.
             self.toast_html.value = dv.notification(content=content,title=title,timeout=timeout)
+    
+    def repeat(self, ntimes, interval=1, delay=1):
+        """Decorator to execute a function after specified `interval` regularyly until it is done `ntimes` with initial `delay`.
+        All times are in seconds. The decorated function should be defined to accept one argument `n`, the number at which event is fired.
+        **Usage**
+            @repeat(2,1)
+            def send(n):
+                if n == 1:
+                    print('Fired first time')
+                else:
+                    print('Fired again')
+        ----------- OR -----------------
+            repeat(1,5,5)(lambda i: print(i))
+        """
+        def _repeat(func):
+            e = Event()
+            def loop():
+                i, time = 0, delay # First time after delay
+                while not e.wait(time): # the first call is in `interval + delay` secs
+                    i, time = i + 1, interval # Next calls after given `interval`
+                    func(i) #execute decorated function
+                    if i == ntimes:
+                        e.set() # stop it there
+                        self.__threads = [te for te in self.__threads if te['t'].is_alive()] # remove finished ones
+            t = Thread(target=loop)
+            t.start() 
+            self.__threads.append({'t':t,'e':e,'f':func})
+        return _repeat
+
+    @property
+    def active_threads(self):
+        "Get all running threads, each one has a dictionary with keys `e` as threading.Event and `t` as threading.Thread."
+        return self.__threads
+    
+    def delete_thread(self,thread):
+        "Delete a given thread {'t':...,'e':...} object given from active_threads."
+        if 't' in thread and 'e' in thread:
+            if thread['t'].is_alive():
+                thread['e'].set() # This removes active thread
+                self.__threads = [th for th in self.__threads if th['t'] != thread['t']] # Removes from list too
+        
     
     def __toggle_notify(self,change):
         "Blocks notifications."

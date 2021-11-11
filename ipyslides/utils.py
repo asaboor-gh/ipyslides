@@ -1,10 +1,9 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
-            'file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source','repeat']
+            'file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
 import re, sys, linecache
-from threading import Event, Thread # for repeat decorator
 import textwrap
 from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
@@ -253,28 +252,3 @@ def source(collapsed=False):
             write(details(out_code,summary='Show Code'))
         else:
             write(keep_format(out_code))
-
-def repeat(ntimes, interval=1, delay=1):
-    """Decorator to execute a function after specified `interval` regularyly until it is done `ntimes` with initial `delay`.
-    All times are in seconds. The decorated function should be defined to accept one argument `n`, the number at which event fired.
-    **Usage**
-        @repeat(2,1)
-        def send(n):
-            if n == 1:
-                print('Fired first time')
-            else:
-                print('Fired again')
-    ----------- OR -----------------
-        repeat(1,5,5)(lambda i: print(i))
-    """
-    def _repeat(func):
-        e = Event()
-        def loop():
-            i, time = 0, delay # First time after delay
-            while not e.wait(time): # the first call is in `interval + delay` secs
-                i, time = i + 1, interval # Next calls after given `interval`
-                func(i)
-                if i == ntimes:
-                    e.set() # stop it there
-        Thread(target=loop).start() 
-    return _repeat
