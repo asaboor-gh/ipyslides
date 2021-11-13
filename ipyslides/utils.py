@@ -1,5 +1,5 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
-            'file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source']
+            'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
@@ -8,7 +8,7 @@ import textwrap
 from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
 from markdown import markdown
-from IPython.display import HTML, display, Markdown, Code
+from IPython.display import HTML, display, Markdown, Code, SVG
 import matplotlib.pyplot as plt, os
 from IPython.utils.capture import capture_output
 from IPython.core.display import __all__ as __all
@@ -127,10 +127,28 @@ def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
     return f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>"""
 
-def file2img(filename,width='100%'):
-    "Displays png/jpeg/jpg etc. images from file"
-    return f'<img src="{filename}" alt="{filename}" width="{width}" height="auto">'
+def image(filename,width='100%',caption=None, zoomable = True):
+    """Displays png/jpeg/jpg etc. images from file. Set `zoomable = True` to zoom on hover."""
+    if isinstance(width,int):
+        width = f"{width}px"
+    img = f'<img src="{filename}" alt="{filename}" width="{width}" height="auto">' 
+    if caption:
+        img = img + textbox(caption)  # Add caption
+    if zoomable:
+        return f'<div class="zoom-container">{img}</div>'
+    return img
 
+file2img = image #alias must be there
+
+def svg(filename,caption=None,zoomable=True):
+    "Display svg file with additional customizations."
+    svg = SVG(filename=filename)._repr_svg_()
+    if caption:
+        svg = svg + textbox(caption)  # Add caption 
+    if zoomable:
+        return f'<div class="zoom-container">{svg}</div>'
+    return svg
+        
 def file2text(filename):
     "Only reads plain text, not bytes"
     with open(filename,'r') as f:

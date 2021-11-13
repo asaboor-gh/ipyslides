@@ -9,6 +9,7 @@ light_root = ''':root {
 	--tr-odd-bg: whitesmoke;
 	--tr-hover-bg: #D1D9E1;
 	--accent-color: navy;
+    --pointer-color: red;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 '''
@@ -21,6 +22,7 @@ dark_root = ''':root {
 	--tr-odd-bg: #181818;
 	--tr-hover-bg: #264348;
 	--accent-color: #d9e0e3;
+    --pointer-color: blue;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 '''
@@ -33,6 +35,7 @@ inherit_root = """:root {
 	--tr-odd-bg: var(--jp-layout-color2,#e6e7e1);
 	--tr-hover-bg:var(--jp-border-color1,lightblue);
  	--accent-color:var(--jp-brand-color2,navy);
+    --pointer-color: var(--md-pink-A400,red);
 	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
 }
 """
@@ -321,11 +324,18 @@ def style_html(style_root = inherit_root):
     display:none !important;
 }   
 .CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
-/* Matplotlib figure SVG */
-div.fig-container>svg{
-  background: var(--primary-bg);
-  transition: transform .2s; /* Animation */
-}    
+/* Zoom container including Matplotlib figure SVG */
+
+div.zoom-container,
+div.zoom-container > * {
+    background: var(--primary-bg);
+    display:flex !important; /* To align in center */
+    flex-direction: column !important; /* To have caption at bottom */
+    align-items:center !important;
+    justify-content:center !important;
+    transition: transform .2s; /* Animation */
+}  
+  
 .pygal-chart {  /* it doesnt show otherwise */
     min-width:300px;
     width:100%;
@@ -334,6 +344,16 @@ div.fig-container>svg{
 .SlideArea .block {
     background: var(--primary-bg);
     border-radius: 4px;
+}
+div.LaserPointer { /* For laser pointer */
+    position:absolute !important;
+    width:12px;
+    height:12px;
+    z-index:100;
+    border-radius:50%;
+    border: 2px solid white;
+    background: var(--pointer-color);
+    box-shadow: 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color);
 }
 </style>'''
 
@@ -561,6 +581,8 @@ function main(){
     let mplBtn = document.getElementsByClassName('mpl-zoom __uid__')[0];
     let winFs = document.getElementsByClassName('window-fs __uid__')[0];
     let capSc = document.getElementsByClassName('screenshot-btn __uid__')[0];
+    let cursor = document.getElementsByClassName('LaserPointer __uid__')[0];
+
     
     // Keyboard events
     function keyOnSlides(e) {
@@ -600,6 +622,14 @@ function main(){
         box.onkeydown = keyOnSlides; // This is better than event listners as they register multiple times
         box.onmouseenter = function(){box.focus();};
         box.onmouseleave = function(){box.blur();};
+        // Cursor pointer functions
+        let slide = box.getElementsByClassName('SlideBox __uid__')[0];
+        function onMouseMove(e) {
+            let bbox = box.getBoundingClientRect()
+            cursor.setAttribute("style","left:"+ (e.pageX - bbox.left + slide.scrollLeft) + "px; top: " + (e.pageY-bbox.top + slide.scrollTop) + "px;")
+        };
+        
+        box.onmousemove = onMouseMove;
     });
     
     let loc = window.location.toString()
@@ -632,21 +662,23 @@ try {
 
 mpl_fs_css = '''<style>
 /* Pop out matplotlib's SVG on click/hover */
-div.fig-container>svg:focus, div.fig-container>svg:hover{
+div.zoom-container > *:focus, div.zoom-container > *:hover{
     position:fixed;
     left:100px;
     top:0px;
     z-index:100;
     width: calc(100vw - 200px);
     height: 100%;
+    object-fit:scale-down !important;
     box-shadow: 0px 0px 200px 200px rgba(15,20,10,0.8); 
-}  
+} 
+
 @media screen and (max-width: __breakpoint_width__) { /* Computed dynamically */
-    div.fig-container>svg:focus, div.fig-container>svg:hover{
-    width:100%;
-    height: calc(100vh - 200px);
-    top: 100px;
-    left:0px;
+    div.zoom-container > *:focus, div.zoom-container > *:hover{
+        width:100%;
+        height: calc(100vh - 200px);
+        top: 100px;
+        left:0px;
     }
 } 
 </style>

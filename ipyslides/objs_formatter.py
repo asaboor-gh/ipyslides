@@ -22,7 +22,7 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     if caption:
         svg = svg + f'<p style="font-size:80% !important;">{caption}</p>'
-    return f"<div class='fig-container'>{svg}</div>"
+    return f"<div class='zoom-container'>{svg}</div>"
 
 def bokeh2html(bokeh_fig,title=""):
     from bokeh.resources import CDN

@@ -57,6 +57,7 @@ class NavBar:
                 
         self.info_html = ipw.HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
         self.toast_html = ipw.HTML() # For notifications
+        self.cursor_html = ipw.HTML().add_class('LaserPointer') # For beautiful cursor
         self.nav_footer =  HBox([self.btn_setting,
                               HBox([self.info_html],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
                               self.btn_capture
@@ -151,7 +152,7 @@ class NavBar:
         
     @contextmanager
     def __print_context(self):
-        hide_widgets = [self.controls,self.btn_setting,self.btn_capture,self.float_ctrl,self.toast_html]
+        hide_widgets = [self.controls,self.btn_setting,self.btn_capture,self.float_ctrl,self.toast_html,self.cursor_html]
         old_pref = self.toast_html.layout.visibility # To keep user prefernce back after screenshot
         for w in hide_widgets:
             w.layout.visibility = 'hidden'
@@ -255,7 +256,7 @@ class NavBar:
             img.close()    
     
     @property
-    def images(self):
+    def screenshots(self):
         "Get all captured screenshots in order."
         return self.__sort_images()
     
@@ -365,7 +366,7 @@ class LiveSlides(NavBar):
         
         self.setting = Customize(self)  # Call settings now
         self.panel_box = self.setting.box
-        self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox').add_class(self.uid)
+        self.slide_box = Box([self.out, self.cursor_html.add_class(self.uid)],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox').add_class(self.uid)
         self.logo_html = ipw.HTML()
         self.float_ctrl = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
         self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
@@ -763,7 +764,7 @@ class Customize:
         self.out_js_fix = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.out_js_var = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
-        self.btn_mpl = ipw.ToggleButton(description='Matplotlib Zoom',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
+        self.btn_zoom = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
         btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
         self.box = VBox([Box([self.__instructions,self.main.btn_setting,],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         self.out_js_fix, self.out_js_var, # Must be in middle so that others dont get disturbed.
@@ -779,7 +780,7 @@ class Customize:
                             self.main.dd_clear,
                             HBox([self.main.btn_png, self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
-                            HBox([self.btn_fs,self.btn_mpl], layout=btns_layout),
+                            HBox([self.btn_fs,self.btn_zoom], layout=btns_layout),
                             ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel').add_class(self.main.uid)
@@ -796,12 +797,12 @@ class Customize:
         self.width_slider.observe(self.__update_size,names=['value'])
         self.main.btn_setting.on_click(self.__toggle_panel)
         self.btn_fs.observe(self.update_theme,names=['value'])
-        self.btn_mpl.observe(self.update_theme,names=['value'])
+        self.btn_zoom.observe(self.update_theme,names=['value'])
         self.reflow_check.observe(self.update_theme)
         self.update_theme() #Trigger Theme and Javascript in it
         self.bbox_input.on_submit(self.__set_bbox)
         
-        for w in (self.btn_mpl,self.btn_fs,self.box):
+        for w in (self.btn_zoom,self.btn_fs,self.box):
             w.add_class(self.main.uid)
     
     def __sync_other_themes(self,change): 
@@ -895,15 +896,14 @@ class Customize:
                 self.main.box.remove_class('FullScreen')
         
         # Matplotlib's SVG Zoom 
-        if self.btn_mpl.value:
-            self.btn_mpl.icon= 'toggle-on'
+        if self.btn_zoom.value:
+            self.btn_zoom.icon= 'toggle-on'
             theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
-            self.main.notify('Hover over a matplotlib figure to zoom it!',timeout=3)
         else:
-            self.btn_mpl.icon= 'toggle-off'
+            self.btn_zoom.icon= 'toggle-off'
         
         # Now Set Theme and emit a resize event just for being smooth in GUI transformations
-        for selector in ['.controls', '.SlideArea', '.SlideBox', '.ProgBox', '.panel']:
+        for selector in ['.controls', '.SlideArea', '.SlideBox', '.ProgBox', '.panel','.LaserPointer']:
             theme_css = theme_css.replace(selector, f'{selector}.{self.main.uid}')
         
         self.main.theme_html.value = theme_css
