@@ -349,11 +349,12 @@ div.LaserPointer { /* For laser pointer */
     position:absolute !important;
     width:12px;
     height:12px;
-    z-index:100;
+    z-index:101; /* below side panel but above zoomed image */
     border-radius:50%;
     border: 2px solid white;
     background: var(--pointer-color);
     box-shadow: 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color);
+    display:none; /* Initial setup. Display will be set using javascript only */
 }
 </style>'''
 
@@ -623,13 +624,19 @@ function main(){
         box.onmouseenter = function(){box.focus();};
         box.onmouseleave = function(){box.blur();};
         // Cursor pointer functions
-        let slide = box.getElementsByClassName('SlideBox __uid__')[0];
+        // let slide = box.getElementsByClassName('SlideBox __uid__')[0];
         function onMouseMove(e) {
             let bbox = box.getBoundingClientRect()
-            cursor.setAttribute("style","left:"+ (e.pageX - bbox.left + slide.scrollLeft) + "px; top: " + (e.pageY-bbox.top + slide.scrollTop) + "px;")
+            let _display = "display:block;"
+            if (e.pageX > (bbox.right - 30) || e.pageY > (bbox.bottom - 30)) {
+                _display = "display:none;"
+            };
+            cursor.setAttribute("style",_display + "left:"+ (e.pageX - bbox.left + 10) + "px; top: " + (e.pageY - bbox.top + 10) + "px;")
         };
         
         box.onmousemove = onMouseMove;
+        box.onmouseleave = function (){cursor.setAttribute("style","display:none;");}
+        box.onmouseenter = function (){cursor.setAttribute("style","display:block;");}
     });
     
     let loc = window.location.toString()

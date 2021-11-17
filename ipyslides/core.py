@@ -366,7 +366,7 @@ class LiveSlides(NavBar):
         
         self.setting = Customize(self)  # Call settings now
         self.panel_box = self.setting.box
-        self.slide_box = Box([self.out, self.cursor_html.add_class(self.uid)],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox').add_class(self.uid)
+        self.slide_box = Box([self.out],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox').add_class(self.uid)
         self.logo_html = ipw.HTML()
         self.float_ctrl = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
         self.float_ctrl.observe(self.__set_hidden_height,names=['value'])
@@ -374,7 +374,7 @@ class LiveSlides(NavBar):
         # All Box of Slides
         self.box =  VBox([self.loading_html, self.toast_html,self.main_style_html,
                           self.theme_html,self.logo_html, self.sidebar_html,
-                          self.panel_box,
+                          self.panel_box, self.cursor_html.add_class(self.uid),
                           HBox([ #Slide_box must be in a box to have animations work
                             self.slide_box,
                           ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
