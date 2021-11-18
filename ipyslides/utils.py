@@ -1,5 +1,5 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
-            'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source']
+            'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source','raw']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
@@ -201,13 +201,17 @@ def keep_format(plaintext_or_html):
     "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_raw(obj.to_html()) preserves its actual form."
     if not isinstance(plaintext_or_html,str):
         return plaintext_or_html # if not string, return as is
-    return {'__keep_format__':plaintext_or_html}
+    return {'__keep_format__':plaintext_or_html} 
+
+def raw(text):
+    "Keep shape of text as it is, preserving whitespaces as well."
+    return {'__keep_format__':f"<div class='PyRepr'>{text}<div>"}
 
 def rows(*objs):
     "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
     return objs # Its already a tuple
 
-def block(title,*objs,bg='olive'):
+def block(title,*objs,bg = 'olive'):
     "Format a block like in LATEX beamer. *objs expect to be writable with `write` command."
     _title = f"""<center style='background:var(--secondary-bg);margin:0px -4px;'>
                 <b>{title}</b></center>"""
@@ -250,8 +254,8 @@ def block_k(title,*objs):
     return block(title,*objs,bg='#343434')
 
 @contextmanager
-def source(collapsed=False):
-    "Excute and displays source code in the context manager. Set `collapsed=True` to display in collapse."
+def source(collapsed = False):
+    "Excute and displays source code in the context manager. Set `collapsed = True` to display in collapse."
     def frame():
         "This is better than traceback as it works same for IPython and script.py"
         return (sys._getframe().f_back.f_back.f_back.f_code.co_filename,
