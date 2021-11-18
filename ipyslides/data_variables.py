@@ -349,6 +349,7 @@ div.LaserPointer { /* For laser pointer */
     position:absolute !important;
     width:12px;
     height:12px;
+    left:-50px; /* Hides when not required , otherwise handled by javascript*/
     z-index:101; /* below side panel but above zoomed image */
     border-radius:50%;
     border: 2px solid white;
@@ -674,7 +675,7 @@ div.zoom-container > *:focus, div.zoom-container > *:hover{
     left:100px;
     top:0px;
     z-index:100;
-    width: calc(100vw - 200px);
+    width: calc(100% - 200px);
     height: 100%;
     object-fit:scale-down !important;
     box-shadow: 0px 0px 200px 200px rgba(15,20,10,0.8); 
@@ -683,7 +684,7 @@ div.zoom-container > *:focus, div.zoom-container > *:hover{
 @media screen and (max-width: __breakpoint_width__) { /* Computed dynamically */
     div.zoom-container > *:focus, div.zoom-container > *:hover{
         width:100%;
-        height: calc(100vh - 200px);
+        height: calc(100% - 200px);
         top: 100px;
         left:0px;
     }

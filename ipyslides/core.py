@@ -876,6 +876,14 @@ class Customize:
                         '__codefont__',self.main._font_family['code'])
         if self.reflow_check.value:
             theme_css = theme_css.replace('</style>','') + f".SlideArea.{self.main.uid} * "+ "{max-height:max-content !important;}\n</style>"
+        
+        # Zoom Container 
+        if self.btn_zoom.value:
+            self.btn_zoom.icon= 'toggle-on'
+            theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
+        else:
+            self.btn_zoom.icon= 'toggle-off'
+        
         # Catch Fullscreen too.
         if self.btn_fs.value:
             theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
@@ -894,13 +902,6 @@ class Customize:
             
             if getattr(self.main,'box',False): # Wait for main.__init__ to complete
                 self.main.box.remove_class('FullScreen')
-        
-        # Matplotlib's SVG Zoom 
-        if self.btn_zoom.value:
-            self.btn_zoom.icon= 'toggle-on'
-            theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
-        else:
-            self.btn_zoom.icon= 'toggle-off'
         
         # Now Set Theme and emit a resize event just for being smooth in GUI transformations
         for selector in ['.controls', '.SlideArea', '.SlideBox', '.ProgBox', '.panel','.LaserPointer']:
