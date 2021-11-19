@@ -1,5 +1,6 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
-            'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format','source','raw']
+            'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format',
+            'source','raw','enable_zoom']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
@@ -11,9 +12,9 @@ from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code, SVG
 import matplotlib.pyplot as plt, os
 from IPython.utils.capture import capture_output
-from IPython.core.display import __all__ as __all
+from IPython.core.display import Image, __all__ as __all
 import ipywidgets as ipw
-from .objs_formatter import format_object, syntax_css, _fix_code
+from .objs_formatter import format_object, syntax_css, _fix_code, fix_ipy_image
 from .objs_formatter import plt2html # For backward cimpatibility and inside class
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
@@ -127,28 +128,36 @@ def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
     return f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>"""
 
-def image(filename,width='100%',caption=None, zoomable = True):
-    """Displays png/jpeg/jpg etc. images from file. Set `zoomable = True` to zoom on hover."""
+
+def image(filename=None,width='50%',caption=None, zoomable=True,**kwargs):
+    "Displays PNG/JPEG etc, `kwrags` are passed to IPython.display.Image. You can provide url for image."
     if isinstance(width,int):
-        width = f"{width}px"
-    img = f'<img src="{filename}" alt="{filename}" width="{width}" height="auto">' 
+        width = f'{width}px'
+    img = fix_ipy_image(Image(filename = filename,**kwargs),width=width)
     if caption:
         img = img + textbox(caption)  # Add caption
     if zoomable:
         return f'<div class="zoom-container">{img}</div>'
     return img
-
+    
 file2img = image #alias must be there
 
-def svg(filename,caption=None,zoomable=True):
-    "Display svg file with additional customizations."
-    svg = SVG(filename=filename)._repr_svg_()
+def svg(filename=None,caption=None,zoomable=True,**kwargs):
+    "Display svg file with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url for svg."
+    svg = SVG(filename=filename, **kwargs)._repr_svg_()
     if caption:
         svg = svg + textbox(caption)  # Add caption 
     if zoomable:
         return f'<div class="zoom-container">{svg}</div>'
     return svg
-        
+
+def enable_zoom(obj):
+    "Add zoom-container class to given object, whether a widget or html/IPYthon object"
+    try:
+        return ipw.Box([obj]).add_class('zoom-container')
+    except:
+        return {'__keep_format__': f'<div class="zoom-container">{_fix_repr(obj)}</div>'}
+  
 def file2text(filename):
     "Only reads plain text, not bytes"
     with open(filename,'r') as f:

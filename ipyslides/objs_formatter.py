@@ -29,6 +29,11 @@ def bokeh2html(bokeh_fig,title=""):
     from bokeh.embed import file_html
     return file_html(bokeh_fig, CDN, title)
 
+def fix_ipy_image(image,width='100%'):
+    img = image._repr_mimebundle_() # Picks PNG/JPEG/etc
+    _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
+    return f"<img src='{_src}' width='{width}' height='auto'/>" # width is important, height auto fixed
+
 def syntax_css():
     color_keys = {
         'inherit': 'n',
@@ -68,7 +73,8 @@ libraries = [
     {'name':'pygal','obj':'Graph','func':'render','args':{},'kwargs':{'is_unicode':True}},
     {'name':'pydeck','obj':'Deck','func':'to_html','args':(),'kwargs': {'as_string':True}},
     {'name':'pandas','obj':'DataFrame','func':'to_html','args':(),'kwargs': {}},
-    {'name':'bokeh.plotting','obj':'Figure','func':bokeh2html,'args':(),'kwargs':{'title':''}}
+    {'name':'bokeh.plotting','obj':'Figure','func':bokeh2html,'args':(),'kwargs':{'title':''}},
+    {'name':'IPython.display','obj':'Image','func':fix_ipy_image,'args':(),'kwargs':{'width':'100%'}}
     
 ]
 
