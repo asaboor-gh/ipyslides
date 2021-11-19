@@ -129,7 +129,7 @@ def details(str_html,summary='Click to show content'):
     return f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>"""
 
 
-def image(filename=None,width='50%',caption=None, zoomable=True,**kwargs):
+def image(filename=None,width='80%',caption=None, zoomable=True,**kwargs):
     "Displays PNG/JPEG etc, `kwrags` are passed to IPython.display.Image. You can provide url for image."
     if isinstance(width,int):
         width = f'{width}px'
