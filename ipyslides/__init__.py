@@ -70,6 +70,7 @@ def initialize(markdown_file=None,
     # Replace content if markdown file given
     if markdown_file and os.path.isfile(markdown_file):
         chunks = __parse_md_file(markdown_file)
+        slides.from_markdown = chunks # Set attribute to access it
         with slides.title():
             write(chunks[0])
         for i,chunk in enumerate(chunks[1:],start=1):
