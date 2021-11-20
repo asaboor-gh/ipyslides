@@ -25,7 +25,9 @@ def print_context():
     "Use `print` or function printing with onside in this context manager to display in order."
     with capture_output() as cap:
         yield
-    display(Markdown(f'```shell\n{cap.stdout}\n{cap.stderr}```'))
+    if cap.stderr:
+        return cap.stderr
+    write(raw(cap.stdout)) # clean whitspace preserved 
     
 @contextmanager
 def set_dir(path):
