@@ -1,6 +1,6 @@
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
-
+import os
 from .core import LiveSlides
 from .utils import write
 from .data_variables import animations
@@ -12,7 +12,22 @@ __all__.extend(['LiveSlides', 'write'])
 if __name__ == '__main__':
     print('Use this package in Jupyter notebook!')
     
-def initialize(magic_suffix = '',
+def __parse_md_file(md_file):
+    "Parse a Markdown file to put in slides and returns text for title and each slide."
+    with open(md_file,'r') as f:
+        lines = f.readlines()
+        breaks = [-1] # start, will add +1 next
+        for i,line in enumerate(lines):
+            if line and line.strip() =='---':
+                breaks.append(i)
+        breaks.append(len(lines)) # Last one
+        
+        ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
+        return [''.join(lines[x.start:x.stop]) for x in ranges]
+        
+    
+def initialize(markdown_file=None,
+               magic_suffix = '',
                centering = True,
                dark_theme = False,
                footer_text = 'Author Name',
@@ -27,6 +42,15 @@ def initialize(magic_suffix = '',
                animation_css = animations['slide_h'],
               ):
     """Creates insrance of `LiveSlides` with much of defualt settings enabled. 
+    You can create slides from a `markdown_file` as well. Slides separator should be --- (three dashes) in start of line.
+    _________ Markdown File Content __________
+    # Talk Title
+    ---
+    # Slide 1 
+    ---
+    # Slide 2
+    ___________________________________________
+    This will create two slides along with title page.
     `magic_suffix` add value to slide's magic, e.g. if `magic_suffix='A'`, slides should be
     created using `%%slideA` magic. Other arguments are just settings of slides. 
     """
@@ -43,6 +67,14 @@ def initialize(magic_suffix = '',
     
     with slides.slide(1):
         slides.write('# Slide 1\nOverwrite this using \n`with slide(1):`\n\t`    ...`\n or \n `%%slide 1`')
+    # Replace content if markdown file given
+    if markdown_file and os.path.isfile(markdown_file):
+        chunks = __parse_md_file(markdown_file)
+        with slides.title():
+            write(chunks[0])
+        for i,chunk in enumerate(chunks[1:],start=1):
+            with slides.slide(i):
+                write(chunk)
     return slides
 
 init = initialize # Aliase

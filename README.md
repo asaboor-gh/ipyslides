@@ -9,6 +9,25 @@ See [PDF-Slides](IPySlides-Print.pdf)
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.0.4
+- Laser pointer 🔴 is added, you can customize it's color in custom theme. 
+- `ipyslides.initialize` now has argument `markdown_file`. You can write presentation from a markdown file. Slides separator is `---` (three dashes). For example:
+```
+_________ Markdown File Content __________
+# Talk Title
+---
+# Slide 1 
+---
+# Slide 2
+___________________________________________
+```
+This will create two slides along with title page. 
+- `ls.enable_zoom(object)` will zoom that object when hovered on it while `Zoom Items` button is ON (or `Z` pressed in Jupyterlab)
+- `ls.raw` will print a string while preserving whitspaces and new lines. 
+- `ls.svg`,`ls.image`(ls.file2image is just an alias now for ls.image) can now take url or data to display image.
+- `ls.repeat` can be used to remind you of something via notification at given time interval. You can infact create a timer with combination of `ls.repeat` and `ls.notify`. 
+- Besides just matplotlib's figure, now everything inside `ls.image`, `ls.svg`,`ls.enable_zoom` will go full screen on hover with `Zoom Items` toggle button ON. 
+
 # 1.0.3
 - Now you can send notificatios based on slide using `@ls.notify_at` decorator. This is dynamic operation, so if you need to show time during slides(look at demo slide), it will show current time. Notifications are hidden during screenshot by app's mechanism, not external ones. You can turn ON/OFF notifications from settings panel. 
 - Use `Save PNG` button to save all screenshots in a folder in sequence. You can create a `Powerpoint Presentation` from these picture by following instructions in side panel or from the generated file `Make-PPT.md` along pictures.

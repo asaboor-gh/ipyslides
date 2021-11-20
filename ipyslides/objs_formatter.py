@@ -34,6 +34,7 @@ def fix_ipy_image(image,width='100%'):
     _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
     return f"<img src='{_src}' width='{width}' height='auto'/>" # width is important, height auto fixed
 
+
 def syntax_css():
     color_keys = {
         'inherit': 'n',
@@ -74,8 +75,7 @@ libraries = [
     {'name':'pydeck','obj':'Deck','func':'to_html','args':(),'kwargs': {'as_string':True}},
     {'name':'pandas','obj':'DataFrame','func':'to_html','args':(),'kwargs': {}},
     {'name':'bokeh.plotting','obj':'Figure','func':bokeh2html,'args':(),'kwargs':{'title':''}},
-    {'name':'IPython.display','obj':'Image','func':fix_ipy_image,'args':(),'kwargs':{'width':'100%'}}
-    
+    {'name':'IPython.display','obj':'Image','func':fix_ipy_image,'args':(),'kwargs':{'width':'100%'}}  
 ]
 
 def format_object(obj):

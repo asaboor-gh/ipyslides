@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from .utils import _cell_code, write, textbox
 from . import utils
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
+from .objs_formatter import fix_ipy_image
 
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
@@ -426,9 +427,7 @@ class LiveSlides(NavBar):
         if '<svg' in src and '</svg>' in src:
             image = src
         else:
-            img = Image(src,width=width)._repr_mimebundle_() # Picks PNG/JPEG
-            _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
-            image = f"<img src='{_src}' width='{width}px'/>"
+            image = fix_ipy_image(Image(src,width=width),width=width) #width both in Image and its fixing
             
         self.logo_html.value = f"""<div style='position:absolute;right:{right}px;top:{top}px;width:{width}px;height:auto;'>
                                     {image}</div>"""
