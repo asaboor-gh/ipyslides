@@ -1,11 +1,13 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
             'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format',
-            'source','raw','enable_zoom']
+            'source','raw','enable_zoom','html_node']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
+
 import re, sys, linecache
 import textwrap
+from io import BytesIO # For PIL image
 from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
 from markdown import markdown
@@ -130,12 +132,26 @@ def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
     return f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>"""
 
+def __check_pil_image(data):
+    "Check if data is a PIL Image or numpy array"
+    if data.__repr__().startswith('<PIL'):
+        im_bytes = BytesIO()
+        data.save(im_bytes,data.format,quality=95) #Save image to BytesIO in format of given image
+        return im_bytes.getvalue()
+    return data # if not return back data
 
-def image(filename=None,width='80%',caption=None, zoomable=True,**kwargs):
-    "Displays PNG/JPEG etc, `kwrags` are passed to IPython.display.Image. You can provide url for image."
+def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
+    """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
+    You can provide following to `data` parameter:
+        - An opened PIL image. Useful for image operations and then direct writing to slides. 
+        - A file path to image file.
+        - A url to image file.
+        - A str/bytes object containing image data.  
+    """
     if isinstance(width,int):
         width = f'{width}px'
-    img = fix_ipy_image(Image(filename = filename,**kwargs),width=width)
+    _data = __check_pil_image(data) #Check if data is a PIL Image or return data
+    img = fix_ipy_image(Image(data = _data,**kwargs),width=width)
     if caption:
         img = img + textbox(caption)  # Add caption
     if zoomable:
@@ -144,9 +160,9 @@ def image(filename=None,width='80%',caption=None, zoomable=True,**kwargs):
     
 file2img = image #alias must be there
 
-def svg(filename=None,caption=None,zoomable=True,**kwargs):
-    "Display svg file with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url for svg."
-    svg = SVG(filename=filename, **kwargs)._repr_svg_()
+def svg(data=None,caption=None,zoomable=True,**kwargs):
+    "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
+    svg = SVG(data=data, **kwargs)._repr_svg_()
     if caption:
         svg = svg + textbox(caption)  # Add caption 
     if zoomable:
@@ -159,6 +175,30 @@ def enable_zoom(obj):
         return ipw.Box([obj]).add_class('zoom-container')
     except:
         return {'__keep_format__': f'<div class="zoom-container">{_fix_repr(obj)}</div>'}
+    
+def html_node(tag,children = [],className = None,**node_attrs):
+    """Returns html node with given children and node attributes like style, id etc.
+    `tag` can be any valid html tag name.
+    `children` expects:
+        - str: A string to be added as node's text content.
+        - html_node: A html_node to be added as child node.
+        - list/tuple of [str, html_node]: A list of str and html_node to be added as child nodes.
+    Example:
+        html_node('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
+        """
+    if isinstance(children,str):
+        content = children
+    elif isinstance(children,(list,tuple)):
+        content = ''.join(child if isinstance(child,str) else child._repr_html_() for child in children)
+    else:
+        try:
+            content = children._repr_html_() #Try to get html representation of children if HTML object
+        except:
+            raise ValueError(f'Children should be a list/tuple of html_node or str, not {type(children)}')
+    attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
+    if className:
+        attrs = f'class="{className}"' + ' ' + attrs # space is must after className
+    return HTML(f'<{tag} {attrs}>{content}</{tag}>')
   
 def file2text(filename):
     "Only reads plain text, not bytes"
