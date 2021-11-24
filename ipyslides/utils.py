@@ -1,6 +1,6 @@
 __all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
             'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format',
-            'source','raw','enable_zoom','html_node']
+            'source','raw','enable_zoom','html_node','sig','doc']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
