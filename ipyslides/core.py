@@ -16,6 +16,7 @@ from . import utils
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 from .objs_formatter import fix_ipy_image
 
+
 def custom_progressbar(intslider):
     "This has a box as children[0] where you can put navigation buttons."
     html = ipw.HTML('''<style>

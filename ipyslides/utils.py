@@ -68,7 +68,6 @@ def _fmt_write(*columns,width_percents=None):
         widths = [f'{int(100/len(columns))}%' for _ in columns]
     else:
         widths = [f'{w}%' for w in width_percents]
-        
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] 
     _cols = ''.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
                      {''.join([_fix_repr(row) for row in _col])}
@@ -329,13 +328,19 @@ def source(collapsed = False):
             
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
-    _sig = f'<b>{callable.__name__}</b>' + str(inspect.signature(callable))
-    if prepend_str: 
-        _sig = alert(prepend_str + '.') + _sig
-    return {'__keep_format__':_sig}
+    try:
+        _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--secondary-fg);">{str(inspect.signature(callable))}</span>'
+        if prepend_str: 
+            _sig = alert(prepend_str + '.') + _sig
+        return {'__keep_format__':_sig}
+    except:
+        raise TypeError(f'Object {callable} is not a callable')
 
 def doc(callable,prepend_str = None):
     "Returns documentation of a callable. You can prepend a class/module name."
-    _doc = _fix_repr(inspect.getdoc(callable))
-    _sig = sig(callable,prepend_str)['__keep_format__']
-    return {'__keep_format__':f"<div class='PyRepr'>{_sig}<br>{_doc}</div>"}
+    try:
+        _doc = _fix_repr(inspect.getdoc(callable))
+        _sig = sig(callable,prepend_str)['__keep_format__']
+        return {'__keep_format__':f"<div class='PyRepr'>{_sig}<br>{_doc}</div>"}
+    except:
+        raise TypeError(f'Object {callable} is not a callable')

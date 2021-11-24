@@ -7,6 +7,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 from markdown import markdown
 
+
 def plt2html(plt_fig=None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
     - **Parameters**
