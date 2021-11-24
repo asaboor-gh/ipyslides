@@ -7,6 +7,7 @@ __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']]
 
 import re, sys, linecache
 import textwrap
+import inspect
 from io import BytesIO # For PIL image
 from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
@@ -325,3 +326,16 @@ def source(collapsed = False):
             write(details(out_code,summary='Show Code'))
         else:
             write(keep_format(out_code))
+            
+def sig(callable,prepend_str = None):
+    "Returns signature of a callable. You can prepend a class/module name."
+    _sig = f'<b>{callable.__name__}</b>' + str(inspect.signature(callable))
+    if prepend_str: 
+        _sig = alert(prepend_str + '.') + _sig
+    return {'__keep_format__':_sig}
+
+def doc(callable,prepend_str = None):
+    "Returns documentation of a callable. You can prepend a class/module name."
+    _doc = _fix_repr(inspect.getdoc(callable))
+    _sig = sig(callable,prepend_str)['__keep_format__']
+    return {'__keep_format__':f"<div class='PyRepr'>{_sig}<br>{_doc}</div>"}
