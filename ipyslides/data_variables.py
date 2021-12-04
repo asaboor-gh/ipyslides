@@ -487,16 +487,18 @@ a.jp-InternalAnchorLink { display: none !important;}
     opacity:1;
 }
 /* Order of below two lines matters */
-:not(.jp-LabShell) .DisplaySwitch, .SlideArea .DisplaySwitch {display:none !important;} /* No switch for embeded slides */
-.jp-LabShell .DisplaySwitch {display:block !important;}
+:not(.jp-LabShell, body[data-retro]) .DisplaySwitch, .SlideArea .DisplaySwitch {display:none !important;} /* No switch for embeded slides */
+.jp-LabShell .DisplaySwitch, body[data-retro] .DisplaySwitch{display:block !important;}
 
-.jp-LabShell .DisplaySwitch {
+.jp-LabShell .DisplaySwitch,
+body[data-retro] .DisplaySwitch {
     width:max-content;
     display:flex;
     flex-direction:row !important;
     padding-left:16px !important;
 }
-.jp-LabShell .DisplaySwitch>div>button {
+.jp-LabShell .DisplaySwitch>div>button
+body[data-retro] .DisplaySwitch>div>button {
     background:transparent;
     border: none;
     color: var(--accent-color);
@@ -504,11 +506,13 @@ a.jp-InternalAnchorLink { display: none !important;}
     border-radius:0;
     min-width:36px;
 }
-.jp-LabShell .DisplaySwitch>div>button.mod-active {
+.jp-LabShell .DisplaySwitch>div>button.mod-active,
+body[data-retro] .DisplaySwitch>div>button.mod-active {
     color:var(--primary-bg);
     background:var(--accent-color);
 }
-.jp-LabShell .DisplaySwitch>div {
+.jp-LabShell .DisplaySwitch>div,
+body[data-retro] .DisplaySwitch>div {
     display:inline-flex;
     flex-direction:row;
     width:max-content;
@@ -520,7 +524,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 
 def sidebar_layout_css(span_percent = 40):
     return f'''<style>
-.jp-LabShell {{
+.jp-LabShell, body[data-retro]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
     right: {span_percent}vw !important;
     margin-right:1px !important;
     min-width: 0 !important;
@@ -529,7 +533,8 @@ def sidebar_layout_css(span_percent = 40):
     min-width: 0 !important;
     padding-right: {span_percent}vw !importnat;
 }}
-.jp-LabShell .SlidesWrapper.__uid__ {{
+.jp-LabShell .SlidesWrapper.__uid__ ,
+body[data-retro] .SlidesWrapper.__uid__{{
     position:fixed;
     top:0px !important;
     right:0px !important;

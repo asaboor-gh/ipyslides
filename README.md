@@ -9,6 +9,10 @@ See [PDF-Slides](IPySlides-Print.pdf)
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.0.7 
+- Layout/Functionality is fixed for [RetroLab](https://github.com/jupyterlab/retrolab) which will be base for classical notebook version 7 in future.
+- `ls.sig(callable)` displays signature and `ls.doc(callable)` display signature alongwith docs in contrast to `write(callable)` directly which displays code as well. 
+
 # 1.0.5
 - `ls.image` now accepts `im = PIL.Image.open('path')` object and displays if `im` is not closed. You can display `numpy.array` from `numpy` or `opencv` image by converting it to `PIL.Image.fromarry(array)` or using `plt.imshow(array)` on it and then `write(plt.gcf())`. 
 - `html_node` function is added to separaetly add HTML without parsing it. It can display itself if on the last line of notebook's cell or can be passed to `write`,`ihtml` commands as well.
