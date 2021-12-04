@@ -21,6 +21,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     requirements = ['markdown'],
+    install_requires = [
+          'markdown',
+      ],
     packages = setuptools.find_packages(),
     keywords        = ['Jupyter', 'Widgets', 'IPython'],
     include_package_data = True,
