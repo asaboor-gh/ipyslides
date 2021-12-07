@@ -487,13 +487,13 @@ a.jp-InternalAnchorLink { display: none !important;}
     opacity:1;
 }
 /* Order of below two lines matters */
-:not(.jp-LabShell, body[data-retro]) .DisplaySwitch, .SlideArea .DisplaySwitch {display:none !important;} /* No switch for embeded slides */
+body .DisplaySwitch, .SlideArea .DisplaySwitch {display:none !important;} /* No switch for embeded slides */
 .jp-LabShell .DisplaySwitch, body[data-retro] .DisplaySwitch{display:block !important;}
 
 .jp-LabShell .DisplaySwitch,
 body[data-retro] .DisplaySwitch {
     width:max-content;
-    display:flex;
+    display:flex !important;
     flex-direction:row !important;
     padding-left:16px !important;
 }
