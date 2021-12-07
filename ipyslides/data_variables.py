@@ -51,6 +51,7 @@ def style_html(style_root = inherit_root):
     padding:2px 4px;
     color: var(--secondary-fg);
 }
+.jp-OutputArea-child, .jp-OutputArea-child .jp-OutputArea-output { background: transparent !important;background-color: transparent !important;} /* For some themes */
 .SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-RenderedHTMLCommon :not(pre) > code { background-color: var(--secondary-bg); color:var(--secondary-fg);}
