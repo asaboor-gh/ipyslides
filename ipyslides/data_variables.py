@@ -1,14 +1,14 @@
 # Author: Abdul Saboor
 # CSS for ipyslides
 light_root = ''':root {
-	--heading-fg: navy;
+	--heading-fg: crimson;
 	--primary-fg: black;
-	--primary-bg: white;
+	--primary-bg: snow;
 	--secondary-bg: whitesmoke;
 	--secondary-fg: #454545;
 	--tr-odd-bg: whitesmoke;
 	--tr-hover-bg: #D1D9E1;
-	--accent-color: navy;
+	--accent-color: crimson;
     --pointer-color: red;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
@@ -141,9 +141,10 @@ def style_html(style_root = inherit_root):
     justify-content: flex-end !important;
     align-items:center !important;
     margin-bottom:16px !important;
-    color: var(--accent-color);
+    color: var(--accent-color) !important;
     
 }
+.controls .widget-button > i { color: var(--accent-color) !important;}
 
 @media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in Notebook*/
     .SlidesWrapper .panel {width:100% !important;}
@@ -159,7 +160,12 @@ def style_html(style_root = inherit_root):
 	}
 }
 
-.SlidesWrapper h1,h2,h3,h4,h5,h6{
+.SlidesWrapper h1,
+.SlidesWrapper h2,
+.SlidesWrapper h3,
+.SlidesWrapper h4,
+.SlidesWrapper h5,
+.SlidesWrapper h6{
 	color:var(--heading-fg);
  	text-align:center;
 	overflow:hidden; /* FireFox */
@@ -358,6 +364,24 @@ div.LaserPointer { /* For laser pointer */
     box-shadow: 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color);
     display:none; /* Initial setup. Display will be set using javascript only */
 }
+/* Linked Area */
+.jp-LinkedOutputView > div.jp-OutputArea >  div:first-child,
+.jp-LinkedOutputView div.SlidesWrapper .height-slider{
+   display: none !important;
+}
+.jp-LinkedOutputView, 
+.jp-LinkedOutputView > div.jp-OutputArea,
+.jp-LinkedOutputView > div.jp-OutputArea > div.jp-OutputArea-output{
+     display:flex;
+    height: 100%;
+    width:100%;
+    padding:0;
+    margin:0;
+}
+.jp-LinkedOutputView div.SlidesWrapper{
+    height: 100% !important;
+    width: 100% !important;
+}
 </style>'''
 
 animations = {'zoom':'''<style>
@@ -456,8 +480,8 @@ a.jp-InternalAnchorLink { display: none !important;}
    .SlidesWrapper, .SlidesWrapper.FullScreen {
        height: auto !important;
    }
-   .controls, .NavWrapper button, .float-control {
-       display:none;
+   .controls, .NavWrapper button, .float-control, div.LaserPointer {
+       display:none !important;
    }
     .NavWrapper p {
         margin-left:16px;

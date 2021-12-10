@@ -343,12 +343,12 @@ class LiveSlides(NavBar):
         self.__slides_dict = {} # Initialize slide dictionary
         self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
         
-        self.iterable = self.__collect_slides() # Collect internally
-        self.nslides = self.iterable[-1]['n'].split('.')[0] if self.iterable else 0
+        self.__iterable = self.__collect_slides() # Collect internally
+        self.nslides = self.__iterable[-1]['n'].split('.')[0] if self.__iterable else 0
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 36px')
                               ).add_class('SlideArea').add_class(self.uid)
         
-        _max = len(self.iterable) if self.iterable else 0
+        _max = len(self.__iterable) if self.__iterable else 0
         super().__init__(N=_max)
         self.controls.children[1].add_class(self.uid) # Add to pro_slider_box, 
         self.theme_root = dv.inherit_root
@@ -391,6 +391,11 @@ class LiveSlides(NavBar):
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
+    
+    @property
+    def iterable(self):
+        "Get slides list"
+        return self.__iterable
         
     def _push2sidebar(self,span_percent = 50): # Value should be same as width_slider's initial value
         """Pushes this instance of LiveSlides to sidebar and other instances inline."""
@@ -454,7 +459,7 @@ class LiveSlides(NavBar):
         return self.__toasts
     
     def __display_toast(self):
-        slide_id = self.iterable[self.prog_slider.value - 1]['n']
+        slide_id = self.__iterable[self.prog_slider.value - 1]['n']
         try:
             toast = self.__toasts[slide_id]
             self.notify(content=toast['func'](toast['arg']),**toast['kwargs'])
@@ -473,7 +478,7 @@ class LiveSlides(NavBar):
         # Make slide from other slides' title page
         _slide = {'slide': other.__slides_title_page, 'func':write if isinstance(other.__slides_title_page, str) else None}
             
-        for i, s in enumerate([*self.iterable, _slide, *other.iterable]):
+        for i, s in enumerate([*self.__iterable, _slide, *other.__iterable]):
             with slides.slide(i+1):
                 if s['func'] == None:
                     s['slide'].show() # Pre-Calculated Slides
@@ -558,7 +563,7 @@ class LiveSlides(NavBar):
     
     def __display_slide(self):
         self.__display_toast() # Display in start is fine
-        item = self.iterable[self.prog_slider.value-1]
+        item = self.__iterable[self.prog_slider.value-1]
         self.info_html.value = self.__footer_text.replace('__number__',f'{item["n"]} / {self.nslides}') #Slide Number
         if not self.controls.layout.visibility == 'hidden': # No animations while printing
             check = round(float(item["n"]) - int(float(item["n"])), 2) # Must be rounded
@@ -567,7 +572,7 @@ class LiveSlides(NavBar):
         return item['slide'].show() 
            
     def __update_content(self,change):
-        if self.__slides_title_page or (self.iterable and change):
+        if self.__slides_title_page or (self.__iterable and change):
             self.loading_html.value = dv.loading_svg
             self.out.clear_output(wait=True)
             with self.out:
@@ -594,10 +599,10 @@ class LiveSlides(NavBar):
         
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
-        self.iterable = self.__collect_slides()
-        if self.iterable:
-            self.nslides = self.iterable[-1]['n'].split('.')[0] # Avoid frames number
-            self.N = len(self.iterable)
+        self.__iterable = self.__collect_slides()
+        if self.__iterable:
+            self.nslides = self.__iterable[-1]['n'].split('.')[0] # Avoid frames number
+            self.N = len(self.__iterable)
         else:
             self.nslides = 0
             self.N = 0
@@ -879,8 +884,11 @@ class Customize:
         
         # Zoom Container 
         if self.btn_zoom.value:
-            self.btn_zoom.icon= 'toggle-on'
-            theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
+            if self.btn_fs.value:
+                self.btn_zoom.icon= 'toggle-on'
+                theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
+            else:
+                self.main.notify('Objects are only zoomable in Fullscreen mode!',timeout=2)
         else:
             self.btn_zoom.icon= 'toggle-off'
         
