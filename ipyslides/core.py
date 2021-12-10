@@ -351,10 +351,10 @@ class LiveSlides(NavBar):
         _max = len(self.__iterable) if self.__iterable else 0
         super().__init__(N=_max)
         self.controls.children[1].add_class(self.uid) # Add to pro_slider_box, 
-        self.theme_root = dv.inherit_root
+        self.theme_root = dv.theme_roots['Inherit']
         self.font_scale = 1 #Scale 1 corresponds to 16px
         self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
-        self.theme_html = ipw.HTML(dv.style_html(dv.inherit_root.replace('__text_size__','16px')).replace(
+        self.theme_html = ipw.HTML(dv.style_html(self.theme_root.replace('__text_size__','16px')).replace(
                                 '__breakpoint_width__','650px').replace(
                                 '__textfont__',self._font_family['text']).replace(
                                 '__codefont__',self._font_family['code']))
@@ -760,7 +760,7 @@ class Customize:
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('height-slider') #2160 for 4K screens
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
-        self.theme_dd = ipw.Dropdown(**describe('Theme'),options=['Inherit','Light','Dark','Custom'])
+        self.theme_dd = ipw.Dropdown(**describe('Theme'),options=[*dv.theme_roots.keys(),'Custom'],value='Inherit')
         self.reflow_check = ipw.Checkbox(value=False,description='Set auto height of components for better screenshots',layout=self.theme_dd.layout)
         self.bbox_input = ipw.Text(description='L,T,R,B (px)',layout=self.theme_dd.layout,value='Type left,top,right,bottom pixel values and press ↲')
         self.main.toast_check.layout = self.theme_dd.layout # Fix same
@@ -858,22 +858,19 @@ class Customize:
         
     def update_theme(self,change=None):  
         text_size = '{}px'.format(int(self.main.font_scale*16))
-        if self.theme_dd.value == 'Inherit':
-            theme_css = dv.style_html(self.main.theme_root)
-        elif self.theme_dd.value == 'Light':
-            theme_css = dv.style_html(dv.light_root)
-        elif self.theme_dd.value == 'Dark':
-            theme_css = dv.style_html(dv.dark_root)
-        elif self.theme_dd.value == 'Custom': # In case of Custom CSS
+        if self.theme_dd.value == 'Custom': # In case of Custom CSS
             with self.main.set_dir(self.main.shell.starting_dir):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
-                        _str = dv.style_html(dv.light_root).replace('<style>','').replace('</style>','')
+                        _str = dv.style_html(dv.theme_roots['Light']).replace('<style>','').replace('</style>','')
                         f.writelines(['/* Author: Abdul Saboor */'])
                         f.write(_str)
                 # Read CSS from file
                 with open('custom.css','r') as f:
                     theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
+        else:
+            theme_css = dv.style_html(dv.theme_roots[self.theme_dd.value])
+            
         # Replace font-size and breakpoint size
         theme_css = theme_css.replace(
                         '__text_size__',text_size).replace(

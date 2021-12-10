@@ -1,19 +1,46 @@
 # Author: Abdul Saboor
 # CSS for ipyslides
-light_root = ''':root {
-	--heading-fg: crimson;
+theme_roots = {
+'Inherit': ''':root {
+	--heading-fg: var(--jp-inverse-layout-color1,navy);
+	--primary-fg:  var(--jp-inverse-layout-color0,black);
+	--primary-bg: var(--jp-layout-color0,#cad3d3);
+	--secondary-bg:var(--jp-layout-color2,#dce5e7);
+	--secondary-fg: var(--jp-inverse-layout-color4,#454545);
+	--tr-odd-bg: var(--jp-layout-color2,#e6e7e1);
+	--tr-hover-bg:var(--jp-border-color1,lightblue);
+ 	--accent-color:var(--jp-brand-color2,navy);
+    --pointer-color: var(--md-pink-A400,red);
+	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
+}
+''',
+'Light': ''':root {
+	--heading-fg: navy;
 	--primary-fg: black;
-	--primary-bg: snow;
+	--primary-bg: white;
 	--secondary-bg: whitesmoke;
 	--secondary-fg: #454545;
 	--tr-odd-bg: whitesmoke;
 	--tr-hover-bg: #D1D9E1;
-	--accent-color: crimson;
+	--accent-color: navy;
     --pointer-color: red;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
-'''
-dark_root = ''':root {
+''',
+'Fancy': ''':root {
+	--heading-fg: crimson;
+	--primary-fg: #330066;
+	--primary-bg: #99CCCC;
+	--secondary-bg: #CCFFFF;
+	--secondary-fg: #663300;
+	--tr-odd-bg: #99CC99;
+	--tr-hover-bg: #CCCC66;
+	--accent-color: crimson;
+    --pointer-color: blue;
+	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
+}
+''',
+'Dark': ''':root {
 	--heading-fg: snow;
 	--primary-fg: white;
 	--primary-bg: black;
@@ -26,21 +53,10 @@ dark_root = ''':root {
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 '''
-inherit_root = """:root {
-	--heading-fg: var(--jp-inverse-layout-color1,navy);
-	--primary-fg:  var(--jp-inverse-layout-color0,black);
-	--primary-bg: var(--jp-layout-color0,#cad3d3);
-	--secondary-bg:var(--jp-layout-color2,#dce5e7);
-	--secondary-fg: var(--jp-inverse-layout-color4,#454545);
-	--tr-odd-bg: var(--jp-layout-color2,#e6e7e1);
-	--tr-hover-bg:var(--jp-border-color1,lightblue);
- 	--accent-color:var(--jp-brand-color2,navy);
-    --pointer-color: var(--md-pink-A400,red);
-	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
 }
-"""
 
-def style_html(style_root = inherit_root):
+
+def style_html(style_root = theme_roots['Inherit']):
 	return '<style>\n' + style_root + ''' 
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 70% !important; 
@@ -527,8 +543,8 @@ body[data-retro] .DisplaySwitch>div>button {
     background:transparent;
     border: none;
     color: var(--accent-color);
-    width:auto;
-    border-radius:0;
+    width:60px;
+    border-radius:0 !important;
     min-width:36px;
 }
 .jp-LabShell .DisplaySwitch>div>button.mod-active,
@@ -540,7 +556,7 @@ body[data-retro] .DisplaySwitch>div>button.mod-active {
 body[data-retro] .DisplaySwitch>div {
     display:inline-flex;
     flex-direction:row;
-    width:max-content;
+    width:150px;
     border: 1px solid var(--accent-color);
     padding: 2px 0px;
 }
