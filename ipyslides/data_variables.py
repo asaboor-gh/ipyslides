@@ -29,14 +29,14 @@ theme_roots = {
 ''',
 'Fancy': ''':root {
 	--heading-fg: crimson;
-	--primary-fg: #330066;
-	--primary-bg: #99CCCC;
-	--secondary-bg: #99DDDD;
-	--secondary-fg: #663300;
-	--tr-odd-bg: #99CC99;
-	--tr-hover-bg: #99DD99;
-	--accent-color: crimson;
-    --pointer-color: blue;
+	--primary-fg: #75652c;
+	--primary-bg: #fdf6e3;
+	--secondary-bg: #fff1e4;
+	--secondary-fg: #0b8080;
+	--tr-odd-bg: #e8e3cf;
+	--tr-hover-bg: #fff1c1;
+	--accent-color: #9b0d2a;
+    --pointer-color: #f51188;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 ''',
