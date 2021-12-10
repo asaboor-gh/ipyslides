@@ -31,10 +31,10 @@ theme_roots = {
 	--heading-fg: crimson;
 	--primary-fg: #330066;
 	--primary-bg: #99CCCC;
-	--secondary-bg: #CCFFFF;
+	--secondary-bg: #99DDDD;
 	--secondary-fg: #663300;
 	--tr-odd-bg: #99CC99;
-	--tr-hover-bg: #CCCC66;
+	--tr-hover-bg: #99DD99;
 	--accent-color: crimson;
     --pointer-color: blue;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
