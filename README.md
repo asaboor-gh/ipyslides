@@ -9,6 +9,15 @@ See [PDF-Slides](IPySlides-Print.pdf)
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.0.8
+- `ls.source` now let you capture source code into a variable and do not show bydefault, but this way you can write source code anywhere you want. 
+```python
+with ls.source() as src:
+    x = do_something()
+write(x,src) #will be displayed in two side by side columns, it was not that flexible before
+```
+- Theming is modified a little bit and a new `Fancy` theme is added. 
+- Bug fixes and improvements in CSS. 
 # 1.0.7 
 - Layout/Functionality is fixed for [RetroLab](https://github.com/jupyterlab/retrolab) which will be base for classical notebook version 7 in future.
 - `ls.sig(callable)` displays signature and `ls.doc(callable)` display signature alongwith docs in contrast to `write(callable)` directly which displays code as well. 

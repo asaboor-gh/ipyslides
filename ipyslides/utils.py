@@ -8,9 +8,11 @@ __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']]
 import re, sys, linecache
 import textwrap
 import inspect
+from types import SimpleNamespace
 from io import BytesIO # For PIL image
 from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
+from ipywidgets.widgets.widget_layout import Layout
 from markdown import markdown
 from IPython.display import HTML, display, Markdown, Code, SVG
 import matplotlib.pyplot as plt, os
@@ -86,7 +88,7 @@ def write(*columns,width_percents=None):
     - Give a matplotlib `figure/Axes` to it or use `ipyslides.utils.plt2html()`.
     - Give an interactive plotly figure.
     - Give a pandas dataframe `df` or `df.to_html()`.
-    - Give any object which has `to_html` method like Altair chart. 
+    - Give any object which has `to_html` method like Altair chart. (Note that chart will not remain interactive, use display(chart) if need interactivity like brushing etc.)
     - Give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
     - Give a function/class/module (without calling) and it will be displayed as a pretty printed code block.
     
@@ -117,7 +119,7 @@ def _fmt_iwrite(*columns,width_percents=None):
 def iwrite(*columns,width_percents=None):
     """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
     Text and other rich IPython content like charts can be added with `ihtml`"""
-    display(_fmt_iwrite(*columns,width_percents=width_percents))
+    return display(_fmt_iwrite(*columns,width_percents=width_percents))
 
 def fmt2cols(c1,c2,w1=50,w2=50):
     """Useful when you want to split a column in `write` command in small 2 columns, e.g displaying a firgure with text on left.
@@ -306,25 +308,40 @@ def block_k(title,*objs):
 
 @contextmanager
 def source(collapsed = False):
-    "Excute and displays source code in the context manager. Set `collapsed = True` to display in collapse."
+    """Excute and displays source code in the context manager. Set `collapsed = True` to display in collapse.
+    **Usage**:
+    ```python
+    with source() as s:
+        do_something()
+        #s is the source code that will be avaialble outside the context manager
+    write(s)
+    #s.raw, s.html are accesible attributes.
+    ```
+    """
     def frame():
         "This is better than traceback as it works same for IPython and script.py"
         return (sys._getframe().f_back.f_back.f_back.f_code.co_filename,
                 sys._getframe().f_back.f_back.f_back.f_lineno) #should be in function and go back three times
         
     file, l1 = frame()
+    #return_obj = SimpleNamespace(raw='',html='',_repr_html_ = lambda:'')
+    _alert = alert('You can get code once you exit context manager <center>OR</center>use `ipywidgets.HTML` as placeholder and change its value later, but it will show up at desiered place.')
+    return_obj = type("SourceCode",(object,),{'raw':'','html':'','_repr_html_': lambda self=None: _alert})() # create an empty object
     try:
-        yield
+        yield return_obj
     finally:
         file, l2 = frame()
         lines = linecache.getlines(file)[l1:l2]
     
         code = textwrap.dedent(''.join(lines))
+        return_obj.raw = code
         out_code = _fix_code(markdown("```python\n{}\n```".format(code),extensions=__md_extensions))
         if collapsed:
-            write(details(out_code,summary='Show Code'))
+            return_obj._repr_html_ = lambda self = None: details(out_code,summary='Show Code')
         else:
-            write(keep_format(out_code))
+            return_obj._repr_html_ = lambda self = None: out_code
+            
+        return_obj.html = return_obj._repr_html_()
             
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."

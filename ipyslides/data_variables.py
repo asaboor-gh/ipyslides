@@ -71,6 +71,8 @@ def style_html(style_root = theme_roots['Inherit']):
 .SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-RenderedHTMLCommon :not(pre) > code { background-color: var(--secondary-bg); color:var(--secondary-fg);}
+.jp-RenderedText, .jp-RenderedText pre {color:var(--primary-fg) !important;}
+.widget-html, .widget-html .widget-html-content > div {display:grid !important; overflow:auto !important;}
 .jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
@@ -224,7 +226,7 @@ def style_html(style_root = theme_roots['Inherit']):
 }
 .SlidesWrapper div.codehilite code {
     counter-increment: line;
-    display:block; /* should be on new line */
+    display:block !important; /* should be on new line */
     width:auto;
     min-width:100%;
 }

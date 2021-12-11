@@ -1,4 +1,4 @@
-__version__ = '1.0.7'
+__version__ = '1.0.8'
 
 import os
 from .core import LiveSlides
@@ -93,4 +93,5 @@ def demo():
             slides.write_citations()
         
     slides.prog_slider.value = 0 # back to title
+    slides.setting.theme_dd.value = 'Fancy'
     return slides
