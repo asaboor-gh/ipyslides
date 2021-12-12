@@ -790,7 +790,7 @@ otherwise select `Custom Slide Size` and change size there according to found as
 '''
 
 more_instructions =f'''# How to Use
-### Jupyter Lab Only
+### Jupyter Lab Only (Retro Lab as well)
 Having your cursor over slides:
 
 - Press `Ctrl + Shift + C` to change the theme, create console/terminal etc.
@@ -808,7 +808,7 @@ but captures of multiple times in a slides are first to last in order in time.
 
 ### PDF Printing
 There are two ways of printing to PDF.
-- Capturing each screenshot based on slide's state (in order) and later using `Save Slides Screenshots to PDF`. This is a manual process but you have full control of view of slide.
+- Capturing each screenshot based on slide's state (in order) and later using `Save PDF`. This is a manual process but you have full control of view of slide.
 - Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `load_time` in `ls.print_settings` value and then print.
 
 #### Assuming you have `ls = LiveSlides()`
@@ -820,7 +820,7 @@ There are two ways of printing to PDF.
 ```python
 import ipyslides as isd 
 slides = isd.initilize() # >= 1.0.0, changes cell content blow this version
-@slides.slides(1,*objs)
+@slides.frames(1,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)
 #create a rich content title page with `%%title` or \n`with title():\n    ...`\n context manager.
@@ -836,7 +836,7 @@ settings_instructions = f'''{more_instructions}
 {how_to_ppt}
 ### Custom Theme
 For custom themes, change below `Theme` dropdown to `Custom`.
-You will see a `custom.css` in current folder,edit it and chnage
+You will see a `custom.css` in current folder,edit it and change
 font scale or set theme to another value and back to `Custom` to take effect. 
 > Note: `custom.css` is only picked from current directory.
           
