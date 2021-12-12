@@ -1,6 +1,7 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
-import numpy as np, matplotlib.pyplot as plt # plt for imshow here
+import matplotlib.pyplot as plt # plt for imshow here
 import itertools, sys
+import warnings
 from threading import Event, Thread
 from time import sleep
 from PIL import ImageGrab
@@ -8,7 +9,7 @@ from IPython.display import display, Javascript, HTML, Image
 import ipywidgets as ipw
 from ipywidgets import Layout,Button,Box,HBox,VBox
 from . import data_variables as dv
-import datetime, re, os #re for updating font-size and slide number
+import datetime, os 
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
 from .utils import _cell_code, write, textbox
@@ -396,6 +397,11 @@ class LiveSlides(NavBar):
     def iterable(self):
         "Get slides list"
         return self.__iterable
+    
+    @property
+    def current_source(self):
+        "Get source code from current context manager `with source():` even if it is not assigned to a variable"
+        return self.user_ns.get('__current_source_code__','`with source():` is not used yet')
         
     def _push2sidebar(self,span_percent = 50): # Value should be same as width_slider's initial value
         """Pushes this instance of LiveSlides to sidebar and other instances inline."""
@@ -749,6 +755,7 @@ class LiveSlides(NavBar):
     
     def get_cell_code(self,this_line=True,magics=False,comments=False,lines=None):
         "Get current cell's code. `lines` should be list/tuple of line numbers to include if filtered."
+        warnings.warn('This function will be deprecated in future. Use `with source() context manager` instead.',DeprecationWarning, stacklevel=2)
         return _cell_code(shell=self.shell,this_line=this_line,magics=magics,comments=comments,lines=lines)
 
 class Customize:

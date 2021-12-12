@@ -9,13 +9,15 @@ See [PDF-Slides](IPySlides-Print.pdf)
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
-# 1.0.8
+# 1.0.9
 - `ls.source` now let you capture source code into a variable and do not show bydefault, but this way you can write source code anywhere you want. 
 ```python
 with ls.source() as src:
     x = do_something()
 write(x,src) #will be displayed in two side by side columns, it was not that flexible before
 ```
+- Even if you do not explicitly assign `ls.source() as s:`, you can still access current code block using `ls.current_source`. 
+- `ls.get_cell_code` will be deprecated in future in favor of verstile `ls.source`.
 - Theming is modified a little bit and a new `Fancy` theme is added. 
 - Bug fixes and improvements in CSS. 
 # 1.0.7 

@@ -106,7 +106,7 @@ with slides.slide(10):
 
 # Plotly and Pandas DataFrame only show if you have installed
 with slides.slide(11,background='#800000'):
-    with slides.source() as s:
+    with slides.source():
         try:
             import pandas as pd 
             import altair as alt
@@ -126,7 +126,7 @@ with slides.slide(11,background='#800000'):
         write(('## Writing Pandas DataFrame',df),
             ('## Writing Altair Chart\nMay not work everywhere, needs javascript',chart)
             )
-    write(s)
+    write(slides.current_source) #Show source code of above block even without assignning to variable explicitly
     
 try:
     import plotly.graph_objects as go

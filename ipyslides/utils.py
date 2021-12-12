@@ -5,17 +5,14 @@ __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
 
 
-import re, sys, linecache
+import sys, linecache, os
 import textwrap
 import inspect
-from types import SimpleNamespace
 from io import BytesIO # For PIL image
 from contextlib import contextmanager
 from IPython.core.getipython import get_ipython
-from ipywidgets.widgets.widget_layout import Layout
 from markdown import markdown
-from IPython.display import HTML, display, Markdown, Code, SVG
-import matplotlib.pyplot as plt, os
+from IPython.display import HTML, display, Code, SVG
 from IPython.utils.capture import capture_output
 from IPython.core.display import Image, __all__ as __all
 import ipywidgets as ipw
@@ -311,7 +308,7 @@ def source(collapsed = False):
     """Excute and displays source code in the context manager. Set `collapsed = True` to display in collapse.
     **Usage**:
     ```python
-    with source() as s:
+    with source() as s: #if not used as `s`, still it is stored in variable `__current_source_code__` that you can acess by this name or from `LiveSlides.current_source`
         do_something()
         #s is the source code that will be avaialble outside the context manager
     write(s)
@@ -327,6 +324,7 @@ def source(collapsed = False):
     #return_obj = SimpleNamespace(raw='',html='',_repr_html_ = lambda:'')
     _alert = alert('You can get code once you exit context manager <center>OR</center>use `ipywidgets.HTML` as placeholder and change its value later, but it will show up at desiered place.')
     return_obj = type("SourceCode",(object,),{'raw':'','html':'','_repr_html_': lambda self=None: _alert})() # create an empty object
+    get_ipython().user_ns['__current_source_code__'] = return_obj # add to user namespace, this does not create extra object, just points to same
     try:
         yield return_obj
     finally:
