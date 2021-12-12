@@ -72,7 +72,7 @@ def style_html(style_root = theme_roots['Inherit']):
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-RenderedHTMLCommon :not(pre) > code { background-color: var(--secondary-bg); color:var(--secondary-fg);}
 .jp-RenderedText, .jp-RenderedText pre {color:var(--primary-fg) !important;}
-.widget-html, .widget-html .widget-html-content > div {display:grid !important; overflow:auto !important;}
+.widget-html:not(.LaserPointer), .widget-html .widget-html-content > div {display:grid !important; overflow:auto !important;}
 .jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
@@ -381,6 +381,7 @@ div.LaserPointer { /* For laser pointer */
     background: var(--pointer-color);
     box-shadow: 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color);
     display:none; /* Initial setup. Display will be set using javascript only */
+    overflow:hidden !important; /* To hide at edges */
 }
 /* Linked Area */
 .jp-LinkedOutputView > div.jp-OutputArea >  div:first-child,
