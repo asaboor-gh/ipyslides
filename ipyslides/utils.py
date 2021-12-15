@@ -105,18 +105,61 @@ def ihtml(*columns,width_percents=None):
 
 def _fmt_iwrite(*columns,width_percents=None):
     if not width_percents:
-        widths = ['auto' for _ in columns]
+        widths = [f'{int(100/len(columns))}%' for _ in columns]
     else:
         widths = [f'{w}%' for w in width_percents]
         
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] #Make list if single element
-    children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}')) for _c, _w in zip(_cols,widths)]
-    return ipw.HBox(children = children).add_class('columns')
+    
+    # Conver to other objects to HTML
+    fixed_cols = []
+    for j, _rows in enumerate(_cols):
+        row = [] 
+        for i, item in enumerate(_rows):
+            try: 
+                ipw.Box([item]) # Check for widget first 
+                item._grid_location = {'row':i,'column':j}
+                row.append(item)
+            except:
+                tmp = ipw.HTML(value = _fix_repr(item))
+                tmp._grid_location = {'row':i,'column':j}
+                row = [*row,tmp]
+        fixed_cols.append(row)
+                
+    children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}')) for _c, _w in zip(fixed_cols,widths)]
+    return ipw.HBox(children = children).add_class('columns'), fixed_cols #Return display widget and list of objects for later use
 
 def iwrite(*columns,width_percents=None):
-    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
-    Text and other rich IPython content like charts can be added with `ihtml`"""
-    return display(_fmt_iwrite(*columns,width_percents=width_percents))
+    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc 
+    or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
+    Other objects that are passed will be converted to HTML widgets. Object containing javascript code may not work, use `write` command for that.
+    **Returns**: grid,columns as reference to use later and update. rows are packed in columns.
+    **Example**:
+    grid,[(obj,_),_] = iwrite(['First column, first row','First column, second row'],'Second column')
+    #We unpacked such a way that we can replace `obj` with new one using `grid.update`
+    grid.update(obj,'First column, first row with new data') #You can update same `obj` many times. See `ipyslides.demo` for example.
+    """
+    
+    _grid, _cols = _fmt_iwrite(*columns,width_percents=width_percents)
+    display(_grid) # Actually display the widget
+    
+    def update(self, old_obj, new_obj):
+        "Updates the old object with new object, and returns reference to new_obj, which can be updated later."
+        row, col = old_obj._grid_location['row'], old_obj._grid_location['column']
+        widgets_row = list(self.children[col].children)
+        try: 
+            ipw.Box([new_obj]) # Check for widget first 
+            tmp = new_obj
+        except:
+            tmp = ipw.HTML(value = _fix_repr(new_obj))
+
+        tmp._grid_location = {'row':row,'column':col}
+        widgets_row[row] = tmp
+        self.children[col].children = widgets_row
+    
+    _grid.update = update.__get__(_grid, type(_grid)) # Make replace method available to the widget
+    return _grid, _cols
+    
 
 def fmt2cols(c1,c2,w1=50,w2=50):
     """Useful when you want to split a column in `write` command in small 2 columns, e.g displaying a firgure with text on left.

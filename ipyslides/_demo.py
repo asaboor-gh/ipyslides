@@ -140,25 +140,30 @@ with slides.slide(12):
 # Interactive widgets can't be used in write command, but still they are displayed.   
 
 with slides.slide(13):
-    with slides.source() as s:
+    with slides.source() as src:
+        import time
         import ipywidgets as ipw
-        btn = ipw.Button(description='Click Me To see Progress',layout=ipw.Layout(width='auto'))
-        prog = ipw.IntProgress(value=10)
-        html = ihtml(f"Current Value is {prog.value}")
-        source_html = ipw.HTML()
-        def onclick(btn):
-            prog.value = prog.value + 10
-            if prog.value > 90:
-                prog.value = 0
-            html.value = f"Current Value is {prog.value}"
-
-        btn.on_click(onclick)
+        import numpy as np, matplotlib.pyplot as plt
         
         write('## Interactive Apps on Slide\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
-        iwrite([prog,btn,html], source_html,width_percents=[40,60])
+        grid, [(plot,button),(code,)] = slides.iwrite([
+            '## Plot will be here! Click button below to activate it!',
+            ipw.Button(description='Click me to animate race plot',layout=ipw.Layout(width='auto'))],'Code')
+        
+        def onclick(btn):
+            for i in range(100):
+                time.sleep(0.001)
+                x = np.linspace(i,i+1,10)
+                y = np.random.random((10,))
+                plt.barh(x,np.sort(y),height=0.1,color=plt.cm.get_cmap('inferno')(y))
+                plt.gca().set_axis_off()
+                grid.update(plot,plt.gcf()) #Update plot each time
+
+        button.on_click(onclick)
+        
         write("[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)")
     
-    source_html.value = s.html #This is to show source code inside with block
+    grid.update(code,src) #This is to show source code inside with block
 
 # Animat plot in slides  
 @slides.frames(14,*range(14,19))
