@@ -72,7 +72,7 @@ def style_html(style_root = theme_roots['Inherit']):
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-RenderedHTMLCommon :not(pre) > code { background-color: var(--secondary-bg); color:var(--secondary-fg);}
 .jp-RenderedText, .jp-RenderedText pre {color:var(--primary-fg) !important;}
-.widget-html:not(.LaserPointer), .widget-html .widget-html-content > div {display:grid !important; overflow:auto !important;}
+.widget-html:not(.LaserPointer), .widget-html .widget-html-content > div {display:grid !important; font-size: var(--text-size) !important;} /* Do not use overflow her */
 .jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
@@ -172,6 +172,7 @@ def style_html(style_root = theme_roots['Inherit']):
     .NavWrapper .progress {height:4px !important;}
     .SlideArea .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
     .SlideArea .columns>div[style] {width:100%!important;} /* important to override inline CSS */
+    .SlideArea .columns .widget-html
     .ProgBox {
     	width: 40%;
     	opacity:0;
@@ -227,7 +228,7 @@ def style_html(style_root = theme_roots['Inherit']):
 .SlidesWrapper div.codehilite code {
     counter-increment: line;
     display:block !important; /* should be on new line */
-    width:auto;
+    width:max-content;
     min-width:100%;
 }
 .SlidesWrapper div.codehilite code:before{

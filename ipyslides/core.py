@@ -12,7 +12,7 @@ from . import data_variables as dv
 import datetime, os 
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
-from .utils import _cell_code, write, textbox
+from .utils import write, textbox
 from . import utils
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 from .objs_formatter import fix_ipy_image
@@ -752,11 +752,6 @@ class LiveSlides(NavBar):
                 n = n + 1
                    
         return tuple(slides_iterable)
-    
-    def get_cell_code(self,this_line=True,magics=False,comments=False,lines=None):
-        "Get current cell's code. `lines` should be list/tuple of line numbers to include if filtered."
-        warnings.warn('This function will be deprecated in future. Use `with source() context manager` instead.',DeprecationWarning, stacklevel=2)
-        return _cell_code(shell=self.shell,this_line=this_line,magics=magics,comments=comments,lines=lines)
 
 class Customize:
     def __init__(self,instance_LiveSlides):

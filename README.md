@@ -9,6 +9,19 @@ See [PDF-Slides](IPySlides-Print.pdf)
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.1.0
+- Commnd `iwrite` now returns a displayed grid and references to objects passed. So you can update live things on slides (see `ipyslides.demo` for it). It now accept other objects like matplotlib's figure etc.
+```python
+grid, x = iwrite('X') 
+grid, (x,y) = iwrite('X','Y')
+grid, (x,y) = iwrite(['X','Y'])
+grid, [(x,y),z] = iwrite(['X','Y'],'Z')
+#We unpacked such a way that we can replace objects with new one using `grid.update`
+new_obj = grid.update(x, 'First column, first row with new data') #You can update same `new_obj` withit's own widget methods.
+```
+- `ls.source` is now an HTML widget, so it can update itself within context manager block when written inside `iwrite` command. Same widget can be passed to `write` command but will not be updated.
+- `ls.get_cell_code` is no more there in favor for `ls.source`.
+- `ls.fmt2cols` is renamed to `ls.format_html` and expanded to any number of objects/columns. Result can be passed to both writing commands. `ls.ihtml` is deprecated for same reason. Just a single function is okay.
 # 1.0.9
 - `ls.source` now let you capture source code into a variable and do not show bydefault, but this way you can write source code anywhere you want. 
 ```python

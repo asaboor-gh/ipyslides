@@ -1,5 +1,5 @@
-__all__ = ['print_context', 'write', 'iwrite', 'ihtml', 'details', 'plt2html', 'set_dir', 'textbox',
-            'image','svg','file2img','file2text','file2code','fmt2cols','alert','colored','keep_format',
+__all__ = ['print_context', 'write', 'iwrite', 'details', 'plt2html', 'set_dir', 'textbox',
+            'image','svg','file2img','file2text','file2code','format_html','alert','colored','keep_format',
             'source','raw','enable_zoom','html_node','sig','doc']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
@@ -16,12 +16,22 @@ from IPython.display import HTML, display, Code, SVG
 from IPython.utils.capture import capture_output
 from IPython.core.display import Image, __all__ as __all
 import ipywidgets as ipw
+from matplotlib.pyplot import box
 from .objs_formatter import format_object, syntax_css, _fix_code, fix_ipy_image
 from .objs_formatter import plt2html # For backward cimpatibility and inside class
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
 
 __md_extensions = ['fenced_code','tables','codehilite','footnotes'] # For MArkdown Parser
+class _HTML_Widget(ipw.HTML):
+    "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method."
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        
+    def _repr_html_(self):
+        "Make it available in `write` command as well."
+        return self.value
+        
 @contextmanager
 def print_context():
     "Use `print` or function printing with onside in this context manager to display in order."
@@ -99,9 +109,6 @@ def write(*columns,width_percents=None):
     ''' 
     return display(HTML(_fmt_write(*columns,width_percents=width_percents)))
 
-def ihtml(*columns,width_percents=None):
-    "Returns an ipywidgets.HTML widget. Accepts content types same as in `write` command but does not allow javascript, so interactive graphs may not render."
-    return ipw.HTML(_fmt_write(*columns,width_percents=width_percents))
 
 def _fmt_iwrite(*columns,width_percents=None):
     if not width_percents:
@@ -114,61 +121,73 @@ def _fmt_iwrite(*columns,width_percents=None):
     # Conver to other objects to HTML
     fixed_cols = []
     for j, _rows in enumerate(_cols):
-        row = [] 
+        row = []
         for i, item in enumerate(_rows):
             try: 
                 ipw.Box([item]) # Check for widget first 
                 item._grid_location = {'row':i,'column':j}
                 row.append(item)
             except:
-                tmp = ipw.HTML(value = _fix_repr(item))
+                tmp = _HTML_Widget(value = _fix_repr(item))
+                if '<script>' in tmp.value:
+                    tmp.value,  = block_r('Error displaying object',f'Can not display object {item!r} as it needs Javascript. Use `write` or `display`.').values()
+
                 tmp._grid_location = {'row':i,'column':j}
                 row = [*row,tmp]
-        fixed_cols.append(row)
                 
+        fixed_cols.append(row)
+
     children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}')) for _c, _w in zip(fixed_cols,widths)]
-    return ipw.HBox(children = children).add_class('columns'), fixed_cols #Return display widget and list of objects for later use
+    # Format things as given in input
+    out_cols = tuple(tuple(row) if len(row) > 1 else row[0] for row in fixed_cols) 
+    out_cols = tuple(out_cols) if len(out_cols) > 1 else out_cols[0]
+    return ipw.HBox(children = children).add_class('columns'), out_cols #Return display widget and list of objects for later use
 
 def iwrite(*columns,width_percents=None):
-    """Each obj in columns should be an IPython widget like `ipywidgets`,`bqplots` etc 
+    """Each obj in columns could be an IPython widget like `ipywidgets`,`bqplots` etc 
     or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
-    Other objects that are passed will be converted to HTML widgets. Object containing javascript code may not work, use `write` command for that.
+    Other objects (those in `write` command) will be converted to HTML widgets if possible. 
+    Object containing javascript code may not work, use `write` command for that.
+    
     **Returns**: grid,columns as reference to use later and update. rows are packed in columns.
-    **Example**:
-    grid,[(obj,_),_] = iwrite(['First column, first row','First column, second row'],'Second column')
-    #We unpacked such a way that we can replace `obj` with new one using `grid.update`
-    grid.update(obj,'First column, first row with new data') #You can update same `obj` many times. See `ipyslides.demo` for example.
+    
+    **Examples**:
+    grid, x = iwrite('X')
+    grid, (x,y) = iwrite('X','Y')
+    grid, (x,y) = iwrite(['X','Y'])
+    grid, [(x,y),z] = iwrite(['X','Y'],'Z')
+    #We unpacked such a way that we can replace objects with new one using `grid.update`
+    new_obj = grid.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
     """
     
-    _grid, _cols = _fmt_iwrite(*columns,width_percents=width_percents)
+    _grid, _objects = _fmt_iwrite(*columns,width_percents=width_percents)
     display(_grid) # Actually display the widget
     
     def update(self, old_obj, new_obj):
-        "Updates the old object with new object, and returns reference to new_obj, which can be updated later."
+        "Updates `old_obj`  with `new_obj`. Returns reference to created/given widget, which can be updated by it's own methods."
         row, col = old_obj._grid_location['row'], old_obj._grid_location['column']
         widgets_row = list(self.children[col].children)
         try: 
             ipw.Box([new_obj]) # Check for widget first 
             tmp = new_obj
         except:
-            tmp = ipw.HTML(value = _fix_repr(new_obj))
-
-        tmp._grid_location = {'row':row,'column':col}
+            tmp = _HTML_Widget(value = _fix_repr(new_obj))
+            if '<script>' in tmp.value:
+                tmp.value, = block_r('Error displaying object',f'Can not update object {new_obj!r} as it needs Javascript. Use `write` or `display` commands').values()
+                return # Don't update
+        
+        tmp._grid_location = old_obj._grid_location # Keep location
         widgets_row[row] = tmp
         self.children[col].children = widgets_row
+        return tmp
     
-    _grid.update = update.__get__(_grid, type(_grid)) # Make replace method available to the widget
-    return _grid, _cols
+    _grid.update = update.__get__(_grid,type(_grid)) #attach update method to grid
+    return _grid, _objects
     
 
-def fmt2cols(c1,c2,w1=50,w2=50):
-    """Useful when you want to split a column in `write` command in small 2 columns, e.g displaying a firgure with text on left.
-    Both `c1` and c2` should be in text format or have  `_repr_<repr>_` method where <repr> is one of 
-    ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
-    `w1, w2` as their respective widths(int) in percents."""
-    return f"""<div class='columns'>
-        <div style='width:{w1}%;overflow-x:auto;'>{_fix_repr(c1)}</div>
-        <div style='width:{w2}%;overflow-x:auto;'>{_fix_repr(c2)}</div></div>"""  
+def format_html(*columns,width_percents=None):
+    'Same as `write` except it does not display but give a dict object that can be passed to `write` and `iwrite`.'
+    return keep_format(_fmt_write(*columns,width_percents=width_percents))
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
@@ -256,23 +275,6 @@ def file2code(filename,language='python',max_height='350px'):
         code = Code(filename=filename,language=language)._repr_html_()
     return f'<div style="max-height:{max_height};overflow:auto;">{code}</div>'
 
-def _cell_code(shell,line_number=True,this_line=True,magics=False,comments=False,lines=None):
-    "Return current cell's code in slides for educational purpose. `lines` should be list/tuple of line numbers to include if filtered."
-    try:
-        current_cell_code = shell.get_parent()['content']['code'].splitlines()
-    except:
-        return '<pre>get_cell_code / _cell_code</pre><p style="color:red;">can only return code from a cell execution, not from a function at run time</p>'
-        
-    if isinstance(lines,(list,tuple,range)):
-        current_cell_code = [line for i, line in enumerate(current_cell_code) if i+1 in lines]
-    if not this_line:
-        current_cell_code = [line for line in current_cell_code if '_cell_code' not in line]
-    if not magics:
-        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('%')]
-    if not comments:
-        current_cell_code = [line for line in current_cell_code if not line.lstrip().startswith('#')]
-    source = markdown("```python\n{}\n```".format('\n'.join(current_cell_code)),extensions=__md_extensions)
-    return _fix_code(source)
 
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
@@ -355,7 +357,8 @@ def source(collapsed = False):
         do_something()
         #s is the source code that will be avaialble outside the context manager
     write(s)
-    #s.raw, s.html are accesible attributes.
+    #s.raw, s.value are accesible attributes.
+    # iwite(s) will update the source even inside the context manager.
     ```
     """
     def frame():
@@ -365,8 +368,10 @@ def source(collapsed = False):
         
     file, l1 = frame()
     #return_obj = SimpleNamespace(raw='',html='',_repr_html_ = lambda:'')
-    _alert = alert('You can get code once you exit context manager <center>OR</center>use `ipywidgets.HTML` as placeholder and change its value later, but it will show up at desiered place.')
-    return_obj = type("SourceCode",(object,),{'raw':'','html':'','_repr_html_': lambda self=None: _alert})() # create an empty object
+    _alert = alert('You can get code once you exit context manager for `write` command <center>OR</center>use it will auto update inside `iwrite` command')
+    return_obj = _HTML_Widget(value=_alert)
+    return_obj.raw = ''
+    
     get_ipython().user_ns['__current_source_code__'] = return_obj # add to user namespace, this does not create extra object, just points to same
     try:
         yield return_obj
@@ -378,11 +383,9 @@ def source(collapsed = False):
         return_obj.raw = code
         out_code = _fix_code(markdown("```python\n{}\n```".format(code),extensions=__md_extensions))
         if collapsed:
-            return_obj._repr_html_ = lambda self = None: details(out_code,summary='Show Code')
+            return_obj.value =  details(out_code,summary='Show Code')
         else:
-            return_obj._repr_html_ = lambda self = None: out_code
-            
-        return_obj.html = return_obj._repr_html_()
+            return_obj.value = out_code
             
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."

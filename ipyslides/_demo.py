@@ -1,10 +1,8 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import textwrap, time
-
-from ipywidgets.widgets.widget_layout import Layout
 from .core import LiveSlides
-from .utils import write, ihtml,plt2html, iwrite, __reprs__, textbox
+from .utils import write, plt2html, iwrite, __reprs__, textbox
 from .objs_formatter import libraries
 slides = LiveSlides()
 slides.convert2slides(True)
@@ -56,19 +54,16 @@ command to show in Notebook outside `write`.
 f"""## Interactive Widgets
 ### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using `textbox` command</a>')} 
 or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf','This is refernce to FigureWidget using `slides.cite` command')}(reference at end)
-can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made available through `ihtml` command.
+can be included in `iwrite` command as well as other objects that can be passed to `write` with caveat of Javascript.
 """,
 '## Commands which do all Magic!']
 for i in range(4,8):
-    with slides.slide(i, background=f'linear-gradient(to right, olive 0%, olive {i*5}%, crimson {i*15}%, orange 100%)'):
+    with slides.slide(i, background='skyblue'):
         write(__contents[i-4])
         if i == 7:
             with slides.source() as s:
-                write(slides.block_r('slides.write/ipyslide.utils.write',write),
-                      slides.rows(slides.block_b('slides.iwrite/ipyslide.utils.iwrite',iwrite),
-                       slides.block_b('slides.ihtml/ipyslide.utils.ihtml',ihtml)
-                       )
-                    )
+                write(slides.block_r('slides.write/ipyslide.utils.write',write), 
+                      slides.block_b('slides.iwrite/ipyslide.utils.iwrite',iwrite))
                 write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
             write(s)
 # Matplotlib
@@ -141,29 +136,38 @@ with slides.slide(12):
 
 with slides.slide(13):
     with slides.source() as src:
-        import time
         import ipywidgets as ipw
         import numpy as np, matplotlib.pyplot as plt
         
         write('## Interactive Apps on Slide\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
-        grid, [(plot,button),(code,)] = slides.iwrite([
+        grid, [(plot,button, _), code] = slides.iwrite([
             '## Plot will be here! Click button below to activate it!',
-            ipw.Button(description='Click me to animate race plot',layout=ipw.Layout(width='auto'))],'Code')
+            ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
+            "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src)
         
+        def update_plot():
+            x = np.linspace(0,0.9,10)
+            y = np.random.random((10,))
+            _sort = np.argsort(y)
+            
+            fig,ax = plt.subplots(figsize=(3.4,2.6))
+            ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
+        
+            for s in ['right','top','bottom']:
+                ax.spines[s].set_visible(False)
+            
+            ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
+            global plot # only need if you want to change something on it inside function
+            plot = grid.update(plot, fig) #Update plot each time
+            
         def onclick(btn):
-            for i in range(100):
-                time.sleep(0.001)
-                x = np.linspace(i,i+1,10)
-                y = np.random.random((10,))
-                plt.barh(x,np.sort(y),height=0.1,color=plt.cm.get_cmap('inferno')(y))
-                plt.gca().set_axis_off()
-                grid.update(plot,plt.gcf()) #Update plot each time
+            plot_theme = 'dark_background' if 'Dark' in slides.setting.theme_dd.value else 'default'
+            with plt.style.context(plot_theme):
+                update_plot()
 
         button.on_click(onclick)
-        
-        write("[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)")
-    
-    grid.update(code,src) #This is to show source code inside with block
+        update_plot() #Initialize plot
+
 
 # Animat plot in slides  
 @slides.frames(14,*range(14,19))
