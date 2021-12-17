@@ -88,11 +88,11 @@ class NavBar:
        
     def __shift_right(self,change):
         if change:
-            self.prog_slider.value = (self.prog_slider.value + 1) % (self.N + 1)     
+            self.prog_slider.value = (self.prog_slider.value + 1) % self.N  
     
     def __shift_left(self,change):
         if change:
-            self.prog_slider.value = (self.prog_slider.value - 1) % (self.N + 1)
+            self.prog_slider.value = (self.prog_slider.value - 1) % self.N
     
     def show(self):
         return self.nav_bar
@@ -337,12 +337,17 @@ class LiveSlides(NavBar):
         self.animation_css = animation_css
         self.__citations = {} # Initialize citations
         self.__slides_mode = False
-        self.__slides_title_page = '''## Create title page using `%%title` magic or `self.title()` context manager.\n> Author: Abdul Saboor\n<div>
+        with capture_output() as captured:
+            write('''## Create title page using `%%title` magic or `self.title()` context manager.\n> Author: Abdul Saboor\n<div>
         <h4 style="color:green;">Create Slides using <pre>%%slide</pre> or with <pre>self.slide(slide_number)</pre> context manager.</h4>
         <h4 style="color:olive;">Read instructions by clicking on left-bottom button</h4></div>
-        '''
+        ''')
+        self.__slides_title_page = captured
+        self.__slides_title_notes = None #must be None, not True/False
         self.__slides_dict = {} # Initialize slide dictionary
         self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
+        self.__slides_notes = {} # Initialize notes dictionary
+        self.__current_slide = 'title' # Initialize current slide for notes at title page
         
         self.__iterable = self.__collect_slides() # Collect internally
         self.nslides = self.__iterable[-1]['n'].split('.')[0] if self.__iterable else 0
@@ -398,10 +403,15 @@ class LiveSlides(NavBar):
         "Get slides list"
         return self.__iterable
     
-    @property
-    def current_source(self):
-        "Get source code from current context manager `with source():` even if it is not assigned to a variable"
-        return self.user_ns.get('__current_source_code__','`with source():` is not used yet')
+    def notes(self,*columns,width_percents=None):
+        "Add notes to current slide"
+        if self.__current_slide == 'title':
+            self.__slides_title_notes, = self.format_html(*columns,width_percents = width_percents).values()
+        elif self.__current_slide == 'frames':
+            raise ValueError("Notes can't be added under slide frames")
+        else:
+            self.__slides_notes[self.__current_slide], = self.format_html(*columns,width_percents = width_percents).values()
+        
         
     def _push2sidebar(self,span_percent = 50): # Value should be same as width_slider's initial value
         """Pushes this instance of LiveSlides to sidebar and other instances inline."""
@@ -477,19 +487,13 @@ class LiveSlides(NavBar):
         slides.convert2slides(True)
         slides.set_footer() #starting text
         with slides.title():
-            if isinstance(self.__slides_title_page, str):
-                write(self.__slides_title_page) #Markdown String 
-            else:
-                self.__slides_title_page.show() #Ipython Captured Output 
+            self.__slides_title_page.show() #Ipython Captured Output 
         # Make slide from other slides' title page
-        _slide = {'slide': other.__slides_title_page, 'func':write if isinstance(other.__slides_title_page, str) else None}
+        _slide = {'slide': other.__slides_title_page}
             
         for i, s in enumerate([*self.__iterable, _slide, *other.__iterable]):
             with slides.slide(i+1):
-                if s['func'] == None:
-                    s['slide'].show() # Pre-Calculated Slides
-                else:
-                    s['func'](s['slide']) #Show dynamic slides 
+                s['slide'].show() # Pre-Calculated Slides
         return slides
     
     def cite(self,key, citation,here=False):
@@ -569,8 +573,11 @@ class LiveSlides(NavBar):
     
     def __display_slide(self):
         self.__display_toast() # Display in start is fine
-        item = self.__iterable[self.prog_slider.value-1]
-        self.info_html.value = self.__footer_text.replace('__number__',f'{item["n"]} / {self.nslides}') #Slide Number
+        item = self.__iterable[self.prog_slider.value]
+        
+        _number = f'{item["n"]} / {self.nslides}' if self.prog_slider.value != 0 else ''
+        self.info_html.value = self.__footer_text.replace('__number__',_number) #Slide Number
+        
         if not self.controls.layout.visibility == 'hidden': # No animations while printing
             check = round(float(item["n"]) - int(float(item["n"])), 2) # Must be rounded
             if check <= 0.1: # First frame should slide only to make consistent look
@@ -582,16 +589,7 @@ class LiveSlides(NavBar):
             self.loading_html.value = dv.loading_svg
             self.out.clear_output(wait=True)
             with self.out:
-                if self.prog_slider.value == 0:
-                    self.info_html.value = self.__footer_text.replace('__number__','')
-                    if not self.controls.layout.visibility == 'hidden': # No animations while printing
-                        write(self.animation_css)
-                    if isinstance(self.__slides_title_page, str):
-                        write(self.__slides_title_page) #Markdown String 
-                    else:
-                        self.__slides_title_page.show() #Ipython Captured Output
-                else:
-                    self.__display_slide()
+                self.__display_slide()
 
             self.loading_html.value = ''       
             
@@ -612,7 +610,7 @@ class LiveSlides(NavBar):
         else:
             self.nslides = 0
             self.N = 0
-        self.prog_slider.max = self.N
+        self.prog_slider.max = self.N - 1
         self.__update_content(True) # Force Refresh
         
     def write_slide_css(self,**css_props):
@@ -632,6 +630,8 @@ class LiveSlides(NavBar):
         line = line.strip() #VSCode bug to inclue \r in line
         if line and not line.isnumeric():
             return print(f'You should use %%slide integer, not %%slide {line}')
+        
+        self.__current_slide = f'{line}'
         if self.__slides_mode:
             self.shell.run_cell_magic('capture',line,cell)
             if line: #Only keep slides with line number
@@ -647,6 +647,8 @@ class LiveSlides(NavBar):
         `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
         if not isinstance(slide_number,int):
             return print(f'slide_number expects integer, got {slide_number!r}')
+        
+        self.__current_slide = f'{slide_number}'
         with capture_output() as cap:
             self.write_slide_css(**css_props)
             yield
@@ -674,6 +676,7 @@ class LiveSlides(NavBar):
     
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
+        self.__current_slide = 'title'
         if self.__slides_mode:
             self.shell.run_cell_magic('capture','title_output',cell)
             self.__slides_title_page = self.shell.user_ns['title_output']
@@ -686,6 +689,7 @@ class LiveSlides(NavBar):
     def title(self,**css_props):
         """Use this context manager to write title.
         `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
+        self.__current_slide = 'title'
         with capture_output() as cap:
             self.write_slide_css(**css_props)
             yield
@@ -700,6 +704,7 @@ class LiveSlides(NavBar):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
         Every `obj` is shown on it's own frame. No return of function required, if any, only should be display/show etc.
         `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
+        self.__current_slide = 'frames'
         def _frames(func):
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
@@ -741,16 +746,17 @@ class LiveSlides(NavBar):
         slides_iterable,n = [], 1 # n is start of slides, no other way
         for i in range(_min,_max):
             if f'{i}' in self.__slides_dict.keys():
-                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':f'{n}'}) 
+                notes = self.__slides_notes[f'{i}'] if f'{i}' in self.__slides_notes else None
+                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':f'{n}','notes':notes}) 
                 n = n + 1
             if f'd{i}' in self.__dynamicslides_dict.keys():
                 __dynamic = self.__dynamicslides_dict[f'd{i}']
-                slides = [{'slide':obj,'n':f'{n}.{j}'} for j, obj in enumerate(__dynamic['objs'],start=1)]
+                slides = [{'slide':obj,'n':f'{n}.{j}','notes':None} for j, obj in enumerate(__dynamic['objs'],start=1)]
                 if len(slides) == 1:
                     slides[0]['n'] = slides[0]['n'].split('.')[0] # No float in single frame
                 slides_iterable = [*slides_iterable,*slides] 
                 n = n + 1
-                   
+        slides_iterable =[{'slide':self.__slides_title_page,'n':'0','notes': self.__slides_title_notes}, *slides_iterable]
         return tuple(slides_iterable)
 
 class Customize:

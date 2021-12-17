@@ -220,14 +220,30 @@ def style_html(style_root = theme_roots['Inherit']):
 
 .SlidesWrapper div.codehilite pre {
     color: var(--primary-fg)!important;
-    padding: 0px 4px !important;
+    padding: 0 4px 8px 4px !important;
     overflow: auto !important;
     background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
 }
+.SlidesWrapper div.codehilite pre::before {
+    content: "🔴 🟡 🟢";
+    font-size:0.7em;
+    position:absolute;
+    z-index:1;
+    display:block;
+    background:var(--secondary-bg);
+    width: auto !important;
+    min-width: calc(100% - 8px) !important;
+    box-sizing: border-box !important;
+    min-height:2.2em !important;
+    padding:8px 8px 8px 4px;
+}
+.SlideArea div.block div.codehilite pre::before {
+    min-width: calc(100% - 20px) !important;
+}
 .SlidesWrapper div.codehilite code {
     counter-increment: line;
-    display:block !important; /* should be on new line */
+    display:inline-block !important; /* should be on new line */
     width:max-content;
     min-width:100%;
 }
@@ -240,16 +256,27 @@ def style_html(style_root = theme_roots['Inherit']):
     background:var(--secondary-bg);
     color: var(--secondary-fg);
     display:inline-block; /* should be inline */
-    width:1.5em;
+    width:1.2em;
     text-align:right;
-    border-right: 1px solid var(--tr-hover-bg);
-    margin-right:4px;
     -webkit-user-select: none;
+    margin-left:-3em;
+    margin-right: 8px;
+    font-size: 80%;
 }
+.SlidesWrapper div.codehilite pre code:nth-child(1) {
+    margin-top:2.2em !important;
+}
+.SlidesWrapper div.codehilite code.code-no-focus {
+    opacity:0.3 !important;
+}
+.SlidesWrapper div.codehilite code.code-focus {
+    text-shadow: 0 0 1px var(--primary-bg);
+}
+
 .SlidesWrapper div.codehilite {  
     margin: 4px 0px !important; /* Opposite to padding to balance it */
-    border: 1px solid var(--tr-hover-bg) !important;
-    border-radius: 4px !important;
+    border: none !important;
+    border-radius: 0 !important;
     max-height: 400px; /* Try avoiding important here */
     height: auto !important;
     overflow: auto !important;
@@ -261,10 +288,19 @@ def style_html(style_root = theme_roots['Inherit']):
     height: auto !important;
     overflow: auto !important;
 }
-.SlidesWrapper div.codehilite pre>code {
+.SlidesWrapper div.codehilite pre > code {
     background:transparent !important;
     color: var(--primary-fg)!important;
-    white-space:pre !important;
+    white-space: pre !important;
+    display:inline-block !important;
+    width:auto;
+    min-width: 90% !important;
+    overflow-wrap: normal !important;
+    margin-left:2.2em;
+    padding-left: 4px;
+}
+.SlidesWrapper div.codehilite  code > span {
+    white-space: normal !important;
 }
 .SlidesWrapper div.codehilite pre>code:hover {
     background: var(--tr-hover-bg) !important;

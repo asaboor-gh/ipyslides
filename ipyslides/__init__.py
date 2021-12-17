@@ -84,13 +84,13 @@ def demo():
     from . import _demo
     slides = _demo.slides 
     with slides.slide(100):
-        with slides.source():
-            write('## This is all code to generate slides')
-            write(_demo)
-            write(demo)
+        write('## This is all code to generate slides')
+        write(_demo)
+        write(demo)
     with slides.slide(101,background='#9ACD32'):
-        with slides.source():
+        with slides.source.context() as s:
             slides.write_citations()
+        write(s)
         
     slides.prog_slider.value = 0 # back to title
     slides.setting.theme_dd.value = 'Fancy'
