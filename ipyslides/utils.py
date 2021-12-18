@@ -1,5 +1,5 @@
 __all__ = ['print_context', 'write', 'iwrite', 'details', 'plt2html', 'set_dir', 'textbox',
-            'image','svg','file2img','format_html','alert','colored','keep_format',
+            'image','svg','file2img','format_html','format_css','alert','colored','keep_format',
             'source','raw','enable_zoom','html_node','sig','doc']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
@@ -59,9 +59,11 @@ class _Source_Widget(ipw.HTML):
                     link = i
             # i will go up to some value, so we need to add the last lines
             if i > link:
-                _lines.append(f'<code class="code-no-focus"> + {i - link} more lines ... </code>')
+                _last_line = self._code.split('</pre>')[-1] # Get closing characters to add
+                _lines.append(f'<code class="code-no-focus"> + {i - link} more lines ... </code></pre>{_last_line}')
             
-            self.value = ''.join(_lines)   # update value    
+            self.value = ''.join(_lines)   # update value 
+
             return self
         else:
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
@@ -129,21 +131,23 @@ def _fix_repr(obj):
         # Return __repr__ if nothing above
         return f"<div class='PyRepr'>{obj.__repr__()}</div>"
     
-def _fmt_write(*columns,width_percents=None):
+def _fmt_write(*columns,width_percents=None,className=None):
     if not width_percents and len(columns) >= 1:
         widths = [f'{int(100/len(columns))}%' for _ in columns]
     else:
         widths = [f'{w}%' for w in width_percents]
+    _class = className if isinstance(className,str) else ''
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] 
     _cols = ''.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
                      {''.join([_fix_repr(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,widths)])
     _cols = syntax_css() + _cols if 'codehilite' in _cols else _cols
     if len(columns) == 1:
-        return _cols
-    return f'''<div class="columns">{_cols}</div>'''
+        return _cols.replace('<div', f'<div class = "{_class}"',1) if _class else _cols
+    
+    return f'''<div class="columns {_class}">{_cols}</div>''' if _class else f'''<div class="columns">{_cols}</div>'''
         
-def write(*columns,width_percents=None): 
+def write(*columns,width_percents=None,className=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
     Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows or explictly call `rows`. 
     
@@ -159,12 +163,14 @@ def write(*columns,width_percents=None):
     If an object is not in above listed things, `obj.__repr__()` will be printed. If you need to show other than __repr__, use `display(obj)` outside `write` command or use
     methods specific to that library to show in jupyter notebook.
     
+    If you give a className, add CSS of it using `format_css` function and provide it to `write` function.
+    
     Note: Use `keep_format` method to keep format of object for example `keep_format(altair_chart.to_html())`.
     Note: You can give your own type of data provided that it is converted to an HTML string.
     Note: `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
     
     ''' 
-    return display(HTML(_fmt_write(*columns,width_percents=width_percents)))
+    return display(HTML(_fmt_write(*columns,width_percents=width_percents,className=className)))
 
 
 def _fmt_iwrite(*columns,width_percents=None):
@@ -200,11 +206,13 @@ def _fmt_iwrite(*columns,width_percents=None):
     out_cols = tuple(out_cols) if len(out_cols) > 1 else out_cols[0]
     return ipw.HBox(children = children).add_class('columns'), out_cols #Return display widget and list of objects for later use
 
-def iwrite(*columns,width_percents=None):
+def iwrite(*columns,width_percents=None,className=None):
     """Each obj in columns could be an IPython widget like `ipywidgets`,`bqplots` etc 
     or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
     Other objects (those in `write` command) will be converted to HTML widgets if possible. 
     Object containing javascript code may not work, use `write` command for that.
+    
+    If you give a className, add CSS of it using `format_css` function and provide it to `iwrite` function. 
     
     **Returns**: grid,columns as reference to use later and update. rows are packed in columns.
     
@@ -218,6 +226,9 @@ def iwrite(*columns,width_percents=None):
     """
     
     _grid, _objects = _fmt_iwrite(*columns,width_percents=width_percents)
+    if isinstance(className,str):
+        _grid.add_class(className)
+        
     display(_grid) # Actually display the widget
     
     def update(self, old_obj, new_obj):
@@ -242,9 +253,17 @@ def iwrite(*columns,width_percents=None):
     return _grid, _objects
     
 
-def format_html(*columns,width_percents=None):
+def format_html(*columns,width_percents=None,className=None):
     'Same as `write` except it does not display but give a dict object that can be passed to `write` and `iwrite`.'
-    return keep_format(_fmt_write(*columns,width_percents=width_percents))
+    return keep_format(_fmt_write(*columns,width_percents=width_percents,className=className))
+
+def format_css(selector, **css_props):
+    "Provide CSS values with - replaced by _ e.g. font-size to font_size. selector is a string of valid tag/class/id etc."
+    _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
+    _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
+    props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
+    out_str = "<style>\n" + f"{selector} " + "{" + props_str + "\n}\n</style>"
+    return keep_format(out_str)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
@@ -319,14 +338,20 @@ def html_node(tag,children = [],className = None,**node_attrs):
     return HTML(f'<{tag} {attrs}>{content}</{tag}>')
 
 
-def _file2code(filename,language='python'):
+def _file2code(filename,language='python',name=None):
     "Only reads plain text or StringIO, return source object with `show_lines` and `focus_lines` methods."
     try:
         text = filename.read() # if stringIO
     except:
         with open(filename,'r') as f:
             text = f.read()
-        
+            
+    if isinstance(name,str):
+        _title = name
+    else:
+        _title = language[0].capitalize() + language[1:]
+    
+    _class = _title.replace('.','').replace('\s+','')
     if 'ython' in language:
         code = markdown(f'```{language}\n{text}\n```',extensions=__md_extensions)
     else:
@@ -334,16 +359,20 @@ def _file2code(filename,language='python'):
             
         _arr = [_h.split('</pre>') for _h in code.split('<pre>')]
         start, middle, end = [v for vs in _arr for v in vs] # Flatten
-        middle = ''.join(f'<code>{line}</code>' for line in middle.splitlines())
-        code = f'<div class="codehilite"> {start} <pre> {middle} </pre> {end} </div>'
+        middle = ''.join(f'<code>{line}</code>' for line in middle.strip().splitlines())
+        code = f'<div class="codehilite {_class}"> {start} <pre> {middle} </pre> {end} </div>'
+    
+    code = f'''<style> div.codehilite.{_class}::before {{
+                content: '🔴 🟡 🟢  {_title}' !important;
+            }}</style>''' + code
     out = _Source_Widget(value = _fix_code(code))
     out.raw = text 
     return out
 
-def _str2code(text,language='python'):
+def _str2code(text,language='python',name=None):
     "Only reads plain text source code, return source object with `show_lines` and `focus_lines` methods."
     s = StringIO(text)
-    return _file2code(s,language=language)
+    return _file2code(s,language=language,name=name)
  
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
@@ -429,15 +458,15 @@ class source:
         Use source.from_callable(callable) to get a source object from a callable.
         """)
     @classmethod
-    def from_string(cls,text,language='python'):
-        "Creates source object from string."
-        cls.current = _str2code(text,language=language)
+    def from_string(cls,text,language='python',name=None):
+        "Creates source object from string. `name` is alternate used name for language"
+        cls.current = _str2code(text,language=language,name=name)
         return cls.current
     
     @classmethod
-    def from_file(cls, filename,language='python'):
-        "Returns source object with `show_lines` and `focus_lines` methods."
-        cls.current = _file2code(filename,language)
+    def from_file(cls, filename,language='python',name=None):
+        "Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language"
+        cls.current = _file2code(filename,language=language,name=name)
         return cls.current
     
     @classmethod       
@@ -446,13 +475,7 @@ class source:
         for _type in ['class','function','module','method','builtin','generator']:
             if getattr(inspect,f'is{_type}')(callable):
                 source = inspect.getsource(callable)
-                _source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
-                # Create HTML
-                _source = syntax_css() + markdown(f'```python\n{_source}\n```',extensions=['fenced_code','codehilite'])
-                _source = _fix_code(_source) # Avoid empty spans/last empty line and make linenumbering possible
-                _obj = _Source_Widget(value = _source)
-                _obj.raw = source
-                cls.current =  _obj
+                cls.current = _str2code(source,language='python',name=None)
                 return cls.current
     
     @classmethod

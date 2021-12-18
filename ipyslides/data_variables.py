@@ -218,36 +218,27 @@ def style_html(style_root = theme_roots['Inherit']):
 
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
-.SlidesWrapper div.codehilite pre {
+div.codehilite, div.codehilite pre {
+    min-width: 100% !important;
+    witdh: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+}
+div.codehilite pre { /* works for both case, do not use > */
     color: var(--primary-fg)!important;
-    padding: 0 4px 8px 4px !important;
+    padding: 8px 4px 8px 4px !important; 
     overflow: auto !important;
     background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
 }
-.SlidesWrapper div.codehilite pre::before {
-    content: "🔴 🟡 🟢";
-    font-size:0.7em;
-    position:absolute;
-    z-index:1;
-    display:block;
-    background:var(--secondary-bg);
-    width: auto !important;
-    min-width: calc(100% - 8px) !important;
-    box-sizing: border-box !important;
-    min-height:2.2em !important;
-    padding:8px 8px 8px 4px;
-}
-.SlideArea div.block div.codehilite pre::before {
-    min-width: calc(100% - 20px) !important;
-}
-.SlidesWrapper div.codehilite code {
+
+div.codehilite code {
     counter-increment: line;
     display:inline-block !important; /* should be on new line */
     width:max-content;
     min-width:100%;
 }
-.SlidesWrapper div.codehilite code:before{
+div.codehilite code:before{
     content: counter(line,decimal);
     position: sticky;
     top:initial;
@@ -263,24 +254,38 @@ def style_html(style_root = theme_roots['Inherit']):
     margin-right: 8px;
     font-size: 80%;
 }
-.SlidesWrapper div.codehilite pre code:nth-child(1) {
-    margin-top:2.2em !important;
-}
-.SlidesWrapper div.codehilite code.code-no-focus {
+div.codehilite code.code-no-focus {
     opacity:0.3 !important;
 }
-.SlidesWrapper div.codehilite code.code-focus {
+div.codehilite code.code-focus {
     text-shadow: 0 0 1px var(--primary-bg);
 }
 
-.SlidesWrapper div.codehilite {  
+div.codehilite {  
     margin: 4px 0px !important; /* Opposite to padding to balance it */
     border: none !important;
     border-radius: 0 !important;
     max-height: 400px; /* Try avoiding important here */
     height: auto !important;
     overflow: auto !important;
+    display:inline-flex !important; /* for ::before */
+    padding-top: 2em !important;
 }
+div.codehilite::before {
+    content: '🔴 🟡 🟢 Python';
+    position:absolute;
+    margin-left:8px;
+    font-size:0.7em;
+    z-index:2;
+    background: var(--secondary-bg);
+    border-radius: 8px 8px 0 0;
+    box-sizing:border-box;
+    margin-top: -2em;
+    padding:4px 8px;
+    height:2em;
+}
+.widget-html div.codehilite::before {padding-top: 0 !important;}
+div.highlight, .widget-html div.codehilite {display:inline-flex !important;}
 .SlidesWrapper div.PyRepr {
     margin: 4px !important;
     white-space:pre !important;
@@ -288,7 +293,7 @@ def style_html(style_root = theme_roots['Inherit']):
     height: auto !important;
     overflow: auto !important;
 }
-.SlidesWrapper div.codehilite pre > code {
+div.codehilite pre > code {
     background:transparent !important;
     color: var(--primary-fg)!important;
     white-space: pre !important;
@@ -299,10 +304,10 @@ def style_html(style_root = theme_roots['Inherit']):
     margin-left:2.2em;
     padding-left: 4px;
 }
-.SlidesWrapper div.codehilite  code > span {
+div.codehilite  code > span {
     white-space: normal !important;
 }
-.SlidesWrapper div.codehilite pre>code:hover {
+div.codehilite pre>code:hover {
     background: var(--tr-hover-bg) !important;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {

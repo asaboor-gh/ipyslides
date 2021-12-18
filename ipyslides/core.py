@@ -2,6 +2,7 @@ from ipyslides.objs_formatter import bokeh2html, plt2html
 import matplotlib.pyplot as plt # plt for imshow here
 import itertools, sys
 import warnings
+from collections import namedtuple
 from threading import Event, Thread
 from time import sleep
 from PIL import ImageGrab
@@ -350,7 +351,7 @@ class LiveSlides(NavBar):
         self.__current_slide = 'title' # Initialize current slide for notes at title page
         
         self.__iterable = self.__collect_slides() # Collect internally
-        self.nslides = self.__iterable[-1]['n'].split('.')[0] if self.__iterable else 0
+        self.nslides = int(self.__iterable[-1]['n']) if self.__iterable else 0
         self.out = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 36px')
                               ).add_class('SlideArea').add_class(self.uid)
         
@@ -399,9 +400,11 @@ class LiveSlides(NavBar):
             w.add_class(self.uid)
     
     @property
-    def iterable(self):
+    def slides(self):
         "Get slides list"
-        return self.__iterable
+        nt = namedtuple('SLIDE','slide n notes')
+        return tuple([nt(**d) for d in self.__iterable])
+    
     
     def notes(self,*columns,width_percents=None):
         "Add notes to current slide"
@@ -475,7 +478,7 @@ class LiveSlides(NavBar):
         return self.__toasts
     
     def __display_toast(self):
-        slide_id = self.__iterable[self.prog_slider.value - 1]['n']
+        slide_id = str(self.__iterable[self.prog_slider.value - 1]['n'])
         try:
             toast = self.__toasts[slide_id]
             self.notify(content=toast['func'](toast['arg']),**toast['kwargs'])
@@ -579,7 +582,7 @@ class LiveSlides(NavBar):
         self.info_html.value = self.__footer_text.replace('__number__',_number) #Slide Number
         
         if not self.controls.layout.visibility == 'hidden': # No animations while printing
-            check = round(float(item["n"]) - int(float(item["n"])), 2) # Must be rounded
+            check = round(item["n"] - int(item["n"]), 2) # Must be rounded
             if check <= 0.1: # First frame should slide only to make consistent look
                 write(self.animation_css) 
         return item['slide'].show() 
@@ -605,7 +608,7 @@ class LiveSlides(NavBar):
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self.__iterable = self.__collect_slides()
         if self.__iterable:
-            self.nslides = self.__iterable[-1]['n'].split('.')[0] # Avoid frames number
+            self.nslides = int(self.__iterable[-1]['n']) # Avoid frames number
             self.N = len(self.__iterable)
         else:
             self.nslides = 0
@@ -658,16 +661,6 @@ class LiveSlides(NavBar):
         else:
             self.__slides_dict[f'{slide_number}'] = cap 
             self.refresh()
-    
-    def enum_slides(self,start,stop,step=1,**css_props):
-        """Enumeration shortcurt for adding slides through a loop. start, stop, step are passed to `range`.
-        It can overwrite slides created with `with slide`  and `%%slide`. css_props are applied to each slide.
-        - **Example**
-            for i,s in enum_slides(50,55):
-            with s:
-                print(f'Slide {i}')
-        """
-        return ((i , self.slide(i,**css_props)) for i in range(start,stop,step))
     
     def code_line_numbering(self,b=True):
         if b:
@@ -747,16 +740,16 @@ class LiveSlides(NavBar):
         for i in range(_min,_max):
             if f'{i}' in self.__slides_dict.keys():
                 notes = self.__slides_notes[f'{i}'] if f'{i}' in self.__slides_notes else None
-                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':f'{n}','notes':notes}) 
+                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':n,'notes':notes}) 
                 n = n + 1
             if f'd{i}' in self.__dynamicslides_dict.keys():
                 __dynamic = self.__dynamicslides_dict[f'd{i}']
-                slides = [{'slide':obj,'n':f'{n}.{j}','notes':None} for j, obj in enumerate(__dynamic['objs'],start=1)]
+                slides = [{'slide':obj,'n':float(f'{n}.{j}'),'notes':None} for j, obj in enumerate(__dynamic['objs'],start=1)]
                 if len(slides) == 1:
                     slides[0]['n'] = slides[0]['n'].split('.')[0] # No float in single frame
                 slides_iterable = [*slides_iterable,*slides] 
                 n = n + 1
-        slides_iterable =[{'slide':self.__slides_title_page,'n':'0','notes': self.__slides_title_notes}, *slides_iterable]
+        slides_iterable =[{'slide':self.__slides_title_page,'n':0,'notes': self.__slides_title_notes}, *slides_iterable]
         return tuple(slides_iterable)
 
 class Customize:

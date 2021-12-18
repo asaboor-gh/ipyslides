@@ -175,20 +175,19 @@ with slides.slide(13):
 # Animat plot in slides  
 @slides.frames(14,*range(14,19))
 def func(obj):
-    fig, ax = plt.subplots()
-    x = np.linspace(0,obj+1,50+10*(obj - 13))
-    ax.plot(x,np.sin(x));
-    ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {obj - 13}')
-    ax.set_axis_off()
-    slides.write(f'### This is Slide {14}.{obj-13}\n and we are animating matplotlib',ax,width_percents=[30,70])
+    with slides.source.context() as s:
+        fig, ax = plt.subplots()
+        x = np.linspace(0,obj+1,50+10*(obj - 13))
+        ax.plot(x,np.sin(x));
+        ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {obj - 13}')
+        ax.set_axis_off()
+    slides.write([f'### This is Slide {14}.{obj-13}\n and we are animating matplotlib',
+                  s.focus_lines([obj-14])
+                  ],ax,width_percents=[40,60])
 
-# Use enumerate to iterate over slides
-for i,s in slides.enum_slides(15,17,background='var(--secondary-bg)'):
-    with s:
-        write(f'### This is Slide {i} added with `enum_slides`')
-
+    
 # Let's test notification API
-for i in range(len(slides.iterable)):
+for i in range(slides.prog_slider.max):
     @slides.notify_at(i,timeout=2)
     def push_notification(idx): # idx is will pick i from decorator, just to show these are dummy varibales
         t = time.localtime()
