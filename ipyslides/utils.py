@@ -294,8 +294,6 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     if zoomable:
         return f'<div class="zoom-container">{img}</div>'
     return img
-    
-file2img = image #alias must be there
 
 def svg(data=None,caption=None,zoomable=True,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."

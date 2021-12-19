@@ -263,18 +263,17 @@ div.codehilite code.code-focus {
 
 div.codehilite {  
     margin: 4px 0px !important; /* Opposite to padding to balance it */
-    border: none !important;
-    border-radius: 0 !important;
     max-height: 400px; /* Try avoiding important here */
     height: auto !important;
     overflow: auto !important;
     display:inline-flex !important; /* for ::before */
-    padding-top: 2em !important;
+    padding-top: 1.5em !important;
+    box-shadow: 0 1.6em 0 0 var(--secondary-bg) inset;
+    border-radius:4px!important;
 }
 div.codehilite::before {
     content: '🔴 🟡 🟢 Python';
     position:absolute;
-    margin-left:8px;
     font-size:0.7em;
     z-index:2;
     background: var(--secondary-bg);
@@ -307,7 +306,7 @@ div.codehilite pre > code {
 div.codehilite  code > span {
     white-space: normal !important;
 }
-div.codehilite pre>code:hover {
+div.codehilite pre > code:hover {
     background: var(--tr-hover-bg) !important;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
@@ -387,7 +386,8 @@ div.codehilite pre>code:hover {
 .SlidesWrapper ::-webkit-scrollbar-thumb:hover{
     background: var(--tr-hover-bg) !important;
 }
-.SlidesWrapper ::-webkit-scrollbar-corner {
+.SlidesWrapper ::-webkit-scrollbar-corner,
+.codehilite::-webkit-scrollbar-corner {
     display:none !important;
 }   
 .CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */

@@ -69,7 +69,6 @@ class NavBar:
         self.controls = HBox([self.btn_prev,ipw.Box([self.prog_slider]).add_class('ProgBox'),self.btn_next],
                             ).add_class('controls')
         self.toast_check = ipw.Checkbox(value = False, description='Hide Notifications')
-        self.__threads = [] # Assign as list
         
         self.build_navbar() # this is the main function to build the navbar
          
@@ -104,47 +103,6 @@ class NavBar:
         if content and isinstance(content,str):
             self.toast_html.value = '' # Set first to '', otherwise may not trigger for same value again.
             self.toast_html.value = dv.notification(content=content,title=title,timeout=timeout)
-    
-    def repeat(self, ntimes, interval=1, delay=1):
-        """Decorator to execute a function after specified `interval` regularyly until it is done `ntimes` with initial `delay`.
-        All times are in seconds. The decorated function should be defined to accept one argument `n`, the number at which event is fired.
-        **Usage**
-            @repeat(2,1)
-            def send(n):
-                if n == 1:
-                    print('Fired first time')
-                else:
-                    print('Fired again')
-        ----------- OR -----------------
-            repeat(1,5,5)(lambda i: print(i))
-        """
-        def _repeat(func):
-            e = Event()
-            def loop():
-                i, time = 0, delay # First time after delay
-                while not e.wait(time): # the first call is in `interval + delay` secs
-                    i, time = i + 1, interval # Next calls after given `interval`
-                    func(i) #execute decorated function
-                    if i == ntimes:
-                        e.set() # stop it there
-                        self.__threads = [te for te in self.__threads if te['t'].is_alive()] # remove finished ones
-            t = Thread(target=loop)
-            t.start() 
-            self.__threads.append({'t':t,'e':e,'f':func})
-        return _repeat
-
-    @property
-    def active_threads(self):
-        "Get all running threads, each one has a dictionary with keys `e` as threading.Event and `t` as threading.Thread."
-        return self.__threads
-    
-    def delete_thread(self,thread):
-        "Delete a given thread {'t':...,'e':...} object given from active_threads."
-        if 't' in thread and 'e' in thread:
-            if thread['t'].is_alive():
-                thread['e'].set() # This removes active thread
-                self.__threads = [th for th in self.__threads if th['t'] != thread['t']] # Removes from list too
-        
     
     def __toggle_notify(self,change):
         "Blocks notifications."
@@ -762,7 +720,8 @@ class Customize:
         self.width_slider = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
         self.scale_slider = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         self.theme_dd = ipw.Dropdown(**describe('Theme'),options=[*dv.theme_roots.keys(),'Custom'],value='Inherit')
-        self.reflow_check = ipw.Checkbox(value=False,description='Set auto height of components for better screenshots',layout=self.theme_dd.layout)
+        self.reflow_check = ipw.Checkbox(value=False,description='Reflow Code',layout=self.theme_dd.layout)
+        self.notes_check = ipw.Checkbox(value=False,description='Display Notes',layout=self.theme_dd.layout) # do not observe, just keep track when slides work
         self.bbox_input = ipw.Text(description='L,T,R,B (px)',layout=self.theme_dd.layout,value='Type left,top,right,bottom pixel values and press ↲')
         self.main.toast_check.layout = self.theme_dd.layout # Fix same
         self.main.dd_clear.layout = self.theme_dd.layout # Fix same
@@ -771,6 +730,7 @@ class Customize:
         self.out_js_var = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_zoom = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
+        self.btn_present = ipw.ToggleButton(description='Present',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')
         btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
         self.box = VBox([Box([self.__instructions,self.main.btn_setting,],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         self.out_js_fix, self.out_js_var, # Must be in middle so that others dont get disturbed.
@@ -781,12 +741,11 @@ class Customize:
                             self.theme_dd,
                             ipw.HTML('<hr/>'),
                             self.bbox_input,
-                            self.reflow_check,
-                            self.main.toast_check,
+                            ipw.HBox([self.reflow_check,self.main.toast_check,self.notes_check],layout=btns_layout),
                             self.main.dd_clear,
                             HBox([self.main.btn_png, self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
-                            HBox([self.btn_fs,self.btn_zoom], layout=btns_layout),
+                            HBox([self.btn_fs,self.btn_zoom, self.btn_present], layout=btns_layout),
                             ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel').add_class(self.main.uid)
@@ -807,10 +766,18 @@ class Customize:
         self.reflow_check.observe(self.update_theme)
         self.update_theme() #Trigger Theme and Javascript in it
         self.bbox_input.on_submit(self.__set_bbox)
+        self.btn_present.observe(self.__present,names=['value'])
         
         for w in (self.btn_zoom,self.btn_fs,self.box):
             w.add_class(self.main.uid)
     
+    def __present(self,change):
+        if change['new'] == True:
+            self.btn_fs.value = True # Force fullscreen
+            with self.out_js_var:
+                display(Javascript('document.documentElement.requestFullscreen();'))
+        # Add how it can interact with notes and other things
+            
     def __sync_other_themes(self,change): 
         # Only way to have a better experience with themes
         for other in self.main.__class__.__slides__.values():
