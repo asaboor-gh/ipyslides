@@ -1,9 +1,8 @@
 from ipyslides.objs_formatter import bokeh2html, plt2html
 import matplotlib.pyplot as plt # plt for imshow here
 import itertools, sys
-import warnings
+import time, datetime
 from collections import namedtuple
-from threading import Event, Thread
 from time import sleep
 from PIL import ImageGrab
 from IPython.display import display, Javascript, HTML, Image
@@ -535,7 +534,7 @@ class LiveSlides(NavBar):
     def __display_slide(self):
         self.__display_toast() # Display in start is fine
         item = self.__iterable[self.prog_slider.value]
-        
+        self.setting.show_notes(item['notes']) # Display notes first
         _number = f'{item["n"]} / {self.nslides}' if self.prog_slider.value != 0 else ''
         self.info_html.value = self.__footer_text.replace('__number__',_number) #Slide Number
         
@@ -714,6 +713,7 @@ class Customize:
     def __init__(self,instance_LiveSlides):
         "Provide instance of LivSlides to work."
         self.main = instance_LiveSlides
+        self.start_time = None
         def describe(value): return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
         
         self.height_slider = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('height-slider') #2160 for 4K screens
@@ -741,7 +741,7 @@ class Customize:
                             self.theme_dd,
                             ipw.HTML('<hr/>'),
                             self.bbox_input,
-                            ipw.HBox([self.reflow_check,self.main.toast_check,self.notes_check],layout=btns_layout),
+                            ipw.HBox([self.notes_check, self.main.toast_check, self.reflow_check],layout=btns_layout),
                             self.main.dd_clear,
                             HBox([self.main.btn_png, self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
@@ -764,19 +764,79 @@ class Customize:
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_zoom.observe(self.update_theme,names=['value'])
         self.reflow_check.observe(self.update_theme)
+        self.notes_check.observe(self.__open_close_notes, names=['value'])
         self.update_theme() #Trigger Theme and Javascript in it
         self.bbox_input.on_submit(self.__set_bbox)
         self.btn_present.observe(self.__present,names=['value'])
         
-        for w in (self.btn_zoom,self.btn_fs,self.box):
+        for w in (self.btn_zoom,self.btn_fs,self.box, self.btn_present):
             w.add_class(self.main.uid)
+    
+    def show_notes(self, html_str):
+        if self.notes_check.value and html_str and isinstance(html_str,str):
+            current_time = time.localtime()
+            if current_time.tm_hour > 12:
+                h, m, f = f'{current_time.tm_hour-12}'.rjust(2,'0'), f'{current_time.tm_min}'.rjust(2,'0'), 'PM'
+            else:
+                h, m, f = f'{current_time.tm_hour}'.rjust(2,'0'), f'{current_time.tm_min}'.rjust(2,'0'), 'AM'
+            time_str = f'{h}:{m} {f}'
+            
+            if self.start_time:
+                spent = time.time() - self.start_time 
+                spent_str = f'{int(spent//3600)}:'.rjust(3,'0') + f'{int(spent//60)}'.rjust(2,'0')
+            else:
+                spent_str = '00:00'
+
+            _time = f'''<div style="border-radius:4px;padding:8px;background:var(--secondary-bg);">
+                        <h2>{time_str}</h2><hr/>
+                        <h2>{spent_str}</h2>
+                        <h4>Elapsed Time</h4><div>'''
+            theme = self.main.theme_html.value.replace(f'.{self.main.uid}','').replace('FullScreen','') #important
+            code_theme = '''<style> 
+                            pre { display:flex; flex-direction:column; } 
+                            .SlideBox { display:flex; flex-direction:row; justify-content:space-between;}
+                            .SlideBox > div:first-child { margin:auto; }
+                        </style>'''
+            node = f'''{theme}<div class="SlidesWrapper"> 
+                    <div class="SlideBox"> 
+                        <div class="SlideArea"> {code_theme}{html_str} </div> <div>{_time}</div>
+                    </div></div>'''
+            with self.out_js_var:
+                display(Javascript(f'''
+                let notes_win = window.open("","__Notes_Window__","popup");
+                notes_win.document.title = 'Notes';
+                notes_win.document.body.innerHTML = {node!r};
+                notes_win.document.body.style.background = 'var(--primary-bg)';
+                '''))
+    
+    def __open_close_notes(self,change):
+        if change['new'] == True:
+            with self.out_js_var:
+                display(Javascript('''
+                let notes_win = window.open("","__Notes_Window__","popup");
+                notes_win.resizeTo(screen.width/2,screen.height/2);
+                notes_win.moveTo(screen.width/4,screen.height*2/5);
+                notes_win.document.title = 'Notes';
+                notes_win.document.body.innerHTML = "<h1> Notes will show up here, do not close it manually, just navigate away!</h1>";
+                '''))
+        else:
+            with self.out_js_var:
+                display(Javascript('window.open("","__Notes_Window__","popup").close();'))
     
     def __present(self,change):
         if change['new'] == True:
             self.btn_fs.value = True # Force fullscreen
             with self.out_js_var:
                 display(Javascript('document.documentElement.requestFullscreen();'))
-        # Add how it can interact with notes and other things
+            
+            self.btn_present.icon = 'pause'
+            self.start_time = time.time() # Start time here
+        else:
+            with self.out_js_var:
+                display(Javascript('document.exitFullscreen();'))
+        
+            self.btn_present.icon = 'play'
+            self.start_time = None
             
     def __sync_other_themes(self,change): 
         # Only way to have a better experience with themes

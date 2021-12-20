@@ -1,4 +1,4 @@
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 import os
 from .core import LiveSlides
@@ -93,5 +93,4 @@ def demo():
         write(s)
         
     slides.prog_slider.value = 0 # back to title
-    slides.setting.theme_dd.value = 'Fancy'
     return slides

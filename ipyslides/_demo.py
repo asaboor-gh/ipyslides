@@ -87,7 +87,8 @@ with slides.slide(9):
     with slides.source.context() as s:
         write(f"### Watching Youtube Video?")
         write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
-    write(s)
+    write([slides.format_css('.youtube-source',position='absloute',width='50%',border_radius='8px 2em',background='black'), s]
+          ,className='youtube-source')
     
 # Data Table
 with slides.slide(10):
@@ -170,6 +171,8 @@ with slides.slide(13):
 
         button.on_click(onclick)
         update_plot() #Initialize plot
+    
+    slides.notes('## Something to hide from viewers!')
 
 
 # Animat plot in slides  

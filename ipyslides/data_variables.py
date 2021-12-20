@@ -675,6 +675,7 @@ function main(){
     let winFs = document.getElementsByClassName('window-fs __uid__')[0];
     let capSc = document.getElementsByClassName('screenshot-btn __uid__')[0];
     let cursor = document.getElementsByClassName('LaserPointer __uid__')[0];
+    let present = document.getElementsByClassName('presenter-btn __uid__')[0];
 
     
     // Keyboard events
@@ -703,6 +704,8 @@ function main(){
             capSc.click();  // S for screenshot
         } else if (key === 80) {
             window.print(); // P for PDF print
+        } else if (key === 84) { 
+            present.click(); // T for presenter and timer start
         }; 
         resizeWindow(); // Resize after key press, good for F key
         e.stopPropagation(); // stop propagation to jupyterlab events and other views 
@@ -839,6 +842,7 @@ Having your cursor over slides:
 - Press `Ctrl + Shift + C` to change the theme, create console/terminal etc.
 - Press `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch to other tabs like console/terminal/notebooks and do coding without leaving slides!
 - Press `F` to toggle fullscreen mode.
+- Press `T` to start timer and fullscreen mode(of browser). You need to also check the `Show Notes` option to see notes.
 
 ### Jupyter Lab + Others (Notebook, VSCode, Voila etc.)
 May not work in others but Lab is optimized.
