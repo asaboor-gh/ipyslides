@@ -572,6 +572,13 @@ a.jp-InternalAnchorLink { display: none !important;}
     height:50%;
     opacity:1;
 }
+.Inline-Notes {border: 1px solid var(--accent-color);border-radius:4px;}
+.Inline-Notes > div {
+    display: flex;
+    flex-direction:row;
+    justify-content: space-between;
+    padding:4px;
+}
 /* Order of below two lines matters */
 body .DisplaySwitch, .SlideArea .DisplaySwitch {display:none !important;} /* No switch for embeded slides */
 .jp-LabShell .DisplaySwitch, body[data-retro] .DisplaySwitch{display:block !important;}

@@ -352,6 +352,7 @@ class LiveSlides(NavBar):
         self.__update_content(True) # First attmpt
         self.app = self.box # Alias 
         self.__toasts = {} # Collecting slides' notification toasts
+        self._notes_html = ipw.HTML('Notes Area').add_class('Inline-Notes') # For below slides area
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
@@ -363,14 +364,14 @@ class LiveSlides(NavBar):
         return tuple([nt(**d) for d in self.__iterable])
     
     
-    def notes(self,*columns,width_percents=None):
-        "Add notes to current slide"
+    def notes(self,content):
+        "Add notes to current slide. Content could be any object except javascript and interactive widgets."
         if self.__current_slide == 'title':
-            self.__slides_title_notes, = self.format_html(*columns,width_percents = width_percents).values()
+            self.__slides_title_notes, = self.format_html(content).values()
         elif self.__current_slide == 'frames':
             raise ValueError("Notes can't be added under slide frames")
         else:
-            self.__slides_notes[self.__current_slide], = self.format_html(*columns,width_percents = width_percents).values()
+            self.__slides_notes[self.__current_slide], = self.format_html(content).values()
         
         
     def _push2sidebar(self,span_percent = 50): # Value should be same as width_slider's initial value
@@ -500,8 +501,14 @@ class LiveSlides(NavBar):
          
         self.display_switch.observe(self.__relocate_displays,names=['value'])        
         self.display_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
-        return display(HBox([ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
-                             self.display_switch]))
+        return display(VBox([
+                            HBox([
+                                ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
+                                self.display_switch
+                            ]),
+                            self._notes_html
+                        ])
+                )
     
     def __relocate_displays(self,change):
         if change and change['new']: # Turns ON at value 1 of display_switch
@@ -773,41 +780,48 @@ class Customize:
             w.add_class(self.main.uid)
     
     def show_notes(self, html_str):
-        if self.notes_check.value and html_str and isinstance(html_str,str):
+        self.main._notes_html.value = 'Notes Area' # Must be, so when no notes, should not be there
+        if html_str and isinstance(html_str,str):
             current_time = time.localtime()
             if current_time.tm_hour > 12:
-                h, m, f = f'{current_time.tm_hour-12}'.rjust(2,'0'), f'{current_time.tm_min}'.rjust(2,'0'), 'PM'
+                time_str = f'{current_time.tm_hour-12:0>2}:{current_time.tm_min:0>2} PM'
             else:
-                h, m, f = f'{current_time.tm_hour}'.rjust(2,'0'), f'{current_time.tm_min}'.rjust(2,'0'), 'AM'
-            time_str = f'{h}:{m} {f}'
+                time_str = f'{current_time.tm_hour:0>2}:{current_time.tm_min:0>2} AM'
+            
             
             if self.start_time:
                 spent = time.time() - self.start_time 
-                spent_str = f'{int(spent//3600)}:'.rjust(3,'0') + f'{int(spent//60)}'.rjust(2,'0')
+                spent_str = f'{int(spent//3600):0>2}:{int(spent//60):0>2}'
             else:
                 spent_str = '00:00'
 
-            _time = f'''<div style="border-radius:4px;padding:8px;background:var(--secondary-bg);">
+            _time = f'''<div style="border-radius:4px;padding:8px;background:var(--secondary-bg);min-width:max-content;">
                         <h2>{time_str}</h2><hr/>
                         <h2>{spent_str}</h2>
                         <h4>Elapsed Time</h4><div>'''
-            theme = self.main.theme_html.value.replace(f'.{self.main.uid}','').replace('FullScreen','') #important
-            code_theme = '''<style> 
-                            pre { display:flex; flex-direction:column; } 
-                            .SlideBox { display:flex; flex-direction:row; justify-content:space-between;}
-                            .SlideBox > div:first-child { margin:auto; }
-                        </style>'''
-            node = f'''{theme}<div class="SlidesWrapper"> 
-                    <div class="SlideBox"> 
-                        <div class="SlideArea"> {code_theme}{html_str} </div> <div>{_time}</div>
-                    </div></div>'''
-            with self.out_js_var:
-                display(Javascript(f'''
-                let notes_win = window.open("","__Notes_Window__","popup");
-                notes_win.document.title = 'Notes';
-                notes_win.document.body.innerHTML = {node!r};
-                notes_win.document.body.style.background = 'var(--primary-bg)';
-                '''))
+            self.main._notes_html.value = html_str + _time # show alaways
+            
+            # Next everything for Browser window case
+            if self.notes_check.value:  # Only show on demand
+                theme = self.main.theme_html.value.replace(f'.{self.main.uid}','').replace('FullScreen','') #important
+                code_theme = '''<style> 
+                                pre { display:flex; flex-direction:column; } 
+                                .SlideBox { display:flex; flex-direction:row; justify-content:space-between;}
+                                .SlideBox > div:first-child { margin:auto; }
+                            </style>'''
+                node = f'''{theme}<div class="SlidesWrapper"> 
+                        <div class="SlideBox"> 
+                            <div class="SlideArea"> {code_theme}{html_str} </div> <div>{_time}</div>
+                        </div></div>'''
+                    
+
+                with self.out_js_var:
+                    display(Javascript(f'''
+                    let notes_win = window.open("","__Notes_Window__","popup");
+                    notes_win.document.title = 'Notes';
+                    notes_win.document.body.innerHTML = {node!r};
+                    notes_win.document.body.style.background = 'var(--primary-bg)';
+                    '''))
     
     def __open_close_notes(self,change):
         if change['new'] == True:
