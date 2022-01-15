@@ -356,6 +356,7 @@ class LiveSlides(NavBar):
         
         for w in (self.btn_next,self.btn_prev,self.btn_setting,self.btn_capture,self.box):
             w.add_class(self.uid)
+            
     
     @property
     def slides(self):
@@ -506,6 +507,7 @@ class LiveSlides(NavBar):
                                 ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
                                 self.display_switch
                             ]),
+                            self.setting.btn_timer,
                             self._notes_html
                         ])
                 )
@@ -737,7 +739,7 @@ class Customize:
         self.out_js_var = ipw.Output(layout=Layout(width='auto',height='0px'))
         self.btn_fs = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
         self.btn_zoom = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
-        self.btn_present = ipw.ToggleButton(description='Present',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')
+        self.btn_timer = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')
         btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
         self.box = VBox([Box([self.__instructions,self.main.btn_setting,],layout=Layout(width='100%',height='auto',overflow='hidden')),
                         self.out_js_fix, self.out_js_var, # Must be in middle so that others dont get disturbed.
@@ -752,7 +754,7 @@ class Customize:
                             self.main.dd_clear,
                             HBox([self.main.btn_png, self.main.btn_pdf, self.main.btn_print], layout=btns_layout),
                             ipw.HTML('<hr/>'),
-                            HBox([self.btn_fs,self.btn_zoom, self.btn_present], layout=btns_layout),
+                            HBox([self.btn_fs,self.btn_zoom, self.btn_timer], layout=btns_layout),
                             ],layout=Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
                         ],layout=Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
                         ).add_class('panel').add_class(self.main.uid)
@@ -774,9 +776,9 @@ class Customize:
         self.notes_check.observe(self.__open_close_notes, names=['value'])
         self.update_theme() #Trigger Theme and Javascript in it
         self.bbox_input.on_submit(self.__set_bbox)
-        self.btn_present.observe(self.__present,names=['value'])
+        self.btn_timer.observe(self.__timeit,names=['value'])
         
-        for w in (self.btn_zoom,self.btn_fs,self.box, self.btn_present):
+        for w in (self.btn_zoom,self.btn_fs,self.box, self.btn_timer):
             w.add_class(self.main.uid)
     
     def show_notes(self, html_str):
@@ -791,15 +793,19 @@ class Customize:
             
             if self.start_time:
                 spent = time.time() - self.start_time 
-                spent_str = f'{int(spent//3600):0>2}:{int(spent//60):0>2}'
+                h, sec = divmod(spent,3600) # Houres
+                m, _ = divmod(sec,60) # Minutes
+                spent_str = f'{int(h):0>2}:{int(m):0>2}' # They are floats by default
             else:
                 spent_str = '00:00'
 
             _time = f'''<div style="border-radius:4px;padding:8px;background:var(--secondary-bg);min-width:max-content;">
-                        <h2>{time_str}</h2><hr/>
-                        <h2>{spent_str}</h2>
-                        <h4>Elapsed Time</h4><div>'''
-            self.main._notes_html.value = html_str + _time # show alaways
+                        <h2>Time: {time_str}</h2><hr/>
+                        <h3>Elapsed Time: {spent_str}</h3><div>'''
+                        
+            self.main._notes_html.value = f'''<div style="margin:-4px;padding:4px;background:var(--secondary-bg);border-radius:4px 4px 0 0;">
+                    <b style="font-size:110%;color:var(--accent-color);">Time: {time_str} | Elapsed Time: {spent_str}</b>
+                    </div>''' + html_str # show alaways
             
             # Next everything for Browser window case
             if self.notes_check.value:  # Only show on demand
@@ -837,19 +843,12 @@ class Customize:
             with self.out_js_var:
                 display(Javascript('window.open("","__Notes_Window__","popup").close();'))
     
-    def __present(self,change):
+    def __timeit(self,change):
         if change['new'] == True:
-            self.btn_fs.value = True # Force fullscreen
-            with self.out_js_var:
-                display(Javascript('document.documentElement.requestFullscreen();'))
-            
-            self.btn_present.icon = 'pause'
+            self.btn_timer.icon = 'pause'
             self.start_time = time.time() # Start time here
         else:
-            with self.out_js_var:
-                display(Javascript('document.exitFullscreen();'))
-        
-            self.btn_present.icon = 'play'
+            self.btn_timer.icon = 'play'
             self.start_time = None
             
     def __sync_other_themes(self,change): 

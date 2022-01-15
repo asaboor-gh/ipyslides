@@ -1,5 +1,5 @@
 __all__ = ['print_context', 'write', 'iwrite', 'details', 'plt2html', 'set_dir', 'textbox',
-            'image','svg','file2img','format_html','format_css','alert','colored','keep_format',
+            'image','svg','format_html','format_css','alert','colored','keep_format',
             'source','raw','enable_zoom','html_node','sig','doc']
 __all__.extend(['rows','block'])
 __all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
@@ -261,8 +261,8 @@ def format_css(selector, **css_props):
     "Provide CSS values with - replaced by _ e.g. font-size to font_size. selector is a string of valid tag/class/id etc."
     _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
     _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
-    props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-    out_str = "<style>\n" + f"{selector} " + "{" + props_str + "\n}\n</style>"
+    props_str = '\n'.join([f"    {k}: {v}" for k,v in _css_props.items()])
+    out_str = f"<style>\n{selector} {{\n{props_str}\n}}\n</style>"
     return keep_format(out_str)
         
 def details(str_html,summary='Click to show content'):
@@ -542,5 +542,3 @@ def doc(callable,prepend_str = None):
     except:
         raise TypeError(f'Object {callable} is not a callable')
     
-def float_obj(obj,x,y,width,height,zindex, box_shadow = True, **css_props):
-    ...

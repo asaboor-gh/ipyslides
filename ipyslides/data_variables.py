@@ -572,10 +572,17 @@ a.jp-InternalAnchorLink { display: none !important;}
     height:50%;
     opacity:1;
 }
-.Inline-Notes {border: 1px solid var(--accent-color);border-radius:4px;}
+.Inline-Notes {
+    border: 1px solid var(--accent-color);
+    border-radius:4px;
+    background: var(--primary-bg);
+    color: var(--primary-fg);
+    width: 85% !important; /* For see all */
+}
+    
 .Inline-Notes > div {
     display: flex;
-    flex-direction:row;
+    flex-direction:column;
     justify-content: space-between;
     padding:4px;
 }
@@ -842,30 +849,37 @@ otherwise select `Custom Slide Size` and change size there according to found as
 > Note: Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
 '''
 
-more_instructions =f'''# How to Use
-### Jupyter Lab Only (Retro Lab as well)
-Having your cursor over slides:
+more_instructions =f'''## How to Use
 
-- Press `Ctrl + Shift + C` to change the theme, create console/terminal etc.
-- Press `Ctrl + Shift + [`, `Ctrl + Shift + ]` to switch to other tabs like console/terminal/notebooks and do coding without leaving slides!
-- Press `F` to toggle fullscreen mode.
-- Press `T` to start timer and fullscreen mode(of browser). You need to also check the `Show Notes` option to see notes.
+**Key Bindings**
+Having your cursor over slides, you can use follwoing keys/combinations:
 
-### Jupyter Lab + Others (Notebook, VSCode, Voila etc.)
-May not work in others but Lab is optimized.
+| Key (comb) | Action | 
+|------------|--------|
+| `Space/RightArrowKey` | Move to next slide |
+| `Shift + Space/LeftArrowKey` | Move to previous slide |
+| `Ctrl + Shift + C` | change the theme, create console/terminal etc |
+| `Ctrl + Shift + [/]` | switch to other tabs like console/terminal/notebooks|
+| `F` | fit/release slides to/from viewport |
+| `T` | start/stop timer |
+| `Z` | toggle matplotlib/svg/image zoom mode |
+| `S` | save screenshot of current slide |
+| `P` | print PDF of current slide |
 
-- Press `Z` to toggle matplotlib zoom mode.
-- Press `Space` or right arrow key `>` to advance to next slide, `Shift + Space` or left arrow key `<` to go back.
-- Press `S` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
+**Tips**
+
+- Other keys are blocked so that you may not delete or do some random actions on notebook cells.
+- Jupyter/Retro Lab is optimized for keyboard. Other frontends like Classic Notebook, VSCode, Voila etc. may not work properly.
+- Pressing `S` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
 but captures of multiple times in a slides are first to last in order in time.
-- Press `P` to print PDF of current slide in full screen mode. You can collect all PDFs yourself. Its manual but high quality.
 
 ### PDF Printing
 There are two ways of printing to PDF.
 - Capturing each screenshot based on slide's state (in order) and later using `Save PDF`. This is a manual process but you have full control of view of slide.
 - Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `load_time` in `ls.print_settings` value and then print.
 
-#### Assuming you have `ls = LiveSlides()`
+**Assuming you have `ls = ipyslides.LiveSlides()` or `ls = ipyslides.initialize()`**
+
 - Edit and test cells in `ls.convert2slides(False)` mode.
 - Run cells in `ls.convert2slides(True)` mode from top to bottom. 
 - `%%slide integer` on cell top auto picks slide and %%title auto picks title page.
@@ -896,20 +910,23 @@ font scale or set theme to another value and back to `Custom` to take effect.
           
 --------
 For matching plots style with theme, run following code in a cell above slides.
-### Matplotlib
+
+**Matplotlib**
 ```python
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 #plt.style.available() #gives styles list
 ```
-### Plotly
+
+**Plotly**
 ```python
 import plotly.io as pio
 pio.templates.default = "plotly_white"
 #pio.templates #gives list of styles
 ```
 > Tip: Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
-### Altair
+
+**Altair**
 ```python
 import altair as alt
 alt.themes.enable('dark')

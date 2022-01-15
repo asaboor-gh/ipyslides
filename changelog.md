@@ -1,6 +1,9 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.2.1
+- Speaker Notes are added inside notebook as well, so in case you are sharing slides area of notebook in softwares like Zoom, Google Meets etc., that will be useful. No need to check `Show Notes` in this case. 
+- Miscalleneous big fixes. 
 # 1.2.0
 ### Speaker Notes 
 - You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `ls.notes` command. 
