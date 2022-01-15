@@ -854,17 +854,17 @@ more_instructions =f'''## How to Use
 **Key Bindings**
 Having your cursor over slides, you can use follwoing keys/combinations:
 
-| Key (comb) | Action | 
-|------------|--------|
-| `Space/RightArrowKey` | Move to next slide |
-| `Shift + Space/LeftArrowKey` | Move to previous slide |
-| `Ctrl + Shift + C` | change the theme, create console/terminal etc |
-| `Ctrl + Shift + [/]` | switch to other tabs like console/terminal/notebooks|
-| `F` | fit/release slides to/from viewport |
-| `T` | start/stop timer |
-| `Z` | toggle matplotlib/svg/image zoom mode |
-| `S` | save screenshot of current slide |
-| `P` | print PDF of current slide |
+| Key (comb)                   | Action                                               | 
+|------------------------------|------------------------------------------------------|
+| `Space/RightArrowKey`        | Move to next slide                                   |
+| `Shift + Space/LeftArrowKey` | Move to previous slide                               |
+| `Ctrl + Shift + C`           | change the theme, create console/terminal etc        |
+| `Ctrl + Shift + [/]`         | switch to other tabs like console/terminal/notebooks |
+| `F`                          | fit/release slides to/from viewport                  |
+| `T`                          | start/stop timer                                     |
+| `Z`                          | toggle matplotlib/svg/image zoom mode                |
+| `S`                          | save screenshot of current slide                     |
+| `P`                          | print PDF of current slide                           |
 
 **Tips**
 

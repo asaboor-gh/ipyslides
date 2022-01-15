@@ -541,4 +541,5 @@ def doc(callable,prepend_str = None):
         return {'__keep_format__':f"<div class='PyRepr'>{_sig}<br>{_doc}</div>"}
     except:
         raise TypeError(f'Object {callable} is not a callable')
+
     
