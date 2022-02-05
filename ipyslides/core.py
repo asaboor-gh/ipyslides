@@ -36,6 +36,8 @@ def custom_progressbar(intslider):
         ipw.link((intprogress, prop), (intslider, prop)) # These links enable auto refresh from outside
     return VBox([HBox(layout=Layout(height='0px')).add_class('nav-box'),
                             VBox([ html,intprogress]) ]).add_class('NavWrapper') #class is must
+
+
 class NavBar:
     def __init__(self,N=10):
         "N is number of slides here."
@@ -108,8 +110,7 @@ class NavBar:
         if self.toast_check.value:
             self.toast_html.layout.visibility = 'hidden' 
         else:
-            self.toast_html.layout.visibility = 'visible'
-        
+            self.toast_html.layout.visibility = 'visible' 
         
     @contextmanager
     def __print_context(self):
@@ -363,7 +364,6 @@ class LiveSlides(NavBar):
         "Get slides list"
         nt = namedtuple('SLIDE','slide n notes')
         return tuple([nt(**d) for d in self.__iterable])
-    
     
     def notes(self,content):
         "Add notes to current slide. Content could be any object except javascript and interactive widgets."

@@ -464,7 +464,8 @@ class source:
     @classmethod
     def from_file(cls, filename,language='python',name=None):
         "Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language"
-        cls.current = _file2code(filename,language=language,name=name)
+        _title = filename if name is None else name
+        cls.current = _file2code(filename,language=language,name=_title)
         return cls.current
     
     @classmethod       
