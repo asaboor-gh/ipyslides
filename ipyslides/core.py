@@ -12,10 +12,12 @@ from . import data_variables as dv
 import datetime, os 
 from IPython.utils.capture import capture_output
 from contextlib import contextmanager
-from .utils import write, textbox
+from .utils import textbox
 from . import utils
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 from .objs_formatter import fix_ipy_image
+from .source import Source
+from .writers import write, iwrite
 
 
 def custom_progressbar(intslider):
@@ -282,6 +284,9 @@ class LiveSlides(NavBar):
             setattr(self,k,v)
         self.plt2html = plt2html
         self.bokeh2html = bokeh2html
+        self.source = Source # Code source
+        self.write = write # Write IPython objects in slides
+        self.iwrite = iwrite # Write Widgets/IPython in slides
         
         try:  # Handle python IDLE etc.
             self.shell = get_ipython()

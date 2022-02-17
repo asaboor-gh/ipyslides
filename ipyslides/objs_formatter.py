@@ -131,6 +131,3 @@ def format_object(obj):
 
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       
-
- 
-            

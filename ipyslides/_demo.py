@@ -2,8 +2,10 @@
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import textwrap, time
 from .core import LiveSlides
-from .utils import write, iwrite, __reprs__, textbox, plt2html
-from .objs_formatter import libraries
+from .utils import textbox
+from .writers import write, iwrite, __reprs__
+from .objs_formatter import libraries, plt2html
+
 slides = LiveSlides()
 slides.convert2slides(True)
 slides.set_footer('Author: Abdul Saboor عبدالصبور')
@@ -63,8 +65,8 @@ for i in range(4,8):
         write(__contents[i-4])
         if i == 7:
             with slides.source.context() as s:
-                write(slides.block_r('slides.write/ipyslide.utils.write',write), 
-                      slides.block_b('slides.iwrite/ipyslide.utils.iwrite',iwrite))
+                write(slides.block_r('slides.write/ipyslides.writers.write',write), 
+                      slides.block_b('slides.iwrite/ipyslides.writers.iwrite',iwrite))
                 write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
             write(s.show_lines([0,1]))
 # Matplotlib

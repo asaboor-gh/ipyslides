@@ -1,11 +1,12 @@
 import setuptools
+from .ipyslides.shared_vars import __version__
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="ipyslides",
-    version="1.2.1",
+    version = __version__,
     author="Abdul Saboor",
     author_email="mass_qau@outlook.com",
     description="Live rich content slides in jupyter notebook",

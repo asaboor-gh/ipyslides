@@ -1,8 +1,9 @@
-__version__ = '1.2.1'
+from .shared_vars import __version__
+__version__ = __version__
 
 import os
 from .core import LiveSlides
-from .utils import write
+from .writers import write
 from .data_variables import animations
 
 __all__ = ['initialize','init','demo']
