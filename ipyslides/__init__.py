@@ -28,7 +28,6 @@ def __parse_md_file(md_file):
         
     
 def initialize(markdown_file=None,
-               magic_suffix = '',
                centering = True,
                dark_theme = False,
                footer_text = 'Author Name',
@@ -52,19 +51,17 @@ def initialize(markdown_file=None,
     # Slide 2
     ___________________________________________
     This will create two slides along with title page.
-    `magic_suffix` add value to slide's magic, e.g. if `magic_suffix='A'`, slides should be
-    created using `%%slideA` magic. Other arguments are just settings of slides. 
     """
-    slides = LiveSlides(animation_css=animation_css,magic_suffix=magic_suffix)
+    slides = LiveSlides(animation_css=animation_css)
     slides.convert2slides(True)
-    slides.set_font_scale(font_scale)
-    slides.align8center(centering)
-    slides.code_line_numbering(code_line_numbering)
-    slides.set_footer(footer_text,show_date=show_date,show_slide_number=show_slide_number)
+    slides.settings.set_font_scale(font_scale)
+    slides.settings.align8center(centering)
+    slides.settings.code_line_numbering(code_line_numbering)
+    slides.settings.set_footer(footer_text,show_date=show_date,show_slide_number=show_slide_number)
     
     if dark_theme:
-        slides.setting.theme_dd.value = 'Dark'
-    slides.set_logo(logo_src,width=50)
+        slides.settings.theme_dd.value = 'Dark'
+    slides.settings.set_logo(logo_src,width=50)
     
     with slides.slide(1):
         slides.write('# Slide 1\nOverwrite this using \n`with slide(1):`\n\t`    ...`\n or \n `%%slide 1`')
@@ -92,6 +89,6 @@ def demo():
         with slides.source.context() as s:
             slides.write_citations()
         write(s)
-        
+    slides.settings.theme_dd.value = 'Fancy'
     slides.prog_slider.value = 0 # back to title
     return slides

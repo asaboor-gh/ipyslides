@@ -8,8 +8,8 @@ from .objs_formatter import libraries, plt2html
 
 slides = LiveSlides()
 slides.convert2slides(True)
-slides.set_footer('Author: Abdul Saboor عبدالصبور')
-slides.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
+slides.settings.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="50" fill="blue"/>
         <text x="45%" y="45%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↑</text>
         <text x="55%" y="60%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↓</text></svg>''',width=50)
@@ -20,7 +20,7 @@ with slides.slide(1): #slide 1
         write('## I am created using `with slides.slide(1)` context( manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
     write(s.focus_lines([1]))  #focus on line 1 
-    slides.notes('### Note for slide 1')
+    slides.notes.insert('### Note for slide 1')
     
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
@@ -167,14 +167,14 @@ with slides.slide(13):
             plot = grid.update(plot, fig) #Update plot each time
             
         def onclick(btn):
-            plot_theme = 'dark_background' if 'Dark' in slides.setting.theme_dd.value else 'default'
+            plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
             with plt.style.context(plot_theme):
                 update_plot()
 
         button.on_click(onclick)
         update_plot() #Initialize plot
     
-    slides.notes('## Something to hide from viewers!')
+    slides.notes.insert('## Something to hide from viewers!')
 
 
 # Animat plot in slides  

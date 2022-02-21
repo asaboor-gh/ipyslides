@@ -28,14 +28,14 @@ theme_roots = {
 }
 ''',
 'Fancy': ''':root {
-	--heading-fg: crimson;
-	--primary-fg: #75652c;
-	--primary-bg: #fdf6e3;
-	--secondary-bg: #fff1e4;
-	--secondary-fg: #0b8080;
-	--tr-odd-bg: #e8e3cf;
-	--tr-hover-bg: #fff1c1;
-	--accent-color: #9b0d2a;
+	--heading-fg: #606582;
+	--primary-fg: #1a202c;
+	--primary-bg: #f0f3ff;
+	--secondary-bg: #e2e8f0;
+	--secondary-fg: #a0aec0;
+	--tr-odd-bg: #f0f5ff;
+	--tr-hover-bg: #f2e0e0;
+	--accent-color: #000098;
     --pointer-color: #f51188;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
