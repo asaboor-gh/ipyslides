@@ -2,7 +2,7 @@ from .shared_vars import __version__
 __version__ = __version__
 
 import os
-from .core import LiveSlides
+from .core import LiveSlides 
 from .writers import write
 from .data_variables import animations
 
@@ -59,8 +59,7 @@ def initialize(markdown_file=None,
     slides.settings.code_line_numbering(code_line_numbering)
     slides.settings.set_footer(footer_text,show_date=show_date,show_slide_number=show_slide_number)
     
-    if dark_theme:
-        slides.settings.theme_dd.value = 'Dark'
+    slides.settings.theme_dd.value = 'Dark' if dark_theme else 'Fancy'
     slides.settings.set_logo(logo_src,width=50)
     
     with slides.slide(1):
