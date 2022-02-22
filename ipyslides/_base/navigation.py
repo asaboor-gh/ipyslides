@@ -8,40 +8,40 @@ class Navigation:
         "Both instnaces should be inside `LiveSlide` class."
         self.widgets = _instanceWidgets
         self.N = self.widgets.sliders.progress.max + 1
-        self.prog_slider = self.widgets.sliders.progress
+        self.progress_slider = self.widgets.sliders.progress
         self.btn_next = self.widgets.buttons.next
         self.btn_prev = self.widgets.buttons.prev
-        self.btn_setting = self.widgets.buttons.setting
+        self.btn_settings = self.widgets.buttons.setting
         self.visible_slider = self.widgets.sliders.visible
     
         
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
-        self.btn_setting.on_click(self.__toggle_panel)
+        self.btn_settings.on_click(self.__toggle_panel)
         self.visible_slider.observe(self.__set_hidden_height,names=['value'])
         
     def __shift_right(self,change):
         if change:
-            if self.prog_slider.value >= self.prog_slider.max:
-                self.prog_slider.value = 0 # switch  to title back
+            if self.progress_slider.value >= self.progress_slider.max:
+                self.progress_slider.value = 0 # switch  to title back
             else:
-                self.prog_slider.value = self.prog_slider.value + 1  
+                self.progress_slider.value = self.progress_slider.value + 1  
     
     def __shift_left(self,change):
         if change:
-            if self.prog_slider.value <= 0:
-                self.prog_slider.value = self.prog_slider.max # loop back to last slide
+            if self.progress_slider.value <= 0:
+                self.progress_slider.value = self.progress_slider.max # loop back to last slide
             else:
-                self.prog_slider.value = self.prog_slider.value - 1
+                self.progress_slider.value = self.progress_slider.value - 1
     
     def __toggle_panel(self,change):
-        if self.btn_setting.description == '\u2630':
-            self.btn_setting.description  = '⨉'
+        if self.btn_settings.description == '\u2630':
+            self.btn_settings.description  = '⨉'
             self.widgets.panelbox.layout.display = 'flex'
             self.btn_next.disabled = True
             self.btn_prev.disabled = True
         else:
-            self.btn_setting.description = '\u2630'
+            self.btn_settings.description = '\u2630'
             self.widgets.panelbox.layout.display = 'none'
             self.btn_next.disabled = False
             self.btn_prev.disabled = False

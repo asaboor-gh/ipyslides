@@ -23,7 +23,7 @@ class PdfPrint:
         self.btn_pdf = self.widgets.buttons.pdf
         self.btn_png = self.widgets.buttons.png
         self.btn_capture = self.widgets.buttons.capture
-        self.btn_setting = self.widgets.buttons.setting
+        self.btn_settings = self.widgets.buttons.setting
         self.bbox_input = self.widgets.inputs.bbox
         
         self.__images = {} #Store screenshots
@@ -145,7 +145,7 @@ class PdfPrint:
         
     def __print_pdf(self,btn):
         "Quick Print"
-        self.btn_setting.click() # Close side panel
+        self.btn_settings.click() # Close side panel
         imgs = []
         for i in range(self.widgets.sliders.progress.max + 1):  
             with self.__print_context():

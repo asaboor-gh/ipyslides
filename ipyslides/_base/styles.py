@@ -34,7 +34,7 @@ theme_roots = {
 	--primary-bg: #f0f3ff;
 	--secondary-bg: #e2e8f0;
 	--secondary-fg: #a0aec0;
-	--tr-odd-bg: #f0f5ff;
+	--tr-odd-bg: #e2e8f0;
 	--tr-hover-bg: #f2e0e0;
 	--accent-color: #000098;
     --pointer-color: #f51188;

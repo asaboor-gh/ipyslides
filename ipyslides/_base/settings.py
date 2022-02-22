@@ -8,7 +8,7 @@ import datetime
 from IPython import get_ipython
 from IPython.display import display, Image, HTML
 from ..writers import write
-from ..objs_formatter import fix_ipy_image
+from ..formatter import fix_ipy_image
 from ..utils import set_dir
 from . import scripts, intro, styles
 
@@ -47,9 +47,9 @@ class LayoutSettings:
         self.btn_fs.observe(self.update_theme,names=['value'])
         self.btn_zoom.observe(self.update_theme,names=['value'])
         self.reflow_check.observe(self.update_theme)
-        self.display_switch = self.widgets.toggles.display
-        self.display_switch.observe(self._toggle_sidebar,names=['value'])        
-        self.display_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
+        self.sidebar_switch = self.widgets.toggles.display
+        self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
+        self.sidebar_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
         
     
         self.update_theme() #Trigger Theme and Javascript in it
@@ -188,7 +188,7 @@ class LayoutSettings:
     def _toggle_sidebar(self,change): 
         """Pushes this instance of LiveSlides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
-        if self.btn_fs.value or self.display_switch.value == 0:
+        if self.btn_fs.value or self.sidebar_switch.value == 0:
             self.widgets.htmls.sidebar.value = '' # Should be empty to avoid competition of style
             self.height_slider.layout.display = 'inline-flex' #Very impprtant
         else:

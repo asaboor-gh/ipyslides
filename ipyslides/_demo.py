@@ -4,7 +4,7 @@ import textwrap, time
 from .core import LiveSlides
 from .utils import textbox
 from .writers import write, iwrite, __reprs__
-from .objs_formatter import libraries, plt2html
+from .formatter import libraries, plt2html
 
 slides = LiveSlides()
 slides.convert2slides(True)
@@ -192,7 +192,7 @@ def func(obj):
 
     
 # Let's test notification API
-for i in range(slides.prog_slider.max):
+for i in range(slides.progress_slider.max):
     @slides.notify_at(i,timeout=2)
     def push_notification(idx): # idx is will pick i from decorator, just to show these are dummy varibales
         t = time.localtime()

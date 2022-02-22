@@ -87,11 +87,7 @@ def format_object(obj):
     
     # Some builtin types
     if isinstance(obj,dict):
-        # First prefer keep_format method. 
-        if '__keep_format__' in obj:
-            return True, obj['__keep_format__']
-        else:
-            return  True, f"<div class='PyRepr'>{json.dumps(obj,indent=4)}</div>"    
+        return  True, f"<div class='PyRepr'>{json.dumps(obj,indent=4)}</div>"    
     elif isinstance(obj,(set,list,tuple,int,float)): # Then prefer other builtins
         return True, f"<div class='PyRepr'>{obj}</div>"
     

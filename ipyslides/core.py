@@ -9,7 +9,7 @@ import ipywidgets as ipw
 
 from .source import Source
 from .writers import write, iwrite
-from .objs_formatter import bokeh2html, plt2html
+from .formatter import bokeh2html, plt2html
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
@@ -82,9 +82,9 @@ class LiveSlides(BaseLiveSlides):
         
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
         
-        self.prog_slider = self.widgets.sliders.progress
-        self.prog_slider.observe(self.__set_class,names=['value'])
-        self.prog_slider.observe(self.__update_content,names=['value'])
+        self.progress_slider = self.widgets.sliders.progress
+        self.progress_slider.observe(self.__set_class,names=['value'])
+        self.progress_slider.observe(self.__update_content,names=['value'])
         
         # All Box of Slides
         self.box =  self.widgets.mainbox
@@ -164,16 +164,16 @@ class LiveSlides(BaseLiveSlides):
     def __set_class(self,change):
         "Set Opposite animation for backward navigation"
         self.widgets.slidebox.remove_class('Prev') # Safely Removes without error
-        if change['new'] == self.prog_slider.max and change['old'] == 0:
+        if change['new'] == self.progress_slider.max and change['old'] == 0:
             self.widgets.slidebox.add_class('Prev')
-        elif (change['new'] < change['old']) and (change['old'] - change['new'] != self.prog_slider.max):
+        elif (change['new'] < change['old']) and (change['old'] - change['new'] != self.progress_slider.max):
             self.widgets.slidebox.add_class('Prev')
     
     def __display_slide(self):
         self.display_toast() # or self.toasts.display_toast . Display in start is fine
-        item = self.__iterable[self.prog_slider.value]
+        item = self.__iterable[self.progress_slider.value]
         self.notes.display(item['notes']) # Display notes first
-        _number = f'{item["n"]} / {self.nslides}' if self.prog_slider.value != 0 else ''
+        _number = f'{item["n"]} / {self.nslides}' if self.progress_slider.value != 0 else ''
         self.settings.set_footer(_number_str = _number)
         
         if self.print.is_printing == False: # No animations while printing
@@ -201,7 +201,7 @@ class LiveSlides(BaseLiveSlides):
         else:
             self.nslides = 0
             self.N = 0
-        self.prog_slider.max = self.N -1
+        self.progress_slider.max = self.N -1
         self.__update_content(True) # Force Refresh
         
     def write_slide_css(self,**css_props):

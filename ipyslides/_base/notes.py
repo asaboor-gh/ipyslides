@@ -22,11 +22,11 @@ class Notes:
     def insert(self, content):
         "Add notes to current slide. Content could be any object except javascript and interactive widgets."
         if self.main._current_slide == 'title':
-            self.main._slides_title_note, = self.main.format_html(content).values()
+            self.main._slides_title_note = self.main.format_html(content)._repr_html_()
         elif self.main._current_slide == 'frames':
             raise ValueError("Notes can't be added under slide frames")
         else:
-            self.main._slides_notes[self.main._current_slide], = self.main.format_html(content).values()
+            self.main._slides_notes[self.main._current_slide] = self.main.format_html(content)._repr_html_()
     
     def display(self, html_str):
         self.widgets.htmls.notes.value = 'Notes Area' # Must be, so when no notes, should not be there

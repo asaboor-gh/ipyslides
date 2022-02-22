@@ -4,11 +4,13 @@ write/ iwrite main functions to add content to slides
 
 __all__ = ['write','iwrite']
 
+from unicodedata import name
 from IPython.core.display import display, HTML, __all__ as __all
 import ipywidgets as ipw
 from markdown import markdown
+from collections import namedtuple
 
-from .objs_formatter import format_object, syntax_css, _fix_code
+from .formatter import format_object, syntax_css, _fix_code
 from .shared_vars import _md_extensions
 
 
@@ -137,7 +139,6 @@ def iwrite(*columns,width_percents=None,className=None):
     #We unpacked such a way that we can replace objects with new one using `grid.update`
     new_obj = grid.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
     """
-    
     _grid, _objects = _fmt_iwrite(*columns,width_percents=width_percents)
     if isinstance(className,str):
         _grid.add_class(className)
@@ -163,4 +164,4 @@ def iwrite(*columns,width_percents=None,className=None):
         return tmp
     
     _grid.update = update.__get__(_grid,type(_grid)) #attach update method to grid
-    return _grid, _objects
+    return namedtuple('DisplayGrid',['grid','columns'])(_grid,_objects)

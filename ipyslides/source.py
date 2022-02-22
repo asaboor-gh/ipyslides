@@ -13,7 +13,7 @@ from markdown import markdown
 
 from .utils import alert, details
 from .shared_vars import _md_extensions
-from .objs_formatter import _fix_code
+from .formatter import _fix_code
     
 
 # Do not use this in main work, just inside a function
