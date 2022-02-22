@@ -14,7 +14,8 @@ from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
-from ._base import BaseLiveSlides, styles
+from ._base.base import BaseLiveSlides
+from ._base import styles
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()

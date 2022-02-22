@@ -211,5 +211,3 @@ def doc(callable,prepend_str = None):
     except:
         raise TypeError(f'Object {callable} is not a callable')
     
-
-    
