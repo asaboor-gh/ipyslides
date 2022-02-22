@@ -5,18 +5,19 @@ and then provided to other classes via composition, not inheritance.
 
 import os 
 import datetime
-from functools import wraps
-from IPython.display import Javascript, display, Image, HTML
-from .. import data_variables as dv
+from IPython import get_ipython
+from IPython.display import display, Image, HTML
 from ..writers import write
 from ..objs_formatter import fix_ipy_image
+from ..utils import set_dir
+from . import scripts, intro, styles
 
 
 class LayoutSettings:
-    def __init__(self,_instanceLiveSlides, _instanceWidgets):
+    def __init__(self, _instanceWidgets):
         "Provide instance of LivSlides to work."
-        self.main = _instanceLiveSlides
         self.widgets = _instanceWidgets
+        self.animation = styles.animations['slide']
         self.font_scale = 1
         self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
         self._footer_text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>'
@@ -37,7 +38,7 @@ class LayoutSettings:
         self.box.on_displayed(lambda change: self.__add_js()) # First attempt of Javascript to work
         
         with self.__instructions:
-            write(dv.settings_instructions) 
+            write(intro.instructions) 
         
         self.theme_dd.observe(self.update_theme)
         self.scale_slider.observe(self.__set_font_scale)
@@ -50,10 +51,14 @@ class LayoutSettings:
         self.display_switch.observe(self._toggle_sidebar,names=['value'])        
         self.display_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
         
-        for w in (self.btn_zoom,self.btn_fs,self.box, self.btn_timer):
-            w.add_class(self.main.uid)
     
         self.update_theme() #Trigger Theme and Javascript in it
+        
+    def set_animation(self,name):
+        if name in styles.animations:
+            self.animation = styles.animations[name]
+        else:
+            print(f'Animation {name!r} not found. Use any of {list(styles.animations.keys())}.')
       
     def set_font_family(self,text_font=None,code_font=None):
         "Set main fonts for text and code."
@@ -110,12 +115,12 @@ class LayoutSettings:
             
     def __add_js(self):
         with self.out_js_fix: 
-            display(Javascript(dv.navigation_js.replace('__uid__',self.widgets.uid)))
+            display(scripts.navigation_js)
     
     def emit_resize_event(self):
         with self.out_js_var: 
             self.out_js_var.clear_output(wait=True)
-            display(Javascript("window.dispatchEvent(new Event('resize'));"))
+            display(scripts.resize_js)
         
     def __update_size(self,change):
         self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
@@ -134,17 +139,17 @@ class LayoutSettings:
     def update_theme(self,change=None):  
         text_size = '{}px'.format(int(self.font_scale*16))
         if self.theme_dd.value == 'Custom': # In case of Custom CSS
-            with self.main.set_dir(self.main.shell.starting_dir):
+            with set_dir(get_ipython().starting_dir):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
-                        _str = dv.style_html(dv.theme_roots['Light']).replace('<style>','').replace('</style>','')
+                        _str =  styles.style_html( styles.theme_roots['Light']).replace('<style>','').replace('</style>','')
                         f.writelines(['/* Author: Abdul Saboor */'])
                         f.write(_str)
                 # Read CSS from file
                 with open('custom.css','r') as f:
                     theme_css = '<style>' + ''.join(f.readlines()) + '</style>'
         else:
-            theme_css = dv.style_html(dv.theme_roots[self.theme_dd.value])
+            theme_css =  styles.style_html( styles.theme_roots[self.theme_dd.value])
             
         # Replace font-size and breakpoint size
         theme_css = theme_css.replace(
@@ -158,7 +163,7 @@ class LayoutSettings:
         if self.btn_zoom.value:
             if self.btn_fs.value:
                 self.btn_zoom.icon= 'toggle-on'
-                theme_css = theme_css.replace('</style>','\n') + dv.mpl_fs_css.replace('<style>','')
+                theme_css = theme_css.replace('</style>','\n') +  styles.mpl_fs_css.replace('<style>','')
             else:
                 self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
         else:
@@ -166,7 +171,7 @@ class LayoutSettings:
         
         # Catch Fullscreen too.
         if self.btn_fs.value:
-            theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') + dv.fullscreen_css.replace('<style>','')
+            theme_css = theme_css.replace('__breakpoint_width__','650px').replace('</style>','\n') +  styles.fullscreen_css.replace('<style>','')
             self.btn_fs.icon = 'compress'
             self.widgets.mainbox.add_class('FullScreen') # Add this to fullscreen
             
@@ -175,9 +180,6 @@ class LayoutSettings:
             self.btn_fs.icon = 'expand'
             self.widgets.mainbox.remove_class('FullScreen')
         
-        # Now Set Theme and emit a resize event just for being smooth in GUI transformations
-        for selector in ['.controls', '.SlideArea', '.SlideBox', '.ProgBox', '.panel','.LaserPointer']:
-            theme_css = theme_css.replace(selector, f'{selector}.{self.main.uid}')
         
         self.widgets.htmls.theme.value = theme_css
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline, must call
@@ -190,7 +192,7 @@ class LayoutSettings:
             self.widgets.htmls.sidebar.value = '' # Should be empty to avoid competition of style
             self.height_slider.layout.display = 'inline-flex' #Very impprtant
         else:
-            self.widgets.htmls.sidebar.value = dv.sidebar_layout_css(span_percent=self.width_slider.value).replace('__uid__',self.main.uid)
+            self.widgets.htmls.sidebar.value =  styles.sidebar_layout_css(span_percent=self.width_slider.value)
             self.height_slider.layout.display = 'none'
 
         return self.emit_resize_event() # Must return this event so it work in other functions.

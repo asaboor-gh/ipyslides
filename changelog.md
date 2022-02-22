@@ -1,6 +1,26 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.3.0 (Single Instance Restriction)
+Now there exists only one instance of `LiveSlides` per notebook. Multiple instnaces do not behave well with each other and as we see almost every presentation software is one presentation per file, so is `ipyslides` now. You can still create it from markdown file or import a previously created presentation.
+## Notable Change
+- `LiveSlides` now does not accept any argument because single instance can not be modified later. Parameters are transferred to corresponding functions in `ls.settings`. 
+- Functionality is modularized now. most commnads starting with `set` are now accessible as `ls.settings.<set_function>`. 
+    - Printing functions are under `ls.print.<function>`
+    - Notes can be added using `ls.notes.insert` now. 
+    - Other functionality is available as `ls.<function>` like `ls.write`, `ls.source` etc.
+    - `ls.clear` cleans up all slides. You can rerun cells to fill up content. 
+
+```python
+ls = LiveSlides()
+ls.settings.set_logo(...)
+ls.settings.set_animation('zoom')
+ls.notes.insert('Slide Notes')
+ls.print.screenshots # returns all captured images
+ls.notify(...)
+```
+
+
 # 1.2.1
 - Speaker Notes are added inside notebook as well, so in case you are sharing slides area of notebook in softwares like Zoom, Google Meets etc., that will be useful. No need to check `Show Notes` in this case. 
 - Miscalleneous bug fixes. 
@@ -74,7 +94,7 @@ This will create two slides along with title page.
 - `ls.enable_zoom(object)` will zoom that object when hovered on it while `Zoom Items` button is ON (or `Z` pressed in Jupyterlab)
 - `ls.raw` will print a string while preserving whitspaces and new lines. 
 - `ls.svg`,`ls.image`(ls.file2image is just an alias now for ls.image) can now take url or data to display image.
-- `ls.repeat` can be used to remind you of something via notification at given time interval. You can infact create a timer with combination of `ls.repeat` and `ls.notify`. 
+- `ls.repeat` (dropped in 1.2.0) can be used to remind you of something via notification at given time interval. You can infact create a timer with combination of `ls.repeat` and `ls.notify`. 
 - Besides just matplotlib's figure, now everything inside `ls.image`, `ls.svg`,`ls.enable_zoom` will go full screen on hover with `Zoom Items` toggle button ON. 
 
 # 1.0.3
@@ -131,7 +151,7 @@ This will create two slides along with title page.
 - All utilities commnads are now under `LiveSlides` class too, so you can use either 
 `ipyslides.utils.command` or `ls.command` for `command` in `write`,`iwrite`,`file2code` etc.
 ## 0.8.10
-- You can add two slides together like `ls1 + ls2`, title of `ls2` is converted to a slide inplace. 
+- You can add two slides together like `ls1 + ls2`, title of `ls2` is converted to a slide inplace (dropped in 1.3.0). 
 - You can now change style of each slide usig `**css_props` in commands like `@ls.slides`, `with ls.slide` and `with ls.title`. 
 - A new command `textbox` is added which is useful to write inline references. Same can be acheived with `slides.cite(...here=True)`. 
 - You can use `ls.alert('text')`, `ls.colored('text',fg,bg)` to highlight text.
@@ -154,9 +174,8 @@ def func(obj):
 decorator which is more pythonic way. 
 ## 0.8.0 +
 > Note: All these points may not or only partially apply to earlier versions. So use stable API above version 8.
-- Before this version, slides were collected using global namespace, which only allowed one presentation per
-notebook. Now slides are stored in local namespace, so no restriction on number of slides per notebook.
-- To acheive local namespace, functions are moved under class LiveSlide and it registers magics too. So now you will
+- Before this version, slides were collected using global namespace, but now are stored in local namespace.
+- To acheive local namespace, functions are moved under class `LiveSlide` and it registers magics too. So now you will
 be able to use `%%slide, %%title` magics. Now you will use context managers as follows
 ```python
 ls = LiveSlides()
@@ -166,12 +185,10 @@ with ls.title():
     ...
 with ls.slide(<slide number>):
     ...
-ls.insert_after(<slide number>,*objs, func)
 ```
 - `ipyslides.initialize()` can write all above code in same cell. 
-> Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.
-- You can elevate simple cell output to fullscreen in Jupyterlab >= 3.
+
 - `with ls.slide` content manager is equivalent to `%%slide` so make sure none of them overwrite each other.
 
-- Auto refresh is enabled. Whenever you execute a cell containing `%%title`, `with ls.title`, `%%slide`, `with ls.slide` or `ls.insert_after`, slides get updated automatically.
+- Auto refresh is enabled. Whenever you execute a cell containing `%%title`, `with ls.title`, `%%slide`, `with ls.slide`  slides get updated automatically.
 - LiveSlides should be only in top cell. As it collects slides in local namespace, it can not take into account the slides created above itself.

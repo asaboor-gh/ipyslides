@@ -4,7 +4,6 @@ __version__ = __version__
 import os
 from .core import LiveSlides 
 from .writers import write
-from .data_variables import animations
 
 __all__ = ['initialize','init','demo']
 __all__.extend(['LiveSlides', 'write'])
@@ -39,7 +38,7 @@ def initialize(markdown_file=None,
         <circle cx="50" cy="50" r="50" fill="blue"/>
         <text x="45%" y="45%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↑</text>
         <text x="55%" y="60%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↓</text></svg>''',
-               animation_css = animations['slide_h'],
+               animation = 'slide',
               ):
     """Creates insrance of `LiveSlides` with much of defualt settings enabled. 
     You can create slides from a `markdown_file` as well. Slides separator should be --- (three dashes) in start of line.
@@ -52,13 +51,13 @@ def initialize(markdown_file=None,
     ___________________________________________
     This will create two slides along with title page.
     """
-    slides = LiveSlides(animation_css=animation_css)
+    slides = LiveSlides()
     slides.convert2slides(True)
     slides.settings.set_font_scale(font_scale)
     slides.settings.align8center(centering)
     slides.settings.code_line_numbering(code_line_numbering)
     slides.settings.set_footer(footer_text,show_date=show_date,show_slide_number=show_slide_number)
-    
+    slides.settings.set_animation(animation)
     slides.settings.theme_dd.value = 'Dark' if dark_theme else 'Fancy'
     slides.settings.set_logo(logo_src,width=50)
     

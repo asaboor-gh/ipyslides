@@ -11,8 +11,8 @@ from contextlib import contextmanager
 from PIL import ImageGrab
 import matplotlib.pyplot as plt
 
-from .. import data_variables as dv
 from ..writers import write
+from . import intro
 
 
 class PdfPrint:
@@ -28,6 +28,7 @@ class PdfPrint:
         
         self.__images = {} #Store screenshots
         self.__print_settings = {'load_time':0.5,'quality':100,'bbox':None}
+        self.is_printing = False
         
         self.btn_print.on_click(self.__print_pdf)
         self.btn_capture.on_click(self.capture_screen)
@@ -43,7 +44,7 @@ class PdfPrint:
         with self.widgets.outputs.intro:
             self.widgets.outputs.intro.clear_output(wait=True)
             self.set_print_settings(**print_settings)
-            write(dv.settings_instructions) 
+            write(intro.instructions) 
         self.widgets._push_toast(f'See Screenshot of your selected bbox = {bbox} 👇')
         
     @contextmanager
@@ -59,11 +60,14 @@ class PdfPrint:
         for w in hide_widgets:
             w.layout.visibility = 'hidden'
         try:    
+            self.is_printing = True # Must be for main class to know
             yield
         finally:
+            self.is_printing = False # Back to normal
             for w in hide_widgets:
                 w.layout.visibility = 'visible' 
             self.widgets.htmls.toast.layout.visibility = old_pref 
+            
                 
     def screen_bbox(self):
         "Return screen's bounding box on windows, return None on other platforms which works as full screen too in screenshot."
@@ -174,7 +178,7 @@ class PdfPrint:
                 im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= self.__print_settings['quality'],subsampling=0,optimize=True)  # Do not lose image quality at least here
             md_file = os.path.join(directory,'Make-PPT.md')
             with open(md_file,'w') as f:
-                f.write(dv.how_to_ppt)
+                f.write(intro.how_to_ppt)
             self.widgets._push_toast(f'''All captured images are saved in "{directory}"<br/> 
                          <em>See file "{md_file}" as bonus option!</em>''',timeout=10)
         else:

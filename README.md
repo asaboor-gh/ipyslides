@@ -11,7 +11,7 @@ See [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.2.0
+> pip install ipyslides >= 1.3.0
 ```
 For development install, clone this repository and then
 ```shell
@@ -21,9 +21,6 @@ For development install, clone this repository and then
 # Editable Demo
 See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides). You can edit it yourself.
 
-
-
-> For jupyterlab >= 3, do pip install sidecar for better presenting mode.
 
 # Content Types to Embed
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 
@@ -49,8 +46,10 @@ can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made 
 
 - Slides in Jupyter Lab are theme aware in `Inherit` theme mode, so theme of slides changes based on editor theme.
 
+# PDF printing
+Read instructions in side panel about PDF printing. See [PDF-Slides](IPySlides-Print.pdf)
 # Speaker Notes (1.2.0+) (Experimental)
-- You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `ls.notes` command. 
+- You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `ls.notes.insert` (`ls.notes` in < 1.2.1) command. 
 - Notes is an experimantal feuture, so use at your own risk. Do not share full screen, share a brwoser tab for slides and you can keep notes hidden from audience this way. 
 # Known Limitations
 - Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. 

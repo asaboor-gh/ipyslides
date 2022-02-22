@@ -1,5 +1,6 @@
 # Author: Abdul Saboor
 # CSS for ipyslides
+
 theme_roots = {
 'Inherit': ''':root {
 	--heading-fg: var(--jp-inverse-layout-color1,navy);
@@ -633,8 +634,8 @@ def sidebar_layout_css(span_percent = 40):
     min-width: 0 !important;
     padding-right: {span_percent}vw !importnat;
 }}
-.jp-LabShell .SlidesWrapper.__uid__ ,
-body[data-retro] .SlidesWrapper.__uid__{{
+.jp-LabShell .SlidesWrapper,
+body[data-retro] .SlidesWrapper {{
     position:fixed;
     top:0px !important;
     right:0px !important;
@@ -677,104 +678,6 @@ html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + 
 </style>''' 
 
 
-navigation_js = '''
-function main(){
-    function resizeWindow() {
-        window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
-    }; 
-    resizeWindow(); // resize on first display
-    // Only get buttons of first view, otherwise it will becomes multiclicks
-    let arrows = document.getElementsByClassName('arrows __uid__'); // These are 2*instances
-    let mplBtn = document.getElementsByClassName('mpl-zoom __uid__')[0];
-    let winFs = document.getElementsByClassName('window-fs __uid__')[0];
-    let capSc = document.getElementsByClassName('screenshot-btn __uid__')[0];
-    let cursor = document.getElementsByClassName('LaserPointer __uid__')[0];
-    let present = document.getElementsByClassName('presenter-btn __uid__')[0];
-
-    
-    // Keyboard events
-    function keyOnSlides(e) {
-        e.preventDefault();
-        resizeWindow(); // Resize before key press
-        let key = e.keyCode;
-        if (key === 37 || (e.shiftKey && key === 32)) { 
-            arrows[0].click(); // Prev or Shift + Spacebar
-        } else if (key === 39 || key === 32) { 
-            arrows[1].click(); // Next or Spacebar
-        } else if (key === 90) { 
-            mplBtn.click(); // Z 
-        } else if (key === 88 || key === 68) {
-            alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
-            e.stopPropagation(); // stop propagation to jupyterlab events
-            return false;
-        } else if (key===77){
-            alert("Pressing M could change cell to Markdown and vanish away slides!");
-            e.stopPropagation();   // M key
-        } else if (key === 70) { 
-            winFs.click(); // F 
-        } else if (key === 13) {
-            return true; // Enter key
-        } else if (key === 83) {
-            capSc.click();  // S for screenshot
-        } else if (key === 80) {
-            window.print(); // P for PDF print
-        } else if (key === 84) { 
-            present.click(); // T for presenter and timer start
-        }; 
-        resizeWindow(); // Resize after key press, good for F key
-        e.stopPropagation(); // stop propagation to jupyterlab events and other views 
-    };
-    
-    let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
-    // Do All things in loop so that Javscript acts on all views of slides
-    Array.from(boxes).forEach(box => {
-        box.tabIndex = -1; // Need for event listeners, should be at top
-        box.onkeydown = keyOnSlides; // This is better than event listners as they register multiple times
-        box.onmouseenter = function(){box.focus();};
-        box.onmouseleave = function(){box.blur();};
-        // Cursor pointer functions
-        // let slide = box.getElementsByClassName('SlideBox __uid__')[0];
-        function onMouseMove(e) {
-            let bbox = box.getBoundingClientRect()
-            let _display = "display:block;"
-            if (e.pageX > (bbox.right - 30) || e.pageY > (bbox.bottom - 30)) {
-                _display = "display:none;"
-            };
-            cursor.setAttribute("style",_display + "left:"+ (e.pageX - bbox.left + 10) + "px; top: " + (e.pageY - bbox.top + 10) + "px;")
-        };
-        
-        box.onmousemove = onMouseMove;
-        box.onmouseleave = function (){cursor.setAttribute("style","display:none;");}
-        box.onmouseenter = function (){cursor.setAttribute("style","display:block;");}
-    });
-    
-    let loc = window.location.toString()
-    if (loc.includes("voila")) {
-        winFs.click(); // Turn ON fullscreen for voila anywhare.
-    };
-    // Do this at end so that at least other things work in Voila
-    try {
-        let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
-        main.onmouseup = resizeWindow; // So that Voila works
-    } catch (error) { 
-    
-    }
-    
-};
-// Now execute function to work, handle browser refresh too
-try {
-    var waitLoading = setInterval(function() {
-        let boxes = document.getElementsByClassName('SlidesWrapper __uid__');
-        if (boxes.length >= 1) {
-            main(); // Refresh does work in this case
-            clearInterval(waitLoading);
-        }
-    }, 500); // check every 500ms, I do not need be hurry
-    
-} catch (error) {
-   alert("Restart Kernel and run again for Keyboard Navigation to work. Avoid refreshing browser!") 
-};
-'''
 
 mpl_fs_css = '''<style>
 /* Pop out matplotlib's SVG on click/hover */
@@ -805,131 +708,3 @@ loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
   <path fill="var(--accent-color,navy)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z">
     <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.5s" repeatCount="indefinite"/>
   </path></svg></div>'''
-  
-def notification(content,title='IPySlides Notification',timeout=5):
-    _title = f'<b>{title}</b>' if title else '' # better for inslides notification
-    return f'''<style>
-        .NotePop {{
-            display:flex;
-            flex-direction:row;
-            background: linear-gradient(to right, var(--tr-hover-bg) 0%, var(--secondary-bg) 100%);
-            border-radius: 4px;
-            padding:8px;
-            opacity:0.9;
-            width:auto;
-            max-width:400px;
-            height:max-content;
-            box-shadow: 0 0 2px 2px var(--tr-hover-bg);
-            animation: popup 0s ease-in {timeout}s;
-            animation-fill-mode: forwards;
-        }}
-        .NotePop>div>b {{color: var(--accent-color);}}
-        @keyframes popup {{
-            to {{
-                visibility:hidden;
-                width:0;
-                height:0;
-            }}
-        }}
-        </style>
-        <div style="position:absolute;left:8px;top:8px;z-index:1000;" class="NotePop">
-        <div style="width:4px;background: var(--accent-color);margin-left:-8px;margin-right:8px"></div>
-        <div>{_title}<p>{content}</p></div></div>'''
-# ONLY INSTRUCTIONS BELOW
-
-how_to_ppt = '''### How to make Powerpoint Presentation from Bunch of Images
-- Save all screenshots using `Save PNG` button and go to folder just created.
-- You know the aspect ratio while taking screenshots, if not, read details of any of picture to find it.
-- Open Powerpoint, got to `Design` tab and select `Slide Size`. If pictures here are of aspect ration 4:3 or 16:9, select that,
-otherwise select `Custom Slide Size` and change size there according to found aspect ratio. 
-- You will see a slide of your prefered size now. Go to `Insert` tab and select `Photo Album > New Photo Album`.
-- Select `File/Disk` option to insert pictures and make sure `Picture Layout` option is `Fit to slide`.
-- Now click `Create` and you will see all pictures as slides.
-
-> Note: Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
-'''
-
-more_instructions =f'''## How to Use
-
-**Key Bindings**
-Having your cursor over slides, you can use follwoing keys/combinations:
-
-| Key (comb)                   | Action                                               | 
-|------------------------------|------------------------------------------------------|
-| `Space/RightArrowKey`        | Move to next slide                                   |
-| `Shift + Space/LeftArrowKey` | Move to previous slide                               |
-| `Ctrl + Shift + C`           | change the theme, create console/terminal etc        |
-| `Ctrl + Shift + [/]`         | switch to other tabs like console/terminal/notebooks |
-| `F`                          | fit/release slides to/from viewport                  |
-| `T`                          | start/stop timer                                     |
-| `Z`                          | toggle matplotlib/svg/image zoom mode                |
-| `S`                          | save screenshot of current slide                     |
-| `P`                          | print PDF of current slide                           |
-
-**Tips**
-
-- Other keys are blocked so that you may not delete or do some random actions on notebook cells.
-- Jupyter/Retro Lab is optimized for keyboard. Other frontends like Classic Notebook, VSCode, Voila etc. may not work properly.
-- Pressing `S` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
-but captures of multiple times in a slides are first to last in order in time.
-
-### PDF Printing
-There are two ways of printing to PDF.
-- Capturing each screenshot based on slide's state (in order) and later using `Save PDF`. This is a manual process but you have full control of view of slide.
-- Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `load_time` in `ls.print_settings` value and then print.
-
-**Assuming you have `ls = ipyslides.LiveSlides()` or `ls = ipyslides.initialize()`**
-
-- Edit and test cells in `ls.convert2slides(False)` mode.
-- Run cells in `ls.convert2slides(True)` mode from top to bottom. 
-- `%%slide integer` on cell top auto picks slide and %%title auto picks title page.
-- You can use context managers like `ls.slide()` and `ls.title()` in place of `%%slide` and `%%title` respectively.
-
-```python
-import ipyslides as isd 
-slides = isd.initilize() # >= 1.0.0, changes cell content blow this version
-@slides.frames(1,*objs)
-def func(obj):
-    write(obj) #This will create as many slides after the slide number 1 as length(objs)
-#create a rich content title page with `%%title` or \n`with title():\n    ...`\n context manager.
-slides.show() # Use it once to see slides
-```
-- LiveSlides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
-> Note: For LiveSlides('A'), use %%slideA, %%titleA, LiveSlides('B'), use %%slideB, %%titleB so that they do not overwite each other's slides.
-
-> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-'''
-
-settings_instructions = f'''{more_instructions}
-{how_to_ppt}
-### Custom Theme
-For custom themes, change below `Theme` dropdown to `Custom`.
-You will see a `custom.css` in current folder,edit it and change
-font scale or set theme to another value and back to `Custom` to take effect. 
-> Note: `custom.css` is only picked from current directory.
-          
---------
-For matching plots style with theme, run following code in a cell above slides.
-
-**Matplotlib**
-```python
-import matplotlib.pyplot as plt
-plt.style.use('ggplot')
-#plt.style.available() #gives styles list
-```
-
-**Plotly**
-```python
-import plotly.io as pio
-pio.templates.default = "plotly_white"
-#pio.templates #gives list of styles
-```
-> Tip: Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
-
-**Altair**
-```python
-import altair as alt
-alt.themes.enable('dark')
-#alt.themes #gives available themes
-```
-'''

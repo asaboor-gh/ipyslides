@@ -10,18 +10,11 @@ import ipywidgets as ipw
 from .source import Source
 from .writers import write, iwrite
 from .objs_formatter import bokeh2html, plt2html
-from . import data_variables as dv
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
-# ===========================COMPOSITION CLASSES======================================    
-from ._base.widgets import Widgets
-from ._base.toasts import Toasts
-from ._base.navigation import Navigation
-from ._base.settings import LayoutSettings
-from ._base.notes import Notes
-from ._base.print_pdf import PdfPrint
+from ._base import BaseLiveSlides, styles
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -30,32 +23,31 @@ except:
     sys.exit()
     
         
-class LiveSlides(Toasts):
+class LiveSlides(BaseLiveSlides):
     __instance = None # Make it singleton class
     def __new__(cls,*args, **kwargs):
         if not cls.__instance:
             cls.__instance = object.__new__(cls)
             return cls.__instance
         else:
-            raise Exception("Only one instance of slides per notebook is available!")
-    
-    def __init__(self,animation_css = dv.animations['slide_h']):
-        """Interactive Slides in IPython Notebook. 
+            print("Only one instance of slides per notebook is available!")
+            
+    # Singlton class can't be initialized twice, so arguments are not passed
+    def __init__(self):
+        """Interactive Slides in IPython Notebook. Only one instance can exist. 
         Use `display(Markdown('text'))` instead of `print` in slides or
         ```python
         with ipyslides.utils.print_context():
             print('something')
             function_that_prints_something()
         ```
-        - **Parameters**
-            - animation_css: CSS for animation. Set to '' if not animating. You can define yourself by editing `ipysildes.data_variables.animations`.
         - **Example**
             ```python 
             import ipyslides as isd 
             isd.initilize() #This will generate code in same cell including this class, which is self explainatory 
             ```
         """
-        self.uid = f's{id(self)}' # For uniqueness in javascript
+        super().__init__() # start Base class in start
         self.shell = SHELL
         
         for k,v in _under_slides.items(): # Make All methods available in slides
@@ -66,18 +58,10 @@ class LiveSlides(Toasts):
         self.write = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
             
-        self.widgets = Widgets(self.uid)
-        super().__init__(self.widgets)
-        self.print = PdfPrint(self.widgets)
-        self.navigation = Navigation(self.widgets)
-        self.settings = LayoutSettings(self, self.widgets)
-        self.notes = Notes(self, self.widgets)
-            
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
         self.user_ns = self.shell.user_ns #important for set_dir
         
-        self.animation_css = animation_css
         self._citations = {} # Initialize citations
         self.__slides_mode = False
         with capture_output() as captured:
@@ -105,9 +89,8 @@ class LiveSlides(Toasts):
         # All Box of Slides
         self.box =  self.widgets.mainbox
         self.__update_content(True) # First attmpt
-        self.app = self.box # Alias 
-            
-    
+        self.app = self.box # Alias     
+
     @property
     def slides(self):
         "Get slides list"
@@ -193,15 +176,15 @@ class LiveSlides(Toasts):
         _number = f'{item["n"]} / {self.nslides}' if self.prog_slider.value != 0 else ''
         self.settings.set_footer(_number_str = _number)
         
-        if not self.widgets.controls.layout.visibility == 'hidden': # No animations while printing
+        if self.print.is_printing == False: # No animations while printing
             check = round(item["n"] - int(item["n"]), 2) # Must be rounded
             if check <= 0.1: # First frame should slide only to make consistent look
-                write(self.animation_css) 
+                write(self.settings.animation) # Animation style
         return item['slide'].show() 
            
     def __update_content(self,change):
         if self.__slides_title_page or (self.__iterable and change):
-            self.loading_html.value = dv.loading_svg
+            self.loading_html.value = styles.loading_svg
             self.widgets.outputs.slide.clear_output(wait=True)
             with self.widgets.outputs.slide:
                 self.__display_slide()
@@ -226,9 +209,9 @@ class LiveSlides(Toasts):
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-        out_str = "<style>\n" + f".SlidesWrapper.{self.uid}, .SlideArea.{self.uid} .block " + "{" + props_str + "}\n"
+        out_str = "<style>\n" + f".SlidesWrapper, .SlideArea .block " + "{" + props_str + "}\n"
         if 'color' in _css_props:
-            out_str += f".SlidesWrapper.{self.uid} p, .SlidesWrapper.{self.uid}>:not(div){{ color: {_css_props['color']}}}"
+            out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {_css_props['color']}}}"
         return write(out_str + "\n</style>") # return a write object for actual write
     
     # defining magics and context managers

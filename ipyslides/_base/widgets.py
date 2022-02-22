@@ -5,8 +5,8 @@ and then provided to other classes via composition, not inheritance.
 from dataclasses import dataclass
 import ipywidgets as ipw
 from ipywidgets import HTML, IntProgress, VBox, HBox, Box, Layout, Button
+from . import styles
 
-from .. import data_variables as dv
 
 auto_layout =  Layout(width='auto')
 btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
@@ -47,13 +47,13 @@ class _Htmls:
     Instantiate under `Widgets` class only.
     """
     info    = HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
-    theme   = HTML(dv.style_html(dv.theme_roots['Fancy'].replace(
+    theme   = HTML(styles.style_html(styles.theme_roots['Fancy'].replace(
         '__text_size__','16px')).replace(
         '__breakpoint_width__','650px').replace(
         '__textfont__','sans-serif').replace(
         '__codefont__','var(--jp-code-font-family)'))
-    main    = HTML(dv.main_layout_css)
-    sidebar = HTML(dv.sidebar_layout_css()) # Should be separate CSS
+    main    = HTML(styles.main_layout_css)
+    sidebar = HTML(styles.sidebar_layout_css()) # Should be separate CSS
     loading = HTML() #SVG Animation in it
     logo    =  HTML()
     toast   = HTML() # For notifications
@@ -95,7 +95,7 @@ class _Dropdowns:
     """
     Instantiate under `Widgets` class only.
     """
-    theme = ipw.Dropdown(**describe('Theme'),options=[*dv.theme_roots.keys(),'Custom'],value='Inherit')
+    theme = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_roots.keys(),'Custom'],value='Inherit')
     clear = ipw.Dropdown(description='Delete',options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
         
     
@@ -157,15 +157,44 @@ def _custom_progressbar(intslider):
         ipw.link((intprogress, prop), (intslider, prop)) # These links enable auto refresh from outside
     
     return intprogress, html
+
+def _notification(content,title='IPySlides Notification',timeout=5):
+    _title = f'<b>{title}</b>' if title else '' # better for inslides notification
+    return f'''<style>
+        .NotePop {{
+            display:flex;
+            flex-direction:row;
+            background: linear-gradient(to right, var(--tr-hover-bg) 0%, var(--secondary-bg) 100%);
+            border-radius: 4px;
+            padding:8px;
+            opacity:0.9;
+            width:auto;
+            max-width:400px;
+            height:max-content;
+            box-shadow: 0 0 2px 2px var(--tr-hover-bg);
+            animation: popup 0s ease-in {timeout}s;
+            animation-fill-mode: forwards;
+        }}
+        .NotePop>div>b {{color: var(--accent-color);}}
+        @keyframes popup {{
+            to {{
+                visibility:hidden;
+                width:0;
+                height:0;
+            }}
+        }}
+        </style>
+        <div style="position:absolute;left:8px;top:8px;z-index:1000;" class="NotePop">
+        <div style="width:4px;background: var(--accent-color);margin-left:-8px;margin-right:8px"></div>
+        <div>{_title}<p>{content}</p></div></div>'''
+
     
     
 class Widgets:
     """
     Instantiate under `LiveSLides` class only and provide to other classes after built-up.
     """
-    def __init__(self,uid):
-        "uid is the unique id of the slide provided from LiveSlides class"
-        self.uid = uid # must be passed to other classes
+    def __init__(self):
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -182,10 +211,10 @@ class Widgets:
         self.controls = HBox([
             self.buttons.prev,
             ipw.Box([
-                self.sliders.progress.add_class(self.uid)
-            ]).add_class('ProgBox').add_class(self.uid),
+                self.sliders.progress 
+            ]).add_class('ProgBox') ,
             self.buttons.next
-        ]).add_class('controls').add_class(self.uid)
+        ]).add_class('controls') 
         
         self.navbox = VBox([
             HBox([self.buttons.setting,
@@ -197,7 +226,7 @@ class Widgets:
                 self.__proghtml,
                 self.progressbar
                 ])
-        ]).add_class('NavWrapper').add_class(self.uid) #class is must
+        ]).add_class('NavWrapper')  #class is must
         
         
         
@@ -234,11 +263,11 @@ class Widgets:
                 ], layout=btns_layout),
             ],layout = Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
         ],layout = Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
-        ).add_class('panel').add_class(self.uid)
+        ).add_class('panel') 
         
         self.slidebox = Box([
-            self.outputs.slide.add_class(self.uid)
-        ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox').add_class(self.uid)
+            self.outputs.slide 
+        ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox') 
         
         self.mainbox = VBox([
             self.htmls.loading, 
@@ -248,23 +277,23 @@ class Widgets:
             self.htmls.logo, 
             self.htmls.sidebar,
             self.panelbox, 
-            self.htmls.cursor.add_class(self.uid),
+            self.htmls.cursor ,
             HBox([ #Slide_box must be in a box to have animations work
-                self.slidebox.add_class(self.uid), 
+                self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.sliders.visible,
             self.navbox
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{self.sliders.height.value}px',margin='auto')
-        ).add_class('SlidesWrapper').add_class(self.uid) #Very Important to add this class
+        ).add_class('SlidesWrapper')  #Very Important to add this class
 
         for btn in [self.buttons.next, self.buttons.prev, self.buttons.setting,self.buttons.capture]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
-            btn.add_class(self.uid)
+            btn 
     
     def _push_toast(self,content,title='IPySlides Notification',timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Set `title = None` if need only content. Remain invisible in screenshot."
         if content and isinstance(content,str):
             self.htmls.toast.value = '' # Set first to '', otherwise may not trigger for same value again.
-            self.htmls.toast.value = dv.notification(content=content,title=title,timeout=timeout)
+            self.htmls.toast.value = _notification(content=content,title=title,timeout=timeout)

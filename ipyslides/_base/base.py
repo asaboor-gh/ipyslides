@@ -1,16 +1,35 @@
-"Add notes and show_notes here too and inheit LiveSlides class from here."
+"Inherit LiveSlides class from here. It adds useful attributes and methods."
+from .widgets import Widgets
+from .print_pdf import PdfPrint
+from .navigation import Navigation
+from .settings import LayoutSettings
+from .notes import Notes
 
-from .. import data_variables as dv
-
-    
-class Toasts:
-    def __init__(self, _instanceWidgets):
+class BaseLiveSlides:
+    def __init__(self):
         "Both instnaces should be inside `LiveSlide` class."
-        self.widgets = _instanceWidgets
+        self.__widgets = Widgets()
+        self.__print = PdfPrint(self.__widgets)
+        self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
+        self.__settings = LayoutSettings(self.__widgets)
+        self.notes = Notes(self, self.__widgets) # Needs main class for access to notes
+        
         self.__toasts = {} #Store notifications
         self.toast_html = self.widgets.htmls.toast
         
         self.widgets.checks.toast.observe(self.__toggle_notify,names=['value'])
+    
+    @property
+    def widgets(self):
+        return self.__widgets
+    
+    @property
+    def print(self):
+        return self.__print
+    
+    @property
+    def settings(self):
+        return self.__settings
     
     def notify(self,content,title='IPySlides Notification',timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Set `title = None` if need only content. Remain invisible in screenshot."
@@ -44,6 +63,7 @@ class Toasts:
         return self.__toasts
     
     def display_toast(self):
+        # self.iterable is picked from LiveSlide class after instantiation
         slide_id = str(self.iterable[self.widgets.sliders.progress.value - 1]['n'])
         try:
             toast = self.__toasts[slide_id]
