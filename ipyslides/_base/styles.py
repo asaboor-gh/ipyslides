@@ -29,15 +29,15 @@ theme_roots = {
 }
 ''',
 'Fancy': ''':root {
-	--heading-fg: #606582;
-	--primary-fg: #1a202c;
-	--primary-bg: #f0f3ff;
-	--secondary-bg: #e2e8f0;
-	--secondary-fg: #a0aec0;
-	--tr-odd-bg: #e2e8f0;
-	--tr-hover-bg: #f2e0e0;
-	--accent-color: #000098;
-    --pointer-color: #f51188;
+	--heading-fg: #105599;
+	--primary-fg: #755;
+	--primary-bg: #efefef;
+	--secondary-bg: #effffe;
+	--secondary-fg: #89E;
+	--tr-odd-bg: #deddde;
+	--tr-hover-bg: #D1D9E1;
+	--accent-color: #955200;
+    --pointer-color: #FF7722;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 ''',
