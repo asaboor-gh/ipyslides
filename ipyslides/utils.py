@@ -1,8 +1,8 @@
 __all__ = ['print_context',  'details', 'plt2html', 'set_dir', 'textbox',
             'image','svg','format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html_node','sig','doc']
-__all__.extend(['rows','block'])
-__all__.extend([f'block_{c}' for c in ['r','g','b','y','c','m','k','o','w','p']])
+__all__.extend(['rows','cols','block'])
+__all__.extend([f'block_{c}' for c in 'rgbycmkowp'])
 
 
 import os
@@ -10,13 +10,13 @@ import inspect
 from io import BytesIO # For PIL image
 from contextlib import contextmanager
 
-from IPython.display import HTML,  SVG
+from IPython.display import SVG
 from IPython.utils.capture import capture_output
 from IPython.core.display import Image
 import ipywidgets as ipw
 
 from .formatter import fix_ipy_image
-from .writers import write, _fmt_write, _fix_repr
+from .writers import write, _HTML, _fmt_write, _fix_repr
  
         
 @contextmanager
@@ -93,7 +93,7 @@ def enable_zoom(obj):
     try:
         return ipw.Box([obj]).add_class('zoom-container')
     except:
-        return HTML(f'<div class="zoom-container">{_fix_repr(obj)}</div>')
+        return _HTML(f'<div class="zoom-container">{_fix_repr(obj)}</div>')
     
 def html_node(tag,children = [],className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc.
@@ -117,7 +117,7 @@ def html_node(tag,children = [],className = None,**node_attrs):
     attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
     if className:
         attrs = f'class="{className}"' + ' ' + attrs # space is must after className
-    return HTML(f'<{tag} {attrs}>{content}</{tag}>')
+    return _HTML(f'<{tag} {attrs}>{content}</{tag}>')
 
  
 def textbox(text, **css_props):
@@ -140,15 +140,19 @@ def keep_format(plaintext_or_html):
     "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_raw(obj.to_html()) preserves its actual form."
     if not isinstance(plaintext_or_html,str):
         return plaintext_or_html # if not string, return as is
-    return HTML(plaintext_or_html) 
+    return _HTML(plaintext_or_html) 
 
 def raw(text):
     "Keep shape of text as it is, preserving whitespaces as well."
-    return HTML(f"<div class='PyRepr'>{text}<div>")
+    return _HTML(f"<div class='PyRepr'>{text}<div>")
 
 def rows(*objs):
     "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
     return objs # Its already a tuple
+
+def cols(*objs,width_percents=None):
+    "Returns HTML containing multiple columns of given width_percents."
+    return format_html(*objs,width_percents=width_percents) # Its already a tuple
 
 def block(title,*objs,bg = 'olive'):
     "Format a block like in LATEX beamer. *objs expect to be writable with `write` command."
@@ -198,7 +202,7 @@ def sig(callable,prepend_str = None):
         _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--secondary-fg);">{str(inspect.signature(callable))}</span>'
         if prepend_str: 
             _sig = alert(prepend_str + '.') + _sig
-        return HTML(_sig)
+        return _HTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')
 
@@ -207,7 +211,7 @@ def doc(callable,prepend_str = None):
     try:
         _doc = _fix_repr(inspect.getdoc(callable))
         _sig = sig(callable,prepend_str)._repr_html_()
-        return HTML(f"<div class='PyRepr'>{_sig}<br>{_doc}</div>")
+        return _HTML(f"<div class='PyRepr'>{_sig}<br>{_doc}</div>")
     except:
         raise TypeError(f'Object {callable} is not a callable')
     

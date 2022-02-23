@@ -6,8 +6,8 @@ and then provided to other classes via composition, not inheritance.
 import os 
 import datetime
 from IPython import get_ipython
-from IPython.display import display, Image, HTML
-from ..writers import write
+from IPython.display import display, Image
+from ..writers import write, _HTML
 from ..formatter import fix_ipy_image
 from ..utils import set_dir
 from . import scripts, intro, styles
@@ -100,8 +100,8 @@ class LayoutSettings:
         
     def code_line_numbering(self,b=True):
         if b:
-            return display(HTML('<style> code:before{ display:inline-block !important; } </style>'))
-        return display(HTML('<style> code:before{ display:none !important; } </style>'))
+            return display(_HTML('<style> code:before{ display:inline-block !important; } </style>'))
+        return display(_HTML('<style> code:before{ display:none !important; } </style>'))
     
     def align8center(self,b=True):
         "Central aligment of slide by default. If False, left-top aligned."

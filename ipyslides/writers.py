@@ -16,6 +16,21 @@ from .shared_vars import _md_extensions
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
 
+class _HTML(HTML):
+    def __init__(self, value,*args,**kwargs):
+        "This HTML will be diplayable, printable and formatable."
+        self.value = value
+        super().__init__(value, *args,**kwargs)
+        
+    def __format__(self, spec):
+        return f'{self._repr_html_():{spec}}'
+    
+    def __repr__(self):
+        return repr(self.value)
+    
+    def __str__(self):
+        return str(self.value)
+    
 class _HTML_Widget(ipw.HTML):
     "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method."
     def __init__(self,*args,**kwargs):
@@ -24,6 +39,16 @@ class _HTML_Widget(ipw.HTML):
     def _repr_html_(self):
         "Make it available in `write` command as well."
         return self.value
+    
+    def __format__(self, spec):
+        return f'{self._repr_html_():{spec}}'
+    
+    def __repr__(self):
+        return repr(self.value)
+    
+    def __str__(self):
+        return str(self.value)
+    
 
 def _fix_repr(obj):
     if isinstance(obj,str):
@@ -85,7 +110,7 @@ def write(*columns,width_percents=None,className=None):
     Note: `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
     
     ''' 
-    return display(HTML(_fmt_write(*columns,width_percents=width_percents,className=className)))
+    return display(_HTML(_fmt_write(*columns,width_percents=width_percents,className=className)))
 
 
 def _fmt_iwrite(*columns,width_percents=None):
