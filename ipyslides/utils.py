@@ -39,7 +39,7 @@ def set_dir(path):
 
 def format_html(*columns,width_percents=None,className=None):
     'Same as `write` except it does not display but give a dict object that can be passed to `write` and `iwrite`.'
-    return keep_format(_fmt_write(*columns,width_percents=width_percents,className=className))
+    return _HTML(_fmt_write(*columns,width_percents=width_percents,className=className))
 
 def format_css(selector, **css_props):
     "Provide CSS values with - replaced by _ e.g. font-size to font_size. selector is a string of valid tag/class/id etc."
@@ -47,7 +47,7 @@ def format_css(selector, **css_props):
     _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
     props_str = '\n'.join([f"    {k}: {v}" for k,v in _css_props.items()])
     out_str = f"<style>\n{selector} {{\n{props_str}\n}}\n</style>"
-    return keep_format(out_str)
+    return _HTML(out_str)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
@@ -76,8 +76,8 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     if caption:
         img = img + textbox(caption)  # Add caption
     if zoomable:
-        return f'<div class="zoom-container">{img}</div>'
-    return img
+        return _HTML(f'<div class="zoom-container">{img}</div>')
+    return _HTML(img)
 
 def svg(data=None,caption=None,zoomable=True,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
@@ -85,8 +85,8 @@ def svg(data=None,caption=None,zoomable=True,**kwargs):
     if caption:
         svg = svg + textbox(caption)  # Add caption 
     if zoomable:
-        return f'<div class="zoom-container">{svg}</div>'
-    return svg
+        return _HTML(f'<div class="zoom-container">{svg}</div>')
+    return _HTML(svg)
 
 def enable_zoom(obj):
     "Add zoom-container class to given object, whether a widget or html/IPYthon object"
@@ -126,15 +126,15 @@ def textbox(text, **css_props):
     css_props = {'display':'inline-block','white-space': 'pre', **css_props} # very important to apply text styles in order
     # white-space:pre preserves whitspacing, text will be viewed as written. 
     _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
-    return f"<span class='TextBox' style = {_style!r}> {text} </span>"  # markdown="span" will avoid inner parsing
+    return _HTML(f"<span class='TextBox' style = {_style!r}> {text} </span>")  # markdown="span" will avoid inner parsing
 
 def alert(text):
     "Alerts text!"
-    return f"<span style='color:#DC143C;'>{text}</span>"
+    return _HTML(f"<span style='color:#DC143C;'>{text}</span>")
     
 def colored(text,fg='blue',bg=None):
     "Colored text, `fg` and `bg` should be valid CSS colors"
-    return f"<span style='background:{bg};color:{fg};'>{text}</span>"
+    return _HTML(f"<span style='background:{bg};color:{fg};'>{text}</span>")
 
 def keep_format(plaintext_or_html):
     "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_raw(obj.to_html()) preserves its actual form."
@@ -152,14 +152,14 @@ def rows(*objs):
 
 def cols(*objs,width_percents=None):
     "Returns HTML containing multiple columns of given width_percents."
-    return format_html(*objs,width_percents=width_percents) # Its already a tuple
+    return format_html(*objs,width_percents=width_percents)
 
 def block(title,*objs,bg = 'olive'):
     "Format a block like in LATEX beamer. *objs expect to be writable with `write` command."
     _title = f"""<center style='background:var(--secondary-bg);margin:0px -4px;'>
                 <b>{title}</b></center>"""
     _out = _fmt_write(objs) # single column
-    return keep_format(f"""<div style='padding:4px' class='block'>
+    return _HTML(f"""<div style='padding:4px' class='block'>
         <div style='border-top:4px solid {bg};box-shadow: 0px 0px 4px {bg};border-radius:4px;padding:0 4px;'>
         {_title}
         {_out}

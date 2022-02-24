@@ -17,19 +17,18 @@ from .shared_vars import _md_extensions
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
 
 class _HTML(HTML):
-    def __init__(self, value,*args,**kwargs):
+    def __init__(self, *args,**kwargs):
         "This HTML will be diplayable, printable and formatable."
-        self.value = value
-        super().__init__(value, *args,**kwargs)
+        super().__init__(*args,**kwargs)
         
     def __format__(self, spec):
         return f'{self._repr_html_():{spec}}'
     
     def __repr__(self):
-        return repr(self.value)
+        return repr(self._repr_html_())
     
     def __str__(self):
-        return str(self.value)
+        return str(self._repr_html_())
     
 class _HTML_Widget(ipw.HTML):
     "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method."

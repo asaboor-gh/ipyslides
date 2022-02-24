@@ -324,6 +324,7 @@ div.codehilite pre > code:hover {
     overflow: auto;
 	color: var(--primary-fg)!important;
 	background: var(--primary-bg)!important;
+    border: 1px solid var(--tr-odd-bg) !important; /* Makes it pleasant to view */
 }
 .SlidesWrapper tbody>tr:nth-child(odd) {background: var(--tr-odd-bg)!important;}
 .SlidesWrapper tbody>tr:nth-child(even) {background: var(--primary-bg)!important;}
