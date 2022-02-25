@@ -8,7 +8,7 @@ import datetime
 from IPython import get_ipython
 from IPython.display import display, Image
 from ..writers import write, _HTML
-from ..formatter import fix_ipy_image
+from ..formatter import fix_ipy_image, code_css
 from ..utils import set_dir
 from . import scripts, intro, styles
 
@@ -53,12 +53,17 @@ class LayoutSettings:
         
     
         self.update_theme() #Trigger Theme and Javascript in it
+        self.set_code_style() #Trigger CSS in it, must
         
     def set_animation(self,name):
         if name in styles.animations:
             self.animation = styles.animations[name]
         else:
             print(f'Animation {name!r} not found. Use any of {list(styles.animations.keys())}.')
+    
+    def set_code_style(self,style='default'):
+        "Set code style CSS."
+        self.widgets.htmls.hilite.value = code_css(style)
       
     def set_font_family(self,text_font=None,code_font=None):
         "Set main fonts for text and code."

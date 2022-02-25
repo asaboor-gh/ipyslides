@@ -10,7 +10,7 @@ import ipywidgets as ipw
 from markdown import markdown
 from collections import namedtuple
 
-from .formatter import format_object, syntax_css, _fix_code
+from .formatter import format_object, _fix_code
 from .shared_vars import _md_extensions
 
 
@@ -80,7 +80,7 @@ def _fmt_write(*columns,width_percents=None,className=None):
     _cols = ''.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
                      {''.join([_fix_repr(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,widths)])
-    _cols = syntax_css() + _cols if 'codehilite' in _cols else _cols
+    
     if len(columns) == 1:
         return _cols.replace('<div', f'<div class = "{_class}"',1) if _class else _cols
     
@@ -145,34 +145,17 @@ def _fmt_iwrite(*columns,width_percents=None):
     out_cols = tuple(out_cols) if len(out_cols) > 1 else out_cols[0]
     return ipw.HBox(children = children).add_class('columns'), out_cols #Return display widget and list of objects for later use
 
-def iwrite(*columns,width_percents=None,className=None):
-    """Each obj in columns could be an IPython widget like `ipywidgets`,`bqplots` etc 
-    or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
-    Other objects (those in `write` command) will be converted to HTML widgets if possible. 
-    Object containing javascript code may not work, use `write` command for that.
-    
-    If you give a className, add CSS of it using `format_css` function and provide it to `iwrite` function. 
-    
-    **Returns**: grid,columns as reference to use later and update. rows are packed in columns.
-    
-    **Examples**:
-    grid, x = iwrite('X')
-    grid, (x,y) = iwrite('X','Y')
-    grid, (x,y) = iwrite(['X','Y'])
-    grid, [(x,y),z] = iwrite(['X','Y'],'Z')
-    #We unpacked such a way that we can replace objects with new one using `grid.update`
-    new_obj = grid.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
-    """
-    _grid, _objects = _fmt_iwrite(*columns,width_percents=width_percents)
-    if isinstance(className,str):
-        _grid.add_class(className)
-        
-    display(_grid) # Actually display the widget
+class _WidgetsWriter:
+    def __init__(self, *columns, width_percents=None, className=None):
+        self._grid, self._cols = _fmt_iwrite(*columns,width_percents=width_percents)
+        if isinstance(className, str):
+            self._grid.add_class(className)
+        self._grid.add_class('columns')
     
     def update(self, old_obj, new_obj):
         "Updates `old_obj`  with `new_obj`. Returns reference to created/given widget, which can be updated by it's own methods."
         row, col = old_obj._grid_location['row'], old_obj._grid_location['column']
-        widgets_row = list(self.children[col].children)
+        widgets_row = list(self._grid.children[col].children)
         try: 
             ipw.Box([new_obj]) # Check for widget first 
             tmp = new_obj
@@ -184,8 +167,29 @@ def iwrite(*columns,width_percents=None,className=None):
         
         tmp._grid_location = old_obj._grid_location # Keep location
         widgets_row[row] = tmp
-        self.children[col].children = widgets_row
+        self._grid.children[col].children = widgets_row
         return tmp
     
-    _grid.update = update.__get__(_grid,type(_grid)) #attach update method to grid
-    return namedtuple('DisplayGrid',['grid','columns'])(_grid,_objects)
+def iwrite(*columns,width_percents=None,className=None):
+    """Each obj in columns could be an IPython widget like `ipywidgets`,`bqplots` etc 
+    or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
+    Other objects (those in `write` command) will be converted to HTML widgets if possible. 
+    Object containing javascript code may not work, use `write` command for that.
+    
+    If you give a className, add CSS of it using `format_css` function and provide it to `iwrite` function. 
+    
+    **Returns**: writer, columns as reference to use later and update. rows are packed in columns.
+    
+    **Examples**:
+    writer, x = iwrite('X')
+    writer, (x,y) = iwrite('X','Y')
+    writer, (x,y) = iwrite(['X','Y'])
+    writer, [(x,y),z] = iwrite(['X','Y'],'Z')
+    #We unpacked such a way that we can replace objects with new one using `grid.update`
+    new_obj = writer.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
+    """
+    wr = _WidgetsWriter(*columns,width_percents=width_percents,className=className)
+        
+    display(wr._grid) # Actually display the widget
+    
+    return namedtuple('LiveGrid',['writer','columns'])(wr, wr._cols)

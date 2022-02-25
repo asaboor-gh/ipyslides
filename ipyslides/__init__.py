@@ -32,6 +32,7 @@ def initialize(markdown_file=None,
                footer_text = 'Author Name',
                show_slide_number = True,
                show_date = True,
+               code_style = 'default',
                code_line_numbering = True,
                font_scale = 1.0,
                logo_src = '''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -60,6 +61,7 @@ def initialize(markdown_file=None,
     slides.settings.set_animation(animation)
     slides.settings.theme_dd.value = 'Dark' if dark_theme else 'Fancy'
     slides.settings.set_logo(logo_src,width=50)
+    slides.settings.set_code_style(code_style)
     
     with slides.slide(1):
         slides.write('# Slide 1\nOverwrite this using \n`with slide(1):`\n\t`    ...`\n or \n `%%slide 1`')

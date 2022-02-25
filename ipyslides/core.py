@@ -9,7 +9,7 @@ import ipywidgets as ipw
 
 from .source import Source
 from .writers import write, iwrite
-from .formatter import bokeh2html, plt2html
+from .formatter import bokeh2html, plt2html, code_css
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}

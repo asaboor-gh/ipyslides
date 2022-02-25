@@ -6,6 +6,8 @@ import inspect, re, json
 from io import BytesIO
 import matplotlib.pyplot as plt
 from markdown import markdown
+from pygments.formatters import HtmlFormatter
+from pygments.styles import get_all_styles
 
 
 def plt2html(plt_fig=None,transparent=True,caption=None):
@@ -36,28 +38,11 @@ def fix_ipy_image(image,width='100%'):
     return f"<img src='{_src}' width='{width}' height='auto'/>" # width is important, height auto fixed
 
 
-def syntax_css():
-    color_keys = {
-        'inherit': 'n',
-        '#008000': 'k ow kc',
-        '#080': 'mi mf',
-        '#ff7f0e': 'kn',
-        '#2ca02c': 'nn',
-        '#d62728': 'p',
-        '#5650b5': 'c1 sd',
-        '#AA22FF': 'o',
-        'olive': 'nf',
-        'red': 'se',
-        '#337ab7': 'nc',
-        '#1175cb': 'nb',
-        '#BA2121': 's1 s2',
-        '#7f7f7f': 'sa',
-        '#2800ff': 'si',   
-    }
-    kcw = [[(_v,c,'bold') if _v in ['k','kc'] else (_v,c,'normal') for _v in k.split()] for c,k in color_keys.items()]
-    kcw = [v for vs in kcw for v in vs] # Flatten
-    css = '\n'.join([f'.codehilite .{k} {{color:{c};font-weight:{w};}}' for k,c,w in kcw]) # Fonts are declared in main CSS
-    return "<style>\n{}\n</style>".format(css)
+def code_css(style='default'):
+    if style not in get_all_styles():
+        raise ValueError(f"Style {style!r} not found in {list(get_all_styles())}")
+    _style = HtmlFormatter(style=style).get_style_defs('.codehilite')
+    return "<style>\n{}\n</style>".format(_style)
 
 def _fix_code(_html):
     "Fix code highlighting for given _html string"
@@ -98,7 +83,7 @@ def format_object(obj):
                 source = inspect.getsource(obj)
                 source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
                 # Create HTML
-                source = syntax_css() + markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
+                source = markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
                 source = _fix_code(source) # Avoid empty spans/last empty line and make linenumbering possible
             except:
                 source = f'Can not get source code of:\n{obj}'

@@ -55,10 +55,11 @@ class _Htmls:
     main    = HTML(styles.main_layout_css)
     sidebar = HTML(styles.sidebar_layout_css()) # Should be separate CSS
     loading = HTML() #SVG Animation in it
-    logo    =  HTML()
+    logo    = HTML()
     toast   = HTML() # For notifications
     cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
-    notes   = ipw.HTML('Notes Area').add_class('Inline-Notes') # For below slides area
+    notes   = HTML('Notes Area').add_class('Inline-Notes') # For below slides area
+    hilite  = HTML() # Updated in settings on creation. For code blocks.
 
 @dataclass(frozen=True)
 class _Inputs:
@@ -277,7 +278,8 @@ class Widgets:
             self.htmls.logo, 
             self.htmls.sidebar,
             self.panelbox, 
-            self.htmls.cursor ,
+            self.htmls.cursor,
+            self.htmls.hilite,
             HBox([ #Slide_box must be in a box to have animations work
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
