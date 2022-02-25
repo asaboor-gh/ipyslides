@@ -168,7 +168,7 @@ class Source:
 
         file, l1 = frame()
         _alert = alert('You can get code once you exit context manager for `write` command <center>OR</center>use it will auto update inside `iwrite` command')
-        return_obj = _Source_Widget(value=_alert)
+        return_obj = _Source_Widget(value=f'{_alert}')
         return_obj.raw = ''
 
         cls.current = return_obj # add to user namespace, this does not create extra object, just points to same

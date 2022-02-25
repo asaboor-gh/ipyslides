@@ -15,8 +15,8 @@ from IPython.utils.capture import capture_output
 from IPython.core.display import Image
 import ipywidgets as ipw
 
-from .formatter import fix_ipy_image
-from .writers import write, _HTML, _fmt_write, _fix_repr
+from .formatter import fix_ipy_image, _HTML
+from .writers import write, _fmt_write, _fix_repr
  
         
 @contextmanager
@@ -51,7 +51,7 @@ def format_css(selector, **css_props):
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
-    return f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>"""
+    return _HTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>""")
 
 def __check_pil_image(data):
     "Check if data is a PIL Image or numpy array"
@@ -148,7 +148,7 @@ def raw(text):
 
 def rows(*objs):
     "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
-    return objs # Its already a tuple
+    return format_html(objs) # Its already a tuple, so will show in a column with many rows
 
 def cols(*objs,width_percents=None):
     "Returns HTML containing multiple columns of given width_percents."
@@ -201,7 +201,7 @@ def sig(callable,prepend_str = None):
     try:
         _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--secondary-fg);">{str(inspect.signature(callable))}</span>'
         if prepend_str: 
-            _sig = alert(prepend_str + '.') + _sig
+            _sig = f'{alert(prepend_str)}.{_sig}' # must be inside format string
         return _HTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')
@@ -210,7 +210,7 @@ def doc(callable,prepend_str = None):
     "Returns documentation of a callable. You can prepend a class/module name."
     try:
         _doc = _fix_repr(inspect.getdoc(callable))
-        _sig = sig(callable,prepend_str)._repr_html_()
+        _sig = sig(callable,prepend_str)
         return _HTML(f"<div class='PyRepr'>{_sig}<br>{_doc}</div>")
     except:
         raise TypeError(f'Object {callable} is not a callable')

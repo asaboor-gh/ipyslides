@@ -8,6 +8,45 @@ import matplotlib.pyplot as plt
 from markdown import markdown
 from pygments.formatters import HtmlFormatter
 from pygments.styles import get_all_styles
+import ipywidgets as ipw
+from IPython.display import HTML
+
+class _HTML(HTML):
+    def __init__(self, *args,**kwargs):
+        "This HTML will be diplayable, printable and formatable."
+        super().__init__(*args,**kwargs)
+        
+    def __format__(self, spec):
+        return f'{self._repr_html_():{spec}}'
+    
+    def __repr__(self):
+        return repr(self._repr_html_())
+    
+    def __str__(self):
+        return str(self._repr_html_())
+    
+    @property
+    def value(self):
+        "Returns HTML string."
+        return self._repr_html_()
+    
+class _HTML_Widget(ipw.HTML):
+    "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method. Usable in format string."
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        
+    def _repr_html_(self):
+        "Make it available in `write` command as well."
+        return self.value
+    
+    def __format__(self, spec):
+        return f'{self._repr_html_():{spec}}'
+    
+    def __repr__(self):
+        return repr(self.value)
+    
+    def __str__(self):
+        return str(self.value)
 
 
 def plt2html(plt_fig=None,transparent=True,caption=None):
@@ -25,7 +64,7 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     if caption:
         svg = svg + f'<p style="font-size:80% !important;">{caption}</p>'
-    return f"<div class='zoom-container'>{svg}</div>"
+    return _HTML(f"<div class='zoom-container'>{svg}</div>")
 
 def bokeh2html(bokeh_fig,title=""):
     from bokeh.resources import CDN
@@ -35,14 +74,27 @@ def bokeh2html(bokeh_fig,title=""):
 def fix_ipy_image(image,width='100%'):
     img = image._repr_mimebundle_() # Picks PNG/JPEG/etc
     _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
-    return f"<img src='{_src}' width='{width}' height='auto'/>" # width is important, height auto fixed
+    return _HTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
 
 
-def code_css(style='default'):
+def code_css(style='default',background='var(--secondary-bg)'):
+    "Style code block with given style from pygments module and background color."
     if style not in get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(get_all_styles())}")
     _style = HtmlFormatter(style=style).get_style_defs('.codehilite')
-    return "<style>\n{}\n</style>".format(_style)
+
+    return f"""
+    <style>
+    div.codehilite {{
+        box-shadow: 0 1.6em 0 0 {background} inset !important;
+    }}
+    div.codehilite pre, 
+    div.codehilite::before, 
+    div.codehilite pre>code::before {{
+        background: {background} !important;
+    }}
+    {_style}
+    </style>"""
 
 def _fix_code(_html):
     "Fix code highlighting for given _html string"

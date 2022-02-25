@@ -61,9 +61,9 @@ class LayoutSettings:
         else:
             print(f'Animation {name!r} not found. Use any of {list(styles.animations.keys())}.')
     
-    def set_code_style(self,style='default'):
-        "Set code style CSS."
-        self.widgets.htmls.hilite.value = code_css(style)
+    def set_code_style(self,style='default',background='var(--secondary-bg)'):
+        "Set code style CSS. Use background for better view of your choice."
+        self.widgets.htmls.hilite.value = code_css(style,background=background)
       
     def set_font_family(self,text_font=None,code_font=None):
         "Set main fonts for text and code."

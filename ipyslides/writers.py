@@ -4,49 +4,17 @@ write/ iwrite main functions to add content to slides
 
 __all__ = ['write','iwrite']
 
-from unicodedata import name
 from IPython.core.display import display, HTML, __all__ as __all
 import ipywidgets as ipw
 from markdown import markdown
 from collections import namedtuple
 
-from .formatter import format_object, _fix_code
+from .formatter import format_object, _fix_code, _HTML, _HTML_Widget
 from .shared_vars import _md_extensions
 
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
 
-class _HTML(HTML):
-    def __init__(self, *args,**kwargs):
-        "This HTML will be diplayable, printable and formatable."
-        super().__init__(*args,**kwargs)
-        
-    def __format__(self, spec):
-        return f'{self._repr_html_():{spec}}'
-    
-    def __repr__(self):
-        return repr(self._repr_html_())
-    
-    def __str__(self):
-        return str(self._repr_html_())
-    
-class _HTML_Widget(ipw.HTML):
-    "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method."
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        
-    def _repr_html_(self):
-        "Make it available in `write` command as well."
-        return self.value
-    
-    def __format__(self, spec):
-        return f'{self._repr_html_():{spec}}'
-    
-    def __repr__(self):
-        return repr(self.value)
-    
-    def __str__(self):
-        return str(self.value)
     
 
 def _fix_repr(obj):
@@ -54,12 +22,15 @@ def _fix_repr(obj):
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
         _html = markdown(_obj,extensions=_md_extensions) 
         return _fix_code(_html)
-        
+    elif isinstance(obj,(HTML, _HTML, ipw.HTML, _HTML_Widget)):
+        return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick  
     else:
         # Next prefer custom methods of objects. 
         is_true, _html = format_object(obj)
         if is_true:
-            return _html
+            if isinstance(_html,(_HTML,_HTML_Widget)): # format object can return _HTML, _HTML_Widget as well.
+                return _html._repr_html_()
+            return _html # Otherwise it is a string
         # Ipython objects
         _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
         for _rep_ in _reprs_:
