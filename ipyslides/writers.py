@@ -4,7 +4,7 @@ write/ iwrite main functions to add content to slides
 
 __all__ = ['write','iwrite']
 
-from IPython.core.display import display, HTML, __all__ as __all
+from IPython.core.display import display, __all__ as __all
 import ipywidgets as ipw
 from markdown import markdown
 from collections import namedtuple
@@ -22,8 +22,10 @@ def _fix_repr(obj):
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
         _html = markdown(_obj,extensions=_md_extensions) 
         return _fix_code(_html)
-    elif isinstance(obj,(HTML, _HTML, ipw.HTML, _HTML_Widget)):
+    
+    elif isinstance(obj,(_HTML, _HTML_Widget)):
         return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick  
+    
     else:
         # Next prefer custom methods of objects. 
         is_true, _html = format_object(obj)
@@ -31,6 +33,7 @@ def _fix_repr(obj):
             if isinstance(_html,(_HTML,_HTML_Widget)): # format object can return _HTML, _HTML_Widget as well.
                 return _html._repr_html_()
             return _html # Otherwise it is a string
+        
         # Ipython objects
         _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
         for _rep_ in _reprs_:
@@ -75,7 +78,7 @@ def write(*columns,width_percents=None,className=None):
     
     If you give a className, add CSS of it using `format_css` function and provide it to `write` function.
     
-    Note: Use `keep_format` method to keep format of object for example `keep_format(altair_chart.to_html())`.
+    Note: Use `keep_format` method to bypass markdown parser, for example `keep_format(altair_chart.to_html())`.
     Note: You can give your own type of data provided that it is converted to an HTML string.
     Note: `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
     

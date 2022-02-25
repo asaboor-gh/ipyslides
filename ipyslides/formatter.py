@@ -117,6 +117,7 @@ libraries = [
 ]
 
 def format_object(obj):
+    "Returns string or _HTML for given object."
     try: # If matplotlib axes given
         _fig = obj.get_figure()
         return True,plt2html(_fig)

@@ -31,7 +31,7 @@ class LiveSlides(BaseLiveSlides):
             cls.__instance = object.__new__(cls)
             return cls.__instance
         else:
-            print("Only one instance of slides per notebook is available!")
+            raise Exception("Can't create more than one instance of a singleton class")
             
     # Singlton class can't be initialized twice, so arguments are not passed
     def __init__(self):

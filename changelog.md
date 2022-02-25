@@ -1,6 +1,14 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.3.1
+- Use `ls.settings.set_code_style(style,background)` to set any style available in `pygments` module. 
+```python
+ls.settings.set_code_style('material','#003')
+```
+![Code Sample](code_sample.png)
+- Almost every utility object like `image`,`svg`, `doc`, etc. is an HTML object which can autodisplay on last line of cell. 
+- Bugs fixes.
 # 1.3.0 (Single Instance Restriction)
 Now there exists only one instance of `LiveSlides` per notebook. Multiple instnaces do not behave well with each other and as we see almost every presentation software is one presentation per file, so is `ipyslides` now. You can still create it from markdown file or import a previously created presentation.
 ## Notable Change
