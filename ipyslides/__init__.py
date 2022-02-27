@@ -26,7 +26,7 @@ def __parse_md_file(md_file):
         return [''.join(lines[x.start:x.stop]) for x in ranges]
         
     
-def initialize(markdown_file=None,
+def initialize(markdown_file = None,
                centering = True,
                dark_theme = False,
                footer_text = 'Author Name',
@@ -52,7 +52,7 @@ def initialize(markdown_file=None,
     ___________________________________________
     This will create two slides along with title page.
     """
-    slides = LiveSlides()
+    slides = LiveSlides()    
     slides.convert2slides(True)
     slides.settings.set_font_scale(font_scale)
     slides.settings.align8center(centering)

@@ -31,7 +31,7 @@ class LiveSlides(BaseLiveSlides):
             cls.__instance = object.__new__(cls)
             return cls.__instance
         else:
-            raise Exception("Can't create more than one instance of a singleton class")
+            raise Exception("Can't create more than one instance of a singleton class! Resrtart Kernel or delete previous instance.")
             
     # Singlton class can't be initialized twice, so arguments are not passed
     def __init__(self):

@@ -13,7 +13,7 @@ from IPython.display import HTML
 
 class _HTML(HTML):
     def __init__(self, *args,**kwargs):
-        "This HTML will be diplayable, printable and formatable."
+        "This HTML will be diplayable, printable and formatable. Can add other HTML object or string to it."
         super().__init__(*args,**kwargs)
         
     def __format__(self, spec):
@@ -25,13 +25,19 @@ class _HTML(HTML):
     def __str__(self):
         return str(self._repr_html_())
     
+    def __add__(self, other):
+        if isinstance(other,_HTML):
+            return _HTML(self._repr_html_() + other._repr_html_())
+        elif isinstance(other,str):
+            return _HTML(self._repr_html_() + other)
+    
     @property
     def value(self):
         "Returns HTML string."
         return self._repr_html_()
     
 class _HTML_Widget(ipw.HTML):
-    "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method. Usable in format string."
+    "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method. Usable in format string. Can add other HTML object or string to it."
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         
@@ -47,6 +53,12 @@ class _HTML_Widget(ipw.HTML):
     
     def __str__(self):
         return str(self.value)
+    
+    def __add__(self, other):
+        if isinstance(other,_HTML_Widget):
+            return _HTML(self._repr_html_() + other._repr_html_())
+        elif isinstance(other,str):
+            return _HTML(self._repr_html_() + other)
 
 
 def plt2html(plt_fig=None,transparent=True,caption=None):
@@ -66,15 +78,24 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
         svg = svg + f'<p style="font-size:80% !important;">{caption}</p>'
     return _HTML(f"<div class='zoom-container'>{svg}</div>")
 
+def _plt2htmlstr(plt_fig=None,transparent=True,caption=None):
+    return plt2html(plt_fig=plt_fig,transparent=transparent,caption=caption).value
+
 def bokeh2html(bokeh_fig,title=""):
     from bokeh.resources import CDN
     from bokeh.embed import file_html
-    return file_html(bokeh_fig, CDN, title)
+    return _HTML(file_html(bokeh_fig, CDN, title))
+
+def _bokeh2htmlstr(bokeh_fig,title=""):
+    return bokeh2html(bokeh_fig,title).value
 
 def fix_ipy_image(image,width='100%'):
     img = image._repr_mimebundle_() # Picks PNG/JPEG/etc
     _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
     return _HTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
+
+def _ipy_imagestr(image,width='100%'):
+    return fix_ipy_image(image,width=width).value
 
 
 def code_css(style='default',background='var(--secondary-bg)'):
@@ -107,17 +128,17 @@ def _fix_code(_html):
 # ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
 
 libraries = [
-    {'name':'matplotlib.pyplot','obj':'Figure','func':plt2html,'args':(),'kwargs': {}},
+    {'name':'matplotlib.pyplot','obj':'Figure','func':_plt2htmlstr,'args':(),'kwargs': {}},
     {'name':'altair','obj':'Chart','func': 'to_html','args':(),'kwargs': {}},
     {'name':'pygal','obj':'Graph','func':'render','args':{},'kwargs':{'is_unicode':True}},
     {'name':'pydeck','obj':'Deck','func':'to_html','args':(),'kwargs': {'as_string':True}},
     {'name':'pandas','obj':'DataFrame','func':'to_html','args':(),'kwargs': {}},
-    {'name':'bokeh.plotting','obj':'Figure','func':bokeh2html,'args':(),'kwargs':{'title':''}},
-    {'name':'IPython.display','obj':'Image','func':fix_ipy_image,'args':(),'kwargs':{'width':'100%'}}  
+    {'name':'bokeh.plotting','obj':'Figure','func':_bokeh2htmlstr,'args':(),'kwargs':{'title':''}},
+    {'name':'IPython.display','obj':'Image','func':_ipy_imagestr,'args':(),'kwargs':{'width':'100%'}}  
 ]
 
 def format_object(obj):
-    "Returns string or _HTML for given object."
+    "Returns string of HTML for given object."
     try: # If matplotlib axes given
         _fig = obj.get_figure()
         return True,plt2html(_fig)

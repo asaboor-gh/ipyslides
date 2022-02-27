@@ -207,6 +207,7 @@ class Widgets:
         
         # Make the progress bar and link to slides
         self.progressbar, self.__proghtml = _custom_progressbar(self.sliders.progress)
+        self.progressbar 
         
         # Layouts build on these widgets
         self.controls = HBox([
@@ -219,15 +220,15 @@ class Widgets:
         
         self.navbox = VBox([
             HBox([self.buttons.setting,
-                HBox([self.htmls.info],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
+                HBox([self.htmls.info],layout= Layout(overflow_x = 'auto',overflow_y='hidden')) ,
                 self.buttons.capture
             ],layout=Layout(height='32px')
-            ).add_class('nav-box'),
+            ).add_class('nav-box') ,
             VBox([
                 self.__proghtml,
                 self.progressbar
                 ])
-        ]).add_class('NavWrapper')  #class is must
+        ]).add_class('NavWrapper')   #class is must
         
         
         
@@ -235,7 +236,7 @@ class Widgets:
             Box([
                 self.outputs.intro,
                 self.buttons.setting,
-            ],layout=Layout(width='100%',height='auto',overflow='hidden')),
+            ],layout=Layout(width='100%',height='auto',overflow='hidden')) ,
             self.outputs.js_fix, 
             self.outputs.js_var, # Must be in middle so that others dont get disturbed.
             VBox([
@@ -249,19 +250,19 @@ class Widgets:
                     self.checks.notes, 
                     self.checks.toast, 
                     self.checks.reflow
-                ],layout=btns_layout),
+                ],layout=btns_layout) ,
                 self.ddowns.clear,
                 HBox([
                     self.buttons.png, 
                     self.buttons.pdf, 
                     self.buttons.print
-                ], layout=btns_layout),
+                ], layout=btns_layout) ,
                 HTML('<hr/>'),
                 HBox([
                     self.toggles.fscrn,
                     self.toggles.zoom, 
                     self.toggles.timer
-                ], layout=btns_layout),
+                ], layout=btns_layout) ,
             ],layout = Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
         ],layout = Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
         ).add_class('panel') 

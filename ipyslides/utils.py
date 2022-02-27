@@ -44,7 +44,7 @@ def format_html(*columns,width_percents=None,className=None):
 def format_css(selector, **css_props):
     "Provide CSS values with - replaced by _ e.g. font-size to font_size. selector is a string of valid tag/class/id etc."
     _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
-    _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
+    _css_props = {k: f"{v.replace('!important','').replace(';','')} !important;" for k,v in _css_props.items()}
     props_str = '\n'.join([f"    {k}: {v}" for k,v in _css_props.items()])
     out_str = f"<style>\n{selector} {{\n{props_str}\n}}\n</style>"
     return _HTML(out_str)
@@ -72,9 +72,9 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     if isinstance(width,int):
         width = f'{width}px'
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
-    img = fix_ipy_image(Image(data = _data,**kwargs),width=width)
+    img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs _HTML object
     if caption:
-        img = img + textbox(caption)  # Add caption
+        img = img + textbox(caption)  # Add caption,  _HTML + _HTML
     if zoomable:
         return _HTML(f'<div class="zoom-container">{img}</div>')
     return _HTML(img)
@@ -83,7 +83,7 @@ def svg(data=None,caption=None,zoomable=True,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
     if caption:
-        svg = svg + textbox(caption)  # Add caption 
+        svg = f'{svg} {textbox(caption)}'  # Add caption 
     if zoomable:
         return _HTML(f'<div class="zoom-container">{svg}</div>')
     return _HTML(svg)
@@ -116,7 +116,7 @@ def html_node(tag,children = [],className = None,**node_attrs):
             raise ValueError(f'Children should be a list/tuple of html_node or str, not {type(children)}')
     attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
     if className:
-        attrs = f'class="{className}"' + ' ' + attrs # space is must after className
+        attrs = f'class="{className}" {attrs}' # space is must after className
     return _HTML(f'<{tag} {attrs}>{content}</{tag}>')
 
  
@@ -146,13 +146,13 @@ def raw(text):
     "Keep shape of text as it is, preserving whitespaces as well."
     return _HTML(f"<div class='PyRepr'>{text}<div>")
 
-def rows(*objs):
+def rows(*objs, className=None):
     "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
-    return format_html(objs) # Its already a tuple, so will show in a column with many rows
+    return format_html(objs,className = className) # Its already a tuple, so will show in a column with many rows
 
-def cols(*objs,width_percents=None):
+def cols(*objs,width_percents=None, className=None):
     "Returns HTML containing multiple columns of given width_percents."
-    return format_html(*objs,width_percents=width_percents)
+    return format_html(*objs,width_percents=width_percents,className = className)
 
 def block(title,*objs,bg = 'olive'):
     "Format a block like in LATEX beamer. *objs expect to be writable with `write` command."

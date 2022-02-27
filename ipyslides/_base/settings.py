@@ -162,7 +162,7 @@ class LayoutSettings:
                         '__textfont__',self._font_family['text']).replace(
                         '__codefont__',self._font_family['code'])
         if self.reflow_check.value:
-            theme_css = theme_css.replace('</style>','') + f".SlideArea.{self.widgets.uid} * "+ "{max-height:max-content !important;}\n</style>"
+            theme_css = theme_css.replace('</style>','') + f".SlideArea * "+ "{max-height:max-content !important;}\n</style>"
         
         # Zoom Container 
         if self.btn_zoom.value:
