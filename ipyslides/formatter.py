@@ -10,6 +10,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.styles import get_all_styles
 import ipywidgets as ipw
 from IPython.display import HTML
+from IPython import get_ipython
 
 class _HTML(HTML):
     def __init__(self, *args,**kwargs):
@@ -81,6 +82,7 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
 def _plt2htmlstr(plt_fig=None,transparent=True,caption=None):
     return plt2html(plt_fig=plt_fig,transparent=transparent,caption=caption).value
 
+
 def bokeh2html(bokeh_fig,title=""):
     from bokeh.resources import CDN
     from bokeh.embed import file_html
@@ -139,10 +141,9 @@ libraries = [
 
 def format_object(obj):
     "Returns string of HTML for given object."
-    try: # If matplotlib axes given
-        _fig = obj.get_figure()
-        return True,plt2html(_fig)
-    except: pass
+    # If matplotlib axes given, handle it separately
+    if hasattr(obj,'get_figure'): 
+        return True,_plt2htmlstr(obj.get_figure())
     
     # Some builtin types
     if isinstance(obj,dict):
@@ -165,8 +166,7 @@ def format_object(obj):
             return (True, source)
     
     # Other Libraries   
-    try: module_name = obj.__module__
-    except: module_name = '' #str, int etc don't have __module__
+    module_name = obj.__module__ if hasattr(obj,'__module__') else '' #str, int etc don't have __module__
     
     for lib in libraries:
         if lib['name'].split('.')[0] in module_name: #MATCH NAMES

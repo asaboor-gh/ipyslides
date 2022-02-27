@@ -18,6 +18,7 @@ __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('disp
     
 
 def _fix_repr(obj):
+    "should return a string"
     if isinstance(obj,str):
         _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
         _html = markdown(_obj,extensions=_md_extensions) 
@@ -27,12 +28,10 @@ def _fix_repr(obj):
         return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick  
     
     else:
-        # Next prefer custom methods of objects. 
+        # Next prefer custom methods of objects as they are more frequently used
         is_true, _html = format_object(obj)
         if is_true:
-            if isinstance(_html,(_HTML,_HTML_Widget)): # format object can return _HTML, _HTML_Widget as well.
-                return _html._repr_html_()
-            return _html # Otherwise it is a string
+            return _html # it is a string
         
         # Ipython objects
         _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
