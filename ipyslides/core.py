@@ -218,7 +218,24 @@ class LiveSlides(BaseLiveSlides):
     # defining magics and context managers
     
     def __slide(self,line,cell):
-        "Turns to cell magic `slide` to capture slide. Moves to this slide when executed."
+        """Capture content of a cell as `slide`.
+            ---------------- Cell ----------------
+            %%slide 1                             
+            #python code here                     
+            --------------------------------------
+        
+        You can use another cell magic under it to capture cell content as you want, e.g.
+            ---------------- Cell ----------------
+            %%slide 2
+            %%markdown
+            Everything here and below is treated as markdown, not python code.
+            --------------------------------------
+            ---------------- Cell ----------------
+            %%slide 3
+            %%javascript
+            alert('Hello from second slide') # This will open a popup on third slide
+            --------------------------------------
+        """
         line = line.strip() #VSCode bug to inclue \r in line
         if line and not line.isnumeric():
             return print(f'You should use %%slide integer, not %%slide {line}')
