@@ -2,6 +2,7 @@ import sys
 from collections import namedtuple
 from contextlib import contextmanager
 
+import numpy as np
 from IPython import get_ipython
 from IPython.display import display
 from IPython.utils.capture import capture_output
@@ -30,9 +31,9 @@ class LiveSlides(BaseLiveSlides):
     def __new__(cls,*args, **kwargs):
         if not cls.__instance:
             cls.__instance = object.__new__(cls)
-            return cls.__instance
-        else:
-            raise Exception("Can't create more than one instance of a singleton class! Resrtart Kernel or delete previous instance.")
+        return cls.__instance #return each time, display will make sure single display in last call
+        #else:
+        #    raise Exception("Can't create more than one instance of a singleton class! Resrtart Kernel or delete previous instance.")
             
     # Singlton class can't be initialized twice, so arguments are not passed
     def __init__(self):
@@ -67,7 +68,7 @@ class LiveSlides(BaseLiveSlides):
         self._citations = {} # Initialize citations
         self.__slides_mode = False
         with capture_output() as self.__slides_title_page:
-            write(how_to_slide + '<h3 style="color:green;"> Read more in side panel</h3>')
+            write(how_to_slide)
 
         self.__slides_dict = {} # Initialize slide dictionary
         self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
@@ -86,10 +87,9 @@ class LiveSlides(BaseLiveSlides):
         self.progress_slider.observe(self.__update_content,names=['value'])
         
         # All Box of Slides
-        self.box =  self.widgets.mainbox
-        self.__update_content(True) # First attmpt
-        self.app = self.box # Alias   
-        self._app_displayed = False
+        self._box =  self.widgets.mainbox
+        self.__update_content(True) # First attmpt  
+        self._display_handles = [] # Initialize display handles
 
     @property
     def slides(self):
@@ -121,8 +121,6 @@ class LiveSlides(BaseLiveSlides):
     
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
-        if not self.__slides_mode:
-            return print('Set "self.convert2slides(True)", then it will work.')
         
         if fix_buttons:
             self.widgets.buttons.next.description = '▶'
@@ -140,16 +138,22 @@ class LiveSlides(BaseLiveSlides):
     
     def _ipython_display_(self):
         'Auto display when self is on last line of a cell'
-        if self._app_displayed:
-            return print('App is running in another cell, If not, try `.force_show()` method!')
-        self.__jlab_in_cell_display()
-        self._app_displayed = True
-        return display(self.box) # should be in display and return
+        if not self.__slides_mode:
+            return print('Set "self.convert2slides(True)", then it will work.')
+        
+        for out in self._display_handles:
+            out.clear_output(wait=False) # Remove previous displays
+            with out:
+                self.write('<h5 style="color:green;"> View of slides is in another cell, run cell to see here!</h5>')
+            
+        output = ipw.Output()
+        self._display_handles.append(output)
+        
+        with output:
+            self.__jlab_in_cell_display()
+            display(self._box)
+        return display(output)
     
-    def force_show(self):
-        "Force display."
-        self._app_displayed = False
-        return self._ipython_display_()
     
     def __jlab_in_cell_display(self): 
         # Can test Voila here too

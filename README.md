@@ -11,12 +11,42 @@ See [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.3.0
+> pip install ipyslides >= 1.3.2
 ```
 For development install, clone this repository and then
 ```shell
 > cd ipyslides
 > pip install -e .
+```
+# Creating Slides
+> Tip: You can use `ipyslides.demo()` to create example slides and start editing.
+
+```python
+#------------ Cell 1 --------------------
+import ipyslides as isd 
+ls = isd.LiveSlides()
+ls.convert2slides(True)
+ls.settings.set_animzation('zoom') 
+#------------ Cell 2 --------------------
+%%title
+# create a rich content title page
+#------------ Cell 3 --------------------
+%%slide 1
+# slide 1 content
+#------------ Cell 4 --------------------
+@ls.frames(1,*objs)
+def func(obj):
+    write(obj) #This will create as many slides after the slide number 1 as length(objs)
+#------------ Cell 5 --------------------
+ls # This displays slides if on the last line of cell, or use `ls.show()`.
+```
+You can load slides from a markdown file, slides separator should be --- (three dashes)
+```python
+ls.from_markdown(path, footer_text = 'Author Name')
+with ls.slide(2):
+    write(ls.md_content[2]) # write content of slide 2 from file
+    plot_something() # Add other things to same file
+    write_something()
 ```
 # Editable Demo
 See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides). You can edit it yourself.

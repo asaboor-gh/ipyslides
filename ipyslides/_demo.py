@@ -1,10 +1,12 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import textwrap, time
+from io import StringIO
 from .core import LiveSlides
 from .utils import textbox
 from .writers import write, iwrite, __reprs__
 from .formatter import libraries, plt2html
+from ._base.intro import how_to_slide
 
 slides = LiveSlides()
 slides.convert2slides(True)
@@ -14,12 +16,19 @@ slides.settings.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/
         <text x="45%" y="45%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↑</text>
         <text x="55%" y="60%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↓</text></svg>''',width=50)
 
-#title is skipped to show instructions  
-with slides.slide(1): #slide 1
+#Demo for loading slides from a file or file-like object 
+fp = StringIO('\n'.join(how_to_slide) + '''\n---
+# Slide 1
+(from markown file until here)
+''')
+slides.from_markdown(fp) # This will create first slide along with title page.
+
+with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context() as s:
+        write(slides.md_content[1])
         write('## I am created using `with slides.slide(1)` context( manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
-    write(s.focus_lines([1]))  #focus on line 1 
+    write(s.focus_lines([0]))  #focus on line 0 
     slides.notes.insert('### Note for slide 1')
     
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell

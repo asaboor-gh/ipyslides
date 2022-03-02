@@ -1,5 +1,5 @@
 "Inherit LiveSlides class from here. It adds useful attributes and methods."
-import json, re, os
+import json, re, os, io
 from contextlib import suppress
 from .widgets import Widgets
 from .print_pdf import PdfPrint
@@ -70,89 +70,16 @@ class BaseLiveSlides:
             slide_id = str(self.iterable[self.widgets.sliders.progress.value - 1]['n'])
             toast = self.__toasts[slide_id]
             self.notify(content=toast['func'](toast['arg']),**toast['kwargs'])
-        
-
-    def load_ipynb(self, filename, footer_text = 'Author Name'):
-        """If you want to create slides in clean and linear execution way, use this method. It overrides `load_md`.
-            
-            - First cell of notebook should be imports and it will be executed.
-                
-                import ipyslides as isd
-                slides = isd.LiveSlides() # This line will not re-run to avoid conflicts
-                
-            - Next cell will be used to create title page
-                This should not have %%title or `with title`
-            - Other cells will be slides
-                Do not use `with slides.slide` context manager if you use this function
-                use other methods freely e.g.
-                
-                %%slide
-                slides.cite...
-                slides.notes.insert...
-                slide.image...
-            
-            - Last cell should call `slides.load_ipynb(filename)`.
-                
-            - A cell with tag `#hide` will not be executed.
-        
-        > Make sure notebook is saved before using this function. 
-        """
-        if not os.path.isfile(filename):
-            raise ValueError(f"File {filename!r} does not exist!")
-        
-        with open(filename, 'r') as f:
-            try:
-                nb = json.load(f, cls = DecodeCleanNotebook)
-            except:
-                raise ValueError(f'Notebook {filename!r}cannot be parsed')
-        
-        # clean cells
-        for i, cell in enumerate(nb['cells']):
-            if cell['source'] and '#hide' in cell['source'][0]: # skip cells first if #hide even in markdown cell
-                nb['cells'][i]['source'] = []
-            for j, line in enumerate(cell['source']):
-                if cell['cell_type'] == 'code':
-                    for word in ['%%slide','load_ipynb','LiveSlides','load_md']: # do not include %%title as it is special case
-                        if word in line or line.lstrip().startswith('#'): # skip lines
-                            nb['cells'][i]['source'][j] = ''   #This keep slides created with %%slide available
-            
-            nb['cells'][i]['source'] = ''.join(ln for ln in cell['source'] if ln.strip()) #\n reamins there, so strip it
-        
-        cells = [cell for cell in nb['cells'] if cell['source']]
-        # check if previous slides excpet with %%slide as that line is processed
-        for cell in cells:
-            for check in ['^%%title','with*.title','@*.frames','with*.slide']: # Nod idea why . matches . and nothing too
-                if re.search(check, cell['source']):
-                    return self.shell.run_cell_magic('markdown','',f'<span style="color:red">Cannot recreate a previously created slide</span>\n```python\n{cell["source"]}\n```')
-
-        if len(cells) < 2:
-            raise ValueError('Notebook should have at least 2 cells, first cell is just for imports and cell where `load_ipynb` is run is not included.')
-
-        if cells[0]['cell_type'] == 'code':
-            self.shell.run_cell(cells[0]['source']) # run for any imports
-            
-        self.convert2slides(True) # call before adding slides
-        self.clear() # Clean all other slides if any
-        self.settings.set_footer(footer_text)
-        
-        with self.title():
-            if cells[1]['cell_type'] == 'code':
-                self.shell.run_cell(cells[1]['source'])
-            else:
-                self.write(cells[1]['source']) # Usually Markdown cell for title
-
-        for i, cell in enumerate(cells[2:],start = 1):
-            with self.slide(i):
-                source = cell['source']
-                if cell['cell_type'] == 'code':
-                    self.shell.run_cell(source)
-                else:
-                    self.write(source) # Markdown
-        
-        return self
     
-    def load_md(self, filename, footer_text = 'Author Name'):
-        """You can create slides from a markdown file as well. It overrides `load_ipynb`.
+    @property
+    def md_content(self):
+        "Get markdown content from loaded file."
+        return self._md_content
+        
+    
+    def from_markdown(self, path, footer_text = 'Author Name'):
+        """You can create slides from a markdown file or StringIO object as well. It creates slides 1,2,3... in order.
+        You should add more slides by higher number than the number of slides in the file, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
         _________ Markdown File Content __________
         # Talk Title
@@ -163,52 +90,48 @@ class BaseLiveSlides:
         ___________________________________________
         This will create two slides along with title page.
         
+        Content of each slide from imported file is stored as list in `slides.md_content`. You can append content to it like this:
+        ```python
+        with slides.slide(2):
+            write(slides.md_content[2])
+            plot_something()
+            write_something()
+        ```
+        
         > Note: With this method you can add more slides besides created ones.
         """
-        if not os.path.isfile(filename):
-            raise ValueError(f"File {filename!r} does not exist!")
+        if not (isinstance(path, io.StringIO) or os.path.isfile(path)): #check path later or it will throw error
+            raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")
         
         self.convert2slides(True)
         self.clear()
         self.settings.set_footer(footer_text)
-
-        chunks = _parse_md_file(filename)
+        
+        if isinstance(path, io.StringIO):
+            chunks = _parse_md_file(path)
+        else:
+            with open(path, 'r') as fp:
+                chunks = _parse_md_file(fp)
 
         with self.title():
             self.write(chunks[0])
         for i,chunk in enumerate(chunks[1:],start=1):
             with self.slide(i):
                 self.write(chunk)
+        self._md_content = chunks # Store for later use
         
         return self
         
 
-class DecodeCleanNotebook(json.JSONDecoder):
-    """
-    - Deserilizes Jupyter-Noteebook to dictionary with taking care of `#hide` in top of cell.
-    - **Usage**
-        - `json.load(fp,cls = DecodeCleanNotebook)`.
-    """
-    def __init__(self, *args, **kwargs):
-        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
-
-    def object_hook(self, obj):
-        ignored = ['metadata', 'execution_count', 'outputs']
-        if 'cell_type' in obj:
-            obj = {k:v for k,v in obj.items() if k not in ignored}
-        return obj
-
-
-def _parse_md_file(md_file):
-    "Parse a Markdown file to put in slides and returns text for title and each slide."
-    with open(md_file,'r') as f:
-        lines = f.readlines()
-        breaks = [-1] # start, will add +1 next
-        for i,line in enumerate(lines):
-            if line and line.strip() =='---':
-                breaks.append(i)
-        breaks.append(len(lines)) # Last one
-        
-        ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
-        return [''.join(lines[x.start:x.stop]) for x in ranges]
+def _parse_md_file(fp):
+    "Parse a Markdown file or StringIO to put in slides and returns text for title and each slide."
+    lines = fp.readlines()
+    breaks = [-1] # start, will add +1 next
+    for i,line in enumerate(lines):
+        if line and line.strip() =='---':
+            breaks.append(i)
+    breaks.append(len(lines)) # Last one
+    
+    ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
+    return [''.join(lines[x.start:x.stop]) for x in ranges]
         

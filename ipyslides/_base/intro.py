@@ -12,24 +12,50 @@ otherwise select `Custom Slide Size` and change size there according to found as
 > Note: Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
 '''
 
-how_to_slide = '''### Creating Slides
+how_to_slide = ('''# Creating Slides
+> Tip: You can use `ipyslides.demo()` to create example slides and start editing.
+
 **Assuming you have `ls = ipyslides.LiveSlides()`**
 
-- Use `ls.load_ipynb` to create slides from a notebook (same notebook too)
-    - You do not need to keep track of slide numbers, any code and markdown cell will be picked in order.
-    - Any cell with `#hide` on top will not be executed. 
-    - No slides can be added in this programatically, it's a top to bottom linear process.
-    - Markdown cells are picked this way.
-    - Slides created with `%%slide` are picked.
-    
-- Use `ls.load_md` to create slides from markdown file and then can add slides over it.
-
-- Proceed without any of above methods. (below points still apply to slides from `load_md`)
+- Proceed to create slides:
     - Edit and test cells in `ls.convert2slides(False)` mode.
     - Run cells in `ls.convert2slides(True)` mode from top to bottom. 
     - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
     - You can use context managers like `with ls.slide(): ...` and `with ls.title(): ...` in place of `%%slide` and `%%title` respectively.
-'''
+```python
+#------------ Cell 1 --------------------
+import ipyslides as isd 
+ls = isd.LiveSlides()
+ls.convert2slides(True)
+ls.settings.set_animzation('zoom') 
+#------------ Cell 2 --------------------
+%%title
+# create a rich content title page
+#------------ Cell 3 --------------------
+%%slide 1
+# slide 1 content
+#------------ Cell 4 --------------------
+@ls.frames(1,*objs)
+def func(obj):
+    write(obj) #This will create as many slides after the slide number 1 as length(objs)
+#------------ Cell 5 --------------------
+ls # This displays slides if on the last line of cell, or use `ls.show()`.
+```
+
+- Use `ls.from_markdown` to create slides from markdown file/StringIO and then can add slides over it.
+    - Slides are added in order of content.
+    - Slides should be separated by `---` (three dashes) in start of line.
+    - You can add more slides besides created ones or modify existing ones using `ls.md_content`:
+```python
+ls.from_markdown(path, footer_text = 'Author Name')
+with ls.slide(2):
+    write(ls.md_content[2]) # write content of slide 2 from file
+    plot_something() # Add other things to same file
+    write_something()
+```
+''',
+'<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
+)
 
 more_instructions =f'''## How to Use
 
@@ -60,18 +86,8 @@ There are two ways of printing to PDF.
 - Capturing each screenshot based on slide's state (in order) and later using `Save PDF`. This is a manual process but you have full control of view of slide.
 - Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `load_time` in `ls.print_settings` value and then print.
 
-{how_to_slide}
+{how_to_slide[0]}
 
-```python
-import ipyslides as isd 
-slides = isd.LiveSlides()
-slides.settings.set_animzation('zoom') 
-@slides.frames(1,*objs)
-def func(obj):
-    write(obj) #This will create as many slides after the slide number 1 as length(objs)
-#create a rich content title page with `%%title` or \n`with title():\n    ...`\n context manager.
-slides.show() # Use it once to see slides
-```
 - LiveSlides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 
 > Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
