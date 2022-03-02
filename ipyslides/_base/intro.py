@@ -12,6 +12,25 @@ otherwise select `Custom Slide Size` and change size there according to found as
 > Note: Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
 '''
 
+how_to_slide = '''### Creating Slides
+**Assuming you have `ls = ipyslides.LiveSlides()`**
+
+- Use `ls.load_ipynb` to create slides from a notebook (same notebook too)
+    - You do not need to keep track of slide numbers, any code and markdown cell will be picked in order.
+    - Any cell with `#hide` on top will not be executed. 
+    - No slides can be added in this programatically, it's a top to bottom linear process.
+    - Markdown cells are picked this way.
+    - Slides created with `%%slide` are picked.
+    
+- Use `ls.load_md` to create slides from markdown file and then can add slides over it.
+
+- Proceed without any of above methods. (below points still apply to slides from `load_md`)
+    - Edit and test cells in `ls.convert2slides(False)` mode.
+    - Run cells in `ls.convert2slides(True)` mode from top to bottom. 
+    - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
+    - You can use context managers like `with ls.slide(): ...` and `with ls.title(): ...` in place of `%%slide` and `%%title` respectively.
+'''
+
 more_instructions =f'''## How to Use
 
 **Key Bindings**
@@ -41,16 +60,11 @@ There are two ways of printing to PDF.
 - Capturing each screenshot based on slide's state (in order) and later using `Save PDF`. This is a manual process but you have full control of view of slide.
 - Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `load_time` in `ls.print_settings` value and then print.
 
-**Assuming you have `ls = ipyslides.LiveSlides()` or `ls = ipyslides.initialize()`**
-
-- Edit and test cells in `ls.convert2slides(False)` mode.
-- Run cells in `ls.convert2slides(True)` mode from top to bottom. 
-- `%%slide integer` on cell top auto picks slide and %%title auto picks title page.
-- You can use context managers like `ls.slide()` and `ls.title()` in place of `%%slide` and `%%title` respectively.
+{how_to_slide}
 
 ```python
 import ipyslides as isd 
-slides = isd.initilize() # >= 1.0.0, changes cell content blow this version
+slides = isd.LiveSlides()
 slides.settings.set_animzation('zoom') 
 @slides.frames(1,*objs)
 def func(obj):

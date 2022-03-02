@@ -9,12 +9,13 @@ import ipywidgets as ipw
 
 from .source import Source
 from .writers import write, iwrite
-from .formatter import bokeh2html, plt2html, code_css
+from .formatter import bokeh2html, plt2html
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
 from ._base.base import BaseLiveSlides
+from ._base.intro import how_to_slide
 from ._base import styles
 
 try:  # Handle python IDLE etc.
@@ -65,12 +66,9 @@ class LiveSlides(BaseLiveSlides):
         
         self._citations = {} # Initialize citations
         self.__slides_mode = False
-        with capture_output() as captured:
-            write('''## Create title page using `%%title` magic or `self.title()` context manager.\n> Author: Abdul Saboor\n<div>
-        <h4 style="color:green;">Create Slides using <pre>%%slide</pre> or with <pre>self.slide(slide_number)</pre> context manager.</h4>
-        <h4 style="color:olive;">Read instructions by clicking on left-bottom button</h4></div>
-        ''')
-        self.__slides_title_page = captured
+        with capture_output() as self.__slides_title_page:
+            write(how_to_slide + '<h3 style="color:green;"> Read more in side panel</h3>')
+
         self.__slides_dict = {} # Initialize slide dictionary
         self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
         
@@ -90,7 +88,8 @@ class LiveSlides(BaseLiveSlides):
         # All Box of Slides
         self.box =  self.widgets.mainbox
         self.__update_content(True) # First attmpt
-        self.app = self.box # Alias     
+        self.app = self.box # Alias   
+        self._app_displayed = False
 
     @property
     def slides(self):
@@ -124,6 +123,7 @@ class LiveSlides(BaseLiveSlides):
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
         if not self.__slides_mode:
             return print('Set "self.convert2slides(True)", then it will work.')
+        
         if fix_buttons:
             self.widgets.buttons.next.description = '▶'
             self.widgets.buttons.prev.description = '◀'
@@ -134,14 +134,22 @@ class LiveSlides(BaseLiveSlides):
             self.widgets.buttons.prev.description = ''
             self.widgets.buttons.prev.icon = 'chevron-left'
             self.widgets.buttons.next.icon = 'chevron-right'
-        self.__jlab_in_cell_display()
-        return self.box
-    __call__ = show
+        
+        return self._ipython_display_()
+
     
     def _ipython_display_(self):
         'Auto display when self is on last line of a cell'
+        if self._app_displayed:
+            return print('App is running in another cell, If not, try `.force_show()` method!')
         self.__jlab_in_cell_display()
-        return display(self.box)
+        self._app_displayed = True
+        return display(self.box) # should be in display and return
+    
+    def force_show(self):
+        "Force display."
+        self._app_displayed = False
+        return self._ipython_display_()
     
     def __jlab_in_cell_display(self): 
         # Can test Voila here too
@@ -192,7 +200,6 @@ class LiveSlides(BaseLiveSlides):
 
             self.loading_html.value = ''       
             
-        
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self.__iterable = self.__collect_slides()
@@ -327,8 +334,9 @@ class LiveSlides(BaseLiveSlides):
         
     def __collect_slides(self):
         """Collect cells for an instance of LiveSlides."""
+        slides_iterable,n = [{'slide':self.__slides_title_page,'n':0,'notes': self._slides_title_note}], 1 # n is start of slides, no other way
         if not self.__slides_mode:
-            return [] # return empty in any case
+            return slides_iterable # return title in any case
 
         dynamic_slides = [k.replace('d','') for k in self.__dynamicslides_dict.keys()]
         # If slide number is mistaken, still include that. 
@@ -338,12 +346,11 @@ class LiveSlides(BaseLiveSlides):
             _min, _max = min(all_slides), max(all_slides) + 1
         except:
             _min, _max = 0, 0
-        slides_iterable,n = [], 1 # n is start of slides, no other way
         for i in range(_min,_max):
             if f'{i}' in self.__slides_dict.keys():
                 notes = self._slides_notes[f'{i}'] if f'{i}' in self._slides_notes else None
                 slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':n,'notes':notes}) 
-                n = n + 1
+                n = n + 1 #should be added separately in both cases
             if f'd{i}' in self.__dynamicslides_dict.keys():
                 __dynamic = self.__dynamicslides_dict[f'd{i}']
                 slides = [{'slide':obj,'n':float(f'{n}.{j}'),'notes':None} for j, obj in enumerate(__dynamic['objs'],start=1)]
@@ -351,5 +358,5 @@ class LiveSlides(BaseLiveSlides):
                     slides[0]['n'] = slides[0]['n'].split('.')[0] # No float in single frame
                 slides_iterable = [*slides_iterable,*slides] 
                 n = n + 1
-        slides_iterable =[{'slide':self.__slides_title_page,'n':0,'notes': self._slides_title_note}, *slides_iterable]
+
         return tuple(slides_iterable)

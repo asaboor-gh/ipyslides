@@ -84,7 +84,7 @@ class _Sliders:
     """
     Instantiate under `Widgets` class only.
     """
-    progress   = ipw.IntSlider(options= [(f'{i}',i) for i in range(1)],continuous_update=False,readout=True)
+    progress   = ipw.IntSlider(min=0, max=0, value=0, continuous_update=False,readout=True)
     visible    = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
     height     = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('height-slider') #2160 for 4K screens
     width      = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
