@@ -7,7 +7,6 @@ class Navigation:
     def __init__(self, _instanceWidgets):
         "Both instnaces should be inside `LiveSlide` class."
         self.widgets = _instanceWidgets
-        self.N = self.widgets.sliders.progress.max + 1
         self.progress_slider = self.widgets.sliders.progress
         self.btn_next = self.widgets.buttons.next
         self.btn_prev = self.widgets.buttons.prev
@@ -22,17 +21,17 @@ class Navigation:
         
     def __shift_right(self,change):
         if change:
-            if self.progress_slider.value >= self.progress_slider.max:
-                self.progress_slider.value = 0 # switch  to title back
-            else:
-                self.progress_slider.value = self.progress_slider.value + 1  
+            try:
+                self.progress_slider.index = self.progress_slider.index + 1 # Forwards
+            except:
+                self.progress_slider.index = 0 # loop back to title page at end of presentation
     
     def __shift_left(self,change):
         if change:
-            if self.progress_slider.value <= 0:
-                self.progress_slider.value = self.progress_slider.max # loop back to last slide
+            if self.progress_slider.index == 0:
+                self.progress_slider.index = len(self.progress_slider.options) - 1 # loop back to last slide
             else:
-                self.progress_slider.value = self.progress_slider.value - 1
+                self.progress_slider.index = self.progress_slider.index - 1 # Backwards
     
     def __toggle_panel(self,change):
         if self.btn_settings.description == '\u2630':

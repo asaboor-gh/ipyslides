@@ -29,8 +29,8 @@ class LayoutSettings:
         self.reflow_check = self.widgets.checks.reflow
         
         self.__instructions = self.widgets.outputs.intro
-        self.out_js_fix = self.widgets.outputs.js_fix
-        self.out_js_var = self.widgets.outputs.js_var
+        self.out_fixed = self.widgets.outputs.fixed
+        self.out_renew = self.widgets.outputs.renew
         self.btn_fs    = self.widgets.toggles.fscrn
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
@@ -119,12 +119,12 @@ class LayoutSettings:
             self.widgets.outputs.slide.layout.width = '100%'
             
     def __add_js(self):
-        with self.out_js_fix: 
+        with self.out_fixed: 
             display(scripts.navigation_js)
     
     def emit_resize_event(self):
-        with self.out_js_var: 
-            self.out_js_var.clear_output(wait=True)
+        with self.out_renew: 
+            self.out_renew.clear_output(wait=True)
             display(scripts.resize_js)
         
     def __update_size(self,change):

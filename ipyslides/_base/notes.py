@@ -12,7 +12,7 @@ class Notes:
         
         self.notes_check = self.widgets.checks.notes
         self.btn_timer = self.widgets.toggles.timer
-        self.out_js_var = self.widgets.outputs.js_var
+        self.out_renew = self.widgets.outputs.renew
         
         self.start_time = None
         
@@ -68,7 +68,7 @@ class Notes:
                         </div></div>'''
                     
 
-                with self.out_js_var:
+                with self.out_renew:
                     display(Javascript(f'''
                     let notes_win = window.open("","__Notes_Window__","popup");
                     notes_win.document.title = 'Notes';
@@ -78,7 +78,7 @@ class Notes:
     
     def __open_close_notes(self,change):
         if change['new'] == True:
-            with self.out_js_var:
+            with self.out_renew:
                 display(Javascript('''
                 let notes_win = window.open("","__Notes_Window__","popup");
                 notes_win.resizeTo(screen.width/2,screen.height/2);
@@ -87,7 +87,7 @@ class Notes:
                 notes_win.document.body.innerHTML = "<h1> Notes will show up here, do not close it manually, just navigate away!</h1>";
                 '''))
         else:
-            with self.out_js_var:
+            with self.out_renew:
                 display(Javascript('window.open("","__Notes_Window__","popup").close();'))
     
     def __timeit(self,change):

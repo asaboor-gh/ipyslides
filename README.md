@@ -85,4 +85,23 @@ Read instructions in side panel about PDF printing. See [PDF-Slides](IPySlides-P
 - Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. 
 - Bounding box of slides for screenshots should be set by user (if not in fullscreen).
 
+# Customize Slides
+You can customize slides by inheriting from `LiveSlides` class. 
+For example if you want to have custom theme and some other settings always enabled and
+bottom information only on title slide, you can do so:
+```python
+class CustomSlides(isd.LiveSlides):
+    def __init__(self):
+        super().__init__()
+        self.convert2slides(True)
+        self.settings.theme_dd.value = 'Custom'
+        self.progress_slider.observe(self.set_visible, names=['index'])
+    
+    def set_visible(self, change):
+        if self.progress_slider.index == 0:
+            self.widgets.navbox.children[0].layout.visibility = 'visible'
+        else:
+            self.widgets.navbox.children[0].layout.visibility = 'hidden'
+```
+
 > Very thankful to [Python-Markdown](https://python-markdown.github.io/) which enabled to create `write` command as well as syntax highliting.

@@ -17,6 +17,7 @@ _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
 from ._base.base import BaseLiveSlides
 from ._base.intro import how_to_slide
+from ._base.scripts import multi_slides_alert
 from ._base import styles
 
 try:  # Handle python IDLE etc.
@@ -78,18 +79,25 @@ class LiveSlides(BaseLiveSlides):
         self._current_slide = 'title' # Initialize current slide for notes at title page
         
         self.__iterable = self.__collect_slides() # Collect internally
-        self.nslides = int(self.__iterable[-1]['n']) if self.__iterable else 0
+        self._nslides = int(self.__iterable[-1]['n']) if self.__iterable else 0 # Real number of slides
+        self._max_index = 0 # Maximum index including frames
         
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
         
         self.progress_slider = self.widgets.sliders.progress
-        self.progress_slider.observe(self.__set_class,names=['value'])
-        self.progress_slider.observe(self.__update_content,names=['value'])
+        self.progress_slider.observe(self.__set_class,names=['index'])
+        self.progress_slider.observe(self.__update_content,names=['index'])
         
         # All Box of Slides
         self._box =  self.widgets.mainbox
+        self._box.on_displayed(lambda change: self.__muti_notebook_slides_alert()) 
         self.__update_content(True) # First attmpt  
-        self._display_handles = [] # Initialize display handles
+        self._display_box_ = ipw.VBox() # Initialize display box
+    
+    def __muti_notebook_slides_alert(self):
+        " Alert for multiple slides in other notebooks, as they don't work well together."
+        with self.widgets.outputs.renew:
+            display(multi_slides_alert)
 
     @property
     def slides(self):
@@ -141,19 +149,13 @@ class LiveSlides(BaseLiveSlides):
         if not self.__slides_mode:
             return print('Set "self.convert2slides(True)", then it will work.')
         
-        for out in self._display_handles:
-            out.clear_output(wait=False) # Remove previous displays
-            with out:
-                self.write('<h5 style="color:green;"> View of slides is in another cell, run cell to see here!</h5>')
-            
-        output = ipw.Output()
-        self._display_handles.append(output)
-        
-        with output:
-            self.__jlab_in_cell_display()
-            display(self._box)
-        return display(output)
+        self.close_view() # Close previous views
+        self._display_box_ = ipw.VBox(children=[self.__jlab_in_cell_display(), self._box]) # Initialize display box again
+        return display(self._display_box_)
     
+    def close_view(self):
+        "Close all slides views, but keep slides in memory than can be shown again."
+        self._display_box_.close() 
     
     def __jlab_in_cell_display(self): 
         # Can test Voila here too
@@ -162,31 +164,29 @@ class LiveSlides(BaseLiveSlides):
                 self.widgets.sliders.width.value = 100 # This fixes dynamic breakpoint in Voila
         except: pass # Do Nothing
          
-        return display(
-            ipw.VBox([
-                ipw.HBox([
-                    ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
-                    self.widgets.toggles.display
-                ]),
-                self.widgets.toggles.timer,
-                self.widgets.htmls.notes
-            ])
-        )
+        return ipw.VBox([
+                    ipw.HBox([
+                        ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
+                        self.widgets.toggles.display
+                    ]),
+                    self.widgets.toggles.timer,
+                    self.widgets.htmls.notes
+                ])
         
         
     def __set_class(self,change):
         "Set Opposite animation for backward navigation"
         self.widgets.slidebox.remove_class('Prev') # Safely Removes without error
-        if change['new'] == self.progress_slider.max and change['old'] == 0:
+        if change['new'] == self._max_index and change['old'] == 0:
             self.widgets.slidebox.add_class('Prev')
-        elif (change['new'] < change['old']) and (change['old'] - change['new'] != self.progress_slider.max):
+        elif (change['new'] < change['old']) and (change['old'] - change['new'] != self._max_index):
             self.widgets.slidebox.add_class('Prev')
     
     def __display_slide(self):
         self.display_toast() # or self.toasts.display_toast . Display in start is fine
-        item = self.__iterable[self.progress_slider.value]
+        item = self.__iterable[self.progress_slider.index]
         self.notes.display(item['notes']) # Display notes first
-        _number = f'{item["n"]} / {self.nslides}' if self.progress_slider.value != 0 else ''
+        _number = f'{item["n"]} / {self._nslides}' if self.progress_slider.index != 0 else ''
         self.settings.set_footer(_number_str = _number)
         
         if self.print.is_printing == False: # No animations while printing
@@ -208,12 +208,10 @@ class LiveSlides(BaseLiveSlides):
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self.__iterable = self.__collect_slides()
         if self.__iterable:
-            self.nslides = int(self.__iterable[-1]['n']) # Avoid frames number
-            self.N = len(self.__iterable)
+            self._nslides = int(self.__iterable[-1]['n']) # Avoid frames number
         else:
-            self.nslides = 0
-            self.N = 0
-        self.progress_slider.max = self.N -1
+            self._nslides = 0
+            
         self.__update_content(True) # Force Refresh
         
     def write_slide_css(self,**css_props):
@@ -362,5 +360,13 @@ class LiveSlides(BaseLiveSlides):
                     slides[0]['n'] = slides[0]['n'].split('.')[0] # No float in single frame
                 slides_iterable = [*slides_iterable,*slides] 
                 n = n + 1
-
+        # Now update progress bar
+        old_label = self.progress_slider.label
+        opts = [('Title Page', 0), *[(f"Slide {s['n']}", 100*s['n']/slides_iterable[-1]['n']) for s in slides_iterable[1:]]]
+        self.progress_slider.options = opts  # update options
+        self._max_index = len(opts) - 1 
+        # Bring back to same slide if possible
+        if old_label in list(zip(*opts))[0]:
+            self.progress_slider.label = old_label
+            
         return tuple(slides_iterable)

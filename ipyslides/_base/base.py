@@ -118,6 +118,7 @@ class BaseLiveSlides:
         for i,chunk in enumerate(chunks[1:],start=1):
             with self.slide(i):
                 self.write(chunk)
+            
         self._md_content = chunks # Store for later use
         
         return self

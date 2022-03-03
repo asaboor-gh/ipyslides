@@ -22,5 +22,5 @@ def demo():
             slides.write_citations()
         slides.write(s)
     slides.settings.theme_dd.value = 'Fancy'
-    slides.progress_slider.value = 0 # back to title
+    slides.progress_slider.index = 0 # back to title
     return slides

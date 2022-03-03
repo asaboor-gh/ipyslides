@@ -201,7 +201,7 @@ def func(obj):
 
     
 # Let's test notification API
-for i in range(slides.progress_slider.max):
+for i in range(slides._max_index):
     @slides.notify_at(i,timeout=2)
     def push_notification(idx): # idx is will pick i from decorator, just to show these are dummy varibales
         t = time.localtime()

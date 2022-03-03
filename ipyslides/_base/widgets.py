@@ -4,7 +4,7 @@ and then provided to other classes via composition, not inheritance.
 """
 from dataclasses import dataclass
 import ipywidgets as ipw
-from ipywidgets import HTML, IntProgress, VBox, HBox, Box, Layout, Button
+from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, Layout, Button
 from . import styles
 
 
@@ -84,7 +84,7 @@ class _Sliders:
     """
     Instantiate under `Widgets` class only.
     """
-    progress   = ipw.IntSlider(min=0, max=0, value=0, continuous_update=False,readout=True)
+    progress   = ipw.SelectionSlider(options=[('Title Page',0)], value=0, continuous_update=False,readout=True)
     visible    = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
     height     = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('height-slider') #2160 for 4K screens
     width      = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
@@ -108,8 +108,8 @@ class _Outputs:
     slide  = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 36px')
                               ).add_class('SlideArea')
     intro  = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
-    js_fix = ipw.Output(layout=Layout(width='auto',height='0px'))
-    js_var = ipw.Output(layout=Layout(width='auto',height='0px'))
+    fixed = ipw.Output(layout=Layout(width='auto',height='0px')) # For fixed javascript
+    renew = ipw.Output(layout=Layout(width='auto',height='0px')) # Content can be added dynamically
 
 
 def _custom_progressbar(intslider):
@@ -153,9 +153,8 @@ def _custom_progressbar(intslider):
         transform:translate(-2px,1px) !important;
     }
     </style>''')
-    intprogress = IntProgress(min=intslider.min, max=intslider.max, layout=Layout(width='100%'))
-    for prop in ('min','max','value'):
-        ipw.link((intprogress, prop), (intslider, prop)) # These links enable auto refresh from outside
+    intprogress = FloatProgress(min=0, max=100,value=0, layout=Layout(width='100%'))
+    ipw.link((intslider, 'value'), (intprogress, 'value')) # This link enable auto refresh from outside
     
     return intprogress, html
 
@@ -207,7 +206,6 @@ class Widgets:
         
         # Make the progress bar and link to slides
         self.progressbar, self.__proghtml = _custom_progressbar(self.sliders.progress)
-        self.progressbar 
         
         # Layouts build on these widgets
         self.controls = HBox([
@@ -237,8 +235,8 @@ class Widgets:
                 self.outputs.intro,
                 self.buttons.setting,
             ],layout=Layout(width='100%',height='auto',overflow='hidden')) ,
-            self.outputs.js_fix, 
-            self.outputs.js_var, # Must be in middle so that others dont get disturbed.
+            self.outputs.fixed, 
+            self.outputs.renew, # Must be in middle so that others dont get disturbed.
             VBox([
                 self.sliders.height.add_class('voila-sidecar-hidden'), 
                 self.sliders.width.add_class('voila-sidecar-hidden'),

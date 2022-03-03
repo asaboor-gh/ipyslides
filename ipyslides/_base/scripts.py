@@ -2,6 +2,14 @@ from IPython.display import Javascript
 
 resize_js = Javascript("window.dispatchEvent(new Event('resize'));")
 
+multi_slides_alert = Javascript("""
+let slides = document.getElementsByClassName('SlidesWrapper');
+if (slides.length > 1) {
+    alert('''You have slides open in other notebook(s) in currnet tab. 
+    Please close their view by using `.close_view()` method and re-run here to have smooth navigations via keyboard!''');
+};
+""")
+
 navigation_js = Javascript('''
 function main(){
     function resizeWindow() {
@@ -9,12 +17,12 @@ function main(){
     }; 
     resizeWindow(); // resize on first display
     // Only get buttons of first view, otherwise it will becomes multiclicks
-    let arrows = document.getElementsByClassName('arrows '); // These are 2*instances
-    let mplBtn = document.getElementsByClassName('mpl-zoom ')[0];
-    let winFs = document.getElementsByClassName('window-fs ')[0];
-    let capSc = document.getElementsByClassName('screenshot-btn ')[0];
-    let cursor = document.getElementsByClassName('LaserPointer ')[0];
-    let present = document.getElementsByClassName('presenter-btn ')[0];
+    let arrows = document.getElementsByClassName('arrows'); // These are 2*instances
+    let mplBtn = document.getElementsByClassName('mpl-zoom')[0];
+    let winFs = document.getElementsByClassName('window-fs')[0];
+    let capSc = document.getElementsByClassName('screenshot-btn')[0];
+    let cursor = document.getElementsByClassName('LaserPointer')[0];
+    let present = document.getElementsByClassName('presenter-btn')[0];
 
     
     // Keyboard events
@@ -50,28 +58,26 @@ function main(){
         e.stopPropagation(); // stop propagation to jupyterlab events and other views 
     };
     
-    let boxes = document.getElementsByClassName('SlidesWrapper ');
-    // Do All things in loop so that Javscript acts on all views of slides
-    Array.from(boxes).forEach(box => {
-        box.tabIndex = -1; // Need for event listeners, should be at top
-        box.onkeydown = keyOnSlides; // This is better than event listners as they register multiple times
-        box.onmouseenter = function(){box.focus();};
-        box.onmouseleave = function(){box.blur();};
-        // Cursor pointer functions
-        // let slide = box.getElementsByClassName('SlideBox ')[0];
-        function onMouseMove(e) {
-            let bbox = box.getBoundingClientRect()
-            let _display = "display:block;"
-            if (e.pageX > (bbox.right - 30) || e.pageY > (bbox.bottom - 30)) {
-                _display = "display:none;"
-            };
-            cursor.setAttribute("style",_display + "left:"+ (e.pageX - bbox.left + 10) + "px; top: " + (e.pageY - bbox.top + 10) + "px;")
+    let box = document.getElementsByClassName('SlidesWrapper')[0];
+    
+    box.tabIndex = -1; // Need for event listeners, should be at top
+    box.onkeydown = keyOnSlides; // This is better than event listners as they register multiple times
+    box.onmouseenter = function(){box.focus();};
+    box.onmouseleave = function(){box.blur();};
+    // Cursor pointer functions
+    // let slide = box.getElementsByClassName('SlideBox')[0];
+    function onMouseMove(e) {
+        let bbox = box.getBoundingClientRect()
+        let _display = "display:block;"
+        if (e.pageX > (bbox.right - 30) || e.pageY > (bbox.bottom - 30)) {
+            _display = "display:none;"
         };
-        
-        box.onmousemove = onMouseMove;
-        box.onmouseleave = function (){cursor.setAttribute("style","display:none;");}
-        box.onmouseenter = function (){cursor.setAttribute("style","display:block;");}
-    });
+        cursor.setAttribute("style",_display + "left:"+ (e.pageX - bbox.left + 10) + "px; top: " + (e.pageY - bbox.top + 10) + "px;")
+    };
+    
+    box.onmousemove = onMouseMove;
+    box.onmouseleave = function (){cursor.setAttribute("style","display:none;");}
+    box.onmouseenter = function (){cursor.setAttribute("style","display:block;");}
     
     let loc = window.location.toString()
     if (loc.includes("voila")) {

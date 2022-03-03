@@ -1,6 +1,15 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.3.3 (working...)
+- Added `ls.close_view` method, which closes widgets view but available on next run. 
+- You will get warning if running slides in two or more notebooks in Jupyterlab, because keyboard navigation and CSS does not behave well when two slides are in single browser's tab. In that case, you don't need to delete slides, just call `ls.close_view()` to remove unwanted displays from frontend.
+- Slide navigation slider (hover between two buttons to see) now displays actual slide number. 
+- Javascript optimzations for single instnace of slides. 
+- Bug fixes
+
+
+
 # 1.3.2
 - You can now load slides from a markdown file/StringIO object using `ls.from_markdown` and later edit or use it's content in combination with other type of contents using `ls.md_content` attribute. 
 ```python

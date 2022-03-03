@@ -125,4 +125,23 @@ import altair as alt
 alt.themes.enable('dark')
 #alt.themes #gives available themes
 ```
+
+### Customize Slides
+You can customize slides by inheriting from `LiveSlides` class. 
+For example if you want to have custom theme and some other settings always enabled and
+bottom information only on title slide, you can do so:
+```python
+class CustomSlides(isd.LiveSlides):
+    def __init__(self):
+        super().__init__()
+        self.convert2slides(True)
+        self.settings.theme_dd.value = 'Custom'
+        self.progress_slider.observe(self.set_visible, names=['index'])
+    
+    def set_visible(self, change):
+        if self.progress_slider.index == 0:
+            self.widgets.navbox.children[0].layout.visibility = 'visible'
+        else:
+            self.widgets.navbox.children[0].layout.visibility = 'hidden'
+```
 '''
