@@ -362,7 +362,7 @@ class LiveSlides(BaseLiveSlides):
                 n = n + 1
         # Now update progress bar
         old_label = self.progress_slider.label
-        opts = [(f"{s['n']}", 100*s['n']/len(slides_iterable)) for s in slides_iterable]
+        opts = [(f"{s['n']}", 100*s['n']/slides_iterable[-1]['n']) for s in slides_iterable]
         self.progress_slider.options = opts  # update options
         self._max_index = len(opts) - 1 
         # Bring back to same slide if possible
