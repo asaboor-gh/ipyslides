@@ -2,13 +2,14 @@
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import textwrap, time
 from io import StringIO
+from IPython import get_ipython
 from .core import LiveSlides
 from .utils import textbox
 from .writers import write, iwrite, __reprs__
 from .formatter import libraries, plt2html
 from ._base.intro import how_to_slide
 
-slides = LiveSlides()
+slides = get_ipython().user_ns['_s_l_i_d_e_s_'] # get slides from notebook instead of creating new one
 slides.convert2slides(True)
 slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
 slides.settings.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">

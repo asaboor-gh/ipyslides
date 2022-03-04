@@ -1,5 +1,6 @@
 "Inherit LiveSlides class from here. It adds useful attributes and methods."
 import json, re, os, io
+from IPython import get_ipython
 from contextlib import suppress
 from .widgets import Widgets
 from .print_pdf import PdfPrint
@@ -123,6 +124,24 @@ class BaseLiveSlides:
         self._md_content = chunks # Store for later use
         
         return self
+    
+    def demo(self):
+        """Demo slides with a variety of content."""
+        get_ipython().user_ns['_s_l_i_d_e_s_'] = self
+        from .. import _demo
+        slides = _demo.slides # or it is self
+        with slides.slide(100):
+            slides.write('## This is all code to generate slides')
+            slides.write(_demo)
+            slides.write(self.demo)
+        with slides.slide(101,background='#9ACD32'):
+            with slides.source.context() as s:
+                slides.write_citations()
+            slides.write(s)
+        slides.settings.theme_dd.value = 'Fancy'
+        slides.progress_slider.index = 0 # back to title
+        return slides
+        
         
 
 def _parse_md_file(fp):
