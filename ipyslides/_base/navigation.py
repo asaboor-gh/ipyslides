@@ -20,6 +20,7 @@ class Navigation:
         self.visible_slider.observe(self.__set_hidden_height,names=['value'])
         
     def __shift_right(self,change):
+        self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
         if change:
             try:
                 self.progress_slider.index = self.progress_slider.index + 1 # Forwards
@@ -27,7 +28,9 @@ class Navigation:
                 self.progress_slider.index = 0 # loop back to title page at end of presentation
     
     def __shift_left(self,change):
+        self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
         if change:
+            self.widgets.slidebox.add_class('Prev') # Backwards Animation
             if self.progress_slider.index == 0:
                 self.progress_slider.index = len(self.progress_slider.options) - 1 # loop back to last slide
             else:

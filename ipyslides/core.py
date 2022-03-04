@@ -56,10 +56,11 @@ class LiveSlides(BaseLiveSlides):
         
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
-        self.plt2html = plt2html
+            
+        self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
         self.source = Source # Code source
-        self.write = write # Write IPython objects in slides
+        self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
             
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
@@ -72,7 +73,6 @@ class LiveSlides(BaseLiveSlides):
             write(how_to_slide)
 
         self.__slides_dict = {} # Initialize slide dictionary
-        
         self._slides_title_note = None #must be None, not True/False
         self._slides_notes = {} # Initialize notes dictionary
         self._current_slide = 'title' # Initialize current slide for notes at title page
@@ -84,7 +84,6 @@ class LiveSlides(BaseLiveSlides):
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
         
         self.progress_slider = self.widgets.sliders.progress
-        self.progress_slider.observe(self.__set_class,names=['index'])
         self.progress_slider.observe(self.__update_content,names=['index'])
         
         # All Box of Slides
@@ -170,15 +169,7 @@ class LiveSlides(BaseLiveSlides):
                     self.widgets.toggles.timer,
                     self.widgets.htmls.notes
                 ])
-        
-        
-    def __set_class(self,change):
-        "Set Opposite animation for backward navigation"
-        self.widgets.slidebox.remove_class('Prev') # Safely Removes without error
-        if change['new'] == self._max_index and change['old'] == 0:
-            self.widgets.slidebox.add_class('Prev')
-        elif (change['new'] < change['old']) and (change['old'] - change['new'] != self._max_index):
-            self.widgets.slidebox.add_class('Prev')
+            
     
     def __display_slide(self):
         self.display_toast() # or self.toasts.display_toast . Display in start is fine
@@ -346,14 +337,12 @@ class LiveSlides(BaseLiveSlides):
         val_keys = sorted([int(k) if k.isnumeric() else float(k) for k in self.__slides_dict.keys()]) 
         str_keys = [str(k) for k in val_keys]
         
-        try: #handle  slides if empty
-            _min, _max = int(val_keys[0]), int(val_keys[-1]) + 1
-            max_frames = max([int(v.split('.')[1]) for v in str_keys if '.' in v])
-        except:
-            _min, _max, max_frames = 0, 0, 0
-            
+        _min, _max = [int(val_keys[0]), int(val_keys[-1])] if val_keys else (0,0)
+        frames = [int(v.split('.')[1]) for v in str_keys if '.' in v]
+        max_frames = max(frames) if frames else 0
+        
         n = 0 #start of slides
-        for i in range(_min,_max):
+        for i in range(_min,_max + 1):
             if i in val_keys:
                 n = n + 1 #should be added before slide
                 notes = self._slides_notes[f'{i}'] if f'{i}' in self._slides_notes else None

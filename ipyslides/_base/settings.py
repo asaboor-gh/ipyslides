@@ -56,10 +56,13 @@ class LayoutSettings:
         self.set_code_style() #Trigger CSS in it, must
         
     def set_animation(self,name):
-        if name in styles.animations:
+        "Set animation style or pass None to disable animation."
+        if name is None:
+            self.animation = '' #Disable animation
+        elif name in styles.animations:
             self.animation = styles.animations[name]
         else:
-            print(f'Animation {name!r} not found. Use any of {list(styles.animations.keys())}.')
+            print(f'Animation {name!r} not found. Pass None or any of {list(styles.animations.keys())}.')
     
     def set_code_style(self,style='default',background='var(--secondary-bg)'):
         "Set code style CSS. Use background for better view of your choice."
