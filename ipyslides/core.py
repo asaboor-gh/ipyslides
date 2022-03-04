@@ -68,14 +68,15 @@ class LiveSlides(BaseLiveSlides):
         self.user_ns = self.shell.user_ns #important for set_dir
         
         self._citations = {} # Initialize citations
-        self.__slides_mode = False
+        self.__slides_mode = True # Default is slides mode since it is more intuitive
         with capture_output() as self.__slides_title_page:
             write(how_to_slide)
 
         self.__slides_dict = {} # Initialize slide dictionary
         self._slides_title_note = None #must be None, not True/False
         self._slides_notes = {} # Initialize notes dictionary
-        self._current_slide = 'title' # Initialize current slide for notes at title page
+        self._current_slide = '0' # Initialize current slide for notes at title page
+        self._map_slide_number = {} # Iinput to display number of slide
         
         self.__iterable = self.__collect_slides() # Collect internally
         self._nslides = int(self.__iterable[-1]['n']) if self.__iterable else 0 # Real number of slides
@@ -172,6 +173,8 @@ class LiveSlides(BaseLiveSlides):
             
     
     def __display_slide(self):
+        # clear previous content of notification as new one is about to be shown, this will ensure not to see on wrong slide
+        self.widgets.htmls.toast.value = ''
         self.display_toast() # or self.toasts.display_toast . Display in start is fine
         item = self.__iterable[self.progress_slider.index]
         self.notes.display(item['notes']) # Display notes first
@@ -253,6 +256,7 @@ class LiveSlides(BaseLiveSlides):
                 self.__slides_dict[line] = self.shell.user_ns[line]
                 del self.shell.user_ns[line] # delete the line from shell
                 self.refresh()
+                self.progress_slider.label = self._map_slide_number[line] # goto slide
         else:
             self.shell.run_cell(cell)
     
@@ -273,16 +277,18 @@ class LiveSlides(BaseLiveSlides):
         else:
             self.__slides_dict[f'{slide_number}'] = cap 
             self.refresh()
+            self.progress_slider.label = self._map_slide_number[f'{slide_number}'] #go to slide
 
     
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
-        self._current_slide = 'title'
+        self._current_slide = '0'
         if self.__slides_mode:
             self.shell.run_cell_magic('capture','title_output',cell)
             self.__slides_title_page = self.shell.user_ns['title_output']
             del self.shell.user_ns['title_output'] # delete from shell
             self.refresh()
+            self.progress_slider.label = '0' # goto title slide
         else:
             self.shell.run_cell(cell)
             
@@ -290,7 +296,7 @@ class LiveSlides(BaseLiveSlides):
     def title(self,**css_props):
         """Use this context manager to write title.
         `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
-        self._current_slide = 'title'
+        self._current_slide = '0'
         with capture_output() as cap:
             self.write_slide_css(**css_props)
             yield
@@ -300,6 +306,7 @@ class LiveSlides(BaseLiveSlides):
         else:
             self.__slides_title_page = cap 
             self.refresh()
+            self.progress_slider.label = '0' # goto title slide
     
     def frames(self, slide_number, *objs, **css_props):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
@@ -321,6 +328,7 @@ class LiveSlides(BaseLiveSlides):
                     self.__slides_dict[f'{slide_number}.{i}'] = cap
                     
                 self.refresh() # Content change refreshes it.
+                self.progress_slider.label = self._map_slide_number[f'{slide_number}.1'] # goto first frame always
         return _frames
         
     def convert2slides(self,b=False):
@@ -331,6 +339,7 @@ class LiveSlides(BaseLiveSlides):
     def __collect_slides(self):
         """Collect cells for an instance of LiveSlides."""
         slides_iterable = [{'slide':self.__slides_title_page,'n':0,'notes': self._slides_title_note}]
+        self._map_slide_number = {'0':'0'} # for title page
         if not self.__slides_mode:
             return tuple(slides_iterable) # return title in any case
         
@@ -347,7 +356,7 @@ class LiveSlides(BaseLiveSlides):
                 n = n + 1 #should be added before slide
                 notes = self._slides_notes[f'{i}'] if f'{i}' in self._slides_notes else None
                 slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':n,'notes':notes}) 
-            
+                self._map_slide_number[str(i)] = str(n)
             for j in range(1, max_frames + 1):
                 key = f'{i}.{j}'
                 if key in str_keys:
@@ -355,5 +364,6 @@ class LiveSlides(BaseLiveSlides):
                         n = n + 1 #should be added for next frames once
                     notes = self._slides_notes[key] if key in self._slides_notes else None
                     slides_iterable.append({'slide':self.__slides_dict[key],'n':float(f'{n}.{j}'),'notes':notes}) 
-            
+                    self._map_slide_number[key] = f'{n}.{j}'
+                    
         return tuple(slides_iterable)

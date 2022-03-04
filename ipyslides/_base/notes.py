@@ -21,7 +21,7 @@ class Notes:
         
     def insert(self, content):
         "Add notes to current slide. Content could be any object except javascript and interactive widgets."
-        if self.main._current_slide == 'title':
+        if self.main._current_slide == '0':
             self.main._slides_title_note = self.main.format_html(content)._repr_html_()
         else:
             self.main._slides_notes[self.main._current_slide] = self.main.format_html(content)._repr_html_()
