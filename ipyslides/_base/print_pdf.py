@@ -116,13 +116,13 @@ class PdfPrint:
             sleep(0.05) # Just for above clearance of widgets views
             img = ImageGrab.grab(bbox=self.__print_settings['bbox']) 
         for i in itertools.count():
-            if not f'im-{self.widgets.sliders.progress.value}-{i}' in self.__images:
-                self.__images[f'im-{self.widgets.sliders.progress.value}-{i}'] =  img 
+            if not f'im-{self.widgets.sliders.progress.index}-{i}' in self.__images:
+                self.__images[f'im-{self.widgets.sliders.progress.index}-{i}'] =  img 
                 return # Exit loop
     
     def __sort_images(self):
         ims = [] #sorting
-        for i in range(self.widgets.sliders.progress.max + 1): # That's maximum number of slides
+        for i in range(len(self.widgets.sliders.progress.options)): # That's maximum number of slides
             for j in range(len(self.__images)): # To be on safe side, no idea how many captures
                 if f'im-{i}-{j}' in self.__images:
                     ims.append(self.__images[f'im-{i}-{j}'])
@@ -147,9 +147,9 @@ class PdfPrint:
         "Quick Print"
         self.btn_settings.click() # Close side panel
         imgs = []
-        for i in range(self.widgets.sliders.progress.max + 1):  
+        for i in range(len(self.widgets.sliders.progress.options)):  
             with self.__print_context():
-                self.widgets.sliders.progress.value = i #keep inside context manger to avoid slide transitions
+                self.widgets.sliders.progress.index = i #keep inside context manger to avoid slide transitions
                 sleep(self.__print_settings['load_time']) #keep waiting here until it almost loads 
                 imgs.append(ImageGrab.grab(bbox=self.__print_settings['bbox']))
                   
@@ -191,17 +191,17 @@ class PdfPrint:
         self.save_images()
     
     def __clear_images(self,change):
-        if 'Current' in self.dd_clear.value:
-            self.__images = {k:v for k,v in self.__images.items() if f'-{self.widgets.sliders.progress.value}-' not in k}
+        if 'Current' in self.widgets.ddowns.clear.value:
+            self.__images = {k:v for k,v in self.__images.items() if f'-{self.widgets.sliders.progress.index}-' not in k}
             for k,img in self.__images.items():
-                if f'-{self.widgets.sliders.progress.value}-' in k:
+                if f'-{self.widgets.sliders.progress.index}-' in k:
                     img.close() # Close image to save mememory
             self.widgets._push_toast('Deleted screenshots of current slide')
-        elif 'All' in self.dd_clear.value:
+        elif 'All' in self.widgets.ddowns.clear.value:
             for k,img in self.__images.items():
                 img.close() # Close image to save mememory
             self.__images = {} # Cleaned up
             self.widgets._push_toast('Deleted screenshots of all slides')
         
-        self.dd_clear.value = 'None' # important to get back after operation
+        self.widgets.ddowns.clear.value = 'None' # important to get back after operation
     

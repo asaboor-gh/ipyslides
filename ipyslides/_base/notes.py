@@ -23,8 +23,6 @@ class Notes:
         "Add notes to current slide. Content could be any object except javascript and interactive widgets."
         if self.main._current_slide == 'title':
             self.main._slides_title_note = self.main.format_html(content)._repr_html_()
-        elif self.main._current_slide == 'frames':
-            raise ValueError("Notes can't be added under slide frames")
         else:
             self.main._slides_notes[self.main._current_slide] = self.main.format_html(content)._repr_html_()
     
@@ -56,7 +54,7 @@ class Notes:
             
             # Next everything for Browser window case
             if self.notes_check.value:  # Only show on demand
-                theme = self.widgets.htmls.theme.value.replace(f'.{self.widgets.uid}','').replace('FullScreen','') #important
+                theme = self.widgets.htmls.theme.value.replace('FullScreen','') #important
                 code_theme = '''<style> 
                                 pre { display:flex; flex-direction:column; } 
                                 .SlideBox { display:flex; flex-direction:row; justify-content:space-between;}

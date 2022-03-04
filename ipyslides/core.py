@@ -72,7 +72,6 @@ class LiveSlides(BaseLiveSlides):
             write(how_to_slide)
 
         self.__slides_dict = {} # Initialize slide dictionary
-        self.__dynamicslides_dict = {} # initialize dynamic slides dictionary
         
         self._slides_title_note = None #must be None, not True/False
         self._slides_notes = {} # Initialize notes dictionary
@@ -91,7 +90,7 @@ class LiveSlides(BaseLiveSlides):
         # All Box of Slides
         self._box =  self.widgets.mainbox
         self._box.on_displayed(lambda change: self.__muti_notebook_slides_alert()) 
-        self.__update_content(True) # First attmpt  
+        self.__update_content(True) # First attmpt will only update title page
         self._display_box_ = ipw.VBox() # Initialize display box
     
     def __muti_notebook_slides_alert(self):
@@ -112,7 +111,6 @@ class LiveSlides(BaseLiveSlides):
     def clear(self):
         "Clear all slides."
         self.__slides_dict = {}
-        self.__dynamicslides_dict = {}
         self.refresh() # Clear interface too
     
     def cite(self,key, citation,here=False):
@@ -206,11 +204,19 @@ class LiveSlides(BaseLiveSlides):
             
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
-        self.__iterable = self.__collect_slides()
-        if self.__iterable:
-            self._nslides = int(self.__iterable[-1]['n']) # Avoid frames number
-        else:
-            self._nslides = 0
+        self.__iterable = self.__collect_slides() # would be at least one title slide
+        n_last = self.__iterable[-1]['n']
+        self._nslides = int(n_last) # Avoid frames number
+        self._max_index = len(self.__iterable) - 1 # This includes all frames
+        
+        # Now update progress bar
+        old_label = self.progress_slider.label
+        denom = n_last if n_last > 0 else 1 # in case only title slide
+        opts = [(f"{s['n']}", np.round(100*s['n']/denom, 2)) for s in self.__iterable]
+        self.progress_slider.options = opts  # update options
+        
+        if old_label in list(zip(*opts))[0]: # Bring back to same slide if possible
+            self.progress_slider.label = old_label
             
         self.__update_content(True) # Force Refresh
         
@@ -308,7 +314,7 @@ class LiveSlides(BaseLiveSlides):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
         Every `obj` is shown on it's own frame. No return of function required, if any, only should be display/show etc.
         `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
-        self._current_slide = 'frames'
+        self._current_slide = f'{slide_number}.1' # First frame
         def _frames(func):
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
@@ -317,14 +323,11 @@ class LiveSlides(BaseLiveSlides):
                 print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
                 return objs
             else:
-                _slides = []
-                for obj in objs:
+                for i, obj in enumerate(objs,start=1):
                     with capture_output() as cap:
                         self.write_slide_css(**css_props)
                         func(obj)
-                    _slides.append(cap)
-                 
-                self.__dynamicslides_dict[f'd{slide_number}'] = {'objs': _slides}
+                    self.__slides_dict[f'{slide_number}.{i}'] = cap
                     
                 self.refresh() # Content change refreshes it.
         return _frames
@@ -336,38 +339,32 @@ class LiveSlides(BaseLiveSlides):
         
     def __collect_slides(self):
         """Collect cells for an instance of LiveSlides."""
-        slides_iterable,n = [{'slide':self.__slides_title_page,'n':0,'notes': self._slides_title_note}], 1 # n is start of slides, no other way
+        slides_iterable = [{'slide':self.__slides_title_page,'n':0,'notes': self._slides_title_note}]
         if not self.__slides_mode:
-            return slides_iterable # return title in any case
-
-        dynamic_slides = [k.replace('d','') for k in self.__dynamicslides_dict.keys()]
-        # If slide number is mistaken, still include that. 
-        all_slides = [int(k) for k in [*self.__slides_dict.keys(), *dynamic_slides]]
-
-        try: #handle dynamic slides if empty
-            _min, _max = min(all_slides), max(all_slides) + 1
+            return tuple(slides_iterable) # return title in any case
+        
+        val_keys = sorted([int(k) if k.isnumeric() else float(k) for k in self.__slides_dict.keys()]) 
+        str_keys = [str(k) for k in val_keys]
+        
+        try: #handle  slides if empty
+            _min, _max = int(val_keys[0]), int(val_keys[-1]) + 1
+            max_frames = max([int(v.split('.')[1]) for v in str_keys if '.' in v])
         except:
-            _min, _max = 0, 0
+            _min, _max, max_frames = 0, 0, 0
+            
+        n = 0 #start of slides
         for i in range(_min,_max):
-            if f'{i}' in self.__slides_dict.keys():
+            if i in val_keys:
+                n = n + 1 #should be added before slide
                 notes = self._slides_notes[f'{i}'] if f'{i}' in self._slides_notes else None
                 slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':n,'notes':notes}) 
-                n = n + 1 #should be added separately in both cases
-            if f'd{i}' in self.__dynamicslides_dict.keys():
-                __dynamic = self.__dynamicslides_dict[f'd{i}']
-                slides = [{'slide':obj,'n':float(f'{n}.{j}'),'notes':None} for j, obj in enumerate(__dynamic['objs'],start=1)]
-                if len(slides) == 1:
-                    slides[0]['n'] = slides[0]['n'].split('.')[0] # No float in single frame
-                slides_iterable = [*slides_iterable,*slides] 
-                n = n + 1
-        # Now update progress bar
-        old_label = self.progress_slider.label
-        divideby = slides_iterable[-1]['n'] if slides_iterable[-1]['n'] != 0 else 1 # in case only title slide
-        opts = [(f"{s['n']}", 100*s['n']/divideby) for s in slides_iterable]
-        self.progress_slider.options = opts  # update options
-        self._max_index = len(opts) - 1 
-        # Bring back to same slide if possible
-        if old_label in list(zip(*opts))[0]:
-            self.progress_slider.label = old_label
+            
+            for j in range(1, max_frames + 1):
+                key = f'{i}.{j}'
+                if key in str_keys:
+                    if j == 1:
+                        n = n + 1 #should be added for next frames once
+                    notes = self._slides_notes[key] if key in self._slides_notes else None
+                    slides_iterable.append({'slide':self.__slides_dict[key],'n':float(f'{n}.{j}'),'notes':notes}) 
             
         return tuple(slides_iterable)
