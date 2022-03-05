@@ -1,3 +1,4 @@
+from msilib import sequence
 import sys
 from collections import namedtuple
 from contextlib import contextmanager
@@ -308,28 +309,63 @@ class LiveSlides(BaseLiveSlides):
             self.refresh()
             self.progress_slider.label = '0' # goto title slide
     
-    def frames(self, slide_number, *objs, **css_props):
+    def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto', **css_props):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
-        Every `obj` is shown on it's own frame. No return of function required, if any, only should be display/show etc.
+        You can also call it as a function, e.g. `.frames(slide_number = 1,1,2,3,4,5)()` becuase required function is `write` by defualt.
+        
+        ```python
+        @slides.frames(1,a,b,c) # slides 1.1, 1.2, 1.3 with content a,b,c
+        def f(obj):
+            do_something(obj)
+            
+        slides.frames(1,a,b,c)() # Auto writes the frames with same content as above
+        slides.frames(1,a,b,c, repeat = True)() # content is [a], [a,b], [a,b,c] from top to bottom
+        slides.frames(1,a,b,c, repeat = [(0,1),(1,2)])() # two frames with content [a,b] and [b,c]
+        ```
+        
+        **Parameters**:
+        - slide_number: (int) slide number to insert frames on. 
+        - objs: expanded by * (list, tuple) of objects to write on frames. If repeat is False, only one frame is generated for each obj.
+        - repeat: (bool, list, tuple) If False, only one frame is generated for each obj.
+            If True, one frame are generated in sequence of ojects linke `[a,b,c]` will generate 3 frames with [a], [a,b], [a,b,c] to given in function and will be written top to bottom. 
+            If list or tuple, it will be used as the sequence of frames to generate and number of frames = len(repeat).
+            [(0,1),(1,2)] will generate 2 frames with [a,b] and [b,c] to given in function and will be written top to bottom or the way you write in your function.
+        - frame_height: ('N%', 'Npx', 'auto') height of the frame that keeps incoming frames object at static place.
+        
+        No return of defined function required, if any, only should be display/show etc.
         `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
-        self._current_slide = f'{slide_number}.1' # First frame
-        def _frames(func):
+        def _frames(func = self.write): # default write if called without function
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
+            
+            self._current_slide = f'{slide_number}.1' # First frame
 
             if not self.__slides_mode:
                 print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
                 return objs
             else:
-                for i, obj in enumerate(objs,start=1):
+                if repeat == True:
+                    _new_objs = [objs[:i] for i in range(1,len(objs)+1)]
+                elif isinstance(repeat,(list, tuple)):
+                    _new_objs =[]
+                    for k, seq in enumerate(repeat):
+                        if not isinstance(seq,(list,tuple)):
+                            raise TypeError(f'Expected list or tuple at index {k} of `repeat`, got {seq}')
+                        _new_objs.append([objs[s] for s in seq])
+                else:
+                    _new_objs = objs
+                        
+                for i, obj in enumerate(_new_objs,start=1):
                     with capture_output() as cap:
+                        self.write(self.format_css('.SlideArea',height = frame_height))
                         self.write_slide_css(**css_props)
-                        func(obj)
+                        func(obj) # call function with obj
                     self.__slides_dict[f'{slide_number}.{i}'] = cap
                     
                 self.refresh() # Content change refreshes it.
                 self.progress_slider.label = self._map_slide_number[f'{slide_number}.1'] # goto first frame always
-        return _frames
+        return _frames 
+    
         
     def convert2slides(self,b=False):
         "Turn ON/OFF slides vs editing mode. Should be in same cell as `LiveSLides`"

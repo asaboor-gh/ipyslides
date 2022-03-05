@@ -185,9 +185,9 @@ def style_html(style_root = theme_roots['Inherit']):
 .SlidesWrapper h3,
 .SlidesWrapper h4,
 .SlidesWrapper h5,
-.SlidesWrapper h6{
+.SlidesWrapper h6 {
 	color:var(--heading-fg);
- 	text-align:center;
+ 	text-align: center;
 	overflow:hidden; /* FireFox */
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--primary-fg) !important;}

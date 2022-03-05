@@ -51,7 +51,8 @@ class _Htmls:
         '__text_size__','16px')).replace(
         '__breakpoint_width__','650px').replace(
         '__textfont__','sans-serif').replace(
-        '__codefont__','var(--jp-code-font-family)'))
+        '__codefont__','var(--jp-code-font-family)')
+        )
     main    = HTML(styles.main_layout_css)
     sidebar = HTML(styles.sidebar_layout_css()) # Should be separate CSS
     loading = HTML() #SVG Animation in it

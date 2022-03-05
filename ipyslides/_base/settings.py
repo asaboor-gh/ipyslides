@@ -111,15 +111,18 @@ class LayoutSettings:
             return display(_HTML('<style> code:before{ display:inline-block !important; } </style>'))
         return display(_HTML('<style> code:before{ display:none !important; } </style>'))
     
-    def align8center(self,b=True):
+    def align8center(self,b = True):
         "Central aligment of slide by default. If False, left-top aligned."
+        self._heading_align = 'left' if b else 'center'
+        self.widgets.outputs.slide.layout.width = '100%'
         if b:
+            self.widgets.outputs.slide.layout.display='block'
             self.widgets.outputs.slide.layout.margin = 'auto'
-            self.widgets.outputs.slide.layout.width = 'auto'
-            self.widgets.outputs.slide.layout.max_width = '100%'
+            self.widgets.outputs.slide.layout.align_items = 'center'
         else:
+            self.widgets.outputs.slide.layout.display='flex'
             self.widgets.outputs.slide.layout.margin = '2px 8px 2px 8px'
-            self.widgets.outputs.slide.layout.width = '100%'
+            self.widgets.outputs.slide.layout.align_items = 'flex-start'
             
     def __add_js(self):
         with self.out_fixed: 
@@ -164,6 +167,9 @@ class LayoutSettings:
                         '__text_size__',text_size).replace(
                         '__textfont__',self._font_family['text']).replace(
                         '__codefont__',self._font_family['code'])
+        
+        # Update CSS
+        self.widgets.htmls.theme.value = theme_css
         if self.reflow_check.value:
             theme_css = theme_css.replace('</style>','') + f".SlideArea * "+ "{max-height:max-content !important;}\n</style>"
         
