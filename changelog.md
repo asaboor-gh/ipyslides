@@ -1,7 +1,7 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
-# 1.3.4
+# 1.3.4/5
 - Demo is under main class now. Access as `ls.demo()`. 
 - `@ls.frames` now accept `repeat` arguement to design frames in different ways. See `ls.demo()` slides. 
 - Now contet on slides is updated in real time on cell execution, so you see the result of you just ran. 
