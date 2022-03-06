@@ -1,4 +1,3 @@
-from msilib import sequence
 import sys
 from collections import namedtuple
 from contextlib import contextmanager
