@@ -46,10 +46,7 @@ class BaseLiveSlides:
             self.toast_html.layout.visibility = 'hidden' 
         else:
             self.toast_html.layout.visibility = 'visible'
-    
-    def notify_at(self, *args, **kwargs):
-        self.write(self.alert('`@notify_at` is deprecated. Use `@notify_later` decorator instead.'))
-        return self.notify_later(*args, **kwargs)
+
     
     def notify_later(self, title='IPySlides Notification', timeout=5):
         """Decorator to push notification at slide under which it is run. 

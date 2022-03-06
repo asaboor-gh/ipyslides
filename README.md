@@ -11,7 +11,7 @@ See [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.3.2
+> pip install ipyslides >= 1.3.4
 ```
 For development install, clone this repository and then
 ```shell
@@ -19,7 +19,7 @@ For development install, clone this repository and then
 > pip install -e .
 ```
 # Creating Slides
-> Tip: You can use `ipyslides.demo()` to create example slides and start editing.
+> Tip: You can use `ipyslides.LiveSlides().demo()` to create example slides and start editing.
 
 ```python
 #------------ Cell 1 --------------------

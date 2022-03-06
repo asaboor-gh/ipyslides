@@ -54,6 +54,7 @@ class LayoutSettings:
     
         self.update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
+        self.align8center(True) # Trigger this as well
         
     def set_animation(self,name):
         "Set animation style or pass None to disable animation."

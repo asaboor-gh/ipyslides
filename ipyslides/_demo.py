@@ -3,6 +3,7 @@
 import textwrap, time
 from io import StringIO
 from IPython import get_ipython
+from IPython.display import Latex
 from .core import LiveSlides
 from .utils import textbox
 from .writers import write, iwrite, __reprs__
@@ -213,4 +214,34 @@ def func(obj):
                   ],ax,width_percents=[40,60])
     if obj == 14:
         slides.write(s.show_lines([5,6]))
-       
+        
+# Frames structure
+boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:auto;padding:8px;margin:8px;border-radius:4px;"><h1>{i}</h1></div>' for i in range(1,10)]
+@slides.frames(15,*boxes, repeat=False)
+def f(obj):
+    slides.write('# Frames with \n#### `repeat = False`')
+    slides.write('',obj,'')
+
+@slides.frames(16,*boxes, repeat=True)
+def f(obj):
+    slides.write('# Frames with \n#### `repeat = True`')
+    slides.write('',*obj,'')
+    
+@slides.frames(17,*boxes, repeat=[(0,1,2),(3,4,5),(6,7,8)])
+def f(obj):
+    with slides.source.context() as s:
+        slides.write('# Frames with \n#### `repeat = [(0,1,2),(3,4,5),(6,7,8)]`')
+        slides.write('',*obj,'')
+    slides.write('', s,'', width_percents=[15,70,15])
+
+with slides.slide(18):
+    with slides.source.context() as s:
+        slides.write(['## Displaying image from url from somewhere in Kashmir',
+                      slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg')])
+    slides.write('', s,'', width_percents=[15,70,15])
+
+with slides.slide(19):
+    slides.write('## $\LaTeX$ in Slides\nUse `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations')
+    slides.write([r'\$\$\int_0^1\frac{1}{1-x^2}dx\$\$',
+                r'$$\int_0^1\frac{1}{1-x^2}dx$$'
+                ])  

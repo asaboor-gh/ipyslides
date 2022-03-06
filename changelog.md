@@ -1,6 +1,14 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.3.4
+- Demo is under main class now. Access as `ls.demo()`. 
+- `@ls.frames` now accept `repeat` arguement to design frames in different ways. See `ls.demo()` slides. 
+- Now contet on slides is updated in real time on cell execution, so you see the result of you just ran. 
+- `@ls.notify_at` is deprecated in favor of `@ls.notify_later` which does not require you to give slide number, picks current slide number under which itb is run. Under `@ls.frames`, notifications are shown on first frame only.
+- `ls.notes.insert` now work under `@ls.frames`and notes are shown on first frame only.
+- Bugs in PDF printing and some other places fixed.
+
 # 1.3.3
 - Added `ls.close_view` method, which closes widgets view but available on next run. 
 - You will get warning if running slides in two or more notebooks in Jupyterlab, because keyboard navigation and CSS does not behave well when two slides are in single browser's tab. In that case, you don't need to delete slides, just call `ls.close_view()` to remove unwanted displays from frontend.
