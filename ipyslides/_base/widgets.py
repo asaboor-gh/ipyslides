@@ -195,6 +195,12 @@ class Widgets:
     """
     Instantiate under `LiveSLides` class only and provide to other classes after built-up.
     """
+    def __setattr__(self, name , value):
+        if name in self.__dict__:
+            raise AttributeError(f'{name} is a read-only attribute')
+        
+        self.__dict__[name] = value
+        
     def __init__(self):
         self.buttons = _Buttons()
         self.toggles = _Toggles()
@@ -217,19 +223,19 @@ class Widgets:
             self.buttons.next
         ]).add_class('controls') 
         
+        self.footerbox = HBox([
+            self.buttons.setting,
+            HBox([self.htmls.info],layout= Layout(overflow_x = 'auto',overflow_y='hidden')) ,
+            self.buttons.capture
+        ],layout=Layout(height='32px')).add_class('nav-box')
+        
         self.navbox = VBox([
-            HBox([self.buttons.setting,
-                HBox([self.htmls.info],layout= Layout(overflow_x = 'auto',overflow_y='hidden')) ,
-                self.buttons.capture
-            ],layout=Layout(height='32px')
-            ).add_class('nav-box') ,
+            self.footerbox,
             VBox([
                 self.__proghtml,
                 self.progressbar
                 ])
         ]).add_class('NavWrapper')   #class is must
-        
-        
         
         self.panelbox = VBox([
             Box([

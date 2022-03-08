@@ -15,7 +15,7 @@ otherwise select `Custom Slide Size` and change size there according to found as
 how_to_slide = ('''# Creating Slides
 **Assuming you have `ls = ipyslides.LiveSlides()`**
 
-1. Proceed to create slides:
+- Proceed to create slides:
     - Edit and test cells in `ls.convert2slides(False)` mode.
     - Run cells in `ls.convert2slides(True)` mode from top to bottom. 
     - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
@@ -40,7 +40,7 @@ def func(obj):
 ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
 
-2. Use `ls.from_markdown` to create slides from markdown file/StringIO and then can add slides over it.
+- Use `ls.from_markdown` to create slides from markdown file/StringIO and then can add slides over it.
     - Slides are added in order of content.
     - Slides should be separated by `---` (three dashes) in start of line.
     - You can add more slides besides created ones or modify existing ones using `ls.md_content`:
@@ -51,7 +51,7 @@ with ls.slide(2):
     plot_something() # Add other things to same file
     write_something()
 ```
-3. Use `ls.demo` to create example slides and start editing. Follow steps in part 1.
+- Use `ls.demo` to create example slides and start editing. Follow steps in first part.
 
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
@@ -140,8 +140,8 @@ class CustomSlides(isd.LiveSlides):
     
     def set_visible(self, change):
         if self.progress_slider.index == 0:
-            self.widgets.navbox.children[0].layout.visibility = 'visible'
+            self.widgets.footerbox.layout.visibility = 'visible'
         else:
-            self.widgets.navbox.children[0].layout.visibility = 'hidden'
+            self.widgets.footerbox.layout.visibility = 'hidden'
 ```
 '''
