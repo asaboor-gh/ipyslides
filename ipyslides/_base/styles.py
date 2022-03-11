@@ -68,6 +68,10 @@ def style_html(style_root = theme_roots['Inherit']):
     padding:2px 4px;
     color: var(--secondary-fg);
 }
+.Warning { color:#FFAC1C;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid #FFAC1C; border-top:2px solid #FFAC1C;}
+.Success { color:green;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid green; border-top:2px solid green; }
+.Error { color:red;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid red; border-top:2px solid red; }
+.Info { color:skyblue;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid skyblue; border-top:2px solid skyblue; }
 .jp-OutputArea-child, .jp-OutputArea-child .jp-OutputArea-output { background: transparent !important;background-color: transparent !important;} /* For some themes */
 .SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
@@ -203,7 +207,7 @@ def style_html(style_root = theme_roots['Inherit']):
 
 .SlideArea .footnote *,  .SlideArea .footnote li::marker {
     font-size:0.9em;
-    line-height: 0.7em;
+    line-height: 0.9em;
 }
 .SlideArea hr {
     margin:0 !important;

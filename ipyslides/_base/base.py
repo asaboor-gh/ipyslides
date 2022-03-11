@@ -1,5 +1,5 @@
 "Inherit LiveSlides class from here. It adds useful attributes and methods."
-import json, re, os, io
+import os, io
 from IPython import get_ipython
 from contextlib import suppress
 from .widgets import Widgets
@@ -19,7 +19,7 @@ class BaseLiveSlides:
         
         self._md_content = 'Slides not loaded from markdown.'
         
-        self.__toasts = {} #Store notifications
+        self._toasts = {} #Store notifications
         self.toast_html = self.widgets.htmls.toast
         
         self.widgets.checks.toast.observe(self.__toggle_notify,names=['value'])
@@ -60,25 +60,24 @@ class BaseLiveSlides:
             return f'Notification at {time}'
         """
         def _notify(func): 
-            self.__toasts[f'{self._current_slide}'] = dict(func = func, kwargs = dict(title=title, timeout=timeout))
+            self._toasts[f'{self._current_slide}'] = dict(func = func, kwargs = dict(title=title, timeout=timeout))
         return _notify
     
     def clear_notifications(self):
         "Remove all redundent notifications that show up."
-        self.__toasts = {} # Free up
+        self._toasts = {} # Free up
     
     @property
     def notifications(self):
         "See all stored notifications."
-        return self.__toasts
+        return self._toasts
     
     def display_toast(self):
-        # self.widgets.sliders.progress.label is now same as what seen in the app
-        with suppress(BaseException): # Try and bypass any error
-            for k, v in self._map_slide_number.items():
-                if v == self.widgets.sliders.progress.label:
-                    toast = self.__toasts[k]
-                    self.notify(content = toast['func'](), **toast['kwargs'])
+        toast = self._toasts.get(self.access_key,None) #access_key is current slide's number from LiveSlides
+        if toast:
+            # clear previous content of notification as new one is about to be shown, this will ensure not to see on wrong slide
+            self.widgets.htmls.toast.value = ''
+            self.notify(content = toast['func'](), **toast['kwargs'])
     
     @property
     def md_content(self):
