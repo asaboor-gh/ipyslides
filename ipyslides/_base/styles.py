@@ -68,11 +68,24 @@ def style_html(style_root = theme_roots['Inherit']):
     padding:2px 4px;
     color: var(--secondary-fg);
 }
-.Warning { color:#FFAC1C;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid #FFAC1C; border-top:2px solid #FFAC1C;}
-.Success { color:green;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid green; border-top:2px solid green; }
-.Error { color:red;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid red; border-top:2px solid red; }
-.Info { color:skyblue;background:var(--secondary-bg);padding:4px;border-radius:4px; border:1px solid skyblue; border-top:2px solid skyblue; }
-.jp-OutputArea-child, .jp-OutputArea-child .jp-OutputArea-output { background: transparent !important;background-color: transparent !important;} /* For some themes */
+div(.Info, .Warning, .Success, .Error) *:last-child { margin-bottom:0.2em;}
+.Info, .Warning, .Success, .Error, 
+.Info *, .Warning *, .Success *, .Error * { 
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:baseline !important;
+}
+.Warning { color:#FFAC1C;padding:4px;border-radius:4px; border-left:4px solid #FFAC1C;}
+.Warning * { color:#FFAC1C !important;}
+.Success { color:green;padding:4px;border-radius:4px; border-left:4px solid green; }
+.Success * { color:green !important;}
+.Error { color:red;padding:4px;border-radius:4px; border-left:4px solid red; }
+.Error * { color:red !important;}
+.Info { color:skyblue;padding:4px;border-radius:4px; border-left:4px solid skyblue; }
+.Info * { color:skyblue !important;}
+
+.jp-OutputArea-child, .jp-OutputArea-child .jp-OutputArea-output { background: transparent !important;background-color: transparent !important; margin: 0 !important;} /* For some themes */
 .SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-RenderedHTMLCommon :not(pre) > code { background-color: var(--secondary-bg); color:var(--secondary-fg);}

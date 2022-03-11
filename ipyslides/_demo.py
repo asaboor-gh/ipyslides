@@ -27,7 +27,7 @@ slides.from_markdown(fp) # This will create first slide along with title page.
 
 with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context() as s:
-        write(slides.md_content[1])
+        write(slides.md_content[1], className='Info')
         write('## I am created using `with slides.slide(1)` context( manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
     write(s.focus_lines([0]))  #focus on line 0 
@@ -225,7 +225,7 @@ def f(obj):
 @slides.frames(16,*boxes, repeat=True)
 def f(obj):
     slides.write('# Frames with \n#### `repeat = True`')
-    slides.write('',*obj,'')
+    slides.write('',*obj,'',className='Warning')
     
 @slides.frames(17,*boxes, repeat=[(0,1,2),(3,4,5),(6,7,8)])
 def f(obj):
@@ -237,7 +237,8 @@ def f(obj):
 with slides.slide(18):
     with slides.source.context() as s:
         slides.write(['## Displaying image from url from somewhere in Kashmir',
-                      slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg')])
+                      slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg')],
+                     className='Success')
     slides.write('', s,'', width_percents=[15,70,15])
 
 with slides.slide(19):

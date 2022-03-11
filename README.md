@@ -11,7 +11,7 @@ See [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.3.4
+> pip install ipyslides >= 1.3.6
 ```
 For development install, clone this repository and then
 ```shell

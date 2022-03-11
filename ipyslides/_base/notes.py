@@ -24,7 +24,7 @@ class Notes:
         self.main._slides_notes[self.main._current_slide] = self.main.format_html(content)._repr_html_()
     
     def display(self, html_str):
-        self.widgets.htmls.notes.value = 'Notes Area' # Must be, so when no notes, should not be there
+        self.widgets.htmls.notes.value = 'Notes Area: Time only updates while switching slides' # Must be, so when no notes, should not be there
         if html_str and isinstance(html_str,str):
             current_time = time.localtime()
             if current_time.tm_hour > 12:

@@ -1,6 +1,9 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
+# 1.3.6
+- Use `ls.pre_compute_display()` to load all slides into memory. This is useful if you have a lot of Maths or Widgets.
+- You can use some predefined classed like `Info, Warning, Success, Error` in `write` command to have special colored messages. 
 # 1.3.4/5
 - Demo is under main class now. Access as `ls.demo()`. 
 - `@ls.frames` now accept `repeat` arguement to design frames in different ways. See `ls.demo()` slides. 
