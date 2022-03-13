@@ -1,10 +1,9 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
 
-# 1.3.7
+# 1.3.7/8
 - Use `ls.settings.set_layout(content_width='<N>%')` to display slides in a desired width. This will not change with in small devices.
 - Bugs fixes. 
-
 
 # 1.3.6
 - Use `ls.pre_compute_display()` to load all slides into memory. This is useful if you have a lot of Maths or Widgets.

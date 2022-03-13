@@ -208,8 +208,10 @@ class LiveSlides(BaseLiveSlides):
             write(slide_css) # Write CSS first to avoid style conflict  
         
         self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0',margin='0',opacity='0') # Hide old slide
+        self.widgets.slidebox.children[old_index].remove_class('SlideArea')
         self.widgets.slidebox.children[new_index].layout = self.widgets.outputs.slide.layout
-    
+        self.widgets.slidebox.children[new_index].add_class('SlideArea')
+        
     def __update_content(self,change):
         if self.__iterable and change:
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
@@ -230,7 +232,7 @@ class LiveSlides(BaseLiveSlides):
         This is very useful when you have a lot of Maths or Widgets, no susequent calls to MathJax/Widget Manager required on slide's switch when it is loaded once."""
         self.__computed_display = b
         if b:
-            slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')).add_class('SlideArea') for s in self.__iterable]
+            slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
             self.widgets.slidebox.children = [*slides, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
             for i, s in enumerate(self.__iterable):
                 with self.widgets.slidebox.children[i]:
