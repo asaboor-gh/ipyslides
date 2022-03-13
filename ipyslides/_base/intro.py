@@ -59,6 +59,7 @@ with ls.slide(2):
 
 more_instructions =f'''## How to Use
 > Use `ls.pre_compute_display()` to load all slides into memory. This is useful if you have a lot of Maths or Widgets.
+
 **Key Bindings**
 Having your cursor over slides, you can use follwoing keys/combinations:
 

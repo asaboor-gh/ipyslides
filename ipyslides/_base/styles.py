@@ -188,6 +188,7 @@ div(.Info, .Warning, .Success, .Error) *:last-child { margin-bottom:0.2em;}
 	.SlidesWrapper .controls button {width:30% !important;}
     .SlidesWrapper .SlideArea {padding-bottom: 50px !important;}
     .NavWrapper .progress {height:4px !important;}
+    .SlideArea { min-width:100% !important;width:100% !important;} /* can't work without min-width */
     .SlideArea .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
     .SlideArea .columns>div[style] {width:100%!important;} /* important to override inline CSS */
     .SlideArea .columns .widget-html
@@ -218,6 +219,7 @@ div(.Info, .Warning, .Success, .Error) *:last-child { margin-bottom:0.2em;}
     color:var(--primary-fg);
 }
 
+.SlideArea { width: __content_width__ !important;} 
 .SlideArea .footnote *,  .SlideArea .footnote li::marker {
     font-size:0.9em;
     line-height: 0.9em;

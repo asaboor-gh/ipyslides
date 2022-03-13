@@ -46,7 +46,7 @@ class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    info    = HTML('<p>Put Your Info Here using `self.set_footer` function</p>')
+    footer    = HTML('<p>Put Your Info Here using `self.set_footer` function</p>').add_class('Footer')
     theme   = HTML(styles.style_html(styles.theme_roots['Fancy'].replace(
         '__text_size__','16px')).replace(
         '__breakpoint_width__','650px').replace(
@@ -106,7 +106,7 @@ class _Outputs:
     """
     Instantiate under `Widgets` class only.
     """
-    slide  = ipw.Output(layout= Layout(width='auto',height='auto',margin='auto',overflow='auto',padding='2px 36px')
+    slide  = ipw.Output(layout= Layout(height='auto',margin='auto',overflow='auto',padding='2px 36px') # do not set width here, in css
                               ).add_class('SlideArea')
     intro  = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
     fixed = ipw.Output(layout=Layout(width='auto',height='0px')) # For fixed javascript
@@ -127,6 +127,9 @@ def _custom_progressbar(intslider):
     .NavWrapper .nav-box .menu:hover {
         opacity:1;
     }
+    .NavWrapper .nav-box .Footer p {
+        font-size:14px !important;
+    }
     .NavWrapper .nav-box {
         z-index:50;
         overflow: hidden;
@@ -134,7 +137,7 @@ def _custom_progressbar(intslider):
     .NavWrapper .widget-hprogress {
         height:4px; !impportant;
     }
-    .NavWrapper, .NavWrapper>div {
+    .NavWrapper, .NavWrapper > div {
         padding:0px;
         margin:0px;
         overflow:hidden;
@@ -225,7 +228,7 @@ class Widgets:
         
         self.footerbox = HBox([
             self.buttons.setting,
-            HBox([self.htmls.info],layout= Layout(overflow_x = 'auto',overflow_y='hidden')) ,
+            HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')) ,
             self.buttons.capture
         ],layout=Layout(height='32px')).add_class('nav-box')
         

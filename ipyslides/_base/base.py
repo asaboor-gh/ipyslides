@@ -144,7 +144,7 @@ class BaseLiveSlides:
             with slides.source.context() as s:
                 slides.write_citations()
             slides.write(s)
-        slides.settings.theme_dd.value = 'Fancy'
+        
         slides.progress_slider.index = 0 # back to title
         return slides
         

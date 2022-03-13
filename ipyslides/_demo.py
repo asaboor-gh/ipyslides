@@ -109,7 +109,7 @@ with slides.slide(9):
         write('This line is written as function in context manager is not taken as source at end of block. No idea why?')
 
         
-    write([slides.format_css('.youtube-source',position='absloute',width='50%',border_radius='8px 2em',background='black'), s]
+    write([slides.format_css('.youtube-source',width='100%',border_radius='8px 2em',background='black'), s]
           ,className='youtube-source')
     
 # Data Table
@@ -220,26 +220,26 @@ boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:auto;padd
 @slides.frames(15,*boxes, repeat=False)
 def f(obj):
     slides.write('# Frames with \n#### `repeat = False`')
-    slides.write('',obj,'')
+    slides.write(obj)
 
 @slides.frames(16,*boxes, repeat=True)
 def f(obj):
     slides.write('# Frames with \n#### `repeat = True`')
-    slides.write('',*obj,'',className='Warning')
+    slides.write(*obj,className='Warning')
     
 @slides.frames(17,*boxes, repeat=[(0,1,2),(3,4,5),(6,7,8)])
 def f(obj):
     with slides.source.context() as s:
         slides.write('# Frames with \n#### `repeat = [(0,1,2),(3,4,5),(6,7,8)]`')
-        slides.write('',*obj,'')
-    slides.write('', s,'', width_percents=[15,70,15])
+        slides.write(*obj)
+    slides.write(s)
 
 with slides.slide(18):
     with slides.source.context() as s:
-        slides.write(['## Displaying image from url from somewhere in Kashmir',
+        slides.write(['## Displaying image from url from somewhere in Kashmir (کشمیر)',
                       slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg')],
                      className='Success')
-    slides.write('', s,'', width_percents=[15,70,15])
+    slides.write(s)
 
 with slides.slide(19):
     slides.write('## $\LaTeX$ in Slides\nUse `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations')

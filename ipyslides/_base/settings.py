@@ -21,6 +21,7 @@ class LayoutSettings:
         self.font_scale = 1
         self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
         self._footer_text = 'Abdul Saboor | <a style="color:blue;" href="www.google.com">google@google.com</a>'
+        self._content_width = '100%'
         
         self.height_slider = self.widgets.sliders.height
         self.width_slider  = self.widgets.sliders.width
@@ -54,7 +55,7 @@ class LayoutSettings:
     
         self.update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
-        self.align8center(True) # Trigger this as well
+        self.set_layout(center = True, content_width = '90%') # Trigger this as well
         
     def set_animation(self,name):
         "Set animation style or pass None to disable animation."
@@ -105,25 +106,32 @@ class LayoutSettings:
             _text += '<b style="color:var(--accent-color);white-space:pre;">  __number__<b>'
         _text = f'<p style="white-space:nowrap;"> {_text} </p>'
         
-        self.widgets.htmls.info.value = _text.replace('__number__',_number_str)
+        self.widgets.htmls.footer.value = _text.replace('__number__',_number_str)
         
     def code_line_numbering(self,b=True):
         if b:
             return display(_HTML('<style> code:before{ display:inline-block !important; } </style>'))
         return display(_HTML('<style> code:before{ display:none !important; } </style>'))
     
-    def align8center(self,b = True):
+    def set_layout(self,center = True, content_width='100%'):
         "Central aligment of slide by default. If False, left-top aligned."
-        self._heading_align = 'left' if b else 'center'
-        self.widgets.outputs.slide.layout.width = '100%'
-        if b:
-            self.widgets.outputs.slide.layout.display='block'
-            self.widgets.outputs.slide.layout.margin = 'auto'
-            self.widgets.outputs.slide.layout.align_items = 'center'
+        self._content_width = content_width
+        style_dict = {'display':'block','width':content_width} #block is must
+        if center:
+            style_dict.update(dict(margin = 'auto',align_items = 'center',justify_content = 'center'))
         else:
-            self.widgets.outputs.slide.layout.display='flex'
-            self.widgets.outputs.slide.layout.margin = '2px 8px 2px 8px'
-            self.widgets.outputs.slide.layout.align_items = 'flex-start'
+            style_dict.update(dict(margin = '2px 8px 2px 8px',align_items = 'baseline',justify_content = 'flex-start'))
+        
+        for k,v in style_dict.items():
+            setattr(self.widgets.outputs.slide.layout, k, v)
+        
+        self.update_theme(change=None) # Trigger CSS in it to make width change
+    
+    def align8center(self,b=True):
+        "Use set_layout(center=False) to align slide to left-top"
+        print('Use set_layout(center={},...) instead'.format(not b))
+        self.set_layout(center=b)
+            
             
     def __add_js(self):
         with self.out_fixed: 
@@ -167,7 +175,8 @@ class LayoutSettings:
         theme_css = theme_css.replace(
                         '__text_size__',text_size).replace(
                         '__textfont__',self._font_family['text']).replace(
-                        '__codefont__',self._font_family['code'])
+                        '__codefont__',self._font_family['code']).replace(
+                        '__content_width__',self._content_width)
         
         # Update CSS
         self.widgets.htmls.theme.value = theme_css
