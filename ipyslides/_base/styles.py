@@ -111,21 +111,12 @@ def style_html(style_root = theme_roots['Inherit']):
     margin-bottom:0.1em !important;
 }
 
-.Info, .Warning, .Success, .Error { 
-    padding-left: 8px !important;
-}
-.Info > *, .Warning > *, .Success > *, .Error > * {
-    margin-right:auto !important; /* Pushes to left */
-    text-align:left !important; /* Aligns to left */
-}
-.Warning { color:#FFAC1C;padding:4px;border-radius:4px; border-left:4px solid #FFAC1C;}
-.Warning * { color:#FFAC1C !important;}
-.Success { color:green;padding:4px;border-radius:4px; border-left:4px solid green; }
-.Success * { color:green !important;}
-.Error { color:red;padding:4px;border-radius:4px; border-left:4px solid red; }
-.Error * { color:red !important;}
-.Info { color:skyblue;padding:4px;border-radius:4px; border-left:4px solid skyblue; }
-.Info * { color:skyblue !important;}
+.Info, .Warning, .Success, .Error { padding: 4px !important;}
+
+.Warning, .Warning * { color:#FFAC1C !important;}
+.Success, .Success * { color:green !important;}
+.Error, .Error * { color:red !important;}
+.Info, .Info * { color:skyblue !important;}
 
 .jp-OutputArea-child, .jp-OutputArea-child .jp-OutputArea-output { background: transparent !important;background-color: transparent !important; margin: 0 !important;} /* For some themes */
 .SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */

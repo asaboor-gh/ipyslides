@@ -56,10 +56,10 @@ class BaseLiveSlides:
         className = 'Left'              Text------------
         className = 'Right'             ------------Text
         className = 'RTL'               ------ اردو عربی 
-        className = 'Info'              | Blue Text
-        className = 'Warning'           | Orange Text
-        className = 'Success'           | Green Text
-        className = 'Error'             | Red Text
+        className = 'Info'              Blue Text
+        className = 'Warning'           Orange Text
+        className = 'Success'           Green Text
+        className = 'Error'             Red Text
         ''')
 
     

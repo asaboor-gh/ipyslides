@@ -183,7 +183,7 @@ class Source:
             out_code = _str2code(code).value #needs further processing
 
             if collapsed:
-                return_obj._code =  details(out_code,summary='Show Code')
+                return_obj._code =  details(out_code,summary='Show Code').value #details is _HTML
             else:
                 return_obj._code = out_code 
                 
