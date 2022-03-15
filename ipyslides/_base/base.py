@@ -88,7 +88,7 @@ class BaseLiveSlides:
         return self._toasts
     
     def display_toast(self):
-        toast = self._toasts.get(self.access_key,None) #access_key is current slide's number from LiveSlides
+        toast = self._toasts.get(self._access_key,None) #_access_key is current slide's number from LiveSlides
         if toast:
             # clear previous content of notification as new one is about to be shown, this will ensure not to see on wrong slide
             self.widgets.htmls.toast.value = ''

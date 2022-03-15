@@ -87,6 +87,7 @@ class LiveSlides(BaseLiveSlides):
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
         
         self.progress_slider = self.widgets.sliders.progress
+        self.progress_slider.index = 0 # Important for rerun of slides
         self.progress_slider.observe(self.__update_content,names=['index'])
         
         # All Box of Slides
@@ -111,7 +112,7 @@ class LiveSlides(BaseLiveSlides):
         return self.__iterable  
     
     @property
-    def access_key(self):
+    def _access_key(self):
         "Access key for slides number to get other things like notes, toasts, etc."
         return self._f2i_dict.get(self.progress_slider.label, '') # being on safe, give '' as default
 
@@ -191,7 +192,7 @@ class LiveSlides(BaseLiveSlides):
         try:
             self.widgets.outputs.slide.clear_output(wait=True)
             with self.widgets.outputs.slide:
-                write(self._slides_css.get(self.access_key,'')) # Write CSS first
+                write(self._slides_css.get(self._access_key,'')) # Write CSS first
                 if (self.print.is_printing == False) and (self.frameno < 2): # No animations while printing or frames
                     write(self.settings.animation) # Animation style
                 self.__iterable[self.progress_slider.index]['slide'].show()  # Show slide
@@ -199,7 +200,7 @@ class LiveSlides(BaseLiveSlides):
             self.loading_html.value = ''
            
     def __switch_slide(self,old_index, new_index): # this change is provide from __update_content
-        slide_css = self._slides_css.get(self.access_key,'') # Get CSS
+        slide_css = self._slides_css.get(self._access_key,'') # Get CSS
         if (self.print.is_printing == False) and (self.frameno < 2): # No animations while printing or frames
             slide_css = self.settings.animation.replace('</style>','') + slide_css.replace('<style>','')
              
@@ -216,10 +217,10 @@ class LiveSlides(BaseLiveSlides):
         if self.__iterable and change:
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
             self.display_toast() # or self.toasts.display_toast . Display in start is fine
-            self.notes.display(self._slides_notes.get(self.access_key,None)) # Display notes first
+            self.notes.display(self._slides_notes.get(self._access_key,None)) # Display notes first
         
-            n = self.__iterable[self.progress_slider.index]["n"] # keep it from slides
-            _number = f'{n} / {self._nslides}' if self.progress_slider.index != 0 else ''
+            n = self.__iterable[self.progress_slider.index]["n"] if self.__iterable else 0 # keep it from slides
+            _number = f'{n} / {self._nslides}' if n != 0 else ''
             self.settings.set_footer(_number_str = _number)
             
             if self.__computed_display:
