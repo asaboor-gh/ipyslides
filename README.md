@@ -99,9 +99,9 @@ class CustomSlides(isd.LiveSlides):
     
     def set_visible(self, change):
         if self.progress_slider.index == 0:
-            self.widgets.navbox.children[0].layout.visibility = 'visible'
+            self.widgets.footerbox.layout.visibility = 'visible'
         else:
-            self.widgets.navbox.children[0].layout.visibility = 'hidden'
+            self.widgets.footerbox.layout.visibility = 'hidden'
 ```
 
 > Very thankful to [Python-Markdown](https://python-markdown.github.io/) which enabled to create `write` command as well as syntax highliting.

@@ -27,16 +27,8 @@ except:
     sys.exit()
     
         
-class LiveSlides(BaseLiveSlides):
-    __instance = None # Make it singleton class
-    def __new__(cls,*args, **kwargs):
-        if not cls.__instance:
-            cls.__instance = object.__new__(cls)
-        return cls.__instance #return each time, display will make sure single display in last call
-        #else:
-        #    raise Exception("Can't create more than one instance of a singleton class! Resrtart Kernel or delete previous instance.")
-            
-    # Singlton class can't be initialized twice, so arguments are not passed
+class _PrivateSlidesClass(BaseLiveSlides):
+    # This is made availabe as singleton object `LiveSlides` in IPython namespace.
     def __init__(self):
         """Interactive Slides in IPython Notebook. Only one instance can exist. 
         Use `display(Markdown('text'))` instead of `print` in slides or
@@ -51,6 +43,7 @@ class LiveSlides(BaseLiveSlides):
             isd.initilize() #This will generate code in same cell including this class, which is self explainatory 
             ```
         """
+        # print(f'Inside: {self.__class__.__name__}')
         super().__init__() # start Base class in start
         self.shell = SHELL
         
@@ -95,6 +88,9 @@ class LiveSlides(BaseLiveSlides):
         self._box.on_displayed(lambda change: self.__muti_notebook_slides_alert()) 
         self.__update_content(True) # First attmpt will only update title page
         self._display_box_ = ipw.VBox() # Initialize display box
+    
+    def __call__(self): # Important if slides called, must have function
+        return self
     
     def __muti_notebook_slides_alert(self):
         " Alert for multiple slides in other notebooks, as they don't work well together."
@@ -442,3 +438,6 @@ class LiveSlides(BaseLiveSlides):
                 nframe = nframe + 1
         self._f2i_dict = {v:k for k,v in self._i2f_dict.items()}
         return tuple(slides_iterable)
+
+# Make available as Singleton LiveSlides
+LiveSlides = _PrivateSlidesClass() # Singleton in use namespace

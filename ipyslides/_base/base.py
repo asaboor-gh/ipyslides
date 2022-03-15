@@ -11,6 +11,7 @@ from .notes import Notes
 class BaseLiveSlides:
     def __init__(self):
         "Both instnaces should be inside `LiveSlide` class."
+        # print(f'Inside: {self.__class__.__name__}')
         self.__widgets = Widgets()
         self.__print = PdfPrint(self.__widgets)
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
