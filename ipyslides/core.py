@@ -87,7 +87,7 @@ class LiveSlides(BaseLiveSlides):
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
         
         self.progress_slider = self.widgets.sliders.progress
-        self.progress_slider.index = 0 # Important for rerun of slides
+        self._slideindex = 0 # Important for rerun of slides
         self.progress_slider.observe(self.__update_content,names=['index'])
         
         # All Box of Slides
@@ -114,7 +114,7 @@ class LiveSlides(BaseLiveSlides):
     @property
     def _access_key(self):
         "Access key for slides number to get other things like notes, toasts, etc."
-        return self._f2i_dict.get(self.progress_slider.label, '') # being on safe, give '' as default
+        return self._f2i_dict.get(self._slidelabel, '') # being on safe, give '' as default
 
     def clear(self):
         "Clear all slides."
@@ -181,11 +181,31 @@ class LiveSlides(BaseLiveSlides):
                     self.widgets.htmls.notes
                 ])
     @property
-    def frameno(self):
+    def _frameno(self):
         "Get current frame number, return 0 if not in frames in slide"
-        if '.' in self.progress_slider.label:
-            return int(self.progress_slider.label.split('.')[-1])
+        if '.' in self._slidelabel:
+            return int(self._slidelabel.split('.')[-1])
         return 0
+    
+    @property
+    def _slideindex(self):
+        "Get current slide index"
+        return self.progress_slider.index
+    
+    @_slideindex.setter
+    def _slideindex(self,value):
+        "Set current slide index"
+        self.progress_slider.index = value
+        
+    @property
+    def _slidelabel(self):
+        "Get current slide label"
+        return self.progress_slider.label
+    
+    @_slidelabel.setter
+    def _slidelabel(self,value):
+        "Set current slide label"
+        self.progress_slider.label = value
             
     def __display_slide(self):
         self.loading_html.value = styles.loading_svg
@@ -193,15 +213,15 @@ class LiveSlides(BaseLiveSlides):
             self.widgets.outputs.slide.clear_output(wait=True)
             with self.widgets.outputs.slide:
                 write(self._slides_css.get(self._access_key,'')) # Write CSS first
-                if (self.print.is_printing == False) and (self.frameno < 2): # No animations while printing or frames
+                if (self.print.is_printing == False) and (self._frameno < 2): # No animations while printing or frames
                     write(self.settings.animation) # Animation style
-                self.__iterable[self.progress_slider.index]['slide'].show()  # Show slide
+                self.__iterable[self._slideindex]['slide'].show()  # Show slide
         finally:
             self.loading_html.value = ''
            
     def __switch_slide(self,old_index, new_index): # this change is provide from __update_content
         slide_css = self._slides_css.get(self._access_key,'') # Get CSS
-        if (self.print.is_printing == False) and (self.frameno < 2): # No animations while printing or frames
+        if (self.print.is_printing == False) and (self._frameno < 2): # No animations while printing or frames
             slide_css = self.settings.animation.replace('</style>','') + slide_css.replace('<style>','')
              
         self.widgets.slidebox.children[-1].clear_output(wait=False) # Clear last slide CSS
@@ -219,7 +239,7 @@ class LiveSlides(BaseLiveSlides):
             self.display_toast() # or self.toasts.display_toast . Display in start is fine
             self.notes.display(self._slides_notes.get(self._access_key,None)) # Display notes first
         
-            n = self.__iterable[self.progress_slider.index]["n"] if self.__iterable else 0 # keep it from slides
+            n = self.__iterable[self._slideindex]["n"] if self.__iterable else 0 # keep it from slides
             _number = f'{n} / {self._nslides}' if n != 0 else ''
             self.settings.set_footer(_number_str = _number)
             
@@ -238,7 +258,7 @@ class LiveSlides(BaseLiveSlides):
             for i, s in enumerate(self.__iterable):
                 with self.widgets.slidebox.children[i]:
                     s['slide'].show() 
-                self.progress_slider.index = i # goto there to update display
+                self._slideindex = i # goto there to update display
                 print(f'Pocessing... {int(self.widgets.progressbar.value)}%',end='\r') # Update loading progress bar
         else:
             self.widgets.slidebox.children = [self.widgets.outputs.slide]
@@ -251,13 +271,13 @@ class LiveSlides(BaseLiveSlides):
         self._max_index = len(self.__iterable) - 1 # This includes all frames
         
         # Now update progress bar
-        old_label = self.progress_slider.label
+        old_label = self._slidelabel
         denom = n_last if n_last > 0 else 1 # in case only title slide
         opts = [(f"{s['n']}", np.round(100*s['n']/denom, 2)) for s in self.__iterable]
         self.progress_slider.options = opts  # update options
         
         if old_label in list(zip(*opts))[0]: # Bring back to same slide if possible
-            self.progress_slider.label = old_label
+            self._slidelabel = old_label
             
         self.__update_content(True) # Force Refresh
         
@@ -320,7 +340,7 @@ class LiveSlides(BaseLiveSlides):
         else:
             self.__slides_dict[f'{slide_number}'] = cap 
             self.refresh()
-            self.progress_slider.label = self._i2f_dict[f'{slide_number}'] #go to slide
+            self._slidelabel = self._i2f_dict[f'{slide_number}'] #go to slide
 
     
     def __title(self,line,cell):
@@ -389,7 +409,7 @@ class LiveSlides(BaseLiveSlides):
                     self.__slides_dict[f'{slide_number}.{i}'] = cap
                     
                 self.refresh() # Content change refreshes it.
-                self.progress_slider.label = self._i2f_dict[f'{slide_number}.1'] # goto first frame always
+                self._slidelabel = self._i2f_dict[f'{slide_number}.1'] # goto first frame always
         return _frames 
       
     def convert2slides(self,b=False):
