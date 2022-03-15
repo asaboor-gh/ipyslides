@@ -76,6 +76,7 @@ def write(*columns,width_percents=None,className=None):
     methods specific to that library to show in jupyter notebook.
     
     If you give a className, add CSS of it using `format_css` function and provide it to `write` function.
+    Get a list of already available classes using `slides.css_styles`. For these you dont need to provide CSS.
     
     Note: Use `keep_format` method to bypass markdown parser, for example `keep_format(altair_chart.to_html())`.
     Note: You can give your own type of data provided that it is converted to an HTML string.
@@ -143,13 +144,14 @@ class _WidgetsWriter:
         self._grid.children[col].children = widgets_row
         return tmp
     
-def iwrite(*columns,width_percents=None,className=None):
+def iwrite(*columns,width_percents = None,className=None):
     """Each obj in columns could be an IPython widget like `ipywidgets`,`bqplots` etc 
     or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
     Other objects (those in `write` command) will be converted to HTML widgets if possible. 
     Object containing javascript code may not work, use `write` command for that.
     
     If you give a className, add CSS of it using `format_css` function and provide it to `iwrite` function. 
+    Get a list of already available classes using `slides.css_styles`. For these you dont need to provide CSS.
     
     **Returns**: writer, columns as reference to use later and update. rows are packed in columns.
     

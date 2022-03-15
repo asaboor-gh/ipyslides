@@ -246,3 +246,14 @@ with slides.slide(19):
     slides.write([r'\$\$\int_0^1\frac{1}{1-x^2}dx\$\$',
                 r'$$\int_0^1\frac{1}{1-x^2}dx$$'
                 ])  
+
+with slides.slide(20):
+    slides.write('## Built-in CSS styles')
+    with slides.source.context() as s:
+        with slides.print_context():
+            slides.css_styles
+            
+        slides.write('Info',className='Info')
+        slides.write('Warning',className='Warning')
+        slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='Right RTL')
+    slides.write(s)

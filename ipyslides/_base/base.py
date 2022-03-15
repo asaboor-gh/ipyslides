@@ -46,6 +46,21 @@ class BaseLiveSlides:
             self.toast_html.layout.visibility = 'hidden' 
         else:
             self.toast_html.layout.visibility = 'visible'
+    
+    @property
+    def css_styles(self):
+        """CSS styles for write(..., className = style)."""
+        print('Use any or combinations of these styles in className argument of writing functions:')
+        print('''
+        className = 'Center'            ------Text------
+        className = 'Left'              Text------------
+        className = 'Right'             ------------Text
+        className = 'RTL'               ------ اردو عربی 
+        className = 'Info'              | Blue Text
+        className = 'Warning'           | Orange Text
+        className = 'Success'           | Green Text
+        className = 'Error'             | Red Text
+        ''')
 
     
     def notify_later(self, title='IPySlides Notification', timeout=5):

@@ -1,5 +1,10 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
+# 1.3.9
+- Use `ls.css_styles` to get a list of predefined CSS classes to use in argument `className` of writing/formatting functions. 
+- Use `className = 'Right RTL'` to type right to left langauges in correct format. 
+- Use `ls.vspace(em = <int,float>) to have vertical spacings in unit of em. (1em = 1 text line height). Useful to adjust content.
+- Bugs fixes. 
 
 # 1.3.7/8
 - Use `ls.settings.set_layout(content_width='<N>%')` to display slides in a desired width. This will not change with in small devices.

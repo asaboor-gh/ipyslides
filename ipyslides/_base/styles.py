@@ -68,6 +68,9 @@ def style_html(style_root = theme_roots['Inherit']):
     padding:2px 4px;
     color: var(--secondary-fg);
 }
+.SlideArea figure {
+    margin: 8px !important; /* override default margin */
+}
 .SlideArea .zoom-container figure {
     width: 100% !important;
     object-fit:scale-down !important; /* If height goes out, scale down */
@@ -77,12 +80,37 @@ def style_html(style_root = theme_roots['Inherit']):
     line-height: 1em !important;
     padding-top: 0.2em !important;
 }
-.Center, .Center > * {
+.Center:not(.columns), .Center > *:not(.columns) {
     display:table !important;
     margin: 0 auto !important;
     width: auto !important; /* max-content creates oveflow, do not use it */
 }
-div(.Info, .Warning, .Success, .Error) *:last-child { margin-bottom:0.2em;}
+.Left:not(.columns) { 
+    display:table !important; 
+    width: auto !important; 
+    margin-right: auto !important; 
+    text-align:left !important;
+}
+.Right:not(.columns) { 
+    display:table !important; 
+    width: auto !important; 
+    margin-left: auto !important; 
+    text-align:right !important;
+}
+
+.RTL, .RTL > * {
+    text-align:right !important;
+    padding: 0 12px !important; /* to avoid cuts in RTL */
+}
+
+.Info > *:last-child, .Warning > *:last-child,
+.Success > *:last-child, .Error > *:last-child,
+.Right:not(.columns) >*:last-child,
+.Left:not(.columns) >*:last-child,
+.Center:not(.columns) >*:last-child{ 
+    margin-bottom:0.1em !important;
+}
+
 .Info, .Warning, .Success, .Error { 
     padding-left: 8px !important;
 }
@@ -587,6 +615,9 @@ a.jp-InternalAnchorLink { display: none !important;}
     }
     .SlidesWrapper div.codehilite, .SlidesWrapper div.PyRepr {
         max-height:auto !important; /* Flow itself */
+    }
+    .SlideArea {
+        width: 100% !important;
     }
 }
 
