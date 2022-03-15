@@ -68,7 +68,10 @@ def style_html(style_root = theme_roots['Inherit']):
     padding:2px 4px;
     color: var(--secondary-fg);
 }
-
+.SlideArea .zoom-container figure {
+    width: 100% !important;
+    object-fit:scale-down !important; /* If height goes out, scale down */
+}
 .SlideArea figcaption {
     font-size: 0.8em !important;
     line-height: 1em !important;
