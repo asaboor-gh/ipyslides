@@ -1,4 +1,4 @@
-__all__ = ['print_context',  'details', 'plt2html', 'set_dir', 'textbox',
+__all__ = ['print_context',  'details', 'plt2html', 'set_dir', 'textbox', 'vspace',
             'image','svg','format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html_node','sig','doc']
 __all__.extend(['rows','cols','block'])
@@ -38,7 +38,7 @@ def set_dir(path):
         os.chdir(current)
 
 def format_html(*columns,width_percents=None,className=None):
-    'Same as `write` except it does not display but give a dict object that can be passed to `write` and `iwrite`.'
+    'Same as `write` except it does not write xplicitly, provide in write function'
     return _HTML(_fmt_write(*columns,width_percents=width_percents,className=className))
 
 def format_css(selector, **css_props):
@@ -73,8 +73,8 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
         width = f'{width}px'
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs _HTML object
-    if caption:
-        img = img + textbox(caption)  # Add caption,  _HTML + _HTML
+    cap = f'<figcaption>{caption}</figcaption>' if caption else ''
+    img = html_node('figure', img.value + cap)  # Add caption,  _HTML + _HTML
     if zoomable:
         return _HTML(f'<div class="zoom-container">{img}</div>')
     return _HTML(img)
@@ -82,8 +82,8 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
 def svg(data=None,caption=None,zoomable=True,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
-    if caption:
-        svg = f'{svg} {textbox(caption)}'  # Add caption 
+    cap = f'<figcaption>{caption}</figcaption>' if caption else ''
+    svg = html_node('figure', svg + cap)
     if zoomable:
         return _HTML(f'<div class="zoom-container">{svg}</div>')
     return _HTML(svg)
@@ -119,6 +119,9 @@ def html_node(tag,children = [],className = None,**node_attrs):
         attrs = f'class="{className}" {attrs}' # space is must after className
     return _HTML(f'<{tag} {attrs}>{content}</{tag}>')
 
+def vspace(em = 1):
+    "Returns html node with given height in em"
+    return html_node('div',style=f'height:{em}em;')
  
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
@@ -126,7 +129,7 @@ def textbox(text, **css_props):
     css_props = {'display':'inline-block','white-space': 'pre', **css_props} # very important to apply text styles in order
     # white-space:pre preserves whitspacing, text will be viewed as written. 
     _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
-    return _HTML(f"<span class='TextBox' style = {_style!r}> {text} </span>")  # markdown="span" will avoid inner parsing
+    return _HTML(f"<span class='TextBox' style = {_style!r}>{text}</span>")  # markdown="span" will avoid inner parsing
 
 def alert(text):
     "Alerts text!"

@@ -60,21 +60,32 @@ theme_roots = {
 def style_html(style_root = theme_roots['Inherit']):
 	return '<style>\n' + style_root + ''' 
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
-    font-size: 70% !important; 
-    line-height: 80% !important;
+    font-size: 0.7em !important; 
+    line-height: 0.75em !important;
     position:relative; 
     left:initial;
     top:initial;
     padding:2px 4px;
     color: var(--secondary-fg);
 }
+
+.SlideArea figcaption {
+    font-size: 0.8em !important;
+    line-height: 1em !important;
+    padding-top: 0.2em !important;
+}
+.Center, .Center > * {
+    display:table !important;
+    margin: 0 auto !important;
+    width: auto !important; /* max-content creates oveflow, do not use it */
+}
 div(.Info, .Warning, .Success, .Error) *:last-child { margin-bottom:0.2em;}
-.Info, .Warning, .Success, .Error, 
-.Info *, .Warning *, .Success *, .Error * { 
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-start;
-    align-items:baseline !important;
+.Info, .Warning, .Success, .Error { 
+    padding-left: 8px !important;
+}
+.Info > *, .Warning > *, .Success > *, .Error > * {
+    margin-right:auto !important; /* Pushes to left */
+    text-align:left !important; /* Aligns to left */
 }
 .Warning { color:#FFAC1C;padding:4px;border-radius:4px; border-left:4px solid #FFAC1C;}
 .Warning * { color:#FFAC1C !important;}
