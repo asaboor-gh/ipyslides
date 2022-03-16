@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import ipywidgets as ipw
 from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, Layout, Button
 from . import styles
+from ..utils import html
 
 
 auto_layout =  Layout(width='auto')
@@ -18,43 +19,41 @@ class _Buttons:
     """
     Instantiate under `Widgets` class only.
     """
-    prev =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
-    next =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
+    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
+    next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
     setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('float-cross-btn')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
-                    tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
-            ).add_class('screenshot-btn') # .add_class('menu')
-    pdf = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
-    png = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
-    print = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
+                tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
+                ).add_class('screenshot-btn') # .add_class('menu')
+    pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
+    png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
+    print   = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
     
-
 @dataclass(frozen=True)
 class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    display =  ipw.ToggleButtons(description='Display Mode',options=[('Inline',0),('Sidebar',1)],value = 1).add_class('DisplaySwitch')
-    fscrn = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
-    zoom = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
-    timer = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')             
+    display = ipw.ToggleButtons(description='Display Mode',options=[('Inline',0),('Sidebar',1)],value = 1).add_class('DisplaySwitch')
+    fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
+    zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
+    timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')             
         
-
 
 @dataclass(frozen=True)
 class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    footer    = HTML('<p>Put Your Info Here using `self.set_footer` function</p>').add_class('Footer')
-    theme   = HTML(styles.style_html(styles.theme_roots['Fancy'].replace(
-        '__text_size__','16px')).replace(
-        '__breakpoint_width__','650px').replace(
-        '__textfont__','sans-serif').replace(
-        '__codefont__','var(--jp-code-font-family)')
-        )
-    main    = HTML(styles.main_layout_css)
-    sidebar = HTML(styles.sidebar_layout_css()) # Should be separate CSS
+    footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>').add_class('Footer')
+    theme   = HTML(html('style',styles.style_html(styles.theme_roots['Fancy'].replace(
+                '__text_size__','16px')).replace(
+                '__breakpoint_width__','650px').replace(
+                '__textfont__','sans-serif').replace(
+                '__codefont__','var(--jp-code-font-family)')
+                ).value)
+    main    = HTML(html('style',styles.main_layout_css).value)
+    sidebar = HTML(html('style',styles.sidebar_layout_css()).value) # Should be separate CSS
     loading = HTML() #SVG Animation in it
     logo    = HTML()
     toast   = HTML() # For notifications
@@ -85,11 +84,11 @@ class _Sliders:
     """
     Instantiate under `Widgets` class only.
     """
-    progress   = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
-    visible    = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
-    height     = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('height-slider') #2160 for 4K screens
-    width      = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
-    scale      = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
+    progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
+    visible  = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
+    height   = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('height-slider') #2160 for 4K screens
+    width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 50,continuous_update=False).add_class('width-slider')
+    scale    = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         
 
 @dataclass(frozen=True)
@@ -106,9 +105,9 @@ class _Outputs:
     """
     Instantiate under `Widgets` class only.
     """
-    slide  = ipw.Output(layout= Layout(height='auto',margin='auto',overflow='auto',padding='2px 36px') # do not set width here, in css
-                              ).add_class('SlideArea')
-    intro  = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
+    slide = ipw.Output(layout= Layout(height='auto',margin='auto',overflow='auto',padding='2px 36px') # do not set width here, in css
+            ).add_class('SlideArea')
+    intro = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
     fixed = ipw.Output(layout=Layout(width='auto',height='0px')) # For fixed javascript
     renew = ipw.Output(layout=Layout(width='auto',height='0px')) # Content can be added dynamically
 

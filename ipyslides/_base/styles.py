@@ -58,7 +58,7 @@ theme_roots = {
 
 
 def style_html(style_root = theme_roots['Inherit']):
-	return '<style>\n' + style_root + ''' 
+	return style_root + ''' 
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
     line-height: 0.75em !important;
@@ -123,6 +123,7 @@ def style_html(style_root = theme_roots['Inherit']):
 .jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
 .jp-RenderedHTMLCommon :not(pre) > code { background-color: var(--secondary-bg); color:var(--secondary-fg);}
 .jp-RenderedText, .jp-RenderedText pre {color:var(--primary-fg) !important;}
+.jp-RenderedHTMLCommon p {margin-bottom: 0.2em !important;}
 .widget-html:not(.LaserPointer), .widget-html .widget-html-content > div {display:grid !important; font-size: var(--text-size) !important;} /* Do not use overflow her */
 .jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
 .cell-output-ipywidget-background { /* VSCode issue */
@@ -362,6 +363,20 @@ div.codehilite  code > span {
 div.codehilite pre > code:hover {
     background: var(--tr-hover-bg) !important;
 }
+/* Docs have Python code only, so no need to have fancy things there */
+.Docs div.codehilite {
+    margin: 0 !important;
+    padding-top: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+.Docs div.codehilite::before {
+    display: none !important;
+    background: none !important;
+}
+.Docs div.codehilite *, .Docs div.codehilite *::before{
+    background: none !important;
+}
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--secondary-bg);
 	color: var(--secondary-fg);
@@ -497,9 +512,9 @@ div.LaserPointer { /* For laser pointer */
     height: 100% !important;
     width: 100% !important;
 }
-</style>'''
+'''
 
-animations = {'zoom':'''<style>
+animations = {'zoom':'''
 .SlideBox {
     animation-name: zoom; animation-duration: 600ms;
     animation-timing-function: linear;
@@ -511,8 +526,8 @@ animations = {'zoom':'''<style>
 	75% { transform: scale(0.85); }
    100% { transform: scale(1); }
 }
-</style>''',
-'slide_h': '''<style>
+''',
+'slide_h': '''
 .SlideBox {
     animation-name: slide; animation-duration: 400ms;
     animation-timing-function: cubic-bezier(.2,.7,.8,.9);
@@ -529,9 +544,8 @@ animations = {'zoom':'''<style>
      from { transform: translateX(-100%);}
      to { transform: translateX(0); }
 }
-</style>
 ''',
-'slide_v': '''<style>
+'slide_v': '''
 .SlideBox {
     animation-name: slide; animation-duration: 400ms;
     animation-timing-function: cubic-bezier(.2,.7,.8,.9);
@@ -548,18 +562,18 @@ animations = {'zoom':'''<style>
      from { transform: translateY(-100%);}
      to { transform: translateY(0); }
 }
-</style>
 '''
 }
 animations['slide'] = animations['slide_h']# Backward compatibility
 
-main_layout_css = '''<style>
+main_layout_css = '''
 .SlidesWrapper .SlideArea { align-items: center;}
 a.jp-InternalAnchorLink { display: none !important;}
 .widget-inline-hbox .widget-readout  { min-width:auto !important;}
 .jupyterlab-sidecar .SlidesWrapper,
 .jp-LinkedOutputView .SlidesWrapper {
-    width: 100% !important; height: 100% !important;
+    width: 100% !important; 
+    height: 100% !important;
 }               
 .jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden,
 .jp-LinkedOutputView .SlidesWrapper .voila-sidecar-hidden,
@@ -676,11 +690,11 @@ body[data-retro] .DisplaySwitch>div {
     border: 1px solid var(--accent-color);
     padding: 2px 0px;
 }
-<style>'''
+'''
 
 
 def sidebar_layout_css(span_percent = 40):
-    return f'''<style>
+    return f'''
 .jp-LabShell, body[data-retro]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
     right: {span_percent}vw !important;
     margin-right:1px !important;
@@ -705,10 +719,10 @@ body[data-retro] .SlidesWrapper {{
     min-height:0 !important;
     border:none !important;
 }}
-</style>'''
+'''
 
 
-fullscreen_css = '''<style>
+fullscreen_css = '''
 .SlidesWrapper:not(.FullScreen) { display:none;} /*Hide All and display, leave only one */
 .SlidesWrapper.FullScreen {      
     flex: 1;
@@ -731,11 +745,9 @@ fullscreen_css = '''<style>
 .SlidesWrapper.FullScreen .console-btn {display:block;} /* Show console button in fullscreen in jupyterlab only*/
 .jupyterlab-sidecar .console-btn {display:none;} /* Hide console button in sidecar as not works there */
 html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + Shift + ],[ pressed */
-</style>''' 
+''' 
 
-
-
-mpl_fs_css = '''<style>
+mpl_fs_css = '''
 /* Pop out matplotlib's SVG on click/hover */
 div.zoom-container > *:focus, div.zoom-container > *:hover{
     position:fixed;
@@ -755,8 +767,7 @@ div.zoom-container > *:focus, div.zoom-container > *:hover{
         top: 100px;
         left:0px;
     }
-} 
-</style>
+}
 '''
 
 loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">

@@ -123,7 +123,7 @@ write(x,src) #will be displayed in two side by side columns, it was not that fle
 
 # 1.0.5
 - `ls.image` now accepts `im = PIL.Image.open('path')` object and displays if `im` is not closed. You can display `numpy.array` from `numpy` or `opencv` image by converting it to `PIL.Image.fromarry(array)` or using `plt.imshow(array)` on it and then `write(plt.gcf())`. 
-- `html_node` function is added to separaetly add HTML without parsing it. It can display itself if on the last line of notebook's cell or can be passed to `write`,`iwrite` commands as well.
+- `html_node` (`html` in 1.4+) function is added to separaetly add HTML without parsing it. It can display itself if on the last line of notebook's cell or can be passed to `write`,`iwrite` commands as well.
 
 # 1.0.4
 - Laser pointer 🔴 is added, you can customize it's color in custom theme. 
@@ -173,7 +173,7 @@ This will create two slides along with title page.
 - You can (not recommended) use browser's print PDF by pressing key `P` in jupyterlab but it only gives you current slide with many limitations, e.g. you need to collect all pages manually.
 
 # 0.9.6
-- Code line numbering is ON by default. You can set `ls.code_line_numbering(False)` to turn OFF.
+- Code line numbering is ON by default. You can set `ls.code_lineno(False)` to turn OFF.
 - Add slides in for loop using `slides.enum_slides` (later deprecated)function. It create pairs of index and slides. 
 #### PDF Printing (Tested on Windows)
 - PDF printing is now available. Always print in full screen or set `bbox` of slides. Read instructions in side panel. [PDF-Slides](IPySlides-Print.pdf)

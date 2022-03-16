@@ -11,7 +11,7 @@ from ..shared_vars import computed_warning
 
 class BaseLiveSlides:
     def __init__(self):
-        "Both instnaces should be inside `LiveSlide` class."
+        "Both instnaces should be inside `_PrivateSlidesClass` class."
         # print(f'Inside: {self.__class__.__name__}')
         self.__widgets = Widgets()
         self.__print = PdfPrint(self.__widgets)

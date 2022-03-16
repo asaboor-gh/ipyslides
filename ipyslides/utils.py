@@ -1,6 +1,6 @@
 __all__ = ['print_context',  'details', 'plt2html', 'set_dir', 'textbox', 'vspace',
             'image','svg','format_html','format_css','alert','colored','keep_format',
-            'raw','enable_zoom','html_node','sig','doc']
+            'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycmkowp'])
 
@@ -74,7 +74,7 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs _HTML object
     cap = f'<figcaption>{caption}</figcaption>' if caption else ''
-    img = html_node('figure', img.value + cap)  # Add caption,  _HTML + _HTML
+    img = html('figure', img.value + cap)  # Add caption,  _HTML + _HTML
     if zoomable:
         return _HTML(f'<div class="zoom-container">{img}</div>')
     return _HTML(img)
@@ -83,7 +83,7 @@ def svg(data=None,caption=None,zoomable=True,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
     cap = f'<figcaption>{caption}</figcaption>' if caption else ''
-    svg = html_node('figure', svg + cap)
+    svg = html('figure', svg + cap)
     if zoomable:
         return _HTML(f'<div class="zoom-container">{svg}</div>')
     return _HTML(svg)
@@ -95,15 +95,15 @@ def enable_zoom(obj):
     except:
         return _HTML(f'<div class="zoom-container">{_fix_repr(obj)}</div>')
     
-def html_node(tag,children = [],className = None,**node_attrs):
+def html(tag,children = [],className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc.
     `tag` can be any valid html tag name.
     `children` expects:
         - str: A string to be added as node's text content.
-        - html_node: A html_node to be added as child node.
-        - list/tuple of [str, html_node]: A list of str and html_node to be added as child nodes.
+        - html: A html to be added as child node.
+        - list/tuple of [str, html]: A list of str and html to be added as child nodes.
     Example:
-        html_node('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
+        html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
         """
     if isinstance(children,str):
         content = children
@@ -113,7 +113,7 @@ def html_node(tag,children = [],className = None,**node_attrs):
         try:
             content = children._repr_html_() #Try to get html representation of children if HTML object
         except:
-            raise ValueError(f'Children should be a list/tuple of html_node or str, not {type(children)}')
+            raise ValueError(f'Children should be a list/tuple of html or str, not {type(children)}')
     attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
     if className:
         attrs = f'class="{className}" {attrs}' # space is must after className
@@ -121,7 +121,7 @@ def html_node(tag,children = [],className = None,**node_attrs):
 
 def vspace(em = 1):
     "Returns html node with given height in em"
-    return html_node('div',style=f'height:{em}em;')
+    return html('div',style=f'height:{em}em;')
  
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
@@ -214,7 +214,7 @@ def doc(callable,prepend_str = None):
     try:
         _doc = _fix_repr(inspect.getdoc(callable))
         _sig = sig(callable,prepend_str)
-        return _HTML(f"<div class='PyRepr'>{_sig}<br>{_doc}</div>")
+        return _HTML(f"<div class='Docs'>{_sig}<br>{_doc}</div>")
     except:
         raise TypeError(f'Object {callable} is not a callable')
     

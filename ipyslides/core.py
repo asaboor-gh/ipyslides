@@ -29,8 +29,9 @@ except:
     
         
 class _PrivateSlidesClass(BaseLiveSlides):
-    # This is made availabe as singleton object `LiveSlides` in IPython namespace.
+    """This is private class. Use `LiveSlides` instead."""
     def __init__(self):
+        """This is private class. Use `LiveSlides` instead."""
         # print(f'Inside: {self.__class__.__name__}')
         super().__init__() # start Base class in start
         self.shell = SHELL
@@ -191,11 +192,13 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def __display_slide(self):
         self.loading_html.value = styles.loading_svg
         try:
+            _slide_css = self._slides_css.get(self._access_key,'') 
+            if (self.print.is_printing == False) and (self._frameno < 2): # No animations while printing or frames
+                _slide_css += self.settings.animation # Animation style
+            
             self.widgets.outputs.slide.clear_output(wait=True)
             with self.widgets.outputs.slide:
-                write(self._slides_css.get(self._access_key,'')) # Write CSS first
-                if (self.print.is_printing == False) and (self._frameno < 2): # No animations while printing or frames
-                    write(self.settings.animation) # Animation style
+                write(self.html('style',_slide_css)) # Write CSS first
                 self.__iterable[self._slideindex]['slide'].show()  # Show slide
         finally:
             self.loading_html.value = ''
@@ -203,11 +206,11 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def __switch_slide(self,old_index, new_index): # this change is provide from __update_content
         slide_css = self._slides_css.get(self._access_key,'') # Get CSS
         if (self.print.is_printing == False) and (self._frameno < 2): # No animations while printing or frames
-            slide_css = self.settings.animation.replace('</style>','') + slide_css.replace('<style>','')
+            slide_css += self.settings.animation
              
         self.widgets.slidebox.children[-1].clear_output(wait=False) # Clear last slide CSS
         with self.widgets.slidebox.children[-1]:
-            write(slide_css) # Write CSS first to avoid style conflict  
+            write(self.html('style',slide_css)) # Write CSS first to avoid style conflict  
         
         self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0',margin='0',opacity='0') # Hide old slide
         self.widgets.slidebox.children[old_index].remove_class('SlideArea')
@@ -267,12 +270,12 @@ class _PrivateSlidesClass(BaseLiveSlides):
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-        out_str = "<style>\n" + f".SlidesWrapper, .SlideArea .block " + "{" + props_str + "}\n"
+        out_str = f".SlidesWrapper, .SlideArea .block " + "{" + props_str + "}\n"
         if 'color' in _css_props:
             out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {_css_props['color']}}}"
         
         key = f'{self._current_slide}' if nframe is None else f'{self._current_slide}.{nframe}'
-        self._slides_css[key] = out_str + "</style>"
+        self._slides_css[key] = out_str
     
     def write_slide_css(self, **css_props):
         "Provide CSS values with - replaced by _ e.g. font-size to font_size."
@@ -425,26 +428,50 @@ class _PrivateSlidesClass(BaseLiveSlides):
 # Make available as Singleton LiveSlides
 _private_instance = _PrivateSlidesClass() # Singleton in use namespace
 class LiveSlides:
-    def __new__(cls):
-        "Returns Same instance each time. Encapsulation."
+    """Interactive Slides in IPython Notebook. Only one instance can exist. 
+    
+    **Example**
+    ```python 
+    import ipyslides as isd 
+    ls = isd.LiveSlides() 
+    ls.demo() # Load demo slides
+    ls.from_markdown(...) # Load slides from markdown files
+    ```
+    
+    Instead of builtin `print` in slides use following to display printed content in correct order.
+    ```python
+    with ls.print_context():
+        print('something')
+        function_that_prints_something()
+    ```
+    
+    > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
+    
+    > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
+    """
+    def __new__(cls,
+                center        = True, 
+                content_width = '90%', 
+                footer_text   = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
+                show_date     = True,
+                show_slideno  = True,
+                logo_src      = None, 
+                font_scale    = 1, 
+                text_font     = 'sans-serif', 
+                code_font     = 'var(--jp-code-font-family)', 
+                code_style    = 'default', 
+                code_lineno   = True, 
+                animation     = 'slide_h'):
+        "Returns Same instance each time after applying given settings. Encapsulation."
+        _private_instance.settings.set_layout(center = center, content_width = content_width)
+        _private_instance.settings.set_footer(text = footer_text, show_date = show_date, show_slideno = show_slideno)
+        _private_instance.settings.set_logo(src = logo_src)
+        _private_instance.settings.set_font_scale(font_scale = font_scale)
+        _private_instance.settings.set_font_family(text_font = text_font, code_font = code_font)
+        _private_instance.settings.set_code_style(style = code_style)
+        _private_instance.settings.code_lineno(b = code_lineno)
+        _private_instance.settings.set_animation(name = animation)
         return _private_instance
     
-    def __init__(self):
-        """Interactive Slides in IPython Notebook. Only one instance can exist. 
-        Instead of builtin `print` in slides use:
-        ```python
-        with ipyslides.utils.print_context():
-            print('something')
-            function_that_prints_something()
-        ```
-        
-        - **Example**
-            ```python 
-            import ipyslides as isd 
-            ls = isd.LiveSlides() 
-            ls.demo() # Load demo slides
-            ls.from_markdown(...) # Load slides from markdown files
-            ```
-        > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
-        """
-        pass
+    # No need to define __init__, __new__ is enough to show signature and docs
+    
