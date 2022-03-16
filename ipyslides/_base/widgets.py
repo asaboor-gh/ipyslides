@@ -60,6 +60,8 @@ class _Htmls:
     cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
     notes   = HTML('Notes Area').add_class('Inline-Notes') # For below slides area
     hilite  = HTML() # Updated in settings on creation. For code blocks.
+    fscrn   = HTML() # Full Screen CSS, do not add here
+    zoom    = HTML() # zoom-container CSS
 
 @dataclass(frozen=True)
 class _Inputs:
@@ -289,6 +291,8 @@ class Widgets:
             self.panelbox, 
             self.htmls.cursor,
             self.htmls.hilite,
+            self.htmls.zoom,
+            self.htmls.fscrn,
             HBox([ #Slide_box must be in a box to have animations work
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose

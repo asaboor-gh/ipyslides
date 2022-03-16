@@ -21,6 +21,7 @@ class LayoutSettings:
         self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '100%'
+        self._breakpoint_width = '650px'
         
         self.height_slider = self.widgets.sliders.height
         self.width_slider  = self.widgets.sliders.width
@@ -28,7 +29,7 @@ class LayoutSettings:
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
         
-        self.__instructions = self.widgets.outputs.intro
+        self._instructions = self.widgets.outputs.intro
         self.out_fixed = self.widgets.outputs.fixed
         self.out_renew = self.widgets.outputs.renew
         self.btn_fs    = self.widgets.toggles.fscrn
@@ -37,15 +38,15 @@ class LayoutSettings:
         self.box = self.widgets.panelbox
         self.box.on_displayed(lambda change: self.__add_js()) # First attempt of Javascript to work
         
-        with self.__instructions:
+        with self._instructions:
             write(intro.instructions) 
         
         self.theme_dd.observe(self.update_theme)
         self.scale_slider.observe(self.__set_font_scale)
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
-        self.btn_fs.observe(self.update_theme,names=['value'])
-        self.btn_zoom.observe(self.update_theme,names=['value'])
+        self.btn_fs.observe(self._push_fullscreen,names=['value'])
+        self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.reflow_check.observe(self.update_theme)
         self.sidebar_switch = self.widgets.toggles.display
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
@@ -132,7 +133,6 @@ class LayoutSettings:
         print('Use set_layout(center={},...) instead'.format(not b))
         self.set_layout(center=b)
             
-            
     def __add_js(self):
         with self.out_fixed: 
             display(scripts.navigation_js)
@@ -176,36 +176,16 @@ class LayoutSettings:
                         '__text_size__',text_size).replace(
                         '__textfont__',self._font_family['text']).replace(
                         '__codefont__',self._font_family['code']).replace(
-                        '__content_width__',self._content_width)
+                        '__content_width__',self._content_width).replace(
+                        '__breakpoint_width__', self._breakpoint_width  
+                        )
         
         # Update CSS
         self.widgets.htmls.theme.value = theme_css
         if self.reflow_check.value:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
         
-        # Zoom Container 
-        if self.btn_zoom.value:
-            if self.btn_fs.value:
-                self.btn_zoom.icon= 'toggle-on'
-                theme_css = theme_css +  styles.mpl_fs_css
-            else:
-                self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
-        else:
-            self.btn_zoom.icon= 'toggle-off'
-        
-        # Catch Fullscreen too.
-        if self.btn_fs.value:
-            theme_css = theme_css.replace('__breakpoint_width__','650px') +  styles.fullscreen_css
-            self.btn_fs.icon = 'compress'
-            self.widgets.mainbox.add_class('FullScreen') # Add this to fullscreen
-            
-        else:
-            theme_css = theme_css.replace('__breakpoint_width__',f'{int(100*650/self.width_slider.value)}px') #Will break when slides is 650px not just window
-            self.btn_fs.icon = 'expand'
-            self.widgets.mainbox.remove_class('FullScreen')
-        
-        
-        self.widgets.htmls.theme.value = html('style',theme_css).value
+        self.widgets.htmls.theme.value = f'<style>\n{theme_css}\n</style>'
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline, must call
         self.emit_resize_event()
         
@@ -220,3 +200,28 @@ class LayoutSettings:
             self.height_slider.layout.display = 'none'
 
         return self.emit_resize_event() # Must return this event so it work in other functions.
+    
+    def _push_fullscreen(self,change): 
+        if self.btn_fs.value:
+            self._breakpoint_width = '650px'
+            self.btn_fs.icon = 'compress'
+            self.widgets.mainbox.add_class('FullScreen') # to fullscreen
+        else:
+            self._breakpoint_width = f'{int(100*650/self.width_slider.value)}px'
+            self.btn_fs.icon = 'expand'
+            self.widgets.mainbox.remove_class('FullScreen') # back to inline
+            
+        self.widgets.htmls.fscrn.value = html('style', styles.fullscreen_css if self.btn_fs.value else '').value
+        self.update_theme(change=None) # For updating size and breakpoints
+    
+    def _push_zoom(self,change):
+        if self.btn_zoom.value:
+            if self.btn_fs.value:
+                self.btn_zoom.icon= 'toggle-on'
+                self.widgets.htmls.zoom.value = f'<style>\n{styles.mpl_fs_css}\n</style>'
+            else:
+                self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
+        else:
+            self.btn_zoom.icon= 'toggle-off'
+            self.widgets.htmls.zoom.value = ''
+        
