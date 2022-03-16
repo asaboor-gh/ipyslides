@@ -41,13 +41,13 @@ class LayoutSettings:
         with self._instructions:
             write(intro.instructions) 
         
-        self.theme_dd.observe(self.update_theme)
-        self.scale_slider.observe(self.__set_font_scale)
+        self.theme_dd.observe(self.update_theme,names=['value'])
+        self.scale_slider.observe(self.__set_font_scale,names=['value'])
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
         self.btn_fs.observe(self._push_fullscreen,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
-        self.reflow_check.observe(self.update_theme)
+        self.reflow_check.observe(self.update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
         self.sidebar_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
@@ -162,12 +162,10 @@ class LayoutSettings:
             with set_dir(get_ipython().starting_dir):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
-                        _str =  styles.style_html( styles.theme_roots['Light'])
-                        f.writelines(['/* Author: Abdul Saboor */'])
-                        f.write(_str)
-                # Read CSS from file
-                with open('custom.css','r') as f:
-                    theme_css = ''.join(f.readlines())
+                        f.write('/* Author: Abdul Saboor */\n' + styles.style_html( styles.theme_roots['Light']))
+                else: # Read CSS from file otherwise
+                    with open('custom.css','r') as f:
+                        theme_css = ''.join(f.readlines())
         else:
             theme_css =  styles.style_html(styles.theme_roots[self.theme_dd.value])
             
@@ -212,6 +210,7 @@ class LayoutSettings:
             self.widgets.mainbox.remove_class('FullScreen') # back to inline
             
         self.widgets.htmls.fscrn.value = html('style', styles.fullscreen_css if self.btn_fs.value else '').value
+        self.emit_resize_event() # Resize before waiting fo update-theme
         self.update_theme(change=None) # For updating size and breakpoints
     
     def _push_zoom(self,change):
