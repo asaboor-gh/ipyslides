@@ -27,6 +27,9 @@ class _Source_Widget(ipw.HTML):
     def _repr_html_(self):
         "Make it available in `write` command as well."
         return self.value
+    
+    def __format__(self, spec):
+        return f'{self.value:{spec}}'
         
     def show_lines(self, lines):
         "Return source object with selected lines from list/tuple/range of lines."
@@ -102,7 +105,13 @@ def _file2code(filename,language='python',name=None):
     
     code = f'''<style> div.codehilite.{_class}::before {{
                 content: '🔴 🟡 🟢  {_title}' !important;
-            }}</style>''' + code
+            }}
+            div.codehilite .highlight {{
+                width: 100% !important;
+                height: 100% !important;
+            }}
+            div.codehilite .highlight code:first-child {{ padding-left: 0 !important;}}
+            </style>''' + code
     out = _Source_Widget(value = _fix_code(code))
     out.raw = text 
     return out

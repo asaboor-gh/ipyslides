@@ -19,6 +19,7 @@ from ._base.base import BaseLiveSlides
 from ._base.intro import how_to_slide
 from ._base.scripts import multi_slides_alert
 from ._base import styles
+from .shared_vars import computed_warning
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -30,19 +31,6 @@ except:
 class _PrivateSlidesClass(BaseLiveSlides):
     # This is made availabe as singleton object `LiveSlides` in IPython namespace.
     def __init__(self):
-        """Interactive Slides in IPython Notebook. Only one instance can exist. 
-        Use `display(Markdown('text'))` instead of `print` in slides or
-        ```python
-        with ipyslides.utils.print_context():
-            print('something')
-            function_that_prints_something()
-        ```
-        - **Example**
-            ```python 
-            import ipyslides as isd 
-            isd.initilize() #This will generate code in same cell including this class, which is self explainatory 
-            ```
-        """
         # print(f'Inside: {self.__class__.__name__}')
         super().__init__() # start Base class in start
         self.shell = SHELL
@@ -62,7 +50,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         
         self._citations = {} # Initialize citations
         self.__slides_mode = True # Default is slides mode since it is more intuitive
-        self.__computed_display = False # Do not load all slides by default
+        self._computed_display = False # Do not load all slides by default
         with capture_output() as cap:
             write(how_to_slide)
 
@@ -80,7 +68,6 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
         
         self.progress_slider = self.widgets.sliders.progress
-        self._slideindex = 0 # Important for rerun of slides
         self.progress_slider.observe(self.__update_content,names=['index'])
         
         # All Box of Slides
@@ -89,8 +76,6 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.__update_content(True) # First attmpt will only update title page
         self._display_box_ = ipw.VBox() # Initialize display box
     
-    def __call__(self): # Important if slides called, must have function
-        return self
     
     def __muti_notebook_slides_alert(self):
         " Alert for multiple slides in other notebooks, as they don't work well together."
@@ -239,7 +224,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
             _number = f'{n} / {self._nslides}' if n != 0 else ''
             self.settings.set_footer(_number_str = _number)
             
-            if self.__computed_display:
+            if self._computed_display:
                 self.__switch_slide(old_index= change['old'], new_index= change['new'])
             else:
                 self.__display_slide() 
@@ -247,7 +232,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def pre_compute_display(self,b = True):
         """Load all slides's display and later switch, else loads only current slide. Reset with b = False
         This is very useful when you have a lot of Maths or Widgets, no susequent calls to MathJax/Widget Manager required on slide's switch when it is loaded once."""
-        self.__computed_display = b
+        self._computed_display = b
         if b:
             slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
             self.widgets.slidebox.children = [*slides, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
@@ -320,11 +305,9 @@ class _PrivateSlidesClass(BaseLiveSlides):
         if not ((isinstance(slide_number, int) and (slide_number >= 1)) or (slide_number == '0')): # '0' is title slide
             raise ValueError(f'slide_number should be >= 1, got {slide_number}')
         
-        if self.__computed_display and self.__slides_mode:
+        if self._computed_display and self.__slides_mode:
             yield # To avoid generator yied error
-            return write(('**Can not add slide on pre-computed display.**' 
-            ' Use `.pre_compute_display(False)` to disable it and then add slides.'
-            ' After all slides added, run `.pre_compute_display(True)` to enable it again for fast loading while presenting!'),className='Error')
+            return write(computed_warning, className='Error')
         
         self._current_slide = f'{slide_number}'
         with capture_output() as cap:
@@ -440,4 +423,28 @@ class _PrivateSlidesClass(BaseLiveSlides):
         return tuple(slides_iterable)
 
 # Make available as Singleton LiveSlides
-LiveSlides = _PrivateSlidesClass() # Singleton in use namespace
+_private_instance = _PrivateSlidesClass() # Singleton in use namespace
+class LiveSlides:
+    def __new__(cls):
+        "Returns Same instance each time. Encapsulation."
+        return _private_instance
+    
+    def __init__(self):
+        """Interactive Slides in IPython Notebook. Only one instance can exist. 
+        Instead of builtin `print` in slides use:
+        ```python
+        with ipyslides.utils.print_context():
+            print('something')
+            function_that_prints_something()
+        ```
+        
+        - **Example**
+            ```python 
+            import ipyslides as isd 
+            ls = isd.LiveSlides() 
+            ls.demo() # Load demo slides
+            ls.from_markdown(...) # Load slides from markdown files
+            ```
+        > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
+        """
+        pass

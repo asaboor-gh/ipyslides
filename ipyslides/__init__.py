@@ -2,9 +2,8 @@ from .shared_vars import __version__
 __version__ = __version__
 
 from .core import LiveSlides
-IPySlides  = LiveSlides # alias
 
-__all__ = ['LiveSlides','IPySlides']
+__all__ = ['LiveSlides']
       
         
 if __name__ == '__main__':
