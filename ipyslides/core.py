@@ -1,6 +1,6 @@
 import sys
 from collections import namedtuple
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 
 import numpy as np
 from IPython import get_ipython
@@ -43,7 +43,6 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.source = Source # Code source
         self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
-            
         self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
         self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
         self.user_ns = self.shell.user_ns #important for set_dir
@@ -53,7 +52,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self._computed_display = False # Do not load all slides by default
         with capture_output() as cap:
             write(how_to_slide)
-
+        
         self.__slides_dict = {'0': cap} # Initialize slide dictionary
         self._slides_notes = {'0': None} # Initialize notes dictionary
         self._slides_css = {} # Initialize css dictionary for each slide

@@ -1,9 +1,9 @@
 # IPySlides
 Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
 
-Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
-
-See [PDF-Slides](IPySlides-Print.pdf)
+- Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
+- See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides). 
+- See [PDF-Slides](IPySlides-Print.pdf)
 ![Overview](overview.jpg)
 
 # Changelog
@@ -55,9 +55,6 @@ with ls.slide(2):
 ```python
 ls.load_docs()
 ```
-# Editable Demo
-See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides). You can edit it yourself.
-
 
 # Content Types to Embed
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 

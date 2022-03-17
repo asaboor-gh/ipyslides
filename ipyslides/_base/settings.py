@@ -153,7 +153,7 @@ class LayoutSettings:
         self._update_theme(change=None)
         
         
-    def _update_theme(self,change=None):  
+    def _update_theme(self,change=None): 
         text_size = '{}px'.format(int(self.font_scale*16))
         if self.theme_dd.value == 'Custom': # In case of Custom CSS
             with set_dir(get_ipython().starting_dir):
@@ -196,7 +196,7 @@ class LayoutSettings:
 
         return self._emit_resize_event() # Must return this event so it work in other functions.
     
-    def _push_fullscreen(self,change): 
+    def _push_fullscreen(self,change):  
         if self.btn_fs.value:
             self._breakpoint_width = '650px'
             self.btn_fs.icon = 'compress'

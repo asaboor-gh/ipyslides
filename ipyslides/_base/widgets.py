@@ -60,8 +60,8 @@ class _Htmls:
     cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
     notes   = HTML('Notes Area').add_class('Inline-Notes') # For below slides area
     hilite  = HTML() # Updated in settings on creation. For code blocks.
-    fscrn   = HTML() # Full Screen CSS, do not add here
-    zoom    = HTML() # zoom-container CSS
+    fscrn   = HTML() # Full Screen CSS, do not add here!
+    zoom    = HTML() # zoom-container CSS, do not add here!
 
 @dataclass(frozen=True)
 class _Inputs:
