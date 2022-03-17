@@ -19,7 +19,6 @@ from ._base.base import BaseLiveSlides
 from ._base.intro import how_to_slide
 from ._base.scripts import multi_slides_alert
 from ._base import styles
-from .shared_vars import computed_warning
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -77,6 +76,11 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.__update_content(True) # First attmpt will only update title page
         self._display_box_ = ipw.VBox() # Initialize display box
     
+    def _check_computed(self, what_cannot_do):
+        if self._computed_display:
+            raise Exception(('Can not {act} on pre-computed display. '
+            'Use `.pre_compute_display(False)` to disable it and then {act}. '
+            'You may enable it after that for fast loading of slides while presenting!').format(act = what_cannot_do))
     
     def __muti_notebook_slides_alert(self):
         " Alert for multiple slides in other notebooks, as they don't work well together."
@@ -100,6 +104,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
 
     def clear(self):
         "Clear all slides."
+        self._check_computed('clear slides')
         self.__slides_dict = {k:v for k,v in self.__slides_dict.items() if k == '0'} # keep title page
         self._slides_notes = {k:v for k,v in self._slides_notes.items() if k == '0'} # keep title page's notes
         self._toasts = {k:v for k,v in self._toasts.items() if k == '0' } # keep title page's toasts
@@ -107,6 +112,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
     
     def cite(self,key, citation,here=False):
         "Add citation in presentation, both key and citation are text/markdown/HTML."
+        self._check_computed('add citations')
         if here:
             return utils.textbox(citation,left='initial',top='initial') # Just write here
         self._citations[key] = citation
@@ -249,6 +255,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
             
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
+        self._check_computed('refresh')
         self.__iterable = self.__collect_slides() # would be at least one title slide
         n_last = self.__iterable[-1]['n']
         self._nslides = int(n_last) # Avoid frames number
@@ -267,6 +274,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         
     def __insert_slide_css(self,nframe = None,**css_props):
         "Provide CSS values with - replaced by _ e.g. font-size to font_size."
+        self._check_computed('add CSS to slide')
         _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
         _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
         props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
@@ -310,7 +318,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         
         if self._computed_display and self.__slides_mode:
             yield # To avoid generator yied error
-            return write(computed_warning, className='Error')
+            self._check_computed('add slide')
         
         self._current_slide = f'{slide_number}'
         with capture_output() as cap:
@@ -363,6 +371,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         No return of defined function required, if any, only should be display/show etc.
         `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
         def _frames(func = self.write): # default write if called without function
+            self._check_computed('add frames')
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
             

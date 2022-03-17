@@ -7,7 +7,6 @@ from .print_pdf import PdfPrint
 from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
-from ..shared_vars import computed_warning
 
 class BaseLiveSlides:
     def __init__(self):
@@ -125,9 +124,7 @@ class BaseLiveSlides:
         
         > Note: With this method you can add more slides besides created ones.
         """
-        if self._computed_display: # This is must
-            return self.write(computed_warning, className='Error')
-        
+        self._check_computed('add slides from markdown file')
         if not (isinstance(path, io.StringIO) or os.path.isfile(path)): #check path later or it will throw error
             raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")
         
@@ -153,9 +150,7 @@ class BaseLiveSlides:
     
     def demo(self):
         """Demo slides with a variety of content."""
-        if self._computed_display: # This is must
-            return self.write(computed_warning, className='Error') 
-        
+        self._check_computed('load demo')
         get_ipython().user_ns['_s_l_i_d_e_s_'] = self
         from .. import _demo
         slides = _demo.slides # or it is self
