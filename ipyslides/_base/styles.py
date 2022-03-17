@@ -137,7 +137,7 @@ def style_html(style_root = theme_roots['Inherit']):
    font-family: __codefont__, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
    font-size: 90% !important;
 }
-.SlideArea .SlidesWrapper {max-height:calc(95vh - 100px);} /* in case of embed slides */ 
+
 .SlidesWrapper {
 	margin: auto;
 	padding: 0px;
@@ -428,7 +428,7 @@ div.codehilite pre > code:hover {
     background:var(--hover-bg);
     text-shadow: 0 0 2px var(--primary-bg), 0 0 4px var(--accent-color);
 }
-.SlideArea .SlidesWrapper :is(.NavWrapper, .controls) button{ border: none !important;} /* embeded slides */
+
 .sidecar-only {background: transparent;box-shadow: none;min-width:max-content; opacity:0.6;}
 .sidecar-only:hover, .sidecar-only:focus {opacity:1;}
 
@@ -588,8 +588,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 /* next Three things should be in given order */
 .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
 .jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only,
-.jp-Cell-outputArea>div .sidecar-only {display: block;}
-.SlideArea .SlidesWrapper .sidecar-only {display: none;} /* No fullscreen for embeded slides */ 
+.jp-Cell-outputArea>div .sidecar-only {display: block;} 
 .jp-LinkedOutputView>div {overflow:hidden !important;}
 
 
@@ -735,9 +734,7 @@ fullscreen_css = '''
     margin: 0px;
     padding: 0;
     background:var(--primary-bg);
-} 
-.SlideArea .SlidesWrapper, .SlideArea .SlidesWrapper.FullScreen { /* Do Not apply Fullscreen in embed mode */
-        display:unset;position:relative;width:90%;max-width:95%;height:unset;left:unset;bottom:unset;}  
+}  
 .jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
 #jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
 .lm-DockPanel-tabBar {display:none;}

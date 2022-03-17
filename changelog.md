@@ -1,5 +1,8 @@
 # Changelog
 Content below assumes you have `ls = LiveSlides()`.
+
+# 1.4.0
+Use `ls.load_docs()` to see updated documentation for this and above versions. No more changelogs will be created.
 # 1.3.9
 - Use `ls.css_styles` to get a list of predefined CSS classes to use in argument `className` of writing/formatting functions. 
 - Use `className = 'Right RTL'` to type right to left langauges in correct format. 

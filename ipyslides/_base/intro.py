@@ -52,7 +52,7 @@ with ls.slide(2):
     write_something()
 ```
 - Use `ls.demo` to create example slides and start editing. Follow steps in first part.
-
+- Use `ls.load_docs` to see upto date documentation.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
@@ -135,7 +135,6 @@ bottom information only on title slide, you can do so:
 class CustomSlides(isd.LiveSlides):
     def __init__(self):
         super().__init__()
-        self.convert2slides(True)
         self.settings.theme_dd.value = 'Custom'
         self.progress_slider.observe(self.set_visible, names=['index'])
     

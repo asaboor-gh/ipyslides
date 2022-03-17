@@ -7,11 +7,12 @@ See [PDF-Slides](IPySlides-Print.pdf)
 ![Overview](overview.jpg)
 
 # Changelog
-See [changelog](changelog.md)
+Above version 1.4.0, users can see upto date documentation via `ipyslides.LiveSlides().load_docs()`, so no additional changelog will be created in future. 
+See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.3.9
+> pip install ipyslides >= 1.4.0
 ```
 For development install, clone this repository and then
 ```shell
@@ -40,13 +41,19 @@ def func(obj):
 #------------ Cell 5 --------------------
 ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
-You can load slides from a markdown file, slides separator should be --- (three dashes)
+#### You can load slides from a markdown file
+slides separator should be --- (three dashes)
 ```python
 ls.from_markdown(path, footer_text = 'Author Name')
 with ls.slide(2):
     write(ls.md_content[2]) # write content of slide 2 from file
     plot_something() # Add other things to same file
     write_something()
+```
+
+#### You can see documentation slides with:
+```python
+ls.load_docs()
 ```
 # Editable Demo
 See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides). You can edit it yourself.
@@ -56,7 +63,7 @@ See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides). You ca
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 
 
 > Note: Websites may refuse to load in iframe.
-> Note: You can embed one intsnace of slides `ls1' inside other instance `ls2' using `ls2.insert_after(<N>,ls1.box)`. This is very cool.
+
 ## IPython Display Objects
 Any object with following methods could be in `write` command:
 `_repr_pretty_`, `_repr_html_`, `_repr_markdown_`, `_repr_svg_`, `_repr_png_`, `_repr_jpeg_`, `_repr_latex_`, `_repr_json_`, `_repr_javascript_`, `_repr_pdf_`
@@ -69,7 +76,7 @@ Many will be extentended in future. If an object is not implemented, use `displa
 
 ## Interactive Widgets
 Any object in `ipywidgets` or libraries based on `ipywidgtes` such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`
-can be included in `iwrite` command. Text/Markdown/HTML inside `iwrite` is made available through `ihtml` command.
+can be included in `iwrite` command. `iwrite` also renders other objects except Javascript.
 # Full Screen Presentation
 - Jupyterlab 3.0+ has full screen eneabled from any view:
 - Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by Voila, may not work as expected.     
@@ -93,7 +100,6 @@ bottom information only on title slide, you can do so:
 class CustomSlides(isd.LiveSlides):
     def __init__(self):
         super().__init__()
-        self.convert2slides(True)
         self.settings.theme_dd.value = 'Custom'
         self.progress_slider.observe(self.set_visible, names=['index'])
     
