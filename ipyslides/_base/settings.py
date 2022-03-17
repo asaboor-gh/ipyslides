@@ -176,7 +176,6 @@ class LayoutSettings:
                         )
         
         # Update CSS
-        self.widgets.htmls.theme.value = theme_css
         if self.reflow_check.value:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
         
