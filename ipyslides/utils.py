@@ -30,6 +30,7 @@ def print_context():
     
 @contextmanager
 def set_dir(path):
+    "Context manager to set working directory to given path and return to previous working directory when done."
     current = os.getcwd()
     try:
         os.chdir(path)
@@ -64,10 +65,11 @@ def __check_pil_image(data):
 def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     You can provide following to `data` parameter:
-        - An opened PIL image. Useful for image operations and then direct writing to slides. 
-        - A file path to image file.
-        - A url to image file.
-        - A str/bytes object containing image data.  
+        
+    - An opened PIL image. Useful for image operations and then direct writing to slides. 
+    - A file path to image file.
+    - A url to image file.
+    - A str/bytes object containing image data.  
     """
     if isinstance(width,int):
         width = f'{width}px'
@@ -99,12 +101,16 @@ def html(tag,children = [],className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc.
     `tag` can be any valid html tag name.
     `children` expects:
-        - str: A string to be added as node's text content.
-        - html: A html to be added as child node.
-        - list/tuple of [str, html]: A list of str and html to be added as child nodes.
+    
+    - str: A string to be added as node's text content.
+    - html: A html to be added as child node.
+    - list/tuple of [str, html]: A list of str and html to be added as child nodes.
+    
     Example:
-        html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
-        """
+    ```python
+    html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
+    ```
+    """
     if isinstance(children,str):
         content = children
     elif isinstance(children,(list,tuple)):

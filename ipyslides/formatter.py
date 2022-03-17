@@ -64,9 +64,11 @@ class _HTML_Widget(ipw.HTML):
 
 def plt2html(plt_fig=None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
-    - **Parameters**
-        - plt_fig    : Matplotlib's figure instance, auto picks as well.
-        - transparent: True of False for fig background.
+    **Parameters**
+    
+    - plt_fig    : Matplotlib's figure instance, auto picks as well.
+    - transparent: True of False for fig background.
+    - caption    : Caption for figure.
     """
     if plt_fig==None:
         plt_fig = plt.gcf()
@@ -84,6 +86,12 @@ def _plt2htmlstr(plt_fig=None,transparent=True,caption=None):
 
 
 def bokeh2html(bokeh_fig,title=""):
+    """Write bokeh figure as HTML string to use in `ipyslide.utils.write`.
+    **Parameters**
+    
+    - bokeh_fig : Bokeh figure instance.
+    - title     : Title for figure.
+    """
     from bokeh.resources import CDN
     from bokeh.embed import file_html
     return _HTML(file_html(bokeh_fig, CDN, title))

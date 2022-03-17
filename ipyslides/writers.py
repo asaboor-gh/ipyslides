@@ -156,12 +156,14 @@ def iwrite(*columns,width_percents = None,className=None):
     **Returns**: writer, columns as reference to use later and update. rows are packed in columns.
     
     **Examples**:
+    ```python
     writer, x = iwrite('X')
     writer, (x,y) = iwrite('X','Y')
     writer, (x,y) = iwrite(['X','Y'])
     writer, [(x,y),z] = iwrite(['X','Y'],'Z')
     #We unpacked such a way that we can replace objects with new one using `grid.update`
     new_obj = writer.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
+    ```
     """
     wr = _WidgetsWriter(*columns,width_percents=width_percents,className=className)
         

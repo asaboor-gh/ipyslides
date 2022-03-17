@@ -119,7 +119,8 @@ class _PrivateSlidesClass(BaseLiveSlides):
         _id = list(self._citations.keys()).index(key)
         return f'<sup style="color:var(--accent-color);">{_id + 1}</sup>'
     
-    def write_citations(self,title='### References'):     
+    def write_citations(self,title='### References'): 
+        "Write all citations collected via `cite` method in the end of the presentation."    
         collection = [f'<span><sup style="color:var(--accent-color);">{i+1}</sup>{v}</span>' for i,(k,v) in enumerate(self._citations.items())]
         return write(title + '\n' +'\n'.join(collection))      
     
@@ -226,8 +227,8 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def __update_content(self,change):
         if self.__iterable and change:
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
-            self.display_toast() # or self.toasts.display_toast . Display in start is fine
-            self.notes.display(self._slides_notes.get(self._access_key,None)) # Display notes first
+            self._display_toast() # or self.toasts._display_toast . Display in start is fine
+            self.notes._display(self._slides_notes.get(self._access_key,None)) # Display notes first
         
             n = self.__iterable[self._slideindex]["n"] if self.__iterable else 0 # keep it from slides
             _number = f'{n} / {self._nslides}' if n != 0 else ''
@@ -359,7 +360,8 @@ class _PrivateSlidesClass(BaseLiveSlides):
         slides.frames(1,a,b,c, repeat = [(0,1),(1,2)])() # two frames with content [a,b] and [b,c]
         ```
         
-        **Parameters**:
+        **Parameters**
+        
         - slide_number: (int) slide number to insert frames on. 
         - objs: expanded by * (list, tuple) of objects to write on frames. If repeat is False, only one frame is generated for each obj.
         - repeat: (bool, list, tuple) If False, only one frame is generated for each obj.

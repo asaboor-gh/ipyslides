@@ -41,19 +41,19 @@ class LayoutSettings:
         with self._instructions:
             write(intro.instructions) 
         
-        self.theme_dd.observe(self.update_theme,names=['value'])
+        self.theme_dd.observe(self._update_theme,names=['value'])
         self.scale_slider.observe(self.__set_font_scale,names=['value'])
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
         self.btn_fs.observe(self._push_fullscreen,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
-        self.reflow_check.observe(self.update_theme,names=['value'])
+        self.reflow_check.observe(self._update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
         self.sidebar_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
         
     
-        self.update_theme() #Trigger Theme and Javascript in it
+        self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True, content_width = '90%') # Trigger this as well
         
@@ -76,10 +76,11 @@ class LayoutSettings:
             self._font_family['text'] = text_font
         if code_font:
             self._font_family['code'] = code_font  
-        self.update_theme() # Changes Finally 
+        self._update_theme() # Changes Finally 
     
 
     def set_font_scale(self,font_scale=1):
+        "Set font scale to increase or decrease text size. 1 is default."
         self.scale_slider.value = font_scale 
         
     def set_logo(self,src,width=80,top=0,right=16):
@@ -94,7 +95,7 @@ class LayoutSettings:
                                         {image}</div>"""
                                     
     def set_footer(self, text = '', show_slideno=True, show_date=True, _number_str=''):
-        # For dynamic change of footer text
+        "Set footer text. `text` should be string. `show_slideno` and `show_date` are booleans."
         if text:
             self._footer_text = text #assign to text
             _text = text 
@@ -110,6 +111,7 @@ class LayoutSettings:
         self.widgets.htmls.footer.value = _text.replace('__number__',_number_str)
         
     def code_lineno(self,b=True):
+        "Set code line numbers to be shown or not."
         if b:
             return display(html('style', 'code:before{ display:inline-block !important; }'))
         return display(html('style', 'code:before{ display:none !important; }'))
@@ -126,18 +128,13 @@ class LayoutSettings:
         for k,v in style_dict.items():
             setattr(self.widgets.outputs.slide.layout, k, v)
         
-        self.update_theme(change=None) # Trigger CSS in it to make width change
-    
-    def align8center(self,b=True):
-        "Use set_layout(center=False) to align slide to left-top"
-        print('Use set_layout(center={},...) instead'.format(not b))
-        self.set_layout(center=b)
+        self._update_theme(change=None) # Trigger CSS in it to make width change
             
     def __add_js(self):
         with self.out_fixed: 
             display(scripts.navigation_js)
     
-    def emit_resize_event(self):
+    def _emit_resize_event(self):
         with self.out_renew: 
             self.out_renew.clear_output(wait=True)
             display(scripts.resize_js)
@@ -146,17 +143,17 @@ class LayoutSettings:
         self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
         self.widgets.mainbox.layout.width = '{}vw'.format(self.width_slider.value)  
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline
-        self.emit_resize_event() # Although its in _toggle_sidebar, but for being safe, do this
-        self.update_theme(change=None) # For updating size and breakpoints
+        self._emit_resize_event() # Although its in _toggle_sidebar, but for being safe, do this
+        self._update_theme(change=None) # For updating size and breakpoints
             
                      
     def __set_font_scale(self,change):
-        # Below line should not be in update_theme to avoid loop call.
+        # Below line should not be in _update_theme to avoid loop call.
         self.font_scale = self.widgets.sliders.scale.value
-        self.update_theme(change=None)
+        self._update_theme(change=None)
         
         
-    def update_theme(self,change=None):  
+    def _update_theme(self,change=None):  
         text_size = '{}px'.format(int(self.font_scale*16))
         if self.theme_dd.value == 'Custom': # In case of Custom CSS
             with set_dir(get_ipython().starting_dir):
@@ -185,7 +182,7 @@ class LayoutSettings:
         
         self.widgets.htmls.theme.value = f'<style>\n{theme_css}\n</style>'
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline, must call
-        self.emit_resize_event()
+        self._emit_resize_event()
         
     def _toggle_sidebar(self,change): 
         """Pushes this instance of LiveSlides to sidebar and back inline."""
@@ -197,7 +194,7 @@ class LayoutSettings:
             self.widgets.htmls.sidebar.value =  html('style',styles.sidebar_layout_css(span_percent=self.width_slider.value)).value
             self.height_slider.layout.display = 'none'
 
-        return self.emit_resize_event() # Must return this event so it work in other functions.
+        return self._emit_resize_event() # Must return this event so it work in other functions.
     
     def _push_fullscreen(self,change): 
         if self.btn_fs.value:
@@ -210,8 +207,8 @@ class LayoutSettings:
             self.widgets.mainbox.remove_class('FullScreen') # back to inline
             
         self.widgets.htmls.fscrn.value = html('style', styles.fullscreen_css if self.btn_fs.value else '').value
-        self.emit_resize_event() # Resize before waiting fo update-theme
-        self.update_theme(change=None) # For updating size and breakpoints
+        self._emit_resize_event() # Resize before waiting fo update-theme
+        self._update_theme(change=None) # For updating size and breakpoints
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
