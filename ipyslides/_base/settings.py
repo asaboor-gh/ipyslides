@@ -145,6 +145,10 @@ class LayoutSettings:
         self.widgets.mainbox.layout.width = '{}vw'.format(self.width_slider.value)  
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline
         self._emit_resize_event() # Although its in _toggle_sidebar, but for being safe, do this
+        
+        if not self.btn_fs.value: #If not fullscreen, then update breakpoint, so that it can be used in CSS
+            self._breakpoint_width = f'{int(100*650/self.width_slider.value)}px'
+        
         self._update_theme(change=None) # For updating size and breakpoints
             
                      
