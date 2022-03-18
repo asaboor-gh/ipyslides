@@ -50,18 +50,16 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self._citations = {} # Initialize citations
         self.__slides_mode = True # Default is slides mode since it is more intuitive
         self._computed_display = False # Do not load all slides by default
-        with capture_output() as cap:
-            write(how_to_slide)
         
-        self.__slides_dict = {'0': cap} # Initialize slide dictionary
+        self.__slides_dict = {} # Initialize slide dictionary
         self._slides_notes = {'0': None} # Initialize notes dictionary
         self._slides_css = {} # Initialize css dictionary for each slide
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._i2f_dict = {'0':'0'} # input number -> display number of slide
         self._f2i_dict = {'0':'0'} # display number -> input number of slide
         
-        self.__iterable = self.__collect_slides() # Collect internally
-        self._nslides = int(self.__iterable[-1]['n']) if self.__iterable else 0 # Real number of slides
+        self.__iterable = [] #self.__collect_slides() # Collect internally
+        self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
         
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
@@ -71,8 +69,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         
         # All Box of Slides
         self._box =  self.widgets.mainbox
-        self._box.on_displayed(lambda change: self.__muti_notebook_slides_alert()) 
-        self.__update_content(True) # First attmpt will only update title page
+        self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
     
     def _check_computed(self, what_cannot_do):
@@ -81,10 +78,15 @@ class _PrivateSlidesClass(BaseLiveSlides):
             'Use `.pre_compute_display(False)` to disable it and then {act}. '
             'You may enable it after that for fast loading of slides while presenting!').format(act = what_cannot_do))
     
-    def __muti_notebook_slides_alert(self):
-        " Alert for multiple slides in other notebooks, as they don't work well together."
+    def _on_displayed(self, change):
         with self.widgets.outputs.renew:
             display(multi_slides_alert)
+            
+        with capture_output() as cap:
+            write(how_to_slide)
+            
+        self.__slides_dict['0'] = cap
+        self.refresh() # Refresh slides
 
     @property
     def slides(self):

@@ -36,10 +36,7 @@ class LayoutSettings:
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
         self.box = self.widgets.panelbox
-        self.box.on_displayed(lambda change: self.__add_js()) # First attempt of Javascript to work
-        
-        with self._instructions:
-            write(intro.instructions) 
+        self.box.on_displayed(self._on_displayed) # First attempt of Javascript to work
         
         self.theme_dd.observe(self._update_theme,names=['value'])
         self.scale_slider.observe(self.__set_font_scale,names=['value'])
@@ -52,11 +49,15 @@ class LayoutSettings:
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
         self.sidebar_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
         
-    
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True, content_width = '90%') # Trigger this as well
         
+    def _on_displayed(self,change):
+        self.__add_js()
+        with self._instructions:
+            write(intro.instructions)
+            
     def set_animation(self,name):
         "Set animation style or pass None to disable animation."
         if name is None:

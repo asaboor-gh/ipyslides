@@ -97,33 +97,35 @@ def enable_zoom(obj):
     except:
         return _HTML(f'<div class="zoom-container">{_fix_repr(obj)}</div>')
     
-def html(tag,children = [],className = None,**node_attrs):
+def html(tag, children = None,className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc.
     `tag` can be any valid html tag name.
     `children` expects:
     
+    - If None, returns self closing html node such as <img...></img>.
     - str: A string to be added as node's text content.
-    - html: A html to be added as child node.
-    - list/tuple of [str, html]: A list of str and html to be added as child nodes.
+    - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
     
     Example:
     ```python
     html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
     ```
     """
-    if isinstance(children,str):
+    if children is None:
+        content = ''
+    elif isinstance(children,str):
         content = children
     elif isinstance(children,(list,tuple)):
-        content = ''.join(child if isinstance(child,str) else child._repr_html_() for child in children)
+        content = format_html(children) # Convert to html nodes in sequence of rows
     else:
-        try:
-            content = children._repr_html_() #Try to get html representation of children if HTML object
-        except:
-            raise ValueError(f'Children should be a list/tuple of html or str, not {type(children)}')
+        raise ValueError(f'Children should be a list/tuple of objects or str, not {type(children)}')
+    
     attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
     if className:
-        attrs = f'class="{className}" {attrs}' # space is must after className
-    return _HTML(f'<{tag} {attrs}>{content}</{tag}>')
+        attrs = f'class="{className}" {attrs}'
+        
+    tag_in =  f'<{tag} {attrs}>' if attrs else f'<{tag}>' # space is must after tag, strip attrs spaces
+    return _HTML(f'{tag_in}{content}</{tag}>')
 
 def vspace(em = 1):
     "Returns html node with given height in em"
