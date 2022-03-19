@@ -279,6 +279,8 @@ div.codehilite, div.codehilite pre {
     box-sizing: border-box !important;
 }
 div.codehilite pre { /* works for both case, do not use > */
+    display: flex !important;
+    flex-direction: column !important; /* Specially for HTML output file */
     color: var(--primary-fg)!important;
     padding: 8px 4px 8px 4px !important; 
     overflow: auto !important;

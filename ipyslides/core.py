@@ -51,7 +51,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.__slides_mode = True # Default is slides mode since it is more intuitive
         self._computed_display = False # Do not load all slides by default
         
-        self.__slides_dict = {} # Initialize slide dictionary
+        self.__slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._slides_notes = {'0': None} # Initialize notes dictionary
         self._slides_css = {} # Initialize css dictionary for each slide
         self._current_slide = '0' # Initialize current slide for notes at title page
@@ -81,12 +81,14 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def _on_displayed(self, change):
         with self.widgets.outputs.renew:
             display(multi_slides_alert)
-            
-        with capture_output() as cap:
-            write(how_to_slide)
-            
-        self.__slides_dict['0'] = cap
-        self.refresh() # Refresh slides
+        
+        if '0' not in self.__slides_dict:
+            with capture_output() as captured:
+                write(how_to_slide)
+                
+            self.__slides_dict['0'] = captured
+        
+        self.refresh() # This displays the slides 
 
     @property
     def slides(self):
@@ -306,7 +308,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         """
         line = line.strip() #VSCode bug to inclue \r in line
         if line and not line.isnumeric():
-            raise ValueError(f'You should use %%slide integer, not %%slide {line}')
+            raise ValueError(f'You should use %%slide integer >= 1, got {line}')
         
         with self.slide(int(line)):
             self.shell.run_cell(cell)
@@ -315,9 +317,10 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def slide(self,slide_number,**css_props):
         """Use this context manager to generate any number of slides from a cell
         `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
-        if not ((isinstance(slide_number, int) and (slide_number >= 1)) or (slide_number == '0')): # '0' is title slide
-            raise ValueError(f'slide_number should be >= 1, got {slide_number}')
+        if not isinstance(slide_number, int):
+            raise ValueError(f'slide_number should be int >= 1, got {slide_number}')
         
+        assert slide_number >= 0 # slides should be >= 1, zero for title slide
         if self._computed_display and self.__slides_mode:
             yield # To avoid generator yied error
             self._check_computed('add slide')
@@ -337,14 +340,14 @@ class _PrivateSlidesClass(BaseLiveSlides):
     
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
-        with self.slide('0'):
+        with self.slide(0):
             self.shell.run_cell(cell)
             
     @contextmanager
     def title(self,**css_props):
         """Use this context manager to write title.
         `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
-        with self.slide('0', **css_props):
+        with self.slide(0, **css_props):
             yield
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto', **css_props):
@@ -378,6 +381,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
             
+            assert slide_number >= 1 # Should be >= 1, should not add title slide as frames
             self._current_slide = f'{slide_number}.1' # First frame
 
             if not self.__slides_mode:

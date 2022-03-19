@@ -176,8 +176,7 @@ class BaseLiveSlides:
         self.clear()
         self.settings.set_footer('IPySlides Documentation')
         
-        
-        with self.title():
+        with self.title(): # Title
             self.write('## IPySlides Documentation\n### Creating slides with IPySlides')
             self.write(self.doc(LiveSlides))
         
