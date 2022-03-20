@@ -280,7 +280,6 @@ div.codehilite {
     overflow:auto;
     border: 1px solid var(--tr-hover-bg);
     border-top: 1.8em solid var(--primary-bg);
-    /*padding-top: 0.2em;*/
     margin: 4px 0px !important; /* Opposite to padding to balance it */
     max-height: 400px; /* Try avoiding important here */
     height: auto !important;
@@ -290,7 +289,8 @@ div.codehilite pre { /* works for both case, do not use > */
     color: var(--primary-fg)!important;
     padding: 8px 4px 8px 4px !important; 
     overflow: auto !important;
-    width: auto;
+    width: auto !important;
+    box-sizing: border-box !important;
     height: auto;
     background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
@@ -309,17 +309,20 @@ div.codehilite code {
     counter-increment: line;
     display:inline-block !important; /* should be on new line */
     width:auto;
-    min-width:90%;
+    min-width: calc(90% - 2.2em);
     background:transparent !important;
     color: var(--primary-fg)!important;
     white-space: pre !important;
     overflow-wrap: normal !important;
-    margin-left:2.2em;
-    padding-left: 4px;
+    padding-left:2.2em;
+    /*padding-left: 4px;*/
     box-sizing: border-box !important;
 }
 div.codehilite code:hover {
     background: var(--tr-hover-bg) !important;
+}
+div.codehilite code:hover::before {
+    background: none !important;
 }
 div.codehilite code:before{
     content: counter(line,decimal);
@@ -338,7 +341,8 @@ div.codehilite code:before{
     font-size: 80%;
 }
 div.codehilite  code > span {
-    white-space: normal !important;
+    white-space: normal; /* for breaking words */
+    word-break: break-word; /* for breaking words */
 }
 div.codehilite code.code-no-focus {
     opacity:0.3 !important;
@@ -346,9 +350,6 @@ div.codehilite code.code-no-focus {
 div.codehilite code.code-focus {
     text-shadow: 0 0 1px var(--primary-bg);
 }
-
-.widget-html div.codehilite::before {padding-top: 0 !important;}
-div.highlight, .widget-html div.codehilite {display:inline-flex !important;}
 .SlidesWrapper div.PyRepr {
     margin: 4px !important;
     white-space:pre !important;
@@ -358,18 +359,20 @@ div.highlight, .widget-html div.codehilite {display:inline-flex !important;}
 }
 
 /* Docs have Python code only, so no need to have fancy things there */
-.Docs div.codehilite {
+.Docs .codehilite {
     margin: 0 !important;
     padding-top: 0 !important;
+    border-top: none !important; /* Remove big top border */
+    border: none !important;
     background: none !important;
     box-shadow: none !important;
 }
-.Docs div.codehilite::before {
-    display: none !important;
+.Docs div.codehilite pre,
+.Docs div.codehilite code::before{
     background: none !important;
 }
-.Docs div.codehilite *, .Docs div.codehilite *::before{
-    background: none !important;
+.Docs .codehilite pre::before {
+    display: none !important;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
 	background: var(--secondary-bg);

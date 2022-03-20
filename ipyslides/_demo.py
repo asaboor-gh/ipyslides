@@ -106,7 +106,7 @@ with slides.slide(9):
         write('This line is written as function in context manager is not taken as source at end of block. No idea why?')
 
         
-    write([slides.format_css('.youtube-source',width='100%',border_radius='8px 2em',background='black'), s]
+    write([slides.format_css('.youtube-source',width='100%',border_radius='8px 2em'), s]
           ,className='youtube-source')
     
 # Data Table

@@ -110,7 +110,7 @@ def _file2code(filename,language='python',name=None):
                 width: 100% !important;
                 height: 100% !important;
             }}
-            div.codehilite .highlight code:first-child {{ padding-left: 0 !important;}}
+            div.codehilite .highlight code:first-child {{ padding-left: 4px !important;}}
             </style>''' + code
     out = _Source_Widget(value = _fix_code(code))
     out.raw = text 
