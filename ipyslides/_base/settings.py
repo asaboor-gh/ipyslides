@@ -20,7 +20,7 @@ class LayoutSettings:
         self.font_scale = 1
         self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
-        self._content_width = '100%'
+        self._content_width = '90%' #Better
         self._breakpoint_width = '650px'
         
         self.height_slider = self.widgets.sliders.height
@@ -51,7 +51,7 @@ class LayoutSettings:
         
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
-        self.set_layout(center = True, content_width = '90%') # Trigger this as well
+        self.set_layout(center = True) # Trigger this as well
         
     def _on_displayed(self,change):
         self.__add_js()
@@ -117,14 +117,14 @@ class LayoutSettings:
             return display(html('style', 'code:before{ display:inline-block !important; }'))
         return display(html('style', 'code:before{ display:none !important; }'))
     
-    def set_layout(self,center = True, content_width='100%'):
+    def set_layout(self,center = True, content_width = None):
         "Central aligment of slide by default. If False, left-top aligned."
-        self._content_width = content_width
+        self._content_width = content_width if content_width else self._content_width # user selected
         style_dict = {'display':'block','width':content_width} #block is must
         if center:
             style_dict.update(dict(margin = 'auto',align_items = 'center',justify_content = 'center'))
-        else:
-            style_dict.update(dict(margin = '2px 8px 2px 8px',align_items = 'baseline',justify_content = 'flex-start'))
+        else: #container still should be in the center horizontally with auto margin
+            style_dict.update(dict(margin = '8px auto',align_items = 'baseline',justify_content = 'flex-start'))
         
         for k,v in style_dict.items():
             setattr(self.widgets.outputs.slide.layout, k, v)

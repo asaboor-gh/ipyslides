@@ -272,27 +272,54 @@ def style_html(style_root = theme_roots['Inherit']):
 
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
-div.codehilite, div.codehilite pre {
+div.codehilite {
     min-width: 100% !important;
     witdh: 100% !important;
     max-width: 100vw !important;
     box-sizing: border-box !important;
+    overflow:auto;
+    border: 1px solid var(--tr-hover-bg);
+    border-top: 1.8em solid var(--primary-bg);
+    /*padding-top: 0.2em;*/
+    margin: 4px 0px !important; /* Opposite to padding to balance it */
+    max-height: 400px; /* Try avoiding important here */
+    height: auto !important;
 }
 div.codehilite pre { /* works for both case, do not use > */
-    display: flex !important;
-    flex-direction: column !important; /* Specially for HTML output file */
+    display: grid !important;
     color: var(--primary-fg)!important;
     padding: 8px 4px 8px 4px !important; 
     overflow: auto !important;
+    width: auto;
+    height: auto;
     background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
 }
-
+div.codehilite pre::before {
+    content: 'Python';
+    position: absolute;
+    left:initial !important; /* important inside block */
+    margin-top:-2em;
+    left: 0.2em;
+    padding-left: 0.2em;
+    color: var(--accent-color);
+    font-weight: bold;
+}
 div.codehilite code {
     counter-increment: line;
     display:inline-block !important; /* should be on new line */
-    width:max-content;
-    min-width:100%;
+    width:auto;
+    min-width:90%;
+    background:transparent !important;
+    color: var(--primary-fg)!important;
+    white-space: pre !important;
+    overflow-wrap: normal !important;
+    margin-left:2.2em;
+    padding-left: 4px;
+    box-sizing: border-box !important;
+}
+div.codehilite code:hover {
+    background: var(--tr-hover-bg) !important;
 }
 div.codehilite code:before{
     content: counter(line,decimal);
@@ -310,6 +337,9 @@ div.codehilite code:before{
     margin-right: 8px;
     font-size: 80%;
 }
+div.codehilite  code > span {
+    white-space: normal !important;
+}
 div.codehilite code.code-no-focus {
     opacity:0.3 !important;
 }
@@ -317,28 +347,6 @@ div.codehilite code.code-focus {
     text-shadow: 0 0 1px var(--primary-bg);
 }
 
-div.codehilite {  
-    margin: 4px 0px !important; /* Opposite to padding to balance it */
-    max-height: 400px; /* Try avoiding important here */
-    height: auto !important;
-    overflow: auto !important;
-    display:inline-flex !important; /* for ::before */
-    padding-top: 1.5em !important;
-    box-shadow: 0 1.6em 0 0 var(--secondary-bg) inset;
-    border-radius:4px!important;
-}
-div.codehilite::before {
-    content: '🔴 🟡 🟢 Python';
-    position:absolute;
-    font-size:0.7em;
-    z-index:2;
-    background: var(--secondary-bg);
-    border-radius: 8px 8px 0 0;
-    box-sizing:border-box;
-    margin-top: -2em;
-    padding:4px 8px;
-    height:2em;
-}
 .widget-html div.codehilite::before {padding-top: 0 !important;}
 div.highlight, .widget-html div.codehilite {display:inline-flex !important;}
 .SlidesWrapper div.PyRepr {
@@ -348,23 +356,7 @@ div.highlight, .widget-html div.codehilite {display:inline-flex !important;}
     height: auto !important;
     overflow: auto !important;
 }
-div.codehilite pre > code {
-    background:transparent !important;
-    color: var(--primary-fg)!important;
-    white-space: pre !important;
-    display:inline-block !important;
-    width:auto;
-    min-width: 90% !important;
-    overflow-wrap: normal !important;
-    margin-left:2.2em;
-    padding-left: 4px;
-}
-div.codehilite  code > span {
-    white-space: normal !important;
-}
-div.codehilite pre > code:hover {
-    background: var(--tr-hover-bg) !important;
-}
+
 /* Docs have Python code only, so no need to have fancy things there */
 .Docs div.codehilite {
     margin: 0 !important;

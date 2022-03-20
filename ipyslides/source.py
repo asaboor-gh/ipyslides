@@ -103,8 +103,8 @@ def _file2code(filename,language='python',name=None):
         middle = ''.join(f'<code>{line}</code>' for line in middle.strip().splitlines())
         code = f'<div class="codehilite {_class}"> {start} <pre> {middle} </pre> {end} </div>'
     
-    code = f'''<style> div.codehilite.{_class}::before {{
-                content: '🔴 🟡 🟢  {_title}' !important;
+    code = f'''<style> div.codehilite.{_class} pre::before {{
+                content: '{_title}' !important;
             }}
             div.codehilite .highlight {{
                 width: 100% !important;

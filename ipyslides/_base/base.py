@@ -103,7 +103,7 @@ class BaseLiveSlides:
         return self._md_content
         
     
-    def from_markdown(self, path, footer_text = 'Author Name'):
+    def from_markdown(self, path):
         """You can create slides from a markdown file or StringIO object as well. It creates slides 1,2,3... in order.
         You should add more slides by higher number than the number of slides in the file, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
@@ -133,7 +133,6 @@ class BaseLiveSlides:
         
         self.convert2slides(True)
         self.clear()
-        self.settings.set_footer(footer_text)
         
         if isinstance(path, io.StringIO):
             chunks = _parse_md_file(path)
