@@ -278,11 +278,14 @@ div.codehilite {
     max-width: 100vw !important;
     box-sizing: border-box !important;
     overflow:auto;
-    border: 1px solid var(--tr-hover-bg);
-    border-top: 1.8em solid var(--primary-bg);
+    border-left: 2px solid var(--tr-hover-bg);
+    border-top: 1.8em solid transparent;
+    border-radius: 2px;
+    padding: 0 !important;
     margin: 4px 0px !important; /* Opposite to padding to balance it */
     max-height: 400px; /* Try avoiding important here */
     height: auto !important;
+    background: transparent !important;
 }
 div.codehilite pre { /* works for both case, do not use > */
     display: grid !important;
@@ -292,6 +295,7 @@ div.codehilite pre { /* works for both case, do not use > */
     width: auto !important;
     box-sizing: border-box !important;
     height: auto;
+    margin: 0px !important;
     background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
 }

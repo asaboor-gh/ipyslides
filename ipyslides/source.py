@@ -34,26 +34,26 @@ class _Source_Widget(ipw.HTML):
     def show_lines(self, lines):
         "Return source object with selected lines from list/tuple/range of lines."
         self.value = self._code # Reset to original code first
-        if isinstance(lines,(list,tuple,range)):
-            _lines, link = [],0
-            for i, line in enumerate(self._code.split('<code>'), start = -1):
-                if i == -1:
-                    _lines.append(line) # start things
-                elif i in lines:
-                    if link + 1 != i and i > 0:
-                        _lines.append(f'<code class="code-no-focus"> + {i - link} more lines ... </code>')
-                    _lines.append('<code>' + line) # Do not pick altogther if not in lines
-                    link = i
-            # i will go up to some value, so we need to add the last lines
-            if i > link:
-                _last_line = self._code.split('</pre>')[-1] # Get closing characters to add
-                _lines.append(f'<code class="code-no-focus"> + {i - link} more lines ... </code></pre>{_last_line}')
-            
-            self.value = ''.join(_lines)   # update value 
-
-            return self
-        else:
+        if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
+        
+        start, *middle = self._code.split('<code>')
+        middle[-1], end = middle[-1].split('</code>')
+        middle[-1] += '</code>'
+        _max_index = len(middle) - 1
+        
+        new_lines = [start]
+        picks = [-1,*sorted(lines)]
+        for a, b in zip(picks[:-1],picks[1:]):
+            if b - a > 1: # Not consecutive lines
+                new_lines.append(f'<code class="code-no-focus"> + {b - a - 1} more lines ... </code>')
+            new_lines.append('<code>' + middle[b])
+        
+        if lines and lines[-1] < _max_index:
+            new_lines.append(f'<code class="code-no-focus"> + {_max_index - lines[-1]} more lines ... </code>')
+        
+        self.value = ''.join([*new_lines, end])   # update value 
+        return self      
     
     def show_all(self):
         "Show all lines. Call this after you may consumed lines using `show_lines`."
@@ -63,21 +63,20 @@ class _Source_Widget(ipw.HTML):
     def focus_lines(self, lines):
         "Return source object with focus on given list/tuple/range of lines."
         self.value = self._code # Reset to original code first
-        if isinstance(lines,(list,tuple,range)):
-            _lines = []
-            for i, line in enumerate(self._code.split('<code>'), start = -1):
-                if i == -1:
-                    _lines.append(line) # start things
-                elif i not in lines:
-                    _lines.append('<code class="code-no-focus">' + line)
-                else:
-                    _lines.append('<code class="code-focus">' + line)
-            
-            self.value = ''.join(_lines)  # update value
-            return self
-        else:
+        if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
-
+        
+        _lines = []
+        for i, line in enumerate(self._code.split('<code>'), start = -1):
+            if i == -1:
+                _lines.append(line) # start things
+            elif i not in lines:
+                _lines.append('<code class="code-no-focus">' + line)
+            else:
+                _lines.append('<code class="code-focus">' + line)
+        
+        self.value = ''.join(_lines)  # update value
+        return self
 
 def _file2code(filename,language='python',name=None):
     "Only reads plain text or StringIO, return source object with `show_lines` and `focus_lines` methods."
@@ -120,7 +119,6 @@ def _str2code(text,language='python',name=None):
     "Only reads plain text source code, return source object with `show_lines` and `focus_lines` methods."
     s = StringIO(text)
     return _file2code(s,language=language,name=name)
-
 
 class Source:
     current = None

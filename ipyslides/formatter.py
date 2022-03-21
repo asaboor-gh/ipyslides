@@ -114,18 +114,7 @@ def code_css(style='default',background='var(--secondary-bg)'):
         raise ValueError(f"Style {style!r} not found in {list(get_all_styles())}")
     _style = HtmlFormatter(style=style).get_style_defs('.codehilite')
 
-    return f"""
-    <style>
-    div.codehilite {{
-        box-shadow: 0 1.6em 0 0 {background} inset !important;
-    }}
-    div.codehilite pre, 
-    div.codehilite::before, 
-    div.codehilite pre>code::before {{
-        background: {background} !important;
-    }}
-    {_style}
-    </style>"""
+    return f"<style>\n{_style}\n</style>"""
 
 def _fix_code(_html):
     "Fix code highlighting for given _html string"

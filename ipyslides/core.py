@@ -82,13 +82,15 @@ class _PrivateSlidesClass(BaseLiveSlides):
         with self.widgets.outputs.renew:
             display(multi_slides_alert)
         
+        self._make_sure_title()
+        self.refresh() # This displays the slides 
+    
+    def _make_sure_title(self):
         if '0' not in self.__slides_dict:
             with capture_output() as captured:
                 write(how_to_slide)
                 
             self.__slides_dict['0'] = captured
-        
-        self.refresh() # This displays the slides 
 
     @property
     def slides(self):
@@ -108,9 +110,10 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def clear(self):
         "Clear all slides."
         self._check_computed('clear slides')
-        self.__slides_dict = {k:v for k,v in self.__slides_dict.items() if k == '0'} # keep title page
-        self._slides_notes = {k:v for k,v in self._slides_notes.items() if k == '0'} # keep title page's notes
-        self._toasts = {k:v for k,v in self._toasts.items() if k == '0' } # keep title page's toasts
+        self._make_sure_title() # Make sure title is there, before updating slides
+        self.__slides_dict = {'0':self.__slides_dict.get('0')} # keep title page
+        self._slides_notes = {'0':self._slides_notes.get('0',None)} # keep title page's notes
+        self._toasts = {'0':self._toasts.get('0',None) } # keep title page's toasts
         self.refresh() # Clear interface too
     
     def cite(self,key, citation,here=False):
