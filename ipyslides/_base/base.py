@@ -62,6 +62,7 @@ class BaseLiveSlides:
         className = 'Warning'           Orange Text
         className = 'Success'           Green Text
         className = 'Error'             Red Text
+        className = 'Note'              Text with info icon
         ''')
 
     
@@ -181,12 +182,12 @@ class BaseLiveSlides:
         
         with self.slide(1):
             self.write('## Adding Slides')
-            self.write('Besides functions below, you can add slides with `%%title` and `%%slide <slide number>` magics as well.',className='Info')
+            self.write('Besides functions below, you can add slides with `%%title` and `%%slide <slide number>` magics as well.\n{.Note .Info}')
             self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides')])
         
         with self.slide(2):
             self.write('## Adding Content')
-            self.write('Besides functions below, you can add content to slides with `display(obj)` as well.',className='Info')
+            self.write('Besides functions below, you can add content to slides with `display(obj)` as well.\n{.Note .Info}')
             self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides')])
         
         with self.slide(3):
@@ -211,9 +212,12 @@ class BaseLiveSlides:
             self.write('## Useful Functions for Rich Content')
             for attr in dir(self):
                 if not attr.startswith('_'):
-                    if not attr in ['write','iwrite','source','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown','highlight']:
+                    if not attr in ['write','iwrite','source','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown']:
                         with suppress(Exception):
-                            self.write(self.doc(getattr(self,attr),'LiveSlides'))
+                            if not 'block_' in attr:
+                                self.write(self.doc(getattr(self,attr),'LiveSlides'))
+                        if attr == 'block':
+                            self.write(f"`block` has other shortcut colored versions {', '.join(f'`block_{c}`' for c in 'rgbycmkowp')}.\n{{.Note .Info}}")
         
         with self.slide(7):
             self.write('## Content Styling')
@@ -229,7 +233,7 @@ class BaseLiveSlides:
         with self.slide(8):
             self.write('## Highlighting Code')
             with self.source.context() as s:
-                self.write(('You can highlight code using `highlight` function or within markdown like this: '
+                self.write(('You can **highlight**{.Error} code using `highlight` function or within markdown like this: '
                         '```python\n'
                         'import ipyslides as isd\n```\n'
                         '```javascript\n'

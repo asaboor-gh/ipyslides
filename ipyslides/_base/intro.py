@@ -9,7 +9,8 @@ otherwise select `Custom Slide Size` and change size there according to found as
 - Select `File/Disk` option to insert pictures and make sure `Picture Layout` option is `Fit to slide`.
 - Now click `Create` and you will see all pictures as slides.
 
-> Note: Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
+Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
+{.Note .Warning}
 '''
 
 how_to_slide = ('''# Creating Slides
@@ -23,9 +24,8 @@ how_to_slide = ('''# Creating Slides
 ```python
 #------------ Cell 1 --------------------
 import ipyslides as isd 
-ls = isd.LiveSlides()
-ls.convert2slides(True)
-ls.settings.set_animzation('zoom') 
+ls = isd.LiveSlides(**settings_kwargs)
+ls.settings.set_animation('zoom') 
 #------------ Cell 2 --------------------
 %%title
 # create a rich content title page
@@ -45,7 +45,7 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
     - Slides should be separated by `---` (three dashes) in start of line.
     - You can add more slides besides created ones or modify existing ones using `ls.md_content`:
 ```python
-ls.from_markdown(path, footer_text = 'Author Name')
+ls.from_markdown(path)
 with ls.slide(2):
     write(ls.md_content[2]) # write content of slide 2 from file
     plot_something() # Add other things to same file
@@ -58,9 +58,11 @@ with ls.slide(2):
 )
 
 more_instructions =f'''## How to Use
-> Use `ls.pre_compute_display()` to load all slides into memory. This is useful if you have a lot of Maths or Widgets.
+Use `ls.pre_compute_display()` to load all slides into memory. This is useful if you have a lot of Maths or Widgets.
+{{.Note .Info}}
 
-**Key Bindings**
+**Key Bindings**{{.Success}}
+
 Having your cursor over slides, you can use follwoing keys/combinations:
 
 | Key (comb)                   | Action                                               | 
@@ -75,7 +77,7 @@ Having your cursor over slides, you can use follwoing keys/combinations:
 | `S`                          | save screenshot of current slide                     |
 | `P`                          | print PDF of current slide                           |
 
-**Tips**
+**Tips**{{.Success}}
 
 - Other keys are blocked so that you may not delete or do some random actions on notebook cells.
 - Jupyter/Retro Lab is optimized for keyboard. Other frontends like Classic Notebook, VSCode, Voila etc. may not work properly.
@@ -91,7 +93,8 @@ There are two ways of printing to PDF.
 
 - LiveSlides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 
-> Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
+Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
+{{.Note .Warning}}
 '''
 
 instructions = f'''{more_instructions}
@@ -100,27 +103,30 @@ instructions = f'''{more_instructions}
 For custom themes, change below `Theme` dropdown to `Custom`.
 You will see a `custom.css` in current folder,edit it and change
 font scale or set theme to another value and back to `Custom` to take effect. 
-> Note: `custom.css` is only picked from current directory.
+
+`custom.css` is only picked from current directory.
+{{.Note .Info}}
           
 --------
 For matching plots style with theme, run following code in a cell above slides.
 
-**Matplotlib**
+**Matplotlib**{{.Success}}
 ```python
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 #plt.style.available() #gives styles list
 ```
 
-**Plotly**
+**Plotly**{{.Success}}
 ```python
 import plotly.io as pio
 pio.templates.default = "plotly_white"
 #pio.templates #gives list of styles
 ```
-> Tip: Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
+Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
+{{.Note .Info}}
 
-**Altair**
+**Altair**{{.Success}}
 ```python
 import altair as alt
 alt.themes.enable('dark')

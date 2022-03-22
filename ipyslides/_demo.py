@@ -37,9 +37,13 @@ slides.shell.run_cell_magic('slide','2','write("## I am created using magic `%%s
 #slide 3
 online_sources = '''# IPySlides Online Running Sources 
 Launch as voila slides (may not work as expected [^1])[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides.ipynb)
-[Edit on Kaggle](https://www.kaggle.com/massgh/ipyslides)
+{.Note .Error}
+
+[Edit on Kaggle](https://www.kaggle.com/massgh/ipyslides)\n{.Note .Warning}
+
 Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
-<br>
+{.Note .Success}
+
 [^1]: Add references like this per slide. Use slides.cite() to add citations generally.
 '''
 @slides.frames(3,'## I am created using `@slides.frames`',online_sources)
@@ -104,7 +108,7 @@ with slides.slide(9):
             t = time.localtime()
             return f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}'
         
-        write('This line is written as function in context manager is not taken as source at end of block. No idea why?')
+        write('This line is written as function in context manager is not taken as source at end of block. No idea why?\n{.Note .Error}')
 
         
     write([slides.format_css('.youtube-source div.highlight pre',background='#FEE',color='black'), s]
@@ -143,7 +147,7 @@ with slides.slide(11,background='#800000'):
             df = '### Install `pandas` to view output'
             chart = '### Install Altair to see chart'
         write(('## Writing Pandas DataFrame',df),
-            ('## Writing Altair Chart\nMay not work everywhere, needs javascript',chart)
+            ('## Writing Altair Chart\nMay not work everywhere, needs javascript\n{.Note .Warning}',chart)
             )
     write(slides.source.current.show_lines(range(5,12))) #Show source code of above block even without assignning to variable explicitly
     
@@ -241,6 +245,7 @@ with slides.slide(18):
 
 with slides.slide(19):
     slides.write('## $\LaTeX$ in Slides\nUse `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations')
+    slides.write('$\LaTeX$ needs time to load, so `slides.pre_compute_display()` will help\n{.Note .Warning}')
     slides.write([r'\$\$\int_0^1\frac{1}{1-x^2}dx\$\$',
                 r'$$\int_0^1\frac{1}{1-x^2}dx$$'
                 ])  

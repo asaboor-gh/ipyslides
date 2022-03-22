@@ -55,6 +55,7 @@ class LayoutSettings:
         
     def _on_displayed(self,change):
         self.__add_js()
+        self._instructions.clear_output(wait=True) # This make sure that instructions are not duplicated
         with self._instructions:
             write(intro.instructions)
             

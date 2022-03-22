@@ -111,12 +111,28 @@ def style_html(style_root = theme_roots['Inherit']):
     margin-bottom:0.1em !important;
 }
 
-.Info, .Warning, .Success, .Error { padding: 4px !important;}
+.Info, .Warning, .Success, .Error, .Note { padding: 0.2em !important;}
 
 .Warning, .Warning * { color:#FFAC1C !important;}
 .Success, .Success * { color:green !important;}
 .Error, .Error * { color:red !important;}
 .Info, .Info * { color:skyblue !important;}
+.Note{
+    border: 1px solid var(--tr-hover-bg);
+    border-radius: 0.2em;
+}
+.Note::before {
+    content: 'ℹ';
+    display: inline-flex;
+    width: 1em;
+    height: 1em;
+    margin: 0 0.2em;
+    justify-content:center;
+    align-items:center;
+    border: 1px solid var(--accent-color);
+    border-radius: 1em;
+    color: var(--accent-color);
+}
 
 .jp-OutputArea-child, .jp-OutputArea-child .jp-OutputArea-output { background: transparent !important;background-color: transparent !important; margin: 0 !important;} /* For some themes */
 .SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
