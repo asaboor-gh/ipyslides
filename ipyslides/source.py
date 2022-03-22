@@ -13,7 +13,7 @@ from markdown import markdown
 
 from .utils import alert, details
 from .shared_vars import _md_extensions
-from .formatter import _fix_code
+from .formatter import highlight
     
 
 # Do not use this in main work, just inside a function
@@ -78,47 +78,22 @@ class _Source_Widget(ipw.HTML):
         self.value = ''.join(_lines)  # update value
         return self
 
-def _file2code(filename,language='python',name=None):
+def _file2code(filename,language='python',name=None,**kwargs):
     "Only reads plain text or StringIO, return source object with `show_lines` and `focus_lines` methods."
     try:
         text = filename.read() # if stringIO
     except:
         with open(filename,'r') as f:
             text = f.read()
-            
-    if isinstance(name,str):
-        _title = name
-    else:
-        _title = language[0].capitalize() + language[1:]
     
-    _class = _title.replace('.','').replace('\s+','')
-    if 'ython' in language:
-        code = markdown(f'```{language}\n{text}\n```',extensions=_md_extensions)
-    else:
-        code = Code(data = text,language=language)._repr_html_() 
-            
-        _arr = [_h.split('</pre>') for _h in code.split('<pre>')]
-        start, middle, end = [v for vs in _arr for v in vs] # Flatten
-        middle = ''.join(f'<code>{line}</code>' for line in middle.strip().splitlines())
-        code = f'<div class="codehilite {_class}"> {start} <pre> {middle} </pre> {end} </div>'
-    
-    code = f'''<style> div.codehilite.{_class} pre::before {{
-                content: '{_title}' !important;
-            }}
-            div.codehilite .highlight {{
-                width: 100% !important;
-                height: 100% !important;
-            }}
-            div.codehilite .highlight code:first-child {{ padding-left: 4px !important;}}
-            </style>''' + code
-    out = _Source_Widget(value = _fix_code(code))
-    out.raw = text 
-    return out
+    return _str2code(text,language=language,name=name,**kwargs)
 
-def _str2code(text,language='python',name=None):
+
+def _str2code(text,language='python',name=None,**kwargs):
     "Only reads plain text source code, return source object with `show_lines` and `focus_lines` methods."
-    s = StringIO(text)
-    return _file2code(s,language=language,name=name)
+    out = _Source_Widget(value = highlight(text,language = language, name = name).value,**kwargs)
+    out.raw = text
+    return out
 
 class Source:
     current = None
@@ -131,21 +106,21 @@ class Source:
         Use Source.from_callable(callable) to get a source object from a callable.
         """)
     @classmethod
-    def from_string(cls,text,language='python',name=None):
-        "Creates source object from string. `name` is alternate used name for language"
-        cls.current = _str2code(text,language=language,name=name)
+    def from_string(cls,text,language='python',name=None,**kwargs):
+        "Creates source object from string. `name` is alternate used name for language. `kwargs` are passed to `ipyslides.formatter.highlight`."
+        cls.current = _str2code(text,language=language,name=name,**kwargs)
         return cls.current
     
     @classmethod
-    def from_file(cls, filename,language='python',name=None):
-        "Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language"
+    def from_file(cls, filename,language='python',name=None,**kwargs):
+        "Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language.`kwargs` are passed to `ipyslides.formatter.highlight`"
         _title = filename if name is None else name
-        cls.current = _file2code(filename,language=language,name=_title)
+        cls.current = _file2code(filename,language=language,name=_title,**kwargs)
         return cls.current
     
     @classmethod       
-    def from_callable(cls, callable):
-        "Returns source object from a given callable [class,function,module,method etc.] with `show_lines` and `focus_lines` methods."
+    def from_callable(cls, callable,**kwargs):
+        "Returns source object from a given callable [class,function,module,method etc.] with `show_lines` and `focus_lines` methods. `kwargs` are passed to `ipyslides.formatter.highlight`"
         for _type in ['class','function','module','method','builtin','generator']:
             if getattr(inspect,f'is{_type}')(callable):
                 source = inspect.getsource(callable)

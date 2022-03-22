@@ -10,7 +10,7 @@ import ipywidgets as ipw
 
 from .source import Source
 from .writers import write, iwrite
-from .formatter import bokeh2html, plt2html
+from .formatter import bokeh2html, plt2html, highlight
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
@@ -40,6 +40,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
             
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
+        self.highlight  = highlight
         self.source = Source # Code source
         self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides

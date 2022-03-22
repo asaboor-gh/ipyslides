@@ -108,7 +108,7 @@ class BaseLiveSlides:
         You should add more slides by higher number than the number of slides in the file, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
         **Markdown File Content**
-        ```md
+        ```markdown
         # Talk Title
         ---
         # Slide 1 
@@ -182,12 +182,12 @@ class BaseLiveSlides:
         with self.slide(1):
             self.write('## Adding Slides')
             self.write('Besides functions below, you can add slides with `%%title` and `%%slide <slide number>` magics as well.',className='Info')
-            self.write([self.doc(self.title,'LiveSlides'),self.vspace(),self.doc(self.slide,'LiveSlides'),self.vspace(),self.doc(self.frames,'LiveSlides')])
+            self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides')])
         
         with self.slide(2):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `display(obj)` as well.',className='Info')
-            self.write([self.doc(self.write,'LiveSlides'),self.vspace(),self.doc(self.iwrite,'LiveSlides')])
+            self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides')])
         
         with self.slide(3):
             self.write('## Adding Speaker Notes')
@@ -211,22 +211,35 @@ class BaseLiveSlides:
             self.write('## Useful Functions for Rich Content')
             for attr in dir(self):
                 if not attr.startswith('_'):
-                    if not attr in ['write','iwrite','source','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown']:
+                    if not attr in ['write','iwrite','source','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown','highlight']:
                         with suppress(Exception):
                             self.write(self.doc(getattr(self,attr),'LiveSlides'))
         
         with self.slide(7):
             self.write('## Content Styling')
-            self.write(('You can style your content with `className` attribute in writing/content functions. ' 
-                       'Provide CSS for that using `.format_css` or use some of the available styles. '
-                       'See these styles with `.css_styles` property as below:'),className='Success')
+            with self.source.context() as c:
+                self.write(('You can **style**{.Error} your *content*{: style="color:hotpink;"} with `className` attribute in writing/content functions. ' 
+                       'Provide **CSS**{.Info} for that using `.format_css` or use some of the available styles. '
+                       'See these **styles**{.Success} with `.css_styles` property as below:'))
+                self.iwrite(c)
+                
             with self.print_context():
                 self.css_styles # Auto prints css styles
         
         with self.slide(8):
+            self.write('## Highlighting Code')
+            with self.source.context() as s:
+                self.write(('You can highlight code using `highlight` function or within markdown like this: '
+                        '```python\n'
+                        'import ipyslides as isd\n```\n'
+                        '```javascript\n'
+                        'import React, { Component } from "react";\n```\n'))
+                self.iwrite(s)
+        
+        with self.slide(9):
             self.write('## Loading from File/Other Contexts')
-            self.write([self.doc(self.from_markdown,'LiveSlides'), self.vspace(), 
-                        self.doc(self.demo,'LiveSlides'),self.vspace(), 
+            self.write([self.doc(self.from_markdown,'LiveSlides'), 
+                        self.doc(self.demo,'LiveSlides'), 
                         self.doc(self.load_docs,'LiveSlides')])
         
         self.progress_slider.index = 0 # back to title

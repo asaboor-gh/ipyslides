@@ -128,7 +128,7 @@ def html(tag, children = None,className = None,**node_attrs):
     return _HTML(f'{tag_in}{content}</{tag}>')
 
 def vspace(em = 1):
-    "Returns html node with given height in em"
+    "Returns html node with given height in em\nNew in version 1.4.2"
     return html('div',style=f'height:{em}em;')
  
 def textbox(text, **css_props):
@@ -222,7 +222,7 @@ def doc(callable,prepend_str = None):
     try:
         _doc = _fix_repr(inspect.getdoc(callable))
         _sig = sig(callable,prepend_str)
-        return _HTML(f"<div class='Docs'>{_sig}<br>{_doc}</div>")
+        return _HTML(f"<div class='Docs'>{_sig}<br>{_doc}\n</div>")
     except:
         raise TypeError(f'Object {callable} is not a callable')
     

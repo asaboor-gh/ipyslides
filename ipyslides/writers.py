@@ -9,20 +9,32 @@ import ipywidgets as ipw
 from markdown import markdown
 from collections import namedtuple
 
-from .formatter import format_object, _fix_code, _HTML, _HTML_Widget
+from .formatter import format_object, highlight, _HTML, _HTML_Widget
 from .shared_vars import _md_extensions
 
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
 
-    
+def _fix_md_str(md_str):
+    "should return a string after fixing markdown and code blocks"
+    new_str = md_str.split('```') # Split by code blocks
+    if len(new_str) > 1:
+        for i, section in enumerate(new_str):
+            if i % 2 == 0:
+                new_str[i] = markdown(section,extensions=_md_extensions)
+            else:
+                line, code = section.split('\n',1)
+                language = line.strip() if line.strip() else 'shell'
+                new_str[i] = highlight(code,language = language, include_css=False).value
+        return '\n'.join(new_str)
+    else:
+        return markdown(new_str[0],extensions=_md_extensions)
+              
 
 def _fix_repr(obj):
     "should return a string"
     if isinstance(obj,str):
-        _obj = obj.strip().replace('\n','  \n') #Markdown doesn't like newlines without spaces
-        _html = markdown(_obj,extensions=_md_extensions) 
-        return _fix_code(_html)
+        return _fix_md_str(obj)
     
     elif isinstance(obj,(_HTML, _HTML_Widget)):
         return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick  

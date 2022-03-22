@@ -6,8 +6,7 @@ import inspect, re, json
 from io import BytesIO
 import matplotlib.pyplot as plt
 from markdown import markdown
-from pygments.formatters import HtmlFormatter
-from pygments.styles import get_all_styles
+import pygments
 import ipywidgets as ipw
 from IPython.display import HTML
 from IPython import get_ipython
@@ -110,20 +109,33 @@ def _ipy_imagestr(image,width='100%'):
 
 def code_css(style='default',background='var(--secondary-bg)'):
     "Style code block with given style from pygments module and background color."
-    if style not in get_all_styles():
-        raise ValueError(f"Style {style!r} not found in {list(get_all_styles())}")
-    _style = HtmlFormatter(style=style).get_style_defs('.codehilite')
+    if style not in pygments.styles.get_all_styles():
+        raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
+    _style = pygments.formatters.HtmlFormatter(style=style).get_style_defs('.highlight')
 
-    return f"<style>\n{_style}\n</style>"""
+    return f"""<style>\n{_style}
+    div.highlight pre, div.highlight code:before {{
+        background: {background} !important;
+    }}\n</style>"""
 
-def _fix_code(_html):
-    "Fix code highlighting for given _html string"
-    _arr = [_h.split('</code>') for _h in _html.split('<code>')]
-    _arr = [v for vs in _arr for v in vs] # Flatten
-    _arr = ['<code>'+_a.replace('\n','</code><code>') + '</code>' if i % 2 != 0 else _a for i, _a in enumerate(_arr)] 
-    return ''.join(_arr).replace('<span></span>','').replace('<code></code></pre>','</pre>') # Remove empty spans and last code line
-
-
+def highlight(code, language='python', name = None, style='default', include_css=False):
+    """Highlight code with given language and style.
+    New in version 1.4.3"""
+    formatter = pygments.formatters.HtmlFormatter(style = style)
+    _style = f'<style>{formatter.get_style_defs(".highlight")}</style>' if include_css else ''
+    _code = pygments.highlight(code, pygments.lexers.get_lexer_by_name(language),formatter)
+    
+    start, mid_end = _code.split('<pre>')
+    middle, end = mid_end.split('</pre>')
+    lines = middle.strip().replace('<span></span>','').splitlines()
+    code_ = '\n' + '\n'.join([f'<code>{line}</code>' for line in lines]) # start with newline is important
+    _title = name if name else language.title()
+    return _HTML(f'''<div>
+        <span class='lang-name'>{_title}</span>
+        {_style}\n{start}
+        <pre>{code_}
+        </pre>\n{end}</div>''')
+    
 # ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
 
 libraries = [
@@ -154,9 +166,7 @@ def format_object(obj):
             try:
                 source = inspect.getsource(obj)
                 source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
-                # Create HTML
-                source = markdown(f'```python\n{source}\n```',extensions=['fenced_code','codehilite'])
-                source = _fix_code(source) # Avoid empty spans/last empty line and make linenumbering possible
+                source = highlight(source,language='python',style='default',include_css=False).value
             except:
                 source = f'Can not get source code of:\n{obj}'
             

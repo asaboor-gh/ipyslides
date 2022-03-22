@@ -272,14 +272,13 @@ def style_html(style_root = theme_roots['Inherit']):
 
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
-div.codehilite {
+div.highlight {
     min-width: 100% !important;
     witdh: 100% !important;
     max-width: 100vw !important;
     box-sizing: border-box !important;
-    overflow:auto;
+    overflow: auto !important;
     border-left: 2px solid var(--tr-hover-bg);
-    border-top: 1.8em solid transparent;
     border-radius: 2px;
     padding: 0 !important;
     margin: 4px 0px !important; /* Opposite to padding to balance it */
@@ -287,7 +286,7 @@ div.codehilite {
     height: auto !important;
     background: transparent !important;
 }
-div.codehilite pre { /* works for both case, do not use > */
+div.highlight pre { /* works for both case, do not use > */
     display: grid !important;
     color: var(--primary-fg)!important;
     padding: 8px 4px 8px 4px !important; 
@@ -299,17 +298,8 @@ div.codehilite pre { /* works for both case, do not use > */
     background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
 }
-div.codehilite pre::before {
-    content: 'Python';
-    position: absolute;
-    left:initial !important; /* important inside block */
-    margin-top:-2em;
-    left: 0.2em;
-    padding-left: 0.2em;
-    color: var(--accent-color);
-    font-weight: bold;
-}
-div.codehilite code {
+
+div.highlight code {
     counter-increment: line;
     display:inline-block !important; /* should be on new line */
     width:auto;
@@ -322,13 +312,13 @@ div.codehilite code {
     /*padding-left: 4px;*/
     box-sizing: border-box !important;
 }
-div.codehilite code:hover {
+div.highlight code:hover {
     background: var(--tr-hover-bg) !important;
 }
-div.codehilite code:hover::before {
+div.highlight code:hover::before {
     background: none !important;
 }
-div.codehilite code:before{
+div.highlight code:before{
     content: counter(line,decimal);
     position: sticky;
     top:initial;
@@ -344,15 +334,19 @@ div.codehilite code:before{
     margin-right: 8px;
     font-size: 80%;
 }
-div.codehilite  code > span {
+div.highlight  code > span {
     white-space: normal; /* for breaking words */
     word-break: break-word; /* for breaking words */
 }
-div.codehilite code.code-no-focus {
+div.highlight code.code-no-focus {
     opacity:0.3 !important;
 }
-div.codehilite code.code-focus {
+div.highlight code.code-focus {
     text-shadow: 0 0 1px var(--primary-bg);
+}
+span.lang-name {
+    color: var(--accent-color);
+    font-size: 0.8em;
 }
 .SlidesWrapper div.PyRepr {
     margin: 4px !important;
@@ -363,19 +357,13 @@ div.codehilite code.code-focus {
 }
 
 /* Docs have Python code only, so no need to have fancy things there */
-.Docs .codehilite {
-    margin: 0 !important;
-    padding-top: 0 !important;
-    border-top: none !important; /* Remove big top border */
+.Docs {
+    margin-bottom: 1em !important;
+}
+.Docs .highlight {
     border: none !important;
-    background: none !important;
-    box-shadow: none !important;
 }
-.Docs div.codehilite pre,
-.Docs div.codehilite code::before{
-    background: none !important;
-}
-.Docs .codehilite pre::before {
+.Docs span.lang-name {
     display: none !important;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
@@ -444,7 +432,7 @@ div.codehilite code.code-focus {
     width: 4px;
     background: transparent !important;
 }
-.codehilite::-webkit-scrollbar { /* important for good display */
+.highlight::-webkit-scrollbar { /* important for good display */
     background: var(--secondary-bg) !important;
 }
 .SlidesWrapper ::-webkit-scrollbar:hover {
@@ -457,7 +445,7 @@ div.codehilite code.code-focus {
     background: var(--tr-hover-bg) !important;
 }
 .SlidesWrapper ::-webkit-scrollbar-corner,
-.codehilite::-webkit-scrollbar-corner {
+.highlight::-webkit-scrollbar-corner {
     display:none !important;
 }   
 .CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
@@ -618,7 +606,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     pre, .SlideBox, .SlidesWrapper, .SlideArea {
         height: auto !important;
     }
-    .SlidesWrapper div.codehilite, .SlidesWrapper div.PyRepr {
+    .SlidesWrapper div.highlight, .SlidesWrapper div.PyRepr {
         max-height:auto !important; /* Flow itself */
     }
     .SlideArea {

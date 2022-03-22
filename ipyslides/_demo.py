@@ -17,7 +17,7 @@ slides.settings.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/
 
 #Demo for loading slides from a file or file-like object 
 fp = StringIO('\n'.join(how_to_slide) + '''\n---
-# Slide 1
+# Slide 1 {.Success}
 (from markown file until here)
 ''')
 slides.from_markdown(fp) # This will create first slide along with title page.
@@ -55,9 +55,9 @@ def func(obj):
 __contents = [f"""## IPython Display Objects
 #### Any object with following methods could be in`write` command:
 {', '.join([f'`_repr_{rep}_`' for rep in __reprs__])}
-Such as `IPython.display.<HTML,SVG,Markdown,Code>` etc. or third party such as `plotly.graph_objects.Figure`.            
+Such as `IPython.display.<HTML,SVG,Markdown,Code>` etc. or third party such as `plotly.graph_objects.Figure`{{.Warning}}.            
 """,
-f"""## Plots and Other Data Types
+f"""## Plots and Other **Data**{{style='color:var(--accent-color);'}} Types
 #### These objects are implemented to be writable in `write` command:
 {', '.join([f"`{lib['name']}.{lib['obj']}`" for lib in libraries])}
 Many will be extentended in future. If an object is not implemented, use `display(obj)` to show inline or use library's specific
@@ -67,6 +67,7 @@ f"""## Interactive Widgets
 ### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using `textbox` command</a>')} 
 or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf','This is refernce to FigureWidget using `slides.cite` command')}(reference at end)
 can be included in `iwrite` command as well as other objects that can be passed to `write` with caveat of Javascript.
+{{.Warning}}
 """,
 '## Commands which do all Magic!']
 for i in range(4,8):
@@ -74,9 +75,9 @@ for i in range(4,8):
         write(__contents[i-4])
         if i == 7:
             with slides.source.context() as s:
-                write(slides.block_r('slides.write/ipyslides.writers.write',write), 
-                      slides.block_b('slides.iwrite/ipyslides.writers.iwrite',iwrite))
+                write([slides.doc(write,'LiveSlides'), slides.doc(iwrite,'LiveSlides')])
                 write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
+            
             write(s.show_lines([0,1]))
 # Matplotlib
 with slides.slide(8,background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'):
@@ -106,7 +107,7 @@ with slides.slide(9):
         write('This line is written as function in context manager is not taken as source at end of block. No idea why?')
 
         
-    write([slides.format_css('.youtube-source',width='100%',border_radius='8px 2em'), s]
+    write([slides.format_css('.youtube-source div.highlight pre',background='#FEE',color='black'), s]
           ,className='youtube-source')
     
 # Data Table
