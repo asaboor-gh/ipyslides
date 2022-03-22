@@ -24,8 +24,9 @@ def _fix_md_str(md_str):
                 new_str[i] = markdown(section,extensions=_md_extensions)
             else:
                 line, code = section.split('\n',1)
-                language = line.strip() if line.strip() else 'shell'
-                new_str[i] = highlight(code,language = language, include_css=False).value
+                language = line.strip() if line.strip() else 'text' # If no language, assume
+                name = ' ' if language == 'text' else None # If no language or text, don't show name
+                new_str[i] = highlight(code,language = language, name = name, include_css=False).value
         return '\n'.join(new_str)
     else:
         return markdown(new_str[0],extensions=_md_extensions)

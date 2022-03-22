@@ -25,9 +25,8 @@ For development install, clone this repository and then
 ```python
 #------------ Cell 1 --------------------
 import ipyslides as isd 
-ls = isd.LiveSlides()
-ls.convert2slides(True)
-ls.settings.set_animzation('zoom') 
+ls = isd.LiveSlides(**settings_kwargs) # settings_kwargs are added in 1.4.1
+ls.settings.set_animation('zoom') # could be as animaation='zoom' in settings_kwargs in 1.4.1 +
 #------------ Cell 2 --------------------
 %%title
 # create a rich content title page
@@ -44,7 +43,7 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
 #### You can load slides from a markdown file
 slides separator should be --- (three dashes)
 ```python
-ls.from_markdown(path, footer_text = 'Author Name')
+ls.from_markdown(path)
 with ls.slide(2):
     write(ls.md_content[2]) # write content of slide 2 from file
     plot_something() # Add other things to same file

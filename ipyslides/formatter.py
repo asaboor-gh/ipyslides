@@ -2,10 +2,10 @@
 
 """
 import sys
+import textwrap
 import inspect, re, json
 from io import BytesIO
 import matplotlib.pyplot as plt
-from markdown import markdown
 import pygments
 import ipywidgets as ipw
 from IPython.display import HTML
@@ -123,7 +123,9 @@ def highlight(code, language='python', name = None, style='default', include_css
     New in version 1.4.3"""
     formatter = pygments.formatters.HtmlFormatter(style = style)
     _style = f'<style>{formatter.get_style_defs(".highlight")}</style>' if include_css else ''
-    _code = pygments.highlight(code, pygments.lexers.get_lexer_by_name(language),formatter)
+    _code = pygments.highlight(textwrap.dedent(code), # dedent make sure code blocks at any level are picked as well
+                               pygments.lexers.get_lexer_by_name(language),
+                               formatter)
     
     start, mid_end = _code.split('<pre>')
     middle, end = mid_end.split('</pre>')

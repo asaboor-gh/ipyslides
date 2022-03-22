@@ -175,7 +175,7 @@ def style_html(style_root = theme_roots['Inherit']):
 }
 .SlidesWrapper .panel>div:last-child {padding-top:16px;min-height:max-content;} 
 
-.SlideArea .columns {width:99%;max-width:99%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
+.SlideArea .columns {width:100%;max-width:100%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
 
 .SlidesWrapper .widget-hslider .ui-slider,
 .SlidesWrapper .widget-hslider .ui-slider .ui-slider-handle {
