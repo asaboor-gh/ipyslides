@@ -83,8 +83,11 @@ class _PrivateSlidesClass(BaseLiveSlides):
         with self.widgets.outputs.renew:
             display(multi_slides_alert)
         
-        self._make_sure_title()
-        self.refresh() # This displays the slides 
+        self._make_sure_title() # Should be before showing it below
+        
+        self.widgets.slidebox.children[0].clear_output(wait=True)
+        with self.widgets.slidebox.children[0]: # title slide in both simple and computed case
+            self.__slides_dict['0'].show() # Instead of refreshing, we can just update the content of the title slides to avoid errors
     
     def _make_sure_title(self):
         if '0' not in self.__slides_dict:

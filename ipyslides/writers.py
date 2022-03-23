@@ -10,7 +10,9 @@ from markdown import markdown
 from collections import namedtuple
 
 from .formatter import format_object, highlight, _HTML, _HTML_Widget
-from .shared_vars import _md_extensions
+
+_md_extensions = [#'fenced_code',#'codehilite', # May be not required now
+                  'tables','footnotes','attr_list'] # For MArkdown Parser
 
 
 __reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command

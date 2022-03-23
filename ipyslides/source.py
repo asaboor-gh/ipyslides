@@ -12,7 +12,6 @@ from contextlib import contextmanager
 from markdown import markdown
 
 from .utils import alert, details
-from .shared_vars import _md_extensions
 from .formatter import highlight
     
 
