@@ -45,6 +45,7 @@ Markdown here with extended options. Nested blocks are not supported
     x = 1 + 2
     ls.write([x, source])
     ```
+{{source}} will be shown in start here as well. Only variables are supported
 #------------ Cell 5 --------------------
 @ls.frames(1,*objs)
 def func(obj):

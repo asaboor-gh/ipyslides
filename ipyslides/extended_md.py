@@ -1,4 +1,22 @@
-import string
+"""
+Extended Markdown
+
+You can use the following syntax:
+
+```python run var_name
+import numpy as np
+```
+# Normal Markdown
+```multicol
+A
++++
+This {{var_name}} is a code from above and will be substituted with the value of var_name
+```
+
+Note: Nested blocks are not supported.
+"""
+
+
 import textwrap, re
 from markdown import Markdown
 from IPython.core.display import display
@@ -8,13 +26,31 @@ from .formatter import _HTML, highlight, stringify
 from .source import _str2code
 
 _md_extensions = ['tables','footnotes','attr_list'] # For MArkdown Parser
-# Add fix_repr here for all objects other than string
-# Add column divider firts
-# after tha evalue python code blocks with display options
-# at last evaluate expressions in {{exp}}
+
     
 class ExetendedMarkdown(Markdown):
-    "New in 1.4.5"
+    """You can use the following syntax:
+
+    ```python run var_name
+    # If no var_name, code will be executed without assigning it to any variable
+    import numpy as np
+    ```
+    # Normal Markdown
+    ```multicol 30 70
+    # First column is 30% width
+    If 30 70 was not given, all columns will be of equal width
+    +++
+    # Second column is 70% wide
+    This {{var_name}} is a code from above and will be substituted with the value of var_name
+    ```
+    
+    ```python
+    # This will not be executed, only shown
+    ```
+
+    Note: Nested blocks are not supported.
+    
+    New in 1.4.5"""
     def __init__(self):
         self.extensions = _md_extensions
         super().__init__(extensions = self.extensions)
@@ -32,20 +68,20 @@ class ExetendedMarkdown(Markdown):
         if len(new_str) > 1:
             for i, section in enumerate(new_str):
                 if i % 2 == 0:
-                    out = self.convert(section)
+                    out = self._sub_vars(self.convert(section))
                     if display_inline:
                         display(_HTML(out))
                     else:
                         collect += out
                 else:
-                    out = self._parse_block(section) 
-                    if display_inline:
+                    out = self._parse_block(section) # vars are substituted already inside
+                    if display_inline and out:
                         display(_HTML(out))
-                    else:
+                    elif out: # Do not collect None
                         collect += out
             return collect
         else:
-            out = self.convert(new_str[0])
+            out = self._sub_vars(self.convert(new_str[0]))
             if display_inline:
                 display(_HTML(out))
             else:
@@ -55,7 +91,7 @@ class ExetendedMarkdown(Markdown):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         line, data = block.split('\n',1)
         if 'multicol' in line:
-            return self._parse_multicol(data, line.strip())
+            return self._sub_vars(self._parse_multicol(data, line.strip()))
         elif 'python' in line:
             return self._parse_python(data, line.strip())
         else:
@@ -92,32 +128,35 @@ class ExetendedMarkdown(Markdown):
     def _parse_python(self, data, header):
         # if inside some writing command, do not run code at all
         if len(header.split()) > 3:
-            raise ValueError(f'Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name(above, below)')
+            raise ValueError(f'Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name')
         dedent_data = textwrap.dedent(data)
         if self._display_inline == False or header.lower() == 'python': # no run given
             return highlight(dedent_data,language = 'python', className=None).value
         elif 'run' in header and self._display_inline: 
             source = header.split('run')[1].strip() # Afte run it be source variable
             _source_out = _str2code(dedent_data,language='python',className=None)
-            if source and source not in ['above','below']:
+            
+            if source:
                 get_ipython().user_ns[source] = _source_out
                 
-            if source == 'above':
-                display(_source_out)
             # Run Code now
             get_ipython().run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
-            
-            if source == 'below':
-                display(_source_out)
+            return '' # string should be, not None
     
-    def eval_exp(self, html_output):
-        all_matches = re.findall(r'\{\{(.*?)\}\}', html_output) # ['x','x + y'] in {{x}}, {{x + y}}
-        # only have python vars here, and functions in scope of LiveSlides to eval
-        # for match in all_matches:
-        #     try:
-        #         html_output = html_output.replace(f'{{{match}}}', string(eval(match)))
-        #     except Exception as e:
-        #         raise e
+    def _sub_vars(self, html_output):
+        "Substitute variables in html_output given as {{var}}"
+        all_matches = re.findall(r'\{\{(.*?)\}\}', html_output)
+        # only have python vars here, security is an issue for expressions
+        for match in all_matches:
+            try:
+                var = get_ipython().user_ns[match.strip()]
+                if isinstance(var, str):
+                    html_output = html_output.replace('{{' + match + '}}', var, 1)
+                else:
+                    html_output = html_output.replace('{{' + match + '}}', stringify(var), 1)
+            except Exception as e:
+                raise e
+        return html_output # return in main scope
             
         
         

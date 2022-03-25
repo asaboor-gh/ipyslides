@@ -210,6 +210,8 @@ def format_object(obj):
 
 
 def stringify(obj):
+    """Returns string of HTML for given object.
+    New in 1.4.5"""
     if isinstance(obj,str):
         raise ValueError('can not stringify string')
     elif isinstance(obj,(_HTML, _HTML_Widget)):

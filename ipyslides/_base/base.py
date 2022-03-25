@@ -141,11 +141,9 @@ class BaseLiveSlides:
             with open(path, 'r') as fp:
                 chunks = _parse_md_file(fp)
 
-        with self.title():
-            self.write(chunks[0])
-        for i,chunk in enumerate(chunks[1:],start=1):
-            with self.slide(i):
-                self.write(chunk)
+        for i,chunk in enumerate(chunks):
+            self.shell.run_cell_magic('slide', f'{i} -m', chunk)
+            print(f'Running ... {100*(i + 1)//len(chunks)}%', end='\r')
             
         self._md_content = chunks # Store for later use
         
