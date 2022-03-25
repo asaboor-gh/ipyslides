@@ -34,10 +34,22 @@ ls.settings.set_animation('zoom') # could be as animaation='zoom' in settings_kw
 %%slide 1
 # slide 1 content
 #------------ Cell 4 --------------------
+%%slide 1 -m # new in 1.4.5
+Markdown here with extended options
+```multicol
+A
++++
+B
+```
+```python run source
+x = 1 + 2
+ls.write([x, source])
+```
+#------------ Cell 5 --------------------
 @ls.frames(1,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)
-#------------ Cell 5 --------------------
+#------------ Cell 6 --------------------
 ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
 #### You can load slides from a markdown file

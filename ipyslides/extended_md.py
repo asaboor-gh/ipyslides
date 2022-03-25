@@ -14,13 +14,18 @@ _md_extensions = ['tables','footnotes','attr_list'] # For MArkdown Parser
 # at last evaluate expressions in {{exp}}
     
 class ExetendedMarkdown(Markdown):
+    "New in 1.4.5"
     def __init__(self):
         self.extensions = _md_extensions
         super().__init__(extensions = self.extensions)
         self._display_inline = False
         
     def parse(self, md_str, display_inline = False):
-        "should return a string after fixing markdown and code blocks"
+        """Return a string after fixing markdown and code/multicol blocks if display_inline is False
+        Else displays objects and execute python code from '```python run source_var_name' block.
+        
+        New in 1.4.5
+        """
         self._display_inline = display_inline # Must chnage here
         new_str = md_str.split('```') # Split by code blocks
         collect = ''
@@ -60,7 +65,6 @@ class ExetendedMarkdown(Markdown):
         
     def _parse_multicol(self, data, header):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
-        
         cols = data.split('+++') # Split by columns
         cols = [self.convert(col) for col in cols] 
         if len(cols) == 1:
@@ -87,6 +91,8 @@ class ExetendedMarkdown(Markdown):
     
     def _parse_python(self, data, header):
         # if inside some writing command, do not run code at all
+        if len(header.split()) > 4:
+            raise ValueError(f'Too many arguments in {header!r}, expects 4 or less as ```python run source_var_name above(below)')
         if self._display_inline == False or header.lower() == 'python': # no run given
             return highlight(data,language = 'python', className=None).value
         elif 'run' in header and self._display_inline: 
@@ -105,7 +111,7 @@ class ExetendedMarkdown(Markdown):
     
     def eval_exp(self, html_output):
         all_matches = re.findall(r'\{\{(.*?)\}\}', html_output) # ['x','x + y'] in {{x}}, {{x + y}}
-        # only have python vars here, avoid eval. it is risky
+        # only have python vars here, and functions in scope of LiveSlides to eval
         # for match in all_matches:
         #     try:
         #         html_output = html_output.replace(f'{{{match}}}', string(eval(match)))
