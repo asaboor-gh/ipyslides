@@ -1,42 +1,37 @@
 """
 Display source code from files/context managers.
 """
-
-import ipywidgets as ipw
+import ast, re
 import sys, linecache
-from io import StringIO
 import textwrap
 import inspect
-from IPython.display import Code
 from contextlib import contextmanager
-from markdown import markdown
 
-from .utils import alert, details
-from .formatter import highlight
+from .formatter import highlight, _HTML
     
 
 # Do not use this in main work, just inside a function
-class _Source_Widget(ipw.HTML):
-    "Source code widget for IPython, give html fixed code as value."
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        self._code = self.value # Save original code for later operations
-        self.raw = '' # Raw code
+class _Source(_HTML):
+    "Returns the source code of the object as HTML."
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._raw = ''
+    @property
+    def raw(self):
+        "Return raw source code."
+        return self._raw
     
-    def _repr_html_(self):
-        "Make it available in `write` command as well."
-        return self.value
-    
-    def __format__(self, spec):
-        return f'{self.value:{spec}}'
-        
+    @raw.setter
+    def raw(self, value):
+        "Set raw source code."
+        self._raw = value
+
     def show_lines(self, lines):
         "Return source object with selected lines from list/tuple/range of lines."
-        self.value = self._code # Reset to original code first
         if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
         
-        start, *middle = self._code.split('<code>')
+        start, *middle = self.value.split('<code>')
         middle[-1], end = middle[-1].split('</code>')
         middle[-1] += '</code>'
         _max_index = len(middle) - 1
@@ -51,22 +46,15 @@ class _Source_Widget(ipw.HTML):
         if lines and lines[-1] < _max_index:
             new_lines.append(f'<code class="code-no-focus"> + {_max_index - lines[-1]} more lines ... </code>')
         
-        self.value = ''.join([*new_lines, end])   # update value 
-        return self      
-    
-    def show_all(self):
-        "Show all lines. Call this after you may consumed lines using `show_lines`."
-        self.value = self._code
-        return self
+        return self.__class__(''.join([*new_lines, end]))     
     
     def focus_lines(self, lines):
         "Return source object with focus on given list/tuple/range of lines."
-        self.value = self._code # Reset to original code first
         if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
         
         _lines = []
-        for i, line in enumerate(self._code.split('<code>'), start = -1):
+        for i, line in enumerate(self.value.split('<code>'), start = -1):
             if i == -1:
                 _lines.append(line) # start things
             elif i not in lines:
@@ -74,8 +62,7 @@ class _Source_Widget(ipw.HTML):
             else:
                 _lines.append('<code class="code-focus">' + line)
         
-        self.value = ''.join(_lines)  # update value
-        return self
+        return self.__class__(''.join(_lines))
 
 def _file2code(filename,language='python',name=None,**kwargs):
     "Only reads plain text or StringIO, return source object with `show_lines` and `focus_lines` methods."
@@ -90,7 +77,7 @@ def _file2code(filename,language='python',name=None,**kwargs):
 
 def _str2code(text,language='python',name=None,**kwargs):
     "Only reads plain text source code, return source object with `show_lines` and `focus_lines` methods."
-    out = _Source_Widget(value = highlight(text,language = language, name = name).value,**kwargs)
+    out = _Source(highlight(text,language = language, name = name, **kwargs).value)
     out.raw = text
     return out
 
@@ -127,48 +114,44 @@ class Source:
                 return cls.current
     
     @classmethod
-    @contextmanager
-    def context(cls, collapsed = False, focus_lines = None):
-        """Excute and displays source code in the context manager. Set `collapsed = True` to display in collapse.
-        `foucs_lines` is a list/tuple/range of line index to be highlighted. Useful when source is written inside context manager itself.
+    @contextmanager 
+    def context(cls, **kwargs): 
+        """Excute and displays source code in the context manager. kwargs are passed to `ipyslides.formatter.highlight` function.
+        Useful when source is written inside context manager itself.
         **Usage**:
         ```python
-        with source.context() as s: #if not used as `s`, still it is stored in variable `__current_source_code__` that you can acess by this name or from `LiveSlides.current_source`
+        with source.context() as s: #if not used as `s`, still it is stored `source.current` attribute.`
             do_something()
-            #s is the source code that will be avaialble outside the context manager
-        write(s)
+            write(s)
+            
         #s.raw, s.value are accesible attributes.
-        #s.focus_lines, s.show_lines are methods that return object of same type.
-        # iwite(s) will update the source even inside the context manager.
+        #s.focus_lines, s.show_lines are methods that are used to show selective lines.
         ```
-        """     
-        def frame():
-            "This is better than traceback as it works same for IPython and script.py"
-            return (sys._getframe().f_back.f_back.f_back.f_code.co_filename,
-                    sys._getframe().f_back.f_back.f_back.f_lineno) #should be in function and go back three times
-
-        file, l1 = frame()
-        _alert = alert('You can get code once you exit context manager for `write` command <center>OR</center>use it will auto update inside `iwrite` command')
-        return_obj = _Source_Widget(value=f'{_alert}')
-        return_obj.raw = ''
-
-        cls.current = return_obj # add to user namespace, this does not create extra object, just points to same
-        try:
-            yield return_obj
-        finally:
-            file, l2 = frame()
-            lines = linecache.getlines(file)[l1:l2]
-
-            code = textwrap.dedent(''.join(lines))
-            return_obj.raw = code
-            out_code = _str2code(code).value #needs further processing
-
-            if collapsed:
-                return_obj._code =  details(out_code,summary='Show Code').value #details is _HTML
-            else:
-                return_obj._code = out_code 
-                
-            return_obj.value = return_obj._code # Update the value of the widget
+        """  
+        frame = sys._getframe().f_back.f_back # go two steps back
+        lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
+        offset = 0 # going back to zero indent level
+        while re.match('^\t?^\s+', lines[n1 - offset]): 
+             offset = offset + 1
+             
+        _source = ''.join(lines[n1 - offset:])
+        tree = ast.parse(_source)
+        with_node = tree.body[0] # Could be itself at top level
         
-        if isinstance(focus_lines,(list,tuple,range)):
-            _ = return_obj.focus_lines(focus_lines) # highlight lines, no need to return self here
+        for node in ast.walk(tree):
+            if isinstance(node, ast.With) and node.lineno == offset: # that much gone up, so back same
+                with_node = node
+                break
+
+        if (sys.version_info.major >= 3) and (sys.version_info.minor >= 8):
+            n2 = with_node.body[-1].end_lineno #can include multiline expression
+        else: # if no next sibling node, pick by brute force for < 3.8
+            n2 = with_node.body[-1].lineno # multiline expressions can't be handled, just first line picked
+        
+        source = textwrap.dedent(''.join(lines[n1:][:n2 - offset]))
+        source_html = _Source(highlight(source,language = 'python', **kwargs).value)
+        source_html.raw = source # raw source code
+        cls.current = source_html
+        
+        yield source_html
+        # No need to try as it is not possible to get here if not in context manager

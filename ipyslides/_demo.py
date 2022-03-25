@@ -4,8 +4,8 @@ import textwrap, time
 from io import StringIO
 from IPython import get_ipython
 from .utils import textbox
-from .writers import write, iwrite, __reprs__
-from .formatter import libraries, plt2html
+from .writers import write, iwrite
+from .formatter import libraries, plt2html, __reprs__
 from ._base.intro import how_to_slide
 
 slides = get_ipython().user_ns['_s_l_i_d_e_s_'] # get slides from notebook instead of creating new one
@@ -23,7 +23,7 @@ fp = StringIO('\n'.join(how_to_slide) + '''\n---
 slides.from_markdown(fp) # This will create first slide along with title page.
 
 with slides.slide(1): #slide 1 will be modified with old and new content
-    with slides.source.context() as s:
+    with slides.source.context(style='monokai',background='black',className='Mono') as s:
         write(slides.md_content[1], className='Info')
         write('## I am created using `with slides.slide(1)` context( manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
@@ -85,22 +85,20 @@ for i in range(4,8):
             write(s.show_lines([0,1]))
 # Matplotlib
 with slides.slide(8,background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'):
+    write('## Plotting with Matplotlib')
     with slides.source.context() as s:
         import numpy as np, matplotlib.pyplot as plt
         x = np.linspace(0,2*np.pi)
         with plt.style.context('ggplot'):
             fig, ax = plt.subplots(figsize=(3.4,2.6))
             _ = ax.plot(x,np.cos(x))
-            
-    write('## Plotting with Matplotlib')
-    write(slides.block_g('Matplotlib inside block!',slides.alert('Alerting inside block!'),
-                         plt2html(caption='No need to save me in file, I directly show up here!'),
-                         s.focus_lines([1,3,4])))
+        write([ax, s.focus_lines([1,3,4])])
+        
 
 # Youtube
 from IPython.display import YouTubeVideo
 with slides.slide(9):
-    with slides.source.context() as s:
+    with slides.source.context(style='vs',background='#FAA',className="Youtube") as s:
         write(f"### Watching Youtube Video?")
         write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
         @slides.notify_later()
@@ -108,11 +106,7 @@ with slides.slide(9):
             t = time.localtime()
             return f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}'
         
-        write('This line is written as function in context manager is not taken as source at end of block. No idea why?\n{.Note .Error}')
-
-        
-    write([slides.format_css('.youtube-source div.highlight pre',background='#FEE',color='black'), s]
-          ,className='youtube-source')
+        write(s) # source.context(style='vs',background='#FAA',className="Youtube")
     
 # Data Table
 with slides.slide(10):
@@ -125,7 +119,7 @@ with slides.slide(10):
             |d1|d2|d3|
             |r1|r2|r3|
             ''')))
-    write(s.focus_lines([3,4,5,6]))
+        write(s.focus_lines([3,4,5,6]))
 
 # Plotly and Pandas DataFrame only show if you have installed
 with slides.slide(11,background='#800000'):
@@ -163,7 +157,7 @@ with slides.slide(12):
 # Interactive widgets can't be used in write command, but still they are displayed.   
 
 with slides.slide(13):
-    with slides.source.context(focus_lines = [4,5,6,7,*range(24,30)]) as src:
+    with slides.source.context() as src:
         import ipywidgets as ipw
         import numpy as np, matplotlib.pyplot as plt
         
@@ -171,7 +165,7 @@ with slides.slide(13):
         grid, [(plot,button, _), code] = slides.iwrite([
             '## Plot will be here! Click button below to activate it!',
             ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
-            "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src)
+            "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src.focus_lines([4,5,6,7,*range(24,30)]))
         
         def update_plot():
             x = np.linspace(0,0.9,10)

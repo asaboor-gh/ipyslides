@@ -8,9 +8,11 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import pygments
 import ipywidgets as ipw
-from IPython.display import HTML
+from IPython.display import HTML 
+from IPython.core.display import __all__ as _all
 from IPython import get_ipython
 
+__reprs__ = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 class _HTML(HTML):
     def __init__(self, *args,**kwargs):
         "This HTML will be diplayable, printable and formatable. Can add other HTML object or string to it."
@@ -107,22 +109,28 @@ def _ipy_imagestr(image,width='100%'):
     return fix_ipy_image(image,width=width).value
 
 
-def code_css(style='default',background='var(--secondary-bg)'):
+def code_css(style='default',background='var(--secondary-bg)',className = None):
     "Style code block with given style from pygments module and background color."
     if style not in pygments.styles.get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
-    _style = pygments.formatters.HtmlFormatter(style=style).get_style_defs('.highlight')
+    _class = '.highlight' if className is None else f'.highlight.{className}'
+    _style = pygments.formatters.HtmlFormatter(style=style).get_style_defs(_class)
 
     return f"""<style>\n{_style}
-    div.highlight pre, div.highlight code:before {{
+    div{_class} pre, div{_class} code:before {{
         background: {background} !important;
+    }}
+    div{_class} code:hover::before {{
+        background: none !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, style='default', include_css=False):
-    """Highlight code with given language and style.
+def highlight(code, language='python', name = None, className = None, style='default', background = 'var(--secondary-bg)'):
+    """Highlight code with given language and style. style only works if className is given.
     New in version 1.4.3"""
+    if style not in pygments.styles.get_all_styles():
+        raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     formatter = pygments.formatters.HtmlFormatter(style = style)
-    _style = f'<style>{formatter.get_style_defs(".highlight")}</style>' if include_css else ''
+    _style = code_css(style=style, background = background, className=className) if className else ''
     _code = pygments.highlight(textwrap.dedent(code), # dedent make sure code blocks at any level are picked as well
                                pygments.lexers.get_lexer_by_name(language),
                                formatter)
@@ -132,6 +140,10 @@ def highlight(code, language='python', name = None, style='default', include_css
     lines = middle.strip().replace('<span></span>','').splitlines()
     code_ = '\n' + '\n'.join([f'<code>{line}</code>' for line in lines]) # start with newline is important
     _title = name if name else language.title()
+    
+    if isinstance(className, str):
+        start = start.replace('class="highlight"',f'class="highlight {className}"')
+    
     return _HTML(f'''<div>
         <span class='lang-name'>{_title}</span>
         {_style}\n{start}
@@ -168,7 +180,7 @@ def format_object(obj):
             try:
                 source = inspect.getsource(obj)
                 source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
-                source = highlight(source,language='python',style='default',include_css=False).value
+                source = highlight(source,language='python',style='default',className=None).value
             except:
                 source = f'Can not get source code of:\n{obj}'
             
@@ -195,3 +207,25 @@ def format_object(obj):
 
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       
+
+
+def stringify(obj):
+    if isinstance(obj,str):
+        raise ValueError('can not stringify string')
+    elif isinstance(obj,(_HTML, _HTML_Widget)):
+        return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick   
+    else:
+        # Next prefer custom methods of objects as they are more frequently used
+        is_true, _html = format_object(obj)
+        if is_true:
+            return _html # it is a string
+        
+        # Ipython objects
+        _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
+        for _rep_ in _reprs_:
+            _out_ = _rep_()
+            if _out_: # If there is object in _repr_<>_, don't return None
+                return _out_
+        
+        # Return __repr__ if nothing above
+        return f"<div class='PyRepr'>{obj.__repr__()}</div>"

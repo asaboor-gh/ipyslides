@@ -4,59 +4,19 @@ write/ iwrite main functions to add content to slides
 
 __all__ = ['write','iwrite']
 
-from IPython.core.display import display, __all__ as __all
 import ipywidgets as ipw
-from markdown import markdown
 from collections import namedtuple
+from IPython.display import display
 
-from .formatter import format_object, highlight, _HTML, _HTML_Widget
-
-_md_extensions = [#'fenced_code',#'codehilite', # May be not required now
-                  'tables','footnotes','attr_list'] # For MArkdown Parser
-
-
-__reprs__ = [rep.replace('display_','') for rep in __all if rep.startswith('display_')] # Can display these in write command
-
-def _fix_md_str(md_str):
-    "should return a string after fixing markdown and code blocks"
-    new_str = md_str.split('```') # Split by code blocks
-    if len(new_str) > 1:
-        for i, section in enumerate(new_str):
-            if i % 2 == 0:
-                new_str[i] = markdown(section,extensions=_md_extensions)
-            else:
-                line, code = section.split('\n',1)
-                language = line.strip() if line.strip() else 'text' # If no language, assume
-                name = ' ' if language == 'text' else None # If no language or text, don't show name
-                new_str[i] = highlight(code,language = language, name = name, include_css=False).value
-        return '\n'.join(new_str)
-    else:
-        return markdown(new_str[0],extensions=_md_extensions)
-              
+from .formatter import _HTML, _HTML_Widget, stringify
+from .extended_md import ExetendedMarkdown          
 
 def _fix_repr(obj):
     "should return a string"
     if isinstance(obj,str):
-        return _fix_md_str(obj)
-    
-    elif isinstance(obj,(_HTML, _HTML_Widget)):
-        return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick  
-    
+        return ExetendedMarkdown().parse(obj, display_inline= False)
     else:
-        # Next prefer custom methods of objects as they are more frequently used
-        is_true, _html = format_object(obj)
-        if is_true:
-            return _html # it is a string
-        
-        # Ipython objects
-        _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
-        for _rep_ in _reprs_:
-            _out_ = _rep_()
-            if _out_: # If there is object in _repr_<>_, don't return None
-                return _out_
-        
-        # Return __repr__ if nothing above
-        return f"<div class='PyRepr'>{obj.__repr__()}</div>"
+        return stringify(obj)
     
 def _fmt_write(*columns,width_percents=None,className=None):
     if not width_percents and len(columns) >= 1:

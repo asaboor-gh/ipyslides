@@ -8,6 +8,7 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
+from .extended_md import ExetendedMarkdown
 from .source import Source
 from .writers import write, iwrite
 from .formatter import bokeh2html, plt2html, highlight
@@ -44,9 +45,10 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.source = Source # Code source
         self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
-        self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
-        self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
-        self.user_ns = self.shell.user_ns #important for set_dir
+        with suppress(Exception): # Avoid error when using setuptools to install
+            self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
+            self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
+            self.user_ns = self.shell.user_ns #important for set_dir
         
         self._citations = {} # Initialize citations
         self.__slides_mode = True # Default is slides mode since it is more intuitive
@@ -313,12 +315,15 @@ class _PrivateSlidesClass(BaseLiveSlides):
             %%markdown
             Everything here and below is treated as markdown, not python code.
         """
-        line = line.strip() #VSCode bug to inclue \r in line
-        if line and not line.isnumeric():
-            raise ValueError(f'You should use %%slide integer >= 1, got {line}')
+        line = line.strip().split() #VSCode bug to inclue \r in line
+        if line and not line[0].isnumeric():
+            raise ValueError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
         
-        with self.slide(int(line)):
-            self.shell.run_cell(cell)
+        with self.slide(int(line[0])):
+            if '-m' in line[1:]:
+                ExetendedMarkdown().parse(cell, display_inline = True)
+            else:
+                self.shell.run_cell(cell)
     
     @contextmanager
     def slide(self,slide_number,**css_props):
@@ -348,7 +353,10 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
         with self.slide(0):
-            self.shell.run_cell(cell)
+            if '-m' in line:
+                ExetendedMarkdown().parse(cell, display_inline = True)
+            else:
+                self.shell.run_cell(cell)
             
     @contextmanager
     def title(self,**css_props):
