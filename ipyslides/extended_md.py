@@ -91,22 +91,23 @@ class ExetendedMarkdown(Markdown):
     
     def _parse_python(self, data, header):
         # if inside some writing command, do not run code at all
-        if len(header.split()) > 4:
-            raise ValueError(f'Too many arguments in {header!r}, expects 4 or less as ```python run source_var_name above(below)')
+        if len(header.split()) > 3:
+            raise ValueError(f'Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name(above, below)')
+        dedent_data = textwrap.dedent(data)
         if self._display_inline == False or header.lower() == 'python': # no run given
-            return highlight(data,language = 'python', className=None).value
+            return highlight(dedent_data,language = 'python', className=None).value
         elif 'run' in header and self._display_inline: 
-            dedent_data = textwrap.dedent(data)
             source = header.split('run')[1].strip() # Afte run it be source variable
             _source_out = _str2code(dedent_data,language='python',className=None)
-            if source:
+            if source and source not in ['above','below']:
                 get_ipython().user_ns[source] = _source_out
-            if 'above' in header:
+                
+            if source == 'above':
                 display(_source_out)
             # Run Code now
             get_ipython().run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
             
-            if 'below' in header and not 'above' in header:
+            if source == 'below':
                 display(_source_out)
     
     def eval_exp(self, html_output):
