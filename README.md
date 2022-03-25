@@ -35,16 +35,16 @@ ls.settings.set_animation('zoom') # could be as animaation='zoom' in settings_kw
 # slide 1 content
 #------------ Cell 4 --------------------
 %%slide 1 -m # new in 1.4.5
-Markdown here with extended options
-```multicol
-A
-+++
-B
-```
-```python run source
-x = 1 + 2
-ls.write([x, source])
-```
+Markdown here with extended options. Nested blocks are not supported
+    ```multicol 30 70
+    less content
+    +++
+    more content
+    ```
+    ```python run source
+    x = 1 + 2
+    ls.write([x, source])
+    ```
 #------------ Cell 5 --------------------
 @ls.frames(1,*objs)
 def func(obj):
