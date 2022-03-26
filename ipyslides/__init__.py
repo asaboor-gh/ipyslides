@@ -6,12 +6,14 @@ from .core import LiveSlides
 from .extended_md import parse_xmd
 from .formatter import code_css
 
-def display_markdown(markdown_file_path):
+def display_markdown(markdown_file_path, print_text_fonts = None, print_code_fonts = None):
     """Parse a markdown file and display immediately. This is handy for generating document from markdown file with python code outputs.
     Runs python code blocks with header `python run source_var_name`. 
     
-    You can export notebook as HTML and print it to PDF, that will be a cleaned without cells PDF document.
-    Exported and printted PDF will include notebook's markdown cells.
+    You can export notebook as HTML and print it to PDF or just `Ctrl + P`, that will be a cleaned without cells PDF document.
+    Exported and printed PDF will include notebook's markdown cells.
+    
+    You can provide fonts that will be used while printing PDF. If not given, fallbacks to default fonts.
     
     New in 1.4.6
     """
@@ -33,8 +35,13 @@ def display_markdown(markdown_file_path):
             page-break-after: auto; 
             page-break-inside: avoid; 
         }
+        body *:not(.fa):not(i):not(span) {   
+            font-family: __textfont__, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
+        }
+        body code>span { font-family: __codefont__, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";}
     }
-    </style>''')
+    </style>'''.replace('__textfont__',print_text_fonts).replace('__codefont__',print_code_fonts))
+    
     parse_xmd(xmd, display_inline = True) # No return required
 
 __all__ = ['LiveSlides', 'display_markdown']
