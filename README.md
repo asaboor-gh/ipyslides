@@ -34,7 +34,7 @@ ls.settings.set_animation('zoom') # could be as animaation='zoom' in settings_kw
 %%slide 1
 # slide 1 content
 #------------ Cell 4 --------------------
-%%slide 1 -m # new in 1.4.5
+%%slide 1 -m # new in 1.4.6
 Markdown here with extended options. Nested blocks are not supported
     ```multicol 30 70
     less content
@@ -67,6 +67,13 @@ with ls.slide(2):
 ```python
 ls.load_docs()
 ```
+
+#### You can display a file containing extended markdown 
+```python
+import ipyslides as isd
+isd.display_markdown(path) # >= 1.4.6
+```
+and then export notebook to other formats.
 
 # Content Types to Embed
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 

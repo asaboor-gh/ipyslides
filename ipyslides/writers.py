@@ -9,12 +9,12 @@ from collections import namedtuple
 from IPython.display import display
 
 from .formatter import _HTML, _HTML_Widget, stringify
-from .extended_md import ExetendedMarkdown          
+from .extended_md import parse_xmd          
 
 def _fix_repr(obj):
     "should return a string"
     if isinstance(obj,str):
-        return ExetendedMarkdown().parse(obj, display_inline= False)
+        return parse_xmd(obj, display_inline= False)
     else:
         return stringify(obj)
     

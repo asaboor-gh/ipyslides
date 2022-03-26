@@ -8,7 +8,7 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
-from .extended_md import ExetendedMarkdown
+from .extended_md import parse_xmd
 from .source import Source
 from .writers import write, iwrite
 from .formatter import bokeh2html, plt2html, highlight
@@ -45,6 +45,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.source = Source # Code source
         self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
+        self.parse_xmd = parse_xmd # Parse extended markdown
         with suppress(Exception): # Avoid error when using setuptools to install
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
@@ -321,7 +322,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         
         with self.slide(int(line[0])):
             if '-m' in line[1:]:
-                ExetendedMarkdown().parse(cell, display_inline = True)
+                parse_xmd(cell, display_inline = True)
             else:
                 self.shell.run_cell(cell)
     
@@ -354,7 +355,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         "Turns to cell magic `title` to capture title"
         with self.slide(0):
             if '-m' in line:
-                ExetendedMarkdown().parse(cell, display_inline = True)
+                parse_xmd(cell, display_inline = True)
             else:
                 self.shell.run_cell(cell)
             

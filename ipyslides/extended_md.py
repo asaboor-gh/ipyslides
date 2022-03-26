@@ -28,29 +28,8 @@ from .source import _str2code
 _md_extensions = ['tables','footnotes','attr_list'] # For MArkdown Parser
 
     
-class ExetendedMarkdown(Markdown):
-    """You can use the following syntax:
-
-    ```python run var_name
-    # If no var_name, code will be executed without assigning it to any variable
-    import numpy as np
-    ```
-    # Normal Markdown
-    ```multicol 30 70
-    # First column is 30% width
-    If 30 70 was not given, all columns will be of equal width
-    +++
-    # Second column is 70% wide
-    This {{var_name}} is a code from above and will be substituted with the value of var_name
-    ```
-    
-    ```python
-    # This will not be executed, only shown
-    ```
-
-    Note: Nested blocks are not supported.
-    
-    New in 1.4.5"""
+class _ExtendedMarkdown(Markdown):
+    "New in 1.4.5"
     def __init__(self):
         self.extensions = _md_extensions
         super().__init__(extensions = self.extensions)
@@ -158,7 +137,33 @@ class ExetendedMarkdown(Markdown):
                 raise e
         return html_output # return in main scope
             
-        
-        
+
+def parse_xmd(extended_markdown, display_inline = True):
+    """Parse extended markdown and display immediately. 
+    If you need output html, use display_inline=False but that won't execute python code blocks.
+    
+    You can use the following syntax:
+
+        ```python run var_name
+        # If no var_name, code will be executed without assigning it to any variable
+        import numpy as np
+        ```
+        # Normal Markdown
+        ```multicol 40 60
+        # First column is 40% width
+        If 40 60 was not given, all columns will be of equal width
+        +++
+        # Second column is 60% wide
+        This \{\{var_name\}\} is code from above and will be substituted with the value of var_name
+        ```
+
+        ```python
+        # This will not be executed, only shown
+        ```
+
+    Note: Nested blocks are not supported.
+    New in 1.4.6
+    """
+    return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline)  
     
     

@@ -20,6 +20,7 @@ how_to_slide = ('''# Creating Slides
     - Edit and test cells in `ls.convert2slides(False)` mode.
     - Run cells in `ls.convert2slides(True)` mode from top to bottom. 
     - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
+    - `%%slide integer -m` can be used to create slide from full markdown (extended one).
     - You can use context managers like `with ls.slide(): ...` and `with ls.title(): ...` in place of `%%slide` and `%%title` respectively.
 ```python
 #------------ Cell 1 --------------------
@@ -33,10 +34,23 @@ ls.settings.set_animation('zoom')
 %%slide 1
 # slide 1 content
 #------------ Cell 4 --------------------
+%%slide 1 -m # new in 1.4.6
+Markdown here with extended options. Nested blocks are not supported
+    ```multicol 30 70
+    less content
+    +++
+    more content
+    ```
+    ```python run source
+    x = 1 + 2
+    ls.write([x, source])
+    ```
+{{source}} will be shown in start here as well. Only variables are supported
+#------------ Cell 5 --------------------
 @ls.frames(1,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)
-#------------ Cell 5 --------------------
+#------------ Cell 6 --------------------
 ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
 

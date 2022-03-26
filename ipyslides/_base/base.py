@@ -121,7 +121,7 @@ class BaseLiveSlides:
         Content of each slide from imported file is stored as list in `slides.md_content`. You can append content to it like this:
         ```python
         with slides.slide(2):
-            write(slides.md_content[2])
+            self.parse_xmd(slides.md_content[2]) # Instead of write, parse_xmd take cares of code blocks
             plot_something()
             write_something()
         ```
@@ -141,9 +141,12 @@ class BaseLiveSlides:
             with open(path, 'r') as fp:
                 chunks = _parse_md_file(fp)
 
-        for i,chunk in enumerate(chunks):
-            self.shell.run_cell_magic('slide', f'{i} -m', chunk)
-            print(f'Running ... {100*(i + 1)//len(chunks)}%', end='\r')
+        with self.title():
+            self.parse_xmd(chunks[0], display_inline=True)
+            
+        for i,chunk in enumerate(chunks[1:],start=1):
+            with self.slide(i):
+                self.parse_xmd(chunk, display_inline=True)
             
         self._md_content = chunks # Store for later use
         
@@ -171,6 +174,7 @@ class BaseLiveSlides:
         "Create presentation from docs of IPySlides."
         self._check_computed('load docs')
         from ..core import LiveSlides
+        
         self.clear()
         self.settings.set_footer('IPySlides Documentation')
         
@@ -180,13 +184,13 @@ class BaseLiveSlides:
         
         with self.slide(1):
             self.write('## Adding Slides')
-            self.write('Besides functions below, you can add slides with `%%title` and `%%slide <slide number>` magics as well.\n{.Note .Info}')
+            self.write('Besides functions below, you can add slides with `%%title`,  `%%slide <slide number>` and `%%slide <slide number>` -m` magics as well.\n{.Note .Info}')
             self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides')])
         
         with self.slide(2):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `display(obj)` as well.\n{.Note .Info}')
-            self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides')])
+            self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides'), self.doc(self.parse_xmd,'LiveSlides')])
         
         with self.slide(3):
             self.write('## Adding Speaker Notes')
@@ -210,7 +214,7 @@ class BaseLiveSlides:
             self.write('## Useful Functions for Rich Content')
             for attr in dir(self):
                 if not attr.startswith('_'):
-                    if not attr in ['write','iwrite','source','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown']:
+                    if not attr in ['write','iwrite','parse_xmd','source','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown']:
                         with suppress(Exception):
                             if not 'block_' in attr:
                                 self.write(self.doc(getattr(self,attr),'LiveSlides'))
@@ -240,6 +244,7 @@ class BaseLiveSlides:
         
         with self.slide(9):
             self.write('## Loading from File/Other Contexts')
+            self.write('You can parse and view a markdown file with `ipyslides.display_markdown` as well. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
             self.write([self.doc(self.from_markdown,'LiveSlides'), 
                         self.doc(self.demo,'LiveSlides'), 
                         self.doc(self.load_docs,'LiveSlides')])
