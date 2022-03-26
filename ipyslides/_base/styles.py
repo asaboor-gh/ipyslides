@@ -311,7 +311,7 @@ div.highlight pre { /* works for both case, do not use > */
     box-sizing: border-box !important;
     height: auto;
     margin: 0px !important;
-    background: var(--secondary-bg);
+    background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
 }
 

@@ -120,7 +120,7 @@ def code_css(style='default',background='var(--secondary-bg)',className = None):
 
     return f"""<style>\n{_style}
     div{_class} pre, div{_class} code:before {{
-        background: {background};
+        background: {background} !important;
     }}
     div{_class} code:hover::before {{
         background: none !important;
