@@ -40,7 +40,7 @@ def display_markdown(markdown_file_path, print_text_fonts = None, print_code_fon
         }
         body code>span { font-family: __codefont__, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";}
     }
-    </style>'''.replace('__textfont__',print_text_fonts).replace('__codefont__',print_code_fonts))
+    </style>'''.replace('__textfont__',f'"{print_text_fonts}"').replace('__codefont__',f'"{print_code_fonts}"'))
     
     parse_xmd(xmd, display_inline = True) # No return required
 
