@@ -28,6 +28,11 @@ def display_markdown(markdown_file_path, print_text_fonts = None, print_code_fon
     }
     pre, code { background:unset !important;}
     pre { padding: 0.2em !important; padding-bottom: 0.2em; margin-bottom: 0.5em; }
+    .RTL, .RTL > * {
+        text-align:right !important;
+        padding: 0 12px !important; /* to avoid cuts in RTL */
+        line-height: 120% !important;
+    }
     @media print {
         div.input, div.output_area > div.prompt{ display:none !important; }
         img, svg, .columns, div.highlight, span {
