@@ -12,7 +12,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.4.4
+> pip install ipyslides >= 1.4.7
 ```
 For development install, clone this repository and then
 ```shell
@@ -73,7 +73,8 @@ ls.load_docs()
 import ipyslides as isd
 isd.display_markdown(path) # >= 1.4.6
 ```
-and then export notebook to other formats.
+and then export notebook to other formats. If exported to HTML and then PDF is printed, this will give 
+a clean document with only showing cell outputs and markdown cells.
 
 # Content Types to Embed
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 

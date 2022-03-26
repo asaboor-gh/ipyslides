@@ -113,10 +113,10 @@ def style_html(style_root = theme_roots['Inherit']):
 
 .Info, .Warning, .Success, .Error, .Note { padding: 0.2em !important;}
 
-.Warning, .Warning * { color:#FFAC1C !important;}
-.Success, .Success * { color:green !important;}
-.Error, .Error * { color:red !important;}
-.Info, .Info * { color:skyblue !important;}
+.Warning, .Warning *:not(span) { color:#FFAC1C !important;}
+.Success, .Success *:not(span) { color:green !important;}
+.Error, .Error *:not(span) { color:red !important;}
+.Info, .Info *:not(span) { color:skyblue !important;}
 .Note{
     border: 1px solid var(--tr-hover-bg);
     border-radius: 0.2em;
@@ -304,14 +304,14 @@ div.highlight {
 }
 div.highlight pre { /* works for both case, do not use > */
     display: grid !important;
-    color: var(--primary-fg)!important;
+    color: var(--primary-fg);
     padding: 8px 4px 8px 4px !important; 
     overflow: auto !important;
     width: auto !important;
     box-sizing: border-box !important;
     height: auto;
     margin: 0px !important;
-    background: var(--secondary-bg) !important;
+    background: var(--secondary-bg);
     counter-reset: line; /* important to add line numbers */
 }
 
@@ -321,7 +321,7 @@ div.highlight code {
     width:auto;
     min-width: calc(90% - 2.2em);
     background:transparent !important;
-    color: var(--primary-fg)!important;
+    color: var(--primary-fg);
     white-space: pre !important;
     overflow-wrap: normal !important;
     padding-left:2.2em;

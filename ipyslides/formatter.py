@@ -110,15 +110,17 @@ def _ipy_imagestr(image,width='100%'):
 
 
 def code_css(style='default',background='var(--secondary-bg)',className = None):
-    "Style code block with given style from pygments module and background color."
+    """Style code block with given style from pygments module and background color.
+    """
     if style not in pygments.styles.get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     _class = '.highlight' if className is None else f'.highlight.{className}'
-    _style = pygments.formatters.HtmlFormatter(style=style).get_style_defs(_class)
+    _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
+    
 
     return f"""<style>\n{_style}
     div{_class} pre, div{_class} code:before {{
-        background: {background} !important;
+        background: {background};
     }}
     div{_class} code:hover::before {{
         background: none !important;
@@ -126,9 +128,13 @@ def code_css(style='default',background='var(--secondary-bg)',className = None):
 
 def highlight(code, language='python', name = None, className = None, style='default', background = 'var(--secondary-bg)'):
     """Highlight code with given language and style. style only works if className is given.
+    If className is given and matches any of pygments.styles.get_all_styles(), then style will be applied immediately.
     New in version 1.4.3"""
     if style not in pygments.styles.get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
+    if className in pygments.styles.get_all_styles():
+        style = className
+        
     formatter = pygments.formatters.HtmlFormatter(style = style)
     _style = code_css(style=style, background = background, className=className) if className else ''
     _code = pygments.highlight(textwrap.dedent(code), # dedent make sure code blocks at any level are picked as well
@@ -170,8 +176,10 @@ def format_object(obj):
     
     # Some builtin types
     if isinstance(obj,dict):
-        return  True, f"<div class='PyRepr'>{json.dumps(obj,indent=4)}</div>"    
-    elif isinstance(obj,(set,list,tuple,int,float)): # Then prefer other builtins
+        return  True, f"<div class='PyRepr'>{json.dumps(obj,indent=4)}</div>"  
+    elif isinstance(obj,(int,float, bool)):
+        return True, str(obj)  
+    elif isinstance(obj,(set,list,tuple)): # Then prefer other builtins
         return True, f"<div class='PyRepr'>{obj}</div>"
     
     # If Code object given

@@ -95,7 +95,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def _make_sure_title(self):
         if '0' not in self.__slides_dict:
             with capture_output() as captured:
-                write(how_to_slide)
+                self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
                 
             self.__slides_dict['0'] = captured
 

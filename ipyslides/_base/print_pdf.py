@@ -12,6 +12,7 @@ from PIL import ImageGrab
 import matplotlib.pyplot as plt
 
 from ..writers import write
+from ..extended_md import parse_xmd
 from . import intro
 
 
@@ -44,7 +45,7 @@ class PdfPrint:
         with self.widgets.outputs.intro:
             self.widgets.outputs.intro.clear_output(wait=True)
             self.set_print_settings(**print_settings)
-            write(intro.instructions) 
+            parse_xmd(intro.instructions) 
         self.widgets._push_toast(f'See Screenshot of your selected bbox = {bbox} 👇')
         
     @contextmanager

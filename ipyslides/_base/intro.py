@@ -22,35 +22,53 @@ how_to_slide = ('''# Creating Slides
     - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
     - `%%slide integer -m` can be used to create slide from full markdown (extended one).
     - You can use context managers like `with ls.slide(): ...` and `with ls.title(): ...` in place of `%%slide` and `%%title` respectively.
+
+<style>
+.lang-name { display:none !important }
+</style>
 ```python
-#------------ Cell 1 --------------------
 import ipyslides as isd 
-ls = isd.LiveSlides(**settings_kwargs)
+ls = isd.LiveSlides()
 ls.settings.set_animation('zoom') 
-#------------ Cell 2 --------------------
+```
+```python
 %%title
 # create a rich content title page
-#------------ Cell 3 --------------------
+```
+```python
 %%slide 1
 # slide 1 content
-#------------ Cell 4 --------------------
+```
+```python
 %%slide 1 -m # new in 1.4.6
-Markdown here with extended options. Nested blocks are not supported
-    ```multicol 30 70
-    less content
-    +++
-    more content
-    ```
-    ```python run source
-    x = 1 + 2
-    ls.write([x, source])
-    ```
-{{source}} will be shown in start here as well. Only variables are supported
-#------------ Cell 5 --------------------
+**Markdown here with extended options. Nested blocks are not supported**
+ ```multicol 30 70 .Success
+ less content
+ +++
+ more content
+ ```
+```
+**Markdown here with extended options. Nested blocks are not supported**
+```multicol 30 70 .Success
+less content
++++
+more content
+```
+```python run source
+x = 1 + 2
+print(x) # will be printed on slide in somehwewere top as print appears first of all. 
+# Use `ls.print_context():  print()` to see at exactly where it is printed.
+```
+There is a python block above with header `python run source`. We can display that block by  &lcub;&lcub;source&rcub;&rcub; as below:
+{{source}} 
+
+variable `x` defined there is shown here x = {{x}}. Only variables can be embeded in &lcub;&lcub;var&rcub;&rcub;, not expressions.
+```python
 @ls.frames(1,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)
-#------------ Cell 6 --------------------
+```
+```python
 ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
 
@@ -58,7 +76,7 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
     - Slides are added in order of content.
     - Slides should be separated by `---` (three dashes) in start of line.
     - You can add more slides besides created ones or modify existing ones using `ls.md_content`:
-```python
+```python .rrt
 ls.from_markdown(path)
 with ls.slide(2):
     write(ls.md_content[2]) # write content of slide 2 from file

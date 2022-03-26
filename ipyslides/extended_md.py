@@ -34,18 +34,28 @@ class _ExtendedMarkdown(Markdown):
         self.extensions = _md_extensions
         super().__init__(extensions = self.extensions)
         self._display_inline = False
+    
+    def _extract_class(self, header):
+        out = header.split('.')
+        if len(out) == 1:
+            return out[0].strip(), ''
+        return out[0].strip(), out[1].strip()
         
-    def parse(self, md_str, display_inline = False):
+    def parse(self, xmd, display_inline = False):
         """Return a string after fixing markdown and code/multicol blocks if display_inline is False
         Else displays objects and execute python code from '```python run source_var_name' block.
         
         New in 1.4.5
         """
         self._display_inline = display_inline # Must chnage here
-        new_str = md_str.split('```') # Split by code blocks
+        
+        if xmd[:3] == '```': # Could be a block just in start of file or string
+            xmd = '\n' + xmd
+            
+        new_strs = xmd.split('\n```') # This avoids nested blocks and it should be
         collect = ''
-        if len(new_str) > 1:
-            for i, section in enumerate(new_str):
+        if len(new_strs) > 1:
+            for i, section in enumerate(new_strs):
                 if i % 2 == 0:
                     out = self._sub_vars(self.convert(section))
                     if display_inline:
@@ -60,7 +70,7 @@ class _ExtendedMarkdown(Markdown):
                         collect += out
             return collect
         else:
-            out = self._sub_vars(self.convert(new_str[0]))
+            out = self._sub_vars(self.convert(new_strs[0]))
             if display_inline:
                 display(_HTML(out))
             else:
@@ -68,22 +78,23 @@ class _ExtendedMarkdown(Markdown):
     
     def _parse_block(self, block):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
-        line, data = block.split('\n',1)
+        header, data = block.split('\n',1)
+        line, _class = self._extract_class(header)
         if 'multicol' in line:
-            return self._sub_vars(self._parse_multicol(data, line.strip()))
+            return self._sub_vars(self._parse_multicol(data, line, _class))
         elif 'python' in line:
-            return self._parse_python(data, line.strip())
+            return self._parse_python(data, line, _class)
         else:
             language = line.strip() if line.strip() else 'text' # If no language, assume
             name = ' ' if language == 'text' else None # If no language or text, don't show name
-            return highlight(data,language = language, name = name, className=None).value # no need to highlight with className separately     
+            return highlight(data,language = language, name = name, className = _class).value # no need to highlight with className separately     
         
-    def _parse_multicol(self, data, header):
-        "Returns parsed block or columns or code, input is without ``` but includes langauge name."
+    def _parse_multicol(self, data, header, _class):
+        "Returns parsed block or columns or code, input is without \`\`\` but includes langauge name."
         cols = data.split('+++') # Split by columns
         cols = [self.convert(col) for col in cols] 
         if len(cols) == 1:
-            return cols[0] # Single as is
+            return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]
         
         if header.strip() == 'multicol':
             widths = [f'{int(100/len(cols))}%' for _ in cols]
@@ -102,18 +113,18 @@ class _ExtendedMarkdown(Markdown):
             {col}
         </div>""" for col,w in zip(cols,widths)])
         
-        return f'<div class="columns">{cols}\n</div>'
+        return f'<div class="columns {_class}">{cols}\n</div>'
     
-    def _parse_python(self, data, header):
+    def _parse_python(self, data, header, _class):
         # if inside some writing command, do not run code at all
         if len(header.split()) > 3:
             raise ValueError(f'Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name')
         dedent_data = textwrap.dedent(data)
         if self._display_inline == False or header.lower() == 'python': # no run given
-            return highlight(dedent_data,language = 'python', className=None).value
+            return highlight(dedent_data,language = 'python', className = _class).value
         elif 'run' in header and self._display_inline: 
             source = header.split('run')[1].strip() # Afte run it be source variable
-            _source_out = _str2code(dedent_data,language='python',className=None)
+            _source_out = _str2code(dedent_data,language='python',className = _class)
             
             if source:
                 get_ipython().user_ns[source] = _source_out
@@ -161,6 +172,9 @@ def parse_xmd(extended_markdown, display_inline = True):
         # This will not be executed, only shown
         ```
 
+    Each block can have a class name (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess`.
+    For example, `python .friendly` will be highlighted with friendly theme from pygments.
+    Pygments themes, however, are not supported with `multicol`.
     Note: Nested blocks are not supported.
     New in 1.4.6
     """

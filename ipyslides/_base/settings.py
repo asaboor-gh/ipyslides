@@ -9,6 +9,7 @@ from IPython import get_ipython
 from IPython.display import display, Image
 from ..writers import write
 from ..formatter import fix_ipy_image, code_css
+from ..extended_md import parse_xmd
 from ..utils import set_dir, html
 from . import scripts, intro, styles
 
@@ -57,7 +58,7 @@ class LayoutSettings:
         self.__add_js()
         self._instructions.clear_output(wait=True) # This make sure that instructions are not duplicated
         with self._instructions:
-            write(intro.instructions)
+            parse_xmd(intro.instructions, display_inline = True)
             
     def set_animation(self,name):
         "Set animation style or pass None to disable animation."
