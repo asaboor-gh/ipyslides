@@ -251,6 +251,13 @@ class BaseLiveSlides:
         
         self.progress_slider.index = 0 # back to title
         return self
+    
+    def display_html(self):
+        # Bring display_mardown here, with filtered CSS and print one. Columns should go inlined.
+        # Deprecate display_markdown
+        # Add SlideArea div at end. and filter CSS according to that, so that slides and document both
+        # look what they should look like.
+        pass
 
 def _parse_md_file(fp):
     "Parse a Markdown file or StringIO to put in slides and returns text for title and each slide."

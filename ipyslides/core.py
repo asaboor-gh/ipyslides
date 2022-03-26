@@ -479,6 +479,9 @@ class LiveSlides:
     
     > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
     
+    Aynthing with class name 'Extra' will not be displayed on slides, but appears in document when `LiveSlides.display_html` is called.
+    This is useful to fill-in content in document that is not required in slides.
+    
     > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
     """
     def __new__(cls,
@@ -506,4 +509,5 @@ class LiveSlides:
         return _private_instance
     
     # No need to define __init__, __new__ is enough to show signature and docs
+    
     

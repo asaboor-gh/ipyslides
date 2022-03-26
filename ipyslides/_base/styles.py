@@ -573,6 +573,7 @@ animations['slide'] = animations['slide_h']# Backward compatibility
 
 main_layout_css = '''
 .SlidesWrapper .SlideArea { align-items: center;}
+.SlidesWrapper .SlideArea .Extra {display:none !important;}
 a.jp-InternalAnchorLink { display: none !important;}
 .widget-inline-hbox .widget-readout  { min-width:auto !important;}
 .jupyterlab-sidecar .SlidesWrapper,
