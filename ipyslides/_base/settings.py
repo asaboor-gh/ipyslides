@@ -162,7 +162,10 @@ class LayoutSettings:
         
     def _update_theme(self,change=None): 
         text_size = '{}px'.format(int(self.font_scale*16))
-        if self.theme_dd.value == 'Custom': # In case of Custom CSS
+        
+        if self.theme_dd.value != 'Custom':
+            theme_css =  styles.style_html(styles.theme_roots[self.theme_dd.value])
+        else: # In case of Custom CSS
             with set_dir(get_ipython().starting_dir):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
@@ -170,9 +173,7 @@ class LayoutSettings:
                 else: # Read CSS from file otherwise
                     with open('custom.css','r') as f:
                         theme_css = ''.join(f.readlines())
-        else:
-            theme_css =  styles.style_html(styles.theme_roots[self.theme_dd.value])
-            
+                 
         # Replace font-size and breakpoint size
         theme_css = theme_css.replace(
                         '__text_size__',text_size).replace(

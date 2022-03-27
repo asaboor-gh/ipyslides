@@ -8,6 +8,9 @@ from .print_pdf import PdfPrint
 from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
+from .report_template import doc_html, doc_css
+
+from ..formatter import code_css
 
 class BaseLiveSlides:
     def __init__(self):
@@ -235,7 +238,7 @@ class BaseLiveSlides:
         with self.slide(8):
             self.write('## Highlighting Code')
             with self.source.context() as s:
-                self.write(('You can **highlight**{.Error} code using `highlight` function or within markdown like this: '
+                self.write(('You can **highlight**{.Error} code using `highlight` function or within markdown like this: \n'
                         '```python\n'
                         'import ipyslides as isd\n```\n'
                         '```javascript\n'
@@ -252,12 +255,37 @@ class BaseLiveSlides:
         self.progress_slider.index = 0 # back to title
         return self
     
-    def display_html(self):
-        # Bring display_mardown here, with filtered CSS and print one. Columns should go inlined.
-        # Deprecate display_markdown
-        # Add SlideArea div at end. and filter CSS according to that, so that slides and document both
-        # look what they should look like.
-        pass
+    def build_report(self, path = 'report.html', page_size = 'letter', allow_non_html_repr = True, text_font = 'sans-serif',code_font = 'monospace'):
+        """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
+        Use 'overrides.css' file in same folder to override CSS.
+        Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
+        """
+        content = ''
+        for item in self.slides:
+            for out in item.slide.outputs:
+                content += '<section>'
+                if 'text/html' in out.data:
+                    content += out.data['text/html']
+                elif allow_non_html_repr:
+                    if 'text/plain' in out.data:
+                        content += out.data['text/plain']
+                    else:
+                        content += 'No HTML or text for this object'
+                content += '</section>'
+        
+        content  = content.replace('<section></section>','') # Remove empty sections
+        
+        __style_css__ = doc_css.replace('__textfont__', f'"{text_font}"').replace('__codefont__', f'"{code_font}"')
+        html = doc_html.replace(
+            '__page_size__',page_size).replace(
+            '__code_css__', code_css(background = 'none')).replace(
+            '__style_css__', __style_css__).replace(
+            '__content__', content)
+        
+        # Save now
+        _path = path.split('.')[0] + '.html' if path != 'report.html' else path
+        with open(_path,'w') as f:
+            f.write(html)
 
 def _parse_md_file(fp):
     "Parse a Markdown file or StringIO to put in slides and returns text for title and each slide."

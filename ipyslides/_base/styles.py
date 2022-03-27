@@ -145,11 +145,13 @@ def style_html(style_root = theme_roots['Inherit']):
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
-.SlidesWrapper *:not(.fa):not(i):not(span) { /* Do not edit __textfont__, code does this. */
+.SlidesWrapper *:not(.fa):not(i):not(span),
+.SlideArea *:not(.fa):not(i):not(span){ /* Do not edit __textfont__, code does this. */
    font-family: __textfont__, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
 }
 
-.SlidesWrapper code>span { /* Do not edit __codefont__, code does this. */
+.SlidesWrapper code>span,
+.SlideArea code>span { /* Do not edit __codefont__, code does this. */
    font-family: __codefont__, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
    font-size: 90% !important;
 }
@@ -290,7 +292,7 @@ def style_html(style_root = theme_roots['Inherit']):
 
 div.highlight {
     min-width: 100% !important;
-    witdh: 100% !important;
+    width: 100% !important;
     max-width: 100vw !important;
     box-sizing: border-box !important;
     overflow: auto !important;
@@ -364,12 +366,13 @@ span.lang-name {
     color: var(--accent-color);
     font-size: 0.8em;
 }
-.SlidesWrapper div.PyRepr {
+.SlideArea div.PyRepr {
     margin: 4px !important;
     white-space:pre !important;
     max-height: 400px;
     height: auto !important;
     overflow: auto !important;
+    overflow-wrap: break-word !important;
 }
 
 /* Docs have Python code only, so no need to have fancy things there */
@@ -573,7 +576,7 @@ animations['slide'] = animations['slide_h']# Backward compatibility
 
 main_layout_css = '''
 .SlidesWrapper .SlideArea { align-items: center;}
-.SlidesWrapper .SlideArea .Extra {display:none !important;}
+.SlidesWrapper .SlideArea .report-only {display:none !important;}
 a.jp-InternalAnchorLink { display: none !important;}
 .widget-inline-hbox .widget-readout  { min-width:auto !important;}
 .jupyterlab-sidecar .SlidesWrapper,
@@ -623,7 +626,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     pre, .SlideBox, .SlidesWrapper, .SlideArea {
         height: auto !important;
     }
-    .SlidesWrapper div.highlight, .SlidesWrapper div.PyRepr {
+    .SlidesWrapper div.highlight, .SlideArea div.PyRepr {
         max-height:auto !important; /* Flow itself */
     }
     .SlideArea {

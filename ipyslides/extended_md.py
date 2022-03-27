@@ -159,7 +159,7 @@ def parse_xmd(extended_markdown, display_inline = True):
         # If no var_name, code will be executed without assigning it to any variable
         import numpy as np
         ```
-        # Normal Markdown {.Extra}
+        # Normal Markdown {.report-only}
         ```multicol 40 60
         # First column is 40% width
         If 40 60 was not given, all columns will be of equal width
@@ -175,7 +175,7 @@ def parse_xmd(extended_markdown, display_inline = True):
     Each block can have a class name (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess`.
     For example, `python .friendly` will be highlighted with friendly theme from pygments.
     Pygments themes, however, are not supported with `multicol`.
-    Aynthing with class name 'Extra' will not be displayed on slides, but appears in document when `LiveSlides.display_html` is called.
+    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.display_html` is called.
     
     Note: Nested blocks are not supported.
     New in 1.4.6
