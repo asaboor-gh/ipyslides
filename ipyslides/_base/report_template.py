@@ -24,7 +24,7 @@ doc_html = '''<!DOCTYPE html>
     MathJax.Hub.Config({
         tex2jax: {
             inlineMath: [ ["$","$"] ],
-            displayMath: [ ["$$","$$"], ["\\[","\\]"] ],
+            displayMath: [ ["$$","$$"] ],
             processEscapes: true,
             processEnvironments: true
         },
@@ -66,10 +66,9 @@ body {
     color: var(--primary-fg, black);
     width: 216mm;
     margin: 10mm auto;
+    padding: 18mm 15mm 15mm 18mm;
 }
-body > div {
-    padding: 15mm 15mm 15mm 18mm;
-}
+
 h1,h2,h3,h4,h5,h6 { color: var(--accent-color, black); }
 body div.highlight, body div.highlight pre {
     width: 100% !important;
@@ -87,32 +86,7 @@ div.columns > div[style*="width:"] {
     max-width:100% !important;
 }
 .slides-only {display:none !important;}
-@page {
-    size: __page_size__;
-    margin-top: 18mm !important;
-    margin-bottom: 15mm !important;
-}
-@page:first {
-    margin-top: 3mm !important; /* already 15mm padding */
-}
-@media print {
-    body {
-        margin: 0;
-    }
-    code, span, figure, img, svg, .zoom-container { 
-        page-break-inside: avoid !important; 
-    }
-    ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
-    div.highlight, pre, div.PyRepr {
-        height:auto;
-        max-height: auto !important; 
-        overflow-wrap: break-word !important; 
-    }
-    section:first-child {page-break-after: always;margin: auto 0 !important;}
-    table { page-break-inside:auto; }
-    tr    { page-break-inside:avoid; page-break-after:auto; }
-    h1,h2,h3,h4 { page-break-before : auto; page-break-after : avoid !important; }
-}
+
 .Content-Area .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
     line-height: 0.75em !important;
@@ -366,6 +340,39 @@ div.zoom-container > * {
 .Content-Area .block {
     background: var(--primary-bg);
     border-radius: 4px;
+}
+
+@page {
+    size: __page_size__;
+    margin-top: 18mm !important;
+    margin-bottom: 15mm !important;
+}
+@page:first {
+    margin-top: 0mm !important; /* already 18mm padding */
+}
+@media print {
+    body {
+        margin: 0;
+        display: table;
+        table-layout: fixed;
+        padding-top: 18mm;
+        padding-bottom: 18mm;
+        height: auto;
+    }
+    code, span, figure, img, svg, .zoom-container, blockquote { 
+        page-break-inside: avoid !important; 
+    }
+    ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
+    div.highlight, pre, div.PyRepr {
+        height:auto;
+        max-height: auto !important; 
+        overflow-wrap: break-word !important; 
+    }
+    section:first-child {page-break-after: always;margin: auto 0 !important;}
+    table { page-break-inside:auto; }
+    tr    { page-break-inside:avoid; page-break-after:auto; }
+    h1,h2,h3,h4 { page-break-before : auto !important; page-break-after : avoid !important; page-break-inside : avoid !important; }
+    
 }
 </style>
 '''

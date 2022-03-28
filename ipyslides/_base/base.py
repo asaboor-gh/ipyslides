@@ -66,6 +66,8 @@ class BaseLiveSlides:
         className = 'Success'           Green Text
         className = 'Error'             Red Text
         className = 'Note'              Text with info icon
+        className = 'slides-only'       Text will not appear in exported html with `build_report`
+        className = 'report-only'       Text will not appear on slides. Useful to fill content in report. 
         ''')
 
     
@@ -246,24 +248,25 @@ class BaseLiveSlides:
                 self.iwrite(s)
         
         with self.slide(9):
-            self.write('## Loading from File/Other Contexts')
+            self.write('## Loading from/to File/Other Contexts')
             self.write('You can parse and view a markdown file with `ipyslides.display_markdown` as well. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
             self.write([self.doc(self.from_markdown,'LiveSlides'), 
                         self.doc(self.demo,'LiveSlides'), 
-                        self.doc(self.load_docs,'LiveSlides')])
+                        self.doc(self.load_docs,'LiveSlides'),
+                        self.doc(self.build_report,'LiveSlides')])
         
         self.progress_slider.index = 0 # back to title
         return self
     
-    def build_report(self, path = 'report.html', page_size = 'letter', allow_non_html_repr = True, text_font = 'sans-serif',code_font = 'monospace'):
+    def build_report(self, path = 'report.html', page_size = 'letter', allow_non_html_repr = False, text_font = 'sans-serif',code_font = 'monospace'):
         """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
         Use 'overrides.css' file in same folder to override CSS.
         Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
         """
         content = ''
         for item in self.slides:
+            content += '<section>' # section for each slide
             for out in item.slide.outputs:
-                content += '<section>'
                 if 'text/html' in out.data:
                     content += out.data['text/html']
                 elif allow_non_html_repr:
@@ -271,7 +274,7 @@ class BaseLiveSlides:
                         content += out.data['text/plain']
                     else:
                         content += 'No HTML or text for this object'
-                content += '</section>'
+            content += '</section>'
         
         content  = content.replace('<section></section>','') # Remove empty sections
         
