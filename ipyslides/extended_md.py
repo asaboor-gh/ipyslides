@@ -47,7 +47,11 @@ class _ExtendedMarkdown(Markdown):
         
         New in 1.4.5
         """
-        self._display_inline = display_inline # Must chnage here
+        self._display_inline = display_inline # Must change here
+        def collect_or_display(parsed_md):
+            if self._display_inline:
+                display(parsed_md)
+            return '' if self._display_inline else parsed_md
         
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
@@ -58,23 +62,14 @@ class _ExtendedMarkdown(Markdown):
             for i, section in enumerate(new_strs):
                 if i % 2 == 0:
                     out = self._sub_vars(self.convert(section))
-                    if display_inline:
-                        display(_HTML(out))
-                    else:
-                        collect += out
+                    collect += collect_or_display(out)
                 else:
                     out = self._parse_block(section) # vars are substituted already inside
-                    if display_inline and out:
-                        display(_HTML(out))
-                    elif out: # Do not collect None
-                        collect += out
+                    collect += collect_or_display(out)
             return collect
         else:
             out = self._sub_vars(self.convert(new_strs[0]))
-            if display_inline:
-                display(_HTML(out))
-            else:
-                return out
+            return collect_or_display(out)
     
     def _parse_block(self, block):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
@@ -134,7 +129,9 @@ class _ExtendedMarkdown(Markdown):
             return '' # string should be, not None
     
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as {{var}}"
+        "Substitute variables in html_output given as {{var}}, and two inline columns as ||C1||C2||"
+    
+        # Replace variables first 
         all_matches = re.findall(r'\{\{(.*?)\}\}', html_output)
         # only have python vars here, security is an issue for expressions
         for match in all_matches:
@@ -146,6 +143,14 @@ class _ExtendedMarkdown(Markdown):
                     html_output = html_output.replace('{{' + match + '}}', stringify(var), 1)
             except Exception as e:
                 raise e
+        
+        # Replace columns after vars, so not to format their brackets
+        all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output)
+        for cols in all_cols:
+            _cols = ''.join(f'<div stye="width:50%;">{c}</div>' for c in cols)
+            _out = f'<div class="columns">{_cols}</div>'
+            html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
+        
         return html_output # return in main scope
             
 

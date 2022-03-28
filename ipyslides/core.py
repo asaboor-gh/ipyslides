@@ -49,6 +49,8 @@ class _PrivateSlidesClass(BaseLiveSlides):
         with suppress(Exception): # Avoid error when using setuptools to install
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
+            self.shell.register_magic_function(self.notes.insert, magic_kind='line',magic_name='notes')
+            self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
             self.user_ns = self.shell.user_ns #important for set_dir
         
         self._citations = {} # Initialize citations
@@ -358,6 +360,17 @@ class _PrivateSlidesClass(BaseLiveSlides):
                 parse_xmd(cell, display_inline = True)
             else:
                 self.shell.run_cell(cell)
+    
+    def __xmd(self, line, cell = None):
+        """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown. 
+        Can use in place of `write` commnad for strings.
+        When using `%xmd`, variables should be `{var}`, not `{{var}}`.
+        Inline columns are supported with ||C1||C2|| syntax."""
+        if cell is None:
+            parse_xmd(line, display_inline = True)
+        else:
+            parse_xmd(cell, display_inline = True)
+        return '' # To avoid showing None in output
             
     @contextmanager
     def title(self,**css_props):
