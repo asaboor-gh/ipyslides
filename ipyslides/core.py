@@ -492,12 +492,14 @@ class LiveSlides:
     ```
     
     Instead of builtin `print` in slides use following to display printed content in correct order.
-    In version 1.4.9+ builtin `print` is overridden, but you still need context manager to handle functions that print internally.
     ```python
     with ls.print_context():
         print('something')
         function_that_prints_something()
     ```
+    In version 1.4.9+ builtin `print` is overridden, but you still need context manager to handle functions that print internally.
+    If `object.__str__` has HTML representation, it will be displayed as HTML rather than plain text inside this modified `print`.
+    You can override it by setting `print = __builtin__.print` after initializing `LiveSlides` instance.
     
     > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
     
