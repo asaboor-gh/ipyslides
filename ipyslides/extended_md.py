@@ -21,6 +21,7 @@ import textwrap, re
 from markdown import Markdown
 from IPython.core.display import display
 from IPython import get_ipython
+from IPython.utils.capture import capture_output
 
 from .formatter import _HTML, highlight, stringify
 from .source import _str2code
@@ -34,6 +35,7 @@ class _ExtendedMarkdown(Markdown):
         self.extensions = _md_extensions
         super().__init__(extensions = self.extensions)
         self._display_inline = False
+        self._run_code = False
     
     def _extract_class(self, header):
         out = header.split('.')
@@ -41,48 +43,57 @@ class _ExtendedMarkdown(Markdown):
             return out[0].strip(), ''
         return out[0].strip(), out[1].strip()
         
-    def parse(self, xmd, display_inline = False):
+    def parse(self, xmd, display_inline = False, rich_outputs = False):
         """Return a string after fixing markdown and code/multicol blocks if display_inline is False
         Else displays objects and execute python code from '```python run source_var_name' block.
+        Precedence of content return/display is:
+        rich_outputs = True > display_inline = True > parsed_html_string
         
         New in 1.4.5
         """
         self._display_inline = display_inline # Must change here
-        def collect_or_display(parsed_md):
-            if self._display_inline:
-                display(parsed_md)
-            return '' if self._display_inline else parsed_md
-        
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
             
         new_strs = xmd.split('\n```') # This avoids nested blocks and it should be
-        collect = ''
+        outputs =[]
         if len(new_strs) > 1:
             for i, section in enumerate(new_strs):
                 if i % 2 == 0:
                     out = self._sub_vars(self.convert(section))
-                    collect += collect_or_display(out)
+                    outputs.append(_HTML(out))
                 else:
-                    out = self._parse_block(section) # vars are substituted already inside
-                    collect += collect_or_display(out)
-            return collect
+                    outputs.extend(self._parse_block(section)) # vars are substituted already inside
         else:
             out = self._sub_vars(self.convert(new_strs[0]))
-            return collect_or_display(out)
+            outputs.append(_HTML(out))
+        
+        if rich_outputs:
+            return outputs
+        elif display_inline:
+            display(*outputs)
+        else:
+            content = ''
+            for out in outputs:
+                try:
+                    content += out.value # HTML
+                except:
+                    content += out.data['text/html'] # Rich content from python execution
+            return content
+            
     
     def _parse_block(self, block):
-        "Returns parsed block or columns or code, input is without ``` but includes langauge name."
+        "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
         header, data = block.split('\n',1)
         line, _class = self._extract_class(header)
         if 'multicol' in line:
-            return self._sub_vars(self._parse_multicol(data, line, _class))
+            return [_HTML(self._sub_vars(self._parse_multicol(data, line, _class))),]
         elif 'python' in line:
-            return self._parse_python(data, line, _class)
+            return self._parse_python(data, line, _class) # itself list
         else:
             language = line.strip() if line.strip() else 'text' # If no language, assume
             name = ' ' if language == 'text' else None # If no language or text, don't show name
-            return highlight(data,language = language, name = name, className = _class).value # no need to highlight with className separately     
+            return [highlight(data,language = language, name = name, className = _class),] # no need to highlight with className separately     
         
     def _parse_multicol(self, data, header, _class):
         "Returns parsed block or columns or code, input is without \`\`\` but includes langauge name."
@@ -112,21 +123,22 @@ class _ExtendedMarkdown(Markdown):
     
     def _parse_python(self, data, header, _class):
         # if inside some writing command, do not run code at all
+        shell = get_ipython()
         if len(header.split()) > 3:
             raise ValueError(f'Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name')
         dedent_data = textwrap.dedent(data)
         if self._display_inline == False or header.lower() == 'python': # no run given
-            return highlight(dedent_data,language = 'python', className = _class).value
+            return [highlight(dedent_data,language = 'python', className = _class),]
         elif 'run' in header and self._display_inline: 
             source = header.split('run')[1].strip() # Afte run it be source variable
             _source_out = _str2code(dedent_data,language='python',className = _class)
             
             if source:
-                get_ipython().user_ns[source] = _source_out
-                
+                shell.user_ns[source] = _source_out 
             # Run Code now
-            get_ipython().run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
-            return '' # string should be, not None
+            with capture_output() as captured:
+                shell.run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
+            return captured.outputs
     
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as {{var}}, and two inline columns as ||C1||C2||"
@@ -147,17 +159,19 @@ class _ExtendedMarkdown(Markdown):
         # Replace columns after vars, so not to format their brackets
         all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output)
         for cols in all_cols:
-            _cols = ''.join(f'<div stye="width:50%;">{c}</div>' for c in cols)
+            _cols = ''.join(f'<div stye="width:50%;">{self.convert(c)}</div>' for c in cols)
             _out = f'<div class="columns">{_cols}</div>'
             html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
         
         return html_output # return in main scope
             
 
-def parse_xmd(extended_markdown, display_inline = True):
+def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
     """Parse extended markdown and display immediately. 
     If you need output html, use display_inline = False but that won't execute python code blocks.
-    
+    Precedence of content return/display is:
+        rich_outputs = True > display_inline = True > parsed_html_string
+        
     You can use the following syntax:
 
         ```python run var_name
@@ -176,6 +190,7 @@ def parse_xmd(extended_markdown, display_inline = True):
         ```python
         # This will not be executed, only shown
         ```
+        || Inline-column A || Inline-column B ||
 
     Each block can have a class name (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess`.
     For example, `python .friendly` will be highlighted with friendly theme from pygments.
@@ -185,6 +200,6 @@ def parse_xmd(extended_markdown, display_inline = True):
     Note: Nested blocks are not supported.
     New in 1.4.6
     """
-    return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline)  
+    return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline, rich_outputs = rich_outputs)  
     
     

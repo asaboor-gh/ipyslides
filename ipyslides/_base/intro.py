@@ -23,9 +23,6 @@ how_to_slide = ('''# Creating Slides
     - `%%slide integer -m` can be used to create slide from full markdown (extended one).
     - You can use context managers like `with ls.slide(): ...` and `with ls.title(): ...` in place of `%%slide` and `%%title` respectively.
 
-<style>
-.lang-name { display:none !important }
-</style>
 ```python
 import ipyslides as isd 
 ls = isd.LiveSlides()

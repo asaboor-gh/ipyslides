@@ -21,13 +21,16 @@ fp = StringIO('\n'.join(how_to_slide) + '''\n---
 ```python run source
 import ipyslides as isd
 version = isd.__version__
+%xmd #### This is inline markdown parsed by magic {.Note .Warning}
 ```
-Version: {{version}} as executed from above code in markdown. 
+Version: {{version}} as executed from below code in markdown. 
+{{source}}
 ---
 # Slide 2 {.Success}
 Created using `%%slide 2 -m` with markdown only
 ```multicol
 # Column A
+||### Sub column A {.Success}||### Sub column B ||
 +++
 # Column B
 ```
@@ -37,7 +40,8 @@ slides.from_markdown(fp) # This will create first slide along with title page.
 
 with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context(style='monokai',background='black',className='Mono') as s:
-        write(slides.md_content[1])
+        slides.parse_xmd(slides.md_content[1])
+        #display(*get_ipython().user_ns['outputs'])
         write('## I am created using `with slides.slide(1)` context( manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
     write(s.focus_lines([0]))  #focus on line 0 
@@ -90,7 +94,7 @@ for i in range(4,8):
         write(__contents[i-4])
         if i == 7:
             with slides.source.context() as s:
-                write([slides.doc(write,'LiveSlides'), slides.doc(iwrite,'LiveSlides')])
+                write([slides.doc(write,'LiveSlides'), slides.doc(iwrite,'LiveSlides'), slides.doc(slides.parse_xmd,'LiveSlides')])
                 write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
             
             write(s.show_lines([0,1]))

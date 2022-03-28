@@ -118,8 +118,16 @@ class BaseLiveSlides:
         # Talk Title
         ---
         # Slide 1 
+        || Inline - Column A || Inline - Column B ||
+        {{some_var}} that will be replaced by it's html value.
         ---
         # Slide 2
+         ```multicol 40 60
+        # Block column 1
+        +++
+        # Block column 2
+        || Mini - Column A || Mini - Column B ||
+         ```
         ```
         This will create two slides along with title page.
         
@@ -194,11 +202,12 @@ class BaseLiveSlides:
         
         with self.slide(2):
             self.write('## Adding Content')
-            self.write('Besides functions below, you can add content to slides with `display(obj)` as well.\n{.Note .Info}')
-            self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides'), self.doc(self.parse_xmd,'LiveSlides')])
+            self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.Note .Info}')
+            self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides'), self.doc(self.parse_xmd,'LiveSlides'),self.doc(self.cite,'LiveSlides')])
         
         with self.slide(3):
             self.write('## Adding Speaker Notes')
+            self.write('You can use line magic `%notes` to add notes as well.\n{.Note .Success}')
             for item in [getattr(self.notes,a) for a in dir(self.notes) if not a.startswith('_')]:
                 with suppress(Exception):
                     self.write(self.doc(item,'LiveSlides.notes'))

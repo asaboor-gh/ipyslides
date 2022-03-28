@@ -14,7 +14,7 @@ from .extended_md import parse_xmd
 def _fix_repr(obj):
     "should return a string"
     if isinstance(obj,str):
-        return parse_xmd(obj, display_inline= False)
+        return parse_xmd(obj, display_inline= False, rich_outputs=False)
     else:
         return stringify(obj)
     

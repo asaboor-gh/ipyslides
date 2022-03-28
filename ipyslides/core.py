@@ -324,7 +324,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         
         with self.slide(int(line[0])):
             if '-m' in line[1:]:
-                parse_xmd(cell, display_inline = True)
+                parse_xmd(cell, display_inline = True, rich_outputs = False)
             else:
                 self.shell.run_cell(cell)
     
@@ -357,20 +357,20 @@ class _PrivateSlidesClass(BaseLiveSlides):
         "Turns to cell magic `title` to capture title"
         with self.slide(0):
             if '-m' in line:
-                parse_xmd(cell, display_inline = True)
+                parse_xmd(cell, display_inline = True, rich_outputs = False)
             else:
                 self.shell.run_cell(cell)
     
     def __xmd(self, line, cell = None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown. 
         Can use in place of `write` commnad for strings.
-        When using `%xmd`, variables should be `{var}`, not `{{var}}`.
+        When using `%xmd`, variables should be `{{{{var}}}}` or `\{\{var\}\}`, not `{{var}}` as IPython 
+        does some formatting to line in magic. If you just need to format it in string, then `{var}` works as well.
         Inline columns are supported with ||C1||C2|| syntax."""
         if cell is None:
-            parse_xmd(line, display_inline = True)
+            return parse_xmd(line, display_inline = True, rich_outputs = False)
         else:
-            parse_xmd(cell, display_inline = True)
-        return '' # To avoid showing None in output
+            return parse_xmd(cell, display_inline = True, rich_outputs = False)
             
     @contextmanager
     def title(self,**css_props):
