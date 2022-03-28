@@ -76,11 +76,10 @@ class _ExtendedMarkdown(Markdown):
             content = ''
             for out in outputs:
                 try:
-                    content += out.value # HTML
+                    content += out.value # _HTML, _Source
                 except:
                     content += out.data['text/html'] # Rich content from python execution
             return content
-            
     
     def _parse_block(self, block):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."

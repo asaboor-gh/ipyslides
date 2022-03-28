@@ -77,6 +77,14 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self._box =  self.widgets.mainbox
         self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
+        
+        # Override print function to display in slides
+        def inline_print(*args, **kwargs):
+            "Returns a display object to be inline with others. args and kwargs are passed to builtin print."
+            with self.print_context():
+                print(*args, **kwargs)
+            
+        self.shell.user_ns['print'] = inline_print
     
     def _check_computed(self, what_cannot_do):
         if self._computed_display:
@@ -343,7 +351,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self._current_slide = f'{slide_number}'
         with capture_output() as cap:
             self.__insert_slide_css(**css_props)
-            yield
+            yield cap # Useful to use later
         # Now Handle What is captured
         if not self.__slides_mode:
             cap.show()
@@ -376,8 +384,8 @@ class _PrivateSlidesClass(BaseLiveSlides):
     def title(self,**css_props):
         """Use this context manager to write title.
         `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
-        with self.slide(0, **css_props):
-            yield
+        with self.slide(0, **css_props) as s:
+            yield s # Useful to use later
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto', **css_props):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
@@ -484,6 +492,7 @@ class LiveSlides:
     ```
     
     Instead of builtin `print` in slides use following to display printed content in correct order.
+    In version 1.4.9+ builtin `print` is overridden, but you still need context manager to handle functions that print internally.
     ```python
     with ls.print_context():
         print('something')

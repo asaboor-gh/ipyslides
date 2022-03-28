@@ -120,6 +120,10 @@ class BaseLiveSlides:
         # Slide 1 
         || Inline - Column A || Inline - Column B ||
         {{some_var}} that will be replaced by it's html value.
+         ```python run source
+         # code here will be executed and it's output will be shown in slide.
+         ```
+         {{source}} from above code block will be replaced by it's html value.
         ---
         # Slide 2
          ```multicol 40 60
