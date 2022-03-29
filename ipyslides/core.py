@@ -52,6 +52,14 @@ class _PrivateSlidesClass(BaseLiveSlides):
             self.shell.register_magic_function(self.notes.insert, magic_kind='line',magic_name='notes')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
             self.user_ns = self.shell.user_ns #important for set_dir
+            
+            # Override print function to display in order in slides
+            def _print(*args, **kwargs):
+                "Returns a display object to be inline with others. args and kwargs are passed to builtin print."
+                with self.print_context():
+                    __builtins__.print(*args, **kwargs)
+            
+            self.shell.user_ns['print'] = _print
         
         self._citations = {} # Initialize citations
         self.__slides_mode = True # Default is slides mode since it is more intuitive
@@ -77,14 +85,6 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self._box =  self.widgets.mainbox
         self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
-        
-        # Override print function to display in order in slides
-        def _print(*args, **kwargs):
-            "Returns a display object to be inline with others. args and kwargs are passed to builtin print."
-            with self.print_context():
-                __builtins__.print(*args, **kwargs)
-            
-        self.shell.user_ns['print'] = _print
     
     def _check_computed(self, what_cannot_do):
         if self._computed_display:
