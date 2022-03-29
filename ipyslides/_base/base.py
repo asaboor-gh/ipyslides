@@ -272,22 +272,27 @@ class BaseLiveSlides:
     
     def build_report(self, path = 'report.html', allow_non_html_repr = False, * , as_slides = False, page_size = 'letter', text_font = 'sans-serif',code_font = 'monospace'):
         """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
-        Use `as_slides = True` (> 1.5.0) to build static HTML slides. Widgets, again, are not exportable. Other options are ignored in this case.
-        Use 'overrides.css' file in same folder to override CSS styles.
-        Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
+        - allow_non_html_repr: if True, then non-html representation of the slides like text/plain will be used in report, but not in slides.
+        - Use `as_slides = True` (> 1.5.0) to build static HTML slides. Widgets, again, are not exportable. Other options are ignored in this case and only HTML objects are taken.
+        - Use 'overrides.css' file in same folder to override CSS styles.
+        - Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
+        - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
+        - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
         """
         content = ''
         for item in self.slides:
-            content += '<section><div class="SlideArea">' if as_slides else '<section>' # section for each slide
+            _html = ''
             for out in item.slide.outputs:
                 if 'text/html' in out.data:
-                    content += out.data['text/html']
-                elif allow_non_html_repr:
+                    _html += out.data['text/html']
+                elif allow_non_html_repr and as_slides == False:
                     if 'text/plain' in out.data:
-                        content += out.data['text/plain']
+                        _html += out.data['text/plain']
                     else:
-                        content += f'<{out.__module__}.{out.__class__.__name__} object at {hex(id(out))}> has no "text/html", "text/plain" representation.'
-            content += '</div></section>' if as_slides else '</section>'
+                        _html += f'<p style="color:red;">Object at {hex(id(out))} has no text/HTML representation.</p>'  
+            if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
+                content += (f'<section><div class="SlideArea">{_html}</div></section>' 
+                            if as_slides else f'<section>{_html}</section>')
         
         __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.widgets.htmls.theme.value) + slides_css # Column break width
                             if as_slides else doc_css.replace(

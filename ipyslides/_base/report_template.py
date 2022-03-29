@@ -412,9 +412,49 @@ section .SlideArea {
 	margin: auto !important;
 	padding: 1em !important;
 }
+
 @media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    @page {
+        size: letter landscape;
+        margin-top: 0 !important;
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    .SlidesWrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: auto !important;
+    }
+    section {
+        display: grid !important;
+        margin: 0 !important;
+        page-break-inside: avoid !important;
+        page-break-after: always !important;
+    }
+    section:last-of-type {
+        page-break-after: avoid !important;
+    }
+    section .SlideArea {
+        height: auto !important;
+        max-height: 100% !important;
+        box-sizing: border-box;
+        overflow: hidden !important;
+        max-width: 100% !important;
+        margin: auto !important;
+        page-break-inside: avoid !important;
+    }
     ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
-    /* It is a fixed page, no need to tweak other things */
 }
 </style>
 """

@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.5.0
+> pip install ipyslides >= 1.5.1
 ```
 For development install, clone this repository and then
 ```shell
@@ -104,11 +104,13 @@ can be included in `iwrite` command. `iwrite` also renders other objects except 
 - Slides in Jupyter Lab are theme aware in `Inherit` theme mode, so theme of slides changes based on editor theme.
 
 # PDF printing
+To include all type of objects you need to make PDF manually.
 Read instructions in side panel about PDF printing. See [PDF-Slides](IPySlides-Print.pdf)
+If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bokeh` charts etc. and not something like `ipywidgets`, see next section.
 # HTML/PDF Report [HTML Slides in 1.5.0+]
 - You can create beautiful HTML/PDF report from slides using `ls.build_report`. See [PDF-Report](IPySlides-Report.pdf)
 - You can use CSS classes `.report-only` and `.slides-only` to create different content for both sceberios. Content variety is limited. Widgets can not be exported. 
-- Use as_slides = True to build static slides (1.5.0 +). Widgets are not exported. See [HTML-Slide](slide.html)
+- Use `as_slides = True` to build static slides (1.5.0 +) that you can print as well. Widgets are not exported. See [HTML-Slide](slide.html)
 # Speaker Notes (1.2.0+) (Experimental)
 - You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `ls.notes.insert` (`ls.notes` in < 1.2.1) command. 
 - Notes is an experimantal feuture, so use at your own risk. Do not share full screen, share a brwoser tab for slides and you can keep notes hidden from audience this way. 
