@@ -5,11 +5,11 @@ theme_roots = {
 'Inherit': ''':root {
 	--heading-fg: var(--jp-inverse-layout-color1,navy);
 	--primary-fg:  var(--jp-inverse-layout-color0,black);
-	--primary-bg: var(--jp-layout-color0,#cad3d3);
-	--secondary-bg:var(--jp-layout-color2,#dce5e7);
+	--primary-bg: var(--jp-layout-color0,white);
+	--secondary-bg:var(--jp-layout-color2,whitesmoke);
 	--secondary-fg: var(--jp-inverse-layout-color4,#454545);
-	--tr-odd-bg: var(--jp-layout-color2,#e6e7e1);
-	--tr-hover-bg:var(--jp-border-color1,lightblue);
+	--tr-odd-bg: var(--jp-layout-color2,whitesmoke);
+	--tr-hover-bg:var(--jp-border-color1,#D1D9E1);
  	--accent-color:var(--jp-brand-color2,navy);
     --pointer-color: var(--md-pink-A400,red);
 	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
@@ -290,7 +290,7 @@ def style_html(style_root = theme_roots['Inherit']):
 
 #jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
 
-div.highlight {
+.highlight {
     min-width: 100% !important;
     width: 100% !important;
     max-width: 100vw !important;
@@ -302,48 +302,44 @@ div.highlight {
     margin: 4px 0px !important; /* Opposite to padding to balance it */
     max-height: 400px; /* Try avoiding important here */
     height: auto !important;
-    background: transparent !important;
+    /* colors are set via settigs.set_code_style */
 }
-div.highlight pre { /* works for both case, do not use > */
+.highlight pre { /* works for both case, do not use > */
     display: grid !important;
-    color: var(--primary-fg);
     padding: 8px 4px 8px 4px !important; 
     overflow: auto !important;
     width: auto !important;
     box-sizing: border-box !important;
     height: auto;
     margin: 0px !important;
-    background: var(--secondary-bg) !important;
     counter-reset: line; /* important to add line numbers */
+    /* colors are set via settigs.set_code_style */
 }
 
-div.highlight code {
+.highlight code {
     counter-increment: line;
     display:inline-block !important; /* should be on new line */
     width:auto;
     min-width: calc(90% - 2.2em);
     background:transparent !important;
-    color: var(--primary-fg);
     white-space: pre !important;
     overflow-wrap: normal !important;
     padding-left:2.2em;
-    /*padding-left: 4px;*/
     box-sizing: border-box !important;
+    /* colors are set via settigs.set_code_style */
 }
-div.highlight code:hover {
+.highlight code:hover {
     background: var(--tr-hover-bg) !important;
 }
-div.highlight code:hover::before {
+.highlight code:hover::before {
     background: none !important;
 }
-div.highlight code:before{
+.highlight code:before{
     content: counter(line,decimal);
     position: sticky;
     top:initial;
     left:-4px;
     padding: 0 8px;
-    background:var(--secondary-bg);
-    color: var(--secondary-fg);
     display:inline-block; /* should be inline */
     width:1.2em;
     text-align:right;
@@ -351,15 +347,16 @@ div.highlight code:before{
     margin-left:-3em;
     margin-right: 8px;
     font-size: 80%;
+    /* colors are set via settigs.set_code_style */
 }
-div.highlight  code > span {
+.highlight  code > span {
     white-space: normal; /* for breaking words */
     word-break: break-word; /* for breaking words */
 }
-div.highlight code.code-no-focus {
+.highlight code.code-no-focus {
     opacity:0.3 !important;
 }
-div.highlight code.code-focus {
+.highlight code.code-focus {
     text-shadow: 0 0 1px var(--primary-bg);
 }
 span.lang-name {
@@ -626,7 +623,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     pre, .SlideBox, .SlidesWrapper, .SlideArea {
         height: auto !important;
     }
-    .SlidesWrapper div.highlight, .SlideArea div.PyRepr {
+    .SlidesWrapper .highlight, .SlideArea div.PyRepr {
         max-height:auto !important; /* Flow itself */
     }
     .SlideArea {

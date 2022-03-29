@@ -39,7 +39,7 @@ That version from last slide is still in memory. See it is there {{version}}
 slides.from_markdown(fp) # This will create first slide along with title page.
 
 with slides.slide(1): #slide 1 will be modified with old and new content
-    with slides.source.context(style='monokai',background='black',className='Mono') as s:
+    with slides.source.context(style='monokai', color='white', className='Mono') as s:
         slides.parse_xmd(slides.md_content[1])
         #display(*get_ipython().user_ns['outputs'])
         write('## I am created using `with slides.slide(1)` context( manager!')
@@ -113,7 +113,7 @@ with slides.slide(8,background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 10
 # Youtube
 from IPython.display import YouTubeVideo
 with slides.slide(9):
-    with slides.source.context(style='vs',background='#FAA',className="Youtube") as s:
+    with slides.source.context(style='vs',className="Youtube") as s:
         write(f"### Watching Youtube Video?")
         write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
         @slides.notify_later()

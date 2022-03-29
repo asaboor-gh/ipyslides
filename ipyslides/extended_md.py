@@ -158,7 +158,7 @@ class _ExtendedMarkdown(Markdown):
         # Replace columns after vars, so not to format their brackets
         all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output)
         for cols in all_cols:
-            _cols = ''.join(f'<div stye="width:50%;">{self.convert(c)}</div>' for c in cols)
+            _cols = ''.join(f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols)
             _out = f'<div class="columns">{_cols}</div>'
             html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
         

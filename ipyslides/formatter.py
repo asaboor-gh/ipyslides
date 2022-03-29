@@ -109,27 +109,31 @@ def _ipy_imagestr(image,width='100%'):
     return fix_ipy_image(image,width=width).value
 
 
-def code_css(style='default',background='var(--secondary-bg)',className = None):
-    """Style code block with given style from pygments module and background color.
+def code_css(style='default',color = None, className = None):
+    """Style code block with given style from pygments module and text color(some themes dont provide text color, so fix it).
     """
     if style not in pygments.styles.get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     _class = '.highlight' if className is None else f'.highlight.{className}'
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
-    
-
     return f"""<style>\n{_style}
     span.err {{border: none !important;}}
-    div{_class} pre, div{_class} code:before {{
-        background: {background} !important;
+    {_class}, {_class} code:before {{
+        color: {color if color else 'var(--primary-fg)'};
     }}
-    div{_class} code:hover::before {{
+    {_class} code:before {{
+        opacity: 0.8;
+        background: transparent;
+        color: {color if color else 'var(--secondary-fg)'};
+    }}
+    {_class} code:hover::before {{
         background: none !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, className = None, style='default', background = 'var(--secondary-bg)'):
+def highlight(code, language='python', name = None, className = None, style='default', color = None):
     """Highlight code with given language and style. style only works if className is given.
     If className is given and matches any of pygments.styles.get_all_styles(), then style will be applied immediately.
+    color is used for text color as some themes dont provide text color.
     New in version 1.4.3"""
     if style not in pygments.styles.get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
@@ -137,7 +141,7 @@ def highlight(code, language='python', name = None, className = None, style='def
         style = className
         
     formatter = pygments.formatters.HtmlFormatter(style = style)
-    _style = code_css(style=style, background = background, className=className) if className else ''
+    _style = code_css(style=style, color = color, className=className) if className else ''
     _code = pygments.highlight(textwrap.dedent(code), # dedent make sure code blocks at any level are picked as well
                                pygments.lexers.get_lexer_by_name(language),
                                formatter)

@@ -39,7 +39,7 @@ def write(*columns,width_percents=None,className=None):
     Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows or explictly call `rows`. 
     
     - Pass int,float,dict,function etc. Pass list/tuple in a wrapped list for correct print as they used for rows writing too.
-    - Give a code object from `ipyslides.get_cell_code()` to it, syntax highlight is enabled.
+    - Give a code object from `LiveSlides.source.context[from_...]` to it, syntax highlight is enabled.
     - Give a matplotlib `figure/Axes` to it or use `ipyslides.objs_formatter.plt2html()`.
     - Give an interactive plotly figure.
     - Give a pandas dataframe `df` or `df.to_html()`.

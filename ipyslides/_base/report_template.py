@@ -41,7 +41,8 @@ doc_html = '''<!DOCTYPE html>
 </head>
 <body>
 <div>
-    <div class="Content-Area">
+    <!-- Classes below work for both scenerios -->
+    <div class="Content-Area SlidesWrapper">
     __content__
     </div>
 </div>
@@ -351,6 +352,11 @@ div.zoom-container > * {
     margin-top: 0mm !important; /* already 18mm padding */
 }
 @media print {
+    * {
+        color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
     body {
         margin: 0;
         display: table;
@@ -376,3 +382,39 @@ div.zoom-container > * {
 }
 </style>
 '''
+
+slides_css = """<style>
+.report-only { display:none !important;}
+.SlidesWrapper {
+	scroll-snap-type: x mandatory !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    width: 100vw !important;
+}
+section {
+	scroll-snap-align:start !important;
+	display: grid !important;
+	height: 100vh !important;
+	max-height: 100vh !important;
+	min-width: 100vw !important;
+	box-sizing: border-box !important;
+}
+section .SlideArea {
+	height: auto !important;
+	max-height: 100vh !important;
+	box-sizing: border-box;
+	overflow-y: auto !important;
+	width: 90vw !important;
+	margin: auto !important;
+	padding: 1em !important;
+}
+@media print {
+    ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
+    /* It is a fixed page, no need to tweak other things */
+}
+</style>
+"""

@@ -1,6 +1,5 @@
 "Inherit LiveSlides class from here. It adds useful attributes and methods."
-import os, io
-from turtle import width
+import os, io, re
 from IPython import get_ipython
 from contextlib import suppress
 from .widgets import Widgets
@@ -8,7 +7,7 @@ from .print_pdf import PdfPrint
 from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
-from .report_template import doc_html, doc_css
+from .report_template import doc_html, doc_css, slides_css
 
 from ..formatter import code_css
 
@@ -271,14 +270,15 @@ class BaseLiveSlides:
         self.progress_slider.index = 0 # back to title
         return self
     
-    def build_report(self, path = 'report.html', page_size = 'letter', allow_non_html_repr = False, text_font = 'sans-serif',code_font = 'monospace'):
+    def build_report(self, path = 'report.html', allow_non_html_repr = False, * , as_slides = False, page_size = 'letter', text_font = 'sans-serif',code_font = 'monospace'):
         """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
-        Use 'overrides.css' file in same folder to override CSS.
+        Use `as_slides = True` (> 1.5.0) to build static HTML slides. Widgets, again, are not exportable. Other options are ignored in this case.
+        Use 'overrides.css' file in same folder to override CSS styles.
         Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
         """
         content = ''
         for item in self.slides:
-            content += '<section>' # section for each slide
+            content += '<section><div class="SlideArea">' if as_slides else '<section>' # section for each slide
             for out in item.slide.outputs:
                 if 'text/html' in out.data:
                     content += out.data['text/html']
@@ -286,20 +286,24 @@ class BaseLiveSlides:
                     if 'text/plain' in out.data:
                         content += out.data['text/plain']
                     else:
-                        content += 'No HTML or text for this object'
-            content += '</section>'
+                        content += f'<{out.__module__}.{out.__class__.__name__} object at {hex(id(out))}> has no "text/html", "text/plain" representation.'
+            content += '</div></section>' if as_slides else '</section>'
         
-        content  = content.replace('<section></section>','') # Remove empty sections
+        __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.widgets.htmls.theme.value) # Column break width
+                            if as_slides else doc_css.replace(
+                                '__textfont__', f'"{text_font}"').replace(
+                                '__codefont__', f'"{code_font}"')
+                        )
+        __code_css__ = self.widgets.htmls.hilite.value if as_slides else code_css(background = 'none')
         
-        __style_css__ = doc_css.replace('__textfont__', f'"{text_font}"').replace('__codefont__', f'"{code_font}"')
         html = doc_html.replace(
             '__page_size__',page_size).replace(
-            '__code_css__', code_css(background = 'none')).replace(
+            '__code_css__', __code_css__).replace(
             '__style_css__', __style_css__).replace(
             '__content__', content)
         
         # Save now
-        _path = path.split('.')[0] + '.html' if path != 'report.html' else path
+        _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
         with open(_path,'w') as f:
             f.write(html)
 

@@ -73,7 +73,7 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
     - Slides are added in order of content.
     - Slides should be separated by `---` (three dashes) in start of line.
     - You can add more slides besides created ones or modify existing ones using `ls.md_content`:
-```python .rrt
+```python .monokai
 ls.from_markdown(path)
 with ls.slide(2):
     write(ls.md_content[2]) # write content of slide 2 from file
