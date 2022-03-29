@@ -54,12 +54,12 @@ class _PrivateSlidesClass(BaseLiveSlides):
             self.user_ns = self.shell.user_ns #important for set_dir
             
             # Override print function to display in order in slides
-            def _print(*args, **kwargs):
+            def displayed_print(*args, **kwargs):
                 "Returns a display object to be inline with others. args and kwargs are passed to builtin print."
                 with self.print_context():
-                    __builtins__.print(*args, **kwargs)
+                    print(*args, **kwargs)
             
-            self.shell.user_ns['print'] = _print
+            self.shell.user_ns['print'] = displayed_print
         
         self._citations = {} # Initialize citations
         self.__slides_mode = True # Default is slides mode since it is more intuitive
@@ -272,7 +272,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
                 with self.widgets.slidebox.children[i]:
                     s['slide'].show() 
                 self._slideindex = i # goto there to update display
-                __builtins__.print(f'Pocessing... {int(self.widgets.progressbar.value)}%',end='\r') # Update loading progress bar
+                print(f'Pocessing... {int(self.widgets.progressbar.value)}%',end='\r') # Update loading progress bar
         else:
             self.widgets.slidebox.children = [self.widgets.outputs.slide]
             
@@ -498,7 +498,7 @@ class LiveSlides:
     ```
     In version 1.4.9+ builtin `print` is overridden, but you still need context manager to handle functions that print internally.
     If `object.__str__` has HTML representation, it will be displayed as HTML rather than plain text inside this modified `print`.
-    You can override it by setting `print = __builtin__.print` after initializing `LiveSlides` instance.
+    You can override it by setting `print = __builtins__.print` after initializing `LiveSlides` instance.
     
     > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
     
