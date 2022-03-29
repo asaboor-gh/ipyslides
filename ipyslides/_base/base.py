@@ -289,7 +289,7 @@ class BaseLiveSlides:
                         content += f'<{out.__module__}.{out.__class__.__name__} object at {hex(id(out))}> has no "text/html", "text/plain" representation.'
             content += '</div></section>' if as_slides else '</section>'
         
-        __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.widgets.htmls.theme.value) # Column break width
+        __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.widgets.htmls.theme.value) + slides_css # Column break width
                             if as_slides else doc_css.replace(
                                 '__textfont__', f'"{text_font}"').replace(
                                 '__codefont__', f'"{code_font}"')
