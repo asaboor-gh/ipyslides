@@ -102,7 +102,7 @@ def html(tag, children = None,className = None,**node_attrs):
     `tag` can be any valid html tag name.
     `children` expects:
     
-    - If None, returns self closing html node such as <img...></img>.
+    - If None, returns self closing html node such as <img alt='Image'></img>.
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
     

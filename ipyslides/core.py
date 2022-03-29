@@ -78,13 +78,13 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
         
-        # Override print function to display in slides
-        def inline_print(*args, **kwargs):
+        # Override print function to display in order in slides
+        def _print(*args, **kwargs):
             "Returns a display object to be inline with others. args and kwargs are passed to builtin print."
             with self.print_context():
-                print(*args, **kwargs)
+                __builtins__.print(*args, **kwargs)
             
-        self.shell.user_ns['print'] = inline_print
+        self.shell.user_ns['print'] = _print
     
     def _check_computed(self, what_cannot_do):
         if self._computed_display:
@@ -162,7 +162,6 @@ class _PrivateSlidesClass(BaseLiveSlides):
             self.widgets.buttons.next.icon = 'chevron-right'
         
         return self._ipython_display_()
-
     
     def _ipython_display_(self):
         'Auto display when self is on last line of a cell'
@@ -273,7 +272,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
                 with self.widgets.slidebox.children[i]:
                     s['slide'].show() 
                 self._slideindex = i # goto there to update display
-                print(f'Pocessing... {int(self.widgets.progressbar.value)}%',end='\r') # Update loading progress bar
+                __builtins__.print(f'Pocessing... {int(self.widgets.progressbar.value)}%',end='\r') # Update loading progress bar
         else:
             self.widgets.slidebox.children = [self.widgets.outputs.slide]
             
