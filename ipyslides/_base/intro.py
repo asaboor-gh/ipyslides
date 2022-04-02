@@ -114,9 +114,11 @@ Having your cursor over slides, you can use follwoing keys/combinations:
 but captures of multiple times in a slides are first to last in order in time.
 
 ### PDF Printing
-There are two ways of printing to PDF.
-- Capturing each screenshot based on slide's state (in order) and later using `Save PDF`. This is a manual process but you have full control of view of slide.
-- Press `Print PDF` button and leave until it moves up to last slide and you will get single print per slide. If something don't load, increase `load_time` in `ls.print_settings` value and then print.
+- Capture screenshot of current state of slide by camera button in toolbar or by pressing `S` key. 
+    This will collect screenshots of current slide in order of capturing. 
+    This is a manual process but you can collect content as you want.
+- Press `Capture All` button in side panel to capture a single image of each slide. Then you can add images over it by manually capturing.
+- Press `Save PDF` button to save all screenshots as PDF.
 
 {how_to_slide[0]}
 

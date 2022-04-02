@@ -58,7 +58,7 @@ def __check_pil_image(data):
     "Check if data is a PIL Image or numpy array"
     if data.__repr__().startswith('<PIL'):
         im_bytes = BytesIO()
-        data.save(im_bytes,data.format,quality=95) #Save image to BytesIO in format of given image
+        data.save(im_bytes,data.format if data.format else 'PNG',quality=95) #Save image to BytesIO in format of given image
         return im_bytes.getvalue()
     return data # if not return back data
 

@@ -79,6 +79,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.loading_html = self.widgets.htmls.loading #SVG Animation in it
         
         self.progress_slider = self.widgets.sliders.progress
+        self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self.__update_content,names=['index'])
         
         # All Box of Slides
@@ -134,17 +135,17 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.refresh() # Clear interface too
     
     def cite(self,key, citation,here=False):
-        "Add citation in presentation, both key and citation are text/markdown/HTML."
+        "Add citation in presentation, key should be a unique string and citation is text/markdown/HTML."
         self._check_computed('add citations')
         if here:
             return utils.textbox(citation,left='initial',top='initial') # Just write here
-        self._citations[key] = citation
+        self._citations[key] =  citation
         _id = list(self._citations.keys()).index(key)
-        return f'<sup style="color:var(--accent-color);">{_id + 1}</sup>'
+        return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_id + 1}</sup></a>'
     
     def write_citations(self,title='### References'): 
         "Write all citations collected via `cite` method in the end of the presentation."    
-        collection = [f'<span><sup style="color:var(--accent-color);">{i+1}</sup>{v}</span>' for i,(k,v) in enumerate(self._citations.items())]
+        collection = [f'<span id="{k}"><a href="#{k}-back"><sup style="color:var(--accent-color);">{i+1}</sup></a>{v}</span>' for i,(k,v) in enumerate(self._citations.items())]
         return write(title + '\n' +'\n'.join(collection))      
     
     def show(self, fix_buttons = False): 
@@ -222,7 +223,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.loading_html.value = styles.loading_svg
         try:
             _slide_css = self._slides_css.get(self._access_key,'') 
-            if (self.print.is_printing == False) and (self._frameno < 2): # No animations while printing or frames
+            if (self.screenshot.capturing == False) and (self._frameno < 2): # No animations while printing or frames
                 _slide_css += self.settings.animation # Animation style
             
             self.widgets.outputs.slide.clear_output(wait=True)
@@ -234,7 +235,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
            
     def __switch_slide(self,old_index, new_index): # this change is provide from __update_content
         slide_css = self._slides_css.get(self._access_key,'') # Get CSS
-        if (self.print.is_printing == False) and (self._frameno < 2): # No animations while printing or frames
+        if (self.screenshot.capturing == False) and (self._frameno < 2): # No animations while printing or frames
             slide_css += self.settings.animation
              
         self.widgets.slidebox.children[-1].clear_output(wait=False) # Clear last slide CSS

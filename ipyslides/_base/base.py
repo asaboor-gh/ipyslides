@@ -1,24 +1,23 @@
 "Inherit LiveSlides class from here. It adds useful attributes and methods."
-import os, io, re
+import os, io
 from IPython import get_ipython
 from contextlib import suppress
 from .widgets import Widgets
-from .print_pdf import PdfPrint
+from .screenshot import ScreenShot
 from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
-from .report_template import doc_html, doc_css, slides_css
-
-from ..formatter import code_css
+from .export_html import _HhtmlExporter
 
 class BaseLiveSlides:
     def __init__(self):
         "Both instnaces should be inside `_PrivateSlidesClass` class."
         # print(f'Inside: {self.__class__.__name__}')
         self.__widgets = Widgets()
-        self.__print = PdfPrint(self.__widgets)
+        self.__screenshot = ScreenShot(self.__widgets)
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
         self.__settings = LayoutSettings(self.__widgets)
+        self.__export = _HhtmlExporter(self)
         self.notes = Notes(self, self.__widgets) # Needs main class for access to notes
         
         self._md_content = 'Slides not loaded from markdown.'
@@ -33,8 +32,12 @@ class BaseLiveSlides:
         return self.__widgets
     
     @property
-    def print(self):
-        return self.__print
+    def export(self):
+        return self.__export
+    
+    @property
+    def screenshot(self):
+        return self.__screenshot
     
     @property
     def settings(self):
@@ -271,46 +274,7 @@ class BaseLiveSlides:
         return self
     
     def build_report(self, path = 'report.html', allow_non_html_repr = False, * , as_slides = False, page_size = 'letter', text_font = 'sans-serif',code_font = 'monospace'):
-        """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
-        - allow_non_html_repr: if True, then non-html representation of the slides like text/plain will be used in report, but not in slides.
-        - Use `as_slides = True` (> 1.5.0) to build static HTML slides. Widgets, again, are not exportable. Other options are ignored in this case and only HTML objects are taken.
-        - Use 'overrides.css' file in same folder to override CSS styles.
-        - Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
-        - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
-        - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
-        """
-        content = ''
-        for item in self.slides:
-            _html = ''
-            for out in item.slide.outputs:
-                if 'text/html' in out.data:
-                    _html += out.data['text/html']
-                elif allow_non_html_repr and as_slides == False:
-                    if 'text/plain' in out.data:
-                        _html += out.data['text/plain']
-                    else:
-                        _html += f'<p style="color:red;">Object at {hex(id(out))} has no text/HTML representation.</p>'  
-            if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
-                content += (f'<section><div class="SlideArea">{_html}</div></section>' 
-                            if as_slides else f'<section>{_html}</section>')
-        
-        __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.widgets.htmls.theme.value) + slides_css # Column break width
-                            if as_slides else doc_css.replace(
-                                '__textfont__', f'"{text_font}"').replace(
-                                '__codefont__', f'"{code_font}"')
-                        )
-        __code_css__ = self.widgets.htmls.hilite.value if as_slides else code_css(background = 'none')
-        
-        html = doc_html.replace(
-            '__page_size__',page_size).replace(
-            '__code_css__', __code_css__).replace(
-            '__style_css__', __style_css__).replace(
-            '__content__', content)
-        
-        # Save now
-        _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
-        with open(_path,'w') as f:
-            f.write(html)
+        raise DeprecationWarning('Use `export.report` instead.')
 
 def _parse_md_file(fp):
     "Parse a Markdown file or StringIO to put in slides and returns text for title and each slide."

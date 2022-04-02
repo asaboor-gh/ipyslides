@@ -27,7 +27,7 @@ class _Buttons:
                 ).add_class('screenshot-btn') # .add_class('menu')
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
-    print   = Button(description='Print PDF',layout= Layout(width='auto',height='auto'))
+    cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -62,6 +62,7 @@ class _Htmls:
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     fscrn   = HTML() # Full Screen CSS, do not add here!
     zoom    = HTML() # zoom-container CSS, do not add here!
+    capture = HTML() # Screenshot image here
 
 @dataclass(frozen=True)
 class _Inputs:
@@ -78,8 +79,6 @@ class _Checks:
     reflow = ipw.Checkbox(value=False,description='Reflow Code',layout=auto_layout)
     notes  = ipw.Checkbox(value=False,description='Display Notes',layout=auto_layout) # do not observe, just keep track when slides work
     toast  = ipw.Checkbox(value = False, description='Hide Notifications')
-        
-    
 
 @dataclass(frozen=True)
 class _Sliders:
@@ -255,6 +254,7 @@ class Widgets:
                 self.sliders.scale,
                 self.ddowns.theme,
                 HTML('<hr/>'),
+                self.htmls.capture,
                 self.inputs.bbox,
                 ipw.HBox([
                     self.checks.notes, 
@@ -263,9 +263,9 @@ class Widgets:
                 ],layout=btns_layout) ,
                 self.ddowns.clear,
                 HBox([
+                    self.buttons.cap_all,
                     self.buttons.png, 
                     self.buttons.pdf, 
-                    self.buttons.print
                 ], layout=btns_layout) ,
                 HTML('<hr/>'),
                 HBox([

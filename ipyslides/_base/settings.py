@@ -7,10 +7,10 @@ import os
 import datetime
 from IPython import get_ipython
 from IPython.display import display, Image
-from ..writers import write
+from IPython.utils.capture import capture_output
 from ..formatter import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
-from ..utils import set_dir, html
+from ..utils import set_dir, html, details
 from . import scripts, intro, styles
 
 class LayoutSettings:
@@ -81,7 +81,6 @@ class LayoutSettings:
             self._font_family['code'] = code_font  
         self._update_theme() # Changes Finally 
     
-
     def set_font_scale(self,font_scale=1):
         "Set font scale to increase or decrease text size. 1 is default."
         self.scale_slider.value = font_scale 
@@ -175,7 +174,7 @@ class LayoutSettings:
                         theme_css = ''.join(f.readlines())
         
         if self.theme_dd.value == 'Dark':
-            self.set_code_style('monokai')
+            self.set_code_style('monokai',color='#f8f8f2')
         elif self.theme_dd.value == 'Fancy':
             self.set_code_style('borland') 
         else:

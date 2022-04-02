@@ -5,7 +5,7 @@ doc_html = '''<!DOCTYPE html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>IPySlides Report</title>
+    <title>IPySlides</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
@@ -397,6 +397,7 @@ slides_css = """<style>
 }
 section {
 	scroll-snap-align:start !important;
+    scroll-snap-stop: always !important;
 	display: grid !important;
 	height: 100vh !important;
 	max-height: 100vh !important;
@@ -411,6 +412,26 @@ section .SlideArea {
 	width: 90vw !important;
 	margin: auto !important;
 	padding: 1em !important;
+}
+section span.html-slide-number{
+    width: auto;
+    height: 1.3em;
+    padding: 0.1em;
+    margin: auto 8px 8px auto;
+    color: var(--secondary-fg);
+}
+.SlidesWrapper::-webkit-scrollbar:vertical,
+.SlidesWrapper::-webkit-scrollbar-button,
+.SlidesWrapper::-webkit-scrollbar-corner {
+    display:none !important;
+}
+.SlidesWrapper::-webkit-scrollbar {
+    background: var(--secondary-bg, whitesmoke) !important;
+    height: 4px !important;
+}
+.SlidesWrapper::-webkit-scrollbar-thumb, 
+.SlidesWrapper::-webkit-scrollbar-track-piece:start {
+    background-color: var(--accent-color, navy) !important;
 }
 
 @media print {
