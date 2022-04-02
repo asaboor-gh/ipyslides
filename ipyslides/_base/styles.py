@@ -189,9 +189,10 @@ def style_html(style_root = theme_roots['Inherit']):
 } 
 .SlidesWrapper .panel>div:first-child {
     height:auto;
-    min-height:250px;
+    min-height:360px;
+    padding-top:16px;
 }
-.SlidesWrapper .panel>div:last-child {padding-top:16px;min-height:max-content;} 
+.SlidesWrapper .panel>div:last-child {min-height:max-content;} 
 
 .SlideArea .columns {width:100%;max-width:100%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
 
@@ -313,7 +314,7 @@ def style_html(style_root = theme_roots['Inherit']):
     height: auto;
     margin: 0px !important;
     counter-reset: line; /* important to add line numbers */
-    /* colors are set via settigs.set_code_style */
+    background: none !important; /* This should be none as will given by the code_css */
 }
 
 .highlight code {

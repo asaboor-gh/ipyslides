@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 
 
 from ..formatter import plt2html
-from ..extended_md import parse_xmd
 from . import intro
 
 
@@ -40,13 +39,9 @@ class ScreenShot:
     
     def __set_bbox(self,change):
         bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]    
-        print_settings = {**self.capture_settings(), 'bbox':bbox}
-        with self.widgets.outputs.intro:
-            self.widgets.outputs.intro.clear_output(wait=True)
-            self.capture_setup(**print_settings)
-            parse_xmd(intro.instructions) 
-        self.widgets._push_toast(f'See Screenshot of your selected bbox = {bbox} 👇')
+        self.capture_setup(**{**self.capture_settings(), 'bbox':bbox}, show_toast=True)
         
+    
     @contextmanager
     def capture_mode(self, *additional_widgets_to_hide):
         """Hide some widgets and while capturing a screenshot, show them back again.
@@ -82,7 +77,7 @@ class ScreenShot:
         except:
             return None
 
-    def capture_setup(self,load_time=0.5,quality=95,bbox = None):
+    def capture_setup(self,load_time=0.5,quality=95,bbox = None, show_toast=False):
         """Setting for screen capture. 
         - load_time: 0.5; time in seconds for each slide to load before print, only applied to Capture All, not on manual screenshot. 
         - quality: 95; In term of current screen. Will not chnage too much above 95. 
@@ -96,10 +91,12 @@ class ScreenShot:
             img = ImageGrab.grab(bbox=bbox)
             _ = plt.figure(figsize = (3, 3*img.height/img.height), dpi=720) # For clear view
             _ = plt.imshow(img)
-            plt.gca().set_axis_off()
-            plt.subplots_adjust(left=0,bottom=0,top=1,right=1)
-            plt.show() # Display in Output widget too. 
-            #self.widgets.htmls.capture.value =  plt2html().value  
+            plt.subplots_adjust(left=0,bottom=0,top=1,right=1) 
+            plot_html = plt2html(caption=f'Screenshot of bbox = {bbox}')
+            if show_toast:
+                self.widgets._push_toast(plot_html.value, timeout = 10)
+            else:
+                return plot_html # Displays on it's own
     
     def capture_settings(self):
         return self.__capture_settings    

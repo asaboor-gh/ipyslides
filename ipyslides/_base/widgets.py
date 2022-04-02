@@ -10,7 +10,7 @@ from ..utils import html
 
 
 auto_layout =  Layout(width='auto')
-btns_layout = Layout(justify_content='space-around',padding='8px',height='max-content',min_height='30px',overflow='auto')
+btns_layout = Layout(justify_content='space-around',padding='4px',height='max-content',min_height='30px',overflow='auto')
 def describe(value): 
     return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
 
@@ -76,9 +76,9 @@ class _Checks:
     """
     Instantiate under `Widgets` class only.
     """
-    reflow = ipw.Checkbox(value=False,description='Reflow Code',layout=auto_layout)
-    notes  = ipw.Checkbox(value=False,description='Display Notes',layout=auto_layout) # do not observe, just keep track when slides work
-    toast  = ipw.Checkbox(value = False, description='Hide Notifications')
+    reflow = ipw.Checkbox(indent = False, value=False,description='Reflow Code',layout=auto_layout)
+    notes  = ipw.Checkbox(indent = False, value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
+    toast  = ipw.Checkbox(indent = False, value = True, description='Notifications',layout=auto_layout)
 
 @dataclass(frozen=True)
 class _Sliders:
@@ -98,7 +98,7 @@ class _Dropdowns:
     Instantiate under `Widgets` class only.
     """
     theme = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_roots.keys(),'Custom'],value='Inherit')
-    clear = ipw.Dropdown(description='Delete',options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
+    clear = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
         
     
 @dataclass(frozen=True)
@@ -241,40 +241,42 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
-        self.panelbox = VBox([
-            Box([
-                self.outputs.intro,
-                self.buttons.setting,
-            ],layout=Layout(width='100%',height='auto',overflow='hidden')) ,
-            self.outputs.fixed, 
-            self.outputs.renew, # Must be in middle so that others dont get disturbed.
+        self.panelbox = HBox([
+            VBox([ # Panel box
             VBox([
                 self.sliders.height.add_class('voila-sidecar-hidden'), 
                 self.sliders.width.add_class('voila-sidecar-hidden'),
                 self.sliders.scale,
                 self.ddowns.theme,
-                HTML('<hr/>'),
-                self.htmls.capture,
-                self.inputs.bbox,
+                HBox([
+                    self.toggles.fscrn,
+                    self.toggles.zoom, 
+                    self.toggles.timer
+                ], layout=btns_layout),
                 ipw.HBox([
                     self.checks.notes, 
                     self.checks.toast, 
                     self.checks.reflow
                 ],layout=btns_layout) ,
+                HTML('<hr/>'),
+                self.htmls.capture,
+                self.inputs.bbox,
                 self.ddowns.clear,
                 HBox([
                     self.buttons.cap_all,
                     self.buttons.png, 
                     self.buttons.pdf, 
-                ], layout=btns_layout) ,
+                ], layout=btns_layout),
                 HTML('<hr/>'),
-                HBox([
-                    self.toggles.fscrn,
-                    self.toggles.zoom, 
-                    self.toggles.timer
-                ], layout=btns_layout) ,
-            ],layout = Layout(width='100%',height='max-content',min_height='400px',overflow='auto'))
-        ],layout = Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='auto',display='none')
+                
+            ],layout = Layout(width='100%',height='max-content',min_height='auto',overflow='auto')),
+            self.outputs.fixed, 
+            self.outputs.renew, # Must be in middle so that others dont get disturbed.
+            self.outputs.intro,
+             
+            ],layout = ipw.Layout(height='100%',overflow_y='scroll')).add_class('panel-box'),
+            self.buttons.setting,
+        ],layout = Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='hidden',display='none')
         ).add_class('panel') 
         
         self.slidebox = Box([
