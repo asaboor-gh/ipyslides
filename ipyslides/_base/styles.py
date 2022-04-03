@@ -57,7 +57,7 @@ theme_roots = {
 }
 
 
-def style_html(style_root = theme_roots['Inherit']):
+def style_css(style_root = theme_roots['Inherit']):
 	return style_root + ''' 
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
@@ -141,6 +141,7 @@ def style_html(style_root = theme_roots['Inherit']):
 .jp-RenderedText, .jp-RenderedText pre {color:var(--primary-fg) !important;}
 .jp-RenderedHTMLCommon p {margin-bottom: 0.2em !important;}
 .widget-html:not(.LaserPointer), .widget-html .widget-html-content > div {display:grid !important; font-size: var(--text-size) !important;} /* Do not use overflow her */
+.panel-text .widget-html-content {line-height: inherit !important;}
 .jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
@@ -186,13 +187,7 @@ def style_html(style_root = theme_roots['Inherit']):
     outline:none !important;
     font-size: 24px;
     background: var(--primary-bg) !important;
-} 
-.SlidesWrapper .panel>div:first-child {
-    height:auto;
-    min-height:360px;
-    padding-top:16px;
 }
-.SlidesWrapper .panel>div:last-child {min-height:max-content;} 
 
 .SlideArea .columns {width:100%;max-width:100%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
 
@@ -392,7 +387,7 @@ span.lang-name {
  	border-collapse: collapse !important;
     min-width:auto;
     width:100%;
-    font-size: small;
+    font-size: 0.95em;
     word-break:break-all;
     overflow: auto;
 	color: var(--primary-fg)!important;
@@ -502,7 +497,8 @@ div.LaserPointer { /* For laser pointer */
 }
 /* Linked Area */
 .jp-LinkedOutputView > div.jp-OutputArea >  div:first-child,
-.jp-LinkedOutputView div.SlidesWrapper .height-slider{
+.jp-LinkedOutputView .SlidesWrapper .height-slider,
+.SlidesWrapper.FullScreen .height-slider{
    display: none !important;
 }
 .jp-LinkedOutputView, 
@@ -729,7 +725,6 @@ body[data-retro] .SlidesWrapper {{
 
 
 fullscreen_css = '''
-.SlidesWrapper:not(.FullScreen) { display:none;} /*Hide All and display, leave only one */
 .SlidesWrapper.FullScreen {      
     flex: 1;
     position: fixed;

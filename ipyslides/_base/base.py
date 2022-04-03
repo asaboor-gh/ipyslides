@@ -234,7 +234,7 @@ class BaseLiveSlides:
             self.write('## Useful Functions for Rich Content')
             for attr in dir(self):
                 if not attr.startswith('_'):
-                    if not attr in ['write','iwrite','parse_xmd','source','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown']:
+                    if not attr in ['write','iwrite','parse_xmd','source','export','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown']:
                         with suppress(Exception):
                             if not 'block_' in attr:
                                 self.write(self.doc(getattr(self,attr),'LiveSlides'))
@@ -263,12 +263,13 @@ class BaseLiveSlides:
                 self.iwrite(s)
         
         with self.slide(9):
-            self.write('## Loading from/to File/Other Contexts')
+            self.write('## Loading from File/Exporting to HTML')
             self.write('You can parse and view a markdown file with `ipyslides.display_markdown` as well. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
             self.write([self.doc(self.from_markdown,'LiveSlides'), 
                         self.doc(self.demo,'LiveSlides'), 
                         self.doc(self.load_docs,'LiveSlides'),
-                        self.doc(self.build_report,'LiveSlides')])
+                        self.doc(self.export.slides,'LiveSlides.export'),
+                        self.doc(self.export.report,'LiveSlides.export')])
         
         self.progress_slider.index = 0 # back to title
         return self

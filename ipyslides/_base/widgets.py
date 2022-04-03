@@ -4,16 +4,15 @@ and then provided to other classes via composition, not inheritance.
 """
 from dataclasses import dataclass
 import ipywidgets as ipw
-from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, Layout, Button
+from IPython.utils.capture import capture_output
+from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
 from . import styles
 from ..utils import html
 
 
 auto_layout =  Layout(width='auto')
-btns_layout = Layout(justify_content='space-around',padding='4px',height='max-content',min_height='30px',overflow='auto')
 def describe(value): 
     return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
-
 @dataclass(frozen=True)
 class _Buttons:
     """
@@ -46,7 +45,7 @@ class _Htmls:
     Instantiate under `Widgets` class only.
     """
     footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>').add_class('Footer')
-    theme   = HTML(html('style',styles.style_html(styles.theme_roots['Fancy'].replace(
+    theme   = HTML(html('style',styles.style_css(styles.theme_roots['Fancy'].replace(
                 '__text_size__','16px')).replace(
                 '__breakpoint_width__','650px').replace(
                 '__textfont__','sans-serif').replace(
@@ -63,6 +62,7 @@ class _Htmls:
     fscrn   = HTML() # Full Screen CSS, do not add here!
     zoom    = HTML() # zoom-container CSS, do not add here!
     capture = HTML() # Screenshot image here
+    intro   = HTML().add_class('panel-text') # Intro HTML
 
 @dataclass(frozen=True)
 class _Inputs:
@@ -108,7 +108,6 @@ class _Outputs:
     """
     slide = ipw.Output(layout= Layout(height='auto',margin='auto',overflow='auto',padding='2px 36px') # do not set width here, in css
             ).add_class('SlideArea')
-    intro = ipw.Output(clear_output=False, layout=Layout(width='100%',height='100%',overflow='auto',padding='4px')).add_class('panel-text')
     fixed = ipw.Output(layout=Layout(width='auto',height='0px')) # For fixed javascript
     renew = ipw.Output(layout=Layout(width='auto',height='0px')) # Content can be added dynamically
 
@@ -241,43 +240,35 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
-        self.panelbox = HBox([
-            VBox([ # Panel box
+        self.panelbox = VBox([
+            self.buttons.setting,
             VBox([
                 self.sliders.height.add_class('voila-sidecar-hidden'), 
                 self.sliders.width.add_class('voila-sidecar-hidden'),
                 self.sliders.scale,
                 self.ddowns.theme,
-                HBox([
+                Box([GridBox([
                     self.toggles.fscrn,
-                    self.toggles.zoom, 
-                    self.toggles.timer
-                ], layout=btns_layout),
-                ipw.HBox([
-                    self.checks.notes, 
-                    self.checks.toast, 
-                    self.checks.reflow
-                ],layout=btns_layout) ,
-                HTML('<hr/>'),
-                self.htmls.capture,
-                self.inputs.bbox,
-                self.ddowns.clear,
-                HBox([
+                     self.toggles.zoom,
+                    self.toggles.timer,
+                    self.checks.notes,
+                    self.checks.toast,
+                    self.checks.reflow,
                     self.buttons.cap_all,
-                    self.buttons.png, 
-                    self.buttons.pdf, 
-                ], layout=btns_layout),
-                HTML('<hr/>'),
-                
-            ],layout = Layout(width='100%',height='max-content',min_height='auto',overflow='auto')),
-            self.outputs.fixed, 
-            self.outputs.renew, # Must be in middle so that others dont get disturbed.
-            self.outputs.intro,
-             
-            ],layout = ipw.Layout(height='100%',overflow_y='scroll')).add_class('panel-box'),
-            self.buttons.setting,
-        ],layout = Layout(width='70%',min_width='50%',height='100%',padding='4px',overflow='hidden',display='none')
-        ).add_class('panel') 
+                    self.buttons.pdf,
+                    self.buttons.png,
+                ],layout=Layout(width='auto',overflow_x='scroll',
+                                grid_template_columns='1fr 1fr 1fr',grid_gap='4px',
+                                padding='4px',margin='auto')
+                )],layout=Layout(min_height='120px')),# This ensures no collapse and scrollable Grid
+                self.ddowns.clear,
+                self.inputs.bbox,
+                self.htmls.capture,
+                self.outputs.fixed, 
+                self.outputs.renew,
+                self.htmls.intro  
+            ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0'))
+        ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('panel') 
         
         self.slidebox = Box([
             self.outputs.slide 

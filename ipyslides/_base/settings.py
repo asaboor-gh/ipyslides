@@ -10,7 +10,7 @@ from IPython.display import display, Image
 from IPython.utils.capture import capture_output
 from ..formatter import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
-from ..utils import set_dir, html, details
+from ..utils import set_dir, html
 from . import scripts, intro, styles
 
 class LayoutSettings:
@@ -30,7 +30,6 @@ class LayoutSettings:
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
         
-        self._instructions = self.widgets.outputs.intro
         self.out_fixed = self.widgets.outputs.fixed
         self.out_renew = self.widgets.outputs.renew
         self.btn_fs    = self.widgets.toggles.fscrn
@@ -56,9 +55,11 @@ class LayoutSettings:
         
     def _on_displayed(self,change):
         self.__add_js()
-        self._instructions.clear_output(wait=True) # This make sure that instructions are not duplicated
-        with self._instructions:
-            parse_xmd(intro.instructions, display_inline = True)
+        
+        with capture_output() as cap:
+            parse_xmd(intro.instructions,display_inline=True)
+        # Only do this if it's in Jupyter, otherwise throws errors
+        self.widgets.htmls.intro.value = '\n'.join(o.data['text/html'] for o in cap.outputs)
             
     def set_animation(self,name):
         "Set animation style or pass None to disable animation."
@@ -163,12 +164,12 @@ class LayoutSettings:
         text_size = '{}px'.format(int(self.font_scale*16))
         
         if self.theme_dd.value != 'Custom':
-            theme_css =  styles.style_html(styles.theme_roots[self.theme_dd.value])
+            theme_css =  styles.style_css(styles.theme_roots[self.theme_dd.value])
         else: # In case of Custom CSS
             with set_dir(get_ipython().starting_dir):
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
-                        f.write('/* Author: Abdul Saboor */\n' + styles.style_html( styles.theme_roots['Light']))
+                        f.write('/* Author: Abdul Saboor */\n' + styles.style_css( styles.theme_roots['Light']))
                 else: # Read CSS from file otherwise
                     with open('custom.css','r') as f:
                         theme_css = ''.join(f.readlines())

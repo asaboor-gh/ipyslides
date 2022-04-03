@@ -39,7 +39,7 @@ class ScreenShot:
     
     def __set_bbox(self,change):
         bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]    
-        self.capture_setup(**{**self.capture_settings(), 'bbox':bbox}, show_toast=True)
+        self.capture_setup(**{**self.capture_settings(), 'bbox':bbox})
         
     
     @contextmanager
@@ -77,7 +77,7 @@ class ScreenShot:
         except:
             return None
 
-    def capture_setup(self,load_time=0.5,quality=95,bbox = None, show_toast=False):
+    def capture_setup(self,load_time=0.5,quality=95,bbox = None):
         """Setting for screen capture. 
         - load_time: 0.5; time in seconds for each slide to load before print, only applied to Capture All, not on manual screenshot. 
         - quality: 95; In term of current screen. Will not chnage too much above 95. 
@@ -92,11 +92,10 @@ class ScreenShot:
             _ = plt.figure(figsize = (3, 3*img.height/img.height), dpi=720) # For clear view
             _ = plt.imshow(img)
             plt.subplots_adjust(left=0,bottom=0,top=1,right=1) 
-            plot_html = plt2html(caption=f'Screenshot of bbox = {bbox}')
-            if show_toast:
-                self.widgets._push_toast(plot_html.value, timeout = 10)
-            else:
-                return plot_html # Displays on it's own
+            plt.gca().set_axis_off()
+            plot_html = plt2html()
+            self.widgets.htmls.capture.value = plot_html.value
+            return plot_html # Displays on it's own if called in cell
     
     def capture_settings(self):
         return self.__capture_settings    
