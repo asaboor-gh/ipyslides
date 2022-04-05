@@ -156,7 +156,7 @@ class _ExtendedMarkdown(Markdown):
                 raise e
         
         # Replace columns after vars, so not to format their brackets
-        all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output)
+        all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output, flags = re.DOTALL) # Matches new line as well, useful for inline plots and big objects
         for cols in all_cols:
             _cols = ''.join(f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols)
             _out = f'<div class="columns">{_cols}</div>'
