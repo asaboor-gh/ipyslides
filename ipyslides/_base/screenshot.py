@@ -8,10 +8,8 @@ from time import sleep
 from contextlib import contextmanager
 
 from PIL import ImageGrab
-import matplotlib.pyplot as plt
 
-
-from ..formatter import plt2html
+from ..utils import image, alert
 from . import intro
 
 
@@ -38,9 +36,9 @@ class ScreenShot:
         self.bbox_input.on_submit(self.__set_bbox)
     
     def __set_bbox(self,change):
-        bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]    
-        self.capture_setup(**{**self.capture_settings(), 'bbox':bbox})
-        
+        bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]  
+        img = self.capture_setup(**{**self.capture_settings(), 'bbox':bbox})
+        self.widgets.htmls.capture.value = img.value # Display it below the input  
     
     @contextmanager
     def capture_mode(self, *additional_widgets_to_hide):
@@ -66,16 +64,11 @@ class ScreenShot:
                 w.layout.visibility = 'visible' 
             self.widgets.htmls.toast.layout.visibility = old_pref 
             
-                
-    def get_bbox(self):
-        "Return screen's bounding box on windows, return None on other platforms which works as full screen too in screenshot."
-        try:
-            import ctypes
-            user = ctypes.windll.user32
-            user.SetProcessDPIAware()
-            return (0, 0, user.GetSystemMetrics(0), user.GetSystemMetrics(1))
-        except:
-            return None
+    @property           
+    def screen_bbox(self):
+        "Return screen's bounding box in pixels."
+        img = ImageGrab.grab(bbox=None) # Just to get bounding box
+        return (0,0, *img.size)
 
     def capture_setup(self,load_time=0.5,quality=95,bbox = None):
         """Setting for screen capture. 
@@ -85,18 +78,11 @@ class ScreenShot:
         > Note: Auto detection of bbox in frontends where javascript runs is under progress. """
         if bbox and len(bbox) != 4:
             return print("bbox expects [left,top,right,bottom] in integers")
-        self.__capture_settings = {'load_time':load_time,'quality':quality,'bbox':bbox if bbox else self.get_bbox()} # better to get on windows
+        self.__capture_settings = {'load_time':load_time,'quality':quality,'bbox':bbox if bbox else self.screen_bbox} # get full if none given
         # Display what user sets
         if bbox:
-            img = ImageGrab.grab(bbox=bbox)
-            _ = plt.figure(figsize = (3, 3*img.height/img.height), dpi=720) # For clear view
-            _ = plt.imshow(img)
-            plt.subplots_adjust(left=0,bottom=0,top=1,right=1) 
-            plt.gca().set_axis_off()
-            plot_html = plt2html()
-            self.widgets.htmls.capture.value = plot_html.value
-            return plot_html # Displays on it's own if called in cell
-    
+            return image(ImageGrab.grab(bbox=bbox),width='100%')
+            
     def capture_settings(self):
         return self.__capture_settings    
     

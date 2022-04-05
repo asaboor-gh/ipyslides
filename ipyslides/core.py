@@ -102,6 +102,9 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.widgets.slidebox.children[0].clear_output(wait=True)
         with self.widgets.slidebox.children[0]: # title slide in both simple and computed case
             self.__slides_dict['0'].show() # Instead of refreshing, we can just update the content of the title slides to avoid errors
+        
+        with suppress(Exception): # Does not work everywhere.
+            self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
     
     def _make_sure_title(self):
         if '0' not in self.__slides_dict:

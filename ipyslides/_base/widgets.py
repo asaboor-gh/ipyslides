@@ -61,7 +61,8 @@ class _Htmls:
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     fscrn   = HTML() # Full Screen CSS, do not add here!
     zoom    = HTML() # zoom-container CSS, do not add here!
-    capture = HTML() # Screenshot image here
+    capture = HTML('<p class="Info">Edit above box and hit Enter to see screenshot here. ' 
+                   'If nothing shown, your system does not support taking screenshots with PIL</p>').add_class('capture-html') # Screenshot image here
     intro   = HTML().add_class('panel-text') # Intro HTML
 
 @dataclass(frozen=True)
@@ -69,7 +70,7 @@ class _Inputs:
     """
     Instantiate under `Widgets` class only.
     """
-    bbox = ipw.Text(description='L,T,R,B (px)',layout=auto_layout,value='Type left,top,right,bottom pixel values and press ↲')
+    bbox = ipw.Text(description='L,T,R,B (px)',layout=auto_layout,value='Type left,top,right,bottom pixel values and press ↲').add_class('bbox-input')
 
 @dataclass(frozen=True)
 class _Checks:

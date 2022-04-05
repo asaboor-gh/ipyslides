@@ -472,7 +472,8 @@ div.zoom-container > * {
     justify-content:center !important;
     transition: transform .2s; /* Animation */
 }  
-  
+.panel .capture-html { border: 1px solid var(--secondary-fg); }
+.panel .capture-html figure {width:100%;margin:0;padding:0;background:var(--secondary-bg);}
 .pygal-chart {  /* it doesnt show otherwise */
     min-width:300px;
     width:100%;
