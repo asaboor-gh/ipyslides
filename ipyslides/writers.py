@@ -85,7 +85,7 @@ def _fmt_iwrite(*columns,width_percents=None):
 
                 tmp._grid_location = {'row':i,'column':j}
                 row = [*row,tmp]
-                
+        
         fixed_cols.append(row)
 
     children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}')) for _c, _w in zip(fixed_cols,widths)]

@@ -472,8 +472,6 @@ div.zoom-container > * {
     justify-content:center !important;
     transition: transform .2s; /* Animation */
 }  
-.panel .capture-html { border: 1px solid var(--secondary-fg); }
-.panel .capture-html figure {width:100%;margin:0;padding:0;background:var(--secondary-bg);}
 .pygal-chart {  /* it doesnt show otherwise */
     min-width:300px;
     width:100%;
@@ -597,7 +595,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 
 
 #rendered_cells .SlidesWrapper {
-    position: absolute;
+    position: fixed !important;
     width:100% !important;
     height: 100% !important;
     bottom: 0px !important;
@@ -605,7 +603,8 @@ a.jp-InternalAnchorLink { display: none !important;}
     tight: 0px !important;
     left: 0px !important;
 }
-#rendered_cells .window-fs {display:none;}
+#rendered_cells .height-slider {display:none !important;}
+#rendered_cells .window-fs {opacity:0.1 !important;}
 .SlidesWrapper {z-index: 10 !important;}
 
 @media print {
@@ -629,6 +628,8 @@ a.jp-InternalAnchorLink { display: none !important;}
     }
 }
 
+.panel .capture-html { border: 1px solid var(--secondary-fg); }
+.panel .capture-html figure {width:100%;margin:0;padding:0;background:var(--secondary-bg);}
 .float-control {
     position: absolute;
     right:0;

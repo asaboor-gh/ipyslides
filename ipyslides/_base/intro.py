@@ -116,7 +116,7 @@ but captures of multiple times in a slides are first to last in order in time.
 ### PDF Printing
 - Capture screenshot of current state of slide by camera button in toolbar or by pressing `S` key. 
     This will collect screenshots of current slide in order of capturing. 
-    This is a manual process but you can collect content as you want.
+    This is a manual process but you can collect content as you want. You can hover top-right corner to use a slider to adjust height of visible content.
 - Press `Capture All` button in side panel to capture a single image of each slide. Then you can add images over it by manually capturing.
 - Press `Save PDF` button to save all screenshots as PDF.
 
