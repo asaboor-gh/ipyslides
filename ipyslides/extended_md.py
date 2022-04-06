@@ -62,7 +62,8 @@ class _ExtendedMarkdown(Markdown):
                     out = self._sub_vars(self.convert(section))
                     outputs.append(_HTML(out))
                 else:
-                    outputs.extend(self._parse_block(section)) # vars are substituted already inside
+                    _section = textwrap.dedent(section) # Remove indentation in code block, useuful to write examples inside markdown block
+                    outputs.extend(self._parse_block(_section)) # vars are substituted already inside
         else:
             out = self._sub_vars(self.convert(new_strs[0]))
             outputs.append(_HTML(out))
@@ -166,35 +167,36 @@ class _ExtendedMarkdown(Markdown):
 
 def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
     """Parse extended markdown and display immediately. 
-    If you need output html, use display_inline = False but that won't execute python code blocks.
-    Precedence of content return/display is:
-        rich_outputs = True > display_inline = True > parsed_html_string
-        
-    You can use the following syntax:
+    If you need output html, use `display_inline = False` but that won't execute python code blocks.
+    Precedence of content return/display is `rich_outputs = True > display_inline = True > parsed_html_string`.
 
-        ```python run var_name
-        # If no var_name, code will be executed without assigning it to any variable
-        import numpy as np
-        ```
-        # Normal Markdown {.report-only}
-        ```multicol 40 60
-        # First column is 40% width
-        If 40 60 was not given, all columns will be of equal width, this paragraph will be inside info block due to class -> &lcurb;.Info &rcurb;\n{.Info}
-        +++
-        # Second column is 60% wide
-        This \{\{var_name\}\} is code from above and will be substituted with the value of var_name
-        ```
+    **Example**
+    ```markdown
+     ```python run var_name
+     #If no var_name, code will be executed without assigning it to any variable
+     import numpy as np
+     ```
+     # Normal Markdown {.report-only}
+     ```multicol 40 60
+     # First column is 40% width
+     If 40 60 was not given, all columns will be of equal width, this paragraph will be inside info block due to class at bottom
+     {.Info}
+     +++
+     # Second column is 60% wide
+     This {{var_name}} is code from above and will be substituted with the value of var_name
+     ```
 
-        ```python
-        # This will not be executed, only shown
-        ```
-        || Inline-column A || Inline-column B ||
+     ```python
+     # This will not be executed, only shown
+     ```
+     || Inline-column A || Inline-column B ||
+    ```
 
     Each block can have class names (speparated with space or .) (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess.Info`.
     For example, `python .friendly` will be highlighted with friendly theme from pygments.
     Pygments themes, however, are not supported with `multicol`. You need to write CSS for a custom class in <style> tag.
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.export.<export_function>` is called.
-    
+
     Note: Nested blocks are not supported.
     New in 1.4.6
     """

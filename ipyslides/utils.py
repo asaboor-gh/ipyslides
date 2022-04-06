@@ -224,5 +224,5 @@ def doc(callable,prepend_str = None):
         _sig = sig(callable,prepend_str)
         return _HTML(f"<div class='Docs'>{_sig}<br>{_doc}\n</div>")
     except:
-        raise TypeError(f'Object {callable} is not a callable')
+        raise TypeError(f'Object {callable} is not a callable or __doc__ is not available')
     
