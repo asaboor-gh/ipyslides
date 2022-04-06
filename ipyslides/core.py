@@ -1,4 +1,4 @@
-import sys
+import sys, re
 from collections import namedtuple
 from contextlib import contextmanager, suppress
 
@@ -323,20 +323,29 @@ class _PrivateSlidesClass(BaseLiveSlides):
             %%slide 1                             
             #python code here                     
         
-        You can use another cell magic under it to capture cell content as you want, e.g.
+        You can use extended markdown to create slides
             ---------------- Cell ----------------
-            %%slide 2
-            %%markdown
+            %%slide 2 -m
             Everything here and below is treated as markdown, not python code.
+            (1.5.4+) If Markdown is separated by three dashes (---) on it's own line, multiple frames are created.
         """
         line = line.strip().split() #VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
             raise ValueError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
         
-        with self.slide(int(line[0])):
-            if '-m' in line[1:]:
-                parse_xmd(cell, display_inline = True, rich_outputs = False)
+        slide_number = int(line[0])
+        
+        if '-m' in line[1:]:
+            _frames = re.split(r'^---$|^---\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
+            if len(_frames) == 1:
+                with self.slide(slide_number):
+                    parse_xmd(cell, display_inline = True, rich_outputs = False)
             else:
+                @self.frames(slide_number, *_frames)
+                def create_frames(obj):
+                    parse_xmd(obj, display_inline = True, rich_outputs = False)
+        else:
+            with self.slide(slide_number):
                 self.shell.run_cell(cell)
     
     @contextmanager
