@@ -35,13 +35,12 @@ class _ExtendedMarkdown(Markdown):
         self.extensions = _md_extensions
         super().__init__(extensions = self.extensions)
         self._display_inline = False
-        self._run_code = False
     
     def _extract_class(self, header):
-        out = header.split('.')
+        out = header.split('.',1) # Can have many classes there
         if len(out) == 1:
             return out[0].strip(), ''
-        return out[0].strip(), out[1].strip()
+        return out[0].strip(), out[1].replace('.', ' ').strip()
         
     def parse(self, xmd, display_inline = False, rich_outputs = False):
         """Return a string after fixing markdown and code/multicol blocks if display_inline is False
@@ -180,7 +179,7 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
         # Normal Markdown {.report-only}
         ```multicol 40 60
         # First column is 40% width
-        If 40 60 was not given, all columns will be of equal width
+        If 40 60 was not given, all columns will be of equal width, this paragraph will be inside info block due to class -> &lcurb;.Info &rcurb;\n{.Info}
         +++
         # Second column is 60% wide
         This \{\{var_name\}\} is code from above and will be substituted with the value of var_name
@@ -191,10 +190,10 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
         ```
         || Inline-column A || Inline-column B ||
 
-    Each block can have a class name (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess`.
+    Each block can have class names (speparated with space or .) (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess.Info`.
     For example, `python .friendly` will be highlighted with friendly theme from pygments.
-    Pygments themes, however, are not supported with `multicol`.
-    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.display_html` is called.
+    Pygments themes, however, are not supported with `multicol`. You need to write CSS for a custom class in <style> tag.
+    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.export.<export_function>` is called.
     
     Note: Nested blocks are not supported.
     New in 1.4.6

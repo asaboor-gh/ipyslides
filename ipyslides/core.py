@@ -194,7 +194,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
                     ]),
                     self.widgets.toggles.timer,
                     self.widgets.htmls.notes
-                ])
+                ]).add_class('ExtraControls')
     @property
     def _frameno(self):
         "Get current frame number, return 0 if not in frames in slide"

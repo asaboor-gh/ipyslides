@@ -202,9 +202,11 @@ class LayoutSettings:
         """Pushes this instance of LiveSlides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
         if self.btn_fs.value or self.sidebar_switch.value == 0:
+            self.widgets.mainbox.remove_class('SideMode')
             self.widgets.htmls.sidebar.value = '' # Should be empty to avoid competition of style
-            self.height_slider.layout.display = 'inline-flex' #Very impprtant
+            self.height_slider.layout.display = 'inline-flex' #Very important
         else:
+            self.widgets.mainbox.add_class('SideMode')
             self.widgets.htmls.sidebar.value =  html('style',styles.sidebar_layout_css(span_percent=self.width_slider.value)).value
             self.height_slider.layout.display = 'none'
 

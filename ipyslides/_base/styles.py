@@ -134,15 +134,44 @@ def style_css(style_root = theme_roots['Inherit']):
     color: var(--accent-color);
 }
 
-.jp-OutputArea-child, .jp-OutputArea-child .jp-OutputArea-output { background: transparent !important;background-color: transparent !important; margin: 0 !important;} /* For some themes */
-.SlidesWrapper .jupyter-widgets:not(button) { color: var(--primary-fg) !important;} /* All widgets text */
-.jp-RenderedHTMLCommon { padding:0px;padding-right: 0px !important;font-size: var(--text-size);} /* important for central layout */
-.jp-RenderedHTMLCommon :not(pre) > code { background-color: var(--secondary-bg); color:var(--secondary-fg);}
-.jp-RenderedText, .jp-RenderedText pre {color:var(--primary-fg) !important;}
-.jp-RenderedHTMLCommon p {margin-bottom: 0.2em !important;}
-.widget-html:not(.LaserPointer), .widget-html .widget-html-content > div {display:grid !important; font-size: var(--text-size) !important;} /* Do not use overflow her */
-.panel-text .widget-html-content {line-height: inherit !important;}
-.jp-LinkedOutputView, .SlidesWrapper, .SlidesWrapper * { box-sizing:border-box;}
+.jp-OutputArea-child, 
+.jp-OutputArea-child .jp-OutputArea-output { 
+    background: transparent !important;
+    background-color: transparent !important; 
+    margin: 0 !important;
+} /* For some themes */
+.SlidesWrapper .jupyter-widgets:not(button) { 
+    color: var(--primary-fg) !important;
+} /* All widgets text */
+.jp-RenderedHTMLCommon { 
+    padding:0px;
+    padding-right: 0px !important;
+    font-size: var(--text-size);
+} /* important for central layout */
+.jp-RenderedHTMLCommon :not(pre) > code { 
+    background-color: var(--secondary-bg); 
+    color:var(--secondary-fg);
+}
+.jp-RenderedText, 
+.jp-RenderedText pre {
+    color:var(--primary-fg) !important;
+}
+.jp-RenderedHTMLCommon p {
+    margin-bottom: 0.2em !important;
+}
+.widget-html:not(.LaserPointer), 
+.widget-html .widget-html-content > div {
+    display:grid !important; 
+    font-size: var(--text-size) !important;
+} /* Do not use overflow here */
+.panel-text .widget-html-content {
+    line-height: inherit !important;
+}
+.jp-LinkedOutputView, 
+.SlidesWrapper, 
+.SlidesWrapper * { 
+    box-sizing:border-box;
+}
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
@@ -503,7 +532,7 @@ div.LaserPointer { /* For laser pointer */
 .jp-LinkedOutputView, 
 .jp-LinkedOutputView > div.jp-OutputArea,
 .jp-LinkedOutputView > div.jp-OutputArea > div.jp-OutputArea-output{
-     display:flex;
+    display:flex;
     height: 100%;
     width:100%;
     padding:0;
@@ -512,6 +541,13 @@ div.LaserPointer { /* For laser pointer */
 .jp-LinkedOutputView div.SlidesWrapper{
     height: 100% !important;
     width: 100% !important;
+}
+#rendered_cells .height-slider,
+#rendered_cells .width-slider,
+.SlidesWrapper.SideMode .height-slider,
+.jp-LinkedOutputView .ExtraControls,
+.jupyterlab-sidecar .ExtraControls {
+    display: none !important;
 }
 '''
 
@@ -596,8 +632,8 @@ a.jp-InternalAnchorLink { display: none !important;}
 
 #rendered_cells .SlidesWrapper {
     position: fixed !important;
-    width:100% !important;
-    height: 100% !important;
+    width:100vw !important;
+    height: 100vh !important;
     bottom: 0px !important;
     top: 0px !important;
     tight: 0px !important;
@@ -739,13 +775,18 @@ fullscreen_css = '''
     padding: 0;
     background:var(--primary-bg);
 }  
-.jp-SideBar.lm-TabBar, .f17wptjy, #jp-bottom-panel { display:none !important;}
-#jp-top-panel, #jp-menu-panel {display:none !important;} /* in case of simple mode */
-.lm-DockPanel-tabBar {display:none;}
-.SlidesWrapper .voila-sidecar-hidden {display: none;}
-.SlidesWrapper.FullScreen .console-btn {display:block;} /* Show console button in fullscreen in jupyterlab only*/
-.jupyterlab-sidecar .console-btn {display:none;} /* Hide console button in sidecar as not works there */
-html,body {background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + Shift + ],[ pressed */
+.f17wptjy, 
+#jp-top-panel,
+#jp-menu-panel,
+#jp-bottom-panel,
+.lm-DockPanel-tabBar,
+.jp-SideBar.lm-TabBar, 
+.jupyterlab-sidecar .console-btn, 
+.SlidesWrapper .voila-sidecar-hidden {
+    display:none !important;
+}
+.SlidesWrapper.FullScreen .console-btn { display:block;} /* Show console button in fullscreen in jupyterlab only*/
+html, body { background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + Shift + ],[ pressed */
 ''' 
 
 mpl_fs_css = '''
