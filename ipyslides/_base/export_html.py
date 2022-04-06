@@ -55,6 +55,7 @@ class _HhtmlExporter:
     
     def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', text_font = 'sans-serif', code_font = 'monospace', overwrite = False):
         """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
+        
         - allow_non_html_repr: (True), then non-html representation of the slides like text/plain will be used in report.
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'report-only' class to generate additional content that only appear in report.
@@ -68,6 +69,7 @@ class _HhtmlExporter:
     
     def slides(self, path = 'slides.html', slide_number = True, overwrite = False):
         """Build beutiful html slides that you can print. Widgets are not supported for this purpose.
+        
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.

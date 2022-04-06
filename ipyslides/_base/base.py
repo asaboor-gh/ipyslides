@@ -115,6 +115,7 @@ class BaseLiveSlides:
         """You can create slides from a markdown file or StringIO object as well. It creates slides 1,2,3... in order.
         You should add more slides by higher number than the number of slides in the file, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
+        Frames separator should be ___ (three underscores) in start of line. All markdown before first ___ will be written on all frames.
         **Markdown File Content**
         ```markdown
         # Talk Title
@@ -128,14 +129,18 @@ class BaseLiveSlides:
          {{source}} from above code block will be replaced by it's html value.
         ---
         # Slide 2
+        ___
+        ## First Frame
          ```multicol 40 60
         # Block column 1
         +++
         # Block column 2
         || Mini - Column A || Mini - Column B ||
          ```
+        ___
+        ## Second Frame
         ```
-        This will create two slides along with title page.
+        This will create two slides along with title page. Second slide will have two frames.
         
         Content of each slide from imported file is stored as list in `slides.md_content`. You can append content to it like this:
         ```python
@@ -159,13 +164,10 @@ class BaseLiveSlides:
         else:
             with open(path, 'r') as fp:
                 chunks = _parse_md_file(fp)
-
-        with self.title():
-            self.parse_xmd(chunks[0], display_inline=True)
             
-        for i,chunk in enumerate(chunks[1:],start=1):
-            with self.slide(i):
-                self.parse_xmd(chunk, display_inline=True)
+        for i,chunk in enumerate(chunks):
+            # Must run under this to create frames with triple underscore (___)
+            self.shell.run_cell_magic('slide', f'{i} -m', chunk)
             
         self._md_content = chunks # Store for later use
         

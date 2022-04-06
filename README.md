@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.5.4
+> pip install ipyslides >= 1.5.5
 ```
 For development install, clone this repository and then
 ```shell
@@ -48,7 +48,7 @@ Markdown here with extended options. Nested blocks are not supported
     ```
 {{source}} will be shown in start here as well. Only variables are supported.
 
-(1.5.4+) three dashes on their own line create multiple frames
+(1.5.5+) three underscores ___ on their own line create multiple frames
 #------------ Cell 5 --------------------
 @ls.frames(1,*objs)
 def func(obj):
@@ -58,6 +58,7 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
 #### You can load slides from a markdown file
 slides separator should be --- (three dashes)
+frames separator should be ___ (three underscores)
 ```python
 ls.from_markdown(path)
 with ls.slide(2):
