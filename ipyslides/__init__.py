@@ -2,14 +2,10 @@ from .__version__ import __version__
 
 version = __version__
 
-from .core import LiveSlides
+from .core import LiveSlides 
+from . import parsers
 
-
-def display_markdown(markdown_file_path, print_text_fonts = None, print_code_fonts = None):
-    raise AttributeError("This function is deprecated. Use `LiveSlides.build_report` instead.")
-
-__all__ = ['LiveSlides']
-      
+__all__ = ['LiveSlides', 'parsers']
         
 if __name__ == '__main__':
     print('Use this package in Jupyter notebook!')

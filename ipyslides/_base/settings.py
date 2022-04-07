@@ -23,6 +23,7 @@ class LayoutSettings:
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '90%' #Better
         self._breakpoint_width = '650px'
+        self._code_lineno = True
         
         self.height_slider = self.widgets.sliders.height
         self.width_slider  = self.widgets.sliders.width
@@ -50,7 +51,7 @@ class LayoutSettings:
         self.sidebar_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
         
         self._update_theme() #Trigger Theme and Javascript in it
-        self.set_code_style(color = 'var(--primary-fg)') #Trigger CSS in it, must
+        self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
         
     def _on_displayed(self,change):
@@ -70,9 +71,10 @@ class LayoutSettings:
         else:
             print(f'Animation {name!r} not found. Pass None or any of {list(styles.animations.keys())}.')
     
-    def set_code_style(self,style='default',color = None):
-        "Set code style CSS. Use background for better view of your choice."
-        self.widgets.htmls.hilite.value = code_css(style,color = color)
+    def set_code_style(self,style='default',color = None,background = None, accent_color = 'var(--tr-hover-bg)',lineno = True):
+        "Set code style CSS. Use background for better view of your choice. This is overwritten by theme change."
+        self._code_lineno = lineno # Used in theme to keep track 
+        self.widgets.htmls.hilite.value = code_css(style,color = color,background = background, lineno = lineno, accent_color = accent_color)
       
     def set_font_family(self,text_font=None,code_font=None):
         "Set main fonts for text and code."
@@ -113,12 +115,6 @@ class LayoutSettings:
         
         self.widgets.htmls.footer.value = _text.replace('__number__',_number_str)
         
-    def code_lineno(self,b=True):
-        "Set code line numbers to be shown or not."
-        if b:
-            return display(html('style', 'code:before{ display:inline-block !important; }'))
-        return display(html('style', 'code:before{ display:none !important; }'))
-    
     def set_layout(self,center = True, content_width = None):
         "Central aligment of slide by default. If False, left-top aligned."
         self._content_width = content_width if content_width else self._content_width # user selected
@@ -175,11 +171,11 @@ class LayoutSettings:
                         theme_css = ''.join(f.readlines())
         
         if self.theme_dd.value == 'Dark':
-            self.set_code_style('monokai',color='#f8f8f2')
+            self.set_code_style('monokai',color='#f8f8f2',lineno=self._code_lineno)
         elif self.theme_dd.value == 'Fancy':
-            self.set_code_style('borland') 
+            self.set_code_style('borland',lineno=self._code_lineno) 
         else:
-            self.set_code_style('default')
+            self.set_code_style('default',lineno=self._code_lineno)
                
         # Replace font-size and breakpoint size
         theme_css = theme_css.replace(

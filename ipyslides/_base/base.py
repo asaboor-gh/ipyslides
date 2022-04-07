@@ -57,8 +57,8 @@ class BaseLiveSlides:
     @property
     def css_styles(self):
         """CSS styles for write(..., className = style)."""
-        print('Use any or combinations of these styles in className argument of writing functions:')
-        print('''
+        # self.html will be added from Chid class
+        return self.html('pre', '''Use any or combinations of these styles in className argument of writing functions:
         className = 'Center'            ------Text------
         className = 'Left'              Text------------
         className = 'Right'             ------------Text
@@ -124,6 +124,7 @@ class BaseLiveSlides:
         || Inline - Column A || Inline - Column B ||
         {{some_var}} that will be replaced by it's html value.
          ```python run source
+         from ipyslides import parsers as prs # import parser functions from this module (1.5.6+)
          # code here will be executed and it's output will be shown in slide.
          ```
          {{source}} from above code block will be replaced by it's html value.
@@ -275,9 +276,7 @@ class BaseLiveSlides:
         
         self.progress_slider.index = 0 # back to title
         return self
-    
-    def build_report(self, path = 'report.html', allow_non_html_repr = False, * , as_slides = False, page_size = 'letter', text_font = 'sans-serif',code_font = 'monospace'):
-        raise DeprecationWarning('Use `export.report` instead.')
+
 
 def _parse_md_file(fp):
     "Parse a Markdown file or StringIO to put in slides and returns text for title and each slide."

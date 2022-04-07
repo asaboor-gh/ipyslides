@@ -6,6 +6,7 @@ import textwrap
 import inspect, re, json
 from io import BytesIO
 import matplotlib.pyplot as plt
+from numpy import gradient
 import pygments
 import ipywidgets as ipw
 from IPython.display import HTML 
@@ -109,28 +110,50 @@ def _ipy_imagestr(image,width='100%'):
     return fix_ipy_image(image,width=width).value
 
 
-def code_css(style='default',color = None, className = None):
-    """Style code block with given style from pygments module and text color(some themes dont provide text color, so fix it).
+def code_css(style='default',color = None, background = None, accent_color = 'var(--tr-hover-bg)', className = None, lineno = True):
+    """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
     """
     if style not in pygments.styles.get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     _class = '.highlight' if className is None else f'.highlight.{className}'
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
+    
+    # Override color and background if provided
+    _bg_fg = ''.join(a.replace(';',' ').replace(':',' ').replace('{','').strip() 
+                     for a in _style.replace(_class,'').split('}') if a.lstrip().startswith('{')
+                     ).split() # Join makes single string
+    _bg_fg = dict(zip([k for i,k in enumerate(_bg_fg) if i % 2 == 0],[k for i,k in enumerate(_bg_fg) if i % 2 != 0]))
+    bg = background if background else _bg_fg.get('background','var(--secondary-bg)')
+    fg = color if color else _bg_fg.get('color','var(--primary-fg)')
+    
+    if style == 'default': # This is important to display in inherit theme
+        bg, fg = 'var(--secondary-bg)', 'var(--primary-fg)'
+    
+    gradient = f'linear-gradient(to right, {accent_color}, {accent_color} 2.2em, {bg} 2.2em, {bg} 100%)'
+        
     return f"""<style>\n{_style}
+    {_class} {{ 
+        background: {gradient if lineno else bg}; 
+        color: {fg}; 
+        border-left: 2px solid {accent_color};
+    }}
     span.err {{border: none !important;}}
-    {_class}, {_class} code:before {{
-        color: {color if color else 'var(--primary-fg)'};
+    
+    {_class} code {{
+        padding-left: {'2.2em' if lineno else '0.5em'};
+    }}
+    {_class} code:hover {{
+        background: {accent_color} !important; /* Important to override default hover */
     }}
     {_class} code:before {{
-        opacity: 0.8;
-        background: transparent;
-        color: {color if color else 'var(--secondary-fg)'};
-    }}
-    {_class} code:hover::before {{
-        background: none !important;
+        opacity: 0.95;
+        background: {accent_color};
+        width: {'1.2em' if lineno else '0'};
+        color: {fg};
+        display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, className = None, style='default', color = None):
+def highlight(code, language='python', name = None, className = None, style='default', color = None, background = None, accent_color = 'var(--tr-hover-bg)', lineno = True):
     """Highlight code with given language and style. style only works if className is given.
     If className is given and matches any of pygments.styles.get_all_styles(), then style will be applied immediately.
     color is used for text color as some themes dont provide text color.
@@ -141,7 +164,7 @@ def highlight(code, language='python', name = None, className = None, style='def
         style = className
         
     formatter = pygments.formatters.HtmlFormatter(style = style)
-    _style = code_css(style=style, color = color, className=className) if className else ''
+    _style = code_css(style=style, color = color, background = background, accent_color = accent_color,className=className, lineno = lineno) if className else ''
     _code = pygments.highlight(textwrap.dedent(code), # dedent make sure code blocks at any level are picked as well
                                pygments.lexers.get_lexer_by_name(language),
                                formatter)

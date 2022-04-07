@@ -321,7 +321,6 @@ def style_css(style_root = theme_roots['Inherit']):
     max-width: 100vw !important;
     box-sizing: border-box !important;
     overflow: auto !important;
-    border-left: 2px solid var(--tr-hover-bg);
     border-radius: 2px;
     padding: 0 !important;
     margin: 4px 0px !important; /* Opposite to padding to balance it */
@@ -349,15 +348,7 @@ def style_css(style_root = theme_roots['Inherit']):
     background:transparent !important;
     white-space: pre !important;
     overflow-wrap: normal !important;
-    padding-left:2.2em;
     box-sizing: border-box !important;
-    /* colors are set via settigs.set_code_style */
-}
-.highlight code:hover {
-    background: var(--tr-hover-bg) !important;
-}
-.highlight code:hover::before {
-    background: none !important;
 }
 .highlight code:before{
     content: counter(line,decimal);
@@ -366,13 +357,11 @@ def style_css(style_root = theme_roots['Inherit']):
     left:-4px;
     padding: 0 8px;
     display:inline-block; /* should be inline */
-    width:1.2em;
     text-align:right;
     -webkit-user-select: none;
     margin-left:-3em;
     margin-right: 8px;
     font-size: 80%;
-    /* colors are set via settigs.set_code_style */
 }
 .highlight  code > span {
     white-space: normal; /* for breaking words */

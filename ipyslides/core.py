@@ -541,8 +541,7 @@ class LiveSlides:
         _private_instance.settings.set_logo(src = logo_src)
         _private_instance.settings.set_font_scale(font_scale = font_scale)
         _private_instance.settings.set_font_family(text_font = text_font, code_font = code_font)
-        _private_instance.settings.set_code_style(style = code_style)
-        _private_instance.settings.code_lineno(b = code_lineno)
+        _private_instance.settings.set_code_style(style = code_style, lineno = code_lineno)
         _private_instance.settings.set_animation(name = animation)
         return _private_instance
     

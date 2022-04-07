@@ -1,4 +1,4 @@
-__all__ = ['print_context',  'details', 'plt2html', 'set_dir', 'textbox', 'vspace',
+__all__ = ['print_context',  'details', 'set_dir', 'textbox', 'vspace',
             'image','svg','format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
