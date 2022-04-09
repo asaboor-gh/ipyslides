@@ -117,17 +117,18 @@ def code_css(style='default',color = None, background = None, accent_color = 'va
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     _class = '.highlight' if className is None else f'.highlight.{className}'
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
+    if style == 'default':
+        _bg_fg = {'background': 'var(--secondary-bg)', 'color': 'var(--primary-fg)'} # Should match inherit theme
+    else: # Override color and background if provided by theme
+        _bg_fg = {} 
+        items = [b.strip().split() for b in ''.join(re.findall(f'{_class}\s+?{{(.*?)}}',_style)).replace(':',' ').rstrip(';').split(';')]
+        for item in items:
+            if len(item) == 2 and item[0] in ('background','color'):
+                _bg_fg[item[0]] = item[1]      
     
-    # Override color and background if provided
-    _bg_fg = ''.join(a.replace(';',' ').replace(':',' ').replace('{','').strip() 
-                     for a in _style.replace(_class,'').split('}') if a.lstrip().startswith('{')
-                     ).split() # Join makes single string
-    _bg_fg = dict(zip([k for i,k in enumerate(_bg_fg) if i % 2 == 0],[k for i,k in enumerate(_bg_fg) if i % 2 != 0]))
+    # keep user preferences               
     bg = background if background else _bg_fg.get('background','var(--secondary-bg)')
     fg = color if color else _bg_fg.get('color','var(--primary-fg)')
-    
-    if style == 'default': # This is important to display in inherit theme
-        bg, fg = 'var(--secondary-bg)', 'var(--primary-fg)'
     
     gradient = f'linear-gradient(to right, {accent_color}, {accent_color} 2.2em, {bg} 2.2em, {bg} 100%)'
         

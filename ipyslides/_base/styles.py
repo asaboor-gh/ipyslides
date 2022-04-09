@@ -10,7 +10,7 @@ theme_roots = {
 	--secondary-fg: var(--jp-inverse-layout-color4,#454545);
 	--tr-odd-bg: var(--jp-layout-color2,whitesmoke);
 	--tr-hover-bg:var(--jp-border-color1,#D1D9E1);
- 	--accent-color:var(--jp-brand-color2,navy);
+ 	--accent-color:var(--jp-brand-color1,navy);
     --pointer-color: var(--md-pink-A400,red);
 	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
 }
