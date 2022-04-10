@@ -719,6 +719,28 @@ body[data-retro] .DisplaySwitch>div {
     border: 1px solid var(--accent-color);
     padding: 2px 0px;
 }
+
+.Intro summary {
+    background: var(--secondary-bg);
+    padding-left:0.2em;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+.Intro summary::marker {
+    content: '';
+}
+.Intro summary::after {
+    content: 'show/hide';
+    color: var(--secondary-fg);
+    font-weight:normal;
+    font-size: 80%;
+    float:right;
+    padding: 0.2em;
+}
+.capture-html * {
+    font-size: 0.9em;
+    line-height: 0.9em  !important;
+}
 '''
 
 

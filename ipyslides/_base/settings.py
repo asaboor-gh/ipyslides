@@ -10,7 +10,7 @@ from IPython.display import display, Image
 from IPython.utils.capture import capture_output
 from ..formatter import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
-from ..utils import set_dir, html
+from ..utils import set_dir, html, details
 from . import scripts, intro, styles
 
 class LayoutSettings:
@@ -60,7 +60,8 @@ class LayoutSettings:
         with capture_output() as cap:
             parse_xmd(intro.instructions,display_inline=True)
         # Only do this if it's in Jupyter, otherwise throws errors
-        self.widgets.htmls.intro.value = '\n'.join(o.data['text/html'] for o in cap.outputs)
+        self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
+        self.widgets.htmls.intro.add_class('Intro')
             
     def set_animation(self,name):
         "Set animation style or pass None to disable animation."
