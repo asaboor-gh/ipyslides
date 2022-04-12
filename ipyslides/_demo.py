@@ -5,7 +5,7 @@ from io import StringIO
 from IPython import get_ipython
 from .utils import textbox
 from .writers import write, iwrite
-from .formatter import libraries, plt2html, __reprs__
+from .formatter import libraries, __reprs__
 from ._base.intro import how_to_slide
 
 slides = get_ipython().user_ns['_s_l_i_d_e_s_'] # get slides from notebook instead of creating new one
@@ -44,7 +44,7 @@ with slides.slide(1): #slide 1 will be modified with old and new content
         #display(*get_ipython().user_ns['outputs'])
         write('## I am created using `with slides.slide(1)` context( manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
-    write(s.focus_lines([0]))  #focus on line 0 
+    s.focus_lines([0]).display()  #focus on line 0 
     slides.notes.insert('### Note for slide 1')
     
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
@@ -68,7 +68,7 @@ def func(obj):
     with slides.source.context() as s:
         slides.write(obj)
         slides.notify_later()(lambda: 'That is a notification which shows you can use decorator this way as well')
-    write(s)
+    s.display()
 
 #Now generate many slides in a loop
 __contents = [f"""## IPython Display Objects
@@ -97,7 +97,7 @@ for i in range(4,8):
                 write([slides.doc(write,'LiveSlides'), slides.doc(iwrite,'LiveSlides'), slides.doc(slides.parse_xmd,'LiveSlides')])
                 write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
             
-            write(s.show_lines([0,1]))
+            s.show_lines([0,1]).display()
 # Matplotlib
 with slides.slide(8,background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'):
     write('## Plotting with Matplotlib')
@@ -121,7 +121,7 @@ with slides.slide(9):
             t = time.localtime()
             return f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}'
         
-        write(s) # source.context(style='vs',background='#FAA',className="Youtube")
+        s.display() # s = source.context(style='vs', className="Youtube")
     
 # Data Table
 with slides.slide(10):
@@ -134,7 +134,7 @@ with slides.slide(10):
             |d1|d2|d3|
             |r1|r2|r3|
             ''')))
-        write(s.focus_lines([3,4,5,6]))
+        s.focus_lines([3,4,5,6]).display()
 
 # Plotly and Pandas DataFrame only show if you have installed
 with slides.slide(11,background='#800000'):
@@ -158,7 +158,7 @@ with slides.slide(11,background='#800000'):
         write(('## Writing Pandas DataFrame',df),
             ('## Writing Altair Chart\nMay not work everywhere, needs javascript\n{.Note .Warning}',chart)
             )
-    write(slides.source.current.show_lines(range(5,12))) #Show source code of above block even without assignning to variable explicitly
+    slides.source.current.show_lines(range(5,12)).display() #Show source code of above block even without assignning to variable explicitly
     
 try:
     import plotly.graph_objects as go
@@ -224,7 +224,7 @@ def func(obj):
                   s.show_lines([obj-14])
                   ],ax,width_percents=[40,60])
     if obj == 14:
-        slides.write(s.show_lines([5,6]))
+        s.show_lines([5,6]).display()
         
 # Frames structure
 boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:auto;padding:8px;margin:8px;border-radius:4px;"><h1>{i}</h1></div>' for i in range(1,10)]
@@ -243,14 +243,14 @@ def f(obj):
     with slides.source.context() as s:
         slides.write('# Frames with \n#### `repeat = [(0,1,2),(3,4,5),(6,7,8)]`')
         slides.write(*obj)
-    slides.write(s)
+    s.display()
 
 with slides.slide(18):
     with slides.source.context() as s:
         slides.write(['## Displaying image from url from somewhere in Kashmir (کشمیر)',
                       slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg')],
                      className='Success')
-    slides.write(s)
+    s.display()
 
 with slides.slide(19):
     slides.write('## $\LaTeX$ in Slides\nUse `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations')
@@ -268,4 +268,14 @@ with slides.slide(20):
         slides.write('Info',className='Info')
         slides.write('Warning',className='Warning')
         slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='Right RTL')
-    slides.write(s)
+    s.display()
+
+with slides.slide(21):
+    with slides.source.context() as s:
+        slides.rows(
+            '## Can skip `write` commnad sometimes',
+            slides.cols('### Column A','### Column B',className='Info'),
+            '||### Column C {.Warning}||### Column D {.Success}||',
+        ).display()
+        slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
+    s.display()

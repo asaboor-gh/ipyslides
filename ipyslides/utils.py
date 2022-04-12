@@ -153,9 +153,10 @@ def keep_format(plaintext_or_html):
         return plaintext_or_html # if not string, return as is
     return _HTML(plaintext_or_html) 
 
-def raw(text):
+def raw(text, className=None):
     "Keep shape of text as it is, preserving whitespaces as well."
-    return _HTML(f"<div class='PyRepr'>{text}</div>")
+    _class = className if className else ''
+    return _HTML(f"<div class='PyRepr {_class}'>{text}</div>")
 
 def rows(*objs, className=None):
     "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."

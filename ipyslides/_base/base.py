@@ -70,7 +70,7 @@ class BaseLiveSlides:
         className = 'Note'              Text with info icon
         className = 'slides-only'       Text will not appear in exported html with `build_report`
         className = 'report-only'       Text will not appear on slides. Useful to fill content in report. 
-        ''')
+        ''',className= 'Info')
 
     
     def notify_later(self, title='IPySlides Notification', timeout=5):
@@ -178,7 +178,7 @@ class BaseLiveSlides:
         """Demo slides with a variety of content."""
         self._check_computed('load demo')
         get_ipython().user_ns['_s_l_i_d_e_s_'] = self
-        from .. import _demo
+        from .. import _demo # Import after assigning in user_ns
         slides = _demo.slides # or it is self
         with slides.slide(100):
             slides.write('## This is all code to generate slides')
@@ -187,7 +187,7 @@ class BaseLiveSlides:
         with slides.slide(101,background='#9ACD32'):
             with slides.source.context() as s:
                 slides.write_citations()
-            slides.write(s)
+            s.display()
         
         slides.progress_slider.index = 0 # back to title
         return slides
@@ -196,12 +196,13 @@ class BaseLiveSlides:
         "Create presentation from docs of IPySlides."
         self._check_computed('load docs')
         from ..core import LiveSlides
+        from ..__version__ import __version__
         
         self.clear()
         self.settings.set_footer('IPySlides Documentation')
         
         with self.title(): # Title
-            self.write('## IPySlides Documentation\n### Creating slides with IPySlides')
+            self.write(f'## IPySlides {__version__} Documentation\n### Creating slides with IPySlides')
             self.write(self.doc(LiveSlides))
         
         with self.slide(1):
@@ -250,10 +251,8 @@ class BaseLiveSlides:
                 self.write(('You can **style**{.Error} your *content*{: style="color:hotpink;"} with `className` attribute in writing/content functions. ' 
                        'Provide **CSS**{.Info} for that using `.format_css` or use some of the available styles. '
                        'See these **styles**{.Success} with `.css_styles` property as below:'))
-                self.iwrite(c)
-                
-            with self.print_context():
-                self.css_styles # Auto prints css styles
+                self.css_styles.display()
+                c.display()
         
         with self.slide(8):
             self.write('## Highlighting Code')
@@ -263,7 +262,7 @@ class BaseLiveSlides:
                         'import ipyslides as isd\n```\n'
                         '```javascript\n'
                         'import React, { Component } from "react";\n```\n'))
-                self.iwrite(s)
+                s.display()
         
         with self.slide(9):
             self.write('## Loading from File/Exporting to HTML')
@@ -273,6 +272,9 @@ class BaseLiveSlides:
                         self.doc(self.load_docs,'LiveSlides'),
                         self.doc(self.export.slides,'LiveSlides.export'),
                         self.doc(self.export.report,'LiveSlides.export')])
+        
+        with self.slide(10):
+            self.write(['## Presentation Code',self.load_docs])
         
         self.progress_slider.index = 0 # back to title
         return self

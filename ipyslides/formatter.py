@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from numpy import gradient
 import pygments
 import ipywidgets as ipw
-from IPython.display import HTML 
+from IPython.display import display, HTML 
 from IPython.core.display import __all__ as _all
 from IPython import get_ipython
 
@@ -33,6 +33,10 @@ class _HTML(HTML):
             return _HTML(self._repr_html_() + other._repr_html_())
         elif isinstance(other,str):
             return _HTML(self._repr_html_() + other)
+    
+    def display(self):
+        "Display this HTML object inline"
+        display(self)
     
     @property
     def value(self):
@@ -62,6 +66,10 @@ class _HTML_Widget(ipw.HTML):
             return _HTML(self._repr_html_() + other._repr_html_())
         elif isinstance(other,str):
             return _HTML(self._repr_html_() + other)
+    
+    def display(self):
+        "Display this HTML widget inline"
+        display(self)
 
 
 def plt2html(plt_fig=None,transparent=True,caption=None):

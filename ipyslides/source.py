@@ -118,11 +118,12 @@ class Source:
     def context(cls, **kwargs): 
         """Excute and displays source code in the context manager. kwargs are passed to `ipyslides.formatter.highlight` function.
         Useful when source is written inside context manager itself.
+        
         **Usage**:
         ```python
         with source.context() as s: #if not used as `s`, still it is stored `source.current` attribute.`
             do_something()
-            write(s)
+            write(s) # or s.display(), iwrite(s)
             
         #s.raw, s.value are accesible attributes.
         #s.focus_lines, s.show_lines are methods that are used to show selective lines.
