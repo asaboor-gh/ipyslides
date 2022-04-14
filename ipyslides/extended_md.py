@@ -29,7 +29,7 @@ from .source import _str2code
 
 _md_extensions = ['tables','footnotes','attr_list'] # For MArkdown Parser
 
-_allowed_funcs = 'cite|write_citations|write_slide_css|insert_notes|notes.insert|source.from_string|source.from_file'
+_allowed_funcs = 'cite|citations_html|insert_notes|notes.insert|source.from_string|source.from_file'
 _allowed_funcs += '|'.join(['|details','textbox','vspace','image','svg','format_css','alert','colored','raw','plt2html','bokeh2html'])
 class _ExtendedMarkdown(Markdown):
     "New in 1.4.5"
@@ -141,7 +141,7 @@ class _ExtendedMarkdown(Markdown):
         "Validate expression to be executed in {{eval:expr}}"
         if ';' in expression: # This remove biggest security risk
                 raise ValueError(f'Multiple statements not allowed in eval:expr -> {expression!r}')
-        if re.search('import|.system', expression):
+        if re.search('^import|^system', expression): # .system(), __import__() call will be blocked below
             raise ValueError(f'import/system commands are not allowed in eval:expr -> {expression!r}')
             
         value = ast.parse(expression).body[0].value # Check if allowed python code
@@ -164,7 +164,7 @@ class _ExtendedMarkdown(Markdown):
                 
             try:
                 output = eval(eval_str, {'__builtins__':None,'__import__':None, **get_ipython().user_ns})
-                _out = stringify(output) if not isinstance(output, str) else output
+                _out = (stringify(output) if output else '') if not isinstance(output, str) else output # Avoid None
                 html_output = html_output.replace('{{eval:' + eval_str + '}}', _out, 1)
             except Exception as e:
                 raise e
@@ -175,10 +175,8 @@ class _ExtendedMarkdown(Markdown):
         for match in all_matches:
             try:
                 var = get_ipython().user_ns[match.strip()]
-                if isinstance(var, str):
-                    html_output = html_output.replace('{{' + match + '}}', var, 1)
-                else:
-                    html_output = html_output.replace('{{' + match + '}}', stringify(var), 1)
+                _out = (stringify(var) if var else '') if not isinstance(var, str) else var # Avoid None
+                html_output = html_output.replace('{{' + match + '}}', _out, 1)
             except Exception as e:
                 raise e
         

@@ -11,7 +11,7 @@ import ipywidgets as ipw
 from .extended_md import parse_xmd
 from .source import Source
 from .writers import write, iwrite
-from .formatter import bokeh2html, plt2html, highlight
+from .formatter import bokeh2html, plt2html, highlight, _HTML
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
@@ -122,7 +122,11 @@ class _PrivateSlidesClass(BaseLiveSlides):
     
     @property
     def iterable(self):
-        return self.__iterable  
+        return self.__iterable 
+    
+    @property
+    def citations(self):
+        return self._citations 
     
     @property
     def _access_key(self):
@@ -138,20 +142,28 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self._toasts = {'0':self._toasts.get('0',None) } # keep title page's toasts
         self.refresh() # Clear interface too
     
-    def cite(self,key, citation,here=False):
+    def cite(self,key, citation = None,here = False):
         "Add citation in presentation, key should be a unique string and citation is text/markdown/HTML."
         self._check_computed('add citations')
         if here:
             return utils.textbox(citation,left='initial',top='initial') # Just write here
-        self._citations[key] =  citation
+        self._citations[key] =  self.citations.get(key,citation)
         _id = list(self._citations.keys()).index(key)
+        # Return string otherwise will be on different place
         return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_id + 1}</sup></a>'
     
-    def write_citations(self,title='### References'): 
+    def citations_html(self,title='### References'): 
         "Write all citations collected via `cite` method in the end of the presentation."    
-        collection = [f'<span id="{k}"><a href="#{k}-back"><sup style="color:var(--accent-color);">{i+1}</sup></a>{v}</span>' for i,(k,v) in enumerate(self._citations.items())]
-        return write(title + '\n' +'\n'.join(collection))      
+        collection = [f'''<span id="{k}">
+            <a href="#{k}-back"><sup style="color:var(--accent-color);">{i+1}</sup></a>
+            {v if v else f"Set LiveSlides.citations[{k!r}] = 'citation value'"}
+            </span>''' for i,(k,v) in enumerate(self._citations.items())]
+        return _HTML(self.parse_xmd(title + '\n' +'\n'.join(collection), display_inline=False, rich_outputs = False))
     
+    def write_citations(self,title='### References'):
+        "Write all citations collected via `cite` method in the end of the presentation."
+        self.write(self.citations_html(title = title))
+        
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
         
