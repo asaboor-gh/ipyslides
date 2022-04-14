@@ -30,6 +30,7 @@ except:
         
 class _PrivateSlidesClass(BaseLiveSlides):
     """This is private class. Use `LiveSlides` instead."""
+    __name__ = 'ipyslides.core.Slides' # Used to validate code in markdown, must
     def __init__(self):
         """This is private class. Use `LiveSlides` instead."""
         # print(f'Inside: {self.__class__.__name__}')

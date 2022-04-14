@@ -111,7 +111,7 @@ class BaseLiveSlides:
         return self._md_content
         
     
-    def from_markdown(self, path):
+    def from_markdown(self, path, trusted = False):
         """You can create slides from a markdown file or StringIO object as well. It creates slides 1,2,3... in order.
         You should add more slides by higher number than the number of slides in the file, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
@@ -153,6 +153,25 @@ class BaseLiveSlides:
         
         > Note: With this method you can add more slides besides created ones.
         """
+        if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
+            raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
+        
+        if not trusted:
+            with open(path, 'r') as f:
+                lines = f.readlines()
+                untrusted_lines = []
+                for i, line in enumerate(lines, start = 1):
+                    if 'eval:' in line:
+                        untrusted_lines.append(i)
+                    if 'python run' in line:
+                        untrusted_lines.append(i)
+            
+            if untrusted_lines:
+                raise Exception(f'File {path!r} may contain unsafe code to be executed at lines: {untrusted_lines}'
+                    ' Verify code is safe and try again with argument `trusted = True`.'
+                    ' Never run files that you did not create yourself or not verified by you.')
+        
+                    
         self._check_computed('add slides from markdown file')
         if not (isinstance(path, io.StringIO) or os.path.isfile(path)): #check path later or it will throw error
             raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")

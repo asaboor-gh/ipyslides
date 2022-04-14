@@ -12,12 +12,12 @@ A
 +++
 This {{var_name}} is a code from above and will be substituted with the value of var_name
 ```
-
+{{eval:single line expression}} is allowed in 1.5.8+ only for a subset of functions in `LiveSlides` to include content dynamically.
 Note: Nested blocks are not supported.
 """
 
 
-import textwrap, re
+import textwrap, re, ast
 from markdown import Markdown
 from IPython.core.display import display
 from IPython import get_ipython
@@ -26,9 +26,11 @@ from IPython.utils.capture import capture_output
 from .formatter import _HTML, highlight, stringify
 from .source import _str2code
 
+
 _md_extensions = ['tables','footnotes','attr_list'] # For MArkdown Parser
 
-    
+_allowed_funcs = 'cite|write_citations|write_slide_css|insert_notes|notes.insert|source.from_string|source.from_file'
+_allowed_funcs += '|'.join(['|details','textbox','vspace','image','svg','format_css','alert','colored','raw','plt2html','bokeh2html'])
 class _ExtendedMarkdown(Markdown):
     "New in 1.4.5"
     def __init__(self):
@@ -56,17 +58,13 @@ class _ExtendedMarkdown(Markdown):
             
         new_strs = xmd.split('\n```') # This avoids nested blocks and it should be
         outputs =[]
-        if len(new_strs) > 1:
-            for i, section in enumerate(new_strs):
-                if i % 2 == 0:
-                    out = self._sub_vars(self.convert(section))
-                    outputs.append(_HTML(out))
-                else:
-                    _section = textwrap.dedent(section) # Remove indentation in code block, useuful to write examples inside markdown block
-                    outputs.extend(self._parse_block(_section)) # vars are substituted already inside
-        else:
-            out = self._sub_vars(self.convert(new_strs[0]))
-            outputs.append(_HTML(out))
+        for i, section in enumerate(new_strs):
+            if i % 2 == 0:
+                out = self._sub_vars(self.convert(section))
+                outputs.append(_HTML(out))
+            else:
+                _section = textwrap.dedent(section) # Remove indentation in code block, useuful to write examples inside markdown block
+                outputs.extend(self._parse_block(_section)) # vars are substituted already inside
         
         if rich_outputs:
             return outputs
@@ -138,12 +136,41 @@ class _ExtendedMarkdown(Markdown):
             with capture_output() as captured:
                 shell.run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
             return captured.outputs
+        
+    def _validate_expression(self, expression):
+        "Validate expression to be executed in {{eval:expr}}"
+        if ';' in expression: # This remove biggest security risk
+                raise ValueError(f'Multiple statements not allowed in eval:expr -> {expression!r}')
+        if re.search('import|.system', expression):
+            raise ValueError(f'import/system commands are not allowed in eval:expr -> {expression!r}')
+            
+        value = ast.parse(expression).body[0].value # Check if allowed python code
+        if isinstance(value, ast.Call) and not re.search(_allowed_funcs, expression):
+            raise ValueError(f'Arbitrary function calls not allowed in eval:expr -> {expression!r}, use only following methods:\n{_allowed_funcs.replace("|",", ")}')
+        elif isinstance(value, ast.Call) and re.search(_allowed_funcs, expression):
+            _prefix, _main = expression.split('.',1), 'Forbidden'
+            if len(_prefix) > 1:
+                _main = get_ipython().user_ns[_prefix[0]] # Check if really inside the scope of slides
+                
+            if _main == 'Forbidden' or not _main.__name__.startswith('ipyslides'): # Can cover LiveSlides, parsers, utils etc'
+                raise ValueError(f'Function {expression!r} not allowed in main scope in eval:expr -> {expression!r}')
     
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as {{var}}, and two inline columns as ||C1||C2||"
-    
+        # Eval inline code
+        all_evals = re.findall(r'\{\{eval:(.*?)\}\}', html_output) # Do not match new lines here, so bad
+        for eval_str in all_evals:
+            self._validate_expression(eval_str) # Check for valid code
+                
+            try:
+                output = eval(eval_str, {'__builtins__':None,'__import__':None, **get_ipython().user_ns})
+                _out = stringify(output) if not isinstance(output, str) else output
+                html_output = html_output.replace('{{eval:' + eval_str + '}}', _out, 1)
+            except Exception as e:
+                raise e
+            
         # Replace variables first 
-        all_matches = re.findall(r'\{\{(.*?)\}\}', html_output)
+        all_matches = re.findall(r'\{\{(.*?)\}\}', html_output) # Do not match new lines here, so bad
         # only have python vars here, security is an issue for expressions
         for match in all_matches:
             try:
@@ -198,6 +225,9 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.export.<export_function>` is called.
 
     Note: Nested blocks are not supported.
+    
+    {{eval:single line expression}} is allowed in 1.5.8+ only for a subset of functions in `LiveSlides` to include content dynamically.
+    
     New in 1.4.6
     """
     return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline, rich_outputs = rich_outputs)  
