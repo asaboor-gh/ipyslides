@@ -221,7 +221,7 @@ def sig(callable,prepend_str = None):
 def doc(callable,prepend_str = None):
     "Returns documentation of a callable. You can prepend a class/module name."
     try:
-        _doc = _fix_repr(inspect.getdoc(callable))
+        _doc = _fix_repr(inspect.getdoc(callable).replace('{','\u2774').replace('}','\u2775'))
         _sig = sig(callable,prepend_str)
         return _HTML(f"<div class='Docs'>{_sig}<br>{_doc}\n</div>")
     except:

@@ -12,7 +12,8 @@ A
 +++
 This {{var_name}} is a code from above and will be substituted with the value of var_name
 ```
-{{eval:single line expression}} is allowed in 1.5.8+ only for a subset of functions in `LiveSlides` to include content dynamically.
+{{selective expression}} is allowed in 1.5.8+ only for a subset of functions in `LiveSlides` to include content dynamically.
+Get a list of all available functions by  `LiveSlides.markdown_callables`.
 Note: Nested blocks are not supported.
 """
 
@@ -30,7 +31,8 @@ from .source import _str2code
 _md_extensions = ['tables','footnotes','attr_list'] # For MArkdown Parser
 
 _allowed_funcs = 'cite|citations_html|insert_notes|notes.insert|source.from_callable|source.from_file'
-_allowed_funcs += '|'.join(['|details','textbox','vspace','image','svg','format_css','alert','colored','raw','plt2html','bokeh2html'])
+_allowed_funcs += '|'.join(['|details','textbox','vspace','image','svg','format_css','alert','colored','raw','plt2html','bokeh2html','doc','sig'])
+
 class _ExtendedMarkdown(Markdown):
     "New in 1.4.5"
     def __init__(self):
@@ -60,7 +62,7 @@ class _ExtendedMarkdown(Markdown):
         outputs =[]
         for i, section in enumerate(new_strs):
             if i % 2 == 0:
-                out = self._sub_vars(self.convert(section))
+                out = self.convert(self._sub_vars(section))
                 outputs.append(_HTML(out))
             else:
                 _section = textwrap.dedent(section) # Remove indentation in code block, useuful to write examples inside markdown block
@@ -84,7 +86,7 @@ class _ExtendedMarkdown(Markdown):
         header, data = block.split('\n',1)
         line, _class = self._extract_class(header)
         if 'multicol' in line:
-            return [_HTML(self._sub_vars(self._parse_multicol(data, line, _class))),]
+            return [_HTML(self._parse_multicol(data, line, _class)),]
         elif 'python' in line:
             return self._parse_python(data, line, _class) # itself list
         else:
@@ -95,7 +97,7 @@ class _ExtendedMarkdown(Markdown):
     def _parse_multicol(self, data, header, _class):
         "Returns parsed block or columns or code, input is without \`\`\` but includes langauge name."
         cols = data.split('+++') # Split by columns
-        cols = [self.convert(col) for col in cols] 
+        cols = [self.convert(self._sub_vars(col)) for col in cols] 
         if len(cols) == 1:
             return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]
         
@@ -137,48 +139,44 @@ class _ExtendedMarkdown(Markdown):
                 shell.run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
             return captured.outputs
         
-    def _validate_expression(self, expression):
-        "Validate expression to be executed in {{eval:expr}}"
+    def _safe_eval(self, expression):
+        "Evaluate on allowed expressions in {{expression}}"
         if ';' in expression: # This remove biggest security risk
-                raise ValueError(f'Multiple statements not allowed in eval:expr -> {expression!r}')
-        if re.search('^import|^system', expression): # .system(), __import__() call will be blocked below
-            raise ValueError(f'import/system commands are not allowed in eval:expr -> {expression!r}')
+                raise ValueError(f'Multiple statements not allowed in expr -> {expression!r}')
+        
+        node = ast.parse(expression)
+        for n in ast.walk(node):
+            if isinstance(n, (ast.Import, ast.ImportFrom)):
+                raise ValueError(f'import commands are not allowed in expr -> {expression!r}')
+            if isinstance(n, ast.Call):
+                if not re.search(_allowed_funcs, expression):
+                    raise ValueError(f'''Arbitrary function calls not allowed in expr -> {expression!r}, use only following methods:\n{_allowed_funcs.replace("|",", ")}''')
+                elif re.search(_allowed_funcs, expression):
+                    _prefix, _main = expression.split('.',1), 'Forbidden'
+                    if len(_prefix) > 1:
+                        _main = get_ipython().user_ns[_prefix[0]] # Check if really inside the scope of slides
+                    if _main == 'Forbidden' or not _main.__name__.startswith('ipyslides'): # Can cover LiveSlides, parsers, utils etc'
+                        raise ValueError(f'Function {expression!r} not allowed in main scope in expr -> {expression!r}')
             
-        value = ast.parse(expression).body[0].value # Check if allowed python code
-        if isinstance(value, ast.Call) and not re.search(_allowed_funcs, expression):
-            raise ValueError(f'Arbitrary function calls not allowed in eval:expr -> {expression!r}, use only following methods:\n{_allowed_funcs.replace("|",", ")}')
-        elif isinstance(value, ast.Call) and re.search(_allowed_funcs, expression):
-            _prefix, _main = expression.split('.',1), 'Forbidden'
-            if len(_prefix) > 1:
-                _main = get_ipython().user_ns[_prefix[0]] # Check if really inside the scope of slides
-                
-            if _main == 'Forbidden' or not _main.__name__.startswith('ipyslides'): # Can cover LiveSlides, parsers, utils etc'
-                raise ValueError(f'Function {expression!r} not allowed in main scope in eval:expr -> {expression!r}')
+        # Finally eval it
+        return eval(expression, {'__import__':None, **get_ipython().user_ns})
     
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as {{var}}, and two inline columns as ||C1||C2||"
-        # Eval inline code
-        all_evals = re.findall(r'\{\{eval:(.*?)\}\}', html_output) # Do not match new lines here, so bad
-        for eval_str in all_evals:
-            self._validate_expression(eval_str) # Check for valid code
-                
-            try:
-                output = eval(eval_str, {'__builtins__':None,'__import__':None, **get_ipython().user_ns})
-                _out = (stringify(output) if output else '') if not isinstance(output, str) else output # Avoid None
-                html_output = html_output.replace('{{eval:' + eval_str + '}}', _out, 1)
-            except Exception as e:
-                raise e
+        "Substitute variables in html_output given as {{var}}, {{expression}}, and two inline columns as ||C1||C2||"
             
         # Replace variables first 
-        all_matches = re.findall(r'\{\{(.*?)\}\}', html_output) # Do not match new lines here, so bad
-        # only have python vars here, security is an issue for expressions
+        all_matches = re.findall(r'\{\{(.*?)\}\}', html_output, flags = re.DOTALL)
+        user_ns = get_ipython().user_ns
         for match in all_matches:
-            try:
-                var = get_ipython().user_ns[match.strip()]
-                _out = (stringify(var) if var else '') if not isinstance(var, str) else var # Avoid None
-                html_output = html_output.replace('{{' + match + '}}', _out, 1)
-            except Exception as e:
-                raise e
+            output = match # If below fails, it will be the same as input line
+            _match = match.strip()
+            if _match in user_ns:
+                output = user_ns[_match]
+            else:
+                output = self._safe_eval(_match) # eval allowed expressions
+            
+            _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
+            html_output = html_output.replace('{{' + match + '}}', _out, 1)
         
         # Replace columns after vars, so not to format their brackets
         all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output, flags = re.DOTALL) # Matches new line as well, useful for inline plots and big objects
@@ -224,7 +222,8 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
 
     Note: Nested blocks are not supported.
     
-    {{eval:single line expression}} is allowed in 1.5.8+ only for a subset of functions in `LiveSlides` to include content dynamically.
+    {{selective expression}} is allowed in 1.5.8+ only for a subset of functions in `LiveSlides` to include content dynamically.
+    Get a list of all available functions by  `LiveSlides.markdown_callables`.
     
     New in 1.4.6
     """

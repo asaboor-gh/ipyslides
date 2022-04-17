@@ -1,5 +1,5 @@
 "Inherit LiveSlides class from here. It adds useful attributes and methods."
-import os, io
+import os, io, re
 from IPython import get_ipython
 from contextlib import suppress
 from .widgets import Widgets
@@ -157,14 +157,16 @@ class BaseLiveSlides:
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         if not trusted:
-            with open(path, 'r') as f:
-                lines = f.readlines()
-                untrusted_lines = []
-                for i, line in enumerate(lines, start = 1):
-                    if 'eval:' in line:
-                        untrusted_lines.append(i)
-                    if 'python run' in line:
-                        untrusted_lines.append(i)
+            if isinstance(path, io.StringIO):
+                lines = path.readlines()
+            else:
+                with open(path, 'r') as f:
+                    lines = f.readlines()
+                    
+            untrusted_lines = []
+            for i, line in enumerate(lines, start = 1):
+                if re.match(r'{{|python run', line):
+                    untrusted_lines.append(i)
             
             if untrusted_lines:
                 raise Exception(f'File {path!r} may contain unsafe code to be executed at lines: {untrusted_lines}'

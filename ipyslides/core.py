@@ -8,7 +8,7 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
-from .extended_md import parse_xmd
+from .extended_md import parse_xmd, _allowed_funcs
 from .source import Source
 from .writers import write, iwrite
 from .formatter import bokeh2html, plt2html, highlight, _HTML
@@ -82,7 +82,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self.__update_content,names=['index'])
-        
+        self.markdown_callables = tuple(_allowed_funcs.split('|'))
         # All Box of Slides
         self._box =  self.widgets.mainbox
         self._box.on_displayed(self._on_displayed) 

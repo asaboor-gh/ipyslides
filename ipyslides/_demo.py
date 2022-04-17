@@ -36,7 +36,7 @@ Created using `%%slide 2 -m` with markdown only
 ```
 That version from last slide is still in memory. See it is there {{version}}
 ''')
-slides.from_markdown(fp) # This will create first slide along with title page.
+slides.from_markdown(fp, trusted=True) # This will create first slide along with title page.
 
 with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context(style='monokai', color='white', className='Mono') as s:

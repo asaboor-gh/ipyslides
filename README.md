@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.5.7
+> pip install ipyslides >= 1.5.8
 ```
 For development install, clone this repository and then
 ```shell
@@ -46,7 +46,7 @@ Markdown here with extended options. Nested blocks are not supported
     x = 1 + 2
     ls.write([x, source])
     ```
-{{source}} will be shown in start here as well. Only variables are supported.
+{{source}} will be shown in start here as well. Expressions are supported in 1.5.8+.
 
 (1.5.5+) three underscores ___ on their own line create multiple frames
 #------------ Cell 5 --------------------
