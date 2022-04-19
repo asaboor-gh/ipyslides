@@ -182,6 +182,9 @@ class _PrivateSlidesClass(BaseLiveSlides):
     
     def _ipython_display_(self):
         'Auto display when self is on last line of a cell'
+        if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
+            raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
+        
         if not self.__slides_mode:
             return print('Set "self.convert2slides(True)", then it will work.')
         
