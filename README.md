@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.5.8
+> pip install ipyslides >= 1.6.0
 ```
 For development install, clone this repository and then
 ```shell
