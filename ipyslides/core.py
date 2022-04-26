@@ -60,7 +60,7 @@ class _PrivateSlidesClass(BaseLiveSlides):
                 with self.print_context():
                     print(*args, **kwargs)
             
-            self.shell.user_ns['print'] = displayed_print
+            self.shell.user_ns['pprint'] = displayed_print
         
         self._citations = {} # Initialize citations
         self.__slides_mode = True # Default is slides mode since it is more intuitive
@@ -527,10 +527,7 @@ class LiveSlides:
         print('something')
         function_that_prints_something()
     ```
-    In version 1.4.9+ builtin `print` is overridden, but you still need context manager to handle functions that print internally.
-    If `object.__str__` has HTML representation, it will be displayed as HTML rather than plain text inside this modified `print`.
-    You can override it by setting `print = __builtins__.print` after initializing `LiveSlides` instance.
-    
+    In version 1.5.9+ function `pprint` will be avalible in ipython namespace when LiveSlide is initialized. This displays objects in intended from rather than just text.
     > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
     
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.display_html` is called.

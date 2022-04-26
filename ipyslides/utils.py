@@ -1,4 +1,4 @@
-__all__ = ['print_context',  'details', 'set_dir', 'textbox', 'vspace',
+__all__ = ['print_context', 'supress_std', 'details', 'set_dir', 'textbox', 'vspace',
             'image','svg','format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
@@ -10,7 +10,7 @@ import inspect
 from io import BytesIO # For PIL image
 from contextlib import contextmanager
 
-from IPython.display import SVG
+from IPython.display import SVG, display
 from IPython.utils.capture import capture_output
 from IPython.core.display import Image
 import ipywidgets as ipw
@@ -27,6 +27,13 @@ def print_context():
     if cap.stderr:
         return cap.stderr
     write(raw(cap.stdout)) # clean whitspace preserved 
+
+@contextmanager
+def supress_std():
+    "Block stdout and stderr in this context manager but display rich data. Useful to hide printouts from functions."
+    with capture_output() as cap:
+        yield
+    return display(*cap.outputs)
     
 @contextmanager
 def set_dir(path):
