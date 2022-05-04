@@ -11,7 +11,7 @@ import ipywidgets as ipw
 from .extended_md import parse_xmd, _allowed_funcs
 from .source import Source
 from .writers import write, iwrite
-from .formatter import bokeh2html, plt2html, highlight, _HTML
+from .formatter import bokeh2html, plt2html, highlight, _HTML, serializer
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
@@ -28,8 +28,8 @@ except:
     sys.exit()
     
         
-class _PrivateSlidesClass(BaseLiveSlides):
-    """This is private class. Use `LiveSlides` instead."""
+class LiveSlides(BaseLiveSlides):
+    """This will be overwritten after creating a single object below!"""
     __name__ = 'ipyslides.core.Slides' # Used to validate code in markdown, must
     def __init__(self):
         """This is private class. Use `LiveSlides` instead."""
@@ -47,6 +47,8 @@ class _PrivateSlidesClass(BaseLiveSlides):
         self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
         self.parse_xmd = parse_xmd # Parse extended markdown
+        self.serializer = serializer # Serialize IPython objects to HTML
+        
         with suppress(Exception): # Avoid error when using setuptools to install
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
@@ -509,7 +511,9 @@ class _PrivateSlidesClass(BaseLiveSlides):
         return tuple(slides_iterable)
 
 # Make available as Singleton LiveSlides
-_private_instance = _PrivateSlidesClass() # Singleton in use namespace
+_private_instance = LiveSlides() # Singleton in use namespace
+# This is overwritten below to just have a singleton
+
 class LiveSlides:
     """Interactive Slides in IPython Notebook. Only one instance can exist. 
     

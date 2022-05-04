@@ -46,6 +46,7 @@ def write(*columns,width_percents=None,className=None):
     - Give any object which has `to_html` method like Altair chart. (Note that chart will not remain interactive, use display(chart) if need interactivity like brushing etc.)
     - Give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
     - Give a function/class/module (without calling) and it will be displayed as a pretty printed code block.
+    - Give a registered object using `@LiveSlides.serializer.registor` decorator.
     
     If an object is not in above listed things, `obj.__repr__()` will be printed. If you need to show other than __repr__, use `display(obj)` outside `write` command or use
     methods specific to that library to show in jupyter notebook.

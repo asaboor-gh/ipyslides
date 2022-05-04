@@ -6,7 +6,6 @@ import textwrap
 import inspect, re, json
 from io import BytesIO
 import matplotlib.pyplot as plt
-from numpy import gradient
 import pygments
 import ipywidgets as ipw
 from IPython.display import display, HTML 
@@ -193,6 +192,56 @@ def highlight(code, language='python', name = None, className = None, style='def
         <pre>{code_}
         </pre>\n{end}</div>''')
     
+class RegisterSerializer:
+    def __init__(self):
+        """Register serializer for LiveSlides.write/iwrite."""
+        self._libs = []
+    
+    def register(self, obj):
+        """Decorator to register html serializer for an object. 
+        Decoracted function accepts one argument that will take `obj` and should return html string.
+        This definition will take precedence over any other in the module.
+        All regeisted serializers only exist for the lifetime of the module in a namespace.
+        
+        **Usage**
+        ```python
+        class MyObject:
+            def __repr__(self):
+                return 'My object is awesome'
+        
+        ls = ipyslides.LiveSlides()
+        @ls.serializer.register(MyObject)
+        def parse_myobject(obj):
+            return f'<h1>{obj.__repr__()}</h1>'
+        
+        ls.write(MyObject())
+        #This will write "My object is awesome" as main heading
+        ```
+        """
+        def _register(func):
+            item = {'obj': obj, 'func': func}
+            for _lib in self._libs:
+                if item['obj'] is _lib['obj']:
+                    return print(f'Already registered: {item}')
+                
+            self._libs.append(item)
+            return item
+        return _register
+    
+    def unregister(self, obj):
+        "Unregister serializer for an object."
+        for item in self._libs:
+            if obj is item['obj']:
+                self._libs.remove(item)
+    
+    @property
+    def registered(self):
+        return tuple(self._libs)
+
+serializer = RegisterSerializer()
+del RegisterSerializer # Make sure this is not used by user
+
+    
 # ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
 
 libraries = [
@@ -207,6 +256,10 @@ libraries = [
 
 def format_object(obj):
     "Returns string of HTML for given object."
+    for _lib in serializer._libs:
+        if isinstance(obj, _lib['obj']):
+            return True, _lib['func'](obj)
+    
     # If matplotlib axes given, handle it separately
     if hasattr(obj,'get_figure'): 
         return True,_plt2htmlstr(obj.get_figure())

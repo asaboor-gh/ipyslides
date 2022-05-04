@@ -295,6 +295,11 @@ class BaseLiveSlides:
                         self.doc(self.export.report,'LiveSlides.export')])
         
         with self.slide(10):
+            self.write('## Adding User defined Objects')
+            self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@LiveSlides.serializer.register` to serialize them to html.\n{.Note .Info}')
+            self.write(self.doc(self.serializer.register,'LiveSlides.serializer'))
+        
+        with self.slide(11):
             self.write(['## Presentation Code',self.load_docs])
         
         self.progress_slider.index = 0 # back to title

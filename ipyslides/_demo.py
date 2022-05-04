@@ -163,7 +163,7 @@ with slides.slide(11,background='#800000'):
 try:
     import plotly.graph_objects as go
     fig = go.Figure()
-    fig.add_trace(go.Bar([1,5,8,9]))
+    fig.add_trace(go.Bar(y=[1,5,8,9]))
 except:
     fig = '### Install `plotly` to view output'
 with slides.slide(12):
