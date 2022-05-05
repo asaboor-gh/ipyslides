@@ -197,7 +197,7 @@ class RegisterSerializer:
         """Register serializer for an object to use inside LiveSlides.write/iwrite."""
         self._libs = []
     
-    def register(self, obj_type):
+    def register(self, obj_type, verbose = True):
         """Decorator to register html serializer for an object type. 
         Decoracted function accepts one argument that will take `obj_type` and should return html string.
         This definition will take precedence over any other in the module.
@@ -213,25 +213,32 @@ class RegisterSerializer:
         ls = ipyslides.LiveSlides()
         @ls.serializer.register(MyObject)
         def parse_myobject(obj):
-            return f'<h1>{obj.__repr__()}</h1>'
-        
-        ls.write(MyObject())
-        #This will write "My object is awesome" as main heading
+            return f'<h1>{obj!r}</h1>'
+            
+        my_object = MyObject()
+        ls.write(my_object) #This will write "My object is awesome" as main heading
+        parse_myobject(my_object) #This will return "<h1>My object is awesome</h1>"
         ```
+        
+        **Note**: Serializer function should return html string. It is not validated for correct code on registration time.
         """
         def _register(func):
+            if obj_type is str:
+                raise TypeError("Cannot register serializer for string type! Use custom class to encapsulate string the way you want.")
             item = {'obj': obj_type, 'func': func}
             already = False
             for i, _lib in enumerate(self._libs):
                 if item['obj'] is _lib['obj']:
                     self._libs[i] = item
-                    print(f'Overwritten: {item["obj"]} → {item["func"].__name__}({item["obj"]})')
+                    if verbose:
+                        print(f'Updated: {item["obj"]} → {item["func"].__name__}({item["obj"]})')
                     already = True
                     break
                     
             if not already:
-                print(f'Registered: {item["obj"]} → {item["func"].__name__}({item["obj"]})')
                 self._libs.append(item)
+                if verbose:
+                    print(f'Registered: {item["obj"]} → {item["func"].__name__}({item["obj"]})')
                 
             return func
         return _register
