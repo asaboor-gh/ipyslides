@@ -95,7 +95,7 @@ for i in range(4,8):
         if i == 7:
             with slides.source.context() as s:
                 write([slides.doc(write,'LiveSlides'), slides.doc(iwrite,'LiveSlides'), slides.doc(slides.parse_xmd,'LiveSlides')])
-                write("#### If an object does not render as you want, use `display(object)` or it's own library's mehod to display inside Notebook.")
+                write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@LiveSlides.serializer.register` decorator")
             
             s.show_lines([0,1]).display()
 # Matplotlib
@@ -279,3 +279,16 @@ with slides.slide(21):
         ).display()
         slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
     s.display()
+    
+with slides.slide(22):
+    slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
+    with slides.suppress_std():
+        with slides.source.context() as s:
+            @slides.serializer.register(int)
+            def colorize(obj):
+                color = 'red' if obj % 2 == 0 else 'green'
+                return f'<span style="color:{color};">{obj}</span>'
+
+            slides.write(*range(10))
+        
+        s.display()

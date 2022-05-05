@@ -19,6 +19,7 @@ plt2html        = __pi.plt2html
 bokeh2html      = __pi.bokeh2html
 highlight       = __pi.highlight
 markdown_callables = __pi.markdown_callables
+serializer      = __pi.serializer
 
 __all__ = ['cite', 'write_citations', 'write_slide_css', 'notify', 'notify_later', 'insert_notes', 'parse_xmd', 'write', 'iwrite', 'source', 'css_styles', 'plt2html', 'bokeh2html', 'highlight']
 from .utils import *

@@ -194,14 +194,15 @@ def highlight(code, language='python', name = None, className = None, style='def
     
 class RegisterSerializer:
     def __init__(self):
-        """Register serializer for LiveSlides.write/iwrite."""
+        """Register serializer for an object to use inside LiveSlides.write/iwrite."""
         self._libs = []
     
-    def register(self, obj):
-        """Decorator to register html serializer for an object. 
-        Decoracted function accepts one argument that will take `obj` and should return html string.
+    def register(self, obj_type):
+        """Decorator to register html serializer for an object type. 
+        Decoracted function accepts one argument that will take `obj_type` and should return html string.
         This definition will take precedence over any other in the module.
         All regeisted serializers only exist for the lifetime of the module in a namespace.
+        Only a single serializer can be registered for an object type.
         
         **Usage**
         ```python
@@ -219,24 +220,30 @@ class RegisterSerializer:
         ```
         """
         def _register(func):
-            item = {'obj': obj, 'func': func}
-            for _lib in self._libs:
+            item = {'obj': obj_type, 'func': func}
+            already = False
+            for i, _lib in enumerate(self._libs):
                 if item['obj'] is _lib['obj']:
-                    return print(f'Already registered: {item}')
+                    self._libs[i] = item
+                    print(f'Overwritten: {item["obj"]} → {item["func"].__name__}({item["obj"]})')
+                    already = True
+                    break
+                    
+            if not already:
+                print(f'Registered: {item["obj"]} → {item["func"].__name__}({item["obj"]})')
+                self._libs.append(item)
                 
-            self._libs.append(item)
-            return item
+            return func
         return _register
     
-    def unregister(self, obj):
-        "Unregister serializer for an object."
+    def unregister(self, obj_type):
+        "Unregister all serializer handlers for a type."
         for item in self._libs:
-            if obj is item['obj']:
+            if obj_type is item['obj']:
                 self._libs.remove(item)
     
-    @property
-    def registered(self):
-        return tuple(self._libs)
+    def __repr__(self):
+        return 'Serializer(\n\t' + '\n\t'.join(f'{item["obj"]} → {item["func"].__name__}({item["obj"]})' for item in self._libs) + '\n)'
 
 serializer = RegisterSerializer()
 del RegisterSerializer # Make sure this is not used by user

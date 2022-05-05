@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.6.0
+> pip install ipyslides >= 1.6.1
 ```
 For development install, clone this repository and then
 ```shell
@@ -100,6 +100,18 @@ Many will be extentended in future. If an object is not implemented, use `displa
 ## Interactive Widgets
 Any object in `ipywidgets` or libraries based on `ipywidgtes` such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`
 can be included in `iwrite` command. `iwrite` also renders other objects except Javascript.
+
+## Custom and Third Party Objects(not implemented in this library)
+Starting version 1.6.1, you can add serialization method in current namespace. For example you can do something like this
+```python
+@ls.serializer.register(int)
+def colorize(obj):
+    color = 'red' if obj % 2 == 0 else 'green'
+    return f'<span style="color:{color};">{obj}</span>'
+
+slides.write(*range(10))
+# This will color even odd integers differently
+```
 # Full Screen Presentation
 - Jupyterlab 3.0+ has full screen eneabled from any view:
 - Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by Voila, may not work as expected.     

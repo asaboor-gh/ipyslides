@@ -165,7 +165,7 @@ class BaseLiveSlides:
                     
             untrusted_lines = []
             for i, line in enumerate(lines, start = 1):
-                if re.match(r'{{|python run', line):
+                if re.match(r'{{|```python\s+run', line):
                     untrusted_lines.append(i)
             
             if untrusted_lines:
