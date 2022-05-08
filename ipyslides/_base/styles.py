@@ -738,9 +738,9 @@ def sidebar_layout_css(span_percent = 40):
     margin-right:1px !important;
     min-width: 0 !important;
 }}
-.kLqJVm .jp-Notebook {{ /* For Kaggle */
+body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
     min-width: 0 !important;
-    padding-right: {span_percent}vw !importnat;
+    padding-right: {span_percent}vw !important;
 }}
 .jp-LabShell .SlidesWrapper,
 body[data-retro] .SlidesWrapper {{

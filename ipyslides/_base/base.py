@@ -152,6 +152,8 @@ class BaseLiveSlides:
         ```
         
         > Note: With this method you can add more slides besides created ones.
+        
+        Starting from version 1.6.2, only those slides will be updated whose content is changed from last run of this function. This increases speed.
         """
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
@@ -179,17 +181,28 @@ class BaseLiveSlides:
             raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")
         
         self.convert2slides(True)
-        self.clear()
         
         if isinstance(path, io.StringIO):
             chunks = _parse_md_file(path)
         else:
             with open(path, 'r') as fp:
                 chunks = _parse_md_file(fp)
+        
+        if hasattr(self, '_md_content'):
+            if len(self._md_content) > len(chunks):
+                self.clear() # If there are more chunks, they will overwrite previous slides automatically, if less then clear previous content
+        else: # If there is no _md_content, clear all slides
+            self.clear()
             
         for i,chunk in enumerate(chunks):
             # Must run under this to create frames with triple underscore (___)
-            self.shell.run_cell_magic('slide', f'{i} -m', chunk)
+            if hasattr(self, '_md_content'):
+                if self._md_content[i:] and chunk == self._md_content[i]:
+                    pass # Skip if content is same as previous one
+                else:
+                    self.shell.run_cell_magic('slide', f'{i} -m', chunk)
+            else:
+                self.shell.run_cell_magic('slide', f'{i} -m', chunk)
             
         self._md_content = chunks # Store for later use
         

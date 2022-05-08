@@ -1,4 +1,4 @@
-__all__ = ['print_context', 'suppress_std', 'details', 'set_dir', 'textbox', 'vspace',
+__all__ = ['print_context', 'suppress_std','capture_std', 'details', 'set_dir', 'textbox', 'vspace',
             'image','svg','format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
@@ -18,10 +18,44 @@ import ipywidgets as ipw
 from .formatter import fix_ipy_image, _HTML
 from .writers import write, _fmt_write, _fix_repr
  
-        
+class CapturedStd:
+    "Not reuqired by user, so will be deleted"
+    def __init__(self):
+        self._captured = None
+    @property
+    def stdout(self):
+        return raw(self._captured.stdout)
+    @property
+    def stderr(self):
+        return alert(self._captured.stderr)
+    
+_captured_std = CapturedStd()
+del CapturedStd # No need outide of this module
+    
+@contextmanager
+def capture_std(): 
+    """Context manager to capture stdout and stderr, displays all other rich objects inline.
+    
+    **Usage**
+    ```python
+    with capture_std() as std:
+        print('Hello')
+        display('World')
+    # 'World' will be displayed inline, but 'Hello' will be captured
+    std.stdout # yields `raw('Hello')`
+    std.stderr # yields `alert('')`
+    ```
+    """    
+    with capture_output() as cap: 
+        _captured_std._captured = cap # Store output
+        yield _captured_std # Return the std as function to get later.
+    
+    return display(*cap.outputs) # Display outputs after context manager is exited.
+
 @contextmanager
 def print_context():
     "Use `print` or function printing with onside in this context manager to display in order."
+    alert('`print_context` will be deprecated in future, use `with capture_std() as std:` to capture stdout and stderr and then use std.stdout/stderr to get it.').display()
     with capture_output() as cap:
         yield
     if cap.stderr:
@@ -31,7 +65,8 @@ def print_context():
 @contextmanager
 def suppress_std():
     "Block stdout and stderr in this context manager but display rich data. Useful to hide printouts from functions."
-    with capture_output() as cap:
+    alert('`suppress_std` will be deprecated in future, use `with capture_std() as std:` to capture stdout and stderr and then use std.stdout/stderr to get it.').display()
+    with capture_std() as cap:
         yield
     return display(*cap.outputs)
     
