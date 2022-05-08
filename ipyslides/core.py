@@ -57,12 +57,13 @@ class LiveSlides(BaseLiveSlides):
             self.user_ns = self.shell.user_ns #important for set_dir
             
             # Override print function to display in order in slides
-            def displayed_print(*args, **kwargs):
-                "Returns a display object to be inline with others. args and kwargs are passed to builtin print."
-                with self.print_context():
+            def pprint(*args, **kwargs):
+                "Displays object(s) inline with others in corrct order. args and kwargs are passed to builtin print."
+                with self.capture_std() as std:
                     print(*args, **kwargs)
+                std.stdout.display() # Display at the end
             
-            self.shell.user_ns['pprint'] = displayed_print
+            self.shell.user_ns['pprint'] = pprint
         
         self._citations = {} # Initialize citations
         self.__slides_mode = True # Default is slides mode since it is more intuitive
@@ -523,9 +524,13 @@ class LiveSlides:
     
     Instead of builtin `print` in slides use following to display printed content in correct order.
     ```python
-    with ls.print_context():
+    with ls.capture_std() as std:
         print('something')
         function_that_prints_something()
+        display('Something') # Will be displayed here
+        ls.write(std.stdout) # Will be written here whatever printed above this line
+        
+    std.stdout.display() #ls.write(std.stdout)
     ```
     In version 1.5.9+ function `pprint` will be avalible in ipython namespace when LiveSlide is initialized. This displays objects in intended from rather than just text.
     > `ls.demo` and `ls.from_markdown` overwrite all previous slides.

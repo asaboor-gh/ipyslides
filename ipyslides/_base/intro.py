@@ -54,7 +54,7 @@ more content
 ```python run source
 x = 1 + 2
 print(x) # will be printed on slide in somehwewere top as print appears first of all. 
-# Use `ls.print_context():  print()` to see at exactly where it is printed.
+# Use `with ls.capture_std() as std:  print();std.stdout` to see at exactly where it is printed.
 ```
 There is a python block above with header `python run source`. We can display that block by  &lcub;&lcub;source&rcub;&rcub; as below:
 {{source}} 

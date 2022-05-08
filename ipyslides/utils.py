@@ -30,7 +30,7 @@ class CapturedStd:
         return alert(self._captured.stderr)
     
 _captured_std = CapturedStd()
-del CapturedStd # No need outide of this module
+del CapturedStd # No need outside of this module
     
 @contextmanager
 def capture_std(): 
