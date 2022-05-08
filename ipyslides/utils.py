@@ -1,4 +1,4 @@
-__all__ = ['print_context', 'suppress_std','capture_std', 'details', 'set_dir', 'textbox', 'vspace',
+__all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace',
             'image','svg','format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
@@ -51,24 +51,6 @@ def capture_std():
         yield _captured_std # Return the std as function to get later.
     
     return display(*cap.outputs) # Display outputs after context manager is exited.
-
-@contextmanager
-def print_context():
-    "Use `print` or function printing with onside in this context manager to display in order."
-    alert('`print_context` will be deprecated in future, use `with capture_std() as std:` to capture stdout and stderr and then use std.stdout/stderr to get it.').display()
-    with capture_output() as cap:
-        yield
-    if cap.stderr:
-        return cap.stderr
-    write(raw(cap.stdout)) # clean whitspace preserved 
-
-@contextmanager
-def suppress_std():
-    "Block stdout and stderr in this context manager but display rich data. Useful to hide printouts from functions."
-    alert('`suppress_std` will be deprecated in future, use `with capture_std() as std:` to capture stdout and stderr and then use std.stdout/stderr to get it.').display()
-    with capture_output() as cap:
-        yield
-    return display(*cap.outputs)
     
 @contextmanager
 def set_dir(path):

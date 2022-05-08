@@ -148,7 +148,7 @@ class LiveSlides(BaseLiveSlides):
         self._check_computed('add citations')
         if here:
             return utils.textbox(citation,left='initial',top='initial') # Just write here
-        self._citations[key] =  self.citations.get(key,citation)
+        self._citations[key] =  citation or self.citations.get(key,None) # Get given first
         _id = list(self._citations.keys()).index(key)
         # Return string otherwise will be on different place
         return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_id + 1}</sup></a>'
@@ -159,7 +159,7 @@ class LiveSlides(BaseLiveSlides):
             <a href="#{k}-back"><sup style="color:var(--accent-color);">{i+1}</sup></a>
             {v if v else f"Set LiveSlides.citations[{k!r}] = 'citation value'"}
             </span>''' for i,(k,v) in enumerate(self._citations.items())]
-        return _HTML(self.parse_xmd(title + '\n' +'\n'.join(collection), display_inline=False, rich_outputs = False))
+        return _HTML(self.parse_xmd(title + '\n' +'<br/>'.join(collection), display_inline=False, rich_outputs = False))
     
     def write_citations(self,title='### References'):
         "Write all citations collected via `cite` method in the end of the presentation."
