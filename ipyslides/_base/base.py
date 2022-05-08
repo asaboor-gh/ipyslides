@@ -188,12 +188,14 @@ class BaseLiveSlides:
             with open(path, 'r') as fp:
                 chunks = _parse_md_file(fp)
         
+        if hasattr(self,'_loaded_other') and self._loaded_other:
+            self.clear()
+            self._loaded_other = False
+        
         if hasattr(self, '_md_content'):
             if len(self._md_content) > len(chunks):
                 self.clear() # If there are more chunks, they will overwrite previous slides automatically, if less then clear previous content
-        else: # If there is no _md_content, clear all slides
-            self.clear()
-            
+        
         for i,chunk in enumerate(chunks):
             # Must run under this to create frames with triple underscore (___)
             if hasattr(self, '_md_content'):
@@ -208,11 +210,22 @@ class BaseLiveSlides:
         
         return self
     
+    def _clean_markdown_loaded(self):
+        "Use in other than from_markdown methods."
+        self.clear() # Clear previous content
+        if hasattr(self, '_md_content'): # If loaded from markdown file, clear it
+            self._md_content = []
+        self._loaded_other = True
+    
     def demo(self):
         """Demo slides with a variety of content."""
         self._check_computed('load demo')
+        self._clean_markdown_loaded()
+            
         get_ipython().user_ns['_s_l_i_d_e_s_'] = self
         from .. import _demo # Import after assigning in user_ns
+        import importlib
+        _demo = importlib.reload(_demo) # Reload is must if other contexts loaded before this
         slides = _demo.slides # or it is self
         with slides.slide(100):
             slides.write('## This is all code to generate slides')
@@ -229,10 +242,11 @@ class BaseLiveSlides:
     def load_docs(self):
         "Create presentation from docs of IPySlides."
         self._check_computed('load docs')
+        self._clean_markdown_loaded()
+        
         from ..core import LiveSlides
         from ..__version__ import __version__
         
-        self.clear()
         self.settings.set_footer('IPySlides Documentation')
         
         with self.title(): # Title
