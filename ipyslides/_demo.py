@@ -262,7 +262,7 @@ with slides.slide(19):
 with slides.slide(20):
     slides.write('## Built-in CSS styles')
     with slides.source.context() as s:
-        slides.css_styles.dsplay()
+        slides.css_styles.display()
         slides.write('Info',className='Info')
         slides.write('Warning',className='Warning')
         slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='Right RTL')
