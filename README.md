@@ -75,12 +75,11 @@ ls.load_docs()
 #### You can build html of slides 
 Content type is limited. Widgets can not be exported.
 ```python
-ls.build_report() # >= 1.4.8
-# can have argument as_slides = True in >= 1.5.0
+ls.export.report() # >= 1.6
+ls.export.slides() # HTML Slides
 ```
-and then export notebook to other formats. If exported to HTML and then PDF is printed, this will give 
-a clean document with only showing cell outputs and markdown cells.
-See [HTML Sides](slides.html)
+When exported to HTML and then PDF is printed, this gives 
+a clean document.
 
 # Content Types to Embed
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 
@@ -125,7 +124,7 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 # HTML/PDF Report/Slides [HTML Slides in 1.5.2+]
 - You can create beautiful HTML/PDF report from slides using `ls.export.report`. See [PDF-Report](IPySlides-Report.pdf)
 - You can use CSS classes `.report-only` and `.slides-only` to create different content for both sceberios. Content variety is limited. Widgets can not be exported. 
-- Use `ls.export.slides` to build static slides that you can print as well. Widgets are not exported. See [HTML-Slide](slide.html)
+- Use `ls.export.slides` to build static slides that you can print as well. Widgets are not exported.
 # Speaker Notes (1.2.0+) (Experimental)
 - You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `ls.notes.insert` (`ls.notes` in < 1.2.1) command. 
 - Notes is an experimantal feuture, so use at your own risk. Do not share full screen, share a brwoser tab for slides and you can keep notes hidden from audience this way. 
