@@ -19,7 +19,7 @@ class LayoutSettings:
         self.widgets = _instanceWidgets
         self.animation = styles.animations['slide']
         self.font_scale = 1
-        self._font_family = {'code':'var(--jp-code-font-family)','text':'sans-serif'}
+        self._font_family = {'code':'var(--jp-code-font-family)','text':'STIXGeneral'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '90%' #Better
         self._breakpoint_width = '650px'

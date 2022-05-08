@@ -177,12 +177,12 @@ def style_css(style_root = theme_roots['Inherit']):
     margin: 8px 0px;} /* VS Code */
 .SlidesWrapper *:not(.fa):not(i):not(span),
 .SlideArea *:not(.fa):not(i):not(span){ /* Do not edit __textfont__, code does this. */
-   font-family: __textfont__, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
+   font-family: "__textfont__", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
 }
 
 .SlidesWrapper code>span,
 .SlideArea code>span { /* Do not edit __codefont__, code does this. */
-   font-family: __codefont__, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
+   font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
    font-size: 90% !important;
 }
 
