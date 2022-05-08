@@ -686,6 +686,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     justify-content: space-between;
     padding:4px;
 }
+/* Order of these matters */
 .DisplaySwitch {
     display: none; /* Hide by default */
 }
@@ -700,6 +701,10 @@ body[data-retro] .DisplaySwitch {
     outline:none !important;
     font-size: 24px;
     box-shadow:none !important;
+}
+#rendered_cells .DisplaySwitch,
+.SlidesWrapper.FullScreen .DisplaySwitch {
+    display: none !important; /* in fullscreen */
 }
 
 .Intro summary {
