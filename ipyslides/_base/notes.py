@@ -1,6 +1,5 @@
 
 import time
-from IPython.display import Javascript, display
 
 
 class Notes:
@@ -13,7 +12,6 @@ class Notes:
         
         self.notes_check = self.widgets.checks.notes
         self.btn_timer = self.widgets.toggles.timer
-        self.out_renew = self.widgets.outputs.renew
         
         self.start_time = None
         
@@ -64,27 +62,24 @@ class Notes:
                         </div></div>'''
                     
 
-                with self.out_renew:
-                    display(Javascript(f'''
+                self.widgets._exec_js(f'''
                     let notes_win = window.open("","__Notes_Window__","popup");
                     notes_win.document.title = 'Notes';
                     notes_win.document.body.innerHTML = {node!r};
                     notes_win.document.body.style.background = 'var(--primary-bg)';
-                    '''))
+                    ''')
     
     def __open_close_notes(self,change):
         if change['new'] == True:
-            with self.out_renew:
-                display(Javascript('''
+            self.widgets._exec_js('''
                 let notes_win = window.open("","__Notes_Window__","popup");
                 notes_win.resizeTo(screen.width/2,screen.height/2);
                 notes_win.moveTo(screen.width/4,screen.height*2/5);
                 notes_win.document.title = 'Notes';
                 notes_win.document.body.innerHTML = "<h1> Notes will show up here, do not close it manually, just navigate away!</h1>";
-                '''))
+                ''')
         else:
-            with self.out_renew:
-                display(Javascript('window.open("","__Notes_Window__","popup").close();'))
+            self.widgets._exec_js('window.open("","__Notes_Window__","popup").close();')
     
     def __timeit(self,change):
         if change['new'] == True:

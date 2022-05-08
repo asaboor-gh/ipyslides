@@ -6,7 +6,7 @@ and then provided to other classes via composition, not inheritance.
 import os 
 import datetime
 from IPython import get_ipython
-from IPython.display import display, Image
+from IPython.display import display, Image, Javascript
 from IPython.utils.capture import capture_output
 from ..formatter import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
@@ -31,8 +31,6 @@ class LayoutSettings:
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
         
-        self.out_fixed = self.widgets.outputs.fixed
-        self.out_renew = self.widgets.outputs.renew
         self.btn_fs    = self.widgets.toggles.fscrn
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
@@ -48,7 +46,7 @@ class LayoutSettings:
         self.reflow_check.observe(self._update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
-        self.sidebar_switch.value = 0 # Initial Call must be inline, so that things should be shown outside Jupyterlab always
+        self.sidebar_switch.value = False # Initial Call must be inline, so that things should be shown outside Jupyterlab always
         
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
@@ -131,13 +129,11 @@ class LayoutSettings:
         self._update_theme(change=None) # Trigger CSS in it to make width change
             
     def __add_js(self):
-        with self.out_fixed: 
-            display(scripts.navigation_js)
+        with self.widgets.outputs.fixed: 
+            display(Javascript(scripts.navigation_js))
     
     def _emit_resize_event(self):
-        with self.out_renew: 
-            self.out_renew.clear_output(wait=True)
-            display(scripts.resize_js)
+        self.widgets._exec_js(scripts.resize_js)
         
     def __update_size(self,change):
         self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
@@ -198,15 +194,17 @@ class LayoutSettings:
     def _toggle_sidebar(self,change): 
         """Pushes this instance of LiveSlides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
-        if self.btn_fs.value or self.sidebar_switch.value == 0:
+        if self.btn_fs.value or self.sidebar_switch.value == False:
             self.widgets.mainbox.remove_class('SideMode')
             self.widgets.htmls.sidebar.value = '' # Should be empty to avoid competition of style
             self.height_slider.layout.display = 'inline-flex' #Very important
+            self.sidebar_switch.description = '◨'
         else:
             self.widgets.mainbox.add_class('SideMode')
             self.widgets.htmls.sidebar.value =  html('style',styles.sidebar_layout_css(span_percent=self.width_slider.value)).value
             self.height_slider.layout.display = 'none'
-
+            self.sidebar_switch.description = '▣'
+            
         return self._emit_resize_event() # Must return this event so it work in other functions.
     
     def _push_fullscreen(self,change):  

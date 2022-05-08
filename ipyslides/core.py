@@ -97,8 +97,7 @@ class LiveSlides(BaseLiveSlides):
             'You may enable it after that for fast loading of slides while presenting!').format(act = what_cannot_do))
     
     def _on_displayed(self, change):
-        with self.widgets.outputs.renew:
-            display(multi_slides_alert)
+        self.widgets._exec_js(multi_slides_alert)
         
         self._make_sure_title() # Should be before showing it below
         
@@ -206,10 +205,7 @@ class LiveSlides(BaseLiveSlides):
         except: pass # Do Nothing
          
         return ipw.VBox([
-                    ipw.HBox([
-                        ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
-                        self.widgets.toggles.display
-                    ]),
+                    ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
                     self.widgets.toggles.timer,
                     self.widgets.htmls.notes
                 ]).add_class('ExtraControls')

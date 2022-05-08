@@ -1,16 +1,15 @@
-from IPython.display import Javascript
 
-resize_js = Javascript("window.dispatchEvent(new Event('resize'));")
+resize_js = "window.dispatchEvent(new Event('resize'));"
 
-multi_slides_alert = Javascript("""
+multi_slides_alert = """
 let slides = document.getElementsByClassName('SlidesWrapper');
 if (slides.length > 1) {
     alert('''You have slides open in other notebook(s) in currnet tab. 
     Please close their view by using `.close_view()` method and re-run here to have smooth navigations via keyboard!''');
 };
-""")
+"""
 
-navigation_js = Javascript('''
+navigation_js = '''
 function main(){
     function resizeWindow() {
         window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
@@ -106,4 +105,3 @@ try {
    alert("Restart Kernel and run again for Keyboard Navigation to work. Avoid refreshing browser!") 
 };
 '''
-)

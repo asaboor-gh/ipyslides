@@ -4,7 +4,7 @@ and then provided to other classes via composition, not inheritance.
 """
 from dataclasses import dataclass
 import ipywidgets as ipw
-from IPython.utils.capture import capture_output
+from IPython.display import display, Javascript
 from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
 from . import styles
 from ..utils import html
@@ -33,7 +33,7 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    display = ipw.ToggleButtons(description='Display Mode',options=[('Inline',0),('Sidebar',1)],value = 1).add_class('DisplaySwitch')
+    display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('menu')
     fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
     zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
     timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')             
@@ -280,7 +280,8 @@ class Widgets:
             self.htmls.toast,
             self.htmls.main,
             self.htmls.theme,
-            self.htmls.logo, 
+            self.htmls.logo,
+            self.toggles.display, 
             self.htmls.sidebar,
             self.panelbox, 
             self.htmls.cursor,
@@ -306,3 +307,9 @@ class Widgets:
         if content and isinstance(content,str):
             self.htmls.toast.value = '' # Set first to '', otherwise may not trigger for same value again.
             self.htmls.toast.value = _notification(content=content,title=title,timeout=timeout)
+    
+    def _exec_js(self,code_string):
+        "Execute javascript code, output is not permanent."
+        self.outputs.renew.clear_output(wait = True)
+        with self.outputs.renew:
+            display(Javascript(code_string))

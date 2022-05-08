@@ -686,38 +686,20 @@ a.jp-InternalAnchorLink { display: none !important;}
     justify-content: space-between;
     padding:4px;
 }
-/* Order of below two lines matters */
-body .DisplaySwitch, .SlideArea .DisplaySwitch {display:none !important;} /* No switch for embeded slides */
-.jp-LabShell .DisplaySwitch, body[data-retro] .DisplaySwitch{display:block !important;}
-
+.DisplaySwitch {
+    display: none; /* Hide by default */
+}
 .jp-LabShell .DisplaySwitch,
 body[data-retro] .DisplaySwitch {
-    width:max-content;
-    display:flex !important;
-    flex-direction:row !important;
-    padding-left:16px !important;
-}
-.jp-LabShell .DisplaySwitch>div>button
-body[data-retro] .DisplaySwitch>div>button {
-    background:transparent;
-    border: none;
-    color: var(--accent-color);
-    width:60px;
-    border-radius:0 !important;
-    min-width:36px;
-}
-.jp-LabShell .DisplaySwitch>div>button.mod-active,
-body[data-retro] .DisplaySwitch>div>button.mod-active {
-    color:var(--primary-bg);
-    background:var(--accent-color);
-}
-.jp-LabShell .DisplaySwitch>div,
-body[data-retro] .DisplaySwitch>div {
-    display:inline-flex;
-    flex-direction:row;
-    width:150px;
-    border: 1px solid var(--accent-color);
-    padding: 2px 0px;
+    display:block !important;
+    position:absolute !important;
+    padding:4px !important;
+    width: max-content !important;
+    background: transparent !important;
+    border:none !important;
+    outline:none !important;
+    font-size: 24px;
+    box-shadow:none !important;
 }
 
 .Intro summary {
