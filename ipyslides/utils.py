@@ -66,7 +66,7 @@ def print_context():
 def suppress_std():
     "Block stdout and stderr in this context manager but display rich data. Useful to hide printouts from functions."
     alert('`suppress_std` will be deprecated in future, use `with capture_std() as std:` to capture stdout and stderr and then use std.stdout/stderr to get it.').display()
-    with capture_std() as cap:
+    with capture_output() as cap:
         yield
     return display(*cap.outputs)
     

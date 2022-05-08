@@ -262,9 +262,7 @@ with slides.slide(19):
 with slides.slide(20):
     slides.write('## Built-in CSS styles')
     with slides.source.context() as s:
-        with slides.print_context():
-            slides.css_styles
-            
+        slides.css_styles.dsplay()
         slides.write('Info',className='Info')
         slides.write('Warning',className='Warning')
         slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='Right RTL')
@@ -282,7 +280,7 @@ with slides.slide(21):
     
 with slides.slide(22):
     slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
-    with slides.suppress_std():
+    with slides.capture_std():
         with slides.source.context() as s:
             @slides.serializer.register(int)
             def colorize(obj):
