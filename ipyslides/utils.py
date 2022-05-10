@@ -29,6 +29,11 @@ class CapturedStd:
     def stderr(self):
         return alert(self._captured.stderr)
     
+    def __repr__(self):
+        _out = f'{self._captured.stdout[:10]}...' if len(self._captured.stdout) > 10 else self._captured.stdout
+        _err = f'{self._captured.stderr[:10]}...' if len(self._captured.stderr) > 10 else self._captured.stderr
+        return f'CapturedStd(stdout = {_out!r}, stderr = {_err!r})'
+    
 _captured_std = CapturedStd()
 del CapturedStd # No need outside of this module
     
