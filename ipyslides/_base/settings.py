@@ -163,9 +163,10 @@ class LayoutSettings:
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
                         f.write('/* Author: Abdul Saboor */\n' + styles.style_css( styles.theme_roots['Light']))
-                else: # Read CSS from file otherwise
-                    with open('custom.css','r') as f:
-                        theme_css = ''.join(f.readlines())
+                        
+                # Read CSS from file now
+                with open('custom.css','r') as f:
+                    theme_css = ''.join(f.readlines())
         
         if self.theme_dd.value == 'Dark':
             self.set_code_style('monokai',color='#f8f8f2',lineno=self._code_lineno)
