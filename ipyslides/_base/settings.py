@@ -22,7 +22,7 @@ class LayoutSettings:
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIXGeneral'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '90%' #Better
-        self._breakpoint_width = '650px'
+        self._breakpoint_width = f'{int(100*650/self.widgets.sliders.width.value)}px' # Whatever was set initially
         self._code_lineno = True
         
         self.height_slider = self.widgets.sliders.height
