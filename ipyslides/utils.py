@@ -1,5 +1,5 @@
 __all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace',
-            'image','svg','format_html','format_css','alert','colored','keep_format',
+            'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycmkowp'])
@@ -10,7 +10,7 @@ import inspect
 from io import BytesIO # For PIL image
 from contextlib import contextmanager
 
-from IPython.display import SVG, display
+from IPython.display import SVG, IFrame, display
 from IPython.utils.capture import capture_output
 from IPython.core.display import Image
 import ipywidgets as ipw
@@ -118,6 +118,11 @@ def svg(data=None,caption=None,zoomable=True,**kwargs):
     if zoomable:
         return _HTML(f'<div class="zoom-container">{svg}</div>')
     return _HTML(svg)
+
+def iframe(src, width='100%',height='auto',**kwargs):
+    "Display `src` in an `iframe`. `kwrags` are passed to IPython.display.IFrame"
+    f = IFrame(src,width,height, **kwargs)
+    return _HTML(f._repr_html_())
 
 def enable_zoom(obj):
     "Add zoom-container class to given object, whether a widget or html/IPYthon object"
