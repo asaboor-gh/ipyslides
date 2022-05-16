@@ -5,7 +5,7 @@ and then provided to other classes via composition, not inheritance.
 
 class Navigation:
     def __init__(self, _instanceWidgets):
-        "Both instnaces should be inside `LiveSlide` class."
+        "Instnace should be inside `LiveSlide` class."
         # print(f'Inside: {self.__class__.__name__}')
         self.widgets = _instanceWidgets
         self.progress_slider = self.widgets.sliders.progress

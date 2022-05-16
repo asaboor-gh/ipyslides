@@ -11,8 +11,6 @@ from .export_html import _HhtmlExporter
 
 class BaseLiveSlides:
     def __init__(self):
-        "Both instnaces should be inside `_PrivateSlidesClass` class."
-        # print(f'Inside: {self.__class__.__name__}')
         self.__widgets = Widgets()
         self.__screenshot = ScreenShot(self.__widgets)
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions

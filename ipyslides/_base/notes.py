@@ -3,9 +3,9 @@ import time
 
 
 class Notes:
-    "Notes are stored in LiveSlide class for consistensy."
+    "Notes are stored in `LiveSlide` class for consistensy."
     def __init__(self,_insatanceLiveSlides, _instanceWidgets):
-        "Instances should be inside `LiveSlide` class."
+        "Instance should be inside `LiveSlide` class."
         # print(f'Inside: {self.__class__.__name__}')
         self.main = _insatanceLiveSlides
         self.widgets = _instanceWidgets

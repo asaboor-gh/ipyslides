@@ -8,7 +8,7 @@ from .export_template import doc_css, doc_html, slides_css
 from ..formatter import code_css
 
 class _HhtmlExporter:
-    # Should be used inside BaseLiveSlides class only.
+    # Should be used inside LiveSlides class only.
     def __init__(self, _instance_BaseLiveSlides):
         self.main = _instance_BaseLiveSlides
         

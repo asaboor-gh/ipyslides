@@ -29,11 +29,9 @@ except:
     
         
 class LiveSlides(BaseLiveSlides):
-    """This will be overwritten after creating a single object below!"""
+    # This will be overwritten after creating a single object below!
     __name__ = 'ipyslides.core.Slides' # Used to validate code in markdown, must
     def __init__(self):
-        """This is private class. Use `LiveSlides` instead."""
-        # print(f'Inside: {self.__class__.__name__}')
         super().__init__() # start Base class in start
         self.shell = SHELL
         
@@ -532,7 +530,7 @@ class LiveSlides:
         
     std.stdout.display() #ls.write(std.stdout)
     ```
-    In version 1.5.9+ function `pprint` will be avalible in ipython namespace when LiveSlide is initialized. This displays objects in intended from rather than just text.
+    In version 1.5.9+ function `pprint` is avalible in IPython namespace when LiveSlide is initialized. This displays objects in intended from rather than just text.
     > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
     
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.display_html` is called.
@@ -554,6 +552,7 @@ class LiveSlides:
                 code_lineno   = True, 
                 animation     = 'slide_h'):
         "Returns Same instance each time after applying given settings. Encapsulation."
+        _private_instance.__doc__ = cls.__doc__ # copy docstring
         _private_instance.settings.set_layout(center = center, content_width = content_width)
         _private_instance.settings.set_footer(text = footer_text, show_date = show_date, show_slideno = show_slideno)
         _private_instance.settings.set_logo(src = logo_src)

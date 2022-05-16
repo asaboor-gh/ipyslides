@@ -15,7 +15,7 @@ from . import intro
 
 class ScreenShot:
     def __init__(self, _instanceWidgets):
-        "Both instnaces should be inside `LiveSlide` class."
+        "Instnace should be inside `LiveSlide` class."
         self.widgets = _instanceWidgets
         self.btn_cap_all = self.widgets.buttons.cap_all
         self.btn_pdf = self.widgets.buttons.pdf
