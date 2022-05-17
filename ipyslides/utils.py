@@ -8,7 +8,7 @@ __all__.extend([f'block_{c}' for c in 'rgbycmkowp'])
 import os
 import inspect
 from io import BytesIO # For PIL image
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 
 from IPython.display import SVG, IFrame, display
 from IPython.utils.capture import capture_output
@@ -16,7 +16,7 @@ from IPython.core.display import Image
 import ipywidgets as ipw
 
 from .formatter import fix_ipy_image, _HTML
-from .writers import write, _fmt_write, _fix_repr
+from .writers import _fmt_write, _fix_repr
  
 class CapturedStd:
     "Not reuqired by user, so will be deleted"
@@ -252,12 +252,47 @@ def sig(callable,prepend_str = None):
     except:
         raise TypeError(f'Object {callable} is not a callable')
 
-def doc(callable,prepend_str = None):
-    "Returns documentation of a callable. You can prepend a class/module name."
-    try:
-        _doc = _fix_repr(inspect.getdoc(callable).replace('{','\u2774').replace('}','\u2775'))
-        _sig = sig(callable,prepend_str)
-        return _HTML(f"<div class='Docs'>{_sig}<br>{_doc}\n</div>")
-    except:
-        raise TypeError(f'Object {callable} is not a callable or __doc__ is not available')
+
+def doc(obj,prepend_str = None, members=None):
+    "Returns documentation of an `obj`. You can prepend a class/module name. memebers is True/List of attributes to show doc of."
+    if obj is None:
+        return _HTML('') # Must be _HTML to work on memebers
     
+    _doc, _sig, _full_doc = '', '', ''
+    try:
+        _doc += _fix_repr(inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775')
+    except:
+        raise TypeError(f'Object {obj} does not have a docstring')
+    
+    with suppress(BaseException): # This allows to get docs of module without signature
+        _sig = sig(obj,prepend_str)
+    
+    _full_doc = f"<div class='Docs'>{_sig}<br>{_doc}\n</div>"
+    _pstr = f'{str(prepend_str) + "." if prepend_str else ""}{obj.__name__}' if hasattr(obj,'__name__') else ""
+    
+    _mems = []
+    if members == True:
+        if hasattr(obj,'__all__'):
+            _mems = [getattr(obj, a, None) for a in obj.__all__]
+        else: # if no __all__, show all public members
+            for attr in [getattr(obj, d) for d in dir(obj) if not d.startswith('_')]:
+                if inspect.ismodule(obj): # Restrict imported items in docs
+                    if hasattr(attr, '__module__')  and attr.__module__ == obj.__name__:
+                        _mems.append(attr) 
+                else:
+                    _mems.append(attr)
+            
+                
+    elif isinstance(members, (list, tuple, set)):
+        for attr in members:
+            if not hasattr(obj,attr):
+                raise AttributeError(f'Object {obj} does not have attribute {attr!r}')
+            else:
+                _mems.append(getattr(obj,attr))
+    
+    # Collect docs of members
+    for attr in _mems:
+        with suppress(BaseException):
+            _full_doc += doc(attr, prepend_str=f'{_pstr}',members=False).value
+    
+    return _HTML(_full_doc)

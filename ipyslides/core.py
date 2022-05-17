@@ -30,7 +30,7 @@ except:
         
 class LiveSlides(BaseLiveSlides):
     # This will be overwritten after creating a single object below!
-    __name__ = 'ipyslides.core.Slides' # Used to validate code in markdown, must
+    __name__ = 'ipyslides.core.LiveSlides' # Used to validate code in markdown, must
     def __init__(self):
         super().__init__() # start Base class in start
         self.shell = SHELL
