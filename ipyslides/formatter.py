@@ -192,9 +192,9 @@ def highlight(code, language='python', name = None, className = None, style='def
         <pre>{code_}
         </pre>\n{end}</div>''')
     
-class RegisterSerializer:
+class Serializer:
     def __init__(self):
-        """Register serializer for an object to use inside LiveSlides.write/iwrite."""
+        """HTML serializer for an object to use inside LiveSlides.write/iwrite."""
         self._libs = []
     
     def register(self, obj_type, verbose = True):
@@ -252,8 +252,8 @@ class RegisterSerializer:
     def __repr__(self):
         return 'Serializer(\n\t' + '\n\t'.join(f'{item["obj"]} → {item["func"].__name__}({item["obj"]})' for item in self._libs) + '\n)'
 
-serializer = RegisterSerializer()
-del RegisterSerializer # Make sure this is not used by user
+serializer = Serializer()
+del Serializer # Make sure this is not used by user
 
     
 # ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
