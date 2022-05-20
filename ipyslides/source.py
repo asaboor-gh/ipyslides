@@ -116,7 +116,7 @@ class Source:
     @classmethod
     @contextmanager 
     def context(cls, **kwargs): 
-        """Excute and displays source code in the context manager. kwargs are passed to `ipyslides.formatter.highlight` function.
+        """Execute and displays source code in the context manager. kwargs are passed to `ipyslides.formatter.highlight` function.
         Useful when source is written inside context manager itself.
         
         **Usage**:

@@ -264,21 +264,15 @@ class BaseLiveSlides:
         with self.slide(3):
             self.write('## Adding Speaker Notes')
             self.write('You can use line magic `%notes` to add notes as well.\n{.Note .Success}')
-            for item in [getattr(self.notes,a) for a in dir(self.notes) if not a.startswith('_')]:
-                with suppress(Exception):
-                    self.write(self.doc(item,'LiveSlides.notes'))
+            self.doc(self.notes,'LiveSlides', members = True).display()
                    
         with self.slide(4):
             self.write('## Displaying Source Code')
-            for item in [getattr(self.source,a) for a in dir(self.source) if not a.startswith('_')]:
-                with suppress(Exception):
-                    self.write(self.doc(item,'LiveSlides.source'))
+            self.doc(self.source,'LiveSlides', members=True).display()
         
         with self.slide(5):
             self.write('## Layout and Theme Settings')
-            for item in [getattr(self.settings,a) for a in dir(self.settings) if not a.startswith('_')]:
-                with suppress(Exception):
-                    self.write(self.doc(item,'LiveSlides.settings'))
+            self.doc(self.settings,'LiveSlides', members=True).display()
                 
         with self.slide(6):
             self.write('## Useful Functions for Rich Content')

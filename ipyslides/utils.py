@@ -247,28 +247,36 @@ def sig(callable,prepend_str = None):
     try:
         _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--secondary-fg);">{str(inspect.signature(callable))}</span>'
         if prepend_str: 
-            _sig = f'{alert(prepend_str)}.{_sig}' # must be inside format string
+            _sig = f'{colored(prepend_str,"var(--accent-color)")}.{_sig}' # must be inside format string
         return _HTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')
 
 
 def doc(obj,prepend_str = None, members=None):
-    "Returns documentation of an `obj`. You can prepend a class/module name. memebers is True/List of attributes to show doc of."
+    "Returns documentation of an `obj`. You can prepend a class/module name. members is True/List of attributes to show doc of."
     if obj is None:
         return _HTML('') # Must be _HTML to work on memebers
     
     _doc, _sig, _full_doc = '', '', ''
-    try:
-        _doc += _fix_repr(inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775')
-    except:
-        raise TypeError(f'Object {obj} does not have a docstring')
+    with suppress(BaseException): # if not __doc__, go forwards
+        _doc += _fix_repr((inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775'))
     
     with suppress(BaseException): # This allows to get docs of module without signature
         _sig = sig(obj,prepend_str)
     
+    # If above fails, try to get name of module/object
+    _name = obj.__name__ if hasattr(obj,'__name__') else type(obj).__name__
+    if _name == 'property':
+        _name = obj.fget.__name__
+        
+    _pstr = f'{str(prepend_str) + "." if prepend_str else ""}{_name}'
+    
+    if _name.startswith('_'): # Remove private attributes
+        return _HTML('') # Must be _HTML to work on memebers
+    
+    _sig = _sig or colored(_pstr,"var(--accent-color)") # Picks previous signature if exists
     _full_doc = f"<div class='Docs'>{_sig}<br>{_doc}\n</div>"
-    _pstr = f'{str(prepend_str) + "." if prepend_str else ""}{obj.__name__}' if hasattr(obj,'__name__') else ""
     
     _mems = []
     if members == True:
@@ -279,9 +287,13 @@ def doc(obj,prepend_str = None, members=None):
                 if inspect.ismodule(obj): # Restrict imported items in docs
                     if hasattr(attr, '__module__')  and attr.__module__ == obj.__name__:
                         _mems.append(attr) 
+                elif inspect.isclass(obj):
+                    if inspect.ismethod(attr) or inspect.isfunction(attr) or type(attr).__name__ == 'property':
+                        _mems.append(attr)
                 else:
-                    _mems.append(attr)
-            
+                    with suppress(BaseException):
+                        if attr.__module__ == obj.__module__: # Most useful
+                            _mems.append(attr)
                 
     elif isinstance(members, (list, tuple, set)):
         for attr in members:
@@ -293,6 +305,7 @@ def doc(obj,prepend_str = None, members=None):
     # Collect docs of members
     for attr in _mems:
         with suppress(BaseException):
-            _full_doc += doc(attr, prepend_str=f'{_pstr}',members=False).value
+            _class_members = inspect.ismodule(obj) and inspect.isclass(attr)
+            _full_doc += doc(attr, prepend_str=f'{_pstr}',members = _class_members).value
     
     return _HTML(_full_doc)

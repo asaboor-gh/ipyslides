@@ -533,7 +533,7 @@ class LiveSlides:
     In version 1.5.9+ function `pprint` is avalible in IPython namespace when LiveSlide is initialized. This displays objects in intended from rather than just text.
     > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
     
-    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.display_html` is called.
+    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `ls.export.report` is called.
     This is useful to fill-in content in document that is not required in slides.
     
     > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
