@@ -2,7 +2,6 @@ import sys, re
 from collections import namedtuple
 from contextlib import contextmanager, suppress
 
-import numpy as np
 from IPython import get_ipython
 from IPython.display import display
 from IPython.utils.capture import capture_output
@@ -17,7 +16,7 @@ from . import utils
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
 from ._base.base import BaseLiveSlides
-from ._base.intro import how_to_slide
+from ._base.intro import how_to_slide, logo_svg
 from ._base.scripts import multi_slides_alert
 from ._base import styles
 
@@ -304,7 +303,7 @@ class LiveSlides(BaseLiveSlides):
         # Now update progress bar
         old_label = self._slidelabel
         denom = n_last if n_last > 0 else 1 # in case only title slide
-        opts = [(f"{s['n']}", np.round(100*s['n']/denom, 2)) for s in self.__iterable]
+        opts = [(f"{s['n']}", round(100*s['n']/denom, 2)) for s in self.__iterable]
         self.progress_slider.options = opts  # update options
         
         if old_label in list(zip(*opts))[0]: # Bring back to same slide if possible
@@ -544,7 +543,7 @@ class LiveSlides:
                 footer_text   = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
                 show_date     = True,
                 show_slideno  = True,
-                logo_src      = None, 
+                logo_src      = logo_svg, 
                 font_scale    = 1, 
                 text_font     = 'sans-serif', 
                 code_font     = 'var(--jp-code-font-family)', 
@@ -555,7 +554,7 @@ class LiveSlides:
         _private_instance.__doc__ = cls.__doc__ # copy docstring
         _private_instance.settings.set_layout(center = center, content_width = content_width)
         _private_instance.settings.set_footer(text = footer_text, show_date = show_date, show_slideno = show_slideno)
-        _private_instance.settings.set_logo(src = logo_src)
+        _private_instance.settings.set_logo(src = logo_src,width = 60)
         _private_instance.settings.set_font_scale(font_scale = font_scale)
         _private_instance.settings.set_font_family(text_font = text_font, code_font = code_font)
         _private_instance.settings.set_code_style(style = code_style, lineno = code_lineno)

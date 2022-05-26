@@ -321,7 +321,6 @@ def style_css(style_root = theme_roots['Inherit']):
     max-width: 100vw !important;
     box-sizing: border-box !important;
     overflow: auto !important;
-    border-radius: 2px;
     padding: 0 !important;
     margin: 4px 0px !important; /* Opposite to padding to balance it */
     max-height: 400px; /* Try avoiding important here */

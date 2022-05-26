@@ -1,11 +1,13 @@
 """
 Display source code from files/context managers.
 """
-import ast, re
+import ast, re, os
 import sys, linecache
 import textwrap
 import inspect
-from contextlib import contextmanager
+import pygments
+
+from contextlib import contextmanager, suppress
 
 from .formatter import highlight, _HTML
     
@@ -98,10 +100,24 @@ class Source:
         return cls.current
     
     @classmethod
-    def from_file(cls, filename,language='python',name=None,**kwargs):
-        "Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language.`kwargs` are passed to `ipyslides.formatter.highlight`"
-        _title = filename if name is None else name
-        cls.current = _file2code(filename,language=language,name=_title,**kwargs)
+    def from_file(cls, filename,language = None,name = None,**kwargs):
+        """Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language.  
+        `kwargs` are passed to `ipyslides.formatter.highlight`.     
+        
+        (1.6.8+) tries to auto detect lanaguage from filename extension, if `language` is not given.
+        """
+        _title = name or filename
+        _lang = language or os.path.splitext(filename)[-1].replace('.','')
+        
+        if language is None:
+            lexer = None
+            with suppress(BaseException):
+                lexer = pygments.lexers.get_lexer_by_name(_lang)
+                
+            if lexer is None:
+                raise Exception(f'Failed to detect language from file {filename!r}. Use language argument!')
+            
+        cls.current = _file2code(filename,language = _lang,name = _title,**kwargs)
         return cls.current
     
     @classmethod       

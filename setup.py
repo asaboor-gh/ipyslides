@@ -21,9 +21,10 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    requires = ['markdown'],
+    requires = ['markdown','ipywidgets'],
     install_requires = [
           'markdown',
+          'ipywidgets'
       ],
     packages = setuptools.find_packages(),
     keywords        = ['Jupyter', 'Widgets', 'IPython'],

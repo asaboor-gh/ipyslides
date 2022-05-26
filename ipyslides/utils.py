@@ -211,36 +211,16 @@ def block(title,*objs,bg = 'olive'):
         {_out}
         </div></div>""")
     
-def block_r(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='crimson')
-def block_b(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='navy')
-def block_g(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='#006400')
-def block_y(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='#E4D00A')
-def block_o(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='orange')
-def block_p(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='purple')
-def block_c(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='#48d1cc')
-def block_m(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='magenta')
-def block_w(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='whitesmoke')
-def block_k(title,*objs):
-    "See documentation of `block`."
-    return block(title,*objs,bg='#343434')
+def block_r(title,*objs): return block(title,*objs,bg='crimson')
+def block_b(title,*objs): return block(title,*objs,bg='navy')
+def block_g(title,*objs): return block(title,*objs,bg='#006400')
+def block_y(title,*objs): return block(title,*objs,bg='#E4D00A')
+def block_o(title,*objs): return block(title,*objs,bg='orange')
+def block_p(title,*objs): return block(title,*objs,bg='purple')
+def block_c(title,*objs): return block(title,*objs,bg='#48d1cc')
+def block_m(title,*objs): return block(title,*objs,bg='magenta')
+def block_w(title,*objs): return block(title,*objs,bg='whitesmoke')
+def block_k(title,*objs): return block(title,*objs,bg='#343434')
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."

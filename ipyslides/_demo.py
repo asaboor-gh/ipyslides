@@ -6,14 +6,11 @@ from IPython import get_ipython
 from .utils import textbox
 from .writers import write, iwrite
 from .formatter import libraries, __reprs__
-from ._base.intro import how_to_slide
+from ._base.intro import how_to_slide, logo_svg
 
 slides = get_ipython().user_ns['_s_l_i_d_e_s_'] # get slides from notebook instead of creating new one
 slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
-slides.settings.set_logo('''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="blue"/>
-        <text x="45%" y="45%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↑</text>
-        <text x="55%" y="60%" fill="white" font-size="4em" dominant-baseline="central" text-anchor="middle">↓</text></svg>''',width=50)
+slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
 
 #Demo for loading slides from a file or file-like object 
 fp = StringIO('\n'.join(how_to_slide) + '''\n---

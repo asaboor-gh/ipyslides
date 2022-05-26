@@ -5,7 +5,6 @@ import sys
 import textwrap
 import inspect, re, json
 from io import BytesIO
-import matplotlib.pyplot as plt
 import pygments
 import ipywidgets as ipw
 from IPython.display import display, HTML 
@@ -71,7 +70,7 @@ class _HTML_Widget(ipw.HTML):
         display(self)
 
 
-def plt2html(plt_fig=None,transparent=True,caption=None):
+def plt2html(plt_fig = None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
     **Parameters**
     
@@ -79,11 +78,12 @@ def plt2html(plt_fig=None,transparent=True,caption=None):
     - transparent: True of False for fig background.
     - caption    : Caption for figure.
     """
-    if plt_fig==None:
-        plt_fig = plt.gcf()
+    # First line is to remove depedency on matplotlib if not used
+    plt = sys.modules.get('matplotlib.pyplot', __import__('matplotlib.pyplot'))
+    _fig = plt_fig or plt.gcf()
     plot_bytes = BytesIO()
-    plt.savefig(plot_bytes,format='svg',transparent=transparent)
-    plt.clf() # Clear image to avoid other display
+    _fig.savefig(plot_bytes,format='svg',transparent = transparent)
+    _fig.clf() # Clear image to avoid other display
     plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     if caption:
@@ -117,7 +117,7 @@ def _ipy_imagestr(image,width='100%'):
     return fix_ipy_image(image,width=width).value
 
 
-def code_css(style='default',color = None, background = None, accent_color = 'var(--tr-hover-bg)', className = None, lineno = True):
+def code_css(style='default',color = None, background = None, hover_color = 'var(--tr-hover-bg)', className = None, lineno = True):
     """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
     """
     if style not in pygments.styles.get_all_styles():
@@ -136,14 +136,13 @@ def code_css(style='default',color = None, background = None, accent_color = 'va
     # keep user preferences               
     bg = background if background else _bg_fg.get('background','var(--secondary-bg)')
     fg = color if color else _bg_fg.get('color','var(--primary-fg)')
-    
-    gradient = f'linear-gradient(to right, {accent_color}, {accent_color} 2.2em, {bg} 2.2em, {bg} 100%)'
-        
+     
     return f"""<style>\n{_style}
     {_class} {{ 
-        background: {gradient if lineno else bg}; 
+        background: {bg}; 
         color: {fg}; 
-        border-left: 2px solid {accent_color};
+        border-left: 0.2em solid {hover_color};
+        border-radius: 0.2em;
     }}
     span.err {{border: none !important;}}
     
@@ -151,17 +150,17 @@ def code_css(style='default',color = None, background = None, accent_color = 'va
         padding-left: {'2.2em' if lineno else '0.5em'};
     }}
     {_class} code:hover {{
-        background: {accent_color} !important; /* Important to override default hover */
+        background: {hover_color} !important; /* Important to override default hover */
     }}
     {_class} code:before {{
-        opacity: 0.95;
-        background: {accent_color};
+        opacity: 0.8;
         width: {'1.2em' if lineno else '0'};
         color: {fg};
+        font-size: 80%;
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, className = None, style='default', color = None, background = None, accent_color = 'var(--tr-hover-bg)', lineno = True):
+def highlight(code, language='python', name = None, className = None, style='default', color = None, background = None, hover_color = 'var(--tr-hover-bg)', lineno = True):
     """Highlight code with given language and style. style only works if className is given.
     If className is given and matches any of pygments.styles.get_all_styles(), then style will be applied immediately.
     color is used for text color as some themes dont provide text color.
@@ -172,7 +171,7 @@ def highlight(code, language='python', name = None, className = None, style='def
         style = className
         
     formatter = pygments.formatters.HtmlFormatter(style = style)
-    _style = code_css(style=style, color = color, background = background, accent_color = accent_color,className=className, lineno = lineno) if className else ''
+    _style = code_css(style=style, color = color, background = background, hover_color = hover_color,className=className, lineno = lineno) if className else ''
     _code = pygments.highlight(textwrap.dedent(code), # dedent make sure code blocks at any level are picked as well
                                pygments.lexers.get_lexer_by_name(language),
                                formatter)
@@ -199,10 +198,10 @@ class Serializer:
     
     def register(self, obj_type, verbose = True):
         """Decorator to register html serializer for an object type. 
-        Decoracted function accepts one argument that will take `obj_type` and should return html string.
-        This definition will take precedence over any other in the module.
-        All regeisted serializers only exist for the lifetime of the module in a namespace.
-        Only a single serializer can be registered for an object type.
+        - Decoracted function accepts one argument that will take `obj_type` and should return HTML string.
+         - This definition will take precedence over any other in the module.
+        - All regeisted serializers only exist for the lifetime of the module in a namespace.
+        - Only a single serializer can be registered for an object type.
         
         **Usage**
         ```python
@@ -218,9 +217,18 @@ class Serializer:
         my_object = MyObject()
         ls.write(my_object) #This will write "My object is awesome" as main heading
         parse_myobject(my_object) #This will return "<h1>My object is awesome</h1>"
+        
+        #This is equivalent to above for custom objects(builtin objects can't be modified)
+        class MyObject:
+            def _repr_html_(self):
+                return '<h1>My object is awesome</h1>'
+                
+        my_object = MyObject()
+        ls.write(my_object)
         ```
         
-        **Note**: Serializer function should return html string. It is not validated for correct code on registration time.
+        **Note**: Serializer function should return html string. It is not validated for correct code on registration time.       
+        **Note**: Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
         """
         def _register(func):
             if obj_type is str:
@@ -248,6 +256,10 @@ class Serializer:
         for item in self._libs:
             if obj_type is item['obj']:
                 self._libs.remove(item)
+    
+    def unregisterall(self):
+        "Unregister all serializer handlers. New in 1.6.8"
+        self._libs = []
     
     def __repr__(self):
         return 'Serializer(\n\t' + '\n\t'.join(f'{item["obj"]} → {item["func"].__name__}({item["obj"]})' for item in self._libs) + '\n)'

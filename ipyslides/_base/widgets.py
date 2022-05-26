@@ -231,7 +231,7 @@ class Widgets:
             self.buttons.setting,
             HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')) ,
             self.buttons.capture
-        ],layout=Layout(height='32px')).add_class('nav-box')
+        ],layout=Layout(height='36px')).add_class('nav-box')
         
         self.navbox = VBox([
             self.footerbox,

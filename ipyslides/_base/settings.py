@@ -70,10 +70,10 @@ class LayoutSettings:
         else:
             print(f'Animation {name!r} not found. Pass None or any of {list(styles.animations.keys())}.')
     
-    def set_code_style(self,style='default',color = None,background = None, accent_color = 'var(--tr-hover-bg)',lineno = True):
+    def set_code_style(self,style='default',color = None,background = None, hover_color = 'var(--tr-hover-bg)',lineno = True):
         "Set code style CSS. Use background for better view of your choice. This is overwritten by theme change."
         self._code_lineno = lineno # Used in theme to keep track 
-        self.widgets.htmls.hilite.value = code_css(style,color = color,background = background, lineno = lineno, accent_color = accent_color)
+        self.widgets.htmls.hilite.value = code_css(style,color = color,background = background, lineno = lineno, hover_color = hover_color)
       
     def set_font_family(self,text_font=None,code_font=None):
         "Set main fonts for text and code."
