@@ -201,7 +201,8 @@ def cols(*objs,width_percents=None, className=None):
     return format_html(*objs,width_percents=width_percents,className = className)
 
 def block(title,*objs,bg = 'olive'):
-    "Format a block like in LATEX beamer. *objs expect to be writable with `write` command."
+    """Format a block like in LATEX beamer. *objs expect to be writable with `write` command.   
+    Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,k,o,w,p>`"""
     _title = f"""<center style='background:var(--secondary-bg);margin:0px -4px;'>
                 <b>{title}</b></center>"""
     _out = _fmt_write(objs) # single column
@@ -233,17 +234,18 @@ def sig(callable,prepend_str = None):
         raise TypeError(f'Object {callable} is not a callable')
 
 
-def doc(obj,prepend_str = None, members=None):
+def doc(obj,prepend_str = None, members = None, itself = True):
     "Returns documentation of an `obj`. You can prepend a class/module name. members is True/List of attributes to show doc of."
     if obj is None:
         return _HTML('') # Must be _HTML to work on memebers
     
     _doc, _sig, _full_doc = '', '', ''
-    with suppress(BaseException): # if not __doc__, go forwards
-        _doc += _fix_repr((inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775'))
-    
-    with suppress(BaseException): # This allows to get docs of module without signature
-        _sig = sig(obj,prepend_str)
+    if itself == True:
+        with suppress(BaseException): # if not __doc__, go forwards
+            _doc += _fix_repr((inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775'))
+
+        with suppress(BaseException): # This allows to get docs of module without signature
+            _sig = sig(obj,prepend_str)
     
     # If above fails, try to get name of module/object
     _name = obj.__name__ if hasattr(obj,'__name__') else type(obj).__name__
@@ -256,7 +258,7 @@ def doc(obj,prepend_str = None, members=None):
         return _HTML('') # Must be _HTML to work on memebers
     
     _sig = _sig or colored(_pstr,"var(--accent-color)") # Picks previous signature if exists
-    _full_doc = f"<div class='Docs'>{_sig}<br>{_doc}\n</div>"
+    _full_doc = f"<div class='Docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
     
     _mems = []
     if members == True:
@@ -285,7 +287,7 @@ def doc(obj,prepend_str = None, members=None):
     # Collect docs of members
     for attr in _mems:
         with suppress(BaseException):
-            _class_members = inspect.ismodule(obj) and inspect.isclass(attr)
-            _full_doc += doc(attr, prepend_str=f'{_pstr}',members = _class_members).value
+            _class_members = inspect.ismodule(obj) and (inspect.isclass(attr) and (attr.__module__ == obj.__name__)) # Restrict imported classes in docs
+            _full_doc += doc(attr, prepend_str=f'{_pstr}',members = _class_members, itself = True).value
     
     return _HTML(_full_doc)

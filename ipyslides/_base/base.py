@@ -276,15 +276,12 @@ class BaseLiveSlides:
                 
         with self.slide(6):
             self.write('## Useful Functions for Rich Content')
-            for attr in dir(self):
-                if not attr.startswith('_'):
-                    if not attr in ['write','iwrite','parse_xmd','source','export','notes','settings','title','slide','frames','css_styles','load_docs','demo','from_markdown']:
-                        with suppress(Exception):
-                            if not 'block_' in attr:
-                                self.write(self.doc(getattr(self,attr),'LiveSlides'))
-                        if attr == 'block':
-                            self.write(f"`block` has other shortcut colored versions {', '.join(f'`block_{c}`' for c in 'rgbycmkowp')}.\n{{.Note .Info}}")
-        
+            members = ['alert','block', 'bokeh2html', 'capture_std', 'citations', 'citations_html', 'cite',
+                       'colored', 'cols', 'details', 'doc', 'enable_zoom', 'format_css', 'format_html', 'highlight',
+                       'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
+                       'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'write_slide_css']
+            self.doc(self, 'LiveSlides', members = members, itself = False).display()
+            
         with self.slide(7):
             self.write('## Content Styling')
             with self.source.context() as c:
