@@ -197,9 +197,10 @@ class Serializer:
         self._libs = []
     
     def register(self, obj_type, verbose = True):
-        """Decorator to register html serializer for an object type. 
+        """Decorator to register html serializer for an object type.
+        
         - Decoracted function accepts one argument that will take `obj_type` and should return HTML string.
-         - This definition will take precedence over any other in the module.
+        - This definition will take precedence over any other in the module.
         - All regeisted serializers only exist for the lifetime of the module in a namespace.
         - Only a single serializer can be registered for an object type.
         

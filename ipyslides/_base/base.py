@@ -264,15 +264,15 @@ class BaseLiveSlides:
         with self.slide(3):
             self.write('## Adding Speaker Notes')
             self.write('You can use line magic `%notes` to add notes as well.\n{.Note .Success}')
-            self.doc(self.notes,'LiveSlides', members = True).display()
+            self.doc(self.notes,'LiveSlides.notes', members = True, itself = False).display()
                    
         with self.slide(4):
             self.write('## Displaying Source Code')
-            self.doc(self.source,'LiveSlides', members=True).display()
+            self.doc(self.source,'LiveSlides.source', members = True, itself = False).display()
         
         with self.slide(5):
             self.write('## Layout and Theme Settings')
-            self.doc(self.settings,'LiveSlides', members=True).display()
+            self.doc(self.settings,'LiveSlides.settings', members=True,itself = False).display()
                 
         with self.slide(6):
             self.write('## Useful Functions for Rich Content')
@@ -313,7 +313,7 @@ class BaseLiveSlides:
         with self.slide(10):
             self.write('## Adding User defined Objects')
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@LiveSlides.serializer.register` to serialize them to html.\n{.Note .Info}')
-            self.write(self.doc(self.serializer.register,'LiveSlides.serializer'))
+            self.doc(self.serializer,'LiveSlides.serializer', members = True, itself = False).display()
         
         with self.slide(11):
             self.write(['## Presentation Code',self.load_docs])

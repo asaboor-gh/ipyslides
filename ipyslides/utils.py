@@ -259,6 +259,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     
     _sig = _sig or colored(_pstr,"var(--accent-color)") # Picks previous signature if exists
     _full_doc = f"<div class='Docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
+    _pstr = (prepend_str or _pstr) if itself == False else _pstr # Prefer given string if itself is not to doc
     
     _mems = []
     if members == True:
@@ -288,6 +289,6 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     for attr in _mems:
         with suppress(BaseException):
             _class_members = inspect.ismodule(obj) and (inspect.isclass(attr) and (attr.__module__ == obj.__name__)) # Restrict imported classes in docs
-            _full_doc += doc(attr, prepend_str=f'{_pstr}',members = _class_members, itself = True).value
+            _full_doc += doc(attr, prepend_str = _pstr, members = _class_members, itself = True).value
     
     return _HTML(_full_doc)
