@@ -6,7 +6,7 @@ New in 1.4.6
 from .core import _private_instance as __pi
 cite            = __pi.cite
 citations_html  = __pi.citations_html
-write_slide_css = __pi.write_slide_css
+set_slide_css   = __pi.set_slide_css
 notify          = __pi.notify
 notify_later    = __pi.notify_later
 insert_notes    = __pi.notes.insert
@@ -21,7 +21,7 @@ highlight       = __pi.highlight
 markdown_callables = __pi.markdown_callables
 serializer      = __pi.serializer
 
-__all__ = ['cite', 'write_citations', 'write_slide_css', 'notify', 'notify_later', 'insert_notes', 'parse_xmd', 'write', 'iwrite', 'source', 'css_styles', 'plt2html', 'bokeh2html', 'highlight']
+__all__ = ['cite', 'write_citations', 'notify', 'notify_later', 'insert_notes', 'parse_xmd', 'write', 'iwrite', 'source', 'css_styles', 'plt2html', 'bokeh2html', 'highlight']
 from .utils import *
 from .utils import __all__ as __all_utils
 

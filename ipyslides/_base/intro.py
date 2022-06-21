@@ -17,8 +17,6 @@ how_to_slide = ('''# Creating Slides
 **Assuming you have `ls = ipyslides.LiveSlides()`**
 
 - Proceed to create slides:
-    - Edit and test cells in `ls.convert2slides(False)` mode.
-    - Run cells in `ls.convert2slides(True)` mode from top to bottom. 
     - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
     - `%%slide integer -m` can be used to create slide from full markdown (extended one).
     - You can use context managers like `with ls.slide(): ...` and `with ls.title(): ...` in place of `%%slide` and `%%title` respectively.

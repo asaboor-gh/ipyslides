@@ -20,7 +20,7 @@ class Notes:
         
     def insert(self, content):
         "Add notes to current slide. Content could be any object except javascript and interactive widgets."
-        self.main._slides_notes[self.main._current_slide] = self.main.format_html(content)._repr_html_()
+        self.main._slides_dict[self.main._current_slide].notes = self.main.format_html(content)._repr_html_()
     
     def _display(self, html_str):
         self.widgets.htmls.notes.value = 'Notes Area: Time only updates while switching slides' # Must be, so when no notes, should not be there

@@ -18,6 +18,7 @@ _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 from ._base.base import BaseLiveSlides
 from ._base.intro import how_to_slide, logo_svg
 from ._base.scripts import multi_slides_alert
+from ._base.slide import build_slide
 from ._base import styles
 
 try:  # Handle python IDLE etc.
@@ -63,12 +64,9 @@ class LiveSlides(BaseLiveSlides):
             self.shell.user_ns['pprint'] = pprint
         
         self._citations = {} # Initialize citations
-        self.__slides_mode = True # Default is slides mode since it is more intuitive
         self._computed_display = False # Do not load all slides by default
         
-        self.__slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
-        self._slides_notes = {'0': None} # Initialize notes dictionary
-        self._slides_css = {} # Initialize css dictionary for each slide
+        self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._i2f_dict = {'0':'0'} # input number -> display number of slide
         self._f2i_dict = {'0':'0'} # display number -> input number of slide
@@ -81,7 +79,7 @@ class LiveSlides(BaseLiveSlides):
         
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
-        self.progress_slider.observe(self.__update_content,names=['index'])
+        self.progress_slider.observe(self._update_content,names=['index'])
         self.markdown_callables = tuple(_allowed_funcs.split('|'))
         # All Box of Slides
         self._box =  self.widgets.mainbox
@@ -101,23 +99,19 @@ class LiveSlides(BaseLiveSlides):
         
         self.widgets.slidebox.children[0].clear_output(wait=True)
         with self.widgets.slidebox.children[0]: # title slide in both simple and computed case
-            self.__slides_dict['0'].show() # Instead of refreshing, we can just update the content of the title slides to avoid errors
+            self._slides_dict['0'].show() # Instead of refreshing, we can just update the content of the title slides to avoid errors
         
         with suppress(Exception): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
     
     def _make_sure_title(self):
-        if '0' not in self.__slides_dict:
-            with capture_output() as captured:
+        if '0' not in self._slides_dict:
+            with build_slide(self, '0'):
                 self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
                 
-            self.__slides_dict['0'] = captured
-
     @property
     def slides(self):
-        "Get slides list"
-        nt = namedtuple('SLIDE','slide n')
-        return tuple([nt(**d) for d in self.__iterable])
+        return tuple(self.__iterable)
     
     @property
     def iterable(self):
@@ -136,8 +130,7 @@ class LiveSlides(BaseLiveSlides):
         "Clear all slides."
         self._check_computed('clear slides')
         self._make_sure_title() # Make sure title is there, before updating slides
-        self.__slides_dict = {'0':self.__slides_dict.get('0')} # keep title page
-        self._slides_notes = {'0':self._slides_notes.get('0',None)} # keep title page's notes
+        self._slides_dict = {'0':self._slides_dict.get('0')} # keep title page
         self._toasts = {'0':self._toasts.get('0',None) } # keep title page's toasts
         self.refresh() # Clear interface too
     
@@ -183,9 +176,6 @@ class LiveSlides(BaseLiveSlides):
         'Auto display when self is on last line of a cell'
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
-        
-        if not self.__slides_mode:
-            return print('Set "self.convert2slides(True)", then it will work.')
         
         self.close_view() # Close previous views
         self._display_box_ = ipw.VBox(children=[self.__jlab_in_cell_display(), self._box]) # Initialize display box again
@@ -236,20 +226,21 @@ class LiveSlides(BaseLiveSlides):
             
     def __display_slide(self):
         self.loading_html.value = styles.loading_svg
+        
         try:
-            _slide_css = self._slides_css.get(self._access_key,'') 
+            _slide_css = '' 
             if (self.screenshot.capturing == False) and (self._frameno < 2): # No animations while printing or frames
                 _slide_css += self.settings.animation # Animation style
             
             self.widgets.outputs.slide.clear_output(wait=True)
             with self.widgets.outputs.slide:
                 write(self.html('style',_slide_css)) # Write CSS first
-                self.__iterable[self._slideindex]['slide'].show()  # Show slide
+                self.__iterable[self._slideindex].show()  # Show slide
         finally:
             self.loading_html.value = ''
-           
-    def __switch_slide(self,old_index, new_index): # this change is provide from __update_content
-        slide_css = self._slides_css.get(self._access_key,'') # Get CSS
+            
+    def __switch_slide(self,old_index, new_index): # this change is provide from _update_content
+        slide_css = self.__iterable[new_index]._css._repr_html_()
         if (self.screenshot.capturing == False) and (self._frameno < 2): # No animations while printing or frames
             slide_css += self.settings.animation
              
@@ -262,13 +253,17 @@ class LiveSlides(BaseLiveSlides):
         self.widgets.slidebox.children[new_index].layout = self.widgets.outputs.slide.layout
         self.widgets.slidebox.children[new_index].add_class('SlideArea')
         
-    def __update_content(self,change):
+    def _update_content(self,change):
         if self.__iterable and change:
+            for _class in [c for c in self.widgets.slidebox._dom_classes if c.startswith('slide-')]:
+                self.widgets.slidebox.remove_class(_class)
+            self.widgets.slidebox.add_class(self.__iterable[self._slideindex]._css_class)
+        
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
             self._display_toast() # or self.toasts._display_toast . Display in start is fine
-            self.notes._display(self._slides_notes.get(self._access_key,None)) # Display notes first
+            self.notes._display(self._slides_dict.get(self._access_key,None).notes) # Display notes first
         
-            n = self.__iterable[self._slideindex]["n"] if self.__iterable else 0 # keep it from slides
+            n = self.__iterable[self._slideindex].display_number if self.__iterable else 0 # keep it from slides
             _number = f'{n} / {self._nslides}' if n != 0 else ''
             self.settings.set_footer(_number_str = _number)
             
@@ -282,11 +277,11 @@ class LiveSlides(BaseLiveSlides):
         This is very useful when you have a lot of Maths or Widgets, no susequent calls to MathJax/Widget Manager required on slide's switch when it is loaded once."""
         self._computed_display = b
         if b:
-            slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
+            slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')).add_class(s._css_class) for s in self.__iterable]
             self.widgets.slidebox.children = [*slides, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
             for i, s in enumerate(self.__iterable):
                 with self.widgets.slidebox.children[i]:
-                    s['slide'].show() 
+                    s.show() 
                 self._slideindex = i # goto there to update display
                 print(f'Pocessing... {int(self.widgets.progressbar.value)}%',end='\r') # Update loading progress bar
         else:
@@ -296,37 +291,25 @@ class LiveSlides(BaseLiveSlides):
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self._check_computed('refresh')
         self.__iterable = self.__collect_slides() # would be at least one title slide
-        n_last = self.__iterable[-1]['n']
+        n_last = self.__iterable[-1].display_number
         self._nslides = int(n_last) # Avoid frames number
         self._max_index = len(self.__iterable) - 1 # This includes all frames
         
         # Now update progress bar
         old_label = self._slidelabel
-        denom = n_last if n_last > 0 else 1 # in case only title slide
-        opts = [(f"{s['n']}", round(100*s['n']/denom, 2)) for s in self.__iterable]
+        opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self.__iterable]
         self.progress_slider.options = opts  # update options
         
         if old_label in list(zip(*opts))[0]: # Bring back to same slide if possible
             self._slidelabel = old_label
             
-        self.__update_content(True) # Force Refresh
+        self._update_content(True) # Force Refresh
         
-    def __insert_slide_css(self,nframe = None,**css_props):
-        "Provide CSS values with - replaced by _ e.g. font-size to font_size."
-        self._check_computed('add CSS to slide')
-        _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
-        _css_props = {k:v.replace('!important','').replace(';','') + '!important;' for k,v in _css_props.items()}
-        props_str = ''.join([f"{k}:{v}" for k,v in _css_props.items()])
-        out_str = f".SlidesWrapper, .SlideArea .block " + "{" + props_str + "}\n"
-        if 'color' in _css_props:
-            out_str += f".SlidesWrapper p, .SlidesWrapper>:not(div){{ color: {_css_props['color']}}}"
-        
-        key = f'{self._current_slide}' if nframe is None else f'{self._current_slide}.{nframe}'
-        self._slides_css[key] = out_str
-    
-    def write_slide_css(self, **css_props):
-        "Provide CSS values with - replaced by _ e.g. font-size to font_size."
-        self.__insert_slide_css(nframe = None, **css_props)
+    def set_slide_css(self,props_dict = {}):
+        """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
+        'selector' for slide itself should be ''.
+        """
+        self._slides_dict[self._current_slide].set_css(props_dict)
     
     # defining magics and context managers
     def __slide(self,line,cell):
@@ -363,28 +346,21 @@ class LiveSlides(BaseLiveSlides):
                 self.shell.run_cell(cell)
     
     @contextmanager
-    def slide(self,slide_number,**css_props):
+    def slide(self,slide_number,props_dict = {}):
         """Use this context manager to generate any number of slides from a cell
-        `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
+        CSS properties from `props_dict` are applied to current slide."""
         if not isinstance(slide_number, int):
             raise ValueError(f'slide_number should be int >= 1, got {slide_number}')
         
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
-        if self._computed_display and self.__slides_mode:
+        if self._computed_display:
             yield # To avoid generator yied error
             self._check_computed('add slide')
         
         self._current_slide = f'{slide_number}'
-        with capture_output() as cap:
-            self.__insert_slide_css(**css_props)
+        
+        with build_slide(self, self._current_slide, props_dict=props_dict) as cap:
             yield cap # Useful to use later
-        # Now Handle What is captured
-        if not self.__slides_mode:
-            cap.show()
-        else:
-            self.__slides_dict[f'{slide_number}'] = cap 
-            self.refresh()
-            self._slidelabel = self._i2f_dict[f'{slide_number}'] #go to slide
 
     
     def __title(self,line,cell):
@@ -407,13 +383,13 @@ class LiveSlides(BaseLiveSlides):
             return parse_xmd(cell, display_inline = True, rich_outputs = False)
             
     @contextmanager
-    def title(self,**css_props):
+    def title(self,props_dict = {}):
         """Use this context manager to write title.
-        `css_props` are applied to current slide. `-` -> `_` as `font-size` -> `font_size` in python."""
-        with self.slide(0, **css_props) as s:
+        CSS properties from `props_dict` are applied to current slide."""
+        with self.slide(0, props_dict = props_dict) as s:
             yield s # Useful to use later
     
-    def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto', **css_props):
+    def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto', props_dict = {}):
         """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
         You can also call it as a function, e.g. `.frames(slide_number = 1,1,2,3,4,5)()` becuase required function is `write` by defualt.
         
@@ -438,7 +414,7 @@ class LiveSlides(BaseLiveSlides):
         - frame_height: ('N%', 'Npx', 'auto') height of the frame that keeps incoming frames object at static place.
         
         No return of defined function required, if any, only should be display/show etc.
-        `css_props` are applied to all slides from *objs. `-` -> `_` as `font-size` -> `font_size` in python."""
+        CSS properties from `prop_dict` are applied to all slides from *objs."""
         def _frames(func = self.write): # default write if called without function
             self._check_computed('add frames')
             if not isinstance(slide_number,int):
@@ -447,43 +423,30 @@ class LiveSlides(BaseLiveSlides):
             assert slide_number >= 1 # Should be >= 1, should not add title slide as frames
             self._current_slide = f'{slide_number}.1' # First frame
 
-            if not self.__slides_mode:
-                print(f'Showing raw form of given objects, will be displayed in slides using function {func} dynamically')
-                return objs
+            if repeat == True:
+                _new_objs = [objs[:i] for i in range(1,len(objs)+1)]
+            elif isinstance(repeat,(list, tuple)):
+                _new_objs =[]
+                for k, seq in enumerate(repeat):
+                    if not isinstance(seq,(list,tuple)):
+                        raise TypeError(f'Expected list or tuple at index {k} of `repeat`, got {seq}')
+                    _new_objs.append([objs[s] for s in seq])
             else:
-                if repeat == True:
-                    _new_objs = [objs[:i] for i in range(1,len(objs)+1)]
-                elif isinstance(repeat,(list, tuple)):
-                    _new_objs =[]
-                    for k, seq in enumerate(repeat):
-                        if not isinstance(seq,(list,tuple)):
-                            raise TypeError(f'Expected list or tuple at index {k} of `repeat`, got {seq}')
-                        _new_objs.append([objs[s] for s in seq])
-                else:
-                    _new_objs = objs
-                        
-                for i, obj in enumerate(_new_objs,start=1):
-                    with capture_output() as cap:
-                        self.write(self.format_css('.SlideArea',height = frame_height))
-                        self.__insert_slide_css(nframe = i,**css_props) # insert css for all frames
-                        func(obj) # call function with obj
-                    self.__slides_dict[f'{slide_number}.{i}'] = cap
+                _new_objs = objs
                     
-                self.refresh() # Content change refreshes it.
-                self._slidelabel = self._i2f_dict[f'{slide_number}.1'] # goto first frame always
+            for i, obj in enumerate(_new_objs,start=1):
+                with build_slide(self, f'{slide_number}.{i}', props_dict= props_dict):
+                    self.write(self.format_css('.SlideArea',height = frame_height))
+                    func(obj) # call function with obj
+            
         return _frames 
-      
-    def convert2slides(self,b=False):
-        "Turn ON/OFF slides vs editing mode. Should be in same cell as `LiveSLides`"
-        self.__slides_mode = b
 
     def __collect_slides(self):
         """Collect cells for an instance of LiveSlides."""
-        slides_iterable = [{'slide':self.__slides_dict['0'],'n':0}]
-        if not self.__slides_mode:
-            return tuple(slides_iterable) # return title slide in any case
+        self._slides_dict['0'].display_number = 0
+        slides_iterable = [self._slides_dict['0']]
         
-        val_keys = sorted([int(k) if k.isnumeric() else float(k) for k in self.__slides_dict.keys()]) 
+        val_keys = sorted([int(k) if k.isnumeric() else float(k) for k in self._slides_dict.keys()]) 
         str_keys = [str(k) for k in val_keys]
         _max_range = int(val_keys[-1]) + 1 if val_keys else 1
         
@@ -491,14 +454,16 @@ class LiveSlides(BaseLiveSlides):
         for i in range(1, _max_range):
             if i in val_keys:
                 nslide = nslide + 1 #should be added before slide
-                slides_iterable.append({'slide':self.__slides_dict[f'{i}'],'n':nslide}) 
+                self._slides_dict[f'{i}'].display_number = nslide
+                slides_iterable.append(self._slides_dict[f'{i}']) 
                 self._i2f_dict[str(i)] = str(nslide)
             
             n_ij, nframe = '{}.{}', 1
             while n_ij.format(i,nframe) in str_keys:
                 nslide = nslide + 1 if nframe == 1 else nslide
                 _in, _out = n_ij.format(i,nframe), n_ij.format(nslide,nframe)
-                slides_iterable.append({'slide':self.__slides_dict[_in],'n':float(_out)}) 
+                self._slides_dict[_in].display_number = float(_out)
+                slides_iterable.append(self._slides_dict[_in]) 
                 self._i2f_dict[_in] = _out
                 nframe = nframe + 1
         self._f2i_dict = {v:k for k,v in self._i2f_dict.items()}

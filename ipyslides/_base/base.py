@@ -178,8 +178,6 @@ class BaseLiveSlides:
         if not (isinstance(path, io.StringIO) or os.path.isfile(path)): #check path later or it will throw error
             raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")
         
-        self.convert2slides(True)
-        
         if isinstance(path, io.StringIO):
             chunks = _parse_md_file(path)
         else:
@@ -279,7 +277,7 @@ class BaseLiveSlides:
             members = ['alert','block', 'bokeh2html', 'capture_std', 'citations', 'citations_html', 'cite',
                        'colored', 'cols', 'details', 'doc', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
-                       'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'write_slide_css']
+                       'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'set_slide_css']
             self.doc(self, 'LiveSlides', members = members, itself = False).display()
             
         with self.slide(7):
