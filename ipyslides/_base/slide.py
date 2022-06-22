@@ -19,13 +19,13 @@ class Slide:
             
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
-        self.set_css(props_dict)
         self.slide_number = None # This should be set in the LiveSlide class
         self.display_number = None # This should be set in the LiveSlides
+        self.set_css(props_dict)
         
         self.notes = '' # Should be update by Notes and LiveSlides calssess
         self.set_overall_animation()
-        self.animation = None
+        self._animation = None
         
     def __repr__(self):
         return f'Slide(slide_number = {self.slide_number}, display_number = {self.display_number})'
@@ -66,7 +66,20 @@ class Slide:
     def display_label(self):
         return str(self.display_number)
     
-    def show(self):
+    @property
+    def css(self):
+        return self._css
+    
+    @property
+    def animation(self):
+        return self._animation or html('style', 
+            (self._animations['frame'] 
+             if '.' in self.display_label
+             else self._animations['main'])
+            )
+    
+    @property
+    def outputs(self):
         middle_outputs = [[out] for out in self._outputs] # Make list for later flattening
         shift = 0
         for k, v in self._extra_outputs.items():
@@ -75,11 +88,10 @@ class Slide:
                 shift += 1
                 
         middle_outputs = [o for out in middle_outputs for o in out] # Flatten list
-        
-        _outputs = self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']
-        if self.app._computed_display == False:
-            _outputs.insert(0, self._css)
-        return display(*_outputs)
+        return tuple(self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
+    
+    def show(self):
+        return display(*self.outputs)
     
     def set_css(self,props_dict):
         """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
@@ -103,19 +115,10 @@ class Slide:
                         _all_css = f'.SlidesWrapper {{\n{q}:{p}!important;}}' 
             
         self._css = html('style', _all_css)
-        with suppress(BaseException): # Fist time there is no label, so avoid it
-            if self.app._slidelabel != self.display_label:
-                self.app._slidelabel = self.display_label # Go back to set css
-            else:
-                if self.app._computed_display:
-                    self.app.widgets.slidebox.children[-1].clear_output(wait = True)
-                    with self.app.widgets.slidebox.children[-1]:
-                        display(self._css)
-                else:
-                    self.app._update_content(True) # For Single Slides
+        self.app.notify(f'CSS takes effect once you naviagte away from and back to slide {self.display_number}!')
         
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
-        "Set animation for all slides created after using this function."
+        "Set animation for all slides."
         if main:
             self.__class__._animations['main'] = styles.animations[main]
         if frame:
@@ -124,8 +127,20 @@ class Slide:
     def set_animation(self, name):
         "Set animation of this slide."
         if name:
-            self.animation = html('style',styles.animations[name])
+            self._animation = html('style',styles.animations[name])
+            self.app.notify(f'Animation takes effet once you naviagte away from and back to slide {self.display_number}!')
             
+    def _make_single_slide(self):
+        "Opposite of refresh"
+        self.app.widgets.buttons.reload.remove_class('Hidden')
+        self.app.widgets.slidebox.children = (self.app.widgets.outputs.slide,)
+        
+        self.app.progress_slider.options = [('0',0)] # update options to be just one
+        
+        self.app.widgets.outputs.slide.clear_output(wait=True)
+        with self.app.widgets.outputs.slide:
+            display(self.css, self.animation, *self.outputs)
+        
 @contextmanager
 def build_slide(app, slide_number_str, props_dict = {}):
     "Use as contextmanager in LiveSlides class to create slide"
@@ -135,17 +150,12 @@ def build_slide(app, slide_number_str, props_dict = {}):
         
     _slide._outputs = captured.outputs
     _slide.slide_number = slide_number_str
-    _slide.animation = _slide.animation or html('style', 
-            (_slide._animations['frame'] 
-             if '.' in slide_number_str 
-             else _slide._animations['main'])
-            )
     
     if captured.stdout:
         _slide._outputs.insert(0, _slide._alert + raw(captured.stdout))
-        
+    
     app._slides_dict[slide_number_str] = _slide
-    app.refresh() # Make Slides first then go there
-    app._slidelabel = _slide.display_label
+    _slide._make_single_slide()
+        
     
     

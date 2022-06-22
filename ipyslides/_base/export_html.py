@@ -17,7 +17,7 @@ class _HhtmlExporter:
         content = ''
         for item in self.main.slides:
             _html = ''
-            for out in item.slide.outputs:
+            for out in item.outputs:
                 if 'text/html' in out.data:
                     _html += out.data['text/html']
                 elif allow_non_html_repr and as_slides == False:
@@ -26,7 +26,7 @@ class _HhtmlExporter:
                     else:
                         _html += f'<p style="color:red;">Object at {hex(id(out))} has no text/HTML representation.</p>'  
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
-                _sn = f'<span class="html-slide-number">{item.n}/{int(self.main.slides[-1].n)}</span>' if kwargs.get("slide_number",False) and item.n != 0 else ''
+                _sn = f'<span class="html-slide-number">{item.display_number}/{int(self.main.slides[-1].display_number)}</span>' if kwargs.get("slide_number",False) and item.display_number != 0 else ''
                 content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
                             if as_slides else f'<section>{_html}</section>')
         

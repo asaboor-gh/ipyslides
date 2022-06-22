@@ -64,7 +64,6 @@ class LiveSlides(BaseLiveSlides):
             self.shell.user_ns['pprint'] = pprint
         
         self._citations = {} # Initialize citations
-        self._computed_display = False # Do not load all slides by default
         
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._current_slide = '0' # Initialize current slide for notes at title page
@@ -74,22 +73,15 @@ class LiveSlides(BaseLiveSlides):
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
         
-        self.loading_html = self.widgets.htmls.loading #SVG Animation in it
-        
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
+        self.widgets.buttons.reload.on_click(self.refresh)
         self.markdown_callables = tuple(_allowed_funcs.split('|'))
         # All Box of Slides
         self._box =  self.widgets.mainbox
         self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
-    
-    def _check_computed(self, what_cannot_do):
-        if self._computed_display:
-            raise Exception(('Can not {act} on pre-computed display. '
-            'Use `.pre_compute_display(False)` to disable it and then {act}. '
-            'You may enable it after that for fast loading of slides while presenting!').format(act = what_cannot_do))
     
     def _on_displayed(self, change):
         self.widgets._exec_js(multi_slides_alert)
@@ -127,7 +119,6 @@ class LiveSlides(BaseLiveSlides):
 
     def clear(self):
         "Clear all slides."
-        self._check_computed('clear slides')
         self._make_sure_title() # Make sure title is there, before updating slides
         self._slides_dict = {'0':self._slides_dict.get('0')} # keep title page
         self._toasts = {'0':self._toasts.get('0',None) } # keep title page's toasts
@@ -135,7 +126,6 @@ class LiveSlides(BaseLiveSlides):
     
     def cite(self,key, citation = None,here = False):
         "Add citation in presentation, key should be a unique string and citation is text/markdown/HTML."
-        self._check_computed('add citations')
         if here:
             return utils.textbox(citation,left='initial',top='initial') # Just write here
         self._citations[key] =  citation or self.citations.get(key,None) # Get given first
@@ -223,30 +213,20 @@ class LiveSlides(BaseLiveSlides):
         "Set current slide label"
         self.progress_slider.label = value
             
-    def __display_slide(self):
-        self.loading_html.value = styles.loading_svg
-        
-        try:
-            self.widgets.outputs.slide.clear_output(wait=True)
-            with self.widgets.outputs.slide:
-                if self.screenshot.capturing == False:
-                    self.__iterable[self._slideindex].animation.display()
-                
-                self.__iterable[self._slideindex].show()  # Show slide
-        finally:
-            self.loading_html.value = ''
-            
-    def __switch_slide(self,old_index, new_index): # this change is provide from _update_content
+    def _switch_slide(self,old_index, new_index): # this change is provide from _update_content
         self.widgets.slidebox.children[-1].clear_output(wait=False) # Clear last slide CSS
         with self.widgets.slidebox.children[-1]:
             if self.screenshot.capturing == False:
                 self.__iterable[new_index].animation.display()
-            self.__iterable[new_index]._css.display()
+            self.__iterable[new_index].css.display()
+        
+        if (old_index + 1) > len(self.widgets.slidebox.children):
+            old_index = new_index # Just safe
             
         self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0',margin='0',opacity='0') # Hide old slide
         self.widgets.slidebox.children[old_index].remove_class('SlideArea')
+        self.widgets.slidebox.children[new_index].add_class('SlideArea') # First show then set layout
         self.widgets.slidebox.children[new_index].layout = self.widgets.outputs.slide.layout
-        self.widgets.slidebox.children[new_index].add_class('SlideArea')
         
     def _update_content(self,change):
         if self.__iterable and change:
@@ -258,43 +238,28 @@ class LiveSlides(BaseLiveSlides):
             _number = f'{n} / {self._nslides}' if n != 0 else ''
             self.settings.set_footer(_number_str = _number)
             
-            if self._computed_display:
-                self.__switch_slide(old_index= change['old'], new_index= change['new'])
-            else:
-                self.__display_slide() 
+            self._switch_slide(old_index= change['old'], new_index= change['new']) 
     
-    def pre_compute_display(self,b = True):
-        """Load all slides's display and later switch, else loads only current slide. Reset with b = False
-        This is very useful when you have a lot of Maths or Widgets, no susequent calls to MathJax/Widget Manager required on slide's switch when it is loaded once."""
-        self._computed_display = b
-        if b:
-            slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
-            self.widgets.slidebox.children = [*slides, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
-            for i, s in enumerate(self.__iterable):
-                with self.widgets.slidebox.children[i]:
-                    s.show() 
-                self._slideindex = i # goto there to update display
-                print(f'Pocessing... {int(self.widgets.progressbar.value)}%',end='\r') # Update loading progress bar
-        else:
-            self.widgets.slidebox.children = [self.widgets.outputs.slide]
             
-    def refresh(self): 
+    def refresh(self, btn = None): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
-        self._check_computed('refresh')
         self.__iterable = self.__collect_slides() # would be at least one title slide
         n_last = self.__iterable[-1].display_number
         self._nslides = int(n_last) # Avoid frames number
         self._max_index = len(self.__iterable) - 1 # This includes all frames
         
         # Now update progress bar
-        old_label = self._slidelabel
         opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self.__iterable]
         self.progress_slider.options = opts  # update options
-        
-        if old_label in list(zip(*opts))[0]: # Bring back to same slide if possible
-            self._slidelabel = old_label
+        # Update Slides
+        slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
+        self.widgets.slidebox.children = [*slides, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
+        for i, s in enumerate(self.__iterable):
+            with self.widgets.slidebox.children[i]:
+                s.show() 
+            self._slideindex = i # goto there to update display
             
-        self._update_content(True) # Force Refresh
+        self.widgets.buttons.reload.add_class('Hidden')
         
     def set_slide_css(self,props_dict = {}):
         """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
@@ -303,7 +268,7 @@ class LiveSlides(BaseLiveSlides):
         self._slides_dict[self._current_slide].set_css(props_dict)
     
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
-        "Set animation for main and frame slides for all slides created after this. For individual slides, use `self.slides[index].set_animation`"
+        "Set animation for main and frame slides for all slides. For individual slides, use `self.slides[index].set_animation`"
         self._slides_dict[self._current_slide].set_overall_animation(main = main, frame = frame)
     
     # defining magics and context managers
@@ -348,9 +313,6 @@ class LiveSlides(BaseLiveSlides):
             raise ValueError(f'slide_number should be int >= 1, got {slide_number}')
         
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
-        if self._computed_display:
-            yield # To avoid generator yied error
-            self._check_computed('add slide')
         
         self._current_slide = f'{slide_number}'
         
@@ -411,7 +373,6 @@ class LiveSlides(BaseLiveSlides):
         No return of defined function required, if any, only should be display/show etc.
         CSS properties from `prop_dict` are applied to all slides from *objs."""
         def _frames(func = self.write): # default write if called without function
-            self._check_computed('add frames')
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
             

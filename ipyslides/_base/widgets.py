@@ -27,6 +27,7 @@ class _Buttons:
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
     cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
+    reload  = Button(description='Reload',icon = 'refresh', layout= Layout(width='auto',height='auto')).add_class('ReloadButton').add_class('Hidden')
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -282,6 +283,7 @@ class Widgets:
             self.htmls.theme,
             self.htmls.logo,
             self.toggles.display, 
+            self.buttons.reload,
             self.htmls.sidebar,
             self.panelbox, 
             self.htmls.cursor,

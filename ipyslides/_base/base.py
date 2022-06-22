@@ -174,7 +174,6 @@ class BaseLiveSlides:
                     ' Never run files that you did not create yourself or not verified by you.')
         
                     
-        self._check_computed('add slides from markdown file')
         if not (isinstance(path, io.StringIO) or os.path.isfile(path)): #check path later or it will throw error
             raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")
         
@@ -203,7 +202,7 @@ class BaseLiveSlides:
                 self.shell.run_cell_magic('slide', f'{i} -m', chunk)
             
         self._md_content = chunks # Store for later use
-        
+        self.refresh()
         return self
     
     def _clean_markdown_loaded(self):
@@ -215,7 +214,6 @@ class BaseLiveSlides:
     
     def demo(self):
         """Demo slides with a variety of content."""
-        self._check_computed('load demo')
         self._clean_markdown_loaded()
             
         get_ipython().user_ns['_s_l_i_d_e_s_'] = self
@@ -232,12 +230,11 @@ class BaseLiveSlides:
                 slides.write_citations()
             s.display()
         
-        slides.progress_slider.index = 0 # back to title
+        slides.refresh() 
         return slides
     
     def load_docs(self):
         "Create presentation from docs of IPySlides."
-        self._check_computed('load docs')
         self._clean_markdown_loaded()
         
         from ..core import LiveSlides
@@ -316,7 +313,7 @@ class BaseLiveSlides:
         with self.slide(11):
             self.write(['## Presentation Code',self.load_docs])
         
-        self.progress_slider.index = 0 # back to title
+        self.refresh() 
         return self
 
 
