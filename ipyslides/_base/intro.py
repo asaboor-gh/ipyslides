@@ -24,7 +24,7 @@ how_to_slide = ('''# Creating Slides
 ```python
 import ipyslides as isd 
 ls = isd.LiveSlides()
-ls.settings.set_animation('zoom') 
+ls.set_animation(main='zoom') 
 ```
 ```python
 %%title

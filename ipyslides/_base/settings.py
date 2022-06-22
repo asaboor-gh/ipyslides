@@ -17,7 +17,6 @@ class LayoutSettings:
     def __init__(self, _instanceWidgets):
         "Provide instance of LivSlides to work."
         self.widgets = _instanceWidgets
-        self.animation = styles.animations['slide']
         self.font_scale = 1
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIXGeneral'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
@@ -61,15 +60,6 @@ class LayoutSettings:
         self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
         self.widgets.htmls.intro.add_class('Intro')
             
-    def set_animation(self,name):
-        "Set animation style or pass None to disable animation."
-        if name is None:
-            self.animation = '' #Disable animation
-        elif name in styles.animations:
-            self.animation = styles.animations[name]
-        else:
-            print(f'Animation {name!r} not found. Pass None or any of {list(styles.animations.keys())}.')
-    
     def set_code_style(self,style='default',color = None,background = None, hover_color = 'var(--tr-hover-bg)',lineno = True):
         "Set code style CSS. Use background for better view of your choice. This is overwritten by theme change."
         self._code_lineno = lineno # Used in theme to keep track 

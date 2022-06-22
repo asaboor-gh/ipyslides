@@ -68,8 +68,7 @@ class LiveSlides(BaseLiveSlides):
         
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._current_slide = '0' # Initialize current slide for notes at title page
-        self._i2f_dict = {'0':'0'} # input number -> display number of slide
-        self._f2i_dict = {'0':'0'} # display number -> input number of slide
+        self._reverse_mapping = {'0':'0'} # display number -> input number of slide
         
         self.__iterable = [] #self.__collect_slides() # Collect internally
         self._nslides =  0 # Real number of slides
@@ -124,7 +123,7 @@ class LiveSlides(BaseLiveSlides):
     @property
     def _access_key(self):
         "Access key for slides number to get other things like notes, toasts, etc."
-        return self._f2i_dict.get(self._slidelabel, '') # being on safe, give '' as default
+        return self._reverse_mapping.get(self._slidelabel, '') # being on safe, give '' as default
 
     def clear(self):
         "Clear all slides."
@@ -228,26 +227,22 @@ class LiveSlides(BaseLiveSlides):
         self.loading_html.value = styles.loading_svg
         
         try:
-            _slide_css = '' 
-            if (self.screenshot.capturing == False) and (self._frameno < 2): # No animations while printing or frames
-                _slide_css += self.settings.animation # Animation style
-            
             self.widgets.outputs.slide.clear_output(wait=True)
             with self.widgets.outputs.slide:
-                write(self.html('style',_slide_css)) # Write CSS first
+                if self.screenshot.capturing == False:
+                    self.__iterable[self._slideindex].animation.display()
+                
                 self.__iterable[self._slideindex].show()  # Show slide
         finally:
             self.loading_html.value = ''
             
     def __switch_slide(self,old_index, new_index): # this change is provide from _update_content
-        slide_css = self.__iterable[new_index]._css._repr_html_()
-        if (self.screenshot.capturing == False) and (self._frameno < 2): # No animations while printing or frames
-            slide_css += self.settings.animation
-             
         self.widgets.slidebox.children[-1].clear_output(wait=False) # Clear last slide CSS
         with self.widgets.slidebox.children[-1]:
-            write(self.html('style',slide_css)) # Write CSS first to avoid style conflict  
-        
+            if self.screenshot.capturing == False:
+                self.__iterable[new_index].animation.display()
+            self.__iterable[new_index]._css.display()
+            
         self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0',margin='0',opacity='0') # Hide old slide
         self.widgets.slidebox.children[old_index].remove_class('SlideArea')
         self.widgets.slidebox.children[new_index].layout = self.widgets.outputs.slide.layout
@@ -255,10 +250,6 @@ class LiveSlides(BaseLiveSlides):
         
     def _update_content(self,change):
         if self.__iterable and change:
-            for _class in [c for c in self.widgets.slidebox._dom_classes if c.startswith('slide-')]:
-                self.widgets.slidebox.remove_class(_class)
-            self.widgets.slidebox.add_class(self.__iterable[self._slideindex]._css_class)
-        
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
             self._display_toast() # or self.toasts._display_toast . Display in start is fine
             self.notes._display(self._slides_dict.get(self._access_key,None).notes) # Display notes first
@@ -277,7 +268,7 @@ class LiveSlides(BaseLiveSlides):
         This is very useful when you have a lot of Maths or Widgets, no susequent calls to MathJax/Widget Manager required on slide's switch when it is loaded once."""
         self._computed_display = b
         if b:
-            slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')).add_class(s._css_class) for s in self.__iterable]
+            slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
             self.widgets.slidebox.children = [*slides, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
             for i, s in enumerate(self.__iterable):
                 with self.widgets.slidebox.children[i]:
@@ -310,6 +301,10 @@ class LiveSlides(BaseLiveSlides):
         'selector' for slide itself should be ''.
         """
         self._slides_dict[self._current_slide].set_css(props_dict)
+    
+    def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
+        "Set animation for main and frame slides for all slides created after this. For individual slides, use `self.slides[index].set_animation`"
+        self._slides_dict[self._current_slide].set_overall_animation(main = main, frame = frame)
     
     # defining magics and context managers
     def __slide(self,line,cell):
@@ -456,7 +451,7 @@ class LiveSlides(BaseLiveSlides):
                 nslide = nslide + 1 #should be added before slide
                 self._slides_dict[f'{i}'].display_number = nslide
                 slides_iterable.append(self._slides_dict[f'{i}']) 
-                self._i2f_dict[str(i)] = str(nslide)
+                self._reverse_mapping[str(nslide)] = str(i)
             
             n_ij, nframe = '{}.{}', 1
             while n_ij.format(i,nframe) in str_keys:
@@ -464,9 +459,9 @@ class LiveSlides(BaseLiveSlides):
                 _in, _out = n_ij.format(i,nframe), n_ij.format(nslide,nframe)
                 self._slides_dict[_in].display_number = float(_out)
                 slides_iterable.append(self._slides_dict[_in]) 
-                self._i2f_dict[_in] = _out
+                self._reverse_mapping[_out] = _in
                 nframe = nframe + 1
-        self._f2i_dict = {v:k for k,v in self._i2f_dict.items()}
+            
         return tuple(slides_iterable)
 
 # Make available as Singleton LiveSlides
@@ -513,8 +508,8 @@ class LiveSlides:
                 text_font     = 'sans-serif', 
                 code_font     = 'var(--jp-code-font-family)', 
                 code_style    = 'default', 
-                code_lineno   = True, 
-                animation     = 'slide_h'):
+                code_lineno   = True
+                ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         _private_instance.__doc__ = cls.__doc__ # copy docstring
         _private_instance.settings.set_layout(center = center, content_width = content_width)
@@ -523,7 +518,6 @@ class LiveSlides:
         _private_instance.settings.set_font_scale(font_scale = font_scale)
         _private_instance.settings.set_font_family(text_font = text_font, code_font = code_font)
         _private_instance.settings.set_code_style(style = code_style, lineno = code_lineno)
-        _private_instance.settings.set_animation(name = animation)
         return _private_instance
     
     # No need to define __init__, __new__ is enough to show signature and docs
