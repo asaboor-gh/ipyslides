@@ -17,7 +17,7 @@ class _HhtmlExporter:
         content = ''
         for item in self.main.slides:
             _html = ''
-            for out in item.outputs:
+            for out in item.contents:
                 if 'text/html' in out.data:
                     _html += out.data['text/html']
                 elif allow_non_html_repr and as_slides == False:

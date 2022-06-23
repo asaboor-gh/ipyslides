@@ -226,7 +226,7 @@ class LiveSlides(BaseLiveSlides):
         self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0',margin='0',opacity='0') # Hide old slide
         self.widgets.slidebox.children[old_index].remove_class('SlideArea')
         self.widgets.slidebox.children[new_index].add_class('SlideArea') # First show then set layout
-        self.widgets.slidebox.children[new_index].layout = self.widgets.outputs.slide.layout
+        self.widgets.slidebox.children[new_index].layout = self.settings._slide_layout 
         
     def _update_content(self,change):
         if self.__iterable and change:
@@ -252,11 +252,10 @@ class LiveSlides(BaseLiveSlides):
         opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self.__iterable]
         self.progress_slider.options = opts  # update options
         # Update Slides
-        slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
-        self.widgets.slidebox.children = [*slides, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
+        #slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
+        self.widgets.slidebox.children = [*self.__iterable, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
         for i, s in enumerate(self.__iterable):
-            with self.widgets.slidebox.children[i]:
-                s.show() 
+            s.update_display() 
             self._slideindex = i # goto there to update display
             
         self.widgets.buttons.reload.add_class('Hidden')

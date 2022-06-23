@@ -8,6 +8,8 @@ import datetime
 from IPython import get_ipython
 from IPython.display import display, Image, Javascript
 from IPython.utils.capture import capture_output
+from ipywidgets import Layout
+
 from ..formatter import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
 from ..utils import set_dir, html, details
@@ -23,6 +25,7 @@ class LayoutSettings:
         self._content_width = '90%' #Better
         self._breakpoint_width = f'{int(100*650/self.widgets.sliders.width.value)}px' # Whatever was set initially
         self._code_lineno = True
+        self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em')
         
         self.height_slider = self.widgets.sliders.height
         self.width_slider  = self.widgets.sliders.width
@@ -115,6 +118,7 @@ class LayoutSettings:
         
         for k,v in style_dict.items():
             setattr(self.widgets.outputs.slide.layout, k, v)
+            setattr(self._slide_layout,k,v)
         
         self._update_theme(change=None) # Trigger CSS in it to make width change
             

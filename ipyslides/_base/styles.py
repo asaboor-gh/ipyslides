@@ -513,13 +513,8 @@ div.LaserPointer { /* For laser pointer */
 }
 .ReloadButton {
     position: absolute;
-    margin:auto;
-    left:50%;
-    top: 20px;
-    transform: translateX(-50%);
-    border: 2px solid red;
-    border-radius: 1em 1em 0 1em !important;
-    font-size: 20px;
+    left:40px;
+    padding: 4px !important;
     display:block !important;
     z-index: 200 !important;
 }

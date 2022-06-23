@@ -1,6 +1,8 @@
 """Slide Object, should not be instantiated directly"""
 
 from contextlib import contextmanager, suppress
+from xml.dom import ValidationErr
+from ipywidgets import Output, Layout
 
 from IPython.display import display
 from IPython.utils.capture import capture_output
@@ -8,20 +10,21 @@ from IPython.utils.capture import capture_output
 from . import styles
 from ..utils import raw, colored, html
 
-class Slide:
+class Slide(Output):
     _animations = {'main':'','frame':''}
-    _alert = colored('Print Warning: Use "pprint" function or "capture_std" contextmanager to display strings in order!', fg = 'red', bg = 'white')
+    _alert = colored('Print Warning: Use "pprint" function or "capture_std" contextmanager to display printed strings in order!', fg = 'red', bg = 'white')
     def __init__(self, app, captured_output, props_dict = {}):
-        self.app = app
-        self._outputs = captured_output.outputs
+        super().__init__(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))
+        self._app = app
+        self._contents = captured_output.outputs
         if captured_output.stdout:
-            self._outputs.insert(0, self._alert + raw(captured_output.stdout))
+            display(self._alert)
             
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
         self.slide_number = None # This should be set in the LiveSlide class
         self.display_number = None # This should be set in the LiveSlides
-        self.set_css(props_dict)
+        self.set_css(props_dict, notify = False)
         
         self.notes = '' # Should be update by Notes and LiveSlides calssess
         self.set_overall_animation()
@@ -30,37 +33,44 @@ class Slide:
     def __repr__(self):
         return f'Slide(slide_number = {self.slide_number}, display_number = {self.display_number})'
     
-    @contextmanager
-    def append(self):
-        with self.insert(-1):
-            yield
-    
-    @contextmanager
-    def prepend(self):
-        with self.insert(0):
-            yield
+    def update_display(self):
+        self.clear_output()
+        with self:
+            display(*self.contents)
     
     @contextmanager
     def insert(self, index):
+        "Contextmanager to insert new content as given index. If index is -1, just appends at end."
+        if index < -1:
+            raise ValueError(f'expects non-negative index or -1 to append at end, got {index}')
+        
         with capture_output() as captured:
             yield
         
         outputs = captured.outputs
         if captured.stdout:
-            self._outputs.insert(0, self._alert + raw(captured.stdout))
+            display(self._alert)
             
         if index == 0:
             self._extra_outputs['start'] = outputs
         elif index == -1:
             self._extra_outputs['end'] = outputs
         else:
-            if index >= len(self._outputs):
-                raise IndexError('Index {} out of range for slide with {} objects'.format(index, len(self._outputs)))
+            if index >= len(self._contents):
+                raise IndexError('Index {} out of range for slide with {} objects'.format(index, len(self._contents)))
             self._extra_outputs[f'{index}'] = outputs
+        
+        if self in self._app.slides:
+            self._app._slidelabel = self.display_label # Go there
+        self.update_display()
     
     def reset(self):
         "Reset all appended/prepended/inserted objects."
         self._extra_outputs = {'start': [], 'end': []}
+        if self in self._app.slides:
+            self._app._slidelabel = self.display_label # Go there
+        self.update_display() 
+
     
     @property
     def display_label(self):
@@ -79,8 +89,8 @@ class Slide:
             )
     
     @property
-    def outputs(self):
-        middle_outputs = [[out] for out in self._outputs] # Make list for later flattening
+    def contents(self):
+        middle_outputs = [[out] for out in self._contents] # Make list for later flattening
         shift = 0
         for k, v in self._extra_outputs.items():
             if k not in ['start', 'end']:
@@ -91,9 +101,9 @@ class Slide:
         return tuple(self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
     
     def show(self):
-        return display(*self.outputs)
+        return display(*self.contents)
     
-    def set_css(self,props_dict):
+    def set_css(self,props_dict, notify = True):
         """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
         'selector' for slide itself should be ''.
         """
@@ -115,7 +125,8 @@ class Slide:
                         _all_css = f'.SlidesWrapper {{\n{q}:{p}!important;}}' 
             
         self._css = html('style', _all_css)
-        self.app.notify(f'CSS takes effect once you naviagte away from and back to slide {self.display_number}!')
+        if notify:
+            self._app.notify(f'CSS takes effect once you naviagte away from and back to slide {self.display_number}!')
         
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for all slides."
@@ -128,34 +139,43 @@ class Slide:
         "Set animation of this slide."
         if name:
             self._animation = html('style',styles.animations[name])
-            self.app.notify(f'Animation takes effet once you naviagte away from and back to slide {self.display_number}!')
+            self._app.notify(f'Animation takes effet once you naviagte away from and back to slide {self.display_number}!')
             
-    def _make_single_slide(self):
+    def _update_slide(self):
         "Opposite of refresh"
-        self.app.widgets.buttons.reload.remove_class('Hidden')
-        self.app.widgets.slidebox.children = (self.app.widgets.outputs.slide,)
+        if self in self._app.slides: # Already in slides
+            self._app._slidelabel = self.display_label # Go there
+            return self.update_display() # Just update 
         
-        self.app.progress_slider.options = [('0',0)] # update options to be just one
+        # Otherwise warn used to refresh
+        self._app.widgets.buttons.reload.remove_class('Hidden')
+        self._app.widgets.slidebox.children = (self._app.widgets.outputs.slide,)
         
-        self.app.widgets.outputs.slide.clear_output(wait=True)
-        with self.app.widgets.outputs.slide:
-            display(self.css, self.animation, *self.outputs)
+        self._app.progress_slider.options = [('0',0)] # update options to be just one
+        
+        self._app.widgets.outputs.slide.clear_output(wait=True)
+        with self._app.widgets.outputs.slide:
+            display(self.css, self.animation, *self.contents)
         
 @contextmanager
 def build_slide(app, slide_number_str, props_dict = {}):
     "Use as contextmanager in LiveSlides class to create slide"
     with capture_output() as captured:
-        _slide = Slide(app, captured, props_dict)
+        if slide_number_str in app._slides_dict:
+            _slide = app._slides_dict[slide_number_str]
+        else:
+            _slide = Slide(app, captured, props_dict)
+            _slide.slide_number = slide_number_str
+            app._slides_dict[slide_number_str] = _slide
+            
         yield _slide
         
-    _slide._outputs = captured.outputs
-    _slide.slide_number = slide_number_str
+    _slide._contents = captured.outputs
     
     if captured.stdout:
-        _slide._outputs.insert(0, _slide._alert + raw(captured.stdout))
+        display(_slide._alert)
     
-    app._slides_dict[slide_number_str] = _slide
-    _slide._make_single_slide()
+    _slide._update_slide()
         
     
     
