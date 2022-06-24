@@ -85,21 +85,11 @@ class LiveSlides(BaseLiveSlides):
     def _on_displayed(self, change):
         self.widgets._exec_js(multi_slides_alert)
         
-        self._make_sure_title() # Should be before showing it below
-        
-        self.widgets.slidebox.children[0].clear_output(wait=True)
-        with self.widgets.slidebox.children[0]: # title slide in both simple and computed case
-            self._slides_dict['0'].update_display() # Instead of refreshing, we can just update the content of the title slides to avoid errors
+        with build_slide(self, '0'):
+            self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
         
         with suppress(Exception): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
-        
-        self.refresh() # Update display
-    
-    def _make_sure_title(self):
-        if '0' not in self._slides_dict:
-            with build_slide(self, '0'):
-                self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
     
     def __iter__(self): # This is must have for exporting
         return iter(self._iterable)
@@ -131,8 +121,7 @@ class LiveSlides(BaseLiveSlides):
 
     def clear(self):
         "Clear all slides."
-        self._make_sure_title() # Make sure title is there, before updating slides
-        self._slides_dict = {'0':self._slides_dict.get('0')} # keep title page
+        self._slides_dict = {} # Clear slides
         self.refresh() # Clear interface too
     
     def cite(self,key, citation = None,here = False):
@@ -257,10 +246,15 @@ class LiveSlides(BaseLiveSlides):
     def refresh(self, btn = None): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self._iterable = self._collect_slides() # would be at least one title slide
+        if not self._iterable:
+            self.progress_slider.options = [('0',0)] # Clear options
+            self.widgets.slidebox.children = [] # Clear older slides
+            return None
+        
         n_last = self._iterable[-1].display_number
         self._nslides = int(n_last) # Avoid frames number
         self._max_index = len(self._iterable) - 1 # This includes all frames
-        
+        self.notify(f'Refreshing slides... {btn}')
         # Now update progress bar
         opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self._iterable]
         self.progress_slider.options = opts  # update options
@@ -310,7 +304,7 @@ class LiveSlides(BaseLiveSlides):
             _frames = re.split(r'^___$|^___\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
             if len(_frames) == 1:
                 if (line[0] in self._slides_dict) and (self._slides_dict[line[0]]._markdown == cell):
-                    self.notify(f'Slide {line[0]} already exists with same markdown!')
+                    pass # Do nothing if already exists
                 else:
                     with self.slide(slide_number):
                         parse_xmd(cell, display_inline = True, rich_outputs = False)
@@ -321,7 +315,7 @@ class LiveSlides(BaseLiveSlides):
                 for i, obj in enumerate(_frames[1:], start = 1):
                     key = f'{slide_number}.{i}'
                     if (key in self._slides_dict) and (self._slides_dict[key]._markdown == (_frames[0] + obj)):
-                        self.notify(f'Slide {key} already exists with same markdown!')
+                        pass # Do nothing if already exists
                     else:
                         with build_slide(self, key):
                             parse_xmd(_frames[0], display_inline = True, rich_outputs = False) # This goes with every frame
@@ -332,7 +326,7 @@ class LiveSlides(BaseLiveSlides):
         else:
             if (line[0] in self._slides_dict) and hasattr(self._slides_dict[line[0]], '_cell_code'):
                 if self._slides_dict[line[0]]._cell_code == cell:
-                    self.notify(f'Slide {line[0]} already exists with same code!')
+                    pass # do nothing
                 else:
                     with self.slide(slide_number):
                         self.shell.run_cell(cell)
@@ -437,8 +431,10 @@ class LiveSlides(BaseLiveSlides):
 
     def _collect_slides(self):
         """Collect cells for an instance of LiveSlides."""
-        self._slides_dict['0'].display_number = 0
-        slides_iterable = [self._slides_dict['0']]
+        slides_iterable = []
+        if '0' in self._slides_dict:
+            self._slides_dict['0'].display_number = 0
+            slides_iterable = [self._slides_dict['0']]
         
         val_keys = sorted([int(k) if k.isnumeric() else float(k) for k in self._slides_dict.keys()]) 
         str_keys = [str(k) for k in val_keys]

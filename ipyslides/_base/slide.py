@@ -1,5 +1,5 @@
 """Slide Object, should not be instantiated directly"""
-
+import time
 from contextlib import contextmanager
 from ipywidgets import Output, Layout
 
@@ -31,6 +31,7 @@ class Slide:
         self._animation = None
         self._markdown = '' # Should be update by Markdown and LiveSlides calssess
         self._toast = None # Update from BaseLiveSlides
+        self._has_widgets = False # Update in build_slide function
         
     def __repr__(self):
         md = f'{self.markdown[:15]}...' if self.markdown else ''
@@ -69,15 +70,13 @@ class Slide:
                 raise IndexError('Index {} out of range for slide with {} objects'.format(index, len(self._contents)))
             self._extra_outputs[f'{index}'] = outputs
         
-        if self in self._app.widgets.slidebox.children:
-            self._app._slidelabel = self.display_label # Go there
+        self._app._slidelabel = self.display_label # Go there
         self.update_display()
     
     def reset(self):
         "Reset all appended/prepended/inserted objects."
         self._extra_outputs = {'start': [], 'end': []}
-        if self in self._app.widgets.slidebox.children:
-            self._app._slidelabel = self.display_label # Go there
+        self._app._slidelabel = self.display_label # Go there
         self.update_display() 
 
     @property
@@ -142,8 +141,14 @@ class Slide:
                         _all_css = f'.SlidesWrapper {{\n{q}:{p}!important;}}' 
             
         self._css = html('style', _all_css)
-        if notify:
-            self._app.notify(f'CSS takes effect once you naviagte away from and back to slide {self.display_number}!')
+        
+        # See effect of changes
+        if self._app._slidelabel != self.display_label:
+            self._app._slidelabel = self.display_label # Go there to see effects
+        else:
+            self._app.widgets.outputs.slide.clear_output(wait = True)
+            with self._app.widgets.outputs.slide:
+                display(self.animation, self._css)
         
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for all slides."
@@ -161,30 +166,35 @@ class Slide:
         "Set animation of this slide."
         if name:
             self._animation = html('style',styles.animations[name])
-            self._app.notify(f'Animation takes effet once you naviagte away from and back to slide {self.display_number}!')
+            # See effect of changes
+            if self._app._slidelabel != self.display_label:
+                self._app._slidelabel = self.display_label # Go there to see effects
+            else:
+                self._app.widgets.outputs.slide.clear_output(wait = True)
+                with self._app.widgets.outputs.slide:
+                    display(self.animation, self._css)
         else:
             self._animation = None # It should be None, not ''
             
-    def _update_slide(self):
-        "Opposite of refresh"
-        if self._widget in self._app.widgets.slidebox.children: # Already in slides
-            self._app._slidelabel = self.display_label # Go there
-            return self.update_display() # Just update 
+    def _rebuild_all(self):
+        "Update all slides in optimal way."
+        self._app._iterable = self._app._collect_slides()
+        n_last = self._app._iterable[-1].display_number
+        self._app._nslides = int(n_last) # Avoid frames number
+        self._app._max_index = len(self._app._iterable) - 1 # This includes all frames
+        
+        # Now update progress bar
+        opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self._app._iterable]
+        self._app.progress_slider.options = opts  # update options
+        # Update Slides after progress bar is updated
+        self._app.widgets.slidebox.children = [it._widget for it in self._app._iterable]
+        self._app._slidelabel = self.display_label # Go there after refreshing
+        
+        for i, s in enumerate(self._app._iterable):
+            s._index = i # Update index
+            if s._has_widgets:
+                s.update_display() # Refresh all slides with widgets only, other data is not lost
 
-        # Create new otherwise and do such things to update widgets
-        # for k in [p for ps in s.contents for p in ps.data.keys()]:
-        # if k.startswith('application'):
-        #     s.update_display()
-        
-        # Otherwise warn used to refresh
-        self._app.widgets.buttons.reload.remove_class('Hidden')
-        self._app.widgets.slidebox.children = (self._widget,)
-        
-        self._app.progress_slider.options = [('0',0)] # update options to be just one
-        
-        self._widget.clear_output(wait=True)
-        with self._widget:
-            display(self.css, self.animation, *self.contents)
         
 @contextmanager
 def build_slide(app, slide_number_str, props_dict = {}):
@@ -196,15 +206,25 @@ def build_slide(app, slide_number_str, props_dict = {}):
             _slide = Slide(app, captured, props_dict)
             _slide.slide_number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
+            setattr(_slide, 'new', True) # To indictae for rebuilding
             
         yield _slide
         
     _slide._contents = captured.outputs
     
+    _slide.update_display() # Update Slide, it will not come to this point if has same code
+    for k in [p for ps in _slide.contents for p in ps.data.keys()]:
+        if k.startswith('application'): # Widgets in this slide
+            _slide._has_widgets = True
+            break # No need to check other widgets if one exists
+    
     if captured.stdout:
         display(_slide._alert)
     
-    _slide._update_slide()
+    if hasattr(_slide, 'new'):
+        _slide._rebuild_all()
+        delattr(_slide, 'new')
+    
         
     
     

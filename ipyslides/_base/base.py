@@ -195,7 +195,7 @@ class BaseLiveSlides:
             # Must run under this to create frames with triple underscore (___)
             self.shell.run_cell_magic('slide', f'{i} -m', chunk)
         
-        self.refresh()    
+        self._slideindex = 0 # Go to title   
         return self
     
     def _clean_markdown_loaded(self):
@@ -215,12 +215,13 @@ class BaseLiveSlides:
             slides.write('## This is all code to generate slides')
             slides.write(self.demo)
             slides.source.from_file(file).display()
+            
         with slides.slide(101, props_dict = {'': dict(background='#9ACD32')}):
             with slides.source.context() as s:
                 slides.write_citations()
             s.display()
         
-        slides.refresh()
+        slides._slideindex = 0 # Go to title
         return slides
     
     def load_docs(self):
@@ -303,7 +304,7 @@ class BaseLiveSlides:
         with self.slide(11):
             self.write(['## Presentation Code',self.load_docs])
         
-        self.refresh(0)
+        self._slideindex = 0 # Go to title
         return self
 
 
