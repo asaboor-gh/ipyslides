@@ -70,11 +70,11 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
 - Use `ls.from_markdown` to create slides from markdown file/StringIO and then can add slides over it.
     - Slides are added in order of content.
     - Slides should be separated by `---` (three dashes) in start of line.
-    - You can add more slides besides created ones or modify existing ones using `ls.md_content`:
+    - You can add more slides besides created ones or modify existing ones using `ls[key or index].markdown`:
 ```python .monokai
 ls.from_markdown(path)
 with ls.slide(2):
-    write(ls.md_content[2]) # write content of slide 2 from file
+    write(ls[2].markdown) # write content of slide 2 from file
     plot_something() # Add other things to same file
     write_something()
 ```

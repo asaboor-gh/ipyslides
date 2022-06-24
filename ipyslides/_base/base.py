@@ -16,14 +16,16 @@ class BaseLiveSlides:
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
         self.__settings = LayoutSettings(self.__widgets)
         self.__export = _HhtmlExporter(self)
-        self.notes = Notes(self, self.__widgets) # Needs main class for access to notes
-        
-        self._md_content = 'Slides not loaded from markdown.'
+        self.__notes = Notes(self, self.__widgets) # Needs main class for access to notes
         
         self._toasts = {} #Store notifications
         self.toast_html = self.widgets.htmls.toast
         
         self.widgets.checks.toast.observe(self.__toggle_notify,names=['value'])
+    
+    @property
+    def notes(self):
+        return self.__notes
     
     @property
     def widgets(self):
@@ -105,9 +107,11 @@ class BaseLiveSlides:
     
     @property
     def md_content(self):
-        "Get markdown content from loaded file."
-        return self._md_content
-        
+        return self.colored('`md_content` attribute is deprecated. Use `self[key or index].markdown` instead.',fg='red',bg='white')
+    
+    @property
+    def slides(self):
+        return self.colored('`slides` attribute is deprecated. Use `self[key or index]` to access a slide instead.',fg='red',bg='white')
     
     def from_markdown(self, path, trusted = False):
         """You can create slides from a markdown file or StringIO object as well. It creates slides 1,2,3... in order.
@@ -141,10 +145,10 @@ class BaseLiveSlides:
         ```
         This will create two slides along with title page. Second slide will have two frames.
         
-        Content of each slide from imported file is stored as list in `slides.md_content`. You can append content to it like this:
+        Content of each slide from imported file is stored as .markdown attribute to slide. You can append content to it like this:
         ```python
         with slides.slide(2):
-            self.parse_xmd(slides.md_content[2]) # Instead of write, parse_xmd take cares of code blocks
+            self.parse_xmd(slides[2].markdown) # Instead of write, parse_xmd take cares of code blocks
             plot_something()
             write_something()
         ```
@@ -187,50 +191,36 @@ class BaseLiveSlides:
             self.clear()
             self._loaded_other = False
         
-        if hasattr(self, '_md_content'):
-            if len(self._md_content) > len(chunks):
-                self.clear() # If there are more chunks, they will overwrite previous slides automatically, if less then clear previous content
-        
         for i,chunk in enumerate(chunks):
             # Must run under this to create frames with triple underscore (___)
-            if hasattr(self, '_md_content'):
-                if self._md_content[i:] and chunk == self._md_content[i]:
-                    pass # Skip if content is same as previous one
-                else:
-                    self.shell.run_cell_magic('slide', f'{i} -m', chunk)
-            else:
-                self.shell.run_cell_magic('slide', f'{i} -m', chunk)
-            
-        self._md_content = chunks # Store for later use
-        self.refresh()
+            self.shell.run_cell_magic('slide', f'{i} -m', chunk)
+        
+        self.refresh()    
         return self
     
     def _clean_markdown_loaded(self):
         "Use in other than from_markdown methods."
         self.clear() # Clear previous content
-        if hasattr(self, '_md_content'): # If loaded from markdown file, clear it
-            self._md_content = []
         self._loaded_other = True
     
     def demo(self):
         """Demo slides with a variety of content."""
         self._clean_markdown_loaded()
+        
+        import runpy
+        file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_demo.py') # Relative path to this file
+        slides = runpy.run_path(file, init_globals= {'slides': self})['slides']
             
-        get_ipython().user_ns['_s_l_i_d_e_s_'] = self
-        from .. import _demo # Import after assigning in user_ns
-        import importlib
-        _demo = importlib.reload(_demo) # Reload is must if other contexts loaded before this
-        slides = _demo.slides # or it is self
         with slides.slide(100):
             slides.write('## This is all code to generate slides')
-            slides.write(_demo)
             slides.write(self.demo)
-        with slides.slide(101,background='#9ACD32'):
+            slides.source.from_file(file).display()
+        with slides.slide(101, props_dict = {'': dict(background='#9ACD32')}):
             with slides.source.context() as s:
                 slides.write_citations()
             s.display()
         
-        slides.refresh() 
+        slides.refresh()
         return slides
     
     def load_docs(self):
@@ -313,7 +303,7 @@ class BaseLiveSlides:
         with self.slide(11):
             self.write(['## Presentation Code',self.load_docs])
         
-        self.refresh() 
+        self.refresh(0)
         return self
 
 

@@ -4,7 +4,6 @@ from contextlib import contextmanager, suppress
 
 from IPython import get_ipython
 from IPython.display import display
-from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
 from .extended_md import parse_xmd, _allowed_funcs
@@ -82,6 +81,7 @@ class LiveSlides(BaseLiveSlides):
         self._box =  self.widgets.mainbox
         self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
+
     
     def _on_displayed(self, change):
         self.widgets._exec_js(multi_slides_alert)
@@ -90,23 +90,34 @@ class LiveSlides(BaseLiveSlides):
         
         self.widgets.slidebox.children[0].clear_output(wait=True)
         with self.widgets.slidebox.children[0]: # title slide in both simple and computed case
-            self._slides_dict['0'].show() # Instead of refreshing, we can just update the content of the title slides to avoid errors
+            self._slides_dict['0'].update_display() # Instead of refreshing, we can just update the content of the title slides to avoid errors
         
         with suppress(Exception): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
+        
+        self.refresh() # Update display
     
     def _make_sure_title(self):
         if '0' not in self._slides_dict:
             with build_slide(self, '0'):
                 self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
-                
-    @property
-    def slides(self):
-        return tuple(self.__iterable)
+    
+    def __iter__(self): # This is must have for exporting
+        return iter(self.__iterable)
+    
+    def __getitem__(self, key):
+        "Get slide by index or key(written on slide's bottom)."
+        if isinstance(key, int):
+            return self.__iterable[key]
+        elif isinstance(key, str) and key in self._reverse_mapping:
+            return self._slides_dict[self._reverse_mapping[key]]
+        
+        raise KeyError("Slide could be accessed by index or key, got {}".format(key))
     
     @property
-    def iterable(self):
-        return self.__iterable 
+    def current(self):
+        "Access current visible slide and use operations like insert, set_css etc."
+        return self._slides_dict[self._access_key]
     
     @property
     def citations(self):
@@ -201,7 +212,8 @@ class LiveSlides(BaseLiveSlides):
     @_slideindex.setter
     def _slideindex(self,value):
         "Set current slide index"
-        self.progress_slider.index = value
+        with suppress(BaseException): # May not be ready yet
+            self.progress_slider.index = value
         
     @property
     def _slidelabel(self):
@@ -211,11 +223,12 @@ class LiveSlides(BaseLiveSlides):
     @_slidelabel.setter
     def _slidelabel(self,value):
         "Set current slide label"
-        self.progress_slider.label = value
+        with suppress(BaseException): # May not be ready yet
+            self.progress_slider.label = value
             
     def _switch_slide(self,old_index, new_index): # this change is provide from _update_content
-        self.widgets.slidebox.children[-1].clear_output(wait=False) # Clear last slide CSS
-        with self.widgets.slidebox.children[-1]:
+        self.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
+        with self.widgets.outputs.slide:
             if self.screenshot.capturing == False:
                 self.__iterable[new_index].animation.display()
             self.__iterable[new_index].css.display()
@@ -253,10 +266,13 @@ class LiveSlides(BaseLiveSlides):
         self.progress_slider.options = opts  # update options
         # Update Slides
         #slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
-        self.widgets.slidebox.children = [*self.__iterable, ipw.Output(layout=ipw.Layout(width = '0',margin='0'))] # Add Output at end for style and animations
+        self.widgets.slidebox.children = [it._widget for it in self.__iterable]
         for i, s in enumerate(self.__iterable):
             s.update_display() 
+            s._index = i # Update index
             self._slideindex = i # goto there to update display
+        
+        self._slideindex = 0 # goto first slide after refresh
             
         self.widgets.buttons.reload.add_class('Hidden')
         
@@ -267,7 +283,7 @@ class LiveSlides(BaseLiveSlides):
         self._slides_dict[self._current_slide].set_css(props_dict)
     
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
-        "Set animation for main and frame slides for all slides. For individual slides, use `self.slides[index].set_animation`"
+        "Set animation for main and frame slides for all slides. For individual slides, use `self[index or key].set_animation/self.current.set_animation`"
         self._slides_dict[self._current_slide].set_overall_animation(main = main, frame = frame)
     
     # defining magics and context managers
@@ -293,16 +309,39 @@ class LiveSlides(BaseLiveSlides):
         if '-m' in line[1:]:
             _frames = re.split(r'^___$|^___\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
             if len(_frames) == 1:
-                with self.slide(slide_number):
-                    parse_xmd(cell, display_inline = True, rich_outputs = False)
+                if (line[0] in self._slides_dict) and (self._slides_dict[line[0]]._markdown == cell):
+                    self.notify(f'Slide {line[0]} already exists with same markdown!')
+                else:
+                    with self.slide(slide_number):
+                        parse_xmd(cell, display_inline = True, rich_outputs = False)
+                
+                self._slides_dict[line[0]]._markdown = cell # Update markdown
+                
             else:
-                @self.frames(slide_number, *_frames[1:])
-                def create_frames(obj):
-                    parse_xmd(_frames[0], display_inline = True, rich_outputs = False) # This goes with every frame
-                    parse_xmd(obj, display_inline = True, rich_outputs = False)
+                for i, obj in enumerate(_frames[1:], start = 1):
+                    key = f'{slide_number}.{i}'
+                    if (key in self._slides_dict) and (self._slides_dict[key]._markdown == (_frames[0] + obj)):
+                        self.notify(f'Slide {key} already exists with same markdown!')
+                    else:
+                        with build_slide(self, key):
+                            parse_xmd(_frames[0], display_inline = True, rich_outputs = False) # This goes with every frame
+                            parse_xmd(obj, display_inline = True, rich_outputs = False)
+                    
+                    self._slides_dict[key]._markdown = (_frames[0] + obj) # Update markdown      
+                    
         else:
-            with self.slide(slide_number):
-                self.shell.run_cell(cell)
+            if (line[0] in self._slides_dict) and hasattr(self._slides_dict[line[0]], '_cell_code'):
+                if self._slides_dict[line[0]]._cell_code == cell:
+                    self.notify(f'Slide {line[0]} already exists with same code!')
+                else:
+                    with self.slide(slide_number):
+                        self.shell.run_cell(cell)
+            else:
+                with self.slide(slide_number):
+                    self.shell.run_cell(cell)
+                    
+            self._slides_dict[line[0]]._cell_code = cell # Update code for faster run later
+            
     
     @contextmanager
     def slide(self,slide_number,props_dict = {}):

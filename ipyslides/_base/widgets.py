@@ -27,7 +27,7 @@ class _Buttons:
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
     cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
-    reload  = Button(description='Reload',icon = 'refresh', layout= Layout(width='auto',height='auto')).add_class('ReloadButton').add_class('Hidden')
+    reload  = Button(description='Sync Slides',icon = 'refresh', layout= Layout(width='auto',height='auto')).add_class('ReloadButton').add_class('Hidden')
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -108,7 +108,7 @@ class _Outputs:
     """
     Instantiate under `Widgets` class only.
     """
-    slide = ipw.Output(layout= Layout(height='auto',margin='auto',overflow='auto',padding='2px 36px') # do not set width here, in css
+    slide = ipw.Output(layout= Layout(height='0',width = '0',margin='0',opacity='0') # for hodling slide CSS
             ).add_class('SlideArea')
     fixed = ipw.Output(layout=Layout(width='auto',height='0px')) # For fixed javascript
     renew = ipw.Output(layout=Layout(width='auto',height='0px')) # Content can be added dynamically
@@ -268,12 +268,13 @@ class Widgets:
                 self.htmls.capture,
                 self.outputs.fixed, 
                 self.outputs.renew,
+                self.outputs.slide,
                 self.htmls.intro  
             ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0'))
         ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('panel') 
         
         self.slidebox = Box([
-            self.outputs.slide 
+            # Slides are added here dynamically
         ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox') 
         
         self.mainbox = VBox([

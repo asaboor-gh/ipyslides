@@ -117,7 +117,6 @@ class LayoutSettings:
             style_dict.update(dict(margin = '8px auto',align_items = 'baseline',justify_content = 'flex-start'))
         
         for k,v in style_dict.items():
-            setattr(self.widgets.outputs.slide.layout, k, v)
             setattr(self._slide_layout,k,v)
         
         self._update_theme(change=None) # Trigger CSS in it to make width change

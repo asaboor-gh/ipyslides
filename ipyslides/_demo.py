@@ -3,12 +3,12 @@
 import textwrap, time
 from io import StringIO
 from IPython import get_ipython
-from .utils import textbox
-from .writers import write, iwrite
-from .formatter import libraries, __reprs__
-from ._base.intro import how_to_slide, logo_svg
+from ipyslides.utils import textbox
+from ipyslides.writers import write, iwrite
+from ipyslides.formatter import libraries, __reprs__
+from ipyslides._base.intro import how_to_slide, logo_svg
 
-slides = get_ipython().user_ns['_s_l_i_d_e_s_'] # get slides from notebook instead of creating new one
+slides = globals()['slides'] # gloabals are update from calling function demo()
 slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
 slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
 
@@ -37,7 +37,7 @@ slides.from_markdown(fp, trusted=True) # This will create first slide along with
 
 with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context(style='monokai', color='white', className='Mono') as s:
-        slides.parse_xmd(slides.md_content[1])
+        slides.parse_xmd(slides[1].markdown)
         #display(*get_ipython().user_ns['outputs'])
         write('## I am created using `with slides.slide(1)` context( manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
@@ -47,7 +47,7 @@ with slides.slide(1): #slide 1 will be modified with old and new content
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
 #slide 2    
-slides.shell.run_cell_magic('slide','2 -m',slides.md_content[2])
+slides.shell.run_cell_magic('slide','2 -m',slides[2].markdown)
 #slide 3
 online_sources = '''# IPySlides Online Running Sources 
 Launch as voila slides (may not work as expected [^1])[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides.ipynb)
@@ -87,7 +87,7 @@ can be included in `iwrite` command as well as other objects that can be passed 
 """,
 '## Commands which do all Magic!']
 for i in range(4,8):
-    with slides.slide(i, background='skyblue'):
+    with slides.slide(i, props_dict = {'':dict(background = 'skyblue')}):
         write(__contents[i-4])
         if i == 7:
             with slides.source.context() as s:
@@ -96,7 +96,7 @@ for i in range(4,8):
             
             s.show_lines([0,1]).display()
 # Matplotlib
-with slides.slide(8,background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'):
+with slides.slide(8,props_dict = {'': dict(background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')}):
     write('## Plotting with Matplotlib')
     with slides.source.context() as s:
         import numpy as np, matplotlib.pyplot as plt
@@ -134,7 +134,7 @@ with slides.slide(10):
         s.focus_lines([3,4,5,6]).display()
 
 # Plotly and Pandas DataFrame only show if you have installed
-with slides.slide(11,background='#800000'):
+with slides.slide(11,props_dict = {'':dict(background='#800000')}):
     with slides.source.context():
         try:
             import pandas as pd 

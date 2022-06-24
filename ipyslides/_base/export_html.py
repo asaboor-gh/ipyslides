@@ -15,20 +15,22 @@ class _HhtmlExporter:
     def _htmlize(self, allow_non_html_repr = False, as_slides = False, **kwargs):
         "page_size, text_font, code_font, slide_number are in kwargs"
         content = ''
-        for item in self.main.slides:
+        for item in self.main:
             _html = ''
             for out in item.contents:
                 if 'text/html' in out.data:
                     _html += out.data['text/html']
-                elif allow_non_html_repr and as_slides == False:
+                elif allow_non_html_repr and (as_slides == False):
                     if 'text/plain' in out.data:
                         _html += out.data['text/plain']
                     else:
                         _html += f'<p style="color:red;">Object at {hex(id(out))} has no text/HTML representation.</p>'  
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
-                _sn = f'<span class="html-slide-number">{item.display_number}/{int(self.main.slides[-1].display_number)}</span>' if kwargs.get("slide_number",False) and item.display_number != 0 else ''
+                _sn = (f'<span class="html-slide-number">{item.display_number}/{int(self.main[-1].display_number)}</span>' 
+                        if kwargs.get("slide_number",False) and item.display_number != 0 else '')
                 content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
                             if as_slides else f'<section>{_html}</section>')
+                
         
         __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.main.widgets.htmls.theme.value) + slides_css # Column break width
                             if as_slides else doc_css.replace(

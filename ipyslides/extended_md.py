@@ -217,7 +217,7 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
 
     Each block can have class names (speparated with space or .) (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess.Info`.
     For example, `python .friendly` will be highlighted with friendly theme from pygments.
-    Pygments themes, however, are not supported with `multicol`. You need to write CSS for a custom class in <style> tag.
+    Pygments themes, however, are not supported with `multicol`. You need to write and display CSS for a custom class.
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.export.<export_function>` is called.
 
     Note: Nested blocks are not supported.

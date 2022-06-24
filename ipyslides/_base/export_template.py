@@ -412,13 +412,15 @@ section .SlideArea {
 	width: 90vw !important;
 	margin: auto !important;
 	padding: 1em !important;
+    box-sizing: border-box !important;
 }
-section span.html-slide-number{
+section span.html-slide-number {
     width: auto;
     height: 1.3em;
     padding: 0.1em;
     margin: auto 8px 8px auto;
     color: var(--secondary-fg);
+    font-size: 0.9em;
 }
 .SlidesWrapper::-webkit-scrollbar:vertical,
 .SlidesWrapper::-webkit-scrollbar-button,
