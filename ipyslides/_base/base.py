@@ -18,7 +18,6 @@ class BaseLiveSlides:
         self.__export = _HhtmlExporter(self)
         self.__notes = Notes(self, self.__widgets) # Needs main class for access to notes
         
-        self._toasts = {} #Store notifications
         self.toast_html = self.widgets.htmls.toast
         
         self.widgets.checks.toast.observe(self.__toggle_notify,names=['value'])
@@ -86,20 +85,21 @@ class BaseLiveSlides:
         ```
         """
         def _notify(func): 
-            self._toasts[f'{self._current_slide}'] = dict(func = func, kwargs = dict(title=title, timeout=timeout))
+            self._slides_dict[f'{self._current_slide}']._toast = dict(func = func, kwargs = dict(title=title, timeout=timeout))
         return _notify
-    
-    def clear_notifications(self):
-        "Remove all redundent notifications that show up."
-        self._toasts = {} # Free up
+        
+    def clear_toasts(self):
+        "Remove all toast notifications that show up with any slide."
+        for s in self._slides_dict.values():
+            s.toast = None
     
     @property
-    def notifications(self):
-        "See all stored notifications."
-        return self._toasts
+    def toasts(self):
+        "Get all toast notifications attached to slides."
+        return tuple([{'slide_key': s.display_label, 'slide_index': s._index, 'slide_toast': s.toast} for s in self._slides_dict.values() if s.toast])
     
     def _display_toast(self):
-        toast = self._toasts.get(self._access_key,None) #_access_key is current slide's number from LiveSlides
+        toast = self._slides_dict[self._access_key].toast #_access_key is current slide's number from LiveSlides
         if toast:
             # clear previous content of notification as new one is about to be shown, this will ensure not to see on wrong slide
             self.widgets.htmls.toast.value = ''

@@ -30,6 +30,7 @@ class Slide:
         self.set_overall_animation()
         self._animation = None
         self._markdown = '' # Should be update by Markdown and LiveSlides calssess
+        self._toast = None # Update from BaseLiveSlides
         
     def __repr__(self):
         md = f'{self.markdown[:15]}...' if self.markdown else ''
@@ -79,6 +80,9 @@ class Slide:
             self._app._slidelabel = self.display_label # Go there
         self.update_display() 
 
+    @property
+    def toast(self):
+        return self._toast
     
     @property
     def display_label(self):
@@ -166,6 +170,11 @@ class Slide:
         if self._widget in self._app.widgets.slidebox.children: # Already in slides
             self._app._slidelabel = self.display_label # Go there
             return self.update_display() # Just update 
+
+        # Create new otherwise and do such things to update widgets
+        # for k in [p for ps in s.contents for p in ps.data.keys()]:
+        # if k.startswith('application'):
+        #     s.update_display()
         
         # Otherwise warn used to refresh
         self._app.widgets.buttons.reload.remove_class('Hidden')

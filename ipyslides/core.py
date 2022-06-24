@@ -1,5 +1,4 @@
 import sys, re
-from collections import namedtuple
 from contextlib import contextmanager, suppress
 
 from IPython import get_ipython
@@ -68,7 +67,7 @@ class LiveSlides(BaseLiveSlides):
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
         
-        self.__iterable = [] #self.__collect_slides() # Collect internally
+        self._iterable = [] #self._collect_slides() # Collect internally
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
         
@@ -103,16 +102,18 @@ class LiveSlides(BaseLiveSlides):
                 self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
     
     def __iter__(self): # This is must have for exporting
-        return iter(self.__iterable)
+        return iter(self._iterable)
     
     def __getitem__(self, key):
         "Get slide by index or key(written on slide's bottom)."
         if isinstance(key, int):
-            return self.__iterable[key]
+            return self._iterable[key]
         elif isinstance(key, str) and key in self._reverse_mapping:
             return self._slides_dict[self._reverse_mapping[key]]
+        elif isinstance(key, slice):
+            return self._iterable[key.start:key.stop:key.step]
         
-        raise KeyError("Slide could be accessed by index or key, got {}".format(key))
+        raise KeyError("Slide could be accessed by index, slice or key, got {}".format(key))
     
     @property
     def current(self):
@@ -132,7 +133,6 @@ class LiveSlides(BaseLiveSlides):
         "Clear all slides."
         self._make_sure_title() # Make sure title is there, before updating slides
         self._slides_dict = {'0':self._slides_dict.get('0')} # keep title page
-        self._toasts = {'0':self._toasts.get('0',None) } # keep title page's toasts
         self.refresh() # Clear interface too
     
     def cite(self,key, citation = None,here = False):
@@ -230,8 +230,8 @@ class LiveSlides(BaseLiveSlides):
         self.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
         with self.widgets.outputs.slide:
             if self.screenshot.capturing == False:
-                self.__iterable[new_index].animation.display()
-            self.__iterable[new_index].css.display()
+                self._iterable[new_index].animation.display()
+            self._iterable[new_index].css.display()
         
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index # Just safe
@@ -242,12 +242,12 @@ class LiveSlides(BaseLiveSlides):
         self.widgets.slidebox.children[new_index].layout = self.settings._slide_layout 
         
     def _update_content(self,change):
-        if self.__iterable and change:
+        if self._iterable and change:
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
             self._display_toast() # or self.toasts._display_toast . Display in start is fine
             self.notes._display(self._slides_dict.get(self._access_key,None).notes) # Display notes first
         
-            n = self.__iterable[self._slideindex].display_number if self.__iterable else 0 # keep it from slides
+            n = self._iterable[self._slideindex].display_number if self._iterable else 0 # keep it from slides
             _number = f'{n} / {self._nslides}' if n != 0 else ''
             self.settings.set_footer(_number_str = _number)
             
@@ -256,18 +256,18 @@ class LiveSlides(BaseLiveSlides):
             
     def refresh(self, btn = None): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
-        self.__iterable = self.__collect_slides() # would be at least one title slide
-        n_last = self.__iterable[-1].display_number
+        self._iterable = self._collect_slides() # would be at least one title slide
+        n_last = self._iterable[-1].display_number
         self._nslides = int(n_last) # Avoid frames number
-        self._max_index = len(self.__iterable) - 1 # This includes all frames
+        self._max_index = len(self._iterable) - 1 # This includes all frames
         
         # Now update progress bar
-        opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self.__iterable]
+        opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self._iterable]
         self.progress_slider.options = opts  # update options
         # Update Slides
-        #slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self.__iterable]
-        self.widgets.slidebox.children = [it._widget for it in self.__iterable]
-        for i, s in enumerate(self.__iterable):
+        #slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self._iterable]
+        self.widgets.slidebox.children = [it._widget for it in self._iterable]
+        for i, s in enumerate(self._iterable):
             s.update_display() 
             s._index = i # Update index
             self._slideindex = i # goto there to update display
@@ -435,7 +435,7 @@ class LiveSlides(BaseLiveSlides):
             
         return _frames 
 
-    def __collect_slides(self):
+    def _collect_slides(self):
         """Collect cells for an instance of LiveSlides."""
         self._slides_dict['0'].display_number = 0
         slides_iterable = [self._slides_dict['0']]
