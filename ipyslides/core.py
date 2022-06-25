@@ -28,36 +28,27 @@ except:
 
 class _Citation:
     "Add citation to the slide with a unique key and value. New in 1.7.0"
-    def __init__(self, slide, key, value):
+    def __init__(self, slide, key):
         self._slide = slide
         self._key = key
-        self._value = value
         self._id = '?'
         
     def __repr__(self):
-        return f"Citation(key = {self._key!r}, value = {self._value!r}, id = {self._id!r}, slide_key = {self._slide.label!r})"
+        return f"Citation(key = {self._key!r}, id = {self._id!r}, slide_label = {self._slide.label!r})"
     
     @property
     def html(self):
         "HTML of this citation"
-        value = parse_xmd(self._value if self._value else f"Set self[{self._slide.label!r}].citations[{self._key!r}].value = 'citation value'",
-                        display_inline=False, rich_outputs = False).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
+        value = parse_xmd(
+            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations`'),
+            display_inline=False, rich_outputs = False
+            ).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
         
         return _HTML(f'''<span class = "citation" id="{self._key}">
             <a href="#{self._key}-back">
                 <sup style="color:var(--accent-color);">{self._id}</sup>
             </a>{value}</span>''')
         
-    @property
-    def value(self):
-        "Value of citation"
-        return self._value
-    
-    @value.setter
-    def value(self, value):
-        "Set value of citation as text/html/markdown"
-        self._value = value
-    
         
 class LiveSlides(BaseLiveSlides):
     # This will be overwritten after creating a single object below!
@@ -98,7 +89,7 @@ class LiveSlides(BaseLiveSlides):
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
-        
+        self._citations_dict = {} # Initialize citations dictionary, updated by user or by set_citations.
         self._iterable = [] #self._collect_slides() # Collect internally
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
@@ -144,7 +135,12 @@ class LiveSlides(BaseLiveSlides):
     @property
     def citations(self):
         "Get All citations."
-        return tuple([citation for slide in self[:] for citation in slide.citations.values()])
+        # Need to filter unique keys across all slides
+        _all_citations = {}
+        for slide in self[:]:
+            _all_citations.update(slide.citations)
+            
+        return _all_citations
     
     @property
     def _access_key(self):
@@ -156,34 +152,39 @@ class LiveSlides(BaseLiveSlides):
         self._slides_dict = {} # Clear slides
         self.refresh() # Clear interface too
     
-    def cite(self,key, citation = None,here = False):
+    def cite(self, key, here = False):
         "Add citation in presentation, key should be a unique string and citation is text/markdown/HTML."
         if here:
-            return utils.textbox(citation,left='initial',top='initial') # Just write here
+            return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial') # Just write here
         
         current_slide = self._slides_dict[self._current_slide] # Get current slide, may not be refreshed yet
-        _cited = _Citation(slide = current_slide, key = key, 
-            value = (citation or current_slide.citations.get(key, None)))
+        _cited = _Citation(slide = current_slide, key = key)
         current_slide._citations[key] = _cited
         
         # Set _id for citation
         if self._citations_per_slide:
             _cited._id = str(list(current_slide.citations.keys()).index(key) + 1) # Get index of key
         else:
-            # Find slides created till now
-            if current_slide.index: # If index is set
-                prev_index = 0 # Start from 0
-                for slide in self[:current_slide.index]:
-                    prev_index += len(slide.citations)
-                    
-                _cited._id = str(prev_index + list(current_slide.citations.keys()).index(key) + 1)
-                    
-            else: # If index is not set, just use key
-                _cited._id = key
+            # Find number of citations created till now
+            prev_citations = {**self.citations, **current_slide.citations} # Current citations + previous ones
+            if key in prev_citations:
+                _cited._id = str(list(prev_citations.keys()).index(key) + 1)
+            else:
+                _cited._id = str(len(prev_citations)) 
              
         # Return string otherwise will be on different place
         return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup></a>'
     
+    def set_citations(self, citations_dict):
+        "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
+        self._citations_dict.update(citations_dict)
+        if self._citations_per_slide:
+            for slide in self[:]:
+                if slide.citations:
+                    slide.update_display()
+        else:
+            self.notify('Citations updated, please rerun the slide with references to see effect.')
+            
     def citations_html(self,title='### References'): 
         "Write all citations collected via `cite` method in the end of the presentation."    
         if self._citations_per_slide:
@@ -193,7 +194,7 @@ class LiveSlides(BaseLiveSlides):
             
         _html = _HTML(self.parse_xmd(title + '\n',display_inline=False, rich_outputs = False))
         
-        for citation in self.citations:
+        for citation in self.citations.values():
             _html = _html + citation.html
         
         return _html
@@ -379,19 +380,10 @@ class LiveSlides(BaseLiveSlides):
                     
                     self._slides_dict[key]._markdown = (_frames[0] + obj) # Update markdown      
                     
-        else:
-            if (line[0] in self._slides_dict) and hasattr(self._slides_dict[line[0]], '_cell_code'):
-                if self._slides_dict[line[0]]._cell_code == cell:
-                    pass # do nothing
-                else:
-                    with self.slide(slide_number):
-                        self.shell.run_cell(cell)
-            else:
-                with self.slide(slide_number):
-                    self.shell.run_cell(cell)
+        else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
+            with self.slide(slide_number):
+                self.shell.run_cell(cell)
                     
-            self._slides_dict[line[0]]._cell_code = cell # Update code for faster run later
-            
     
     @contextmanager
     def slide(self,slide_number,props_dict = {}):
@@ -549,7 +541,7 @@ class LiveSlides:
     > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
     
     ### Changes in version 1.7.0+
-    
+    - Slides from markdown file of `%%slide slide_number -m` only run again if content of slide changes. That makes reloading fast.
     - You can now show citations on bottom of each slide by setting `citations_per_slide = True` in `LiveSlides` constructor.
     - You can now access individual slides by indexing `ls[i]` where `i` is the slide index or by key as `ls['3.1'] will give you slide which shows 3.1 at bottom.
     - Basides indexing, you can access current displayed slide by `ls.current`.

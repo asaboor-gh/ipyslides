@@ -11,6 +11,8 @@ from ipyslides._base.intro import how_to_slide, logo_svg
 slides = globals()['slides'] # gloabals are update from calling function demo()
 slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
 slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
+slides._citations_per_slide = False # This could be changed by other functions
+slides.set_citations({'pf': 'This is refernce to FigureWidget using `slides.cite` command'})
 
 #Demo for loading slides from a file or file-like object 
 fp = StringIO('\n'.join(how_to_slide) + '''\n---
@@ -81,7 +83,7 @@ command to show in Notebook outside `write`.
 """,
 f"""## Interactive Widgets
 ### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using `textbox` command</a>')} 
-or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf','This is refernce to FigureWidget using `slides.cite` command')}(reference at end)
+or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf')}(reference at end)
 can be included in `iwrite` command as well as other objects that can be passed to `write` with caveat of Javascript.
 {{.Warning}}
 """,

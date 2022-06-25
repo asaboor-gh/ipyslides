@@ -41,6 +41,7 @@ class Slide:
     
     def update_display(self):
         "Update display of this slide."
+        self._app._slidelabel = self.label # Go there to see effects
         self._widget.clear_output()
         with self._widget:
             display(*self.contents)

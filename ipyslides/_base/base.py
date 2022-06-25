@@ -57,7 +57,7 @@ class BaseLiveSlides:
     def css_styles(self):
         """CSS styles for write(..., className = style)."""
         # self.html will be added from Chid class
-        return self.html('pre', '''Use any or combinations of these styles in className argument of writing functions:
+        return self.html('div', '''Use any or combinations of these styles in className argument of writing functions:
         className = 'Center'            ------Text------
         className = 'Left'              Text------------
         className = 'Right'             ------------Text
@@ -69,7 +69,7 @@ class BaseLiveSlides:
         className = 'Note'              Text with info icon
         className = 'slides-only'       Text will not appear in exported html with `build_report`
         className = 'report-only'       Text will not appear on slides. Useful to fill content in report. 
-        ''',className= 'Info')
+        ''',className= 'PyRepr')
 
     
     def notify_later(self, title='IPySlides Notification', timeout=5):
