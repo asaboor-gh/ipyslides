@@ -10,6 +10,7 @@ from . import styles
 from ..utils import colored, html
 
 class Slide:
+    "New in 1.7.0"
     _animations = {'main':'','frame':''}
     _alert = colored('Print Warning: Use "pprint" function or "capture_std" contextmanager to display printed strings in order!', fg = 'red', bg = 'white')
     def __init__(self, app, captured_output, props_dict = {}):
@@ -22,7 +23,7 @@ class Slide:
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
         self.slide_number = None # This should be set in the LiveSlide class
-        self.display_number = None # This should be set in the LiveSlides
+        self.position = None # This should be set in the LiveSlides
         self._index = None # This should be set in the LiveSlides
         self.set_css(props_dict, notify = False)
         
@@ -32,16 +33,22 @@ class Slide:
         self._markdown = '' # Should be update by Markdown and LiveSlides calssess
         self._toast = None # Update from BaseLiveSlides
         self._has_widgets = False # Update in build_slide function
+        self._citations = {} # Added from LiveSlides
         
     def __repr__(self):
         md = f'{self.markdown[:15]}...' if self.markdown else ''
-        return f'Slide(slide_number = {self.slide_number}, key = {self.display_label!r}, index = {self._index}, markdown = {md!r})'
+        return f'Slide(slide_number = {self.slide_number}, key = {self.label!r}, index = {self._index}, markdown = {md!r})'
     
     def update_display(self):
         "Update display of this slide."
         self._widget.clear_output()
         with self._widget:
             display(*self.contents)
+            
+            if self._citations and self._app._citations_per_slide:
+                html('hr').display()
+                for citation in self._citations.values():
+                    citation.html.display()
     
     @contextmanager
     def append(self):
@@ -70,13 +77,13 @@ class Slide:
                 raise IndexError('Index {} out of range for slide with {} objects'.format(index, len(self._contents)))
             self._extra_outputs[f'{index}'] = outputs
         
-        self._app._slidelabel = self.display_label # Go there
+        self._app._slidelabel = self.label # Go there
         self.update_display()
     
     def reset(self):
         "Reset all appended/prepended/inserted objects."
         self._extra_outputs = {'start': [], 'end': []}
-        self._app._slidelabel = self.display_label # Go there
+        self._app._slidelabel = self.label # Go there
         self.update_display() 
 
     @property
@@ -84,8 +91,12 @@ class Slide:
         return self._toast
     
     @property
-    def display_label(self):
-        return str(self.display_number)
+    def label(self):
+        return str(self.position)
+    
+    @property
+    def citations(self):
+        return self._citations
     
     @property
     def css(self):
@@ -103,7 +114,7 @@ class Slide:
     def animation(self):
         return self._animation or html('style', 
             (self._animations['frame'] 
-             if '.' in self.display_label
+             if '.' in self.label
              else self._animations['main'])
             )
     
@@ -147,8 +158,8 @@ class Slide:
         self._css = html('style', _all_css)
         
         # See effect of changes
-        if self._app._slidelabel != self.display_label:
-            self._app._slidelabel = self.display_label # Go there to see effects
+        if self._app._slidelabel != self.label:
+            self._app._slidelabel = self.label # Go there to see effects
         else:
             self._app.widgets.outputs.slide.clear_output(wait = True)
             with self._app.widgets.outputs.slide:
@@ -171,8 +182,8 @@ class Slide:
         if name:
             self._animation = html('style',styles.animations[name])
             # See effect of changes
-            if self._app._slidelabel != self.display_label:
-                self._app._slidelabel = self.display_label # Go there to see effects
+            if self._app._slidelabel != self.label:
+                self._app._slidelabel = self.label # Go there to see effects
             else:
                 self._app.widgets.outputs.slide.clear_output(wait = True)
                 with self._app.widgets.outputs.slide:
@@ -183,16 +194,16 @@ class Slide:
     def _rebuild_all(self):
         "Update all slides in optimal way."
         self._app._iterable = self._app._collect_slides()
-        n_last = self._app._iterable[-1].display_number
+        n_last = self._app._iterable[-1].position
         self._app._nslides = int(n_last) # Avoid frames number
         self._app._max_index = len(self._app._iterable) - 1 # This includes all frames
         
         # Now update progress bar
-        opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self._app._iterable]
+        opts = [(f"{s.position}", round(100*float(s.position)/(n_last or 1), 2)) for s in self._app._iterable]
         self._app.progress_slider.options = opts  # update options
         # Update Slides after progress bar is updated
         self._app.widgets.slidebox.children = [it._widget for it in self._app._iterable]
-        self._app._slidelabel = self.display_label # Go there after refreshing
+        self._app._slidelabel = self.label # Go there after refreshing
         
         for i, s in enumerate(self._app._iterable):
             s._index = i # Update index
@@ -202,7 +213,7 @@ class Slide:
         
 @contextmanager
 def build_slide(app, slide_number_str, props_dict = {}):
-    "Use as contextmanager in LiveSlides class to create slide"
+    "Use as contextmanager in LiveSlides class to create slide. New in 1.7.0"
     with capture_output() as captured:
         if slide_number_str in app._slides_dict:
             _slide = app._slides_dict[slide_number_str]
@@ -215,7 +226,7 @@ def build_slide(app, slide_number_str, props_dict = {}):
         yield _slide
         
     _slide._contents = captured.outputs
-    app._slidelabel = _slide.display_label # Go there to see effects
+    app._slidelabel = _slide.label # Go there to see effects
     _slide.update_display() # Update Slide, it will not come to this point if has same code
     
     for k in [p for ps in _slide.contents for p in ps.data.keys()]:

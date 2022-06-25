@@ -96,7 +96,7 @@ class BaseLiveSlides:
     @property
     def toasts(self):
         "Get all toast notifications attached to slides."
-        return tuple([{'slide_key': s.display_label, 'slide_index': s._index, 'slide_toast': s.toast} for s in self._slides_dict.values() if s.toast])
+        return tuple([{'slide_key': s.label, 'slide_index': s._index, 'slide_toast': s.toast} for s in self._slides_dict.values() if s.toast])
     
     def _display_toast(self):
         toast = self._slides_dict[self._access_key].toast #_access_key is current slide's number from LiveSlides

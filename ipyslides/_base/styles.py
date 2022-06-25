@@ -53,6 +53,32 @@ theme_roots = {
     --pointer-color: blue;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
+''',
+'Material Light': ''':root {
+	--heading-fg: #4984c4;
+	--primary-fg: #3b3b3b;
+	--primary-bg: #fafafa;
+	--secondary-bg: #e9eef2;
+	--secondary-fg: #3b5e3b;
+	--tr-odd-bg: #e9eef2;
+	--tr-hover-bg: #dae3ec;
+	--accent-color: #4d7f43;
+    --pointer-color: red;
+	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
+}
+''',
+'Material Dark': ''':root {
+	--heading-fg: #aec7e3;
+	--primary-fg: #bebebe;
+	--primary-bg: #282828;
+	--secondary-bg: #383838;
+	--secondary-fg: #fefefe;
+	--tr-odd-bg: #383838;
+	--tr-hover-bg: #484848;
+	--accent-color: #a8bfa3;
+    --pointer-color: blue;
+	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
+}
 '''
 }
 
@@ -61,12 +87,16 @@ def style_css(style_root = theme_roots['Inherit']):
 	return style_root + ''' 
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
-    line-height: 0.75em !important;
+    line-height: 0.8em !important;
     position:relative; 
     left:initial;
     top:initial;
     padding:2px 4px;
     color: var(--secondary-fg);
+}
+.SlideArea .citation {
+    font-size: 0.8em !important; 
+    line-height: 0.85em !important;
 }
 .SlideArea figure {
     margin: 8px !important; /* override default margin */

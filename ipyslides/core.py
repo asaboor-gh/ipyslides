@@ -25,6 +25,39 @@ except:
     print("Slides only work in IPython Notebook!")
     sys.exit()
     
+
+class _Citation:
+    "Add citation to the slide with a unique key and value. New in 1.7.0"
+    def __init__(self, slide, key, value):
+        self._slide = slide
+        self._key = key
+        self._value = value
+        self._id = '?'
+        
+    def __repr__(self):
+        return f"Citation(key = {self._key!r}, value = {self._value!r}, id = {self._id!r}, slide_key = {self._slide.label!r})"
+    
+    @property
+    def html(self):
+        "HTML of this citation"
+        value = parse_xmd(self._value if self._value else f"Set self[{self._slide.label!r}].citations[{self._key!r}].value = 'citation value'",
+                        display_inline=False, rich_outputs = False).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
+        
+        return _HTML(f'''<span class = "citation" id="{self._key}">
+            <a href="#{self._key}-back">
+                <sup style="color:var(--accent-color);">{self._id}</sup>
+            </a>{value}</span>''')
+        
+    @property
+    def value(self):
+        "Value of citation"
+        return self._value
+    
+    @value.setter
+    def value(self, value):
+        "Set value of citation as text/html/markdown"
+        self._value = value
+    
         
 class LiveSlides(BaseLiveSlides):
     # This will be overwritten after creating a single object below!
@@ -61,8 +94,7 @@ class LiveSlides(BaseLiveSlides):
             
             self.shell.user_ns['pprint'] = pprint
         
-        self._citations = {} # Initialize citations
-        
+        self._citations_per_slide = False # If citations are per slide or just once       
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
@@ -111,7 +143,8 @@ class LiveSlides(BaseLiveSlides):
     
     @property
     def citations(self):
-        return self._citations 
+        "Get All citations."
+        return tuple([citation for slide in self[:] for citation in slide.citations.values()])
     
     @property
     def _access_key(self):
@@ -127,22 +160,47 @@ class LiveSlides(BaseLiveSlides):
         "Add citation in presentation, key should be a unique string and citation is text/markdown/HTML."
         if here:
             return utils.textbox(citation,left='initial',top='initial') # Just write here
-        self._citations[key] =  citation or self.citations.get(key,None) # Get given first
-        _id = list(self._citations.keys()).index(key)
+        
+        current_slide = self._slides_dict[self._current_slide] # Get current slide, may not be refreshed yet
+        _cited = _Citation(slide = current_slide, key = key, 
+            value = (citation or current_slide.citations.get(key, None)))
+        current_slide._citations[key] = _cited
+        
+        # Set _id for citation
+        if self._citations_per_slide:
+            _cited._id = str(list(current_slide.citations.keys()).index(key) + 1) # Get index of key
+        else:
+            # Find slides created till now
+            if current_slide.index: # If index is set
+                prev_index = 0 # Start from 0
+                for slide in self[:current_slide.index]:
+                    prev_index += len(slide.citations)
+                    
+                _cited._id = str(prev_index + list(current_slide.citations.keys()).index(key) + 1)
+                    
+            else: # If index is not set, just use key
+                _cited._id = key
+             
         # Return string otherwise will be on different place
-        return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_id + 1}</sup></a>'
+        return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup></a>'
     
     def citations_html(self,title='### References'): 
         "Write all citations collected via `cite` method in the end of the presentation."    
-        collection = [f'''<span id="{k}">
-            <a href="#{k}-back"><sup style="color:var(--accent-color);">{i+1}</sup></a>
-            {v if v else f"Set LiveSlides.citations[{k!r}] = 'citation value'"}
-            </span>''' for i,(k,v) in enumerate(self._citations.items())]
-        return _HTML(self.parse_xmd(title + '\n' +'<br/>'.join(collection), display_inline=False, rich_outputs = False))
-    
+        if self._citations_per_slide:
+            raise ValueError("Citations are consumed per slide.\n" 
+                             "If you want to display them in the end, "
+                             "use `citations_per_slide = False` during initialization of `LiveSlides`.")
+            
+        _html = _HTML(self.parse_xmd(title + '\n',display_inline=False, rich_outputs = False))
+        
+        for citation in self.citations:
+            _html = _html + citation.html
+        
+        return _html
+        
     def write_citations(self,title='### References'):
         "Write all citations collected via `cite` method in the end of the presentation."
-        self.write(self.citations_html(title = title))
+        return self.citations_html(title = title).display()
         
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
@@ -235,7 +293,7 @@ class LiveSlides(BaseLiveSlides):
             self._display_toast() # or self.toasts._display_toast . Display in start is fine
             self.notes._display(self._slides_dict.get(self._access_key,None).notes) # Display notes first
         
-            n = self._iterable[self._slideindex].display_number if self._iterable else 0 # keep it from slides
+            n = self._iterable[self._slideindex].position if self._iterable else 0 # keep it from slides
             _number = f'{n} / {self._nslides}' if n != 0 else ''
             self.settings.set_footer(_number_str = _number)
             
@@ -250,12 +308,12 @@ class LiveSlides(BaseLiveSlides):
             self.widgets.slidebox.children = [] # Clear older slides
             return None
         
-        n_last = self._iterable[-1].display_number
+        n_last = self._iterable[-1].position
         self._nslides = int(n_last) # Avoid frames number
         self._max_index = len(self._iterable) - 1 # This includes all frames
         self.notify('Refreshing display of slides...')
         # Now update progress bar
-        opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self._iterable]
+        opts = [(f"{s.position}", round(100*float(s.position)/(n_last or 1), 2)) for s in self._iterable]
         self.progress_slider.options = opts  # update options
         # Update Slides
         #slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self._iterable]
@@ -407,7 +465,6 @@ class LiveSlides(BaseLiveSlides):
                 return print(f'slide_number expects integer, got {slide_number!r}')
             
             assert slide_number >= 1 # Should be >= 1, should not add title slide as frames
-            self._current_slide = f'{slide_number}.1' # First frame
 
             if repeat == True:
                 _new_objs = [objs[:i] for i in range(1,len(objs)+1)]
@@ -421,6 +478,7 @@ class LiveSlides(BaseLiveSlides):
                 _new_objs = objs
                     
             for i, obj in enumerate(_new_objs,start=1):
+                self._current_slide = f'{slide_number}.{i}' # Update current slide
                 with build_slide(self, f'{slide_number}.{i}', props_dict= props_dict):
                     self.write(self.format_css('.SlideArea',height = frame_height))
                     func(obj) # call function with obj
@@ -431,7 +489,7 @@ class LiveSlides(BaseLiveSlides):
         """Collect cells for an instance of LiveSlides."""
         slides_iterable = []
         if '0' in self._slides_dict:
-            self._slides_dict['0'].display_number = 0
+            self._slides_dict['0'].position = 0
             slides_iterable = [self._slides_dict['0']]
         
         val_keys = sorted([int(k) if k.isnumeric() else float(k) for k in self._slides_dict.keys()]) 
@@ -442,7 +500,7 @@ class LiveSlides(BaseLiveSlides):
         for i in range(1, _max_range):
             if i in val_keys:
                 nslide = nslide + 1 #should be added before slide
-                self._slides_dict[f'{i}'].display_number = nslide
+                self._slides_dict[f'{i}'].position = nslide
                 slides_iterable.append(self._slides_dict[f'{i}']) 
                 self._reverse_mapping[str(nslide)] = str(i)
             
@@ -450,7 +508,7 @@ class LiveSlides(BaseLiveSlides):
             while n_ij.format(i,nframe) in str_keys:
                 nslide = nslide + 1 if nframe == 1 else nslide
                 _in, _out = n_ij.format(i,nframe), n_ij.format(nslide,nframe)
-                self._slides_dict[_in].display_number = float(_out)
+                self._slides_dict[_in].position = float(_out)
                 slides_iterable.append(self._slides_dict[_in]) 
                 self._reverse_mapping[_out] = _in
                 nframe = nframe + 1
@@ -467,7 +525,7 @@ class LiveSlides:
     **Example**
     ```python 
     import ipyslides as isd 
-    ls = isd.LiveSlides() 
+    ls = isd.LiveSlides(citations_per_slide = True) # Citations will show up on bottom of each slide if any (New in 1.7.0)
     ls.demo() # Load demo slides
     ls.from_markdown(...) # Load slides from markdown files
     ```
@@ -483,14 +541,26 @@ class LiveSlides:
     std.stdout.display() #ls.write(std.stdout)
     ```
     In version 1.5.9+ function `pprint` is avalible in IPython namespace when LiveSlide is initialized. This displays objects in intended from rather than just text.
-    > `ls.demo` and `ls.from_markdown` overwrite all previous slides.
+    > `ls.demo` and `ls.from_markdown`, `ls.load_docs` overwrite all previous slides.
     
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `ls.export.report` is called.
     This is useful to fill-in content in document that is not required in slides.
     
     > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
+    
+    ### Changes in version 1.7.0+
+    
+    - You can now show citations on bottom of each slide by setting `citations_per_slide = True` in `LiveSlides` constructor.
+    - You can now access individual slides by indexing `ls[i]` where `i` is the slide index or by key as `ls['3.1'] will give you slide which shows 3.1 at bottom.
+    - Basides indexing, you can access current displayed slide by `ls.current`.
+    - You can add new content to existing slides by using `with ls[index].insert(where)` context. All new chnaged can be reverted by `ls[index].reset()`.
+    - If a display is not complete, e.g. some widget missing on a slide, you can use `(ls.current, ls[index], ls[key]).update_display()` to update display.
+    - You can set overall animation by `ls.set_overall_animation` or per slide by `ls[i].set_animation`
+    - You can now set CSS for each slide by `ls[i].set_css` or `ls.set_slide_css` at current slide.
+    - `ls.pre_compute_display` is deprecated and slides now are computed on-demand with each new slide.
     """
     def __new__(cls,
+                citations_per_slide = False,
                 center        = True, 
                 content_width = '90%', 
                 footer_text   = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
@@ -505,6 +575,7 @@ class LiveSlides:
                 ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         _private_instance.__doc__ = cls.__doc__ # copy docstring
+        _private_instance._citations_per_slide = citations_per_slide
         _private_instance.settings.set_layout(center = center, content_width = content_width)
         _private_instance.settings.set_footer(text = footer_text, show_date = show_date, show_slideno = show_slideno)
         _private_instance.settings.set_logo(src = logo_src,width = 60)

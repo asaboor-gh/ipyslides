@@ -161,7 +161,7 @@ class LayoutSettings:
                 with open('custom.css','r') as f:
                     theme_css = ''.join(f.readlines())
         
-        if self.theme_dd.value == 'Dark':
+        if 'Dark' in self.theme_dd.value:
             self.set_code_style('monokai',color='#f8f8f2',lineno=self._code_lineno)
         elif self.theme_dd.value == 'Fancy':
             self.set_code_style('borland',lineno=self._code_lineno) 
