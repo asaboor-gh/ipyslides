@@ -177,7 +177,6 @@ class BaseLiveSlides:
                     ' Verify code is safe and try again with argument `trusted = True`.'
                     ' Never run files that you did not create yourself or not verified by you.')
         
-                    
         if not (isinstance(path, io.StringIO) or os.path.isfile(path)): #check path later or it will throw error
             raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")
         
@@ -190,6 +189,8 @@ class BaseLiveSlides:
         if hasattr(self,'_loaded_other') and self._loaded_other:
             self.clear()
             self._loaded_other = False
+        
+        self.close_view() # Close any previous view to speed up loading 10x faster on average
         
         for i,chunk in enumerate(chunks):
             # Must run under this to create frames with triple underscore (___)
@@ -205,27 +206,47 @@ class BaseLiveSlides:
     
     def demo(self):
         """Demo slides with a variety of content."""
+        self.close_view() # Close any previous view to speed up loading 10x faster on average
         self._clean_markdown_loaded()
         
         import runpy
         file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_demo.py') # Relative path to this file
         slides = runpy.run_path(file, init_globals= {'slides': self})['slides']
-            
-        with slides.slide(100):
+        
+        N = slides[-1].index
+        with slides.slide(N + 1):
             slides.write('## This is all code to generate slides')
             slides.write(self.demo)
             slides.source.from_file(file).display()
             
-        with slides.slide(101, props_dict = {'': dict(background='#9ACD32')}):
+        with slides.slide(N + 2, props_dict = {'': dict(background='#9ACD32')}):
             with slides.source.context() as s:
                 slides.write_citations()
             s.display()
+        
+        # Just for func, set theme of all even slides to be fancy, and zoom animation
+        fancy_even_slides_css = {       
+            '--heading-fg': '#105599',
+	        '--primary-fg': '#755',
+	        '--primary-bg': '#efefef',
+	        '--secondary-bg': '#effffe',
+	        '--secondary-fg': '#89E',
+	        '--tr-odd-bg': '#deddde',
+	        '--tr-hover-bg': '#D1D9E1',
+	        '--accent-color': '#955200',
+            '--pointer-color': '#FF7722'
+        }   
+        
+        for s in slides[::2]: 
+            s.set_css({'slide': fancy_even_slides_css})
+            s.set_animation('zoom')
         
         slides._slideindex = 0 # Go to title
         return slides
     
     def load_docs(self):
         "Create presentation from docs of IPySlides."
+        self.close_view() # Close any previous view to speed up loading 10x faster on average
         self._clean_markdown_loaded()
         
         from ..core import LiveSlides

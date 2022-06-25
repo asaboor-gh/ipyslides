@@ -74,7 +74,6 @@ class LiveSlides(BaseLiveSlides):
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
-        self.widgets.buttons.reload.on_click(self.refresh)
         self.markdown_callables = tuple(_allowed_funcs.split('|'))
         # All Box of Slides
         self._box =  self.widgets.mainbox
@@ -243,7 +242,7 @@ class LiveSlides(BaseLiveSlides):
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
     
             
-    def refresh(self, btn = None): 
+    def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self._iterable = self._collect_slides() # would be at least one title slide
         if not self._iterable:
@@ -254,7 +253,7 @@ class LiveSlides(BaseLiveSlides):
         n_last = self._iterable[-1].display_number
         self._nslides = int(n_last) # Avoid frames number
         self._max_index = len(self._iterable) - 1 # This includes all frames
-        self.notify(f'Refreshing slides... {btn}')
+        self.notify('Refreshing display of slides...')
         # Now update progress bar
         opts = [(f"{s.display_number}", round(100*float(s.display_number)/(n_last or 1), 2)) for s in self._iterable]
         self.progress_slider.options = opts  # update options
@@ -268,7 +267,6 @@ class LiveSlides(BaseLiveSlides):
         
         self._slideindex = 0 # goto first slide after refresh
             
-        self.widgets.buttons.reload.add_class('Hidden')
         
     def set_slide_css(self,props_dict = {}):
         """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}

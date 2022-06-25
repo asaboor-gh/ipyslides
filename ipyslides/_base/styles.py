@@ -511,16 +511,7 @@ div.LaserPointer { /* For laser pointer */
     display:none; /* Initial setup. Display will be set using javascript only */
     overflow:hidden !important; /* To hide at edges */
 }
-.ReloadButton {
-    position: absolute;
-    left:40px;
-    padding: 4px !important;
-    display:block !important;
-    z-index: 200 !important;
-}
-.ReloadButton.Hidden {
-    display: none !important;
-}
+
 /* Linked Area */
 .jp-LinkedOutputView > div.jp-OutputArea >  div:first-child,
 .jp-LinkedOutputView .SlidesWrapper .height-slider,

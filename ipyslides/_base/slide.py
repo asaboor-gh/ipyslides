@@ -92,6 +92,10 @@ class Slide:
         return self._css
     
     @property
+    def index(self):
+        return self._index
+    
+    @property
     def markdown(self):
         return self._markdown
     
@@ -121,7 +125,7 @@ class Slide:
     
     def set_css(self,props_dict, notify = True):
         """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
-        'selector' for slide itself should be ''.
+        'selector' for slide itself should be '' or 'slide'.
         """
         if not isinstance(props_dict, dict):
             raise TypeError("props_dict must be a dict in format {'selector': {'prop':'value',...},...}")
@@ -131,14 +135,14 @@ class Slide:
                 raise TypeError('Value for selector {} should be a dict of {"prop":"value",...}, got {}'.format(k,v))
         _all_css = ''
         for k, v in props_dict.items():
-            _css = f'.SlideArea {k} {{\n'
-            _css += '\n'.join([f'{q}:{p}!important;' for q, p in v.items()])
-            _all_css += _css + '\n}'
-            
-            if k.strip() == '':
-                for q,p in v.items():
-                    if 'background' in q:
-                        _all_css = f'.SlidesWrapper {{\n{q}:{p}!important;}}' 
+            _css = ''
+            if k.strip() in ('', 'slide', '.slide'):
+                _css += f'.SlidesWrapper {{\n'
+            else:
+                _css += f'.SlideArea {k} {{\n'
+                
+            _css += ('\n'.join([f'{q}:{p}!important;' for q, p in v.items()]) + '\n}\n')
+            _all_css += _css # Append to all css
             
         self._css = html('style', _all_css)
         
@@ -211,8 +215,9 @@ def build_slide(app, slide_number_str, props_dict = {}):
         yield _slide
         
     _slide._contents = captured.outputs
-    
+    app._slidelabel = _slide.display_label # Go there to see effects
     _slide.update_display() # Update Slide, it will not come to this point if has same code
+    
     for k in [p for ps in _slide.contents for p in ps.data.keys()]:
         if k.startswith('application'): # Widgets in this slide
             _slide._has_widgets = True
