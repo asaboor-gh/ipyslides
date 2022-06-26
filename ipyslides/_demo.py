@@ -14,8 +14,8 @@ slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipysl
 slides._citations_per_slide = False # This could be changed by other functions
 slides.set_citations({'pf': 'This is refernce to FigureWidget using `slides.cite` command'})
 
-#Demo for loading slides from a file or file-like object 
-fp = StringIO('\n'.join(how_to_slide) + '''\n---
+#Demo for loading slides from a file or text block 
+slides.from_markdown(0,'\n'.join(how_to_slide) + '''\n---
 # Slide 1 {.Success}
 ```python run source
 import ipyslides as isd
@@ -34,14 +34,12 @@ Created using `%%slide 2 -m` with markdown only
 # Column B
 ```
 That version from last slide is still in memory. See it is there {{version}}
-''')
-slides.from_markdown(fp, trusted=True) # This will create first slide along with title page.
+''',trusted=True)
 
 with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context(style='monokai', color='white', className='Mono') as s:
         slides.parse_xmd(slides[1].markdown)
-        #display(*get_ipython().user_ns['outputs'])
-        write('## I am created using `with slides.slide(1)` context( manager!')
+        write('## I am created using `with slides.slide(1)` context manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
     s.focus_lines([0]).display()  #focus on line 0 
     slides.notes.insert('### Note for slide 1')
@@ -97,6 +95,7 @@ for i in range(4,8):
                 write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@LiveSlides.serializer.register` decorator")
             
             s.show_lines([0,1]).display()
+            
 # Matplotlib
 with slides.slide(8,props_dict = {'': dict(background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')}):
     write('## Plotting with Matplotlib')
@@ -226,7 +225,7 @@ def func(obj):
         s.show_lines([5,6]).display()
         
 # Frames structure
-boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:auto;padding:8px;margin:8px;border-radius:4px;"><h1>{i}</h1></div>' for i in range(1,10)]
+boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:auto;padding:8px;margin:8px;border-radius:4px;"><h1>{i}</h1></div>' for i in range(1,5)]
 @slides.frames(15,*boxes, repeat=False)
 def f(obj):
     slides.write('# Frames with \n#### `repeat = False`')
@@ -237,10 +236,10 @@ def f(obj):
     slides.write('# Frames with \n#### `repeat = True`')
     slides.write(*obj,className='Warning')
     
-@slides.frames(17,*boxes, repeat=[(0,1,2),(3,4,5),(6,7,8)])
+@slides.frames(17,*boxes, repeat=[(0,1),(2,3)])
 def f(obj):
     with slides.source.context() as s:
-        slides.write('# Frames with \n#### `repeat = [(0,1,2),(3,4,5),(6,7,8)]`')
+        slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)
     s.display()
 
@@ -251,12 +250,14 @@ with slides.slide(18):
                      className='Success')
     s.display()
 
-with slides.slide(19):
-    slides.write('## $\LaTeX$ in Slides\nUse `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations')
-    slides.write('$\LaTeX$ needs time to load, so `slides.pre_compute_display()` will help\n{.Note .Warning}')
-    slides.write([r'\$\$\int_0^1\frac{1}{1-x^2}dx\$\$',
-                r'$$\int_0^1\frac{1}{1-x^2}dx$$'
-                ])  
+slides.from_markdown(19, '''## $\LaTeX$ in Slides
+Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
+$\LaTeX$ needs time to load, so keeping it in view until it loads would help.
+{.Note .Warning}
+
+\$\$\int_0^1\\frac{1}{1-x^2}dx\$\$
+$$\int_0^1\\frac{1}{1-x^2}dx$$
+''', trusted=True)
 
 with slides.slide(20):
     slides.write('## Built-in CSS styles')

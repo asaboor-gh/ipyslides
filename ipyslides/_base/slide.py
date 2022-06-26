@@ -32,7 +32,7 @@ class Slide:
         self._animation = None
         self._markdown = '' # Should be update by Markdown and LiveSlides calssess
         self._toast = None # Update from BaseLiveSlides
-        self._has_widgets = False # Update in build_slide function
+        self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from LiveSlides
         
     def __repr__(self):
@@ -213,7 +213,7 @@ class Slide:
 
         
 @contextmanager
-def build_slide(app, slide_number_str, props_dict = {}):
+def _build_slide(app, slide_number_str, props_dict = {}):
     "Use as contextmanager in LiveSlides class to create slide. New in 1.7.0"
     with capture_output() as captured:
         if slide_number_str in app._slides_dict:

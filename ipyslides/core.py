@@ -16,7 +16,7 @@ _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 from ._base.base import BaseLiveSlides
 from ._base.intro import how_to_slide, logo_svg
 from ._base.scripts import multi_slides_alert
-from ._base.slide import build_slide
+from ._base.slide import _build_slide
 from ._base import styles
 
 try:  # Handle python IDLE etc.
@@ -107,7 +107,7 @@ class LiveSlides(BaseLiveSlides):
     def _on_displayed(self, change):
         self.widgets._exec_js(multi_slides_alert)
         
-        with build_slide(self, '0'):
+        with _build_slide(self, '0'):
             self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
         
         with suppress(Exception): # Does not work everywhere.
@@ -115,6 +115,9 @@ class LiveSlides(BaseLiveSlides):
     
     def __iter__(self): # This is must have for exporting
         return iter(self._iterable)
+    
+    def __len__(self):
+        return len(self._iterable)
     
     def __getitem__(self, key):
         "Get slide by index or key(written on slide's bottom)."
@@ -153,7 +156,8 @@ class LiveSlides(BaseLiveSlides):
         self.refresh() # Clear interface too
     
     def cite(self, key, here = False):
-        "Add citation in presentation, key should be a unique string and citation is text/markdown/HTML."
+        """Add citation in presentation, key should be a unique string and citation is text/markdown/HTML.
+        Citations corresponding to keys used can be created by `.set_citations` method."""
         if here:
             return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial') # Just write here
         
@@ -374,7 +378,7 @@ class LiveSlides(BaseLiveSlides):
                     if (key in self._slides_dict) and (self._slides_dict[key]._markdown == (_frames[0] + obj)):
                         pass # Do nothing if already exists
                     else:
-                        with build_slide(self, key):
+                        with _build_slide(self, key):
                             parse_xmd(_frames[0], display_inline = True, rich_outputs = False) # This goes with every frame
                             parse_xmd(obj, display_inline = True, rich_outputs = False)
                     
@@ -396,7 +400,7 @@ class LiveSlides(BaseLiveSlides):
         
         self._current_slide = f'{slide_number}'
         
-        with build_slide(self, self._current_slide, props_dict=props_dict) as cap:
+        with _build_slide(self, self._current_slide, props_dict=props_dict) as cap:
             yield cap # Useful to use later
 
     
@@ -471,7 +475,7 @@ class LiveSlides(BaseLiveSlides):
                     
             for i, obj in enumerate(_new_objs,start=1):
                 self._current_slide = f'{slide_number}.{i}' # Update current slide
-                with build_slide(self, f'{slide_number}.{i}', props_dict= props_dict):
+                with _build_slide(self, f'{slide_number}.{i}', props_dict= props_dict):
                     self.write(self.format_css('.SlideArea',height = frame_height))
                     func(obj) # call function with obj
             

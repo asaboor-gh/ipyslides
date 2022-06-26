@@ -1,7 +1,5 @@
 "Inherit LiveSlides class from here. It adds useful attributes and methods."
-import os, io, re
-from IPython import get_ipython
-from contextlib import suppress
+import os, re, textwrap
 from .widgets import Widgets
 from .screenshot import ScreenShot
 from .navigation import Navigation
@@ -105,20 +103,12 @@ class BaseLiveSlides:
             self.widgets.htmls.toast.value = ''
             self.notify(content = toast['func'](), **toast['kwargs'])
     
-    @property
-    def md_content(self):
-        return self.colored('`md_content` attribute is deprecated. Use `self[key or index].markdown` instead.',fg='red',bg='white')
-    
-    @property
-    def slides(self):
-        return self.colored('`slides` attribute is deprecated. Use `self[key or index]` to access a slide instead.',fg='red',bg='white')
-    
-    def from_markdown(self, path, trusted = False):
-        """You can create slides from a markdown file or StringIO object as well. It creates slides 1,2,3... in order.
-        You should add more slides by higher number than the number of slides in the file, or it will overwrite.
+    def from_markdown(self, start, file_or_str, trusted = False):
+        """You can create slides from a markdown file or tex block as well. It creates slides start + (0,1,2,3...) in order.
+        You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
         Frames separator should be ___ (three underscores) in start of line. All markdown before first ___ will be written on all frames.
-        **Markdown File Content**
+        **Markdown Content**
         ```markdown
         # Talk Title
         ---
@@ -143,29 +133,33 @@ class BaseLiveSlides:
         ___
         ## Second Frame
         ```
-        This will create two slides along with title page. Second slide will have two frames.
+        This will create two slides along with title page if start = 0. Second slide will have two frames.
         
-        Content of each slide from imported file is stored as .markdown attribute to slide. You can append content to it like this:
+        Markdown content of each slide is stored as .markdown attribute to slide. You can append content to it like this:
         ```python
         with slides.slide(2):
             self.parse_xmd(slides[2].markdown) # Instead of write, parse_xmd take cares of code blocks
             plot_something()
             write_something()
         ```
-        
-        > Note: With this method you can add more slides besides created ones.
-        
         Starting from version 1.6.2, only those slides will be updated whose content is changed from last run of this function. This increases speed.
+        
+        **New in 1.7.2**:     
+        You can add slides from text blocks/file with a start number. It will create slides at numbers `start, start + 1, .... start + N+1` if there are `N` `---` (three dashes) separators in the text.
         """
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
+        if not isinstance(file_or_str, str): #check path later or it will throw error
+            raise ValueError(f"file_or_str expects a makrdown file path(str) or text block, got {file_or_str!r}")
+        
         if not trusted:
-            if isinstance(path, io.StringIO):
-                lines = path.readlines()
-            else:
-                with open(path, 'r') as f:
+            try: # Try becuase long string will through error for path
+                os.path.isfile(file_or_str) # check if file exists then check code blocks
+                with open(file_or_str, 'r') as f:
                     lines = f.readlines()
+            except:
+                lines = file_or_str.splitlines()
                     
             untrusted_lines = []
             for i, line in enumerate(lines, start = 1):
@@ -173,41 +167,31 @@ class BaseLiveSlides:
                     untrusted_lines.append(i)
             
             if untrusted_lines:
-                raise Exception(f'File {path!r} may contain unsafe code to be executed at lines: {untrusted_lines}'
+                raise Exception(f'Given file/text may contain unsafe code to be executed at lines: {untrusted_lines}'
                     ' Verify code is safe and try again with argument `trusted = True`.'
                     ' Never run files that you did not create yourself or not verified by you.')
         
-        if not (isinstance(path, io.StringIO) or os.path.isfile(path)): #check path later or it will throw error
-            raise ValueError(f"File {path!r} does not exist or not a io.StringIO object.")
+        try:
+            if os.path.isfile(file_or_str):
+                with open(file_or_str, 'r') as f:
+                    chunks = _parse_markdown_text(f.read())
+            elif file_or_str.endswith('.md'): # File but does not exits
+                raise FileNotFoundError(f'File {file_or_str} does not exist.')
+            else:
+                chunks = _parse_markdown_text(file_or_str)
+        except:
+            chunks = _parse_markdown_text(file_or_str)
         
-        if isinstance(path, io.StringIO):
-            chunks = _parse_md_file(path)
-        else:
-            with open(path, 'r') as fp:
-                chunks = _parse_md_file(fp)
-        
-        if hasattr(self,'_loaded_other') and self._loaded_other:
-            self.clear()
-            self._loaded_other = False
-        
-        self.close_view() # Close any previous view to speed up loading 10x faster on average
-        
-        for i,chunk in enumerate(chunks):
+        for i,chunk in enumerate(chunks, start = start):
             # Must run under this to create frames with triple underscore (___)
             self.shell.run_cell_magic('slide', f'{i} -m', chunk)
-        
-        self._slideindex = 0 # Go to title   
-        return self
+            
     
-    def _clean_markdown_loaded(self):
-        "Use in other than from_markdown methods."
-        self.clear() # Clear previous content
-        self._loaded_other = True
     
     def demo(self):
         """Demo slides with a variety of content."""
         self.close_view() # Close any previous view to speed up loading 10x faster on average
-        self._clean_markdown_loaded()
+        self.clear() # Clear previous content
         
         import runpy
         file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_demo.py') # Relative path to this file
@@ -247,7 +231,7 @@ class BaseLiveSlides:
     def load_docs(self):
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
-        self._clean_markdown_loaded()
+        self.clear() # Clear previous content
         
         from ..core import LiveSlides
         from ..__version__ import __version__
@@ -261,7 +245,7 @@ class BaseLiveSlides:
         with self.slide(1):
             self.write('## Adding Slides')
             self.write('Besides functions below, you can add slides with `%%title`,  `%%slide <slide number>` and `%%slide <slide number>` -m` magics as well.\n{.Note .Info}')
-            self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides')])
+            self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides'),self.doc(self.from_markdown,'LiveSlides')])
         
         with self.slide(2):
             self.write('## Adding Content')
@@ -283,7 +267,7 @@ class BaseLiveSlides:
                 
         with self.slide(6):
             self.write('## Useful Functions for Rich Content')
-            members = ['alert','block', 'bokeh2html', 'capture_std', 'citations', 'citations_html', 'cite',
+            members = ['alert','block', 'bokeh2html', 'capture_std', 'citations_html', 'cite',
                        'colored', 'cols', 'details', 'doc', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
                        'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'set_slide_css']
@@ -298,20 +282,26 @@ class BaseLiveSlides:
                 self.css_styles.display()
                 c.display()
         
+        self.from_markdown(8, '''
+        ## Highlighting Code
+        You can **highlight**{.Error} code using `highlight` function or within markdown like this:
+        ```python
+        import ipyslides as isd
+        ```
+        ```javascript
+        import React, { Component } from "react";
+        ```
+        ''', trusted= True)
+        
+        # Update with source of slide
         with self.slide(8):
-            self.write('## Highlighting Code')
-            with self.source.context() as s:
-                self.write(('You can **highlight**{.Error} code using `highlight` function or within markdown like this: \n'
-                        '```python\n'
-                        'import ipyslides as isd\n```\n'
-                        '```javascript\n'
-                        'import React, { Component } from "react";\n```\n'))
-                s.display()
+            self.parse_xmd(self[8].markdown)
+            self.source.from_string(self[8].markdown,language='markdown').display()
         
         with self.slide(9):
             self.write('## Loading from File/Exporting to HTML')
-            self.write('You can parse and view a markdown file with `ipyslides.display_markdown` as well. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
-            self.write([self.doc(self.from_markdown,'LiveSlides'), 
+            self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
+            self.write([self.doc(self.from_markdown,'LiveSlides'),
                         self.doc(self.demo,'LiveSlides'), 
                         self.doc(self.load_docs,'LiveSlides'),
                         self.doc(self.export.slides,'LiveSlides.export'),
@@ -329,9 +319,9 @@ class BaseLiveSlides:
         return self
 
 
-def _parse_md_file(fp):
-    "Parse a Markdown file or StringIO to put in slides and returns text for title and each slide."
-    lines = fp.readlines()
+def _parse_markdown_text(text_block):
+    "Parses a Markdown text block and returns text for title and each slide."
+    lines = textwrap.dedent(text_block).splitlines() # Remove overall indentation
     breaks = [-1] # start, will add +1 next
     for i,line in enumerate(lines):
         if line and line.strip() =='---':
@@ -339,5 +329,5 @@ def _parse_md_file(fp):
     breaks.append(len(lines)) # Last one
     
     ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
-    return [''.join(lines[x.start:x.stop]) for x in ranges]
+    return ['\n'.join(lines[x.start:x.stop]) for x in ranges]
         
