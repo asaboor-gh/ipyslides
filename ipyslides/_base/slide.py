@@ -46,7 +46,7 @@ class Slide:
         with self._widget:
             display(*self.contents)
             
-            if self._citations and self._app._citations_per_slide:
+            if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr').display()
                 for citation in self._citations.values():
                     citation.html.display()
@@ -63,7 +63,7 @@ class Slide:
             raise ValueError(f'expects non-negative index or -1 to append at end, got {index}')
         
         with capture_output() as captured:
-            yield
+            yield 
         
         outputs = captured.outputs
         if captured.stdout:
@@ -130,6 +130,18 @@ class Slide:
                 
         middle_outputs = [o for out in middle_outputs for o in out] # Flatten list
         return tuple(self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
+    
+    @property
+    def source(self):
+        "Return source code of this slide, markdwon or python."
+        if hasattr(self, '_markdown'):
+            return self._app.source.from_string(self._markdown, language = 'markdown')
+        elif hasattr(self, '_cell_code'):
+            return self._app.source.from_string(self._cell_code, language = 'python')
+        else:
+            return self._app.source.from_string('Source of a slide only exits if it is created using `from_markdown` or `%%slide` magic.\n'
+                'For `@LiveSlide.frames` and `with LiveSlides.slide` contextmanager, use `with LiveSlides.source.context`  to capture source.',
+                language = 'markdown')
     
     def show(self):
         self.update_display() # Needs to not discard widgets there

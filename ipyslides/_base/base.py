@@ -185,7 +185,10 @@ class BaseLiveSlides:
         for i,chunk in enumerate(chunks, start = start):
             # Must run under this to create frames with triple underscore (___)
             self.shell.run_cell_magic('slide', f'{i} -m', chunk)
-            
+        
+        # Return refrence to slides for quick update
+        handles = [[self._slides_dict[key] for key in self._slides_dict.keys() if key.startswith(f'{i}')] for i in range(start, start + len(chunks))]
+        return tuple([h for handle in handles for h in handle]) # flatten list of lists
     
     
     def demo(self):
@@ -282,7 +285,7 @@ class BaseLiveSlides:
                 self.css_styles.display()
                 c.display()
         
-        self.from_markdown(8, '''
+        s8, = self.from_markdown(8, '''
         ## Highlighting Code
         You can **highlight**{.Error} code using `highlight` function or within markdown like this:
         ```python
@@ -294,9 +297,8 @@ class BaseLiveSlides:
         ''', trusted= True)
         
         # Update with source of slide
-        with self.slide(8):
-            self.parse_xmd(self[8].markdown)
-            self.source.from_string(self[8].markdown,language='markdown').display()
+        with s8.insert(-1): # Insert source code
+            s8.source.display()
         
         with self.slide(9):
             self.write('## Loading from File/Exporting to HTML')

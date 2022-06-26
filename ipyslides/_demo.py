@@ -11,11 +11,11 @@ from ipyslides._base.intro import how_to_slide, logo_svg
 slides = globals()['slides'] # gloabals are update from calling function demo()
 slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
 slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
-slides._citations_per_slide = False # This could be changed by other functions
+slides._citation_mode = 'global' # This could be changed by other functions
 slides.set_citations({'pf': 'This is refernce to FigureWidget using `slides.cite` command'})
 
 #Demo for loading slides from a file or text block 
-slides.from_markdown(0,'\n'.join(how_to_slide) + '''\n---
+s0, s1, s2 = slides.from_markdown(0,'\n'.join(how_to_slide) + '''\n---
 # Slide 1 {.Success}
 ```python run source
 import ipyslides as isd
@@ -27,18 +27,21 @@ Version: {{version}} as executed from below code in markdown.
 ---
 # Slide 2 {.Success}
 Created using `%%slide 2 -m` with markdown only
+citation[slide2]:This is reference created using markdown:
+cite:slide2: Refrence to this will show at end
 ```multicol
 # Column A
 ||### Sub column A {.Success}||### Sub column B ||
 +++
 # Column B
 ```
+notes:This is note created using markdown:
 That version from last slide is still in memory. See it is there {{version}}
 ''',trusted=True)
 
 with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context(style='monokai', color='white', className='Mono') as s:
-        slides.parse_xmd(slides[1].markdown)
+        slides.parse_xmd(s1.markdown) #s1 was assigned as `s0, s1, s2 = slides.from_markdown...` in start.
         write('## I am created using `with slides.slide(1)` context manager!')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
     s.focus_lines([0]).display()  #focus on line 0 
@@ -47,7 +50,7 @@ with slides.slide(1): #slide 1 will be modified with old and new content
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
 #slide 2    
-slides.shell.run_cell_magic('slide','2 -m',slides[2].markdown)
+slides.shell.run_cell_magic('slide','2 -m',s2.markdown)
 #slide 3
 online_sources = '''# IPySlides Online Running Sources 
 Launch as voila slides (may not work as expected [^1])[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides.ipynb)

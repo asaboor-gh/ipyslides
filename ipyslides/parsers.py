@@ -4,12 +4,10 @@ Useful while writing markdown slides, without intefering with the rest of the co
 New in 1.4.6
 """
 from .core import _private_instance as __pi
-cite            = __pi.cite
 citations_html  = __pi.citations_html
 set_slide_css   = __pi.set_slide_css
 notify          = __pi.notify
 notify_later    = __pi.notify_later
-insert_notes    = __pi.notes.insert
 parse_xmd       = __pi.parse_xmd
 write           = __pi.write
 iwrite          = __pi.iwrite
@@ -21,7 +19,7 @@ highlight       = __pi.highlight
 markdown_callables = __pi.markdown_callables
 serializer      = __pi.serializer
 
-__all__ = ['cite', 'write_citations', 'notify', 'notify_later', 'insert_notes', 'parse_xmd', 'write', 'iwrite', 'source', 'css_styles', 'plt2html', 'bokeh2html', 'highlight']
+__all__ = ['cite', 'write_citations', 'notify', 'notify_later', 'parse_xmd', 'write', 'iwrite', 'source', 'css_styles', 'plt2html', 'bokeh2html', 'highlight']
 from .utils import *
 from .utils import __all__ as __all_utils
 

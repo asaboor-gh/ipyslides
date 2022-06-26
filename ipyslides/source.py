@@ -8,6 +8,7 @@ import inspect
 import pygments
 
 from contextlib import contextmanager, suppress
+from IPython.display import display
 
 from .formatter import highlight, _HTML
     
@@ -27,6 +28,16 @@ class _Source(_HTML):
     def raw(self, value):
         "Set raw source code."
         self._raw = value
+    
+    def display(self,collaped = False):
+        "Display source object in IPython notebook."
+        if collaped:
+            return _HTML(f"""<details style='max-height:100%;overflow:auto;'>
+                <summary>Show Code</summary>
+                {self.value}
+                </details>""").display()
+        else:
+            return display(self) # Without collapsed
 
     def show_lines(self, lines):
         "Return source object with selected lines from list/tuple/range of lines."
@@ -132,7 +143,7 @@ class Source:
     @classmethod
     @contextmanager 
     def context(cls, **kwargs): 
-        """Execute and displays source code in the context manager. kwargs are passed to `ipyslides.formatter.highlight` function.
+        """Execute and displays source code in the context manager. `kwargs` are passed to `ipyslides.formatter.highlight` function.
         Useful when source is written inside context manager itself.
         
         **Usage**:

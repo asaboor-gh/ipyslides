@@ -85,7 +85,7 @@ class LiveSlides(BaseLiveSlides):
             
             self.shell.user_ns['pprint'] = pprint
         
-        self._citations_per_slide = False # If citations are per slide or just once       
+        self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
@@ -155,10 +155,16 @@ class LiveSlides(BaseLiveSlides):
         self._slides_dict = {} # Clear slides
         self.refresh() # Clear interface too
     
-    def cite(self, key, here = False):
+    def cite(self, key):
         """Add citation in presentation, key should be a unique string and citation is text/markdown/HTML.
-        Citations corresponding to keys used can be created by `.set_citations` method."""
-        if here:
+        Citations corresponding to keys used can be created by `.set_citations` method.
+        
+        **New in 1.7.2**      
+        In Markdown, citations can be created by using `cite:key:` syntax and 
+        can be set using `citation[key] = text` syntax. If citation_mode is global, they can be shown using `citations:citation title` syntax.
+        
+        """
+        if self._citation_mode == 'inline':
             return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial') # Just write here
         
         current_slide = self._slides_dict[self._current_slide] # Get current slide, may not be refreshed yet
@@ -166,7 +172,7 @@ class LiveSlides(BaseLiveSlides):
         current_slide._citations[key] = _cited
         
         # Set _id for citation
-        if self._citations_per_slide:
+        if self._citation_mode == 'footnote':
             _cited._id = str(list(current_slide.citations.keys()).index(key) + 1) # Get index of key
         else:
             # Find number of citations created till now
@@ -182,7 +188,7 @@ class LiveSlides(BaseLiveSlides):
     def set_citations(self, citations_dict):
         "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
         self._citations_dict.update(citations_dict)
-        if self._citations_per_slide:
+        if self._citation_mode == 'footnote':
             for slide in self[:]:
                 if slide.citations:
                     slide.update_display()
@@ -190,11 +196,15 @@ class LiveSlides(BaseLiveSlides):
             self.notify('Citations updated, please rerun the slide with references to see effect.')
             
     def citations_html(self,title='### References'): 
-        "Write all citations collected via `cite` method in the end of the presentation."    
-        if self._citations_per_slide:
-            raise ValueError("Citations are consumed per slide.\n" 
-                             "If you want to display them in the end, "
-                             "use `citations_per_slide = False` during initialization of `LiveSlides`.")
+        """Write all citations collected via `cite` method in the end of the presentation.
+        
+        **New in 1.7.2**      
+        In markdown, use `citations: citations title:` syntax.
+        """    
+        if self._citation_mode != 'global':
+            return self.html("p", "Citations are consumed per slide or inline.\n" 
+                "If you want to display them at the end, "
+                "use `citation_mode = 'global` during initialization of `LiveSlides`.")
             
         _html = _HTML(self.parse_xmd(title + '\n',display_inline=False, rich_outputs = False))
         
@@ -204,7 +214,10 @@ class LiveSlides(BaseLiveSlides):
         return _html
         
     def write_citations(self,title='### References'):
-        "Write all citations collected via `cite` method in the end of the presentation."
+        """Write all citations collected via `cite` method in the end of the presentation.
+        
+        **New in 1.7.2**      
+        In markdown, use `citations:citations title:` syntax."""
         return self.citations_html(title = title).display()
         
     def show(self, fix_buttons = False): 
@@ -352,41 +365,79 @@ class LiveSlides(BaseLiveSlides):
             ---------------- Cell ----------------
             %%slide 2 -m
             Everything here and below is treated as markdown, not python code.
-            (1.5.5+) If Markdown is separated by three underscores (___) on it's own line, multiple frames are created.
-            Markdown before the first three underscores is written on all frames. This is equivalent to `@LiveSlides.frames` decorator.
+            **New in 1.7.2**       
+            citation[key]:citation text that will be applied to below key:
+            cite:key:
+            notes:This is a note for current slide:
+            citations:This is citations title:
+            
+            
+        (1.5.5+) If Markdown is separated by three underscores (___) on it's own line, multiple frames are created.
+        Markdown before the first three underscores is written on all frames. This is equivalent to `@LiveSlides.frames` decorator.
         """
         line = line.strip().split() #VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
             raise ValueError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
         
-        slide_number = int(line[0])
+        self._current_slide = line[0] # Works as a key for the _slides_dict
+        
+        # NOTE: DO NOT bypass creating new slides with same old markdown, some varibale
+        #      may be changed in any of the cells.
+        
+        def resolve_objs(text_chunk):
+            # These objects should be only resolved under slide as they need slide reference
+            # cite:key:
+            all_matches = re.findall(r'cite:(.*?):', text_chunk, flags = re.DOTALL)
+            for match in all_matches:
+                key = match.strip()
+                text_chunk = text_chunk.replace('cite:' + match + ':', self.cite(key), 1)
+            
+            # notes:This is a note for current slide:
+            all_matches = re.findall(r'notes:(.*?):', text_chunk, flags = re.DOTALL)
+            for match in all_matches:
+                self.notes.insert(match)
+                text_chunk = text_chunk.replace('notes:' + match + ':', '', 1)
+            
+            # citations:This is citations title:
+            all_matches = re.findall(r'citations:(.*?):', text_chunk, flags = re.DOTALL)
+            for match in all_matches:
+                citations = self.citations_html(title = match).value
+                text_chunk = text_chunk.replace('citations:' + match + ':', citations, 1)
+            
+            # citation[key]:citation content:
+            all_matches = re.findall(r'citation\[(.*?)\]:(.*?):', text_chunk, flags = re.DOTALL)
+            citations = {}
+            for match in all_matches:
+                citations[match[0].strip()] = match[1]
+                text_chunk = text_chunk.replace('citation[' + match[0] + ']:' + match[1] + ':', '', 1)
+            
+            self.set_citations(citations)
+            return text_chunk
+            
         
         if '-m' in line[1:]:
             _frames = re.split(r'^___$|^___\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
             if len(_frames) == 1:
-                if (line[0] in self._slides_dict) and (self._slides_dict[line[0]]._markdown == cell):
-                    pass # Do nothing if already exists
-                else:
-                    with self.slide(slide_number):
-                        parse_xmd(cell, display_inline = True, rich_outputs = False)
+                with _build_slide(self, self._current_slide):
+                    parse_xmd(resolve_objs(cell), display_inline = True, rich_outputs = False)
                 
-                self._slides_dict[line[0]]._markdown = cell # Update markdown
+                self._slides_dict[self._current_slide]._markdown = cell # Update markdown
                 
             else:
                 for i, obj in enumerate(_frames[1:], start = 1):
-                    key = f'{slide_number}.{i}'
-                    if (key in self._slides_dict) and (self._slides_dict[key]._markdown == (_frames[0] + obj)):
-                        pass # Do nothing if already exists
-                    else:
-                        with _build_slide(self, key):
-                            parse_xmd(_frames[0], display_inline = True, rich_outputs = False) # This goes with every frame
-                            parse_xmd(obj, display_inline = True, rich_outputs = False)
-                    
-                    self._slides_dict[key]._markdown = (_frames[0] + obj) # Update markdown      
+                    self._current_slide = f'{line[0]}.{i}'
+                    with _build_slide(self, self._current_slide):
+                        chunk = resolve_objs(_frames[0] + '\n' + obj)
+                        parse_xmd(chunk, display_inline = True, rich_outputs = False) 
+                        
+                    self._slides_dict[self._current_slide]._markdown = (_frames[0] + obj) # Update markdown      
                     
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            with self.slide(slide_number):
+            with _build_slide(self, self._current_slide):
                 self.shell.run_cell(cell)
+            
+            self._slides_dict[self._current_slide]._cell_code = cell # Update cell code
+                
                     
     
     @contextmanager
@@ -556,7 +607,7 @@ class LiveSlides:
     - `ls.pre_compute_display` is deprecated and slides now are computed on-demand with each new slide.
     """
     def __new__(cls,
-                citations_per_slide = False,
+                citation_mode = 'global',
                 center        = True, 
                 content_width = '90%', 
                 footer_text   = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
@@ -571,7 +622,11 @@ class LiveSlides:
                 ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         _private_instance.__doc__ = cls.__doc__ # copy docstring
-        _private_instance._citations_per_slide = citations_per_slide
+        
+        if citation_mode not in ['global', 'inline', 'footnote']:
+            raise ValueError(f'citation_mode must be one of "global", "inline", "footnote" but got {citation_mode}')
+        
+        _private_instance._citation_mode = citation_mode
         _private_instance.settings.set_layout(center = center, content_width = content_width)
         _private_instance.settings.set_footer(text = footer_text, show_date = show_date, show_slideno = show_slideno)
         _private_instance.settings.set_logo(src = logo_src,width = 60)

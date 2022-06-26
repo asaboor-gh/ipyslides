@@ -19,7 +19,11 @@ class Notes:
         self.btn_timer.observe(self.__timeit,names=['value'])
         
     def insert(self, content):
-        "Add notes to current slide. Content could be any object except javascript and interactive widgets."
+        """Add notes to current slide. Content could be any object except javascript and interactive widgets.
+        Alternatively you can add using `%notes notes content` magic.
+        
+        **New in 1.7.2**      
+        In markdown, you can use `notes:notes content:`, focus on two colons syntax."""
         self.main._slides_dict[self.main._current_slide].notes = self.main.format_html(content)._repr_html_()
     
     def _display(self, html_str):

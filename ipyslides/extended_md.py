@@ -30,7 +30,7 @@ from .source import _str2code
 
 _md_extensions = ['tables','footnotes','attr_list'] # For MArkdown Parser
 
-_allowed_funcs = 'cite|citations_html|insert_notes|notes.insert|source.from_callable|source.from_file'
+_allowed_funcs = 'citations_html|source.from_callable|source.from_file'
 _allowed_funcs += '|'.join(['|details','textbox','vspace','image','svg','format_css','alert','colored','raw','plt2html','bokeh2html','doc','sig'])
 
 class _ExtendedMarkdown(Markdown):
