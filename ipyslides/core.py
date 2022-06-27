@@ -1,11 +1,11 @@
-import sys, re
+import sys, re, textwrap
 from contextlib import contextmanager, suppress
 
 from IPython import get_ipython
 from IPython.display import display
 import ipywidgets as ipw
 
-from .extended_md import parse_xmd, _allowed_funcs
+from .extended_md import parse_xmd, _special_funcs
 from .source import Source
 from .writers import write, iwrite
 from .formatter import bokeh2html, plt2html, highlight, _HTML, serializer
@@ -40,7 +40,7 @@ class _Citation:
     def html(self):
         "HTML of this citation"
         value = parse_xmd(
-            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations`'),
+            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations` or @{self._key}&#96;citationvalue&#96; in markdown.'),
             display_inline=False, rich_outputs = False
             ).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
         
@@ -97,13 +97,52 @@ class LiveSlides(BaseLiveSlides):
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
-        self.markdown_callables = tuple(_allowed_funcs.split('|'))
         # All Box of Slides
         self._box =  self.widgets.mainbox
         self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
 
     
+    @property
+    def xmd_syntax(self):
+        "Special syntax for markdown."
+        return _HTML(self.parse_xmd(textwrap.dedent('''
+        ## Extended Markdown
+        Extended syntax for markdown is constructed is constructed to support almost full presentation from Markdown.
+        
+        **Following syntax is available only under `%%slide int -m` or in `from_markdown` function:**
+        
+        - alert`notes&#96;  This is slide notes&#96;`  to add notes to current slide
+        - alert`cite&#96;  key&#96;` to add citation to current slide
+        - alert`@key&#96;  citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;  key&#96;`
+        - alert`citations&#96;  citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
+        - Triple underscore `___` is used to split markdown text in frames. 
+        - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
+        
+        **Other syntax can be used everywhere like under `%%slides int -m`, in `write/iwrite/format_html/parse_xmd/from_markdown` functions:**\n
+        - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
+        - Two side by side columns can be added inline using || Column A || Column B || sytnax.
+        - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
+        ~~~markdown     
+         ```multicol widthA widthB
+         Column A
+         +++
+         Column B
+         ```
+        ~~~
+        
+        - Python code blocks can be exectude by syntax 
+        ~~~markdown
+         ```python run source {.CSS_className}
+         my_var = 'Hello'
+         ```
+        ~~~
+        and source then can be emded with \{\{source\}\} syntax and also \{\{my_var\}\} will show 'Hello'.
+        - Other options include:
+        ''') + '\n' + ', '.join(f'alert`{k}&#96;  {v}&#96;`' for k,v in _special_funcs.items()),
+        display_inline = False
+        ))
+        
     def _on_displayed(self, change):
         self.widgets._exec_js(multi_slides_alert)
         
@@ -160,7 +199,7 @@ class LiveSlides(BaseLiveSlides):
         Citations corresponding to keys used can be created by `.set_citations` method.
         
         **New in 1.7.2**      
-        In Markdown, citations can be created by using `cite:key:` syntax and 
+        In Markdown(under `%%slide int -m` or in `from_markdown`), citations can be created by using `cite:key:` syntax and 
         can be set using `citation[key] = text` syntax. If citation_mode is global, they can be shown using `citations:citation title` syntax.
         
         """
@@ -199,7 +238,7 @@ class LiveSlides(BaseLiveSlides):
         """Write all citations collected via `cite` method in the end of the presentation.
         
         **New in 1.7.2**      
-        In markdown, use `citations: citations title:` syntax.
+        In markdown (under `%%slide int -m` or in `from_markdown`), use `citations: citations title:` syntax.
         """    
         if self._citation_mode != 'global':
             return self.html("p", "Citations are consumed per slide or inline.\n" 
@@ -217,7 +256,7 @@ class LiveSlides(BaseLiveSlides):
         """Write all citations collected via `cite` method in the end of the presentation.
         
         **New in 1.7.2**      
-        In markdown, use `citations:citations title:` syntax."""
+        In markdown (under `%%slide int -m` or in `from_markdown`), use `citations:citations title:` syntax."""
         return self.citations_html(title = title).display()
         
     def show(self, fix_buttons = False): 
@@ -365,12 +404,8 @@ class LiveSlides(BaseLiveSlides):
             ---------------- Cell ----------------
             %%slide 2 -m
             Everything here and below is treated as markdown, not python code.
-            **New in 1.7.2**       
-            citation[key]:citation text that will be applied to below key:
-            cite:key:
-            notes:This is a note for current slide:
-            citations:This is citations title:
-            
+            **New in 1.7.2**    
+            Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
             
         (1.5.5+) If Markdown is separated by three underscores (___) on it's own line, multiple frames are created.
         Markdown before the first three underscores is written on all frames. This is equivalent to `@LiveSlides.frames` decorator.
@@ -387,29 +422,30 @@ class LiveSlides(BaseLiveSlides):
         def resolve_objs(text_chunk):
             # These objects should be only resolved under slide as they need slide reference
             # cite:key:
-            all_matches = re.findall(r'cite:(.*?):', text_chunk, flags = re.DOTALL)
+            all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
             for match in all_matches:
                 key = match.strip()
-                text_chunk = text_chunk.replace('cite:' + match + ':', self.cite(key), 1)
+                text_chunk = text_chunk.replace(f'cite`{match}`', self.cite(key), 1)
             
             # notes:This is a note for current slide:
-            all_matches = re.findall(r'notes:(.*?):', text_chunk, flags = re.DOTALL)
+            all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL)
             for match in all_matches:
                 self.notes.insert(match)
-                text_chunk = text_chunk.replace('notes:' + match + ':', '', 1)
+                text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
             
             # citations:This is citations title:
-            all_matches = re.findall(r'citations:(.*?):', text_chunk, flags = re.DOTALL)
+            all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
             for match in all_matches:
                 citations = self.citations_html(title = match).value
-                text_chunk = text_chunk.replace('citations:' + match + ':', citations, 1)
+                text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
+                
             
-            # citation[key]:citation content:
-            all_matches = re.findall(r'citation\[(.*?)\]:(.*?):', text_chunk, flags = re.DOTALL)
+            # @key:citation content:
+            all_matches = re.findall(r'@(.*?)\`(.*?)\`', text_chunk, flags = re.DOTALL)
             citations = {}
             for match in all_matches:
                 citations[match[0].strip()] = match[1]
-                text_chunk = text_chunk.replace('citation[' + match[0] + ']:' + match[1] + ':', '', 1)
+                text_chunk = text_chunk.replace(f'@{match[0]}`{match[1]}`', '', 1)
             
             self.set_citations(citations)
             return text_chunk
@@ -417,28 +453,30 @@ class LiveSlides(BaseLiveSlides):
         
         if '-m' in line[1:]:
             _frames = re.split(r'^___$|^___\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
-            if len(_frames) == 1:
-                with _build_slide(self, self._current_slide):
-                    parse_xmd(resolve_objs(cell), display_inline = True, rich_outputs = False)
+            if len(_frames) > 1:
+                _frames = [_frames[0] + '\n' + obj for obj in _frames[1:]]
                 
-                self._slides_dict[self._current_slide]._markdown = cell # Update markdown
-                
-            else:
-                for i, obj in enumerate(_frames[1:], start = 1):
+            for i, obj in enumerate(_frames, start = 1):
+                if len(_frames) > 1: # Otherwise it's already been done
                     self._current_slide = f'{line[0]}.{i}'
-                    with _build_slide(self, self._current_slide):
-                        chunk = resolve_objs(_frames[0] + '\n' + obj)
-                        parse_xmd(chunk, display_inline = True, rich_outputs = False) 
-                        
-                    self._slides_dict[self._current_slide]._markdown = (_frames[0] + obj) # Update markdown      
                     
+                with _build_slide(self, self._current_slide) as s:
+                    chunk = resolve_objs(obj)
+                    s.clear_display(wait = True) # It piles up otherwise due to replacements
+                    parse_xmd(chunk, display_inline = True, rich_outputs = False) 
+                    
+                s._markdown = chunk # Update markdown after some replacements like cite`key`     
+                with suppress(BaseException):
+                    delattr(s, '_cell_code')
+                        
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            with _build_slide(self, self._current_slide):
+            with _build_slide(self, self._current_slide) as s:
                 self.shell.run_cell(cell)
             
-            self._slides_dict[self._current_slide]._cell_code = cell # Update cell code
-                
-                    
+            s._cell_code = cell # Update cell code
+            with suppress(BaseException):
+                delattr(s, '_markdown')
+                   
     
     @contextmanager
     def slide(self,slide_number,props_dict = {}):
@@ -594,6 +632,9 @@ class LiveSlides:
     This is useful to fill-in content in document that is not required in slides.
     
     > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
+    
+    **New in 1.7.2**    
+    Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
     
     ### Changes in version 1.7.0+
     - Slides from markdown file of `%%slide slide_number -m` only run again if content of slide changes. That makes reloading fast.

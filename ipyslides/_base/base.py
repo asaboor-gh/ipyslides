@@ -68,6 +68,17 @@ class BaseLiveSlides:
         className = 'slides-only'       Text will not appear in exported html with `build_report`
         className = 'report-only'       Text will not appear on slides. Useful to fill content in report. 
         ''',className= 'PyRepr')
+        
+    def source_code(self, title = 'Source Code'):
+        "Return source code of all slides created using `from_markdown` or `%%slide`."
+        sources = []
+        for slide in self[:]:
+            if hasattr(slide, '_markdown') and slide._markdown:
+                sources.append(self.source.from_string(slide._markdown, language= 'markdown', name=f'Markdown: Slide {slide.label}'))
+            elif hasattr(slide, '_cell_code'):
+                sources.append(self.source.from_string(slide._cell_code, language= 'python', name=f'Python: Slide {slide.label}'))
+        
+        return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
 
     
     def notify_later(self, title='IPySlides Notification', timeout=5):
@@ -145,7 +156,9 @@ class BaseLiveSlides:
         Starting from version 1.6.2, only those slides will be updated whose content is changed from last run of this function. This increases speed.
         
         **New in 1.7.2**:     
-        You can add slides from text blocks/file with a start number. It will create slides at numbers `start, start + 1, .... start + N+1` if there are `N` `---` (three dashes) separators in the text.
+        - You can add slides from text blocks/file with a start number. 
+        - It will create slides at numbers `start, start + 1, .... start + N+1` if there are `N` `---` (three dashes) separators in the text.
+        - Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
         """
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
@@ -163,7 +176,7 @@ class BaseLiveSlides:
                     
             untrusted_lines = []
             for i, line in enumerate(lines, start = 1):
-                if re.match(r'{{|```python\s+run', line):
+                if re.match(r'```python\s+run', line):
                     untrusted_lines.append(i)
             
             if untrusted_lines:
@@ -253,6 +266,7 @@ class BaseLiveSlides:
         with self.slide(2):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.Note .Info}')
+            self.xmd_syntax.display() # This will display information about Markdown extended syntax
             self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides'), self.doc(self.parse_xmd,'LiveSlides'),self.doc(self.cite,'LiveSlides')])
         
         with self.slide(3):

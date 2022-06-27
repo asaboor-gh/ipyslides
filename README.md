@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.7.1
+> pip install ipyslides >= 1.7.2
 ```
 For development install, clone this repository and then
 ```shell
@@ -28,6 +28,7 @@ For development install, clone this repository and then
 import ipyslides as isd 
 ls = isd.LiveSlides(**settings_kwargs) # settings_kwargs are added in 1.4.1
 ls.settings.set_animation('zoom') # could be as animaation='zoom' in settings_kwargs in 1.4.1 +
+ls.special_syntax # Gives you information what you can do with markdown 1.7.2+
 #------------ Cell 2 --------------------
 %%title
 # create a rich content title page
@@ -62,7 +63,7 @@ frames separator should be ___ (three underscores)
 ```python
 ls.from_markdown(path)
 with ls.slide(2):
-    write(ls.md_content[2]) # write content of slide 2 from file
+    write(ls[2].markdown) # write content of slide 2 from file
     plot_something() # Add other things to same file
     write_something()
 ```

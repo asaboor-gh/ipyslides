@@ -36,19 +36,14 @@ ls.set_animation(main='zoom')
 ```
 ```python
 %%slide 1 -m # new in 1.4.6
-**Markdown here with extended options. Nested blocks are not supported**
+**Markdown here with extended options (see `ls.xmd_syntax` for info). Nested blocks are not supported**
  ```multicol 30 70 .Success
  less content
  +++
  more content
  ```
 ```
-**Markdown here with extended options. Nested blocks are not supported**
-```multicol 30 70 .Success
-less content
-+++
-more content
-```
+
 ```python run source
 x = 1 + 2
 print(x) # will be printed on slide in somehwewere top as print appears first of all. 

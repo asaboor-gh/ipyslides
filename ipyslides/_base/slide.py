@@ -37,12 +37,11 @@ class Slide:
         
     def __repr__(self):
         md = f'{self.markdown[:15]}...' if self.markdown else ''
-        return f'Slide(slide_number = {self.slide_number}, key = {self.label!r}, index = {self._index}, markdown = {md!r})'
+        return f'Slide(slide_number = {self.slide_number}, label = {self.label!r}, index = {self._index}, markdown = {md!r})'
     
     def update_display(self):
         "Update display of this slide."
-        self._app._slidelabel = self.label # Go there to see effects
-        self._widget.clear_output()
+        self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
         with self._widget:
             display(*self.contents)
             
@@ -50,6 +49,11 @@ class Slide:
                 html('hr').display()
                 for citation in self._citations.values():
                     citation.html.display()
+    
+    def clear_display(self, wait = False):
+        "Clear display of this slide."
+        self._app._slidelabel = self.label # Go there to see effects
+        self._widget.clear_output(wait = wait)
     
     @contextmanager
     def append(self):
@@ -109,7 +113,7 @@ class Slide:
     
     @property
     def markdown(self):
-        return self._markdown
+        return getattr(self, '_markdown', '') # Not All Slides have markdown
     
     @property
     def animation(self):
@@ -246,9 +250,6 @@ def _build_slide(app, slide_number_str, props_dict = {}):
         if k.startswith('application'): # Widgets in this slide
             _slide._has_widgets = True
             break # No need to check other widgets if one exists
-    
-    if captured.stdout:
-        display(_slide._alert)
     
     if hasattr(_slide, 'new'):
         _slide._rebuild_all()

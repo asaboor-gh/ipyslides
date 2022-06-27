@@ -12,12 +12,13 @@ parse_xmd       = __pi.parse_xmd
 write           = __pi.write
 iwrite          = __pi.iwrite
 source          = __pi.source
+source_code     = __pi.source_code
 css_styles      = __pi.css_styles
 plt2html        = __pi.plt2html
 bokeh2html      = __pi.bokeh2html
 highlight       = __pi.highlight
-markdown_callables = __pi.markdown_callables
 serializer      = __pi.serializer
+
 
 __all__ = ['cite', 'write_citations', 'notify', 'notify_later', 'parse_xmd', 'write', 'iwrite', 'source', 'css_styles', 'plt2html', 'bokeh2html', 'highlight']
 from .utils import *

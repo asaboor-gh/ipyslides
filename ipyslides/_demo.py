@@ -61,7 +61,7 @@ Launch as voila slides (may not work as expected [^1])[![Binder](https://mybinde
 Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
 {.Note .Success}
 
-[^1]: Add references like this per slide. Use slides.cite() to add citations generally.
+[^1]: Add references like this per slide. Use slides.cite() or in markdown cite\`key\` to add citations generally.
 '''
 @slides.frames(3,'## I am created using `@slides.frames`',online_sources)
 def func(obj):

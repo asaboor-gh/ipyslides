@@ -1,4 +1,4 @@
-__all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace',
+__all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
@@ -130,6 +130,13 @@ def enable_zoom(obj):
         return ipw.Box([obj]).add_class('zoom-container')
     except:
         return _HTML(f'<div class="zoom-container">{_fix_repr(obj)}</div>')
+
+def center(obj):
+    "Align a given object at center horizontally, whether a widget or html/IPYthon object"
+    try:
+        return ipw.Box([obj]).add_class('Center')
+    except:
+        return _HTML(f'<div class="Center">{_fix_repr(obj)}</div>')
     
 def html(tag, children = None,className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc.
