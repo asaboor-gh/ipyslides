@@ -65,8 +65,8 @@ class _HhtmlExporter:
         
         New in 1.5.2
         """
-        if self.main.citations and (self.main_citation_mode != 'global'):
-            raise ValueError(f'''Citations in {self.main_citation_mode!r} mode are not supported in report. 
+        if self.main.citations and (self.main._citation_mode != 'global'):
+            raise ValueError(f'''Citations in {self.main._citation_mode!r} mode are not supported in report. 
             Use LiveSLides(citation_mode = "global" and run all slides again before generating report.''')
         
         _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path

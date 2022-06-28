@@ -131,6 +131,7 @@ with slides.slide(9):
         s.display() # s = source.context(style='vs', className="Youtube")
     
 # Data Table
+slides.shell.user_ns['slides'] = slides #Inject variable in IPython shell to use in below cell magic
 slides.shell.run_cell_magic('slide','10',"""import textwrap
 with slides.source.context() as s:
     write('## Data Tables')
