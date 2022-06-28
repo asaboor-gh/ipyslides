@@ -160,7 +160,7 @@ class _ExtendedMarkdown(Markdown):
                 output = user_ns[_match]
             else:
                 raise ValueError(('{!r} is not found or expression is not executable. ' 
-                'Only variables and special syntax is allowed as follows:\n'
+                'Only variables and special syntax is allowed: (See LiveSlides.xmd_syntax for details)\n'
                 '{}').format(_match,'\n'.join(f'{k}:{v}:' for k,v in _special_funcs.items())))
                 
             _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None

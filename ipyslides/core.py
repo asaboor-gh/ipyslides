@@ -1,3 +1,4 @@
+from distutils.command.build import build
 import sys, re, textwrap
 from contextlib import contextmanager, suppress
 
@@ -52,7 +53,6 @@ class _Citation:
         
 class LiveSlides(BaseLiveSlides):
     # This will be overwritten after creating a single object below!
-    __name__ = 'ipyslides.core.LiveSlides' # Used to validate code in markdown, must
     def __init__(self):
         super().__init__() # start Base class in start
         self.shell = SHELL
@@ -86,6 +86,7 @@ class LiveSlides(BaseLiveSlides):
             self.shell.user_ns['pprint'] = pprint
         
         self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
+            
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
@@ -101,7 +102,10 @@ class LiveSlides(BaseLiveSlides):
         self._box =  self.widgets.mainbox
         self._box.on_displayed(self._on_displayed) 
         self._display_box_ = ipw.VBox() # Initialize display box
-
+        
+        # Start with a blank slide to avoid errors
+        with _build_slide(self,'0') as slide:
+            self._slides_dict['0'] = slide
     
     @property
     def xmd_syntax(self):
@@ -114,7 +118,7 @@ class LiveSlides(BaseLiveSlides):
         
         - alert`notes&#96;  This is slide notes&#96;`  to add notes to current slide
         - alert`cite&#96;  key&#96;` to add citation to current slide
-        - alert`@key&#96;  citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;  key&#96;`
+        - alert`$key&#96;  citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;  key&#96;`
         - alert`citations&#96;  citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
         - Triple underscore `___` is used to split markdown text in frames. 
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
@@ -441,11 +445,11 @@ class LiveSlides(BaseLiveSlides):
                 
             
             # @key:citation content:
-            all_matches = re.findall(r'@(.*?)\`(.*?)\`', text_chunk, flags = re.DOTALL)
+            all_matches = re.findall(r'\$(.*?)\`(.*?)\`', text_chunk, flags = re.DOTALL)
             citations = {}
             for match in all_matches:
                 citations[match[0].strip()] = match[1]
-                text_chunk = text_chunk.replace(f'@{match[0]}`{match[1]}`', '', 1)
+                text_chunk = text_chunk.replace(f'${match[0]}`{match[1]}`', '', 1)
             
             self.set_citations(citations)
             return text_chunk
@@ -466,16 +470,14 @@ class LiveSlides(BaseLiveSlides):
                     parse_xmd(chunk, display_inline = True, rich_outputs = False) 
                     
                 s._markdown = chunk # Update markdown after some replacements like cite`key`     
-                with suppress(BaseException):
-                    delattr(s, '_cell_code')
+                s._cell_code = '' # Reset cell code
                         
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, self._current_slide) as s:
                 self.shell.run_cell(cell)
             
             s._cell_code = cell # Update cell code
-            with suppress(BaseException):
-                delattr(s, '_markdown')
+            s._markdown = '' # Reset markdown
                    
     
     @contextmanager
@@ -489,8 +491,11 @@ class LiveSlides(BaseLiveSlides):
         
         self._current_slide = f'{slide_number}'
         
-        with _build_slide(self, self._current_slide, props_dict=props_dict) as cap:
-            yield cap # Useful to use later
+        with _build_slide(self, self._current_slide, props_dict=props_dict) as s:
+            yield s # Useful to use later
+            
+        s._markdown = '' # Reset markdown
+        s._cell_code = '' # Reset cell code
 
     
     def __title(self,line,cell):
@@ -564,9 +569,12 @@ class LiveSlides(BaseLiveSlides):
                     
             for i, obj in enumerate(_new_objs,start=1):
                 self._current_slide = f'{slide_number}.{i}' # Update current slide
-                with _build_slide(self, f'{slide_number}.{i}', props_dict= props_dict):
+                with _build_slide(self, f'{slide_number}.{i}', props_dict= props_dict) as s:
                     self.write(self.format_css('.SlideArea',height = frame_height))
                     func(obj) # call function with obj
+                
+                s._markdown = '' # Reset markdown
+                s._cell_code = '' # Reset cell code
             
         return _frames 
 

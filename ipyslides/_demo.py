@@ -1,9 +1,8 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
-import textwrap, time
-from io import StringIO
-from IPython import get_ipython
+import time
 from ipyslides.utils import textbox
+
 from ipyslides.writers import write, iwrite
 from ipyslides.formatter import libraries, __reprs__
 from ipyslides._base.intro import how_to_slide, logo_svg
@@ -35,22 +34,29 @@ cite:slide2: Refrence to this will show at end
 +++
 # Column B
 ```
-notes:This is note created using markdown:
+notes`This is note created using markdown`
 That version from last slide is still in memory. See it is there {{version}}
 ''',trusted=True)
+
+with s0.insert(0):
+    s0.source.display(collapsed = True)
 
 with slides.slide(1): #slide 1 will be modified with old and new content
     with slides.source.context(style='monokai', color='white', className='Mono') as s:
         slides.parse_xmd(s1.markdown) #s1 was assigned as `s0, s1, s2 = slides.from_markdown...` in start.
-        write('## I am created using `with slides.slide(1)` context manager!')
+        write('#### I am created using `with slides.slide(1)` context manager, '
+            'so I overwrite the previous slide, and you can not see my full code, '
+            'but part of it using `LiveSlides.source.context` context manager.')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
     s.focus_lines([0]).display()  #focus on line 0 
     slides.notes.insert('### Note for slide 1')
     
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
-#slide 2    
-slides.shell.run_cell_magic('slide','2 -m',s2.markdown)
+# Insert source of slide 2    
+with s2.insert(0):
+    s2.source.display(collapsed = True)
+    
 #slide 3
 online_sources = '''# IPySlides Online Running Sources 
 Launch as voila slides (may not work as expected [^1])[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides.ipynb)
@@ -83,7 +89,7 @@ Many will be extentended in future. If an object is not implemented, use `displa
 command to show in Notebook outside `write`.
 """,
 f"""## Interactive Widgets
-### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using `textbox` command</a>')} 
+### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
 or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf')}(reference at end)
 can be included in `iwrite` command as well as other objects that can be passed to `write` with caveat of Javascript.
 {{.Warning}}
@@ -125,17 +131,18 @@ with slides.slide(9):
         s.display() # s = source.context(style='vs', className="Youtube")
     
 # Data Table
-with slides.slide(10):
-    with slides.source.context() as s:
-        write('## Data Tables')
-        write(slides.block_r('Here is Table',
-            textwrap.dedent('''
-            |h1|h2|h3|
-            |---|---|---|
-            |d1|d2|d3|
-            |r1|r2|r3|
-            ''')))
-        s.focus_lines([3,4,5,6]).display()
+slides.shell.run_cell_magic('slide','10',"""import textwrap
+with slides.source.context() as s:
+    write('## Data Tables')
+    write(slides.block_r('Here is Table',
+        textwrap.dedent('''
+        |h1|h2|h3|
+        |---|---|---|
+        |d1|d2|d3|
+        |r1|r2|r3|
+        ''')))
+    s.focus_lines([3,4,5,6]).display()
+""")
 
 # Plotly and Pandas DataFrame only show if you have installed
 with slides.slide(11,props_dict = {'':dict(background='#800000')}):

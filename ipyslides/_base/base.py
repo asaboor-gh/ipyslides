@@ -69,13 +69,13 @@ class BaseLiveSlides:
         className = 'report-only'       Text will not appear on slides. Useful to fill content in report. 
         ''',className= 'PyRepr')
         
-    def source_code(self, title = 'Source Code'):
+    def get_source(self, title = 'Source Code'):
         "Return source code of all slides created using `from_markdown` or `%%slide`."
         sources = []
         for slide in self[:]:
             if hasattr(slide, '_markdown') and slide._markdown:
                 sources.append(self.source.from_string(slide._markdown, language= 'markdown', name=f'Markdown: Slide {slide.label}'))
-            elif hasattr(slide, '_cell_code'):
+            elif hasattr(slide, '_cell_code') and slide._cell_code:
                 sources.append(self.source.from_string(slide._cell_code, language= 'python', name=f'Python: Slide {slide.label}'))
         
         return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
@@ -219,7 +219,11 @@ class BaseLiveSlides:
             slides.write(self.demo)
             slides.source.from_file(file).display()
             
-        with slides.slide(N + 2, props_dict = {'': dict(background='#9ACD32')}):
+        with slides.slide(N + 2):
+            slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.Note .Info}')
+            slides.get_source().display()
+            
+        with slides.slide(N + 3, props_dict = {'': dict(background='#9ACD32')}):
             with slides.source.context() as s:
                 slides.write_citations()
             s.display()
@@ -312,6 +316,9 @@ class BaseLiveSlides:
         
         # Update with source of slide
         with s8.insert(-1): # Insert source code
+            self.write('<hr/>This slide was created with `from_markdown` function. '
+                'So its source code can be inserted in the slide later! '
+                'See at last slide how it was done!<hr/>')
             s8.source.display()
         
         with self.slide(9):

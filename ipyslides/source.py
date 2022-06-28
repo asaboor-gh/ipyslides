@@ -29,9 +29,9 @@ class _Source(_HTML):
         "Set raw source code."
         self._raw = value
     
-    def display(self,collaped = False):
+    def display(self,collapsed = False):
         "Display source object in IPython notebook."
-        if collaped:
+        if collapsed:
             return _HTML(f"""<details style='max-height:100%;overflow:auto;'>
                 <summary>Show Code</summary>
                 {self.value}

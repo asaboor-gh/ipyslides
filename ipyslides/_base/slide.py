@@ -27,10 +27,11 @@ class Slide:
         self._index = None # This should be set in the LiveSlides
         self.set_css(props_dict, notify = False)
         
-        self.notes = '' # Should be update by Notes and LiveSlides calssess
+        self.notes = '' # Should be update by Notes and LiveSlides calss
         self.set_overall_animation()
         self._animation = None
-        self._markdown = '' # Should be update by Markdown and LiveSlides calssess
+        self._markdown = '' # Should be update by LiveSlides
+        self._cell_code = '' # Should be update by LiveSlides 
         self._toast = None # Update from BaseLiveSlides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from LiveSlides
@@ -138,12 +139,13 @@ class Slide:
     @property
     def source(self):
         "Return source code of this slide, markdwon or python."
-        if hasattr(self, '_markdown'):
+        if hasattr(self, '_markdown') and self._markdown:
             return self._app.source.from_string(self._markdown, language = 'markdown')
-        elif hasattr(self, '_cell_code'):
+        elif hasattr(self, '_cell_code') and self._cell_code:
             return self._app.source.from_string(self._cell_code, language = 'python')
         else:
-            return self._app.source.from_string('Source of a slide only exits if it is created using `from_markdown` or `%%slide` magic.\n'
+            return self._app.source.from_string('Source of a slide only exits if it is created using `from_markdown` or `%%slide` magic '
+                'and is **NOT overwritten** by `@LiveSlide.frames` or `with LiveSlides.slide` contextmanager.\n'
                 'For `@LiveSlide.frames` and `with LiveSlides.slide` contextmanager, use `with LiveSlides.source.context`  to capture source.',
                 language = 'markdown')
     
