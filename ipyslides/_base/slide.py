@@ -1,5 +1,4 @@
 """Slide Object, should not be instantiated directly"""
-import time
 from contextlib import contextmanager
 from ipywidgets import Output, Layout
 
@@ -7,18 +6,15 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 
 from . import styles
-from ..utils import colored, html
+from ..utils import html
 
 class Slide:
     "New in 1.7.0"
     _animations = {'main':'','frame':''}
-    _alert = colored('Print Warning: Use "pprint" function or "capture_std" contextmanager to display printed strings in order!', fg = 'red', bg = 'white')
     def __init__(self, app, captured_output, props_dict = {}):
         self._widget = Output(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))
         self._app = app
         self._contents = captured_output.outputs
-        if captured_output.stdout:
-            display(self._alert)
             
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
@@ -32,6 +28,7 @@ class Slide:
         self._animation = None
         self._markdown = '' # Should be update by LiveSlides
         self._cell_code = '' # Should be update by LiveSlides 
+        self._from_cell = False # Update in build slides
         self._toast = None # Update from BaseLiveSlides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from LiveSlides
@@ -48,6 +45,7 @@ class Slide:
             
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr').display()
+                
                 for citation in self._citations.values():
                     citation.html.display()
     
@@ -71,9 +69,7 @@ class Slide:
             yield 
         
         outputs = captured.outputs
-        if captured.stdout:
-            display(self._alert)
-            
+        
         if index == 0:
             self._extra_outputs['start'] = outputs
         elif index == -1:
@@ -139,12 +135,15 @@ class Slide:
     @property
     def source(self):
         "Return source code of this slide, markdwon or python."
-        if hasattr(self, '_markdown') and self._markdown:
-            return self._app.source.from_string(self._markdown, language = 'markdown')
-        elif hasattr(self, '_cell_code') and self._cell_code:
-            return self._app.source.from_string(self._cell_code, language = 'python')
+        return self._get_source()
+    
+    def _get_source(self, name = None):
+        if self._from_cell and self._cell_code:
+            return self._app.source.from_string(self._cell_code, language = 'python', name = name)
+        elif self._from_cell and self._markdown:
+            return self._app.source.from_string(self._markdown, language = 'markdown', name = name)
         else:
-            return self._app.source.from_string('Source of a slide only exits if it is created using `from_markdown` or `%%slide` magic '
+            return self._app.source.from_string('Source of a slide only exits if it is created (most recently) using `from_markdown` or `%%slide` magic '
                 'and is **NOT overwritten** by `@LiveSlide.frames` or `with LiveSlides.slide` contextmanager.\n'
                 'For `@LiveSlide.frames` and `with LiveSlides.slide` contextmanager, use `with LiveSlides.source.context`  to capture source.',
                 language = 'markdown')
@@ -231,7 +230,7 @@ class Slide:
 
         
 @contextmanager
-def _build_slide(app, slide_number_str, props_dict = {}):
+def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
     "Use as contextmanager in LiveSlides class to create slide. New in 1.7.0"
     with capture_output() as captured:
         if slide_number_str in app._slides_dict:
@@ -243,8 +242,13 @@ def _build_slide(app, slide_number_str, props_dict = {}):
             setattr(_slide, 'new', True) # To indictae for rebuilding
             
         yield _slide
+    
+    _slide._from_cell = from_cell # Need to determine code source
+    if not from_cell:
+        _slide._cell_code = '' # Clear cell code but not Markdown
         
     _slide._contents = captured.outputs
+        
     app._slidelabel = _slide.label # Go there to see effects
     _slide.update_display() # Update Slide, it will not come to this point if has same code
     
@@ -252,6 +256,10 @@ def _build_slide(app, slide_number_str, props_dict = {}):
         if k.startswith('application'): # Widgets in this slide
             _slide._has_widgets = True
             break # No need to check other widgets if one exists
+    
+    if captured.stdout:
+        # Chekc what the shit is \x1b[?1h coming from
+        print(captured.stdout)
     
     if hasattr(_slide, 'new'):
         _slide._rebuild_all()

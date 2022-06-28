@@ -464,7 +464,7 @@ class LiveSlides(BaseLiveSlides):
                 if len(_frames) > 1: # Otherwise it's already been done
                     self._current_slide = f'{line[0]}.{i}'
                     
-                with _build_slide(self, self._current_slide) as s:
+                with _build_slide(self, self._current_slide, from_cell = True) as s:
                     chunk = resolve_objs(obj)
                     s.clear_display(wait = True) # It piles up otherwise due to replacements
                     parse_xmd(chunk, display_inline = True, rich_outputs = False) 
@@ -473,7 +473,7 @@ class LiveSlides(BaseLiveSlides):
                 s._cell_code = '' # Reset cell code
                         
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            with _build_slide(self, self._current_slide) as s:
+            with _build_slide(self, self._current_slide, from_cell = True) as s:
                 self.shell.run_cell(cell)
             
             s._cell_code = cell # Update cell code
@@ -491,12 +491,8 @@ class LiveSlides(BaseLiveSlides):
         
         self._current_slide = f'{slide_number}'
         
-        with _build_slide(self, self._current_slide, props_dict=props_dict) as s:
+        with _build_slide(self, self._current_slide, props_dict=props_dict, from_cell = False) as s:
             yield s # Useful to use later
-            
-        s._markdown = '' # Reset markdown
-        s._cell_code = '' # Reset cell code
-
     
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
@@ -569,12 +565,9 @@ class LiveSlides(BaseLiveSlides):
                     
             for i, obj in enumerate(_new_objs,start=1):
                 self._current_slide = f'{slide_number}.{i}' # Update current slide
-                with _build_slide(self, f'{slide_number}.{i}', props_dict= props_dict) as s:
+                with _build_slide(self, f'{slide_number}.{i}', props_dict= props_dict, from_cell = False) as s:
                     self.write(self.format_css('.SlideArea',height = frame_height))
                     func(obj) # call function with obj
-                
-                s._markdown = '' # Reset markdown
-                s._cell_code = '' # Reset cell code
             
         return _frames 
 
@@ -618,7 +611,7 @@ class LiveSlides:
     **Example**
     ```python 
     import ipyslides as isd 
-    ls = isd.LiveSlides(citations_per_slide = True) # Citations will show up on bottom of each slide if any (New in 1.7.0)
+    ls = isd.LiveSlides(citation_mode = 'footnote) # Citations will show up on bottom of each slide if any (New in 1.7.2)
     ls.demo() # Load demo slides
     ls.from_markdown(...) # Load slides from markdown files
     ```
@@ -642,18 +635,14 @@ class LiveSlides:
     > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
     
     **New in 1.7.2**    
-    Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
-    
-    ### Changes in version 1.7.0+
-    - Slides from markdown file of `%%slide slide_number -m` only run again if content of slide changes. That makes reloading fast.
-    - You can now show citations on bottom of each slide by setting `citations_per_slide = True` in `LiveSlides` constructor.
-    - You can now access individual slides by indexing `ls[i]` where `i` is the slide index or by key as `ls['3.1'] will give you slide which shows 3.1 at bottom.
+    - Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+    - You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `LiveSlides` constructor.
+    - You can now access individual slides by indexing `s_i = ls[i]` where `i` is the slide index or by key as `s_3_1 = ls['3.1'] will give you slide which shows 3.1 at bottom.
     - Basides indexing, you can access current displayed slide by `ls.current`.
-    - You can add new content to existing slides by using `with ls[index].insert(where)` context. All new chnaged can be reverted by `ls[index].reset()`.
+    - You can add new content to existing slides by using `with s_i.insert(where)` context. All new changes can be reverted by `s_i.reset()`.
     - If a display is not complete, e.g. some widget missing on a slide, you can use `(ls.current, ls[index], ls[key]).update_display()` to update display.
-    - You can set overall animation by `ls.set_overall_animation` or per slide by `ls[i].set_animation`
-    - You can now set CSS for each slide by `ls[i].set_css` or `ls.set_slide_css` at current slide.
-    - `ls.pre_compute_display` is deprecated and slides now are computed on-demand with each new slide.
+    - You can set overall animation by `ls.set_overall_animation` or per slide by `s_i.set_animation`
+    - You can now set CSS for each slide by `s_i.set_css` or `ls.set_slide_css` at current slide.
     """
     def __new__(cls,
                 citation_mode = 'global',

@@ -73,12 +73,15 @@ class BaseLiveSlides:
         "Return source code of all slides created using `from_markdown` or `%%slide`."
         sources = []
         for slide in self[:]:
-            if hasattr(slide, '_markdown') and slide._markdown:
-                sources.append(self.source.from_string(slide._markdown, language= 'markdown', name=f'Markdown: Slide {slide.label}'))
-            elif hasattr(slide, '_cell_code') and slide._cell_code:
-                sources.append(self.source.from_string(slide._cell_code, language= 'python', name=f'Python: Slide {slide.label}'))
+            if slide._from_cell and slide._markdown:
+                sources.append(slide._get_source(name=f'Markdown: Slide {slide.label}'))
+            elif slide._from_cell and slide._cell_code:
+                sources.append(slide._get_source(name=f'Python: Slide {slide.label}'))
         
-        return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
+        if sources:
+            return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
+        else:
+            self.html('p', 'No source code found.', className='Info')
 
     
     def notify_later(self, title='IPySlides Notification', timeout=5):
@@ -159,6 +162,9 @@ class BaseLiveSlides:
         - You can add slides from text blocks/file with a start number. 
         - It will create slides at numbers `start, start + 1, .... start + N+1` if there are `N` `---` (three dashes) separators in the text.
         - Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+        
+        **Returns**:       
+        A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
         """
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')

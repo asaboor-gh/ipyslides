@@ -76,16 +76,15 @@ with ls.slide(2):
 - Use `ls.demo` to create example slides and start editing. Follow steps in first part.
 - Use `ls.load_docs` to see upto date documentation.
 
-### Changes in version 1.7.0+
-
-- You can now show citations on bottom of each slide by setting `citations_per_slide = True` in `LiveSlides` constructor.
-- You can now access individual slides by indexing `ls[i]` where `i` is the slide index or by key as `ls['3.1'] will give you slide which shows 3.1 at bottom.
+**New in 1.7.2**    
+- Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+- You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `LiveSlides` constructor.
+- You can now access individual slides by indexing `s_i = ls[i]` where `i` is the slide index or by key as `s_3_1 = ls['3.1'] will give you slide which shows 3.1 at bottom.
 - Basides indexing, you can access current displayed slide by `ls.current`.
-- You can add new content to existing slides by using `with ls[index].insert(where)` context. All new chnaged can be reverted by `ls[index].reset()`.
+- You can add new content to existing slides by using `with s_i.insert(where)` context. All new changes can be reverted by `s_i.reset()`.
 - If a display is not complete, e.g. some widget missing on a slide, you can use `(ls.current, ls[index], ls[key]).update_display()` to update display.
-- You can set overall animation by `ls.set_overall_animation` or per slide by `ls[i].set_animation`
-- You can now set CSS for each slide by `ls[i].set_css` or `ls.set_slide_css` at current slide.
-- `ls.pre_compute_display` is deprecated and slides now are computed on-demand with each new slide.
+- You can set overall animation by `ls.set_overall_animation` or per slide by `s_i.set_animation`
+- You can now set CSS for each slide by `s_i.set_css` or `ls.set_slide_css` at current slide.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
