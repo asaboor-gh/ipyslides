@@ -48,7 +48,7 @@ class _Htmls:
     theme   = HTML(html('style',styles.style_css(styles.theme_roots['Fancy'].replace(
                 '__text_size__','16px')).replace(
                 '__breakpoint_width__','650px').replace(
-                '__textfont__','sans-serif').replace(
+                '__textfont__','STIX Two Text').replace(
                 '__codefont__','var(--jp-code-font-family)')
                 ).value)
     main    = HTML(html('style',styles.main_layout_css).value)

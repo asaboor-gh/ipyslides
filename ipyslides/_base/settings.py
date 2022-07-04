@@ -20,7 +20,7 @@ class LayoutSettings:
         "Provide instance of LivSlides to work."
         self.widgets = _instanceWidgets
         self.font_scale = 1
-        self._font_family = {'code':'var(--jp-code-font-family)','text':'STIXGeneral'}
+        self._font_family = {'code':'var(--jp-code-font-family)','text':'STIX Two Text'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '90%' #Better
         self._breakpoint_width = f'{int(100*650/self.widgets.sliders.width.value)}px' # Whatever was set initially

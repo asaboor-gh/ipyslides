@@ -166,9 +166,9 @@ class LiveSlides(BaseLiveSlides):
         
     def _on_displayed(self, change):
         self.widgets._exec_js(multi_slides_alert)
-        
-        with _build_slide(self, '0'):
-            self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
+        if not '0' in self._slides_dict: # prevent overwrite
+            with _build_slide(self, '0'):
+                self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
         
         with suppress(Exception): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
@@ -674,7 +674,7 @@ class LiveSlides:
                 show_slideno  = True,
                 logo_src      = logo_svg, 
                 font_scale    = 1, 
-                text_font     = 'sans-serif', 
+                text_font     = 'STIX Two Text', 
                 code_font     = 'var(--jp-code-font-family)', 
                 code_style    = 'default', 
                 code_lineno   = True

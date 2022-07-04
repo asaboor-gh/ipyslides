@@ -34,7 +34,7 @@ class _HhtmlExporter:
         
         __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.main.widgets.htmls.theme.value) + slides_css # Column break width
                             if as_slides else doc_css.replace(
-                                '__textfont__', f'"{kwargs.get("text_font","sans-serif")}"').replace(
+                                '__textfont__', f'"{kwargs.get("text_font","STIX Two Text")}"').replace(
                                 '__codefont__', f'"{kwargs.get("code_font","monospace")}"')
                         )
         __code_css__ = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')
@@ -55,7 +55,7 @@ class _HhtmlExporter:
             
         print(f'File {path!r} saved!')
     
-    def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', text_font = 'sans-serif', code_font = 'monospace', overwrite = False):
+    def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', text_font = 'STIX Two Text', code_font = 'monospace', overwrite = False):
         """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
         
         - allow_non_html_repr: (True), then non-html representation of the slides like text/plain will be used in report.

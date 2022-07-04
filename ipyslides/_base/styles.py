@@ -273,9 +273,9 @@ def style_css(style_root = theme_roots['Inherit']):
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
-.SlidesWrapper *:not(.fa):not(i):not(span)not:(pre):not(code),
-.SlideArea *:not(.fa):not(i):not(span):not:(pre):not(code){ /* Do not edit __textfont__, code does this. */
-   font-family: "__textfont__","Roboto", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
+.SlidesWrapper *:not(.fa):not(i):not(span):not(pre):not(code),
+.SlideArea *:not(.fa):not(i):not(span):not(pre):not(code) { /* Do not edit __textfont__, code does this. */
+   font-family: "__textfont__", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
 }
 
 .SlidesWrapper code>span,
