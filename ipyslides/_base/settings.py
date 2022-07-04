@@ -170,6 +170,9 @@ class LayoutSettings:
         else:
             self.set_code_style('default',lineno=self._code_lineno)
             light = '250'
+            
+        if self.theme_dd.value in ['Inherit', 'Custom']:
+            light = '-' # Use Fallback colors, can't have idea which themes colors would be there
                
         # Replace font-size and breakpoint size
         theme_css = theme_css.replace(

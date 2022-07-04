@@ -166,8 +166,6 @@ def style_css(style_root = theme_roots['Inherit']):
 
 .Block {
     padding:8px;
-    border: 1px solid var(--accent-color);
-    border-radius: 4px;
     border-top: 3px solid var(--accent-color);
     background: var(--secondary-bg);
     margin-bottom: 0.9em;
@@ -175,59 +173,59 @@ def style_css(style_root = theme_roots['Inherit']):
 
 .Block-red {
     padding:8px;
-    border: 1px solid rgb(__light__, 0, 0);
-    border-radius: 4px;
+    border-top: 3px solid red; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__, 0, 0);
+    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
     background: rgb(__light__,calc(__light__ - 20),calc(__light__ - 20));
     margin-bottom: 0.9em;
 }
 
 .Block-green {
     padding:8px;
-    border: 1px solid rgb(0, __light__, 0);
-    border-radius: 4px;
+    border-top: 3px solid green; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0, __light__, 0);
+    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
     background: rgb(calc(__light__ - 20),__light__,calc(__light__ - 20));
     margin-bottom: 0.9em;
 }
 
 .Block-blue {
     padding:8px;
-    border: 1px solid rgb(0, 0, __light__);
-    border-radius: 4px;
+    border-top: 3px solid blue; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0, 0, __light__);
+    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
     background: rgb(calc(__light__ - 20),calc(__light__ - 20),__light__);
     margin-bottom: 0.9em;
 }
 .Block-yellow {
     padding:8px;
-    border: 1px solid rgb(__light__, __light__, 0);
-    border-radius: 4px;
+    border-top: 3px solid yellow; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__, __light__, 0);
+    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
     background: rgb(__light__,__light__,calc(__light__ - 20));
     margin-bottom: 0.9em;
 }
 .Block-cyan {
     padding:8px;
-    border: 1px solid rgb(0,__light__, __light__);
-    border-radius: 4px;
+    border-top: 3px solid cyan; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0,__light__, __light__);
+    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
     background: rgb(calc(__light__ - 20),__light__,__light__);
     margin-bottom: 0.9em;
 }
 .Block-gray {
     padding:8px;
-    border: 1px solid rgb(calc(__light__ - 10),calc(__light__ - 10),calc(__light__ - 10));
-    border-radius: 4px;
+    border-top: 3px solid gray; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(calc(__light__ - 10),calc(__light__ - 10),calc(__light__ - 10));
+    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
     background: rgb(calc(__light__ - 20),calc(__light__ - 20),calc(__light__ - 20));
     margin-bottom: 0.9em;
 }
 .Block-magenta {
     padding:8px;
-    border: 1px solid rgb(__light__,0, __light__);
-    border-radius: 4px;
+    border-top: 3px solid magenta; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__,0, __light__);
+    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
     background: rgb(__light__,calc(__light__ - 20),__light__);
     margin-bottom: 0.9em;
 }
@@ -592,10 +590,6 @@ div.zoom-container > * {
     width:100%;
     height:auto;
 }  
-.SlideArea .block {
-    background: var(--primary-bg);
-    border-radius: 4px;
-}
 div.LaserPointer { /* For laser pointer */
     position:absolute !important;
     width:12px;

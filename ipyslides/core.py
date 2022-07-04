@@ -166,7 +166,7 @@ class LiveSlides(BaseLiveSlides):
         
     def _on_displayed(self, change):
         self.widgets._exec_js(multi_slides_alert)
-        if not '0' in self._slides_dict: # prevent overwrite
+        if self._max_index == 0: # prevent overwrite
             with _build_slide(self, '0'):
                 self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
         
