@@ -164,6 +164,74 @@ def style_css(style_root = theme_roots['Inherit']):
     color: var(--accent-color);
 }
 
+.Block {
+    padding:8px;
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    border-top: 3px solid var(--accent-color);
+    background: var(--secondary-bg);
+    margin-bottom: 0.9em;
+}
+
+.Block-red {
+    padding:8px;
+    border: 1px solid rgb(__light__, 0, 0);
+    border-radius: 4px;
+    border-top: 3px solid rgb(__light__, 0, 0);
+    background: rgb(__light__,calc(__light__ - 20),calc(__light__ - 20));
+    margin-bottom: 0.9em;
+}
+
+.Block-green {
+    padding:8px;
+    border: 1px solid rgb(0, __light__, 0);
+    border-radius: 4px;
+    border-top: 3px solid rgb(0, __light__, 0);
+    background: rgb(calc(__light__ - 20),__light__,calc(__light__ - 20));
+    margin-bottom: 0.9em;
+}
+
+.Block-blue {
+    padding:8px;
+    border: 1px solid rgb(0, 0, __light__);
+    border-radius: 4px;
+    border-top: 3px solid rgb(0, 0, __light__);
+    background: rgb(calc(__light__ - 20),calc(__light__ - 20),__light__);
+    margin-bottom: 0.9em;
+}
+.Block-yellow {
+    padding:8px;
+    border: 1px solid rgb(__light__, __light__, 0);
+    border-radius: 4px;
+    border-top: 3px solid rgb(__light__, __light__, 0);
+    background: rgb(__light__,__light__,calc(__light__ - 20));
+    margin-bottom: 0.9em;
+}
+.Block-cyan {
+    padding:8px;
+    border: 1px solid rgb(0,__light__, __light__);
+    border-radius: 4px;
+    border-top: 3px solid rgb(0,__light__, __light__);
+    background: rgb(calc(__light__ - 20),__light__,__light__);
+    margin-bottom: 0.9em;
+}
+.Block-gray {
+    padding:8px;
+    border: 1px solid rgb(calc(__light__ - 10),calc(__light__ - 10),calc(__light__ - 10));
+    border-radius: 4px;
+    border-top: 3px solid rgb(calc(__light__ - 10),calc(__light__ - 10),calc(__light__ - 10));
+    background: rgb(calc(__light__ - 20),calc(__light__ - 20),calc(__light__ - 20));
+    margin-bottom: 0.9em;
+}
+.Block-magenta {
+    padding:8px;
+    border: 1px solid rgb(__light__,0, __light__);
+    border-radius: 4px;
+    border-top: 3px solid rgb(__light__,0, __light__);
+    background: rgb(__light__,calc(__light__ - 20),__light__);
+    margin-bottom: 0.9em;
+}
+
 .jp-OutputArea-child, 
 .jp-OutputArea-child .jp-OutputArea-output { 
     background: transparent !important;
@@ -205,9 +273,9 @@ def style_css(style_root = theme_roots['Inherit']):
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
-.SlidesWrapper *:not(.fa):not(i):not(span),
-.SlideArea *:not(.fa):not(i):not(span){ /* Do not edit __textfont__, code does this. */
-   font-family: "__textfont__", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
+.SlidesWrapper *:not(.fa):not(i):not(span)not:(pre):not(code),
+.SlideArea *:not(.fa):not(i):not(span):not:(pre):not(code){ /* Do not edit __textfont__, code does this. */
+   font-family: "__textfont__","Roboto", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
 }
 
 .SlidesWrapper code>span,

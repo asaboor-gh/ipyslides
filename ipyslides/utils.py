@@ -2,7 +2,7 @@ __all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc']
 __all__.extend(['rows','cols','block'])
-__all__.extend([f'block_{c}' for c in 'rgbycmkowp'])
+__all__.extend([f'block_{c}' for c in 'rgbycma'])
 
 
 import os
@@ -207,28 +207,20 @@ def cols(*objs,width_percents=None, className=None):
     "Returns HTML containing multiple columns of given width_percents."
     return format_html(*objs,width_percents=width_percents,className = className)
 
-def block(title,*objs,bg = 'olive'):
+def block(*objs,className = 'Block'):
     """Format a block like in LATEX beamer. *objs expect to be writable with `write` command.   
-    Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,k,o,w,p>`"""
-    _title = f"""<center style='background:var(--secondary-bg);margin:0px -4px;'>
-                <b>{title}</b></center>"""
-    _out = _fmt_write(objs) # single column
-    return _HTML(f"""<div style='padding:4px' class='block'>
-        <div style='border-top:4px solid {bg};box-shadow: 0px 0px 4px {bg};border-radius:4px;padding:0 4px;'>
-        {_title}
-        {_out}
-        </div></div>""")
+    Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,k,w>`.
+    In 1.7.5+, you can create blocks just by CSS classes in markdown as {.Block}, {.Block-red}, {.Block-green}, etc.
+    """
+    return _HTML(f"<div class='{className}'>{_fmt_write(objs)}</div>")
     
-def block_r(title,*objs): return block(title,*objs,bg='crimson')
-def block_b(title,*objs): return block(title,*objs,bg='navy')
-def block_g(title,*objs): return block(title,*objs,bg='#006400')
-def block_y(title,*objs): return block(title,*objs,bg='#E4D00A')
-def block_o(title,*objs): return block(title,*objs,bg='orange')
-def block_p(title,*objs): return block(title,*objs,bg='purple')
-def block_c(title,*objs): return block(title,*objs,bg='#48d1cc')
-def block_m(title,*objs): return block(title,*objs,bg='magenta')
-def block_w(title,*objs): return block(title,*objs,bg='whitesmoke')
-def block_k(title,*objs): return block(title,*objs,bg='#343434')
+def block_r(*objs): return block(*objs,className = 'Block-red')
+def block_b(*objs): return block(*objs,className = 'Block-blue')
+def block_g(*objs): return block(*objs,className = 'Block-green')
+def block_y(*objs): return block(*objs,className = 'Block-yellow')
+def block_c(*objs): return block(*objs,className = 'Block-cyan')
+def block_m(*objs): return block(*objs,className = 'Block-magenta')
+def block_a(*objs): return block(*objs,className = 'Block-gray')
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."

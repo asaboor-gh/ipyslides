@@ -17,8 +17,10 @@ Note: Nested blocks are not supported.
 
 **New in 1.7.2**    
 Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
-"""
 
+**New in 1.7.5**
+Use `LiveSlides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+"""
 
 import textwrap, re
 from markdown import Markdown
@@ -30,7 +32,35 @@ from .formatter import _HTML, highlight, stringify
 from .source import _str2code
 
 
-_md_extensions = ['tables','footnotes','attr_list'] # For Markdown Parser
+_md_extensions = ['tables','footnotes','attr_list','md_in_html'] # For Markdown Parser
+
+class PyMarkdown_Extender:
+    def __init__(self):
+        "Adds extensions to the Markdown parser. See [Website of Python-Markdown](https://python-markdown.github.io/extensions/)"
+        self._exts = []
+    
+    def __repr__(self) -> str:
+        return repr(self._all)
+        
+    @property
+    def _all(self):
+        return list(set([*self._exts, *_md_extensions]))
+    
+    def extend(self,extensions_list):
+        "Add list of extensions to the Markdown parser."
+        self._exts = list(set([*self._exts, *extensions_list]))
+    
+    def clear(self):
+        "Clear all extensions added by user."
+        self._exts = []
+    
+    @property
+    def active(self):
+        "List of active extensions."
+        return self._all
+  
+extender = PyMarkdown_Extender()
+del PyMarkdown_Extender
 
 _special_funcs = {
     'textbox':'text',
@@ -44,8 +74,7 @@ _special_funcs = {
 class _ExtendedMarkdown(Markdown):
     "New in 1.4.5"
     def __init__(self):
-        self.extensions = _md_extensions
-        super().__init__(extensions = self.extensions)
+        super().__init__(extensions = extender._all)
         self._display_inline = False
     
     def _extract_class(self, header):
@@ -180,7 +209,13 @@ class _ExtendedMarkdown(Markdown):
             for match in all_matches:
                 _out = getattr(utils,func)(match).value
                 html_output = html_output.replace(f'{func}`{match}`', _out, 1)
+                
+        # Replace Block classes
+        all_matches = re.findall(r'class\`(.*?)\`', html_output, flags = re.DOTALL)
+        for match in all_matches:
+            html_output = html_output.replace(f'class`{match}`', f'<div class="{match}" markdown="1">', 1)
         
+        html_output = re.sub(r'^\^\^\^$', '</div>', html_output,flags=re.MULTILINE) # Close last block
         return html_output # return in main scope
             
 
@@ -222,6 +257,9 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
     
     **New in 1.7.2**    
     Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+    
+    **New in 1.7.5**
+    Use `LiveSlides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
     return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline, rich_outputs = rich_outputs)  
     

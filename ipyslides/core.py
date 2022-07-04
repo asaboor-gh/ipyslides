@@ -6,7 +6,7 @@ from IPython import get_ipython
 from IPython.display import display
 import ipywidgets as ipw
 
-from .extended_md import parse_xmd, _special_funcs
+from .extended_md import parse_xmd, _special_funcs, extender as _extender
 from .source import Source
 from .writers import write, iwrite
 from .formatter import bokeh2html, plt2html, highlight, _HTML, serializer
@@ -59,7 +59,8 @@ class LiveSlides(BaseLiveSlides):
         
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
-            
+        
+        self.extender   = _extender
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
         self.highlight  = highlight
@@ -116,10 +117,10 @@ class LiveSlides(BaseLiveSlides):
         
         **Following syntax is available only under `%%slide int -m` or in `from_markdown` function:**
         
-        - alert`notes&#96;  This is slide notes&#96;`  to add notes to current slide
-        - alert`cite&#96;  key&#96;` to add citation to current slide
-        - alert`$key&#96;  citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;  key&#96;`
-        - alert`citations&#96;  citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
+        - alert`notes&#96;This is slide notes&#96;`  to add notes to current slide
+        - alert`cite&#96;key&#96;` to add citation to current slide
+        - alert`$key&#96;citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
+        - alert`citations&#96;citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
         - Triple underscore `___` is used to split markdown text in frames. 
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         
@@ -127,23 +128,39 @@ class LiveSlides(BaseLiveSlides):
         - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
         - Two side by side columns can be added inline using || Column A || Column B || sytnax.
         - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
-        ~~~markdown     
+        ```markdown     
          ```multicol widthA widthB
          Column A
          +++
          Column B
          ```
-        ~~~
+        ```
         
         - Python code blocks can be exectude by syntax 
-        ~~~markdown
+        ```markdown
          ```python run source {.CSS_className}
          my_var = 'Hello'
          ```
-        ~~~
+        ```
         and source then can be emded with \{\{source\}\} syntax and also \{\{my_var\}\} will show 'Hello'.
+        
+        - A whole block of markdown can be CSS-classed using syntax
+        ```markdown
+         class`Block-yellow`
+         ### This is Header 3
+         <hr/>
+         Some **bold text**
+         ^^^
+        ```
+        gives
+        class`Block-yellow`
+        ### This is Header 3
+        <hr/>
+        Some **bold text**
+        ^^^
+        
         - Other options include:
-        ''') + '\n' + ', '.join(f'alert`{k}&#96;  {v}&#96;`' for k,v in _special_funcs.items()),
+        ''') + '\n' + ', '.join(f'alert`{k}&#96;{v}&#96;`' for k,v in _special_funcs.items()),
         display_inline = False
         ))
         
@@ -643,6 +660,10 @@ class LiveSlides:
     - If a display is not complete, e.g. some widget missing on a slide, you can use `(ls.current, ls[index], ls[key]).update_display()` to update display.
     - You can set overall animation by `ls.set_overall_animation` or per slide by `s_i.set_animation`
     - You can now set CSS for each slide by `s_i.set_css` or `ls.set_slide_css` at current slide.
+    
+    **New in 1.7.5**
+    Use `LiveSlides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+    Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
     """
     def __new__(cls,
                 citation_mode = 'global',

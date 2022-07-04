@@ -66,7 +66,9 @@ class BaseLiveSlides:
         className = 'Error'             Red Text
         className = 'Note'              Text with info icon
         className = 'slides-only'       Text will not appear in exported html with `build_report`
-        className = 'report-only'       Text will not appear on slides. Useful to fill content in report. 
+        className = 'report-only'       Text will not appear on slides. Useful to fill content in report.
+        className = 'Block'             Block of text/objects
+        className = 'Block-<red,green,...>'      Block of text/objects with specific background color
         ''',className= 'PyRepr')
         
     def get_source(self, title = 'Source Code'):

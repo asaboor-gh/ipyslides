@@ -1,4 +1,5 @@
 """Slide Object, should not be instantiated directly"""
+
 from contextlib import contextmanager
 from ipywidgets import Output, Layout
 
@@ -6,7 +7,7 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 
 from . import styles
-from ..utils import html
+from ..utils import html, alert, raw
 
 class Slide:
     "New in 1.7.0"
@@ -240,7 +241,7 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
             _slide.slide_number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
             setattr(_slide, 'new', True) # To indictae for rebuilding
-            
+         
         yield _slide
     
     _slide._from_cell = from_cell # Need to determine code source
@@ -257,10 +258,12 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
             _slide._has_widgets = True
             break # No need to check other widgets if one exists
     
-    if captured.stdout:
-        # Chekc what the shit is \x1b[?1h coming from
-        print(captured.stdout)
-    
+    if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
+        display(alert('Use `pprint` or `LiveSlides.capture_std` '
+                      'contextmanager to see output on sldie!<hr/>'
+                ) + raw(captured.stdout)
+        )
+        
     if hasattr(_slide, 'new'):
         _slide._rebuild_all()
         delattr(_slide, 'new')

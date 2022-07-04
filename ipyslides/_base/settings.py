@@ -163,10 +163,13 @@ class LayoutSettings:
         
         if 'Dark' in self.theme_dd.value:
             self.set_code_style('monokai',color='#f8f8f2',lineno=self._code_lineno)
+            light = '120'
         elif self.theme_dd.value == 'Fancy':
             self.set_code_style('borland',lineno=self._code_lineno) 
+            light = '230'
         else:
             self.set_code_style('default',lineno=self._code_lineno)
+            light = '250'
                
         # Replace font-size and breakpoint size
         theme_css = theme_css.replace(
@@ -174,7 +177,8 @@ class LayoutSettings:
                         '__textfont__',self._font_family['text']).replace(
                         '__codefont__',self._font_family['code']).replace(
                         '__content_width__',self._content_width).replace(
-                        '__breakpoint_width__', self._breakpoint_width  
+                        '__breakpoint_width__', self._breakpoint_width).replace(
+                        '__light__',light
                         )
         
         # Update CSS
