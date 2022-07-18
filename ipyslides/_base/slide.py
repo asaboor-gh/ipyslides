@@ -1,5 +1,6 @@
 """Slide Object, should not be instantiated directly"""
 
+import typing
 from contextlib import contextmanager
 from ipywidgets import Output, Layout
 
@@ -61,7 +62,7 @@ class Slide:
         return self.insert(index = -1)
     
     @contextmanager
-    def insert(self, index):
+    def insert(self, index: int):
         "Contextmanager to insert new content at given index. If index is -1, just appends at end. Only most recent inserted object(s) are displayed."
         if index < -1:
             raise ValueError(f'expects non-negative index or -1 to append at end, got {index}')
@@ -82,6 +83,20 @@ class Slide:
         
         self._app._slidelabel = self.label # Go there
         self.update_display()
+        
+    def insert_markdown(self, index_markdown_dict: typing.Dict[int, str]) -> None:
+        """Insert multiple markdown objects (after being parsed) at given indices on slide at once.
+        Give a dictionary as {0: 'Markdown',..., -1:'Markdown'}.
+        
+        New in 1.7.7"""
+        if not isinstance(index_markdown_dict, dict):
+            raise TypeError(f'expects dict as {{index: "Markdown",...}}, got {type(index_markdown_dict)}')
+        for index, markdown in index_markdown_dict.items():
+            if not isinstance(index, int):
+                raise TypeError(f'expects int as index, got {type(index)}')
+            
+            with self.insert(index):
+                self._app.parse_xmd(markdown, display_inline = True)
     
     def reset(self):
         "Reset all appended/prepended/inserted objects."

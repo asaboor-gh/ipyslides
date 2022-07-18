@@ -36,6 +36,8 @@ class CapturedStd:
     
 _captured_std = CapturedStd()
 del CapturedStd # No need outside of this module
+
+backtick = '&#96;'
     
 @contextmanager
 def capture_std(): 
@@ -209,7 +211,7 @@ def cols(*objs,width_percents=None, className=None):
 
 def block(*objs,className = 'Block'):
     """Format a block like in LATEX beamer. *objs expect to be writable with `write` command.   
-    Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,k,w>`.
+    Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,a>`.
     In 1.7.5+, you can create blocks just by CSS classes in markdown as {.Block}, {.Block-red}, {.Block-green}, etc.
     """
     return _HTML(f"<div class='{className}'>{_fmt_write(objs)}</div>")

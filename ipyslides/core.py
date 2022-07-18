@@ -60,6 +60,7 @@ class LiveSlides(BaseLiveSlides):
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
         
+        self.backtick = '&#96;'
         self.extender   = _extender
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
@@ -220,8 +221,8 @@ class LiveSlides(BaseLiveSlides):
         Citations corresponding to keys used can be created by `.set_citations` method.
         
         **New in 1.7.2**      
-        In Markdown(under `%%slide int -m` or in `from_markdown`), citations can be created by using `cite:key:` syntax and 
-        can be set using `citation[key] = text` syntax. If citation_mode is global, they can be shown using `citations:citation title` syntax.
+        In Markdown(under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite&#96;key&#96;` syntax and 
+        can be set using alert`$key&#96;citationtext&#96;` syntax. If citation_mode is global, they can be shown using alert`citations&#96;citation title&#96;` syntax.
         
         """
         if self._citation_mode == 'inline':
@@ -427,6 +428,11 @@ class LiveSlides(BaseLiveSlides):
             Everything here and below is treated as markdown, not python code.
             **New in 1.7.2**    
             Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+        
+        (1.7.7+) You can run a slide only once for long calculations.
+            ---------------- Cell ----------------
+            %%slide 3 -s
+            var = certain_long_calculation() # This will be run only once
             
         (1.5.5+) If Markdown is separated by three underscores (___) on it's own line, multiple frames are created.
         Markdown before the first three underscores is written on all frames. This is equivalent to `@LiveSlides.frames` decorator.
@@ -442,26 +448,26 @@ class LiveSlides(BaseLiveSlides):
         
         def resolve_objs(text_chunk):
             # These objects should be only resolved under slide as they need slide reference
-            # cite:key:
+            # cite`key`
             all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
             for match in all_matches:
                 key = match.strip()
                 text_chunk = text_chunk.replace(f'cite`{match}`', self.cite(key), 1)
             
-            # notes:This is a note for current slide:
+            # notes`This is a note for current slide`
             all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL)
             for match in all_matches:
                 self.notes.insert(match)
                 text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
             
-            # citations:This is citations title:
+            # citations`This is citations title`
             all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
             for match in all_matches:
                 citations = self.citations_html(title = match).value
                 text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
                 
             
-            # @key:citation content:
+            # $key`citation content`
             all_matches = re.findall(r'\$(.*?)\`(.*?)\`', text_chunk, flags = re.DOTALL)
             citations = {}
             for match in all_matches:
@@ -470,7 +476,6 @@ class LiveSlides(BaseLiveSlides):
             
             self.set_citations(citations)
             return text_chunk
-            
         
         if '-m' in line[1:]:
             _frames = re.split(r'^___$|^___\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
@@ -490,6 +495,10 @@ class LiveSlides(BaseLiveSlides):
                 s._cell_code = '' # Reset cell code
                         
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
+            if '-s' in line[1:] and self._current_slide in self._slides_dict:
+                if self._slides_dict[self._current_slide]._cell_code == cell:
+                    return # Do not run if cell is same as previous and -s is used
+            
             with _build_slide(self, self._current_slide, from_cell = True) as s:
                 self.shell.run_cell(cell)
             
@@ -623,17 +632,12 @@ _private_instance = LiveSlides() # Singleton in use namespace
 # This is overwritten below to just have a singleton
 
 class LiveSlides:
-    """Interactive Slides in IPython Notebook. Only one instance can exist. 
+    __doc__ = textwrap.dedent("""
+    Interactive Slides in IPython Notebook. Only one instance can exist. 
     
-    **Example**
-    ```python 
-    import ipyslides as isd 
-    ls = isd.LiveSlides(citation_mode = 'footnote) # Citations will show up on bottom of each slide if any (New in 1.7.2)
-    ls.demo() # Load demo slides
-    ls.from_markdown(...) # Load slides from markdown files
-    ```
+    All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
     
-    Instead of builtin `print` in slides use following to display printed content in correct order.
+    Instead of builtin `print`, use `pprint` (1.5.9+) or `with capture_std` in slides use following to display printed content in correct order.
     ```python
     with ls.capture_std() as std:
         print('something')
@@ -643,28 +647,13 @@ class LiveSlides:
         
     std.stdout.display() #ls.write(std.stdout)
     ```
-    In version 1.5.9+ function `pprint` is avalible in IPython namespace when LiveSlide is initialized. This displays objects in intended from rather than just text.
-    > `ls.demo` and `ls.from_markdown`, `ls.load_docs` overwrite all previous slides.
+    
+    > `ls.demo` and `ls.load_docs` overwrite all previous slides.
     
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `ls.export.report` is called.
     This is useful to fill-in content in document that is not required in slides.
     
-    > All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
-    
-    **New in 1.7.2**    
-    - Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
-    - You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `LiveSlides` constructor.
-    - You can now access individual slides by indexing `s_i = ls[i]` where `i` is the slide index or by key as `s_3_1 = ls['3.1'] will give you slide which shows 3.1 at bottom.
-    - Basides indexing, you can access current displayed slide by `ls.current`.
-    - You can add new content to existing slides by using `with s_i.insert(where)` context. All new changes can be reverted by `s_i.reset()`.
-    - If a display is not complete, e.g. some widget missing on a slide, you can use `(ls.current, ls[index], ls[key]).update_display()` to update display.
-    - You can set overall animation by `ls.set_overall_animation` or per slide by `s_i.set_animation`
-    - You can now set CSS for each slide by `s_i.set_css` or `ls.set_slide_css` at current slide.
-    
-    **New in 1.7.5**
-    Use `LiveSlides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
-    Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-    """
+    """) + how_to_slide[0]
     def __new__(cls,
                 citation_mode = 'global',
                 center        = True, 

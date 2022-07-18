@@ -44,6 +44,11 @@ ls.set_animation(main='zoom')
  ```
 ```
 
+```python
+%%slide 2 -s # new in 1.7.7
+var = some_long_computation() # This will run only first time or when cell code chnages.
+```
+
 ```python run source
 x = 1 + 2
 print(x) # will be printed on slide in somehwewere top as print appears first of all. 
@@ -62,10 +67,9 @@ def func(obj):
 ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
 
-- Use `ls.from_markdown` to create slides from markdown file/StringIO and then can add slides over it.
+- Use `ls.from_markdown` to create multiple slides from markdown file/text.
     - Slides are added in order of content.
     - Slides should be separated by `---` (three dashes) in start of line.
-    - You can add more slides besides created ones or modify existing ones using `ls[key or index].markdown`:
 ```python .monokai
 ls.from_markdown(path)
 with ls.slide(2):
@@ -75,16 +79,28 @@ with ls.slide(2):
 ```
 - Use `ls.demo` to create example slides and start editing. Follow steps in first part.
 - Use `ls.load_docs` to see upto date documentation.
+- You can acess markdown content of an existing slide using `ls[key or index].markdown` if it has been created using `ls.from_markdown` or `%%slide i -m`.
+- You can insert content usign `with ls[key or index].insert(index)` or `ls[key or index].insert_markdown` (1.7.7+).
 
-**New in 1.7.2**    
+**New in 1.7.2**
+  
 - Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
 - You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `LiveSlides` constructor.
-- You can now access individual slides by indexing `s_i = ls[i]` where `i` is the slide index or by key as `s_3_1 = ls['3.1'] will give you slide which shows 3.1 at bottom.
+- You can now access individual slides by indexing `s_i = ls[i]` where `i` is the slide index or by key as `s_3_1 = ls['3.1']` will give you slide which shows 3.1 at bottom.
 - Basides indexing, you can access current displayed slide by `ls.current`.
 - You can add new content to existing slides by using `with s_i.insert(where)` context. All new changes can be reverted by `s_i.reset()`.
 - If a display is not complete, e.g. some widget missing on a slide, you can use `(ls.current, ls[index], ls[key]).update_display()` to update display.
 - You can set overall animation by `ls.set_overall_animation` or per slide by `s_i.set_animation`
 - You can now set CSS for each slide by `s_i.set_css` or `ls.set_slide_css` at current slide.
+
+**New in 1.7.5**    
+Use `LiveSlides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
+    
+**New in 1.7.7**        
+Use `slides[i].insert_markdown({'index': 'markdown_string',...})` to insert markdown (pasrsed objects) at indices.   
+`%%slide i -s` can be used to execute code just once in current session. It will run again if code changes in cell.
+
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )

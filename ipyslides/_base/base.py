@@ -272,7 +272,7 @@ class BaseLiveSlides:
         
         with self.slide(1):
             self.write('## Adding Slides')
-            self.write('Besides functions below, you can add slides with `%%title`,  `%%slide <slide number>` and `%%slide <slide number>` -m` magics as well.\n{.Note .Info}')
+            self.write('Besides functions below, you can add slides with `%%title`,  `%%slide <slide number>` and `%%slide <slide number>` -m`,`%%slide <slide number> -s` magics as well.\n{.Note .Info}')
             self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides'),self.doc(self.from_markdown,'LiveSlides')])
         
         with self.slide(2):
@@ -339,9 +339,11 @@ class BaseLiveSlides:
                         self.doc(self.export.report,'LiveSlides.export')])
         
         with self.slide(10):
-            self.write('## Adding User defined Objects')
+            self.write('## Adding User defined Objects/Markdown Extensions')
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@LiveSlides.serializer.register` to serialize them to html.\n{.Note .Info}')
             self.doc(self.serializer,'LiveSlides.serializer', members = True, itself = False).display()
+            self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
+            self.doc(self.extender,'LiveSlides.extender', members = True, itself = False).display()
         
         with self.slide(11):
             self.write(['## Presentation Code',self.load_docs])

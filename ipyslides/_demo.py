@@ -26,8 +26,8 @@ Version: {{version}} as executed from below code in markdown.
 ---
 # Slide 2 {.Success}
 Created using `%%slide 2 -m` with markdown only
-citation[slide2]:This is reference created using markdown:
-cite:slide2: Refrence to this will show at end
+$slide2`This is reference created using markdown`
+cite`slide2` Refrence to this will show at end
 ```multicol
 # Column A
 ||### Sub column A {.Success}||### Sub column B ||
@@ -56,6 +56,8 @@ slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 # Insert source of slide 2    
 with s2.insert(0):
     s2.source.display(collapsed = True)
+
+s2.insert_markdown({-1: f'alert`I was added at end using {slides.backtick}s2.insert_markdown{slides.backtick}`'})
     
 #slide 3
 online_sources = '''# IPySlides Online Running Sources 
