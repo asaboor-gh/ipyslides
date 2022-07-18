@@ -102,7 +102,6 @@ def style_css(style_root = theme_roots['Inherit']):
     margin: 8px !important; /* override default margin */
 }
 .SlideArea .zoom-container figure {
-    width: 100% !important;
     object-fit:scale-down !important; /* If height goes out, scale down */
 }
 .SlideArea figcaption {
@@ -888,7 +887,7 @@ div.zoom-container > *:focus, div.zoom-container > *:hover{
     z-index:100;
     width: calc(100% - 200px);
     height: 100%;
-    object-fit:scale-down !important;
+    object-fit: scale-down !important;
     box-shadow: 0px 0px 200px 200px rgba(15,20,10,0.8); 
 } 
 

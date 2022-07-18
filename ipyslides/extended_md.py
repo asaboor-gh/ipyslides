@@ -195,13 +195,6 @@ class _ExtendedMarkdown(Markdown):
             _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
             html_output = html_output.replace('{{' + match + '}}', _out, 1)
         
-        # Replace columns after vars, so not to format their brackets
-        all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output, flags = re.DOTALL) # Matches new line as well, useful for inline plots and big objects
-        for cols in all_cols:
-            _cols = ''.join(f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols)
-            _out = f'<div class="columns">{_cols}</div>'
-            html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
-            
         # Replace inline one argumnet functions
         from . import utils # Inside function to avoid circular import
         for func in _special_funcs.keys():
@@ -209,7 +202,14 @@ class _ExtendedMarkdown(Markdown):
             for match in all_matches:
                 _out = getattr(utils,func)(match).value
                 html_output = html_output.replace(f'{func}`{match}`', _out, 1)
-                
+        
+        # Replace columns after vars, so not to format their brackets
+        all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output, flags = re.DOTALL) # Matches new line as well, useful for inline plots and big objects
+        for cols in all_cols:
+            _cols = ''.join(f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols)
+            _out = f'<div class="columns">{_cols}</div>'
+            html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
+              
         # Replace Block classes
         all_matches = re.findall(r'class\`(.*?)\`', html_output, flags = re.DOTALL)
         for match in all_matches:

@@ -101,7 +101,6 @@ div.columns > div[style*="width:"] {
     margin: 8px !important; /* override default margin */
 }
 .Content-Area .zoom-container figure {
-    width: 100% !important;
     object-fit:scale-down !important; /* If height goes out, scale down */
 }
 .Content-Area figcaption {
