@@ -41,7 +41,7 @@ class _Citation:
     def html(self):
         "HTML of this citation"
         value = parse_xmd(
-            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations` or @{self._key}&#96;citationvalue&#96; in markdown.'),
+            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations` or [{self._key}]:&#96;citationvalue&#96; in markdown.'),
             display_inline=False, rich_outputs = False
             ).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
         
@@ -120,7 +120,7 @@ class LiveSlides(BaseLiveSlides):
         
         - alert`notes&#96;This is slide notes&#96;`  to add notes to current slide
         - alert`cite&#96;key&#96;` to add citation to current slide
-        - alert`key:&#96;citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
+        - alert`[key]:&#96;citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
         - alert`citations&#96;citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
         - Triple underscore `___` is used to split markdown text in frames. 
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
@@ -222,7 +222,7 @@ class LiveSlides(BaseLiveSlides):
         
         **New in 1.7.2**      
         In Markdown(under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite&#96;key&#96;` syntax and 
-        can be set using alert`key:&#96;citationtext&#96;` syntax. If citation_mode is global, they can be shown using alert`citations&#96;citation title&#96;` syntax.
+        can be set using alert`[key]:&#96;citationtext&#96;` syntax. If citation_mode is global, they can be shown using alert`citations&#96;citation title&#96;` syntax.
         
         """
         if self._citation_mode == 'inline':
@@ -465,14 +465,13 @@ class LiveSlides(BaseLiveSlides):
             for match in all_matches:
                 citations = self.citations_html(title = match).value
                 text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
-                
             
-            # key:`citation content`
-            all_matches = re.findall(r'(.*?)\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
+            # [key]:`citation content`
+            all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
             citations = {}
             for match in all_matches:
                 citations[match[0].strip()] = match[1]
-                text_chunk = text_chunk.replace(f'{match[0]}~`{match[1]}`', '', 1)
+                text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
             
             self.set_citations(citations)
             return text_chunk
