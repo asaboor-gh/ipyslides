@@ -4,8 +4,10 @@ import typing
 from contextlib import contextmanager
 from ipywidgets import Output, Layout
 
+
 from IPython.display import display
 from IPython.utils.capture import capture_output
+
 
 from . import styles
 from ..utils import html, alert, raw
@@ -39,9 +41,13 @@ class Slide:
         md = f'{self.markdown[:15]}...' if self.markdown else ''
         return f'Slide(slide_number = {self.slide_number}, label = {self.label!r}, index = {self._index}, markdown = {md!r})'
     
-    def update_display(self):
+    def update_display(self, go_there = True):
         "Update display of this slide."
-        self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
+        if go_there:
+            self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
+        else:
+            self._widget.clear_output(wait = True) # Clear, but don't go there
+            
         with self._widget:
             display(*self.contents)
             
@@ -226,7 +232,7 @@ class Slide:
             self._animation = None # It should be None, not ''
             
     def _rebuild_all(self):
-        "Update all slides in optimal way."
+        "Update all slides in optimal way when a new slide is added."
         self._app._iterable = self._app._collect_slides()
         n_last = self._app._iterable[-1].position
         self._app._nslides = int(n_last) # Avoid frames number
@@ -237,13 +243,14 @@ class Slide:
         self._app.progress_slider.options = opts  # update options
         # Update Slides after progress bar is updated
         self._app.widgets.slidebox.children = [it._widget for it in self._app._iterable]
-        self._app._slidelabel = self.label # Go there after refreshing
+        self._app._slidelabel = self.label # Go there after setting children
         
+        # Update display for slides with widgets
         for i, s in enumerate(self._app._iterable):
-            s._index = i # Update index
+            s._index = i # Update index of slide for __repr__
             if s._has_widgets:
-                s.update_display() # Refresh all slides with widgets only, other data is not lost
-
+                s.update_display(go_there =  False) # Refresh all slides with widgets only, other data is not lost
+        
         
 @contextmanager
 def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):

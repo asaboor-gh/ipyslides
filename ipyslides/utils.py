@@ -1,6 +1,6 @@
 __all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
-            'raw','enable_zoom','html','sig','doc']
+            'raw','enable_zoom','html','sig','doc','code']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
 
@@ -293,3 +293,10 @@ def doc(obj,prepend_str = None, members = None, itself = True):
             _full_doc += doc(attr, prepend_str = _pstr, members = _class_members, itself = True).value
     
     return _HTML(_full_doc)
+
+def code(callable):
+    "Returns full code of a callable. Added in 1.7.9, you can just pass callable into `write` command."
+    try:
+        return _HTML(_fix_repr(callable))
+    except:
+        raise TypeError(f'Object {callable} is not a callable')

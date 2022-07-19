@@ -127,7 +127,7 @@ class LiveSlides(BaseLiveSlides):
         
         **Other syntax can be used everywhere like under `%%slides int -m`, in `write/iwrite/format_html/parse_xmd/from_markdown` functions:**\n
         - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
-        - Two side by side columns can be added inline using || Column A || Column B || sytnax.
+        - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
         - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
         ```markdown     
          ```multicol widthA widthB

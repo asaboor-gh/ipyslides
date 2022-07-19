@@ -221,7 +221,7 @@ class BaseLiveSlides:
         file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_demo.py') # Relative path to this file
         slides = runpy.run_path(file, init_globals= {'slides': self})['slides']
         
-        N = slides[-1].index
+        N = len(slides)
         with slides.slide(N + 1):
             slides.write('## This is all code to generate slides')
             slides.write(self.demo)
