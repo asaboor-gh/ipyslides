@@ -21,33 +21,33 @@ For development install, clone this repository and then
 > pip install -e .
 ```
 # Creating Slides
-> Tip: You can use `ipyslides.LiveSlides().demo()` to create example slides and start editing.
+Inside Jupyter Notebook:
 
 ```python
 #------------ Cell 1 --------------------
 import ipyslides as isd 
 ls = isd.LiveSlides(**settings_kwargs) # settings_kwargs are added in 1.4.1
-ls.settings.set_animation('zoom') # could be as animaation='zoom' in settings_kwargs in 1.4.1 +
-ls.special_syntax # Gives you information what you can do with markdown 1.7.2+
+ls.set_overall_animation('zoom') # can be changed per slide in 1.7.6+
+ls.xmd_syntax # Gives you information what you can do with markdown 1.7.2+
 #------------ Cell 2 --------------------
 %%title
 # create a rich content title page
 #------------ Cell 3 --------------------
-%%slide 1
+%%slide 1 # in 1.7.7+ you can add -s swich to excute cell once, kind a cache.
 # slide 1 content
 #------------ Cell 4 --------------------
 %%slide 1 -m # new in 1.4.6
-Markdown here with extended options. Nested blocks are not supported
+Markdown here with extended options such as alert`this will be alerted in slides`. Nested blocks are not supported
     ```multicol 30 70
     less content
     +++
-    more content
+    more content in ||side by || side columns||. 
     ```
     ```python run source
     x = 1 + 2
     ls.write([x, source])
     ```
-{{source}} will be shown in start here as well. Expressions are supported in 1.5.8+.
+{{source}} will be shown in start here as well. Expressions are are not supported.
 
 (1.5.5+) three underscores ___ on their own line create multiple frames
 #------------ Cell 5 --------------------
@@ -61,7 +61,7 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
 slides separator should be --- (three dashes)
 frames separator should be ___ (three underscores)
 ```python
-ls.from_markdown(path)
+ls.from_markdown(start, path)
 with ls.slide(2):
     write(ls[2].markdown) # write content of slide 2 from file
     plot_something() # Add other things to same file
@@ -71,6 +71,10 @@ with ls.slide(2):
 #### You can see documentation slides with:
 ```python
 ls.load_docs()
+```
+#### You can see a rich content demo of slides with:
+```python
+ls.demo()
 ```
 
 #### You can build html of slides 
@@ -111,6 +115,12 @@ def colorize(obj):
 
 slides.write(*range(10))
 # This will color even odd integers differently
+```
+
+## Markdown Extensions
+In 1.7.7+ you can install extensions of markdown e.g. [PyMdown](https://facelessuser.github.io/pymdown-extensions/) and use them as follows:
+```python
+ls.extender.extend(extension)
 ```
 # Full Screen Presentation
 - Jupyterlab 3.0+ has full screen eneabled from any view:
