@@ -112,6 +112,7 @@ with slides.slide(8,props_dict = {'': dict(background='linear-gradient(to right,
     write('## Plotting with Matplotlib')
     with slides.source.context() as s:
         import numpy as np, matplotlib.pyplot as plt
+        plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation
         x = np.linspace(0,2*np.pi)
         with plt.style.context('ggplot'):
             fig, ax = plt.subplots(figsize=(3.4,2.6))

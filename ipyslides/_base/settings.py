@@ -3,7 +3,7 @@ Author Notes: Classes in this module should only be instantiated in LiveSlide cl
 and then provided to other classes via composition, not inheritance.
 """
 
-import os 
+import os, sys
 import datetime
 from IPython import get_ipython
 from IPython.display import display, Image, Javascript
@@ -73,8 +73,9 @@ class LayoutSettings:
         if text_font:
             self._font_family['text'] = text_font
         if code_font:
-            self._font_family['code'] = code_font  
-        self._update_theme() # Changes Finally 
+            self._font_family['code'] = code_font
+        
+        self._update_theme() # Changes Finally
     
     def set_font_scale(self,font_scale=1):
         "Set font scale to increase or decrease text size. 1 is default."

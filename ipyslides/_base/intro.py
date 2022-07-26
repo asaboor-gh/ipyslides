@@ -163,6 +163,7 @@ For matching plots style with theme, run following code in a cell above slides.
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 #plt.style.available() #gives styles list
+plt.rcParams['svg.fonttype'] = 'none' # or 'path' Enforces same fonts in plots as in presentation slides or use
 ```
 
 **Plotly**{{.Success}}
