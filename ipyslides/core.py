@@ -89,7 +89,7 @@ class LiveSlides(BaseLiveSlides):
         
         self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
             
-        self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_displayed.
+        self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_load_and_refresh.
         self._current_slide = '0' # Initialize current slide for notes at title page
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
         self._citations_dict = {} # Initialize citations dictionary, updated by user or by set_citations.
@@ -102,7 +102,7 @@ class LiveSlides(BaseLiveSlides):
         self.progress_slider.observe(self._update_content,names=['index'])
         # All Box of Slides
         self._box =  self.widgets.mainbox
-        self._box.on_displayed(self._on_displayed) 
+        self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box_ = ipw.VBox() # Initialize display box
         
         # Start with a blank slide to avoid errors
@@ -165,7 +165,7 @@ class LiveSlides(BaseLiveSlides):
         display_inline = False
         ))
         
-    def _on_displayed(self, change):
+    def _on_load_and_refresh(self):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
             with _build_slide(self, '0'):

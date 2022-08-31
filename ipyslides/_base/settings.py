@@ -37,7 +37,7 @@ class LayoutSettings:
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
         self.box = self.widgets.panelbox
-        self.box.on_displayed(self._on_displayed) # First attempt of Javascript to work
+        self._on_load_and_refresh() # First attempt of Javascript to work
         
         self.theme_dd.observe(self._update_theme,names=['value'])
         self.scale_slider.observe(self.__set_font_scale,names=['value'])
@@ -54,7 +54,7 @@ class LayoutSettings:
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
         
-    def _on_displayed(self,change):
+    def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
         self.__add_js()
         
         with capture_output() as cap:
