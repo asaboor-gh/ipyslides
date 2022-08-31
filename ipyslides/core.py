@@ -214,8 +214,13 @@ class LiveSlides(BaseLiveSlides):
 
     def clear(self):
         "Clear all slides."
-        self._slides_dict = {k:v for k,v in self._slides_dict.items() if k == '0'} # Clear slides, but keep title page
+        self._slides_dict = {} # Clear slides
+        with _build_slide(self, '0'):
+            with suppress(BaseException): # Create a clean title page with no previous toasts/css/animations etc.
+                self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
+        
         self.refresh() # Clear interface too
+        
     
     def cite(self, key):
         """Add citation in presentation, key should be a unique string and citation is text/markdown/HTML.
