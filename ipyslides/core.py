@@ -169,9 +169,10 @@ class LiveSlides(BaseLiveSlides):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
             with _build_slide(self, '0'):
-                self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
+                with suppress(BaseException):
+                    self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
         
-        with suppress(Exception): # Does not work everywhere.
+        with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
     
     def __iter__(self): # This is must have for exporting

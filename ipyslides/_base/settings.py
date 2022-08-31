@@ -3,6 +3,7 @@ Author Notes: Classes in this module should only be instantiated in LiveSlide cl
 and then provided to other classes via composition, not inheritance.
 """
 
+from contextlib import suppress
 import os, sys
 import datetime
 from IPython import get_ipython
@@ -58,7 +59,8 @@ class LayoutSettings:
         self.__add_js()
         
         with capture_output() as cap:
-            parse_xmd(intro.instructions,display_inline=True)
+            with suppress(BaseException): # When ipython is not running, avoid errors
+                parse_xmd(intro.instructions,display_inline=True)
         # Only do this if it's in Jupyter, otherwise throws errors
         self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
         self.widgets.htmls.intro.add_class('Intro')
