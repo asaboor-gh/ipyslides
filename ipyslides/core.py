@@ -217,9 +217,9 @@ class LiveSlides(BaseLiveSlides):
         self._slides_dict = {} # Clear slides
         with _build_slide(self, '0'):
             with suppress(BaseException): # Create a clean title page with no previous toasts/css/animations etc.
-                self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
+                self.parse_xmd('# Title Page', display_inline=True)
         
-        self.refresh() # Clear interface too
+        self.refresh() # Clear interface again may be not needed, but it is not that costly.
         
     
     def cite(self, key):
@@ -658,6 +658,8 @@ class LiveSlides:
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `ls.export.report` is called.
     This is useful to fill-in content in document that is not required in slides.
     
+    Starting with 1.8, you can provide extensions at initialization time as a list to arguments `extensions`. See [PyMdownx](https://facelessuser.github.io/pymdown-extensions/extensions/arithmatex/) for useful extensions. `'pymdownx.arithmatex'` is a recommended extension to load Maths faster.
+    
     """) + how_to_slide[0]
     def __new__(cls,
                 citation_mode = 'global',
@@ -671,7 +673,8 @@ class LiveSlides:
                 text_font     = 'STIX Two Text', 
                 code_font     = 'var(--jp-code-font-family)', 
                 code_style    = 'default', 
-                code_lineno   = True
+                code_lineno   = True,
+                extensions    = []
                 ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         _private_instance.__doc__ = cls.__doc__ # copy docstring
@@ -679,6 +682,7 @@ class LiveSlides:
         if citation_mode not in ['global', 'inline', 'footnote']:
             raise ValueError(f'citation_mode must be one of "global", "inline", "footnote" but got {citation_mode}')
         
+        _private_instance.extender.extend(extensions)
         _private_instance._citation_mode = citation_mode
         _private_instance.settings.set_layout(center = center, content_width = content_width)
         _private_instance.settings.set_footer(text = footer_text, show_date = show_date, show_slideno = show_slideno)
