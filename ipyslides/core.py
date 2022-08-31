@@ -214,7 +214,7 @@ class LiveSlides(BaseLiveSlides):
 
     def clear(self):
         "Clear all slides."
-        self._slides_dict = {} # Clear slides
+        self._slides_dict = {k:v for k,v in self._slides_dict.items() if k == '0'} # Clear slides, but keep title page
         self.refresh() # Clear interface too
     
     def cite(self, key):
@@ -472,9 +472,9 @@ class LiveSlides(BaseLiveSlides):
             citations = {}
             for match in all_matches:
                 citations[match[0].strip()] = match[1]
+                self.set_citations(citations) # Only update under all_matches loop, otherwise it will be a mess of notifications
                 text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
             
-            self.set_citations(citations)
             return text_chunk
         
         if '-m' in line[1:]:

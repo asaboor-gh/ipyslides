@@ -105,7 +105,7 @@ class BaseLiveSlides:
     def clear_toasts(self):
         "Remove all toast notifications that show up with any slide."
         for s in self._slides_dict.values():
-            s.toast = None
+            s._toast = None # remove toast from slide
     
     @property
     def toasts(self):
@@ -239,12 +239,6 @@ class BaseLiveSlides:
         # Just for func, set theme of all even slides to be fancy, and zoom animation
         fancy_even_slides_css = {       
             '--heading-fg': '#105599',
-	        '--primary-fg': '#755',
-	        '--primary-bg': '#efefef',
-	        '--secondary-bg': '#effffe',
-	        '--secondary-fg': '#89E',
-	        '--tr-odd-bg': '#deddde',
-	        '--tr-hover-bg': '#D1D9E1',
 	        '--accent-color': '#955200',
             '--pointer-color': '#FF7722'
         }   
