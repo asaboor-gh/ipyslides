@@ -10,7 +10,7 @@ from IPython.utils.capture import capture_output
 
 
 from . import styles
-from ..utils import html, alert, raw
+from ..utils import html, _HTML
 
 class Slide:
     "New in 1.7.0"
@@ -281,10 +281,10 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
             break # No need to check other widgets if one exists
     
     if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
-        display(alert('Use `pprint` or `LiveSlides.capture_std` '
-                      'contextmanager to see output on sldie!<hr/>'
-                ) + raw(captured.stdout)
-        )
+        _slide._contents.append(_HTML('<div class="PyRepr Error">Use `pprint` or `LiveSlides.capture_std` '
+        'contextmanager \nto see print output on slide in desired order!\n'
+        '---------------------------------------------------------------------------\n'
+        + captured.stdout + '</div>'))
         
     if hasattr(_slide, 'new'):
         _slide._rebuild_all()

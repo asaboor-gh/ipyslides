@@ -24,6 +24,7 @@ setuptools.setup(
     requires = ['markdown','ipywidgets'],
     install_requires = [
           'markdown',
+          'markdown-customblocks',
           'ipywidgets'
       ],
     packages = setuptools.find_packages(),

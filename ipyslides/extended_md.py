@@ -32,32 +32,49 @@ from .formatter import _HTML, highlight, stringify
 from .source import _str2code
 
 
-_md_extensions = ['tables','footnotes','attr_list','md_in_html'] # For Markdown Parser
+_md_extensions = ['tables','footnotes','attr_list','md_in_html', 'customblocks'] # For Markdown Parser
+_md_extension_configs = {
+    'customblocks': {
+        'generators' : {
+             
+             }
+    }
+}
 
 class PyMarkdown_Extender:
     def __init__(self):
         "Adds extensions to the Markdown parser. See [Website of Python-Markdown](https://python-markdown.github.io/extensions/)"
         self._exts = []
+        self._configs = {}
     
     def __repr__(self) -> str:
-        return repr(self._all)
+        return "Extensions:\n" + repr(self._all) + "\nConfigs:\n" + repr(self._all_configs)
         
     @property
     def _all(self):
         return list(set([*self._exts, *_md_extensions]))
     
+    @property
+    def _all_configs(self):
+        return {**self._configs, **_md_extension_configs}
+    
     def extend(self,extensions_list):
         "Add list of extensions to the Markdown parser."
         self._exts = list(set([*self._exts, *extensions_list]))
     
+    def config(self,configs_dict):
+        "Add configurations to the Markdown extensions. configs_dict is a dictionary like {'extension_name': <config_dict>}"
+        self._configs = {**self._configs, **configs_dict}
+    
     def clear(self):
-        "Clear all extensions added by user."
+        "Clear all extensions and their configurations added by user."
         self._exts = []
+        self._configs = {}
     
     @property
     def active(self):
         "List of active extensions."
-        return self._all
+        return {'extensions': self._all, 'configs': self._all_configs}
   
 extender = PyMarkdown_Extender()
 del PyMarkdown_Extender
@@ -74,7 +91,7 @@ _special_funcs = {
 class _ExtendedMarkdown(Markdown):
     "New in 1.4.5"
     def __init__(self):
-        super().__init__(extensions = extender._all)
+        super().__init__(extensions = extender._all, extension_configs=extender._all_configs)
         self._display_inline = False
     
     def _extract_class(self, header):
@@ -174,7 +191,15 @@ class _ExtendedMarkdown(Markdown):
             # Run Code now
             with capture_output() as captured:
                 shell.run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
-            return captured.outputs
+            
+            outputs = captured.outputs
+            if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
+                outputs.append(_HTML('<div class="PyRepr Error">Use `pprint` or `LiveSlides.capture_std` '
+                    'contextmanager \nto see print output on slide in desired order!\n'
+                    '---------------------------------------------------------------------------\n'
+                    + captured.stdout + '</div>'))
+            
+            return outputs
         
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as {{var}} and two inline columns as ||C1||C2||"

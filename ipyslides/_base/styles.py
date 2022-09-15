@@ -229,6 +229,19 @@ def style_css(style_root = theme_roots['Inherit']):
     margin-bottom: 0.9em;
 }
 
+details {
+    padding: 0.2em;
+    background: var(--secondary-bg);
+}
+details > summary {
+    color: var(--accent-color);
+    padding: 0.2em;
+}
+details > div {
+    background: var(--primary-bg);
+    padding: 0.2em;
+}
+
 .jp-OutputArea-child, 
 .jp-OutputArea-child .jp-OutputArea-output { 
     background: transparent !important;

@@ -160,6 +160,8 @@ class LiveSlides(BaseLiveSlides):
         Some **bold text**
         ^^^
         
+        > Note: You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) extension to make nested blocks with classes. It is added as dependency.
+        
         - Other options include:
         ''') + '\n' + ', '.join(f'alert`{k}&#96;{v}&#96;`' for k,v in _special_funcs.items()),
         display_inline = False
