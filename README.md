@@ -8,12 +8,12 @@ Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voi
 ![Overview](overview.jpg)
 
 # Changelog
-Above version 1.4.0, users can see upto date documentation via `ipyslides.LiveSlides().load_docs()`, so no additional changelog will be created in future. 
+Above version 1.4.0, users can see upto date documentation via `ipyslides.LiveSlides().docs()`, so no additional changelog will be created in future. 
 See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.8.0
+> pip install ipyslides >= 1.8.1
 ```
 For development install, clone this repository and then
 ```shell
@@ -70,7 +70,7 @@ with ls.slide(2):
 
 #### You can see documentation slides with:
 ```python
-ls.load_docs()
+ls.docs()
 ```
 #### You can see a rich content demo of slides with:
 ```python

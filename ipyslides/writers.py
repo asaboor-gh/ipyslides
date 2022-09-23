@@ -5,8 +5,7 @@ write/ iwrite main functions to add content to slides
 __all__ = ['write','iwrite']
 
 import ipywidgets as ipw
-from collections import namedtuple
-from IPython.display import display
+from IPython.display import display as display
 
 from .formatter import _HTML, _HTML_Widget, stringify
 from .extended_md import parse_xmd          
@@ -16,7 +15,8 @@ def _fix_repr(obj):
     if isinstance(obj,str):
         return parse_xmd(obj, display_inline= False, rich_outputs=False)
     else:
-        return stringify(obj)
+        return stringify(obj)            
+    
     
 def _fmt_write(*columns,width_percents=None,className=None):
     if not width_percents and len(columns) >= 1:
@@ -34,6 +34,8 @@ def _fmt_write(*columns,width_percents=None,className=None):
     
     return f'''<div class="columns {_class}">{_cols}</div>''' if _class else f'''<div class="columns">{_cols}</div>'''
         
+
+
 def write(*columns,width_percents=None,className=None): 
     '''Writes markdown strings or IPython object with method `_repr_<html,svg,png,...>_` in each column of same with. If width_percents is given, column width is adjusted.
     Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows or explictly call `rows`. 
@@ -57,7 +59,6 @@ def write(*columns,width_percents=None,className=None):
     Note: Use `keep_format` method to bypass markdown parser, for example `keep_format(altair_chart.to_html())`.
     Note: You can give your own type of data provided that it is converted to an HTML string.
     Note: `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
-    
     ''' 
     return display(_HTML(_fmt_write(*columns,width_percents=width_percents,className=className)))
 
@@ -81,8 +82,8 @@ def _fmt_iwrite(*columns,width_percents=None):
                 row.append(item)
             except:
                 tmp = _HTML_Widget(value = _fix_repr(item))
-                if '<script>' in tmp.value:
-                    tmp.value,  = _HTML_Widget(f'Error displaying object, cannot update object {item!r} as it needs Javascript. Use `write` or `display` commands')
+                if '</script>' in tmp.value:
+                    tmp.value = f'Error displaying object, cannot update object {item!r} as it needs Javascript. Use `write` or `display` commands or `ipywidgets.Outpt()` to display it.'
 
                 tmp._grid_location = {'row':i,'column':j}
                 row = [*row,tmp]
@@ -91,8 +92,8 @@ def _fmt_iwrite(*columns,width_percents=None):
 
     children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}')) for _c, _w in zip(fixed_cols,widths)]
     # Format things as given in input
-    out_cols = tuple(tuple(row) if len(row) > 1 else row[0] for row in fixed_cols) 
-    out_cols = tuple(out_cols) if len(out_cols) > 1 else out_cols[0]
+    out_cols = tuple(tuple(row) if len(row) > 1 else row[0] for row in fixed_cols) # If single element in row, unwrap it
+    out_cols = tuple(out_cols) # Each column is a tuple of rows even if it has only one row
     return ipw.HBox(children = children).add_class('columns'), out_cols #Return display widget and list of objects for later use
 
 class _WidgetsWriter:
@@ -101,6 +102,22 @@ class _WidgetsWriter:
         if isinstance(className, str):
             self._grid.add_class(className)
         self._grid.add_class('columns')
+        
+    def _ipython_display_(self):
+        return display(self._grid)
+        
+    def __getitem__(self, index): # For unpacking like write, *columns
+        if index == 0:
+            return self
+        elif isinstance(index, int) and index != 0: # != 0 for accessing from -1, -2 as well
+            idx = index - 1 if index > 0 else index
+            return self._cols[idx]
+        else:
+            raise TypeError(f'Index should be integer, got {index!r}')
+    @property
+    def cols(self):
+        "Access columns of the grid. Each column is a list of widgets or single widget if only one row."
+        return self._cols
     
     def update(self, old_obj, new_obj):
         "Updates `old_obj`  with `new_obj`. Returns reference to created/given widget, which can be updated by it's own methods."
@@ -111,8 +128,8 @@ class _WidgetsWriter:
             tmp = new_obj
         except:
             tmp = _HTML_Widget(value = _fix_repr(new_obj))
-            if '<script>' in tmp.value:
-                tmp.value, = _HTML_Widget(f'Error displaying object, cannot update object {new_obj!r} as it needs Javascript. Use `write` or `display` commands')
+            if '</script>' in tmp.value:
+                tmp.value = f'Error displaying object, cannot update object {new_obj!r} as it needs Javascript. Use `write` or `display` commands or `ipywidgets.Outpt()` to display it.'
                 return # Don't update
         
         tmp._grid_location = old_obj._grid_location # Keep location
@@ -133,7 +150,7 @@ def iwrite(*columns,width_percents = None,className=None):
     
     **Examples**:
     ```python
-    writer, x = iwrite('X')
+    writer, x = iwrite('X')  # writer = iwrite('X'); x = writer.cols[0] # gives same result
     writer, (x,y) = iwrite('X','Y')
     writer, (x,y) = iwrite(['X','Y'])
     writer, [(x,y),z] = iwrite(['X','Y'],'Z')
@@ -141,8 +158,4 @@ def iwrite(*columns,width_percents = None,className=None):
     new_obj = writer.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
     ```
     """
-    wr = _WidgetsWriter(*columns,width_percents=width_percents,className=className)
-        
-    display(wr._grid) # Actually display the widget
-    
-    return namedtuple('LiveGrid',['writer','columns'])(wr, wr._cols)
+    return _WidgetsWriter(*columns,width_percents=width_percents,className=className)

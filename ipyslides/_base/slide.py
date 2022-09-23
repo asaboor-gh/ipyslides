@@ -255,6 +255,15 @@ class Slide:
 @contextmanager
 def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
     "Use as contextmanager in LiveSlides class to create slide. New in 1.7.0"
+    # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
+    old_slides = list(app._slides_dict.keys()) # Need if update is required later
+    
+    if '.' in slide_number_str:
+        _int_part, _ = slide_number_str.split('.')
+        app._slides_dict = {k:v for k, v in app._slides_dict.items() if k != _int_part} # Overwrite slide if frames with same number are latest
+    else:
+        app._slides_dict = {k:v for k, v in app._slides_dict.items() if not k.startswith(slide_number_str)} # Overwrite frames if slide with same number is latest
+    
     with capture_output() as captured:
         if slide_number_str in app._slides_dict:
             _slide = app._slides_dict[slide_number_str]
@@ -262,7 +271,6 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
             _slide = Slide(app, captured, props_dict)
             _slide.slide_number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
-            setattr(_slide, 'new', True) # To indictae for rebuilding
          
         yield _slide
     
@@ -285,10 +293,10 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
         'contextmanager \nto see print output on slide in desired order!\n'
         '---------------------------------------------------------------------------\n'
         + captured.stdout + '</div>'))
-        
-    if hasattr(_slide, 'new'):
-        _slide._rebuild_all()
-        delattr(_slide, 'new')
+    
+    if old_slides != list(app._slides_dict.keys()): # If there is a change in slides
+        _slide._rebuild_all() # Rebuild all slides
+        del old_slides # Delete old slides keys
     
         
     

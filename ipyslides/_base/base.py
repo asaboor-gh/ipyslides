@@ -120,7 +120,7 @@ class BaseLiveSlides:
             self.notify(content = toast['func'](), **toast['kwargs'])
     
     def from_markdown(self, start, file_or_str, trusted = False):
-        """You can create slides from a markdown file or tex block as well. It creates slides start + (0,1,2,3...) in order.
+        """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
         Frames separator should be ___ (three underscores) in start of line. All markdown before first ___ will be written on all frames.
@@ -250,7 +250,7 @@ class BaseLiveSlides:
         slides._slideindex = 0 # Go to title
         return slides
     
-    def load_docs(self):
+    def docs(self):
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
@@ -328,7 +328,7 @@ class BaseLiveSlides:
             self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
             self.write([self.doc(self.from_markdown,'LiveSlides'),
                         self.doc(self.demo,'LiveSlides'), 
-                        self.doc(self.load_docs,'LiveSlides'),
+                        self.doc(self.docs,'LiveSlides'),
                         self.doc(self.export.slides,'LiveSlides.export'),
                         self.doc(self.export.report,'LiveSlides.export')])
         
@@ -340,10 +340,12 @@ class BaseLiveSlides:
             self.doc(self.extender,'LiveSlides.extender', members = True, itself = False).display()
         
         with self.slide(11):
-            self.write(['## Presentation Code',self.load_docs])
+            self.write(['## Presentation Code',self.docs])
         
         self._slideindex = 0 # Go to title
         return self
+    
+    load_docs = docs # For backward compatibility
 
 
 def _parse_markdown_text(text_block):

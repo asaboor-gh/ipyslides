@@ -33,13 +33,7 @@ from .source import _str2code
 
 
 _md_extensions = ['tables','footnotes','attr_list','md_in_html', 'customblocks'] # For Markdown Parser
-_md_extension_configs = {
-    'customblocks': {
-        'generators' : {
-             
-             }
-    }
-}
+_md_extension_configs = {}
 
 class PyMarkdown_Extender:
     def __init__(self):
@@ -63,7 +57,7 @@ class PyMarkdown_Extender:
         self._exts = list(set([*self._exts, *extensions_list]))
     
     def config(self,configs_dict):
-        "Add configurations to the Markdown extensions. configs_dict is a dictionary like {'extension_name': <config_dict>}"
+        "Add configurations to the Markdown extensions. configs_dict is a dictionary like {'extension_name': config_dict}"
         self._configs = {**self._configs, **configs_dict}
     
     def clear(self):

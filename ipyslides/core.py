@@ -170,7 +170,7 @@ class LiveSlides(BaseLiveSlides):
     def _on_load_and_refresh(self):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
-            with _build_slide(self, '0'):
+            with _build_slide(self, '0') as s:
                 with suppress(BaseException):
                     self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
         
@@ -411,7 +411,15 @@ class LiveSlides(BaseLiveSlides):
             self._slideindex = i # goto there to update display
         
         self._slideindex = 0 # goto first slide after refresh
-            
+    
+    def delete(self, slide_number):
+        "Delete slide or all frames by `slide_number` with which it was created. It reappear if its source code is run again."
+        if not isinstance(slide_number, int):
+            raise TypeError('slide_number must be an integer, even for frames.')
+        number = str(slide_number)
+        self._slides_dict = {k:v for k,v in self._slides_dict.items() if not k.startswith(number)} # Delete all frames too
+        self.refresh()
+        
         
     def set_slide_css(self,props_dict = {}):
         """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
@@ -655,7 +663,7 @@ class LiveSlides:
     std.stdout.display() #ls.write(std.stdout)
     ```
     
-    > `ls.demo` and `ls.load_docs` overwrite all previous slides.
+    > `ls.demo` and `ls.docs` overwrite all previous slides.
     
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `ls.export.report` is called.
     This is useful to fill-in content in document that is not required in slides.
@@ -695,5 +703,4 @@ class LiveSlides:
         return _private_instance
     
     # No need to define __init__, __new__ is enough to show signature and docs
-    
     

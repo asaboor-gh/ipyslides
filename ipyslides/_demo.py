@@ -189,7 +189,7 @@ with slides.slide(13):
         import numpy as np, matplotlib.pyplot as plt
         
         write('## Interactive Apps on Slide\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
-        grid, [(plot,button, _), code] = slides.iwrite([
+        writer, [(plot,button, _), code] = slides.iwrite([
             '## Plot will be here! Click button below to activate it!',
             ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
             "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src.focus_lines([4,5,6,7,*range(24,30)]))
@@ -207,7 +207,7 @@ with slides.slide(13):
             
             ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
             global plot # only need if you want to change something on it inside function
-            plot = grid.update(plot, fig) #Update plot each time
+            plot = writer.update(plot, fig) #Update plot each time
             
         def onclick(btn):
             plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'

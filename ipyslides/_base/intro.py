@@ -78,7 +78,7 @@ with ls.slide(2):
     write_something()
 ```
 - Use `ls.demo` to create example slides and start editing. Follow steps in first part.
-- Use `ls.load_docs` to see upto date documentation.
+- Use `ls.docs` to see upto date documentation.
 - You can acess markdown content of an existing slide using `ls[key or index].markdown` if it has been created using `ls.from_markdown` or `%%slide i -m`.
 - You can insert content usign `with ls[key or index].insert(index)` or `ls[key or index].insert_markdown` (1.7.7+).
 
