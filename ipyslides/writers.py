@@ -158,4 +158,6 @@ def iwrite(*columns,width_percents = None,className=None):
     new_obj = writer.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
     ```
     """
-    return _WidgetsWriter(*columns,width_percents=width_percents,className=className)
+    wr = _WidgetsWriter(*columns,width_percents=width_percents,className=className)
+    display(wr._grid) # Display it must to show it there
+    return wr # Return it to use later as writer, columns unpacked
