@@ -256,7 +256,7 @@ class Slide:
 def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
     "Use as contextmanager in LiveSlides class to create slide. New in 1.7.0"
     # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
-    old_slides = list(app._slides_dict.keys()) # Need if update is required later
+    old_slides = list(app._slides_dict.values()) # Need if update is required later, values decide if slide is changed
     
     if '.' in slide_number_str:
         _int_part, _ = slide_number_str.split('.')
@@ -266,7 +266,7 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
     
     with capture_output() as captured:
         if slide_number_str in app._slides_dict:
-            _slide = app._slides_dict[slide_number_str]
+            _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
         else:
             _slide = Slide(app, captured, props_dict)
             _slide.slide_number = slide_number_str
@@ -294,9 +294,9 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
         '---------------------------------------------------------------------------\n'
         + captured.stdout + '</div>'))
     
-    if old_slides != list(app._slides_dict.keys()): # If there is a change in slides
+    if old_slides != list(app._slides_dict.values()): # If there is a change in slides
         _slide._rebuild_all() # Rebuild all slides
-        del old_slides # Delete old slides keys
+        del old_slides # Delete old slides
     
         
     
