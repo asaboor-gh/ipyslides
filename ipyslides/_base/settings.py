@@ -106,7 +106,7 @@ class LayoutSettings:
             _text += f' | <text style="color:var(--secondary-fg);">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
         if show_slideno: #Slide number should be replaced from __number__ 
             _text += '<b style="color:var(--accent-color);white-space:pre;">  __number__<b>'
-        _text = f'<p style="white-space:nowrap;"> {_text} </p>'
+        _text = f'<p style="white-space:nowrap;display:inline;"> {_text} </p>' # To avoid line break in footer
         
         self.widgets.htmls.footer.value = _text.replace('__number__',_number_str)
         

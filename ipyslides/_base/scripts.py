@@ -42,10 +42,10 @@ function main(){
         } else if (key===77){
             alert("Pressing M could change cell to Markdown and vanish away slides!");
             e.stopPropagation();   // M key
+        } else if (key === 87) { 
+            winFs.click(); // Toggle Window with W 
         } else if (key === 70) { 
-            winFs.click(); // F 
-        } else if (key === 69) { 
-            // E to enter fullscreen
+            // F to enter fullscreen
             document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();
             if (!winFs.classList.contains('mod-active')) {
                 winFs.click(); // Make layout fullscreen as well

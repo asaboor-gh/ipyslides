@@ -44,7 +44,7 @@ class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>').add_class('Footer')
+    footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_roots['Fancy'].replace(
                 '__text_size__','20px')).replace(
                 '__breakpoint_width__','650px').replace(
