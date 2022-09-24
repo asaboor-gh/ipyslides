@@ -189,7 +189,7 @@ with slides.slide(13):
         import numpy as np, matplotlib.pyplot as plt
         
         write('## Interactive Apps on Slide\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
-        writer, [(plot,button, _), code] = slides.iwrite([
+        writer, (plot,button, _), code = slides.iwrite([
             '## Plot will be here! Click button below to activate it!',
             ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
             "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src.focus_lines([4,5,6,7,*range(24,30)]))

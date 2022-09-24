@@ -152,8 +152,8 @@ def iwrite(*columns,width_percents = None,className=None):
     ```python
     writer, x = iwrite('X')  # writer = iwrite('X'); x = writer.cols[0] # gives same result
     writer, (x,y) = iwrite('X','Y')
-    writer, (x,y) = iwrite(['X','Y'])
-    writer, [(x,y),z] = iwrite(['X','Y'],'Z')
+    writer, (x,y) = iwrite(['X','Y']) # One column with two rows
+    writer, (x,y),z = iwrite(['X','Y'],'Z')
     #We unpacked such a way that we can replace objects with new one using `grid.update`
     new_obj = writer.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
     ```

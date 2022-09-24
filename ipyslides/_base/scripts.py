@@ -44,6 +44,15 @@ function main(){
             e.stopPropagation();   // M key
         } else if (key === 70) { 
             winFs.click(); // F 
+        } else if (key === 69) { 
+            // E to enter fullscreen
+            document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();
+            if (!winFs.classList.contains('mod-active')) {
+                winFs.click(); // Make layout fullscreen as well
+            };
+        } else if (key === 27) {  
+            // Escape to exit fullscreen
+            document.getElementsByClassName('SlidesWrapper')[0].exitFullscreen();
         } else if (key === 13) {
             return true; // Enter key
         } else if (key === 83) {

@@ -15,7 +15,7 @@ from . import utils
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
 from ._base.base import BaseLiveSlides
-from ._base.intro import how_to_slide, logo_svg
+from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import _build_slide
 from ._base import styles
@@ -105,9 +105,6 @@ class LiveSlides(BaseLiveSlides):
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box_ = ipw.VBox() # Initialize display box
         
-        # Start with a blank slide to avoid errors
-        with _build_slide(self,'0') as slide:
-            self._slides_dict['0'] = slide
     
     @property
     def xmd_syntax(self):
@@ -170,9 +167,11 @@ class LiveSlides(BaseLiveSlides):
     def _on_load_and_refresh(self):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
-            with _build_slide(self, '0') as s:
-                with suppress(BaseException):
+            with suppress(BaseException):
+                with _build_slide(self, '0') as s:
                     self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
+                with _build_slide(self, '1') as s:
+                    self.parse_xmd('# Keys Combinations' + key_combs, display_inline=True)
         
         with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size

@@ -150,7 +150,7 @@ class LayoutSettings:
         
         
     def _update_theme(self,change=None): 
-        text_size = '{}px'.format(int(self.font_scale*16))
+        text_size = '{}px'.format(int(self.font_scale*20))
         
         if self.theme_dd.value != 'Custom':
             theme_css =  styles.style_css(styles.theme_roots[self.theme_dd.value])

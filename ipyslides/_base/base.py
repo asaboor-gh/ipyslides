@@ -6,7 +6,7 @@ from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
 from .export_html import _HhtmlExporter
-
+from .intro import key_combs
 class BaseLiveSlides:
     def __init__(self):
         self.__widgets = Widgets()
@@ -340,13 +340,17 @@ class BaseLiveSlides:
             self.doc(self.extender,'LiveSlides.extender', members = True, itself = False).display()
         
         with self.slide(11):
+            self.write('## Keys and Shortcuts', key_combs)
+        
+        with self.slide(12):
             self.write(['## Presentation Code',self.docs])
         
         self._slideindex = 0 # Go to title
         return self
     
-    load_docs = docs # For backward compatibility
-
+    def load_docs(self): # For backward compatibility
+        print('`.load_docs` is deprecated, use `.docs` instead.')
+        return self.docs()
 
 def _parse_markdown_text(text_block):
     "Parses a Markdown text block and returns text for title and each slide."

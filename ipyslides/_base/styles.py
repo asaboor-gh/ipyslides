@@ -394,10 +394,10 @@ details > div {
 	overflow:hidden; /* FireFox */
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--primary-fg) !important;}
-.SlidesWrapper .SlideArea h1 {margin-block: unset;font-size: 3em;  line-height: 1.5em;}
-.SlidesWrapper .SlideArea h2 {margin-block: unset;font-size: 2.5em;line-height: 1.5em;}
-.SlidesWrapper .SlideArea h3 {margin-block: unset;font-size: 2em;  line-height: 1.5em;}
-.SlidesWrapper .SlideArea h4 {margin-block: unset;font-size: 1.5em;line-height: 1.5em;}
+.SlidesWrapper .SlideArea h1 {margin-block: unset;font-size: 2.25em;  line-height: 1.5em;}
+.SlidesWrapper .SlideArea h2 {margin-block: unset;font-size: 2em;line-height: 1.5em;}
+.SlidesWrapper .SlideArea h3 {margin-block: unset;font-size: 1.5em;  line-height: 1.5em;}
+.SlidesWrapper .SlideArea h4 {margin-block: unset;font-size: 1.25em;line-height: 1.5em;}
 .SlidesWrapper .SlideArea h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
 .SlidesWrapper .widget-text input {
     background: var(--primary-bg);

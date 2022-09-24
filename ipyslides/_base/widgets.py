@@ -46,7 +46,7 @@ class _Htmls:
     """
     footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>').add_class('Footer')
     theme   = HTML(html('style',styles.style_css(styles.theme_roots['Fancy'].replace(
-                '__text_size__','16px')).replace(
+                '__text_size__','20px')).replace(
                 '__breakpoint_width__','650px').replace(
                 '__textfont__','STIX Two Text').replace(
                 '__codefont__','var(--jp-code-font-family)')

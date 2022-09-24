@@ -105,12 +105,7 @@ Use `slides[i].insert_markdown({'index': 'markdown_string',...})` to insert mark
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
 
-more_instructions =f'''## How to Use
-
-**Key Bindings**{{.Success}}
-
-Having your cursor over slides, you can use follwoing keys/combinations:
-
+key_combs = '''
 | Key (comb)                   | Action                                               | 
 |------------------------------|------------------------------------------------------|
 | `Space/RightArrowKey`        | Move to next slide                                   |
@@ -122,6 +117,17 @@ Having your cursor over slides, you can use follwoing keys/combinations:
 | `Z`                          | toggle matplotlib/svg/image zoom mode                |
 | `S`                          | save screenshot of current slide                     |
 | `P`                          | print PDF of current slide                           |
+| `E`                          | Enetr Fullscreen mode                                |
+| `Esc`                        | Exit Fullscreen mode                                 |
+'''
+
+more_instructions =f'''## How to Use
+
+**Key Bindings**{{.Success}}
+
+Having your cursor over slides, you can use follwoing keys/combinations:
+
+{key_combs}
 
 **Tips**{{.Success}}
 
