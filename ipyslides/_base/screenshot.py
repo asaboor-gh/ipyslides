@@ -98,7 +98,7 @@ class ScreenShot:
         return res   # Return previous resolution
     
     def capture(self,btn):
-        "Saves screenshot of current slide into self.__images dictionary when corresponding button clicked. Use in fullscreen mode"
+        "Saves screenshot of current slide into self.__images dictionary when corresponding button clicked. Use in fullscreen mode or set bbox using `.capture_setup`."
         with self.capture_mode():
             sleep(0.05) # Just for above clearance of widgets views
             if self.widgets.sliders.progress.label not in self.__images:

@@ -111,7 +111,7 @@ class LiveSlides(BaseLiveSlides):
         "Special syntax for markdown."
         return _HTML(self.parse_xmd(textwrap.dedent('''
         ## Extended Markdown
-        Extended syntax for markdown is constructed is constructed to support almost full presentation from Markdown.
+        Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
         **Following syntax is available only under `%%slide int -m` or in `from_markdown` function:**
         
@@ -156,8 +156,24 @@ class LiveSlides(BaseLiveSlides):
         <hr/>
         Some **bold text**
         ^^^
-        
-        > Note: You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) extension to make nested blocks with classes. It is added as dependency.
+        OR 
+        ```markdown
+        ::: Block-yellow
+            ### This is Header 3
+            <hr/>
+            Some **bold text**
+        ```
+        gives same thing as above. 
+        ::: Note 
+            You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) 
+            extension to make nested blocks with classes. It is added as dependency.
+            
+        ::: Block-red 
+            - You can use `LiveSlides.extender` to extend additional syntax using Markdown extensions such as 
+                [markdown extensions](https://python-markdown.github.io/extensions/) and 
+                [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
+            - You can serialize custom python objects to HTML using `LiveSlides.serializer` function. Having a 
+                `__format__` method in your class enables to use \{\{object\}\} syntax and `_repr_html_` method enables it to use inside `write` function.
         
         - Other options include:
         ''') + '\n' + ', '.join(f'alert`{k}&#96;{v}&#96;`' for k,v in _special_funcs.items()),
@@ -172,6 +188,10 @@ class LiveSlides(BaseLiveSlides):
                     self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
                 with _build_slide(self, '1') as s:
                     self.parse_xmd('# Keys Combinations' + key_combs, display_inline=True)
+                with _build_slide(self, '2') as s:
+                    self.xmd_syntax.display()
+            
+            self._slideindex = 0 # Go to title slide
         
         with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
