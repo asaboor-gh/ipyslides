@@ -25,7 +25,7 @@ class ScreenShot:
         self.bbox_input = self.widgets.inputs.bbox
         
         self.__images = {} #Store screenshots
-        self.__capture_settings = {'load_time':0.8,'quality':100,'bbox':None}
+        self.__capture_settings = {'load_time':0.8,'quality':95,'bbox':None}
         self.capturing = False
         
         self.btn_capture.on_click(self.capture)
