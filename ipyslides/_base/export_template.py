@@ -90,12 +90,15 @@ div.columns > div[style*="width:"] {
 
 .Content-Area .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
-    line-height: 0.75em !important;
+    line-height: 0.99em !important;
     position:relative; 
     left:initial;
     top:initial;
     padding:2px 4px;
     color: var(--secondary-fg);
+    /* Below are required to override behavior of span tag*/
+    display: inline-block !important;
+    white-space: break-spaces !important;
 }
 .Content-Area figure {
     margin: 8px !important; /* override default margin */
@@ -397,7 +400,7 @@ slides_css = """<style>
 section {
 	scroll-snap-align:start !important;
     scroll-snap-stop: always !important;
-	display: grid !important;
+	display: flex !important;
 	height: 100vh !important;
 	max-height: 100vh !important;
 	min-width: 100vw !important;
@@ -419,7 +422,7 @@ section span.html-slide-number {
     padding: 0.1em;
     margin: auto 8px 8px auto;
     color: var(--secondary-fg);
-    font-size: 0.9em;
+    font-size: 0.7em;
 }
 .SlidesWrapper::-webkit-scrollbar:vertical,
 .SlidesWrapper::-webkit-scrollbar-button,
@@ -459,7 +462,7 @@ section span.html-slide-number {
         height: auto !important;
     }
     section {
-        display: grid !important;
+        display: flex !important;
         margin: 0 !important;
         page-break-inside: avoid !important;
         page-break-after: always !important;

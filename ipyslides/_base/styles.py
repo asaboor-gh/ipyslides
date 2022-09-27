@@ -87,12 +87,15 @@ def style_css(style_root = theme_roots['Inherit']):
 	return style_root + ''' 
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
-    line-height: 0.8em !important;
+    line-height: 0.99em !important;
     position:relative; 
     left:initial;
     top:initial;
     padding:2px 4px;
     color: var(--secondary-fg);
+    /* Below are required to override behavior of span tag*/
+    display: inline-block !important;
+    white-space: break-spaces !important;
 }
 .SlideArea .citation {
     font-size: 0.8em !important; 

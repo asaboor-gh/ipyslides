@@ -51,11 +51,22 @@ class Slide:
         with self._widget:
             display(*self.contents)
             
+            
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr').display()
                 
                 for citation in self._citations.values():
                     citation.html.display()
+        
+        # Update corresponding CSS and Animation
+        self._app.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
+        with self._app.widgets.outputs.slide:
+            self.animation.display()
+            self.css.display()
+        
+        # This foreces hard refresh of layout, without it, sometimes CSS is not applied correctly
+        self._widget.remove_class('SlideArea') 
+        self._widget.add_class('SlideArea')
     
     def clear_display(self, wait = False):
         "Clear display of this slide."

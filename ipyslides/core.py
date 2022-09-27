@@ -253,7 +253,7 @@ class LiveSlides(BaseLiveSlides):
         
         """
         if self._citation_mode == 'inline':
-            return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial') # Just write here
+            return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
         
         current_slide = self._slides_dict[self._current_slide] # Get current slide, may not be refreshed yet
         _cited = _Citation(slide = current_slide, key = key)
