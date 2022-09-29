@@ -65,8 +65,9 @@ class Slide:
             self.css.display()
         
         # This foreces hard refresh of layout, without it, sometimes CSS is not applied correctly
-        self._widget.remove_class('SlideArea') 
-        self._widget.add_class('SlideArea')
+        if 'SlideArea' in self._widget._dom_classes: # Only if slide is present there.
+            self._widget.remove_class('SlideArea') 
+            self._widget.add_class('SlideArea')
     
     def clear_display(self, wait = False):
         "Clear display of this slide."

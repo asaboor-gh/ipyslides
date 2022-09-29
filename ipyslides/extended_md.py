@@ -105,7 +105,7 @@ class _ExtendedMarkdown(Markdown):
         self._display_inline = display_inline # Must change here
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
-            
+        
         new_strs = xmd.split('\n```') # This avoids nested blocks and it should be
         outputs =[]
         for i, section in enumerate(new_strs):
@@ -207,9 +207,8 @@ class _ExtendedMarkdown(Markdown):
             if _match in user_ns:
                 output = user_ns[_match]
             else:
-                raise ValueError(('{!r} is not found or expression is not executable. ' 
-                'Only variables and special syntax is allowed: (See LiveSlides.xmd_syntax for details)\n'
-                '{}').format(_match,'\n'.join(f'{k}:{v}:' for k,v in _special_funcs.items())))
+                raise ValueError(('{!r} is not executable. ' 
+                'Only variables are allowed in double curly braces or see LiveSlides.xmd_syntax as well'))
                 
             _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
             html_output = html_output.replace('{{' + match + '}}', _out, 1)
