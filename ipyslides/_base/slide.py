@@ -23,7 +23,7 @@ class Slide:
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
         self.slide_number = None # This should be set in the LiveSlide class
-        self.position = None # This should be set in the LiveSlides
+        self._label = None # This should be set in the LiveSlides
         self._index = None # This should be set in the LiveSlides
         self.set_css(props_dict, notify = False)
         
@@ -36,10 +36,10 @@ class Slide:
         self._toast = None # Update from BaseLiveSlides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from LiveSlides
+        self._frames = [] # Added from LiveSlides
         
     def __repr__(self):
-        md = f'{self.markdown[:15]}...' if self.markdown else ''
-        return f'Slide(slide_number = {self.slide_number}, label = {self.label!r}, index = {self._index}, markdown = {md!r})'
+        return f'Slide(slide_number = {self.slide_number}, label = {self.label!r}, index = {self._index})'
     
     def update_display(self, go_there = True):
         "Update display of this slide."
@@ -121,6 +121,10 @@ class Slide:
         self._extra_outputs = {'start': [], 'end': []}
         self._app._slidelabel = self.label # Go there
         self.update_display() 
+    
+    @property
+    def frames(self):
+        return tuple(self._frames)
 
     @property
     def toast(self):
@@ -128,7 +132,7 @@ class Slide:
     
     @property
     def label(self):
-        return str(self.position)
+        return self._label
     
     @property
     def citations(self):
@@ -246,12 +250,12 @@ class Slide:
     def _rebuild_all(self):
         "Update all slides in optimal way when a new slide is added."
         self._app._iterable = self._app._collect_slides()
-        n_last = self._app._iterable[-1].position
+        n_last = float(self._app._iterable[-1].label)
         self._app._nslides = int(n_last) # Avoid frames number
         self._app._max_index = len(self._app._iterable) - 1 # This includes all frames
         
         # Now update progress bar
-        opts = [(f"{s.position}", round(100*float(s.position)/(n_last or 1), 2)) for s in self._app._iterable]
+        opts = [(s.label, round(100*float(s.label)/(n_last or 1), 2)) for s in self._app._iterable]
         self._app.progress_slider.options = opts  # update options
         # Update Slides after progress bar is updated
         self._app.widgets.slidebox.children = [it._widget for it in self._app._iterable]
@@ -263,27 +267,25 @@ class Slide:
             if s._has_widgets:
                 s.update_display(go_there =  False) # Refresh all slides with widgets only, other data is not lost
         
-        
+
 @contextmanager
-def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
+def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_frameless = True):
     "Use as contextmanager in LiveSlides class to create slide. New in 1.7.0"
     # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
     old_slides = list(app._slides_dict.values()) # Need if update is required later, values decide if slide is changed
-    
-    if '.' in slide_number_str:
-        _int_part, _ = slide_number_str.split('.')
-        app._slides_dict = {k:v for k, v in app._slides_dict.items() if k != _int_part} # Overwrite slide if frames with same number are latest
-    else:
-        app._slides_dict = {k:v for k, v in app._slides_dict.items() if not k.startswith(slide_number_str)} # Overwrite frames if slide with same number is latest
-    
+        
     with capture_output() as captured:
         if slide_number_str in app._slides_dict:
             _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
+            if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
+                _slide = Slide(app, captured, props_dict)
+                _slide.slide_number = slide_number_str
+                app._slides_dict[slide_number_str] = _slide
         else:
             _slide = Slide(app, captured, props_dict)
             _slide.slide_number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
-         
+    
         yield _slide
     
     _slide._from_cell = from_cell # Need to determine code source
@@ -291,24 +293,30 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False):
         _slide._cell_code = '' # Clear cell code but not Markdown
         
     _slide._contents = captured.outputs
-        
-    app._slidelabel = _slide.label # Go there to see effects
-    _slide.update_display() # Update Slide, it will not come to this point if has same code
     
     for k in [p for ps in _slide.contents for p in ps.data.keys()]:
         if k.startswith('application'): # Widgets in this slide
             _slide._has_widgets = True
             break # No need to check other widgets if one exists
+    # Append before updating slides
+    append_print_warning(captured= captured, append_to= _slide._contents)
     
-    if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
-        _slide._contents.append(_HTML('<div class="PyRepr Error">Use `pprint` or `LiveSlides.capture_std` '
-        'contextmanager \nto see print output on slide in desired order!\n'
-        '---------------------------------------------------------------------------\n'
-        + captured.stdout + '</div>'))
+    app._slidelabel = _slide.label # Go there to see effects
+    _slide.update_display() # Update Slide, it will not come to this point if has same code
     
     if old_slides != list(app._slides_dict.values()): # If there is a change in slides
         _slide._rebuild_all() # Rebuild all slides
         del old_slides # Delete old slides
+        
+def append_print_warning(captured, append_to):
+    "Append print warning to outputs of a capture."
+    if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
+        append_to.append(_HTML('<div class="PyRepr Error">Use `pprint` or `LiveSlides.capture_std` '
+        'contextmanager \nto see print output on slide in desired order!\n'
+        '---------------------------------------------------------------------------\n'
+        + captured.stdout + '</div>'))
+        
+
     
         
     

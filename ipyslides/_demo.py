@@ -232,11 +232,13 @@ def func(obj):
         slides.notes.insert(f'## This is under @frames decorator, so it will be shown only in first frame')
         slides.notify_later()(lambda: f'This is under @frames decorator, so it will be shown only in first frame')
         
-    slides.write([f'### This is Slide {14}.{obj-13}\n and we are animating matplotlib',
+    slides.write([f'### This is Slide {14}.{obj-14}\n and we are animating matplotlib',
                   s.show_lines([obj-14])
                   ],ax,width_percents=[40,60])
     if obj == 14:
         s.show_lines([5,6]).display()
+    
+    slides.write(slides.cite('This'))
         
 # Frames structure
 boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:auto;padding:8px;margin:8px;border-radius:4px;"><h1>{i}</h1></div>' for i in range(1,5)]

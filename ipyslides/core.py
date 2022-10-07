@@ -1,9 +1,11 @@
-from distutils.command.build import build
+
 import sys, re, textwrap
 from contextlib import contextmanager, suppress
 
 from IPython import get_ipython
 from IPython.display import display
+from IPython.utils.capture import capture_output
+
 import ipywidgets as ipw
 
 from .extended_md import parse_xmd, _special_funcs, extender as _extender
@@ -17,8 +19,7 @@ _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 from ._base.base import BaseLiveSlides
 from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
-from ._base.slide import _build_slide
-from ._base import styles
+from ._base.slide import Slide, _build_slide, append_print_warning
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -119,8 +120,8 @@ class LiveSlides(BaseLiveSlides):
         - alert`cite&#96;key&#96;` to add citation to current slide
         - alert`[key]:&#96;citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
         - alert`citations&#96;citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
-        - Triple underscore `___` is used to split markdown text in frames. 
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
+        - Double dashes `--` is used to split markdown text in frames. (1.8.9+)
         
         **Other syntax can be used everywhere like under `%%slides int -m`, in `write/iwrite/format_html/parse_xmd/from_markdown` functions:**\n
         - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
@@ -196,6 +197,10 @@ class LiveSlides(BaseLiveSlides):
         with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
     
+    def __repr__(self):
+        repr_all = ',\n    '.join(repr(s) for s in self._iterable)
+        return f'LiveSlides(\n    {repr_all}\n)'
+    
     def __iter__(self): # This is must have for exporting
         return iter(self._iterable)
     
@@ -216,7 +221,7 @@ class LiveSlides(BaseLiveSlides):
     @property
     def current(self):
         "Access current visible slide and use operations like insert, set_css etc."
-        return self._slides_dict[self._access_key]
+        return self._iterable[self._slideindex]
     
     @property
     def citations(self):
@@ -228,11 +233,6 @@ class LiveSlides(BaseLiveSlides):
             
         return _all_citations
     
-    @property
-    def _access_key(self):
-        "Access key for slides number to get other things like notes, toasts, etc."
-        return self._reverse_mapping.get(self._slidelabel, '') # being on safe, give '' as default
-
     def clear(self):
         "Clear all slides."
         self._slides_dict = {} # Clear slides
@@ -255,16 +255,15 @@ class LiveSlides(BaseLiveSlides):
         if self._citation_mode == 'inline':
             return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
         
-        current_slide = self._slides_dict[self._current_slide] # Get current slide, may not be refreshed yet
-        _cited = _Citation(slide = current_slide, key = key)
-        current_slide._citations[key] = _cited
+        _cited = _Citation(slide = self.current, key = key)
+        self.current._citations[key] = _cited
         
         # Set _id for citation
         if self._citation_mode == 'footnote':
-            _cited._id = str(list(current_slide.citations.keys()).index(key) + 1) # Get index of key
+            _cited._id = str(list(self.current.citations.keys()).index(key) + 1) # Get index of key
         else:
             # Find number of citations created till now
-            prev_citations = {**self.citations, **current_slide.citations} # Current citations + previous ones
+            prev_citations = {**self.citations, **self.current.citations} # Current citations + previous ones
             if key in prev_citations:
                 _cited._id = str(list(prev_citations.keys()).index(key) + 1)
             else:
@@ -349,12 +348,6 @@ class LiveSlides(BaseLiveSlides):
                     self.widgets.toggles.timer,
                     self.widgets.htmls.notes
                 ]).add_class('ExtraControls')
-    @property
-    def _frameno(self):
-        "Get current frame number, return 0 if not in frames in slide"
-        if '.' in self._slidelabel:
-            return int(self._slidelabel.split('.')[-1])
-        return 0
     
     @property
     def _slideindex(self):
@@ -397,10 +390,9 @@ class LiveSlides(BaseLiveSlides):
         if self._iterable and change:
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
             self._display_toast() # or self.toasts._display_toast . Display in start is fine
-            self.notes._display(self._slides_dict.get(self._access_key,None).notes) # Display notes first
+            self.notes._display(self.current.notes) # Display notes first
         
-            n = self._iterable[self._slideindex].position if self._iterable else 0 # keep it from slides
-            _number = f'{n} / {self._nslides}' if n != 0 else ''
+            _number = f'{self.current.label} / {self._nslides}' if self.current.label != '0' else ''
             self.settings.set_footer(_number_str = _number)
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
@@ -414,12 +406,12 @@ class LiveSlides(BaseLiveSlides):
             self.widgets.slidebox.children = [] # Clear older slides
             return None
         
-        n_last = self._iterable[-1].position
+        n_last = float(self._iterable[-1].label)
         self._nslides = int(n_last) # Avoid frames number
         self._max_index = len(self._iterable) - 1 # This includes all frames
         self.notify('Refreshing display of slides...')
         # Now update progress bar
-        opts = [(f"{s.position}", round(100*float(s.position)/(n_last or 1), 2)) for s in self._iterable]
+        opts = [(s.label, round(100*float(s.label)/(n_last or 1), 2)) for s in self._iterable]
         self.progress_slider.options = opts  # update options
         # Update Slides
         #slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self._iterable]
@@ -469,7 +461,7 @@ class LiveSlides(BaseLiveSlides):
             %%slide 3 -s
             var = certain_long_calculation() # This will be run only once
             
-        (1.5.5+) If Markdown is separated by three underscores (___) on it's own line, multiple frames are created.
+        (1.8.9+) If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
         Markdown before the first three underscores is written on all frames. This is equivalent to `@LiveSlides.frames` decorator.
         """
         line = line.strip().split() #VSCode bug to inclue \r in line
@@ -512,21 +504,22 @@ class LiveSlides(BaseLiveSlides):
             return text_chunk
         
         if '-m' in line[1:]:
-            _frames = re.split(r'^___$|^___\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
+            _frames = re.split(r'^--$|^--\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
             if len(_frames) > 1:
                 _frames = [_frames[0] + '\n' + obj for obj in _frames[1:]]
                 
-            for i, obj in enumerate(_frames, start = 1):
-                if len(_frames) > 1: # Otherwise it's already been done
-                    self._current_slide = f'{line[0]}.{i}'
-                    
-                with _build_slide(self, self._current_slide, from_cell = True) as s:
-                    chunk = resolve_objs(obj)
-                    s.clear_display(wait = True) # It piles up otherwise due to replacements
-                    parse_xmd(chunk, display_inline = True, rich_outputs = False) 
-                    
-                s._markdown = chunk # Update markdown after some replacements like cite`key`     
-                s._cell_code = '' # Reset cell code
+            resolved_chunks = [resolve_objs(obj) for obj in _frames]
+               
+            @self.frames(int(self._current_slide), *resolved_chunks)
+            def make_slide(chunk):
+                #s.clear_display(wait = True) # It piles up otherwise due to replacements
+                parse_xmd(chunk, display_inline = True, rich_outputs = False)
+                
+            if resolved_chunks:
+                for i, chunk in enumerate(resolved_chunks[1:]):
+                    self._slides_dict[self._current_slide]._frames[i]._markdown = chunk
+
+                self._slides_dict[self._current_slide]._markdown = resolved_chunks[0]
                         
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             if '-s' in line[1:] and self._current_slide in self._slides_dict:
@@ -610,7 +603,7 @@ class LiveSlides(BaseLiveSlides):
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
             
-            assert slide_number >= 1 # Should be >= 1, should not add title slide as frames
+            assert slide_number >= 0 # Should be >= 0
 
             if repeat == True:
                 _new_objs = [objs[:i] for i in range(1,len(objs)+1)]
@@ -622,12 +615,46 @@ class LiveSlides(BaseLiveSlides):
                     _new_objs.append([objs[s] for s in seq])
             else:
                 _new_objs = objs
+                
+            if len(_new_objs) > 100: # 99 frames + 1 main slide
+                raise ValueError(f'Maximum 99 frames are supported, found {len(_new_objs)} frames!')
                     
-            for i, obj in enumerate(_new_objs,start=1):
-                self._current_slide = f'{slide_number}.{i}' # Update current slide
-                with _build_slide(self, f'{slide_number}.{i}', props_dict= props_dict, from_cell = False) as s:
+            self._current_slide = f'{slide_number}'
+            # build_slide returns old slide with updated display if exists.
+            with _build_slide(self, self._current_slide, props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
+                self.write(self.format_css('.SlideArea',height = frame_height))
+                func(_new_objs[0]) # Main slide content
+            
+            _new_objs = _new_objs[1:] # Fisrt one is already written
+            
+            NFRAMES_OLD = len(this_slide._frames) # old frames
+            
+            new_frames = []
+            for i, obj in enumerate(_new_objs):
+                with capture_output() as captured:
                     self.write(self.format_css('.SlideArea',height = frame_height))
-                    func(obj) # call function with obj
+                    func(obj)
+                
+                if i >= NFRAMES_OLD: # Add new frames
+                    new_slide = Slide(self, captured_output=captured, props_dict= props_dict)
+                    new_slide.slide_number = self._current_slide
+                    new_slide._from_cell = False
+                    new_slide._cell_code = ''
+                    new_frames.append(new_slide)
+                else:
+                    this_slide._frames[i]._contents = captured.outputs
+                    new_frames.append(this_slide._frames[i]) # Take same frame back
+                append_print_warning(captured = captured, append_to= new_frames[i]._contents)
+                
+            
+            this_slide._frames = new_frames
+            
+            if len(this_slide._frames) != NFRAMES_OLD:
+                this_slide._rebuild_all() # Rebuild all slides as frames changed
+            
+            # Update All displays
+            for slide in this_slide._frames:
+                slide.update_display()
             
         return _frames 
 
@@ -635,29 +662,26 @@ class LiveSlides(BaseLiveSlides):
         """Collect cells for an instance of LiveSlides."""
         slides_iterable = []
         if '0' in self._slides_dict:
-            self._slides_dict['0'].position = 0
+            self._slides_dict['0']._label = '0'
             slides_iterable = [self._slides_dict['0']]
         
         val_keys = sorted([int(k) if k.isnumeric() else float(k) for k in self._slides_dict.keys()]) 
-        str_keys = [str(k) for k in val_keys]
         _max_range = int(val_keys[-1]) + 1 if val_keys else 1
         
         nslide = 0 #start of slides - 1
         for i in range(1, _max_range):
             if i in val_keys:
                 nslide = nslide + 1 #should be added before slide
-                self._slides_dict[f'{i}'].position = nslide
+                self._slides_dict[f'{i}']._label = f'{nslide}'
                 slides_iterable.append(self._slides_dict[f'{i}']) 
                 self._reverse_mapping[str(nslide)] = str(i)
-            
-            n_ij, nframe = '{}.{}', 1
-            while n_ij.format(i,nframe) in str_keys:
-                nslide = nslide + 1 if nframe == 1 else nslide
-                _in, _out = n_ij.format(i,nframe), n_ij.format(nslide,nframe)
-                self._slides_dict[_in].position = float(_out)
-                slides_iterable.append(self._slides_dict[_in]) 
-                self._reverse_mapping[_out] = _in
-                nframe = nframe + 1
+                
+                # Read Frames
+                frames = self._slides_dict[f'{i}'].frames
+                for j, frame in enumerate(frames, start=1):
+                    jj = f'{j}' if len(frames) < 10 else f'{j:02}' # 99 frames max
+                    frame._label = f'{nslide}.{jj}' # Label for frames
+                    slides_iterable.append(frame)
             
         return tuple(slides_iterable)
 

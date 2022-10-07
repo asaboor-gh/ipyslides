@@ -31,7 +31,6 @@ from IPython.utils.capture import capture_output
 from .formatter import _HTML, highlight, stringify
 from .source import _str2code
 
-
 _md_extensions = ['tables','footnotes','attr_list','md_in_html', 'customblocks'] # For Markdown Parser
 _md_extension_configs = {}
 
@@ -187,12 +186,8 @@ class _ExtendedMarkdown(Markdown):
                 shell.run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
             
             outputs = captured.outputs
-            if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
-                outputs.append(_HTML('<div class="PyRepr Error">Use `pprint` or `LiveSlides.capture_std` '
-                    'contextmanager \nto see print output on slide in desired order!\n'
-                    '---------------------------------------------------------------------------\n'
-                    + captured.stdout + '</div>'))
-            
+            from ._base.slide import append_print_warning # Avoid circular import
+            append_print_warning(captured=captured, append_to=outputs)
             return outputs
         
     def _sub_vars(self, html_output):

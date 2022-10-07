@@ -113,7 +113,7 @@ class BaseLiveSlides:
         return tuple([{'slide_key': s.label, 'slide_index': s._index, 'slide_toast': s.toast} for s in self._slides_dict.values() if s.toast])
     
     def _display_toast(self):
-        toast = self._slides_dict[self._access_key].toast #_access_key is current slide's number from LiveSlides
+        toast = self.current.toast 
         if toast:
             # clear previous content of notification as new one is about to be shown, this will ensure not to see on wrong slide
             self.widgets.htmls.toast.value = ''
@@ -123,7 +123,7 @@ class BaseLiveSlides:
         """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
-        Frames separator should be ___ (three underscores) in start of line. All markdown before first ___ will be written on all frames.
+        Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
         **Markdown Content**
         ```markdown
         # Talk Title
@@ -138,7 +138,7 @@ class BaseLiveSlides:
          {{source}} from above code block will be replaced by it's html value.
         ---
         # Slide 2
-        ___
+        --
         ## First Frame
          ```multicol 40 60
         # Block column 1
@@ -146,7 +146,7 @@ class BaseLiveSlides:
         # Block column 2
         || Mini - Column A || Mini - Column B ||
          ```
-        ___
+        --
         ## Second Frame
         ```
         This will create two slides along with title page if start = 0. Second slide will have two frames.
@@ -204,7 +204,7 @@ class BaseLiveSlides:
             chunks = _parse_markdown_text(file_or_str)
         
         for i,chunk in enumerate(chunks, start = start):
-            # Must run under this to create frames with triple underscore (___)
+            # Must run under this to create frames with two dashes (--)
             self.shell.run_cell_magic('slide', f'{i} -m', chunk)
         
         # Return refrence to slides for quick update

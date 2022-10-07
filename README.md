@@ -49,7 +49,7 @@ Markdown here with extended options such as alert`this will be alerted in slides
     ```
 {{source}} will be shown in start here as well. Expressions are are not supported.
 
-(1.5.5+) three underscores ___ on their own line create multiple frames
+(1.8.9+) two dashes --- on their own line create multiple frames
 #------------ Cell 5 --------------------
 @ls.frames(1,*objs)
 def func(obj):
@@ -59,7 +59,7 @@ ls # This displays slides if on the last line of cell, or use `ls.show()`.
 ```
 #### You can load slides from a markdown file
 slides separator should be --- (three dashes)
-frames separator should be ___ (three underscores)
+frames separator should be -- (two dashes)
 ```python
 ls.from_markdown(start, path)
 with ls.slide(2):
