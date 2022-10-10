@@ -207,10 +207,8 @@ class BaseLiveSlides:
             # Must run under this to create frames with two dashes (--)
             self.shell.run_cell_magic('slide', f'{i} -m', chunk)
         
-        # Return refrence to slides for quick update
-        handles = [[self._slides_dict[key] for key in self._slides_dict.keys() if key.startswith(f'{i}')] for i in range(start, start + len(chunks))]
-        return tuple([h for handle in handles for h in handle]) # flatten list of lists
-    
+        # Return refrence to slides for quick update, frames should be accessed by slide.frames
+        return tuple([self._slides_dict[f'{i}'] for i in range(start, start + len(chunks))])
     
     def demo(self):
         """Demo slides with a variety of content."""
