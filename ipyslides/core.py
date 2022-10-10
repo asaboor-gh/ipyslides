@@ -101,6 +101,8 @@ class LiveSlides(BaseLiveSlides):
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
+        
+        self.widgets.toggles.compare.observe(self._compare, names=['value'])
         # All Box of Slides
         self._box =  self.widgets.mainbox
         self._on_load_and_refresh() # Load and browser refresh handling
@@ -196,6 +198,15 @@ class LiveSlides(BaseLiveSlides):
         
         with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
+
+    def _compare(self, btn):
+        if self.widgets.toggles.compare.value:
+            self._compared_slide = self.current # Need to store current slide
+            self._compared_slide._widget.add_class('Compared')
+        else:
+            with suppress(BaseException):
+                self._compared_slide._widget.remove_class('Compared') # Remove class
+                self._compared_slide = None
     
     def __repr__(self):
         repr_all = ',\n    '.join(repr(s) for s in self._iterable)

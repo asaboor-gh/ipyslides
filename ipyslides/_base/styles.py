@@ -794,9 +794,11 @@ a.jp-InternalAnchorLink { display: none !important;}
     padding:4px;
 }
 /* Order of these matters */
-.DisplaySwitch {
+.DisplaySwitch{
     display: none; /* Hide by default */
 }
+
+.CompareSwitch,
 .jp-LabShell .DisplaySwitch,
 body[data-retro] .DisplaySwitch,
 body[data-notebook] .DisplaySwitch {
@@ -813,6 +815,16 @@ body[data-notebook] .DisplaySwitch {
 #rendered_cells .DisplaySwitch,
 .SlidesWrapper.FullScreen .DisplaySwitch {
     display: none !important; /* in fullscreen */
+}
+.CompareSwitch {
+    opacity:0;
+    padding: 4px 0 !important; 
+    width: 30% !important;
+    left: 35% !important;
+}
+.CompareSwitch:hover,
+.CompareSwitch.mod-active {
+    opacity: 1;
 }
 
 .Intro summary {
@@ -837,6 +849,8 @@ body[data-notebook] .DisplaySwitch {
     line-height: 0.9em  !important;
 }
 '''
+
+
 
 
 def sidebar_layout_css(span_percent = 40):
@@ -920,6 +934,29 @@ div.zoom-container > *:focus, div.zoom-container > *:hover{
         top: 100px;
         left:0px;
     }
+}
+'''
+
+compare_css = '''
+.SlideArea {
+    position: absolute;
+    left:50%;
+    top:0;
+    width:50% !important; 
+    max-height: 100%;
+    overflow:scroll;
+    box-sizing: border-box;
+}
+.Compared {
+    border-right: 1px dashed var(--accent-color);
+    position: absolute;
+    left:0;
+    top:0;
+    width:50% !important;
+    max-height: 100%;
+    overflow:scroll;
+    padding: 16px;
+    box-sizing: border-box;
 }
 '''
 

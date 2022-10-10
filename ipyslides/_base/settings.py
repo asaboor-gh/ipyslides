@@ -47,6 +47,7 @@ class LayoutSettings:
         self.btn_fs.observe(self._push_fullscreen,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
+        self.widgets.toggles.compare.observe(self._update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
         self.sidebar_switch.value = False # Initial Call must be inline, so that things should be shown outside Jupyterlab always
@@ -186,6 +187,10 @@ class LayoutSettings:
                         '__breakpoint_width__', self._breakpoint_width).replace(
                         '__light__',light
                         )
+                        
+        # If in compare mode, then add CSS for it
+        if self.widgets.toggles.compare.value:
+            theme_css += styles.compare_css
         
         # Update CSS
         if self.reflow_check.value:

@@ -34,6 +34,7 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('menu')
+    compare = ipw.ToggleButton(description='⇄', value = False, tooltip='Toggle ON/OFF Compare Mode').add_class('CompareSwitch').add_class('menu')
     fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
     zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
     timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')             
@@ -283,6 +284,7 @@ class Widgets:
             self.htmls.theme,
             self.htmls.logo,
             self.toggles.display, 
+            self.toggles.compare,
             self.htmls.sidebar,
             self.panelbox, 
             self.htmls.cursor,
