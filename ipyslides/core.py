@@ -684,6 +684,23 @@ class LiveSlides(BaseLiveSlides):
                     slides_iterable.append(frame)
             
         return tuple(slides_iterable)
+    
+    def create(self, *slide_numbers):
+        "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is faster than creating one slide each time."
+        new_slides = False
+        for slide_number in slide_numbers:
+            if f'{slide_number}' not in self._slides_dict:
+                with capture_output() as captured:
+                    self.write(f'### Slide-{slide_number}')
+                
+                self._slides_dict[f'{slide_number}'] = Slide(self, captured_output=captured)
+                self._slides_dict[f'{slide_number}'].slide_number = f'{slide_number}'
+                new_slides = True
+        
+        if new_slides:
+            self.refresh() # Refresh all slides
+        
+        return tuple([self._slides_dict[f'{slide_number}'] for slide_number in slide_numbers])
 
 # Make available as Singleton LiveSlides
 _private_instance = LiveSlides() # Singleton in use namespace

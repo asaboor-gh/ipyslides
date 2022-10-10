@@ -13,13 +13,15 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.8.4
+> pip install ipyslides >= 1.8.5
 ```
 For development install, clone this repository and then
 ```shell
 > cd ipyslides
 > pip install -e .
 ```
+
+> Jupyter Notebook version 7 is supported same way as Jupyter Lab in ipyslides >= 1.8.5
 # Creating Slides
 Inside Jupyter Notebook:
 

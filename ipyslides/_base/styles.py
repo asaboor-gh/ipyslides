@@ -798,7 +798,8 @@ a.jp-InternalAnchorLink { display: none !important;}
     display: none; /* Hide by default */
 }
 .jp-LabShell .DisplaySwitch,
-body[data-retro] .DisplaySwitch {
+body[data-retro] .DisplaySwitch,
+body[data-notebook] .DisplaySwitch {
     display:block !important;
     position:absolute !important;
     padding:4px !important;
@@ -840,7 +841,7 @@ body[data-retro] .DisplaySwitch {
 
 def sidebar_layout_css(span_percent = 40):
     return f'''
-.jp-LabShell, body[data-retro]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
+.jp-LabShell, body[data-retro]>div#main, body[data-notebook]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
     right: {span_percent}vw !important;
     margin-right:1px !important;
     min-width: 0 !important;
@@ -850,7 +851,8 @@ body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
     padding-right: {span_percent}vw !important;
 }}
 .jp-LabShell .SlidesWrapper,
-body[data-retro] .SlidesWrapper {{
+body[data-retro] .SlidesWrapper,
+body[data-notebook] .SlidesWrapper{{
     position:fixed;
     top:0px !important;
     right:0px !important;
@@ -863,6 +865,10 @@ body[data-retro] .SlidesWrapper {{
     height:0 !important;
     min-height:0 !important;
     border:none !important;
+}}
+/* Override hiding on scroll in Notebook V7 and associated view of Jupyter lab*/
+.jp-WindowedPanel-window > div.jp-Cell {{
+    display: block !important; 
 }}
 '''
 

@@ -202,13 +202,15 @@ class BaseLiveSlides:
                 chunks = _parse_markdown_text(file_or_str)
         except:
             chunks = _parse_markdown_text(file_or_str)
+            
+        handles = self.create(*range(start, start + len(chunks))) # create slides faster
         
         for i,chunk in enumerate(chunks, start = start):
             # Must run under this to create frames with two dashes (--)
             self.shell.run_cell_magic('slide', f'{i} -m', chunk)
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
-        return tuple([self._slides_dict[f'{i}'] for i in range(start, start + len(chunks))])
+        return handles
     
     def demo(self):
         """Demo slides with a variety of content."""
@@ -252,6 +254,7 @@ class BaseLiveSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
+        self.create(*range(13)) # Create slides faster
         
         from ..core import LiveSlides
         from ..__version__ import __version__
