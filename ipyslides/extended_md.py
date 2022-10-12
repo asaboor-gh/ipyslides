@@ -102,6 +102,7 @@ class _ExtendedMarkdown(Markdown):
         New in 1.4.5
         """
         self._display_inline = display_inline # Must change here
+        xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
         

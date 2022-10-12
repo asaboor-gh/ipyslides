@@ -950,7 +950,7 @@ compare_css = '''
     width:50% !important;
     max-height: 100%;
     overflow:scroll;
-    padding: 16px;
+    padding: 0.2em 2em !important; /* Compare slide should have same padding as Main slide */
     box-sizing: border-box;
 }
 .SlidesWrapper {

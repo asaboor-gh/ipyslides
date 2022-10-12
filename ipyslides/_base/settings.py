@@ -225,7 +225,9 @@ class LayoutSettings:
             self._breakpoint_width = f'{int(100*650/self.width_slider.value)}px'
             self.btn_fs.icon = 'expand'
             self.widgets.mainbox.remove_class('FullScreen') # back to inline
-            
+            if self.btn_zoom.value:
+                self.btn_zoom.value = False # Unzoom to avoid jerks in display
+                
         self.widgets.htmls.fscrn.value = html('style', styles.fullscreen_css if self.btn_fs.value else '').value
         self._emit_resize_event() # Resize before waiting fo update-theme
         self._update_theme(change=None) # For updating size and breakpoints

@@ -135,16 +135,15 @@ with slides.slide(9):
     
 # Data Table
 slides.shell.user_ns['slides'] = slides #Inject variable in IPython shell to use in below cell magic
-slides.shell.run_cell_magic('slide','10',"""import textwrap
+slides.shell.run_cell_magic('slide','10',"""
 with slides.source.context() as s:
     write('## Data Tables')
-    write(slides.block_r('Here is Table','<hr/>',
-        textwrap.dedent('''
+    write(slides.block_r('Here is Table','<hr/>','''
         |h1|h2|h3|
         |---|---|---|
         |d1|d2|d3|
         |r1|r2|r3|
-        ''')))
+        '''))
     s.focus_lines([3,4,5,6]).display()
 """)
 
