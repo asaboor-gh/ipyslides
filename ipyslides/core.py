@@ -222,8 +222,18 @@ class LiveSlides(BaseLiveSlides):
         "Get slide by index or key(written on slide's bottom)."
         if isinstance(key, int):
             return self._iterable[key]
-        elif isinstance(key, str) and key in self._reverse_mapping:
-            return self._slides_dict[self._reverse_mapping[key]]
+        elif isinstance(key, str):
+            frame = None
+            if '.' in key:
+                key, frame = key.split('.')
+            
+            if key in self._reverse_mapping:
+                _slide = self._slides_dict[self._reverse_mapping[key]]
+                if frame:
+                    _slide = _slide.frames[int(frame) - 1]
+                return _slide
+            else:
+                raise KeyError(f'Key {key} not found.')
         elif isinstance(key, slice):
             return self._iterable[key.start:key.stop:key.step]
         

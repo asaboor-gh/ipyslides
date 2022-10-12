@@ -181,8 +181,7 @@ class Slide:
         elif self._from_cell and self._markdown:
             return self._app.source.from_string(self._markdown, language = 'markdown', name = name)
         else:
-            return self._app.source.from_string('Source of a slide only exits if it is created (most recently) using `from_markdown` or `%%slide` magic '
-                'and is **NOT overwritten** by `@LiveSlide.frames` or `with LiveSlides.slide` contextmanager.\n'
+            return self._app.source.from_string('Source of a slide only exits if it is created (most recently) using `from_markdown` or `%%slide` magic\n'
                 'For `@LiveSlide.frames` and `with LiveSlides.slide` contextmanager, use `with LiveSlides.source.context`  to capture source.',
                 language = 'markdown')
     
