@@ -798,7 +798,6 @@ a.jp-InternalAnchorLink { display: none !important;}
     display: none; /* Hide by default */
 }
 
-.CompareSwitch,
 .jp-LabShell .DisplaySwitch,
 body[data-retro] .DisplaySwitch,
 body[data-notebook] .DisplaySwitch {
@@ -816,17 +815,14 @@ body[data-notebook] .DisplaySwitch {
 .SlidesWrapper.FullScreen .DisplaySwitch {
     display: none !important; /* in fullscreen */
 }
-.CompareSwitch {
-    opacity:0;
-    padding: 4px 0 !important; 
-    width: 30% !important;
-    left: 35% !important;
-}
-.CompareSwitch:hover,
 .CompareSwitch.mod-active {
-    opacity: 1;
+    background: transparent !important;
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+    opacity: 1 !important;
+    color: var(--pointer-color) !important;
 }
-
 .Intro summary {
     background: var(--secondary-bg);
     padding-left:0.2em;
@@ -948,7 +944,6 @@ compare_css = '''
     box-sizing: border-box;
 }
 .Compared {
-    border-right: 1px dashed var(--accent-color);
     position: absolute;
     left:0;
     top:0;
@@ -957,6 +952,9 @@ compare_css = '''
     overflow:scroll;
     padding: 16px;
     box-sizing: border-box;
+}
+.SlidesWrapper {
+    background: linear-gradient(to right, var(--primary-bg) 0, var(--primary-bg) calc(50% - 8px), var(--tr-hover-bg) 50%, var(--primary-bg) calc(50% + 8px), var(--primary-bg) 100%) !important;
 }
 '''
 

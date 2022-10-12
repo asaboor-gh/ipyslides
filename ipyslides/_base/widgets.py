@@ -34,7 +34,7 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('menu')
-    compare = ipw.ToggleButton(description='⇄', value = False, tooltip='Toggle ON/OFF Compare Mode').add_class('CompareSwitch').add_class('menu')
+    compare = ipw.ToggleButton(description='⇄', value = False, tooltip='Toggle ON/OFF Compare Mode',layout= Layout(width='auto',height='auto')).add_class('CompareSwitch').add_class('menu')
     fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
     zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
     timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')             
@@ -230,8 +230,9 @@ class Widgets:
         
         self.footerbox = HBox([
             self.buttons.setting,
-            HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')) ,
-            self.buttons.capture
+            HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
+            self.buttons.capture,
+            self.toggles.compare,
         ],layout=Layout(height='36px')).add_class('nav-box')
         
         self.navbox = VBox([
@@ -283,8 +284,7 @@ class Widgets:
             self.htmls.main,
             self.htmls.theme,
             self.htmls.logo,
-            self.toggles.display, 
-            self.toggles.compare,
+            self.toggles.display,
             self.htmls.sidebar,
             self.panelbox, 
             self.htmls.cursor,
