@@ -22,7 +22,7 @@ class Slide:
             
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
-        self.slide_number = None # This should be set in the LiveSlide class
+        self._number = None # This should be set in the LiveSlide class
         self._label = None # This should be set in the LiveSlides
         self._index = None # This should be set in the LiveSlides
         self.set_css(props_dict, notify = False)
@@ -39,7 +39,7 @@ class Slide:
         self._frames = [] # Added from LiveSlides
         
     def __repr__(self):
-        return f'Slide(slide_number = {self.slide_number}, label = {self.label!r}, index = {self._index})'
+        return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
     
     def update_display(self, go_there = True):
         "Update display of this slide."
@@ -278,11 +278,11 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
             _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
             if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
                 _slide = Slide(app, captured, props_dict)
-                _slide.slide_number = slide_number_str
+                _slide._number = slide_number_str
                 app._slides_dict[slide_number_str] = _slide
         else:
             _slide = Slide(app, captured, props_dict)
-            _slide.slide_number = slide_number_str
+            _slide._number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
     
         yield _slide

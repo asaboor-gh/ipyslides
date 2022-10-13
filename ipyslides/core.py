@@ -658,7 +658,7 @@ class LiveSlides(BaseLiveSlides):
                 
                 if i >= NFRAMES_OLD: # Add new frames
                     new_slide = Slide(self, captured_output=captured, props_dict= props_dict)
-                    new_slide.slide_number = self._current_slide
+                    new_slide._number = self._current_slide
                     new_slide._from_cell = False
                     new_slide._cell_code = ''
                     new_frames.append(new_slide)
@@ -715,7 +715,7 @@ class LiveSlides(BaseLiveSlides):
                     self.write(f'### Slide-{slide_number}')
                 
                 self._slides_dict[f'{slide_number}'] = Slide(self, captured_output=captured)
-                self._slides_dict[f'{slide_number}'].slide_number = f'{slide_number}'
+                self._slides_dict[f'{slide_number}']._number = f'{slide_number}'
                 new_slides = True
         
         if new_slides:

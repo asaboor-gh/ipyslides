@@ -100,12 +100,41 @@ function main(){
     }
     
 };
+
+// Touch Events are experimental
+function beta_swiper(){
+    let box = document.getElementsByClassName('SlidesWrapper')[0];
+    box.tabIndex = -1;
+    let arrows = document.getElementsByClassName('arrows'); // These are 2*instances
+
+    let touchstartX = 0;
+    let touchendX = 0;
+    box.addEventListener('touchstart', function (event) {
+        touchstartX = event.changedTouches[0].screenX;
+    }, false);
+
+    box.addEventListener('touchend', function (event) {
+        touchendX = event.changedTouches[0].screenX;
+        handleGesture();
+    }, false);
+
+    function handleGesture() {
+        if ((touchendX - touchstartX) < -100) {
+            arrows[1].click();
+        };
+
+        if ((touchendX - touchstartX) > 100) {
+            arrows[0].click();
+        };
+    };
+};
 // Now execute function to work, handle browser refresh too
 try {
     var waitLoading = setInterval(function() {
         let boxes = document.getElementsByClassName('SlidesWrapper ');
         if (boxes.length >= 1) {
             main(); // Refresh does work in this case
+            beta_swiper(); // Touch events
             clearInterval(waitLoading);
         }
     }, 500); // check every 500ms, I do not need be hurry
