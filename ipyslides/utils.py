@@ -159,7 +159,7 @@ def html(tag, children = None,className = None,**node_attrs):
     elif isinstance(children,str):
         content = children
     elif isinstance(children,(list,tuple)):
-        content = format_html(children) # Convert to html nodes in sequence of rows
+        content = '\n'.join(_fix_repr(child) for child in children) # Convert to html nodes in sequence of rows
     else:
         raise ValueError(f'Children should be a list/tuple of objects or str, not {type(children)}')
     
