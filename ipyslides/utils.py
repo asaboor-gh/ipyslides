@@ -1,11 +1,12 @@
 __all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
-            'raw','enable_zoom','html','sig','doc','code']
+            'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
 
 
 import os
+import datetime
 import inspect
 from io import BytesIO # For PIL image
 from contextlib import contextmanager, suppress
@@ -300,3 +301,13 @@ def code(callable):
         return _HTML(_fix_repr(callable))
     except:
         raise TypeError(f'Object {callable} is not a callable')
+
+def today(fmt = '%b %d, %Y',color = 'var(--secondary-fg)'):
+    "Returns today's date in given format."
+    return colored(datetime.datetime.now().strftime(fmt),fg=color, bg = None)
+
+def sub(text):
+    return html('sub',text)
+
+def sup(text):
+    return html('sup',text)

@@ -73,13 +73,16 @@ extender = PyMarkdown_Extender()
 del PyMarkdown_Extender
 
 _special_funcs = {
-    'textbox':'text',
     'alert':'text',
     'image':'path/src',
     'raw':'text',
     'svg':'path/src', 
     'iframe':'src',
-    'center':'text or \{\{variable\}\}'} # Center should be at end of all
+    'sub': 'text',
+    'sup': 'text',
+    'today': 'fmt like %b-%d-%Y',
+    'textbox':'text', # Anything above this can be enclosed in a textbox
+    'center':'text or \{\{variable\}\}',} # Center should be at end of all
 
 class _ExtendedMarkdown(Markdown):
     "New in 1.4.5"
@@ -214,7 +217,8 @@ class _ExtendedMarkdown(Markdown):
         for func in _special_funcs.keys():
             all_matches = re.findall(fr'{func}\`(.*?)\`', html_output, flags = re.DOTALL)
             for match in all_matches:
-                _out = getattr(utils,func)(match).value
+                _func = getattr(utils,func)
+                _out = _func(match).value if match else _func().value # If no argument, use default
                 html_output = html_output.replace(f'{func}`{match}`', _out, 1)
         
         # Replace columns after vars, so not to format their brackets

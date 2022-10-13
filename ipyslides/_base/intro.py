@@ -14,6 +14,17 @@ Do not use PDF from Powerpoint as that will lower quality, generate PDF from sli
 '''
 
 how_to_slide = ('''# Creating Slides
+class`Center`
+alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
+
+today``
+
+class`TextBox`
+sup`1`My University is somewhere in the middle of nowhere
+sup`2`Their University is somewhere in the middle of nowhere
+^^^
+^^^
+
 **Assuming you have `ls = ipyslides.LiveSlides()`**
 
 - Proceed to create slides:

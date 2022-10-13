@@ -256,48 +256,62 @@ class BaseLiveSlides:
         self.clear() # Clear previous content
         self.create(*range(13)) # Create slides faster
         
+        from itertools import count
         from ..core import LiveSlides
         from ..__version__ import __version__
+        counter = count(start=1)
         
         self.settings.set_footer('IPySlides Documentation')
         
         with self.title(): # Title
             self.write(f'## IPySlides {__version__} Documentation\n### Creating slides with IPySlides')
+            self.center('''
+                alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
+
+                today``
+                
+                class`TextBox`
+                sup`1`My University is somewhere in the middle of nowhere
+                sup`2`Their University is somewhere in the middle of nowhere
+                ^^^
+                ''').display()
+            
+        with self.slide(next(counter)):
             self.write(self.doc(LiveSlides))
         
-        with self.slide(1):
+        with self.slide(next(counter)):
             self.write('## Adding Slides')
             self.write('Besides functions below, you can add slides with `%%title`,  `%%slide <slide number>` and `%%slide <slide number>` -m`,`%%slide <slide number> -s` magics as well.\n{.Note .Info}')
             self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides'),self.doc(self.from_markdown,'LiveSlides')])
         
-        with self.slide(2):
+        with self.slide(next(counter)):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.Note .Info}')
             self.xmd_syntax.display() # This will display information about Markdown extended syntax
             self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides'), self.doc(self.parse_xmd,'LiveSlides'),self.doc(self.cite,'LiveSlides')])
         
-        with self.slide(3):
+        with self.slide(next(counter)):
             self.write('## Adding Speaker Notes')
             self.write('You can use line magic `%notes` to add notes as well.\n{.Note .Success}')
             self.doc(self.notes,'LiveSlides.notes', members = True, itself = False).display()
                    
-        with self.slide(4):
+        with self.slide(next(counter)):
             self.write('## Displaying Source Code')
             self.doc(self.source,'LiveSlides.source', members = True, itself = False).display()
         
-        with self.slide(5):
+        with self.slide(next(counter)):
             self.write('## Layout and Theme Settings')
             self.doc(self.settings,'LiveSlides.settings', members=True,itself = False).display()
                 
-        with self.slide(6):
+        with self.slide(next(counter)):
             self.write('## Useful Functions for Rich Content')
             members = ['alert','block', 'bokeh2html', 'capture_std', 'citations_html', 'cite',
-                       'colored', 'cols', 'details', 'doc', 'enable_zoom', 'format_css', 'format_html', 'highlight',
+                       'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
                        'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'set_slide_css']
             self.doc(self, 'LiveSlides', members = members, itself = False).display()
             
-        with self.slide(7):
+        with self.slide(next(counter)):
             self.write('## Content Styling')
             with self.source.context() as c:
                 self.write(('You can **style**{.Error} your *content*{: style="color:hotpink;"} with `className` attribute in writing/content functions. ' 
@@ -306,7 +320,7 @@ class BaseLiveSlides:
                 self.css_styles.display()
                 c.display()
         
-        s8, = self.from_markdown(8, '''
+        s8, = self.from_markdown(next(counter), '''
         ## Highlighting Code
         You can **highlight**{.Error} code using `highlight` function or within markdown like this:
         ```python
@@ -324,7 +338,7 @@ class BaseLiveSlides:
                 'See at last slide how it was done!<hr/>')
             s8.source.display()
         
-        with self.slide(9):
+        with self.slide(next(counter)):
             self.write('## Loading from File/Exporting to HTML')
             self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
             self.write([self.doc(self.from_markdown,'LiveSlides'),
@@ -333,25 +347,22 @@ class BaseLiveSlides:
                         self.doc(self.export.slides,'LiveSlides.export'),
                         self.doc(self.export.report,'LiveSlides.export')])
         
-        with self.slide(10):
+        with self.slide(next(counter)):
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@LiveSlides.serializer.register` to serialize them to html.\n{.Note .Info}')
             self.doc(self.serializer,'LiveSlides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'LiveSlides.extender', members = True, itself = False).display()
         
-        with self.slide(11):
+        with self.slide(next(counter)):
             self.write('## Keys and Shortcuts', key_combs)
         
-        with self.slide(12):
+        with self.slide(next(counter)):
             self.write(['## Presentation Code',self.docs])
         
         self._slideindex = 0 # Go to title
+        del counter # Delete counter
         return self
-    
-    def load_docs(self): # For backward compatibility
-        print('`.load_docs` is deprecated, use `.docs` instead.')
-        return self.docs()
 
 def _parse_markdown_text(text_block):
     "Parses a Markdown text block and returns text for title and each slide."

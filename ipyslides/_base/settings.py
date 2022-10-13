@@ -13,7 +13,7 @@ from ipywidgets import Layout
 
 from ..formatter import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
-from ..utils import set_dir, html, details
+from ..utils import set_dir, html, details, today
 from . import scripts, intro, styles
 
 class LayoutSettings:
@@ -104,7 +104,7 @@ class LayoutSettings:
             _text = self._footer_text
             
         if show_date:
-            _text += f' | <text style="color:var(--secondary-fg);">' + datetime.datetime.now().strftime('%b-%d-%Y')+ '</text>'
+            _text += f' | {today()}'
         if show_slideno: #Slide number should be replaced from __number__ 
             _text += '<b style="color:var(--accent-color);white-space:pre;">  __number__<b>'
         _text = f'<p style="white-space:nowrap;display:inline;"> {_text} </p>' # To avoid line break in footer
