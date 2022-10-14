@@ -26,7 +26,7 @@ class _HhtmlExporter:
                     else:
                         _html += f'<p style="color:red;">Object at {hex(id(out))} has no text/HTML representation.</p>'  
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
-                _sn = (f'<span class="html-slide-number">{item.label}/{int(self.main[-1].label)}</span>' 
+                _sn = (f'<span class="html-slide-number">{item.label}/{int(float(self.main[-1].label))}</span>'  # Could be 33.1, but we want 33
                         if kwargs.get("slide_number",False) and item.label != '0' else '')
                 content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
                             if as_slides else f'<section>{_html}</section>')

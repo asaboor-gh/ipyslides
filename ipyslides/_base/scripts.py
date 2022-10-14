@@ -107,25 +107,33 @@ function beta_swiper(){
     box.tabIndex = -1;
     let arrows = document.getElementsByClassName('arrows'); // These are 2*instances
 
-    let touchstartX = 0;
-    let touchendX = 0;
+    let startX = 0;
+    let endX = 0;
+    let startY = 0;
+    let endY = 0;
     box.addEventListener('touchstart', function (event) {
-        touchstartX = event.changedTouches[0].screenX;
+        startX = event.changedTouches[0].screenX;
+        startY = event.changedTouches[0].screenY;
     }, false);
 
     box.addEventListener('touchend', function (event) {
-        touchendX = event.changedTouches[0].screenX;
+        endX = event.changedTouches[0].screenX;
+        endY = event.changedTouches[0].screenY;
         handleGesture();
     }, false);
 
     function handleGesture() {
-        if ((touchendX - touchstartX) < -100) {
-            arrows[1].click();
-        };
+        let bbox = box.getBoundingClientRect(); // Swipe only from edges
+        if (Math.abs(endY - startY) < 20) {
+            // Y axis is not important but we should avoid X component of touch for a long y-scroll
+            if ((endX - startX) < -40 && startX > (bbox.right - 50)) {
+                arrows[1].click(); // Left Swipe to Next
+            };
 
-        if ((touchendX - touchstartX) > 100) {
-            arrows[0].click();
-        };
+            if ((endX - startX) > 40 && startX < (bbox.left + 50)) {
+                arrows[0].click(); // Right Swipe to Prev
+            };
+        }; 
     };
 };
 // Now execute function to work, handle browser refresh too

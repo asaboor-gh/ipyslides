@@ -140,6 +140,7 @@ Having your cursor over slides, you can use follwoing keys/combinations:
 
 {key_combs}
 
+> You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
 **Tips**{{.Success}}
 
 - Other keys are blocked so that you may not delete or do some random actions on notebook cells.
