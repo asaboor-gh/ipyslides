@@ -27,7 +27,7 @@ class Slide:
         self._index = None # This should be set in the LiveSlides
         self.set_css(props_dict, notify = False)
         
-        self.notes = '' # Should be update by Notes and LiveSlides calss
+        self._notes = '' # Should be update by Notes and LiveSlides calss
         self.set_overall_animation()
         self._animation = None
         self._markdown = '' # Should be update by LiveSlides
@@ -125,6 +125,10 @@ class Slide:
     @property
     def frames(self):
         return tuple(self._frames)
+    
+    @property
+    def notes(self):
+        return self._notes
 
     @property
     def toast(self):
@@ -178,7 +182,7 @@ class Slide:
     def _get_source(self, name = None):
         if self._from_cell and self._cell_code:
             return self._app.source.from_string(self._cell_code, language = 'python', name = name)
-        elif self._from_cell and self._markdown:
+        elif self._markdown:
             return self._app.source.from_string(self._markdown, language = 'markdown', name = name)
         else:
             return self._app.source.from_string('Source of a slide only exits if it is created (most recently) using `from_markdown` or `%%slide` magic\n'
@@ -280,11 +284,15 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
                 _slide = Slide(app, captured, props_dict)
                 _slide._number = slide_number_str
                 app._slides_dict[slide_number_str] = _slide
+            
+            app._running_slide = _slide # Set running slide outside if
         else:
             _slide = Slide(app, captured, props_dict)
             _slide._number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
-    
+            app._running_slide = _slide
+            
+            
         yield _slide
     
     _slide._from_cell = from_cell # Need to determine code source

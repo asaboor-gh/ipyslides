@@ -26,7 +26,7 @@ class Notes:
         **New in 1.7.2**      
         In markdown, you can use alert`notes&#96;notes content&#96;`."""
         with suppress(BaseException): # Would work on next run, may not first time
-            self.main._slides_dict[f'{self.main._current_slide}'].notes = self.main.format_html(content)._repr_html_()
+            self.main._running_slide._notes = self.main.format_html(content)._repr_html_()
     
     def _display(self, html_str):
         self.widgets.htmls.notes.value = 'Notes Area: Time only updates while switching slides' # Must be, so when no notes, should not be there

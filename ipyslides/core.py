@@ -1,4 +1,5 @@
 
+import chunk
 import sys, re, textwrap
 from contextlib import contextmanager, suppress
 
@@ -91,7 +92,6 @@ class LiveSlides(BaseLiveSlides):
         self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
             
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_load_and_refresh.
-        self._current_slide = '0' # Initialize current slide for notes at title page
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
         self._citations_dict = {} # Initialize citations dictionary, updated by user or by set_citations.
         self._iterable = [] #self._collect_slides() # Collect internally
@@ -276,15 +276,16 @@ class LiveSlides(BaseLiveSlides):
         if self._citation_mode == 'inline':
             return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
         
-        _cited = _Citation(slide = self.current, key = key)
-        self.current._citations[key] = _cited
+        _cited = _Citation(slide = self._running_slide, key = key)
+        self._running_slide._citations[key] = _cited
+        
         
         # Set _id for citation
         if self._citation_mode == 'footnote':
-            _cited._id = str(list(self.current.citations.keys()).index(key) + 1) # Get index of key
+            _cited._id = str(list(self._running_slide.citations.keys()).index(key) + 1) # Get index of key
         else:
             # Find number of citations created till now
-            prev_citations = {**self.citations, **self.current.citations} # Current citations + previous ones
+            prev_citations = {**self.citations, **self._running_slide.citations} # Current citations + previous ones
             if key in prev_citations:
                 _cited._id = str(list(prev_citations.keys()).index(key) + 1)
             else:
@@ -454,14 +455,14 @@ class LiveSlides(BaseLiveSlides):
         
         
     def set_slide_css(self,props_dict = {}):
-        """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
+        """Set CCS to slide which is being built, props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
         'selector' for slide itself should be ''.
         """
-        self._slides_dict[self._current_slide].set_css(props_dict)
+        self._running_slide.set_css(props_dict)
     
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for main and frame slides for all slides. For individual slides, use `self[index or key].set_animation/self.current.set_animation`"
-        self._slides_dict[self._current_slide].set_overall_animation(main = main, frame = frame)
+        self._running_slide.set_overall_animation(main = main, frame = frame)
     
     # defining magics and context managers
     def __slide(self,line,cell):
@@ -489,10 +490,11 @@ class LiveSlides(BaseLiveSlides):
         if line and not line[0].isnumeric():
             raise ValueError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
         
-        self._current_slide = line[0] # Works as a key for the _slides_dict
         
         # NOTE: DO NOT bypass creating new slides with same old markdown, some varibale
         #      may be changed in any of the cells.
+        
+        slide_number_str = line[0] # First argument is slide number
         
         def resolve_objs(text_chunk):
             # These objects should be only resolved under slide as they need slide reference
@@ -529,26 +531,20 @@ class LiveSlides(BaseLiveSlides):
             if len(_frames) > 1:
                 _frames = [_frames[0] + '\n' + obj for obj in _frames[1:]]
                 
-            resolved_chunks = [resolve_objs(obj) for obj in _frames]
-               
-            @self.frames(int(self._current_slide), *resolved_chunks)
-            def make_slide(chunk):
+            @self.frames(int(slide_number_str), *_frames)
+            def make_slide(_frame):
                 #s.clear_display(wait = True) # It piles up otherwise due to replacements
+                chunk = resolve_objs(_frame) # Resolve under slides, otherwise appear on wrong slides
                 parse_xmd(chunk, display_inline = True, rich_outputs = False)
-                
-            if resolved_chunks:
-                for i, chunk in enumerate(resolved_chunks[1:]):
-                    self._slides_dict[self._current_slide]._frames[i]._markdown = chunk
-
-                self._slides_dict[self._current_slide]._markdown = resolved_chunks[0]
-                        
+                self._running_slide._markdown = chunk # Update markdown, # cell_code will be automatuically cleared in `self.frames`
+            
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            if '-s' in line[1:] and self._current_slide in self._slides_dict:
-                if self._slides_dict[self._current_slide]._cell_code == cell:
+            if '-s' in line[1:] and slide_number_str in self._slides_dict:
+                if self._running_slide._cell_code == cell:
                     return # Do not run if cell is same as previous and -s is used
             
-            with _build_slide(self, self._current_slide, from_cell = True) as s:
-                self.shell.run_cell(cell)
+            with _build_slide(self, slide_number_str, from_cell = True) as s:
+                self.shell.run_cell(resolve_objs(cell)) #  Enables citations etc.
             
             s._cell_code = cell # Update cell code
             s._markdown = '' # Reset markdown
@@ -563,9 +559,7 @@ class LiveSlides(BaseLiveSlides):
         
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
         
-        self._current_slide = f'{slide_number}'
-        
-        with _build_slide(self, self._current_slide, props_dict=props_dict, from_cell = False) as s:
+        with _build_slide(self, f'{slide_number}', props_dict=props_dict, from_cell = False) as s:
             yield s # Useful to use later
     
     def __title(self,line,cell):
@@ -639,10 +633,10 @@ class LiveSlides(BaseLiveSlides):
                 
             if len(_new_objs) > 100: # 99 frames + 1 main slide
                 raise ValueError(f'Maximum 99 frames are supported, found {len(_new_objs)} frames!')
-                    
-            self._current_slide = f'{slide_number}'
+           
             # build_slide returns old slide with updated display if exists.
-            with _build_slide(self, self._current_slide, props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
+            with _build_slide(self, f'{slide_number}', props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
+                self._running_slide = this_slide
                 self.write(self.format_css('.SlideArea',height = frame_height))
                 func(_new_objs[0]) # Main slide content
             
@@ -651,20 +645,26 @@ class LiveSlides(BaseLiveSlides):
             NFRAMES_OLD = len(this_slide._frames) # old frames
             
             new_frames = []
-            for i, obj in enumerate(_new_objs):
+            for i, obj in enumerate(_new_objs): # New frames
                 with capture_output() as captured:
+                    if i >= NFRAMES_OLD: # Add new frames
+                        new_slide = Slide(self, captured_output=captured, props_dict= props_dict)
+                        self._running_slide = new_slide
+                        new_slide._number = f'{slide_number}'
+                        new_frames.append(new_slide)
+                        
+                    else: # Update old frames
+                        self._running_slide = this_slide._frames[i] # Take same frame back
+                        new_frames.append(self._running_slide) # Take same frame back
+                    
+                    # Write content after taking back the frame or creating new frame
                     self.write(self.format_css('.SlideArea',height = frame_height))
                     func(obj)
                 
-                if i >= NFRAMES_OLD: # Add new frames
-                    new_slide = Slide(self, captured_output=captured, props_dict= props_dict)
-                    new_slide._number = self._current_slide
-                    new_slide._from_cell = False
-                    new_slide._cell_code = ''
-                    new_frames.append(new_slide)
-                else:
-                    this_slide._frames[i]._contents = captured.outputs
-                    new_frames.append(this_slide._frames[i]) # Take same frame back
+                self._running_slide._contents = captured.outputs # Update contents
+                self._running_slide._from_cell = False
+                self._running_slide._cell_code = ''    
+                
                 append_print_warning(captured = captured, append_to= new_frames[i]._contents)
                 
             
@@ -674,8 +674,8 @@ class LiveSlides(BaseLiveSlides):
                 this_slide._rebuild_all() # Rebuild all slides as frames changed
             
             # Update All displays
-            for slide in this_slide._frames:
-                slide.update_display()
+            for s in this_slide._frames:
+                s.update_display()
             
         return _frames 
 

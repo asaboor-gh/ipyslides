@@ -56,7 +56,7 @@ class _Htmls:
     sidebar = HTML(html('style',styles.sidebar_layout_css()).value) # Should be separate CSS
     loading = HTML() #SVG Animation in it
     logo    = HTML()
-    toast   = HTML() # For notifications
+    toast   = HTML().add_class('Toast') # For notifications
     cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
     notes   = HTML('Notes Area').add_class('Inline-Notes') # For below slides area
     hilite  = HTML() # Updated in settings on creation. For code blocks.

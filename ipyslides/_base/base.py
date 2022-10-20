@@ -75,10 +75,10 @@ class BaseLiveSlides:
         "Return source code of all slides created using `from_markdown` or `%%slide`."
         sources = []
         for slide in self[:]:
-            if slide._from_cell and slide._markdown:
-                sources.append(slide._get_source(name=f'Markdown: Slide {slide.label}'))
-            elif slide._from_cell and slide._cell_code:
+            if slide._from_cell and slide._cell_code:
                 sources.append(slide._get_source(name=f'Python: Slide {slide.label}'))
+            elif slide._markdown:
+                sources.append(slide._get_source(name=f'Markdown: Slide {slide.label}'))
         
         if sources:
             return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
@@ -99,7 +99,7 @@ class BaseLiveSlides:
         ```
         """
         def _notify(func): 
-            self._slides_dict[f'{self._current_slide}']._toast = dict(func = func, kwargs = dict(title=title, timeout=timeout))
+            self._running_slide._toast = dict(func = func, kwargs = dict(title=title, timeout=timeout))
         return _notify
         
     def clear_toasts(self):
