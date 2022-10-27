@@ -414,6 +414,10 @@ details > div {
 }
 .SlideArea hr {
     margin:0 !important;
+    border: none;
+    width: auto;
+    height: 2px;
+    background: linear-gradient(to right, var(--accent-color), var(--secondary-bg),var(--primary-bg),var(--primary-bg));
 }
 .SlideArea .footnote ol {
     margin-top: 0.5em !important;
