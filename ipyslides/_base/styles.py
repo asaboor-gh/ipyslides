@@ -322,7 +322,7 @@ details > div {
     box-shadow: 0 0 20px 20px var(--secondary-bg);
 }
 
-.SlidesWrapper .panel .float-cross-btn {
+.SlidesWrapper .panel .SidePanel-Btn {
     border:none !important;
     outline:none !important;
     font-size: 24px;
@@ -591,6 +591,7 @@ span.lang-name {
 .CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
 /* Zoom container including Matplotlib figure SVG */
 
+div.zoom-container { resize: both;}
 div.zoom-container,
 div.zoom-container > * {
     background: var(--primary-bg);

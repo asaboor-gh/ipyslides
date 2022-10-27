@@ -290,8 +290,7 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
             _slide = Slide(app, captured, props_dict)
             _slide._number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
-            app._running_slide = _slide
-            
+            app._running_slide = _slide   
             
         yield _slide
     

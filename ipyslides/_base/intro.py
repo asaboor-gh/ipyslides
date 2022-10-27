@@ -123,13 +123,14 @@ key_combs = '''
 | `Shift + Space/LeftArrowKey` | Move to previous slide                               |
 | `Ctrl + Shift + C`           | Change the theme, create console/terminal etc        |
 | `Ctrl + Shift + [/]`         | Switch to other tabs like console/terminal/notebooks |
-| `W`                          | Fit/restore slides to/from window's viewport                  |
+| `W`                          | Fit/restore slides to/from window's viewport         |
 | `T`                          | Start/stop timer                                     |
 | `Z`                          | Toggle matplotlib/svg/image zoom mode                |
 | `S`                          | Save screenshot of current slide                     |
 | `P`                          | print PDF of current slide                           |
 | `F`                          | Enetr Fullscreen mode                                |
 | `Esc`                        | Exit Fullscreen mode                                 |
+| `G`                          | Toggle settings panel                                |
 '''
 
 more_instructions =f'''## How to Use

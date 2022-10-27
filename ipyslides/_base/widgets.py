@@ -20,7 +20,7 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
-    setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('float-cross-btn')
+    setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('SidePanel-Btn')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
                 tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
                 ).add_class('screenshot-btn') # .add_class('menu')

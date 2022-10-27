@@ -124,6 +124,16 @@ class LayoutSettings:
             setattr(self._slide_layout,k,v)
         
         self._update_theme(change=None) # Trigger CSS in it to make width change
+        
+    def hide_navigation_gui(self):
+        "Hide all navigation elements, but keyboard or touch still work."
+        self.widgets.controls.layout.display = 'none'
+        self.widgets.footerbox.layout.display = 'none'
+    
+    def show_navigation_gui(self):
+        "Show all navigation elements."
+        self.widgets.controls.layout.display = ''
+        self.widgets.footerbox.layout.display = ''
             
     def __add_js(self):
         with self.widgets.outputs.fixed: 

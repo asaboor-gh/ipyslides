@@ -106,6 +106,11 @@ class _ExtendedMarkdown(Markdown):
         """
         self._display_inline = display_inline # Must change here
         xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
+        
+        slides_instance = get_ipython().user_ns.get('__Slides_Instance__',None)
+        if slides_instance and getattr(slides_instance,'_under_with_or_frame',False):
+            xmd = slides_instance.resolve_objs(xmd) # Resolve objects in xmd related to current slide
+        
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
         

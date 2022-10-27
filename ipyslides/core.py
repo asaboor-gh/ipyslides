@@ -78,6 +78,7 @@ class LiveSlides(BaseLiveSlides):
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
             self.shell.register_magic_function(self.notes.insert, magic_kind='line',magic_name='notes')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
+            self.shell.user_ns['__Slides_Instance__'] = self
             self.user_ns = self.shell.user_ns #important for set_dir
             
             # Override print function to display in order in slides
@@ -116,7 +117,7 @@ class LiveSlides(BaseLiveSlides):
         ## Extended Markdown
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
-        **Following syntax is available only under `%%slide int -m` or in `from_markdown` function:**
+        **Following syntax works only under currently buidling `slide` or `frame`:**
         
         - alert`notes&#96;This is slide notes&#96;`  to add notes to current slide
         - alert`cite&#96;key&#96;` to add citation to current slide
@@ -169,7 +170,7 @@ class LiveSlides(BaseLiveSlides):
         gives same thing as above. 
         ::: Note 
             You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) 
-            extension to make nested blocks with classes. It is added as dependency.
+            extension to make nested blocks with classes. It is added as dependency and can be used to build nested html blocks.
             
         ::: Block-red 
             - You can use `LiveSlides.extender` to extend additional syntax using Markdown extensions such as 
@@ -464,6 +465,34 @@ class LiveSlides(BaseLiveSlides):
         "Set animation for main and frame slides for all slides. For individual slides, use `self[index or key].set_animation/self.current.set_animation`"
         self._running_slide.set_overall_animation(main = main, frame = frame)
     
+    def resolve_objs(self,text_chunk):
+        "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
+        all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
+        for match in all_matches:
+            key = match.strip()
+            text_chunk = text_chunk.replace(f'cite`{match}`', self.cite(key), 1)
+        
+        # notes`This is a note for current slide`
+        all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL)
+        for match in all_matches:
+            self.notes.insert(match)
+            text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
+        
+        # citations`This is citations title`
+        all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
+        for match in all_matches:
+            citations = self.citations_html(title = match).value
+            text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
+        
+        # [key]:`citation content`
+        all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
+        citations = {}
+        for match in all_matches:
+            citations[match[0].strip()] = match[1]
+            self.set_citations(citations) # Only update under all_matches loop, otherwise it will be a mess of notifications
+            text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
+        
+        return text_chunk
     # defining magics and context managers
     def __slide(self,line,cell):
         """Capture content of a cell as `slide`.
@@ -496,35 +525,6 @@ class LiveSlides(BaseLiveSlides):
         
         slide_number_str = line[0] # First argument is slide number
         
-        def resolve_objs(text_chunk):
-            # These objects should be only resolved under slide as they need slide reference
-            # cite`key`
-            all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
-            for match in all_matches:
-                key = match.strip()
-                text_chunk = text_chunk.replace(f'cite`{match}`', self.cite(key), 1)
-            
-            # notes`This is a note for current slide`
-            all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL)
-            for match in all_matches:
-                self.notes.insert(match)
-                text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
-            
-            # citations`This is citations title`
-            all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
-            for match in all_matches:
-                citations = self.citations_html(title = match).value
-                text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
-            
-            # [key]:`citation content`
-            all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
-            citations = {}
-            for match in all_matches:
-                citations[match[0].strip()] = match[1]
-                self.set_citations(citations) # Only update under all_matches loop, otherwise it will be a mess of notifications
-                text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
-            
-            return text_chunk
         
         if '-m' in line[1:]:
             _frames = re.split(r'^--$|^--\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
@@ -534,7 +534,7 @@ class LiveSlides(BaseLiveSlides):
             @self.frames(int(slide_number_str), *_frames)
             def make_slide(_frame):
                 #s.clear_display(wait = True) # It piles up otherwise due to replacements
-                chunk = resolve_objs(_frame) # Resolve under slides, otherwise appear on wrong slides
+                chunk = self.resolve_objs(_frame) # Resolve under slides, otherwise appear on wrong slides
                 parse_xmd(chunk, display_inline = True, rich_outputs = False)
                 self._running_slide._markdown = chunk # Update markdown, # cell_code will be automatuically cleared in `self.frames`
             
@@ -544,7 +544,7 @@ class LiveSlides(BaseLiveSlides):
                     return # Do not run if cell is same as previous and -s is used
             
             with _build_slide(self, slide_number_str, from_cell = True) as s:
-                self.shell.run_cell(resolve_objs(cell)) #  Enables citations etc.
+                self.shell.run_cell(self.resolve_objs(cell)) #  Enables citations etc.
             
             s._cell_code = cell # Update cell code
             s._markdown = '' # Reset markdown
@@ -559,9 +559,13 @@ class LiveSlides(BaseLiveSlides):
         
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
         
+        self._under_with_or_frame = True
+        
         with _build_slide(self, f'{slide_number}', props_dict=props_dict, from_cell = False) as s:
             yield s # Useful to use later
-    
+            
+        self._under_with_or_frame = True
+        
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
         with self.slide(0):
@@ -634,6 +638,7 @@ class LiveSlides(BaseLiveSlides):
             if len(_new_objs) > 100: # 99 frames + 1 main slide
                 raise ValueError(f'Maximum 99 frames are supported, found {len(_new_objs)} frames!')
            
+            self._under_with_or_frame = True
             # build_slide returns old slide with updated display if exists.
             with _build_slide(self, f'{slide_number}', props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
                 self._running_slide = this_slide
@@ -658,6 +663,7 @@ class LiveSlides(BaseLiveSlides):
                         new_frames.append(self._running_slide) # Take same frame back
                     
                     # Write content after taking back the frame or creating new frame
+                    
                     self.write(self.format_css('.SlideArea',height = frame_height))
                     func(obj)
                 
@@ -676,6 +682,8 @@ class LiveSlides(BaseLiveSlides):
             # Update All displays
             for s in this_slide._frames:
                 s.update_display()
+            
+            self._under_with_or_frame = False
             
         return _frames 
 

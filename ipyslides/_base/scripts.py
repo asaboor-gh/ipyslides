@@ -16,12 +16,13 @@ function main(){
     }; 
     resizeWindow(); // resize on first display
     // Only get buttons of first view, otherwise it will becomes multiclicks
-    let arrows = document.getElementsByClassName('arrows'); // These are 2*instances
-    let mplBtn = document.getElementsByClassName('mpl-zoom')[0];
-    let winFs = document.getElementsByClassName('window-fs')[0];
-    let capSc = document.getElementsByClassName('screenshot-btn')[0];
-    let cursor = document.getElementsByClassName('LaserPointer')[0];
+    let arrows  = document.getElementsByClassName('arrows'); // These are 2*instances
+    let mplBtn  = document.getElementsByClassName('mpl-zoom')[0];
+    let winFs   = document.getElementsByClassName('window-fs')[0];
+    let capSc   = document.getElementsByClassName('screenshot-btn')[0];
+    let cursor  = document.getElementsByClassName('LaserPointer')[0];
     let present = document.getElementsByClassName('presenter-btn')[0];
+    let panelBtn = document.getElementsByClassName('SidePanel-Btn')[0];
 
     
     // Keyboard events
@@ -35,6 +36,8 @@ function main(){
             arrows[1].click(); // Next or Spacebar
         } else if (key === 90) { 
             mplBtn.click(); // Z 
+        } else if (key === 71) { 
+            panelBtn.click(); // G
         } else if (key === 88 || key === 68) {
             alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
             e.stopPropagation(); // stop propagation to jupyterlab events
