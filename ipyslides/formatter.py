@@ -193,7 +193,7 @@ def highlight(code, language='python', name = None, className = None, style='def
     
 class Serializer:
     def __init__(self):
-        """HTML serializer for an object to use inside LiveSlides.write/iwrite."""
+        """HTML serializer for an object to use inside Slides.write/iwrite."""
         self._libs = []
     
     def register(self, obj_type, verbose = True):
@@ -210,7 +210,7 @@ class Serializer:
             def __repr__(self):
                 return 'My object is awesome'
         
-        ls = ipyslides.LiveSlides()
+        ls = ipyslides.Slides()
         @ls.serializer.register(MyObject)
         def parse_myobject(obj):
             return f'<h1>{obj!r}</h1>'

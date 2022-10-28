@@ -1,5 +1,6 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
+from contextlib import suppress
 import time
 from ipyslides.utils import textbox
 
@@ -46,7 +47,7 @@ with slides.slide(1): #slide 1 will be modified with old and new content
         slides.parse_xmd(s1.markdown) #s1 was assigned as `s0, s1, s2 = slides.from_markdown...` in start.
         write('#### I am created using `with slides.slide(1)` context manager, '
             'so I overwrite the previous slide, and you can not see my full code, '
-            'but part of it using `LiveSlides.source.context` context manager.')
+            'but part of it using `Slides.source.context` context manager.')
         write(f'I am {slides.alert("Alerted")} and I am *{slides.colored("colored and italic text","magenta","whitesmoke")}*')
     s.focus_lines([0]).display()  #focus on line 0 
     slides.notes.insert('### Note for slide 1')
@@ -102,8 +103,8 @@ for i in range(4,8):
         write(__contents[i-4])
         if i == 7:
             with slides.source.context() as s:
-                write([slides.doc(write,'LiveSlides'), slides.doc(iwrite,'LiveSlides'), slides.doc(slides.parse_xmd,'LiveSlides')])
-                write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@LiveSlides.serializer.register` decorator")
+                write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse_xmd,'Slides')])
+                write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
             
             s.show_lines([0,1]).display()
             
@@ -260,9 +261,11 @@ def f(obj):
 
 with slides.slide(18):
     with slides.source.context() as s:
-        slides.write(['## Displaying image from url from somewhere in Kashmir (کشمیر)',
-                      slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg')],
-                     className='Success')
+        slides.write('## Displaying image from url from somewhere in Kashmir (کشمیر)')
+        try:
+            slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
+        except:
+            slides.write('Could not retrieve image from url. Check internt connection!',className='Error')
     s.display()
 
 slides.from_markdown(19, '''## $\LaTeX$ in Slides
@@ -290,7 +293,8 @@ with slides.slide(21):
             slides.cols('### Column A','### Column B',className='Info'),
             '||### Column C {.Warning}||### Column D {.Success}||',
         ).display()
-        slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
+        slides.write('---')
+
     s.display()
     
 with slides.slide(22):

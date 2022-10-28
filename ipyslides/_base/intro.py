@@ -25,7 +25,7 @@ sup`2`Their University is somewhere in the middle of nowhere
 ^^^
 ^^^
 
-**Assuming you have `ls = ipyslides.LiveSlides()`**
+**Assuming you have `ls = ipyslides.Slides()`**
 
 - Proceed to create slides:
     - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
@@ -34,7 +34,7 @@ sup`2`Their University is somewhere in the middle of nowhere
 
 ```python
 import ipyslides as isd 
-ls = isd.LiveSlides()
+ls = isd.Slides()
 ls.set_animation(main='zoom') 
 ```
 ```python
@@ -95,8 +95,8 @@ with ls.slide(2):
 
 **New in 1.7.2**
   
-- Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
-- You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `LiveSlides` constructor.
+- Find special syntax to be used in markdown by `Slides.xmd_syntax`.
+- You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `Slides` constructor.
 - You can now access individual slides by indexing `s_i = ls[i]` where `i` is the slide index or by key as `s_3_1 = ls['3.1']` will give you slide which shows 3.1 at bottom.
 - Basides indexing, you can access current displayed slide by `ls.current`.
 - You can add new content to existing slides by using `with s_i.insert(where)` context. All new changes can be reverted by `s_i.reset()`.
@@ -105,7 +105,7 @@ with ls.slide(2):
 - You can now set CSS for each slide by `s_i.set_css` or `ls.set_slide_css` at current slide.
 
 **New in 1.7.5**    
-Use `LiveSlides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+Use `Slides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
     
 **New in 1.7.7**        
@@ -159,7 +159,7 @@ but captures of multiple times in a slides are first to last in order in time.
 
 {how_to_slide[0]}
 
-- LiveSlides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
+- Slides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 
 Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
 {{.Note .Warning}}
@@ -203,11 +203,11 @@ alt.themes.enable('dark')
 ```
 
 ### Customize Slides
-You can customize slides by inheriting from `LiveSlides` class. 
+You can customize slides by inheriting from `Slides` class. 
 For example if you want to have custom theme and some other settings always enabled and
 bottom information only on title slide, you can do so:
 ```python
-class CustomSlides(isd.LiveSlides):
+class CustomSlides(isd.Slides):
     def __init__(self):
         super().__init__()
         self.settings.theme_dd.value = 'Custom'

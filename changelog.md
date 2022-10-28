@@ -1,5 +1,5 @@
 # Changelog
-Content below assumes you have `ls = LiveSlides()`.
+Content below assumes you have `ls = LiveSlides()`. (`Slides` from version 2+)
 
 # 1.4.0
 Use `ls.load_docs()` to see updated documentation for this and above versions. No more changelogs will be created.

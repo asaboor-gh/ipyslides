@@ -296,7 +296,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     return _HTML(_full_doc)
 
 def code(callable):
-    "Returns full code of a callable. Added in 1.7.9, you can just pass callable into `write` command or use `ipyslides.LiveSlides().source.from_callable`."
+    "Returns full code of a callable. Added in 1.7.9, you can just pass callable into `write` command or use `ipyslides.Slides().source.from_callable`."
     try:
         return _HTML(_fix_repr(callable))
     except:

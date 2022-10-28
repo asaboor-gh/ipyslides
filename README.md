@@ -8,12 +8,12 @@ Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voi
 ![Overview](overview.jpg)
 
 # Changelog
-Above version 1.4.0, users can see upto date documentation via `ipyslides.LiveSlides().docs()`, so no additional changelog will be created in future. 
+Above version 1.4.0, users can see upto date documentation via `ipyslides.Slides().docs()`, so no additional changelog will be created in future. 
 See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 1.8.9
+> pip install ipyslides >= 2.0.0
 ```
 For development install, clone this repository and then
 ```shell
@@ -28,7 +28,7 @@ Inside Jupyter Notebook:
 ```python
 #------------ Cell 1 --------------------
 import ipyslides as isd 
-ls = isd.LiveSlides(**settings_kwargs) # settings_kwargs are added in 1.4.1
+ls = isd.Slides(**settings_kwargs) # settings_kwargs are added in 1.4.1
 ls.set_overall_animation('zoom') # can be changed per slide in 1.7.6+
 ls.xmd_syntax # Gives you information what you can do with markdown 1.7.2+
 #------------ Cell 2 --------------------
@@ -146,11 +146,11 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 - Bounding box of slides for screenshots should be set by user (if not in fullscreen).
 
 # Customize Slides
-You can customize slides by inheriting from `LiveSlides` class. 
+You can customize slides by inheriting from `Slides` class. 
 For example if you want to have custom theme and some other settings always enabled and
 bottom information only on title slide, you can do so:
 ```python
-class CustomSlides(isd.LiveSlides):
+class CustomSlides(isd.Slides):
     def __init__(self):
         super().__init__()
         self.settings.theme_dd.value = 'Custom'

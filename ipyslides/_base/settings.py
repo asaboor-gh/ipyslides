@@ -211,7 +211,7 @@ class LayoutSettings:
         self._emit_resize_event()
         
     def _toggle_sidebar(self,change): 
-        """Pushes this instance of LiveSlides to sidebar and back inline."""
+        """Pushes this instance of Slides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
         if self.btn_fs.value or self.sidebar_switch.value == False:
             self.widgets.mainbox.remove_class('SideMode')

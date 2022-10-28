@@ -23,20 +23,20 @@ class Slide:
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
         self._number = None # This should be set in the LiveSlide class
-        self._label = None # This should be set in the LiveSlides
-        self._index = None # This should be set in the LiveSlides
+        self._label = None # This should be set in the Slides
+        self._index = None # This should be set in the Slides
         self.set_css(props_dict, notify = False)
         
-        self._notes = '' # Should be update by Notes and LiveSlides calss
+        self._notes = '' # Should be update by Notes and Slides calss
         self.set_overall_animation()
         self._animation = None
-        self._markdown = '' # Should be update by LiveSlides
-        self._cell_code = '' # Should be update by LiveSlides 
+        self._markdown = '' # Should be update by Slides
+        self._cell_code = '' # Should be update by Slides 
         self._from_cell = False # Update in build slides
-        self._toast = None # Update from BaseLiveSlides
+        self._toast = None # Update from BaseSlides
         self._has_widgets = False # Update in _build_slide function
-        self._citations = {} # Added from LiveSlides
-        self._frames = [] # Added from LiveSlides
+        self._citations = {} # Added from Slides
+        self._frames = [] # Added from Slides
         
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -186,7 +186,7 @@ class Slide:
             return self._app.source.from_string(self._markdown, language = 'markdown', name = name)
         else:
             return self._app.source.from_string('Source of a slide only exits if it is created (most recently) using `from_markdown` or `%%slide` magic\n'
-                'For `@LiveSlide.frames` and `with LiveSlides.slide` contextmanager, use `with LiveSlides.source.context`  to capture source.',
+                'For `@LiveSlide.frames` and `with Slides.slide` contextmanager, use `with Slides.source.context`  to capture source.',
                 language = 'markdown')
     
     def show(self):
@@ -273,7 +273,7 @@ class Slide:
 
 @contextmanager
 def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_frameless = True):
-    "Use as contextmanager in LiveSlides class to create slide. New in 1.7.0"
+    "Use as contextmanager in Slides class to create slide. New in 1.7.0"
     # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
     old_slides = list(app._slides_dict.values()) # Need if update is required later, values decide if slide is changed
         
@@ -317,7 +317,7 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
 def append_print_warning(captured, append_to):
     "Append print warning to outputs of a capture."
     if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
-        append_to.append(_HTML('<div class="PyRepr Error">Use `pprint` or `LiveSlides.capture_std` '
+        append_to.append(_HTML('<div class="PyRepr Error">Use `pprint` or `Slides.capture_std` '
         'contextmanager \nto see print output on slide in desired order!\n'
         '---------------------------------------------------------------------------\n'
         + captured.stdout + '</div>'))

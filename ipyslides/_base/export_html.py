@@ -8,9 +8,9 @@ from .export_template import doc_css, doc_html, slides_css
 from ..formatter import code_css
 
 class _HhtmlExporter:
-    # Should be used inside LiveSlides class only.
-    def __init__(self, _instance_BaseLiveSlides):
-        self.main = _instance_BaseLiveSlides
+    # Should be used inside Slides class only.
+    def __init__(self, _instance_BaseSlides):
+        self.main = _instance_BaseSlides
         
     def _htmlize(self, allow_non_html_repr = False, as_slides = False, **kwargs):
         "page_size, text_font, code_font, slide_number are in kwargs"
@@ -79,7 +79,7 @@ class _HhtmlExporter:
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
-        - You can take screenshot (using system's tool) of a widget and add it back to slide using `LiveSlides.image` to keep PNG view of a widget. 
+        - You can take screenshot (using system's tool) of a widget and add it back to slide using `Slides.image` to keep PNG view of a widget. 
         - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
         
         New in 1.5.2

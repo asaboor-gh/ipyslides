@@ -41,14 +41,14 @@ def write(*columns,width_percents=None,className=None):
     Each column should be a valid object (text/markdown/html/ have _repr_<format>_ or to_<format> method) or list/tuple of objects to form rows or explictly call `rows`. 
     
     - Pass int,float,dict,function etc. Pass list/tuple in a wrapped list for correct print as they used for rows writing too.
-    - Give a code object from `LiveSlides.source.context[from_...]` to it, syntax highlight is enabled.
+    - Give a code object from `Slides.source.context[from_...]` to it, syntax highlight is enabled.
     - Give a matplotlib `figure/Axes` to it or use `ipyslides.objs_formatter.plt2html()`.
     - Give an interactive plotly figure.
     - Give a pandas dataframe `df` or `df.to_html()`.
     - Give any object which has `to_html` method like Altair chart. (Note that chart will not remain interactive, use display(chart) if need interactivity like brushing etc.)
     - Give an IPython object which has `_repr_<repr>_` method where <repr> is one of ('html','markdown','svg','png','jpeg','javascript','pdf','pretty','json','latex').
     - Give a function/class/module (without calling) and it will be displayed as a pretty printed code block.
-    - Give a registered object using `@LiveSlides.serializer.registor` decorator.
+    - Give a registered object using `@Slides.serializer.registor` decorator.
     
     If an object is not in above listed things, `obj.__repr__()` will be printed. If you need to show other than __repr__, use `display(obj)` outside `write` command or use
     methods specific to that library to show in jupyter notebook.

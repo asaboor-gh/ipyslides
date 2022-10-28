@@ -16,10 +16,10 @@ This {{var_name}} is a code from above and will be substituted with the value of
 Note: Nested blocks are not supported.
 
 **New in 1.7.2**    
-Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+Find special syntax to be used in markdown by `Slides.xmd_syntax`.
 
 **New in 1.7.5**
-Use `LiveSlides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
 
 import textwrap, re
@@ -212,7 +212,7 @@ class _ExtendedMarkdown(Markdown):
                 output = user_ns[_match]
             else:
                 raise ValueError(('{!r} is not executable. ' 
-                'Only variables are allowed in double curly braces or see LiveSlides.xmd_syntax as well'))
+                'Only variables are allowed in double curly braces or see Slides.xmd_syntax as well'))
                 
             _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
             html_output = html_output.replace('{{' + match + '}}', _out, 1)
@@ -272,17 +272,17 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
     Each block can have class names (speparated with space or .) (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess.Info`.
     For example, `python .friendly` will be highlighted with friendly theme from pygments.
     Pygments themes, however, are not supported with `multicol`. You need to write and display CSS for a custom class.
-    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `LiveSlides.export.<export_function>` is called.
+    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `Slides.export.<export_function>` is called.
 
     Note: Nested blocks are not supported.
     
     This function was added  in 1.4.6
     
     **New in 1.7.2**    
-    Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+    Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     
     **New in 1.7.5**
-    Use `LiveSlides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+    Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
     return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline, rich_outputs = rich_outputs)  
     

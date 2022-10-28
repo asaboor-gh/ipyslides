@@ -5,10 +5,10 @@ import time
 
 class Notes:
     "Notes are stored in `LiveSlide` class for consistensy."
-    def __init__(self,_insatanceLiveSlides, _instanceWidgets):
+    def __init__(self,_insatanceSlides, _instanceWidgets):
         "Instance should be inside `LiveSlide` class."
         # print(f'Inside: {self.__class__.__name__}')
-        self.main = _insatanceLiveSlides
+        self.main = _insatanceSlides
         self.widgets = _instanceWidgets
         
         self.notes_check = self.widgets.checks.notes

@@ -1,4 +1,4 @@
-"Inherit LiveSlides class from here. It adds useful attributes and methods."
+"Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
 from .widgets import Widgets
 from .screenshot import ScreenShot
@@ -7,7 +7,7 @@ from .settings import LayoutSettings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .intro import key_combs
-class BaseLiveSlides:
+class BaseSlides:
     def __init__(self):
         self.__widgets = Widgets()
         self.__screenshot = ScreenShot(self.__widgets)
@@ -163,7 +163,7 @@ class BaseLiveSlides:
         **New in 1.7.2**:     
         - You can add slides from text blocks/file with a start number. 
         - It will create slides at numbers `start, start + 1, .... start + N+1` if there are `N` `---` (three dashes) separators in the text.
-        - Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+        - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         
         **Returns**:       
         A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
@@ -257,7 +257,7 @@ class BaseLiveSlides:
         self.create(*range(13)) # Create slides faster
         
         from itertools import count
-        from ..core import LiveSlides
+        from ..core import Slides
         from ..__version__ import __version__
         counter = count(start=1)
         
@@ -277,31 +277,31 @@ class BaseLiveSlides:
                 ''').display()
             
         with self.slide(next(counter)):
-            self.write(self.doc(LiveSlides))
+            self.write(self.doc(Slides))
         
         with self.slide(next(counter)):
             self.write('## Adding Slides')
             self.write('Besides functions below, you can add slides with `%%title`,  `%%slide <slide number>` and `%%slide <slide number>` -m`,`%%slide <slide number> -s` magics as well.\n{.Note .Info}')
-            self.write([self.doc(self.title,'LiveSlides'),self.doc(self.slide,'LiveSlides'),self.doc(self.frames,'LiveSlides'),self.doc(self.from_markdown,'LiveSlides')])
+            self.write([self.doc(self.title,'Slides'),self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with self.slide(next(counter)):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.Note .Info}')
             self.xmd_syntax.display() # This will display information about Markdown extended syntax
-            self.write([self.doc(self.write,'LiveSlides'),self.doc(self.iwrite,'LiveSlides'), self.doc(self.parse_xmd,'LiveSlides'),self.doc(self.cite,'LiveSlides')])
+            self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse_xmd,'Slides'),self.doc(self.cite,'Slides')])
         
         with self.slide(next(counter)):
             self.write('## Adding Speaker Notes')
             self.write('You can use line magic `%notes` to add notes as well.\n{.Note .Success}')
-            self.doc(self.notes,'LiveSlides.notes', members = True, itself = False).display()
+            self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
         with self.slide(next(counter)):
             self.write('## Displaying Source Code')
-            self.doc(self.source,'LiveSlides.source', members = True, itself = False).display()
+            self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
         with self.slide(next(counter)):
             self.write('## Layout and Theme Settings')
-            self.doc(self.settings,'LiveSlides.settings', members=True,itself = False).display()
+            self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
         with self.slide(next(counter)):
             self.write('## Useful Functions for Rich Content')
@@ -309,7 +309,7 @@ class BaseLiveSlides:
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
                        'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'set_slide_css']
-            self.doc(self, 'LiveSlides', members = members, itself = False).display()
+            self.doc(self, 'Slides', members = members, itself = False).display()
             
         with self.slide(next(counter)):
             self.write('## Content Styling')
@@ -341,18 +341,18 @@ class BaseLiveSlides:
         with self.slide(next(counter)):
             self.write('## Loading from File/Exporting to HTML')
             self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
-            self.write([self.doc(self.from_markdown,'LiveSlides'),
-                        self.doc(self.demo,'LiveSlides'), 
-                        self.doc(self.docs,'LiveSlides'),
-                        self.doc(self.export.slides,'LiveSlides.export'),
-                        self.doc(self.export.report,'LiveSlides.export')])
+            self.write([self.doc(self.from_markdown,'Slides'),
+                        self.doc(self.demo,'Slides'), 
+                        self.doc(self.docs,'Slides'),
+                        self.doc(self.export.slides,'Slides.export'),
+                        self.doc(self.export.report,'Slides.export')])
         
         with self.slide(next(counter)):
             self.write('## Adding User defined Objects/Markdown Extensions')
-            self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@LiveSlides.serializer.register` to serialize them to html.\n{.Note .Info}')
-            self.doc(self.serializer,'LiveSlides.serializer', members = True, itself = False).display()
+            self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.Note .Info}')
+            self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
-            self.doc(self.extender,'LiveSlides.extender', members = True, itself = False).display()
+            self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
         
         with self.slide(next(counter)):
             self.write('## Keys and Shortcuts', key_combs)

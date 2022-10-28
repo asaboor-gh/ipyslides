@@ -17,7 +17,7 @@ from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
-from ._base.base import BaseLiveSlides
+from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide, append_print_warning
@@ -53,7 +53,7 @@ class _Citation:
             </a>{value}</span>''')
         
         
-class LiveSlides(BaseLiveSlides):
+class Slides(BaseSlides):
     # This will be overwritten after creating a single object below!
     def __init__(self):
         super().__init__() # start Base class in start
@@ -173,10 +173,10 @@ class LiveSlides(BaseLiveSlides):
             extension to make nested blocks with classes. It is added as dependency and can be used to build nested html blocks.
             
         ::: Block-red 
-            - You can use `LiveSlides.extender` to extend additional syntax using Markdown extensions such as 
+            - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
                 [markdown extensions](https://python-markdown.github.io/extensions/) and 
                 [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
-            - You can serialize custom python objects to HTML using `LiveSlides.serializer` function. Having a 
+            - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
                 `__format__` method in your class enables to use \{\{object\}\} syntax and `_repr_html_` method enables it to use inside `write` function.
         
         - Other options include:
@@ -211,7 +211,7 @@ class LiveSlides(BaseLiveSlides):
     
     def __repr__(self):
         repr_all = ',\n    '.join(repr(s) for s in self._iterable)
-        return f'LiveSlides(\n    {repr_all}\n)'
+        return f'Slides(\n    {repr_all}\n)'
     
     def __iter__(self): # This is must have for exporting
         return iter(self._iterable)
@@ -314,7 +314,7 @@ class LiveSlides(BaseLiveSlides):
         if self._citation_mode != 'global':
             return self.html("p", "Citations are consumed per slide or inline.\n" 
                 "If you want to display them at the end, "
-                "use `citation_mode = 'global` during initialization of `LiveSlides`.")
+                "use `citation_mode = 'global` during initialization of `Slides`.")
             
         _html = _HTML(self.parse_xmd(title + '\n',display_inline=False, rich_outputs = False))
         
@@ -467,6 +467,7 @@ class LiveSlides(BaseLiveSlides):
     
     def resolve_objs(self,text_chunk):
         "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
+        # cite`key`
         all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
         for match in all_matches:
             key = match.strip()
@@ -505,7 +506,7 @@ class LiveSlides(BaseLiveSlides):
             %%slide 2 -m
             Everything here and below is treated as markdown, not python code.
             **New in 1.7.2**    
-            Find special syntax to be used in markdown by `LiveSlides.xmd_syntax`.
+            Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         
         (1.7.7+) You can run a slide only once for long calculations.
             ---------------- Cell ----------------
@@ -513,7 +514,7 @@ class LiveSlides(BaseLiveSlides):
             var = certain_long_calculation() # This will be run only once
             
         (1.8.9+) If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
-        Markdown before the first three underscores is written on all frames. This is equivalent to `@LiveSlides.frames` decorator.
+        Markdown before the first three underscores is written on all frames. This is equivalent to `@Slides.frames` decorator.
         """
         line = line.strip().split() #VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
@@ -544,9 +545,10 @@ class LiveSlides(BaseLiveSlides):
                     return # Do not run if cell is same as previous and -s is used
             
             with _build_slide(self, slide_number_str, from_cell = True) as s:
-                self.shell.run_cell(self.resolve_objs(cell)) #  Enables citations etc.
+                resolved_code = self.resolve_objs(cell)
+                self.shell.run_cell(resolved_code) #  Enables citations etc.
             
-            s._cell_code = cell # Update cell code
+            s._cell_code = resolved_code # Update cell code
             s._markdown = '' # Reset markdown
                    
     
@@ -688,7 +690,7 @@ class LiveSlides(BaseLiveSlides):
         return _frames 
 
     def _collect_slides(self):
-        """Collect cells for an instance of LiveSlides."""
+        """Collect cells for an instance of Slides."""
         slides_iterable = []
         if '0' in self._slides_dict:
             self._slides_dict['0']._label = '0'
@@ -731,11 +733,11 @@ class LiveSlides(BaseLiveSlides):
         
         return tuple([self._slides_dict[f'{slide_number}'] for slide_number in slide_numbers])
 
-# Make available as Singleton LiveSlides
-_private_instance = LiveSlides() # Singleton in use namespace
+# Make available as Singleton Slides
+_private_instance = Slides() # Singleton in use namespace
 # This is overwritten below to just have a singleton
 
-class LiveSlides:
+class Slides:
     __doc__ = textwrap.dedent("""
     Interactive Slides in IPython Notebook. Only one instance can exist. 
     
