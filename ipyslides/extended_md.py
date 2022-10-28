@@ -84,6 +84,37 @@ _special_funcs = {
     'textbox':'text', # Anything above this can be enclosed in a textbox
     'center':'text or \{\{variable\}\}',} # Center should be at end of all
 
+
+def resolve_objs_on_slide(slide_instance,text_chunk):
+    "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
+    # cite`key`
+    all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    for match in all_matches:
+        key = match.strip()
+        text_chunk = text_chunk.replace(f'cite`{match}`', slide_instance.cite(key), 1)
+    
+    # notes`This is a note for current slide`
+    all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    for match in all_matches:
+        slide_instance.notes.insert(match)
+        text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
+    
+    # citations`This is citations title`
+    all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    for match in all_matches:
+        citations = slide_instance.citations_html(title = match).value
+        text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
+    
+    # [key]:`citation content`
+    all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    citations = {}
+    for match in all_matches:
+        citations[match[0].strip()] = match[1]
+        slide_instance.set_citations(citations) # Only update under all_matches loop, otherwise it will be a mess of notifications
+        text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
+    
+    return text_chunk
+
 class _ExtendedMarkdown(Markdown):
     "New in 1.4.5"
     def __init__(self):
@@ -108,8 +139,8 @@ class _ExtendedMarkdown(Markdown):
         xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
         
         slides_instance = get_ipython().user_ns.get('__Slides_Instance__',None)
-        if slides_instance and getattr(slides_instance,'_under_with_or_frame',False):
-            xmd = slides_instance.resolve_objs(xmd) # Resolve objects in xmd related to current slide
+        if slides_instance and slides_instance._running_slide: # getattr(slides_instance,'_under_with_or_frame',False):
+            xmd = resolve_objs_on_slide(slides_instance,xmd) # Resolve objects in xmd related to current slide
         
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
@@ -237,6 +268,17 @@ class _ExtendedMarkdown(Markdown):
         all_matches = re.findall(r'class\`(.*?)\`', html_output, flags = re.DOTALL)
         for match in all_matches:
             html_output = html_output.replace(f'class`{match}`', f'<div class="{match}" markdown="1">', 1)
+        
+        
+        # Replace colored text
+        all_matches = re.findall(r'color\[(.*?)\]\`(.*?)\`', html_output, flags = re.DOTALL)
+        for match in all_matches:
+            kws = {'fg':None,'bg':None}
+            if '_' in match[0]:
+                kws['fg'], kws['bg'] = [c.strip() for c in match[0].split('_',1)]
+            else:
+                kws['fg'] = match[0].strip()
+            html_output = html_output.replace(f'color[{match[0]}]`{match[1]}`', utils.colored(match[1],**kws).value, 1)
         
         html_output = re.sub(r'^\^\^\^$', '</div>', html_output,flags=re.MULTILINE) # Close last block
         return html_output # return in main scope

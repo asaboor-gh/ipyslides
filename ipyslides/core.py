@@ -1,5 +1,4 @@
 
-import chunk
 import sys, re, textwrap
 from contextlib import contextmanager, suppress
 
@@ -98,6 +97,7 @@ class Slides(BaseSlides):
         self._iterable = [] #self._collect_slides() # Collect internally
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
+        self._running_slide = None # For Notes, citations etc in markdown
         
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
@@ -180,7 +180,8 @@ class Slides(BaseSlides):
                 `__format__` method in your class enables to use \{\{object\}\} syntax and `_repr_html_` method enables it to use inside `write` function.
         
         - Other options include:
-        ''') + '\n' + ', '.join(f'alert`{k}&#96;{v}&#96;`' for k,v in _special_funcs.items()),
+        
+        color[blue]`color[blue]&#96;text&#96;`, color[yellow_skyblue]`color[yellow_skyblue]&#96;text&#96;`, ''') + '\n' + ', '.join(f'alert`{k}&#96;{v}&#96;`' for k,v in _special_funcs.items()),
         display_inline = False
         ))
         
@@ -277,16 +278,17 @@ class Slides(BaseSlides):
         if self._citation_mode == 'inline':
             return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
         
-        _cited = _Citation(slide = self._running_slide, key = key)
-        self._running_slide._citations[key] = _cited
+        this_slide = self._running_slide
+        _cited = _Citation(slide = this_slide, key = key)
+        this_slide._citations[key] = _cited
         
         
         # Set _id for citation
         if self._citation_mode == 'footnote':
-            _cited._id = str(list(self._running_slide.citations.keys()).index(key) + 1) # Get index of key
+            _cited._id = str(list(this_slide.citations.keys()).index(key) + 1) # Get index of key
         else:
             # Find number of citations created till now
-            prev_citations = {**self.citations, **self._running_slide.citations} # Current citations + previous ones
+            prev_citations = {**self.citations, **this_slide.citations} # Current citations + previous ones
             if key in prev_citations:
                 _cited._id = str(list(prev_citations.keys()).index(key) + 1)
             else:
@@ -465,35 +467,6 @@ class Slides(BaseSlides):
         "Set animation for main and frame slides for all slides. For individual slides, use `self[index or key].set_animation/self.current.set_animation`"
         self._running_slide.set_overall_animation(main = main, frame = frame)
     
-    def resolve_objs(self,text_chunk):
-        "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
-        # cite`key`
-        all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
-        for match in all_matches:
-            key = match.strip()
-            text_chunk = text_chunk.replace(f'cite`{match}`', self.cite(key), 1)
-        
-        # notes`This is a note for current slide`
-        all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL)
-        for match in all_matches:
-            self.notes.insert(match)
-            text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
-        
-        # citations`This is citations title`
-        all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
-        for match in all_matches:
-            citations = self.citations_html(title = match).value
-            text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
-        
-        # [key]:`citation content`
-        all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
-        citations = {}
-        for match in all_matches:
-            citations[match[0].strip()] = match[1]
-            self.set_citations(citations) # Only update under all_matches loop, otherwise it will be a mess of notifications
-            text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
-        
-        return text_chunk
     # defining magics and context managers
     def __slide(self,line,cell):
         """Capture content of a cell as `slide`.
@@ -535,9 +508,8 @@ class Slides(BaseSlides):
             @self.frames(int(slide_number_str), *_frames)
             def make_slide(_frame):
                 #s.clear_display(wait = True) # It piles up otherwise due to replacements
-                chunk = self.resolve_objs(_frame) # Resolve under slides, otherwise appear on wrong slides
-                parse_xmd(chunk, display_inline = True, rich_outputs = False)
-                self._running_slide._markdown = chunk # Update markdown, # cell_code will be automatuically cleared in `self.frames`
+                parse_xmd(_frame, display_inline = True, rich_outputs = False)
+                self._running_slide._markdown = _frame # Update markdown, # cell_code will be automatuically cleared in `self.frames`
             
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             if '-s' in line[1:] and slide_number_str in self._slides_dict:
@@ -545,11 +517,12 @@ class Slides(BaseSlides):
                     return # Do not run if cell is same as previous and -s is used
             
             with _build_slide(self, slide_number_str, from_cell = True) as s:
-                resolved_code = self.resolve_objs(cell)
-                self.shell.run_cell(resolved_code) #  Enables citations etc.
+                self.shell.run_cell(cell) #  Enables citations etc.
             
-            s._cell_code = resolved_code # Update cell code
+            s._cell_code = cell # Update cell code
             s._markdown = '' # Reset markdown
+        
+        self._running_slide = None
                    
     
     @contextmanager
@@ -561,12 +534,10 @@ class Slides(BaseSlides):
         
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
         
-        self._under_with_or_frame = True
-        
         with _build_slide(self, f'{slide_number}', props_dict=props_dict, from_cell = False) as s:
             yield s # Useful to use later
             
-        self._under_with_or_frame = True
+        self._running_slide = None
         
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
@@ -640,7 +611,6 @@ class Slides(BaseSlides):
             if len(_new_objs) > 100: # 99 frames + 1 main slide
                 raise ValueError(f'Maximum 99 frames are supported, found {len(_new_objs)} frames!')
            
-            self._under_with_or_frame = True
             # build_slide returns old slide with updated display if exists.
             with _build_slide(self, f'{slide_number}', props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
                 self._running_slide = this_slide
@@ -685,7 +655,7 @@ class Slides(BaseSlides):
             for s in this_slide._frames:
                 s.update_display()
             
-            self._under_with_or_frame = False
+            self._running_slide = None
             
         return _frames 
 

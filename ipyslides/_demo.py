@@ -28,7 +28,7 @@ Version: {{version}} as executed from below code in markdown.
 # Slide 2 {.Success}
 Created using `%%slide 2 -m` with markdown only
 [slide2]:`This is reference created using markdown`
-cite`slide2` Refrence to this will show at end
+cite`slide2` Reference to this will show at end
 ```multicol
 # Column A
 ||### Sub column A {.Success}||### Sub column B ||
@@ -83,17 +83,17 @@ def func(obj):
 __contents = [f"""## IPython Display Objects
 #### Any object with following methods could be in`write` command:
 {', '.join([f'`_repr_{rep}_`' for rep in __reprs__])}
-Such as `IPython.display.<HTML,SVG,Markdown,Code>` etc. or third party such as `plotly.graph_objects.Figure`{{.Warning}}.            
+Such as color[navy_skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`{{.Warning}}.            
 """,
 f"""## Plots and Other **Data**{{style='color:var(--accent-color);'}} Types
 #### These objects are implemented to be writable in `write` command:
 {', '.join([f"`{lib['name']}.{lib['obj']}`" for lib in libraries])}
 Many will be extentended in future. If an object is not implemented, use `display(obj)` to show inline or use library's specific
-command to show in Notebook outside `write`.
+command to show in Notebook outside color[teal_whitesmoke]`write`.
 """,
 f"""## Interactive Widgets
 ### Any object in `ipywidgets`{textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
-or libraries based on ipywidgtes such as `bqplot`,`ipyvolume`,plotly's `FigureWidget`{slides.cite('pf')}(reference at end)
+or libraries based on ipywidgtes such as color[red]`bqplot`,color[green]`ipyvolume`,plotly's `FigureWidget` cite`pf`(reference at end)
 can be included in `iwrite` command as well as other objects that can be passed to `write` with caveat of Javascript.
 {{.Warning}}
 """,
@@ -188,7 +188,7 @@ with slides.slide(13):
         import ipywidgets as ipw
         import numpy as np, matplotlib.pyplot as plt
         
-        write('## Interactive Apps on Slide\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
+        write('## Interactive Apps on color[var(--accent-color)]`Slide`\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
         writer, (plot,button, _), code = slides.iwrite([
             '## Plot will be here! Click button below to activate it!',
             ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
@@ -261,7 +261,7 @@ def f(obj):
 
 with slides.slide(18):
     with slides.source.context() as s:
-        slides.write('## Displaying image from url from somewhere in Kashmir (کشمیر)')
+        slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)`')
         try:
             slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
         except:

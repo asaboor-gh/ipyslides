@@ -314,7 +314,7 @@ class BaseSlides:
         with self.slide(next(counter)):
             self.write('## Content Styling')
             with self.source.context() as c:
-                self.write(('You can **style**{.Error} your *content*{: style="color:hotpink;"} with `className` attribute in writing/content functions. ' 
+                self.write(('You can **style**{.Error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink_yellow]`text`* with `className` attribute in writing/content functions. ' 
                        'Provide **CSS**{.Info} for that using `.format_css` or use some of the available styles. '
                        'See these **styles**{.Success} with `.css_styles` property as below:'))
                 self.css_styles.display()
