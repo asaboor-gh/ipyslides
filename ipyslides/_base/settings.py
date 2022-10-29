@@ -104,7 +104,7 @@ class LayoutSettings:
             _text = self._footer_text
             
         if show_date:
-            _text += f' | {today()}'
+            _text += f' | {today(color = "var(--secondary-fg)")}'
         if show_slideno: #Slide number should be replaced from __number__ 
             _text += '<b style="color:var(--accent-color);white-space:pre;">  __number__<b>'
         _text = f'<p style="white-space:nowrap;display:inline;"> {_text} </p>' # To avoid line break in footer

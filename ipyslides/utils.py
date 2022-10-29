@@ -302,12 +302,12 @@ def code(callable):
     except:
         raise TypeError(f'Object {callable} is not a callable')
 
-def today(fmt = '%b %d, %Y',color = 'var(--secondary-fg)'):
+def today(fmt = '%b %d, %Y',color = 'inherit'): # Should be inherit color for markdown flow
     "Returns today's date in given format."
     return colored(datetime.datetime.now().strftime(fmt),fg=color, bg = None)
 
 def sub(text):
-    return html('sub',text)
+    return html('sub',text,style="font-size:70%;color:inherit;")
 
 def sup(text):
-    return html('sup',text)
+    return html('sup',text,style="font-size:70%;color:inherit;")
