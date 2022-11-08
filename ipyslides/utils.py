@@ -142,11 +142,11 @@ def center(obj):
         return _HTML(f'<div class="Center">{_fix_repr(obj)}</div>')
     
 def html(tag, children = None,className = None,**node_attrs):
-    """Returns html node with given children and node attributes like style, id etc.
-    `tag` can be any valid html tag name.
+    """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
+    `tag` can be any valid html tag name. A `tag` that ends with `/` will be self closing e.g. `hr/` will be `<hr/>`.     
     `children` expects:
     
-    - If None, returns self closing html node such as <img alt='Image'></img>.
+    - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
     
@@ -155,6 +155,17 @@ def html(tag, children = None,className = None,**node_attrs):
     html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
     ```
     """
+    if children and tag.endswith('/'):
+        raise ValueError(f'Parametr `children` should be None for self closing tag {tag!r}')
+    
+    node_attrs = {'style':"background:inherit;color:inherit;",**{k.replace('_','-'):v for k,v in node_attrs.items()}} # replace _ with - in keys, and add default style
+    attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
+    if className:
+        attrs = f'class="{className}" {attrs}'
+    
+    if tag.endswith('/'): # Self closing tag
+        return _HTML(f'<{tag[:-1]} {attrs} />' if attrs else f'<{tag[:-1]}/>')
+    
     if children is None:
         content = ''
     elif isinstance(children,str):
@@ -163,10 +174,6 @@ def html(tag, children = None,className = None,**node_attrs):
         content = '\n'.join(_fix_repr(child) for child in children) # Convert to html nodes in sequence of rows
     else:
         raise ValueError(f'Children should be a list/tuple of objects or str, not {type(children)}')
-    
-    attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
-    if className:
-        attrs = f'class="{className}" {attrs}'
         
     tag_in =  f'<{tag} {attrs}>' if attrs else f'<{tag}>' # space is must after tag, strip attrs spaces
     return _HTML(f'{tag_in}{content}</{tag}>')
