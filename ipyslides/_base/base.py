@@ -11,6 +11,7 @@ class BaseSlides:
     def __init__(self):
         self.__widgets = Widgets()
         self.__screenshot = ScreenShot(self.__widgets)
+        self.clipboard_image = self.__screenshot.clipboard_image # For easy access
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
         self.__settings = LayoutSettings(self.__widgets)
         self.__export = _HhtmlExporter(self)

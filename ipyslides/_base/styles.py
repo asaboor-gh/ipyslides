@@ -310,7 +310,8 @@ details > div {
 	color: var(--primary-fg);
 }
 .SlidesWrapper .panel {
-    background:var(--primary-bg) !important;
+     background: rgba(var(--primary-bg),0.7) !important;
+    backdrop-filter: blur(20px);
     position:absolute;
     border:none;
     padding: 8px !important;
@@ -326,7 +327,7 @@ details > div {
     border:none !important;
     outline:none !important;
     font-size: 24px;
-    background: var(--primary-bg) !important;
+    background: transparent !important;
 }
 
 .SlideArea .columns {width:100%;max-width:100%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}

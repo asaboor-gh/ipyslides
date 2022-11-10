@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 2.0.0
+> pip install ipyslides >= 2.0.1
 ```
 For development install, clone this repository and then
 ```shell
@@ -78,6 +78,8 @@ ls.docs()
 ```python
 ls.demo()
 ```
+
+> Check out `ls.glassmorphic` and `ls.clipboard_image` in 2.0.1+.
 
 #### You can build html of slides 
 Content type is limited. Widgets can not be exported.

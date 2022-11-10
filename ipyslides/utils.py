@@ -111,7 +111,7 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     img = html('figure', img.value + cap)  # Add caption,  _HTML + _HTML
     if zoomable:
         return _HTML(f'<div class="zoom-container">{img}</div>')
-    return _HTML(img)
+    return img # _HTML
 
 def svg(data=None,caption=None,zoomable=True,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."

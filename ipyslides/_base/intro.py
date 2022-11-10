@@ -112,6 +112,8 @@ Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensi
 Use `slides[i].insert_markdown({'index': 'markdown_string',...})` to insert markdown (pasrsed objects) at indices.   
 `%%slide i -s` can be used to execute code just once in current session. It will run again if code changes in cell.
 
+**New in 2.0.1**    
+Check out alert`slides.glassmorphic` and alert`slides.clipboard_image` to add glassmorphic and clipboard image support.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )

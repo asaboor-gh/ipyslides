@@ -702,6 +702,41 @@ class Slides(BaseSlides):
             self.refresh() # Refresh all slides
         
         return tuple([self._slides_dict[f'{slide_number}'] for slide_number in slide_numbers])
+    
+    def glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
+        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.1+)"
+        if 'BackLayer' in self.widgets.mainbox.children[0]._dom_classes:
+            back_html, front_html = self.widgets.mainbox.children[:2]
+        else:
+            back_html = ipw.HTML('',layout= ipw.Layout(width='100%',height='100%')).add_class('BackLayer')
+            front_html = ipw.HTML('',layout= ipw.Layout(width='100%',height='100%')).add_class('BackLayer').add_class('FrontLayer')
+            self.widgets.mainbox.children = (back_html, front_html, *self.widgets.mainbox.children)
+
+        back_html.value = self.image(image_src,width='100%',zoomable=False).value
+        front_html.value = f"""<style>
+        .BackLayer {{
+            position: absolute;
+            top:0;
+            left:0;
+            box-sizing:border-box !important;
+            overflow:hidden;
+            margin:0;
+        }}
+        .BackLayer img{{
+            position: absolute;
+            left:0;
+            top:0;
+            width: 100%;
+            height: 100%;
+            object-fit:cover;
+            filter: blur({blur_radius}px);
+        }}
+        .FrontLayer {{
+            background: var(--primary-bg);
+            opacity:{opacity};
+        }}
+        </style>"""
+    
 
 # Make available as Singleton Slides
 _private_instance = Slides() # Singleton in use namespace

@@ -207,7 +207,7 @@ class Slide:
         for k, v in props_dict.items():
             _css = ''
             if k.strip() in ('', 'slide', '.slide'):
-                _css += f'.SlidesWrapper {{\n'
+                _css += f'.SlidesWrapper, .FrontLayer {{\n'
             else:
                 _css += f'.SlideArea {k} {{\n'
                 

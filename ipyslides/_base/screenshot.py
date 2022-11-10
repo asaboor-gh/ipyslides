@@ -7,9 +7,9 @@ import os
 from time import sleep
 from contextlib import contextmanager
 
-from PIL import ImageGrab
+from PIL import Image, ImageGrab
 
-from ..utils import image, alert
+from ..utils import image
 from . import intro
 
 
@@ -183,4 +183,20 @@ class ScreenShot:
             self.widgets._push_toast('Deleted screenshots of all slides')
         
         self.widgets.ddowns.clear.value = 'None' # important to get back after operation
+    
+    
+    def clipboard_image(self, filename, quality = 95, **kwargs):
+        """Save image from clipboard to file and return `ipyslides.utils.image`. 
+        On next run, it loads from saved file. Useful to add screenshots from system into IPython.
+        kwargs are passed to `ipyslides.utils.image`. Added in 2.0.1"""
+        if os.path.isfile(filename):
+            return image(filename, **kwargs)
+        else:
+            im = ImageGrab.grabclipboard()
+            if isinstance(im,Image.Image):
+                im.save(filename, format= im.format,quality = quality) # Save image to file for later use
+                return image(filename, **kwargs)
+            else:
+                return print('No image on clipboard/file or not supported format.')
+        
     
