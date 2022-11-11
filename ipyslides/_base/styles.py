@@ -85,6 +85,7 @@ theme_roots = {
 
 def style_css(style_root = theme_roots['Inherit']):
 	return style_root + ''' 
+.widget-html.jupyter-widgets-disconnected { display:none !important; } /* Hide disconnected html widgets to avoid spacing issues */
 .SlideArea .TextBox { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
     line-height: 0.99em !important;
@@ -939,30 +940,30 @@ div.zoom-container > *:focus, div.zoom-container > *:hover{
 }
 '''
 
-compare_css = '''
-.SlideArea {
-    position: absolute;
-    left:50%;
-    top:0;
-    width:50% !important; 
-    max-height: 100%;
-    overflow:scroll;
-    box-sizing: border-box;
-}
-.Compared {
-    position: absolute;
-    left:0;
-    top:0;
-    width:50% !important;
-    max-height: 100%;
-    overflow:scroll;
-    padding: 0.2em 2em !important; /* Compare slide should have same padding as Main slide */
-    box-sizing: border-box;
-}
-.SlidesWrapper {
-    background: linear-gradient(to right, var(--primary-bg) 0, var(--primary-bg) calc(50% - 8px), var(--tr-hover-bg) 50%, var(--primary-bg) calc(50% + 8px), var(--primary-bg) 100%) !important;
-}
-'''
+def glass_css(opacity = 0.75,blur_radius = 50):
+    return f'''.BackLayer, .BackLayer .Front {{
+        position: absolute !important;
+        top:0 !important;
+        left:0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        box-sizing:border-box !important;
+        overflow:hidden;
+        margin:0;
+    }}
+    .BackLayer img{{
+        position: absolute;
+        left:0;
+        top:0;
+        width: 100%;
+        height: 100%;
+        object-fit:cover;
+        filter: blur({blur_radius}px);
+    }}
+    .BackLayer .Front {{
+        background: var(--primary-bg);
+        opacity:{opacity};
+    }}'''
 
 loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 50 50">

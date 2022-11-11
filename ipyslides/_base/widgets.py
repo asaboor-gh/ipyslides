@@ -2,6 +2,7 @@
 Author Notes: Classes in this module should only be instantiated in LiveSlide class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
+import os
 from dataclasses import dataclass
 import ipywidgets as ipw
 from IPython.display import display, Javascript
@@ -34,7 +35,6 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('menu')
-    compare = ipw.ToggleButton(description='⇄', value = False, tooltip='Toggle ON/OFF Compare Mode',layout= Layout(width='auto',height='auto')).add_class('CompareSwitch').add_class('menu')
     fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
     zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
     timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')             
@@ -65,6 +65,7 @@ class _Htmls:
     capture = HTML('<span class="Info">Edit above box and hit Enter to see screenshot here. ' 
                    'If nothing shown, your system does not support taking screenshots with PIL</span>').add_class('capture-html') # Screenshot image here
     intro   = HTML().add_class('panel-text') # Intro HTML
+    glass = HTML().add_class('BackLayer') # For glass effect
 
 @dataclass(frozen=True)
 class _Inputs:
@@ -201,12 +202,24 @@ class Widgets:
     """
     def __setattr__(self, name , value):
         if name in self.__dict__:
-            raise AttributeError(f'{name} is a read-only attribute')
+            if name == '_notebook_dir':
+                self.__dict__[name] = value
+            else:
+                raise AttributeError(f'{name} is a read-only attribute')
         
         self.__dict__[name] = value
         
+    @property
+    def assets_dir(self):
+        "Returns the assets directory, if not exist, create one"
+        _dir = os.path.join(self._notebook_dir,'ipyslides-assets')
+        if not os.path.isdir(_dir):
+            os.makedirs(_dir)
+        return _dir
+        
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
+        self._notebook_dir = '.' # This will be updated later
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -232,7 +245,6 @@ class Widgets:
             self.buttons.setting,
             HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
             self.buttons.capture,
-            self.toggles.compare,
         ],layout=Layout(height='36px')).add_class('nav-box')
         
         self.navbox = VBox([
@@ -279,6 +291,7 @@ class Widgets:
         ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox') 
         
         self.mainbox = VBox([
+            self.htmls.glass, # This is the glass pane, should be on top of everything
             self.htmls.loading, 
             self.htmls.toast,
             self.htmls.main,

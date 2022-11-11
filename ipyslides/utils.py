@@ -108,19 +108,19 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs _HTML object
     cap = f'<figcaption>{caption}</figcaption>' if caption else ''
-    img = html('figure', img.value + cap)  # Add caption,  _HTML + _HTML
+    _IMG = html('figure', img.value + cap)  # Add caption,  _HTML + _HTML
     if zoomable:
-        return _HTML(f'<div class="zoom-container">{img}</div>')
-    return img # _HTML
+        return _HTML(f'<div class="zoom-container">{_IMG}</div>')
+    return _IMG # _HTML
 
 def svg(data=None,caption=None,zoomable=True,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
     cap = f'<figcaption>{caption}</figcaption>' if caption else ''
-    svg = html('figure', svg + cap)
+    _SVG = html('figure', svg + cap)
     if zoomable:
-        return _HTML(f'<div class="zoom-container">{svg}</div>')
-    return _HTML(svg)
+        return _HTML(f'<div class="zoom-container">{_SVG}</div>')
+    return _SVG # _HTML
 
 def iframe(src, width='100%',height='auto',**kwargs):
     "Display `src` in an `iframe`. `kwrags` are passed to IPython.display.IFrame"

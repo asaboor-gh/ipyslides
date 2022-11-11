@@ -1,5 +1,5 @@
 
-import sys, re, textwrap
+import os, sys, re, textwrap
 from contextlib import contextmanager, suppress
 
 from IPython import get_ipython
@@ -20,6 +20,7 @@ from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide, append_print_warning
+from ._base.styles import glass_css
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -57,6 +58,7 @@ class Slides(BaseSlides):
     def __init__(self):
         super().__init__() # start Base class in start
         self.shell = SHELL
+        self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
         
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
@@ -103,12 +105,10 @@ class Slides(BaseSlides):
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
         
-        self.widgets.toggles.compare.observe(self._compare, names=['value'])
         # All Box of Slides
         self._box =  self.widgets.mainbox
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box_ = ipw.VBox() # Initialize display box
-        
     
     @property
     def xmd_syntax(self):
@@ -201,14 +201,6 @@ class Slides(BaseSlides):
         with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
 
-    def _compare(self, btn):
-        if self.widgets.toggles.compare.value:
-            self._compared_slide = self.current # Need to store current slide
-            self._compared_slide._widget.add_class('Compared')
-        else:
-            with suppress(BaseException):
-                self._compared_slide._widget.remove_class('Compared') # Remove class
-                self._compared_slide = None
     
     def __repr__(self):
         repr_all = ',\n    '.join(repr(s) for s in self._iterable)
@@ -240,6 +232,16 @@ class Slides(BaseSlides):
             return self._iterable[key.start:key.stop:key.step]
         
         raise KeyError("Slide could be accessed by index, slice or key, got {}".format(key))
+    
+    @property
+    def notebook_dir(self):
+        "Get notebook directory."
+        return self.shell.starting_dir
+    
+    @property
+    def assets_dir(self):
+        "Get assets directory."
+        return self.widgets.assets_dir # Creates automatically
     
     @property
     def current(self):
@@ -705,38 +707,19 @@ class Slides(BaseSlides):
     
     def glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
         "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.1+)"
-        if 'BackLayer' in self.widgets.mainbox.children[0]._dom_classes:
-            back_html, front_html = self.widgets.mainbox.children[:2]
-        else:
-            back_html = ipw.HTML('',layout= ipw.Layout(width='100%',height='100%')).add_class('BackLayer')
-            front_html = ipw.HTML('',layout= ipw.Layout(width='100%',height='100%')).add_class('BackLayer').add_class('FrontLayer')
-            self.widgets.mainbox.children = (back_html, front_html, *self.widgets.mainbox.children)
-
-        back_html.value = self.image(image_src,width='100%',zoomable=False).value
-        front_html.value = f"""<style>
-        .BackLayer {{
-            position: absolute;
-            top:0;
-            left:0;
-            box-sizing:border-box !important;
-            overflow:hidden;
-            margin:0;
-        }}
-        .BackLayer img{{
-            position: absolute;
-            left:0;
-            top:0;
-            width: 100%;
-            height: 100%;
-            object-fit:cover;
-            filter: blur({blur_radius}px);
-        }}
-        .FrontLayer {{
-            background: var(--primary-bg);
-            opacity:{opacity};
-        }}
-        </style>"""
-    
+        if not image_src:
+            self.widgets.htmls.glass.value = '' # Hide glassmorphic
+            return None
+        
+        if not os.path.isfile(image_src):
+            raise FileNotFoundError(f'Image not found at {image_src!r}')
+        
+        self.widgets.htmls.glass.value = f"""<style>
+        {glass_css(opacity=opacity, blur_radius=blur_radius)}
+        </style>
+        {self.image(image_src,width='100%',zoomable=False)}
+        <div class="Front"></div>
+        """
 
 # Make available as Singleton Slides
 _private_instance = Slides() # Singleton in use namespace

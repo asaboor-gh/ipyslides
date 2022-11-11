@@ -51,7 +51,6 @@ class ScreenShot:
                         self.widgets.htmls.toast,
                         self.widgets.htmls.cursor,
                         self.widgets.toggles.display,
-                        self.widgets.toggles.compare,
                         *additional_widgets_to_hide
                         ]
         old_pref = self.widgets.htmls.toast.layout.visibility # To keep user prefernce back after screenshot
@@ -146,11 +145,14 @@ class ScreenShot:
         "Get all captured screenshots in order."
         return self.__sort_images()
     
-    def save_images(self,directory='ipyslides-images'):
+    def save_images(self,directory = None):
         "Save all screenshots as PNG in given `directory`. Names are auto ordered"
         self.btn_png.description = 'Saving PNGs...'
+        if directory is None:
+            directory = os.path.join(self.widgets.assets_dir,'images')
+        
         if not os.path.isdir(directory):
-            os.mkdir(directory)
+            os.makedirs(directory)
         
         ims = self.images
         if ims:    
@@ -187,15 +189,22 @@ class ScreenShot:
     
     def clipboard_image(self, filename, quality = 95, **kwargs):
         """Save image from clipboard to file and return `ipyslides.utils.image`. 
-        On next run, it loads from saved file. Useful to add screenshots from system into IPython.
+        On next run, it loads from saved file under `notebook-dir/ipyslides-assets/screenshots`. Useful to add screenshots from system into IPython.
         kwargs are passed to `ipyslides.utils.image`. Added in 2.0.1"""
-        if os.path.isfile(filename):
-            return image(filename, **kwargs)
+        directory = os.path.join(self.widgets.assets_dir,'screenshots')
+        
+        if not os.path.isdir(directory):
+            os.makedirs(directory)
+        
+        filepath = os.path.join(directory,filename)
+        
+        if os.path.isfile(filepath):
+            return image(filepath, **kwargs)
         else:
             im = ImageGrab.grabclipboard()
             if isinstance(im,Image.Image):
-                im.save(filename, format= im.format,quality = quality) # Save image to file for later use
-                return image(filename, **kwargs)
+                im.save(filepath, format= im.format,quality = quality) # Save image to file for later use
+                return image(filepath, **kwargs)
             else:
                 return print('No image on clipboard/file or not supported format.')
         

@@ -207,7 +207,10 @@ class Slide:
         for k, v in props_dict.items():
             _css = ''
             if k.strip() in ('', 'slide', '.slide'):
-                _css += f'.SlidesWrapper, .FrontLayer {{\n'
+                if 'background' in ' '.join(v.keys()): # Only background is allowed for Front Layer
+                    _css += f'.SlidesWrapper, .BackLayer .Front {{\n'
+                else:
+                    _css += f'.SlidesWrapper {{\n'
             else:
                 _css += f'.SlideArea {k} {{\n'
                 
