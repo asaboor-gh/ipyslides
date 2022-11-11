@@ -153,6 +153,8 @@ def style_css(style_root = theme_roots['Inherit']):
 .Note{
     border: 1px solid var(--tr-hover-bg);
     border-radius: 0.2em;
+    background: none; /* Fallback  for Inherit and Custom theme*/
+    background: rgba(__light__,__light__,__light__,0.75);
 }
 .Note::before {
     content: 'ℹ';
@@ -179,7 +181,7 @@ def style_css(style_root = theme_roots['Inherit']):
     border-top: 3px solid red; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__, 0, 0);
     background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgb(__light__,calc(__light__ - 20),calc(__light__ - 20));
+    background: rgba(__light__,calc(__light__ - 20),calc(__light__ - 20),0.75);
     margin-bottom: 0.9em;
 }
 
@@ -188,7 +190,7 @@ def style_css(style_root = theme_roots['Inherit']):
     border-top: 3px solid green; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0, __light__, 0);
     background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgb(calc(__light__ - 20),__light__,calc(__light__ - 20));
+    background: rgba(calc(__light__ - 20),__light__,calc(__light__ - 20),0.75);
     margin-bottom: 0.9em;
 }
 
@@ -197,7 +199,7 @@ def style_css(style_root = theme_roots['Inherit']):
     border-top: 3px solid blue; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0, 0, __light__);
     background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgb(calc(__light__ - 20),calc(__light__ - 20),__light__);
+    background: rgba(calc(__light__ - 20),calc(__light__ - 20),__light__,0.75);
     margin-bottom: 0.9em;
 }
 .Block-yellow {
@@ -205,7 +207,7 @@ def style_css(style_root = theme_roots['Inherit']):
     border-top: 3px solid yellow; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__, __light__, 0);
     background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgb(__light__,__light__,calc(__light__ - 20));
+    background: rgba(__light__,__light__,calc(__light__ - 20),0.75);
     margin-bottom: 0.9em;
 }
 .Block-cyan {
@@ -213,7 +215,7 @@ def style_css(style_root = theme_roots['Inherit']):
     border-top: 3px solid cyan; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0,__light__, __light__);
     background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgb(calc(__light__ - 20),__light__,__light__);
+    background: rgba(calc(__light__ - 20),__light__,__light__,0.75);
     margin-bottom: 0.9em;
 }
 .Block-gray {
@@ -221,7 +223,7 @@ def style_css(style_root = theme_roots['Inherit']):
     border-top: 3px solid gray; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(calc(__light__ - 10),calc(__light__ - 10),calc(__light__ - 10));
     background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgb(calc(__light__ - 20),calc(__light__ - 20),calc(__light__ - 20));
+    background: rgba(calc(__light__ - 20),calc(__light__ - 20),calc(__light__ - 20),0.75);
     margin-bottom: 0.9em;
 }
 .Block-magenta {
@@ -229,7 +231,7 @@ def style_css(style_root = theme_roots['Inherit']):
     border-top: 3px solid magenta; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__,0, __light__);
     background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgb(__light__,calc(__light__ - 20),__light__);
+    background: rgba(__light__,calc(__light__ - 20),__light__,0.75);
     margin-bottom: 0.9em;
 }
 
@@ -238,7 +240,7 @@ details {
     background: var(--secondary-bg);
 }
 details > summary {
-    color: var(--accent-color);
+    color: var(--accent-color) !important;
     padding: 0.2em;
 }
 details > div {
@@ -311,7 +313,6 @@ details > div {
 	color: var(--primary-fg);
 }
 .SlidesWrapper .panel {
-     background: rgba(var(--primary-bg),0.7) !important;
     backdrop-filter: blur(20px);
     position:absolute;
     border:none;
@@ -600,7 +601,6 @@ span.lang-name {
 div.zoom-container { resize: both;}
 div.zoom-container,
 div.zoom-container > * {
-    background: var(--primary-bg);
     display:flex !important; /* To align in center */
     flex-direction: column !important; /* To have caption at bottom */
     align-items:center !important;
@@ -921,6 +921,7 @@ mpl_fs_css = '''
 /* Pop out matplotlib's SVG on click/hover */
 div.zoom-container > *:focus, div.zoom-container > *:hover{
     position:fixed;
+    background: var(--primary-bg);
     left:100px;
     top:0px;
     z-index:100;
@@ -932,6 +933,7 @@ div.zoom-container > *:focus, div.zoom-container > *:hover{
 
 @media screen and (max-width: __breakpoint_width__) { /* Computed dynamically */
     div.zoom-container > *:focus, div.zoom-container > *:hover{
+        background: var(--primary-bg);
         width:100%;
         height: calc(100% - 200px);
         top: 100px;

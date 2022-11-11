@@ -302,6 +302,7 @@ class BaseSlides:
         
         with self.slide(next(counter)):
             self.write('## Layout and Theme Settings')
+            self.doc(self.glassmorphic,'Slides').display()
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
         with self.slide(next(counter)):
@@ -310,6 +311,7 @@ class BaseSlides:
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
                        'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'set_slide_css']
+            self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
         with self.slide(next(counter)):
