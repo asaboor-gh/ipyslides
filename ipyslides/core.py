@@ -58,7 +58,6 @@ class Slides(BaseSlides):
     def __init__(self):
         super().__init__() # start Base class in start
         self.shell = SHELL
-        self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
         
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
@@ -75,6 +74,7 @@ class Slides(BaseSlides):
         self.serializer = serializer # Serialize IPython objects to HTML
         
         with suppress(Exception): # Avoid error when using setuptools to install
+            self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
             self.shell.register_magic_function(self.notes.insert, magic_kind='line',magic_name='notes')
