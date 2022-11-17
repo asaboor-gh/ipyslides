@@ -463,10 +463,14 @@ class Slides(BaseSlides):
         """Set CCS to slide which is being built, props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
         'selector' for slide itself should be ''.
         """
+        if not self._running_slide:
+            raise ValueError('You can set css only under a slide builder. Use `slides[i].set_css` to set css for a slide otherwise.')
         self._running_slide.set_css(props_dict)
     
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for main and frame slides for all slides. For individual slides, use `self[index or key].set_animation/self.current.set_animation`"
+        if not self._running_slide:
+            raise ValueError('You can set animation only under a slide builder. Use `slides[i].set_animation` to set animation for a slide otherwise.')
         self._running_slide.set_overall_animation(main = main, frame = frame)
     
     # defining magics and context managers

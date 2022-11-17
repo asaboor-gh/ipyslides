@@ -85,8 +85,11 @@ class Slide:
         if index < -1:
             raise ValueError(f'expects non-negative index or -1 to append at end, got {index}')
         
+        self._app._running_slide = self # Need for content parsing based on slide
         with capture_output() as captured:
             yield 
+        
+        self._app._running_slide = None
         
         outputs = captured.outputs
         
