@@ -256,6 +256,7 @@ class Widgets:
         ]).add_class('NavWrapper')   #class is must
         
         self.panelbox = VBox([
+            self.htmls.glass,
             self.buttons.setting,
             VBox([
                 self.sliders.height.add_class('voila-sidecar-hidden'), 

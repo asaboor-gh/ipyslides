@@ -53,7 +53,7 @@ class Slide:
             
             
             if self._citations and (self._app._citation_mode == 'footnote'):
-                html('hr').display()
+                html('hr/').display()
                 
                 for citation in self._citations.values():
                     citation.html.display()

@@ -155,6 +155,9 @@ def html(tag, children = None,className = None,**node_attrs):
     html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
     ```
     """
+    if tag in 'hr/':
+        return _HTML(f'<hr/>') # Special case for hr
+    
     if children and tag.endswith('/'):
         raise ValueError(f'Parametr `children` should be None for self closing tag {tag!r}')
     

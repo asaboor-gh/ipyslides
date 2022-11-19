@@ -229,8 +229,8 @@ def func(obj):
         ax.plot(x,np.sin(x));
         ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {obj - 13}')
         ax.set_axis_off()
-        slides.notes.insert(f'## This is under @frames decorator, so it will be shown only in first frame')
-        slides.notify_later()(lambda: f'This is under @frames decorator, so it will be shown only in first frame')
+        slides.notes.insert(f'## This is under @frames decorator!')
+        slides.notify_later()(lambda: f'This is under @frames decorator!')
         
     slides.write([f'### This is Slide {14}.{obj-14}\n and we are animating matplotlib',
                   s.show_lines([obj-14])
