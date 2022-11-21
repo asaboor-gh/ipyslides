@@ -25,6 +25,9 @@ class Notes:
         
         **New in 1.7.2**      
         In markdown, you can use alert`notes&#96;notes content&#96;`."""
+        if not self.main._running_slide:
+            raise RuntimeError('Notes can only be added inside a slide constructor.')
+        
         with suppress(BaseException): # Would work on next run, may not first time
             self.main._running_slide._notes = self.main.format_html(content)._repr_html_()
     

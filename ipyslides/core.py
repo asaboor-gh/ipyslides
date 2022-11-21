@@ -43,7 +43,7 @@ class _Citation:
     def html(self):
         "HTML of this citation"
         value = parse_xmd(
-            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations` or [{self._key}]:&#96;citationvalue&#96; in markdown.'),
+            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations` or alert`[{self._key}]:&#96;citation text&#96;` in markdown.'),
             display_inline=False, rich_outputs = False
             ).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
         
@@ -99,7 +99,7 @@ class Slides(BaseSlides):
         self._iterable = [] #self._collect_slides() # Collect internally
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
-        self._running_slide = None # For Notes, citations etc in markdown
+        self._running_slide = None # For Notes, citations etc in markdown, controlled in Slide class
         
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
@@ -277,6 +277,9 @@ class Slides(BaseSlides):
         can be set using alert`[key]:&#96;citationtext&#96;` syntax. If citation_mode is global, they can be shown using alert`citations&#96;citation title&#96;` syntax.
         
         """
+        if not self._running_slide:
+            raise RuntimeError('Citations can be added only inside a slide constructor!')
+        
         if self._citation_mode == 'inline':
             return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
         
@@ -310,7 +313,7 @@ class Slides(BaseSlides):
             self.notify('Citations updated, please rerun the slide with references to see effect.')
             
     def citations_html(self,title='### References'): 
-        """Write all citations collected via `cite` method in the end of the presentation.
+        """Write all citations collected via `cite('key')` method in the end of the presentation.
         
         **New in 1.7.2**      
         In markdown (under `%%slide int -m` or in `from_markdown`), use `citations: citations title:` syntax.
@@ -328,7 +331,7 @@ class Slides(BaseSlides):
         return _html
         
     def write_citations(self,title='### References'):
-        """Write all citations collected via `cite` method in the end of the presentation.
+        """Write all citations collected via `cite(key)` method in the end of the presentation.
         
         **New in 1.7.2**      
         In markdown (under `%%slide int -m` or in `from_markdown`), use `citations:citations title:` syntax."""
@@ -458,21 +461,6 @@ class Slides(BaseSlides):
         self._slides_dict = {k:v for k,v in self._slides_dict.items() if not k.startswith(number)} # Delete all frames too
         self.refresh()
         
-        
-    def set_slide_css(self,props_dict = {}):
-        """Set CCS to slide which is being built, props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
-        'selector' for slide itself should be ''.
-        """
-        if not self._running_slide:
-            raise ValueError('You can set css only under a slide builder. Use `slides[i].set_css` to set css for a slide otherwise.')
-        self._running_slide.set_css(props_dict)
-    
-    def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
-        "Set animation for main and frame slides for all slides. For individual slides, use `self[index or key].set_animation/self.current.set_animation`"
-        if not self._running_slide:
-            raise ValueError('You can set animation only under a slide builder. Use `slides[i].set_animation` to set animation for a slide otherwise.')
-        self._running_slide.set_overall_animation(main = main, frame = frame)
-    
     # defining magics and context managers
     def __slide(self,line,cell):
         """Capture content of a cell as `slide`.
@@ -487,11 +475,6 @@ class Slides(BaseSlides):
             **New in 1.7.2**    
             Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         
-        (1.7.7+) You can run a slide only once for long calculations.
-            ---------------- Cell ----------------
-            %%slide 3 -s
-            var = certain_long_calculation() # This will be run only once
-            
         (1.8.9+) If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
         Markdown before the first three underscores is written on all frames. This is equivalent to `@Slides.frames` decorator.
         """
@@ -499,12 +482,10 @@ class Slides(BaseSlides):
         if line and not line[0].isnumeric():
             raise ValueError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
         
-        
         # NOTE: DO NOT bypass creating new slides with same old markdown, some varibale
         #      may be changed in any of the cells.
         
         slide_number_str = line[0] # First argument is slide number
-        
         
         if '-m' in line[1:]:
             _frames = re.split(r'^--$|^--\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
@@ -518,17 +499,11 @@ class Slides(BaseSlides):
                 self._running_slide._markdown = _frame # Update markdown, # cell_code will be automatuically cleared in `self.frames`
             
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            if '-s' in line[1:] and slide_number_str in self._slides_dict:
-                if self._running_slide._cell_code == cell:
-                    return # Do not run if cell is same as previous and -s is used
-            
             with _build_slide(self, slide_number_str, from_cell = True) as s:
                 self.shell.run_cell(cell) #  Enables citations etc.
             
             s._cell_code = cell # Update cell code
             s._markdown = '' # Reset markdown
-        
-        self._running_slide = None
                    
     
     @contextmanager
@@ -542,8 +517,6 @@ class Slides(BaseSlides):
         
         with _build_slide(self, f'{slide_number}', props_dict=props_dict, from_cell = False) as s:
             yield s # Useful to use later
-            
-        self._running_slide = None
         
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
@@ -619,7 +592,6 @@ class Slides(BaseSlides):
            
             # build_slide returns old slide with updated display if exists.
             with _build_slide(self, f'{slide_number}', props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
-                self._running_slide = this_slide
                 self.write(self.format_css('.SlideArea',height = frame_height))
                 func(_new_objs[0]) # Main slide content
             
@@ -629,29 +601,23 @@ class Slides(BaseSlides):
             
             new_frames = []
             for i, obj in enumerate(_new_objs): # New frames
-                with capture_output() as captured:
-                    if i >= NFRAMES_OLD: # Add new frames
-                        new_slide = Slide(self, captured_output=captured, props_dict= props_dict)
-                        self._running_slide = new_slide
-                        new_slide._number = f'{slide_number}'
-                        new_frames.append(new_slide)
-                        
-                    else: # Update old frames
-                        self._running_slide = this_slide._frames[i] # Take same frame back
-                        new_frames.append(self._running_slide) # Take same frame back
-                    
-                    # Write content after taking back the frame or creating new frame
-                    
+                if i >= NFRAMES_OLD: # Add new frames
+                    new_slide = Slide(self, props_dict= props_dict)
+                    new_slide._number = f'{slide_number}'
+                else: # Update old frames
+                    new_slide = this_slide._frames[i] # Take same frame back
+                
+                new_frames.append(new_slide)
+                
+                with new_slide._capture(assign = True) as captured:
                     self.write(self.format_css('.SlideArea',height = frame_height))
                     func(obj)
                 
-                self._running_slide._contents = captured.outputs # Update contents
-                self._running_slide._from_cell = False
-                self._running_slide._cell_code = ''    
+                new_slide._from_cell = False
+                new_slide._cell_code = ''    
                 
                 append_print_warning(captured = captured, append_to= new_frames[i]._contents)
                 
-            
             this_slide._frames = new_frames
             
             if len(this_slide._frames) != NFRAMES_OLD:
@@ -660,8 +626,6 @@ class Slides(BaseSlides):
             # Update All displays
             for s in this_slide._frames:
                 s.update_display()
-            
-            self._running_slide = None
             
         return _frames 
 

@@ -12,10 +12,12 @@ from IPython.utils.capture import capture_output
 from . import styles
 from ..utils import html, _HTML
 
+class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
+
 class Slide:
     "New in 1.7.0"
     _animations = {'main':'','frame':''}
-    def __init__(self, app, captured_output, props_dict = {}):
+    def __init__(self, app, captured_output = _EmptyCaptured, props_dict = {}):
         self._widget = Output(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))
         self._app = app
         self._contents = captured_output.outputs
@@ -41,6 +43,18 @@ class Slide:
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
     
+    @contextmanager
+    def _capture(self, assign = True):
+        "Capture output to this slide."
+        self._app._running_slide = self
+        with capture_output() as captured:
+            yield captured
+        
+        self._app._running_slide = None
+        
+        if assign:
+            self._contents = captured.outputs
+        
     def update_display(self, go_there = True):
         "Update display of this slide."
         if go_there:
@@ -85,11 +99,8 @@ class Slide:
         if index < -1:
             raise ValueError(f'expects non-negative index or -1 to append at end, got {index}')
         
-        self._app._running_slide = self # Need for content parsing based on slide
-        with capture_output() as captured:
+        with self._capture(assign = False) as captured:
             yield 
-        
-        self._app._running_slide = None
         
         outputs = captured.outputs
         
@@ -283,28 +294,23 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
     # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
     old_slides = list(app._slides_dict.values()) # Need if update is required later, values decide if slide is changed
         
-    with capture_output() as captured:
-        if slide_number_str in app._slides_dict:
-            _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
-            if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
-                _slide = Slide(app, captured, props_dict)
-                _slide._number = slide_number_str
-                app._slides_dict[slide_number_str] = _slide
-            
-            app._running_slide = _slide # Set running slide outside if
-        else:
-            _slide = Slide(app, captured, props_dict)
+    if slide_number_str in app._slides_dict:
+        _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
+        if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
+            _slide = Slide(app, props_dict=props_dict)
             _slide._number = slide_number_str
             app._slides_dict[slide_number_str] = _slide
-            app._running_slide = _slide   
+    else:
+        _slide = Slide(app, props_dict=props_dict)
+        _slide._number = slide_number_str
+        app._slides_dict[slide_number_str] = _slide 
             
+    with _slide._capture(assign = True) as captured:  
         yield _slide
     
     _slide._from_cell = from_cell # Need to determine code source
     if not from_cell:
         _slide._cell_code = '' # Clear cell code but not Markdown
-        
-    _slide._contents = captured.outputs
     
     for k in [p for ps in _slide.contents for p in ps.data.keys()]:
         if k.startswith('application'): # Widgets in this slide

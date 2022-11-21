@@ -5,7 +5,6 @@ New in 1.4.6
 """
 from .core import _private_instance as __pi
 citations_html  = __pi.citations_html
-set_slide_css   = __pi.set_slide_css
 notify          = __pi.notify
 notify_later    = __pi.notify_later
 parse_xmd       = __pi.parse_xmd

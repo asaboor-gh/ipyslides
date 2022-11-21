@@ -99,6 +99,9 @@ class BaseSlides:
             return f'Notification at {time}'
         ```
         """
+        if not self._running_slide:
+            raise RuntimeError('You can only use this decorator inside a slide constructor.')
+        
         def _notify(func): 
             self._running_slide._toast = dict(func = func, kwargs = dict(title=title, timeout=timeout))
         return _notify
@@ -310,7 +313,7 @@ class BaseSlides:
             members = ['alert','block', 'bokeh2html', 'capture_std', 'citations_html', 'cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
-                       'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations', 'set_slide_css']
+                       'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations']
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
