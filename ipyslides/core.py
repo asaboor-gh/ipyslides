@@ -77,7 +77,6 @@ class Slides(BaseSlides):
             self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
-            self.shell.register_magic_function(self.notes.insert, magic_kind='line',magic_name='notes')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
             self.shell.user_ns['__Slides_Instance__'] = self
             self.user_ns = self.shell.user_ns #important for set_dir
@@ -270,10 +269,10 @@ class Slides(BaseSlides):
     
     def cite(self, key):
         """Add citation in presentation, key should be a unique string and citation is text/markdown/HTML.
-        Citations corresponding to keys used can be created by `.set_citations` method.
+        Citations corresponding to keys used can be created by `.set_citations ` method.
         
         **New in 1.7.2**      
-        In Markdown(under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite&#96;key&#96;` syntax and 
+        In Markdown (under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite&#96;key&#96;` syntax and 
         can be set using alert`[key]:&#96;citationtext&#96;` syntax. If citation_mode is global, they can be shown using alert`citations&#96;citation title&#96;` syntax.
         
         """

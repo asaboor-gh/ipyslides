@@ -123,7 +123,7 @@ def svg(data=None,caption=None,zoomable=True,**kwargs):
     return _SVG # _HTML
 
 def iframe(src, width='100%',height='auto',**kwargs):
-    "Display `src` in an `iframe`. `kwrags` are passed to IPython.display.IFrame"
+    "Display `src` in an iframe. `kwrags` are passed to IPython.display.IFrame"
     f = IFrame(src,width,height, **kwargs)
     return _HTML(f._repr_html_())
 

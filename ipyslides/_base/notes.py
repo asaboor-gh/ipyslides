@@ -21,7 +21,6 @@ class Notes:
         
     def insert(self, content):
         """Add notes to current slide. Content could be any object except javascript and interactive widgets.
-        Alternatively you can add using `%notes notes content` magic.
         
         **New in 1.7.2**      
         In markdown, you can use alert`notes&#96;notes content&#96;`."""
