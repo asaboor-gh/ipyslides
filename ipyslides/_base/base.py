@@ -220,6 +220,7 @@ class BaseSlides:
         """Demo slides with a variety of content."""
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
+        self._citation_mode = 'global' # Set citation mode to global if set otherwise by user
         
         import runpy
         file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_demo.py') # Relative path to this file
@@ -237,7 +238,7 @@ class BaseSlides:
             
         with slides.slide(N + 3, props_dict = {'': dict(background='#9ACD32')}):
             with slides.source.context() as s:
-                slides.write_citations()
+                slides.write('citations`## Reference via Markdown\n----`',['## Reference via Python API\n----',*slides.citations])
             s.display()
         
         # Just for func, set theme of all even slides to be fancy, and zoom animation
@@ -310,10 +311,10 @@ class BaseSlides:
                 
         with self.slide(next(counter)):
             self.write('## Useful Functions for Rich Content')
-            members = ['alert','block', 'bokeh2html', 'capture_std', 'citations_html', 'cite',
+            members = ['alert','block', 'bokeh2html', 'capture_std', 'cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
-                       'set_dir', 'sig', 'svg', 'textbox', 'vspace', 'write_citations']
+                       'set_dir', 'sig', 'svg', 'textbox', 'vspace']
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
@@ -328,7 +329,8 @@ class BaseSlides:
         
         s8, = self.from_markdown(next(counter), '''
         ## Highlighting Code
-        You can **highlight**{.Error} code using `highlight` function or within markdown like this:
+        [pyg]:`[pygments](https://pygments.org/) is used for syntax highlighting.`
+        You can **highlight**{.Error} code using `highlight`cite`pyg` function or within markdown like this:
         ```python
         import ipyslides as isd
         ```
@@ -342,6 +344,7 @@ class BaseSlides:
             self.write('<hr/>This slide was created with `from_markdown` function. '
                 'So its source code can be inserted in the slide later! '
                 'See at last slide how it was done!<hr/>')
+            self.write(s8.citations)
             s8.source.display()
         
         with self.slide(next(counter)):

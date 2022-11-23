@@ -35,22 +35,26 @@ class _Citation:
         self._slide = slide
         self._key = key
         self._id = '?'
+        self._slide._citations[key] = self # Add to slide's citations
         
     def __repr__(self):
         return f"Citation(key = {self._key!r}, id = {self._id!r}, slide_label = {self._slide.label!r})"
     
-    @property
-    def html(self):
+    def __format__(self, spec):
+        return f'{self.value:{spec}}'
+    
+    
+    def _repr_html_(self):
         "HTML of this citation"
-        value = parse_xmd(
-            self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using `.set_citations` or alert`[{self._key}]:&#96;citation text&#96;` in markdown.'),
-            display_inline=False, rich_outputs = False
-            ).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
+        return self.value
         
-        return _HTML(f'''<span class = "citation" id="{self._key}">
+    @property
+    def value(self):
+        _value = self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using slides.set_citations or [{self._key}]:&#96;citation text&#96; in markdown.')
+        return f'''<span class = "citation" id="{self._key}">
             <a href="#{self._key}-back">
                 <sup style="color:var(--accent-color);">{self._id}</sup>
-            </a>{value}</span>''')
+            </a>{_value}</span>'''
         
         
 class Slides(BaseSlides):
@@ -122,6 +126,7 @@ class Slides(BaseSlides):
         - alert`cite&#96;key&#96;` to add citation to current slide
         - alert`[key]:&#96;citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
         - alert`citations&#96;citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
+        - alert`include&#96;markdown_file.md&#96;` to include a file in markdown format. Useful to have citations in a separate file. (2.0.6+)
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         - Double dashes `--` is used to split markdown text in frames. (1.8.9+)
         
@@ -249,17 +254,21 @@ class Slides(BaseSlides):
     
     @property
     def citations(self):
-        "Get All citations."
+        "Get All citations (when citation_mode = 'global') as tuple that can be passed to `write` function."
         # Need to filter unique keys across all slides
         _all_citations = {}
         for slide in self[:]:
-            _all_citations.update(slide.citations)
+            _all_citations.update(slide._citations)
             
-        return _all_citations
+        if self._citation_mode == 'global':
+            return tuple(sorted(_all_citations.values(), key=lambda x: x._id))
+        
+        return () # No citations when inline or footnote
     
     def clear(self):
         "Clear all slides."
         self._slides_dict = {} # Clear slides
+        self._citations_dict = {} # Clear citations as well
         with _build_slide(self, '0'):
             with suppress(BaseException): # Create a clean title page with no previous toasts/css/animations etc.
                 self.parse_xmd('# Title Page', display_inline=True)
@@ -270,6 +279,7 @@ class Slides(BaseSlides):
     def cite(self, key):
         """Add citation in presentation, key should be a unique string and citation is text/markdown/HTML.
         Citations corresponding to keys used can be created by `.set_citations ` method.
+        Citation can be accessed by alert`Slides.citations` property and can be passed to `write` function.
         
         **New in 1.7.2**      
         In Markdown (under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite&#96;key&#96;` syntax and 
@@ -284,57 +294,34 @@ class Slides(BaseSlides):
         
         this_slide = self._running_slide
         _cited = _Citation(slide = this_slide, key = key)
-        this_slide._citations[key] = _cited
-        
+        self._citations_dict[key] = self._citations_dict.get(key, f'Set citation for key {key!r} using slides.set_citations or [{key}]:&#96;citation text&#96; in markdown.') # This to ensure single run shows citation
         
         # Set _id for citation
         if self._citation_mode == 'footnote':
-            _cited._id = str(list(this_slide.citations.keys()).index(key) + 1) # Get index of key
+            _cited._id = str(list(this_slide._citations.keys()).index(key) + 1) # Get index of key
         else:
-            # Find number of citations created till now
-            prev_citations = {**self.citations, **this_slide.citations} # Current citations + previous ones
-            if key in prev_citations:
-                _cited._id = str(list(prev_citations.keys()).index(key) + 1)
+            prev_keys = list(self._citations_dict.keys())
+                    
+            if key in prev_keys:
+                _cited._id = str(prev_keys.index(key) + 1)
             else:
-                _cited._id = str(len(prev_citations)) 
+                _cited._id = str(len(prev_keys)) 
              
         # Return string otherwise will be on different place
         return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup></a>'
     
     def set_citations(self, citations_dict):
         "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
-        self._citations_dict.update(citations_dict)
+        self._citations_dict.update({key:self.parse_xmd(value, display_inline=False, rich_outputs = False
+                        ).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
+                for key, value in citations_dict.items()})
+        
         if self._citation_mode == 'footnote':
             for slide in self[:]:
                 if slide.citations:
                     slide.update_display()
         else:
-            self.notify('Citations updated, please rerun the slide with references to see effect.')
-            
-    def citations_html(self,title='### References'): 
-        """Write all citations collected via `cite('key')` method in the end of the presentation.
-        
-        **New in 1.7.2**      
-        In markdown (under `%%slide int -m` or in `from_markdown`), use `citations: citations title:` syntax.
-        """    
-        if self._citation_mode != 'global':
-            return self.html("p", "Citations are consumed per slide or inline.\n" 
-                "If you want to display them at the end, "
-                "use `citation_mode = 'global` during initialization of `Slides`.")
-            
-        _html = _HTML(self.parse_xmd(title + '\n',display_inline=False, rich_outputs = False))
-        
-        for citation in self.citations.values():
-            _html = _html + citation.html
-        
-        return _html
-        
-    def write_citations(self,title='### References'):
-        """Write all citations collected via `cite(key)` method in the end of the presentation.
-        
-        **New in 1.7.2**      
-        In markdown (under `%%slide int -m` or in `from_markdown`), use `citations:citations title:` syntax."""
-        return self.citations_html(title = title).display()
+            self.notify('Citations updated, please rerun the slides with references to see effect.')
         
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."

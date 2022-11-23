@@ -15,10 +15,10 @@ class LiveSlides:
         from .__version__ import __version__
         major,minor, patch = map(int,__version__.split('.'))
         if major >= 2:
-            if minor < 5:
-                warnings.warn('Name "Slides" is being deprecated. Use "Slides" instead!')
-            if minor >= 5:
-                raise DeprecationWarning('Name "Slides" is deprecated. Use "Slides" instead!')
+            if minor < 2:
+                warnings.warn('Name "LiveSlides" is being deprecated. Use "Slides" instead!')
+            if minor >= 2:
+                raise DeprecationWarning('Name "LiveSlides" is deprecated. Use "Slides" instead!')
         return Slides(*args, **kwargs)
     
 if __name__ == '__main__':

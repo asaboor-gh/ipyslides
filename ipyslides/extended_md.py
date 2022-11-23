@@ -102,8 +102,8 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     # citations`This is citations title`
     all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
     for match in all_matches:
-        citations = slide_instance.citations_html(title = match).value
-        text_chunk = text_chunk.replace(f'citations`{match}`', citations, 1)
+        repr_html = slide_instance.format_html([match, *slide_instance.citations]).value
+        text_chunk = text_chunk.replace(f'citations`{match}`', repr_html, 1)
     
     # [key]:`citation content`
     all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
@@ -281,6 +281,14 @@ class _ExtendedMarkdown(Markdown):
             html_output = html_output.replace(f'color[{match[0]}]`{match[1]}`', utils.colored(match[1],**kws).value, 1)
         
         html_output = re.sub(r'^\^\^\^$', '</div>', html_output,flags=re.MULTILINE) # Close last block
+        
+        # Run an included file
+        all_matches = re.findall(r'include\`(.*?)\`', html_output, flags = re.DOTALL)
+        for match in all_matches:
+            with open(match,'r') as f:
+                repr_html = self.parse(f.read(),display_inline=False,rich_outputs=False)
+            html_output = html_output.replace(f'include`{match}`', repr_html, 1)
+        
         return html_output # return in main scope
             
 

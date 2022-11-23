@@ -74,9 +74,7 @@ class Slide:
             
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr/').display()
-                
-                for citation in self._citations.values():
-                    citation.html.display()
+                self._app.write(self.citations)
         
         # Update corresponding CSS and Animation
         self._app.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
@@ -161,7 +159,7 @@ class Slide:
     
     @property
     def citations(self):
-        return self._citations
+        return tuple(self._citations.values())
     
     @property
     def css(self):

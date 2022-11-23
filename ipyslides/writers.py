@@ -25,8 +25,8 @@ def _fmt_write(*columns,width_percents=None,className=None):
         widths = [f'{w}%' for w in width_percents]
     _class = className if isinstance(className,str) else ''
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in columns] 
-    _cols = ''.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
-                     {''.join([_fix_repr(row) for row in _col])}
+    _cols = ' '.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
+                     {' '.join([_fix_repr(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,widths)])
     
     if len(columns) == 1:

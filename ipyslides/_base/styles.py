@@ -101,6 +101,7 @@ def style_css(style_root = theme_roots['Inherit']):
 .SlideArea .citation {
     font-size: 0.8em !important; 
     line-height: 0.85em !important;
+    display:block !important;
 }
 .SlideArea figure {
     margin: 8px !important; /* override default margin */
