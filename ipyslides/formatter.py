@@ -210,13 +210,13 @@ class Serializer:
             def __repr__(self):
                 return 'My object is awesome'
         
-        ls = ipyslides.Slides()
-        @ls.serializer.register(MyObject)
+        slides = ipyslides.Slides()
+        @slides.serializer.register(MyObject)
         def parse_myobject(obj):
             return f'<h1>{obj!r}</h1>'
             
         my_object = MyObject()
-        ls.write(my_object) #This will write "My object is awesome" as main heading
+        slides.write(my_object) #This will write "My object is awesome" as main heading
         parse_myobject(my_object) #This will return "<h1>My object is awesome</h1>"
         
         #This is equivalent to above for custom objects(builtin objects can't be modified)
@@ -225,7 +225,7 @@ class Serializer:
                 return '<h1>My object is awesome</h1>'
                 
         my_object = MyObject()
-        ls.write(my_object)
+        slides.write(my_object)
         ```
         
         **Note**: Serializer function should return html string. It is not validated for correct code on registration time.       

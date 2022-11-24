@@ -13,7 +13,7 @@ class BaseSlides:
         self.__screenshot = ScreenShot(self.__widgets)
         self.clipboard_image = self.__screenshot.clipboard_image # For easy access
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
-        self.__settings = LayoutSettings(self.__widgets)
+        self.__settings = LayoutSettings(self, self.__widgets)
         self.__export = _HhtmlExporter(self)
         self.__notes = Notes(self, self.__widgets) # Needs main class for access to notes
         
@@ -252,7 +252,7 @@ class BaseSlides:
             s.set_css({'slide': fancy_even_slides_css})
             s.set_animation('zoom')
         
-        slides._slideindex = 0 # Go to title
+        slides._slideindex = 0 # Go to title, user should not set this
         return slides
     
     def docs(self):
@@ -282,11 +282,11 @@ class BaseSlides:
                 ''').display()
             
         with self.slide(next(counter)):
-            self.write(self.doc(Slides))
+            self.write(['# Main App',self.doc(Slides)])
         
         with self.slide(next(counter)):
             self.write('## Adding Slides')
-            self.write('Besides functions below, you can add slides with `%%title`,  `%%slide <slide number>` and `%%slide <slide number>` -m`,`%%slide <slide number> -s` magics as well.\n{.Note .Info}')
+            self.write('Besides functions below, you can add slides with `%%title` magics as well.\n{.Note .Info}')
             self.write([self.doc(self.title,'Slides'),self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with self.slide(next(counter)):
@@ -297,7 +297,8 @@ class BaseSlides:
         
         with self.slide(next(counter)):
             self.write('## Adding Speaker Notes')
-            self.write(f'You can use alert`notes{self.backtick}notes content{self.backtick}` in markdown.\n{{.Note .Success}}')
+            self.write([f'You can use alert`notes{self.backtick}notes content{self.backtick}` in markdown.\n{{.Note .Success}}\n',
+                       'This is experimental feature, and may not work as expected.\n{.Block-red .Error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
         with self.slide(next(counter)):
@@ -306,7 +307,6 @@ class BaseSlides:
         
         with self.slide(next(counter)):
             self.write('## Layout and Theme Settings')
-            self.doc(self.glassmorphic,'Slides').display()
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
         with self.slide(next(counter)):
@@ -364,7 +364,10 @@ class BaseSlides:
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
         
         with self.slide(next(counter)):
-            self.write('## Keys and Shortcuts', key_combs)
+            self.write('## Keys and Shortcuts\n'
+                '- You can use `Slides.current` to access a slide currently in view.\n'
+                '- You can use `Slides.running` to access the slide currently being built,'
+                ' so you can set CSS, aminations etc.', key_combs)
         
         with self.slide(next(counter)):
             self.write(['## Presentation Code',self.docs])

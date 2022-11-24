@@ -76,6 +76,7 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 def func(obj):
     with slides.source.context() as s:
         slides.write(obj)
+        slides.write(slides.running) # This is currently running slide, so you can set CSS, animation etc inside the function.
         slides.notify_later()(lambda: 'That is a notification which shows you can use decorator this way as well')
     s.display()
 

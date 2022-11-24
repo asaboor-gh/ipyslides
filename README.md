@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 2.0.7
+> pip install ipyslides >= 2.0.8
 ```
 For development install, clone this repository and then
 ```shell
@@ -28,14 +28,14 @@ Inside Jupyter Notebook:
 ```python
 #------------ Cell 1 --------------------
 import ipyslides as isd 
-ls = isd.Slides(**settings_kwargs) # settings_kwargs are added in 1.4.1
-ls.set_overall_animation('zoom') # can be changed per slide in 1.7.6+
-ls.xmd_syntax # Gives you information what you can do with markdown 1.7.2+
+slides = isd.Slides(**settings_kwargs) # settings_kwargs are added in 1.4.1
+slides.settings.set_animation(main='zoom') # can be changed per slide in 1.7.6+
+slides.xmd_syntax # Gives you information what you can do with markdown 1.7.2+
 #------------ Cell 2 --------------------
 %%title
 # create a rich content title page
 #------------ Cell 3 --------------------
-%%slide 1 # in 1.7.7+ you can add -s swich to excute cell once, kind a cache.
+%%slide 1 
 # slide 1 content
 #------------ Cell 4 --------------------
 %%slide 1 -m # new in 1.4.6
@@ -47,45 +47,45 @@ Markdown here with extended options such as alert`this will be alerted in slides
     ```
     ```python run source
     x = 1 + 2
-    ls.write([x, source])
+    slides.write([x, source])
     ```
 {{source}} will be shown in start here as well. Expressions are are not supported.
 
 (1.8.9+) two dashes --- on their own line create multiple frames
 #------------ Cell 5 --------------------
-@ls.frames(1,*objs)
+@slides.frames(1,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)
 #------------ Cell 6 --------------------
-ls # This displays slides if on the last line of cell, or use `ls.show()`.
+slides # This displays slides if on the last line of cell, or use `slides.show()`.
 ```
 #### You can load slides from a markdown file
 slides separator should be --- (three dashes)
 frames separator should be -- (two dashes)
 ```python
-ls.from_markdown(start, path)
-with ls.slide(2):
-    write(ls[2].markdown) # write content of slide 2 from file
+slides.from_markdown(start, path)
+with slides.slide(2):
+    write(slides[2].markdown) # write content of slide 2 from file
     plot_something() # Add other things to same file
     write_something()
 ```
 
 #### You can see documentation slides with:
 ```python
-ls.docs()
+slides.docs()
 ```
 #### You can see a rich content demo of slides with:
 ```python
-ls.demo()
+slides.demo()
 ```
 
-> Check out `ls.glassmorphic` and `ls.clipboard_image` in 2.0.1+.
+> Check out `slides.glassmorphic` and `slides.clipboard_image` in 2.0.1+.
 
 #### You can build html of slides 
 Content type is limited. Widgets can not be exported.
 ```python
-ls.export.report() # >= 1.6
-ls.export.slides() # HTML Slides
+slides.export.report() # >= 1.6
+slides.export.slides() # HTML Slides
 ```
 When exported to HTML and then PDF is printed, this gives 
 a clean document.
@@ -112,7 +112,7 @@ can be included in `iwrite` command. `iwrite` also renders other objects except 
 ## Custom and Third Party Objects(not implemented in this library)
 Starting version 1.6.1, you can add serialization method in current namespace. For example you can do something like this
 ```python
-@ls.serializer.register(int)
+@slides.serializer.register(int)
 def colorize(obj):
     color = 'red' if obj % 2 == 0 else 'green'
     return f'<span style="color:{color};">{obj}</span>'
@@ -124,7 +124,7 @@ slides.write(*range(10))
 ## Markdown Extensions
 In 1.7.7+ you can install extensions of markdown e.g. [PyMdown](https://facelessuser.github.io/pymdown-extensions/) and use them as follows:
 ```python
-ls.extender.extend(extension)
+slides.extender.extend(extension)
 ```
 # Full Screen Presentation
 - Jupyterlab 3.0+ has full screen eneabled from any view:
@@ -137,11 +137,11 @@ To include all type of objects you need to make PDF manually.
 Read instructions in side panel about PDF printing. See [PDF-Slides](IPySlides-Print.pdf)
 If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bokeh` charts etc. and not something like `ipywidgets`, see next section.
 # HTML/PDF Report/Slides [HTML Slides in 1.5.2+]
-- You can create beautiful HTML/PDF report from slides using `ls.export.report`. See [PDF-Report](IPySlides-Report.pdf)
+- You can create beautiful HTML/PDF report from slides using `slides.export.report`. See [PDF-Report](IPySlides-Report.pdf)
 - You can use CSS classes `.report-only` and `.slides-only` to create different content for both sceberios. Content variety is limited. Widgets can not be exported. 
-- Use `ls.export.slides` to build static slides that you can print as well. Widgets are not exported.
+- Use `slides.export.slides` to build static slides that you can print as well. Widgets are not exported.
 # Speaker Notes (1.2.0+) (Experimental)
-- You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `ls.notes.insert` (`ls.notes` in < 1.2.1) command. 
+- You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `slides.notes.insert` (`slides.notes` in < 1.2.1) command. 
 - Notes is an experimantal feuture, so use at your own risk. Do not share full screen, share a brwoser tab for slides and you can keep notes hidden from audience this way. 
 # Known Limitations
 - Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. 

@@ -4,9 +4,7 @@ and then provided to other classes via composition, not inheritance.
 """
 
 from contextlib import suppress
-import os, sys
-import datetime
-from IPython import get_ipython
+import os
 from IPython.display import display, Image, Javascript
 from IPython.utils.capture import capture_output
 from ipywidgets import Layout
@@ -17,8 +15,9 @@ from ..utils import set_dir, html, details, today
 from . import scripts, intro, styles
 
 class LayoutSettings:
-    def __init__(self, _instanceWidgets):
+    def __init__(self, _instanceSlides, _instanceWidgets):
         "Provide instance of LivSlides to work."
+        self._slides = _instanceSlides
         self.widgets = _instanceWidgets
         self.font_scale = 1
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIX Two Text'}
@@ -64,6 +63,29 @@ class LayoutSettings:
         # Only do this if it's in Jupyter, otherwise throws errors
         self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
         self.widgets.htmls.intro.add_class('Intro')
+        
+    def set_animation(self, main = 'slide_h',frame = 'slide_v'):
+        "Set animation for slides and frames. (2.0.8+)"
+        if len(self._slides[:]) >= 1:
+            self._slides[0].set_overall_animation(main = main,frame = frame)
+        else:
+            raise ValueError("No slides yet to set animation.")
+        
+    def set_glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
+        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.8+)"
+        if not image_src:
+            self.widgets.htmls.glass.value = '' # Hide glassmorphic
+            return None
+        
+        if not os.path.isfile(image_src):
+            raise FileNotFoundError(f'Image not found at {image_src!r}')
+        
+        self.widgets.htmls.glass.value = f"""<style>
+        {styles.glass_css(opacity=opacity, blur_radius=blur_radius)}
+        </style>
+        {self._slides.image(image_src,width='100%',zoomable=False)}
+        <div class="Front"></div>
+        """
             
     def set_code_style(self,style='default',color = None,background = None, hover_color = 'var(--tr-hover-bg)',lineno = True):
         "Set code style CSS. Use background for better view of your choice. This is overwritten by theme change."

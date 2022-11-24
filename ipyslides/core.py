@@ -253,6 +253,11 @@ class Slides(BaseSlides):
         return self._iterable[self._slideindex]
     
     @property
+    def running(self):
+        "Access slide currently being built. Useful inside frames decorator."
+        return self._running_slide
+    
+    @property
     def citations(self):
         "Get All citations as a tuple that can be passed to `write` function."
         # Need to filter unique keys across all slides
@@ -588,8 +593,7 @@ class Slides(BaseSlides):
             new_frames = []
             for i, obj in enumerate(_new_objs): # New frames
                 if i >= NFRAMES_OLD: # Add new frames
-                    new_slide = Slide(self, props_dict= props_dict)
-                    new_slide._number = f'{slide_number}'
+                    new_slide = Slide(self, slide_number, props_dict= props_dict)
                 else: # Update old frames
                     new_slide = this_slide._frames[i] # Take same frame back
                 
@@ -642,7 +646,7 @@ class Slides(BaseSlides):
             
         return tuple(slides_iterable)
     
-    def create(self, *slide_numbers):
+    def create(self, *slide_numbers, props_dict ={}):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is faster than creating one slide each time."
         new_slides = False
         for slide_number in slide_numbers:
@@ -650,8 +654,7 @@ class Slides(BaseSlides):
                 with capture_output() as captured:
                     self.write(f'### Slide-{slide_number}')
                 
-                self._slides_dict[f'{slide_number}'] = Slide(self, captured_output=captured)
-                self._slides_dict[f'{slide_number}']._number = f'{slide_number}'
+                self._slides_dict[f'{slide_number}'] = Slide(self, slide_number, captured_output=captured, props_dict= props_dict)
                 new_slides = True
         
         if new_slides:
@@ -661,19 +664,7 @@ class Slides(BaseSlides):
     
     def glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
         "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.1+)"
-        if not image_src:
-            self.widgets.htmls.glass.value = '' # Hide glassmorphic
-            return None
-        
-        if not os.path.isfile(image_src):
-            raise FileNotFoundError(f'Image not found at {image_src!r}')
-        
-        self.widgets.htmls.glass.value = f"""<style>
-        {glass_css(opacity=opacity, blur_radius=blur_radius)}
-        </style>
-        {self.image(image_src,width='100%',zoomable=False)}
-        <div class="Front"></div>
-        """
+        return self.settings.set_glassmorphic(image_src, opacity = opacity, blur_radius = blur_radius)
 
 # Make available as Singleton Slides
 _private_instance = Slides() # Singleton in use namespace
@@ -683,22 +674,22 @@ class Slides:
     __doc__ = textwrap.dedent("""
     Interactive Slides in IPython Notebook. Only one instance can exist. 
     
-    All arguments are passed to corresponding methods in `ls.settings`, so you can use those methods to change settings as well.
+    All arguments are passed to corresponding methods in `slides.settings`, so you can use those methods to change settings as well.
     
     Instead of builtin `print`, use `pprint` (1.5.9+) or `with capture_std` in slides use following to display printed content in correct order.
     ```python
-    with ls.capture_std() as std:
+    with slides.capture_std() as std:
         print('something')
         function_that_prints_something()
         display('Something') # Will be displayed here
-        ls.write(std.stdout) # Will be written here whatever printed above this line
+        slides.write(std.stdout) # Will be written here whatever printed above this line
         
-    std.stdout.display() #ls.write(std.stdout)
+    std.stdout.display() #slides.write(std.stdout)
     ```
     
-    > `ls.demo` and `ls.docs` overwrite all previous slides.
+    > `slides.demo` and `slides.docs` overwrite all previous slides.
     
-    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `ls.export.report` is called.
+    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `slides.export.report` is called.
     This is useful to fill-in content in document that is not required in slides.
     
     Starting with 1.8, you can provide extensions at initialization time as a list to arguments `extensions`. See [PyMdownx](https://facelessuser.github.io/pymdown-extensions/extensions/arithmatex/) for useful extensions. `'pymdownx.arithmatex'` is a recommended extension to load Maths faster.

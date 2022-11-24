@@ -25,17 +25,17 @@ sup`2`Their University is somewhere in the middle of nowhere
 ^^^
 ^^^
 
-**Assuming you have `ls = ipyslides.Slides()`**
+**Assuming you have `slides = ipyslides.Slides()`**
 
 - Proceed to create slides:
     - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
     - `%%slide integer -m` can be used to create slide from full markdown (extended one).
-    - You can use context managers like `with ls.slide(): ...` and `with ls.title(): ...` in place of `%%slide` and `%%title` respectively.
+    - You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
 
 ```python
 import ipyslides as isd 
-ls = isd.Slides()
-ls.set_animation(main='zoom') 
+slides = isd.Slides()
+slides.set_animation(main='zoom') 
 ```
 ```python
 %%title
@@ -47,7 +47,7 @@ ls.set_animation(main='zoom')
 ```
 ```python
 %%slide 1 -m # new in 1.4.6
-**Markdown here with extended options (see `ls.xmd_syntax` for info). Nested blocks are not supported**
+**Markdown here with extended options (see `slides.xmd_syntax` for info). Nested blocks are not supported**
  ```multicol 30 70 .Success
  less content
  +++
@@ -55,65 +55,56 @@ ls.set_animation(main='zoom')
  ```
 ```
 
-```python
-%%slide 2 -s # new in 1.7.7
-var = some_long_computation() # This will run only first time or when cell code chnages.
-```
-
 ```python run source
 x = 1 + 2
 print(x) # will be printed on slide in somehwewere top as print appears first of all. 
-# Use `with ls.capture_std() as std:  print();std.stdout` to see at exactly where it is printed.
+# Use `with slides.capture_std() as std:  print();std.stdout` to see at exactly where it is printed.
 ```
 There is a python block above with header `python run source`. We can display that block by  &lcub;&lcub;source&rcub;&rcub; as below:
 {{source}} 
 
 variable `x` defined there is shown here x = {{x}}. Only variables can be embeded in &lcub;&lcub;var&rcub;&rcub;, not expressions.
 ```python
-@ls.frames(1,*objs)
+@slides.frames(1,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)
 ```
 ```python
-ls # This displays slides if on the last line of cell, or use `ls.show()`.
+slides # This displays slides if on the last line of cell, or use `slides.show()`.
 ```
 
-- Use `ls.from_markdown` to create multiple slides from markdown file/text.
+- Use `slides.from_markdown` to create multiple slides from markdown file/text.
     - Slides are added in order of content.
     - Slides should be separated by `---` (three dashes) in start of line.
 ```python .monokai
-ls.from_markdown(path)
-with ls.slide(2):
-    write(ls[2].markdown) # write content of slide 2 from file
+slides.from_markdown(path)
+with slides.slide(2):
+    write(slides[2].markdown) # write content of slide 2 from file
     plot_something() # Add other things to same file
     write_something()
 ```
-- Use `ls.demo` to create example slides and start editing. Follow steps in first part.
-- Use `ls.docs` to see upto date documentation.
-- You can acess markdown content of an existing slide using `ls[key or index].markdown` if it has been created using `ls.from_markdown` or `%%slide i -m`.
-- You can insert content usign `with ls[key or index].insert(index)` or `ls[key or index].insert_markdown` (1.7.7+).
+- Use `slides.demo` to create example slides and start editing. Follow steps in first part.
+- Use `slides.docs` to see upto date documentation.
+- You can acess markdown content of an existing slide using `slides[key or index].markdown` if it has been created using `slides.from_markdown` or `%%slide i -m`.
+- You can insert content usign `with slides[key or index].insert(index)` or `slides[key or index].insert_markdown` (1.7.7+).
 
 **New in 1.7.2**
   
 - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
 - You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `Slides` constructor.
-- You can now access individual slides by indexing `s_i = ls[i]` where `i` is the slide index or by key as `s_3_1 = ls['3.1']` will give you slide which shows 3.1 at bottom.
-- Basides indexing, you can access current displayed slide by `ls.current`.
+- You can now access individual slides by indexing `s_i = slides[i]` where `i` is the slide index or by key as `s_3_1 = slides['3.1']` will give you slide which shows 3.1 at bottom.
+- Basides indexing, you can access current displayed slide by `slides.current`.
 - You can add new content to existing slides by using `with s_i.insert(where)` context. All new changes can be reverted by `s_i.reset()`.
-- If a display is not complete, e.g. some widget missing on a slide, you can use `(ls.current, ls[index], ls[key]).update_display()` to update display.
-- You can set overall animation by `ls.set_overall_animation` or per slide by `s_i.set_animation`
-- You can now set CSS for each slide by `s_i.set_css` or `ls.set_slide_css` at current slide.
+- If a display is not complete, e.g. some widget missing on a slide, you can use `(slides.current, slides[index], slides[key]).update_display()` to update display.
+- You can set overall animation by `slides.settings.set_animation` or per slide by `s_i.set_animation`
+- You can now set CSS for each slide by `s_i.set_css` or `slides.running.set_css` at current slide.
 
 **New in 1.7.5**    
 Use `Slides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
     
-**New in 1.7.7**        
-Use `slides[i].insert_markdown({'index': 'markdown_string',...})` to insert markdown (pasrsed objects) at indices.   
-`%%slide i -s` can be used to execute code just once in current session. It will run again if code changes in cell.
-
 **New in 2.0.1**    
-Check out alert`slides.glassmorphic` and alert`slides.clipboard_image` to add glassmorphic and clipboard image support.
+Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorphic` in 2.0.8+) and alert`slides.clipboard_image` to add glassmorphic and clipboard image support.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )

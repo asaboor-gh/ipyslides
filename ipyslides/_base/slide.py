@@ -17,17 +17,17 @@ class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
 class Slide:
     "New in 1.7.0"
     _animations = {'main':'','frame':''}
-    def __init__(self, app, captured_output = _EmptyCaptured, props_dict = {}):
+    def __init__(self, app, number, captured_output = _EmptyCaptured, props_dict = {}):
         self._widget = Output(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))
         self._app = app
         self._contents = captured_output.outputs
             
         self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
-        self._number = None # This should be set in the LiveSlide class
+        self._number = number if isinstance(number, str) else str(number) 
         self._label = None # This should be set in the Slides
         self._index = None # This should be set in the Slides
-        self.set_css(props_dict, notify = False)
+        self.set_css(props_dict)
         
         self._notes = '' # Should be update by Notes and Slides calss
         self.set_overall_animation()
@@ -212,7 +212,7 @@ class Slide:
         self.update_display() # Needs to not discard widgets there
         return display(self._widget)
     
-    def set_css(self,props_dict, notify = True):
+    def set_css(self,props_dict):
         """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
         'selector' for slide itself should be '' or 'slide'.
         """
@@ -302,12 +302,10 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
     if slide_number_str in app._slides_dict:
         _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
         if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
-            _slide = Slide(app, props_dict=props_dict)
-            _slide._number = slide_number_str
+            _slide = Slide(app, slide_number_str, props_dict=props_dict)
             app._slides_dict[slide_number_str] = _slide
     else:
-        _slide = Slide(app, props_dict=props_dict)
-        _slide._number = slide_number_str
+        _slide = Slide(app, slide_number_str, props_dict=props_dict)
         app._slides_dict[slide_number_str] = _slide 
             
     with _slide._capture(assign = True) as captured:  
