@@ -254,16 +254,16 @@ class Slides(BaseSlides):
     
     @property
     def citations(self):
-        "Get All citations (when citation_mode = 'global') as tuple that can be passed to `write` function."
+        "Get All citations as a tuple that can be passed to `write` function."
         # Need to filter unique keys across all slides
-        _all_citations = {}
-        for slide in self[:]:
-            _all_citations.update(slide._citations)
-            
         if self._citation_mode == 'global':
+            _all_citations = {}
+            for slide in self[:]:
+                _all_citations.update(slide._citations)
+            
             return tuple(sorted(_all_citations.values(), key=lambda x: x._id))
         
-        return () # No citations when inline or footnote
+        return ("No citations in 'inline' or 'footnote' mode",)
     
     def clear(self):
         "Clear all slides."

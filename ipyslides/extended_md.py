@@ -94,19 +94,19 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
         text_chunk = text_chunk.replace(f'cite`{match}`', slide_instance.cite(key), 1)
     
     # notes`This is a note for current slide`
-    all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
         slide_instance.notes.insert(match)
         text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
     
     # citations`This is citations title`
-    all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
         repr_html = slide_instance.format_html([match, *slide_instance.citations]).value
         text_chunk = text_chunk.replace(f'citations`{match}`', repr_html, 1)
     
     # [key]:`citation content`
-    all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     citations = {}
     for match in all_matches:
         citations[match[0].strip()] = match[1]
@@ -251,14 +251,14 @@ class _ExtendedMarkdown(Markdown):
         # Replace inline one argumnet functions
         from . import utils # Inside function to avoid circular import
         for func in _special_funcs.keys():
-            all_matches = re.findall(fr'{func}\`(.*?)\`', html_output, flags = re.DOTALL)
+            all_matches = re.findall(fr'{func}\`(.*?)\`', html_output, flags = re.DOTALL | re.MULTILINE)
             for match in all_matches:
                 _func = getattr(utils,func)
                 _out = _func(match).value if match else _func().value # If no argument, use default
                 html_output = html_output.replace(f'{func}`{match}`', _out, 1)
         
         # Replace columns after vars, so not to format their brackets
-        all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output, flags = re.DOTALL) # Matches new line as well, useful for inline plots and big objects
+        all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output, flags = re.DOTALL | re.MULTILINE) # Matches new line as well, useful for inline plots and big objects
         for cols in all_cols:
             _cols = ''.join(f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols)
             _out = f'<div class="columns">{_cols}</div>'
@@ -271,7 +271,7 @@ class _ExtendedMarkdown(Markdown):
         
         
         # Replace colored text
-        all_matches = re.findall(r'color\[(.*?)\]\`(.*?)\`', html_output, flags = re.DOTALL)
+        all_matches = re.findall(r'color\[(.*?)\]\`(.*?)\`', html_output, flags = re.DOTALL | re.MULTILINE)
         for match in all_matches:
             kws = {'fg':None,'bg':None}
             if '_' in match[0]:
