@@ -53,13 +53,13 @@ class Slide:
             self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
         
         self._app._running_slide = self
-        with capture_output() as captured:
-            yield captured
-        
-        self._app._running_slide = None
-        
-        if assign:
-            self._contents = captured.outputs
+        try:
+            with capture_output() as captured:
+                yield captured
+        finally:
+            self._app._running_slide = None
+            if assign:
+                self._contents = captured.outputs
         
     def update_display(self, go_there = True):
         "Update display of this slide."

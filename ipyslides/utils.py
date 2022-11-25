@@ -57,7 +57,7 @@ def capture_std():
     with capture_output() as cap: 
         _captured_std._captured = cap # Store output
         yield _captured_std # Return the std as function to get later.
-    
+        
     return display(*cap.outputs) # Display outputs after context manager is exited.
     
 @contextmanager
