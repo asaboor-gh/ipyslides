@@ -226,8 +226,6 @@ class _ExtendedMarkdown(Markdown):
                 shell.run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
             
             outputs = captured.outputs
-            from ._base.slide import append_print_warning # Avoid circular import
-            append_print_warning(captured=captured, append_to=outputs)
             return outputs
         
     def _sub_vars(self, html_output):

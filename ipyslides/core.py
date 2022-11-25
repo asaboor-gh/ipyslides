@@ -19,8 +19,7 @@ _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
-from ._base.slide import Slide, _build_slide, append_print_warning
-from ._base.styles import glass_css
+from ._base.slide import Slide, _build_slide
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -85,14 +84,22 @@ class Slides(BaseSlides):
             self.shell.user_ns['__Slides_Instance__'] = self
             self.user_ns = self.shell.user_ns #important for set_dir
             
-            # Override print function to display in order in slides
-            def pprint(*args, **kwargs):
-                "Displays object(s) inline with others in corrct order. args and kwargs are passed to builtin print."
-                with self.capture_std() as std:
-                    print(*args, **kwargs)
-                std.stdout.display() # Display at the end
+        # Override print function to display in order in slides
+        import builtins
+        self.builtin_print = builtins.print # Save original print function otherwise it will throw a recursion error
+        def print(*args, **kwargs):
+            """Prints object(s) inline with others in corrct order. args and kwargs are passed to builtin print.
+            If file is not sys.stdout, then print is passed to given file."""
             
-            self.shell.user_ns['pprint'] = pprint
+            if 'file' in kwargs and kwargs['file'] == sys.stdout:
+                return self.builtin_print(*args, **kwargs)
+            
+            with capture_output() as captured:
+                self.builtin_print(*args, **kwargs)
+            
+            self.raw(captured.stdout,className = 'CustomPrintOut').display() # Display at the end
+            # CustomPrintOut is used to avoid the print to be displayed when `with suppress_stdout` is used.
+        builtins.print = print
         
         self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
             
@@ -606,7 +613,6 @@ class Slides(BaseSlides):
                 new_slide._from_cell = False
                 new_slide._cell_code = ''    
                 
-                append_print_warning(captured = captured, append_to= new_frames[i]._contents)
                 
             this_slide._frames = new_frames
             
@@ -676,15 +682,12 @@ class Slides:
     
     All arguments are passed to corresponding methods in `slides.settings`, so you can use those methods to change settings as well.
     
-    Instead of builtin `print`, use `pprint` (1.5.9+) or `with capture_std` in slides use following to display printed content in correct order.
+    To suppress unwanted print from other libraries/functions (2.1.0+), use:
     ```python
-    with slides.capture_std() as std:
-        print('something')
-        function_that_prints_something()
-        display('Something') # Will be displayed here
-        slides.write(std.stdout) # Will be written here whatever printed above this line
-        
-    std.stdout.display() #slides.write(std.stdout)
+    with slides.suppress_stdout():
+        some_function_that_prints() # This will not be printed
+        print('This will not be printed either')
+        display('Something') # This will be printed
     ```
     
     > `slides.demo` and `slides.docs` overwrite all previous slides.

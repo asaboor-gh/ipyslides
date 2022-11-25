@@ -1,64 +1,42 @@
-__all__ = ['capture_std', 'details', 'set_dir', 'textbox', 'vspace', 'center',
+__all__ = ['suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
 
 
-import os
+import os, re
 import datetime
 import inspect
 from io import BytesIO # For PIL image
 from contextlib import contextmanager, suppress
 
-from IPython.display import SVG, IFrame, display
+from IPython.display import SVG, IFrame
+from IPython.core.display import Image, display
 from IPython.utils.capture import capture_output
-from IPython.core.display import Image
 import ipywidgets as ipw
 
 from .formatter import fix_ipy_image, _HTML
 from .writers import _fmt_write, _fix_repr
- 
-class CapturedStd:
-    "Not reuqired by user, so will be deleted"
-    def __init__(self):
-        self._captured = None
-    @property
-    def stdout(self):
-        return raw(self._captured.stdout)
-    @property
-    def stderr(self):
-        return alert(self._captured.stderr)
-    
-    def __repr__(self):
-        _out = f'{self._captured.stdout[:10]}...' if len(self._captured.stdout) > 10 else self._captured.stdout
-        _err = f'{self._captured.stderr[:10]}...' if len(self._captured.stderr) > 10 else self._captured.stderr
-        return f'CapturedStd(stdout = {_out!r}, stderr = {_err!r})'
-    
-_captured_std = CapturedStd()
-del CapturedStd # No need outside of this module
+
 
 backtick = '&#96;'
-    
+
 @contextmanager
-def capture_std(): 
-    """Context manager to capture stdout and stderr, displays all other rich objects inline.
+def suppress_stdout():
+    "Suppress stdout in a block of code, especially unwanted print from functions in other modules. (2.1.0+)"
+    with capture_output() as captured:
+        yield 
     
-    **Usage**
-    ```python
-    with capture_std() as std:
-        print('Hello')
-        display('World')
-    # 'World' will be displayed inline, but 'Hello' will be captured
-    std.stdout # yields `raw('Hello')`
-    std.stderr # yields `alert('')`
-    ```
-    """    
-    with capture_output() as cap: 
-        _captured_std._captured = cap # Store output
-        yield _captured_std # Return the std as function to get later.
-        
-    return display(*cap.outputs) # Display outputs after context manager is exited.
+    outputs = captured.outputs
+    new_outputs = []
+    for out in outputs:
+        if 'text/html'in out.data and re.findall(r'class(.*)CustomPrintOut',out.data['text/html']):
+            continue
+        else:
+            new_outputs.append(out)
+    return display(*new_outputs)
+
     
 @contextmanager
 def set_dir(path):

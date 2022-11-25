@@ -57,8 +57,7 @@ slides.set_animation(main='zoom')
 
 ```python run source
 x = 1 + 2
-print(x) # will be printed on slide in somehwewere top as print appears first of all. 
-# Use `with slides.capture_std() as std:  print();std.stdout` to see at exactly where it is printed.
+print(x) 
 ```
 There is a python block above with header `python run source`. We can display that block by  &lcub;&lcub;source&rcub;&rcub; as below:
 {{source}} 

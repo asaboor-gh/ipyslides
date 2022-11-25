@@ -502,6 +502,12 @@ span.lang-name {
     height: auto !important;
     overflow: auto !important;
     overflow-wrap: break-word !important;
+    background: var(--secondary-bg) !important;
+    padding: 0 0.2em !important;
+}
+.SlideArea pre {
+    background: none !important;
+    color: var(--primary-fg) !important;
 }
 
 /* Docs have Python code only, so no need to have fancy things there */

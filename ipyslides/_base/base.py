@@ -311,7 +311,7 @@ class BaseSlides:
                 
         with self.slide(next(counter)):
             self.write('## Useful Functions for Rich Content')
-            members = ['alert','block', 'bokeh2html', 'capture_std', 'cite',
+            members = ['suppress_stdout','alert','block', 'bokeh2html', 'cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
                        'set_dir', 'sig', 'svg', 'textbox', 'vspace']

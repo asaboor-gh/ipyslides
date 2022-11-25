@@ -107,7 +107,6 @@ class Slide:
             yield 
         
         outputs = captured.outputs
-        append_print_warning(captured, append_to = outputs)
         
         if index == 0:
             self._extra_outputs['start'] = outputs
@@ -319,8 +318,6 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
         if k.startswith('application'): # Widgets in this slide
             _slide._has_widgets = True
             break # No need to check other widgets if one exists
-    # Append before updating slides
-    append_print_warning(captured= captured, append_to= _slide._contents)
     
     app._slidelabel = _slide.label # Go there to see effects
     _slide.update_display() # Update Slide, it will not come to this point if has same code
@@ -328,14 +325,7 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
     if old_slides != list(app._slides_dict.values()): # If there is a change in slides
         _slide._rebuild_all() # Rebuild all slides
         del old_slides # Delete old slides
-        
-def append_print_warning(captured, append_to):
-    "Append print warning to outputs of a capture."
-    if captured.stdout.replace('\x1b[2K','').strip(): # Only if there is output after removing \x1b[2K, IPython has something unknown
-        append_to.append(_HTML('<div class="PyRepr Error">Use `pprint` or `Slides.capture_std` '
-        'contextmanager \nto see print output on slide in desired order!\n'
-        '---------------------------------------------------------------------------\n'
-        + captured.stdout + '</div>'))
+
         
 
     

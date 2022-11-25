@@ -300,7 +300,7 @@ with slides.slide(21):
     
 with slides.slide(22):
     slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
-    with slides.capture_std():
+    with slides.suppress_stdout(): # suppress stdout from register fuction below
         with slides.source.context() as s:
             @slides.serializer.register(int)
             def colorize(obj):
@@ -308,5 +308,5 @@ with slides.slide(22):
                 return f'<span style="color:{color};">{obj}</span>'
 
             slides.write(*range(10))
-        
+
         s.display()
