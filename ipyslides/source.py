@@ -142,9 +142,10 @@ class Source:
     
     @classmethod
     @contextmanager 
-    def context(cls, **kwargs): 
+    def context(cls, auto_display = True, **kwargs): 
         """Execute and displays source code in the context manager. `kwargs` are passed to `ipyslides.formatter.highlight` function.
         Useful when source is written inside context manager itself.
+        If `auto_display` is True (by default), then source is displayed before the output of code. Otherwise you can assign the source to a variable and display it later anywhere.
         
         **Usage**:
         ```python
@@ -181,5 +182,8 @@ class Source:
         source_html.raw = source # raw source code
         cls.current = source_html
         
+        if auto_display:
+            source_html.display()
+            
         yield source_html
         # No need to try as it is not possible to get here if not in context manager
