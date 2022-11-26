@@ -87,18 +87,20 @@ class Slides(BaseSlides):
         # Override print function to display in order in slides
         import builtins
         self.builtin_print = builtins.print # Save original print function otherwise it will throw a recursion error
+        
         def print(*args, **kwargs):
             """Prints object(s) inline with others in corrct order. args and kwargs are passed to builtin print.
             If file is not sys.stdout, then print is passed to given file."""
-            
+
             if 'file' in kwargs and kwargs['file'] == sys.stdout:
                 return self.builtin_print(*args, **kwargs)
-            
+
             with capture_output() as captured:
                 self.builtin_print(*args, **kwargs)
-            
-            self.raw(captured.stdout,className = 'CustomPrintOut').display() # Display at the end
+
+            return display(self.raw(captured.stdout,className = 'CustomPrintOut')) # Display at the end, dont use .display here.
             # CustomPrintOut is used to avoid the print to be displayed when `with suppress_stdout` is used.
+        
         builtins.print = print
         
         self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
