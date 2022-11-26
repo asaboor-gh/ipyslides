@@ -290,8 +290,8 @@ details > div {
 .cell-output-ipywidget-background { /* VSCode issue */
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
-.SlidesWrapper *:not(.fa):not(i):not(span):not(pre):not(code),
-.SlideArea *:not(.fa):not(i):not(span):not(pre):not(code) { /* Do not edit __textfont__, code does this. */
+.SlidesWrapper *:not(.fa):not(i):not(span):not(pre):not(code):not(.RawText),
+.SlideArea *:not(.fa):not(i):not(span):not(pre):not(code):not(.RawText) { /* Do not edit __textfont__, code does this. */
    font-family: "__textfont__", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
 }
 
@@ -495,7 +495,10 @@ span.lang-name {
     color: var(--accent-color);
     font-size: 0.8em;
 }
-.SlideArea div.PyRepr {
+.SlideArea .RawText {
+    font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
+    font-size: 90% !important;
+    display: block !important;
     margin: 4px !important;
     white-space:pre !important;
     max-height: 400px;
@@ -503,8 +506,9 @@ span.lang-name {
     overflow: auto !important;
     overflow-wrap: break-word !important;
     background: var(--secondary-bg) !important;
+    color: var(--primary-fg) !important;
     padding: 0 0.2em !important;
-}
+} 
 .SlideArea pre {
     background: none !important;
     color: var(--primary-fg) !important;
@@ -766,7 +770,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     pre, .SlideBox, .SlidesWrapper, .SlideArea {
         height: auto !important;
     }
-    .SlidesWrapper .highlight, .SlideArea div.PyRepr {
+    .SlidesWrapper .highlight, .SlideArea .RawText {
         max-height:auto !important; /* Flow itself */
     }
     .SlideArea {

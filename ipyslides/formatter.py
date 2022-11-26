@@ -293,11 +293,11 @@ def format_object(obj):
     
     # Some builtin types
     if isinstance(obj,dict):
-        return  True, f"<div class='PyRepr'>{json.dumps(obj,indent=4)}</div>"  
+        return  True, f"<div class='RawText'>{json.dumps(obj,indent=4)}</div>"  
     elif isinstance(obj,(int,float, bool)):
         return True, str(obj)  
     elif isinstance(obj,(set,list,tuple)): # Then prefer other builtins
-        return True, f"<div class='PyRepr'>{obj}</div>"
+        return True, f"<div class='RawText'>{obj}</div>"
     
     # If Code object given
     for _type in ['class','function','module','method','builtin','generator']:
@@ -355,4 +355,4 @@ def stringify(obj):
                 return _out_
         
         # Return __repr__ if nothing above
-        return f"<div class='PyRepr'>{obj.__repr__()}</div>"
+        return f"<div class='RawText'>{obj.__repr__()}</div>"

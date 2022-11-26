@@ -259,7 +259,7 @@ span.lang-name {
     color: var(--accent-color);
     font-size: 0.8em;
 }
-.Content-Area div.PyRepr {
+.Content-Area .RawText {
     margin: 4px !important;
     white-space:pre !important;
     height: auto !important;
@@ -371,7 +371,7 @@ div.zoom-container > * {
         page-break-inside: avoid !important; 
     }
     ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
-    div.highlight, pre, div.PyRepr {
+    div.highlight, pre, .RawText {
         height:auto;
         max-height: auto !important; 
         overflow-wrap: break-word !important; 

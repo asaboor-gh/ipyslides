@@ -98,8 +98,8 @@ class Slides(BaseSlides):
                 with capture_output() as captured:
                     self.builtin_print(*args, **kwargs)
 
-                return self.raw(captured.stdout,className = 'CustomPrintOut').display() # Display at the end
-                # CustomPrintOut is used to avoid the print to be displayed when `with suppress_stdout` is used.
+                return self.raw(captured.stdout,className = 'CustomPrint').display() # Display at the end
+                # CustomPrint is used to avoid the print to be displayed when `with suppress_stdout` is used.
             
             builtins.print = print
         

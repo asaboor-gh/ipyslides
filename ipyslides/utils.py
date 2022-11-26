@@ -8,6 +8,7 @@ __all__.extend([f'block_{c}' for c in 'rgbycma'])
 import os, re
 import datetime
 import inspect
+from html import escape # Builtin library
 from io import BytesIO # For PIL image
 from contextlib import contextmanager, suppress
 
@@ -31,7 +32,7 @@ def suppress_stdout():
     outputs = captured.outputs
     new_outputs = []
     for out in outputs:
-        if 'text/html'in out.data and re.findall(r'class(.*)CustomPrintOut',out.data['text/html']):
+        if 'text/html'in out.data and re.findall(r'class(.*)CustomPrint',out.data['text/html']):
             continue
         else:
             new_outputs.append(out)
@@ -188,7 +189,7 @@ def keep_format(plaintext_or_html):
 def raw(text, className=None):
     "Keep shape of text as it is, preserving whitespaces as well."
     _class = className if className else ''
-    return _HTML(f"<div class='PyRepr {_class}'>{text}</div>")
+    return _HTML(f"<div class='RawText {_class}'>{escape(text)}</div>")
 
 def rows(*objs, className=None):
     "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
