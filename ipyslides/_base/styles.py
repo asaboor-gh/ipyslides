@@ -507,7 +507,7 @@ span.lang-name {
     overflow-wrap: break-word !important;
     background: var(--secondary-bg) !important;
     color: var(--primary-fg) !important;
-    padding: 0 0.2em !important;
+    padding: 0 0.3em !important;
 } 
 .SlideArea pre {
     background: none !important;

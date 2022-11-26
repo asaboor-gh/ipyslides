@@ -56,21 +56,28 @@ class BaseSlides:
     def css_styles(self):
         """CSS styles for write(..., className = style)."""
         # self.html will be added from Chid class
-        return self.html('div', '''Use any or combinations of these styles in className argument of writing functions:
-        className = 'Center'            ------Text------
-        className = 'Left'              Text------------
-        className = 'Right'             ------------Text
-        className = 'RTL'               ------ اردو عربی 
-        className = 'Info'              Blue Text
-        className = 'Warning'           Orange Text
-        className = 'Success'           Green Text
-        className = 'Error'             Red Text
-        className = 'Note'              Text with info icon
-        className = 'slides-only'       Text will not appear in exported html with `build_report`
-        className = 'report-only'       Text will not appear on slides. Useful to fill content in report.
-        className = 'Block'             Block of text/objects
-        className = 'Block-[color]'     Block of text/objects with specific background color from red, green, blue, yellow, cyan, magenta and gray.
-        ''',className= 'RawText')
+        return self.raw('''
+        Use any or combinations of these styles in className argument of writing functions:
+        ------------------------------------------------------------------------------------
+         className          | Formatting Style                                              
+        ====================================================================================
+         'Center'           | ------Text------
+         'Left'             | Text------------
+         'Right'            | ------------Text
+         'RTL'              | ------ اردو عربی 
+         'Info'             | Blue Text
+         'Warning'          | Orange Text
+         'Success'          | Green Text
+         'Error'            | Red Text
+         'Note'             | Text with info icon
+         'slides-only'      | Text will not appear in exported html report.
+         'report-only'      | Text will not appear on slides. Use to fill content in report.
+         'Block'            | Block of text/objects
+         'Block-[color]'    | Block of text/objects with specific background color from red,
+                            | green, blue, yellow, cyan, magenta and gray.
+         'RawText'          | Text will not be formatted and will be shown as it is.
+        ------------------------------------------------------------------------------------
+        ''')
         
     def get_source(self, title = 'Source Code'):
         "Return source code of all slides created using `from_markdown` or `%%slide`."
