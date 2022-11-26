@@ -89,10 +89,10 @@ class Slides(BaseSlides):
             import builtins
             self.builtin_print = builtins.print # Save original print function otherwise it will throw a recursion error
             def print(*args, **kwargs):
-                """Prints object(s) inline with others in corrct order. args and kwargs are passed to builtin print.
-                If file is not sys.stdout, then print is passed to given file."""
+                """Prints object(s) inline with others in corrct order. args and kwargs are passed to builtin `print`.
+                If `file` argument is not `sys.stdout`, then print is passed to given file."""
 
-                if 'file' in kwargs and kwargs['file'] == sys.stdout:
+                if 'file' in kwargs and kwargs['file'] != sys.stdout: # User should be able to redirect print to file
                     return self.builtin_print(*args, **kwargs)
 
                 with capture_output() as captured:
