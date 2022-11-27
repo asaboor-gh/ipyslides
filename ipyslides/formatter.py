@@ -151,12 +151,15 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     }}
     {_class} code:hover {{
         background: {hover_color} !important; /* Important to override default hover */
+        box-shadow: 0px -5px 2px -2px var(--primary-bg), 0px 5px 2px -2px var(--primary-bg) !important;
     }}
     {_class} code:before {{
-        opacity: 0.8;
+        opacity: 0.8 !important;
         width: {'1.2em' if lineno else '0'};
+        height: 100%;
         color: {fg};
-        font-size: 80%;
+        background: {bg};
+        font-size: 80% !important;
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
@@ -172,7 +175,7 @@ def highlight(code, language='python', name = None, className = None, style='def
         
     formatter = pygments.formatters.HtmlFormatter(style = style)
     _style = code_css(style=style, color = color, background = background, hover_color = hover_color,className=className, lineno = lineno) if className else ''
-    _code = pygments.highlight(textwrap.dedent(code), # dedent make sure code blocks at any level are picked as well
+    _code = pygments.highlight(textwrap.dedent(code).strip('\n'), # dedent make sure code blocks at any level are picked as well
                                pygments.lexers.get_lexer_by_name(language),
                                formatter)
     
@@ -303,7 +306,7 @@ def format_object(obj):
     for _type in ['class','function','module','method','builtin','generator']:
         if getattr(inspect,f'is{_type}')(obj):
             try:
-                source = inspect.getsource(obj)
+                source = textwrap.dedent(inspect.getsource(obj)).strip('\n') # dedent is must
                 source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
                 source = highlight(source,language='python',style='default',className=None).value
             except:

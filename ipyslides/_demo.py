@@ -43,7 +43,7 @@ with s0.insert(0):
     s0.source.display(collapsed = True)
 
 with slides.slide(1): #slide 1 will be modified with old and new content
-    with slides.source.context(style='monokai', color='white', className='Mono') as s:
+    with slides.source.context(auto_display = False, style='monokai', color='white', className='Mono') as s:
         slides.parse_xmd(s1.markdown) #s1 was assigned as `s0, s1, s2 = slides.from_markdown...` in start.
         write('#### I am created using `with slides.slide(1)` context manager, '
             'so I overwrite the previous slide, and you can not see my full code, '
@@ -74,7 +74,7 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 '''
 @slides.frames(3,'## I am created using `@slides.frames`',online_sources)
 def func(obj):
-    with slides.source.context() as s:
+    with slides.source.context(auto_display = False) as s:
         slides.write(obj)
         slides.write(slides.running) # This is currently running slide, so you can set CSS, animation etc inside the function.
         slides.notify_later()(lambda: 'That is a notification which shows you can use decorator this way as well')
@@ -103,7 +103,7 @@ for i in range(4,8):
     with slides.slide(i, props_dict = {'':dict(background = 'skyblue')}):
         write(__contents[i-4])
         if i == 7:
-            with slides.source.context() as s:
+            with slides.source.context(auto_display = False) as s:
                 write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse_xmd,'Slides')])
                 write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
             
@@ -112,7 +112,7 @@ for i in range(4,8):
 # Matplotlib
 with slides.slide(8,props_dict = {'': dict(background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')}):
     write('## Plotting with Matplotlib')
-    with slides.source.context() as s:
+    with slides.source.context(auto_display = False) as s:
         import numpy as np, matplotlib.pyplot as plt
         plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation
         x = np.linspace(0,2*np.pi)
@@ -125,7 +125,7 @@ with slides.slide(8,props_dict = {'': dict(background='linear-gradient(to right,
 # Youtube
 from IPython.display import YouTubeVideo
 with slides.slide(9):
-    with slides.source.context(style='vs',className="Youtube") as s:
+    with slides.source.context(auto_display = False, style='vs',className="Youtube") as s:
         write(f"### Watching Youtube Video?")
         write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
         @slides.notify_later()
@@ -138,7 +138,7 @@ with slides.slide(9):
 # Data Table
 slides.shell.user_ns['slides'] = slides #Inject variable in IPython shell to use in below cell magic
 slides.shell.run_cell_magic('slide','10',"""
-with slides.source.context() as s:
+with slides.source.context(auto_display = False) as s:
     write('## Data Tables')
     write(slides.block_r('Here is Table','<hr/>','''
         |h1|h2|h3|
@@ -151,7 +151,7 @@ with slides.source.context() as s:
 
 # Plotly and Pandas DataFrame only show if you have installed
 with slides.slide(11,props_dict = {'':dict(background='#800000')}):
-    with slides.source.context():
+    with slides.source.context(auto_display = False):
         try:
             import pandas as pd 
             import altair as alt
@@ -185,7 +185,7 @@ with slides.slide(12):
 # Interactive widgets can't be used in write command, but still they are displayed.   
 
 with slides.slide(13):
-    with slides.source.context() as src:
+    with slides.source.context(auto_display = False) as src:
         import ipywidgets as ipw
         import numpy as np, matplotlib.pyplot as plt
         
@@ -224,7 +224,7 @@ with slides.slide(13):
 # Animat plot in slides  
 @slides.frames(14,*range(14,19))
 def func(obj):
-    with slides.source.context() as s:
+    with slides.source.context(auto_display = False) as s:
         fig, ax = plt.subplots()
         x = np.linspace(0,obj+1,50+10*(obj - 13))
         ax.plot(x,np.sin(x));
@@ -255,19 +255,19 @@ def f(obj):
     
 @slides.frames(17,*boxes, repeat=[(0,1),(2,3)])
 def f(obj):
-    with slides.source.context() as s:
+    with slides.source.context(auto_display = False) as s:
         slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)
     s.display()
 
 with slides.slide(18):
-    with slides.source.context() as s:
+    with slides.source.context(auto_display = False) as s:
         slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)`')
         try:
             slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
         except:
             slides.write('Could not retrieve image from url. Check internt connection!',className='Error')
-    s.display()
+        s.display()
 
 slides.from_markdown(19, '''## $\LaTeX$ in Slides
 Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
@@ -280,28 +280,25 @@ $$\int_0^1\\frac{1}{1-x^2}dx$$
 
 with slides.slide(20):
     slides.write('## Built-in CSS styles')
-    with slides.source.context() as s:
+    with slides.source.context():
         slides.css_styles.display()
         slides.write('Info',className='Info')
         slides.write('Warning',className='Warning')
         slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='Right RTL')
-    s.display()
 
-with slides.slide(21):
-    with slides.source.context() as s:
-        slides.rows(
-            '## Can skip `write` commnad sometimes',
-            slides.cols('### Column A','### Column B',className='Info'),
-            '||### Column C {.Warning}||### Column D {.Success}||',
-        ).display()
-        slides.write('---')
+with slides.slide(21),slides.source.context():
+    slides.rows(
+        '## Can skip `write` commnad sometimes',
+        slides.cols('### Column A','### Column B',className='Info'),
+        '||### Column C {.Warning}||### Column D {.Success}||',
+    ).display()
+    slides.write('----') # In Python < 3.8, context manager does not properly handle end of code block, so use this to end context
 
-    s.display()
     
 with slides.slide(22):
     slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
     with slides.suppress_stdout(): # suppress stdout from register fuction below
-        with slides.source.context() as s:
+        with slides.source.context(auto_display = False) as s:
             @slides.serializer.register(int)
             def colorize(obj):
                 color = 'red' if obj % 2 == 0 else 'green'

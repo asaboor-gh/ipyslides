@@ -149,7 +149,7 @@ class Source:
         
         **Usage**:
         ```python
-        with source.context() as s: #if not used as `s`, still it is stored `source.current` attribute.`
+        with source.context(auto_display = False) as s: #if not used as `s`, still it is stored `source.current` attribute.`
             do_something()
             write(s) # or s.display(), iwrite(s)
             

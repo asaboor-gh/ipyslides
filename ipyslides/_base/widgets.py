@@ -79,7 +79,7 @@ class _Checks:
     """
     Instantiate under `Widgets` class only.
     """
-    reflow = ipw.Checkbox(indent = False, value=False,description='Reflow Code',layout=auto_layout)
+    reflow = ipw.Checkbox(indent = False, value=False,description='Reflow Content',layout=auto_layout)
     notes  = ipw.Checkbox(indent = False, value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
     toast  = ipw.Checkbox(indent = False, value = True, description='Notifications',layout=auto_layout)
 

@@ -479,10 +479,11 @@ details > div {
     -webkit-user-select: none;
     margin-left:-3em;
     margin-right: 8px;
-    font-size: 80%;
+    font-size: 80% !important;
+    opacity:0.8 !important;
 }
 .highlight  code > span {
-    white-space: normal; /* for breaking words */
+    white-space: pre: /*normal;  for breaking words */
     word-break: break-word; /* for breaking words */
 }
 .highlight code.code-no-focus {
@@ -495,25 +496,29 @@ span.lang-name {
     color: var(--accent-color);
     font-size: 0.8em;
 }
-.SlideArea .RawText {
+.RawText { /* Should be same in notebook cell */
     font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
     font-size: 90% !important;
     display: block !important;
     margin: 4px !important;
-    white-space:pre !important;
-    max-height: 400px;
     height: auto !important;
     overflow: auto !important;
     overflow-wrap: break-word !important;
-    background: var(--secondary-bg) !important;
-    color: var(--primary-fg) !important;
     padding: 0 0.3em !important;
 } 
+.SlideArea .RawText { /* Should follow theme under slides */
+    background: var(--secondary-bg) !important;
+    color: var(--primary-fg) !important;
+    max-height: 400px;
+    white-space:pre !important;
+}
 .SlideArea pre {
     background: none !important;
     color: var(--primary-fg) !important;
 }
-
+.CustomPrint {
+    margin-block: 0.5px !important; /* Two adjacant prints should look closer */
+}
 /* Docs have Python code only, so no need to have fancy things there */
 .Docs {
     margin-bottom: 1em !important;
@@ -531,9 +536,9 @@ span.lang-name {
     
 .SlidesWrapper table {
  	border-collapse: collapse !important;
+    font-size: 0.95em;
     min-width:auto;
     width:100%;
-    font-size: 0.95em;
     word-break:break-all;
     overflow: auto;
 	color: var(--primary-fg)!important;

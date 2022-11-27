@@ -1,4 +1,4 @@
-__all__ = ['suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
+__all__ = ['suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block'])
@@ -24,6 +24,26 @@ from .writers import _fmt_write, _fix_repr
 
 backtick = '&#96;'
 
+def _filter_prints(outputs):
+    new_outputs, new_prints = [], []
+    for out in outputs:
+        if 'text/html'in out.data and re.findall(r'class(.*)CustomPrint',out.data['text/html']):
+            new_prints.append(out)
+        else:
+            new_outputs.append(out)
+    return new_outputs, new_prints
+
+@contextmanager
+def suppress_output(keep_stdout = False):
+    "Suppress output of a block of code. If `keep_stdout` is True, only display data is suppressed. (2.1.5+)"
+    with capture_output() as captured:
+        yield 
+    
+    if keep_stdout:
+        outputs = captured.outputs
+        _, new_prints = _filter_prints(outputs)
+        return display(*new_prints)
+
 @contextmanager
 def suppress_stdout():
     "Suppress stdout in a block of code, especially unwanted print from functions in other modules. (2.1.0+)"
@@ -31,12 +51,7 @@ def suppress_stdout():
         yield 
     
     outputs = captured.outputs
-    new_outputs = []
-    for out in outputs:
-        if 'text/html'in out.data and re.findall(r'class(.*)CustomPrint',out.data['text/html']):
-            continue
-        else:
-            new_outputs.append(out)
+    new_outputs, _ = _filter_prints(outputs)
     return display(*new_outputs)
 
     

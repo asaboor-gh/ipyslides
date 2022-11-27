@@ -222,7 +222,7 @@ class LayoutSettings:
         # Update CSS
         if self.reflow_check.value:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
-        
+            
         self.widgets.htmls.theme.value = f'<style>\n{theme_css}\n</style>'
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline, must call
         self._emit_resize_event()

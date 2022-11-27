@@ -224,7 +224,7 @@ class BaseSlides:
         return handles
     
     def demo(self):
-        """Demo slides with a variety of content."""
+        "Demo slides with a variety of content."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
         self._citation_mode = 'global' # Set citation mode to global if set otherwise by user
@@ -242,16 +242,19 @@ class BaseSlides:
         with slides.slide(N + 2):
             slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.Note .Info}')
             slides.get_source().display()
-            
+             
         with slides.slide(N + 3, props_dict = {'': dict(background='#9ACD32')}):
-            with slides.source.context() as s:
-                slides.write('citations`## Reference via Markdown\n----`',['## Reference via Python API\n----',*slides.citations])
-            s.display()
-        
+            with slides.source.context():
+                slides.write('citations`## Reference via Markdown\n----`',
+                             ['## Reference via Python API\n----',
+                              *slides.citations])
+                slides.write('Markdown is easier to write and read, but Python API is more powerful.')
+                
+                 
         # Just for func, set theme of all even slides to be fancy, and zoom animation
         fancy_even_slides_css = {       
             '--heading-fg': '#105599',
-	        '--accent-color': '#955200',
+            '--accent-color': '#955200',
             '--pointer-color': '#FF7722'
         }   
         
@@ -261,7 +264,7 @@ class BaseSlides:
         
         slides._slideindex = 0 # Go to title, user should not set this
         return slides
-    
+        
     def docs(self):
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
@@ -318,7 +321,7 @@ class BaseSlides:
                 
         with self.slide(next(counter)):
             self.write('## Useful Functions for Rich Content')
-            members = ['suppress_stdout','alert','block', 'bokeh2html', 'cite',
+            members = ['suppress_output','suppress_stdout','alert','block', 'bokeh2html', 'cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
                        'set_dir', 'sig', 'svg', 'textbox', 'vspace']
@@ -327,7 +330,7 @@ class BaseSlides:
             
         with self.slide(next(counter)):
             self.write('## Content Styling')
-            with self.source.context() as c:
+            with self.source.context(auto_display = False) as c:
                 self.write(('You can **style**{.Error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink_yellow]`text`* with `className` attribute in writing/content functions. ' 
                        'Provide **CSS**{.Info} for that using `.format_css` or use some of the available styles. '
                        'See these **styles**{.Success} with `.css_styles` property as below:'))
