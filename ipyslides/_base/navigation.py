@@ -27,7 +27,9 @@ class Navigation:
                 self.progress_slider.index = self.progress_slider.index + 1 # Forwards
             except:
                 self.progress_slider.index = 0 # loop back to title page at end of presentation
-    
+            
+            self.__change_icon(self.progress_slider.index)
+            
     def __shift_left(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
         if change:
@@ -36,6 +38,20 @@ class Navigation:
                 self.progress_slider.index = len(self.progress_slider.options) - 1 # loop back to last slide
             else:
                 self.progress_slider.index = self.progress_slider.index - 1 # Backwards
+            
+            self.__change_icon(self.progress_slider.index)
+    
+    def __change_icon(self, current_index):
+        if '.' in self.progress_slider.options[current_index - 1][0]:
+            self.btn_prev.icon = 'chevron-up'
+        else:
+            self.btn_prev.icon = 'chevron-left'
+        
+        next_idx = (current_index + 1) % len(self.progress_slider.options)
+        if '.' in self.progress_slider.options[next_idx][0]:
+            self.btn_next.icon = 'chevron-down'
+        else:
+            self.btn_next.icon = 'chevron-right'
     
     def __toggle_panel(self,change):
         if self.btn_settings.description == '\u2630':

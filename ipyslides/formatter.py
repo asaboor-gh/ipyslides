@@ -151,14 +151,11 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     }}
     {_class} code:hover {{
         background: {hover_color} !important; /* Important to override default hover */
-        box-shadow: 0px -5px 2px -2px var(--primary-bg), 0px 5px 2px -2px var(--primary-bg) !important;
     }}
     {_class} code:before {{
         opacity: 0.8 !important;
         width: {'1.2em' if lineno else '0'};
-        height: 100%;
         color: {fg};
-        background: {bg};
         font-size: 80% !important;
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""

@@ -51,7 +51,7 @@ class _Citation:
     def value(self):
         _value = self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using slides.set_citations or [{self._key}]:&#96;citation text&#96; in markdown.')
         return f'''<span class = "citation" id="{self._key}">
-            <a href="#{self._key}-back">
+            <a href="#{self._key}-back"> 
                 <sup style="color:var(--accent-color);">{self._id}</sup>
             </a>{_value}</span>'''
         
@@ -308,7 +308,7 @@ class Slides(BaseSlides):
         
         this_slide = self._running_slide
         _cited = _Citation(slide = this_slide, key = key)
-        self._citations_dict[key] = self._citations_dict.get(key, f'Set citation for key {key!r} using slides.set_citations or [{key}]:&#96;citation text&#96; in markdown.') # This to ensure single run shows citation
+        self._citations_dict[key] = self._citations_dict.get(key, f'Set citation for key {key!r}.') # This to ensure single run shows citation
         
         # Set _id for citation
         if self._citation_mode == 'footnote':
@@ -322,12 +322,14 @@ class Slides(BaseSlides):
                 _cited._id = str(len(prev_keys)) 
              
         # Return string otherwise will be on different place
-        return f'<a href="#{key}"><sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup></a>'
+        return f'''<a href="#{key}" class="HiddenCitation">
+                <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
+                <span>{self._citations_dict[key]}</span></a>'''
     
     def set_citations(self, citations_dict):
         "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
         self._citations_dict.update({key:self.parse_xmd(value, display_inline=False, rich_outputs = False
-                        ).replace('<p>','',1)[::-1].replace('</p>','',1)[::-1] # Only replace first <p>
+                        ).replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1] # Only replace first <p>
                 for key, value in citations_dict.items()})
         
         if self._citation_mode == 'footnote':

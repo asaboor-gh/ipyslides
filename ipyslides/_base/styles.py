@@ -421,7 +421,7 @@ details > div {
     border: none;
     width: auto;
     height: 2px;
-    background: linear-gradient(to right, var(--accent-color), var(--secondary-bg),transparent,transparent);
+    background: linear-gradient(to right, transparent,  var(--secondary-bg),var(--accent-color), var(--secondary-bg),transparent);
 }
 .SlideArea .footnote ol {
     margin-top: 0.5em !important;
@@ -519,6 +519,20 @@ span.lang-name {
 .CustomPrint {
     margin-block: 0.5px !important; /* Two adjacant prints should look closer */
 }
+/* Citations on hover */
+.HiddenCitation {position: relative;}
+.HiddenCitation * {color: var(--secondary-fg);}
+.HiddenCitation > span {display:none;}
+.HiddenCitation:hover > span {
+  display: unset;
+  font-size: 90%;
+  padding:0.1em;
+  border-radius: 0.25em;
+  border: 1px solid var(--tr-hover-bg);
+}
+a.HiddenCitation:hover { text-decoration: none;} /* does not work without a */
+.HiddenCitation > sup {font-weight:bold;}
+
 /* Docs have Python code only, so no need to have fancy things there */
 .Docs {
     margin-bottom: 1em !important;
