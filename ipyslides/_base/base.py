@@ -324,7 +324,7 @@ class BaseSlides:
             members = ['suppress_output','suppress_stdout','alert','block', 'bokeh2html', 'cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
-                       'set_dir', 'sig', 'svg', 'textbox', 'vspace']
+                       'set_dir', 'sig', 'svg','section', 'textbox', 'vspace']
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             

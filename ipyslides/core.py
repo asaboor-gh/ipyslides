@@ -133,9 +133,11 @@ class Slides(BaseSlides):
         
         - alert`notes&#96;This is slide notes&#96;`  to add notes to current slide
         - alert`cite&#96;key&#96;` to add citation to current slide
-        - alert`[key]:&#96;citation content&#96;`  to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
+        - alert`[key]:&#96;citation content&#96;` to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
         - alert`citations&#96;citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
         - alert`include&#96;markdown_file.md&#96;` to include a file in markdown format. Useful to have citations in a separate file. (2.0.6+)
+        - alert`section&#96;section text&#96;` to add a section that will appear in the table of contents. (2.1.7+).
+        - alert`toc&#96;Table of content header text&#96;` to add a table of contents. Run at last again to collect all. (2.1.7+).
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         - Double dashes `--` is used to split markdown text in frames. (1.8.9+)
         
@@ -339,6 +341,32 @@ class Slides(BaseSlides):
         else:
             self.notify('Citations updated, please rerun the slides with references to see effect.')
         
+    def section(self,text):
+        """Add section to presentation that will appear in table of contents. 
+        In markdown, section can be created by using alert`%%section&#96;section text&#96;` syntax.
+        Sections can be collected using &#96;Slides.toc&#96; property or can be written in markdown using alert`toc&#96;title&#96;` syntax."""
+        self.running._section = text
+    
+    @property 
+    def toc(self):
+        """Returns dictionary of table of contents in form {'slide_label':'section_text',...} 
+        whose keys/values can be passed to write command with desired format. 
+        Run the slide containing alert`Slides.toc` at end as well to see all contents."""
+        return {it._label:it._section for it in self._iterable if it._section if it._section}
+    
+    def goto_button(self, slide, text,**kwargs):
+        """"
+        TODO: Add docstring
+        TODO: Add slide number instead of slide object.
+        Think to return or display, left, right text etc.
+        """
+        button = ipw.Button(description=text,**kwargs)
+        def on_click(btn):
+            slide._app.progress_slider.index = slide.index
+
+        button.on_click(on_click)
+        return display(button)
+    
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
         
@@ -490,7 +518,7 @@ class Slides(BaseSlides):
         slide_number_str = line[0] # First argument is slide number
         
         if '-m' in line[1:]:
-            _frames = re.split(r'^--$|^--\s+$',cell,flags = re.MULTILINE) # Split on --- or ---\s+
+            _frames = re.split(r'^--$|^--\s+$',cell, flags= re.DOTALL | re.MULTILINE) # Split on --- or ---\s+
             if len(_frames) > 1:
                 _frames = [_frames[0] + '\n' + obj for obj in _frames[1:]]
                 

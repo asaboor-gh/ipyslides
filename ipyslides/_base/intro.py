@@ -104,6 +104,12 @@ Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensi
     
 **New in 2.0.1**    
 Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorphic` in 2.0.8+) and alert`slides.clipboard_image` to add glassmorphic and clipboard image support.
+
+**New in 2.1.7**    
+ 
+- You can now add table of contents using &#96;slides.toc&#96; and &#96;slides.section&#96;.
+- In Markdown settings, same thing can be done using alert`toc&#96;Toc Title&#96;` and alert`section&#96;section text&#96;`.
+- You can use `Slides.goto_button` to add a button to go to jump to a slide.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )

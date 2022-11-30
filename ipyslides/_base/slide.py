@@ -39,6 +39,7 @@ class Slide:
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
+        self._section = None # Added from Slides
         
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -51,6 +52,7 @@ class Slide:
             self._notes = '' # Reset notes
             self._citations = {} # Reset citations
             self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
+            self._section = None # Reset section
         
         self._app._running_slide = self
         try:

@@ -87,32 +87,45 @@ _special_funcs = {
 
 def resolve_objs_on_slide(slide_instance,text_chunk):
     "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
-    # cite`key`
-    all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
-    for match in all_matches:
-        key = match.strip()
-        text_chunk = text_chunk.replace(f'cite`{match}`', slide_instance.cite(key), 1)
-    
     # notes`This is a note for current slide`
     all_matches = re.findall(r'notes\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
         slide_instance.notes.insert(match)
         text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
     
-    # citations`This is citations title`
+    # [key]:`citation content`
+    all_matches = re.findall(r'\[([^\n\`\,\s+\[\]]*)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE) # AVoid \n, `, , [,] and space in key
+    citations_dict = {}
+    for match in all_matches:
+        citations_dict[match[0].strip()] = match[1]
+        slide_instance.set_citations(citations_dict) # Only update under all_matches loop, otherwise it will be a mess of notifications
+        text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
+    
+    # cite`key` should be after citations`key`, so that available for writing there if any
+    all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
+    for match in all_matches:
+        key = match.strip()
+        text_chunk = text_chunk.replace(f'cite`{match}`', slide_instance.cite(key), 1)
+    
+    # citations`This is citations title` after setting citations and cite
     all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
         repr_html = slide_instance.format_html([match, *slide_instance.citations]).value
         text_chunk = text_chunk.replace(f'citations`{match}`', repr_html, 1)
-    
-    # [key]:`citation content`
-    all_matches = re.findall(r'\[(.*?)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
-    citations = {}
+        
+    # section`This is section title`
+    all_matches = re.findall(r'section\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        citations[match[0].strip()] = match[1]
-        slide_instance.set_citations(citations) # Only update under all_matches loop, otherwise it will be a mess of notifications
-        text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
-    
+        slide_instance.section(match) # This will be attached to the running slide
+        text_chunk = text_chunk.replace(f'section`{match}`', '', 1)
+        
+    # toc`This is toc title`
+    all_matches = re.findall(r'toc\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
+    for match in all_matches:
+        bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(slide_instance.toc.values(), start = 1)])
+        repr_html = slide_instance.format_html([match, bullets]).value
+        text_chunk = text_chunk.replace(f'toc`{match}`', repr_html, 1)
+        
     return text_chunk
 
 class _ExtendedMarkdown(Markdown):
@@ -240,7 +253,7 @@ class _ExtendedMarkdown(Markdown):
             if _match in user_ns:
                 output = user_ns[_match]
             else:
-                raise ValueError(('{!r} is not executable. ' 
+                raise ValueError(('{{'+ match + '}}' + ' could not be resolved. ' 
                 'Only variables are allowed in double curly braces or see Slides.xmd_syntax as well'))
                 
             _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
