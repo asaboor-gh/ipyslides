@@ -307,7 +307,7 @@ class BaseSlides:
         
         with self.slide(next(counter)):
             self.write('## Adding Speaker Notes')
-            self.write([f'You can use alert`notes{self.backtick}notes content{self.backtick}` in markdown.\n{{.Note .Success}}\n',
+            self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.Note .Success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.Block-red .Error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    

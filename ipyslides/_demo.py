@@ -58,7 +58,7 @@ slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 with s2.insert(0):
     s2.source.display(collapsed = True)
 
-s2.insert_markdown({-1: f'alert`I was added at end using {slides.backtick}s2.insert_markdown{slides.backtick}`'})
+s2.insert_markdown({-1: f'alert`I was added at end using \`s2.insert_markdown\``'})
     
 #slide 3
 online_sources = '''# IPySlides Online Running Sources 

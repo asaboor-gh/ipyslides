@@ -49,7 +49,7 @@ class _Citation:
         
     @property
     def value(self):
-        _value = self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using slides.set_citations or [{self._key}]:&#96;citation text&#96; in markdown.')
+        _value = self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using slides.set_citations or [{self._key}]:\`citation text\` in markdown.')
         return f'''<span class = "citation" id="{self._key}">
             <a href="#{self._key}-back"> 
                 <sup style="color:var(--accent-color);">{self._id}</sup>
@@ -65,7 +65,6 @@ class Slides(BaseSlides):
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
         
-        self.backtick = '&#96;'
         self.extender   = _extender
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
@@ -131,13 +130,15 @@ class Slides(BaseSlides):
         
         **Following syntax works only under currently buidling `slide` or `frame`:**
         
-        - alert`notes&#96;This is slide notes&#96;`  to add notes to current slide
-        - alert`cite&#96;key&#96;` to add citation to current slide
-        - alert`[key]:&#96;citation content&#96;` to add citation value, use these at start, so can be access in alert`cite&#96;key&#96;`
-        - alert`citations&#96;citations title&#96;`  to add citations at end if `citation_mode = 'global'`.
-        - alert`include&#96;markdown_file.md&#96;` to include a file in markdown format. Useful to have citations in a separate file. (2.0.6+)
-        - alert`section&#96;section text&#96;` to add a section that will appear in the table of contents. (2.1.7+).
-        - alert`toc&#96;Table of content header text&#96;` to add a table of contents. Run at last again to collect all. (2.1.7+).
+        - alert`notes\`This is slide notes\``  to add notes to current slide
+        - alert`cite\`key\`` to add citation to current slide
+        - alert`[key]:\`citation content\`` to add citation value, use these at start, so can be access in alert`cite\`key\``
+        - alert`citations\`citations title\``  to add citations at end if `citation_mode = 'global'`.
+        - alert`include\`markdown_file.md\`` to include a file in markdown format. Useful to have citations in a separate file. (2.0.6+)
+        - alert`section\`section text\`` to add a section that will appear in the table of contents. (2.1.7+).
+        - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all. (2.1.7+).
+        - You can escape backtick with backslash: alert`\\\` → \``. (2.1.7+).
+        - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax. (2.1.7+).
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         - Double dashes `--` is used to split markdown text in frames. (1.8.9+)
         
@@ -196,7 +197,7 @@ class Slides(BaseSlides):
         
         - Other options include:
         
-        color[blue]`color[blue]&#96;text&#96;`, color[yellow_skyblue]`color[yellow_skyblue]&#96;text&#96;`, ''') + '\n' + ', '.join(f'alert`{k}&#96;{v}&#96;`' for k,v in _special_funcs.items()),
+        color[blue]`color[blue]\`text\``, color[yellow_skyblue]`color[yellow_skyblue]\`text\``, ''') + '\n' + ', '.join(f'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
         display_inline = False
         ))
         
@@ -298,8 +299,8 @@ class Slides(BaseSlides):
         Citation can be accessed by alert`Slides.citations` property and can be passed to `write` function.
         
         **New in 1.7.2**      
-        In Markdown (under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite&#96;key&#96;` syntax and 
-        can be set using alert`[key]:&#96;citationtext&#96;` syntax. If citation_mode is global, they can be shown using alert`citations&#96;citation title&#96;` syntax.
+        In Markdown (under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite\`key\`` syntax and 
+        can be set using alert`[key]:\`citationtext\`` syntax. If citation_mode is global, they can be shown using alert`citations\`citation title\`` syntax.
         
         """
         if not self._running_slide:
@@ -343,21 +344,20 @@ class Slides(BaseSlides):
         
     def section(self,text):
         """Add section to presentation that will appear in table of contents. 
-        In markdown, section can be created by using alert`%%section&#96;section text&#96;` syntax.
-        Sections can be collected using &#96;Slides.toc&#96; property or can be written in markdown using alert`toc&#96;title&#96;` syntax."""
+        In markdown, section can be created by using alert`%%section\`section text\`` syntax.
+        Sections can be collected using \`Slides.toc\` property or can be written in markdown using alert`toc\`title\`` syntax."""
         self.running._section = text
     
     @property 
     def toc(self):
-        """Returns dictionary of table of contents in form {'slide_label':'section_text',...} 
-        whose keys/values can be passed to write command with desired format. 
+        """Returns tuple of table of contents that can be passed to write command with desired format. 
         Run the slide containing alert`Slides.toc` at end as well to see all contents."""
-        return {it._label:it._section for it in self._iterable if it._section if it._section}
+        return tuple([it._section for it in self._iterable if it._section if it._section])
     
     def goto_button(self, slide, text,**kwargs):
         """"
         TODO: Add docstring
-        TODO: Add slide number instead of slide object.
+        TODO: Add slide number instead of slide object as 1.1 or 2 (make string and split) etc.
         Think to return or display, left, right text etc.
         """
         button = ipw.Button(description=text,**kwargs)

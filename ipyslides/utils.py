@@ -22,8 +22,6 @@ from .formatter import fix_ipy_image, _HTML
 from .writers import _fmt_write, _fix_repr
 
 
-backtick = '&#96;'
-
 def _filter_prints(outputs):
     new_outputs, new_prints = [], []
     for out in outputs:
@@ -317,3 +315,7 @@ def sub(text):
 
 def sup(text):
     return html('sup',text,style="font-size:70%;color:inherit;")
+
+def bullets(iterable, ordered = False, className = None):
+    # Make powerfull bullets by parsing each item
+    pass

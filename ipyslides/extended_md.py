@@ -122,7 +122,7 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     # toc`This is toc title`
     all_matches = re.findall(r'toc\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(slide_instance.toc.values(), start = 1)])
+        bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(slide_instance.toc, start = 1)])
         repr_html = slide_instance.format_html([match, bullets]).value
         text_chunk = text_chunk.replace(f'toc`{match}`', repr_html, 1)
         
@@ -150,7 +150,8 @@ class _ExtendedMarkdown(Markdown):
         """
         self._display_inline = display_inline # Must change here
         xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
-        
+        xmd = re.sub('\\\`', '&#96;', xmd) # Escape backticks
+        xmd = self._resolve_nested(xmd) # Resolve nested objects in form func`?text?` to func`html_repr`
         slides_instance = get_ipython().user_ns.get('__Slides_Instance__',None)
         if slides_instance and slides_instance._running_slide: # getattr(slides_instance,'_under_with_or_frame',False):
             xmd = resolve_objs_on_slide(slides_instance,xmd) # Resolve objects in xmd related to current slide
@@ -180,6 +181,14 @@ class _ExtendedMarkdown(Markdown):
                 except:
                     content += out.data['text/html'] # Rich content from python execution
             return content
+        
+    def _resolve_nested(self,text_chunk):
+        # match func`?text?` to parse text and return func`html_repr`
+        all_matches = re.findall(r'\`\?(.*?)\?\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
+        for match in all_matches:
+            repr_html = self.parse(match, display_inline = False, rich_outputs = False)
+            text_chunk = text_chunk.replace(f'`?{match}?`', f'`{repr_html}`', 1)
+        return text_chunk
     
     def _parse_block(self, block):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
