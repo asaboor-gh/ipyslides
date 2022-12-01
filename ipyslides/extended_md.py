@@ -239,13 +239,13 @@ class _ExtendedMarkdown(Markdown):
             return [highlight(dedent_data,language = 'python', className = _class),]
         elif 'run' in header and self._display_inline: 
             source = header.split('run')[1].strip() # Afte run it be source variable
-            _source_out = _str2code(dedent_data,language='python',className = _class)
-            
             if source:
-                shell.user_ns[source] = _source_out 
-            # Run Code now
+                shell.user_ns[source] = _str2code(dedent_data,language='python',className = _class) 
+            
+            # Run Code now and add a function to access slides instance
+            code = 'def get_slides_instance():\n    return __Slides_Instance__\n' + dedent_data + '\ndel get_slides_instance'
             with capture_output() as captured:
-                shell.run_cell(dedent_data) # Run after assigning it to variable, so can be accessed inside code too
+                shell.run_cell(code) # Run after assigning it to variable, so can be accessed inside code too
             
             outputs = captured.outputs
             return outputs

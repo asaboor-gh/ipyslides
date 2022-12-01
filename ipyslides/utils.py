@@ -1,4 +1,4 @@
-__all__ = ['suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
+__all__ = ['bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block'])
@@ -316,6 +316,12 @@ def sub(text):
 def sup(text):
     return html('sup',text,style="font-size:70%;color:inherit;")
 
-def bullets(iterable, ordered = False, className = None):
-    # Make powerfull bullets by parsing each item
-    pass
+def bullets(iterable, ordered = False,marker = None, className = None):
+    """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command.    
+    `marker` could be a unicode charcter or string, only effects unordered list.
+    """
+    _bullets = []
+    for it in iterable:
+        start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
+        _bullets.append(f'{start}{_fmt_write(it)}</li>')
+    return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],className = className) # Don't use style, it will remove effect of className

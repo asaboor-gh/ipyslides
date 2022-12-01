@@ -321,10 +321,10 @@ class BaseSlides:
                 
         with self.slide(next(counter)):
             self.write('## Useful Functions for Rich Content')
-            members = ['suppress_output','suppress_stdout','alert','block', 'bokeh2html', 'cite',
+            members = ['alert','block', 'bokeh2html', 'bullets','cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
-                       'set_dir', 'sig', 'svg','section', 'textbox', 'vspace']
+                        'section', 'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
@@ -339,8 +339,8 @@ class BaseSlides:
         
         s8, = self.from_markdown(next(counter), '''
         ## Highlighting Code
-        [pyg]:`[pygments](https://pygments.org/) is used for syntax highlighting.`
-        You can **highlight**{.Error} code using `highlight`cite`pyg` function or within markdown like this:
+        [pyg]:`https://pygments.org/ is used for syntax highlighting.`
+        You can **highlight**{.Error} code using `highlight` cite`pyg` function or within markdown like this:
         ```python
         import ipyslides as isd
         ```

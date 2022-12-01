@@ -110,6 +110,8 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 - You can now add table of contents using \`slides.toc\` and \`slides.section\`.
 - In Markdown settings, same thing can be done using alert`toc\`Toc Title\`` and alert`section\`section text\``.
 - You can use `Slides.goto_button` to add a button to go to jump to a slide.
+- Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
+- A new function `Slides.bullets` is added to add powerful bullet list from python objects.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )

@@ -3,6 +3,17 @@ Useful while writing markdown slides, without intefering with the rest of the co
 
 New in 1.4.6
 """
+#import warnings
+from .__version__ import __version__
+major,minor, patch = map(int,__version__.split('.'))
+if major >= 2:
+    if minor < 2:
+        print('DeprecationWarning: module "ipyslides.parsers" is being deprecated.\n' 
+        'Use function "get_slides_instance" inside a python block in markdown to access same functionality!')
+    if minor >= 2:
+        raise DeprecationWarning(('module "ipyslides.parsers" is deprecated.\n' 
+        'Use function "get_slides_instance" inside a python block in markdown to access same functionality!'))
+
 from .core import _private_instance as __pi
 notify          = __pi.notify
 notify_later    = __pi.notify_later

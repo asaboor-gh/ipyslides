@@ -519,6 +519,8 @@ span.lang-name {
 .CustomPrint {
     margin-block: 0.5px !important; /* Two adjacant prints should look closer */
 }
+.GoToButton {min-width:max-content;}
+.SlideArea ul li::marker, .SlideArea ol li::marker {color:var(--accent-color);}
 /* Citations on hover */
 .HiddenCitation {position: relative;}
 .HiddenCitation * {color: var(--secondary-fg);}

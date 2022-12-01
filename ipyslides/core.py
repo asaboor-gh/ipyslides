@@ -1,5 +1,5 @@
 
-import os, sys, re, textwrap
+import sys, re, textwrap
 from contextlib import contextmanager, suppress
 
 from IPython import get_ipython
@@ -322,18 +322,23 @@ class Slides(BaseSlides):
             if key in prev_keys:
                 _cited._id = str(prev_keys.index(key) + 1)
             else:
-                _cited._id = str(len(prev_keys)) 
+                _cited._id = str(len(prev_keys))
              
         # Return string otherwise will be on different place
         return f'''<a href="#{key}" class="HiddenCitation">
-                <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
-                <span>{self._citations_dict[key]}</span></a>'''
+        <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
+        <span>{self._citations_dict[key]}</span>\n</a>'''
     
     def set_citations(self, citations_dict):
         "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
         self._citations_dict.update({key:self.parse_xmd(value, display_inline=False, rich_outputs = False
                         ).replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1] # Only replace first <p>
                 for key, value in citations_dict.items()})
+        
+        for key, value in self._citations_dict.items():
+            for tag in ('</p>','</a>','</div>','</ul>','</ol>','</section>'):
+                if tag in value:
+                    raise ValueError(f'Invalid citation for key {key!r}. Do not use block elements in citations but unformatted links are allowed.')
         
         if self._citation_mode == 'footnote':
             for slide in self[:]:
@@ -354,18 +359,34 @@ class Slides(BaseSlides):
         Run the slide containing alert`Slides.toc` at end as well to see all contents."""
         return tuple([it._section for it in self._iterable if it._section if it._section])
     
-    def goto_button(self, slide, text,**kwargs):
-        """"
-        TODO: Add docstring
-        TODO: Add slide number instead of slide object as 1.1 or 2 (make string and split) etc.
-        Think to return or display, left, right text etc.
-        """
-        button = ipw.Button(description=text,**kwargs)
+    def goto_button(self, slide_number, text,text_around = ('',''), **kwargs):
+        """"Jump to slide_number when clicked. give slide_number as integer of float like 1, 3.1 etc.   
+        `text` is the text to be displayed on button.    
+        `text_around` is tuple of two additional texts items to put on left and right of the Button.    
+        `kwargs` are passed to `ipywidgets.Button` function.       
+        **Note:** This button has a CSS class 'GoToButton' that can be used to style it under each slide separately."""
+        if not isinstance(slide_number, (int,float)):
+            raise TypeError('Slide number should be an integer or float for accessing frames!')
+        
+        button = ipw.Button(description=text,**kwargs).add_class('GoToButton')
         def on_click(btn):
-            slide._app.progress_slider.index = slide.index
+            try:
+                ss = str(slide_number)
+                if '.' in ss:
+                    s,f = ss.split('.')
+                    slide = self._slides_dict[s].frames[int(f)-1]
+                else:
+                    slide = self._slides_dict[ss]
+                
+                slide._app.progress_slider.index = slide.index
+            except:
+                self.notify(f'Failed to jump to slide {slide_number!r}, it may not exist yet!')
 
         button.on_click(on_click)
-        return display(button)
+        
+        t1 = ipw.HTML(self.format_html(text_around[0]).value)
+        t2 = ipw.HTML(self.format_html(text_around[1]).value)
+        return display(ipw.HBox([t1,button,t2],layout=ipw.Layout(align_items='center')))
     
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
