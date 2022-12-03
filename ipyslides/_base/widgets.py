@@ -21,7 +21,10 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
-    setting =  Button(description= '\u2630',layout= Layout(width='auto',height='auto')).add_class('menu').add_class('SidePanel-Btn')
+    setting =  Button(description= '\u2699',layout= Layout(width='auto',height='auto', tooltip='Toggle Settings')).add_class('menu').add_class('SidePanel-Btn')
+    toc     =  Button(description= '\u2630',layout= Layout(width='auto',height='auto', tooltip='Toggle Table of Contents')).add_class('menu').add_class('Toc-Btn')
+    home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('menu')
+    end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('menu')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
                 tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
                 ).add_class('screenshot-btn') # .add_class('menu')
@@ -56,6 +59,7 @@ class _Htmls:
     sidebar = HTML(html('style',styles.sidebar_layout_css()).value) # Should be separate CSS
     loading = HTML() #SVG Animation in it
     logo    = HTML()
+    tochead = HTML('<h4>Table of Contents</h4><hr/>')
     toast   = HTML().add_class('Toast') # For notifications
     cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
     notes   = HTML('Notes Area').add_class('Inline-Notes') # For below slides area
@@ -243,6 +247,7 @@ class Widgets:
         
         self.footerbox = HBox([
             self.buttons.setting,
+            self.buttons.toc,
             HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
             self.buttons.capture,
         ],layout=Layout(height='36px')).add_class('nav-box')
@@ -287,6 +292,8 @@ class Widgets:
             ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0'))
         ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('panel') 
         
+        self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='100%',overflow='auto',display='none')).add_class('TOC')
+        
         self.slidebox = Box([
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox') 
@@ -300,12 +307,13 @@ class Widgets:
             self.htmls.logo,
             self.toggles.display,
             self.htmls.sidebar,
-            self.panelbox, 
+            self.panelbox,
             self.htmls.cursor,
             self.htmls.hilite,
             self.htmls.zoom,
             self.htmls.fscrn,
             HBox([ #Slide_box must be in a box to have animations work
+                self.tocbox, # Should be on left of slides
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display

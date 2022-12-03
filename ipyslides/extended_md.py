@@ -28,7 +28,7 @@ from IPython.core.display import display
 from IPython import get_ipython
 from IPython.utils.capture import capture_output
 
-from .formatter import _HTML, highlight, stringify
+from .formatters import _HTML, highlight, stringify
 from .source import _str2code
 
 _md_extensions = ['tables','footnotes','attr_list','md_in_html', 'customblocks'] # For Markdown Parser
@@ -187,6 +187,7 @@ class _ExtendedMarkdown(Markdown):
         all_matches = re.findall(r'\`\?(.*?)\?\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
         for match in all_matches:
             repr_html = self.parse(match, display_inline = False, rich_outputs = False)
+            repr_html = re.sub('</p>$','',re.sub('^<p>', '', repr_html)) # Remove <p> and </p> tags at start and end
             text_chunk = text_chunk.replace(f'`?{match}?`', f'`{repr_html}`', 1)
         return text_chunk
     

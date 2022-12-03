@@ -160,7 +160,7 @@ class Slide:
     
     @property
     def citations(self):
-        return tuple(self._citations.values())
+        return tuple(sorted(self._citations.values(), key=lambda x: int(x._id)))
     
     @property
     def css(self):
@@ -323,6 +323,9 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
     
     app._slidelabel = _slide.label # Go there to see effects
     _slide.update_display() # Update Slide, it will not come to this point if has same code
+    
+    # Update table of contents
+    app._update_toc(change = None)
     
     if old_slides != list(app._slides_dict.values()): # If there is a change in slides
         _slide._rebuild_all() # Rebuild all slides

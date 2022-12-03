@@ -5,7 +5,7 @@ not by end user.
 import re
 import os
 from .export_template import doc_css, doc_html, slides_css
-from ..formatter import code_css
+from ..formatters import code_css
 
 class _HhtmlExporter:
     # Should be used inside Slides class only.

@@ -7,7 +7,7 @@ __all__ = ['write','iwrite']
 import ipywidgets as ipw
 from IPython.display import display as display
 
-from .formatter import _HTML, _HTML_Widget, stringify
+from .formatters import _HTML, _HTML_Widget, stringify
 from .extended_md import parse_xmd          
 
 def _fix_repr(obj):
@@ -15,7 +15,7 @@ def _fix_repr(obj):
     if isinstance(obj,str):
         return parse_xmd(obj, display_inline= False, rich_outputs=False)
     else:
-        return stringify(obj)            
+        return stringify(obj)        
     
     
 def _fmt_write(*columns,width_percents=None,className=None):

@@ -18,6 +18,8 @@ class Navigation:
         self.btn_prev.on_click(self.__shift_left)
         self.btn_next.on_click(self.__shift_right)
         self.btn_settings.on_click(self.__toggle_panel)
+        self.widgets.buttons.home.on_click(self.__goto_home)
+        self.widgets.buttons.end.on_click(self._goto_end)
         self.visible_slider.observe(self.__set_hidden_height,names=['value'])
         
     def __shift_right(self,change):
@@ -54,16 +56,30 @@ class Navigation:
             self.btn_next.icon = 'chevron-right'
     
     def __toggle_panel(self,change):
-        if self.btn_settings.description == '\u2630':
-            self.btn_settings.description  = '⨉'
+        if self.btn_settings.description == '\u2699':
+            self.btn_settings.description  = '✕'
             self.widgets.panelbox.layout.display = 'flex'
             self.btn_next.disabled = True
             self.btn_prev.disabled = True
         else:
-            self.btn_settings.description = '\u2630'
+            self.btn_settings.description = '\u2699'
             self.widgets.panelbox.layout.display = 'none'
             self.btn_next.disabled = False
             self.btn_prev.disabled = False
+            
+    def __goto_home(self,btn):
+        try:
+            self.progress_slider.index = 0
+            self.widgets.buttons.toc.click() # Close TOC
+        except:
+            self.widgets._push_toast('Cannot go to home page. No slides found.')
+            
+    def _goto_end(self,btn):
+        try:
+            self.progress_slider.index = len(self.progress_slider.options) - 1
+            self.widgets.buttons.toc.click() # Close TOC
+        except:
+            self.widgets._push_toast('Cannot got to end of slides, may not enough slides exist.')
             
     def __set_hidden_height(self,change):
         self.widgets.slidebox.layout.height = f'{self.visible_slider.value}%'

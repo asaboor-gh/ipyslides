@@ -9,7 +9,7 @@ from IPython.display import display, Image, Javascript
 from IPython.utils.capture import capture_output
 from ipywidgets import Layout
 
-from ..formatter import fix_ipy_image, code_css
+from ..formatters import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
 from ..utils import set_dir, html, details, today
 from . import scripts, intro, styles
@@ -39,6 +39,7 @@ class LayoutSettings:
         self.box = self.widgets.panelbox
         self._on_load_and_refresh() # First attempt of Javascript to work
         
+        self.widgets.buttons.toc.on_click(self._toggle_tocbox)
         self.theme_dd.observe(self._update_theme,names=['value'])
         self.scale_slider.observe(self.__set_font_scale,names=['value'])
         self.height_slider.observe(self.__update_size,names=['value'])
@@ -226,6 +227,14 @@ class LayoutSettings:
         self.widgets.htmls.theme.value = f'<style>\n{theme_css}\n</style>'
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline, must call
         self._emit_resize_event()
+        
+    def _toggle_tocbox(self,btn):
+        if self.widgets.tocbox.layout.display == 'none':
+            self.widgets.tocbox.layout.display = 'unset'
+            self.widgets.buttons.toc.description = '✕'
+        else:
+            self.widgets.tocbox.layout.display = 'none'
+            self.widgets.buttons.toc.description = '\u2630'
         
     def _toggle_sidebar(self,change): 
         """Pushes this instance of Slides to sidebar and back inline."""

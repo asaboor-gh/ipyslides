@@ -10,7 +10,7 @@ import pygments
 from contextlib import contextmanager, suppress
 from IPython.display import display
 
-from .formatter import highlight, _HTML
+from .formatters import highlight, _HTML
     
 
 # Do not use this in main work, just inside a function

@@ -101,7 +101,10 @@ def style_css(style_root = theme_roots['Inherit']):
 .SlideArea .citation {
     font-size: 0.8em !important; 
     line-height: 0.85em !important;
-    display:block !important;
+    display: block !important;
+}
+.SlideArea .citation * {
+    display: inline-block !important;
 }
 .SlideArea figure {
     margin: 8px !important; /* override default margin */
@@ -401,11 +404,11 @@ details > div {
 	overflow:hidden; /* FireFox */
 }
 .SlidesWrapper .widget-inline-hbox .widget-readout  {box-shadow: none;color:var(--primary-fg) !important;}
-.SlidesWrapper .SlideArea h1 {margin-block: unset;font-size: 2.25em;  line-height: 1.5em;}
-.SlidesWrapper .SlideArea h2 {margin-block: unset;font-size: 2em;line-height: 1.5em;}
-.SlidesWrapper .SlideArea h3 {margin-block: unset;font-size: 1.5em;  line-height: 1.5em;}
-.SlidesWrapper .SlideArea h4 {margin-block: unset;font-size: 1.25em;line-height: 1.5em;}
-.SlidesWrapper .SlideArea h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
+.SlidesWrapper h1 {margin-block: unset;font-size: 2.25em;  line-height: 1.5em;}
+.SlidesWrapper h2 {margin-block: unset;font-size: 2em;line-height: 1.5em;}
+.SlidesWrapper h3 {margin-block: unset;font-size: 1.5em;  line-height: 1.5em;}
+.SlidesWrapper h4 {margin-block: unset;font-size: 1.25em;line-height: 1.5em;}
+.SlidesWrapper h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
 .SlidesWrapper .widget-text input {
     background: var(--primary-bg);
     color:var(--primary-fg);
@@ -416,7 +419,7 @@ details > div {
     font-size:0.9em;
     line-height: 0.9em;
 }
-.SlideArea hr {
+.SlideArea hr, .TOC hr {
     margin:0 !important;
     border: none;
     width: auto;
@@ -520,20 +523,78 @@ span.lang-name {
     margin-block: 0.5px !important; /* Two adjacant prints should look closer */
 }
 .GoToButton {min-width:max-content;}
+/* Associted with the above */
+.GoToBox {}
+.GoToHtml {}
+
+.SlidesWrapper.CaptureMode .SlideArea .GoToButton {display:none !important;} /* Hide the GoToButton in screenshot, it is not useful there */
+
+/* Table of contents */
+.TOC {
+    backdrop-filter: blur(20px);
+    margin: 4px 36px; 
+    padding: 0.5em;
+    position: absolute;
+    min-width: 60% !important;
+    height: calc(100% - 8px) !important;
+    box-sizing:border-box;
+    z-index: 100;
+    border-radius: 4px;
+    border: 1px solid var(--tr-hover-bg);
+}
+@media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in Notebook*/
+    .TOC {min-width: calc(100% - 72px) !important;}
+}
+.TOC .GoToBox {
+    justify-content: space-between;
+    height: auto;
+    width: auto;
+    box-sizing:border-box !important;
+}
+.TOC .GoToBox:hover {font-weight:bold;}
+.TOC .GoToButton {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    box-sizing:border-box;
+    padding:0;
+    margin:0;
+}
+.TOC .menu {font-size: 24px !important;}
+.TOC .GoToHtml {
+    width:100%;
+    height:max-content;
+    box-sizing:border-box;
+}
+.TOC .GoToHtml .widget-html-content {
+    box-sizing: border-box;
+    padding-left:2em !important;
+    display: flex;
+    flex-direction: row;
+    flex-wrap:nowrap;
+    justify-content:space-between !important;
+    align-items:top;
+}
+.TOC .GoToHtml .widget-html-content  span:first-of-type {
+    position:absolute;
+    top:0 !important; /*must have thing */
+    height:100%;
+    margin-left:-2em !important;
+}
+
 .SlideArea ul li::marker, .SlideArea ol li::marker {color:var(--accent-color);}
 /* Citations on hover */
-.HiddenCitation {position: relative;}
+.HiddenCitation {position: relative; display: inline-block;}
 .HiddenCitation * {color: var(--secondary-fg);}
-.HiddenCitation > span {display:none;}
-.HiddenCitation:hover > span {
-  display: unset;
+.HiddenCitation > div {display:none;}
+.HiddenCitation:hover > div {
+  display: inline-block;
   font-size: 90%;
   padding:0.1em;
   border-radius: 0.25em;
   border: 1px solid var(--tr-hover-bg);
 }
-a.HiddenCitation:hover { text-decoration: none;} /* does not work without a */
-.HiddenCitation > sup {font-weight:bold;}
+.HiddenCitation > a > sup {font-weight:bold;}
 
 /* Docs have Python code only, so no need to have fancy things there */
 .Docs {

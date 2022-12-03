@@ -18,7 +18,7 @@ from IPython.core.display import Image, display
 from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
-from .formatter import fix_ipy_image, _HTML
+from .formatters import fix_ipy_image, _HTML
 from .writers import _fmt_write, _fix_repr
 
 

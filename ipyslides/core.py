@@ -10,8 +10,8 @@ import ipywidgets as ipw
 
 from .extended_md import parse_xmd, _special_funcs, extender as _extender
 from .source import Source
-from .writers import write, iwrite
-from .formatter import bokeh2html, plt2html, highlight, _HTML, serializer
+from .writers import write, iwrite, _fix_repr
+from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
@@ -111,10 +111,12 @@ class Slides(BaseSlides):
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
         self._running_slide = None # For Notes, citations etc in markdown, controlled in Slide class
+        self._section_inds = [] # Indices of slides containing sections
         
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
+        self.progress_slider.observe(self._update_toc,names=['options'])
         
         # All Box of Slides
         self._box =  self.widgets.mainbox
@@ -157,7 +159,8 @@ class Slides(BaseSlides):
         - Python code blocks can be exectude by syntax 
         ```markdown
          ```python run source {.CSS_className}
-         my_var = 'Hello'
+         slides = get_slides_instance() # Only available under python code block
+         slides.write('Hello, I was written from python code block using slides instance.')
          ```
         ```
         and source then can be emded with \{\{source\}\} syntax and also \{\{my_var\}\} will show 'Hello'.
@@ -278,7 +281,7 @@ class Slides(BaseSlides):
             for slide in self[:]:
                 _all_citations.update(slide._citations)
             
-            return tuple(sorted(_all_citations.values(), key=lambda x: x._id))
+            return tuple(sorted(_all_citations.values(), key=lambda x: int(x._id)))
         
         return ("No citations in 'inline' or 'footnote' mode",)
     
@@ -325,20 +328,14 @@ class Slides(BaseSlides):
                 _cited._id = str(len(prev_keys))
              
         # Return string otherwise will be on different place
-        return f'''<a href="#{key}" class="HiddenCitation">
-        <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
-        <span>{self._citations_dict[key]}</span>\n</a>'''
+        return f'''<div class="HiddenCitation"><a href="#{key}">
+        <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup></a>
+        <div>{self._citations_dict[key]}</div>\n</div>'''
     
     def set_citations(self, citations_dict):
         "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
-        self._citations_dict.update({key:self.parse_xmd(value, display_inline=False, rich_outputs = False
-                        ).replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1] # Only replace first <p>
+        self._citations_dict.update({key:self.parse_xmd(value, display_inline=False, rich_outputs = False)
                 for key, value in citations_dict.items()})
-        
-        for key, value in self._citations_dict.items():
-            for tag in ('</p>','</a>','</div>','</ul>','</ol>','</section>'):
-                if tag in value:
-                    raise ValueError(f'Invalid citation for key {key!r}. Do not use block elements in citations but unformatted links are allowed.')
         
         if self._citation_mode == 'footnote':
             for slide in self[:]:
@@ -359,13 +356,9 @@ class Slides(BaseSlides):
         Run the slide containing alert`Slides.toc` at end as well to see all contents."""
         return tuple([it._section for it in self._iterable if it._section if it._section])
     
-    def goto_button(self, slide_number, text,text_around = ('',''), **kwargs):
-        """"Jump to slide_number when clicked. give slide_number as integer of float like 1, 3.1 etc.   
-        `text` is the text to be displayed on button.    
-        `text_around` is tuple of two additional texts items to put on left and right of the Button.    
-        `kwargs` are passed to `ipywidgets.Button` function.       
-        **Note:** This button has a CSS class 'GoToButton' that can be used to style it under each slide separately."""
-        if not isinstance(slide_number, (int,float)):
+    def _private_goto_button(self, slide_number, text,text_before = '', extra_func=None, **kwargs):
+        "See docs of `goto_button`. This is internal function to return button box. extra_func is a function to be called on click after going to slide."
+        if not isinstance(slide_number, (int,float,str)): # keep string for internal use only
             raise TypeError('Slide number should be an integer or float for accessing frames!')
         
         button = ipw.Button(description=text,**kwargs).add_class('GoToButton')
@@ -379,15 +372,26 @@ class Slides(BaseSlides):
                     slide = self._slides_dict[ss]
                 
                 slide._app.progress_slider.index = slide.index
+                if callable(extra_func): # Call extra function if given after chnaging slides, no need for user
+                    extra_func()
+                    
             except:
                 self.notify(f'Failed to jump to slide {slide_number!r}, it may not exist yet!')
 
         button.on_click(on_click)
         
-        t1 = ipw.HTML(self.format_html(text_around[0]).value)
-        t2 = ipw.HTML(self.format_html(text_around[1]).value)
-        return display(ipw.HBox([t1,button,t2],layout=ipw.Layout(align_items='center')))
+        html_before = ipw.HTML(_fix_repr(text_before)).add_class('GoToHtml')
+        return ipw.HBox([html_before,button],layout=ipw.Layout(align_items='center')).add_class('GoToBox')
     
+    def goto_button(self, slide_number, text,text_before = '', **kwargs):
+        """"Jump to slide_number when clicked. give slide_number as integer of float like 1, 3.1 etc.   
+        `text` is the text to be displayed on button.    
+        `text_before` additional text (will be parsed) on left of the Button. It is useful because button will not show up in sceenshot.        
+        `kwargs` are passed to `ipywidgets.Button` function.          
+        **Note:** This button has a CSS classes nested as 'GoToBox' > ('GoToHtml','GoToButton') 
+        that can be used to style it under each slide separately."""
+        return display(self._private_goto_button(slide_number, text,text_before = text_before, **kwargs))
+        
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
         
@@ -455,6 +459,14 @@ class Slides(BaseSlides):
     def _switch_slide(self,old_index, new_index): # this change is provide from _update_content
         self.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
         with self.widgets.outputs.slide:
+            next_slide = self[new_index]
+            if next_slide._section: # Slide has itw own section
+                self.html('style',f'.TOC .s{next_slide._index} {{border: 1px inset var(--secondary-bg);background:var(--secondary-bg);}}').display()
+            else:
+                idxs = [s._index for s in self[:new_index] if s._section] # Get all section indexes before current slide
+                sec_index = idxs[-1] if idxs else 0 # Get last section index
+                self.html('style',f'.TOC .s{sec_index} {{border: 1px inset var(--secondary-bg);background:var(--secondary-bg);}}').display()
+            
             if self.screenshot.capturing == False:
                 self._iterable[new_index].animation.display()
             self._iterable[new_index].css.display()
@@ -544,7 +556,7 @@ class Slides(BaseSlides):
                 _frames = [_frames[0] + '\n' + obj for obj in _frames[1:]]
                 
             @self.frames(int(slide_number_str), *_frames)
-            def make_slide(_frame):
+            def make_slide(_frame, idx):
                 #s.clear_display(wait = True) # It piles up otherwise due to replacements
                 parse_xmd(_frame, display_inline = True, rich_outputs = False)
                 self._running_slide._markdown = _frame # Update markdown, # cell_code will be automatuically cleared in `self.frames`
@@ -596,13 +608,17 @@ class Slides(BaseSlides):
             yield s # Useful to use later
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto', props_dict = {}):
-        """Decorator for inserting frames on slide, define a function with one argument acting on each obj in objs.
-        You can also call it as a function, e.g. `.frames(slide_number = 1,1,2,3,4,5)()` becuase required function is `write` by defualt.
+        """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
+        You can also call it as a function, e.g. `.frames(slide_number = 1,1,2,3,4,5)()` becuase it can write by defualt.
         
         ```python
         @slides.frames(1,a,b,c) # slides 1.1, 1.2, 1.3 with content a,b,c
-        def f(obj):
+        def f(obj, idx):
             do_something(obj)
+            if idx == 0: # Main Slide
+                print('This is main slide')
+            else:
+                print('This is frame', idx)
             
         slides.frames(1,a,b,c)() # Auto writes the frames with same content as above
         slides.frames(1,a,b,c, repeat = True)() # content is [a], [a,b], [a,b,c] from top to bottom
@@ -621,7 +637,7 @@ class Slides(BaseSlides):
         
         No return of defined function required, if any, only should be display/show etc.
         CSS properties from `prop_dict` are applied to all slides from *objs."""
-        def _frames(func = self.write): # default write if called without function
+        def _frames(func = lambda obj, idx:self.write(obj)): # default write if called without function
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
             
@@ -644,7 +660,11 @@ class Slides(BaseSlides):
             # build_slide returns old slide with updated display if exists.
             with _build_slide(self, f'{slide_number}', props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
                 self.write(self.format_css('.SlideArea',height = frame_height))
-                func(_new_objs[0]) # Main slide content
+                try:
+                    func(_new_objs[0],0) # Main slide content
+                except:
+                    print('WARNING: Function under frames should be defined with two arguments, "obj" and "index"')
+                    func(_new_objs[0])
             
             _new_objs = _new_objs[1:] # Fisrt one is already written
             
@@ -661,7 +681,11 @@ class Slides(BaseSlides):
                 
                 with new_slide._capture(assign = True) as captured:
                     self.write(self.format_css('.SlideArea',height = frame_height))
-                    func(obj)
+                    try:
+                        func(obj,i+1)
+                    except:
+                        print('WARNING: Function under frames should be defined with two arguments, "obj" and "index"')
+                        func(obj)
                 
                 new_slide._from_cell = False
                 new_slide._cell_code = ''    
@@ -675,6 +699,18 @@ class Slides(BaseSlides):
             # Update All displays
             for s in this_slide._frames:
                 s.update_display()
+                # Remove duplicate sections/toasts/notes if any
+                if s._section == this_slide._section:
+                    s._section = None
+                if s._notes == this_slide._notes:
+                    s._notes = ''
+                # Toast has new function each time, needs more than just equal check
+                if s._toast and this_slide._toast: 
+                    if s._toast['func']() == this_slide._toast['func']():
+                        s._toast = None
+            
+            # Update Table of contents
+            self._update_toc(change = None)
             
         return _frames 
 
@@ -702,8 +738,35 @@ class Slides(BaseSlides):
                     jj = f'{j}' if len(frames) < 10 else f'{j:02}' # 99 frames max
                     frame._label = f'{nslide}.{jj}' # Label for frames
                     slides_iterable.append(frame)
-            
+        
         return tuple(slides_iterable)
+    
+    def _update_toc(self,change):
+        tocs_dict = {s._section:s for s in self._iterable if s._section}
+        children = children = [
+            ipw.HBox([
+                self.widgets.buttons.home,
+                self.widgets.buttons.end,
+                self.widgets.buttons.toc
+            ]),
+            self.widgets.htmls.tochead
+        ]
+        section_inds = []
+        if not tocs_dict:
+            children.append(ipw.HTML(_fix_repr('No sections found!, create sections with alert`Slides.section` method'
+                    ' or alert`section\`Section content\``/alert`section\`?Section content will be parsed first?\`` in markdown cells')))
+        else:
+            for i,(sec,slide) in enumerate(tocs_dict.items(), start = 1):
+                slide_number = f"{slide._number}.{slide._label.split('.')[1]}" if '.' in slide._label else slide._number
+                text_before = _fix_repr(f'color[var(--accent-color)]`{i}.` {sec}') + f"<p>{slide._label}</p>"
+                extra_func = lambda: self.widgets.buttons.toc.click()
+                p_btn = self._private_goto_button(slide_number,'', text_before= text_before,extra_func=extra_func)
+                children.append(p_btn.add_class(f's{slide._index}')) # class for dynamic CSS
+                section_inds.append(slide._index)
+                
+        self._section_inds = tuple(section_inds)
+        self.widgets.tocbox.children = children
+        
     
     def create(self, *slide_numbers, props_dict ={}):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is faster than creating one slide each time."

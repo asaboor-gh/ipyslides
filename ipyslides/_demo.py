@@ -5,7 +5,7 @@ import time
 from ipyslides.utils import textbox
 
 from ipyslides.writers import write, iwrite
-from ipyslides.formatter import libraries, __reprs__
+from ipyslides.formatters import libraries, __reprs__
 from ipyslides._base.intro import how_to_slide, logo_svg
 
 slides = globals()['slides'] # gloabals are update from calling function demo()
@@ -73,7 +73,7 @@ Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https:/
 [^1]: Add references like this per slide. Use slides.cite() or in markdown cite\`key\` to add citations generally.
 '''
 @slides.frames(3,'## I am created using `@slides.frames`',online_sources)
-def func(obj):
+def func(obj,idx):
     with slides.source.context(auto_display = False) as s:
         slides.write(obj)
         slides.write(slides.running) # This is currently running slide, so you can set CSS, animation etc inside the function.
@@ -223,20 +223,20 @@ with slides.slide(13):
 
 # Animat plot in slides  
 @slides.frames(14,*range(14,19))
-def func(obj):
+def func(obj,idx):
     with slides.source.context(auto_display = False) as s:
         fig, ax = plt.subplots()
-        x = np.linspace(0,obj+1,50+10*(obj - 13))
+        x = np.linspace(0,obj+1,50+10*(idx+1))
         ax.plot(x,np.sin(x));
-        ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {obj - 13}')
+        ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {idx+1}')
         ax.set_axis_off()
         slides.notes.insert(f'## This is under @frames decorator!')
         slides.notify_later()(lambda: f'This is under @frames decorator!')
         
-    slides.write([f'### This is Slide {14}.{obj-14}\n and we are animating matplotlib',
-                  s.show_lines([obj-14])
+    slides.write([f'### This is Slide {14}.{idx}\n and we are animating matplotlib',
+                  s.show_lines([idx])
                   ],ax,width_percents=[40,60])
-    if obj == 14:
+    if idx == 0: #Only show source code of first frame
         s.show_lines([5,6]).display()
     
     slides.write(slides.cite('This'))
@@ -244,17 +244,17 @@ def func(obj):
 # Frames structure
 boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:auto;padding:8px;margin:8px;border-radius:4px;"><h1>{i}</h1></div>' for i in range(1,5)]
 @slides.frames(15,*boxes, repeat=False)
-def f(obj):
+def f(obj,idx):
     slides.write('# Frames with \n#### `repeat = False`')
     slides.write(obj)
 
 @slides.frames(16,*boxes, repeat=True)
-def f(obj):
+def f(obj,idx):
     slides.write('# Frames with \n#### `repeat = True`')
     slides.write(*obj,className='Warning')
     
 @slides.frames(17,*boxes, repeat=[(0,1),(2,3)])
-def f(obj):
+def f(obj,idx):
     with slides.source.context(auto_display = False) as s:
         slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)

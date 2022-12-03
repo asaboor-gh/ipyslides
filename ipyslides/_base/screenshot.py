@@ -46,6 +46,7 @@ class ScreenShot:
         You can provide additional widgets to hide while capturing as well."""
         hide_widgets = [self.widgets.controls,
                         self.widgets.buttons.setting,
+                        self.widgets.buttons.toc,
                         self.btn_capture,
                         self.widgets.sliders.visible,
                         self.widgets.htmls.toast,
@@ -56,10 +57,12 @@ class ScreenShot:
         old_pref = self.widgets.htmls.toast.layout.visibility # To keep user prefernce back after screenshot
         for w in hide_widgets:
             w.layout.visibility = 'hidden'
-        try:    
+        try:  
+            self.widgets.mainbox.add_class('CaptureMode') # Used to hide other things on slide  
             self.capturing = True # Must be for main class to know
             yield
         finally:
+            self.widgets.mainbox.remove_class('CaptureMode')
             self.capturing = False # Back to normal
             for w in hide_widgets:
                 w.layout.visibility = 'visible' 
