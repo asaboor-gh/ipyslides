@@ -101,11 +101,10 @@ def style_css(style_root = theme_roots['Inherit']):
 .SlideArea .citation {
     font-size: 0.8em !important; 
     line-height: 0.85em !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: row !important;
 }
-.SlideArea .citation * {
-    display: inline-block !important;
-}
+.SlideArea .citation > a {margin-right: 0.3em !important;}
 .SlideArea figure {
     margin: 8px !important; /* override default margin */
 }
@@ -317,7 +316,7 @@ details > div {
 	color: var(--primary-fg);
 }
 .SlidesWrapper .panel {
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(50px);
     position:absolute;
     border:none;
     padding: 8px !important;
@@ -421,6 +420,7 @@ details > div {
 }
 .SlideArea hr, .TOC hr {
     margin:0 !important;
+    margin-block: 0.5em !important;
     border: none;
     width: auto;
     height: 2px;
@@ -531,7 +531,7 @@ span.lang-name {
 
 /* Table of contents */
 .TOC {
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(50px);
     margin: 4px 36px; 
     padding: 0.5em;
     position: absolute;
@@ -583,18 +583,19 @@ span.lang-name {
 }
 
 .SlideArea ul li::marker, .SlideArea ol li::marker {color:var(--accent-color);}
-/* Citations on hover */
-.HiddenCitation {position: relative; display: inline-block;}
-.HiddenCitation * {color: var(--secondary-fg);}
-.HiddenCitation > div {display:none;}
-.HiddenCitation:hover > div {
-  display: inline-block;
-  font-size: 90%;
-  padding:0.1em;
-  border-radius: 0.25em;
-  border: 1px solid var(--tr-hover-bg);
+/* Citations on hover of object before it */
+a.citelink > sup {
+    font-weight:bold;
 }
-.HiddenCitation > a > sup {font-weight:bold;}
+.citation.hidden {
+    display:none !important;
+}
+*:hover + .citation.hidden {
+    display:flex !important;
+    border: 1px inset var(--tr-hover-bg);
+    background: var(--secondary-bg);
+    padding: 0.2em;
+}
 
 /* Docs have Python code only, so no need to have fancy things there */
 .Docs {

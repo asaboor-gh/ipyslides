@@ -27,8 +27,8 @@ Version: {{version}} as executed from below code in markdown.
 ---
 # Slide 2 {.Success}
 Created using `%%slide 2 -m` with markdown only
-[slide2]:`This is reference created using markdown`
-cite`slide2` Reference to this will show at end
+[slide2]:`This is reference created using markdown` cite`slide2` 
+Reference to this will show at end
 ```multicol
 # Column A
 ||### Sub column A {.Success}||### Sub column B ||

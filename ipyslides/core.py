@@ -50,10 +50,10 @@ class _Citation:
     @property
     def value(self):
         _value = self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using slides.set_citations or [{self._key}]:\`citation text\` in markdown.')
-        return f'''<span class = "citation" id="{self._key}">
+        return f'''<div class = "citation" id="{self._key}">
             <a href="#{self._key}-back"> 
-                <sup style="color:var(--accent-color);">{self._id}</sup>
-            </a>{_value}</span>'''
+                <span style="color:var(--accent-color);">{self._id}. </span>
+            </a>{_value}</div>'''
         
         
 class Slides(BaseSlides):
@@ -111,7 +111,7 @@ class Slides(BaseSlides):
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
         self._running_slide = None # For Notes, citations etc in markdown, controlled in Slide class
-        self._section_inds = [] # Indices of slides containing sections
+        self._next_number = 0 # Auto numbering of slides should be only in python scripts
         
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
@@ -328,9 +328,9 @@ class Slides(BaseSlides):
                 _cited._id = str(len(prev_keys))
              
         # Return string otherwise will be on different place
-        return f'''<div class="HiddenCitation"><a href="#{key}">
-        <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup></a>
-        <div>{self._citations_dict[key]}</div>\n</div>'''
+        return f'''<a href="#{key}" class="citelink">
+        <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
+        </a>''' + (_cited.value.replace('citation', 'citation hidden',1) if self._citation_mode == 'global' else '') # will be hidden by default
     
     def set_citations(self, citations_dict):
         "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
@@ -433,6 +433,14 @@ class Slides(BaseSlides):
                     self.widgets.toggles.timer,
                     self.widgets.htmls.notes
                 ]).add_class('ExtraControls')
+    
+    @property
+    def auto_number(self):
+        """Returns slide_number to be used in currently buidling slide. Useful inside python scripts. 
+        
+        - Don't use in Notebook, otherwise you will be keep adding slides on each run.
+        - Don't mix auto_number with manual numbering unless you know what you are doing."""
+        return self._next_number 
     
     @property
     def _slideindex(self):
@@ -751,7 +759,7 @@ class Slides(BaseSlides):
             ]),
             self.widgets.htmls.tochead
         ]
-        section_inds = []
+        
         if not tocs_dict:
             children.append(ipw.HTML(_fix_repr('No sections found!, create sections with alert`Slides.section` method'
                     ' or alert`section\`Section content\``/alert`section\`?Section content will be parsed first?\`` in markdown cells')))
@@ -762,9 +770,7 @@ class Slides(BaseSlides):
                 extra_func = lambda: self.widgets.buttons.toc.click()
                 p_btn = self._private_goto_button(slide_number,'', text_before= text_before,extra_func=extra_func)
                 children.append(p_btn.add_class(f's{slide._index}')) # class for dynamic CSS
-                section_inds.append(slide._index)
                 
-        self._section_inds = tuple(section_inds)
         self.widgets.tocbox.children = children
         
     

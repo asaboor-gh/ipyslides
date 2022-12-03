@@ -271,10 +271,8 @@ class BaseSlides:
         self.clear() # Clear previous content
         self.create(*range(13)) # Create slides faster
         
-        from itertools import count
         from ..core import Slides
         from ..__version__ import __version__
-        counter = count(start=1)
         
         self.settings.set_footer('IPySlides Documentation')
         
@@ -282,7 +280,7 @@ class BaseSlides:
             self.write(f'## IPySlides {__version__} Documentation\n### Creating slides with IPySlides')
             self.center('''
                 alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
-
+                section`Introduction`
                 today``
                 
                 class`TextBox`
@@ -291,36 +289,36 @@ class BaseSlides:
                 ^^^
                 ''').display()
             
-        with self.slide(next(counter)):
+        with self.slide(self.auto_number):
             self.write(['# Main App',self.doc(Slides)])
         
-        with self.slide(next(counter)):
-            self.write('## Adding Slides')
+        with self.slide(self.auto_number):
+            self.write('## Adding Slides section`Adding Slides and Content`')
             self.write('Besides functions below, you can add slides with `%%title` magics as well.\n{.Note .Info}')
             self.write([self.doc(self.title,'Slides'),self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
-        with self.slide(next(counter)):
+        with self.slide(self.auto_number):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.Note .Info}')
             self.xmd_syntax.display() # This will display information about Markdown extended syntax
             self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse_xmd,'Slides'),self.doc(self.cite,'Slides')])
         
-        with self.slide(next(counter)):
+        with self.slide(self.auto_number):
             self.write('## Adding Speaker Notes')
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.Note .Success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.Block-red .Error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
-        with self.slide(next(counter)):
+        with self.slide(self.auto_number):
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        with self.slide(next(counter)):
-            self.write('## Layout and Theme Settings')
+        with self.slide(self.auto_number):
+            self.write('## Layout and Theme Settings section`?Layout and color[yellow_black]`Theme` Settings?`')
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
-        with self.slide(next(counter)):
-            self.write('## Useful Functions for Rich Content')
+        with self.slide(self.auto_number):
+            self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
             members = ['alert','block', 'bokeh2html', 'bullets','cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
@@ -328,7 +326,7 @@ class BaseSlides:
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
-        with self.slide(next(counter)):
+        with self.slide(self.auto_number):
             self.write('## Content Styling')
             with self.source.context(auto_display = False) as c:
                 self.write(('You can **style**{.Error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink_yellow]`text`* with `className` attribute in writing/content functions. ' 
@@ -337,10 +335,10 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
-        s8, = self.from_markdown(next(counter), '''
+        s8, = self.from_markdown(self.auto_number, '''
         ## Highlighting Code
-        [pyg]:`https://pygments.org/ is used for syntax highlighting.`
-        You can **highlight**{.Error} code using `highlight` cite`pyg` function or within markdown like this:
+        [pyg]:`[pygments](https://pygments.org/) is used for syntax highlighting.`
+        You can **highlight**{.Error} code using `highlight` function or within markdown like this:cite`pyg`
         ```python
         import ipyslides as isd
         ```
@@ -357,8 +355,8 @@ class BaseSlides:
             self.write(s8.citations)
             s8.source.display()
         
-        with self.slide(next(counter)):
-            self.write('## Loading from File/Exporting to HTML')
+        with self.slide(self.auto_number):
+            self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
             self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
             self.write([self.doc(self.from_markdown,'Slides'),
                         self.doc(self.demo,'Slides'), 
@@ -366,24 +364,23 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
-        with self.slide(next(counter)):
-            self.write('## Adding User defined Objects/Markdown Extensions')
+        with self.slide(self.auto_number):
+            self.write('## Adding User defined Objects/Markdown Extensions section`Advanced Functionality`')
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.Note .Info}')
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
         
-        with self.slide(next(counter)):
+        with self.slide(self.auto_number):
             self.write('## Keys and Shortcuts\n'
                 '- You can use `Slides.current` to access a slide currently in view.\n'
                 '- You can use `Slides.running` to access the slide currently being built,'
                 ' so you can set CSS, aminations etc.', key_combs)
         
-        with self.slide(next(counter)):
-            self.write(['## Presentation Code',self.docs])
+        with self.slide(self.auto_number):
+            self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
         self._slideindex = 0 # Go to title
-        del counter # Delete counter
         return self
 
 def _parse_markdown_text(text_block):

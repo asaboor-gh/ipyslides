@@ -47,14 +47,15 @@ class Slide:
     @contextmanager
     def _capture(self, assign = True):
         "Capture output to this slide."
+        self._app._running_slide = self
         if assign:
+            self._app._next_number = int(self._number) + 1
             self._toast = None # Reset toast
             self._notes = '' # Reset notes
             self._citations = {} # Reset citations
             self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
             self._section = None # Reset section
         
-        self._app._running_slide = self
         try:
             with capture_output() as captured:
                 yield captured
