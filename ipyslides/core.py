@@ -252,6 +252,10 @@ class Slides(BaseSlides):
         
         raise KeyError("Slide could be accessed by index, slice or key, got {}".format(key))
     
+    def navigate_to(self,index):
+        "Programatically Navigate to slide by index."
+        self._slideindex = index
+    
     @property
     def notebook_dir(self):
         "Get notebook directory."
@@ -437,6 +441,7 @@ class Slides(BaseSlides):
     @property
     def auto_number(self):
         """Returns slide_number to be used in currently buidling slide. Useful inside python scripts. 
+        Inside a running slide, you can access it's value using `slides.running.number`.  
         
         - Don't use in Notebook, otherwise you will be keep adding slides on each run.
         - Don't mix auto_number with manual numbering unless you know what you are doing."""

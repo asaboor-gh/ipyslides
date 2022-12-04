@@ -103,11 +103,11 @@ Use `Slides.extender` to add [markdown extensions](https://python-markdown.githu
 Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
     
 **New in 2.0.1**    
-Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorphic` in 2.0.8+) and alert`slides.clipboard_image` to add glassmorphic and clipboard image support.
+Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorphic` in 2.0.8+) and alert`slides.clipboard_image ` to add glassmorphic and clipboard image support.
 
 **New in 2.1.7**    
  
-- You can now add table of contents using \`slides.toc\` and \`slides.section\`.
+- You can now add table of contents using alert`Slides.toc ` and alert`Slides.section `. Remember to run slide with alert` toc ` at last as well to grab all contents.
 - In Markdown settings, same thing can be done using alert`toc\`Toc Title\`` and alert`section\`section text\``.
 - You can use `Slides.goto_button` to add a button to go to jump to a slide.
 - Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.

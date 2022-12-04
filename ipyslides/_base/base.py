@@ -225,45 +225,8 @@ class BaseSlides:
     
     def demo(self):
         "Demo slides with a variety of content."
-        self.close_view() # Close any previous view to speed up loading 10x faster on average
-        self.clear() # Clear previous content
-        self._citation_mode = 'global' # Set citation mode to global if set otherwise by user
-        
-        import runpy
-        file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_demo.py') # Relative path to this file
-        slides = runpy.run_path(file, init_globals= {'slides': self})['slides']
-        
-        N = len(slides)
-        with slides.slide(N + 1):
-            slides.write('## This is all code to generate slides')
-            slides.write(self.demo)
-            slides.source.from_file(file).display()
-            
-        with slides.slide(N + 2):
-            slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.Note .Info}')
-            slides.get_source().display()
-             
-        with slides.slide(N + 3, props_dict = {'': dict(background='#9ACD32')}):
-            with slides.source.context():
-                slides.write('citations`## Reference via Markdown\n----`',
-                             ['## Reference via Python API\n----',
-                              *slides.citations])
-                slides.write('Markdown is easier to write and read, but Python API is more powerful.')
-                
-                 
-        # Just for func, set theme of all even slides to be fancy, and zoom animation
-        fancy_even_slides_css = {       
-            '--heading-fg': '#105599',
-            '--accent-color': '#955200',
-            '--pointer-color': '#FF7722'
-        }   
-        
-        for s in slides[::2]: 
-            s.set_css({'slide': fancy_even_slides_css})
-            s.set_animation('zoom')
-        
-        slides._slideindex = 0 # Go to title, user should not set this
-        return slides
+        from .. import _demo
+        return _demo.demo(self) # Run demo
         
     def docs(self):
         "Create presentation from docs of IPySlides."
@@ -288,6 +251,9 @@ class BaseSlides:
                 sup`2`Their University is somewhere in the middle of nowhere
                 ^^^
                 ''').display()
+        
+        with self.slide(self.auto_number) as slide_toc: # Need at end to refresh TOC
+            self.write('## Table of Contents')
             
         with self.slide(self.auto_number):
             self.write(['# Main App',self.doc(Slides)])
@@ -308,6 +274,7 @@ class BaseSlides:
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.Note .Success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.Block-red .Error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
+            self.goto_button(10,'Jump to Slide 10', 'This is kind a alert`alt text` because button will alert`NOT` show in screenshot of slides')
                    
         with self.slide(self.auto_number):
             self.write('## Displaying Source Code')
@@ -375,12 +342,16 @@ class BaseSlides:
             self.write('## Keys and Shortcuts\n'
                 '- You can use `Slides.current` to access a slide currently in view.\n'
                 '- You can use `Slides.running` to access the slide currently being built,'
-                ' so you can set CSS, aminations etc.', key_combs)
+                ' so you can set CSS, aminations etc.\n'
+                '- You can use `Slides.auto_number` inside python script for `slide_number` argument. alert`Do NOT` use in Notebook.', key_combs)
         
         with self.slide(self.auto_number):
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
-        self._slideindex = 0 # Go to title
+        with slide_toc.insert(-1): # Update table of contents
+            self.write('toc`------`')
+         
+        self.navigate_to(0) # Go to title
         return self
 
 def _parse_markdown_text(text_block):

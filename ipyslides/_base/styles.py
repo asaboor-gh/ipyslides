@@ -412,6 +412,11 @@ details > div {
     background: var(--primary-bg);
     color:var(--primary-fg);
 }
+.SlidesWrapper .widget-html-content pre, 
+.SlidesWrapper .widget-html-content code, 
+.SlidesWrapper .widget-html-content p {
+    font-size: 100% !important; /* otherwise it is so small */
+}
 
 .SlideArea { width: __content_width__ !important;} 
 .SlideArea .footnote *,  .SlideArea .footnote li::marker {

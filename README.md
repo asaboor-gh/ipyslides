@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 2.1.6
+> pip install ipyslides >= 2.1.7
 ```
 For development install, clone this repository and then
 ```shell
@@ -144,7 +144,7 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 - You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `slides.notes.insert` (`slides.notes` in < 1.2.1) command. 
 - Notes is an experimantal feuture, so use at your own risk. Do not share full screen, share a brwoser tab for slides and you can keep notes hidden from audience this way. 
 # Known Limitations
-- Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. 
+- Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. In version `2.1.7+` you can use property `Slides.auto_number` inside Python script, but avoid it in Notebook since it does not run linearly and can create hundreds of slides as you keep running cells.
 - Bounding box of slides for screenshots should be set by user (if not in fullscreen).
 
 # Customize Slides

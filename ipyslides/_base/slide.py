@@ -160,6 +160,10 @@ class Slide:
         return self._label
     
     @property
+    def number(self):
+        return int(self._number) # Return as int
+    
+    @property
     def citations(self):
         return tuple(sorted(self._citations.values(), key=lambda x: int(x._id)))
     
@@ -261,9 +265,11 @@ class Slide:
             self.__class__._animations['frame'] = ''
             
     def set_animation(self, name):
-        "Set animation of this slide."
-        if name:
-            self._animation = html('style',styles.animations[name])
+        "Set animation of this slide. Provide None if need to stop animation."
+        if name is None:
+            self._animation = html('style', '')
+        elif isinstance(name,str):
+            self._animation = html('style',styles.animations.get(name, ''))
             # See effect of changes
             if self._app._slidelabel != self.label:
                 self._app._slidelabel = self.label # Go there to see effects
