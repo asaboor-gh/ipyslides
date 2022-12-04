@@ -19,10 +19,9 @@ sup`2`Their University is somewhere in the middle of nowhere
 ^^^
 <h4 style=""color:green;"> 👈🏻 Read instructions in left panel</h4>
 ---
-## Table of Contents
-toc`-----------------`
+section`Introduction`
 ---
-# Introduction section`Introduction`
+# Introduction
 To see how commands work, use `Slides.docs()` to see the documentation.
 Here we will focus on using all that functionality to create slides.
 ```python run source
@@ -54,8 +53,7 @@ def demo(slides_instance):
     slides = slides_instance
     slides.close_view() # Close any previous view to speed up loading 10x faster on average
     slides.clear() # Clear previous content
-    slides._citation_mode = 'global' # Set citation mode to global if set otherwise by user
-    
+
     # Create shortcut for autoslide/autoframes, but DO NOT do it in Notebook, you may get countless slides there with each run.
     def autoslide(*args,**kwargs): return slides.slide(slides.auto_number, *args, **kwargs) 
     def autoframes(*args,**kwargs): return slides.frames(slides.auto_number, *args, **kwargs) 
@@ -67,6 +65,8 @@ def demo(slides_instance):
 
     #Demo for loading slides from a file or text block 
     s0, s1, s2, *others = slides.from_markdown(0,markdown_str, trusted=True)
+    
+    section_slides = {'1':s1} # We collect all slides that have section to update at end. Very useful
 
     with s0.insert(0):
         s0.source.display(collapsed = True)
@@ -81,8 +81,9 @@ def demo(slides_instance):
     s2.insert_markdown({-1: f'alert`I was added at end using \`s2.insert_markdown\``'})
 
     #Now generate many slides in a loop
-    __contents = [f"""
-    ## IPython Display Objects section`Variety of Content Types to Display`
+    __contents = ["section`Variety of Content Types to Display`",
+    f"""
+    ## IPython Display Objects
     #### Any object with following methods could be in`write` command:
     {', '.join([f'`_repr_{rep}_`' for rep in __reprs__])}
     Such as color[navy_skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`{{.Warning}}.            
@@ -106,16 +107,21 @@ def demo(slides_instance):
     for i, content in enumerate(__contents):
         with autoslide(props_dict = {'':dict(background = 'skyblue')}):
             write(textwrap.dedent(content))
-            if i == 3:
+            if i == 4:
                 with slides.source.context(auto_display = False) as s:
                     write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse_xmd,'Slides')])
                     write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
 
                 s.show_lines([0,1]).display()
+            if i == 0:
+                section_slides['2'] = slides.running
+    
+    with autoslide() as section_slides['3']:
+        slides.write('section`Plotting and DataFrame`')
 
     # Matplotlib
     with autoslide(props_dict = {'': dict(background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')}):
-        write('## Plotting with Matplotlib section`Plotting and DataFrame`')
+        write('## Plotting with Matplotlib')
         with slides.source.context(auto_display = False) as s:
             import numpy as np, matplotlib.pyplot as plt
             plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation
@@ -224,15 +230,18 @@ def demo(slides_instance):
             s.show_lines([5,6]).display()
 
         slides.write(slides.cite('This'))
+        
+    with autoslide() as section_slides['4']:
+        slides.write('section`Controlling Content on Frames`')
 
     # Frames structure
     boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="Center">{i}</b></div>' for i in range(1,5)]
     @autoframes(*boxes, repeat=False)
     def f(obj,idx):
-        slides.write('# Frames with \n#### `repeat = False` section`Controlling Content on Frames`')
+        slides.write('# Frames with \n#### `repeat = False`')
         slides.write(obj)
 
-    @autoframes(*boxes, repeat=True)
+    @autoframes(*boxes, repeat=True,frame_height='100%')
     def f(obj,idx):
         slides.running.set_animation(None) #Disable animation for showing bullets list
         slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
@@ -269,10 +278,12 @@ def demo(slides_instance):
             s.display() # s = source.context(style='vs', className="Youtube")
         
     # Data Table
-    slides.shell.run_cell_magic('slide',f'{slides.auto_number}',"""
+    slides.shell.run_cell(f"""
+    %%slide {slides.auto_number}
     with myslides.source.context(auto_display = False) as s:
         write('## Data Tables')
-        # Remember myslides variable was assigned in a python block in markdown just in start. Magic!
+        # Remember myslides variable was assigned in a python block
+        # in markdown just in start. Magic!
         write(myslides.block_r('Here is Table','<hr/>','''
             |h1|h2|h3|
             |---|---|---|
@@ -308,8 +319,11 @@ def demo(slides_instance):
         ).display()
         slides.write('----') # In Python < 3.8, context manager does not properly handle end of code block, so use this to end context
 
+    with autoslide() as section_slides['5']:
+        slides.write('section`Custom Objects Serilaization`')
+    
     with autoslide():
-        slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')
+        slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
         with slides.suppress_stdout(): # suppress stdout from register fuction below
             with slides.source.context(auto_display = False) as s:
                 @slides.serializer.register(int)
@@ -335,12 +349,9 @@ def demo(slides_instance):
                          ['## Reference via Python API\n----',
                           *slides.citations])
             slides.write('Markdown is easier to write and read, but Python API is more powerful.')
-            
-    with slides.slide(1): #slide 1 will be modified with old and new content
-        with slides.source.context(auto_display = False, style='monokai', color='white', className='Mono') as s:
-            slides.parse_xmd(s1.markdown) #s1 was assigned as `s0, s1, s2 = slides.from_markdown...` in start.
-            slides.write('I was re-executed at end to grab all table of contents and new content!')
-        s.display()
+    
+    for _, slide in section_slides.items():
+        slide.insert_markdown({-1: 'toc`## Table of Contents\n----`'})
     
     slides.navigate_to(0) # Go to title slide
     return slides

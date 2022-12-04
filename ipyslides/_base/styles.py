@@ -316,7 +316,7 @@ details > div {
 	color: var(--primary-fg);
 }
 .SlidesWrapper .panel {
-    backdrop-filter: blur(50px);
+    backdrop-filter: blur(200px);
     position:absolute;
     border:none;
     padding: 8px !important;
@@ -534,9 +534,9 @@ span.lang-name {
 
 .SlidesWrapper.CaptureMode .SlideArea .GoToButton {display:none !important;} /* Hide the GoToButton in screenshot, it is not useful there */
 
-/* Table of contents */
+/* Table of contents panel */
 .TOC {
-    backdrop-filter: blur(50px);
+    backdrop-filter: blur(200px);
     margin: 4px 36px; 
     padding: 0.5em;
     position: absolute;
@@ -586,6 +586,14 @@ span.lang-name {
     height:100%;
     margin-left:-2em !important;
 }
+
+/* Table of contents on slides */
+.SlideArea .toc-item {border-right: 4px solid var(--secondary-bg);}
+.SlideArea .toc-item.this {
+    border-right: 4px solid var(--primary-fg);
+    font-weight: bold !important;
+}
+.SlideArea .toc-item.next {opacity: 0.5;}
 
 .SlideArea ul li::marker, .SlideArea ol li::marker {color:var(--accent-color);}
 /* Citations on hover of object before it */

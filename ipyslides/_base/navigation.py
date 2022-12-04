@@ -15,14 +15,15 @@ class Navigation:
         self.visible_slider = self.widgets.sliders.visible
     
         
-        self.btn_prev.on_click(self.__shift_left)
-        self.btn_next.on_click(self.__shift_right)
-        self.btn_settings.on_click(self.__toggle_panel)
-        self.widgets.buttons.home.on_click(self.__goto_home)
+        self.btn_prev.on_click(self._shift_left)
+        self.btn_next.on_click(self._shift_right)
+        self.btn_settings.on_click(self._toggle_panel)
+        self.widgets.buttons.home.on_click(self._goto_home)
         self.widgets.buttons.end.on_click(self._goto_end)
-        self.visible_slider.observe(self.__set_hidden_height,names=['value'])
+        self.progress_slider.observe(self._change_icons,names=['index'])
+        self.visible_slider.observe(self._set_hidden_height,names=['value'])
         
-    def __shift_right(self,change):
+    def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
         if change:
             try:
@@ -30,9 +31,7 @@ class Navigation:
             except:
                 self.progress_slider.index = 0 # loop back to title page at end of presentation
             
-            self.__change_icon(self.progress_slider.index)
-            
-    def __shift_left(self,change):
+    def _shift_left(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
         if change:
             self.widgets.slidebox.add_class('Prev') # Backwards Animation
@@ -40,22 +39,21 @@ class Navigation:
                 self.progress_slider.index = len(self.progress_slider.options) - 1 # loop back to last slide
             else:
                 self.progress_slider.index = self.progress_slider.index - 1 # Backwards
-            
-            self.__change_icon(self.progress_slider.index)
     
-    def __change_icon(self, current_index):
-        if '.' in self.progress_slider.options[current_index - 1][0]:
+    def _change_icons(self, change):
+        
+        if '.' in self.progress_slider.options[self.progress_slider.index - 1][0]:
             self.btn_prev.icon = 'chevron-up'
         else:
             self.btn_prev.icon = 'chevron-left'
         
-        next_idx = (current_index + 1) % len(self.progress_slider.options)
+        next_idx = (self.progress_slider.index + 1) % len(self.progress_slider.options)
         if '.' in self.progress_slider.options[next_idx][0]:
             self.btn_next.icon = 'chevron-down'
         else:
             self.btn_next.icon = 'chevron-right'
     
-    def __toggle_panel(self,change):
+    def _toggle_panel(self,change):
         if self.btn_settings.description == '\u2699':
             self.btn_settings.description  = '✕'
             self.widgets.panelbox.layout.display = 'flex'
@@ -67,7 +65,7 @@ class Navigation:
             self.btn_next.disabled = False
             self.btn_prev.disabled = False
             
-    def __goto_home(self,btn):
+    def _goto_home(self,btn):
         try:
             self.progress_slider.index = 0
             self.widgets.buttons.toc.click() # Close TOC
@@ -81,7 +79,7 @@ class Navigation:
         except:
             self.widgets._push_toast('Cannot got to end of slides, may not enough slides exist.')
             
-    def __set_hidden_height(self,change):
+    def _set_hidden_height(self,change):
         self.widgets.slidebox.layout.height = f'{self.visible_slider.value}%'
         self.widgets.slidebox.layout.margin='auto 4px'
         

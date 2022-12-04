@@ -352,15 +352,31 @@ class Slides(BaseSlides):
         """Add section to presentation that will appear in table of contents. 
         In markdown, section can be created by using alert`%%section\`section text\`` syntax.
         Sections can be collected using \`Slides.toc\` property or can be written in markdown using alert`toc\`title\`` syntax."""
-        self.running._section = text
+        self.running._section = text  
     
     @property 
     def toc(self):
         """Returns tuple of table of contents that can be passed to write command with desired format. 
         Run the slide containing alert`Slides.toc` at end as well to see all contents."""
-        return tuple([it._section for it in self._iterable if it._section if it._section])
+        sections = []
+        this_index = self[:].index(self.running) if self.running in self[:] else self.running.number # Monkey patching index, would work on next run
+        for slide in self[:this_index]:
+            if slide._section:
+                sections.append(self.html('div', slide._section, style='',className='toc-item prev'))
+        
+        if self.running._section:
+            sections.append(self.html('div', self.running._section, style='',className='toc-item this'))
+        elif sections:
+            sections[-1] = _HTML(sections[-1].value.replace('toc-item prev','toc-item this'))
+        
+        for slide in self[this_index+1:]:
+            if slide._section:
+                sections.append(self.html('div', slide._section, style='',className='toc-item next'))
+            
+        return tuple(sections)
+        
     
-    def _private_goto_button(self, slide_number, text,text_before = '', extra_func=None, **kwargs):
+    def _goto_button(self, slide_number, text,text_before = '', extra_func=None, **kwargs):
         "See docs of `goto_button`. This is internal function to return button box. extra_func is a function to be called on click after going to slide."
         if not isinstance(slide_number, (int,float,str)): # keep string for internal use only
             raise TypeError('Slide number should be an integer or float for accessing frames!')
@@ -375,7 +391,7 @@ class Slides(BaseSlides):
                 else:
                     slide = self._slides_dict[ss]
                 
-                slide._app.progress_slider.index = slide.index
+                self.progress_slider.index = slide.index # let it throw error if slide does not exist
                 if callable(extra_func): # Call extra function if given after chnaging slides, no need for user
                     extra_func()
                     
@@ -394,7 +410,7 @@ class Slides(BaseSlides):
         `kwargs` are passed to `ipywidgets.Button` function.          
         **Note:** This button has a CSS classes nested as 'GoToBox' > ('GoToHtml','GoToButton') 
         that can be used to style it under each slide separately."""
-        return display(self._private_goto_button(slide_number, text,text_before = text_before, **kwargs))
+        return display(self._goto_button(slide_number, text,text_before = text_before, **kwargs))
         
     def show(self, fix_buttons = False): 
         "Display Slides. If icons do not show, try with `fix_buttons=True`."
@@ -473,12 +489,14 @@ class Slides(BaseSlides):
         self.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
         with self.widgets.outputs.slide:
             next_slide = self[new_index]
+            css = '''.TOC .toc-item.s{idx} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
+            .TOC .toc-item {{border-right: 4px solid var(--secondary-bg);}}'''
             if next_slide._section: # Slide has itw own section
-                self.html('style',f'.TOC .s{next_slide._index} {{border: 1px inset var(--secondary-bg);background:var(--secondary-bg);}}').display()
+                self.html('style',css.format(idx = next_slide.index)).display()
             else:
                 idxs = [s._index for s in self[:new_index] if s._section] # Get all section indexes before current slide
                 sec_index = idxs[-1] if idxs else 0 # Get last section index
-                self.html('style',f'.TOC .s{sec_index} {{border: 1px inset var(--secondary-bg);background:var(--secondary-bg);}}').display()
+                self.html('style',css.format(idx = sec_index)).display()
             
             if self.screenshot.capturing == False:
                 self._iterable[new_index].animation.display()
@@ -773,8 +791,8 @@ class Slides(BaseSlides):
                 slide_number = f"{slide._number}.{slide._label.split('.')[1]}" if '.' in slide._label else slide._number
                 text_before = _fix_repr(f'color[var(--accent-color)]`{i}.` {sec}') + f"<p>{slide._label}</p>"
                 extra_func = lambda: self.widgets.buttons.toc.click()
-                p_btn = self._private_goto_button(slide_number,'', text_before= text_before,extra_func=extra_func)
-                children.append(p_btn.add_class(f's{slide._index}')) # class for dynamic CSS
+                p_btn = self._goto_button(slide_number,'', text_before= text_before,extra_func=extra_func)
+                children.append(p_btn.add_class('toc-item').add_class(f's{slide._index}')) # class for dynamic CSS
                 
         self.widgets.tocbox.children = children
         

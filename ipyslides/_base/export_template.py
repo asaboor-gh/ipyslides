@@ -165,7 +165,7 @@ div.columns > div[style*="width:"] {
     color: var(--accent-color);
 }
 
-.Content-Area *:not(.fa):not(i):not(span){ /* Do not edit __textfont__, code does this. */
+.Content-Area *:not(.fa):not(i):not(span):not(.RawText){ /* Do not edit __textfont__, code does this. */
    font-family: __textfont__, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
 }
 
@@ -259,14 +259,21 @@ span.lang-name {
     color: var(--accent-color);
     font-size: 0.8em;
 }
-.Content-Area .RawText {
+
+.Content-Area .RawText { /* Should be same in notebook cell */
+    font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
+    font-size: 90% !important;
+    display: block !important;
     margin: 4px !important;
-    white-space:pre !important;
     height: auto !important;
     overflow: auto !important;
     overflow-wrap: break-word !important;
+    padding: 0 0.3em !important;
+    background: var(--secondary-bg) !important;
+    color: var(--primary-fg) !important;
+    max-height: 400px;
+    white-space:pre !important;
 }
-
 /* Docs have Python code only, so no need to have fancy things there */
 .Docs {
     margin-bottom: 1em !important;
@@ -298,6 +305,22 @@ span.lang-name {
 .Content-Area tbody>tr:nth-child(even) {background: var(--primary-bg)!important;}
 .Content-Area tbody>tr:hover {background: var(--tr-hover-bg)!important;}
 
+/* Table of contents on slides */
+.Content-Area .toc-item {border-right: 4px solid var(--secondary-bg);}
+.Content-Area .toc-item.this {
+    border-right: 4px solid var(--primary-fg);
+    font-weight: bold !important;
+}
+.Content-Area .toc-item.next {opacity: 0.5;}
+
+.Content-Area hr {
+    margin:0 !important;
+    margin-block: 0.5em !important;
+    border: none;
+    width: auto;
+    height: 2px;
+    background: linear-gradient(to right, transparent,  var(--secondary-bg),var(--accent-color), var(--secondary-bg),transparent);
+}
 /* Make Scrollbars beautiful */
 .Content-Area, .Content-Area  * { /* FireFox <3*/
     scrollbar-width: thin;

@@ -252,7 +252,7 @@ class BaseSlides:
                 ^^^
                 ''').display()
         
-        with self.slide(self.auto_number) as slide_toc: # Need at end to refresh TOC
+        with self.slide(self.auto_number) as slide_toc1: # Need at end to refresh TOC
             self.write('## Table of Contents')
             
         with self.slide(self.auto_number):
@@ -280,8 +280,11 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        with self.slide(self.auto_number):
-            self.write('## Layout and Theme Settings section`?Layout and color[yellow_black]`Theme` Settings?`')
+        with self.slide(self.auto_number)  as slide_toc2: # Need at end to refresh TOC
+            self.write('## Table of Contents section`?Layout and color[yellow_black]`Theme` Settings?`')
+        
+        with self.slide(self.auto_number): 
+            self.write('## Layout and Theme Settings')
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
         with self.slide(self.auto_number):
@@ -331,8 +334,11 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
+        with self.slide(self.auto_number) as slide_toc3: # Need at end to refresh TOC
+            self.write('## Table of Contents section`Advanced Functionality`')
+        
         with self.slide(self.auto_number):
-            self.write('## Adding User defined Objects/Markdown Extensions section`Advanced Functionality`')
+            self.write('## Adding User defined Objects/Markdown Extensions')
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.Note .Info}')
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
@@ -348,8 +354,8 @@ class BaseSlides:
         with self.slide(self.auto_number):
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
-        with slide_toc.insert(-1): # Update table of contents
-            self.write('toc`------`')
+        for slide in [slide_toc1, slide_toc2, slide_toc3]:
+            slide.insert_markdown({-1: 'toc`------`'}) # Update table of contents at end
          
         self.navigate_to(0) # Go to title
         return self

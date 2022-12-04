@@ -254,22 +254,26 @@ class Slide:
         
     def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for all slides."
-        if main:
+        if main is None:
+            self.__class__._animations['main'] = ''
+        elif main in styles.animations:
             self.__class__._animations['main'] = styles.animations[main]
         else:
-            self.__class__._animations['main'] = ''
+            raise ValueError(f'Animation {main!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
             
-        if frame:
+        if frame is None:
+            self.__class__._animations['frame'] = ''
+        elif frame in styles.animations:
             self.__class__._animations['frame'] = styles.animations[frame]
         else:
-            self.__class__._animations['frame'] = ''
+            raise ValueError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
             
     def set_animation(self, name):
         "Set animation of this slide. Provide None if need to stop animation."
         if name is None:
             self._animation = html('style', '')
-        elif isinstance(name,str):
-            self._animation = html('style',styles.animations.get(name, ''))
+        elif isinstance(name,str) and name in styles.animations:
+            self._animation = html('style',styles.animations[name])
             # See effect of changes
             if self._app._slidelabel != self.label:
                 self._app._slidelabel = self.label # Go there to see effects
@@ -278,7 +282,7 @@ class Slide:
                 with self._app.widgets.outputs.slide:
                     display(self.animation, self._css)
         else:
-            self._animation = None # It should be None, not ''
+            self._animation = None # It should be None, not '' or don't throw error here
             
     def _rebuild_all(self):
         "Update all slides in optimal way when a new slide is added."
