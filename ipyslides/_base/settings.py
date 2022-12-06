@@ -12,7 +12,7 @@ from ipywidgets import Layout
 from ..formatters import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
 from ..utils import set_dir, html, details, today
-from . import scripts, intro, styles
+from . import scripts, intro, styles, _layout_css
 
 class LayoutSettings:
     def __init__(self, _instanceSlides, _instanceWidgets):
@@ -55,6 +55,7 @@ class LayoutSettings:
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
         
+        
     def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
         self.__add_js()
         
@@ -68,9 +69,35 @@ class LayoutSettings:
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for slides and frames. (2.0.8+)"
         if len(self._slides[:]) >= 1:
-            self._slides[0].set_overall_animation(main = main,frame = frame)
+            self._slides[0]._set_overall_animation(main = main,frame = frame)
         else:
             raise ValueError("No slides yet to set animation.")
+        
+    def set_css(self,props_dict={}):
+        """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well. 
+        Individual slide's CSS will override this. (2.1.8+)  
+        
+        `props_dict` is a nested dict of css properties.      
+        **Example:** 
+        ```python
+        props_dict ={
+            'slide':{'background':'#000'}, # 'slide', '.slide' or '' is a special selector for the slide itself
+            'p': {'color':'#fff', 'animation': '0.2sec animation_name'}, # content selector
+            '@keyframe animation_name':{ 
+                '0%': {'transform':'scale(0.5)'} 
+                '100%': {'transform':'scale(1)'}
+            }, 
+            '@media screen and (max-width: 600px)': {
+                'p': {'color':'#000'}
+            }
+        }
+        ```          
+        """
+        if len(self._slides[:]) >= 1:
+            self._slides[0]._set_overall_css(props_dict = props_dict)
+        else:
+            raise ValueError("No slides yet to set CSS.")
+        
         
     def set_glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
         "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.8+)"
@@ -82,7 +109,7 @@ class LayoutSettings:
             raise FileNotFoundError(f'Image not found at {image_src!r}')
         
         self.widgets.htmls.glass.value = f"""<style>
-        {styles.glass_css(opacity=opacity, blur_radius=blur_radius)}
+        {_layout_css.glass_css(opacity=opacity, blur_radius=blur_radius)}
         </style>
         {self._slides.image(image_src,width='100%',zoomable=False)}
         <div class="Front"></div>
@@ -192,6 +219,7 @@ class LayoutSettings:
                 if not os.path.isfile('custom.css'):
                     with open('custom.css','w') as f:
                         f.write('/* Author: Abdul Saboor */\n' + styles.style_css( styles.theme_roots['Light']))
+                    self._slides.notify(f'File: {os.path.join(self._slides.assets_dir,"custom.css")!r} created. Edit it and change theme dropdown back and forth to see effect.',timeout=5)
                         
                 # Read CSS from file now
                 with open('custom.css','r') as f:
@@ -219,6 +247,9 @@ class LayoutSettings:
                         '__breakpoint_width__', self._breakpoint_width).replace(
                         '__light__',light
                         )
+        # Update Layout CSS
+        layout_css = _layout_css.layout_css.replace('__breakpoint_width__', self._breakpoint_width)
+        self.widgets.htmls.main.value = f'<style>\n{layout_css}\n</style>'
         
         # Update CSS
         if self.reflow_check.value:
@@ -246,7 +277,7 @@ class LayoutSettings:
             self.sidebar_switch.description = '◨'
         else:
             self.widgets.mainbox.add_class('SideMode')
-            self.widgets.htmls.sidebar.value =  html('style',styles.sidebar_layout_css(span_percent=self.width_slider.value)).value
+            self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=self.width_slider.value)).value
             self.height_slider.layout.display = 'none'
             self.sidebar_switch.description = '▣'
             
@@ -264,7 +295,7 @@ class LayoutSettings:
             if self.btn_zoom.value:
                 self.btn_zoom.value = False # Unzoom to avoid jerks in display
                 
-        self.widgets.htmls.fscrn.value = html('style', styles.fullscreen_css if self.btn_fs.value else '').value
+        self.widgets.htmls.fscrn.value = html('style', _layout_css.fullscreen_css if self.btn_fs.value else '').value
         self._emit_resize_event() # Resize before waiting fo update-theme
         self._update_theme(change=None) # For updating size and breakpoints
     
@@ -272,7 +303,7 @@ class LayoutSettings:
         if self.btn_zoom.value:
             if self.btn_fs.value:
                 self.btn_zoom.icon= 'toggle-on'
-                self.widgets.htmls.zoom.value = f'<style>\n{styles.mpl_fs_css}\n</style>'
+                self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css}\n</style>'
             else:
                 self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
         else:

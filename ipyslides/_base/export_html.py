@@ -11,9 +11,10 @@ class _HhtmlExporter:
     # Should be used inside Slides class only.
     def __init__(self, _instance_BaseSlides):
         self.main = _instance_BaseSlides
+        self.main.widgets.toggles.export.observe(self._export, names = ['value']) # Export button
         
     def _htmlize(self, allow_non_html_repr = False, as_slides = False, **kwargs):
-        "page_size, text_font, code_font, slide_number are in kwargs"
+        "page_size, slide_number are in kwargs"
         content = ''
         for item in self.main:
             _html = ''
@@ -31,12 +32,8 @@ class _HhtmlExporter:
                 content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
                             if as_slides else f'<section>{_html}</section>')
                 
-        
-        __style_css__ = (re.sub('\(.*-width.*\)','(max-width: 650px)',self.main.widgets.htmls.theme.value) + slides_css # Column break width
-                            if as_slides else doc_css.replace(
-                                '__textfont__', f'"{kwargs.get("text_font","STIX Two Text")}"').replace(
-                                '__codefont__', f'"{kwargs.get("code_font","monospace")}"')
-                        )
+        theme_css = re.sub('\(.*-width.*\)','(max-width: 650px)',self.main.widgets.htmls.theme.value).replace('<style>','').replace('</style>','')
+        __style_css__ = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
         __code_css__ = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')
         
         return doc_html.replace(
@@ -55,7 +52,7 @@ class _HhtmlExporter:
             
         print(f'File {path!r} saved!')
     
-    def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', text_font = 'STIX Two Text', code_font = 'monospace', overwrite = False):
+    def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', overwrite = False):
         """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
         
         - allow_non_html_repr: (True), then non-html representation of the slides like text/plain will be used in report.
@@ -70,7 +67,8 @@ class _HhtmlExporter:
             Use LiveSLides(citation_mode = "global" and run all slides again before generating report.''')
         
         _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
-        content = self._htmlize(allow_non_html_repr = allow_non_html_repr, as_slides = False, page_size = page_size, text_font = text_font, code_font = code_font)
+        content = self._htmlize(allow_non_html_repr = allow_non_html_repr, as_slides = False, page_size = page_size)
+        content = content.replace('.SlideArea','').replace('SlidesWrapper','ContentWrapper')
         self._writefile(_path, content, overwrite = overwrite)
     
     def slides(self, path = 'slides.html', slide_number = True, overwrite = False):
@@ -87,3 +85,24 @@ class _HhtmlExporter:
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
         content = self._htmlize(allow_non_html_repr = False, as_slides = True, slide_number = slide_number)
         self._writefile(_path, content, overwrite = overwrite)
+        
+    def _export(self,change):
+        "Export to HTML report and slides on button click."
+        _dir = os.path.abspath(os.path.join(self.main.notebook_dir, 'ipyslides-export'))
+        if not os.path.isdir(_dir):
+            os.makedirs(_dir)
+            
+        def further_action(path):
+            self.main.notify(f'File saved: {path!r}')
+            os.startfile(path)
+            self.main.widgets.toggles.export.value = 2 # Reset so next click on same button will work
+        
+        if self.main.widgets.toggles.export.value == 1: # Report
+            path = os.path.join(_dir, 'report.html')
+            self.report(path, allow_non_html_repr = False, overwrite = True)
+            further_action(path)
+            
+        elif self.main.widgets.toggles.export.value == 0: # Slides
+            path = os.path.join(_dir, 'slides.html')
+            self.slides(path, overwrite = True)  
+            further_action(path) 

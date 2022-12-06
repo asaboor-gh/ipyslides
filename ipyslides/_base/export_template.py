@@ -42,7 +42,7 @@ doc_html = '''<!DOCTYPE html>
 <body>
 <div>
     <!-- Classes below work for both scenerios -->
-    <div class="Content-Area SlidesWrapper">
+    <div class="SlidesWrapper">
     __content__
     </div>
 </div>
@@ -52,15 +52,7 @@ doc_html = '''<!DOCTYPE html>
 
 doc_css = '''<style type="text/css">
 /* Author: Abdul Saboor */
-:root {
-	--primary-fg: black;
-	--primary-bg: white;
-	--secondary-bg: whitesmoke;
-	--secondary-fg: #454545;
-	--tr-odd-bg: whitesmoke;
-	--tr-hover-bg: #D1D9E1;
-	--accent-color: navy;
-}
+__theme_css__
 html { background: var(--secondary-bg, whitesmoke);}
 body {
     background: var(--primary-bg, white);
@@ -70,10 +62,10 @@ body {
     padding: 18mm 15mm 15mm 18mm;
 }
 
-h1,h2,h3,h4,h5,h6 { color: var(--accent-color, black); }
 body div.highlight, body div.highlight pre {
     width: 100% !important;
     }
+    
 figure, img, .zoom-container, table, .block {margin: 0 auto !important;} /* center images */
 div.columns { /* ovveride slides css */
     width:100%;
@@ -88,302 +80,37 @@ div.columns > div[style*="width:"] {
 }
 .slides-only {display:none !important;}
 
-.Content-Area .TextBox { /* general text box for writing inline refrences etc. */
-    font-size: 0.7em !important; 
-    line-height: 0.99em !important;
-    position:relative; 
-    left:initial;
-    top:initial;
-    padding:2px 4px;
-    color: var(--secondary-fg);
-    /* Below are required to override behavior of span tag*/
-    display: inline-block !important;
-    white-space: break-spaces !important;
-}
-.Content-Area figure {
-    margin: 8px !important; /* override default margin */
-}
-.Content-Area .zoom-container figure {
-    object-fit:scale-down !important; /* If height goes out, scale down */
-}
-.Content-Area figcaption {
-    font-size: 0.8em !important;
-    line-height: 1em !important;
-    padding-top: 0.2em !important;
-}
-.Center:not(.columns), .Center > *:not(.columns) {
-    display:table !important;
-    margin: 0 auto !important;
-    width: auto !important; /* max-content creates oveflow, do not use it */
-}
-.Left:not(.columns) { 
-    display:table !important; 
-    width: auto !important; 
-    margin-right: auto !important; 
-    text-align:left !important;
-}
-.Right:not(.columns) { 
-    display:table !important; 
-    width: auto !important; 
-    margin-left: auto !important; 
-    text-align:right !important;
-}
-
-.RTL, .RTL > * {
-    text-align:right !important;
-    padding: 0 12px !important; /* to avoid cuts in RTL */
-}
-
-.Info > *:last-child, .Warning > *:last-child,
-.Success > *:last-child, .Error > *:last-child,
-.Right:not(.columns) >*:last-child,
-.Left:not(.columns) >*:last-child,
-.Center:not(.columns) >*:last-child{ 
-    margin-bottom:0.1em !important;
-}
-
-.Info, .Warning, .Success, .Error, .Note { padding: 0.2em !important;}
-
-.Warning, .Warning *:not(span) { color:#FFAC1C !important;}
-.Success, .Success *:not(span) { color:green !important;}
-.Error, .Error *:not(span) { color:red !important;}
-.Info, .Info *:not(span) { color:skyblue !important;}
-.Note{
-    border: 1px solid var(--tr-hover-bg);
-    border-radius: 0.2em;
-}
-.Note::before {
-    content: 'ℹ';
-    display: inline-flex;
-    width: 1em;
-    height: 1em;
-    margin: 0 0.2em;
-    justify-content:center;
-    align-items:center;
-    border: 1px solid var(--accent-color);
-    border-radius: 1em;
-    color: var(--accent-color);
-}
-
-.Content-Area *:not(.fa):not(i):not(span):not(.RawText){ /* Do not edit __textfont__, code does this. */
-   font-family: __textfont__, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" ;
-}
-
-.Content-Area code>span { /* Do not edit __codefont__, code does this. */
-   font-family: __codefont__, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New";
-   font-size: 90% !important;
-}
-
-.Content-Area .footnote *,  .Content-Area .footnote li::marker {
-    font-size:0.9em;
-    line-height: 0.9em;
-}
-.Content-Area hr {
-    margin:0 !important;
-}
-.Content-Area .footnote ol {
-    margin-top: 0.5em !important;
-}
-
-div.highlight {
-    min-width: 100% !important;
-    width: 100% !important;
-    max-width: 100vw !important;
-    box-sizing: border-box !important;
-    overflow: auto !important;
-    border-left: 2px solid var(--tr-hover-bg);
-    border-radius: 2px;
-    padding: 0 !important;
-    margin: 4px 0px !important; /* Opposite to padding to balance it */
-    height: auto !important;
-    background: transparent !important;
-}
-div.highlight pre { /* works for both case, do not use > */
-    display: grid !important;
-    color: var(--primary-fg);
-    padding: 8px 4px 8px 4px !important; 
-    overflow: auto !important;
-    width: auto !important;
-    box-sizing: border-box !important;
-    height: auto;
-    margin: 0px !important;
-    background: var(--secondary-bg) !important;
-    counter-reset: line; /* important to add line numbers */
-}
-
-div.highlight code {
-    counter-increment: line;
-    display:inline-block !important; /* should be on new line */
-    width:auto;
-    min-width: calc(90% - 2.2em);
-    background:transparent !important;
-    color: var(--primary-fg);
-    white-space: pre !important;
-    overflow-wrap: normal !important;
-    padding-left:2.2em;
-    box-sizing: border-box !important;
-}
-div.highlight code:hover {
-    background: var(--tr-hover-bg) !important;
-}
-div.highlight code:hover::before {
-    background: none !important;
-}
-div.highlight code:before{
-    content: counter(line,decimal);
-    position: sticky;
-    top:initial;
-    left:-4px;
-    padding: 0 8px;
-    background:var(--secondary-bg);
-    color: var(--secondary-fg);
-    display:inline-block; /* should be inline */
-    width:1.2em;
-    text-align:right;
-    -webkit-user-select: none;
-    margin-left:-3em;
-    margin-right: 8px;
-    font-size: 80%;
-}
-div.highlight  code > span {
-    white-space: normal; /* for breaking words */
-    word-break: break-word; /* for breaking words */
-}
-div.highlight code.code-no-focus {
-    opacity:0.3 !important;
-}
-div.highlight code.code-focus {
-    text-shadow: 0 0 1px var(--primary-bg);
-}
-span.lang-name {
-    color: var(--accent-color);
-    font-size: 0.8em;
-}
-
-.Content-Area .RawText { /* Should be same in notebook cell */
-    font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
-    font-size: 90% !important;
-    display: block !important;
-    margin: 4px !important;
-    height: auto !important;
-    overflow: auto !important;
-    overflow-wrap: break-word !important;
-    padding: 0 0.3em !important;
-    background: var(--secondary-bg) !important;
-    color: var(--primary-fg) !important;
-    max-height: 400px;
-    white-space:pre !important;
-}
-/* Docs have Python code only, so no need to have fancy things there */
-.Docs {
-    margin-bottom: 1em !important;
-}
-.Docs .highlight {
-    border: none !important;
-}
-.Docs span.lang-name {
-    display: none !important;
-}
-.Content-Area blockquote, .Content-Area blockquote>p {
-	background: var(--secondary-bg);
-	color: var(--secondary-fg);
-}
-    
-.Content-Area table {
- 	border-collapse: collapse !important;
-    min-width:auto;
-    width:100%;
-    word-break:break-all;
-    overflow: auto;
-	color: var(--primary-fg)!important;
-	background: var(--primary-bg)!important;
-    border: none !important; /* Makes it pleasant to view */
-    border-spacing: 0 !important;
-    border-color: transparent !important;
-}
-.Content-Area tbody>tr:nth-child(odd) {background: var(--tr-odd-bg)!important;}
-.Content-Area tbody>tr:nth-child(even) {background: var(--primary-bg)!important;}
-.Content-Area tbody>tr:hover {background: var(--tr-hover-bg)!important;}
-
-/* Table of contents on slides */
-.Content-Area .toc-item {border-right: 4px solid var(--secondary-bg);}
-.Content-Area .toc-item.this {
-    border-right: 4px solid var(--primary-fg);
-    font-weight: bold !important;
-}
-.Content-Area .toc-item.next {opacity: 0.5;}
-
-.Content-Area hr {
-    margin:0 !important;
-    margin-block: 0.5em !important;
-    border: none;
-    width: auto;
-    height: 2px;
-    background: linear-gradient(to right, transparent,  var(--secondary-bg),var(--accent-color), var(--secondary-bg),transparent);
-}
-/* Make Scrollbars beautiful */
-.Content-Area, .Content-Area  * { /* FireFox <3*/
-    scrollbar-width: thin;
-    scrollbar-color:var(--tr-odd-bg) transparent;
-}
-/* Other monsters */  
-.Content-Area ::-webkit-scrollbar {
-    height: 4px;
-    width: 4px;
-    background: transparent !important;
-}
-.highlight::-webkit-scrollbar { /* important for good display */
-    background: var(--secondary-bg) !important;
-}
-.Content-Area ::-webkit-scrollbar:hover {
-    background: var(--secondary-bg) !important;
-}
-.Content-Area ::-webkit-scrollbar-thumb {
-    background: transparent !important;
-}
-.Content-Area ::-webkit-scrollbar-thumb:hover{
-    background: var(--tr-hover-bg) !important;
-}
-.Content-Area ::-webkit-scrollbar-corner,
-.highlight::-webkit-scrollbar-corner {
-    display:none !important;
-}   
-div.zoom-container,
-div.zoom-container > * {
-    background: var(--primary-bg);
-    display:flex !important; /* To align in center */
-    flex-direction: column !important; /* To have caption at bottom */
-    align-items:center !important;
-    justify-content:center !important;
-    transition: transform .2s; /* Animation */
-}  
-  
-.pygal-chart {  /* it doesnt show otherwise */
-    min-width:300px;
-    width:100%;
-    height:auto;
-}  
-.Content-Area .block {
-    background: var(--primary-bg);
-    border-radius: 4px;
-}
-
 @page {
     size: __page_size__;
     margin-top: 18mm !important;
     margin-bottom: 15mm !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 18mm 0 15mm !important;
 }
 @page:first {
     margin-top: 0mm !important; /* already 18mm padding */
 }
 @media print {
+    :root {
+	    --heading-fg: navy;
+	    --primary-fg: black;
+	    --primary-bg: white;
+	    --secondary-bg: whitesmoke;
+	    --secondary-fg: #454545;
+	    --tr-odd-bg: whitesmoke;
+	    --tr-hover-bg: #D1D9E1;
+	    --accent-color: navy;
+    }
     * {
         color-adjust: exact !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
     body {
-        margin: 0;
+        background: var(--primary-bg, white) !important;
+        color: var(--primary-fg, black) !important;
+        margin: 0 !important;
         display: table;
         table-layout: fixed;
         padding-top: 18mm;
@@ -399,7 +126,8 @@ div.zoom-container > * {
         max-height: auto !important; 
         overflow-wrap: break-word !important; 
     }
-    section:first-child {page-break-after: always;margin: auto 0 !important;}
+    section:first-child {page-break-after: always;margin: auto auto !important;}
+    .page-break {page-break-after: always !important;}
     table { page-break-inside:auto; }
     tr    { page-break-inside:avoid; page-break-after:auto; }
     h1,h2,h3,h4 { page-break-before : auto !important; page-break-after : avoid !important; page-break-inside : avoid !important; }
@@ -409,6 +137,7 @@ div.zoom-container > * {
 '''
 
 slides_css = """<style>
+__theme_css__
 .report-only { display:none !important;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;

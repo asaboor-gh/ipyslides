@@ -17,6 +17,7 @@ class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
 class Slide:
     "New in 1.7.0"
     _animations = {'main':'','frame':''}
+    _overall_css = html('style','')
     def __init__(self, app, number, captured_output = _EmptyCaptured, props_dict = {}):
         self._widget = Output(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))
         self._app = app
@@ -30,7 +31,7 @@ class Slide:
         self.set_css(props_dict)
         
         self._notes = '' # Should be update by Notes and Slides calss
-        self.set_overall_animation()
+        self._set_overall_animation()
         self._animation = None
         self._markdown = '' # Should be update by Slides
         self._cell_code = '' # Should be update by Slides 
@@ -169,7 +170,7 @@ class Slide:
     
     @property
     def css(self):
-        return self._css
+        return self._overall_css + self._css # Add overall CSS but self._css should override it
     
     @property
     def index(self):
@@ -218,9 +219,33 @@ class Slide:
         self.update_display() # Needs to not discard widgets there
         return display(self._widget)
     
-    def set_css(self,props_dict):
-        """props_dict is a dict of css properties in format {'selector': {'prop':'value',...},...}
-        'selector' for slide itself should be '' or 'slide'.
+    def _set_overall_css(self, props_dict={}):
+        self.__class__._overall_css = html('style','') # Reset overall CSS
+        old_slide_css = self._css # Save old slide CSS without overall CSS
+        self.set_css(props_dict = props_dict) # Set this slide's CSS
+        self.__class__._overall_css = self.css # Set overall CSS from this slide's CSS, self.css takes both
+        self._css = old_slide_css # Restore old slide CSS
+    
+    def _parse_css(self, selector_dict):
+        # TODO: Parse CSS selector dict for keyframes, media queries, and normal selectors
+        pass
+    
+    def set_css(self,props_dict = {}):
+        """`props_dict` is a nested dict of css properties.      
+        **Example:** 
+        ```python
+        props_dict ={
+            'slide':{'background':'#000'}, # 'slide', '.slide' or '' is a special selector for the slide itself
+            'p': {'color':'#fff', 'animation': '0.2sec animation_name'}, # content selector
+            '@keyframe animation_name':{ 
+                '0%': {'transform':'scale(0.5)'} 
+                '100%': {'transform':'scale(1)'}
+            }, 
+            '@media screen and (max-width: 600px)': {
+                'p': {'color':'#000'}
+            }
+        }
+        ```
         """
         if not isinstance(props_dict, dict):
             raise TypeError("props_dict must be a dict in format {'selector': {'prop':'value',...},...}")
@@ -252,7 +277,7 @@ class Slide:
             with self._app.widgets.outputs.slide:
                 display(self.animation, self._css)
         
-    def set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
+    def _set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for all slides."
         if main is None:
             self.__class__._animations['main'] = ''

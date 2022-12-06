@@ -72,6 +72,7 @@ class BaseSlides:
          'Note'             | Text with info icon
          'slides-only'      | Text will not appear in exported html report.
          'report-only'      | Text will not appear on slides. Use to fill content in report.
+         'page-break'       | Report will break page in print after object with this class.
          'Block'            | Block of text/objects
          'Block-[color]'    | Block of text/objects with specific background color from red,
                             | green, blue, yellow, cyan, magenta and gray.

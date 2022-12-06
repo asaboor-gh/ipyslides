@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import ipywidgets as ipw
 from IPython.display import display, Javascript
 from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
-from . import styles
+from . import styles, _layout_css
 from ..utils import html
 
 
@@ -37,6 +37,7 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
+    export  = ipw.ToggleButtons(description='Export As: ',options=[('Slides',0),('Report',1),('None',2)], value = 2).add_class('export-btn').add_class('menu')
     display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('menu')
     fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
     zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
@@ -55,8 +56,8 @@ class _Htmls:
                 '__textfont__','STIX Two Text').replace(
                 '__codefont__','var(--jp-code-font-family)')
                 ).value)
-    main    = HTML(html('style',styles.main_layout_css).value)
-    sidebar = HTML(html('style',styles.sidebar_layout_css()).value) # Should be separate CSS
+    main    = HTML(html('style',_layout_css.layout_css.replace('__breakpoint_width__','650px')).value) # Will be update in theme as well
+    sidebar = HTML(html('style',_layout_css.sidebar_layout_css()).value) # Should be separate CSS
     loading = HTML() #SVG Animation in it
     logo    = HTML()
     tochead = HTML('<h4>Table of Contents</h4><hr/>')
@@ -268,6 +269,7 @@ class Widgets:
                 self.sliders.width.add_class('voila-sidecar-hidden'),
                 self.sliders.scale,
                 self.ddowns.theme,
+                self.toggles.export,
                 Box([GridBox([
                     self.toggles.fscrn,
                      self.toggles.zoom,
@@ -277,7 +279,7 @@ class Widgets:
                     self.checks.reflow,
                     self.buttons.cap_all,
                     self.buttons.pdf,
-                    self.buttons.png,
+                    self.buttons.png
                 ],layout=Layout(width='auto',overflow_x='scroll',
                                 grid_template_columns='1fr 1fr 1fr',grid_gap='4px',
                                 padding='4px',margin='auto')
