@@ -251,6 +251,8 @@ class Slide:
             raise TypeError("props_dict must be a dict in format {'selector': {'prop':'value',...},...}")
         
         for k, v in props_dict.items():
+            if ('@keyframes' in k) or ('@media' in k):
+                raise NotImplementedError('Keyframes and Media Queries are not implemented yet.')
             if not isinstance(v, dict):
                 raise TypeError('Value for selector {} should be a dict of {"prop":"value",...}, got {}'.format(k,v))
         _all_css = ''

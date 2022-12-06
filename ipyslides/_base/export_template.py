@@ -80,6 +80,20 @@ div.columns > div[style*="width:"] {
 }
 .slides-only {display:none !important;}
 
+.SlidesWrapper h1, .SlidesWrapper h2,
+.SlidesWrapper h3, .SlidesWrapper h4,
+.SlidesWrapper h5, .SlidesWrapper h6 {
+	color:var(--heading-fg);
+ 	text-align: left !important;
+	overflow:hidden; /* FireFox */
+    margin-block: 0.6em 0.5em !important;
+}
+
+.SlidesWrapper h1, .SlidesWrapper h2 {
+	margin-block: 1.2em 1em !important; /* need more space for h1 and h2 */
+}
+
+
 @page {
     size: __page_size__;
     margin-top: 18mm !important;
@@ -132,6 +146,15 @@ div.columns > div[style*="width:"] {
     tr    { page-break-inside:avoid; page-break-after:auto; }
     h1,h2,h3,h4 { page-break-before : auto !important; page-break-after : avoid !important; page-break-inside : avoid !important; }
     
+    /* Blocks should be handled properly in white scenerio*/
+    .Note {background: rgba(250,250,250,0.75);}
+    .Block-red {background: rgba(250,230,230,0.75);}
+    .Block-green {background: rgba(230,250,230,0.75);}
+    .Block-blue {background: rgba(230,230,250,0.75);}
+    .Block-yellow {background: rgba(250,250,230,0.75);}
+    .Block-cyan {background: rgba(230,250,250,0.75);}
+    .Block-gray {background: rgba(230,230,230,0.75);}
+    .Block-magenta {background: rgba(250,230,250,0.75);}
 }
 </style>
 '''
