@@ -83,7 +83,7 @@ div.columns > div[style*="width:"] {
 .SlidesWrapper h1, .SlidesWrapper h2,
 .SlidesWrapper h3, .SlidesWrapper h4,
 .SlidesWrapper h5, .SlidesWrapper h6 {
-	color:var(--heading-fg);
+	color:var(--heading-color);
  	text-align: left !important;
 	overflow:hidden; /* FireFox */
     margin-block: 0.6em 0.5em !important;
@@ -107,13 +107,13 @@ div.columns > div[style*="width:"] {
 }
 @media print {
     :root {
-	    --heading-fg: navy;
+	    --heading-color: navy;
 	    --primary-fg: black;
 	    --primary-bg: white;
 	    --secondary-bg: whitesmoke;
 	    --secondary-fg: #454545;
-	    --tr-odd-bg: whitesmoke;
-	    --tr-hover-bg: #D1D9E1;
+	    --alternate-bg: whitesmoke;
+	    --hover-bg: #D1D9E1;
 	    --accent-color: navy;
     }
     * {

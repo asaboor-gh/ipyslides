@@ -3,78 +3,78 @@
 
 theme_roots = {
 'Inherit': ''':root {
-	--heading-fg: var(--jp-inverse-layout-color1,navy);
+	--heading-color: var(--jp-inverse-layout-color1,navy);
 	--primary-fg:  var(--jp-inverse-layout-color0,black);
 	--primary-bg: var(--jp-layout-color0,white);
 	--secondary-bg:var(--jp-layout-color2,whitesmoke);
 	--secondary-fg: var(--jp-inverse-layout-color4,#454545);
-	--tr-odd-bg: var(--jp-layout-color2,whitesmoke);
-	--tr-hover-bg:var(--jp-border-color1,#D1D9E1);
+	--alternate-bg: var(--jp-layout-color2,whitesmoke);
+	--hover-bg:var(--jp-border-color1,#D1D9E1);
  	--accent-color:var(--jp-brand-color1,navy);
     --pointer-color: var(--md-pink-A400,red);
 	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
 }
 ''',
 'Light': ''':root {
-	--heading-fg: navy;
+	--heading-color: navy;
 	--primary-fg: black;
 	--primary-bg: white;
 	--secondary-bg: whitesmoke;
 	--secondary-fg: #454545;
-	--tr-odd-bg: whitesmoke;
-	--tr-hover-bg: #D1D9E1;
+	--alternate-bg: whitesmoke;
+	--hover-bg: #D1D9E1;
 	--accent-color: navy;
     --pointer-color: red;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 ''',
 'Fancy': ''':root {
-	--heading-fg: #105599;
+	--heading-color: #105599;
 	--primary-fg: #755;
 	--primary-bg: #efefef;
 	--secondary-bg: #effffe;
 	--secondary-fg: #89E;
-	--tr-odd-bg: #deddde;
-	--tr-hover-bg: #D1D9E1;
+	--alternate-bg: #deddde;
+	--hover-bg: #D1D9E1;
 	--accent-color: #955200;
     --pointer-color: #FF7722;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 ''',
 'Dark': ''':root {
-	--heading-fg: snow;
+	--heading-color: snow;
 	--primary-fg: white;
 	--primary-bg: black;
 	--secondary-bg: #353535;
 	--secondary-fg: powderblue;
-	--tr-odd-bg: #282828;
-	--tr-hover-bg: #264348;
+	--alternate-bg: #282828;
+	--hover-bg: #264348;
 	--accent-color: #d9e0e3;
     --pointer-color: blue;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 ''',
 'Material Light': ''':root {
-	--heading-fg: #4984c4;
+	--heading-color: #4984c4;
 	--primary-fg: #3b3b3b;
 	--primary-bg: #fafafa;
 	--secondary-bg: #e9eef2;
 	--secondary-fg: #3b5e3b;
-	--tr-odd-bg: #e9eef2;
-	--tr-hover-bg: #dae3ec;
+	--alternate-bg: #e9eef2;
+	--hover-bg: #dae3ec;
 	--accent-color: #4d7f43;
     --pointer-color: red;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
 }
 ''',
 'Material Dark': ''':root {
-	--heading-fg: #aec7e3;
+	--heading-color: #aec7e3;
 	--primary-fg: #bebebe;
 	--primary-bg: #282828;
 	--secondary-bg: #383838;
 	--secondary-fg: #fefefe;
-	--tr-odd-bg: #383838;
-	--tr-hover-bg: #484848;
+	--alternate-bg: #383838;
+	--hover-bg: #484848;
 	--accent-color: #a8bfa3;
     --pointer-color: blue;
 	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
@@ -153,7 +153,7 @@ def style_css(style_root = theme_roots['Inherit']):
 .Error, .Error *:not(span) { color:red !important;}
 .Info, .Info *:not(span) { color:skyblue !important;}
 .Note{
-    border: 1px solid var(--tr-hover-bg);
+    border: 1px solid var(--hover-bg);
     border-radius: 0.2em;
     background: none; /* Fallback  for Inherit and Custom theme*/
     background: rgba(__light__,__light__,__light__,0.75);
@@ -287,7 +287,7 @@ details > div {
 .SlidesWrapper h4,
 .SlidesWrapper h5,
 .SlidesWrapper h6 {
-	color:var(--heading-fg);
+	color:var(--heading-color);
  	text-align: center;
 	overflow:hidden; /* FireFox */
 }
@@ -427,7 +427,7 @@ a.citelink > sup {
 }
 *:hover + .citation.hidden {
     display:flex !important;
-    border: 1px inset var(--tr-hover-bg);
+    border: 1px inset var(--hover-bg);
     background: var(--secondary-bg);
     padding: 0.2em;
 }
@@ -456,17 +456,17 @@ a.citelink > sup {
     overflow: auto;
 	color: var(--primary-fg)!important;
 	background: var(--primary-bg)!important;
-    border: 1px solid var(--tr-odd-bg) !important; /* Makes it pleasant to view */
+    border: 1px solid var(--alternate-bg) !important; /* Makes it pleasant to view */
 }
-.SlidesWrapper tbody>tr:nth-child(odd) {background: var(--tr-odd-bg)!important;}
+.SlidesWrapper tbody>tr:nth-child(odd) {background: var(--alternate-bg)!important;}
 .SlidesWrapper tbody>tr:nth-child(even) {background: var(--primary-bg)!important;}
-.SlidesWrapper tbody>tr:hover {background: var(--tr-hover-bg)!important;}
+.SlidesWrapper tbody>tr:hover {background: var(--hover-bg)!important;}
 
 
 /* Make Scrollbars beautiful */
 .SlidesWrapper, .SlidesWrapper  * { /* FireFox <3*/
     scrollbar-width: thin;
-    scrollbar-color:var(--tr-odd-bg) transparent;
+    scrollbar-color:var(--alternate-bg) transparent;
 }
 /* Other monsters */  
 .SlidesWrapper ::-webkit-scrollbar {
@@ -484,7 +484,7 @@ a.citelink > sup {
     background: transparent !important;
 }
 .SlidesWrapper ::-webkit-scrollbar-thumb:hover{
-    background: var(--tr-hover-bg) !important;
+    background: var(--hover-bg) !important;
 }
 .SlidesWrapper ::-webkit-scrollbar-corner,
 .highlight::-webkit-scrollbar-corner {

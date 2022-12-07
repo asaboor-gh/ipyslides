@@ -10,7 +10,7 @@ from IPython.utils.capture import capture_output
 
 
 from . import styles
-from ..utils import html, _HTML
+from ..utils import html, format_css, _sub_doc, _css_docstring
 
 class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
 
@@ -18,7 +18,7 @@ class Slide:
     "New in 1.7.0"
     _animations = {'main':'','frame':''}
     _overall_css = html('style','')
-    def __init__(self, app, number, captured_output = _EmptyCaptured, props_dict = {}):
+    def __init__(self, app, number, captured_output = _EmptyCaptured):
         self._widget = Output(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))
         self._app = app
         self._contents = captured_output.outputs
@@ -28,7 +28,6 @@ class Slide:
         self._number = number if isinstance(number, str) else str(number) 
         self._label = None # This should be set in the Slides
         self._index = None # This should be set in the Slides
-        self.set_css(props_dict)
         
         self._notes = '' # Should be update by Notes and Slides calss
         self._set_overall_animation()
@@ -219,57 +218,17 @@ class Slide:
         self.update_display() # Needs to not discard widgets there
         return display(self._widget)
     
-    def _set_overall_css(self, props_dict={}):
+    def _set_overall_css(self, css_dict={}):
         self.__class__._overall_css = html('style','') # Reset overall CSS
         old_slide_css = self._css # Save old slide CSS without overall CSS
-        self.set_css(props_dict = props_dict) # Set this slide's CSS
+        self.set_css(css_dict = css_dict) # Set this slide's CSS
         self.__class__._overall_css = self.css # Set overall CSS from this slide's CSS, self.css takes both
         self._css = old_slide_css # Restore old slide CSS
     
-    def _parse_css(self, selector_dict):
-        # TODO: Parse CSS selector dict for keyframes, media queries, and normal selectors
-        pass
-    
-    def set_css(self,props_dict = {}):
-        """`props_dict` is a nested dict of css properties.      
-        **Example:** 
-        ```python
-        props_dict ={
-            'slide':{'background':'#000'}, # 'slide', '.slide' or '' is a special selector for the slide itself
-            'p': {'color':'#fff', 'animation': '0.2sec animation_name'}, # content selector
-            '@keyframe animation_name':{ 
-                '0%': {'transform':'scale(0.5)'} 
-                '100%': {'transform':'scale(1)'}
-            }, 
-            '@media screen and (max-width: 600px)': {
-                'p': {'color':'#000'}
-            }
-        }
-        ```
-        """
-        if not isinstance(props_dict, dict):
-            raise TypeError("props_dict must be a dict in format {'selector': {'prop':'value',...},...}")
-        
-        for k, v in props_dict.items():
-            if ('@keyframes' in k) or ('@media' in k):
-                raise NotImplementedError('Keyframes and Media Queries are not implemented yet.')
-            if not isinstance(v, dict):
-                raise TypeError('Value for selector {} should be a dict of {"prop":"value",...}, got {}'.format(k,v))
-        _all_css = ''
-        for k, v in props_dict.items():
-            _css = ''
-            if k.strip() in ('', 'slide', '.slide'):
-                if 'background' in ' '.join(v.keys()): # Only background is allowed for Front Layer
-                    _css += f'.SlidesWrapper, .BackLayer .Front {{\n'
-                else:
-                    _css += f'.SlidesWrapper {{\n'
-            else:
-                _css += f'.SlideArea {k} {{\n'
-                
-            _css += ('\n'.join([f'{q}:{p}!important;' for q, p in v.items()]) + '\n}\n')
-            _all_css += _css # Append to all css
-            
-        self._css = html('style', _all_css)
+    @_sub_doc(css_docstring = _css_docstring)
+    def set_css(self,css_dict = {}):
+        "{css_docstring}"
+        self._css = format_css(css_dict)
         
         # See effect of changes
         if self._app._slidelabel != self.label:
@@ -333,7 +292,7 @@ class Slide:
         
 
 @contextmanager
-def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_frameless = True):
+def _build_slide(app, slide_number_str, from_cell = False, is_frameless = True):
     "Use as contextmanager in Slides class to create slide. New in 1.7.0"
     # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
     old_slides = list(app._slides_dict.values()) # Need if update is required later, values decide if slide is changed
@@ -341,10 +300,10 @@ def _build_slide(app, slide_number_str, props_dict = {}, from_cell = False, is_f
     if slide_number_str in app._slides_dict:
         _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
         if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
-            _slide = Slide(app, slide_number_str, props_dict=props_dict)
+            _slide = Slide(app, slide_number_str)
             app._slides_dict[slide_number_str] = _slide
     else:
-        _slide = Slide(app, slide_number_str, props_dict=props_dict)
+        _slide = Slide(app, slide_number_str)
         app._slides_dict[slide_number_str] = _slide 
             
     with _slide._capture(assign = True) as captured:  

@@ -117,7 +117,7 @@ def _ipy_imagestr(image,width='100%'):
     return fix_ipy_image(image,width=width).value
 
 
-def code_css(style='default',color = None, background = None, hover_color = 'var(--tr-hover-bg)', className = None, lineno = True):
+def code_css(style='default',color = None, background = None, hover_color = 'var(--hover-bg)', className = None, lineno = True):
     """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
     """
     if style not in pygments.styles.get_all_styles():
@@ -160,7 +160,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, className = None, style='default', color = None, background = None, hover_color = 'var(--tr-hover-bg)', lineno = True):
+def highlight(code, language='python', name = None, className = None, style='default', color = None, background = None, hover_color = 'var(--hover-bg)', lineno = True):
     """Highlight code with given language and style. style only works if className is given.
     If className is given and matches any of pygments.styles.get_all_styles(), then style will be applied immediately.
     color is used for text color as some themes dont provide text color.

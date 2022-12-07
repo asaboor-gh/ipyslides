@@ -11,7 +11,7 @@ from ipywidgets import Layout
 
 from ..formatters import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
-from ..utils import set_dir, html, details, today
+from ..utils import set_dir, html, details, today, _sub_doc, _css_docstring
 from . import scripts, intro, styles, _layout_css
 
 class LayoutSettings:
@@ -72,29 +72,15 @@ class LayoutSettings:
             self._slides[0]._set_overall_animation(main = main,frame = frame)
         else:
             raise ValueError("No slides yet to set animation.")
-        
-    def set_css(self,props_dict={}):
+    
+    @_sub_doc(css_docstring = _css_docstring)    
+    def set_css(self,css_dict={}):
         """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well. 
         Individual slide's CSS will override this. (2.1.8+)  
-        
-        `props_dict` is a nested dict of css properties.      
-        **Example:** 
-        ```python
-        props_dict ={
-            'slide':{'background':'#000'}, # 'slide', '.slide' or '' is a special selector for the slide itself
-            'p': {'color':'#fff', 'animation': '0.2sec animation_name'}, # content selector
-            '@keyframe animation_name':{ 
-                '0%': {'transform':'scale(0.5)'} 
-                '100%': {'transform':'scale(1)'}
-            }, 
-            '@media screen and (max-width: 600px)': {
-                'p': {'color':'#000'}
-            }
-        }
-        ```          
+        {css_docstring}        
         """
         if len(self._slides[:]) >= 1:
-            self._slides[0]._set_overall_css(props_dict = props_dict)
+            self._slides[0]._set_overall_css(css_dict = css_dict)
         else:
             raise ValueError("No slides yet to set CSS.")
         
@@ -115,7 +101,7 @@ class LayoutSettings:
         <div class="Front"></div>
         """
             
-    def set_code_style(self,style='default',color = None,background = None, hover_color = 'var(--tr-hover-bg)',lineno = True):
+    def set_code_style(self,style='default',color = None,background = None, hover_color = 'var(--hover-bg)',lineno = True):
         "Set code style CSS. Use background for better view of your choice. This is overwritten by theme change."
         self._code_lineno = lineno # Used in theme to keep track 
         self.widgets.htmls.hilite.value = code_css(style,color = color,background = background, lineno = lineno, hover_color = hover_color)

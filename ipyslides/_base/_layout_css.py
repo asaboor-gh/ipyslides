@@ -157,7 +157,7 @@ body[data-notebook] .DisplaySwitch {
     box-sizing:border-box;
     z-index: 100;
     border-radius: 4px;
-    border: 1px solid var(--tr-hover-bg);
+    border: 1px solid var(--hover-bg);
 }
 @media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in Notebook*/
     .TOC {min-width: calc(100% - 72px) !important;}
@@ -386,7 +386,7 @@ div.LaserPointer { /* For laser pointer */
     box-shadow: none !important;
 }
 .SlidesWrapper .export-btn > div {
-    border: 1px inset var(--tr-hover-bg);
+    border: 1px inset var(--hover-bg);
     padding:4px;
     border-radius:4px;
 }

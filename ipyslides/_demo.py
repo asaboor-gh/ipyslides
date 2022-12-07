@@ -105,7 +105,7 @@ def demo(slides_instance):
     '## Commands which do all Magic!']
     
     for i, content in enumerate(__contents):
-        with autoslide(props_dict = {'':dict(background = 'skyblue')}):
+        with autoslide():
             write(textwrap.dedent(content))
             if i == 4:
                 with slides.source.context(auto_display = False) as s:
@@ -120,7 +120,8 @@ def demo(slides_instance):
         slides.write('section`Plotting and DataFrame`')
 
     # Matplotlib
-    with autoslide(props_dict = {'': dict(background='linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')}):
+    with autoslide() as s:
+        s.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
         write('## Plotting with Matplotlib')
         with slides.source.context(auto_display = False) as s:
             import numpy as np, matplotlib.pyplot as plt
@@ -150,7 +151,7 @@ def demo(slides_instance):
         df = '### Install `pandas` to view output'
         chart = '### Install Altair to see chart'
         
-    with autoslide(props_dict = {'':dict(background='#800000')}):
+    with autoslide():
         write(('## Writing Pandas DataFrame',df))
         source.show_lines([0,3,11]).display()
     
@@ -235,7 +236,7 @@ def demo(slides_instance):
         slides.write('section`Controlling Content on Frames`')
 
     # Frames structure
-    boxes = [f'<div style="background:var(--tr-hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="Center">{i}</b></div>' for i in range(1,5)]
+    boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="Center">{i}</b></div>' for i in range(1,5)]
     @autoframes(*boxes, repeat=False)
     def f(obj,idx):
         slides.write('# Frames with \n#### `repeat = False`')
@@ -343,7 +344,7 @@ def demo(slides_instance):
         slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.Note .Info}')
         slides.get_source().display()
          
-    with autoslide(props_dict = {'': dict(background='#9ACD32')}):
+    with autoslide():
         with slides.source.context():
             slides.write('citations`## Reference via Markdown\n----`',
                          ['## Reference via Python API\n----',

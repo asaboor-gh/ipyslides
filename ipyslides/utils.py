@@ -21,6 +21,30 @@ import ipywidgets as ipw
 from .formatters import fix_ipy_image, _HTML
 from .writers import _fmt_write, _fix_repr
 
+def _sub_doc(**kwargs):
+    "Substitute docstring with given kwargs."
+    def _inner(func):
+        func.__doc__ = func.__doc__.format(**kwargs)
+        return func
+    return _inner
+
+_css_docstring = """`css_dict` is a nested dict of css properties.      
+**Example:** 
+```python
+css_dict ={
+    'background':'#000', # Only background will be applied to Slide's background
+    'color':'#fff', # Other things will be applied to content
+    ('p','b','li'): {'color':'#fff', 'animation': '0.2sec animation_name'}, # content selector
+    '@keyframes animation_name':{ 
+        '0%': {'transform':'scale(0.5)'} 
+        '100%': {'transform':'scale(1)'}
+    }, 
+    '@media screen and (max-width: 600px)': {
+        'p': {'color':'#000'}
+    }
+}
+```
+"""
 
 def _filter_prints(outputs):
     new_outputs, new_prints = [], []
@@ -67,13 +91,60 @@ def format_html(*columns,width_percents=None,className=None):
     'Same as `write` except it does not write xplicitly, provide in write function'
     return _HTML(_fmt_write(*columns,width_percents=width_percents,className=className))
 
-def format_css(selector, **css_props):
-    "Provide CSS values with - replaced by _ e.g. font-size to font_size. selector is a string of valid tag/class/id etc."
-    _css_props = {k.replace('_','-'):f"{v}" for k,v in css_props.items()} #Convert to CSS string if int or float
-    _css_props = {k: f"{v.replace('!important','').replace(';','')} !important;" for k,v in _css_props.items()}
-    props_str = '\n'.join([f"    {k}: {v}" for k,v in _css_props.items()])
-    out_str = f"<style>\n{selector} {{\n{props_str}\n}}\n</style>"
-    return _HTML(out_str)
+def _validate_key(key):
+    "Validate key for CSS,allow only string or tuple of strings. commas are allowed only in :is(.A,#B),:has(.A,#B) etc."
+    if not isinstance(key,(str,tuple)):
+        raise ValueError(f'key should be string or tuple of strings, got {key!r}')
+    if isinstance(key,tuple):
+        for k in key:
+            if not isinstance(k,str):
+                raise ValueError(f'Only tuple of strings is allowed as key, got {k!r}')
+        key = f":is({', '.join(key)})"
+    
+    if not re.match(r'^\:(.*?)\((.*?)\)$',key.replace('>','').strip()) and ',' in key:
+        raise ValueError(f'Comma separated selectors are not allowed unless they are of type :is(.A,#B),:has(.A,#B) etc. Use tuple of strings instead for {key!r}')
+    return key
+
+def _build_css(selector, data):
+    "selctor is tuple of string(s), data contains nested dictionaries of selectors, attributes etc."
+    content = '\n' # Start with new line so style tag is above it
+    children = []
+    attributes = []
+
+    for key, value in data.items():
+        key = _validate_key(key) # Just validate key
+        if hasattr(value, 'items'):
+            children.append( (key, value) )
+        else:
+            attributes.append( (key, value) )
+
+    if attributes:
+        content += (' '.join(selector) +" {\n\t")
+        content +=  '\n\t'.join(f"{key} : {value};"  for key, value in attributes) 
+        content += "\n}\n"
+
+    for key, value in children:
+        if key.startswith('@media'):
+            content += f"{key} {{\n\t"
+            content += _build_css(selector, value).replace('\n','\n\t').rstrip('\t') # last tab is bad
+            content += "}\n"
+        elif  key.startswith(':root'): # This is fine
+            content+= _build_css((key,), value)
+        else:
+            content += _build_css(selector + (key,), value)
+        
+    return content.replace('\t','    ') # 4 space instead of tab is bettter option
+
+@_sub_doc(css_docstring = _css_docstring)
+def format_css(css_dict):
+    "{css_docstring}"
+    _all_css = '' # All css
+    slide_bg = css_dict.get('background',css_dict.get('background-color',None))
+    if slide_bg:
+        _all_css += f'\n.SlidesWrapper, .BackLayer .Front {{\nbackground:{slide_bg};\n}}' # Set background for slide
+        
+    _all_css += _build_css(('.SlideArea',),css_dict) # Build css from dict
+    return html('style', _all_css)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."

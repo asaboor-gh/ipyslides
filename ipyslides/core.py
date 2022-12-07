@@ -601,15 +601,14 @@ class Slides(BaseSlides):
                    
     
     @contextmanager
-    def slide(self,slide_number,props_dict = {}):
-        """Use this context manager to generate any number of slides from a cell
-        CSS properties from `props_dict` are applied to current slide."""
+    def slide(self,slide_number):
+        "Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic."
         if not isinstance(slide_number, int):
             raise ValueError(f'slide_number should be int >= 1, got {slide_number}')
         
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
         
-        with _build_slide(self, f'{slide_number}', props_dict=props_dict, from_cell = False) as s:
+        with _build_slide(self, f'{slide_number}', from_cell = False) as s:
             yield s # Useful to use later
         
     def __title(self,line,cell):
@@ -632,13 +631,12 @@ class Slides(BaseSlides):
             return parse_xmd(cell, display_inline = True, rich_outputs = False)
             
     @contextmanager
-    def title(self,props_dict = {}):
-        """Use this context manager to write title.
-        CSS properties from `props_dict` are applied to current slide."""
-        with self.slide(0, props_dict = props_dict) as s:
+    def title(self):
+        "Use this context manager to write title. It is equivalent to `%%title` magic."
+        with self.slide(0) as s:
             yield s # Useful to use later
     
-    def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto', props_dict = {}):
+    def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
         You can also call it as a function, e.g. `.frames(slide_number = 1,1,2,3,4,5)()` becuase it can write by defualt.
         
@@ -689,8 +687,8 @@ class Slides(BaseSlides):
                 raise ValueError(f'Maximum 99 frames are supported, found {len(_new_objs)} frames!')
            
             # build_slide returns old slide with updated display if exists.
-            with _build_slide(self, f'{slide_number}', props_dict= props_dict, from_cell = False, is_frameless = False) as this_slide:
-                self.write(self.format_css('.SlideArea',height = frame_height))
+            with _build_slide(self, f'{slide_number}', from_cell = False, is_frameless = False) as this_slide:
+                self.write(self.format_css({'.SlideArea': {'height': frame_height}}))
                 try:
                     func(_new_objs[0],0) # Main slide content
                 except:
@@ -704,14 +702,14 @@ class Slides(BaseSlides):
             new_frames = []
             for i, obj in enumerate(_new_objs): # New frames
                 if i >= NFRAMES_OLD: # Add new frames
-                    new_slide = Slide(self, slide_number, props_dict= props_dict)
+                    new_slide = Slide(self, slide_number)
                 else: # Update old frames
                     new_slide = this_slide._frames[i] # Take same frame back
                 
                 new_frames.append(new_slide)
                 
                 with new_slide._capture(assign = True) as captured:
-                    self.write(self.format_css('.SlideArea',height = frame_height))
+                    self.write(self.format_css({'.SlideArea': {'height': frame_height}}))
                     try:
                         func(obj,i+1)
                     except:
@@ -797,7 +795,7 @@ class Slides(BaseSlides):
         self.widgets.tocbox.children = children
         
     
-    def create(self, *slide_numbers, props_dict ={}):
+    def create(self, *slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is faster than creating one slide each time."
         new_slides = False
         for slide_number in slide_numbers:
@@ -805,7 +803,7 @@ class Slides(BaseSlides):
                 with capture_output() as captured:
                     self.write(f'### Slide-{slide_number}')
                 
-                self._slides_dict[f'{slide_number}'] = Slide(self, slide_number, captured_output=captured, props_dict= props_dict)
+                self._slides_dict[f'{slide_number}'] = Slide(self, slide_number, captured_output=captured)
                 new_slides = True
         
         if new_slides:
