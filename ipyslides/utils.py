@@ -28,7 +28,12 @@ def _sub_doc(**kwargs):
         return func
     return _inner
 
-_css_docstring = """`css_dict` is a nested dict of css selectors and properties.      
+_css_docstring = """`css_dict` is a nested dict of css selectors and properties. There are few special rules in `css_dict`:
+
+- All nested selectors are joined with space, so '.A': {'.B': ... } becomes '.A .B {...}' in CSS.
+- A '^' in start of a selector joins to parent selector without space, so '.A': {'^:hover': ...} becomes '.A:hover {...}' in CSS. You can also use '.A:hover' directly but it will restrict other nested keys to hover only.
+- A '+' in start of a key allows using same key in dict for CSS fallback, so '.A': {'font-size': '20px','+font-size': '2em'} becomes '.A {font-size: 20px; font-size: 2em;}' in CSS.
+
 **Python** 
 ```python
 {
@@ -135,16 +140,13 @@ def format_html(*columns,width_percents=None,className=None):
 
 def _validate_key(key):
     "Validate key for CSS,allow only string or tuple of strings. commas are allowed only in :is(.A,#B),:has(.A,#B) etc."
-    if not isinstance(key,(str,tuple)):
-        raise ValueError(f'key should be string or tuple of strings, got {key!r}')
-    if isinstance(key,tuple):
-        for k in key:
-            if not isinstance(k,str):
-                raise ValueError(f'Only tuple of strings is allowed as key, got {k!r}')
-        key = f":is({', '.join([k.strip() for k in key])})" # Keep in :is(), will need to handle ^ later
-    
-    if not re.match(r'^\:(.*?)\((.*?)\)$',key.replace('>','').strip()) and ',' in key:
-        raise ValueError(f'Comma separated selectors are not allowed unless they are of type :is(.A,#B),:has(.A,#B) etc. Use tuple of strings instead for {key!r}')
+    if not isinstance(key,str):
+        raise ValueError(f'key should be string, got {key!r}')
+
+    if ',' in key:
+        all_matches = re.findall(r'\((.*?)\)',key,flags=re.DOTALL)
+        for match in all_matches:
+            key = key.replace(f'{match}',match.replace(',','$'),1)  # Make safe from splitting with comma
     return key
 
 def _build_css(selector, data):
@@ -152,10 +154,10 @@ def _build_css(selector, data):
     content = '\n' # Start with new line so style tag is above it
     children = []
     attributes = []
-
+    
     for key, value in data.items():
         key = _validate_key(key) # Just validate key
-        if hasattr(value, 'items'):
+        if isinstance(value, dict):
             children.append( (key, value) )
         else:
             attributes.append( (key, value) )
@@ -173,12 +175,24 @@ def _build_css(selector, data):
         elif  key.startswith(':root'): # This is fine
             content+= _build_css((key,), value)
         else:
-            content += _build_css(selector + (key,), value)
+            if ',' in key:
+                many_keys = '%\n'.join(f"{' '.join(selector)} {k}" for k in key.split(',')) + ' %' # Add % to end to handle last key
+                content += _build_css((many_keys,), value)
+            else:
+                _sel = selector + (key,) # Avoid selector overwriting
+                if selector and '%' in selector[0]: # There is always single or no selector tuple
+                    _sel = (selector[0].replace('%',f' {key} %'),) # Avoid selector overwriting
+
+                content += _build_css(_sel, value)
     
-    content = re.sub('\t', '    ', content) # 4 space instead of tab is bettter option
+    content = re.sub(r'\%\s+\{','{',content) # Remove % and spaces before {
+    content = re.sub(r'\$', ',', content) # Replace $ with ,
     content = re.sub(r'\n\s+\n|\n\n','\n', content) # Remove empty lines after tab is replaced above
-    content = re.sub(r'^(.*?)\s\:is\(\^\,\s', r'\1, \1 :is(', content, flags = re.DOTALL) # Remove ^ from B. :is(^, .A) to B., B. :is(.A)') to select B and all its children
-    content = re.sub(r'\:is\(([^\,]*)\)',r'\1', content, flags = re.DOTALL) # Remove :is(.A) to .A only
+    content = re.sub(r'\s+\,', ',', content) # Remove extra spaces beofore ,
+    content = re.sub(r' +', ' ', content) # Remove extra spaces  
+    content = re.sub(r'\%',',\n',content) # Replace % with ,\\n
+    content = re.sub('\t', '    ', content) # 4 space instead of tab is bettter option
+    content = re.sub(r'\^',' ', content) # Remove left over ^ from start of main selector
         
     return content
 
