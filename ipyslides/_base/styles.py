@@ -85,7 +85,7 @@ theme_roots = {
 
 def style_css(style_root = theme_roots['Inherit']):
 	return style_root + ''' 
-.SlideArea .TextBox { /* general text box for writing inline refrences etc. */
+.SlideArea .text-box { /* general text box for writing inline refrences etc. */
     font-size: 0.7em !important; 
     line-height: 0.99em !important;
     position:relative; 
@@ -115,50 +115,50 @@ def style_css(style_root = theme_roots['Inherit']):
     line-height: 1em !important;
     padding-top: 0.2em !important;
 }
-.Center:not(.columns), .Center > *:not(.columns) {
+.align-center:not(.columns), .align-center > *:not(.columns) {
     display:table !important;
     margin: 0 auto !important;
     width: auto !important; /* max-content creates oveflow, do not use it */
 }
-.Left:not(.columns) { 
+.align-left:not(.columns) { 
     display:table !important; 
     width: auto !important; 
     margin-right: auto !important; 
     text-align:left !important;
 }
-.Right:not(.columns) { 
+.align-right:not(.columns) { 
     display:table !important; 
     width: auto !important; 
     margin-left: auto !important; 
     text-align:right !important;
 }
 
-.RTL, .RTL > * {
+.rtl, .rtl > * {
     text-align:right !important;
-    padding: 0 12px !important; /* to avoid cuts in RTL */
+    padding: 0 12px !important; /* to avoid cuts in rtl */
 }
 
-.Info > *:last-child, .Warning > *:last-child,
-.Success > *:last-child, .Error > *:last-child,
-.Right:not(.columns) >*:last-child,
-.Left:not(.columns) >*:last-child,
-.Center:not(.columns) >*:last-child{ 
+.info > *:last-child, .warning > *:last-child,
+.success > *:last-child, .error > *:last-child,
+.align-right:not(.columns) >*:last-child,
+.align-left:not(.columns) >*:last-child,
+.align-center:not(.columns) >*:last-child{ 
     margin-bottom:0.1em !important;
 }
 
-.Info, .Warning, .Success, .Error, .Note { padding: 0.2em !important;}
+.info, .warning, .success, .error, .note { padding: 0.2em !important;}
 
-.Warning, .Warning *:not(span) { color:#FFAC1C !important;}
-.Success, .Success *:not(span) { color:green !important;}
-.Error, .Error *:not(span) { color:red !important;}
-.Info, .Info *:not(span) { color:skyblue !important;}
-.Note{
+.warning, .warning *:not(span) { color:#FFAC1C !important;}
+.success, .success *:not(span) { color:green !important;}
+.error, .error *:not(span) { color:red !important;}
+.info, .info *:not(span) { color:skyblue !important;}
+.note{
     border: 1px solid var(--hover-bg);
     border-radius: 0.2em;
     background: none; /* Fallback  for Inherit and Custom theme*/
     background: rgba(__light__,__light__,__light__,0.75);
 }
-.Note::before {
+.note::before {
     content: 'ℹ';
     display: inline-flex;
     width: 1em;
@@ -171,14 +171,14 @@ def style_css(style_root = theme_roots['Inherit']):
     color: var(--accent-color);
 }
 
-.Block {
+.block {
     padding:8px;
     border-top: 3px solid var(--accent-color);
     background: var(--secondary-bg);
     margin-bottom: 0.9em;
 }
 
-.Block-red {
+.block-red {
     padding:8px;
     border-top: 3px solid red; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__, 0, 0);
@@ -187,7 +187,7 @@ def style_css(style_root = theme_roots['Inherit']):
     margin-bottom: 0.9em;
 }
 
-.Block-green {
+.block-green {
     padding:8px;
     border-top: 3px solid green; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0, __light__, 0);
@@ -196,7 +196,7 @@ def style_css(style_root = theme_roots['Inherit']):
     margin-bottom: 0.9em;
 }
 
-.Block-blue {
+.block-blue {
     padding:8px;
     border-top: 3px solid blue; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0, 0, __light__);
@@ -204,7 +204,7 @@ def style_css(style_root = theme_roots['Inherit']):
     background: rgba(calc(__light__ - 20),calc(__light__ - 20),__light__,0.75);
     margin-bottom: 0.9em;
 }
-.Block-yellow {
+.block-yellow {
     padding:8px;
     border-top: 3px solid yellow; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__, __light__, 0);
@@ -212,7 +212,7 @@ def style_css(style_root = theme_roots['Inherit']):
     background: rgba(__light__,__light__,calc(__light__ - 20),0.75);
     margin-bottom: 0.9em;
 }
-.Block-cyan {
+.block-cyan {
     padding:8px;
     border-top: 3px solid cyan; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(0,__light__, __light__);
@@ -220,7 +220,7 @@ def style_css(style_root = theme_roots['Inherit']):
     background: rgba(calc(__light__ - 20),__light__,__light__,0.75);
     margin-bottom: 0.9em;
 }
-.Block-gray {
+.block-gray {
     padding:8px;
     border-top: 3px solid gray; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(calc(__light__ - 10),calc(__light__ - 10),calc(__light__ - 10));
@@ -228,7 +228,7 @@ def style_css(style_root = theme_roots['Inherit']):
     background: rgba(calc(__light__ - 20),calc(__light__ - 20),calc(__light__ - 20),0.75);
     margin-bottom: 0.9em;
 }
-.Block-magenta {
+.block-magenta {
     padding:8px;
     border-top: 3px solid magenta; /* Fallback  for Inherit and Custom theme*/
     border-top: 3px solid rgb(__light__,0, __light__);
@@ -250,8 +250,8 @@ details > div {
     padding: 0.2em;
 }
 
-.SlidesWrapper *:not(.fa):not(i):not(span):not(pre):not(code):not(.RawText),
-.SlideArea *:not(.fa):not(i):not(span):not(pre):not(code):not(.RawText) { /* Do not edit __textfont__, code does this. */
+.SlidesWrapper *:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text),
+.SlideArea *:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text) { /* Do not edit __textfont__, code does this. */
    font-family: "__textfont__", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
 }
 
@@ -276,7 +276,7 @@ details > div {
 
 .SlideArea .columns {width:100%;max-width:100%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
 
-@media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in Notebook*/
+@media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in notebook*/
     .SlideArea .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
     .SlideArea .columns>div[style] {width:100%!important;} /* important to override inline CSS */
 }
@@ -379,7 +379,7 @@ span.lang-name {
     color: var(--accent-color);
     font-size: 0.8em;
 }
-.RawText { /* Should be same in notebook cell */
+.raw-text { /* Should be same in notebook cell */
     font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
     font-size: 90% !important;
     display: block !important;
@@ -389,7 +389,7 @@ span.lang-name {
     overflow-wrap: break-word !important;
     padding: 0 0.3em !important;
 } 
-.SlideArea .RawText { /* Should follow theme under slides */
+.SlideArea .raw-text { /* Should follow theme under slides */
     background: var(--secondary-bg) !important;
     color: var(--primary-fg) !important;
     max-height: 400px;
@@ -399,15 +399,15 @@ span.lang-name {
     background: none !important;
     color: var(--primary-fg) !important;
 }
-.CustomPrint {
+.custom-print {
     margin-block: 0.5px !important; /* Two adjacant prints should look closer */
 }
-.GoToButton {min-width:max-content;}
+.goto-button {min-width:max-content;}
 /* Associted with the above */
-.GoToBox {}
-.GoToHtml {}
+.goto-box {}
+.goto-html {}
 
-.SlidesWrapper.CaptureMode .SlideArea .GoToButton {display:none !important;} /* Hide the GoToButton in screenshot, it is not useful there */
+.SlidesWrapper.CaptureMode .SlideArea .goto-button {display:none !important;} /* Hide the goto-button in screenshot, it is not useful there */
 
 /* Table of contents on slides */
 .SlideArea .toc-item {border-right: 4px solid var(--secondary-bg);}
@@ -432,14 +432,14 @@ a.citelink > sup {
     padding: 0.2em;
 }
 
-/* Docs have Python code only, so no need to have fancy things there */
-.Docs {
+/* docs have Python code only, so no need to have fancy things there */
+.docs {
     margin-bottom: 1em !important;
 }
-.Docs .highlight {
+.docs .highlight {
     border: none !important;
 }
-.Docs span.lang-name {
+.docs span.lang-name {
     display: none !important;
 }
 .SlidesWrapper blockquote, .SlidesWrapper blockquote>p {

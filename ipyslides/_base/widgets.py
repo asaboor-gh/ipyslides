@@ -19,15 +19,15 @@ class _Buttons:
     """
     Instantiate under `Widgets` class only.
     """
-    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('arrows')
-    next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('arrows')
-    setting =  Button(description= '\u2699',layout= Layout(width='auto',height='auto', tooltip='Toggle Settings')).add_class('menu').add_class('SidePanel-Btn')
-    toc     =  Button(description= '\u2630',layout= Layout(width='auto',height='auto', tooltip='Toggle Table of Contents')).add_class('menu').add_class('Toc-Btn')
-    home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('menu')
-    end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('menu')
+    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('Arrows')
+    next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('Arrows')
+    setting =  Button(description= '\u2699',layout= Layout(width='auto',height='auto', tooltip='Toggle Settings')).add_class('Menu-Item').add_class('SidePanel-Btn')
+    toc     =  Button(description= '\u2630',layout= Layout(width='auto',height='auto', tooltip='Toggle Table of Contents')).add_class('Menu-Item').add_class('Toc-Btn')
+    home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
+    end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
                 tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
-                ).add_class('screenshot-btn') # .add_class('menu')
+                ).add_class('screenshot-btn') # .add_class('Menu-Item')
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
     cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
@@ -37,11 +37,11 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    export  = ipw.ToggleButtons(description='Export As: ',options=[('Slides',0),('Report',1),('None',2)], value = 2).add_class('export-btn').add_class('menu')
-    display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('menu')
-    fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('window-fs')
-    zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('mpl-zoom')
-    timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('presenter-btn')             
+    export  = ipw.ToggleButtons(description='Export As: ',options=[('Slides',0),('Report',1),('None',2)], value = 2).add_class('Export-Btn').add_class('Menu-Item')
+    display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('Menu-Item')
+    fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('FullWindow-Btn')
+    zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('Zoom-Btn')
+    timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('Presenter-Btn')             
         
 
 @dataclass(frozen=True)
@@ -67,9 +67,9 @@ class _Htmls:
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     fscrn   = HTML() # Full Screen CSS, do not add here!
     zoom    = HTML() # zoom-container CSS, do not add here!
-    capture = HTML('<span class="Info">Edit above box and hit Enter to see screenshot here. ' 
-                   'If nothing shown, your system does not support taking screenshots with PIL</span>').add_class('capture-html') # Screenshot image here
-    intro   = HTML().add_class('panel-text') # Intro HTML
+    capture = HTML('<span class="info">Edit above box and hit Enter to see screenshot here. ' 
+                   'If nothing shown, your system does not support taking screenshots with PIL</span>').add_class('CaptureHtml') # Screenshot image here
+    intro   = HTML().add_class('PanelText') # Intro HTML
     glass = HTML().add_class('BackLayer') # For glass effect
 
 @dataclass(frozen=True)
@@ -77,7 +77,7 @@ class _Inputs:
     """
     Instantiate under `Widgets` class only.
     """
-    bbox = ipw.Text(description='L,T,R,B (px)',layout=auto_layout,value='Type left,top,right,bottom pixel values and press ↲').add_class('bbox-input')
+    bbox = ipw.Text(description='L,T,R,B (px)',layout=auto_layout,value='Type left,top,right,bottom pixel values and press ↲').add_class('Bbox-Input')
 
 @dataclass(frozen=True)
 class _Checks:
@@ -94,9 +94,9 @@ class _Sliders:
     Instantiate under `Widgets` class only.
     """
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
-    visible  = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('float-control')
-    height   = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('height-slider') #2160 for 4K screens
-    width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 40,continuous_update=False).add_class('width-slider') # 40 is best if something goes wrong, it can be pushed back
+    visible  = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('FloatControl')
+    height   = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('Height-Slider') #2160 for 4K screens
+    width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 40,continuous_update=False).add_class('Width-Slider') # 40 is best if something goes wrong, it can be pushed back
     scale    = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         
 
@@ -125,19 +125,19 @@ def _custom_progressbar(intslider):
     # This html should not be exposed to user
     html = HTML('''
     <style>
-    .NavWrapper .nav-box .menu {
+    .NavWrapper .NavBox .Menu-Item {
         font-size:24px !important; 
         overflow:hidden;
         opacity:0.4;
         z-index:55;
     }
-    .NavWrapper .nav-box .menu:hover {
+    .NavWrapper .NavBox .Menu-Item:hover {
         opacity:1;
     }
-    .NavWrapper .nav-box .Footer p {
+    .NavWrapper .NavBox .Footer p {
         font-size:14px !important;
     }
-    .NavWrapper .nav-box {
+    .NavWrapper .NavBox {
         z-index:50;
         overflow: hidden;
     }
@@ -199,8 +199,6 @@ def _notification(content,title='IPySlides Notification',timeout=5):
         <div style="width:4px;background: var(--accent-color);margin-left:-8px;margin-right:8px"></div>
         <div>{_title}<p>{content}</p></div></div>'''
 
-    
-    
 class Widgets:
     """
     Instantiate under `LiveSLides` class only and provide to other classes after built-up.
@@ -244,14 +242,14 @@ class Widgets:
                 self.sliders.progress 
             ]).add_class('ProgBox') ,
             self.buttons.next
-        ]).add_class('controls') 
+        ]).add_class('Controls') 
         
         self.footerbox = HBox([
             self.buttons.setting,
             self.buttons.toc,
             HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
             self.buttons.capture,
-        ],layout=Layout(height='36px')).add_class('nav-box')
+        ],layout=Layout(height='36px')).add_class('NavBox')
         
         self.navbox = VBox([
             self.footerbox,
@@ -292,7 +290,7 @@ class Widgets:
                 self.outputs.slide,
                 self.htmls.intro  
             ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0'))
-        ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('panel') 
+        ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('SidePanel') 
         
         self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='100%',overflow='auto',display='none')).add_class('TOC')
         

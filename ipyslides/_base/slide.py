@@ -10,7 +10,7 @@ from IPython.utils.capture import capture_output
 
 
 from . import styles
-from ..utils import html, format_css, _sub_doc, _css_docstring
+from ..utils import html, _format_css, _sub_doc, _css_docstring
 
 class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
 
@@ -227,8 +227,10 @@ class Slide:
     
     @_sub_doc(css_docstring = _css_docstring)
     def set_css(self,css_dict = {}):
-        "{css_docstring}"
-        self._css = format_css(css_dict)
+        """Attributes at the root level of the dictionary will be applied to the slide.  
+        use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
+        {css_docstring}"""
+        self._css = _format_css(css_dict, allow_root_attrs = True)
         
         # See effect of changes
         if self._app._slidelabel != self.label:

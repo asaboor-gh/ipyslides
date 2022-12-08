@@ -19,7 +19,7 @@ a.jp-InternalAnchorLink { display: none !important;}
 #rendered_cells div.jp-RenderedMarkdown.jp-MarkdownOutput{
     height:0 !important;
 } /* Suppress other outputs and markdown output in Voila */
-/*.jp-LabShell .SlidesWrapper .height-slider {display:none;}*/
+/*.jp-LabShell .SlidesWrapper .Height-Slider {display:none;}*/
 /* next Three things should be in given order */
 .sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
 .jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only,
@@ -36,15 +36,15 @@ a.jp-InternalAnchorLink { display: none !important;}
     tight: 0px !important;
     left: 0px !important;
 }
-#rendered_cells .height-slider {display:none !important;}
-#rendered_cells .window-fs {opacity:0.1 !important;}
+#rendered_cells .Height-Slider {display:none !important;}
+#rendered_cells .FullWindow-Btn {opacity:0.1 !important;}
 .SlidesWrapper {z-index: 10 !important;}
 
 @media print {
-   .SlidesWrapper, .SlidesWrapper.FullScreen {
+   .SlidesWrapper, .SlidesWrapper.FullWindow {
        height: auto !important;
    }
-   .controls, .NavWrapper button, .float-control, div.LaserPointer {
+   .Controls, .NavWrapper button, .FloatControl, div.LaserPointer {
        display:none !important;
    }
     .NavWrapper p {
@@ -53,7 +53,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     pre, .SlideBox, .SlidesWrapper, .SlideArea {
         height: auto !important;
     }
-    .SlidesWrapper .highlight, .SlideArea .RawText {
+    .SlidesWrapper .highlight, .SlideArea .raw-text {
         max-height:auto !important; /* Flow itself */
     }
     .SlideArea {
@@ -61,9 +61,9 @@ a.jp-InternalAnchorLink { display: none !important;}
     }
 }
 
-.panel .capture-html { border: 1px solid var(--secondary-fg); }
-.panel .capture-html figure {width:100%;margin:0;padding:0;background:var(--secondary-bg);}
-.float-control {
+.SidePanel .CaptureHtml { border: 1px solid var(--secondary-fg); }
+.SidePanel .CaptureHtml figure {width:100%;margin:0;padding:0;background:var(--secondary-bg);}
+.FloatControl {
     position: absolute;
     right:0;
     top:0;
@@ -75,7 +75,7 @@ a.jp-InternalAnchorLink { display: none !important;}
     overflow:hidden;
     padding:4px;
 }
-.float-control:hover,.float-control:focus {
+.FloatControl:hover,.FloatControl:focus {
     width:max-content;
     height:50%;
     opacity:1;
@@ -113,7 +113,7 @@ body[data-notebook] .DisplaySwitch {
     box-shadow:none !important;
 }
 #rendered_cells .DisplaySwitch,
-.SlidesWrapper.FullScreen .DisplaySwitch {
+.SlidesWrapper.FullWindow .DisplaySwitch {
     display: none !important; /* in fullscreen */
 }
 .CompareSwitch.mod-active {
@@ -141,7 +141,7 @@ body[data-notebook] .DisplaySwitch {
     float:right;
     padding: 0.2em;
 }
-.capture-html * {
+.CaptureHtml * {
     font-size: 0.9em;
     line-height: 0.9em  !important;
 }
@@ -162,14 +162,14 @@ body[data-notebook] .DisplaySwitch {
 @media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in Notebook*/
     .TOC {min-width: calc(100% - 72px) !important;}
 }
-.TOC .GoToBox {
+.TOC .goto-box {
     justify-content: space-between;
     height: auto;
     width: auto;
     box-sizing:border-box !important;
 }
-.TOC .GoToBox:hover {font-weight:bold;}
-.TOC .GoToButton {
+.TOC .goto-box:hover {font-weight:bold;}
+.TOC .goto-button {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -177,13 +177,13 @@ body[data-notebook] .DisplaySwitch {
     padding:0;
     margin:0;
 }
-.TOC .menu {font-size: 24px !important;}
-.TOC .GoToHtml {
+.TOC .Menu-Item {font-size: 24px !important;}
+.TOC .goto-html {
     width:100%;
     height:max-content;
     box-sizing:border-box;
 }
-.TOC .GoToHtml .widget-html-content {
+.TOC .goto-html .widget-html-content {
     box-sizing: border-box;
     padding-left:2em !important;
     display: flex;
@@ -192,7 +192,7 @@ body[data-notebook] .DisplaySwitch {
     justify-content:space-between !important;
     align-items:top;
 }
-.TOC .GoToHtml .widget-html-content  span:first-of-type {
+.TOC .goto-html .widget-html-content  span:first-of-type {
     position:absolute;
     top:0 !important; /*must have thing */
     height:100%;
@@ -231,7 +231,7 @@ body[data-notebook] .DisplaySwitch {
     display:grid !important; 
     font-size: var(--text-size) !important;
 } /* Do not use overflow here */
-.panel-text .widget-html-content {
+.SidePanel-text .widget-html-content {
     line-height: inherit !important;
 }
 .jp-LinkedOutputView, 
@@ -243,7 +243,7 @@ body[data-notebook] .DisplaySwitch {
     background: var(--theme-background,inherit) !important;
     margin: 8px 0px;} /* VS Code */
     
-.SlidesWrapper .panel {
+.SlidesWrapper .SidePanel {
     backdrop-filter: blur(200px);
     position:absolute;
     border:none;
@@ -256,7 +256,7 @@ body[data-notebook] .DisplaySwitch {
     box-shadow: 0 0 20px 20px var(--secondary-bg);
 }
 
-.SlidesWrapper .panel .SidePanel-Btn {
+.SlidesWrapper .SidePanel .SidePanel-Btn {
     border:none !important;
     outline:none !important;
     font-size: 24px;
@@ -281,14 +281,14 @@ body[data-notebook] .DisplaySwitch {
     justify-content: center;
     opacity: 1;
 }
-.NavWrapper nav-box {
+.NavWrapper NavBox {
     align-items: bottom;
     height: max-content;
     justify-content: flex-start;
     }
-.SlidesWrapper .arrows {opacity:0.4;font-size: 36px;padding:4px;}
-.SlidesWrapper .arrows:hover, .SlidesWrapper .arrows:focus { opacity:1;}
-.SlidesWrapper .controls {
+.SlidesWrapper .Arrows {opacity:0.4;font-size: 36px;padding:4px;}
+.SlidesWrapper .Arrows:hover, .SlidesWrapper .Arrows:focus { opacity:1;}
+.SlidesWrapper .Controls {
     position:absolute;
     right:16px !important;
     bottom:0px !important;
@@ -300,12 +300,12 @@ body[data-notebook] .DisplaySwitch {
     color: var(--accent-color) !important;
     
 }
-.controls .widget-button > i { color: var(--accent-color) !important;}
+.Controls .widget-button > i { color: var(--accent-color) !important;}
 
 @media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in Notebook*/
-    .SlidesWrapper .panel {width:100% !important;}
-    .SlidesWrapper .controls {bottom:30px!important;right:0 !important;width:100%;justify-content: space-around !important;}
-	.SlidesWrapper .controls button {width:30% !important;}
+    .SlidesWrapper .SidePanel {width:100% !important;}
+    .SlidesWrapper .Controls {bottom:30px!important;right:0 !important;width:100%;justify-content: space-around !important;}
+	.SlidesWrapper .Controls button {width:30% !important;}
     .SlidesWrapper .SlideArea {padding-bottom: 50px !important;}
     .NavWrapper .progress {height:4px !important;}
     .SlideArea { min-width:100% !important;width:100% !important;} /* can't work without min-width */
@@ -347,7 +347,7 @@ body[data-notebook] .DisplaySwitch {
     background: var(--secondary-bg);
     color: var(--accent-color)!important;
 }
-.SlidesWrapper :is(.SlideBox, .panel) :is(button, .jupyter-button) { 
+.SlidesWrapper :is(.SlideBox, .SidePanel) :is(button, .jupyter-button) { 
     border: 1px solid var(--accent-color);
     border-radius: 4px;
     min-height: 28px;
@@ -382,23 +382,23 @@ div.LaserPointer { /* For laser pointer */
 }
 
 /* Export Button */
-.SlidesWrapper .export-btn .mod-active{
+.SlidesWrapper .Export-Btn .mod-active{
     box-shadow: none !important;
 }
-.SlidesWrapper .export-btn > div {
+.SlidesWrapper .Export-Btn > div {
     border: 1px inset var(--hover-bg);
     padding:4px;
     border-radius:4px;
 }
 
-.SlidesWrapper .export-btn > div > button:last-of-type {
+.SlidesWrapper .Export-Btn > div > button:last-of-type {
     display:none !important; /* Hide the third button, it's there on python side for a purpose */
     }
 
 /* Linked Area */
 .jp-LinkedOutputView > div.jp-OutputArea >  div:first-child,
-.jp-LinkedOutputView .SlidesWrapper .height-slider,
-.SlidesWrapper.FullScreen .height-slider{
+.jp-LinkedOutputView .SlidesWrapper .Height-Slider,
+.SlidesWrapper.FullWindow .Height-Slider{
    display: none !important;
 }
 .jp-LinkedOutputView, 
@@ -414,9 +414,9 @@ div.LaserPointer { /* For laser pointer */
     height: 100% !important;
     width: 100% !important;
 }
-#rendered_cells .height-slider,
-#rendered_cells .width-slider,
-.SlidesWrapper.SideMode .height-slider,
+#rendered_cells .Height-Slider,
+#rendered_cells .Width-Slider,
+.SlidesWrapper.SideMode .Height-Slider,
 .jp-LinkedOutputView .ExtraControls,
 .jupyterlab-sidecar .ExtraControls {
     display: none !important;
@@ -457,7 +457,7 @@ body[data-notebook] .SlidesWrapper{{
 '''
 
 fullscreen_css = '''
-.SlidesWrapper.FullScreen {      
+.SlidesWrapper.FullWindow {      
     flex: 1;
     position: fixed;
     bottom: 0px;
@@ -479,7 +479,7 @@ fullscreen_css = '''
 .SlidesWrapper .voila-sidecar-hidden {
     display:none !important;
 }
-.SlidesWrapper.FullScreen .console-btn { display:block;} /* Show console button in fullscreen in jupyterlab only*/
+.SlidesWrapper.FullWindow .console-btn { display:block;} /* Show console button in fullscreen in jupyterlab only*/
 html, body { background: var(--primary-bg);} /* Useful for Other tabs when Ctrl + Shift + ],[ pressed */
 ''' 
 

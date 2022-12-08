@@ -82,7 +82,7 @@ _special_funcs = {
     'sup': 'text',
     'today': 'fmt like %b-%d-%Y',
     'textbox':'text', # Anything above this can be enclosed in a textbox
-    'center':'text or \{\{variable\}\}',} # Center should be at end of all
+    'center':'text or \{\{variable\}\}',} # align-center should be at end of all
 
 
 def resolve_objs_on_slide(slide_instance,text_chunk):
@@ -288,8 +288,7 @@ class _ExtendedMarkdown(Markdown):
         # Replace Block classes
         all_matches = re.findall(r'class\`(.*?)\`', html_output, flags = re.DOTALL)
         for match in all_matches:
-            html_output = html_output.replace(f'class`{match}`', f'<div class="{match}" markdown="1">', 1)
-        
+            raise ValueError(f'class`class-name` syntax is changed to indented block like \n::: class-name\n   Indented block to be parsed\n')
         
         # Replace colored text
         all_matches = re.findall(r'color\[(.*?)\]\`(.*?)\`', html_output, flags = re.DOTALL | re.MULTILINE)
@@ -300,8 +299,6 @@ class _ExtendedMarkdown(Markdown):
             else:
                 kws['fg'] = match[0].strip()
             html_output = html_output.replace(f'color[{match[0]}]`{match[1]}`', utils.colored(match[1],**kws).value, 1)
-        
-        html_output = re.sub(r'^\^\^\^$', '</div>', html_output,flags=re.MULTILINE) # Close last block
         
         # Run an included file
         all_matches = re.findall(r'include\`(.*?)\`', html_output, flags = re.DOTALL)
@@ -328,7 +325,7 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
      ```multicol 40 60
      # First column is 40% width
      If 40 60 was not given, all columns will be of equal width, this paragraph will be inside info block due to class at bottom
-     {.Info}
+     {.info}
      +++
      # Second column is 60% wide
      This {{var_name}} is code from above and will be substituted with the value of var_name
@@ -340,7 +337,7 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
      || Inline-column A || Inline-column B ||
     ```
 
-    Each block can have class names (speparated with space or .) (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess.Info`.
+    Each block can have class names (speparated with space or .) (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess.info`.
     For example, `python .friendly` will be highlighted with friendly theme from pygments.
     Pygments themes, however, are not supported with `multicol`. You need to write and display CSS for a custom class.
     Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `Slides.export.<export_function>` is called.

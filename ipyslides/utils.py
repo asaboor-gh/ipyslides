@@ -28,28 +28,70 @@ def _sub_doc(**kwargs):
         return func
     return _inner
 
-_css_docstring = """`css_dict` is a nested dict of css properties.      
-**Example:** 
+_css_docstring = """`css_dict` is a nested dict of css selectors and properties.      
+**Python** 
 ```python
-css_dict ={
-    'background':'#000', # Only background will be applied to Slide's background
-    'color':'#fff', # Other things will be applied to content
-    ('p','b','li'): {'color':'#fff', 'animation': '0.2sec animation_name'}, # content selector
-    '@keyframes animation_name':{ 
-        '0%': {'transform':'scale(0.5)'} 
-        '100%': {'transform':'scale(1)'}
-    }, 
-    '@media screen and (max-width: 600px)': {
-        'p': {'color':'#000'}
-    }
+{
+    '.A': { # .A is repeated nowhere! But in CSS it is a lot
+        'z-index': '50',
+        '.B': {
+            'font-size': '24px',
+            '+font-size': '2em', # Overwrites previous, note + in start, add many more + for more overwrites
+            '^:hover': {'opacity': '1'}, # Attach pseudo class to parent by prepending ^, or .B:hover works too
+        },
+        '> div': { # Direct nesting by >
+            'padding': '0',
+        },
+        '.C p': {'font-size': '14px'},
+    },
+    '.D': {
+        'transform': 'translate(-2px,1px)',
+        ('^', 'h1'): { # caret ^ in first key refers to parent selector, useless in other keys though
+            'background': 'red'
+        },
+        ('h1','h2'): { # become :is(h1,h2), single key without is
+            'background': 'red'
+        }  
+    },
 }
+```
+**CSS** (output of `...format_css`,`...set_css` functions)
+```css
+<style>
+.SlideArea .A {
+    z-index : 50;
+}
+.SlideArea .A .B {
+    font-size : 24px;
+    font-size : 2em;
+}
+.SlideArea .A .B:hover {
+    opacity : 1;
+}
+.SlideArea .A > div {
+    padding : 0;
+}
+.SlideArea .A .C p {
+    font-size : 14px;
+}
+.SlideArea .D {
+    transform : translate(-2px,1px);
+}
+.SlideArea .D, 
+.SlideArea .D h1 {
+    background : red;
+}
+.SlideArea .D :is(h1, h2) {
+    background : red;
+}
+</style>
 ```
 """
 
 def _filter_prints(outputs):
     new_outputs, new_prints = [], []
     for out in outputs:
-        if 'text/html'in out.data and re.findall(r'class(.*)CustomPrint',out.data['text/html']):
+        if 'text/html'in out.data and re.findall(r'class(.*)custom-print',out.data['text/html']):
             new_prints.append(out)
         else:
             new_outputs.append(out)
@@ -99,7 +141,7 @@ def _validate_key(key):
         for k in key:
             if not isinstance(k,str):
                 raise ValueError(f'Only tuple of strings is allowed as key, got {k!r}')
-        key = f":is({', '.join(key)})"
+        key = f":is({', '.join([k.strip() for k in key])})" # Keep in :is(), will need to handle ^ later
     
     if not re.match(r'^\:(.*?)\((.*?)\)$',key.replace('>','').strip()) and ',' in key:
         raise ValueError(f'Comma separated selectors are not allowed unless they are of type :is(.A,#B),:has(.A,#B) etc. Use tuple of strings instead for {key!r}')
@@ -119,8 +161,8 @@ def _build_css(selector, data):
             attributes.append( (key, value) )
 
     if attributes:
-        content += (' '.join(selector) +" {\n\t")
-        content +=  '\n\t'.join(f"{key} : {value};"  for key, value in attributes) 
+        content += re.sub(r'\s+\^','', (' '.join(selector) + " {\n\t")) # Join nested tags to parent if it starts with ^
+        content += '\n\t'.join(f"{key.lstrip('+')} : {value};"  for key, value in attributes)  #  + is multiple keys handler
         content += "\n}\n"
 
     for key, value in children:
@@ -132,19 +174,32 @@ def _build_css(selector, data):
             content+= _build_css((key,), value)
         else:
             content += _build_css(selector + (key,), value)
+    
+    content = re.sub('\t', '    ', content) # 4 space instead of tab is bettter option
+    content = re.sub(r'\n\s+\n|\n\n','\n', content) # Remove empty lines after tab is replaced above
+    content = re.sub(r'^(.*?)\s\:is\(\^\,\s', r'\1, \1 :is(', content, flags = re.DOTALL) # Remove ^ from B. :is(^, .A) to B., B. :is(.A)') to select B and all its children
+    content = re.sub(r'\:is\(([^\,]*)\)',r'\1', content, flags = re.DOTALL) # Remove :is(.A) to .A only
         
-    return content.replace('\t','    ') # 4 space instead of tab is bettter option
+    return content
 
+def _format_css(css_dict, allow_root_attrs = False):
+    _all_css = '' # All css
+    root_attrs = {k:v for k,v in css_dict.items() if not isinstance(v,dict)}
+    if allow_root_attrs:
+        if root_attrs:
+            attrs_str = '\n'.join(f'\t{k} : {v};' for k,v in root_attrs.items())
+            _all_css += f'\n.SlidesWrapper, .BackLayer .Front {{\n{attrs_str}\n}}' # Set background for slide
+    if root_attrs and not allow_root_attrs:
+        print(f'Skipping attributes: \n{root_attrs}\nat root level of css_dict!')
+    
+    css_dict = {k:v for k,v in css_dict.items() if isinstance(v,dict)} # Remove root attrs after they are set above for background, no more use
+    _all_css += _build_css(('.SlideArea',),css_dict) # Build css from dict
+    return html('style', _all_css)
+    
 @_sub_doc(css_docstring = _css_docstring)
 def format_css(css_dict):
     "{css_docstring}"
-    _all_css = '' # All css
-    slide_bg = css_dict.get('background',css_dict.get('background-color',None))
-    if slide_bg:
-        _all_css += f'\n.SlidesWrapper, .BackLayer .Front {{\nbackground:{slide_bg};\n}}' # Set background for slide
-        
-    _all_css += _build_css(('.SlideArea',),css_dict) # Build css from dict
-    return html('style', _all_css)
+    return _format_css(css_dict, allow_root_attrs = False)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
@@ -201,9 +256,9 @@ def enable_zoom(obj):
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
     try:
-        return ipw.Box([obj]).add_class('Center')
+        return ipw.Box([obj]).add_class('align-center')
     except:
-        return _HTML(f'<div class="Center">{_fix_repr(obj)}</div>')
+        return _HTML(f'<div class="align-center">{_fix_repr(obj)}</div>')
     
 def html(tag, children = None,className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
@@ -255,11 +310,11 @@ def vspace(em = 1):
  
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
-    `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `TextBox`."""
+    `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""
     css_props = {'display':'inline-block','white-space': 'pre', **css_props} # very important to apply text styles in order
     # white-space:pre preserves whitspacing, text will be viewed as written. 
     _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
-    return _HTML(f"<span class='TextBox' style = {_style!r}>{text}</span>")  # markdown="span" will avoid inner parsing
+    return _HTML(f"<span class='text-box' style = {_style!r}>{text}</span>")  # markdown="span" will avoid inner parsing
 
 def alert(text):
     "Alerts text!"
@@ -279,7 +334,7 @@ def raw(text, className=None):
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
     _class = className if className else ''
     escaped_text = escape(textwrap.dedent(text).strip('\n')) # dedent and strip newlines on top and bottom
-    return _HTML(f"<div class='RawText {_class}'>{escaped_text}</div>")
+    return _HTML(f"<div class='raw-text {_class}'>{escaped_text}</div>")
 
 def rows(*objs, className=None):
     "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
@@ -289,20 +344,20 @@ def cols(*objs,width_percents=None, className=None):
     "Returns HTML containing multiple columns of given width_percents."
     return format_html(*objs,width_percents=width_percents,className = className)
 
-def block(*objs,className = 'Block'):
+def block(*objs,className = 'block'):
     """Format a block like in LATEX beamer. *objs expect to be writable with `write` command.   
     Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,a>`.
-    In 1.7.5+, you can create blocks just by CSS classes in markdown as {.Block}, {.Block-red}, {.Block-green}, etc.
+    In 1.7.5+, you can create blocks just by CSS classes in markdown as {.block}, {.block-red}, {.block-green}, etc.
     """
     return _HTML(f"<div class='{className}'>{_fmt_write(objs)}</div>")
     
-def block_r(*objs): return block(*objs,className = 'Block-red')
-def block_b(*objs): return block(*objs,className = 'Block-blue')
-def block_g(*objs): return block(*objs,className = 'Block-green')
-def block_y(*objs): return block(*objs,className = 'Block-yellow')
-def block_c(*objs): return block(*objs,className = 'Block-cyan')
-def block_m(*objs): return block(*objs,className = 'Block-magenta')
-def block_a(*objs): return block(*objs,className = 'Block-gray')
+def block_r(*objs): return block(*objs,className = 'block-red')
+def block_b(*objs): return block(*objs,className = 'block-blue')
+def block_g(*objs): return block(*objs,className = 'block-green')
+def block_y(*objs): return block(*objs,className = 'block-yellow')
+def block_c(*objs): return block(*objs,className = 'block-cyan')
+def block_m(*objs): return block(*objs,className = 'block-magenta')
+def block_a(*objs): return block(*objs,className = 'block-gray')
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
@@ -339,7 +394,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
         return _HTML('') # Must be _HTML to work on memebers
     
     _sig = _sig or colored(_pstr,"var(--accent-color)") # Picks previous signature if exists
-    _full_doc = f"<div class='Docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
+    _full_doc = f"<div class='docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
     _pstr = (prepend_str or _pstr) if itself == False else _pstr # Prefer given string if itself is not to doc
     
     _mems = []

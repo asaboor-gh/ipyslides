@@ -16,12 +16,12 @@ function main(){
     }; 
     resizeWindow(); // resize on first display
     // Only get buttons of first view, otherwise it will becomes multiclicks
-    let arrows  = document.getElementsByClassName('arrows'); // These are 2*instances
-    let mplBtn  = document.getElementsByClassName('mpl-zoom')[0];
-    let winFs   = document.getElementsByClassName('window-fs')[0];
+    let arrows  = document.getElementsByClassName('Arrows'); // These are 2*instances
+    let mplBtn  = document.getElementsByClassName('Zoom-Btn')[0];
+    let winFs   = document.getElementsByClassName('FullWindow-Btn')[0];
     let capSc   = document.getElementsByClassName('screenshot-btn')[0];
     let cursor  = document.getElementsByClassName('LaserPointer')[0];
-    let present = document.getElementsByClassName('presenter-btn')[0];
+    let present = document.getElementsByClassName('Presenter-Btn')[0];
     let panelBtn = document.getElementsByClassName('SidePanel-Btn')[0];
 
     
@@ -108,7 +108,7 @@ function main(){
 function beta_swiper(){
     let box = document.getElementsByClassName('SlidesWrapper')[0];
     box.tabIndex = -1;
-    let arrows = document.getElementsByClassName('arrows'); // These are 2*instances
+    let arrows = document.getElementsByClassName('Arrows'); // These are 2*instances
 
     let startX = 0;
     let endX = 0;
@@ -130,7 +130,7 @@ function beta_swiper(){
         if (Math.abs(endY - startY) < 20) {
             // Y axis is not important but we should avoid X component of touch for a long y-scroll
             if ((endX - startX) < -40 && startX > (bbox.right - 50)) {
-                arrows[1].click(); // Left Swipe to Next
+                arrows[1].click(); // align-left Swipe to Next
             };
 
             if ((endX - startX) > 40 && startX < (bbox.left + 50)) {

@@ -58,7 +58,7 @@ class Notes:
             
             # Next everything for Browser window case
             if self.notes_check.value:  # Only show on demand
-                theme = self.widgets.htmls.theme.value.replace('FullScreen','') #important
+                theme = self.widgets.htmls.theme.value.replace('FullWindow','') #important
                 code_theme = '''<style> 
                                 pre { display:flex; flex-direction:column; } 
                                 .SlideBox { display:flex; flex-direction:row; justify-content:space-between;}

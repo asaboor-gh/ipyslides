@@ -97,8 +97,8 @@ class Slides(BaseSlides):
                 with capture_output() as captured:
                     self.builtin_print(*args, **kwargs)
 
-                return self.raw(captured.stdout,className = 'CustomPrint').display() # Display at the end
-                # CustomPrint is used to avoid the print to be displayed when `with suppress_stdout` is used.
+                return self.raw(captured.stdout,className = 'custom-print').display() # Display at the end
+                # custom-print is used to avoid the print to be displayed when `with suppress_stdout` is used.
             
             builtins.print = print
         
@@ -167,31 +167,22 @@ class Slides(BaseSlides):
         
         - A whole block of markdown can be CSS-classed using syntax
         ```markdown
-         class`Block-yellow`
-         ### This is Header 3
-         <hr/>
-         Some **bold text**
-         ^^^
-        ```
-        gives
-        class`Block-yellow`
-        ### This is Header 3
-        <hr/>
-        Some **bold text**
-        ^^^
-        OR 
-        ```markdown
-        ::: Block-yellow
+        ::: block-yellow
             ### This is Header 3
             <hr/>
             Some **bold text**
         ```
-        gives same thing as above. 
-        ::: Note 
+        gives 
+        ::: block-yellow
+            ### This is Header 3
+            <hr/>
+            Some **bold text**
+            
+        ::: note 
             You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) 
             extension to make nested blocks with classes. It is added as dependency and can be used to build nested html blocks.
             
-        ::: Block-red 
+        ::: block-red 
             - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
                 [markdown extensions](https://python-markdown.github.io/extensions/) and 
                 [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
@@ -381,7 +372,7 @@ class Slides(BaseSlides):
         if not isinstance(slide_number, (int,float,str)): # keep string for internal use only
             raise TypeError('Slide number should be an integer or float for accessing frames!')
         
-        button = ipw.Button(description=text,**kwargs).add_class('GoToButton')
+        button = ipw.Button(description=text,**kwargs).add_class('goto-button')
         def on_click(btn):
             try:
                 ss = str(slide_number)
@@ -400,15 +391,15 @@ class Slides(BaseSlides):
 
         button.on_click(on_click)
         
-        html_before = ipw.HTML(_fix_repr(text_before)).add_class('GoToHtml')
-        return ipw.HBox([html_before,button],layout=ipw.Layout(align_items='center')).add_class('GoToBox')
+        html_before = ipw.HTML(_fix_repr(text_before)).add_class('goto-html')
+        return ipw.HBox([html_before,button],layout=ipw.Layout(align_items='center')).add_class('goto-box')
     
     def goto_button(self, slide_number, text,text_before = '', **kwargs):
         """"Jump to slide_number when clicked. give slide_number as integer of float like 1, 3.1 etc.   
         `text` is the text to be displayed on button.    
         `text_before` additional text (will be parsed) on left of the Button. It is useful because button will not show up in sceenshot.        
         `kwargs` are passed to `ipywidgets.Button` function.          
-        **Note:** This button has a CSS classes nested as 'GoToBox' > ('GoToHtml','GoToButton') 
+        **Note:** This button has a CSS classes nested as 'goto-box' > ('goto-html','goto-button') 
         that can be used to style it under each slide separately."""
         return display(self._goto_button(slide_number, text,text_before = text_before, **kwargs))
         

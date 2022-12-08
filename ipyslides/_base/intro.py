@@ -10,20 +10,18 @@ otherwise select `Custom Slide Size` and change size there according to found as
 - Now click `Create` and you will see all pictures as slides.
 
 Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
-{.Note .Warning}
+{.note .warning}
 '''
 
 how_to_slide = ('''# Creating Slides
-class`Center`
-alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
+::: align-center
+    alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`     
+    center`today```
 
-today``
+    ::: text-box
+        sup`1`My University is somewhere in the middle of nowhere
+        sup`2`Their University is somewhere in the middle of nowhere
 
-class`TextBox`
-sup`1`My University is somewhere in the middle of nowhere
-sup`2`Their University is somewhere in the middle of nowhere
-^^^
-^^^
 
 **Assuming you have `slides = ipyslides.Slides()`**
 
@@ -48,7 +46,7 @@ slides.set_animation(main='zoom')
 ```python
 %%slide 1 -m # new in 1.4.6
 **Markdown here with extended options (see `slides.xmd_syntax` for info). Nested blocks are not supported**
- ```multicol 30 70 .Success
+ ```multicol 30 70 .success
  less content
  +++
  more content
@@ -135,7 +133,7 @@ key_combs = '''
 
 more_instructions =f'''## How to Use
 
-**Key Bindings**{{.Success}}
+**Key Bindings**{{.success}}
 
 Having your cursor over slides, you can use follwoing keys/combinations:
 
@@ -143,7 +141,7 @@ Having your cursor over slides, you can use follwoing keys/combinations:
 
 > You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
 
-**Tips**{{.Success}}
+**Tips**{{.success}}
 
 - Other keys are blocked so that you may not delete or do some random actions on notebook cells.
 - Jupyter/Retro Lab is optimized for keyboard. Other frontends like Classic Notebook, VSCode, Voila etc. may not work properly.
@@ -162,7 +160,7 @@ but captures of multiple times in a slides are first to last in order in time.
 - Slides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 
 Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-{{.Note .Warning}}
+{{.note .warning}}
 '''
 
 instructions = f'''{more_instructions}
@@ -173,12 +171,12 @@ You will see a `custom.css` in current folder,edit it and change
 font scale or set theme to another value and back to `Custom` to take effect. 
 
 `custom.css` is only picked from current directory.
-{{.Note .Info}}
+{{.note .info}}
           
 --------
 For matching plots style with theme, run following code in a cell above slides.
 
-**Matplotlib**{{.Success}}
+**Matplotlib**{{.success}}
 ```python
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -186,16 +184,16 @@ plt.style.use('ggplot')
 plt.rcParams['svg.fonttype'] = 'none' # or 'path' Enforces same fonts in plots as in presentation slides or use
 ```
 
-**Plotly**{{.Success}}
+**Plotly**{{.success}}
 ```python
 import plotly.io as pio
 pio.templates.default = "plotly_white"
 #pio.templates #gives list of styles
 ```
 Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
-{{.Note .Info}}
+{{.note .info}}
 
-**Altair**{{.Success}}
+**Altair**{{.success}}
 ```python
 import altair as alt
 alt.themes.enable('dark')

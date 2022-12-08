@@ -7,16 +7,15 @@ from ipyslides.formatters import libraries, __reprs__
 from ipyslides._base.intro import logo_svg
 
 markdown_str = """# Creating Slides
-class`Center`
-alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
+::: align-center
+    alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
 
-today``
+    center`today```
 
-class`TextBox`
-sup`1`My University is somewhere in the middle of nowhere
-sup`2`Their University is somewhere in the middle of nowhere
-^^^
-^^^
+    ::: text-box
+        sup`1`My University is somewhere in the middle of nowhere
+        sup`2`Their University is somewhere in the middle of nowhere
+
 <h4 style=""color:green;"> 👈🏻 Read instructions in left panel</h4>
 ---
 section`Introduction`
@@ -29,20 +28,20 @@ Here we will focus on using all that functionality to create slides.
 myslides = get_slides_instance() 
 import ipyslides as isd
 version = isd.__version__
-%xmd #### This is inline markdown parsed by magic {.Note .Warning}
+%xmd #### This is inline markdown parsed by magic {.note .warning}
 ```
 Version: {{version}} as executed from below code in markdown. 
 {{source}}
 ---
 # IPySlides Online Running Sources 
 Launch as voila slides (may not work as expected [^1])[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides.ipynb)
-{.Note .Error}
+{.note .error}
 
 [Edit on Kaggle](https://www.kaggle.com/massgh/ipyslides)
-{.Note .Warning}
+{.note .warning}
 
 Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
-{.Note .Success}
+{.note .success}
 
 [^1]: Add references like this per slide. Use slides.cite() or in markdown cite\`key\` to add citations generally.
   
@@ -86,7 +85,7 @@ def demo(slides_instance):
     ## IPython Display Objects
     #### Any object with following methods could be in`write` command:
     {', '.join([f'`_repr_{rep}_`' for rep in __reprs__])}
-    Such as color[navy_skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`{{.Warning}}.            
+    Such as color[navy_skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`{{.warning}}.            
     """,
     f"""
     ## Plots and Other **Data**{{style='color:var(--accent-color);'}} Types
@@ -100,7 +99,7 @@ def demo(slides_instance):
     ### Any object in `ipywidgets`{slides.textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
     or libraries based on ipywidgtes such as color[red]`bqplot`,color[green]`ipyvolume`,plotly's `FigureWidget` cite`pf`(reference at end)
     can be included in `iwrite` command as well as other objects that can be passed to `write` with caveat of Javascript.
-    {{.Warning}}
+    {{.warning}}
     """,
     '## Commands which do all Magic!']
     
@@ -156,7 +155,7 @@ def demo(slides_instance):
         source.show_lines([0,3,11]).display()
     
     with autoslide():
-        slides.write(('## Writing Altair Chart\nMay not work everywhere, needs javascript\n{.Note .Warning}',chart))
+        slides.write(('## Writing Altair Chart\nMay not work everywhere, needs javascript\n{.note .warning}',chart))
         source.show_lines(range(1,11)).display()
        
     try:
@@ -236,7 +235,7 @@ def demo(slides_instance):
         slides.write('section`Controlling Content on Frames`')
 
     # Frames structure
-    boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="Center">{i}</b></div>' for i in range(1,5)]
+    boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
     @autoframes(*boxes, repeat=False)
     def f(obj,idx):
         slides.write('# Frames with \n#### `repeat = False`')
@@ -262,7 +261,7 @@ def demo(slides_instance):
             try:
                 slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
             except:
-                slides.write('Could not retrieve image from url. Check internt connection!',className='Error')
+                slides.write('Could not retrieve image from url. Check internt connection!',className='error')
             s.display()
     
     # Youtube
@@ -298,7 +297,7 @@ def demo(slides_instance):
     ## $\LaTeX$ in Slides
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
     $\LaTeX$ needs time to load, so keeping it in view until it loads would help.
-    {.Note .Warning}
+    {.note .warning}
 
     \$\$\int_0^1\\frac{1}{1-x^2}dx\$\$
     $$\int_0^1\\frac{1}{1-x^2}dx$$
@@ -308,15 +307,15 @@ def demo(slides_instance):
         slides.write('## Built-in CSS styles')
         with slides.source.context():
             slides.css_styles.display()
-            slides.write('Info',className='Info')
-            slides.write('Warning',className='Warning')
-            slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='Right RTL')
+            slides.write('Info',className='info')
+            slides.write('warning',className='warning')
+            slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='align-right rtl')
 
     with autoslide(),slides.source.context():
         slides.rows(
             '## Can skip `write` commnad sometimes',
-            slides.cols('### Column A','### Column B',className='Info'),
-            '||### Column C {.Warning}||### Column D {.Success}||',
+            slides.cols('### Column A','### Column B',className='info'),
+            '||### Column C {.warning}||### Column D {.success}||',
         ).display()
         slides.write('----') # In Python < 3.8, context manager does not properly handle end of code block, so use this to end context
 
@@ -341,7 +340,7 @@ def demo(slides_instance):
         slides.source.from_file(__file__).display()
         
     with autoslide():
-        slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.Note .Info}')
+        slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.note .info}')
         slides.get_source().display()
          
     with autoslide():

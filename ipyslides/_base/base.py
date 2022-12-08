@@ -61,22 +61,22 @@ class BaseSlides:
         ------------------------------------------------------------------------------------
          className          | Formatting Style                                              
         ====================================================================================
-         'Center'           | ------Text------
-         'Left'             | Text------------
-         'Right'            | ------------Text
-         'RTL'              | ------ اردو عربی 
-         'Info'             | Blue Text
-         'Warning'          | Orange Text
-         'Success'          | Green Text
-         'Error'            | Red Text
-         'Note'             | Text with info icon
+         'align-center'     | ------Text------
+         'align-left'       | Text------------
+         'align-right'      | ------------Text
+         'rtl'              | ------ اردو عربی 
+         'info'             | Blue Text
+         'warning'          | Orange Text
+         'success'          | Green Text
+         'error'            | Red Text
+         'note'             | Text with info icon
          'slides-only'      | Text will not appear in exported html report.
          'report-only'      | Text will not appear on slides. Use to fill content in report.
          'page-break'       | Report will break page in print after object with this class.
-         'Block'            | Block of text/objects
-         'Block-[color]'    | Block of text/objects with specific background color from red,
+         'block'            | Block of text/objects
+         'block-[color]'    | Block of text/objects with specific background color from red,
                             | green, blue, yellow, cyan, magenta and gray.
-         'RawText'          | Text will not be formatted and will be shown as it is.
+         'raw-text'         | Text will not be formatted and will be shown as it is.
         ------------------------------------------------------------------------------------
         ''')
         
@@ -92,7 +92,7 @@ class BaseSlides:
         if sources:
             return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
         else:
-            self.html('p', 'No source code found.', className='Info')
+            self.html('p', 'No source code found.', className='info')
 
     
     def notify_later(self, title='IPySlides Notification', timeout=5):
@@ -247,10 +247,9 @@ class BaseSlides:
                 section`Introduction`
                 today``
                 
-                class`TextBox`
-                sup`1`My University is somewhere in the middle of nowhere
-                sup`2`Their University is somewhere in the middle of nowhere
-                ^^^
+                ::: text-box
+                    sup`1`My University is somewhere in the middle of nowhere
+                    sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
         with self.slide(self.auto_number) as slide_toc1: # Need at end to refresh TOC
@@ -261,19 +260,19 @@ class BaseSlides:
         
         with self.slide(self.auto_number):
             self.write('## Adding Slides section`Adding Slides and Content`')
-            self.write('Besides functions below, you can add slides with `%%title` magics as well.\n{.Note .Info}')
+            self.write('Besides functions below, you can add slides with `%%title` magics as well.\n{.note .info}')
             self.write([self.doc(self.title,'Slides'),self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with self.slide(self.auto_number):
             self.write('## Adding Content')
-            self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.Note .Info}')
+            self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.note .info}')
             self.xmd_syntax.display() # This will display information about Markdown extended syntax
             self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse_xmd,'Slides'),self.doc(self.cite,'Slides')])
         
         with self.slide(self.auto_number):
             self.write('## Adding Speaker Notes')
-            self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.Note .Success}}\n',
-                       'This is experimental feature, and may not work as expected.\n{.Block-red .Error}'])
+            self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
+                       'This is experimental feature, and may not work as expected.\n{.block-red .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
             self.goto_button(10,'Jump to Slide 10', 'This is kind a alert`alt text` because button will alert`NOT` show in screenshot of slides')
                    
@@ -300,16 +299,16 @@ class BaseSlides:
         with self.slide(self.auto_number):
             self.write('## Content Styling')
             with self.source.context(auto_display = False) as c:
-                self.write(('You can **style**{.Error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink_yellow]`text`* with `className` attribute in writing/content functions. ' 
-                       'Provide **CSS**{.Info} for that using `.format_css` or use some of the available styles. '
-                       'See these **styles**{.Success} with `.css_styles` property as below:'))
+                self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink_yellow]`text`* with `className` attribute in writing/content functions. ' 
+                       'Provide **CSS**{.info} for that using `.format_css` or use some of the available styles. '
+                       'See these **styles**{.success} with `.css_styles` property as below:'))
                 self.css_styles.display()
                 c.display()
         
         s8, = self.from_markdown(self.auto_number, '''
         ## Highlighting Code
         [pyg]:`[pygments](https://pygments.org/) is used for syntax highlighting.`
-        You can **highlight**{.Error} code using `highlight` function or within markdown like this:cite`pyg`
+        You can **highlight**{.error} code using `highlight` function or within markdown like this:cite`pyg`
         ```python
         import ipyslides as isd
         ```
@@ -328,7 +327,7 @@ class BaseSlides:
         
         with self.slide(self.auto_number):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
-            self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.Note .Info}')
+            self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.note .info}')
             self.write([self.doc(self.from_markdown,'Slides'),
                         self.doc(self.demo,'Slides'), 
                         self.doc(self.docs,'Slides'),
@@ -340,7 +339,7 @@ class BaseSlides:
         
         with self.slide(self.auto_number):
             self.write('## Adding User defined Objects/Markdown Extensions')
-            self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.Note .Info}')
+            self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.note .info}')
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()

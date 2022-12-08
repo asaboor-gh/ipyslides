@@ -28,7 +28,7 @@ doc_html = '''<!DOCTYPE html>
             processEscapes: true,
             processEnvironments: true
         },
-        // Center justify equations in code and markdown cells. Elsewhere
+        // align-center justify equations in code and markdown cells. Elsewhere
         // we use CSS to left justify single line equations in code cells.
         displayAlign: "center",
         "HTML-CSS": {
@@ -135,7 +135,7 @@ div.columns > div[style*="width:"] {
         page-break-inside: avoid !important; 
     }
     ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
-    div.highlight, pre, .RawText {
+    div.highlight, pre, .raw-text {
         height:auto;
         max-height: auto !important; 
         overflow-wrap: break-word !important; 
@@ -147,14 +147,14 @@ div.columns > div[style*="width:"] {
     h1,h2,h3,h4 { page-break-before : auto !important; page-break-after : avoid !important; page-break-inside : avoid !important; }
     
     /* Blocks should be handled properly in white scenerio*/
-    .Note {background: rgba(250,250,250,0.75);}
-    .Block-red {background: rgba(250,230,230,0.75);}
-    .Block-green {background: rgba(230,250,230,0.75);}
-    .Block-blue {background: rgba(230,230,250,0.75);}
-    .Block-yellow {background: rgba(250,250,230,0.75);}
-    .Block-cyan {background: rgba(230,250,250,0.75);}
-    .Block-gray {background: rgba(230,230,230,0.75);}
-    .Block-magenta {background: rgba(250,230,250,0.75);}
+    .note {background: rgba(250,250,250,0.75);}
+    .block-red {background: rgba(250,230,230,0.75);}
+    .block-green {background: rgba(230,250,230,0.75);}
+    .block-blue {background: rgba(230,230,250,0.75);}
+    .block-yellow {background: rgba(250,250,230,0.75);}
+    .block-cyan {background: rgba(230,250,250,0.75);}
+    .block-gray {background: rgba(230,230,230,0.75);}
+    .block-magenta {background: rgba(250,230,250,0.75);}
 }
 </style>
 '''

@@ -76,7 +76,7 @@ class LayoutSettings:
     @_sub_doc(css_docstring = _css_docstring)    
     def set_css(self,css_dict={}):
         """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well. 
-        Individual slide's CSS will override this. (2.1.8+)  
+        Individual slide's CSS set by `slides[index].set_css` will override this. (2.1.8+)      
         {css_docstring}        
         """
         if len(self._slides[:]) >= 1:
@@ -273,11 +273,11 @@ class LayoutSettings:
         if self.btn_fs.value:
             self._breakpoint_width = '650px'
             self.btn_fs.icon = 'compress'
-            self.widgets.mainbox.add_class('FullScreen') # to fullscreen
+            self.widgets.mainbox.add_class('FullWindow') # to fullscreen
         else:
             self._breakpoint_width = f'{int(100*650/self.width_slider.value)}px'
             self.btn_fs.icon = 'expand'
-            self.widgets.mainbox.remove_class('FullScreen') # back to inline
+            self.widgets.mainbox.remove_class('FullWindow') # back to inline
             if self.btn_zoom.value:
                 self.btn_zoom.value = False # Unzoom to avoid jerks in display
                 
