@@ -34,6 +34,8 @@ _css_docstring = """`css_dict` is a nested dict of css selectors and properties.
 - A '^' in start of a selector joins to parent selector without space, so '.A': {'^:hover': ...} becomes '.A:hover {...}' in CSS. You can also use '.A:hover' directly but it will restrict other nested keys to hover only.
 - A '+' in start of a key allows using same key in dict for CSS fallback, so '.A': {'font-size': '20px','+font-size': '2em'} becomes '.A {font-size: 20px; font-size: 2em;}' in CSS.
 
+Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
+
 **Python** 
 ```python
 {
@@ -41,22 +43,29 @@ _css_docstring = """`css_dict` is a nested dict of css selectors and properties.
         'z-index': '50',
         '.B': {
             'font-size': '24px',
-            '+font-size': '2em', # Overwrites previous, note + in start, add many more + for more overwrites
+            '+font-size': '2em', # Overwrites previous in CSS, note + in start, add many more + for more overwrites
             '^:hover': {'opacity': '1'}, # Attach pseudo class to parent by prepending ^, or .B:hover works too
         },
         '> div': { # Direct nesting by >
             'padding': '0',
+            '@media screen and (min-width: 650px)' : { # This will take above selectors inside and move itself out
+                'padding': '2em',
+            },
         },
         '.C p': {'font-size': '14px'},
     },
     '.D': {
         'transform': 'translate(-2px,1px)',
-        ('^', 'h1'): { # caret ^ in first key refers to parent selector, useless in other keys though
-            'background': 'red'
-        },
-        ('h1','h2'): { # become :is(h1,h2), single key without is
-            'background': 'red'
-        }  
+        '^, h1': { # caret ^ in start of key joins to parent without space
+            'background': 'red',
+            'span, i': { # Heavy nesting
+                'color':'whitemoke',
+                '@keyframes animation-name': { # This will not stay inside nesting
+                    'from': {'opacity':0},
+                    'to': {'opacity':1}
+                },
+            },
+        },  
     },
 }
 ```
@@ -76,18 +85,34 @@ _css_docstring = """`css_dict` is a nested dict of css selectors and properties.
 .SlideArea .A > div {
     padding : 0;
 }
+@media screen and (min-width: 650px) {
+    .SlideArea .A > div {
+        padding : 2em;
+    }
+}
 .SlideArea .A .C p {
     font-size : 14px;
 }
 .SlideArea .D {
     transform : translate(-2px,1px);
 }
-.SlideArea .D, 
-.SlideArea .D h1 {
+.SlideArea .D,
+.SlideArea .D  h1 {
     background : red;
 }
-.SlideArea .D :is(h1, h2) {
-    background : red;
+.SlideArea .D span,
+.SlideArea .D  i,
+.SlideArea .D h1 span,
+.SlideArea .D h1  i {
+    color : whitemoke;
+}
+@keyframes animation-name {
+    from {
+        opacity : 0;
+    }
+    to {
+        opacity : 1;
+    }
 }
 </style>
 ```
@@ -163,34 +188,29 @@ def _build_css(selector, data):
             attributes.append( (key, value) )
 
     if attributes:
-        content += re.sub(r'\s+\^','', (' '.join(selector) + " {\n\t")) # Join nested tags to parent if it starts with ^
-        content += '\n\t'.join(f"{key.lstrip('+')} : {value};"  for key, value in attributes)  #  + is multiple keys handler
+        content += re.sub(r'\s+\^','', (' '.join(selector) + " {\n").lstrip()) # Join nested tags to parent if it starts with ^
+        content += '\n'.join(f"\t{key.lstrip('+')} : {value};"  for key, value in attributes)  #  + is multiple keys handler
         content += "\n}\n"
 
     for key, value in children:
-        if key.startswith('@media'):
+        if key.startswith('@media'): # Media query can be inside a selector and will be
             content += f"{key} {{\n\t"
             content += _build_css(selector, value).replace('\n','\n\t').rstrip('\t') # last tab is bad
+            content += "}\n"
+        elif key.startswith('@'): # Page, @keyframes etc.
+            content += f"{key} {{\n\t"
+            content += _build_css((), value).replace('\n','\n\t').rstrip('\t')
             content += "}\n"
         elif  key.startswith(':root'): # This is fine
             content+= _build_css((key,), value)
         else:
-            if ',' in key:
-                many_keys = '%\n'.join(f"{' '.join(selector)} {k}" for k in key.split(',')) + ' %' # Add % to end to handle last key
-                content += _build_css((many_keys,), value)
-            else:
-                _sel = selector + (key,) # Avoid selector overwriting
-                if selector and '%' in selector[0]: # There is always single or no selector tuple
-                    _sel = (selector[0].replace('%',f' {key} %'),) # Avoid selector overwriting
+            old_sels = re.sub(r'\s+', ' ',' '.join(selector)).replace('\n','').split(',') # clean up whitespace
+            sels = ',\n'.join([f"{s} {k}".strip() for s in old_sels for k in key.split(',')]) # Handles all kind of nested selectors
+            content += _build_css((sels,), value)
 
-                content += _build_css(_sel, value)
     
-    content = re.sub(r'\%\s+\{','{',content) # Remove % and spaces before {
     content = re.sub(r'\$', ',', content) # Replace $ with ,
     content = re.sub(r'\n\s+\n|\n\n','\n', content) # Remove empty lines after tab is replaced above
-    content = re.sub(r'\s+\,', ',', content) # Remove extra spaces beofore ,
-    content = re.sub(r' +', ' ', content) # Remove extra spaces  
-    content = re.sub(r'\%',',\n',content) # Replace % with ,\\n
     content = re.sub('\t', '    ', content) # 4 space instead of tab is bettter option
     content = re.sub(r'\^',' ', content) # Remove left over ^ from start of main selector
         
