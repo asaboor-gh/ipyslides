@@ -125,7 +125,6 @@ key_combs = '''
 | `Space/RightArrowKey`        | Move to next slide                                   |
 | `Shift + Space/LeftArrowKey` | Move to previous slide                               |
 | `Ctrl + Shift + C`           | Change the theme, create console/terminal etc        |
-| `Ctrl + Shift + [/]`         | Switch to other tabs like console/terminal/notebooks |
 | `W`                          | Fit/restore slides to/from window's viewport         |
 | `T`                          | Start/stop timer                                     |
 | `Z`                          | Toggle matplotlib/svg/image zoom mode                |

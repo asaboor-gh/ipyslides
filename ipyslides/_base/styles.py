@@ -2,6 +2,7 @@
 # CSS for ipyslides
 from ..utils import _build_css
 
+_flow_selector = ":is(.highlight code, .columns > div > *, li, tr)"
 animations = {'zoom':'''
 .SlideBox {
     animation-name: zoom; animation-duration: 600ms;
@@ -51,55 +52,27 @@ animations = {'zoom':'''
      to { transform: translateY(0); }
 }
 ''',
-'flow': '''
-.SlideBox :is(.highlight code, li, tr) {
-    animation-name: slideN; animation-duration: 600ms;
+'flow': f'''
+.SlideBox {_flow_selector} {{
+    animation-name: flow; animation-duration: 600ms;
     animation-timing-function: cubic-bezier(.2,.7,.8,.9);
-}
-.SlideBox.Prev :is(.highlight code, li, tr) { /* .Prev acts when moving slides backward */
-    animation-name: slideP; animation-duration: 600ms;
+}}
+.SlideBox.Prev {_flow_selector} {{ /* .Prev acts when moving slides backward */
+    animation-name: flowPrev; animation-duration: 600ms;
     animation-timing-function: cubic-bezier(.2,.7,.8,.9);
-}
-
-.SlideBox :is(.highlight code, li, tr):nth-child(2) {
-    animation-delay: 30ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(3) {
-    animation-delay: 60ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(4) {
-    animation-delay: 90ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(5) { /* n+5 means all children after 4th child */
-    animation-delay: 120ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(6) { /* n+5 means all children after 4th child */
-    animation-delay: 150ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(7) { /* n+5 means all children after 4th child */
-    animation-delay: 180ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(8) { /* n+5 means all children after 4th child */
-    animation-delay: 210ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(9) { /* n+5 means all children after 4th child */
-    animation-delay: 240ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(10) { /* n+5 means all children after 4th child */
-    animation-delay: 270ms;
-}
-.SlideBox :is(.highlight code, li, tr):nth-child(n+11) { /* n+5 means all children after 4th child */
-    animation-delay: 300ms;
-}
-@keyframes slideN {
-     from { transform: translateX(50%);opacity: 0; }
-     to { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideP {
-     from { transform: translateX(-50%);opacity: 0; }
-     to { transform: translateX(0); opacity: 1; }
-}
-'''
+}}
+''' + _build_css((f".SlideBox {_flow_selector}",), {
+    **{f"^:nth-child({i})":{"animation-delay": f"{int(i*15)}ms"} for i in range(2, 16)},
+    "^:nth-child(n+16)":{"animation-delay": "240ms"},
+    '@keyframes flow':{
+        'from' : {'transform': 'translateX(50%)', 'opacity': 0},
+        'to' : {'transform': 'translateX(0)', 'opacity': 1}
+    },
+    '@keyframes flowPrev':{
+        'from' : {'transform': 'translateX(-50%)', 'opacity': 0},
+        'to' : {'transform': 'translateX(0)', 'opacity': 1}
+    },
+}) 
 }
 
 loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
@@ -189,7 +162,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint_width = '650px', content_width = '70%', _store = None):
+def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%', _store = None):
     if isinstance(_store,dict):
         _store.update(locals())
     return _build_css((),{
@@ -353,7 +326,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'flex-direction':'row',
                 'column-gap':'2em',
                 'height':'auto',
-                f'@media screen and (max-width: {breakpoint_width})': {
+                f'@media screen and (max-width: {breakpoint})': {
                     'width':'100%',
                     'max-width':'100%',
                     'display':'flex',
@@ -505,31 +478,31 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             },
             '^-green' : {
                 'border-top': '3px solid green', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, 0, 0)',
-                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+                '+border-top': f'3px solid rgb(0, {light}, 0)',
+                'background':f'rgba({light - 20},{light},{light - 20},0.75)',
             },
             '^-blue' : {
                 'border-top': '3px solid blue', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, 0, 0)',
-                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+                '+border-top': f'3px solid rgb(0,0,{light})',
+                'background':f'rgba({light -20},{light - 20},{light},0.75)',
             },
             '^-yellow' : {
                 'border-top': '3px solid yellow', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, 0, 0)',
-                'background': f'rgba({light},{light - 20},{light - 20},0.75)',
+                '+border-top': f'3px solid rgb({light}, {light}, 0)',
+                'background': f'rgba({light},{light},{light - 20},0.75)',
             },
             '^-magenta' : {
                 'border-top': '3px solid magenta', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, 0, 0)',
-                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+                '+border-top': f'3px solid rgb({light}, 0, {light})',
+                'background':f'rgba({light},{light - 20},{light},0.75)',
             },
             '^-cyan' : {
                 'border-top': '3px solid cyan', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, 0, 0)',
-                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+                '+border-top': f'3px solid rgb(0, {light}, {light})',
+                'background':f'rgba({light -20},{light},{light},0.75)',
             },
             '^-gray' : {
-                'border-top': '3px solid cyan', # Fallback  for Inherit and Custom theme
+                'border-top': '3px solid gray', # Fallback  for Inherit and Custom theme
                 '+border-top': f'3px solid rgb({light - 10}, {light - 10}, {light - 10})',
                 'background':f'rgba({light -20},{light - 20},{light - 20},0.75)',
             },

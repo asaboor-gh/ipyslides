@@ -53,7 +53,7 @@ class _Htmls:
     """
     footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Fancy'])).value)
-    main    = HTML(html('style',_layout_css.layout_css.replace('__breakpoint_width__','650px')).value) # Will be update in theme as well
+    main    = HTML(html('style',_layout_css.layout_css(breakpoint = '650px')).value) # Will be update in theme as well
     sidebar = HTML(html('style',_layout_css.sidebar_layout_css()).value) # Should be separate CSS
     loading = HTML() #SVG Animation in it
     logo    = HTML()
@@ -62,11 +62,10 @@ class _Htmls:
     cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
     notes   = HTML('Notes Area').add_class('Inline-Notes') # For below slides area
     hilite  = HTML() # Updated in settings on creation. For code blocks.
-    fscrn   = HTML() # Full Screen CSS, do not add here!
     zoom    = HTML() # zoom-container CSS, do not add here!
     capture = HTML('<span class="info">Edit above box and hit Enter to see screenshot here. ' 
                    'If nothing shown, your system does not support taking screenshots with PIL</span>').add_class('CaptureHtml') # Screenshot image here
-    intro   = HTML().add_class('PanelText') # Intro HTML
+    intro   = HTML().add_class('SidePanel-Text') # Intro HTML
     glass = HTML().add_class('BackLayer') # For glass effect
 
 @dataclass(frozen=True)
@@ -231,7 +230,7 @@ class Widgets:
         self.outputs = _Outputs()
         
         # Make the progress bar and link to slides
-        self.progressbar, self.__proghtml = _custom_progressbar(self.sliders.progress)
+        self.progressbar, self._proghtml = _custom_progressbar(self.sliders.progress)
         
         # Layouts build on these widgets
         self.controls = HBox([
@@ -252,7 +251,7 @@ class Widgets:
         self.navbox = VBox([
             self.footerbox,
             VBox([
-                self.__proghtml,
+                self._proghtml,
                 self.progressbar
                 ])
         ]).add_class('NavWrapper')   #class is must
@@ -309,7 +308,6 @@ class Widgets:
             self.htmls.cursor,
             self.htmls.hilite,
             self.htmls.zoom,
-            self.htmls.fscrn,
             HBox([ #Slide_box must be in a box to have animations work
                 self.tocbox, # Should be on left of slides
                 self.slidebox , 

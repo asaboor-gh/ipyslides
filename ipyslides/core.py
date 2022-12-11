@@ -680,11 +680,7 @@ class Slides(BaseSlides):
             # build_slide returns old slide with updated display if exists.
             with _build_slide(self, f'{slide_number}', from_cell = False, is_frameless = False) as this_slide:
                 self.write(self.format_css({'.SlideArea': {'height': frame_height}}))
-                try:
-                    func(_new_objs[0],0) # Main slide content
-                except:
-                    print('WARNING: Function under frames should be defined with two arguments, "obj" and "index"')
-                    func(_new_objs[0])
+                func(_new_objs[0],0) # Main slide content
             
             _new_objs = _new_objs[1:] # Fisrt one is already written
             
@@ -701,11 +697,7 @@ class Slides(BaseSlides):
                 
                 with new_slide._capture(assign = True) as captured:
                     self.write(self.format_css({'.SlideArea': {'height': frame_height}}))
-                    try:
-                        func(obj,i+1)
-                    except:
-                        print('WARNING: Function under frames should be defined with two arguments, "obj" and "index"')
-                        func(obj)
+                    func(obj,i+1) # i+1 as main slide is 0
                 
                 new_slide._from_cell = False
                 new_slide._cell_code = ''    

@@ -33,7 +33,7 @@ class _HhtmlExporter:
                 content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
                             if as_slides else f'<section>{_html}</section>')
         theme_args = {k:v for k,v in self.main.settings._store_theme_args.items() if k != '_store'}
-        theme_args['breakpoint_width'] = '650px'     
+        theme_args['breakpoint'] = '650px'     
         theme_css = styles.style_css(**theme_args) # Theme CSS
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
         _code_css = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')
@@ -49,7 +49,6 @@ class _HhtmlExporter:
         with open(path,'w') as f:
             f.write(content) 
             
-        print(f'File {path!r} saved!')
     
     def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', overwrite = False):
         """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.

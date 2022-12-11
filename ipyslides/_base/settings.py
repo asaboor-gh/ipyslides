@@ -25,7 +25,7 @@ class LayoutSettings:
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIX Two Text'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '90%' #Better
-        self._breakpoint_width = f'{int(100*650/self.widgets.sliders.width.value)}px' # Whatever was set initially
+        self._breakpoint = f'{int(100*650/self.widgets.sliders.width.value)}px' # Whatever was set initially
         self._code_lineno = True
         self._store_theme_args = {}
         self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em')
@@ -46,7 +46,7 @@ class LayoutSettings:
         self.scale_slider.observe(self.__set_font_scale,names=['value'])
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
-        self.btn_fs.observe(self._push_fullscreen,names=['value'])
+        self.btn_fs.observe(self._fill_viewport,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
@@ -199,7 +199,7 @@ class LayoutSettings:
         self._emit_resize_event() # Although its in _toggle_sidebar, but for being safe, do this
         
         if not self.btn_fs.value: #If not fullscreen, then update breakpoint, so that it can be used in CSS
-            self._breakpoint_width = f'{int(100*650/self.width_slider.value)}px'
+            self._breakpoint = f'{int(100*650/self.width_slider.value)}px'
         
         self._update_theme(change=None) # For updating size and breakpoints
             
@@ -235,11 +235,11 @@ class LayoutSettings:
         theme_css = styles.style_css(colors, light = light, text_size = text_size, 
                                      text_font = self._font_family['text'],
                                      code_font = self._font_family['code'],
-                                     breakpoint_width = self._breakpoint_width,
+                                     breakpoint = self._breakpoint,
                                      content_width = self._content_width,
                                      _store = self._store_theme_args)
         # Update Layout CSS
-        layout_css = _layout_css.layout_css.replace('__breakpoint_width__', self._breakpoint_width)
+        layout_css = _layout_css.layout_css(breakpoint = self._breakpoint)
         self.widgets.htmls.main.value = html('style',layout_css).value
         
         # Update CSS
@@ -274,27 +274,31 @@ class LayoutSettings:
             
         return self._emit_resize_event() # Must return this event so it work in other functions.
     
-    def _push_fullscreen(self,change):  
+    def _fill_viewport(self,change):  
+        span_percent = 100
         if self.btn_fs.value:
-            self._breakpoint_width = '650px'
+            self._breakpoint = '650px'
             self.btn_fs.icon = 'compress'
-            self.widgets.mainbox.add_class('FullWindow') # to fullscreen
+            self.widgets.mainbox.add_class('FullWindow') # to Full Window
         else:
-            self._breakpoint_width = f'{int(100*650/self.width_slider.value)}px'
+            self._breakpoint = f'{int(100*650/self.width_slider.value)}px'
             self.btn_fs.icon = 'expand'
             self.widgets.mainbox.remove_class('FullWindow') # back to inline
             if self.btn_zoom.value:
                 self.btn_zoom.value = False # Unzoom to avoid jerks in display
+            span_percent = self.width_slider.value
                 
-        self.widgets.htmls.fscrn.value = html('style', _layout_css.fullscreen_css if self.btn_fs.value else '').value
         self._emit_resize_event() # Resize before waiting fo update-theme
         self._update_theme(change=None) # For updating size and breakpoints
+        self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=span_percent)).value
+        self._emit_resize_event() # Just to be sure again
+        
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
             if self.btn_fs.value:
                 self.btn_zoom.icon= 'toggle-on'
-                self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css}\n</style>'
+                self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self._breakpoint)}\n</style>'
             else:
                 self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
         else:

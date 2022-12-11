@@ -72,6 +72,7 @@ class BaseSlides:
          'note'             | Text with info icon
          'slides-only'      | Text will not appear in exported html report.
          'report-only'      | Text will not appear on slides. Use to fill content in report.
+         'export-only'      | Hidden on main slides, but will appear in exported slides/report.
          'page-break'       | Report will break page in print after object with this class.
          'block'            | Block of text/objects
          'block-[color]'    | Block of text/objects with specific background color from red,
@@ -144,7 +145,7 @@ class BaseSlides:
         || Inline - Column A || Inline - Column B ||
         {{some_var}} that will be replaced by it's html value.
          ```python run source
-         from ipyslides import parsers as prs # import parser functions from this module (1.5.6+)
+         myslides = get_slides_instance() # Access slides instance under python code block in markdown
          # code here will be executed and it's output will be shown in slide.
          ```
          {{source}} from above code block will be replaced by it's html value.
