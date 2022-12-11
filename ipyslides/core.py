@@ -833,19 +833,21 @@ class Slides:
     
     """) + how_to_slide[0]
     def __new__(cls,
-                citation_mode = 'global',
-                center        = True, 
-                content_width = '90%', 
-                footer_text   = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
-                show_date     = True,
-                show_slideno  = True,
-                logo_src      = logo_svg, 
-                font_scale    = 1, 
-                text_font     = 'STIX Two Text', 
-                code_font     = 'var(--jp-code-font-family)', 
-                code_style    = 'default', 
-                code_lineno   = True,
-                extensions    = []
+                citation_mode   = 'global',
+                center          = True, 
+                content_width   = '90%', 
+                footer_text     = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
+                show_date       = True,
+                show_slideno    = True,
+                logo_src        = logo_svg, 
+                font_scale      = 1, 
+                text_font       = 'STIX Two Text', 
+                code_font       = 'var(--jp-code-font-family)', 
+                code_style      = 'default', 
+                code_lineno     = True,
+                main_animation  = 'flow',
+                frame_animation = 'slide_v',
+                extensions      = []
                 ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         _private_instance.__doc__ = cls.__doc__ # copy docstring
@@ -861,6 +863,7 @@ class Slides:
         _private_instance.settings.set_font_scale(font_scale = font_scale)
         _private_instance.settings.set_font_family(text_font = text_font, code_font = code_font)
         _private_instance.settings.set_code_style(style = code_style, lineno = code_lineno)
+        _private_instance.settings.set_animation(main = main_animation, frame = frame_animation)
         return _private_instance
     
     # No need to define __init__, __new__ is enough to show signature and docs

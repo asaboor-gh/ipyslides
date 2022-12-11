@@ -1,512 +1,6 @@
 # Author: Abdul Saboor
 # CSS for ipyslides
-
-theme_roots = {
-'Inherit': ''':root {
-	--heading-color: var(--jp-inverse-layout-color1,navy);
-	--primary-fg:  var(--jp-inverse-layout-color0,black);
-	--primary-bg: var(--jp-layout-color0,white);
-	--secondary-bg:var(--jp-layout-color2,whitesmoke);
-	--secondary-fg: var(--jp-inverse-layout-color4,#454545);
-	--alternate-bg: var(--jp-layout-color2,whitesmoke);
-	--hover-bg:var(--jp-border-color1,#D1D9E1);
- 	--accent-color:var(--jp-brand-color1,navy);
-    --pointer-color: var(--md-pink-A400,red);
-	--text-size: __text_size__; /* Do not edit this, this is dynamic variable */
-}
-''',
-'Light': ''':root {
-	--heading-color: navy;
-	--primary-fg: black;
-	--primary-bg: white;
-	--secondary-bg: whitesmoke;
-	--secondary-fg: #454545;
-	--alternate-bg: whitesmoke;
-	--hover-bg: #D1D9E1;
-	--accent-color: navy;
-    --pointer-color: red;
-	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
-}
-''',
-'Fancy': ''':root {
-	--heading-color: #105599;
-	--primary-fg: #755;
-	--primary-bg: #efefef;
-	--secondary-bg: #effffe;
-	--secondary-fg: #89E;
-	--alternate-bg: #deddde;
-	--hover-bg: #D1D9E1;
-	--accent-color: #955200;
-    --pointer-color: #FF7722;
-	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
-}
-''',
-'Dark': ''':root {
-	--heading-color: snow;
-	--primary-fg: white;
-	--primary-bg: black;
-	--secondary-bg: #353535;
-	--secondary-fg: powderblue;
-	--alternate-bg: #282828;
-	--hover-bg: #264348;
-	--accent-color: #d9e0e3;
-    --pointer-color: blue;
-	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
-}
-''',
-'Material Light': ''':root {
-	--heading-color: #4984c4;
-	--primary-fg: #3b3b3b;
-	--primary-bg: #fafafa;
-	--secondary-bg: #e9eef2;
-	--secondary-fg: #3b5e3b;
-	--alternate-bg: #e9eef2;
-	--hover-bg: #dae3ec;
-	--accent-color: #4d7f43;
-    --pointer-color: red;
-	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
-}
-''',
-'Material Dark': ''':root {
-	--heading-color: #aec7e3;
-	--primary-fg: #bebebe;
-	--primary-bg: #282828;
-	--secondary-bg: #383838;
-	--secondary-fg: #fefefe;
-	--alternate-bg: #383838;
-	--hover-bg: #484848;
-	--accent-color: #a8bfa3;
-    --pointer-color: blue;
-	--text-size: __text_size__; /* Do not edit this it is dynamic variable */
-}
-'''
-}
-
-
-def style_css(style_root = theme_roots['Inherit']):
-	return style_root + ''' 
-.SlideArea .text-box { /* general text box for writing inline refrences etc. */
-    font-size: 0.7em !important; 
-    line-height: 0.99em !important;
-    position:relative; 
-    left:initial;
-    top:initial;
-    padding:2px 4px;
-    color: var(--secondary-fg);
-    /* Below are required to override behavior of span tag*/
-    display: inline-block !important;
-    white-space: break-spaces !important;
-}
-.SlideArea .citation {
-    font-size: 0.8em !important; 
-    line-height: 0.85em !important;
-    display: flex !important;
-    flex-direction: row !important;
-}
-.SlideArea .citation > a {margin-right: 0.3em !important;}
-.SlideArea figure {
-    margin: 8px !important; /* override default margin */
-}
-.SlideArea .zoom-container figure {
-    object-fit:scale-down !important; /* If height goes out, scale down */
-}
-.SlideArea figcaption {
-    font-size: 0.8em !important;
-    line-height: 1em !important;
-    padding-top: 0.2em !important;
-}
-.align-center:not(.columns), .align-center > *:not(.columns) {
-    display:table !important;
-    margin: 0 auto !important;
-    width: auto !important; /* max-content creates oveflow, do not use it */
-}
-.align-left:not(.columns) { 
-    display:table !important; 
-    width: auto !important; 
-    margin-right: auto !important; 
-    text-align:left !important;
-}
-.align-right:not(.columns) { 
-    display:table !important; 
-    width: auto !important; 
-    margin-left: auto !important; 
-    text-align:right !important;
-}
-
-.rtl, .rtl > * {
-    text-align:right !important;
-    padding: 0 12px !important; /* to avoid cuts in rtl */
-}
-
-.info > *:last-child, .warning > *:last-child,
-.success > *:last-child, .error > *:last-child,
-.align-right:not(.columns) >*:last-child,
-.align-left:not(.columns) >*:last-child,
-.align-center:not(.columns) >*:last-child{ 
-    margin-bottom:0.1em !important;
-}
-
-.info, .warning, .success, .error, .note { padding: 0.2em !important;}
-
-.warning, .warning *:not(span) { color:#FFAC1C !important;}
-.success, .success *:not(span) { color:green !important;}
-.error, .error *:not(span) { color:red !important;}
-.info, .info *:not(span) { color:skyblue !important;}
-.note{
-    border: 1px solid var(--hover-bg);
-    border-radius: 0.2em;
-    background: none; /* Fallback  for Inherit and Custom theme*/
-    background: rgba(__light__,__light__,__light__,0.75);
-}
-.note::before {
-    content: 'ℹ';
-    display: inline-flex;
-    width: 1em;
-    height: 1em;
-    margin: 0 0.2em;
-    justify-content:center;
-    align-items:center;
-    border: 1px solid var(--accent-color);
-    border-radius: 1em;
-    color: var(--accent-color);
-}
-
-.block {
-    padding:8px;
-    border-top: 3px solid var(--accent-color);
-    background: var(--secondary-bg);
-    margin-bottom: 0.9em;
-}
-
-.block-red {
-    padding:8px;
-    border-top: 3px solid red; /* Fallback  for Inherit and Custom theme*/
-    border-top: 3px solid rgb(__light__, 0, 0);
-    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgba(__light__,calc(__light__ - 20),calc(__light__ - 20),0.75);
-    margin-bottom: 0.9em;
-}
-
-.block-green {
-    padding:8px;
-    border-top: 3px solid green; /* Fallback  for Inherit and Custom theme*/
-    border-top: 3px solid rgb(0, __light__, 0);
-    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgba(calc(__light__ - 20),__light__,calc(__light__ - 20),0.75);
-    margin-bottom: 0.9em;
-}
-
-.block-blue {
-    padding:8px;
-    border-top: 3px solid blue; /* Fallback  for Inherit and Custom theme*/
-    border-top: 3px solid rgb(0, 0, __light__);
-    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgba(calc(__light__ - 20),calc(__light__ - 20),__light__,0.75);
-    margin-bottom: 0.9em;
-}
-.block-yellow {
-    padding:8px;
-    border-top: 3px solid yellow; /* Fallback  for Inherit and Custom theme*/
-    border-top: 3px solid rgb(__light__, __light__, 0);
-    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgba(__light__,__light__,calc(__light__ - 20),0.75);
-    margin-bottom: 0.9em;
-}
-.block-cyan {
-    padding:8px;
-    border-top: 3px solid cyan; /* Fallback  for Inherit and Custom theme*/
-    border-top: 3px solid rgb(0,__light__, __light__);
-    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgba(calc(__light__ - 20),__light__,__light__,0.75);
-    margin-bottom: 0.9em;
-}
-.block-gray {
-    padding:8px;
-    border-top: 3px solid gray; /* Fallback  for Inherit and Custom theme*/
-    border-top: 3px solid rgb(calc(__light__ - 10),calc(__light__ - 10),calc(__light__ - 10));
-    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgba(calc(__light__ - 20),calc(__light__ - 20),calc(__light__ - 20),0.75);
-    margin-bottom: 0.9em;
-}
-.block-magenta {
-    padding:8px;
-    border-top: 3px solid magenta; /* Fallback  for Inherit and Custom theme*/
-    border-top: 3px solid rgb(__light__,0, __light__);
-    background: var(--secondary-bg); /* Fallback  for Inherit and Custom theme*/
-    background: rgba(__light__,calc(__light__ - 20),__light__,0.75);
-    margin-bottom: 0.9em;
-}
-
-details {
-    padding: 0.2em;
-    background: var(--secondary-bg);
-}
-details > summary {
-    color: var(--accent-color) !important;
-    padding: 0.2em;
-}
-details > div {
-    background: var(--primary-bg);
-    padding: 0.2em;
-}
-
-.SlidesWrapper *:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text),
-.SlideArea *:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text) { /* Do not edit __textfont__, code does this. */
-   font-family: "__textfont__", "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important;
-}
-
-.SlidesWrapper code > span,
-.SlideArea code>span { /* Do not edit __codefont__, code does this. */
-   font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
-   font-size: 90% !important;
-}
-
-.SlidesWrapper {
-	margin: auto;
-	padding: 0px;
-	background:var(--primary-bg);
-	font-size: var(--text-size);
-    color:var(--primary-fg);
-	max-width:100vw; /* This is very important */
- }
-.SlidesWrapper>:not(div), /* Do not change jupyterlab nav items */
-.SlidesWrapper * {  
-	color: var(--primary-fg);
-}
-
-.SlideArea .columns {width:100%;max-width:100%;display:inline-flex;flex-direction:row;column-gap:2em;height:auto;}
-
-@media screen and (max-width: __breakpoint_width__) { /* Computed Dynamically in notebook*/
-    .SlideArea .columns {width:100%;max-width:100%;display:flex;flex-direction:column;}
-    .SlideArea .columns>div[style] {width:100%!important;} /* important to override inline CSS */
-}
-
-.SlidesWrapper h1,
-.SlidesWrapper h2,
-.SlidesWrapper h3,
-.SlidesWrapper h4,
-.SlidesWrapper h5,
-.SlidesWrapper h6 {
-	color:var(--heading-color);
- 	text-align: center;
-	overflow:hidden; /* FireFox */
-}
-.SlidesWrapper h1 {margin-block: unset;font-size: 2.25em;  line-height: 1.5em;}
-.SlidesWrapper h2 {margin-block: unset;font-size: 2em;line-height: 1.5em;}
-.SlidesWrapper h3 {margin-block: unset;font-size: 1.5em;  line-height: 1.5em;}
-.SlidesWrapper h4 {margin-block: unset;font-size: 1.25em;line-height: 1.5em;}
-.SlidesWrapper h5 {margin-block: unset;font-size: 1em;  line-height: 1.5em;}
-.SlidesWrapper .widget-text input {
-    background: var(--primary-bg);
-    color:var(--primary-fg);
-}
-
-.SlideArea { width: __content_width__ !important;} 
-.SlideArea .footnote *,  .SlideArea .footnote li::marker {
-    font-size:0.9em;
-    line-height: 0.9em;
-}
-.SlidesWrapper hr {
-    margin:0 !important;
-    margin-block: 0.5em !important;
-    border: none;
-    width: auto;
-    height: 2px;
-    background: linear-gradient(to right, transparent,  var(--secondary-bg),var(--accent-color), var(--secondary-bg),transparent);
-}
-.SlideArea .footnote ol {
-    margin-top: 0.5em !important;
-}
-.highlight {
-    min-width: 100% !important;
-    width: 100% !important;
-    max-width: 100vw !important;
-    box-sizing: border-box !important;
-    overflow: auto !important;
-    padding: 0 !important;
-    margin: 4px 0px !important; /* Opposite to padding to balance it */
-    max-height: 400px; /* Try avoiding important here */
-    height: auto !important;
-    /* colors are set via settigs.set_code_style */
-}
-.highlight pre { /* works for both case, do not use > */
-    display: grid !important;
-    padding: 8px 4px 8px 4px !important; 
-    overflow: auto !important;
-    width: auto !important;
-    box-sizing: border-box !important;
-    height: auto;
-    margin: 0px !important;
-    counter-reset: line; /* important to add line numbers */
-    background: none !important; /* This should be none as will given by the code_css */
-}
-
-.highlight code {
-    counter-increment: line;
-    display:inline-block !important; /* should be on new line */
-    width:auto;
-    min-width: calc(90% - 2.2em);
-    background:transparent !important;
-    white-space: pre !important;
-    overflow-wrap: normal !important;
-    box-sizing: border-box !important;
-}
-.highlight code:before{
-    content: counter(line,decimal);
-    position: sticky;
-    top:initial;
-    left:-4px;
-    padding: 0 8px;
-    display:inline-block; /* should be inline */
-    text-align:right;
-    -webkit-user-select: none;
-    margin-left:-3em;
-    margin-right: 8px;
-    font-size: 80% !important;
-    opacity:0.8 !important;
-}
-.highlight  code > span {
-    white-space: pre: /*normal;  for breaking words */
-    word-break: break-word; /* for breaking words */
-}
-.highlight code.code-no-focus {
-    opacity:0.3 !important;
-}
-.highlight code.code-focus {
-    text-shadow: 0 0 1px var(--primary-bg);
-}
-span.lang-name {
-    color: var(--accent-color);
-    font-size: 0.8em;
-}
-.raw-text { /* Should be same in notebook cell */
-    font-family: "__codefont__", "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important;
-    font-size: 90% !important;
-    display: block !important;
-    margin: 4px !important;
-    height: auto !important;
-    overflow: auto !important;
-    overflow-wrap: break-word !important;
-    padding: 0 0.3em !important;
-} 
-.SlideArea .raw-text { /* Should follow theme under slides */
-    background: var(--secondary-bg) !important;
-    color: var(--primary-fg) !important;
-    max-height: 400px;
-    white-space:pre !important;
-}
-.SlideArea pre {
-    background: none !important;
-    color: var(--primary-fg) !important;
-}
-.custom-print {
-    margin-block: 0.5px !important; /* Two adjacant prints should look closer */
-}
-.goto-button {min-width:max-content;}
-/* Associted with the above */
-.goto-box {}
-.goto-html {}
-
-.SlidesWrapper.CaptureMode .SlideArea .goto-button {display:none !important;} /* Hide the goto-button in screenshot, it is not useful there */
-
-/* Table of contents on slides */
-.SlideArea .toc-item {border-right: 4px solid var(--secondary-bg);}
-.SlideArea .toc-item.this {
-    border-right: 4px solid var(--primary-fg);
-    font-weight: bold !important;
-}
-.SlideArea .toc-item.next {opacity: 0.5;}
-
-.SlideArea ul li::marker, .SlideArea ol li::marker {color:var(--accent-color);}
-/* Citations on hover of object before it */
-a.citelink > sup {
-    font-weight:bold;
-}
-.citation.hidden {
-    display:none !important;
-}
-*:hover + .citation.hidden {
-    display:flex !important;
-    border: 1px inset var(--hover-bg);
-    background: var(--secondary-bg);
-    padding: 0.2em;
-}
-
-/* docs have Python code only, so no need to have fancy things there */
-.docs {
-    margin-bottom: 1em !important;
-}
-.docs .highlight {
-    border: none !important;
-}
-.docs span.lang-name {
-    display: none !important;
-}
-.SlidesWrapper blockquote, .SlidesWrapper blockquote>p {
-	background: var(--secondary-bg);
-	color: var(--secondary-fg);
-}
-    
-.SlidesWrapper table {
- 	border-collapse: collapse !important;
-    font-size: 0.95em;
-    min-width:auto;
-    width:100%;
-    word-break:break-all;
-    overflow: auto;
-	color: var(--primary-fg)!important;
-	background: var(--primary-bg)!important;
-    border: 1px solid var(--alternate-bg) !important; /* Makes it pleasant to view */
-}
-.SlidesWrapper tbody>tr:nth-child(odd) {background: var(--alternate-bg)!important;}
-.SlidesWrapper tbody>tr:nth-child(even) {background: var(--primary-bg)!important;}
-.SlidesWrapper tbody>tr:hover {background: var(--hover-bg)!important;}
-
-
-/* Make Scrollbars beautiful */
-.SlidesWrapper, .SlidesWrapper  * { /* FireFox <3*/
-    scrollbar-width: thin;
-    scrollbar-color:var(--alternate-bg) transparent;
-}
-/* Other monsters */  
-.SlidesWrapper ::-webkit-scrollbar {
-    height: 4px;
-    width: 4px;
-    background: transparent !important;
-}
-.highlight::-webkit-scrollbar { /* important for good display */
-    background: var(--secondary-bg) !important;
-}
-.SlidesWrapper ::-webkit-scrollbar:hover {
-    background: var(--secondary-bg) !important;
-}
-.SlidesWrapper ::-webkit-scrollbar-thumb {
-    background: transparent !important;
-}
-.SlidesWrapper ::-webkit-scrollbar-thumb:hover{
-    background: var(--hover-bg) !important;
-}
-.SlidesWrapper ::-webkit-scrollbar-corner,
-.highlight::-webkit-scrollbar-corner {
-    display:none !important;
-}   
-
-/* Zoom container including Matplotlib figure SVG */
-div.zoom-container { resize: both;}
-div.zoom-container,
-div.zoom-container > * {
-    display:flex !important; /* To align in center */
-    flex-direction: column !important; /* To have caption at bottom */
-    align-items:center !important;
-    justify-content:center !important;
-    transition: transform .2s; /* Animation */
-}  
-.pygal-chart {  /* it doesnt show otherwise */
-    min-width:300px;
-    width:100%;
-    height:auto;
-}  
-'''
+from ..utils import _build_css
 
 animations = {'zoom':'''
 .SlideBox {
@@ -556,13 +50,511 @@ animations = {'zoom':'''
      from { transform: translateY(-100%);}
      to { transform: translateY(0); }
 }
+''',
+'flow': '''
+.SlideBox :is(.highlight code, li, tr) {
+    animation-name: slideN; animation-duration: 600ms;
+    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+}
+.SlideBox.Prev :is(.highlight code, li, tr) { /* .Prev acts when moving slides backward */
+    animation-name: slideP; animation-duration: 600ms;
+    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+}
+
+.SlideBox :is(.highlight code, li, tr):nth-child(2) {
+    animation-delay: 30ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(3) {
+    animation-delay: 60ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(4) {
+    animation-delay: 90ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(5) { /* n+5 means all children after 4th child */
+    animation-delay: 120ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(6) { /* n+5 means all children after 4th child */
+    animation-delay: 150ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(7) { /* n+5 means all children after 4th child */
+    animation-delay: 180ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(8) { /* n+5 means all children after 4th child */
+    animation-delay: 210ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(9) { /* n+5 means all children after 4th child */
+    animation-delay: 240ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(10) { /* n+5 means all children after 4th child */
+    animation-delay: 270ms;
+}
+.SlideBox :is(.highlight code, li, tr):nth-child(n+11) { /* n+5 means all children after 4th child */
+    animation-delay: 300ms;
+}
+@keyframes slideN {
+     from { transform: translateX(50%);opacity: 0; }
+     to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideP {
+     from { transform: translateX(-50%);opacity: 0; }
+     to { transform: translateX(0); opacity: 1; }
+}
 '''
 }
-animations['slide'] = animations['slide_h']# Backward compatibility
-
 
 loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 50 50">
   <path fill="var(--accent-color,navy)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z">
     <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.5s" repeatCount="indefinite"/>
   </path></svg></div>'''
+  
+# This was 436 lines of code in CSS, css_dict is elegant + only 368 lines, clean CSS output is 462 lines
+def _validate_colors(colors):
+    for key, value in colors.items():
+        if not isinstance(value, str):
+            raise ValueError(f'Color value for {key!r} must be a string')
+        if not key in theme_colors['Light']:
+            raise ValueError(f'Invalid color key {key!r}! Use one of {list(theme_colors["Light"].keys())}')
+    
+    for k1, k2 in zip(sorted(colors.keys()),sorted(theme_colors['Light'].keys())):
+        if k1 != k2:
+            raise ValueError(f'Invalid number of colors! Provide all colors like \n{theme_colors["Light"]}\n')
+        
+theme_colors = {
+    'Inherit': {
+        'heading_color':'var(--jp-inverse-layout-color1,navy)',
+        'primary_fg':'var(--jp-inverse-layout-color0,black)',
+        'primary_bg':'var(--jp-layout-color0,white)',
+        'secondary_bg':'var(--jplayout-color2,whitesmoke)',
+        'secondary_fg':'var(--jp-inverse-layout-color4,#454545)',
+        'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
+        'hover_bg':'var(--jp-border-color1,#D1D9E1)',
+        'accent_color':'var(--jp-brand-color1,navy)',
+        'pointer_color':'var(--md-pink-A400,red)',
+    },
+    'Light': {
+        'heading_color':'navy',
+        'primary_fg':'black',
+        'primary_bg':'white',
+        'secondary_bg':'whitesmoke',
+        'secondary_fg':'#454545',
+        'alternate_bg':'whitesmoke',
+        'hover_bg':'#D1D9E1',
+        'accent_color':'navy',
+        'pointer_color':'red',
+    },
+    'Dark': {
+        'heading_color' : 'snow',
+        'primary_fg' : 'white',
+        'primary_bg' : 'black',
+        'secondary_bg' : '#353535',
+        'secondary_fg' : 'powderblue',
+        'alternate_bg' : '#282828',
+        'hover_bg' : '#264348',
+        'accent_color' : '#d9e0e3',
+        'pointer_color' : 'blue',
+    },
+    'Fancy': {
+        'heading_color': '#105599',
+	    'primary_fg': '#755',
+	    'primary_bg': '#efefef',
+	    'secondary_bg': '#effffe',
+	    'secondary_fg': '#89E',
+	    'alternate_bg': '#deddde',
+	    'hover_bg': '#D1D9E1',
+	    'accent_color': '#955200',
+        'pointer_color': '#FF7722',
+    },
+    'Material Light': {
+        'heading_color': '#4984c4',
+	    'primary_fg': '#3b3b3b',
+	    'primary_bg': '#fafafa',
+	    'secondary_bg': '#e9eef2',
+	    'secondary_fg': '#3b5e3b',
+	    'alternate_bg': '#e9eef2',
+	    'hover_bg': '#dae3ec',
+	    'accent_color': '#4d7f43',
+        'pointer_color': 'red',
+    },
+    'Material Dark': {
+        'heading_color': '#aec7e3',
+	    'primary_fg': '#bebebe',
+	    'primary_bg': '#282828',
+	    'secondary_bg': '#383838',
+	    'secondary_fg': '#fefefe',
+	    'alternate_bg': '#383838',
+	    'hover_bg': '#484848',
+	    'accent_color': '#a8bfa3',
+        'pointer_color': 'blue',
+    }   
+}
+
+def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint_width = '650px', content_width = '70%', _store = None):
+    if isinstance(_store,dict):
+        _store.update(locals())
+    return _build_css((),{
+        ':root': {
+            '--heading-color':f'{colors["heading_color"]}',
+            '--primary-fg':f'{colors["primary_fg"]}',
+            '--primary-bg':f'{colors["primary_bg"]}',
+            '--secondary-bg':f'{colors["secondary_bg"]}',
+            '--secondary-fg':f'{colors["secondary_fg"]}',
+            '--alternate-bg':f'{colors["alternate_bg"]}',
+            '--hover-bg':f'{colors["hover_bg"]}',
+            '--accent-color':f'{colors["accent_color"]}',
+            '--pointer-color':f'{colors["pointer_color"]}',
+            '--text-size':f'{text_size}',
+        },
+        '.SlidesWrapper, .SlideArea': {
+            '*:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text)': {
+                'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+            },
+            'code > span': {
+                'font-family': f'{code_font!r}, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important',
+                'font-size':'90% !important',
+            },
+        },
+        '.SlidesWrapper':{
+            'margin':'auto',
+            'padding':'0px',
+            'background':'var(--primary-bg)',
+            'font-size':'var(--text-size)',
+            'max-width':'100vw', # This is very important
+            '^, *':{ 
+                'color':'var(--primary-fg)',
+                'scrollbar-width':'thin', # FireFox <3
+                'scrollbar-color':'var(--alternate-bg) transparent',
+            },
+            '::-webkit-scrollbar': {
+                'height':'4px',
+                'width':'4px',
+                'background':'transparent !important', 
+                '^:hover': {'background':'var(--secondary-bg) !important',},
+            },
+            '::-webkit-scrollbar-thumb': {
+                'background':'transparent !important',
+                '^:hover': {'background':'var(--hover-bg) !important',},
+            },
+            '::-webkit-scrollbar-corner': {'display':'none',},
+            '.widget-text input': {
+                'background':'var(--primary-bg)',
+                'color':'var(--primary-fg)',
+            },
+            'hr': {
+                'margin':'0 !important',
+                'margin-block':'0.5em !important',
+                'border':'none',
+                'width':'auto',
+                'height':'2px',
+                'background':'linear-gradient(to right, transparent,  var(--secondary-bg),var(--accent-color), var(--secondary-bg),transparent)',
+            },
+            '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
+            ':is(h1, h2, h3, h4, h5, h6)': {
+                'color':'var(--heading-color)',
+                'text-align':'center',
+                'overflow':'hidden', # FireFox 
+                'margin-block':'unset',
+                'line-height':'1.5em',
+            },
+            'h1': {'font-size':'2.25em'},
+            'h2': {'font-size':'2em'},
+            'h3': {'font-size':'1.5em'},
+            'h4': {'font-size':'1.25em'},
+            'h5': {'font-size':'1em'},
+            '^.CaptureMode .SlideArea .goto-button': {'display':'none !important'}, # Hide the goto-button in screenshot, it is not useful there
+            'table': {
+                'border-collapse':'collapse !important',
+                'font-size':'0.95em',
+                'min-width':'auto',
+                'width':'100%',
+                'word-break':'break-all',
+                'overflow':'auto',
+                'color':'var(--primary-fg)!important',
+                'background':'var(--primary-bg)!important',
+                'border':'1px solid var(--alternate-bg) !important', # Makes it pleasant to view
+                'tbody': {
+                    'tr': {
+                        '^:nth-child(odd)': {'background':'var(--alternate-bg)!important',},
+                        '^:nth-child(even)': {'background':'var(--primary-bg)!important',},
+                        '^:hover': {'background':'var(--hover-bg)!important',},
+                    },
+                },
+            },
+            'blockquote, blockquote > p': {
+                'background':'var(--secondary-bg)',
+                'color':'var(--secondary-fg)',
+            },
+        },
+        '.raw-text': { # Should be same in notebook cell 
+            'font-family': f'{code_font!r}, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important',
+            'font-size':'90% !important',
+            'display':'block !important',
+            'margin':'4px !important',
+            'height':'auto !important',
+            'overflow':'auto !important',
+            'overflow-wrap':'break-word !important',
+            'padding':'0 0.3em !important',
+        },
+        '.SlideArea': {
+            'width':f'{content_width} !important',
+            '.toc-item': { # Table of contents on slides 
+                'border-right':'4px solid var(--secondary-bg)',
+                '.this': {
+                    'border-right':'4px solid var(--primary-fg)',
+                    'font-weight':'bold !important',
+                }, 
+                '.next': {'opacity':'0.5',},
+            },
+            'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
+            '.raw-text': { # Should follow theme under slides 
+                'background':'var(--secondary-bg) !important',
+                'color':'var(--primary-fg) !important',
+                'max-height':'400px',
+                'white-space':'pre !important',
+            },
+            '.text-box': { # general text box for writing inline refrences etc. 
+                'font-size':'0.7em !important', 
+                'line-height':'0.99em !important',
+                'position':'relative', 
+                'left':'initial',
+                'top':'initial',
+                'padding':'2px 4px',
+                'color':'var(--secondary-fg)',
+                # Below are required to override behavior of span tag
+                'display':'inline-block !important',
+                'white-space':'break-spaces !important',
+            },
+            '.citation': {
+                'font-size':'0.8em !important', 
+                'line-height':'0.85em !important',
+                'display':'flex !important',
+                'flex-direction':'row !important',
+                '> a': {'margin-right':'0.3em !important'},
+            },
+            '.footnote *, .footnote li::marker': {
+                'font-size':'0.9em',
+                'line-height':'0.9em',
+            },
+            '.footnote ol': {'margin-top':'0.5em !important',},
+            'pre': {
+                'background':'none !important',
+                'color':'var(--primary-fg) !important',
+            },
+            'figure': {'margin':'8px !important'}, # override default margin
+            'figcaption': {
+                'font-size':'0.8em !important',
+                'line-height':'1em !important',
+                'padding-top':'0.2em !important',
+            },
+            '.columns':{
+                'width':'100%',
+                'max-width':'100%',
+                'display':'inline-flex',
+                'flex-direction':'row',
+                'column-gap':'2em',
+                'height':'auto',
+                f'@media screen and (max-width: {breakpoint_width})': {
+                    'width':'100%',
+                    'max-width':'100%',
+                    'display':'flex',
+                    'flex-direction':'column',
+                    '> div[style]': {'width':'100%!important'}, # important to override inline CSS
+               },
+            }
+        },
+        '.highlight': {
+            'min-width':'100% !important',
+            'width':'100% !important',
+            'max-width':'100vw !important',
+            'box-sizing':'border-box !important',
+            'overflow':'auto !important',
+            'padding':'0 !important',
+            'margin':'4px 0px !important', # Opposite to padding to balance it 
+            'max-height':'400px', # Try avoiding important here 
+            'height':'auto !important',
+            # colors are set via settigs.set_code_style 
+            'pre': {  # works for both case, do not use > 
+                'display':'grid !important',
+                'padding':'8px 4px 8px 4px !important', 
+                'overflow':'auto !important',
+                'width':'auto !important',
+                'box-sizing':'border-box !important',
+                'height':'auto',
+                'margin':'0px !important',
+                'counter-reset':'line', # important to add line numbers 
+                'background':'none !important', # This should be none as will given by the code_css 
+            },
+            'code': {
+                'counter-increment':'line',
+                'display':'inline-block !important', # should be on new line 
+                'width':'auto',
+                'min-width':'calc(90% - 2.2em)',
+                'background':'transparent !important',
+                'white-space':'pre !important',
+                'overflow-wrap':'normal !important',
+                'box-sizing':'border-box !important',
+                '^:before': {
+                    'content':'counter(line,decimal)',
+                    'position':'sticky',
+                    'top':'initial',
+                    'left':'-4px',
+                    'padding':'0 8px',
+                    'display':'inline-block', # should be inline 
+                    'text-align':'right',
+                    '-webkit-user-select':'none',
+                    'margin-left':'-3em',
+                    'margin-right':'8px',
+                    'font-size':'80% !important',
+                    'opacity':'0.8 !important',
+                },
+                '> span': {
+                    'white-space':'pre', #normal  for breaking words 
+                    'word-break':'break-word', # for breaking words 
+                },
+                '^.code-no-focus': {'opacity':'0.3 !important'},
+                '^.code-focus':{'text-shadow':'0 0 1px var(--primary-bg)'},
+            },
+            '^::-webkit-scrollbar': {'background':'var(--secondary-bg) !important',},
+            '^::-webkit-scrollbar-corner': {'display': 'none',},
+        },
+        'span.lang-name': {
+            'color':'var(--accent-color)',
+            'font-size':'0.8em',
+        },
+        '.docs': { # docs have Python code only, so no need to have fancy things there
+            'margin-bottom':'1em !important',
+            '.highlight': {'border':'none !important',},
+            'span.lang-name': {'display':'none !important',},
+        },
+        '.custom-print': {
+            'margin-block':'0.5px !important', # Two adjacant prints should look closer 
+        },
+        '.goto-box': {
+            '.goto-button': {'min-width':'max-content'},
+            '.goto-html': {},
+        },
+        'a.citelink > sup': {'font-weight':'bold',},
+        '.citation.hidden': {  
+            'display':'none !important',
+        },
+        '*:hover + .citation.hidden': { # Citations on hover of object before it
+            'display':'flex !important',
+            'border':'1px inset var(--hover-bg)',
+            'background':'var(--secondary-bg)',
+            'padding':'0.2em',
+        },
+        '.align-center:not(.columns), .align-center > *:not(.columns)': {
+            'display':'table !important',
+            'margin':'0 auto !important',
+            'width':'auto !important', # max-content creates oveflow, do not use it 
+        },
+        '.align-left:not(.columns)': { 
+            'margin-right':'auto !important', 
+            'text-align':'left !important',
+        },
+        '.align-right:not(.columns)': { 
+            'margin-left':'auto !important', 
+            'text-align':'right !important',
+        },
+        '.align-right:not(.columns), .align-left:not(.columns), .align-center:not(.columns)': {
+            'display':'table !important',
+            'width':'auto !important',
+            '> *:last-child': {'margin-bottom':'0.1em !important',}, 
+        },
+        '.rtl, .rtl > *': {
+            'text-align':'right !important',
+            'padding':'0 12px !important', # to avoid cuts in rtl 
+        },
+        '.info, .warning, .success, .error, .note': {
+            'padding':'0.2em !important',
+            '^ > *:last-child': {'margin-bottom':'0.1em !important'},
+        },
+        '.warning, .warning *:not(span)': {'color':'#FFAC1C !important',},
+        '.success, .success *:not(span)': {'color':'green !important',},
+        '.error, .error *:not(span)': {'color':'red !important',},
+        '.info, .info *:not(span)': {'color':'skyblue !important',},
+        '.note' : {
+            'border': '1px solid var(--hover-bg)',
+            'border-radius': '0.2em',
+            'background': 'none', # Fallback  for Inherit and Custom theme
+            'background': f'rgba({light},{light},{light},0.75)',
+            '^::before': {
+                'content':"'ℹ'",
+                'display':' inline-flex',
+                'width':' 1em',
+                'height':' 1em',
+                'margin':' 0 0.2em',
+                'justify-content':'center',
+                'align-items':'center',
+                'border':'1px solid var(--accent-color)',
+                'border-radius':'1em',
+                'color':'var(--accent-color)',
+            },
+        },
+        '.block' : {
+            'border-top': '3px solid var(--accent-color)',
+            '^, ^-red,^-green,^-blue, ^-yellow, ^-magenta, ^-gray, ^-cyan': {
+                'padding': '8px',
+                'margin-bottom': '0.9em',
+                'background': 'var(--secondary-bg)', # Fallback  for Inherit and Custom theme
+            },
+            '^-red' : {
+                'border-top': '3px solid red', # Fallback  for Inherit and Custom theme
+                '+border-top': f'3px solid rgb({light}, 0, 0)',
+                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+            },
+            '^-green' : {
+                'border-top': '3px solid green', # Fallback  for Inherit and Custom theme
+                '+border-top': f'3px solid rgb({light}, 0, 0)',
+                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+            },
+            '^-blue' : {
+                'border-top': '3px solid blue', # Fallback  for Inherit and Custom theme
+                '+border-top': f'3px solid rgb({light}, 0, 0)',
+                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+            },
+            '^-yellow' : {
+                'border-top': '3px solid yellow', # Fallback  for Inherit and Custom theme
+                '+border-top': f'3px solid rgb({light}, 0, 0)',
+                'background': f'rgba({light},{light - 20},{light - 20},0.75)',
+            },
+            '^-magenta' : {
+                'border-top': '3px solid magenta', # Fallback  for Inherit and Custom theme
+                '+border-top': f'3px solid rgb({light}, 0, 0)',
+                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+            },
+            '^-cyan' : {
+                'border-top': '3px solid cyan', # Fallback  for Inherit and Custom theme
+                '+border-top': f'3px solid rgb({light}, 0, 0)',
+                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
+            },
+            '^-gray' : {
+                'border-top': '3px solid cyan', # Fallback  for Inherit and Custom theme
+                '+border-top': f'3px solid rgb({light - 10}, {light - 10}, {light - 10})',
+                'background':f'rgba({light -20},{light - 20},{light - 20},0.75)',
+            },
+        },
+        'details': {
+            'padding': '0.2em',
+            'background': 'var(--secondary-bg)',
+            '^, > summary, > div': {'padding': '0.2em'},
+            '> summary': {'color': 'var(--accent-color) !important'},
+            '> div': {'background': 'var(--primary-bg)'},
+        },
+        'div.zoom-container':{
+            'resize':'both',
+            '^, > *':{
+                'display':'flex !important', # To align in center 
+                'flex-direction':'column !important', # To have caption at bottom 
+                'align-items':'center !important',
+                'justify-content':'center !important',
+                'transition':'transform .2s', # Animation
+            },
+            'figure':{'object-fit':'scale-down !important'}, # If height goes out, scale down 
+        },
+        '.pygal-chart':{
+            'min-width':'300px',
+            'width':'100%',
+            'height':'auto',    
+        },
+    })

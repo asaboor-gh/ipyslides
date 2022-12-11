@@ -33,7 +33,7 @@ how_to_slide = ('''# Creating Slides
 ```python
 import ipyslides as isd 
 slides = isd.Slides()
-slides.set_animation(main='zoom') 
+slides.set_animation(main='flow') 
 ```
 ```python
 %%title
@@ -110,6 +110,11 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 - You can use `Slides.goto_button` to add a button to go to jump to a slide.
 - Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
 - A new function `Slides.bullets` is added to add powerful bullet list from python objects.
+
+**New in 2.2.0**
+- A complete overhaul of CSS is done, so your custom CSS classes may be broken. You need to see `slides.docs` and read docs of `slides.fromat_css` as well as `slides.css_style` to know changes.
+- Now you can use python dictionary inside `slides.format_ccs, slides.set_css, slides[0].set_css` functions to set CSS properties, with extended and concise syntax.
+- In Custom Theme mode, now instead of editing a CSS file, you just need to set colors using `slides.settings.set_theme_colors`.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
@@ -166,12 +171,7 @@ Restart Kernel if you make mistake in slide numbers to avoid hidden state proble
 instructions = f'''{more_instructions}
 {how_to_ppt}
 ### Custom Theme
-For custom themes, change below `Theme` dropdown to `Custom`.
-You will see a `custom.css` in current folder,edit it and change
-font scale or set theme to another value and back to `Custom` to take effect. 
-
-`custom.css` is only picked from current directory.
-{{.note .info}}
+For custom themes, change below `Theme` dropdown to `Custom` and use `Slides.settings.set_theme_colors` to set colors.
           
 --------
 For matching plots style with theme, run following code in a cell above slides.
@@ -202,13 +202,13 @@ alt.themes.enable('dark')
 
 ### Customize Slides
 You can customize slides by inheriting from `Slides` class. 
-For example if you want to have custom theme and some other settings always enabled and
+For example if you want to have custom settings always enabled and
 bottom information only on title slide, you can do so:
 ```python
 class CustomSlides(isd.Slides):
     def __init__(self):
         super().__init__()
-        self.settings.theme_dd.value = 'Custom'
+        self.settings.theme_dd.value = 'Custom' # Requires to set_theme_colors or will be Light theme
         self.progress_slider.observe(self.set_visible, names=['index'])
     
     def set_visible(self, change):

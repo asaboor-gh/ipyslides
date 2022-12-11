@@ -8,8 +8,10 @@ import ipywidgets as ipw
 from IPython.display import display, Javascript
 from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
 from . import styles, _layout_css
-from ..utils import html
+from ..utils import html, _build_css
 
+def _build_style_widget(css_dict):
+    return HTML(html('style',_build_css((), css_dict)).value)
 
 auto_layout =  Layout(width='auto')
 def describe(value): 
@@ -50,12 +52,7 @@ class _Htmls:
     Instantiate under `Widgets` class only.
     """
     footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
-    theme   = HTML(html('style',styles.style_css(styles.theme_roots['Fancy'].replace(
-                '__text_size__','20px')).replace(
-                '__breakpoint_width__','650px').replace(
-                '__textfont__','STIX Two Text').replace(
-                '__codefont__','var(--jp-code-font-family)')
-                ).value)
+    theme   = HTML(html('style',styles.style_css(styles.theme_colors['Fancy'])).value)
     main    = HTML(html('style',_layout_css.layout_css.replace('__breakpoint_width__','650px')).value) # Will be update in theme as well
     sidebar = HTML(html('style',_layout_css.sidebar_layout_css()).value) # Should be separate CSS
     loading = HTML() #SVG Animation in it
@@ -105,7 +102,7 @@ class _Dropdowns:
     """
     Instantiate under `Widgets` class only.
     """
-    theme = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_roots.keys(),'Custom'],value='Inherit')
+    theme = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
     clear = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
         
     
@@ -123,47 +120,48 @@ class _Outputs:
 def _custom_progressbar(intslider):
     "Retruns a progress bar with custom style html linked to the slider"
     # This html should not be exposed to user
-    html = HTML('''
-    <style>
-    .NavWrapper .NavBox .Menu-Item {
-        font-size:24px !important; 
-        overflow:hidden;
-        opacity:0.4;
-        z-index:55;
-    }
-    .NavWrapper .NavBox .Menu-Item:hover {
-        opacity:1;
-    }
-    .NavWrapper .NavBox .Footer p {
-        font-size:14px !important;
-    }
-    .NavWrapper .NavBox {
-        z-index:50;
-        overflow: hidden;
-    }
-    .NavWrapper .widget-hprogress {
-        height:4px; !impportant;
-    }
-    .NavWrapper, .NavWrapper > div {
-        padding:0px;
-        margin:0px;
-        overflow:hidden;
-        max-width:100%;
-    }
-    .NavWrapper .progress, .NavWrapper .progress .progress-bar {
-        border-radius:0px; 
-        margin:0px;
-        padding:0px;
-        height:4px !important;
-        overflow:hidden;
-        left:0px;
-        bottom:0px;
-    }
-    .NavWrapper .progress {
-        width:100% !important;
-        transform:translate(-2px,1px) !important;
-    }
-    </style>''')
+    html = _build_style_widget({
+        '.NavWrapper': {
+            '^,^ > div': {
+                'padding': '0px',
+                'margin': '0px',
+                'overflow': 'hidden',
+                'max-width': '100%',
+            },
+            '.progress': {
+                'width': '100% !important',
+                'transform': 'translate(-2px,1px) !important',
+                '^, .progress-bar': {
+                    'border-radius': '0px',
+                    'margin': '0px',
+                    'padding': '0px',
+                    'height': '4px !important',
+                    'overflow': 'hidden',
+                    'left': '0px',
+                    'bottom': '0px',
+                },
+            },
+            '.widget-hprogress': {
+                'height': '4px !important',
+            },
+            '.NavBox': {
+                'z-index': '50',
+                'overflow': 'hidden',
+                '.Menu-Item': {
+                    'font-size': '24px !important',
+                    'overflow': 'hidden',
+                    'opacity': '0.4',
+                    'z-index': '55',
+                    '^:hover': {
+                        'opacity': '1',
+                    },
+                },
+                '.Footer p': {
+                    'font-size': '14px !important',
+                },
+            },
+        },
+    }) # Should be HTML Widget
     intprogress = FloatProgress(min=0, max=100,value=0, layout=Layout(width='100%'))
     ipw.link((intslider, 'value'), (intprogress, 'value')) # This link enable auto refresh from outside
     

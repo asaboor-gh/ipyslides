@@ -30,7 +30,6 @@ class Slide:
         self._index = None # This should be set in the Slides
         
         self._notes = '' # Should be update by Notes and Slides calss
-        self._set_overall_animation()
         self._animation = None
         self._markdown = '' # Should be update by Slides
         self._cell_code = '' # Should be update by Slides 

@@ -1,6 +1,7 @@
 # Template for building a report from slides 
 
-doc_html = '''<!DOCTYPE html>
+def doc_html(code_css, style_css, content):
+    return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -10,8 +11,8 @@ doc_html = '''<!DOCTYPE html>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
     
-    __code_css__
-    __style_css__
+    {code_css}
+    {style_css}
 
     <!-- Custom stylesheet, it must be in the same directory as the html file -->
     <link rel="stylesheet" href="overrides.css">
@@ -21,21 +22,21 @@ doc_html = '''<!DOCTYPE html>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script>
     <!-- MathJax configuration -->
     <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
+    MathJax.Hub.Config({{
+        tex2jax: {{
             inlineMath: [ ["$","$"] ],
             displayMath: [ ["$$","$$"] ],
             processEscapes: true,
             processEnvironments: true
-        },
+        }},
         // align-center justify equations in code and markdown cells. Elsewhere
         // we use CSS to left justify single line equations in code cells.
         displayAlign: "center",
-        "HTML-CSS": {
-            styles: {".MathJax_Display": {"margin": 0}},
-            linebreaks: { automatic: true }
-        }
-    });
+        "HTML-CSS": {{
+            styles: {{".MathJax_Display": {{"margin": 0}}}},
+            linebreaks: {{ automatic: true }}
+        }}
+    }});
     </script>
     <!-- End of mathjax configuration -->
 </head>
@@ -43,7 +44,7 @@ doc_html = '''<!DOCTYPE html>
 <div>
     <!-- Classes below work for both scenerios -->
     <div class="SlidesWrapper">
-    __content__
+    {content}
     </div>
 </div>
 </body>

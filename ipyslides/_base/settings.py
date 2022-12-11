@@ -5,13 +5,14 @@ and then provided to other classes via composition, not inheritance.
 
 from contextlib import suppress
 import os
+import math
 from IPython.display import display, Image, Javascript
 from IPython.utils.capture import capture_output
 from ipywidgets import Layout
 
 from ..formatters import fix_ipy_image, code_css
 from ..extended_md import parse_xmd
-from ..utils import set_dir, html, details, today, _sub_doc, _css_docstring
+from ..utils import html, details, today, _sub_doc, _css_docstring
 from . import scripts, intro, styles, _layout_css
 
 class LayoutSettings:
@@ -20,13 +21,14 @@ class LayoutSettings:
         self._slides = _instanceSlides
         self.widgets = _instanceWidgets
         self.font_scale = 1
+        self._custom_colors = {}
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIX Two Text'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '90%' #Better
         self._breakpoint_width = f'{int(100*650/self.widgets.sliders.width.value)}px' # Whatever was set initially
         self._code_lineno = True
+        self._store_theme_args = {}
         self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em')
-        
         self.height_slider = self.widgets.sliders.height
         self.width_slider  = self.widgets.sliders.width
         self.scale_slider  = self.widgets.sliders.scale
@@ -72,6 +74,19 @@ class LayoutSettings:
             self._slides[0]._set_overall_animation(main = main,frame = frame)
         else:
             raise ValueError("No slides yet to set animation.")
+    
+    @_sub_doc(colors = styles.theme_colors['Light'])
+    def set_theme_colors(self, colors = {}):
+        """Set theme colors. (2.2.0+), Only take effect when using custom theme.
+        colors must be a dictionary with exactly like this:
+        ```python
+        Slides.settings.set_theme_colors({colors})
+        ```
+        """
+        styles._validate_colors(self._custom_colors) # Validate colors before using
+        self._custom_colors = colors
+        self.theme_dd.value = 'Custom' # Trigger theme update
+        self._update_theme()
     
     @_sub_doc(css_docstring = _css_docstring)    
     def set_css(self,css_dict={}):
@@ -194,54 +209,44 @@ class LayoutSettings:
         self.font_scale = self.widgets.sliders.scale.value
         self._update_theme(change=None)
         
-        
     def _update_theme(self,change=None): 
         text_size = '{}px'.format(int(self.font_scale*20))
         
-        if self.theme_dd.value != 'Custom':
-            theme_css =  styles.style_css(styles.theme_roots[self.theme_dd.value])
-        else: # In case of Custom CSS
-            with set_dir(self.widgets.assets_dir):
-                if not os.path.isfile('custom.css'):
-                    with open('custom.css','w') as f:
-                        f.write('/* Author: Abdul Saboor */\n' + styles.style_css( styles.theme_roots['Light']))
-                    self._slides.notify(f'File: {os.path.join(self._slides.assets_dir,"custom.css")!r} created. Edit it and change theme dropdown back and forth to see effect.',timeout=5)
-                        
-                # Read CSS from file now
-                with open('custom.css','r') as f:
-                    theme_css = ''.join(f.readlines())
-        
+        if self.theme_dd.value == 'Custom':
+            colors = self._custom_colors or styles.theme_colors['Inherit']
+            self._slides.notify('You can set custom colors using `Slides.settings.set_theme_colors` method for custom theme!')
+        else:
+            colors = styles.theme_colors[self.theme_dd.value]
+            
         if 'Dark' in self.theme_dd.value:
             self.set_code_style('monokai',color='#f8f8f2',lineno=self._code_lineno)
-            light = '120'
+            light = 120
         elif self.theme_dd.value == 'Fancy':
             self.set_code_style('borland',lineno=self._code_lineno) 
-            light = '230'
+            light = 230
         else:
             self.set_code_style('default',lineno=self._code_lineno)
-            light = '250'
+            light = 250
             
         if self.theme_dd.value in ['Inherit', 'Custom']:
-            light = '-' # Use Fallback colors, can't have idea which themes colors would be there
+            light = math.nan # Use Fallback colors, can't have idea which themes colors would be there
                
         # Replace font-size and breakpoint size
-        theme_css = theme_css.replace(
-                        '__text_size__',text_size).replace(
-                        '__textfont__',self._font_family['text']).replace(
-                        '__codefont__',self._font_family['code']).replace(
-                        '__content_width__',self._content_width).replace(
-                        '__breakpoint_width__', self._breakpoint_width).replace(
-                        '__light__',light
-                        )
+        theme_css = styles.style_css(colors, light = light, text_size = text_size, 
+                                     text_font = self._font_family['text'],
+                                     code_font = self._font_family['code'],
+                                     breakpoint_width = self._breakpoint_width,
+                                     content_width = self._content_width,
+                                     _store = self._store_theme_args)
         # Update Layout CSS
         layout_css = _layout_css.layout_css.replace('__breakpoint_width__', self._breakpoint_width)
-        self.widgets.htmls.main.value = f'<style>\n{layout_css}\n</style>'
+        self.widgets.htmls.main.value = html('style',layout_css).value
         
         # Update CSS
         if self.reflow_check.value:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
             
-        self.widgets.htmls.theme.value = f'<style>\n{theme_css}\n</style>'
+        self.widgets.htmls.theme.value = html('style',theme_css).value
         self._toggle_sidebar(change=None) #modify width of sidebar or display it inline, must call
         self._emit_resize_event()
         

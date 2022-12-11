@@ -6,6 +6,7 @@ import re
 import os
 from .export_template import doc_css, doc_html, slides_css
 from ..formatters import code_css
+from . import styles
 
 class _HhtmlExporter:
     # Should be used inside Slides class only.
@@ -31,16 +32,14 @@ class _HhtmlExporter:
                         if kwargs.get("slide_number",False) and item.label != '0' else '')
                 content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
                             if as_slides else f'<section>{_html}</section>')
-                
-        theme_css = re.sub('\(.*-width.*\)','(max-width: 650px)',self.main.widgets.htmls.theme.value).replace('<style>','').replace('</style>','')
-        __style_css__ = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
-        __code_css__ = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')
+        theme_args = {k:v for k,v in self.main.settings._store_theme_args.items() if k != '_store'}
+        theme_args['breakpoint_width'] = '650px'     
+        theme_css = styles.style_css(**theme_args) # Theme CSS
+        _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
+        _code_css = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')
         
-        return doc_html.replace(
-            '__page_size__',kwargs.get('page_size','letter')).replace(
-            '__code_css__', __code_css__).replace(
-            '__style_css__', __style_css__).replace(
-            '__content__', content)
+        return doc_html(_code_css,_style_css, content).replace(
+            '__page_size__',kwargs.get('page_size','letter'))
 
     def _writefile(self, path, content, overwrite = False):
         if os.path.isfile(path) and not overwrite:
