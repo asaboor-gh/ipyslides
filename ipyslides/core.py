@@ -433,17 +433,11 @@ class Slides(BaseSlides):
         self._display_box_.close() 
     
     def __jlab_in_cell_display(self): 
-        # Can test Voila here too
-        try: # SHould try, so error should not block it
-            if 'voila' in self.shell.config['IPKernelApp']['connection_file']:
-                self.widgets.sliders.width.value = 100 # This fixes dynamic breakpoint in Voila
-        except: pass # Do Nothing
-         
         return ipw.VBox([
-                    ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
-                    self.widgets.toggles.timer,
-                    self.widgets.htmls.notes
-                ]).add_class('ExtraControls')
+            ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
+            self.widgets.toggles.timer,
+            self.widgets.htmls.notes
+        ]).add_class('ExtraControls')
     
     @property
     def auto_number(self):
@@ -855,7 +849,8 @@ class Slides:
         _private_instance.settings.set_font_scale(font_scale = font_scale)
         _private_instance.settings.set_font_family(text_font = text_font, code_font = code_font)
         _private_instance.settings.set_code_style(style = code_style, lineno = code_lineno)
-        _private_instance.settings.set_animation(main = main_animation, frame = frame_animation)
+        with suppress(BaseException): # Avoid error if no slides exist
+            _private_instance.settings.set_animation(main = main_animation, frame = frame_animation)
         return _private_instance
     
     # No need to define __init__, __new__ is enough to show signature and docs

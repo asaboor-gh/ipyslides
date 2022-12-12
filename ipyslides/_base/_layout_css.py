@@ -16,7 +16,6 @@ def layout_css(breakpoint):
                 'border': '2px inset var(--secondary-bg)',
             },
             '^:not(.FullWindow) .DisplaySwitch': {'display': 'block !important'},
-            '.Voila-Hidden': {'display': 'none !important'}, # Hide somethings in Voila
             '.SlideArea': {
                 'align-items': 'center',
                 f'@media screen and (max-width: {breakpoint})': {
@@ -30,12 +29,22 @@ def layout_css(breakpoint):
             },
             '.export-only': { 'display': 'none !important' },
             '.Export-Btn': {
+                'min-height': '38px',
+                'display': 'flex !important',
+                'flex-direction': 'row',
                 '.mod-active': { 'box-shadow': 'none !important' },
                 '> div': {
                     'border': '1px inset var(--hover-bg)',
+                    'display': 'flex !important',
                     'padding': '4px',
                     'border-radius': '4px',
+                    'overflow': 'auto',
                     '> button:last-of-type': { 'display': 'none !important' },
+                },
+                '> label': {
+                    'min-width': '90px',
+                    'text-align':'right',
+                    'padding-right': '8px !important',
                 },
             },
             '.widget-inline-hbox': {
@@ -274,7 +283,7 @@ def layout_css(breakpoint):
             'line-height': '0.9em  !important',
         },
         # Order of these is important
-        ':is(.jp-LabShell, body[data-retro], body[data-notebook]) .DisplaySwitch': {
+        ':is(body[data-base-url], .jp-LabShell, body[data-retro], body[data-notebook]) .DisplaySwitch': {
             'display': 'block !important', # Do not add important here
             'position': 'absolute !important',
             'padding': '4px !important',
@@ -322,22 +331,6 @@ def layout_css(breakpoint):
                 'color':'var(--primary-fg) !important',
             }, 
         },
-        '#rendered_cells': {
-            '.DisplaySwitch, .Voila-Hidden. .Height-Slider, .Width-Slider': {'display': 'none !important'}, #Hide in Voila
-            '.FullWindow-Btn': {'opacity':'0.1 !important',},
-            'div.jp-OutputArea.jp-Cell-outputArea, div.jp-RenderedMarkdown.jp-MarkdownOutput': {
-               'height': '0 !important',  #Suppress other outputs and markdown output in Voila
-            },
-            '.SlidesWrapper': {
-                'position': 'fixed !important',
-                'width':'100vw !important',
-                'height': '100vh !important',
-                'bottom': '0px !important',
-                'top': '0px !important',
-                'tight': '0px !important',
-                'left': '0px !important', 
-            },
-        },
         '@media print': {
             '.SlidesWrapper':{
                 '^, ^.FullWindow': { 
@@ -360,6 +353,17 @@ def layout_css(breakpoint):
                 'width': '100% !important',
             },
         }, # @media print
+        'body[data-base-url]': { #Voila
+            'position': 'fixed !important',
+            'top': '0 !important',
+            'left': '0 !important',
+            'right': '0 !important',
+            'bottom': '0 !important',
+            'overflow': 'hidden !important',
+            '#rendered_cells': {
+                'overflow': 'auto !important',
+            }
+        },
         # Other issues
         '#jp-top-panel, #jp-bottom-panel, #jp-menu-panel': {'color': 'inherit'},
         '.CodeMirror': {
@@ -388,7 +392,10 @@ def layout_css(breakpoint):
 
 def sidebar_layout_css(span_percent = 40):
     return f'''
-.jp-LabShell, body[data-retro]>div#main, body[data-notebook]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
+.jp-LabShell, 
+body[data-base-url], /* For Voila */
+body[data-retro]>div#main, 
+body[data-notebook]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
     right: {span_percent}vw !important;
     margin-right:1px !important;
     min-width: 0 !important;
@@ -397,7 +404,9 @@ body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
     min-width: 0 !important;
     padding-right: {span_percent}vw !important;
 }}
+#rendered_cells {{ margin-right: {span_percent}vw !important; }} /* For Voila */
 .jp-LabShell .SlidesWrapper,
+body[data-base-url] .SlidesWrapper, /* For Voila */
 body[data-retro] .SlidesWrapper,
 body[data-notebook] .SlidesWrapper{{
     position:fixed;
