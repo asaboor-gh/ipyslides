@@ -2,40 +2,6 @@
 
 def layout_css(breakpoint):
     return '''
-.jupyterlab-sidecar .SlidesWrapper,
-.jp-LinkedOutputView .SlidesWrapper {
-    width: 100% !important; 
-    height: 100% !important;
-}               
-.jupyterlab-sidecar .SlidesWrapper .voila-sidecar-hidden,
-.jp-LinkedOutputView .SlidesWrapper .voila-sidecar-hidden,
-#rendered_cells .SlidesWrapper .voila-sidecar-hidden {
-    display: none;
-}
-#rendered_cells div.jp-OutputArea.jp-Cell-outputArea,
-#rendered_cells div.jp-RenderedMarkdown.jp-MarkdownOutput{
-    height:0 !important;
-} /* Suppress other outputs and markdown output in Voila */
-/*.jp-LabShell .SlidesWrapper .Height-Slider {display:none;}*/
-/* next Three things should be in given order */
-.sidecar-only {display: none;} /* No display when ouside sidecar,do not put below next line */
-.jupyterlab-sidecar .sidecar-only, .jp-LinkedOutputView>div .sidecar-only,
-.jp-Cell-outputArea>div .sidecar-only {display: block;} 
-.jp-LinkedOutputView>div {overflow:hidden !important;}
-
-
-#rendered_cells .SlidesWrapper {
-    position: fixed !important;
-    width:100vw !important;
-    height: 100vh !important;
-    bottom: 0px !important;
-    top: 0px !important;
-    tight: 0px !important;
-    left: 0px !important;
-}
-#rendered_cells .Height-Slider {display:none !important;}
-#rendered_cells .FullWindow-Btn {opacity:0.1 !important;}
-
 .Inline-Notes {
     border: 1px solid var(--accent-color);
     border-radius:4px;
@@ -75,9 +41,7 @@ def layout_css(breakpoint):
     background-color: transparent !important; 
     margin: 0 !important;
 } /* For some themes */
-.SlidesWrapper .jupyter-widgets:not(button) { 
-    color: var(--primary-fg) !important;
-} /* All widgets text */
+
 .jp-RenderedHTMLCommon { 
     padding:0px;
     padding-right: 0px !important;
@@ -93,51 +57,8 @@ def layout_css(breakpoint):
 }
 .jp-RenderedHTMLCommon p {
     margin-bottom: 0.2em !important;
-}
-.jp-LinkedOutputView{ 
-    box-sizing:border-box;
-}
-.cell-output-ipywidget-background { /* VSCode issue */
-    background: var(--theme-background,inherit) !important;
-    margin: 8px 0px;} /* VS Code */
-
-#jp-top-panel, #jp-bottom-panel, #jp-menu-panel {color: inherit;}
-
-
-
-.sidecar-only {background: transparent;box-shadow: none;min-width:max-content; opacity:0.6;}
-.sidecar-only:hover, .sidecar-only:focus {opacity:1;}
-
-.CodeMirror {padding-bottom:8px !important; padding-right:8px !important;} /* Jupyter-Lab make space in input cell */
-
-/* Linked Area */
-.jp-LinkedOutputView > div.jp-OutputArea >  div:first-child,
-.jp-LinkedOutputView .SlidesWrapper .Height-Slider,
-.SlidesWrapper.FullWindow .Height-Slider{
-   display: none !important;
-}
-.jp-LinkedOutputView, 
-.jp-LinkedOutputView > div.jp-OutputArea,
-.jp-LinkedOutputView > div.jp-OutputArea > div.jp-OutputArea-output{
-    display:flex;
-    height: 100%;
-    width:100%;
-    padding:0;
-    margin:0;
-}
-.jp-LinkedOutputView div.SlidesWrapper{
-    height: 100% !important;
-    width: 100% !important;
-}
-#rendered_cells .Height-Slider,
-#rendered_cells .Width-Slider,
-.SlidesWrapper.SideMode .Height-Slider,
-.jp-LinkedOutputView .ExtraControls,
-.jupyterlab-sidecar .ExtraControls {
-    display: none !important;
-}
-.SlidesWrapper.FullWindow .console-btn { display:block;} /* Show console button in full window mode */
-'''.replace('__breakpoint__', breakpoint)
+} 
+'''
 
 from ..utils import _build_css
 def layout_css(breakpoint):
@@ -145,7 +66,13 @@ def layout_css(breakpoint):
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
             'z-index': '10 !important',
-            '^.FullWindow .DisplaySwitch': {'display': 'none'},
+            '^.FullWindow': {
+                '.Height-Slider, .Width-Slider, .DisplaySwitch': {'display': 'none !important'},
+            },
+            '^.SideMode': {
+                '.Height-Slider': {'display': 'none !important'},
+            },
+            '.Voila-Hidden': {'display': 'none !important'}, # Hide somethings in Voila
             '.SlideArea': {
                 'align-items': 'center',
                 f'@media screen and (max-width: {breakpoint})': {
@@ -249,7 +176,7 @@ def layout_css(breakpoint):
                     'border': '1px solid var(--accent-color)',  
                 },
             },
-                
+            '.jupyter-widgets:not(button)': { 'color': 'var(--primary-fg) !important'}, # All widgets text color
         },
         'div.LaserPointer': { # For laser pointer 
             'position':'absolute !important',
@@ -401,8 +328,20 @@ def layout_css(breakpoint):
         },
         
         '#rendered_cells': {
-            '.DisplaySwitch': {'display': 'none'}, #Hide in Voila
-            
+            '.DisplaySwitch, .Voila-Hidden. .Height-Slider, .Width-Slider': {'display': 'none'}, #Hide in Voila
+            '.FullWindow-Btn': {'opacity':'0.1 !important',},
+            'div.jp-OutputArea.jp-Cell-outputArea, div.jp-RenderedMarkdown.jp-MarkdownOutput': {
+               'height': '0 !important',  #Suppress other outputs and markdown output in Voila
+            },
+            '.SlidesWrapper': {
+                'position': 'fixed !important',
+                'width':'100vw !important',
+                'height': '100vh !important',
+                'bottom': '0px !important',
+                'top': '0px !important',
+                'tight': '0px !important',
+                'left': '0px !important', 
+            },
         },
         '@media print': {
             '.SlidesWrapper':{
@@ -426,6 +365,39 @@ def layout_css(breakpoint):
                 'width': '100% !important',
             },
         }, # @media print
+        # Other issues
+        '#jp-top-panel, #jp-bottom-panel, #jp-menu-panel': {'color': 'inherit'},
+        '.CodeMirror': {
+            'padding-bottom':'8px !important',
+            'padding-right':'8px !important',
+        }, # Jupyter-Lab make space in input cell
+        '.cell-output-ipywidget-background': { # VSCode issue */
+            'background': 'var(--theme-background,inherit) !important',
+            'margin': '8px 0px',
+        },
+        '.jp-LinkedOutputView': {
+            '.SlidesWrapper': {
+                'display': 'none !important', # Double Display does not work properly
+            },
+            '.ExtraControls': {
+                'display': 'block !important', 
+                '^:after': {
+                    'content': '"Multiple views of slides do not behave properly, you can use this area for notes though!"',
+                    'display': 'block !important',
+                    'color': 'var(--secondary-fg)',
+                },
+            },
+            '.Inline-Notes': {
+                'background': 'var(--primary-bg)',
+                'color': 'var(--primary-fg)',
+                '> div': {
+                    'display': 'flex',
+                    'flex-direction':'column',
+                    'justify-content': 'space-between',
+                    'padding':'4px',
+                },
+            },   
+        },
     })
 
 def sidebar_layout_css(span_percent = 40):

@@ -32,9 +32,10 @@ class _HhtmlExporter:
                         if kwargs.get("slide_number",False) and item.label != '0' else '')
                 content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
                             if as_slides else f'<section>{_html}</section>')
-        theme_args = {k:v for k,v in self.main.settings._store_theme_args.items() if k != '_store'}
-        theme_args['breakpoint'] = '650px'     
-        theme_css = styles.style_css(**theme_args) # Theme CSS
+        
+        theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
+    
+        theme_css = styles.style_css(**theme_kws) # Theme CSS
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
         _code_css = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')
         

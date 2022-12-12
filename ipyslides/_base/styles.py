@@ -162,9 +162,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%', _store = None):
-    if isinstance(_store,dict):
-        _store.update(locals())
+def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%'):
     return _build_css((),{
         ':root': {
             '--heading-color':f'{colors["heading_color"]}',

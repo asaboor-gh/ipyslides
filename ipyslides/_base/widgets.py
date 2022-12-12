@@ -40,10 +40,10 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     export  = ipw.ToggleButtons(description='Export As: ',options=[('Slides',0),('Report',1),('None',2)], value = 2).add_class('Export-Btn').add_class('Menu-Item')
-    display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('voila-sidecar-hidden').add_class('Menu-Item')
-    fscrn   = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('sidecar-only').add_class('FullWindow-Btn')
-    zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('sidecar-only').add_class('Zoom-Btn')
-    timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('sidecar-only').add_class('Presenter-Btn')             
+    display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('Voila-Hidden').add_class('Menu-Item')
+    window  = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('FullWindow-Btn')
+    zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('Zoom-Btn')
+    timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('Presenter-Btn')             
         
 
 @dataclass(frozen=True)
@@ -260,13 +260,13 @@ class Widgets:
             self.htmls.glass,
             self.buttons.setting,
             VBox([
-                self.sliders.height.add_class('voila-sidecar-hidden'), 
-                self.sliders.width.add_class('voila-sidecar-hidden'),
+                self.sliders.height.add_class('Voila-Hidden'), 
+                self.sliders.width.add_class('Voila-Hidden'),
                 self.sliders.scale,
                 self.ddowns.theme,
                 self.toggles.export,
                 Box([GridBox([
-                    self.toggles.fscrn,
+                    self.toggles.window,
                      self.toggles.zoom,
                     self.toggles.timer,
                     self.checks.notes,

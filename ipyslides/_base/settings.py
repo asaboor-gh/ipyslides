@@ -25,9 +25,8 @@ class LayoutSettings:
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIX Two Text'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
         self._content_width = '90%' #Better
-        self._breakpoint = f'{int(100*650/self.widgets.sliders.width.value)}px' # Whatever was set initially
         self._code_lineno = True
-        self._store_theme_args = {}
+        
         self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em')
         self.height_slider = self.widgets.sliders.height
         self.width_slider  = self.widgets.sliders.width
@@ -35,7 +34,7 @@ class LayoutSettings:
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
         
-        self.btn_fs    = self.widgets.toggles.fscrn
+        self.btn_window    = self.widgets.toggles.window
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
         self.box = self.widgets.panelbox
@@ -46,13 +45,12 @@ class LayoutSettings:
         self.scale_slider.observe(self.__set_font_scale,names=['value'])
         self.height_slider.observe(self.__update_size,names=['value'])
         self.width_slider.observe(self.__update_size,names=['value'])
-        self.btn_fs.observe(self._fill_viewport,names=['value'])
+        self.btn_window.observe(self._fill_viewport,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
-        self.sidebar_switch.value = False # Initial Call must be inline, so that things should be shown outside Jupyterlab always
-        
+        self._set_sidebar_css(clear=True) # Clear sidebar css in start
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
@@ -68,6 +66,17 @@ class LayoutSettings:
         self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
         self.widgets.htmls.intro.add_class('Intro')
         
+    @property
+    def span_percent(self):
+        "Return span percent for slides. If viewport is filled, return 100."
+        if self.btn_window.value:
+            return 100
+        return self.width_slider.value
+    
+    @property
+    def breakpoint(self):
+        return f'{int(100*650/self.span_percent)}px'
+    
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for slides and frames. (2.0.8+)"
         if len(self._slides[:]) >= 1:
@@ -192,15 +201,18 @@ class LayoutSettings:
     def _emit_resize_event(self):
         self.widgets._exec_js(scripts.resize_js)
         
+    def _set_sidebar_css(self,clear = False):
+        if clear:
+            self.widgets.htmls.sidebar.value = ''
+        else:
+            self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=self.span_percent)).value
+        return self._emit_resize_event() # Must return this event so it work in other functions.
+        
     def __update_size(self,change):
         self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
-        self.widgets.mainbox.layout.width = '{}vw'.format(self.width_slider.value)  
-        self._toggle_sidebar(change=None) #modify width of sidebar or display it inline
-        self._emit_resize_event() # Although its in _toggle_sidebar, but for being safe, do this
-        
-        if not self.btn_fs.value: #If not fullscreen, then update breakpoint, so that it can be used in CSS
-            self._breakpoint = f'{int(100*650/self.width_slider.value)}px'
-        
+        self.widgets.mainbox.layout.width = '{}vw'.format(self.span_percent) # Do not use self.width_slider.value here, need in full width too 
+        self._emit_resize_event() 
+        self._set_sidebar_css()
         self._update_theme(change=None) # For updating size and breakpoints
             
                      
@@ -208,38 +220,46 @@ class LayoutSettings:
         # Below line should not be in _update_theme to avoid loop call.
         self.font_scale = self.widgets.sliders.scale.value
         self._update_theme(change=None)
-        
-    def _update_theme(self,change=None): 
-        text_size = '{}px'.format(int(self.font_scale*20))
-        
+    
+    @property
+    def text_size(self):
+        "Text size in px."
+        return f'{int(self.font_scale*20)}px'
+    
+    @property
+    def colors(self):
+        "Current theme colors."
         if self.theme_dd.value == 'Custom':
-            colors = self._custom_colors or styles.theme_colors['Inherit']
-            self._slides.notify('You can set custom colors using `Slides.settings.set_theme_colors` method for custom theme!')
-        else:
-            colors = styles.theme_colors[self.theme_dd.value]
-            
-        if 'Dark' in self.theme_dd.value:
+            return self._custom_colors or styles.theme_colors['Inherit']
+        return styles.theme_colors[self.theme_dd.value]
+    
+    @property
+    def light(self):
+        "Lightness of theme. 20-255. NaN if theme is inherit or custom."
+        if self.theme_dd.value in ['Inherit', 'Custom']:
+            return math.nan # Use Fallback colors, can't have idea which themes colors would be there
+        elif 'Dark' in self.theme_dd.value:
             self.set_code_style('monokai',color='#f8f8f2',lineno=self._code_lineno)
-            light = 120
+            return 120
         elif self.theme_dd.value == 'Fancy':
             self.set_code_style('borland',lineno=self._code_lineno) 
-            light = 230
+            return 230
         else:
             self.set_code_style('default',lineno=self._code_lineno)
-            light = 250
-            
-        if self.theme_dd.value in ['Inherit', 'Custom']:
-            light = math.nan # Use Fallback colors, can't have idea which themes colors would be there
-               
+            return 250
+        
+    @property
+    def theme_kws(self):
+        return dict(colors = self.colors, light = self.light, text_size = self.text_size,
+                    text_font = self._font_family['text'], code_font = self._font_family['code'],
+                    breakpoint = self.breakpoint, content_width = self._content_width)
+         
+     
+    def _update_theme(self,change=None):       
         # Replace font-size and breakpoint size
-        theme_css = styles.style_css(colors, light = light, text_size = text_size, 
-                                     text_font = self._font_family['text'],
-                                     code_font = self._font_family['code'],
-                                     breakpoint = self._breakpoint,
-                                     content_width = self._content_width,
-                                     _store = self._store_theme_args)
+        theme_css = styles.style_css(**self.theme_kws)
         # Update Layout CSS
-        layout_css = _layout_css.layout_css(breakpoint = self._breakpoint)
+        layout_css = _layout_css.layout_css(breakpoint = self.breakpoint)
         self.widgets.htmls.main.value = html('style',layout_css).value
         
         # Update CSS
@@ -247,7 +267,6 @@ class LayoutSettings:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
             
         self.widgets.htmls.theme.value = html('style',theme_css).value
-        self._toggle_sidebar(change=None) #modify width of sidebar or display it inline, must call
         self._emit_resize_event()
         
     def _toggle_tocbox(self,btn):
@@ -261,44 +280,36 @@ class LayoutSettings:
     def _toggle_sidebar(self,change): 
         """Pushes this instance of Slides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
-        if self.btn_fs.value or self.sidebar_switch.value == False:
-            self.widgets.mainbox.remove_class('SideMode')
-            self.widgets.htmls.sidebar.value = '' # Should be empty to avoid competition of style
-            self.height_slider.layout.display = 'inline-flex' #Very important
-            self.sidebar_switch.description = '◨'
-        else:
+        if self.sidebar_switch.value:
             self.widgets.mainbox.add_class('SideMode')
-            self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=self.width_slider.value)).value
-            self.height_slider.layout.display = 'none'
+            self._set_sidebar_css()
             self.sidebar_switch.description = '▣'
-            
-        return self._emit_resize_event() # Must return this event so it work in other functions.
+        else:
+            self.widgets.mainbox.remove_class('SideMode')
+            self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
+            self.sidebar_switch.description = '◨'
     
     def _fill_viewport(self,change):  
-        span_percent = 100
-        if self.btn_fs.value:
-            self._breakpoint = '650px'
-            self.btn_fs.icon = 'compress'
+        if self.btn_window.value:
+            self.btn_window.icon = 'compress'
             self.widgets.mainbox.add_class('FullWindow') # to Full Window
         else:
-            self._breakpoint = f'{int(100*650/self.width_slider.value)}px'
-            self.btn_fs.icon = 'expand'
+            self.btn_window.icon = 'expand'
             self.widgets.mainbox.remove_class('FullWindow') # back to inline
             if self.btn_zoom.value:
                 self.btn_zoom.value = False # Unzoom to avoid jerks in display
-            span_percent = self.width_slider.value
                 
         self._emit_resize_event() # Resize before waiting fo update-theme
         self._update_theme(change=None) # For updating size and breakpoints
-        self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=span_percent)).value
+        self._set_sidebar_css()
         self._emit_resize_event() # Just to be sure again
         
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
-            if self.btn_fs.value:
+            if self.btn_window.value:
                 self.btn_zoom.icon= 'toggle-on'
-                self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self._breakpoint)}\n</style>'
+                self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self.breakpoint)}\n</style>'
             else:
                 self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
         else:
