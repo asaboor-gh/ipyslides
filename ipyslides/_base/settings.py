@@ -34,7 +34,7 @@ class LayoutSettings:
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
         
-        self.btn_window    = self.widgets.toggles.window
+        self.btn_window= self.widgets.toggles.window
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
         self.box = self.widgets.panelbox
@@ -50,10 +50,10 @@ class LayoutSettings:
         self.reflow_check.observe(self._update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
-        self._set_sidebar_css(clear=True) # Clear sidebar css in start
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
+        self._toggle_sidebar(change = None) # Trigger this as well
         
         
     def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
@@ -280,7 +280,7 @@ class LayoutSettings:
     def _toggle_sidebar(self,change): 
         """Pushes this instance of Slides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
-        if self.sidebar_switch.value:
+        if (not self.btn_window.value) and self.sidebar_switch.value:
             self.widgets.mainbox.add_class('SideMode')
             self._set_sidebar_css()
             self.sidebar_switch.description = '▣'
@@ -293,15 +293,16 @@ class LayoutSettings:
         if self.btn_window.value:
             self.btn_window.icon = 'compress'
             self.widgets.mainbox.add_class('FullWindow') # to Full Window
+            self._set_sidebar_css() # Set sidebar CSS that will take it to full view
         else:
             self.btn_window.icon = 'expand'
             self.widgets.mainbox.remove_class('FullWindow') # back to inline
+            self._set_sidebar_css(clear = (False if self.sidebar_switch.value else True)) # Move  back from where it was left of
             if self.btn_zoom.value:
                 self.btn_zoom.value = False # Unzoom to avoid jerks in display
                 
         self._emit_resize_event() # Resize before waiting fo update-theme
         self._update_theme(change=None) # For updating size and breakpoints
-        self._set_sidebar_css()
         self._emit_resize_event() # Just to be sure again
         
     

@@ -1,65 +1,5 @@
 # This should not be used by user, but is used by ipyslides to generate layout of slides
 
-def layout_css(breakpoint):
-    return '''
-.Inline-Notes {
-    border: 1px solid var(--accent-color);
-    border-radius:4px;
-    background: var(--primary-bg);
-    color: var(--primary-fg);
-    width: 85% !important; /* For see all */
-}
-    
-.Inline-Notes > div {
-    display: flex;
-    flex-direction:column;
-    justify-content: space-between;
-    padding:4px;
-}
-
-.Intro summary {
-    background: var(--secondary-bg);
-    padding-left:0.2em;
-    color: var(--accent-color);
-    font-weight: bold;
-}
-.Intro summary::marker {
-    content: '';
-}
-.Intro summary::after {
-    content: 'show/hide';
-    color: var(--secondary-fg);
-    font-weight:normal;
-    font-size: 80%;
-    float:right;
-    padding: 0.2em;
-}
-
-.jp-OutputArea-child, 
-.jp-OutputArea-child .jp-OutputArea-output { 
-    background: transparent !important;
-    background-color: transparent !important; 
-    margin: 0 !important;
-} /* For some themes */
-
-.jp-RenderedHTMLCommon { 
-    padding:0px;
-    padding-right: 0px !important;
-    font-size: var(--text-size);
-} /* important for central layout */
-.jp-RenderedHTMLCommon :not(pre) > code { 
-    background-color: var(--secondary-bg); 
-    color:var(--secondary-fg);
-}
-.jp-RenderedText, 
-.jp-RenderedText pre {
-    color:var(--primary-fg) !important;
-}
-.jp-RenderedHTMLCommon p {
-    margin-bottom: 0.2em !important;
-} 
-'''
-
 from ..utils import _build_css
 def layout_css(breakpoint):
     return _build_css((),{
@@ -72,6 +12,10 @@ def layout_css(breakpoint):
             '^.SideMode': {
                 '.Height-Slider': {'display': 'none !important'},
             },
+            '^:not(.FullWindow):not(.SideMode)': {
+                'border': '2px inset var(--secondary-bg)',
+            },
+            '^:not(.FullWindow) .DisplaySwitch': {'display': 'block !important'},
             '.Voila-Hidden': {'display': 'none !important'}, # Hide somethings in Voila
             '.SlideArea': {
                 'align-items': 'center',
@@ -177,6 +121,23 @@ def layout_css(breakpoint):
                 },
             },
             '.jupyter-widgets:not(button)': { 'color': 'var(--primary-fg) !important'}, # All widgets text color
+            '.Intro': {
+                'summary': {
+                    'background': 'var(--secondary-bg)',
+                    'padding-left':'0.2em',
+                    'color': 'var(--accent-color)',
+                    'font-weight': 'bold',
+                    '^::marker': {'content': '""',},
+                    '^::after': {
+                        'content': '"show/hide"',
+                        'color': 'var(--secondary-fg)',
+                        'font-weight':'normal',
+                        'font-size': '80%',
+                        'float':'right',
+                        'padding': '0.2em',  
+                    },
+                },
+            },
         },
         'div.LaserPointer': { # For laser pointer 
             'position':'absolute !important',
@@ -313,9 +274,8 @@ def layout_css(breakpoint):
             'line-height': '0.9em  !important',
         },
         # Order of these is important
-        '.DisplaySwitch': {'display': 'none'}, #Hide by default
         ':is(.jp-LabShell, body[data-retro], body[data-notebook]) .DisplaySwitch': {
-            'display': 'block', # Do not add important here
+            'display': 'block !important', # Do not add important here
             'position': 'absolute !important',
             'padding': '4px !important',
             'width': 'max-content !important',
@@ -326,9 +286,44 @@ def layout_css(breakpoint):
             'box-shadow': 'none !important',
             'color': 'var(--accent-color) !important',
         },
-        
+        '.Inline-Notes': {
+            'background': 'var(--primary-bg)',
+            'color': 'var(--primary-fg)',
+            'border': '1px solid var(--accent-color)',
+            'border-radius':'4px',
+            'width': '85% !important', # To see all of the text
+            'box-sizing': 'border-box',
+            '> div': {
+                'display': 'flex',
+                'flex-direction':'column',
+                'justify-content': 'space-between',
+                'padding':'4px',
+            },
+        },
+        '.jp-OutputArea-child': {
+            '^, .jp-OutputArea-output': { # For some themes
+                'background': 'transparent !important',
+                'background-color': 'transparent !important', 
+                'margin': '0 !important', 
+            },  
+        },
+        '.jp-RenderedHTMLCommon': {
+            'padding': 0,
+            'padding-right': '0 !important', # important for central layout
+            'font-size': 'var(--text-size',
+            '^:not(pre) > code': {
+                'background-color': 'var(--secondary-bg)', 
+                'color':'var(--secondary-fg)',
+            },
+            'p': {'margin-bottom': '0.2em !important',},
+        },
+        '.jp-RenderedText': {
+            '^, pre': {
+                'color':'var(--primary-fg) !important',
+            }, 
+        },
         '#rendered_cells': {
-            '.DisplaySwitch, .Voila-Hidden. .Height-Slider, .Width-Slider': {'display': 'none'}, #Hide in Voila
+            '.DisplaySwitch, .Voila-Hidden. .Height-Slider, .Width-Slider': {'display': 'none !important'}, #Hide in Voila
             '.FullWindow-Btn': {'opacity':'0.1 !important',},
             'div.jp-OutputArea.jp-Cell-outputArea, div.jp-RenderedMarkdown.jp-MarkdownOutput': {
                'height': '0 !important',  #Suppress other outputs and markdown output in Voila
@@ -381,20 +376,11 @@ def layout_css(breakpoint):
             },
             '.ExtraControls': {
                 'display': 'block !important', 
-                '^:after': {
+                'box-sizing': 'border-box',
+                '^:before': {
                     'content': '"Multiple views of slides do not behave properly, you can use this area for notes though!"',
                     'display': 'block !important',
                     'color': 'var(--secondary-fg)',
-                },
-            },
-            '.Inline-Notes': {
-                'background': 'var(--primary-bg)',
-                'color': 'var(--primary-fg)',
-                '> div': {
-                    'display': 'flex',
-                    'flex-direction':'column',
-                    'justify-content': 'space-between',
-                    'padding':'4px',
                 },
             },   
         },
