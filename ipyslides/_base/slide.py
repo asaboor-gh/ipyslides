@@ -16,7 +16,7 @@ class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
 
 class Slide:
     "New in 1.7.0"
-    _animations = {'main':'','frame':''}
+    _animations = {'main':'flow','frame':'slide_v'}
     _overall_css = html('style','')
     def __init__(self, app, number, captured_output = _EmptyCaptured):
         self._widget = Output(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))

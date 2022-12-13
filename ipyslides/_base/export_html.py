@@ -12,7 +12,7 @@ class _HhtmlExporter:
     # Should be used inside Slides class only.
     def __init__(self, _instance_BaseSlides):
         self.main = _instance_BaseSlides
-        self.main.widgets.toggles.export.observe(self._export, names = ['value']) # Export button
+        self.main.widgets.ddowns.export.observe(self._export, names = ['value']) # Export button
         
     def _htmlize(self, allow_non_html_repr = False, as_slides = False, **kwargs):
         "page_size, slide_number are in kwargs"
@@ -94,14 +94,14 @@ class _HhtmlExporter:
         def further_action(path):
             self.main.notify(f'File saved: {path!r}')
             os.startfile(path)
-            self.main.widgets.toggles.export.value = 2 # Reset so next click on same button will work
+            self.main.widgets.ddowns.export.value = 'Select' # Reset so next click on same button will work
         
-        if self.main.widgets.toggles.export.value == 1: # Report
+        if self.main.widgets.ddowns.export.value == 'Report': 
             path = os.path.join(_dir, 'report.html')
             self.report(path, allow_non_html_repr = False, overwrite = True)
             further_action(path)
             
-        elif self.main.widgets.toggles.export.value == 0: # Slides
+        elif self.main.widgets.ddowns.export.value == 'Slides': 
             path = os.path.join(_dir, 'slides.html')
             self.slides(path, overwrite = True)  
             further_action(path) 

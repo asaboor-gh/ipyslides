@@ -98,7 +98,7 @@ theme_colors = {
         'heading_color':'var(--jp-inverse-layout-color1,navy)',
         'primary_fg':'var(--jp-inverse-layout-color0,black)',
         'primary_bg':'var(--jp-layout-color0,white)',
-        'secondary_bg':'var(--jplayout-color2,whitesmoke)',
+        'secondary_bg':'var(--jp-layout-color2,whitesmoke)',
         'secondary_fg':'var(--jp-inverse-layout-color4,#454545)',
         'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
         'hover_bg':'var(--jp-border-color1,#D1D9E1)',
@@ -188,8 +188,8 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
         '.SlidesWrapper':{
             'margin':'auto',
             'padding':'0px',
-            'background':'var(--primary-bg)',
             'font-size':'var(--text-size)',
+            'background':'var(--primary-bg)',
             'max-width':'100vw', # This is very important
             '^, *':{ 
                 'color':'var(--primary-fg)',
@@ -270,11 +270,11 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             'width':f'{content_width} !important',
             '.toc-item': { # Table of contents on slides 
                 'border-right':'4px solid var(--secondary-bg)',
-                '.this': {
+                '^.this': {
                     'border-right':'4px solid var(--primary-fg)',
                     'font-weight':'bold !important',
                 }, 
-                '.next': {'opacity':'0.5',},
+                '^.next': {'opacity':'0.5',},
             },
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 

@@ -19,8 +19,7 @@ class LayoutSettings:
     def __init__(self, _instanceSlides, _instanceWidgets):
         "Provide instance of LivSlides to work."
         self._slides = _instanceSlides
-        self.widgets = _instanceWidgets
-        self.font_scale = 1
+        self._widgets = _instanceWidgets
         self._custom_colors = {}
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIX Two Text'}
         self._footer_text = 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>'
@@ -42,9 +41,9 @@ class LayoutSettings:
         
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
         self.theme_dd.observe(self._update_theme,names=['value'])
-        self.scale_slider.observe(self.__set_font_scale,names=['value'])
-        self.height_slider.observe(self.__update_size,names=['value'])
-        self.width_slider.observe(self.__update_size,names=['value'])
+        self.scale_slider.observe(self._update_theme,names=['value'])
+        self.height_slider.observe(self._update_size,names=['value'])
+        self.width_slider.observe(self._update_size,names=['value'])
         self.btn_window.observe(self._fill_viewport,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
@@ -53,8 +52,9 @@ class LayoutSettings:
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
-        self._toggle_sidebar(change = None) # Trigger this as well
-        
+        self._update_size(change = None) # Trigger this as well
+        self._toggle_sidebar(change = None) # Should be at end
+        self.sidebar_switch.value = False # Should be at end
         
     def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
         self.__add_js()
@@ -65,6 +65,10 @@ class LayoutSettings:
         # Only do this if it's in Jupyter, otherwise throws errors
         self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
         self.widgets.htmls.intro.add_class('Intro')
+    
+    @property
+    def widgets(self):
+        return self._widgets # To avoid breaking code by user
         
     @property
     def span_percent(self):
@@ -208,23 +212,17 @@ class LayoutSettings:
             self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=self.span_percent)).value
         return self._emit_resize_event() # Must return this event so it work in other functions.
         
-    def __update_size(self,change):
+    def _update_size(self,change):
         self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
         self.widgets.mainbox.layout.width = '{}vw'.format(self.span_percent) # Do not use self.width_slider.value here, need in full width too 
         self._emit_resize_event() 
-        self._set_sidebar_css()
+        self._toggle_sidebar(change=None) # To update sidebar width, auto handles fullscreen
         self._update_theme(change=None) # For updating size and breakpoints
             
-                     
-    def __set_font_scale(self,change):
-        # Below line should not be in _update_theme to avoid loop call.
-        self.font_scale = self.widgets.sliders.scale.value
-        self._update_theme(change=None)
-    
     @property
     def text_size(self):
         "Text size in px."
-        return f'{int(self.font_scale*20)}px'
+        return f'{int(self.scale_slider.value*20)}px'
     
     @property
     def colors(self):
@@ -251,18 +249,18 @@ class LayoutSettings:
     @property
     def theme_kws(self):
         return dict(colors = self.colors, light = self.light, text_size = self.text_size,
-                    text_font = self._font_family['text'], code_font = self._font_family['code'],
-                    breakpoint = self.breakpoint, content_width = self._content_width)
+            text_font = self._font_family['text'], code_font = self._font_family['code'],
+            breakpoint = self.breakpoint, content_width = self._content_width)
          
      
-    def _update_theme(self,change=None):       
-        # Replace font-size and breakpoint size
-        theme_css = styles.style_css(**self.theme_kws)
-        # Update Layout CSS
+    def _update_theme(self,change=None): 
+        # Update Layout CSS  
         layout_css = _layout_css.layout_css(breakpoint = self.breakpoint)
         self.widgets.htmls.main.value = html('style',layout_css).value
         
-        # Update CSS
+        # Update Theme CSS
+        theme_css = styles.style_css(**self.theme_kws)
+        
         if self.reflow_check.value:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
             
@@ -280,14 +278,15 @@ class LayoutSettings:
     def _toggle_sidebar(self,change): 
         """Pushes this instance of Slides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
-        if (not self.btn_window.value) and self.sidebar_switch.value:
-            self.widgets.mainbox.add_class('SideMode')
-            self._set_sidebar_css()
-            self.sidebar_switch.description = '▣'
-        else:
-            self.widgets.mainbox.remove_class('SideMode')
-            self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
-            self.sidebar_switch.description = '◨'
+        if not self.btn_window.value:
+            if self.sidebar_switch.value:
+                self.widgets.mainbox.add_class('SideMode')
+                self._set_sidebar_css()
+                self.sidebar_switch.description = '▣'
+            else:
+                self.widgets.mainbox.remove_class('SideMode')
+                self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
+                self.sidebar_switch.description = '◨'
     
     def _fill_viewport(self,change):  
         if self.btn_window.value:

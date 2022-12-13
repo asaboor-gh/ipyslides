@@ -28,25 +28,6 @@ def layout_css(breakpoint):
                 },
             },
             '.export-only': { 'display': 'none !important' },
-            '.Export-Btn': {
-                'min-height': '38px',
-                'display': 'flex !important',
-                'flex-direction': 'row',
-                '.mod-active': { 'box-shadow': 'none !important' },
-                '> div': {
-                    'border': '1px inset var(--hover-bg)',
-                    'display': 'flex !important',
-                    'padding': '4px',
-                    'border-radius': '4px',
-                    'overflow': 'auto',
-                    '> button:last-of-type': { 'display': 'none !important' },
-                },
-                '> label': {
-                    'min-width': '90px',
-                    'text-align':'right',
-                    'padding-right': '8px !important',
-                },
-            },
             '.widget-inline-hbox': {
                 '.widget-label': { 'color': 'var(--primary-fg)' },
                 '.widget-readout': { 
@@ -168,7 +149,7 @@ def layout_css(breakpoint):
                 '.progress-bar': { 'background': 'var(--accent-color) !important' },
             },
             '.NavBox': {
-                'align-items': 'bottom',
+                'align-items': 'center',
                 'height':'max-content',
                 'justify-content': 'flex-start',
             },
@@ -319,7 +300,7 @@ def layout_css(breakpoint):
         '.jp-RenderedHTMLCommon': {
             'padding': 0,
             'padding-right': '0 !important', # important for central layout
-            'font-size': 'var(--text-size',
+            'font-size': 'var(--text-size)',
             '^:not(pre) > code': {
                 'background-color': 'var(--secondary-bg)', 
                 'color':'var(--secondary-fg)',
@@ -359,10 +340,13 @@ def layout_css(breakpoint):
             'left': '0 !important',
             'right': '0 !important',
             'bottom': '0 !important',
-            'overflow': 'hidden !important',
+            'background': 'var(--alternate-bg)',
+            'color': 'var(--primary-fg)',
             '#rendered_cells': {
+                'height': '100% !important',
                 'overflow': 'auto !important',
-            }
+                '.raw-text': { 'color': 'var(--primary-fg)',},
+            },
         },
         # Other issues
         '#jp-top-panel, #jp-bottom-panel, #jp-menu-panel': {'color': 'inherit'},
@@ -404,7 +388,6 @@ body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
     min-width: 0 !important;
     padding-right: {span_percent}vw !important;
 }}
-#rendered_cells {{ margin-right: {span_percent}vw !important; }} /* For Voila */
 .jp-LabShell .SlidesWrapper,
 body[data-base-url] .SlidesWrapper, /* For Voila */
 body[data-retro] .SlidesWrapper,

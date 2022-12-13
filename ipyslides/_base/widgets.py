@@ -39,7 +39,6 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    export  = ipw.ToggleButtons(description='Export As: ',options=[('Slides',0),('Report',1),('None',2)], value = 2).add_class('Export-Btn').add_class('Menu-Item')
     display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('Menu-Item')
     window  = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('FullWindow-Btn')
     zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('Zoom-Btn')
@@ -101,9 +100,9 @@ class _Dropdowns:
     """
     Instantiate under `Widgets` class only.
     """
-    theme = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
-    clear = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
-        
+    theme  = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
+    clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
+    export = ipw.Dropdown(**describe('Export As'),options=['Slides','Report','Select'], value = 'Select')
     
 @dataclass(frozen=True)
 class _Outputs:
@@ -244,7 +243,7 @@ class Widgets:
         self.footerbox = HBox([
             self.buttons.setting,
             self.buttons.toc,
-            HBox([self.htmls.footer],layout= Layout(overflow_x = 'auto',overflow_y='hidden')),
+            self.htmls.footer,
             self.buttons.capture,
         ],layout=Layout(height='36px')).add_class('NavBox')
         
@@ -264,7 +263,7 @@ class Widgets:
                 self.sliders.width,
                 self.sliders.scale,
                 self.ddowns.theme,
-                self.toggles.export,
+                self.ddowns.export,
                 Box([GridBox([
                     self.toggles.window,
                      self.toggles.zoom,
