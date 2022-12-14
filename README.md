@@ -13,7 +13,7 @@ See old [changelog](changelog.md)
 
 # Install
 ```shell
-> pip install ipyslides >= 2.2.2
+> pip install ipyslides
 ```
 For development install, clone this repository and then
 ```shell

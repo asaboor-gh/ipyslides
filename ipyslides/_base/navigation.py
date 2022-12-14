@@ -54,13 +54,13 @@ class Navigation:
             self.btn_next.icon = 'chevron-right'
     
     def _toggle_panel(self,change):
-        if self.btn_settings.description == '⁝':
-            self.btn_settings.description  = '×'
+        if self.btn_settings.icon == 'ellipsis-v':
+            self.btn_settings.icon  = 'times'
             self.widgets.panelbox.layout.display = 'flex'
             self.btn_next.disabled = True
             self.btn_prev.disabled = True
         else:
-            self.btn_settings.description = '⁝'
+            self.btn_settings.icon = 'ellipsis-v'
             self.widgets.panelbox.layout.display = 'none'
             self.btn_next.disabled = False
             self.btn_prev.disabled = False

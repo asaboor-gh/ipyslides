@@ -7,10 +7,13 @@ def layout_css(breakpoint):
         '.SlidesWrapper': {
             'z-index': '10 !important',
             '^.CaptureMode': {
-                '.SlideArea .goto-button, .Menu-Top': {'display':'none !important'}, # Hide in screenshot
+                '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
             },
             '^.FullWindow': {
-                '.Height-Slider, .Width-Slider, .DisplaySwitch': {'display': 'none !important'},
+                '.Height-Slider, .Width-Slider, .SideBar-Btn': {'display': 'none !important'},
+            },
+            '^.FullScreen': {
+                '.SideBar-Btn, .FullWindow-Btn': {'display': 'none !important'},
             },
             '^.SideMode': {
                 '.Height-Slider': {'display': 'none !important'},
@@ -69,8 +72,9 @@ def layout_css(breakpoint):
                 '.Settings-Btn': {
                     'border':'none !important',
                     'outline':'none !important',
-                    'font-size': '24px',
+                    'font-size': '20px',
                     'background': 'transparent !important',
+                    '> i': { 'color': 'var(--accent-color) !important',},
                 },
                 '.SidePanel-Text .widget-html-content': {'line-height': 'inherit !important',},
             },
@@ -85,6 +89,7 @@ def layout_css(breakpoint):
                 'color': 'var(--accent-color)!important',
                 'border-radius':'0px',
                 'background': 'transparent !important',
+                '> i': {'color': 'var(--accent-color) !important',},
             },
             '.jupyter-button:hover:enabled, .jupyter-button:focus:enabled': {
                 'outline':'none !important',
@@ -237,7 +242,7 @@ def layout_css(breakpoint):
                 'padding': 0,
                 'margin':0,
             },
-            '.Menu-Item': {'font-size': '24px !important',},
+            '.Menu-Item': {'font-size': '18px !important',},
             '.goto-html': {
                 'width':'100%',
                 'height':'max-content',
@@ -263,23 +268,39 @@ def layout_css(breakpoint):
             'font-size': '0.9em',
             'line-height': '0.9em  !important',
         },
-        '.Menu-Top': {
-            'display': 'flex !important', # Do not add important here
+        '.TopBar': {
+            'padding-top:4px !important;'
+            'display':'flex',
+            'overflow': 'scroll',
+            'min-height': '36px !important',
+            'align-items': 'center !important',
+            'padding-top': '4px !important',
+            'box-sizing': 'border-box !important',
+            'button': {
+                'font-size': '18px !important',
+                'padding-top':'2px !important',
+                'min-width': 'max-content !important',
+                'outline': 'none !important',
+                'border': 'none !important',
+                'box-shadow': 'none !important',
+                'background': 'transparent !important',
+                'backdrop-filter': 'blur(20px)',
+                '> i': { 'color': 'var(--accent-color) !important',},
+                '^:disabled,^[disabled]': {'display': 'none !important',},
+            },
+        },
+        '.TopBar.Outside': {
             'position': 'absolute !important',
             'z-index': '98 !important', # below matplotlib fullsreen
             'top': '4px !important',
             'margin': '8px !important',
             'width': '60px !important',
-            'box-sizing': 'border-box !important',
-            'overflow': 'scroll !important',
-            'align-items': 'center !important',
             'transition': 'width 400ms',
             '^:hover, ^:focus': {
                 'min-height': '36px !important',
-                'background': 'var(--primary-bg)',
                 'width': '60% !important',
                 f'@media screen and (max-width: {breakpoint})': {'width': 'calc(100% - 16px) !important'}, # There is 8px margin
-                    '> .Settings-Btn' : {
+                '> .Settings-Btn' : {
                     'width': 'auto !important',
                     'margin-right': 'unset !important', # Unset after hover, foucs
                 },
@@ -288,32 +309,8 @@ def layout_css(breakpoint):
                 'width': '30px !important',
                 'margin-right': '30px !important', # need for hover, foucs
             },
-            '> button': {
-                'color': 'var(--accent-color) !important',
-                'font-size': '22px !important',
-                'min-width': 'max-content !important',
-                'outline': 'none !important',
-                'border': 'none !important',
-                'box-shadow': 'none !important',
-                'background': 'transparent !important',
-            },
             '> *:not(.Settings-Btn)' : {'display': 'none !important'},
-            '^:hover > *, ^:focus > *': { 'display': 'unset !important'},
-        },
-        '.Panel-Top': {
-            'display':'flex',
-            'overflow-x': 'scroll',
-            'min-height': '36px !important',
-            'background': 'var(--primary-bg)',
-            'border-bottom': '1px inset var(--hover-bg)',
-            'align-items': 'center !important',
-            'padding-top': '4px !important',
-        },
-        '.Panel-Top button': {
-            'border': 'none !important',
-            'min-width': 'max-content !important',
-            'font-size': '22px',
-            'box-shadow': 'none !important',
+            '^:hover > *:not(:disabled), ^:focus > *:not(:disabled)': { 'display': 'unset !important'},
         },
         '.Inline-Notes': {
             'background': 'var(--primary-bg)',
@@ -380,7 +377,26 @@ def layout_css(breakpoint):
             'right': '0 !important',
             'bottom': '0 !important',
             'background': 'var(--alternate-bg)',
-            'color': 'var(--primary-fg)',
+            '^, *':{ 
+                'color':'var(--primary-fg)',
+                'scrollbar-width':'thin', # FireFox <3
+                'scrollbar-color':'var(--alternate-bg) transparent',
+            },
+            '::-webkit-scrollbar': {
+                'height':'4px',
+                'width':'4px',
+                'background':'transparent !important', 
+                '^:hover': {'background':'var(--secondary-bg) !important',},
+            },
+            '::-webkit-scrollbar-thumb': {
+                'background':'transparent !important',
+                '^:hover': {'background':'var(--hover-bg) !important',},
+            },
+            '::-webkit-scrollbar-corner': {'display':'none',},
+            '.widget-text input': {
+                'background':'var(--primary-bg)',
+                'color':'var(--primary-fg)',
+            },
             '#rendered_cells': {
                 'height': '100% !important',
                 'overflow': 'auto !important',

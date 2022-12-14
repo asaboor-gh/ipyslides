@@ -403,20 +403,8 @@ class Slides(BaseSlides):
         that can be used to style it under each slide separately."""
         return display(self._goto_button(slide_number, text,text_before = text_before, **kwargs))
         
-    def show(self, fix_buttons = False): 
-        "Display Slides. If icons do not show, try with `fix_buttons=True`."
-        
-        if fix_buttons:
-            self.widgets.buttons.next.description = '▶'
-            self.widgets.buttons.prev.description = '◀'
-            self.widgets.buttons.prev.icon = ''
-            self.widgets.buttons.next.icon = ''
-        else: # Important as showing again with False will not update buttons. 
-            self.widgets.buttons.next.description = ''
-            self.widgets.buttons.prev.description = ''
-            self.widgets.buttons.prev.icon = 'chevron-left'
-            self.widgets.buttons.next.icon = 'chevron-right'
-        
+    def show(self): 
+        "Display Slides."
         return self._ipython_display_()
     
     def _ipython_display_(self):

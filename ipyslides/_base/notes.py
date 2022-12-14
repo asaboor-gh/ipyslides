@@ -91,8 +91,8 @@ class Notes:
     
     def __timeit(self,change):
         if change['new'] == True:
-            self.btn_timer.description = '■'
+            self.btn_timer.icon = 'pause'
             self.start_time = time.time() # Start time here
         else:
-            self.btn_timer.description = '▶'
+            self.btn_timer.icon = 'play'
             self.start_time = None

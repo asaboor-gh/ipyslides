@@ -21,14 +21,14 @@ class _Buttons:
     """
     Instantiate under `Widgets` class only.
     """
-    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('Arrows')
-    next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('Arrows')
-    setting =  Button(description= '⁝',layout= Layout(width='auto',height='auto', tooltip='Toggle Settings')).add_class('Menu-Item').add_class('Settings-Btn')
-    toc     =  Button(description= '≡',layout= Layout(width='auto',height='auto', tooltip='Toggle Table of Contents')).add_class('Menu-Item').add_class('Toc-Btn')
+    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows')
+    next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows')
+    setting =  Button(icon= 'ellipsis-v',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
+    toc     =  Button(icon= 'bars',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
     end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
-                tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved!',
+                tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved! [S]',
                 ).add_class('screenshot-btn') # .add_class('Menu-Item')
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
@@ -39,11 +39,11 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('Menu-Item')
-    window  = ipw.ToggleButton(description='□',value = False, tooltip='Fit/Restore Viewport').add_class('FullWindow-Btn').add_class('Menu-Item')
-    fscreen = ipw.ToggleButton(description='\u26F6',value = False, tooltip='Toggle Fullscreen').add_class('FullScreen-Btn').add_class('Menu-Item')
-    zoom    = ipw.ToggleButton(description='◱',value = False, tooltip='Toggle Zooming Items').add_class('Zoom-Btn')
-    timer   = ipw.ToggleButton(description='▶',value = False, tooltip='Start/Stop Timer').add_class('Presenter-Btn')             
+    sidebar = ipw.ToggleButton(icon='columns', value = False, tooltip='Toggle ON/OFF Sidebar Mode [H]').add_class('SideBar-Btn').add_class('Menu-Item')
+    window  = ipw.ToggleButton(icon='window-maximize',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
+    fscreen = ipw.ToggleButton(icon='expand',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
+    zoom    = ipw.ToggleButton(icon='search-plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
+    timer   = ipw.ToggleButton(icon='play',value = False, tooltip='Start/Stop Timer [T]').add_class('Presenter-Btn')             
         
 
 @dataclass(frozen=True)
@@ -147,7 +147,7 @@ def _custom_progressbar(intslider):
                 'z-index': '50',
                 'overflow': 'hidden',
                 '.Menu-Item': {
-                    'font-size': '24px !important',
+                    'font-size': '18px !important',
                     'overflow': 'hidden',
                     'opacity': '0.4',
                     'z-index': '55',
@@ -245,7 +245,7 @@ class Widgets:
             self.buttons.toc,
             HBox([self.htmls.footer]), # should be in Box to avoid overflow
             self.buttons.capture,
-        ],layout=Layout(height='36px')).add_class('NavBox')
+        ],layout=Layout(height='28px')).add_class('NavBox')
         
         self.navbox = VBox([
             self.footerbox,
@@ -255,10 +255,10 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
-        _many_btns = [self.buttons.setting, self.toggles.display, self.toggles.window, self.toggles.fscreen, self.toggles.zoom, self.toggles.timer]
+        _many_btns = [self.buttons.setting, self.toggles.sidebar, self.toggles.window, self.toggles.fscreen, self.toggles.zoom, self.toggles.timer]
         self.panelbox = VBox([
             self.htmls.glass,
-            HBox(_many_btns).add_class('Panel-Top'),
+            HBox(_many_btns).add_class('TopBar').add_class('Inside'),
             VBox([
                 self.sliders.height, 
                 self.sliders.width,
@@ -299,7 +299,7 @@ class Widgets:
             self.htmls.main,
             self.htmls.theme,
             self.htmls.logo,
-            HBox(_many_btns).add_class('Menu-Top'),
+            HBox(_many_btns).add_class('TopBar').add_class('Outside'),
             self.htmls.sidebar,
             self.panelbox,
             self.htmls.cursor,

@@ -49,7 +49,7 @@ class LayoutSettings:
         self.btn_fscreen.observe(self._toggle_fullscreen,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
-        self.sidebar_switch = self.widgets.toggles.display
+        self.sidebar_switch = self.widgets.toggles.sidebar
         self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
@@ -272,10 +272,10 @@ class LayoutSettings:
     def _toggle_tocbox(self,btn):
         if self.widgets.tocbox.layout.display == 'none':
             self.widgets.tocbox.layout.display = 'unset'
-            self.widgets.buttons.toc.description = '×'
+            self.widgets.buttons.toc.icon = 'times'
         else:
             self.widgets.tocbox.layout.display = 'none'
-            self.widgets.buttons.toc.description = '≡'
+            self.widgets.buttons.toc.icon = 'bars'
         
     def _toggle_sidebar(self,change): 
         """Pushes this instance of Slides to sidebar and back inline."""
@@ -284,23 +284,25 @@ class LayoutSettings:
             if self.sidebar_switch.value:
                 self.widgets.mainbox.add_class('SideMode')
                 self._set_sidebar_css()
-                self.sidebar_switch.description = '▣'
+                self.sidebar_switch.icon = 'minus-square-o'
             else:
                 self.widgets.mainbox.remove_class('SideMode')
                 self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
-                self.sidebar_switch.description = '◨'
+                self.sidebar_switch.icon = 'columns'
     
     def _toggle_viewport(self,change):  
         if self.btn_window.value:
-            self.btn_window.description = '−'
+            self.btn_window.icon = 'window-restore'
             self.widgets.mainbox.add_class('FullWindow') # to Full Window
             self._set_sidebar_css() # Set sidebar CSS that will take it to full view
+            self.sidebar_switch.disabled = True # Disable sidebar switch to avoid keyboard shortcuts
         else:
-            self.btn_window.description = '□'
+            self.btn_window.icon = 'window-maximize'
             self.widgets.mainbox.remove_class('FullWindow') # back to inline
             self._set_sidebar_css(clear = (False if self.sidebar_switch.value else True)) # Move  back from where it was left of
             if self.btn_zoom.value:
                 self.btn_zoom.value = False # Unzoom to avoid jerks in display
+            self.sidebar_switch.disabled = False # Enable sidebar switch to recieve events
                 
         self._emit_resize_event() # Resize before waiting fo update-theme
         self._update_theme(change=None) # For updating size and breakpoints
@@ -309,21 +311,31 @@ class LayoutSettings:
     def _toggle_fullscreen(self,change):
         if self.btn_fscreen.value:
             self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
-            self.btn_fscreen.description = '⊹'
+            self.btn_fscreen.icon = 'compress'
+            self.widgets.mainbox.add_class('FullScreen')
+            self._old_state = (self.btn_window.value, self.sidebar_switch.value) # Save old state of sidebar switch
             if not self.btn_window.value: # Should elevate full window too
                 self.btn_window.value = True
+            
+            self.btn_window.disabled = True # Disable window button to recieve events
         else:
-            self.widgets._exec_js("document.exitFullscreen();") # TFullscreen
-            self.btn_fscreen.description = '\u26F6'
+            self.widgets._exec_js("document.exitFullscreen();") # To Fullscreen
+            self.btn_fscreen.icon = 'expand'
+            self.widgets.mainbox.remove_class('FullScreen')
+            self.btn_window.disabled = False # Enable window button to receive events
+            self.btn_window.value = getattr(self,'_old_state',[False])[0] # Restore old state of window button
+            self.sidebar_switch.value = getattr(self,'_old_state',[False])[1] # Restore old state of sidebar button
+        
+        self._emit_resize_event()
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
             if self.btn_window.value:
-                self.btn_zoom.description= '▫'
+                self.btn_zoom.icon = 'search-minus'
                 self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self.breakpoint)}\n</style>'
             else:
                 self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
         else:
-            self.btn_zoom.description= '◱'
+            self.btn_zoom.icon= 'search-plus'
             self.widgets.htmls.zoom.value = ''
         

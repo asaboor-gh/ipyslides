@@ -51,7 +51,7 @@ class ScreenShot:
                         self.widgets.sliders.visible,
                         self.widgets.htmls.toast,
                         self.widgets.htmls.cursor,
-                        self.widgets.toggles.display,
+                        self.widgets.toggles.sidebar,
                         *additional_widgets_to_hide
                         ]
         old_pref = self.widgets.htmls.toast.layout.visibility # To keep user prefernce back after screenshot

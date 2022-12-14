@@ -129,10 +129,11 @@ key_combs = '''
 | `Z`                          | Toggle matplotlib/svg/image zoom mode                |
 | `S`                          | Save screenshot of current slide                     |
 | `P`                          | print PDF of current slide                           |
-| `F`                          | Toggle Fullscreen mode                                |
-| `W`                          | Fit/restore slides to/from window's viewport         |
+| `F`                          | Toggle Fullscreen mode                               |
 | `Esc`                        | Exit Fullscreen mode                                 |
+| `W`                          | Fit/restore slides to/from window's viewport         |
 | `G`                          | Toggle settings panel                                |
+| `H`                          | Toggle sidebar/inline mode of slides                 |
 '''
 
 more_instructions =f'''## How to Use
