@@ -34,6 +34,7 @@ class LayoutSettings:
         self.reflow_check = self.widgets.checks.reflow
         
         self.btn_window= self.widgets.toggles.window
+        self.btn_fscreen= self.widgets.toggles.fscreen
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
         self.box = self.widgets.panelbox
@@ -44,7 +45,8 @@ class LayoutSettings:
         self.scale_slider.observe(self._update_theme,names=['value'])
         self.height_slider.observe(self._update_size,names=['value'])
         self.width_slider.observe(self._update_size,names=['value'])
-        self.btn_window.observe(self._fill_viewport,names=['value'])
+        self.btn_window.observe(self._toggle_viewport,names=['value'])
+        self.btn_fscreen.observe(self._toggle_fullscreen,names=['value'])
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
         self.sidebar_switch = self.widgets.toggles.display
@@ -270,10 +272,10 @@ class LayoutSettings:
     def _toggle_tocbox(self,btn):
         if self.widgets.tocbox.layout.display == 'none':
             self.widgets.tocbox.layout.display = 'unset'
-            self.widgets.buttons.toc.description = '✕'
+            self.widgets.buttons.toc.description = '×'
         else:
             self.widgets.tocbox.layout.display = 'none'
-            self.widgets.buttons.toc.description = '\u2630'
+            self.widgets.buttons.toc.description = '≡'
         
     def _toggle_sidebar(self,change): 
         """Pushes this instance of Slides to sidebar and back inline."""
@@ -288,13 +290,13 @@ class LayoutSettings:
                 self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
                 self.sidebar_switch.description = '◨'
     
-    def _fill_viewport(self,change):  
+    def _toggle_viewport(self,change):  
         if self.btn_window.value:
-            self.btn_window.icon = 'compress'
+            self.btn_window.description = '−'
             self.widgets.mainbox.add_class('FullWindow') # to Full Window
             self._set_sidebar_css() # Set sidebar CSS that will take it to full view
         else:
-            self.btn_window.icon = 'expand'
+            self.btn_window.description = '□'
             self.widgets.mainbox.remove_class('FullWindow') # back to inline
             self._set_sidebar_css(clear = (False if self.sidebar_switch.value else True)) # Move  back from where it was left of
             if self.btn_zoom.value:
@@ -304,15 +306,24 @@ class LayoutSettings:
         self._update_theme(change=None) # For updating size and breakpoints
         self._emit_resize_event() # Just to be sure again
         
+    def _toggle_fullscreen(self,change):
+        if self.btn_fscreen.value:
+            self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
+            self.btn_fscreen.description = '⊹'
+            if not self.btn_window.value: # Should elevate full window too
+                self.btn_window.value = True
+        else:
+            self.widgets._exec_js("document.exitFullscreen();") # TFullscreen
+            self.btn_fscreen.description = '\u26F6'
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
             if self.btn_window.value:
-                self.btn_zoom.icon= 'toggle-on'
+                self.btn_zoom.description= '▫'
                 self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self.breakpoint)}\n</style>'
             else:
                 self.widgets._push_toast('Objects are only zoomable in Fullscreen mode!',timeout=2)
         else:
-            self.btn_zoom.icon= 'toggle-off'
+            self.btn_zoom.description= '◱'
             self.widgets.htmls.zoom.value = ''
         

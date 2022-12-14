@@ -125,12 +125,12 @@ key_combs = '''
 | `Space/RightArrowKey`        | Move to next slide                                   |
 | `Shift + Space/LeftArrowKey` | Move to previous slide                               |
 | `Ctrl + Shift + C`           | Change the theme, create console/terminal etc        |
-| `W`                          | Fit/restore slides to/from window's viewport         |
 | `T`                          | Start/stop timer                                     |
 | `Z`                          | Toggle matplotlib/svg/image zoom mode                |
 | `S`                          | Save screenshot of current slide                     |
 | `P`                          | print PDF of current slide                           |
-| `F`                          | Enetr Fullscreen mode                                |
+| `F`                          | Toggle Fullscreen mode                                |
+| `W`                          | Fit/restore slides to/from window's viewport         |
 | `Esc`                        | Exit Fullscreen mode                                 |
 | `G`                          | Toggle settings panel                                |
 '''

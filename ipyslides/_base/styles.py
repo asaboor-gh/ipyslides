@@ -232,7 +232,6 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             'h3': {'font-size':'1.5em'},
             'h4': {'font-size':'1.25em'},
             'h5': {'font-size':'1em'},
-            '^.CaptureMode .SlideArea .goto-button': {'display':'none !important'}, # Hide the goto-button in screenshot, it is not useful there
             'table': {
                 'border-collapse':'collapse !important',
                 'font-size':'0.95em',

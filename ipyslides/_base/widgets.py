@@ -23,8 +23,8 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto')).add_class('Arrows')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto')).add_class('Arrows')
-    setting =  Button(description= '\u2699',layout= Layout(width='auto',height='auto', tooltip='Toggle Settings')).add_class('Menu-Item').add_class('SidePanel-Btn')
-    toc     =  Button(description= '\u2630',layout= Layout(width='auto',height='auto', tooltip='Toggle Table of Contents')).add_class('Menu-Item').add_class('Toc-Btn')
+    setting =  Button(description= '⁝',layout= Layout(width='auto',height='auto', tooltip='Toggle Settings')).add_class('Menu-Item').add_class('Settings-Btn')
+    toc     =  Button(description= '≡',layout= Layout(width='auto',height='auto', tooltip='Toggle Table of Contents')).add_class('Menu-Item').add_class('Toc-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
     end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
@@ -40,9 +40,10 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     display = ipw.ToggleButton(description='◨', value = False, tooltip='Toggle ON/OFF Sidebar Mode').add_class('DisplaySwitch').add_class('Menu-Item')
-    window  = ipw.ToggleButton(description='Window',icon='expand',value = False).add_class('FullWindow-Btn')
-    zoom    = ipw.ToggleButton(description='Zoom Items',icon='toggle-off',value = False).add_class('Zoom-Btn')
-    timer   = ipw.ToggleButton(description='Timer',icon='play',value = False).add_class('Presenter-Btn')             
+    window  = ipw.ToggleButton(description='□',value = False, tooltip='Fit/Restore Viewport').add_class('FullWindow-Btn').add_class('Menu-Item')
+    fscreen = ipw.ToggleButton(description='\u26F6',value = False, tooltip='Toggle Fullscreen').add_class('FullScreen-Btn').add_class('Menu-Item')
+    zoom    = ipw.ToggleButton(description='◱',value = False, tooltip='Toggle Zooming Items').add_class('Zoom-Btn')
+    timer   = ipw.ToggleButton(description='▶',value = False, tooltip='Start/Stop Timer').add_class('Presenter-Btn')             
         
 
 @dataclass(frozen=True)
@@ -241,9 +242,8 @@ class Widgets:
         ]).add_class('Controls') 
         
         self.footerbox = HBox([
-            self.buttons.setting,
             self.buttons.toc,
-            self.htmls.footer,
+            HBox([self.htmls.footer]), # should be in Box to avoid overflow
             self.buttons.capture,
         ],layout=Layout(height='36px')).add_class('NavBox')
         
@@ -255,9 +255,10 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
+        _many_btns = [self.buttons.setting, self.toggles.display, self.toggles.window, self.toggles.fscreen, self.toggles.zoom, self.toggles.timer]
         self.panelbox = VBox([
             self.htmls.glass,
-            self.buttons.setting,
+            HBox(_many_btns).add_class('Panel-Top'),
             VBox([
                 self.sliders.height, 
                 self.sliders.width,
@@ -265,9 +266,6 @@ class Widgets:
                 self.ddowns.theme,
                 self.ddowns.export,
                 Box([GridBox([
-                    self.toggles.window,
-                     self.toggles.zoom,
-                    self.toggles.timer,
                     self.checks.notes,
                     self.checks.toast,
                     self.checks.reflow,
@@ -301,7 +299,7 @@ class Widgets:
             self.htmls.main,
             self.htmls.theme,
             self.htmls.logo,
-            self.toggles.display,
+            HBox(_many_btns).add_class('Menu-Top'),
             self.htmls.sidebar,
             self.panelbox,
             self.htmls.cursor,

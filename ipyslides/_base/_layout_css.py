@@ -6,16 +6,15 @@ def layout_css(breakpoint):
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
             'z-index': '10 !important',
+            '^.CaptureMode': {
+                '.SlideArea .goto-button, .Menu-Top': {'display':'none !important'}, # Hide in screenshot
+            },
             '^.FullWindow': {
                 '.Height-Slider, .Width-Slider, .DisplaySwitch': {'display': 'none !important'},
             },
             '^.SideMode': {
                 '.Height-Slider': {'display': 'none !important'},
             },
-            '^:not(.FullWindow):not(.SideMode)': {
-                'border': '2px inset var(--secondary-bg)',
-            },
-            '^:not(.FullWindow) .DisplaySwitch': {'display': 'block !important'},
             '.SlideArea': {
                 'align-items': 'center',
                 f'@media screen and (max-width: {breakpoint})': {
@@ -55,8 +54,8 @@ def layout_css(breakpoint):
                 'z-index': '102',
                 'top': '0px !important',
                 'left': '0px !important',
-                'height': 'calc(100% - 48px) !important',
-                'box-shadow': '0 0 20px 20px var(--secondary-bg)',
+                'height': '100% !important',
+                'box-shadow': '0 0 4px 4px var(--secondary-bg)',
                 f'@media screen and (max-width: {breakpoint})': {'width': '100% !important'},
                 '.CaptureHtml' : {
                     'border': '1px solid var(--secondary-fg)',
@@ -67,7 +66,7 @@ def layout_css(breakpoint):
                         'background': 'var(--secondary-bg)'
                     },
                 },
-                '.SidePanel-Btn': {
+                '.Settings-Btn': {
                     'border':'none !important',
                     'outline':'none !important',
                     'font-size': '24px',
@@ -201,6 +200,7 @@ def layout_css(breakpoint):
                 'padding': '0px 4px',
                 'opacity':0,
                 'overflow': 'hidden',
+                'transition': 'width 0.4s',
                 '^:hover, ^:focus': {
                     'width': '50%',
                     'min-width': '30%', # This is very important to force it 
@@ -263,18 +263,57 @@ def layout_css(breakpoint):
             'font-size': '0.9em',
             'line-height': '0.9em  !important',
         },
-        # Order of these is important
-        ':is(body[data-base-url], .jp-LabShell, body[data-retro], body[data-notebook]) .DisplaySwitch': {
-            'display': 'block !important', # Do not add important here
+        '.Menu-Top': {
+            'display': 'flex !important', # Do not add important here
             'position': 'absolute !important',
-            'padding': '4px !important',
-            'width': 'max-content !important',
-            'background': 'transparent !important',
+            'z-index': '98 !important', # below matplotlib fullsreen
+            'top': '4px !important',
+            'margin': '8px !important',
+            'width': '60px !important',
+            'box-sizing': 'border-box !important',
+            'overflow': 'scroll !important',
+            'align-items': 'center !important',
+            'transition': 'width 400ms',
+            '^:hover, ^:focus': {
+                'min-height': '36px !important',
+                'background': 'var(--primary-bg)',
+                'width': '60% !important',
+                f'@media screen and (max-width: {breakpoint})': {'width': 'calc(100% - 16px) !important'}, # There is 8px margin
+                    '> .Settings-Btn' : {
+                    'width': 'auto !important',
+                    'margin-right': 'unset !important', # Unset after hover, foucs
+                },
+            }, # Should be same as side panel
+            '> .Settings-Btn' : {
+                'width': '30px !important',
+                'margin-right': '30px !important', # need for hover, foucs
+            },
+            '> button': {
+                'color': 'var(--accent-color) !important',
+                'font-size': '22px !important',
+                'min-width': 'max-content !important',
+                'outline': 'none !important',
+                'border': 'none !important',
+                'box-shadow': 'none !important',
+                'background': 'transparent !important',
+            },
+            '> *:not(.Settings-Btn)' : {'display': 'none !important'},
+            '^:hover > *, ^:focus > *': { 'display': 'unset !important'},
+        },
+        '.Panel-Top': {
+            'display':'flex',
+            'overflow-x': 'scroll',
+            'min-height': '36px !important',
+            'background': 'var(--primary-bg)',
+            'border-bottom': '1px inset var(--hover-bg)',
+            'align-items': 'center !important',
+            'padding-top': '4px !important',
+        },
+        '.Panel-Top button': {
             'border': 'none !important',
-            'outline': 'none !important',
-            'font-size': '24px',
+            'min-width': 'max-content !important',
+            'font-size': '22px',
             'box-shadow': 'none !important',
-            'color': 'var(--accent-color) !important',
         },
         '.Inline-Notes': {
             'background': 'var(--primary-bg)',

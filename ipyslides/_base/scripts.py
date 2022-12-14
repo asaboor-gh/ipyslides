@@ -19,10 +19,11 @@ function main(){
     let arrows  = document.getElementsByClassName('Arrows'); // These are 2*instances
     let mplBtn  = document.getElementsByClassName('Zoom-Btn')[0];
     let winFs   = document.getElementsByClassName('FullWindow-Btn')[0];
+    let fullSc  = document.getElementsByClassName('FullScreen-Btn')[0];
     let capSc   = document.getElementsByClassName('screenshot-btn')[0];
     let cursor  = document.getElementsByClassName('LaserPointer')[0];
     let present = document.getElementsByClassName('Presenter-Btn')[0];
-    let panelBtn = document.getElementsByClassName('SidePanel-Btn')[0];
+    let panelBtn = document.getElementsByClassName('Settings-Btn')[0];
 
     
     // Keyboard events
@@ -49,10 +50,7 @@ function main(){
             winFs.click(); // Toggle Window with W 
         } else if (key === 70) { 
             // F to enter fullscreen
-            document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();
-            if (!winFs.classList.contains('mod-active')) {
-                winFs.click(); // Make layout fullscreen as well
-            };
+            fullSc.click(); // Toggle Fullscreen with F
         } else if (key === 27) {  
             // Escape to exit fullscreen
             document.getElementsByClassName('SlidesWrapper')[0].exitFullscreen();
