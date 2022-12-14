@@ -1,2 +1,2 @@
 
-__version__ = "2.2.4rc1"
+__version__ = "2.2.4" # 4 is not uploaded yet, experimenting
