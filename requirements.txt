@@ -1,0 +1,9 @@
+jupyterlab==3.3
+markdown
+altair
+ipywidgets<=7.9
+numpy
+pandas
+matplotlib
+voila==0.2.16
+markdown-customblocks

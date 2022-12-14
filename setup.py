@@ -70,9 +70,7 @@ class UploadCommand(Command):
         os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
 
         self.status('Uploading the package to PyPI via Twine …')
-        status_code = os.system('twine upload dist/*')
-        if status_code != 0:
-            sys.exit(status_code)
+        os.system('twine upload dist/*')
             
         yes_no = input('Upload this version to GitHub? [y/n]: ')
         if yes_no.lower() == 'y':
