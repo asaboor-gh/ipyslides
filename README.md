@@ -2,7 +2,7 @@
 Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
 
 - Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
-- See a [Demo Notebook at Kaggle](https://www.kaggle.com/massgh/ipyslides). 
+- See Demo Notebooks at [Kaggle](https://www.kaggle.com/massgh) ([Stable Version](https://www.kaggle.com/massgh/ipyslides), [Development Version](https://www.kaggle.com/code/massgh/ipyslides-latest)).
 - See [PDF-Slides](IPySlides-Print.pdf)
 - See [PDF-Report](IPySlides-Report.pdf)
 ![Overview](overview.jpg)
