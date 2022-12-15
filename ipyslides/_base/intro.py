@@ -115,6 +115,9 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 - A complete overhaul of CSS is done, so your custom CSS classes may be broken. You need to see `slides.docs` and read docs of `slides.fromat_css` as well as `slides.css_style` to know changes.
 - Now you can use python dictionary inside `slides.format_ccs, slides.set_css, slides[0].set_css` functions to set CSS properties, with extended and concise syntax.
 - In Custom Theme mode, now instead of editing a CSS file, you just need to set colors using `slides.settings.set_theme_colors`.
+
+**New in 2.2.5**
+- Inside Python script, you can now use auto numbering of slides with `slides.AutoSlides()`. See it's docs for details.
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )

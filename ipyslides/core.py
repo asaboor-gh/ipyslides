@@ -1,6 +1,7 @@
 
 import sys, re, textwrap
 from contextlib import contextmanager, suppress
+from collections import namedtuple
 
 from IPython import get_ipython
 from IPython.display import display
@@ -80,8 +81,7 @@ class Slides(BaseSlides):
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
-            self.shell.user_ns['__Slides_Instance__'] = self
-            self.user_ns = self.shell.user_ns #important for set_dir
+            self.shell.user_ns['get_slides_instance'] = lambda: self
             
         # Override print function to display in order in slides
         if self.shell.__class__.__name__ in ('ZMQInteractiveShell','Shell'): # Shell for Colab
@@ -159,7 +159,7 @@ class Slides(BaseSlides):
         - Python code blocks can be exectude by syntax 
         ```markdown
          ```python run source {.CSS_className}
-         slides = get_slides_instance() # Only available under python code block
+         slides = get_slides_instance() 
          slides.write('Hello, I was written from python code block using slides instance.')
          ```
         ```
@@ -243,6 +243,15 @@ class Slides(BaseSlides):
         
         raise KeyError("Slide could be accessed by index, slice or key, got {}".format(key))
     
+    def __del__(self):
+        for k,v in globals():
+            if isinstance(v,Slides):
+                del globals()[k]
+        
+        for k,v in locals():
+            if isinstance(v,Slides):
+                del locals()[k]
+    
     def navigate_to(self,index):
         "Programatically Navigate to slide by index."
         self._slideindex = index
@@ -284,7 +293,7 @@ class Slides(BaseSlides):
         "Clear all slides."
         self._slides_dict = {} # Clear slides
         self._citations_dict = {} # Clear citations as well
-        with _build_slide(self, '0'):
+        with self.title():
             with suppress(BaseException): # Create a clean title page with no previous toasts/css/animations etc.
                 self.parse_xmd('# Title Page', display_inline=True)
         
@@ -426,16 +435,7 @@ class Slides(BaseSlides):
             ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
             self.widgets.toggles.timer,
             self.widgets.htmls.notes
-        ]).add_class('ExtraControls')
-    
-    @property
-    def auto_number(self):
-        """Returns slide_number to be used in currently buidling slide. Useful inside python scripts. 
-        Inside a running slide, you can access it's value using `slides.running.number`.  
-        
-        - Don't use in Notebook, otherwise you will be keep adding slides on each run.
-        - Don't mix auto_number with manual numbering unless you know what you are doing."""
-        return self._next_number 
+        ]).add_class('ExtraControls') 
     
     @property
     def _slideindex(self):
@@ -780,7 +780,42 @@ class Slides(BaseSlides):
     def glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
         "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.1+)"
         return self.settings.set_glassmorphic(image_src, opacity = opacity, blur_radius = blur_radius)
-
+    
+    def AutoSlides(self):
+        """Returns a named tuple `AutoSlides(title,slide,frames, from_markdown)` if run from inside a
+        python script. Functions inside this tuple replace main functions while removing the 'slide_number' paramater.
+        Useful to handle auto numbering of slides inside a sequntially running script. Call at top of script before adding slides.
+        > Returns None in Jupyter's context and it is not useful there due to lack of sequence.
+        
+        ```python
+        import ipyslides as isd
+        slides = isd.Slides() 
+        auto = slides.AutoSlides()
+        ```
+        Use `auto.title`, `auto.slide` contextmanagers, `auto.frames` decorator and `auto.from_markdown` 
+        function without thinking about what should be slide number.
+        
+        If somwhow you need to run `%%slide` magic inside python script, read previous slide number
+        and add 1 to it, e.g.:
+        ```python
+        with auto.slide() as last:
+            ...
+        slides.shell.run_cell(f'''%%slide {last.number + 1}
+        code or makrdown based on -m in above line
+        '''
+        ```
+        """
+        last_hist = list(self.shell.history_manager.get_range())[-1][-1]
+        if re.findall(r'AutoSlides\(|AutoSlides\s+\(', last_hist):
+            return None
+        
+        auto = namedtuple('AutoSlides',['title','slide','frames','from_markdown'])
+        def slide(): return self.slide(self._next_number) 
+        def frames(*objs, repeat=False, frame_height='auto'): return self.frames(self._next_number,*objs, repeat = repeat, frame_height = frame_height)
+        def from_markdown(file_or_str, trusted = False): return self.from_markdown(self._next_number,file_or_str, trusted = trusted)
+        return auto(self.title,slide,frames, from_markdown)
+        
+        
 # Make available as Singleton Slides
 _private_instance = Slides() # Singleton in use namespace
 # This is overwritten below to just have a singleton
@@ -843,4 +878,11 @@ class Slides:
         return _private_instance
     
     # No need to define __init__, __new__ is enough to show signature and docs
+    
+# When exit, quit called or kernel is shutdown, this works. Not on restart though
+import atexit
+
+@atexit.register
+def close_slides_view():
+    _private_instance.close_view() # cant fire event though I think or may be. whatever
     

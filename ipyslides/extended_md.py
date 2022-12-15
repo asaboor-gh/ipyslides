@@ -152,7 +152,7 @@ class _ExtendedMarkdown(Markdown):
         xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
         xmd = re.sub('\\\`', '&#96;', xmd) # Escape backticks
         xmd = self._resolve_nested(xmd) # Resolve nested objects in form func`?text?` to func`html_repr`
-        slides_instance = get_ipython().user_ns.get('__Slides_Instance__',None)
+        slides_instance = get_ipython().user_ns.get('get_slides_instance',lambda: None)() # It is callable, do not get it in global namespace,need only single reference outside
         if slides_instance and slides_instance._running_slide: # getattr(slides_instance,'_under_with_or_frame',False):
             xmd = resolve_objs_on_slide(slides_instance,xmd) # Resolve objects in xmd related to current slide
         
@@ -243,10 +243,9 @@ class _ExtendedMarkdown(Markdown):
             if source:
                 shell.user_ns[source] = _str2code(dedent_data,language='python',className = _class) 
             
-            # Run Code now and add a function to access slides instance
-            code = 'def get_slides_instance():\n    return __Slides_Instance__\n' + dedent_data + '\ndel get_slides_instance'
+            # Run Code now 
             with capture_output() as captured:
-                shell.run_cell(code) # Run after assigning it to variable, so can be accessed inside code too
+                shell.run_cell(dedent_data) 
             
             outputs = captured.outputs
             return outputs

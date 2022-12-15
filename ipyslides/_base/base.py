@@ -238,10 +238,11 @@ class BaseSlides:
         
         from ..core import Slides
         from ..__version__ import __version__
-        
         self.settings.set_footer('IPySlides Documentation')
         
-        with self.title(): # Title
+        auto = self.AutoSlides() # Does not work inside notebook (should not as well)
+        
+        with auto.title(): # Title
             self.write(f'## IPySlides {__version__} Documentation\n### Creating slides with IPySlides')
             self.center('''
                 alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
@@ -253,42 +254,42 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        with self.slide(self.auto_number) as slide_toc1: # Need at end to refresh TOC
+        with auto.slide() as slide_toc1: # Need at end to refresh TOC
             self.write('## Table of Contents')
             
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write(['# Main App',self.doc(Slides)])
         
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Adding Slides section`Adding Slides and Content`')
             self.write('Besides functions below, you can add slides with `%%title` magics as well.\n{.note .info}')
-            self.write([self.doc(self.title,'Slides'),self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
+            self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.note .info}')
             self.xmd_syntax.display() # This will display information about Markdown extended syntax
             self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse_xmd,'Slides'),self.doc(self.cite,'Slides')])
         
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Adding Speaker Notes')
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.block-red .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
             self.goto_button(10,'Jump to Slide 10', 'This is kind a alert`alt text` because button will alert`NOT` show in screenshot of slides')
                    
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        with self.slide(self.auto_number)  as slide_toc2: # Need at end to refresh TOC
+        with auto.slide()  as slide_toc2: # Need at end to refresh TOC
             self.write('## Table of Contents section`?Layout and color[yellow_black]`Theme` Settings?`')
         
-        with self.slide(self.auto_number): 
+        with auto.slide(): 
             self.write('## Layout and Theme Settings')
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
             members = ['alert','block', 'bokeh2html', 'bullets','cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
@@ -297,7 +298,7 @@ class BaseSlides:
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Content Styling')
             with self.source.context(auto_display = False) as c:
                 self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink_yellow]`text`* with `className` attribute in writing/content functions. ' 
@@ -306,7 +307,7 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
-        s8, = self.from_markdown(self.auto_number, '''
+        s8, = auto.from_markdown('''
         ## Highlighting Code
         [pyg]:`[pygments](https://pygments.org/) is used for syntax highlighting.`
         You can **highlight**{.error} code using `highlight` function or within markdown like this:cite`pyg`
@@ -326,7 +327,7 @@ class BaseSlides:
             self.write(s8.citations)
             s8.source.display()
         
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
             self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.note .info}')
             self.write([self.doc(self.from_markdown,'Slides'),
@@ -335,24 +336,26 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
-        with self.slide(self.auto_number) as slide_toc3: # Need at end to refresh TOC
+        with auto.slide() as slide_toc3: # Need at end to refresh TOC
             self.write('## Table of Contents section`Advanced Functionality`')
         
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.note .info}')
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
         
-        with self.slide(self.auto_number):
+        with auto.slide():
             self.write('## Keys and Shortcuts\n'
                 '- You can use `Slides.current` to access a slide currently in view.\n'
                 '- You can use `Slides.running` to access the slide currently being built,'
-                ' so you can set CSS, aminations etc.\n'
-                '- You can use `Slides.auto_number` inside python script for `slide_number` argument. alert`Do NOT` use in Notebook.', key_combs)
+                ' so you can set CSS, aminations etc.', key_combs)
         
-        with self.slide(self.auto_number):
+        with auto.slide():
+            self.write(['# Auto Slide Numbering in Python Scripts', self.doc(self.AutoSlides,'Slides')])
+        
+        with auto.slide():
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
         for slide in [slide_toc1, slide_toc2, slide_toc3]:

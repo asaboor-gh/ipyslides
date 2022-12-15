@@ -6,6 +6,7 @@ def layout_css(breakpoint):
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
             'z-index': '10 !important',
+            '^.jupyter-widgets-disconnected': {'display':'none !important'}, # No need 
             '^.CaptureMode': {
                 '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
             },
@@ -38,8 +39,7 @@ def layout_css(breakpoint):
                     'min-width':'auto !important',
                 },
             },
-            '.widget-html':{
-                '^.jupyter-widgets-disconnected': { 'display': 'none !important' },
+            '.widget-html': {
                 '^:not(div.LaserPointer), .widget-html-content > div' :{
                     'display': 'grid !important',
                     'font-size': 'var(--text-size) !important',

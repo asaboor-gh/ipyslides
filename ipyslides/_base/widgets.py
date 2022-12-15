@@ -54,7 +54,7 @@ class _Htmls:
     footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Fancy'])).value)
     main    = HTML(html('style',_layout_css.layout_css(breakpoint = '650px')).value) # Will be update in theme as well
-    sidebar = HTML(html('style',_layout_css.sidebar_layout_css()).value) # Should be separate CSS
+    sidebar = HTML(html('style',_layout_css.sidebar_layout_css()).value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML() #SVG Animation in it
     logo    = HTML()
     tochead = HTML('<h4>Table of Contents</h4><hr/>')

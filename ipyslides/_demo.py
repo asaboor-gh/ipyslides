@@ -6,18 +6,7 @@ from ipyslides.writers import write, iwrite
 from ipyslides.formatters import libraries, __reprs__
 from ipyslides._base.intro import logo_svg
 
-markdown_str = """# Creating Slides
-::: align-center
-    alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
-
-    center`today```
-
-    ::: text-box
-        sup`1`My University is somewhere in the middle of nowhere
-        sup`2`Their University is somewhere in the middle of nowhere
-
-<h4 style=""color:green;"> 👈🏻 Read instructions in left panel</h4>
----
+markdown_str = """
 section`Introduction`
 ---
 # Introduction
@@ -53,22 +42,32 @@ def demo(slides_instance):
     slides.close_view() # Close any previous view to speed up loading 10x faster on average
     slides.clear() # Clear previous content
 
-    # Create shortcut for autoslide/autoframes, but DO NOT do it in Notebook, you may get countless slides there with each run.
-    def autoslide(*args,**kwargs): return slides.slide(slides.auto_number, *args, **kwargs) 
-    def autoframes(*args,**kwargs): return slides.frames(slides.auto_number, *args, **kwargs) 
-        
+    auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
+    
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
     slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
     slides._citation_mode = 'global' # This could be changed by other functions
     slides.set_citations({'pf': 'This is refernce to FigureWidget using `slides.cite` command'})
 
+    slides.shell.run_cell("""
+    %%title -m
+    # Creating Slides
+    ::: align-center
+        alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
+
+        center`today```
+
+        ::: text-box
+            sup`1`My University is somewhere in the middle of nowhere
+            sup`2`Their University is somewhere in the middle of nowhere
+
+    <h4 style=""color:green;"> 👈🏻 Read instructions in left panel</h4>
+    """)
+    
     #Demo for loading slides from a file or text block 
-    s0, s1, s2, *others = slides.from_markdown(0,markdown_str, trusted=True)
+    s1, s2, *others = auto.from_markdown(markdown_str, trusted=True)
     
     section_slides = {'1':s1} # We collect all slides that have section to update at end. Very useful
-
-    with s0.insert(0):
-        s0.source.display(collapsed = True)
 
     slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
@@ -104,7 +103,7 @@ def demo(slides_instance):
     '## Commands which do all Magic!']
     
     for i, content in enumerate(__contents):
-        with autoslide():
+        with auto.slide():
             write(textwrap.dedent(content))
             if i == 4:
                 with slides.source.context(auto_display = False) as s:
@@ -115,11 +114,11 @@ def demo(slides_instance):
             if i == 0:
                 section_slides['2'] = slides.running
     
-    with autoslide() as section_slides['3']:
+    with auto.slide() as section_slides['3']:
         slides.write('section`Plotting and DataFrame`')
 
     # Matplotlib
-    with autoslide() as s:
+    with auto.slide() as s:
         s.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
         write('## Plotting with Matplotlib')
         with slides.source.context(auto_display = False) as s:
@@ -150,11 +149,11 @@ def demo(slides_instance):
         df = '### Install `pandas` to view output'
         chart = '### Install Altair to see chart'
         
-    with autoslide():
+    with auto.slide():
         write(('## Writing Pandas DataFrame',df))
         source.show_lines([0,3,11]).display()
     
-    with autoslide():
+    with auto.slide():
         slides.write(('## Writing Altair Chart\nMay not work everywhere, needs javascript\n{.note .warning}',chart))
         source.show_lines(range(1,11)).display()
        
@@ -166,12 +165,12 @@ def demo(slides_instance):
     except:
         fig = '### Install `plotly` to view output'
         
-    with autoslide():
+    with auto.slide():
         write(('## Writing Plotly Figure',fig))
         s.display()
 
     # Interactive widgets.   
-    with autoslide():
+    with auto.slide():
         with slides.source.context(auto_display = False) as src:
             import ipywidgets as ipw
             import numpy as np, matplotlib.pyplot as plt
@@ -208,7 +207,7 @@ def demo(slides_instance):
 
 
     # Animat plot in slides  
-    @autoframes(*range(14,19))
+    @auto.frames(*range(14,19))
     def func(obj,idx):
         slides.write('section`Simple Animations with Frames`')
         if idx == 0:
@@ -231,30 +230,30 @@ def demo(slides_instance):
 
         slides.write(slides.cite('This'))
         
-    with autoslide() as section_slides['4']:
+    with auto.slide() as section_slides['4']:
         slides.write('section`Controlling Content on Frames`')
 
     # Frames structure
     boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
-    @autoframes(*boxes, repeat=False)
+    @auto.frames(*boxes, repeat=False)
     def f(obj,idx):
         slides.write('# Frames with \n#### `repeat = False`')
         slides.write(obj)
 
-    @autoframes(*boxes, repeat=True,frame_height='100%')
+    @auto.frames(*boxes, repeat=True,frame_height='100%')
     def f(obj,idx):
         slides.running.set_animation(None) #Disable animation for showing bullets list
         slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
         slides.bullets(obj, marker='💘').display()
 
-    @autoframes(*boxes, repeat=[(0,1),(2,3)])
+    @auto.frames(*boxes, repeat=[(0,1),(2,3)])
     def f(obj,idx):
         with slides.source.context(auto_display = False) as s:
             slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
             slides.write(*obj)
         s.display()
 
-    with autoslide():
+    with auto.slide():
         with slides.source.context(auto_display = False) as s:
             slides.goto_button(slides.running.number - 5, 'Skip All Previous Frames')
             slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
@@ -266,7 +265,7 @@ def demo(slides_instance):
     
     # Youtube
     from IPython.display import YouTubeVideo
-    with autoslide():
+    with auto.slide() as previous_slide: # We will use this in next %%magic
         with slides.source.context(auto_display = False, style='vs',className="Youtube") as s:
             write(f"### Watching Youtube Video?")
             write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
@@ -277,9 +276,9 @@ def demo(slides_instance):
 
             s.display() # s = source.context(style='vs', className="Youtube")
         
-    # Data Table
+    # Data Table, we will run %%slide magic with slide_number = previous_slide.number
     slides.shell.run_cell(f"""
-    %%slide {slides.auto_number}
+    %%slide {previous_slide.number + 1}
     with myslides.source.context(auto_display = False) as s:
         write('## Data Tables')
         # Remember myslides variable was assigned in a python block
@@ -293,7 +292,7 @@ def demo(slides_instance):
         s.focus_lines([3,4,5,6]).display()
     """)
 
-    slides.from_markdown(slides.auto_number, '''
+    auto.from_markdown('''
     ## $\LaTeX$ in Slides
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
     $\LaTeX$ needs time to load, so keeping it in view until it loads would help.
@@ -303,7 +302,7 @@ def demo(slides_instance):
     $$\int_0^1\\frac{1}{1-x^2}dx$$
     ''', trusted=True)
 
-    with autoslide():
+    with auto.slide():
         slides.write('## Built-in CSS styles')
         with slides.source.context():
             slides.css_styles.display()
@@ -311,7 +310,7 @@ def demo(slides_instance):
             slides.write('warning',className='warning')
             slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='align-right rtl')
 
-    with autoslide(),slides.source.context():
+    with auto.slide(),slides.source.context():
         slides.rows(
             '## Can skip `write` commnad sometimes',
             slides.cols('### Column A','### Column B',className='info'),
@@ -319,10 +318,10 @@ def demo(slides_instance):
         ).display()
         slides.write('----') # In Python < 3.8, context manager does not properly handle end of code block, so use this to end context
 
-    with autoslide() as section_slides['5']:
+    with auto.slide() as section_slides['5']:
         slides.write('section`Custom Objects Serilaization`')
     
-    with autoslide():
+    with auto.slide():
         slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
         with slides.suppress_stdout(): # suppress stdout from register fuction below
             with slides.source.context(auto_display = False) as s:
@@ -335,15 +334,15 @@ def demo(slides_instance):
 
             s.display()
         
-    with autoslide():
+    with auto.slide():
         slides.write('## This is all code to generate slides section`Code to Generate Slides`')
         slides.source.from_file(__file__).display()
         
-    with autoslide():
+    with auto.slide():
         slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.note .info}')
         slides.get_source().display()
          
-    with autoslide():
+    with auto.slide():
         with slides.source.context():
             slides.write('citations`## Reference via Markdown\n----`',
                          ['## Reference via Python API\n----',
