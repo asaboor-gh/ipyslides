@@ -3,7 +3,7 @@ Author Notes: Classes in this module should only be instantiated in LiveSlide cl
 and then provided to other classes via composition, not inheritance.
 """
 
-from contextlib import suppress
+from contextlib import suppress, contextmanager
 import os
 import math
 from IPython.display import display, Image, Javascript
@@ -204,22 +204,28 @@ class LayoutSettings:
         with self.widgets.outputs.fixed: 
             display(Javascript(scripts.navigation_js))
     
-    def _emit_resize_event(self):
-        self.widgets._exec_js(scripts.resize_js)
+    @contextmanager
+    def emit_resize_event(self):
+        "Emit resize event before and after a code block. Sometimes before is more useful"
+        try:
+            self.widgets._exec_js(scripts.resize_js)
+            yield
+        finally:
+            self.widgets._exec_js(scripts.resize_js)
         
     def _set_sidebar_css(self,clear = False):
-        if clear:
-            self.widgets.htmls.sidebar.value = ''
-        else:
-            self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=self.span_percent)).value
-        return self._emit_resize_event() # Must return this event so it work in other functions.
+        with self.emit_resize_event():
+            if clear:
+                self.widgets.htmls.sidebar.value = ''
+            else:
+                self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=self.span_percent)).value
         
     def _update_size(self,change):
-        self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
-        self.widgets.mainbox.layout.width = '{}vw'.format(self.span_percent) # Do not use self.width_slider.value here, need in full width too 
-        self._emit_resize_event() 
-        self._toggle_sidebar(change=None) # To update sidebar width, auto handles fullscreen
-        self._update_theme(change=None) # For updating size and breakpoints
+        with self.emit_resize_event():
+            self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
+            self.widgets.mainbox.layout.width = '{}vw'.format(self.span_percent) # Do not use self.width_slider.value here, need in full width too 
+            self._toggle_sidebar(change=None) # To update sidebar width, auto handles fullscreen
+            self._update_theme(change=None) # For updating size and breakpoints
             
     @property
     def text_size(self):
@@ -256,18 +262,19 @@ class LayoutSettings:
          
      
     def _update_theme(self,change=None): 
-        # Update Layout CSS  
-        layout_css = _layout_css.layout_css(breakpoint = self.breakpoint)
-        self.widgets.htmls.main.value = html('style',layout_css).value
+        with self.emit_resize_event():
+            # Update Layout CSS  
+            layout_css = _layout_css.layout_css(breakpoint = self.breakpoint)
+            self.widgets.htmls.main.value = html('style',layout_css).value
         
         # Update Theme CSS
         theme_css = styles.style_css(**self.theme_kws)
         
         if self.reflow_check.value:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
-            
-        self.widgets.htmls.theme.value = html('style',theme_css).value
-        self._emit_resize_event()
+        
+        with self.emit_resize_event():
+            self.widgets.htmls.theme.value = html('style',theme_css).value
         
     def _toggle_tocbox(self,btn):
         if self.widgets.tocbox.layout.display == 'none':
@@ -281,52 +288,51 @@ class LayoutSettings:
         """Pushes this instance of Slides to sidebar and back inline."""
         # Only push to sidebar if not in fullscreen
         if not self.btn_window.value:
-            if self.sidebar_switch.value:
-                self.widgets.mainbox.add_class('SideMode')
-                self._set_sidebar_css()
-                self.sidebar_switch.icon = 'minus-square-o'
-            else:
-                self.widgets.mainbox.remove_class('SideMode')
-                self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
-                self.sidebar_switch.icon = 'columns'
+            with self.emit_resize_event():
+                if self.sidebar_switch.value:
+                    self.widgets.mainbox.add_class('SideMode')
+                    self._set_sidebar_css()
+                    self.sidebar_switch.icon = 'minus-square-o'
+                else:
+                    self.widgets.mainbox.remove_class('SideMode')
+                    self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
+                    self.sidebar_switch.icon = 'columns'
     
-    def _toggle_viewport(self,change):  
-        if self.btn_window.value:
-            self.btn_window.icon = 'window-restore'
-            self.widgets.mainbox.add_class('FullWindow') # to Full Window
-            self._set_sidebar_css() # Set sidebar CSS that will take it to full view
-            self.sidebar_switch.disabled = True # Disable sidebar switch to avoid keyboard shortcuts
-        else:
-            self.btn_window.icon = 'window-maximize'
-            self.widgets.mainbox.remove_class('FullWindow') # back to inline
-            self._set_sidebar_css(clear = (False if self.sidebar_switch.value else True)) # Move  back from where it was left of
-            if self.btn_zoom.value:
-                self.btn_zoom.value = False # Unzoom to avoid jerks in display
-            self.sidebar_switch.disabled = False # Enable sidebar switch to recieve events
-                
-        self._emit_resize_event() # Resize before waiting fo update-theme
-        self._update_theme(change=None) # For updating size and breakpoints
-        self._emit_resize_event() # Just to be sure again
+    def _toggle_viewport(self,change): 
+        with self.emit_resize_event(): 
+            if self.btn_window.value:
+                self.btn_window.icon = 'window-restore'
+                self.widgets.mainbox.add_class('FullWindow') # to Full Window
+                self._set_sidebar_css() # Set sidebar CSS that will take it to full view
+                self.sidebar_switch.disabled = True # Disable sidebar switch to avoid keyboard shortcuts
+            else:
+                self.btn_window.icon = 'window-maximize'
+                self.widgets.mainbox.remove_class('FullWindow') # back to inline
+                self._set_sidebar_css(clear = (False if self.sidebar_switch.value else True)) # Move  back from where it was left of
+                if self.btn_zoom.value:
+                    self.btn_zoom.value = False # Unzoom to avoid jerks in display
+                self.sidebar_switch.disabled = False # Enable sidebar switch to recieve events
+
+            self._update_theme(change=None) # For updating size and breakpoints
         
     def _toggle_fullscreen(self,change):
-        if self.btn_fscreen.value:
-            self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
-            self.btn_fscreen.icon = 'compress'
-            self.widgets.mainbox.add_class('FullScreen')
-            self._old_state = (self.btn_window.value, self.sidebar_switch.value) # Save old state of sidebar switch
-            if not self.btn_window.value: # Should elevate full window too
-                self.btn_window.value = True
-            
-            self.btn_window.disabled = True # Disable window button to recieve events
-        else:
-            self.widgets._exec_js("document.exitFullscreen();") # To Fullscreen
-            self.btn_fscreen.icon = 'expand'
-            self.widgets.mainbox.remove_class('FullScreen')
-            self.btn_window.disabled = False # Enable window button to receive events
-            self.btn_window.value = getattr(self,'_old_state',[False])[0] # Restore old state of window button
-            self.sidebar_switch.value = getattr(self,'_old_state',[False])[1] # Restore old state of sidebar button
-        
-        self._emit_resize_event()
+        with self.emit_resize_event():
+            if self.btn_fscreen.value:
+                self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
+                self.btn_fscreen.icon = 'compress'
+                self.widgets.mainbox.add_class('FullScreen')
+                self._old_state = (self.btn_window.value, self.sidebar_switch.value) # Save old state of sidebar switch
+                if not self.btn_window.value: # Should elevate full window too
+                    self.btn_window.value = True
+
+                self.btn_window.disabled = True # Disable window button to recieve events
+            else:
+                self.widgets._exec_js("document.exitFullscreen();") # To Fullscreen
+                self.btn_fscreen.icon = 'expand'
+                self.widgets.mainbox.remove_class('FullScreen')
+                self.btn_window.disabled = False # Enable window button to receive events
+                self.btn_window.value = getattr(self,'_old_state',[False])[0] # Restore old state of window button
+                self.sidebar_switch.value = getattr(self,'_old_state',[False])[1] # Restore old state of sidebar button
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
