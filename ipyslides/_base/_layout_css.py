@@ -302,12 +302,14 @@ def layout_css(breakpoint):
                 f'@media screen and (max-width: {breakpoint})': {'width': 'calc(100% - 16px) !important'}, # There is 8px margin
                 '> .Settings-Btn' : {
                     'width': 'auto !important',
+                    'opacity': '1 !important',
                     'margin-right': 'unset !important', # Unset after hover, foucs
                 },
             }, # Should be same as side panel
             '> .Settings-Btn' : {
                 'width': '30px !important',
                 'margin-right': '30px !important', # need for hover, foucs
+                'opacity': '0.4 !important' # make same as other buttons
             },
             '> *:not(.Settings-Btn)' : {'display': 'none !important'},
             '^:hover > *:not(:disabled), ^:focus > *:not(:disabled)': { 'display': 'unset !important'},
