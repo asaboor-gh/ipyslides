@@ -1,19 +1,22 @@
 # IPySlides
 Create Interactive Slides in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
 
-- Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
+- Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
 - See Demo Notebooks at [Kaggle](https://www.kaggle.com/massgh) ([Stable Version](https://www.kaggle.com/massgh/ipyslides), [Development Version](https://www.kaggle.com/code/massgh/ipyslides-latest)).
 - See [PDF-Slides](IPySlides-Print.pdf)
 - See [PDF-Report](IPySlides-Report.pdf)
 ![Overview](overview.jpg)
 
+---
 # Changelog
 Above version 1.4.0, users can see upto date documentation via `ipyslides.Slides().docs()`, so no additional changelog will be created in future. 
 See old [changelog](changelog.md)
 
+---
 # Install
 ```shell
 > pip install ipyslides
+> pip install ipyslides[extra]
 ```
 For development install, clone this repository and then
 ```shell
@@ -22,6 +25,7 @@ For development install, clone this repository and then
 ```
 
 > Jupyter Notebook version 7 is supported same way as Jupyter Lab in ipyslides >= 1.8.5
+---
 # Creating Slides
 Inside Jupyter Notebook:
 
@@ -59,6 +63,7 @@ def func(obj):
 #------------ Cell 6 --------------------
 slides # This displays slides if on the last line of cell, or use `slides.show()`.
 ```
+---
 #### You can load slides from a markdown file
 slides separator should be --- (three dashes)
 frames separator should be -- (two dashes)
@@ -89,7 +94,7 @@ slides.export.slides() # HTML Slides
 ```
 When exported to HTML and then PDF is printed, this gives 
 a clean document.
-
+---
 # Content Types to Embed
 You can embed anything that you can include in Jupyter notebook like ipywidgets,HTML,PDF,Videos etc.,including jupyter notebook itself! 
 
@@ -126,27 +131,31 @@ In 1.7.7+ you can install extensions of markdown e.g. [PyMdown](https://faceless
 ```python
 slides.extender.extend(extension)
 ```
+---
 # Full Screen Presentation
 - Jupyterlab 3.0+ has full screen eneabled from any view:
 - Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by Voila, may not work as expected.     
 
 - Slides in Jupyter Lab are theme aware in `Inherit` theme mode, so theme of slides changes based on editor theme.
-
+---
 # PDF printing
 To include all type of objects you need to make PDF manually.
 Read instructions in side panel about PDF printing. See [PDF-Slides](IPySlides-Print.pdf)
 If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bokeh` charts etc. and not something like `ipywidgets`, see next section.
+---
 # HTML/PDF Report/Slides [HTML Slides in 1.5.2+]
 - You can create beautiful HTML/PDF report from slides using `slides.export.report`. See [PDF-Report](IPySlides-Report.pdf)
 - You can use CSS classes `.report-only` and `.slides-only` to create different content for both sceberios. Content variety is limited. Widgets can not be exported. 
 - Use `slides.export.slides` to build static slides that you can print as well. Widgets are not exported.
+---
 # Speaker Notes (1.2.0+) (Experimental)
 - You can turn on speaker notes with a `Show Notes` check in side panel. Notes can be added to slides using `slides.notes.insert` (`slides.notes` in < 1.2.1) command. 
 - Notes is an experimantal feuture, so use at your own risk. Do not share full screen, share a brwoser tab for slides and you can keep notes hidden from audience this way. 
+---
 # Known Limitations
 - Slide number is necessary to be tracked by user, as notebook cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. In version `2.1.7+` you can use property `Slides.auto_number` inside Python script, but avoid it in Notebook since it does not run linearly and can create hundreds of slides as you keep running cells.
 - Bounding box of slides for screenshots should be set by user (if not in fullscreen).
-
+---
 # Customize Slides
 You can customize slides by inheriting from `Slides` class. 
 For example if you want to have custom theme and some other settings always enabled and
