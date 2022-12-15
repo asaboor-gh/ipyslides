@@ -418,6 +418,7 @@ class Slides(BaseSlides):
     
     def close_view(self):
         "Close all slides views, but keep slides in memory than can be shown again."
+        self.settings._emit_resize_event() # Emit resize event before closing to collapse if it was in sidebar
         self._display_box_.close() 
     
     def __jlab_in_cell_display(self): 

@@ -285,11 +285,6 @@ class _ExtendedMarkdown(Markdown):
             _out = f'<div class="columns">{_cols}</div>'
             html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
               
-        # Replace Block classes
-        all_matches = re.findall(r'class\`(.*?)\`', html_output, flags = re.DOTALL)
-        for match in all_matches:
-            raise ValueError(f'class`class-name` syntax is changed to indented block like \n::: class-name\n   Indented block to be parsed\n')
-        
         # Replace colored text
         all_matches = re.findall(r'color\[(.*?)\]\`(.*?)\`', html_output, flags = re.DOTALL | re.MULTILINE)
         for match in all_matches:
