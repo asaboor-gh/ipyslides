@@ -282,7 +282,7 @@ class LayoutSettings:
     def _update_theme(self,change=None): 
         with self.emit_resize_event():
             # Update Layout CSS  
-            layout_css = _layout_css.layout_css(breakpoint = self.breakpoint)
+            layout_css = _layout_css.layout_css(breakpoint = self.breakpoint, show_laser_pointer=self.btn_laser.value)
             self.widgets.htmls.main.value = html('style',layout_css).value
         
         # Update Theme CSS
