@@ -133,7 +133,7 @@ class LayoutSettings:
         self.widgets.htmls.glass.value = f"""<style>
         {_layout_css.glass_css(opacity=opacity, blur_radius=blur_radius)}
         </style>
-        {self._slides.image(image_src,width='100%',zoomable=False)}
+        {self._slides.image(image_src,width='100%')}
         <div class="Front"></div>
         """
             
