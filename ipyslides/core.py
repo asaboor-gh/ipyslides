@@ -490,8 +490,8 @@ class Slides(BaseSlides):
             self._display_toast() # or self.toasts._display_toast . Display in start is fine
             self.notes._display(self.current.notes) # Display notes first
         
-            _number = f'{self.current.label} / {self._nslides}' if self.current.label != '0' else ''
-            self.settings.set_footer(_number_str = _number)
+            number = f'{self.current.label} / {self._nslides}' if self.current.label != '0' else ''
+            self.settings._update_footer(number_str = number) # Update footer privately
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
     

@@ -256,10 +256,6 @@ def image(data=None,width='80%',caption=None, **kwargs):
     - A url to image file.
     - A str/bytes object containing image data.  
     """
-    if 'zoomable' in kwargs:
-        kwargs.pop('zoomable')
-        raise ValueError("zoomable is deprecated, output is automatically magnified now.")
-    
     if isinstance(width,int):
         width = f'{width}px'
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
@@ -269,9 +265,6 @@ def image(data=None,width='80%',caption=None, **kwargs):
 
 def svg(data=None,caption=None,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
-    if 'zoomable' in kwargs:
-        kwargs.pop('zoomable')
-        raise ValueError("zoomable is deprecated, output is automatically magnified now.")
     svg = SVG(data=data, **kwargs)._repr_svg_()
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     return html('figure', svg + cap, className='zoom-child')
