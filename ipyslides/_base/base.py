@@ -78,6 +78,9 @@ class BaseSlides:
          'block-[color]'    | Block of text/objects with specific background color from red,
                             | green, blue, yellow, cyan, magenta and gray.
          'raw-text'         | Text will not be formatted and will be shown as it is.
+         'zoom-self'        | Zooms object on hover, when Zoom is enabled.
+         'zoom-child'       | Zooms child object on hover, when Zoom is enabled.
+         'no-zoom'          | Disables zoom on object when it is child of 'zoom-child'.
         ------------------------------------------------------------------------------------
         ''')
         

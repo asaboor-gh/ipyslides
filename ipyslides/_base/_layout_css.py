@@ -1,12 +1,11 @@
 # This should not be used by user, but is used by ipyslides to generate layout of slides
 
 from ..utils import _build_css
-def layout_css(breakpoint):
+def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
     return _build_css((),{
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
             'z-index': '10 !important',
-            '^.jupyter-widgets-disconnected': {'display':'none !important'}, # No need 
             '^.CaptureMode': {
                 '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
             },
@@ -145,6 +144,7 @@ def layout_css(breakpoint):
             'box-shadow':' 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color)',
             'display':'none', # Initial setup. Display will be set using javascript only */
             'overflow':'hidden !important', # To hide at edges */
+            'opacity': f'{1 if show_laser_pointer else 0} !important',
         },
         '.NavWrapper': {
             'max-width': '100% !important',
@@ -287,6 +287,24 @@ def layout_css(breakpoint):
                 'backdrop-filter': 'blur(20px)',
                 '> i': { 'color': 'var(--accent-color) !important',},
                 '^:disabled,^[disabled]': {'display': 'none !important',},
+                '^.Laser-Btn:not(.mod-active)': {
+                    '^:hover:enabled, ^:focus:enabled': {
+                        'color': 'transparent !important',
+                        'text-shadow': 'none !important',
+                        'transform': 'scale(0.85) !important',
+                    },
+                    '> i': {
+                        'display': 'block',
+                        'margin':'auto',
+                        'width': '12px',
+                        'height': '12px',
+                        'background': 'var(--pointer-color) !important',
+                        'color': 'transparent !important',
+                        'border': '2px solid white !important',
+                        'border-radius': '50% !important',
+                        'box-shadow': '0 0 4px 2px white, 0 0 6px 6px var(--pointer-color)',
+                    },
+                },
             },
         },
         '.TopBar.Outside': {
@@ -339,11 +357,12 @@ def layout_css(breakpoint):
             'padding': 0,
             'padding-right': '0 !important', # important for central layout
             'font-size': 'var(--text-size)',
-            '^:not(pre) > code': {
-                'background-color': 'var(--secondary-bg)', 
+            ':not(pre) > code': {
+                'background': 'var(--secondary-bg) !important', 
                 'color':'var(--secondary-fg)',
             },
             'p': {'margin-bottom': '0.2em !important',},
+            'pre, code': {'color':'var(--primary-fg)',},
         },
         '.jp-RenderedText': {
             '^, pre': {
@@ -468,30 +487,54 @@ body[data-notebook] .SlidesWrapper{{
 }}
 '''
 
-def zoom_hover_css(breakpoint):
+def zoom_hover_css(span_percent):
     return f'''
-/* Pop out matplotlib's SVG on click/hover */
-div.zoom-container > *:focus, div.zoom-container > *:hover {{
+/* Pop out matplotlib's SVG, image on click/hover while keeping most top only*/
+.SlideArea .zoom-child > *:not(.no-zoom):focus,
+.SlideArea .zoom-child > *:not(.no-zoom):hover,
+.SlideArea .zoom-self:focus, 
+.SlideArea .zoom-self:hover,
+.SlideArea .plot-container.plotly:hover, /* Becuase plotly is auto-written, take care of it */
+.SlideArea .plot-container.plotly:focus {{
     position:fixed;
-    background: var(--primary-bg);
-    left:100px;
-    top:0px;
+    backdrop-filter: blur(200px);
+    left:calc({100-span_percent}% + 50px);
+    top:50px;
     z-index:100;
-    width: calc(100% - 200px);
-    height: 100%;
+    width: calc({span_percent}% - 100px);
+    height: calc(100% - 100px);
     object-fit: scale-down !important;
-    box-shadow: 0px 0px 200px 200px rgba(15,20,10,0.8); 
+    box-shadow: -1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5); 
+    border-radius: 4px;
+    overflow:scroll !important; /* Specially for dataframes */
+}}
+.SlideArea .zoom-self:focus .vega-embed canvas,
+.SlideArea .zoom-self:hover .vega-embed canvas,
+.SlideArea .plot-container.plotly:hover > .svg-container,
+.SlideArea .plot-container.plotly:focus > .svg-container {{
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important; /* Ovverider plotly and altair style */
+    border-radius: 4px !important;
+    object-fit: scale-down !important;
+    box-sizing: border-box !important;
+}} 
+.SlideArea .zoom-self:focus .vega-embed details,
+.SlideArea .zoom-self:hover .vega-embed details {{display: none !important;}}
+
+/* nested zoom classes should occupy full space because parent is zoomed too */
+.SlideArea .zoom-self  :is(.zoom-self, .zoom-child):hover,
+.SlideArea .zoom-self  :is(.zoom-self, .zoom-child):focus,
+.SlideArea .zoom-child :is(.zoom-self, .zoom-child):hover,
+.SlideArea .zoom-child :is(.zoom-self, .zoom-child):focus {{
+    left: 0px !important;
+    top: 0px !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    background: var(--primary-bg) !important; /* Avoids overlapping with other elements */
 }}
 
-@media screen and (max-width: {breakpoint}) {{ /* Computed dynamically */
-    div.zoom-container > *:focus, div.zoom-container > *:hover {{
-        background: var(--primary-bg);
-        width:100%;
-        height: calc(100% - 200px);
-        top: 100px;
-        left:0px;
-    }}
-}}
 '''
 
 def glass_css(opacity = 0.75,blur_radius = 50):

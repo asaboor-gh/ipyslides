@@ -67,7 +67,7 @@ body div.highlight, body div.highlight pre {
     width: 100% !important;
     }
     
-figure, img, .zoom-container, table, .block {margin: 0 auto !important;} /* center images */
+figure, img, .zoom-child, table, .block {margin: 0 auto !important;} /* center images */
 div.columns { /* ovveride slides css */
     width:100%;
     max-width:100%;
@@ -132,7 +132,7 @@ div.columns > div[style*="width:"] {
         padding-bottom: 18mm;
         height: auto;
     }
-    code, span, figure, img, svg, .zoom-container, blockquote { 
+    code, span, figure, img, svg, .zoom-child, .zoom-self, blockquote { 
         page-break-inside: avoid !important; 
     }
     ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }

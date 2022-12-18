@@ -180,7 +180,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             '*:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text)': {
                 'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
             },
-            'code > span': {
+            'code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': f'{code_font!r}, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important',
                 'font-size':'90% !important',
             },
@@ -310,7 +310,16 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'background':'none !important',
                 'color':'var(--primary-fg) !important',
             },
-            'figure': {'margin':'8px !important'}, # override default margin
+            'figure': {
+                'margin':'8px !important', # override default margin
+                'object-fit':'scale-down !important',
+                '^, > *':{
+                    'display':'flex !important', # To align in center 
+                    'flex-direction':'column !important', # To have caption at bottom 
+                    'align-items':'center !important',
+                    'justify-content':'center !important',
+                },
+            },
             'figcaption': {
                 'font-size':'0.8em !important',
                 'line-height':'1em !important',
@@ -510,17 +519,6 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             '^, > summary, > div': {'padding': '0.2em'},
             '> summary': {'color': 'var(--accent-color) !important'},
             '> div': {'background': 'var(--primary-bg)'},
-        },
-        'div.zoom-container':{
-            'resize':'both',
-            '^, > *':{
-                'display':'flex !important', # To align in center 
-                'flex-direction':'column !important', # To have caption at bottom 
-                'align-items':'center !important',
-                'justify-content':'center !important',
-                'transition':'transform .2s', # Animation
-            },
-            'figure':{'object-fit':'scale-down !important'}, # If height goes out, scale down 
         },
         '.pygal-chart':{
             'min-width':'300px',

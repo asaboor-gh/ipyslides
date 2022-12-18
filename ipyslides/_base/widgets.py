@@ -43,7 +43,8 @@ class _Toggles:
     window  = ipw.ToggleButton(icon='window-maximize',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
     fscreen = ipw.ToggleButton(icon='expand',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='search-plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
-    timer   = ipw.ToggleButton(icon='play',value = False, tooltip='Start/Stop Timer [T]').add_class('Presenter-Btn')             
+    timer   = ipw.ToggleButton(icon='play',value = False, tooltip='Start/Stop Timer [T]').add_class('Presenter-Btn')  
+    laser   = ipw.ToggleButton(icon='circle-o',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn')           
         
 
 @dataclass(frozen=True)
@@ -62,7 +63,7 @@ class _Htmls:
     cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
     notes   = HTML('Notes Area').add_class('Inline-Notes') # For below slides area
     hilite  = HTML() # Updated in settings on creation. For code blocks.
-    zoom    = HTML() # zoom-container CSS, do not add here!
+    zoom    = HTML() # zoom CSS, do not add here!
     capture = HTML('<span class="info">Edit above box and hit Enter to see screenshot here. ' 
                    'If nothing shown, your system does not support taking screenshots with PIL</span>').add_class('CaptureHtml') # Screenshot image here
     intro   = HTML().add_class('SidePanel-Text') # Intro HTML
@@ -255,7 +256,7 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
-        _many_btns = [self.buttons.setting, self.toggles.sidebar, self.toggles.window, self.toggles.fscreen, self.toggles.zoom, self.toggles.timer]
+        _many_btns = [self.buttons.setting, self.toggles.sidebar, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.toggles.timer]
         self.panelbox = VBox([
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),

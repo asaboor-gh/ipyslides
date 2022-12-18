@@ -137,6 +137,7 @@ key_combs = '''
 | `W`                          | Fit/restore slides to/from window's viewport         |
 | `G`                          | Toggle settings panel                                |
 | `H`                          | Toggle sidebar/inline mode of slides                 |
+| `L`                          | Toggle Laser Pointer ON/OFF                          |
 '''
 
 more_instructions =f'''## How to Use

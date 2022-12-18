@@ -86,9 +86,8 @@ def plt2html(plt_fig = None,transparent=True,caption=None):
     _fig.clf() # Clear image to avoid other display
     plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
-    if caption:
-        svg = svg + f'<p style="font-size:80% !important;">{caption}</p>'
-    return _HTML(f"<div class='zoom-container'>{svg}</div>")
+    cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
+    return _HTML(f"<figure class='zoom-child'>{svg + cap}</figure>")
 
 def _plt2htmlstr(plt_fig=None,transparent=True,caption=None):
     return plt2html(plt_fig=plt_fig,transparent=transparent,caption=caption).value
@@ -103,18 +102,18 @@ def bokeh2html(bokeh_fig,title=""):
     """
     from bokeh.resources import CDN
     from bokeh.embed import file_html
-    return _HTML(file_html(bokeh_fig, CDN, title))
+    return _HTML(f'<div class="zoom-child">{file_html(bokeh_fig, CDN, title)}</div>')
 
 def _bokeh2htmlstr(bokeh_fig,title=""):
     return bokeh2html(bokeh_fig,title).value
 
-def fix_ipy_image(image,width='100%'):
+def fix_ipy_image(image,width='100%'): # Do not add zoom class here, it's done in util as well as below
     img = image._repr_mimebundle_() # Picks PNG/JPEG/etc
     _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
     return _HTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
 
-def _ipy_imagestr(image,width='100%'):
-    return fix_ipy_image(image,width=width).value
+def _ipy_imagestr(image,width='100%'): # Zoom for auto output
+    return f'<div class="zoom-child">{fix_ipy_image(image,width=width).value}</div>'
 
 
 def code_css(style='default',color = None, background = None, hover_color = 'var(--hover-bg)', className = None, lineno = True):
@@ -323,12 +322,13 @@ def format_object(obj):
                 
             _obj = getattr(_module,lib['obj'],None)
             if isinstance(obj, _obj):
-                if not isinstance(lib['func'],str): # Handle Matplotlib, bokeh, df etc here by making handling functions
+                if not isinstance(lib['func'],str): # Handle Matplotlib, bokeh, df etc here by making handling functions, they are zoom enabled
                     return True, lib['func'](obj, *lib['args'],**lib['kwargs'])
                 else:
                     _func = getattr(obj, lib['func'],None)
                     if _func:
-                        return True, _func(*lib['args'],**lib['kwargs'])
+                        _output = _func(*lib['args'],**lib['kwargs'])
+                        return True, f'<div class="zoom-self">{_output}</div>' # enbable zoom-self here, not child
 
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       

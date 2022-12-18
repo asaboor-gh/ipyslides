@@ -25,7 +25,7 @@ function main(){
     let cursor  = document.getElementsByClassName('LaserPointer')[0];
     let present = document.getElementsByClassName('Presenter-Btn')[0];
     let panelBtn = document.getElementsByClassName('Settings-Btn')[0];
-
+    let laserBtn = document.getElementsByClassName('Laser-Btn')[0];
     
     // Keyboard events
     function keyOnSlides(e) {
@@ -42,6 +42,8 @@ function main(){
             panelBtn.click(); // G
         } else if (key === 72) {
             sideBtn.click(); // H
+        } else if (key === 76) {
+            laserBtn.click(); // L
         } else if (key === 88 || key === 68) {
             alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
             e.stopPropagation(); // stop propagation to jupyterlab events

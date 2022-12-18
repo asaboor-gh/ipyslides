@@ -247,7 +247,7 @@ def __check_pil_image(data):
         return im_bytes.getvalue()
     return data # if not return back data
 
-def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
+def image(data=None,width='80%',caption=None, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     You can provide following to `data` parameter:
         
@@ -256,24 +256,26 @@ def image(data=None,width='80%',caption=None, zoomable=True,**kwargs):
     - A url to image file.
     - A str/bytes object containing image data.  
     """
+    if 'zoomable' in kwargs:
+        kwargs.pop('zoomable')
+        raise ValueError("zoomable is deprecated, output is automatically magnified now.")
+    
     if isinstance(width,int):
         width = f'{width}px'
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs _HTML object
-    cap = f'<figcaption>{caption}</figcaption>' if caption else ''
-    _IMG = html('figure', img.value + cap)  # Add caption,  _HTML + _HTML
-    if zoomable:
-        return _HTML(f'<div class="zoom-container">{_IMG}</div>')
-    return _IMG # _HTML
+    cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
+    return html('figure', img.value + cap, className='zoom-child')  # Add caption,  _HTML + _HTML
 
-def svg(data=None,caption=None,zoomable=True,**kwargs):
+def svg(data=None,caption=None,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
+    if 'zoomable' in kwargs:
+        kwargs.pop('zoomable')
+        raise ValueError("zoomable is deprecated, output is automatically magnified now.")
     svg = SVG(data=data, **kwargs)._repr_svg_()
-    cap = f'<figcaption>{caption}</figcaption>' if caption else ''
-    _SVG = html('figure', svg + cap)
-    if zoomable:
-        return _HTML(f'<div class="zoom-container">{_SVG}</div>')
-    return _SVG # _HTML
+    cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
+    return html('figure', svg + cap, className='zoom-child')
+
 
 def iframe(src, width='100%',height='auto',**kwargs):
     "Display `src` in an iframe. `kwrags` are passed to IPython.display.IFrame"
@@ -281,11 +283,11 @@ def iframe(src, width='100%',height='auto',**kwargs):
     return _HTML(f._repr_html_())
 
 def enable_zoom(obj):
-    "Add zoom-container class to given object, whether a widget or html/IPYthon object"
+    "Wraps are given obj in a parent with 'zoom-child' class, whether a widget or html/IPYthon object"
     try:
-        return ipw.Box([obj]).add_class('zoom-container')
+        return ipw.Box([obj]).add_class('zoom-child')
     except:
-        return _HTML(f'<div class="zoom-container">{_fix_repr(obj)}</div>')
+        return _HTML(f'<div class="zoom-child">{_fix_repr(obj)}</div>')
 
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
