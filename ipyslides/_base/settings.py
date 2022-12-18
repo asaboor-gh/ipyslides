@@ -38,7 +38,7 @@ class LayoutSettings:
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
         self.btn_laser = self.widgets.toggles.laser
-        self.sidebar_switch = self.widgets.toggles.sidebar
+        self.btn_sidebar = self.widgets.toggles.sidebar
         self.box = self.widgets.panelbox
         self._on_load_and_refresh() # First attempt of Javascript to work
         
@@ -52,23 +52,26 @@ class LayoutSettings:
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.btn_laser.observe(self._toggle_laser,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
-        self.sidebar_switch.observe(self._toggle_sidebar,names=['value'])        
+        self.btn_sidebar.observe(self._toggle_sidebar,names=['value'])        
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
         self._update_size(change = None) # Trigger this as well
         self._toggle_sidebar(change = None) # Should be at end
-        self.sidebar_switch.value = False # Should be at end
+        self.btn_sidebar.value = False # Should be at end
         
     def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
-        self.__add_js()
-        
-        with capture_output() as cap:
-            with suppress(BaseException): # When ipython is not running, avoid errors
-                parse_xmd(intro.instructions,display_inline=True)
-        # Only do this if it's in Jupyter, otherwise throws errors
-        self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
-        self.widgets.htmls.intro.add_class('Intro')
+        with self.emit_resize_event(): # Immediately emit resize event on restart
+            self.__add_js()
+
+            with capture_output() as cap:
+                with suppress(BaseException): # When ipython is not running, avoid errors
+                    parse_xmd(intro.instructions,display_inline=True)
+                html('style','.jupyter-widgets-disconnected { display: none !important; }').display() # Hide disconnected widgets when a new slide instance is created
+            
+            # Only do this if it's in Jupyter, otherwise throws errors
+            self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
+            self.widgets.htmls.intro.add_class('Intro') 
     
     @property
     def widgets(self):
@@ -295,14 +298,14 @@ class LayoutSettings:
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout
         if not self.btn_window.value:
             with self.emit_resize_event():
-                if self.sidebar_switch.value:
+                if self.btn_sidebar.value:
                     self.widgets.mainbox.add_class('SideMode')
                     self._set_sidebar_css()
-                    self.sidebar_switch.icon = 'minus-square-o'
+                    self.btn_sidebar.icon = 'minus-square-o'
                 else:
                     self.widgets.mainbox.remove_class('SideMode')
                     self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
-                    self.sidebar_switch.icon = 'columns'
+                    self.btn_sidebar.icon = 'columns'
     
     def _toggle_viewport(self,change): 
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout
@@ -311,15 +314,23 @@ class LayoutSettings:
                 self.btn_window.icon = 'window-restore'
                 self.widgets.mainbox.add_class('FullWindow') # to Full Window
                 self._set_sidebar_css() # Set sidebar CSS that will take it to full view
-                self.sidebar_switch.disabled = True # Disable sidebar switch to avoid keyboard shortcuts
+                self.btn_sidebar.disabled = True # Disable sidebar switch to avoid keyboard shortcuts
             else:
                 self.btn_window.icon = 'window-maximize'
                 self.widgets.mainbox.remove_class('FullWindow') # back to inline
-                self._set_sidebar_css(clear = (False if self.sidebar_switch.value else True)) # Move  back from where it was left of
-                self.sidebar_switch.disabled = False # Enable sidebar switch to recieve events
-
+                self._set_sidebar_css(clear = (False if self.btn_sidebar.value else True)) # Move  back from where it was left of
+                self.btn_sidebar.disabled = False # Enable sidebar switch to recieve events
+            
             self._update_theme(change=None) # For updating size and breakpoints
-        
+    
+    def _set_old_state(self, reset=False):
+        if reset: # Do not mix getattr here
+            if getattr(self, '_old_state', None):
+                for state in self._old_state:
+                    state['owner'].value = state['value']
+        else:
+            self._old_state = tuple([{'owner': owner, 'value': owner.value} for owner in (self.btn_window, self.btn_sidebar)])
+    
     def _toggle_fullscreen(self,change):
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout
         with self.emit_resize_event():
@@ -327,7 +338,7 @@ class LayoutSettings:
                 self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
                 self.btn_fscreen.icon = 'compress'
                 self.widgets.mainbox.add_class('FullScreen')
-                self._old_state = (self.btn_window.value, self.sidebar_switch.value) # Save old state of sidebar switch
+                self._set_old_state(reset = False) # Save old state of buttons
                 if not self.btn_window.value: # Should elevate full window too
                     self.btn_window.value = True
 
@@ -337,9 +348,8 @@ class LayoutSettings:
                 self.btn_fscreen.icon = 'expand'
                 self.widgets.mainbox.remove_class('FullScreen')
                 self.btn_window.disabled = False # Enable window button to receive events
-                self.btn_window.value = getattr(self,'_old_state',[False])[0] # Restore old state of window button
-                self.sidebar_switch.value = getattr(self,'_old_state',[False])[1] # Restore old state of sidebar button
-    
+                self._set_old_state(reset = True) # Reset old state of all buttons for consistency
+                
     def _toggle_laser(self,change):
         # Just Update Layout CSS
         self.widgets.htmls.main.value = html('style',_layout_css.layout_css(self.breakpoint, show_laser_pointer = self.btn_laser.value)).value
@@ -347,13 +357,12 @@ class LayoutSettings:
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
-            if True in [self.btn_window.value, self.btn_fscreen.value, self.sidebar_switch.value]:
-                self.btn_zoom.icon = 'search-minus'
+            self.btn_zoom.icon = 'search-minus' # Change icon to minus irrespective of layout mode
+            
+            if True in [self.btn_window.value, self.btn_fscreen.value, self.btn_sidebar.value]:
                 self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self.span_percent)}\n</style>'
             else:
-                with self.btn_zoom.hold_trait_notifications():
-                    self.btn_zoom.value = False # In inline mode switch to no hover mode
-                    self.widgets.htmls.zoom.value = '' # Clear zoom css immediately
+                self.widgets.htmls.zoom.value = '' # Clear zoom css immediately to avoid conflict
                 self.widgets._push_toast('Objects are not zoomable in inline mode!',timeout=2)
         else:
             self.btn_zoom.icon= 'search-plus'

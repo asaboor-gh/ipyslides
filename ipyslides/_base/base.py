@@ -356,6 +356,19 @@ class BaseSlides:
                 ' so you can set CSS, aminations etc.', key_combs)
         
         with auto.slide():
+            self.write('''
+            ## Focus on what matters
+            - There is a zoom button on top bar which enables zooming of certain elements. This can be toggled by `Z` key.
+            - Most of supported elements are zoomable by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.
+            - You can also enable zooming for an object/widget by wrapping it inside `Slide.enable_zoom` function conveniently.
+            - You can also enable by manully adding `zoom-self`, `zoom-child` classes to an element. To prevent zooming under as `zoom-child` class, use `no-zoom` class.
+            
+            ::: zoom-self block-red
+                ### Focus on Me 😎
+                - If zoom button is enabled, you can hover here to zoom in this part!
+                - You can also zoom in this part by pressing `Z` key while mouse is over this part.
+            ''')
+        with auto.slide():
             self.write(['# Auto Slide Numbering in Python Scripts', self.doc(self.AutoSlides,'Slides')])
         
         with auto.slide():

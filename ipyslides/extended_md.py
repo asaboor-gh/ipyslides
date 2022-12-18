@@ -125,7 +125,7 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
         bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(slide_instance.toc, start = 1)])
         repr_html = slide_instance.format_html([match, bullets]).value
         text_chunk = text_chunk.replace(f'toc`{match}`', repr_html, 1)
-        
+    
     return text_chunk
 
 class _ExtendedMarkdown(Markdown):
@@ -152,6 +152,7 @@ class _ExtendedMarkdown(Markdown):
         xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
         xmd = re.sub('\\\`', '&#96;', xmd) # Escape backticks
         xmd = self._resolve_nested(xmd) # Resolve nested objects in form func`?text?` to func`html_repr`
+        
         slides_instance = get_ipython().user_ns.get('get_slides_instance',lambda: None)() # It is callable, do not get it in global namespace,need only single reference outside
         if slides_instance and slides_instance._running_slide: # getattr(slides_instance,'_under_with_or_frame',False):
             xmd = resolve_objs_on_slide(slides_instance,xmd) # Resolve objects in xmd related to current slide

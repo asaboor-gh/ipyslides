@@ -353,6 +353,17 @@ def demo(slides_instance):
         slide.insert_markdown({-1: 'toc`## Table of Contents\n----`'})
     
     slides.navigate_to(0) # Go to title slide
+    slides.settings.set_css({
+        ':is(.zoom-child, .zoom-self, .plot-container.plotly, .jp-RenderedImage > img)::before': {
+            'content': "'👇🏻 Zoom it with Z key or enable zoom on hover with button on top bar!'",
+            'position': 'relative',
+            'left':'0',
+            'top':'0',
+            'font-size': '60%',
+            'color':'var(--secondary-fg)',
+            'backdrop-filter':'blur(20px)',
+        }
+    })
     return slides
 
 if __name__ == '__main__':

@@ -1,6 +1,9 @@
 # This should not be used by user, but is used by ipyslides to generate layout of slides
 
 from ..utils import _build_css
+
+_zoom_ables = '.jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom), .plot-container.plotly'
+
 def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
     return _build_css((),{
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
@@ -28,6 +31,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
                 '.report-only': {
                     'display': 'none !important'
                 },
+                _zoom_ables: {'cursor':'zoom-in',},
             },
             '.export-only': { 'display': 'none !important' },
             '.widget-inline-hbox': {
@@ -488,54 +492,48 @@ body[data-notebook] .SlidesWrapper{{
 '''
 
 def zoom_hover_css(span_percent):
-    return f'''
-/* Pop out matplotlib's SVG, image on click/hover while keeping most top only*/
-.SlideArea .zoom-child > *:not(.no-zoom):focus,
-.SlideArea .zoom-child > *:not(.no-zoom):hover,
-.SlideArea .zoom-self:focus, 
-.SlideArea .zoom-self:hover,
-.SlideArea .plot-container.plotly:hover, /* Becuase plotly is auto-written, take care of it */
-.SlideArea .plot-container.plotly:focus {{
-    position:fixed;
-    backdrop-filter: blur(200px);
-    left:calc({100-span_percent}% + 50px);
-    top:50px;
-    z-index:100;
-    width: calc({span_percent}% - 100px);
-    height: calc(100% - 100px);
-    object-fit: scale-down !important;
-    box-shadow: -1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5); 
-    border-radius: 4px;
-    overflow:scroll !important; /* Specially for dataframes */
-}}
-.SlideArea .zoom-self:focus .vega-embed canvas,
-.SlideArea .zoom-self:hover .vega-embed canvas,
-.SlideArea .plot-container.plotly:hover > .svg-container,
-.SlideArea .plot-container.plotly:focus > .svg-container {{
-    position: fixed !important;
-    width: 100% !important;
-    height: 100% !important; /* Ovverider plotly and altair style */
-    border-radius: 4px !important;
-    object-fit: scale-down !important;
-    box-sizing: border-box !important;
-}} 
-.SlideArea .zoom-self:focus .vega-embed details,
-.SlideArea .zoom-self:hover .vega-embed details {{display: none !important;}}
-
-/* nested zoom classes should occupy full space because parent is zoomed too */
-.SlideArea .zoom-self  :is(.zoom-self, .zoom-child):hover,
-.SlideArea .zoom-self  :is(.zoom-self, .zoom-child):focus,
-.SlideArea .zoom-child :is(.zoom-self, .zoom-child):hover,
-.SlideArea .zoom-child :is(.zoom-self, .zoom-child):focus {{
-    left: 0px !important;
-    top: 0px !important;
-    width: 100% !important;
-    height: 100% !important;
-    box-sizing: border-box !important;
-    background: var(--primary-bg) !important; /* Avoids overlapping with other elements */
-}}
-
-'''
+    return _build_css(('.SlideArea',), {
+        # Matplotlib by plt.show, self zoom, child zoom, plotly
+        _zoom_ables: {
+            '^:hover, ^:focus': {
+                'cursor': 'default', # Ovverride zoom-in cursor form main layout
+                'position': 'fixed',
+                'backdrop-filter': 'blur(200px)',
+                'left':f'calc({100-span_percent}% + 50px)',
+                'top':'50px',
+                'z-index':100,
+                'width': f'calc({span_percent}% - 100px)',
+                'height': 'calc(100% - 100px)',
+                'object-fit': 'scale-down !important',
+                'box-shadow': '-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5)',
+                'border-radius': '4px',
+                'overflow':'scroll !important', # Specially for dataframes 
+                '.vega-embed canvas, > .svg-container': { # Vega embed canvas and plotly svg-container inside hoverabe
+                    'position': 'fixed !important', # Will be extra CSS but who cares
+                    'width': '100% !important',
+                    'height': '100% !important', # Ovverider plotly and altair style
+                    'border-radius': '4px !important',
+                    'object-fit': 'scale-down !important',
+                    'box-sizing': 'border-box !important',
+                },
+            },
+        },
+        # Nested zoom classes should occupy full space because parent is zoomed too
+        '.zoom-self, .zoom-child': {
+            '^:focus .vega-embed details, ^:hover .vega-embed details': {'display': 'none !important',},
+            '.zoom-self, .zoom-child': {
+                '^:hover, ^:focus': {
+                    'left': '0px !important',
+                    'top': '0px !important',
+                    'width': '100% !important',
+                    'height': '100% !important',
+                    'box-sizing': 'border-box !important',
+                    'background': 'var(--primary-bg) !important', # Avoids overlapping with other elements 
+                },
+            },
+        },
+    })
+        
 
 def glass_css(opacity = 0.75,blur_radius = 50):
     return f'''.BackLayer, .BackLayer .Front {{
