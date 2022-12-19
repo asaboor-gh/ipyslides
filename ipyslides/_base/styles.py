@@ -181,7 +181,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
             },
             'code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
-                'font-family': f'{code_font!r}, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important',
+                'font-family': f'{code_font!r}, "Cascadia Code", "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
                 'font-size':'90% !important',
             },
         },
@@ -256,7 +256,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             },
         },
         '.raw-text': { # Should be same in notebook cell 
-            'font-family': f'{code_font!r}, "SimSun-ExtB", "Cascadia Code","Ubuntu Mono", "Courier New" !important',
+            'font-family': f'{code_font!r}, "Cascadia Code","Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
             'font-size':'90% !important',
             'display':'block !important',
             'margin':'4px !important',

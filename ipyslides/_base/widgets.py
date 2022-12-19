@@ -44,7 +44,8 @@ class _Toggles:
     fscreen = ipw.ToggleButton(icon='expand',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='search-plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
     timer   = ipw.ToggleButton(icon='play',value = False, tooltip='Start/Stop Timer [T]').add_class('Presenter-Btn')  
-    laser   = ipw.ToggleButton(icon='circle-o',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn')           
+    laser   = ipw.ToggleButton(icon='circle-o',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn') 
+    overlay = ipw.ToggleButton(icon='pencil',value = False, tooltip='Toggle Overlay Panel').add_class('Overlay-Btn')          
         
 
 @dataclass(frozen=True)
@@ -67,7 +68,8 @@ class _Htmls:
     capture = HTML('<span class="info">Edit above box and hit Enter to see screenshot here. ' 
                    'If nothing shown, your system does not support taking screenshots with PIL</span>').add_class('CaptureHtml') # Screenshot image here
     intro   = HTML().add_class('SidePanel-Text') # Intro HTML
-    glass = HTML().add_class('BackLayer') # For glass effect
+    glass   = HTML().add_class('BackLayer') # For glass effect
+    overlay = HTML().add_class('OverlayHtml') # For adding iframe of things
 
 @dataclass(frozen=True)
 class _Inputs:
@@ -256,7 +258,7 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
-        _many_btns = [self.buttons.setting, self.toggles.sidebar, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.toggles.timer]
+        _many_btns = [self.buttons.setting, self.toggles.overlay, self.toggles.sidebar, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.toggles.timer]
         self.panelbox = VBox([
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
@@ -294,7 +296,6 @@ class Widgets:
         ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox') 
         
         self.mainbox = VBox([
-            self.htmls.glass, # This is the glass pane, should be on top of everything
             self.htmls.loading, 
             self.htmls.toast,
             self.htmls.main,
@@ -312,7 +313,9 @@ class Widgets:
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.sliders.visible,
-            self.navbox
+            self.navbox,
+            self.htmls.glass, # This is the glass pane, should be after everything except overlay
+            self.htmls.overlay, 
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{self.sliders.height.value}px',margin='auto')
         ).add_class('SlidesWrapper')  #Very Important to add this class
 

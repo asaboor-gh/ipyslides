@@ -122,6 +122,7 @@ class Slides(BaseSlides):
         self._box =  self.widgets.mainbox
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box_ = ipw.VBox() # Initialize display box
+        self.set_overlay_url(url = None) # Set overlay url for initial information
     
     @property
     def xmd_syntax(self):
@@ -814,6 +815,45 @@ class Slides(BaseSlides):
         def frames(*objs, repeat=False, frame_height='auto'): return self.frames(self._next_number,*objs, repeat = repeat, frame_height = frame_height)
         def from_markdown(file_or_str, trusted = False): return self.from_markdown(self._next_number,file_or_str, trusted = trusted)
         return auto(self.title,slide,frames, from_markdown)
+    
+    def set_overlay_url(self, url = None):
+        """Sets url in a persistent overlay iframe. Useful to load external sites like drawing pads or even files on jupyter/localhost server.
+        You can load a notebook file there by passing url like `http://localhost:{port}{server}{path/to/file.ipynb}`.
+        
+        > Some sites may not allow loading inside an iframe.
+        
+        **These are some suggestions:**
+        
+        - `https://www.tldraw.com/` - Handwriting and drawing
+        - `https://excalidraw.com/` - Handwriting and drawing
+        - `https://www.draw.io/` - Drawing. You can also install extension `jupyterlab-drawio` and load it from there
+        - And you will find many more on internet
+        """
+        if url and isinstance(url, str):
+            if not url.strip():
+                raise ValueError('Empty string is not a valid url')
+            
+            from urllib import request
+            
+            resp = request.urlopen(url,)
+            if resp.getcode() != 200:
+                raise ValueError(f'Invalid url: {url!r} or site is not reachable right now. Exit status: {resp.getcode()}')
+            
+            if resp.getheader("X-Frame-Options") in ('DENY', 'SAMEORIGIN','ALLOW-FROM'):
+                raise RuntimeError(f'Cannot load url: {url!r} inside an iframe! X-Frame-Options: {resp.getheader("X-Frame-Options")!r}')
+            
+            _html = self.html('div',[self.html('span',url), self.iframe(url,height='100%')])
+            self.widgets.htmls.overlay.value= _html.value
+        elif url is None:
+            _html = self.html('div',[
+                self.html('span','About this overlay'),
+                self.html('div',[
+                    self.doc(self.set_overlay_url,'Slides')
+                    ], className = 'block')
+                ])
+            self.widgets.htmls.overlay.value= _html.value # Set overlay to blank and give docs info
+        else:
+            raise ValueError(f'url must be a string or None, got {type(url)}')
         
         
 # Make available as Singleton Slides

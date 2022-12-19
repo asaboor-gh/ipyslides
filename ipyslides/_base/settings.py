@@ -40,6 +40,7 @@ class LayoutSettings:
         self.btn_timer = self.widgets.toggles.timer
         self.btn_laser = self.widgets.toggles.laser
         self.btn_sidebar = self.widgets.toggles.sidebar
+        self.btn_overlay = self.widgets.toggles.overlay
         self.box = self.widgets.panelbox
         self._on_load_and_refresh() # First attempt of Javascript to work
         
@@ -53,7 +54,8 @@ class LayoutSettings:
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.btn_laser.observe(self._toggle_laser,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
-        self.btn_sidebar.observe(self._toggle_sidebar,names=['value'])        
+        self.btn_sidebar.observe(self._toggle_sidebar,names=['value']) 
+        self.btn_overlay.observe(self._toggle_overlay,names=['value'])       
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
@@ -377,4 +379,15 @@ class LayoutSettings:
         else:
             self.btn_zoom.icon= 'search-plus'
             self.widgets.htmls.zoom.value = ''
+            
+    def _toggle_overlay(self,change):
+        if self.btn_overlay.value:
+            self.btn_overlay.icon = 'arrow-left'
+            self.widgets.htmls.overlay.layout.height = '100%'
+            self.btn_laser.disabled = True # Disable laser pointer
+        else:
+            self.btn_overlay.icon = 'pencil'
+            self.widgets.htmls.overlay.layout.height = '0px'
+            self.btn_laser.disabled = False # Enable laser pointer
+
         

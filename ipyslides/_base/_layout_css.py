@@ -160,6 +160,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
                 'align-items': 'center',
                 'height':'max-content',
                 'justify-content': 'flex-start',
+                '.Toc-Btn': {'min-width':'40px',}, # Avoid overflow in small screens
             },
         },
         '.FloatControl': {
@@ -168,7 +169,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
             'top': '0',
             'width': '32px',
             'height': '32px',
-            'z-index': ' 51',
+            'z-index': '51',
             'background': 'var(--primary-bg)',
             'opacity': '0',
             'overflow': 'hidden',
@@ -184,7 +185,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
             'position':'absolute',
             'right':'16px !important',
             'bottom':'0px !important',
-            'z-index':'98', # below matplotlib fullsreen 
+            'z-index':'95', # below matplotlib fullsreen 
             'padding':'0 !important',
             'justify-content':' flex-end !important',
             'align-items':'center !important',
@@ -273,7 +274,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
             'line-height': '0.9em  !important',
         },
         '.TopBar': {
-            'padding-top:4px !important;'
+            'margin-top': '8px !important', # Avoid overlap with topbar outside
             'display':'flex',
             'overflow': 'scroll',
             'min-height': '36px !important',
@@ -314,12 +315,14 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
         '.TopBar.Outside': {
             'position': 'absolute !important',
             'z-index': '98 !important', # below matplotlib fullsreen
-            'top': '4px !important',
-            'margin': '8px !important',
+            'top': '0 !important',
+            'margin': '0 !important',
+            'min-height': '32px !important',
             'width': '60px !important',
+            'padding-top': '0 !important',
             'transition': 'width 400ms',
             '^:hover, ^:focus': {
-                'min-height': '36px !important',
+                'min-height': '32px !important',
                 'width': '60% !important',
                 f'@media screen and (max-width: {breakpoint})': {'width': 'calc(100% - 16px) !important'}, # There is 8px margin
                 '> .Settings-Btn' : {
@@ -372,6 +375,45 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
             '^, pre': {
                 'color':'var(--primary-fg) !important',
             }, 
+        },
+        '.OverlayHtml': {
+            'backdrop-filter': 'blur(50px)',
+            'margin':0,
+            'z-index': 97,
+            'overflow': 'hidden !important',
+            'transition': 'height 200ms',
+            '^, > div': {
+               'position': 'absolute !important',
+               'left': '0',
+               'top': '0',
+               'width': '100%',
+               'box-sizing': 'border-box',
+            },
+            '> div': { 'height': '100% !important',}, # Do not set height for .OverlayHtml, it is done by widgets
+            '.widget-html-content > div': {
+                '> span': {
+                    'height': '32px !important',
+                    'position': 'absolute',
+                    'top': 0,
+                    'padding-left': '32px !important',
+                    'padding-right': '8px',
+                    'padding-top': '2px !important',
+                    'color': 'var(--secondary-fg)',
+                    'background': 'var(--secondary-bg) !important',
+                    'font-size': '18px',
+                    'border': '1px solid var(--hover-bg)',
+                    'border-bottom': 'none',
+                    'border-radius': '0.4em 0.4em 0 0',    
+                },
+                '> iframe, > .block': {
+                    'position': 'absolute',
+                    'top': '32px !important',
+                    'height': 'calc(100% - 32px) !important',
+                },
+                '> .block': {
+                    '^, .docs': { 'overflow': 'scroll !important',},
+                },
+            },
         },
         '@media print': {
             '.SlidesWrapper':{
@@ -452,6 +494,11 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
                 },
             },   
         },
+        '#ipython-main-app .SlidesWrapper .output_scroll': { # For classic Notebook output
+            'height': 'unset !important',
+            '-webkit-box-shadow': 'none !important',
+            'box-shadow': 'none !important',
+        },
     })
 
 def sidebar_layout_css(span_percent = 40):
@@ -478,6 +525,7 @@ body[data-notebook] .SlidesWrapper{{
     height: 100% !important;
     width: {span_percent}vw !important; 
 }}
+
 /* Very important to keep slides ON even Notebook hidden */
 .jp-LabShell .jp-NotebookPanel.p-mod-hidden {{
     display:block !important;
