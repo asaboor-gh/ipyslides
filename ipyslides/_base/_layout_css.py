@@ -393,6 +393,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
             '.widget-html-content > div': {
                 '> span': {
                     'height': '32px !important',
+                    'overflow': 'hidden !important',
                     'position': 'absolute',
                     'top': 0,
                     'padding-left': '32px !important',

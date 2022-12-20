@@ -381,13 +381,17 @@ class LayoutSettings:
             self.widgets.htmls.zoom.value = ''
             
     def _toggle_overlay(self,change):
+        _which_disable = [self.btn_laser, self.btn_zoom, self.btn_timer]
         if self.btn_overlay.value:
             self.btn_overlay.icon = 'arrow-left'
             self.widgets.htmls.overlay.layout.height = '100%'
-            self.btn_laser.disabled = True # Disable laser pointer
+            for btn in _which_disable:
+                btn.disabled = True # Disable all buttons
+            
         else:
             self.btn_overlay.icon = 'pencil'
             self.widgets.htmls.overlay.layout.height = '0px'
-            self.btn_laser.disabled = False # Enable laser pointer
+            for btn in _which_disable:
+                btn.disabled = False # Enable all buttons
 
         

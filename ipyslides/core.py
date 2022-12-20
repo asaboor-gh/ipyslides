@@ -1,5 +1,5 @@
 
-import sys, re, textwrap
+import sys, os, re, textwrap
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 
@@ -822,28 +822,22 @@ class Slides(BaseSlides):
         
         > Some sites may not allow loading inside an iframe.
         
-        **These are some suggestions:**
-        
-        - `https://www.tldraw.com/` - Handwriting and drawing
-        - `https://excalidraw.com/` - Handwriting and drawing
-        - `https://www.draw.io/` - Drawing. You can also install extension `jupyterlab-drawio` and load it from there
-        - And you will find many more on internet
+        You can find open source drawing programs online to use here, or install e.g. `jupyterlab-drawio` extension to load in iframe.
         """
         if url and isinstance(url, str):
             if not url.strip():
                 raise ValueError('Empty string is not a valid url')
             
-            from urllib import request
-            
-            resp = request.urlopen(url,)
-            if resp.getcode() != 200:
-                raise ValueError(f'Invalid url: {url!r} or site is not reachable right now. Exit status: {resp.getcode()}')
-            
-            if resp.getheader("X-Frame-Options") in ('DENY', 'SAMEORIGIN','ALLOW-FROM'):
-                raise RuntimeError(f'Cannot load url: {url!r} inside an iframe! X-Frame-Options: {resp.getheader("X-Frame-Options")!r}')
+            if not os.path.isfile(url):
+                from urllib.parse import urlparse
+                scheme, netloc, path, *others = urlparse(url) # to check if it is a valid url/filepath
+                if not all([scheme, netloc or path]):
+                    raise ValueError(f'Invalid url: {url!r}')
             
             _html = self.html('div',[self.html('span',url), self.iframe(url,height='100%')])
             self.widgets.htmls.overlay.value= _html.value
+            self.settings.btn_overlay.value = True # Bring there when something is available
+            
         elif url is None:
             _html = self.html('div',[
                 self.html('span','About this overlay'),
@@ -853,7 +847,7 @@ class Slides(BaseSlides):
                 ])
             self.widgets.htmls.overlay.value= _html.value # Set overlay to blank and give docs info
         else:
-            raise ValueError(f'url must be a string or None, got {type(url)}')
+            raise ValueError(f'url must be a valide string or None, got {url!r}')
         
         
 # Make available as Singleton Slides

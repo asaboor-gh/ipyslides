@@ -10,6 +10,30 @@ from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Bu
 from . import styles, _layout_css
 from ..utils import html, _build_css
 
+_icons_fallback = { # fallback for fontawesome icons (specially in colab) to choose for description, if fontawesome is not loaded
+    'chevron-left': '◁',
+    'chevron-right': '▷',
+    'chevron-up': '△',
+    'chevron-down': '▽',
+    'pencil': '⇙',
+    'circle-o': '○',
+    'play': '▶',
+    'pause': '■',
+    'expand': '↕',
+    'compress': '↧',
+    'window-maximize': '◱',
+    'window-restore': '▫',
+    'columns': '◨',
+    'minus-square-o': '▣',
+    'camera': '◙',
+    'bars': '≡',
+    'times': '×',
+    'ellipsis-v': '⁝',
+    'arrow-left': '←',
+    'search-plus': '⊕',
+    'search-minus': '⊝'
+ }
+
 def _build_style_widget(css_dict):
     return HTML(html('style',_build_css((), css_dict)).value)
 
@@ -313,9 +337,9 @@ class Widgets:
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.sliders.visible,
-            self.navbox,
-            self.htmls.glass, # This is the glass pane, should be after everything except overlay
+            self.htmls.glass, # This is the glass pane, should be after everything except overlay and navbox
             self.htmls.overlay, 
+            self.navbox, # Navbox should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{self.sliders.height.value}px',margin='auto')
         ).add_class('SlidesWrapper')  #Very Important to add this class
 
@@ -335,3 +359,4 @@ class Widgets:
         self.outputs.renew.clear_output(wait = True)
         with self.outputs.renew:
             display(Javascript(code_string))
+            
