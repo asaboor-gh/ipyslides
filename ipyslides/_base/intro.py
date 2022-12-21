@@ -1,4 +1,4 @@
-from .icons import Icon as _Icon
+from .icons import Icon as _Icon, _icons
 
 # ONLY INSTRUCTIONS BELOW
 
@@ -123,24 +123,24 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
-_play, _pause = _Icon("play","var(--accent-color)"), _Icon("pause","var(--accent-color)")
-_expand, _compress = _Icon("expand","var(--accent-color)"), _Icon("compress","var(--accent-color)")
+_icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
+
 key_combs = f'''
-| Key (comb)                   | Action                                               | 
-|------------------------------|------------------------------------------------------|
-| `Space/RightArrowKey`        | Move to next slide                                   |
-| `Shift + Space/LeftArrowKey` | Move to previous slide                               |
-| `Ctrl + Shift + C`           | Change the theme, create console/terminal etc        |
-| `T` {_play}, {_pause}        | Start/stop timer                                   |
-| `Z`                          | Toggle matplotlib/svg/image zoom mode                |
-| `S`                          | Save screenshot of current slide                     |
-| `P`                          | print PDF of current slide                           |
-| `F` {_expand}, {_compress}   | Toggle Fullscreen mode                               |
-| `Esc`                        | Exit Fullscreen mode                                 |
-| `W`                          | Fit/restore slides to/from window's viewport         |
-| `G`                          | Toggle settings panel                                |
-| `H`                          | Toggle sidebar/inline mode of slides                 |
-| `L`                          | Toggle Laser Pointer ON/OFF                          |
+| Key (comb) and associated button(s)                                           | Action                                               | 
+|-------------------------------------------------------------------------------|------------------------------------------------------|
+| `Space/RightArrowKey` {_icons["chevron-right"]}, {_icons["chevron-down"]}     | Move to next slide                                   |
+| `Shift + Space/LeftArrowKey` {_icons["chevron-left"]}, {_icons["chevron-up"]} | Move to previous slide                               |
+| `Ctrl + Shift + C`                                                            | Change the theme, create console/terminal etc        |
+| `T` {_icons["play"]}, {_icons["pause"]}                                       | Start/stop timer                                     |
+| `Z`                                                                           | Toggle `image/.zoom-self/.zoom-child > *` zoom mode  |
+| `S` {_icons["camera"]}                                                        | Save screenshot of current slide                     |
+| `P`                                                                           | print PDF of current slide                           |
+| `F` {_icons["expand"]}, {_icons["compress"]}                                  | Toggle Fullscreen mode                               |
+| `Esc`                                                                         | Exit Fullscreen mode                                 |
+| `W`                                                                           | Fit/restore slides to/from window's viewport         |
+| `G` {_icons["dots"]}, {_icons["close"]}                                       | Toggle settings panel                                |
+| `H`                                                                           | Toggle sidebar/inline mode of slides                 |
+| `L`                                                                           | Toggle Laser Pointer ON/OFF                          |
 '''
 
 more_instructions =f'''## How to Use
