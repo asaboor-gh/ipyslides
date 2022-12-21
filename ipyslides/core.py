@@ -21,6 +21,7 @@ from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide
+from ._base.icons import Icon as _Icon
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -71,6 +72,7 @@ class Slides(BaseSlides):
         self.bokeh2html = bokeh2html
         self.highlight  = highlight
         self.source = Source # Code source
+        self.icon = _Icon # Icon is useful to add many places
         self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
         self.parse_xmd = parse_xmd # Parse extended markdown

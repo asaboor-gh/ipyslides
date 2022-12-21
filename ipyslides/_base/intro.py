@@ -1,3 +1,5 @@
+from .icons import Icon as _Icon
+
 # ONLY INSTRUCTIONS BELOW
 
 how_to_ppt = '''### How to make Powerpoint Presentation from Bunch of Images
@@ -121,18 +123,19 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 ''',
 '<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
-
-key_combs = '''
+_play, _pause = _Icon("play","var(--accent-color)"), _Icon("pause","var(--accent-color)")
+_expand, _compress = _Icon("expand","var(--accent-color)"), _Icon("compress","var(--accent-color)")
+key_combs = f'''
 | Key (comb)                   | Action                                               | 
 |------------------------------|------------------------------------------------------|
 | `Space/RightArrowKey`        | Move to next slide                                   |
 | `Shift + Space/LeftArrowKey` | Move to previous slide                               |
 | `Ctrl + Shift + C`           | Change the theme, create console/terminal etc        |
-| `T`                          | Start/stop timer                                     |
+| `T` {_play}, {_pause}        | Start/stop timer                                   |
 | `Z`                          | Toggle matplotlib/svg/image zoom mode                |
 | `S`                          | Save screenshot of current slide                     |
 | `P`                          | print PDF of current slide                           |
-| `F`                          | Toggle Fullscreen mode                               |
+| `F` {_expand}, {_compress}   | Toggle Fullscreen mode                               |
 | `Esc`                        | Exit Fullscreen mode                                 |
 | `W`                          | Fit/restore slides to/from window's viewport         |
 | `G`                          | Toggle settings panel                                |

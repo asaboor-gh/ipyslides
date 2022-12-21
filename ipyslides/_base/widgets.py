@@ -47,13 +47,13 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows')
-    setting =  Button(icon= 'ellipsis-v',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
-    toc     =  Button(icon= 'bars',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
+    setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
+    toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
     end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
                 tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved! [S]',
-                ).add_class('screenshot-btn') # .add_class('Menu-Item')
+                ).add_class('Screenshot-Btn').add_class('Menu-Item')
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
     cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
@@ -65,11 +65,11 @@ class _Toggles:
     """
     sidebar = ipw.ToggleButton(icon='columns', value = False, tooltip='Toggle ON/OFF Sidebar Mode [H]').add_class('SideBar-Btn').add_class('Menu-Item')
     window  = ipw.ToggleButton(icon='window-maximize',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
-    fscreen = ipw.ToggleButton(icon='expand',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
+    fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='search-plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
-    timer   = ipw.ToggleButton(icon='play',value = False, tooltip='Start/Stop Timer [T]').add_class('Presenter-Btn')  
+    timer   = ipw.ToggleButton(icon='plus',value = False, tooltip='Start/Stop Timer [T]').add_class('Timer-Btn')  
     laser   = ipw.ToggleButton(icon='circle-o',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn') 
-    overlay = ipw.ToggleButton(icon='pencil',value = False, tooltip='Toggle Overlay Panel').add_class('Overlay-Btn')          
+    overlay = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Overlay Panel').add_class('Overlay-Btn')          
         
 
 @dataclass(frozen=True)

@@ -284,7 +284,7 @@ class LayoutSettings:
     def _update_theme(self,change=None): 
         with self.emit_resize_event():
             # Update Layout CSS  
-            layout_css = _layout_css.layout_css(breakpoint = self.breakpoint, show_laser_pointer=self.btn_laser.value)
+            layout_css = _layout_css.layout_css(breakpoint = self.breakpoint, accent_color= self.colors['accent_color'], show_laser_pointer=self.btn_laser.value)
             self.widgets.htmls.main.value = html('style',layout_css).value
         
         # Update Theme CSS
@@ -299,10 +299,10 @@ class LayoutSettings:
     def _toggle_tocbox(self,btn):
         if self.widgets.tocbox.layout.display == 'none':
             self.widgets.tocbox.layout.display = 'unset'
-            self.widgets.buttons.toc.icon = 'times'
+            self.widgets.buttons.toc.icon = 'minus'
         else:
             self.widgets.tocbox.layout.display = 'none'
-            self.widgets.buttons.toc.icon = 'bars'
+            self.widgets.buttons.toc.icon = 'plus'
         
     def _toggle_sidebar(self,change): 
         """Pushes this instance of Slides to sidebar and back inline."""
@@ -348,7 +348,7 @@ class LayoutSettings:
         with self.emit_resize_event():
             if self.btn_fscreen.value:
                 self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
-                self.btn_fscreen.icon = 'compress'
+                self.btn_fscreen.icon = 'minus'
                 self.widgets.mainbox.add_class('FullScreen')
                 self._set_old_state(reset = False) # Save old state of buttons
                 if not self.btn_window.value: # Should elevate full window too
@@ -357,14 +357,14 @@ class LayoutSettings:
                 self.btn_window.disabled = True # Disable window button to recieve events
             else:
                 self.widgets._exec_js("document.exitFullscreen();") # To Fullscreen
-                self.btn_fscreen.icon = 'expand'
+                self.btn_fscreen.icon = 'plus'
                 self.widgets.mainbox.remove_class('FullScreen')
                 self.btn_window.disabled = False # Enable window button to receive events
                 self._set_old_state(reset = True) # Reset old state of all buttons for consistency
                 
     def _toggle_laser(self,change):
         # Just Update Layout CSS
-        self.widgets.htmls.main.value = html('style',_layout_css.layout_css(self.breakpoint, show_laser_pointer = self.btn_laser.value)).value
+        self.widgets.htmls.main.value = html('style',_layout_css.layout_css(self.breakpoint, accent_color= self.colors['accent_color'], show_laser_pointer = self.btn_laser.value)).value
     
     
     def _push_zoom(self,change):
@@ -383,13 +383,13 @@ class LayoutSettings:
     def _toggle_overlay(self,change):
         _which_disable = [self.btn_laser, self.btn_zoom, self.btn_timer]
         if self.btn_overlay.value:
-            self.btn_overlay.icon = 'arrow-left'
+            self.btn_overlay.icon = 'minus'
             self.widgets.htmls.overlay.layout.height = '100%'
             for btn in _which_disable:
                 btn.disabled = True # Disable all buttons
             
         else:
-            self.btn_overlay.icon = 'pencil'
+            self.btn_overlay.icon = 'plus'
             self.widgets.htmls.overlay.layout.height = '0px'
             for btn in _which_disable:
                 btn.disabled = False # Enable all buttons

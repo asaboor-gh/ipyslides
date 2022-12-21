@@ -1,10 +1,13 @@
 # This should not be used by user, but is used by ipyslides to generate layout of slides
 
 from ..utils import _build_css
+from .styles import theme_colors as _tc
+from .icons import Icon
 
+_accent_color = _tc['Inherit']['accent_color'] # For theme start
 _zoom_ables = '.jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom), .plot-container.plotly'
 
-def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
+def layout_css(breakpoint, accent_color = _accent_color, show_laser_pointer = False): # Defult is off
     return _build_css((),{
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
@@ -203,7 +206,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
                 'opacity':'0.4',
                 'font-size': '36px',
                 'padding':'4px',
-                '^:hover, ^:focus': {'opacity': 1},    
+                '^:hover, ^:focus': {'opacity': 1}, 
             },
             '.ProgBox': {
                 'width': '16px',
@@ -396,7 +399,7 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
                     'overflow': 'hidden !important',
                     'position': 'absolute',
                     'top': 0,
-                    'padding-left': '32px !important',
+                    'padding-left': '36px !important',
                     'padding-right': '8px',
                     'padding-top': '2px !important',
                     'color': 'var(--secondary-fg)',
@@ -416,6 +419,39 @@ def layout_css(breakpoint, show_laser_pointer = False): # Defult is off
                 },
             },
         },
+        # Uniform Icons everywhere
+        '.Settings-Btn, .Toc-Btn, .Overlay-Btn, .Screenshot-Btn, .FullScreen-Btn, .Timer-Btn': { # Align buttons at center
+            'display': 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+        },
+        '.Arrows': {
+                '.fa.fa-chevron-left': Icon('chevron-left', color=accent_color, size='36px').css,
+                '.fa.fa-chevron-right': Icon('chevron-right', color=accent_color, size='36px').css,
+                '.fa.fa-chevron-up': Icon('chevron-up', color=accent_color, size='36px').css,
+                '.fa.fa-chevron-down': Icon('chevron-down', color=accent_color, size='36px').css,
+        },
+        '.Settings-Btn': {
+            '.fa.fa-plus': Icon('dots', color=accent_color, size='1em').css,
+            '.fa.fa-minus': Icon('close', color=accent_color, size='1em').css,
+        },
+        '.Toc-Btn': {
+            '.fa.fa-plus': Icon('toc', color=accent_color, size='1em').css,
+            '.fa.fa-minus': Icon('close', color=accent_color, size='1em').css,
+        },
+        '.Overlay-Btn': {
+            '.fa.fa-plus': Icon('pencil', color=accent_color, size='1em').css,
+            '.fa.fa-minus': Icon('back', color=accent_color, size='1em').css,
+        },
+        '.FullScreen-Btn': {
+            '.fa.fa-plus': Icon('expand', color=accent_color, size='1em').css,
+            '.fa.fa-minus': Icon('compress', color=accent_color, size='1em').css,
+        },
+        '.Timer-Btn': {
+            '.fa.fa-plus': Icon('play', color=accent_color, size='1em').css,
+            '.fa.fa-minus': Icon('pause', color=accent_color, size='1em').css,
+        },
+        '.Screenshot-Btn .fa.fa-camera': Icon('camera', color=accent_color, size='1em').css,
         '@media print': {
             '.SlidesWrapper':{
                 '^, ^.FullWindow': { 

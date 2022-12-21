@@ -21,9 +21,9 @@ function main(){
     let winFs   = document.getElementsByClassName('FullWindow-Btn')[0];
     let sideBtn = document.getElementsByClassName('SideBar-Btn')[0];
     let fullSc  = document.getElementsByClassName('FullScreen-Btn')[0];
-    let capSc   = document.getElementsByClassName('screenshot-btn')[0];
+    let capSc   = document.getElementsByClassName('Screenshot-Btn')[0];
     let cursor  = document.getElementsByClassName('LaserPointer')[0];
-    let present = document.getElementsByClassName('Presenter-Btn')[0];
+    let present = document.getElementsByClassName('Timer-Btn')[0];
     let panelBtn = document.getElementsByClassName('Settings-Btn')[0];
     let laserBtn = document.getElementsByClassName('Laser-Btn')[0];
     
