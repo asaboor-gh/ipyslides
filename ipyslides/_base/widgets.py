@@ -10,30 +10,6 @@ from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Bu
 from . import styles, _layout_css
 from ..utils import html, _build_css
 
-_icons_fallback = { # fallback for fontawesome icons (specially in colab) to choose for description, if fontawesome is not loaded
-    'chevron-left': '◁',
-    'chevron-right': '▷',
-    'chevron-up': '△',
-    'chevron-down': '▽',
-    'pencil': '⇙',
-    'circle-o': '○',
-    'play': '▶',
-    'pause': '■',
-    'expand': '↕',
-    'compress': '↧',
-    'window-maximize': '◱',
-    'window-restore': '▫',
-    'columns': '◨',
-    'minus-square-o': '▣',
-    'camera': '◙',
-    'bars': '≡',
-    'times': '×',
-    'ellipsis-v': '⁝',
-    'arrow-left': '←',
-    'search-plus': '⊕',
-    'search-minus': '⊝'
- }
-
 def _build_style_widget(css_dict):
     return HTML(html('style',_build_css((), css_dict)).value)
 
@@ -45,8 +21,8 @@ class _Buttons:
     """
     Instantiate under `Widgets` class only.
     """
-    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows')
-    next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows')
+    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows').add_class('Prev-Btn')
+    next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
@@ -78,8 +54,8 @@ class _Htmls:
     Instantiate under `Widgets` class only.
     """
     footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
-    theme   = HTML(html('style',styles.style_css(styles.theme_colors['Fancy'])).value)
-    main    = HTML(html('style',_layout_css.layout_css(breakpoint = '650px')).value) # Will be update in theme as well
+    theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
+    main    = HTML(html('style',_layout_css.layout_css('650px', styles.theme_colors['Inherit']['accent_color'])).value) # Will be update in theme as well
     sidebar = HTML(html('style',_layout_css.sidebar_layout_css()).value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML() #SVG Animation in it
     logo    = HTML()
@@ -320,6 +296,7 @@ class Widgets:
         ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox') 
         
         self.mainbox = VBox([
+            self.htmls.glass, # This is the glass pane, should be before everything, otherwise it will cover the slide area
             self.htmls.loading, 
             self.htmls.toast,
             self.htmls.main,
@@ -337,7 +314,6 @@ class Widgets:
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.sliders.visible,
-            self.htmls.glass, # This is the glass pane, should be after everything except overlay and navbox
             self.htmls.overlay, 
             self.navbox, # Navbox should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{self.sliders.height.value}px',margin='auto')

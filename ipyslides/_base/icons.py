@@ -1,3 +1,4 @@
+import re
 from textwrap import dedent as _dedent
 
 from ..formatters import _HTML
@@ -80,6 +81,12 @@ _icons = {
             <rect x="4" y="4" width="7" height="17"/>
             <rect x="14" y="4" width="7" height="17"/>
         </svg>''',
+    'loading': '''
+        <svg xmlns="http://www.w3.org/2000/svg" height="{size}" viewBox="0 0 50 50">
+            <path fill="{color}" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z">
+                <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.5s" repeatCount="indefinite"/>
+            </path>
+        </svg>''',
 }
 
 class Icon(_HTML):
@@ -95,7 +102,7 @@ class Icon(_HTML):
         return f'Icon(css = {self.css}, svg = {self.value!r})'
     
     def __format__(self, spec):
-        return f'{self.svg_inline:{spec}}' # important for f-strings be iinline to add in tables etc.
+        return f'{self._svg_inline:{spec}}' # important for f-strings be iinline to add in tables etc.
     
     @property
     def svg(self):
@@ -103,13 +110,12 @@ class Icon(_HTML):
         return self.value
     
     @property
-    def svg_inline(self):
-        "Get the SVG code of the icon as inline SVG, that can be added in tables etc."
-        return self.value.replace('\n', '') # remove newlines
+    def _svg_inline(self):
+        return re.sub(r' +', ' ', self.value).replace('\n', '') # remove newlines and extra spaces, keep 1
     
     @property
     def css(self):
         "Get the CSS code of the icon as dictionary of {'content': url(svg)}."
-        return {'content': f"url('data:image/svg+xml;utf8,{self.svg_inline}')"}
+        return {'content': f"url('data:image/svg+xml;utf8,{self._svg_inline}')"}
         
         

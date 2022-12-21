@@ -121,7 +121,7 @@ class Slides(BaseSlides):
         self.progress_slider.observe(self._update_toc,names=['options'])
         
         # All Box of Slides
-        self._box =  self.widgets.mainbox
+        self._box =  self.widgets.mainbox 
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box_ = ipw.VBox() # Initialize display box
         self.set_overlay_url(url = None) # Set overlay url for initial information
@@ -488,6 +488,13 @@ class Slides(BaseSlides):
         self.widgets.slidebox.children[new_index].layout = self.settings._slide_layout 
         
     def _update_content(self,change):
+        if self.progress_slider.index == 0: # First slide
+            self._box.add_class('InView-Title').remove_class('InView-Last')
+        elif self.progress_slider.index == (len(self.progress_slider.options) -1): # Last slide
+            self._box.add_class('InView-Last').remove_class('InView-Title')
+        else:
+            self._box.remove_class('InView-Title').remove_class('InView-Last')
+        
         if self._iterable and change:
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
             self._display_toast() # or self.toasts._display_toast . Display in start is fine

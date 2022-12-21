@@ -1,13 +1,12 @@
 # This should not be used by user, but is used by ipyslides to generate layout of slides
 
 from ..utils import _build_css
-from .styles import theme_colors as _tc
 from .icons import Icon
 
-_accent_color = _tc['Inherit']['accent_color'] # For theme start
 _zoom_ables = '.jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom), .plot-container.plotly'
+_icons_size = '1em' # For all except Chevrons
 
-def layout_css(breakpoint, accent_color = _accent_color, show_laser_pointer = False): # Defult is off
+def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult is off
     return _build_css((),{
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
@@ -24,6 +23,18 @@ def layout_css(breakpoint, accent_color = _accent_color, show_laser_pointer = Fa
             '^.SideMode': {
                 '.Height-Slider': {'display': 'none !important'},
             },
+            '@keyframes heart-beat': {
+                '0%': {'transform': 'scale(1)','opacity': '0.5',},
+                '50%': {'transform': 'scale(0.7)', 'opacity': '1',},
+            },
+            '^.InView-Title .Arrows.Prev-Btn': {'visibility': 'hidden',},
+            '^.InView-Title .Arrows.Next-Btn': {
+                'animation-name': 'heart-beat',
+                'animation-duration': '2s',
+                'animation-iteration-count': 'infinite',
+                'animation-timing-function': 'ease-in-out',
+            },
+            '^.InView-Last .Arrows.Next-Btn': { 'visibility': 'hidden',},
             '.SlideArea': {
                 'align-items': 'center',
                 f'@media screen and (max-width: {breakpoint})': {
@@ -432,26 +443,26 @@ def layout_css(breakpoint, accent_color = _accent_color, show_laser_pointer = Fa
                 '.fa.fa-chevron-down': Icon('chevron-down', color=accent_color, size='36px').css,
         },
         '.Settings-Btn': {
-            '.fa.fa-plus': Icon('dots', color=accent_color, size='1em').css,
-            '.fa.fa-minus': Icon('close', color=accent_color, size='1em').css,
+            '.fa.fa-plus': Icon('dots', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('close', color=accent_color, size=_icons_size).css,
         },
         '.Toc-Btn': {
-            '.fa.fa-plus': Icon('toc', color=accent_color, size='1em').css,
-            '.fa.fa-minus': Icon('close', color=accent_color, size='1em').css,
+            '.fa.fa-plus': Icon('toc', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('close', color=accent_color, size=_icons_size).css,
         },
         '.Overlay-Btn': {
-            '.fa.fa-plus': Icon('pencil', color=accent_color, size='1em').css,
-            '.fa.fa-minus': Icon('back', color=accent_color, size='1em').css,
+            '.fa.fa-plus': Icon('pencil', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('back', color=accent_color, size=_icons_size).css,
         },
         '.FullScreen-Btn': {
-            '.fa.fa-plus': Icon('expand', color=accent_color, size='1em').css,
-            '.fa.fa-minus': Icon('compress', color=accent_color, size='1em').css,
+            '.fa.fa-plus': Icon('expand', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('compress', color=accent_color, size=_icons_size).css,
         },
         '.Timer-Btn': {
-            '.fa.fa-plus': Icon('play', color=accent_color, size='1em').css,
-            '.fa.fa-minus': Icon('pause', color=accent_color, size='1em').css,
+            '.fa.fa-plus': Icon('play', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('pause', color=accent_color, size=_icons_size).css,
         },
-        '.Screenshot-Btn .fa.fa-camera': Icon('camera', color=accent_color, size='1em').css,
+        '.Screenshot-Btn .fa.fa-camera': Icon('camera', color=accent_color, size=_icons_size).css,
         '@media print': {
             '.SlidesWrapper':{
                 '^, ^.FullWindow': { 
@@ -643,4 +654,8 @@ def glass_css(opacity = 0.75,blur_radius = 50):
     .BackLayer .Front {{
         background: var(--primary-bg);
         opacity:{opacity};
-    }}'''
+    }}
+    .BackLayer.jupyter-widgets-disconnected {{
+        display:none;
+    }}
+    '''

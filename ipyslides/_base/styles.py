@@ -74,12 +74,6 @@ animations = {'zoom':'''
     },
 }) 
 }
-
-loading_svg = '''<div style="position:absolute;left:0;top:0;z-index:51;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 50 50">
-  <path fill="var(--accent-color,navy)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z">
-    <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.5s" repeatCount="indefinite"/>
-  </path></svg></div>'''
   
 # This was 436 lines of code in CSS, css_dict is elegant + only 368 lines, clean CSS output is 462 lines
 def _validate_colors(colors):
@@ -124,8 +118,8 @@ theme_colors = {
         'secondary_fg' : 'powderblue',
         'alternate_bg' : '#282828',
         'hover_bg' : '#264348',
-        'accent_color' : '#d9e0e3',
-        'pointer_color' : 'blue',
+        'accent_color' : '#ff5722',
+        'pointer_color' : '#ff1744',
     },
     'Fancy': {
         'heading_color': '#105599',
@@ -147,7 +141,7 @@ theme_colors = {
 	    'alternate_bg': '#e9eef2',
 	    'hover_bg': '#dae3ec',
 	    'accent_color': '#4d7f43',
-        'pointer_color': 'red',
+        'pointer_color': '#f50057',
     },
     'Material Dark': {
         'heading_color': '#aec7e3',
@@ -157,8 +151,8 @@ theme_colors = {
 	    'secondary_fg': '#fefefe',
 	    'alternate_bg': '#383838',
 	    'hover_bg': '#484848',
-	    'accent_color': '#a8bfa3',
-        'pointer_color': 'blue',
+	    'accent_color': '#ffc107',
+        'pointer_color': '#e91e63',
     }   
 }
 
