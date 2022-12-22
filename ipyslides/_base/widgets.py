@@ -94,16 +94,15 @@ class _Sliders:
     """
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
     visible  = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('FloatControl')
-    height   = ipw.IntSlider(**describe('Height (px)'),min=200,max=2160, value = 400,continuous_update=False).add_class('Height-Slider') #2160 for 4K screens
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 40,continuous_update=False).add_class('Width-Slider') # 40 is best if something goes wrong, it can be pushed back
     scale    = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         
-
 @dataclass(frozen=True)
 class _Dropdowns:
     """
     Instantiate under `Widgets` class only.
     """
+    aspect = ipw.Dropdown(**describe('Aspect Ratio'),options=[('2:1',0.50),('16:9',0.56),('16:10',0.63),('3:2',0.67), ('7:5',0.71),('4:3',0.75),('5:4',0.80)], value = 0.75,continuous_update=False).add_class('Height-Dd') #2160 for 4K screens
     theme  = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
     clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
     export = ipw.Dropdown(**describe('Export As'),options=['Slides','Report','Select'], value = 'Select')
@@ -263,8 +262,8 @@ class Widgets:
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
             VBox([
-                self.sliders.height, 
                 self.sliders.width,
+                self.ddowns.aspect, 
                 self.sliders.scale,
                 self.ddowns.theme,
                 self.ddowns.export,
@@ -316,7 +315,7 @@ class Widgets:
             self.sliders.visible,
             self.htmls.overlay, 
             self.navbox, # Navbox should come last
-            ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{self.sliders.height.value}px',margin='auto')
+            ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*self.ddowns.aspect.value)}vw',margin='auto')
         ).add_class('SlidesWrapper')  #Very Important to add this class
 
         for btn in [self.buttons.next, self.buttons.prev, self.buttons.setting,self.buttons.capture]:

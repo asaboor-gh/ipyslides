@@ -15,26 +15,29 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
             },
             '^.FullWindow': {
-                '.Height-Slider, .Width-Slider, .SideBar-Btn': {'display': 'none !important'},
+                '.Height-Dd, .Width-Slider, .SideBar-Btn': {'display': 'none !important'},
             },
             '^.FullScreen': {
                 '.SideBar-Btn, .FullWindow-Btn': {'display': 'none !important'},
             },
             '^.SideMode': {
-                '.Height-Slider': {'display': 'none !important'},
+                '.Height-Dd': {'display': 'none !important'},
             },
             '@keyframes heart-beat': {
-                '0%': {'transform': 'scale(1)','opacity': '0.5',},
-                '50%': {'transform': 'scale(0.7)', 'opacity': '1',},
+                '0%': {'transform': 'scale(1)','opacity': '0.5','filter': 'drop-shadow(0 0 1.5rem var(--hover-color))'},
+                '50%': {'transform': 'scale(0.7)', 'opacity': '1','filter': 'drop-shadow(0 0 1.5rem var(--pointer-color))'},
             },
-            '^.InView-Title .Arrows.Prev-Btn': {'visibility': 'hidden',},
-            '^.InView-Title .Arrows.Next-Btn': {
+            '^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn': {'opacity': '0.02',}, # still should be clickable
+            '^.InView-Title .Arrows.Next-Btn, ^.InView-Other .Arrows.Next-Btn': {
                 'animation-name': 'heart-beat',
                 'animation-duration': '2s',
                 'animation-iteration-count': 'infinite',
                 'animation-timing-function': 'ease-in-out',
             },
-            '^.InView-Last .Arrows.Next-Btn': { 'visibility': 'hidden',},
+            '^.InView-Other .Arrows.Next-Btn': {
+                'animation-delay': '60s', # Beet at 60 seconds if left on slide
+                'animation-iteration-count': '15', # 5 times to show 1.5 minute passed
+            },
             '.SlideArea': {
                 'align-items': 'center',
                 f'@media screen and (max-width: {breakpoint})': {

@@ -28,8 +28,8 @@ class LayoutSettings:
         self._code_lineno = True
         
         self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em')
-        self.height_slider = self.widgets.sliders.height
         self.width_slider  = self.widgets.sliders.width
+        self.aspect_dd = self.widgets.ddowns.aspect
         self.scale_slider  = self.widgets.sliders.scale
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
@@ -47,7 +47,7 @@ class LayoutSettings:
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
         self.theme_dd.observe(self._update_theme,names=['value'])
         self.scale_slider.observe(self._update_theme,names=['value'])
-        self.height_slider.observe(self._update_size,names=['value'])
+        self.aspect_dd.observe(self._update_size,names=['value'])
         self.width_slider.observe(self._update_size,names=['value'])
         self.btn_window.observe(self._toggle_viewport,names=['value'])
         self.btn_fscreen.observe(self._toggle_fullscreen,names=['value'])
@@ -242,7 +242,7 @@ class LayoutSettings:
             self._push_zoom(change=None) # Adjust zoom CSS for expected layout
             
         with self.emit_resize_event():
-            self.widgets.mainbox.layout.height = '{}px'.format(self.height_slider.value)
+            self.widgets.mainbox.layout.height = '{}vw'.format(int(self.span_percent*self.aspect_dd.value))
             self.widgets.mainbox.layout.width = '{}vw'.format(self.span_percent) # Do not use self.width_slider.value here, need in full width too 
             self._toggle_sidebar(change=None) # To update sidebar width, auto handles fullscreen
             self._update_theme(change=None) # For updating size and breakpoints and zoom CSS

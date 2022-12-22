@@ -489,11 +489,11 @@ class Slides(BaseSlides):
         
     def _update_content(self,change):
         if self.progress_slider.index == 0: # First slide
-            self._box.add_class('InView-Title').remove_class('InView-Last')
+            self._box.add_class('InView-Title').remove_class('InView-Last').remove_class('InView-Other')
         elif self.progress_slider.index == (len(self.progress_slider.options) -1): # Last slide
-            self._box.add_class('InView-Last').remove_class('InView-Title')
+            self._box.add_class('InView-Last').remove_class('InView-Title').remove_class('InView-Other')
         else:
-            self._box.remove_class('InView-Title').remove_class('InView-Last')
+            self._box.remove_class('InView-Title').remove_class('InView-Last').add_class('InView-Other')
         
         if self._iterable and change:
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
