@@ -4,24 +4,12 @@ from textwrap import dedent as _dedent
 from ..formatters import _HTML
 
 _icons = {
-    'chevron-left': '''
-        <svg width="{size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="{color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-            <path d="M15 4L7 12L15 20" />
-        </svg>''',
-    'chevron-right': '''
-        <svg width="{size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="{color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+    'chevron': '''
+        <svg width="{size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="{color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" transform="rotate({rotation})">
             <path d="M9 4L17 12L9 20" />
         </svg>''',
-    'chevron-up': '''
-        <svg width="{size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="{color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-            <path d="M4 15L12 7L20 15" />
-        </svg>''',
-    'chevron-down': '''
-        <svg width="{size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="{color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-            <path d="M4 9L12 17L20 9"/>
-        </svg>''',
     'pencil': '''
-        <svg xmlns="http://www.w3.org/2000/svg" height="{size}" viewBox="0 0 25 25" fill="{color}" stroke-width="2" transform="rotate(45)">
+        <svg xmlns="http://www.w3.org/2000/svg" height="{size}" viewBox="0 0 25 25" fill="{color}" stroke-width="2" transform="rotate({rotation})">
             <rect x="9" y="0" width="8" height="6"/>
             <rect x="9" y="7" width="1" height="10"/>
             <rect x="12" y="7" width="2" height="10"/>
@@ -29,7 +17,7 @@ _icons = {
             <polygon points="9 18,17 18,13 25,9 18"></polygon>
         </svg>''',
     'toc': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="{color}" fill="{color}">
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="{color}" fill="{color}" transform="rotate({rotation})">
             <circle stroke="none" cx="3" cy="5" r="3"/>
             <circle stroke="none" cx="3" cy="13" r="3"/>
             <circle stroke="none" cx="3" cy="21" r="3"/>
@@ -37,31 +25,31 @@ _icons = {
             <line x1="8" y1="13" x2="24" y2="13" />
             <line x1="8" y1="21" x2="24" y2="21"/>
         </svg>''',
-    'back': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    'arrow': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
             <line x1="4" y1="13" x2="21" y2="13" />
-            <path fill="none" d="M13 4L4 13L13 21" />
+            <path fill="none" d="M13 4L21 13L13 21" />
         </svg>''',
     'close': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
             <line x1="4" y1="4" x2="21" y2="21" />
             <line x1="4" y1="21" x2="21" y2="4" />
         </svg>''',
     'dots': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" fill="{color}">
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" fill="{color}" transform="rotate({rotation})">
           <circle cx="13" cy="5" r="3"/>
           <circle cx="13" cy="13" r="3"/>
           <circle cx="13" cy="21" r="3"/>
         </svg>''',
     'expand': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
           <line x1="4" y1="21" x2="11" y2="14"/>
           <line x1="14" y1="11" x2="21" y2="4"/>
           <path fill="none" d="M13 4L21 4L21 13" />
           <path fill="none" d="M4 13L4 21L13 21" />
         </svg>''',
     'compress': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
           <line x1="4" y1="21" x2="11" y2="14"/>
           <line x1="14" y1="11" x2="21" y2="4"/>
           <path fill="none" d="M14 4L14 11L21 11" />
@@ -73,29 +61,63 @@ _icons = {
             <circle cx="13" cy="15" r="5" fill="black" stroke="white"/>
         </svg>''',
     'play': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" transform="rotate({rotation})">
             <polygon points="4 4,21 13,4 21" fill="{color}"></polygon>
         </svg>''',
     'pause': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" fill="{color}">
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" fill="{color}" transform="rotate({rotation})">
             <rect x="4" y="4" width="7" height="17"/>
             <rect x="14" y="4" width="7" height="17"/>
         </svg>''',
     'loading': '''
-        <svg xmlns="http://www.w3.org/2000/svg" height="{size}" viewBox="0 0 50 50">
+        <svg xmlns="http://www.w3.org/2000/svg" height="{size}" viewBox="0 0 50 50" transform="rotate({rotation})">
             <path fill="{color}" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z">
                 <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.5s" repeatCount="indefinite"/>
             </path>
         </svg>''',
+    'circle': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="13" cy="13" r="11" fill="none" stroke="{color}" stroke-width="2"/>
+        </svg>''',
+    'laser': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="13" cy="13" r="10" fill="none" stroke="{color}" stroke-width="3" filter="drop-shadow(0 0 1px {color})" opacity="0.2"/>
+            <circle cx="13" cy="13" r="7" fill="none" stroke="{color}" stroke-width="2" filter="drop-shadow(0 0 4px {color})" opacity="0.7"/>
+            <circle cx="13" cy="13" r="4" fill="{color}" stroke="white" stroke-width="2" filter="drop-shadow(0 0 5px {color})"/>
+        </svg>''',
+    'zoom-in': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" transform="rotate({rotation})">
+            <circle cx="9" cy="9" r="8" fill="none" stroke="{color}"/>
+            <line x1="17" y1="17" x2="21" y2="21" stroke="{color}" stroke-width="4"/>
+            <line x1="6" y1="9" x2="12" y2="9" stroke="{color}"/>
+            <line x1="9" y1="6" x2="9" y2="12" stroke="{color}"/>
+        </svg>''',
+    'zoom-out': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" transform="rotate({rotation})">
+            <circle cx="9" cy="9" r="8" fill="none" stroke="{color}"/>
+            <line x1="17" y1="17" x2="21" y2="21" stroke="{color}" stroke-width="4"/>
+            <line x1="6" y1="9" x2="12" y2="9" stroke="{color}"/>
+        </svg>''',
+    'win-maximize': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="2 4,23 4,23 21,2 21,2 4" fill="none" stroke="{color}"></polygon>
+            <polygon points="2 4,23 4,23 8,2 8,2 4" fill="{color}" stroke="{color}"></polygon>
+        </svg>''',
+    'win-restore': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="2 6,19 6,19 21,2 21,2 6" fill="none" stroke="{color}"></polygon>
+            <polygon points="2 8,19 8,19 10,2 10,2 8" fill="{color}" stroke="{color}"></polygon>
+            <path d="M4 4L4 2L23 2L23 17L21 17" fill="none" stroke="{color}"/>
+        </svg>''',
 }
 
 class Icon(_HTML):
-    def __init__(self, name: str, color:str = 'currentColor', size:str = '1em') :
-        "Get an icon from the available icon set with a given color and size."
+    def __init__(self, name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0) :
+        "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
         if name not in _icons:
             raise ValueError(f'Icon {name} not found. Available icons: {", ".join(_icons.keys())}')
         
-        _value = _icons[name].format(color=color, size=size).replace('#', '%23')  # replace # with %23 for svg
+        _value = _icons[name].format(color=color, size=size, rotation = rotation).replace('#', '%23')  # replace # with %23 for svg
         super().__init__(_dedent(_value).strip()) # remove leading and trailing whitespace/newlines
         
     def __repr__(self):

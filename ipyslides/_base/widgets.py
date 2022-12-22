@@ -40,11 +40,11 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     sidebar = ipw.ToggleButton(icon='columns', value = False, tooltip='Toggle ON/OFF Sidebar Mode [H]').add_class('SideBar-Btn').add_class('Menu-Item')
-    window  = ipw.ToggleButton(icon='window-maximize',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
+    window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
-    zoom    = ipw.ToggleButton(icon='search-plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
+    zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
     timer   = ipw.ToggleButton(icon='plus',value = False, tooltip='Start/Stop Timer [T]').add_class('Timer-Btn')  
-    laser   = ipw.ToggleButton(icon='circle-o',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn') 
+    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn') 
     overlay = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Overlay Panel').add_class('Overlay-Btn')          
         
 

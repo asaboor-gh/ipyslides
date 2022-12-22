@@ -24,8 +24,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '.Height-Dd': {'display': 'none !important'},
             },
             '@keyframes heart-beat': {
-                '0%': {'transform': 'scale(1)','opacity': '0.5','filter': 'drop-shadow(0 0 1.5rem var(--hover-color))'},
-                '50%': {'transform': 'scale(0.7)', 'opacity': '1','filter': 'drop-shadow(0 0 1.5rem var(--pointer-color))'},
+                '0%': {'transform': 'scale(1)','opacity': '0.5','filter': 'drop-shadow(0 0 2px var(--hover-color))'},
+                '50%': {'transform': 'scale(0.7)', 'opacity': '1','filter': 'drop-shadow(0 0 4px var(--pointer-color))'},
             },
             '^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn': {'opacity': '0.02',}, # still should be clickable
             '^.InView-Title .Arrows.Next-Btn, ^.InView-Other .Arrows.Next-Btn': {
@@ -139,17 +139,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'summary': {
                     'background': 'var(--secondary-bg)',
                     'padding-left':'0.2em',
-                    'color': 'var(--accent-color)',
+                    'color': 'var(--heading-color)',
                     'font-weight': 'bold',
-                    '^::marker': {'content': '""',},
-                    '^::after': {
-                        'content': '"show/hide"',
-                        'color': 'var(--secondary-fg)',
-                        'font-weight':'normal',
-                        'font-size': '80%',
-                        'float':'right',
-                        'padding': '0.2em',  
-                    },
                 },
             },
         },
@@ -309,24 +300,6 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'backdrop-filter': 'blur(20px)',
                 '> i': { 'color': 'var(--accent-color) !important',},
                 '^:disabled,^[disabled]': {'display': 'none !important',},
-                '^.Laser-Btn:not(.mod-active)': {
-                    '^:hover:enabled, ^:focus:enabled': {
-                        'color': 'transparent !important',
-                        'text-shadow': 'none !important',
-                        'transform': 'scale(0.85) !important',
-                    },
-                    '> i': {
-                        'display': 'block',
-                        'margin':'auto',
-                        'width': '12px',
-                        'height': '12px',
-                        'background': 'var(--pointer-color) !important',
-                        'color': 'transparent !important',
-                        'border': '2px solid white !important',
-                        'border-radius': '50% !important',
-                        'box-shadow': '0 0 4px 2px white, 0 0 6px 6px var(--pointer-color)',
-                    },
-                },
             },
         },
         '.TopBar.Outside': {
@@ -434,16 +407,16 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             },
         },
         # Uniform Icons everywhere
-        '.Settings-Btn, .Toc-Btn, .Overlay-Btn, .Screenshot-Btn, .FullScreen-Btn, .Timer-Btn': { # Align buttons at center
+        '.Settings-Btn, .Toc-Btn, .Overlay-Btn, .Screenshot-Btn, .FullScreen-Btn, .Timer-Btn, .Laser-Btn, .Zoom-Btn, .FullWindow-Btn': { # Align buttons at center
             'display': 'flex',
             'align-items': 'center',
             'justify-content': 'center',
         },
         '.Arrows': {
-                '.fa.fa-chevron-left': Icon('chevron-left', color=accent_color, size='36px').css,
-                '.fa.fa-chevron-right': Icon('chevron-right', color=accent_color, size='36px').css,
-                '.fa.fa-chevron-up': Icon('chevron-up', color=accent_color, size='36px').css,
-                '.fa.fa-chevron-down': Icon('chevron-down', color=accent_color, size='36px').css,
+                '.fa.fa-chevron-left': Icon('chevron', color=accent_color, size='36px', rotation=180).css,
+                '.fa.fa-chevron-right': Icon('chevron', color=accent_color, size='36px',rotation=0).css,
+                '.fa.fa-chevron-up': Icon('chevron', color=accent_color, size='36px',rotation=90).css,
+                '.fa.fa-chevron-down': Icon('chevron', color=accent_color, size='36px',rotation=270).css,
         },
         '.Settings-Btn': {
             '.fa.fa-plus': Icon('dots', color=accent_color, size=_icons_size).css,
@@ -454,8 +427,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '.fa.fa-minus': Icon('close', color=accent_color, size=_icons_size).css,
         },
         '.Overlay-Btn': {
-            '.fa.fa-plus': Icon('pencil', color=accent_color, size=_icons_size).css,
-            '.fa.fa-minus': Icon('back', color=accent_color, size=_icons_size).css,
+            '.fa.fa-plus': Icon('pencil', color=accent_color, size=_icons_size, rotation=45).css,
+            '.fa.fa-minus': Icon('arrow', color=accent_color, size=_icons_size, rotation=180).css,
         },
         '.FullScreen-Btn': {
             '.fa.fa-plus': Icon('expand', color=accent_color, size=_icons_size).css,
@@ -466,6 +439,18 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '.fa.fa-minus': Icon('pause', color=accent_color, size=_icons_size).css,
         },
         '.Screenshot-Btn .fa.fa-camera': Icon('camera', color=accent_color, size=_icons_size).css,
+        '.Laser-Btn': {
+            '.fa.fa-plus': Icon('laser', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('circle', color=accent_color, size=_icons_size).css,
+        },
+        '.Zoom-Btn': {
+            '.fa.fa-plus': Icon('zoom-in', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('zoom-out', color=accent_color, size=_icons_size).css,
+        },
+        '.FullWindow-Btn': {
+            '.fa.fa-plus': Icon('win-maximize', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('win-restore', color=accent_color, size=_icons_size).css,
+        },
         '@media print': {
             '.SlidesWrapper':{
                 '^, ^.FullWindow': { 

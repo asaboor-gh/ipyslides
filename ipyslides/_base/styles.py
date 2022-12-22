@@ -511,8 +511,19 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             'padding': '0.2em',
             'background': 'var(--secondary-bg)',
             '^, > summary, > div': {'padding': '0.2em'},
-            '> summary': {'color': 'var(--accent-color) !important'},
+            '> summary': {
+                'padding-left': '0.2em !important',
+                'color': 'var(--heading-color) !important',
+                '^::marker': {
+                    'content':'"≚  "',
+                    'color': 'var(--accent-color) !important',
+                    },
+                },
             '> div': {'background': 'var(--primary-bg)'},
+            '^[open] > summary::marker': {
+                'content':'"≙  "',
+                'color': 'var(--accent-color) !important',
+                },
         },
         '.pygal-chart':{
             'min-width':'300px',

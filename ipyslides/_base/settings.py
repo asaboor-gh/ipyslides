@@ -323,12 +323,12 @@ class LayoutSettings:
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout
         with self.emit_resize_event(): 
             if self.btn_window.value:
-                self.btn_window.icon = 'window-restore'
+                self.btn_window.icon = 'minus'
                 self.widgets.mainbox.add_class('FullWindow') # to Full Window
                 self._set_sidebar_css() # Set sidebar CSS that will take it to full view
                 self.btn_sidebar.disabled = True # Disable sidebar switch to avoid keyboard shortcuts
             else:
-                self.btn_window.icon = 'window-maximize'
+                self.btn_window.icon = 'plus'
                 self.widgets.mainbox.remove_class('FullWindow') # back to inline
                 self._set_sidebar_css(clear = (False if self.btn_sidebar.value else True)) # Move  back from where it was left of
                 self.btn_sidebar.disabled = False # Enable sidebar switch to recieve events
@@ -363,13 +363,17 @@ class LayoutSettings:
                 self._set_old_state(reset = True) # Reset old state of all buttons for consistency
                 
     def _toggle_laser(self,change):
-        # Just Update Layout CSS
+        if self.btn_laser.value:
+            self.btn_laser.icon = 'minus'
+        else:
+            self.btn_laser.icon = 'plus'
+        # Update Layout CSS
         self.widgets.htmls.main.value = html('style',_layout_css.layout_css(self.breakpoint, accent_color= self.colors['accent_color'], show_laser_pointer = self.btn_laser.value)).value
     
     
     def _push_zoom(self,change):
         if self.btn_zoom.value:
-            self.btn_zoom.icon = 'search-minus' # Change icon to minus irrespective of layout mode
+            self.btn_zoom.icon = 'minus' # Change icon to minus irrespective of layout mode
             
             if True in [self.btn_window.value, self.btn_fscreen.value, self.btn_sidebar.value]:
                 self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self.span_percent)}\n</style>'
@@ -377,7 +381,7 @@ class LayoutSettings:
                 self.widgets.htmls.zoom.value = '' # Clear zoom css immediately to avoid conflict
                 self.widgets._push_toast('Objects are not zoomable in inline mode!',timeout=2)
         else:
-            self.btn_zoom.icon= 'search-plus'
+            self.btn_zoom.icon= 'plus'
             self.widgets.htmls.zoom.value = ''
             
     def _toggle_overlay(self,change):

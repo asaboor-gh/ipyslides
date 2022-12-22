@@ -124,6 +124,8 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 f'<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
+for k,r  in zip(['right','left','up','down'],[0,180,90,270]): 
+    _icons[f'chevron-{k}'] = _Icon('chevron', color="var(--accent-color)",rotation=r)
 def _key(k): return f'<span style="border: 1px solid var(--secondary-fg); background:var(--secondary-bg);border-radius:4px;padding:2px 6px;min-width:2em;">{k}</span>'
 key_combs = f'''
 | Key (comb) and associated button(s)                                                            | Action                                               | 
