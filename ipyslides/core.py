@@ -147,7 +147,7 @@ class Slides(BaseSlides):
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         - Double dashes `--` is used to split markdown text in frames. (1.8.9+)
         
-        **Other syntax can be used everywhere like under `%%slides int -m`, in `write/iwrite/format_html/parse_xmd/from_markdown` functions:**\n
+        **Other syntax can be used everywhere like under `%%slides int -m`, in `write` / `iwrite` / `format_html` / `parse_xmd` / `from_markdown` functions:**\n
         - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
         - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
         - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 

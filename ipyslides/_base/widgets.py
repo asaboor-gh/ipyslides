@@ -174,14 +174,13 @@ def _notification(content,title='IPySlides Notification',timeout=5):
         .NotePop {{
             display:flex;
             flex-direction:row;
-            background: linear-gradient(to right, var(--hover-bg) 0%, var(--secondary-bg) 100%);
             border-radius: 4px;
             padding:8px;
-            opacity:0.9;
             width:auto;
             max-width:400px;
             height:max-content;
-            box-shadow: 0 0 2px 2px var(--hover-bg);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2);
             animation: popup 0s ease-in {timeout}s;
             animation-fill-mode: forwards;
         }}
@@ -194,7 +193,7 @@ def _notification(content,title='IPySlides Notification',timeout=5):
             }}
         }}
         </style>
-        <div style="position:absolute;left:8px;top:8px;z-index:1000;" class="NotePop">
+        <div style="position:absolute;left:50%;top:4px;z-index:1000;transform:translateX(-50%);" class="NotePop">
         <div style="width:4px;background: var(--accent-color);margin-left:-8px;margin-right:8px"></div>
         <div>{_title}<p>{content}</p></div></div>'''
 
@@ -328,7 +327,7 @@ class Widgets:
         if content and isinstance(content,str):
             self.htmls.toast.value = '' # Set first to '', otherwise may not trigger for same value again.
             self.htmls.toast.value = _notification(content=content,title=title,timeout=timeout)
-    
+        
     def _exec_js(self,code_string):
         "Execute javascript code, output is not permanent."
         self.outputs.renew.clear_output(wait = True)

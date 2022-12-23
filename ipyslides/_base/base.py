@@ -46,11 +46,12 @@ class BaseSlides:
         return self.widgets._push_toast(content,title=title,timeout=timeout)
     
     def __toggle_notify(self,change):
-        "Blocks notifications."
+        "Blocks notifications if check is not enabled."
         if self.widgets.checks.toast.value:
-            self.toast_html.layout.visibility = 'hidden' 
+            self.toast_html.layout.visibility = 'visible' 
+            self.notify('Notifications are enabled now!')
         else:
-            self.toast_html.layout.visibility = 'visible'
+            self.toast_html.layout.visibility = 'hidden'
     
     @property
     def css_styles(self):
@@ -130,11 +131,11 @@ class BaseSlides:
     
     def _display_toast(self):
         toast = self.current.toast 
-        if toast:
+        if toast and self.widgets.checks.toast.value: # Only show if toast is enabled, others notification from actions should still be there
             # clear previous content of notification as new one is about to be shown, this will ensure not to see on wrong slide
             self.widgets.htmls.toast.value = ''
             self.notify(content = toast['func'](), **toast['kwargs'])
-    
+        
     def from_markdown(self, start, file_or_str, trusted = False):
         """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.

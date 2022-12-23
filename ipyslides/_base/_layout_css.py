@@ -361,6 +361,10 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'background': 'var(--secondary-bg) !important', 
                 'color':'var(--secondary-fg)',
             },
+            ':not(pre) > code, :not(pre) > span': { # To avoid overflow due to large words
+                'word-break': 'normal !important',
+                'overflow-wrap': 'break-word !important',
+            },
             'p': {'margin-bottom': '0.2em !important',},
             'pre, code': {'color':'var(--primary-fg)',},
         },
