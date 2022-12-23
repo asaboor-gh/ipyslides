@@ -412,8 +412,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         '.Arrows': {
                 '.fa.fa-chevron-left': Icon('chevron', color=accent_color, size='36px', rotation=180).css,
                 '.fa.fa-chevron-right': Icon('chevron', color=accent_color, size='36px',rotation=0).css,
-                '.fa.fa-chevron-up': Icon('chevron', color=accent_color, size='36px',rotation=90).css,
-                '.fa.fa-chevron-down': Icon('chevron', color=accent_color, size='36px',rotation=270).css,
+                '.fa.fa-chevron-up': Icon('chevron', color=accent_color, size='36px',rotation=-90).css, # Why SVG rotation is clockwise?
+                '.fa.fa-chevron-down': Icon('chevron', color=accent_color, size='36px',rotation=90).css,
         },
         '.Settings-Btn': {
             '.fa.fa-plus': Icon('dots', color=accent_color, size=_icons_size).css,
