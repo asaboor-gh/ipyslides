@@ -96,7 +96,7 @@ theme_colors = {
         'secondary_fg':'var(--jp-inverse-layout-color4,#454545)',
         'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
         'hover_bg':'var(--jp-border-color1,#D1D9E1)',
-        'accent_color':'var(--jp-brand-color1,navy)',
+        'accent_color':'var(--jp-brand-color1,gray)', # May be neutral is good for all themes for buttons
         'pointer_color':'var(--md-pink-A400,red)',
     },
     'Light': {
@@ -447,21 +447,18 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
         '.error, .error *:not(span)': {'color':'red !important',},
         '.info, .info *:not(span)': {'color':'skyblue !important',},
         '.note' : {
-            'border': '1px solid var(--hover-bg)',
             'border-radius': '0.2em',
-            'background': 'none', # Fallback  for Inherit and Custom theme
-            'background': f'rgba({light},{light},{light},0.75)',
+            'margin-bottom': '0.7em !important',
+            'background': 'var(--secondary-bg)', # Fallback  for Inherit and Custom theme
+            '+background': f'rgba({light-16},{light-10},{light-10},0.75)',
+            '^.admonition > .admonition-title': {'display':'none !important'}, # Remove Note title from markdown-customblocks
             '^::before': {
-                'content':"'ℹ'",
-                'display':' inline-flex',
-                'width':' 1em',
-                'height':' 1em',
-                'margin':' 0 0.2em',
-                'justify-content':'center',
-                'align-items':'center',
-                'border':'1px solid var(--accent-color)',
-                'border-radius':'1em',
-                'color':'var(--accent-color)',
+                'content': '"📝 Note"',
+                'display':'block',
+                'background': 'var(--primary-bg)',
+                'color': 'var(--accent-color)',
+                'padding-left': '0.2em',
+                'border-radius': '0.2em 0.2em 0 0',
             },
         },
         '.block' : {
