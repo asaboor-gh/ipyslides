@@ -16,7 +16,7 @@ _icons = {
             <rect x="16" y="7" width="1" height="10"/>
             <polygon points="9 18,17 18,13 25,9 18"></polygon>
         </svg>''',
-    'toc': '''
+    'bars': '''
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="{color}" fill="{color}" transform="rotate({rotation})">
             <circle stroke="none" cx="3" cy="5" r="3"/>
             <circle stroke="none" cx="3" cy="13" r="3"/>
@@ -109,9 +109,23 @@ _icons = {
             <polygon points="2 8,19 8,19 10,2 10,2 8" fill="{color}" stroke="{color}"></polygon>
             <path d="M4 4L4 2L23 2L23 17L21 17" fill="none" stroke="{color}"/>
         </svg>''',
+    'rows': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
+            <path d="M2 2L23 2L23 23L2 23L2 2" fill="none" stroke="{color}"/>
+            <line x1="6" y1="7" x2="19" y2="7" stroke="{color}" stroke-width="3" stroke-linecap="butt"/>
+            <line x1="6" y1="12.5" x2="19" y2="12.5" stroke="{color}" stroke-width="3" stroke-linecap="butt"/>
+            <line x1="6" y1="18" x2="19" y2="18" stroke="{color}" stroke-width="3" stroke-linecap="butt"/>
+        </svg>''',
+    'columns': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
+            <polygon points="2 2,23 2,23 23,2 23,2 2" fill="none" stroke="{color}"></polygon>
+            <polygon points="2 2,23 2,23 8,2 8,2 2" fill="{color}" stroke="{color}"></polygon>
+            <line x1="12.5" y1="2" x2="12.5" y2="23" stroke="{color}"/>
+        </svg>''',
 }
 
 class Icon(_HTML):
+    available = tuple(_icons.keys())
     def __init__(self, name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0) :
         "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
         if name not in _icons:
@@ -138,6 +152,4 @@ class Icon(_HTML):
     @property
     def css(self):
         "Get the CSS code of the icon as dictionary of {'content': url(svg)}."
-        return {'content': f"url('data:image/svg+xml;utf8,{self._svg_inline}')"}
-        
-        
+        return {'content': f"url('data:image/svg+xml;utf8,{self._svg_inline}')"}   

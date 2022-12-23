@@ -313,11 +313,11 @@ class LayoutSettings:
                 if self.btn_sidebar.value:
                     self.widgets.mainbox.add_class('SideMode')
                     self._set_sidebar_css()
-                    self.btn_sidebar.icon = 'minus-square-o'
+                    self.btn_sidebar.icon = 'minus'
                 else:
                     self.widgets.mainbox.remove_class('SideMode')
                     self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
-                    self.btn_sidebar.icon = 'columns'
+                    self.btn_sidebar.icon = 'plus'
     
     def _toggle_viewport(self,change): 
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout

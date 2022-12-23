@@ -74,8 +74,8 @@ def demo(slides_instance):
     # Insert source of slide 2    
     with s2.insert(0):
         s2.source.display(collapsed = True)
-        slides.goto_button(slides.running.number+5, 'Skip 5 Slides')
-
+        slides.goto_button(slides.running.number + 5, 'Skip 5 Slides',icon='plus')
+        
     s2.insert_markdown({-1: f'alert`I was added at end using \`s2.insert_markdown\``'})
 
     #Now generate many slides in a loop
@@ -211,7 +211,7 @@ def demo(slides_instance):
     def func(obj,idx):
         slides.write('section`Simple Animations with Frames`')
         if idx == 0:
-            slides.goto_button(slides.running.number + 4, 'Skip All Next Frames')
+            slides.goto_button(slides.running.number + 5, 'Skip All Next Frames')
         
         with slides.source.context(auto_display = False) as s:
             fig, ax = plt.subplots()
@@ -255,7 +255,9 @@ def demo(slides_instance):
 
     with auto.slide():
         with slides.source.context(auto_display = False) as s:
-            slides.goto_button(slides.running.number - 5, 'Skip All Previous Frames')
+            slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
+            slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
+            
             slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
             try:
                 slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()

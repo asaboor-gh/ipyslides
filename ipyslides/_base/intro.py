@@ -124,30 +124,30 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 f'<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
-for k,r  in zip(['right','left','up','down'],[0,180,90,270]): 
-    _icons[f'chevron-{k}'] = _Icon('chevron', color="var(--accent-color)",rotation=r)
+for k,r  in zip('RLUD',[0,180,90,270]): 
+    _icons[k] = _Icon('chevron', color="var(--accent-color)",rotation=r)
 def _key(k): return f'<span style="border: 1px solid var(--secondary-fg); background:var(--secondary-bg);border-radius:4px;padding:2px 6px;min-width:2em;">{k}</span>'
 key_combs = f'''
-| Key (comb) and associated button(s)                                                            | Action                                               | 
-|------------------------------------------------------------------------------------------------|------------------------------------------------------|
-| {_key('&#9141;')} / {_key('▸')} {_icons["chevron-right"]}, {_icons["chevron-down"]}            | Move to next slide                                   |
-| {_key('⇧')} + {_key('&#9141;')} / {_key('◂')} {_icons["chevron-left"]}, {_icons["chevron-up"]} | Move to previous slide                               |
-| {_key('Ctrl')} + {_key('⇧')} + {_key('C')}                                                     | Change the theme, create console/terminal etc        |
-| {_key('T')} {_icons["play"]}, {_icons["pause"]}                                                | Start/stop timer                                     |
-| {_key('Z')}                                                                                    | Toggle `image/.zoom-self/.zoom-child > *` zoom mode  |
-| {_key('S')} {_icons["camera"]}                                                                 | Save screenshot of current slide                     |
-| {_key('P')}                                                                                    | print PDF of current slide                           |
-| {_key('F')} {_icons["expand"]}, {_icons["compress"]}                                           | Toggle Fullscreen mode                               |
-| {_key('Esc')}                                                                                  | Exit Fullscreen mode                                 |
-| {_key('W')}                                                                                    | Fit/restore slides to/from window's viewport         |
-| {_key('G')} {_icons["dots"]}, {_icons["close"]}                                                | Toggle settings panel                                |
-| {_key('H')}                                                                                    | Toggle sidebar/inline mode of slides                 |
-| {_key('L')}                                                                                    | Toggle Laser Pointer ON/OFF                          |
+| Key (comb) and associated button(s)                                        | Action                                               | 
+|----------------------------------------------------------------------------|------------------------------------------------------|
+| {_key('&#9141;')} / {_key('▸')} {_icons["R"]}, {_icons["D"]}               | Move to next slide                                   |
+| {_key('⇧')} + {_key('&#9141;')} / {_key('◂')} {_icons["L"]}, {_icons["U"]} | Move to previous slide                               |
+| {_key('Ctrl')} + {_key('⇧')} + {_key('C')}                                 | Change the theme, create console/terminal etc        |
+| {_key('T')} {_icons["play"]}, {_icons["pause"]}                            | Start/stop timer                                     |
+| {_key('Z')} {_icons["zoom-in"]}, {_icons["zoom-out"]}                      | Toggle `image/.zoom-self/.zoom-child > *` zoom mode  |
+| {_key('S')} {_icons["camera"]}                                             | Save screenshot of current slide                     |
+| {_key('P')}                                                                | print PDF of current slide                           |
+| {_key('F')} {_icons["expand"]}, {_icons["compress"]}                       | Toggle Fullscreen mode                               |
+| {_key('Esc')}                                                              | Exit Fullscreen mode                                 |
+| {_key('W')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | Fit/restore slides to/from window's viewport         |
+| {_key('G')} {_icons["dots"]}, {_icons["close"]}                            | Toggle settings panel                                |
+| {_key('H')} {_icons["columns"]}, {_icons["rows"]}                          | Toggle sidebar/inline mode of slides                 |
+| {_key('L')} {_icons["laser"]}, {_icons["circle"]}                                                              | Toggle Laser Pointer ON/OFF                          |
 '''
 
-more_instructions =f'''## How to Use {_icons["pencil"]}
+more_instructions =f'''## How to Use
 
-**Key Bindings**{{.success}}
+**Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 
 Having your cursor over slides, you can use follwoing keys/combinations:
 

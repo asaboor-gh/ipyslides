@@ -109,6 +109,9 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'color': 'var(--accent-color)!important',
                 'border-radius':'0px',
                 'background': 'transparent !important',
+                'display': 'flex',
+                'align-items': 'center', # center the icon vertically
+                'justify-content': 'center',
                 '> i': {'color': 'var(--accent-color) !important',},
             },
             '.jupyter-button:hover:enabled, .jupyter-button:focus:enabled': {
@@ -406,12 +409,6 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 },
             },
         },
-        # Uniform Icons everywhere
-        '.Settings-Btn, .Toc-Btn, .Overlay-Btn, .Screenshot-Btn, .FullScreen-Btn, .Timer-Btn, .Laser-Btn, .Zoom-Btn, .FullWindow-Btn': { # Align buttons at center
-            'display': 'flex',
-            'align-items': 'center',
-            'justify-content': 'center',
-        },
         '.Arrows': {
                 '.fa.fa-chevron-left': Icon('chevron', color=accent_color, size='36px', rotation=180).css,
                 '.fa.fa-chevron-right': Icon('chevron', color=accent_color, size='36px',rotation=0).css,
@@ -423,7 +420,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '.fa.fa-minus': Icon('close', color=accent_color, size=_icons_size).css,
         },
         '.Toc-Btn': {
-            '.fa.fa-plus': Icon('toc', color=accent_color, size=_icons_size).css,
+            '.fa.fa-plus': Icon('bars', color=accent_color, size=_icons_size).css,
             '.fa.fa-minus': Icon('close', color=accent_color, size=_icons_size).css,
         },
         '.Overlay-Btn': {
@@ -450,6 +447,10 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         '.FullWindow-Btn': {
             '.fa.fa-plus': Icon('win-maximize', color=accent_color, size=_icons_size).css,
             '.fa.fa-minus': Icon('win-restore', color=accent_color, size=_icons_size).css,
+        },
+        '.SideBar-Btn': {
+            '.fa.fa-plus': Icon('columns', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('rows', color=accent_color, size=_icons_size).css,
         },
         '@media print': {
             '.SlidesWrapper':{

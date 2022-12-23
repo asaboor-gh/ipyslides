@@ -369,6 +369,20 @@ class BaseSlides:
                 - You can also zoom in this part by pressing `Z` key while mouse is over this part.
             ''')
         with auto.slide():
+            self.write('''
+                ## SVG Icons
+                Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well.
+                ''')
+            self.write(' '.join([f'`{k}`: ' + self.icon(k,color='crimson').svg for k in self.icon.available]))
+            
+            with self.source.context():
+                import ipywidgets as ipw
+                btn = ipw.Button(description='Chevron-Down',icon='plus').add_class('MyIcon') # Any free font awesome icon, but class is important to overwrite icon     
+                self.iwrite(btn)
+                self.format_css({'.MyIcon .fa.fa-plus': self.icon('chevron',color='crimson', size='1.5em',rotation=90).css}).display() # Overwrite icon with your own
+
+            
+        with auto.slide():
             self.write(['# Auto Slide Numbering in Python Scripts', self.doc(self.AutoSlides,'Slides')])
         
         with auto.slide():

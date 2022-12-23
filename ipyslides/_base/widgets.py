@@ -39,7 +39,7 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    sidebar = ipw.ToggleButton(icon='columns', value = False, tooltip='Toggle ON/OFF Sidebar Mode [H]').add_class('SideBar-Btn').add_class('Menu-Item')
+    sidebar = ipw.ToggleButton(icon='plus', value = False, tooltip='Toggle ON/OFF Sidebar Mode [H]').add_class('SideBar-Btn').add_class('Menu-Item')
     window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
