@@ -1,6 +1,6 @@
 
 import os, sys
-from shutil import rmtree
+from shutil import rmtree, copytree, ignore_patterns
 
 from setuptools import setup, Command
 
@@ -40,8 +40,7 @@ except FileNotFoundError:
 # Load the package's __version__.py module as a dictionary.
 about = {}
 with open(os.path.join(here, NAME, '__version__.py')) as f:
-        exec(f.read(), about)
-
+    exec(f.read(), about)
 
 class UploadCommand(Command):
     """Support setup.py upload."""
@@ -61,10 +60,17 @@ class UploadCommand(Command):
 
     def run(self):
         try:
-            self.status('Removing previous builds …')
+            self.status('Removing previous dist …')
             rmtree(os.path.join(here, 'dist'))
-        except OSError:
-            pass
+        except OSError: pass
+        
+        try: # This is important to add updated files
+            self.status('Removing previous build …')
+            rmtree(os.path.join(here, 'build'))
+        except OSError: pass
+        
+        self.status('Copying new files to build/lib …')
+        copytree(os.path.join(here, 'ipyslides'), os.path.join(here, 'build','lib', 'ipyslides'), ignore = ignore_patterns('*.pyc', '__pycache__','*.egg-info'))
 
         self.status('Building Source and Wheel (universal) distribution …')
         os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
@@ -79,7 +85,6 @@ class UploadCommand(Command):
             os.system('git push --tags')
 
         sys.exit()
-
 
 # Where the magic happens:
 setup(

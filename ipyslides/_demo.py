@@ -16,7 +16,7 @@ Here we will focus on using all that functionality to create slides.
 # get the slides instance under a python block in Markdown file, we will use it later to run a cell magic.
 myslides = get_slides_instance() 
 import ipyslides as isd
-version = isd.__version__
+version = myslides.version
 %xmd #### This is inline markdown parsed by magic {.note .warning}
 ```
 Version: {{version}} as executed from below code in markdown. 

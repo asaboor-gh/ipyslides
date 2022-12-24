@@ -1,6 +1,6 @@
 __all__ = ['bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
-            'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
+            'raw','enable_zoom','html','sig','doc','code','today','sub','sup','classproperty']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
 
@@ -484,3 +484,10 @@ def bullets(iterable, ordered = False,marker = None, className = None):
         start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
         _bullets.append(f'{start}{_fmt_write(it)}</li>')
     return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],className = className) # Don't use style, it will remove effect of className
+
+class classproperty(object):
+    "Read-only property that returns a class attribute value."
+    def __init__(self, getter):
+        self.getter= getter
+    def __get__(self, instance, owner):
+        return self.getter(owner)

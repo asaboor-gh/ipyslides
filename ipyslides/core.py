@@ -22,6 +22,7 @@ from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon
+from .__version__ import __version__
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -258,7 +259,16 @@ class Slides(BaseSlides):
     def navigate_to(self,index):
         "Programatically Navigate to slide by index."
         self._slideindex = index
-    
+        
+    @property
+    def version(self):
+        "Get Slides version."
+        return __version__
+
+    @version.setter
+    def version(self, value):
+        raise AttributeError('Cannot set version.')
+        
     @property
     def notebook_dir(self):
         "Get notebook directory."
@@ -864,6 +874,7 @@ _private_instance = Slides() # Singleton in use namespace
 # This is overwritten below to just have a singleton
 
 class Slides:
+    _version = _private_instance.version # This is for initial use, and will be overwritten by property version
     __doc__ = textwrap.dedent("""
     Interactive Slides in IPython Notebook. Only one instance can exist. 
     

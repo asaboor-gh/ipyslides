@@ -169,7 +169,7 @@ def _custom_progressbar(intslider):
     return intprogress, html
 
 def _notification(content,title='IPySlides Notification',timeout=5):
-    _title = f'<b>{title}</b>' if title else '' # better for inslides notification
+    _title = f'<b>🔔 {title}</b><br/>' if title else '' # better for inslides notification
     return f'''<style>
         .NotePop {{
             display:flex;
@@ -184,7 +184,8 @@ def _notification(content,title='IPySlides Notification',timeout=5):
             animation: popup 0s ease-in {timeout}s;
             animation-fill-mode: forwards;
         }}
-        .NotePop>div>b {{color: var(--accent-color);}}
+        .NotePop > div > b {{color: var(--accent-color); font-size:18px !important;}}
+        .NotePop.NotePop.NotePop.NotePop > div > p {{ border-left: 2px solid var(--accent-color);padding-left:4px;font-size:16px !important;}}
         @keyframes popup {{
             to {{
                 visibility:hidden;
@@ -194,7 +195,6 @@ def _notification(content,title='IPySlides Notification',timeout=5):
         }}
         </style>
         <div style="position:absolute;left:50%;top:4px;z-index:1000;transform:translateX(-50%);" class="NotePop">
-        <div style="width:4px;background: var(--accent-color);margin-left:-8px;margin-right:8px"></div>
         <div>{_title}<p>{content}</p></div></div>'''
 
 class Widgets:

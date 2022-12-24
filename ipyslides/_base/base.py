@@ -241,13 +241,12 @@ class BaseSlides:
         self.create(*range(13)) # Create slides faster
         
         from ..core import Slides
-        from ..__version__ import __version__
         self.settings.set_footer('IPySlides Documentation')
         
         auto = self.AutoSlides() # Does not work inside notebook (should not as well)
         
         with auto.title(): # Title
-            self.write(f'## IPySlides {__version__} Documentation\n### Creating slides with IPySlides')
+            self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center('''
                 alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
                 section`Introduction`
