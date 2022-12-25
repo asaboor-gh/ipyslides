@@ -59,7 +59,13 @@ class Slide:
             with capture_output() as captured:
                 yield captured
         finally:
+            self._app._cell_slides.append(self) # Add to slides in current cell
             self._app._running_slide = None
+            # remove previous event handler safely
+            self._app._remove_post_run_callback()
+            # Register new event handler so that the most recent slide will cause it, not every slide in the cell
+            self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
+            
             if assign:
                 self._contents = captured.outputs
         

@@ -22,6 +22,7 @@ from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon
+from ._base.styles import style_css, cell_box_style
 from .__version__ import __version__
 
 try:  # Handle python IDLE etc.
@@ -79,11 +80,16 @@ class Slides(BaseSlides):
         self.parse_xmd = parse_xmd # Parse extended markdown
         self.serializer = serializer # Serialize IPython objects to HTML
         
+        with suppress(Exception): # should be in separate suppress than others
+            self.shell.events.unregister('post_run_cell', self._post_run_cell)
+            self.shell.events.unregister('pre_run_cell', self._pre_run_cell)
+        
         with suppress(Exception): # Avoid error when using setuptools to install
             self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
+            self.shell.events.register('pre_run_cell', self._pre_run_cell) # Register pre_run_cell event but not post_run_cell here
             self.shell.user_ns['get_slides_instance'] = lambda: self
             
         # Override print function to display in order in slides
@@ -108,6 +114,7 @@ class Slides(BaseSlides):
         self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
             
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_load_and_refresh.
+        self._cell_slides = [] # Slides in the current cell
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
         self._citations_dict = {} # Initialize citations dictionary, updated by user or by set_citations.
         self._iterable = [] #self._collect_slides() # Collect internally
@@ -124,9 +131,40 @@ class Slides(BaseSlides):
         # All Box of Slides
         self._box =  self.widgets.mainbox 
         self._on_load_and_refresh() # Load and browser refresh handling
-        self._display_box_ = ipw.VBox() # Initialize display box
+        self._display_box_ = ipw.VBox() # Initialize display box for slides
+        self._cell_box_ = ipw.HBox() # Initialize display box for cells 
+        self._cell_theme_html_ = ipw.HTML() # Initialize display box for cells
         self.set_overlay_url(url = None) # Set overlay url for initial information
     
+    def _pre_run_cell(self, info):
+        self._remove_post_run_callback()
+        self._cell_slides = []
+    
+    def _remove_post_run_callback(self):
+        with suppress(Exception):
+            self.shell.events.unregister('post_run_cell', self._post_run_cell)
+                
+    def _post_run_cell(self, result):
+        if hasattr(self,'_cell_box_'):
+            self._cell_box_.close() # Close previous cell output if any
+            
+        chidlren = []
+        for s in self._cell_slides:
+            out = ipw.Output(layout = self.settings._slide_layout).add_class('SlideArea')
+            with out:
+                display(*s.contents)
+            chidlren.append(ipw.Box([out], layout=ipw.Layout(max_height='500px',overflow='auto',height='auto')).add_class('SlideBox'))
+            
+        self._cell_theme_html_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
+        
+        def update_cell_theme(change):
+            self._cell_theme_html_.value = self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value  
+        
+        self.settings.theme_dd.observe(update_cell_theme,names=['value'])
+        
+        self._cell_box_ = ipw.HBox(children = [ipw.HTML(cell_box_style), self._cell_theme_html_, *chidlren]).add_class('CellBox')
+        display(self._cell_box_)
+            
     @property
     def xmd_syntax(self):
         "Special syntax for markdown."
@@ -434,6 +472,9 @@ class Slides(BaseSlides):
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
+        self._remove_post_run_callback() # No need to show cell when this is shown
+        self._cell_box_.close() # Close cell box as well
+        
         self.close_view() # Close previous views
         self._display_box_ = ipw.VBox(children=[self.__jlab_in_cell_display(), self._box]) # Initialize display box again
         return display(self._display_box_)
@@ -592,7 +633,6 @@ class Slides(BaseSlides):
             
             s._cell_code = cell # Update cell code
             s._markdown = '' # Reset markdown
-                   
     
     @contextmanager
     def slide(self,slide_number):
@@ -604,6 +644,7 @@ class Slides(BaseSlides):
         
         with _build_slide(self, f'{slide_number}', from_cell = False) as s:
             yield s # Useful to use later
+            
         
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
