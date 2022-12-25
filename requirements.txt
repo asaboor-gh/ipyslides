@@ -1,11 +1,12 @@
 # For Binder
 
-jupyterlab==3.3
+ipython>=8.7
+jupyterlab>=3.5.2
 markdown
 altair
-ipywidgets<=7.9
+ipywidgets>=8.0.4
 numpy
 pandas
 matplotlib
-voila==0.2.16
+voila>=0.4.0
 markdown-customblocks
