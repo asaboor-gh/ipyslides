@@ -136,14 +136,14 @@ def _custom_progressbar(intslider):
                     'border-radius': '0px',
                     'margin': '0px',
                     'padding': '0px',
-                    'height': '4px !important',
+                    'height': '3px !important',
                     'overflow': 'hidden',
                     'left': '0px',
                     'bottom': '0px',
                 },
             },
             '.widget-hprogress': {
-                'height': '4px !important',
+                'height': '3px !important',
             },
             '.NavBox': {
                 'z-index': '50',

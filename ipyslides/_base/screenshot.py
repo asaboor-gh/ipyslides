@@ -177,15 +177,24 @@ class ScreenShot:
     
     def __clear_images(self,change):
         if 'Current' in self.widgets.ddowns.clear.value:
-            _ = [img.close() for img in self.__images[self.widgets.sliders.progress.label]] # Close image to save mememory          
+            _how_many = [img.close() for img in self.__images.get(self.widgets.sliders.progress.label,[])] # Close image to save mememory          
             self.__images[self.widgets.sliders.progress.label] = [] # Clear images at that slide       
-            self.widgets._push_toast('Deleted screenshots of current slide')
+            
+            if _how_many:
+                self.widgets._push_toast(f'Deleting screenshots of current slide. {len(_how_many)} images deleted.')
+            else:
+                self.widgets._push_toast('No screenshots found for to delete.',timeout=2)
             
         elif 'All' in self.widgets.ddowns.clear.value:
-            for imgs in self.__images.values():
-                _ = [img.close() for img in imgs] # Close image to save mememory
+            flat_imgs = [img for imgs in self.__images.values() for img in imgs]
+            _how_many = [img.close() for img in flat_imgs] # Close image to save mememory
+            if _how_many:
+                self.widgets._push_toast(f'Deleting screenshots of all slides. {len(_how_many)} images deleted.')
+            else:
+                self.widgets._push_toast('No screenshots found for to delete.', timeout=2)
+            
             self.__images = {} # Cleaned up
-            self.widgets._push_toast('Deleted screenshots of all slides')
+            
         
         self.widgets.ddowns.clear.value = 'None' # important to get back after operation
     

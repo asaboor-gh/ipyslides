@@ -118,7 +118,7 @@ theme_colors = {
         'secondary_fg' : 'powderblue',
         'alternate_bg' : '#282828',
         'hover_bg' : '#264348',
-        'accent_color' : '#ff5722',
+        'accent_color' : '#A9143C',
         'pointer_color' : '#ff1744',
     },
     'Fancy': {
@@ -151,7 +151,7 @@ theme_colors = {
 	    'secondary_fg': '#fefefe',
 	    'alternate_bg': '#383838',
 	    'hover_bg': '#484848',
-	    'accent_color': '#ffc107',
+	    'accent_color': 'teal',
         'pointer_color': '#e91e63',
     }   
 }
