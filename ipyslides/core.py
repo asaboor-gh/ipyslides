@@ -131,9 +131,7 @@ class Slides(BaseSlides):
         # All Box of Slides
         self._box =  self.widgets.mainbox 
         self._on_load_and_refresh() # Load and browser refresh handling
-        self._display_box_ = ipw.HBox() # Initialize display box for slides
-        self._cell_box_ = ipw.HBox() # Initialize display box for cells 
-        self._cell_theme_html_ = ipw.HTML() # Initialize display box for cells
+        self._display_box_ = ipw.HBox() # Initialize display box for slides 
         self.set_overlay_url(url = None) # Set overlay url for initial information
     
     def _pre_run_cell(self, info):
@@ -145,27 +143,22 @@ class Slides(BaseSlides):
             self.shell.events.unregister('post_run_cell', self._post_run_cell)
                 
     def _post_run_cell(self, result):
-        if hasattr(self,'_cell_box_'):
-            self._cell_box_.close() # Close previous cell output if any
+        if hasattr(self,'_display_box_'):
+            self.close_view() # Close previous cell output if any
             
         chidlren = []
         for s in self._cell_slides:
             out = ipw.Output(layout = self.settings._slide_layout).add_class('SlideArea')
             with out:
-                self.html('style','.jupyter-widgets-disconnected { display: none !important; }').display() # should be separate
                 display(*s.contents)
                     
             chidlren.append(ipw.Box([out], layout=ipw.Layout(max_height='500px',overflow='auto',height='auto')).add_class('SlideBox'))
             
-        self._cell_theme_html_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
+        _cell_theme_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
         
-        def update_cell_theme(change):
-            self._cell_theme_html_.value = self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value  
-        
-        self.settings.theme_dd.observe(update_cell_theme,names=['value'])
-        
-        self._cell_box_ = ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),self._cell_theme_html_, *chidlren]).add_class('CellBox')
-        display(self._cell_box_)
+        self.html('style','.jupyter-widgets-disconnected { display: none !important; }').display() # should be separate
+        self._display_box_ = ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),_cell_theme_, *chidlren]).add_class('CellBox')
+        display(self._display_box_)
             
     @property
     def xmd_syntax(self):
@@ -475,7 +468,6 @@ class Slides(BaseSlides):
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         self._remove_post_run_callback() # No need to show cell when this is shown
-        self._cell_box_.close() # Close cell box as well
         
         self.close_view() # Close previous views
         self._display_box_ = ipw.HBox(children=[self._box,self.__jlab_in_cell_display()]) # Initialize display box again
@@ -981,5 +973,4 @@ import atexit
 @atexit.register
 def close_slides_view():
     _private_instance.close_view() # cant fire event though I think or may be. whatever
-    _private_instance._cell_box_.close() # close cell box as well to avoid theme issues later
     
