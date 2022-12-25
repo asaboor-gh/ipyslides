@@ -22,7 +22,7 @@ from ._base.intro import how_to_slide, logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon
-from ._base.styles import style_css, cell_box_style
+from ._base.styles import style_css, cell_box_css
 from .__version__ import __version__
 
 try:  # Handle python IDLE etc.
@@ -131,7 +131,7 @@ class Slides(BaseSlides):
         # All Box of Slides
         self._box =  self.widgets.mainbox 
         self._on_load_and_refresh() # Load and browser refresh handling
-        self._display_box_ = ipw.VBox() # Initialize display box for slides
+        self._display_box_ = ipw.HBox() # Initialize display box for slides
         self._cell_box_ = ipw.HBox() # Initialize display box for cells 
         self._cell_theme_html_ = ipw.HTML() # Initialize display box for cells
         self.set_overlay_url(url = None) # Set overlay url for initial information
@@ -152,7 +152,9 @@ class Slides(BaseSlides):
         for s in self._cell_slides:
             out = ipw.Output(layout = self.settings._slide_layout).add_class('SlideArea')
             with out:
+                self.html('style','.jupyter-widgets-disconnected { display: none !important; }').display() # should be separate
                 display(*s.contents)
+                    
             chidlren.append(ipw.Box([out], layout=ipw.Layout(max_height='500px',overflow='auto',height='auto')).add_class('SlideBox'))
             
         self._cell_theme_html_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
@@ -162,7 +164,7 @@ class Slides(BaseSlides):
         
         self.settings.theme_dd.observe(update_cell_theme,names=['value'])
         
-        self._cell_box_ = ipw.HBox(children = [ipw.HTML(cell_box_style), self._cell_theme_html_, *chidlren]).add_class('CellBox')
+        self._cell_box_ = ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),self._cell_theme_html_, *chidlren]).add_class('CellBox')
         display(self._cell_box_)
             
     @property
@@ -476,7 +478,7 @@ class Slides(BaseSlides):
         self._cell_box_.close() # Close cell box as well
         
         self.close_view() # Close previous views
-        self._display_box_ = ipw.VBox(children=[self.__jlab_in_cell_display(), self._box]) # Initialize display box again
+        self._display_box_ = ipw.HBox(children=[self._box,self.__jlab_in_cell_display()]) # Initialize display box again
         return display(self._display_box_)
     
     def close_view(self):
@@ -487,9 +489,8 @@ class Slides(BaseSlides):
     def __jlab_in_cell_display(self): 
         return ipw.VBox([
             ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
-            self.widgets.toggles.timer,
             self.widgets.htmls.notes
-        ]).add_class('ExtraControls') 
+        ],layout=ipw.Layout(width='auto',max_width='300px')).add_class('ExtraControls') 
     
     @property
     def _slideindex(self):
@@ -980,4 +981,5 @@ import atexit
 @atexit.register
 def close_slides_view():
     _private_instance.close_view() # cant fire event though I think or may be. whatever
+    _private_instance._cell_box_.close() # close cell box as well to avoid theme issues later
     

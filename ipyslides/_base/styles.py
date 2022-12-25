@@ -529,10 +529,10 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
         },
     })
     
-cell_box_style = """<style>
+cell_box_css = """
 .CellBox {
 	scroll-snap-type: x mandatory !important;
-    display: flex !important;
+    display: flex;
     overflow-x: auto !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -545,7 +545,7 @@ cell_box_style = """<style>
 .CellBox .SlideBox {
 	scroll-snap-align:start !important;
     scroll-snap-stop: always !important;
-	display: flex !important;
+	display: flex;
 	height: 100% !important;
 	max-height: 100% !important;
 	min-width: 100% !important;
@@ -554,8 +554,4 @@ cell_box_style = """<style>
 .CellBox .SlideBox .SlideArea {
     box-sizing: border-box !important;
 }
-.CellBox.jupyter-widgets-disconnected {
-    display: none !important;
-}
-</style>
 """

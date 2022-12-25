@@ -94,7 +94,7 @@ class _Sliders:
     """
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
     visible  = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('FloatControl')
-    width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 40,continuous_update=False).add_class('Width-Slider') # 40 is best if something goes wrong, it can be pushed back
+    width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
     scale    = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         
 @dataclass(frozen=True)
