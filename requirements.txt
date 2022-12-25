@@ -3,7 +3,7 @@
 jupyterlab==3.3
 markdown
 altair
-ipywidgets<=7.9
+ipywidgets<8
 numpy
 pandas
 matplotlib
