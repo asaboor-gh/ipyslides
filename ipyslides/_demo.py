@@ -23,14 +23,10 @@ Version: {{version}} as executed from below code in markdown.
 {{source}}
 ---
 # IPySlides Online Running Sources 
-Launch as voila slides (may not work as expected [^1])[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=voila%2Frender%2Fnotebooks%2Fipyslides.ipynb)
-{.note .error}
-
-[Edit on Kaggle](https://www.kaggle.com/massgh/ipyslides)
-{.note .warning}
-
-Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides-voila/HEAD?urlpath=lab%2Ftree%2Fnotebooks%2Fipyslides.ipynb)
-{.note .success}
+::: note
+    - [Edit on Kaggle](https://www.kaggle.com/massgh/ipyslides)
+    - Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
+    - Watch a [Youtube Video](https://www.youtube.com/watch?v=ytfWIYbJteE)
 
 [^1]: Add references like this per slide. Use slides.cite() or in markdown cite\`key\` to add citations generally.
   
@@ -318,8 +314,7 @@ def demo(slides_instance):
             slides.cols('### Column A','### Column B',className='info'),
             '||### Column C {.warning}||### Column D {.success}||',
         ).display()
-        slides.write('----') # In Python < 3.8, context manager does not properly handle end of code block, so use this to end context
-
+        
     with auto.slide() as section_slides['5']:
         slides.write('section`Custom Objects Serilaization`')
     

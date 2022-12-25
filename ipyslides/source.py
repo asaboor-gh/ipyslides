@@ -172,11 +172,7 @@ class Source:
                 with_node = node
                 break
 
-        if (sys.version_info.major >= 3) and (sys.version_info.minor >= 8):
-            n2 = with_node.body[-1].end_lineno #can include multiline expression
-        else: # if no next sibling node, pick by brute force for < 3.8
-            n2 = with_node.body[-1].lineno # multiline expressions can't be handled, just first line picked
-        
+        n2 = with_node.body[-1].end_lineno #can include multiline expressions in python 3.8+
         source = textwrap.dedent(''.join(lines[n1:][:n2 - offset]))
         source_html = _Source(highlight(source,language = 'python', **kwargs).value)
         source_html.raw = source # raw source code

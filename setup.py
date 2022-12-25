@@ -10,16 +10,16 @@ DESCRIPTION = 'Live rich content slides in jupyter notebook'
 URL = 'https://github.com/massgh/ipyslides'
 EMAIL = 'mass_qau@outlook.com'
 AUTHOR = 'Abdul Saboor'
-REQUIRES_PYTHON = '>=3.7'
+REQUIRES_PYTHON = '>=3.8'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'markdown', 'markdown-customblocks', 'ipywidgets'
+    'markdown', 'markdown-customblocks', 'ipywidgets>=8.0.4', 'pillow>=9.3.0'
 ]
 
 # What packages are optional?
 EXTRAS = {
-    'extra': ['jupyterlab==3.3.0','ipython==7.25.0'],
+    'extra': ['jupyterlab>=3.5.2','ipython>=8.7'],
 }
 
 KEYWORDS = ['Jupyter', 'Widgets', 'IPython']
