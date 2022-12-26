@@ -39,7 +39,6 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    sidebar = ipw.ToggleButton(icon='plus', value = False, tooltip='Toggle ON/OFF Sidebar Mode [H]').add_class('SideBar-Btn').add_class('Menu-Item')
     window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
@@ -56,7 +55,7 @@ class _Htmls:
     footer  = HTML('<p>Put Your Info Here using `self.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
     main    = HTML(html('style',_layout_css.layout_css('650px', styles.theme_colors['Inherit']['accent_color'])).value) # Will be update in theme as well
-    sidebar = HTML(html('style',_layout_css.sidebar_layout_css()).value) # Should be separate CSS, need class to handle disconnect options
+    window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML() #SVG Animation in it
     logo    = HTML()
     tochead = HTML('<h4>Table of Contents</h4><hr/>')
@@ -102,7 +101,7 @@ class _Dropdowns:
     """
     Instantiate under `Widgets` class only.
     """
-    aspect = ipw.Dropdown(**describe('Aspect Ratio'),options=[('2:1',0.50),('16:9',0.56),('16:10',0.63),('3:2',0.67), ('7:5',0.71),('4:3',0.75),('5:4',0.80)], value = 0.75,continuous_update=False).add_class('Height-Dd') #2160 for 4K screens
+    aspect = ipw.Dropdown(**describe('Aspect Ratio'),options=[('2:1',0.50),('16:9',0.56),('16:10',0.63),('3:2',0.67), ('7:5',0.71),('4:3',0.75),('5:4',0.80)], value = 0.56,continuous_update=False).add_class('Height-Dd') #16:9 is better for in cell display
     theme  = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
     clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
     export = ipw.Dropdown(**describe('Export As'),options=['Slides','Report','Select'], value = 'Select')
@@ -136,14 +135,14 @@ def _custom_progressbar(intslider):
                     'border-radius': '0px',
                     'margin': '0px',
                     'padding': '0px',
-                    'height': '3px !important',
+                    'height': '4px !important',
                     'overflow': 'hidden',
                     'left': '0px',
                     'bottom': '0px',
                 },
             },
             '.widget-hprogress': {
-                'height': '3px !important',
+                'height': '4px !important',
             },
             '.NavBox': {
                 'z-index': '50',
@@ -256,7 +255,7 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
-        _many_btns = [self.buttons.setting, self.toggles.overlay, self.toggles.sidebar, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.toggles.timer]
+        _many_btns = [self.buttons.setting, self.toggles.overlay, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.toggles.timer]
         self.panelbox = VBox([
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
@@ -301,7 +300,7 @@ class Widgets:
             self.htmls.theme,
             self.htmls.logo,
             HBox(_many_btns).add_class('TopBar').add_class('Outside'),
-            self.htmls.sidebar,
+            self.htmls.window,
             self.panelbox,
             self.htmls.cursor,
             self.htmls.hilite,

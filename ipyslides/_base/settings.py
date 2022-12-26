@@ -39,7 +39,6 @@ class LayoutSettings:
         self.btn_zoom  = self.widgets.toggles.zoom
         self.btn_timer = self.widgets.toggles.timer
         self.btn_laser = self.widgets.toggles.laser
-        self.btn_sidebar = self.widgets.toggles.sidebar
         self.btn_overlay = self.widgets.toggles.overlay
         self.box = self.widgets.panelbox
         self._on_load_and_refresh() # First attempt of Javascript to work
@@ -54,14 +53,11 @@ class LayoutSettings:
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.btn_laser.observe(self._toggle_laser,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
-        self.btn_sidebar.observe(self._toggle_sidebar,names=['value']) 
         self.btn_overlay.observe(self._toggle_overlay,names=['value'])       
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
         self._update_size(change = None) # Trigger this as well
-        self._toggle_sidebar(change = None) # Should be at end
-        self.btn_sidebar.value = False # Should be at end
         
     def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
         with self.emit_resize_event(): # Immediately emit resize event on restart
@@ -79,17 +75,11 @@ class LayoutSettings:
     @property
     def widgets(self):
         return self._widgets # To avoid breaking code by user
-        
-    @property
-    def span_percent(self):
-        "Return span percent for slides. If viewport is filled, return 100."
-        if self.btn_window.value:
-            return 100
-        return self.width_slider.value
     
     @property
     def breakpoint(self):
-        return f'{int(100*650/self.span_percent)}px'
+        span = 100 if self.btn_window.value else self.width_slider.value
+        return f'{int(100*650/span)}px'
     
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for slides and frames. (2.0.8+)"
@@ -230,21 +220,21 @@ class LayoutSettings:
         finally:
             self.widgets._exec_js(scripts.resize_js)
         
-    def _set_sidebar_css(self,clear = False):
-        with self.emit_resize_event():
-            if clear:
-                self.widgets.htmls.sidebar.value = ''
-            else:
-                self.widgets.htmls.sidebar.value =  html('style',_layout_css.sidebar_layout_css(span_percent=self.span_percent)).value
-        
     def _update_size(self,change):
         if change and change['owner'] == self.width_slider:
             self._push_zoom(change=None) # Adjust zoom CSS for expected layout
+            # Update Layout CSS
+            self.widgets.htmls.main.value = html('style',
+                    _layout_css.layout_css(
+                        self.breakpoint, 
+                        accent_color= self.colors['accent_color'], 
+                        show_laser_pointer = self.btn_laser.value
+                    )
+                ).value
             
         with self.emit_resize_event():
-            self.widgets.mainbox.layout.height = '{}vw'.format(int(self.span_percent*self.aspect_dd.value))
-            self.widgets.mainbox.layout.width = '{}vw'.format(self.span_percent) # Do not use self.width_slider.value here, need in full width too 
-            self._toggle_sidebar(change=None) # To update sidebar width, auto handles fullscreen
+            self.widgets.mainbox.layout.height = '{}vw'.format(int(self.width_slider.value*self.aspect_dd.value))
+            self.widgets.mainbox.layout.width = '{}vw'.format(self.width_slider.value) 
             self._update_theme(change=None) # For updating size and breakpoints and zoom CSS
             
     @property
@@ -303,21 +293,6 @@ class LayoutSettings:
         else:
             self.widgets.tocbox.layout.display = 'none'
             self.widgets.buttons.toc.icon = 'plus'
-        
-    def _toggle_sidebar(self,change): 
-        """Pushes this instance of Slides to sidebar and back inline."""
-        # Only push to sidebar if not in fullscreen
-        self._push_zoom(change=None) # Adjust zoom CSS for expected layout
-        if not self.btn_window.value:
-            with self.emit_resize_event():
-                if self.btn_sidebar.value:
-                    self.widgets.mainbox.add_class('SideMode')
-                    self._set_sidebar_css()
-                    self.btn_sidebar.icon = 'minus'
-                else:
-                    self.widgets.mainbox.remove_class('SideMode')
-                    self._set_sidebar_css(clear = True) # Should be empty to avoid competition of style
-                    self.btn_sidebar.icon = 'plus'
     
     def _toggle_viewport(self,change): 
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout
@@ -325,14 +300,12 @@ class LayoutSettings:
             if self.btn_window.value:
                 self.btn_window.icon = 'minus'
                 self.widgets.mainbox.add_class('FullWindow') # to Full Window
-                self._set_sidebar_css() # Set sidebar CSS that will take it to full view
-                self.btn_sidebar.disabled = True # Disable sidebar switch to avoid keyboard shortcuts
+                self.widgets.htmls.window.value =  html('style',_layout_css.viewport_css()).value
             else:
                 self.btn_window.icon = 'plus'
                 self.widgets.mainbox.remove_class('FullWindow') # back to inline
-                self._set_sidebar_css(clear = (False if self.btn_sidebar.value else True)) # Move  back from where it was left of
-                self.btn_sidebar.disabled = False # Enable sidebar switch to recieve events
-            
+                self.widgets.htmls.window.value = ''
+                
             self._update_theme(change=None) # For updating size and breakpoints
     
     def _set_old_state(self, reset=False):
@@ -341,7 +314,7 @@ class LayoutSettings:
                 for state in self._old_state:
                     state['owner'].value = state['value']
         else:
-            self._old_state = tuple([{'owner': owner, 'value': owner.value} for owner in (self.btn_window, self.btn_sidebar)])
+            self._old_state = tuple([{'owner': owner, 'value': owner.value} for owner in (self.btn_window,)])
     
     def _toggle_fullscreen(self,change):
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout
@@ -375,8 +348,8 @@ class LayoutSettings:
         if self.btn_zoom.value:
             self.btn_zoom.icon = 'minus' # Change icon to minus irrespective of layout mode
             
-            if True in [self.btn_window.value, self.btn_fscreen.value, self.btn_sidebar.value]:
-                self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css(self.span_percent)}\n</style>'
+            if True in [self.btn_window.value, self.btn_fscreen.value]:
+                self.widgets.htmls.zoom.value = f'<style>\n{_layout_css.zoom_hover_css()}\n</style>'
             else:
                 self.widgets.htmls.zoom.value = '' # Clear zoom css immediately to avoid conflict
                 self.widgets._push_toast('Objects are not zoomable in inline mode!',timeout=2)

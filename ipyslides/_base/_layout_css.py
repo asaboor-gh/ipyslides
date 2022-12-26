@@ -15,13 +15,10 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
             },
             '^.FullWindow': {
-                '.Height-Dd, .Width-Slider, .SideBar-Btn': {'display': 'none !important'},
+                '.Height-Dd, .Width-Slider': {'display': 'none !important'},
             },
             '^.FullScreen': {
-                '.SideBar-Btn, .FullWindow-Btn': {'display': 'none !important'},
-            },
-            '^.SideMode': {
-                '.Height-Dd': {'display': 'none !important'},
+                '.FullWindow-Btn': {'display': 'none !important'},
             },
             '@keyframes heart-beat': {
                 '0%': {'transform': 'scale(1)','opacity': '0.5','filter': 'drop-shadow(0 0 2px var(--hover-color))'},
@@ -205,7 +202,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             f'@media screen and (max-width: {breakpoint})': {
                     'bottom': '30px !important',
                     'right': '0 !important',
-                    'width' : '100%',
+                    'width' : '100% !important',
                     'justify-content': 'space-around !important',
                     'button' : {'width': '30% !important'},
             },
@@ -452,10 +449,6 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '.fa.fa-plus': Icon('win-maximize', color=accent_color, size=_icons_size).css,
             '.fa.fa-minus': Icon('win-restore', color=accent_color, size=_icons_size).css,
         },
-        '.SideBar-Btn': {
-            '.fa.fa-plus': Icon('columns', color=accent_color, size=_icons_size).css,
-            '.fa.fa-minus': Icon('rows', color=accent_color, size=_icons_size).css,
-        },
         '@media print': {
             '.SlidesWrapper':{
                 '^, ^.FullWindow': { 
@@ -543,19 +536,19 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         },
     })
 
-def sidebar_layout_css(span_percent = 40):
+def viewport_css():
     return f'''
 .jp-LabShell, 
 body[data-base-url], /* For Voila */
 body[data-retro]>div#main, 
 body[data-notebook]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
-    right: {span_percent}vw !important;
+    right: 100vw !important;
     margin-right:1px !important;
     min-width: 0 !important;
 }}
 body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
     min-width: 0 !important;
-    padding-right: {span_percent}vw !important;
+    padding-right: 100vw !important;
 }}
 .jp-LabShell .SlidesWrapper,
 body[data-base-url] .SlidesWrapper, /* For Voila */
@@ -565,7 +558,7 @@ body[data-notebook] .SlidesWrapper{{
     top:0px !important;
     right:0px !important;
     height: 100% !important;
-    width: {span_percent}vw !important; 
+    width: 100vw !important; 
 }}
 
 /* Very important to keep slides ON even Notebook hidden */
@@ -581,7 +574,7 @@ body[data-notebook] .SlidesWrapper{{
 }}
 '''
 
-def zoom_hover_css(span_percent):
+def zoom_hover_css():
     return _build_css(('.SlideArea',), {
         # Matplotlib by plt.show, self zoom, child zoom, plotly
         _zoom_ables: {
@@ -589,10 +582,10 @@ def zoom_hover_css(span_percent):
                 'cursor': 'default', # Ovverride zoom-in cursor form main layout
                 'position': 'fixed',
                 'backdrop-filter': 'blur(200px)',
-                'left':f'calc({100-span_percent}% + 50px)',
+                'left':'50px',
                 'top':'50px',
                 'z-index':100,
-                'width': f'calc({span_percent}% - 100px)',
+                'width': 'calc(100% - 100px)',
                 'height': 'calc(100% - 100px)',
                 'object-fit': 'scale-down !important',
                 'box-shadow': '-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5)',

@@ -145,7 +145,8 @@ class Slides(BaseSlides):
     def _post_run_cell(self, result):
         if hasattr(self,'_display_box_'):
             self.close_view() # Close previous cell output if any
-            
+        
+          
         chidlren = []
         for s in self._cell_slides:
             out = ipw.Output(layout = self.settings._slide_layout).add_class('SlideArea')
@@ -158,7 +159,7 @@ class Slides(BaseSlides):
         
         self.html('style','.jupyter-widgets-disconnected { display: none !important; }').display() # should be separate
         self._display_box_ = ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),_cell_theme_, *chidlren]).add_class('CellBox')
-        display(self._display_box_)
+        self._display_handle = display(self._display_box_, display_id=True)
             
     @property
     def xmd_syntax(self):
@@ -468,15 +469,19 @@ class Slides(BaseSlides):
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         self._remove_post_run_callback() # No need to show cell when this is shown
-        
         self.close_view() # Close previous views
         self._display_box_ = ipw.HBox(children=[self._box,self.__jlab_in_cell_display()]) # Initialize display box again
-        return display(self._display_box_)
+        self._display_handle = display(self._display_box_, display_id=True) # Display slides
     
     def close_view(self):
-        "Close all slides views, but keep slides in memory than can be shown again."
-        with self.settings.emit_resize_event(): # closing must collapse if in sidebar
+        "Close slides/cell view, but keep slides in memory than can be shown again."
+        with self.settings.emit_resize_event(): 
             self._display_box_.close() 
+            
+        if hasattr(self,'_display_handle'):
+            self._display_handle.update(self.html('p',[
+                self.colored('✓✓',fg='var(--secondary-fg)',bg='var(--secondary-bg)')
+            ],style='font-size:70%;')) # Clear display that removes CSS things there
     
     def __jlab_in_cell_display(self): 
         return ipw.VBox([

@@ -141,8 +141,7 @@ key_combs = f'''
 | {_key('Esc')}                                                              | Exit Fullscreen mode                                 |
 | {_key('W')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | Fit/restore slides to/from window's viewport         |
 | {_key('G')} {_icons["dots"]}, {_icons["close"]}                            | Toggle settings panel                                |
-| {_key('H')} {_icons["columns"]}, {_icons["rows"]}                          | Toggle sidebar/inline mode of slides                 |
-| {_key('L')} {_icons["laser"]}, {_icons["circle"]}                                                              | Toggle Laser Pointer ON/OFF                          |
+| {_key('L')} {_icons["laser"]}, {_icons["circle"]}                          | Toggle Laser Pointer ON/OFF                          |
 '''
 
 more_instructions =f'''## How to Use

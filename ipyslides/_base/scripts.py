@@ -19,7 +19,6 @@ function main(){
     let arrows  = document.getElementsByClassName('Arrows'); // These are 2*instances
     let mplBtn  = document.getElementsByClassName('Zoom-Btn')[0];
     let winFs   = document.getElementsByClassName('FullWindow-Btn')[0];
-    let sideBtn = document.getElementsByClassName('SideBar-Btn')[0];
     let fullSc  = document.getElementsByClassName('FullScreen-Btn')[0];
     let capSc   = document.getElementsByClassName('Screenshot-Btn')[0];
     let cursor  = document.getElementsByClassName('LaserPointer')[0];
@@ -40,8 +39,6 @@ function main(){
             mplBtn.click(); // Z 
         } else if (key === 71) { 
             panelBtn.click(); // G
-        } else if (key === 72) {
-            sideBtn.click(); // H
         } else if (key === 76) {
             laserBtn.click(); // L
         } else if (key === 88 || key === 68) {
