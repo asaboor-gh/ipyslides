@@ -16,13 +16,13 @@ function main(){
     }; 
     resizeWindow(); // resize on first display
     // Only get buttons of first view, otherwise it will becomes multiclicks
-    let arrows  = document.getElementsByClassName('Arrows'); // These are 2*instances
-    let mplBtn  = document.getElementsByClassName('Zoom-Btn')[0];
-    let winFs   = document.getElementsByClassName('FullWindow-Btn')[0];
-    let fullSc  = document.getElementsByClassName('FullScreen-Btn')[0];
-    let capSc   = document.getElementsByClassName('Screenshot-Btn')[0];
-    let cursor  = document.getElementsByClassName('LaserPointer')[0];
-    let present = document.getElementsByClassName('Timer-Btn')[0];
+    let arrows   = document.getElementsByClassName('Arrows'); // These are 2*instances
+    let mplBtn   = document.getElementsByClassName('Zoom-Btn')[0];
+    let winFs    = document.getElementsByClassName('FullWindow-Btn')[0];
+    let fullSc   = document.getElementsByClassName('FullScreen-Btn')[0];
+    let capSc    = document.getElementsByClassName('Screenshot-Btn')[0];
+    let cursor   = document.getElementsByClassName('LaserPointer')[0];
+    let present  = document.getElementsByClassName('Timer-Btn')[0];
     let panelBtn = document.getElementsByClassName('Settings-Btn')[0];
     let laserBtn = document.getElementsByClassName('Laser-Btn')[0];
     
@@ -67,6 +67,7 @@ function main(){
         }; 
         resizeWindow(); // Resize after key press, good for F key
         e.stopPropagation(); // stop propagation to jupyterlab events and other views 
+        e.preventDefault(); // stop default actions
     };
     
     let box = document.getElementsByClassName('SlidesWrapper')[0];
@@ -94,13 +95,6 @@ function main(){
     if (loc.includes("voila")) {
         winFs.click(); // Turn ON fullscreen for voila anywhare.
     };
-    // Do this at end so that at least other things work in Voila
-    try {
-        let main = document.getElementById('jp-main-dock-panel'); //Need for resizing events on LabShell
-        main.onmouseup = resizeWindow; // So that Voila works
-    } catch (error) { 
-    
-    }
     
 };
 

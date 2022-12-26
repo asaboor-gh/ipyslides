@@ -4,7 +4,7 @@ from contextlib import contextmanager, suppress
 from collections import namedtuple
 
 from IPython import get_ipython
-from IPython.display import display
+from IPython.display import display, Javascript
 from IPython.utils.capture import capture_output
 
 import ipywidgets as ipw
@@ -131,7 +131,7 @@ class Slides(BaseSlides):
         # All Box of Slides
         self._box =  self.widgets.mainbox 
         self._on_load_and_refresh() # Load and browser refresh handling
-        self._display_box_ = ipw.HBox() # Initialize display box for slides 
+        self._display_box = None # Initialize
         self.set_overlay_url(url = None) # Set overlay url for initial information
     
     def _pre_run_cell(self, info):
@@ -143,23 +143,35 @@ class Slides(BaseSlides):
             self.shell.events.unregister('post_run_cell', self._post_run_cell)
                 
     def _post_run_cell(self, result):
-        if hasattr(self,'_display_box_'):
-            self.close_view() # Close previous cell output if any
-        
-          
+        self.close_view() # Close previous cell output if any  
         chidlren = []
-        for s in self._cell_slides:
-            out = ipw.Output(layout = self.settings._slide_layout).add_class('SlideArea')
+        for i, s in enumerate(self._cell_slides):
+            out = ipw.Output().add_class('SlideArea')
             with out:
                 display(*s.contents)
+                if i == 0:
+                    display(Javascript("let box = document.getElementsByClassName('CellBox')[0];\n"
+                        "box.tabIndex = -1; // Make the box focusable, so user can use keyboard to navigate between slides\n"
+                        "box.focus();"))
                     
-            chidlren.append(ipw.Box([out], layout=ipw.Layout(max_height='500px',overflow='auto',height='auto')).add_class('SlideBox'))
+            chidlren.append(ipw.Box([out], layout=ipw.Layout(max_height='400px',overflow='auto',height='auto')).add_class('SlideBox'))
             
         _cell_theme_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
+        _code_theme_ = ipw.HTML(self.widgets.htmls.hilite.value) # Add value, not itself
         
-        self.html('style','.jupyter-widgets-disconnected { display: none !important; }').display() # should be separate
-        self._display_box_ = ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),_cell_theme_, *chidlren]).add_class('CellBox')
-        self._display_handle = display(self._display_box_, display_id=True)
+        btn = ipw.Button(description='Switch to Slides Application', button_style='danger').add_class('Switch-Btn')
+        def update_display(b):
+            self._display_box.children = [self._box,self.__jlab_in_cell_display()]
+            self._display_box.remove_class('CellBoxWrapper')
+        
+        btn.on_click(update_display)
+        
+        self._display_box = ipw.HBox([
+                btn,
+                ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),_code_theme_, _cell_theme_, *chidlren]).add_class('CellBox')
+            ]).add_class('CellBoxWrapper')
+        
+        return display(self._display_box)
             
     @property
     def xmd_syntax(self):
@@ -470,18 +482,13 @@ class Slides(BaseSlides):
         
         self._remove_post_run_callback() # No need to show cell when this is shown
         self.close_view() # Close previous views
-        self._display_box_ = ipw.HBox(children=[self._box,self.__jlab_in_cell_display()]) # Initialize display box again
-        self._display_handle = display(self._display_box_, display_id=True) # Display slides
+        self._display_box = ipw.HBox(children=[self._box,self.__jlab_in_cell_display()]) # Initialize display box again
+        return display(self._display_box) # Display slides
     
     def close_view(self):
-        "Close slides/cell view, but keep slides in memory than can be shown again."
-        with self.settings.emit_resize_event(): 
-            self._display_box_.close() 
-            
-        if hasattr(self,'_display_handle'):
-            self._display_handle.update(self.html('p',[
-                self.colored('✓✓',fg='var(--secondary-fg)',bg='var(--secondary-bg)')
-            ],style='font-size:70%;')) # Clear display that removes CSS things there
+        "Close slides/cell view, but keep slides in memory than can be shown again."    
+        if hasattr(self,'_display_box') and self._display_box is not None:
+            self._display_box.close() # Clear display that removes CSS things there
     
     def __jlab_in_cell_display(self): 
         return ipw.VBox([
@@ -971,11 +978,4 @@ class Slides:
         return _private_instance
     
     # No need to define __init__, __new__ is enough to show signature and docs
-    
-# When exit, quit called or kernel is shutdown, this works. Not on restart though
-import atexit
-
-@atexit.register
-def close_slides_view():
-    _private_instance.close_view() # cant fire event though I think or may be. whatever
     

@@ -134,10 +134,7 @@ slides.extender.extend(extension)
 ```
 ---
 # Full Screen Presentation
-- Jupyterlab 3.0+ has full screen eneabled from any view:
-- Use [Voila](https://voila.readthedocs.io/en/stable/) for full screen prsentations. Your notebook remains same, it is just get run by Voila, may not work as expected.     
-
-- Slides in Jupyter Lab are theme aware in `Inherit` theme mode, so theme of slides changes based on editor theme.
+Starting version 3.0 of `ipyslides`, you can press `W` (or associated button in top bar) to toggle viewport,`F` (or associated button in top bar) to toggle fullscreen. Tested on JupyterLab, RetroLab and Classic Notebook.
 ---
 # PDF printing
 To include all type of objects you need to make PDF manually.

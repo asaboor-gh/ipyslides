@@ -66,8 +66,7 @@ class LayoutSettings:
             with capture_output() as cap:
                 with suppress(BaseException): # When ipython is not running, avoid errors
                     parse_xmd(intro.instructions,display_inline=True)
-                html('style','.jupyter-widgets-disconnected { display: none !important; }').display() # Hide disconnected widgets when a new slide instance is created
-            
+                
             # Only do this if it's in Jupyter, otherwise throws errors
             self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
             self.widgets.htmls.intro.add_class('Intro') 
@@ -222,7 +221,6 @@ class LayoutSettings:
         
     def _update_size(self,change):
         if change and change['owner'] == self.width_slider:
-            self._push_zoom(change=None) # Adjust zoom CSS for expected layout
             # Update Layout CSS
             self.widgets.htmls.main.value = html('style',
                     _layout_css.layout_css(
@@ -232,10 +230,9 @@ class LayoutSettings:
                     )
                 ).value
             
-        with self.emit_resize_event():
-            self.widgets.mainbox.layout.height = '{}vw'.format(int(self.width_slider.value*self.aspect_dd.value))
-            self.widgets.mainbox.layout.width = '{}vw'.format(self.width_slider.value) 
-            self._update_theme(change=None) # For updating size and breakpoints and zoom CSS
+        self.widgets.mainbox.layout.height = '{}vw'.format(int(self.width_slider.value*self.aspect_dd.value))
+        self.widgets.mainbox.layout.width = '{}vw'.format(self.width_slider.value) 
+        self._update_theme(change=None) # For updating size and breakpoints and zoom CSS
             
     @property
     def text_size(self):
@@ -272,10 +269,9 @@ class LayoutSettings:
          
      
     def _update_theme(self,change=None): 
-        with self.emit_resize_event():
-            # Update Layout CSS  
-            layout_css = _layout_css.layout_css(breakpoint = self.breakpoint, accent_color= self.colors['accent_color'], show_laser_pointer=self.btn_laser.value)
-            self.widgets.htmls.main.value = html('style',layout_css).value
+        # Update Layout CSS  
+        layout_css = _layout_css.layout_css(breakpoint = self.breakpoint, accent_color= self.colors['accent_color'], show_laser_pointer=self.btn_laser.value)
+        self.widgets.htmls.main.value = html('style',layout_css).value
         
         # Update Theme CSS
         theme_css = styles.style_css(**self.theme_kws)
@@ -283,8 +279,7 @@ class LayoutSettings:
         if self.reflow_check.value:
             theme_css = theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
         
-        with self.emit_resize_event():
-            self.widgets.htmls.theme.value = html('style',theme_css).value
+        self.widgets.htmls.theme.value = html('style',theme_css).value
         
     def _toggle_tocbox(self,btn):
         if self.widgets.tocbox.layout.display == 'none':
@@ -317,23 +312,21 @@ class LayoutSettings:
             self._old_state = tuple([{'owner': owner, 'value': owner.value} for owner in (self.btn_window,)])
     
     def _toggle_fullscreen(self,change):
-        self._push_zoom(change=None) # Adjust zoom CSS for expected layout
-        with self.emit_resize_event():
-            if self.btn_fscreen.value:
-                self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
-                self.btn_fscreen.icon = 'minus'
-                self.widgets.mainbox.add_class('FullScreen')
-                self._set_old_state(reset = False) # Save old state of buttons
-                if not self.btn_window.value: # Should elevate full window too
-                    self.btn_window.value = True
+        if self.btn_fscreen.value:
+            self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
+            self.btn_fscreen.icon = 'minus'
+            self.widgets.mainbox.add_class('FullScreen')
+            self._set_old_state(reset = False) # Save old state of buttons
+            if not self.btn_window.value: # Should elevate full window too
+                self.btn_window.value = True
 
-                self.btn_window.disabled = True # Disable window button to recieve events
-            else:
-                self.widgets._exec_js("document.exitFullscreen();") # To Fullscreen
-                self.btn_fscreen.icon = 'plus'
-                self.widgets.mainbox.remove_class('FullScreen')
-                self.btn_window.disabled = False # Enable window button to receive events
-                self._set_old_state(reset = True) # Reset old state of all buttons for consistency
+            self.btn_window.disabled = True # Disable window button to recieve events
+        else:
+            self.widgets._exec_js("document.exitFullscreen();") # To Fullscreen
+            self.btn_fscreen.icon = 'plus'
+            self.widgets.mainbox.remove_class('FullScreen')
+            self.btn_window.disabled = False # Enable window button to receive events
+            self._set_old_state(reset = True) # Reset old state of all buttons for consistency
                 
     def _toggle_laser(self,change):
         if self.btn_laser.value:

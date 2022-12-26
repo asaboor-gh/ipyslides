@@ -537,42 +537,28 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
     })
 
 def viewport_css():
-    return f'''
-.jp-LabShell, 
-body[data-base-url], /* For Voila */
-body[data-retro]>div#main, 
-body[data-notebook]>div#main {{ /* Retrolab will also rise Notebook 7 */ 
-    right: 100vw !important;
-    margin-right:1px !important;
-    min-width: 0 !important;
-}}
-body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
-    min-width: 0 !important;
-    padding-right: 100vw !important;
-}}
-.jp-LabShell .SlidesWrapper,
-body[data-base-url] .SlidesWrapper, /* For Voila */
-body[data-retro] .SlidesWrapper,
-body[data-notebook] .SlidesWrapper{{
-    position:fixed;
-    top:0px !important;
-    right:0px !important;
-    height: 100% !important;
-    width: 100vw !important; 
-}}
-
-/* Very important to keep slides ON even Notebook hidden */
-.jp-LabShell .jp-NotebookPanel.p-mod-hidden {{
-    display:block !important;
-    height:0 !important;
-    min-height:0 !important;
-    border:none !important;
-}}
-/* Override hiding on scroll in Notebook V7 and associated view of Jupyter lab*/
-.jp-WindowedPanel-window > div.jp-Cell {{
-    display: block !important; 
-}}
-'''
+    return '''
+    html, body, .jp-LabShell {
+    position: fixed;
+    left:0;
+    top:0;
+    width:0 !important;
+    min-width: 0 !important; /* This is necessary for lab shell*/
+    height:100vh !important;
+    }
+    .SlidesWrapper {
+        position: fixed;
+        left: 0;
+        top:0;
+        width:100vw !important;
+        height:100vh !important;
+    }
+    #menubar-container { display: none !important; } /* For classic Notebook */
+    body[data-kaggle-source-type] .jp-Notebook { /* For Kaggle */
+        min-width: 0 !important;
+        padding-right: 100vw !important;
+    }
+    '''
 
 def zoom_hover_css():
     return _build_css(('.SlideArea',), {
