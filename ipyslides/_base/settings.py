@@ -60,16 +60,15 @@ class LayoutSettings:
         self._update_size(change = None) # Trigger this as well
         
     def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
-        with self.emit_resize_event(): # Immediately emit resize event on restart
-            self.__add_js()
+        self.__add_js()
 
-            with capture_output() as cap:
-                with suppress(BaseException): # When ipython is not running, avoid errors
-                    parse_xmd(intro.instructions,display_inline=True)
-                
-            # Only do this if it's in Jupyter, otherwise throws errors
-            self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
-            self.widgets.htmls.intro.add_class('Intro') 
+        with capture_output() as cap:
+            with suppress(BaseException): # When ipython is not running, avoid errors
+                parse_xmd(intro.instructions,display_inline=True)
+            
+        # Only do this if it's in Jupyter, otherwise throws errors
+        self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value
+        self.widgets.htmls.intro.add_class('Intro') 
     
     @property
     def widgets(self):
@@ -268,7 +267,7 @@ class LayoutSettings:
             breakpoint = self.breakpoint, content_width = self._content_width)
          
      
-    def _update_theme(self,change=None): 
+    def _update_theme(self,change = None): 
         # Update Layout CSS  
         layout_css = _layout_css.layout_css(breakpoint = self.breakpoint, accent_color= self.colors['accent_color'], show_laser_pointer=self.btn_laser.value)
         self.widgets.htmls.main.value = html('style',layout_css).value
@@ -291,32 +290,28 @@ class LayoutSettings:
     
     def _toggle_viewport(self,change): 
         self._push_zoom(change=None) # Adjust zoom CSS for expected layout
-        with self.emit_resize_event(): 
-            if self.btn_window.value:
-                self.btn_window.icon = 'minus'
-                self.widgets.mainbox.add_class('FullWindow') # to Full Window
+        if self.btn_window.value:
+            self.btn_window.icon = 'minus'
+            self.widgets.mainbox.add_class('FullWindow') # to Full Window
+            
+            with self.emit_resize_event():  # closer is smoother
                 self.widgets.htmls.window.value =  html('style',_layout_css.viewport_css()).value
-            else:
-                self.btn_window.icon = 'plus'
-                self.widgets.mainbox.remove_class('FullWindow') # back to inline
-                self.widgets.htmls.window.value = ''
-                
-            self._update_theme(change=None) # For updating size and breakpoints
-    
-    def _set_old_state(self, reset=False):
-        if reset: # Do not mix getattr here
-            if getattr(self, '_old_state', None):
-                for state in self._old_state:
-                    state['owner'].value = state['value']
         else:
-            self._old_state = tuple([{'owner': owner, 'value': owner.value} for owner in (self.btn_window,)])
+            self.btn_window.icon = 'plus'
+            self.widgets.mainbox.remove_class('FullWindow') # back to inline
+            
+            with self.emit_resize_event(): # closer is smoother
+                self.widgets.htmls.window.value = ''
+            
+        self._update_theme(change=None) # For updating size and breakpoints
     
     def _toggle_fullscreen(self,change):
         if self.btn_fscreen.value:
             self.widgets._exec_js("document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();") # Enter Fullscreen
             self.btn_fscreen.icon = 'minus'
             self.widgets.mainbox.add_class('FullScreen')
-            self._set_old_state(reset = False) # Save old state of buttons
+            
+            self._old_window_state = self.btn_window.value # Save old state of window button
             if not self.btn_window.value: # Should elevate full window too
                 self.btn_window.value = True
 
@@ -325,8 +320,11 @@ class LayoutSettings:
             self.widgets._exec_js("document.exitFullscreen();") # To Fullscreen
             self.btn_fscreen.icon = 'plus'
             self.widgets.mainbox.remove_class('FullScreen')
+            
             self.btn_window.disabled = False # Enable window button to receive events
-            self._set_old_state(reset = True) # Reset old state of all buttons for consistency
+            if hasattr(self, '_old_window_state'):
+                self.btn_window.value = self._old_window_state # Restore old state of window button
+            
                 
     def _toggle_laser(self,change):
         if self.btn_laser.value:
