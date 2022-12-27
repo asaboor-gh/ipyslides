@@ -14,7 +14,6 @@ class Navigation:
         self.btn_settings = self.widgets.buttons.setting
         self.visible_slider = self.widgets.sliders.visible
     
-        
         self.btn_prev.on_click(self._shift_left)
         self.btn_next.on_click(self._shift_right)
         self.btn_settings.on_click(self._toggle_panel)
@@ -25,6 +24,7 @@ class Navigation:
         
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
+        self.widgets.mainbox.remove_class('InView-Other') # A heart beat animation should stop, and will be re-registed by content update
         if change:
             try:
                 self.progress_slider.index = self.progress_slider.index + 1 # Forwards

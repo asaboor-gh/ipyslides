@@ -33,7 +33,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             },
             '^.InView-Other .Arrows.Next-Btn': {
                 'animation-delay': '60s', # Beet at 60 seconds if left on slide
-                'animation-iteration-count': '15', # 5 times to show 1.5 minute passed
+                'animation-iteration-count': '10', # 10 times to catch attention of speaker
             },
             '.SlideArea': {
                 'align-items': 'center',
@@ -56,6 +56,24 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                     'min-width':'auto !important',
                 },
             },
+            '.widget-slider': {
+                '.noUi-base': {
+                    'background': 'transparent',
+                    'border': 'none',
+                },
+                '.noUi-connects': {
+                    'background':'var(--accent-color)',
+                    'border-color': 'var(--accent-color)',
+                },
+                '.noUi-handle': {
+                    'background': 'var(--accent-color)',
+                    'border-color': 'var(--accent-color)',
+                    '^:hover, ^:focus': {
+                        'background': 'var(--hover-bg) !important',
+                        'border-color': 'var(--hover-bg) !important',
+                    },
+                },
+            }, 
             '.widget-html': {
                 '^:not(div.LaserPointer), .widget-html-content > div' :{
                     'display': 'grid !important',
@@ -126,12 +144,6 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '> select, > select > option': {
                     'color': 'var(--primary-fg)!important',
 	                'background': 'var(--primary-bg)!important',
-                },
-            },
-            '.widget-hslider' : {
-                '.ui-slider, .ui-slider-handle': {
-                    'background': 'var(--accent-color)',
-                    'border': '1px solid var(--accent-color)',  
                 },
             },
             '.jupyter-widgets:not(button)': { 'color': 'var(--primary-fg) !important'}, # All widgets text color

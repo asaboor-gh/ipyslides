@@ -222,9 +222,10 @@ class BaseSlides:
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster
         
-        for i,chunk in enumerate(chunks, start = start):
-            # Must run under this to create frames with two dashes (--)
-            self.shell.run_cell_magic('slide', f'{i} -m', chunk)
+        with self.hold_post_run_cell(): 
+            for i,chunk in enumerate(chunks, start = start):
+                # Must run under this to create frames with two dashes (--)
+                self.shell.run_cell_magic('slide', f'{i} -m', chunk)
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
@@ -232,7 +233,15 @@ class BaseSlides:
     def demo(self):
         "Demo slides with a variety of content."
         from .. import _demo
+        
+        self.close_view() # Close any previous view to speed up loading 10x faster on average
+        self.clear() # Clear previous content
+        raw_source = self.source.from_callable(_demo.demo).raw
+        N = raw_source.count('auto.') + raw_source.count('.run_cell') # Count number of slides
+        self.create(*range(N)) # Create slides first, this is faster
+        
         return _demo.demo(self) # Run demo
+        
         
     def docs(self):
         "Create presentation from docs of IPySlides."
@@ -257,7 +266,7 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        with auto.slide() as slide_toc1: # Need at end to refresh TOC
+        with auto.slide():
             self.write('## Table of Contents')
             
         with auto.slide():
@@ -285,7 +294,7 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        with auto.slide()  as slide_toc2: # Need at end to refresh TOC
+        with auto.slide():
             self.write('## Table of Contents section`?Layout and color[yellow_black]`Theme` Settings?`')
         
         with auto.slide(): 
@@ -339,7 +348,7 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
-        with auto.slide() as slide_toc3: # Need at end to refresh TOC
+        with auto.slide():
             self.write('## Table of Contents section`Advanced Functionality`')
         
         with auto.slide():
@@ -388,7 +397,7 @@ class BaseSlides:
         with auto.slide():
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
-        for slide in [slide_toc1, slide_toc2, slide_toc3]:
+        for slide in self.sectioned:
             slide.insert_markdown({-1: 'toc`------`'}) # Update table of contents at end
          
         self.navigate_to(0) # Go to title

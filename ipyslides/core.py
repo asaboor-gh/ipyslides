@@ -84,6 +84,7 @@ class Slides(BaseSlides):
             self.shell.events.unregister('post_run_cell', self._post_run_cell)
             self.shell.events.unregister('pre_run_cell', self._pre_run_cell)
         
+        self._post_run_enabled = True # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
         with suppress(Exception): # Avoid error when using setuptools to install
             self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
             self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
@@ -126,23 +127,45 @@ class Slides(BaseSlides):
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
-        self.progress_slider.observe(self._update_toc,names=['options'])
+        self.progress_slider.observe(self._update_toc,names=['options']) # need to be updated if slides change
         
         # All Box of Slides
         self._box =  self.widgets.mainbox 
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box = None # Initialize
         self.set_overlay_url(url = None) # Set overlay url for initial information
+        
+    @contextmanager
+    def hold_post_run_cell(self):
+        """Context manager to skip post_run_cell event."""
+        self._remove_post_run_callback()
+        self._post_run_enabled = False
+        self._cell_slides = []
+        try:
+            yield
+        finally:
+            self.shell.events.register('post_run_cell', self._post_run_cell)
+            self._post_run_enabled = True
+        
+        
+    def run_cell(self, cell):
+        """Run a cell and return the result."""
+        with self.hold_post_run_cell():
+            self.shell.run_cell(cell)
     
     def _pre_run_cell(self, info):
         self._remove_post_run_callback()
-        self._cell_slides = []
+        if self._post_run_enabled:
+            self._cell_slides = []
     
     def _remove_post_run_callback(self):
         with suppress(Exception):
             self.shell.events.unregister('post_run_cell', self._post_run_cell)
                 
     def _post_run_cell(self, result):
+        if result.error_before_exec or result.error_in_exec:
+            return # Do not display if there is an error
+        
         self.close_view() # Close previous cell output if any  
         chidlren = []
         for i, s in enumerate(self._cell_slides):
@@ -336,6 +359,11 @@ class Slides(BaseSlides):
         return self._running_slide
     
     @property
+    def sectioned(self):
+        "Get all slides where section is provided. See demo/docs function for how to used it effectively."
+        return [s for s in self[:] if s._section]
+    
+    @property
     def citations(self):
         "Get All citations as a tuple that can be passed to `write` function."
         # Need to filter unique keys across all slides
@@ -412,6 +440,7 @@ class Slides(BaseSlides):
         In markdown, section can be created by using alert`%%section\`section text\`` syntax.
         Sections can be collected using \`Slides.toc\` property or can be written in markdown using alert`toc\`title\`` syntax."""
         self.running._section = text  
+        self._update_toc(change = None) # Update toc after each section too
     
     @property 
     def toc(self):
@@ -769,9 +798,6 @@ class Slides(BaseSlides):
                 if s._toast and this_slide._toast: 
                     if s._toast['func']() == this_slide._toast['func']():
                         s._toast = None
-            
-            # Update Table of contents
-            self._update_toc(change = None)
             
         return _frames 
 

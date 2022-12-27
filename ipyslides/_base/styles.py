@@ -2,7 +2,7 @@
 # CSS for ipyslides
 from ..utils import _build_css
 
-_flow_selector = ":is(.highlight code, .columns > div > *, li, tr)"
+_flow_selector = ":is(.highlight code, li, tr)"
 animations = {'zoom':'''
 .SlideBox {
     animation-name: zoom; animation-duration: 600ms;
@@ -271,6 +271,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             },
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
+                'font-family': f'{code_font!r}, "Cascadia Code","Ubuntu Mono", "SimSun-ExtB", "Courier New" !important', # Should be same in notebook cell
                 'background':'var(--secondary-bg) !important',
                 'color':'var(--primary-fg) !important',
                 'max-height':'400px',

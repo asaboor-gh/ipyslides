@@ -35,9 +35,7 @@ Version: {{version}} as executed from below code in markdown.
 def demo(slides_instance):
     "We can import `ipyslides.Slides` and use it to create slides, but we will use the slides instance passed to this function."
     slides = slides_instance
-    slides.close_view() # Close any previous view to speed up loading 10x faster on average
-    slides.clear() # Clear previous content
-
+    
     auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
     
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
@@ -45,7 +43,7 @@ def demo(slides_instance):
     slides._citation_mode = 'global' # This could be changed by other functions
     slides.set_citations({'pf': 'This is refernce to FigureWidget using `slides.cite` command'})
 
-    slides.shell.run_cell("""
+    slides.run_cell("""
     %%title -m
     # Creating Slides
     ::: align-center
@@ -63,8 +61,6 @@ def demo(slides_instance):
     #Demo for loading slides from a file or text block 
     s1, s2, *others = auto.from_markdown(markdown_str, trusted=True)
     
-    section_slides = {'1':s1} # We collect all slides that have section to update at end. Very useful
-
     slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 
     # Insert source of slide 2    
@@ -107,10 +103,8 @@ def demo(slides_instance):
                     write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
 
                 s.show_lines([0,1]).display()
-            if i == 0:
-                section_slides['2'] = slides.running
     
-    with auto.slide() as section_slides['3']:
+    with auto.slide():
         slides.write('section`Plotting and DataFrame`')
 
     # Matplotlib
@@ -226,7 +220,7 @@ def demo(slides_instance):
 
         slides.write(slides.cite('This'))
         
-    with auto.slide() as section_slides['4']:
+    with auto.slide():
         slides.write('section`Controlling Content on Frames`')
 
     # Frames structure
@@ -275,7 +269,7 @@ def demo(slides_instance):
             s.display() # s = source.context(style='vs', className="Youtube")
         
     # Data Table, we will run %%slide magic with slide_number = previous_slide.number
-    slides.shell.run_cell(f"""
+    slides.run_cell(f"""
     %%slide {previous_slide.number + 1}
     with myslides.source.context(auto_display = False) as s:
         write('## Data Tables')
@@ -315,7 +309,7 @@ def demo(slides_instance):
             '||### Column C {.warning}||### Column D {.success}||',
         ).display()
         
-    with auto.slide() as section_slides['5']:
+    with auto.slide():
         slides.write('section`Custom Objects Serilaization`')
     
     with auto.slide():
@@ -333,6 +327,7 @@ def demo(slides_instance):
         
     with auto.slide():
         slides.write('## This is all code to generate slides section`Code to Generate Slides`')
+        slides.source.from_callable(slides.demo).display()
         slides.source.from_file(__file__).display()
         
     with auto.slide():
@@ -346,7 +341,7 @@ def demo(slides_instance):
                           *slides.citations])
             slides.write('Markdown is easier to write and read, but Python API is more powerful.')
     
-    for _, slide in section_slides.items():
+    for slide in slides.sectioned:  # Doing this at end inside script is okay, but Notebook has no sequence of cells, rerun there
         slide.insert_markdown({-1: 'toc`## Table of Contents\n----`'})
     
     slides.navigate_to(0) # Go to title slide
