@@ -24,11 +24,11 @@ class Notes:
         
         **New in 1.7.2**      
         In markdown, you can use alert`notes\`notes content\``."""
-        if not self.main._running_slide:
+        if self.main.running is None:
             raise RuntimeError('Notes can only be added inside a slide constructor.')
         
         with suppress(BaseException): # Would work on next run, may not first time
-            self.main._running_slide._notes = self.main.format_html(content)._repr_html_()
+            self.main.running._notes = self.main.format_html(content)._repr_html_()
     
     def _display(self, html_str):
         self.widgets.htmls.notes.value = 'Notes Area: Time only updates while switching slides' # Must be, so when no notes, should not be there

@@ -155,7 +155,7 @@ class _ExtendedMarkdown(Markdown):
         xmd = re.sub('\\\`', '&#96;', xmd) # Escape backticks
         xmd = self._resolve_nested(xmd) # Resolve nested objects in form func`?text?` to func`html_repr`
         
-        if self._slides and self._slides._running_slide: 
+        if self._slides and self._slides.running: 
             xmd = resolve_objs_on_slide(self._slides,xmd) # Resolve objects in xmd related to current slide
         
         if xmd[:3] == '```': # Could be a block just in start of file or string
@@ -252,7 +252,7 @@ class _ExtendedMarkdown(Markdown):
             # Run Code now 
             with capture_output() as captured:
                 (self._slides or self._shell).run_cell(dedent_data)  # Prefer slides if available
-            
+
             outputs = captured.outputs
             return outputs
         

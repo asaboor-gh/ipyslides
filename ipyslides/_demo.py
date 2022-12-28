@@ -59,7 +59,7 @@ s1, s2, *others = auto.from_markdown(markdown_str, trusted=True)
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 # Insert source of slide 2    
 with s2.insert(0):
-    s2.source.display(collapsed = True)
+    s2.get_source().display(collapsed = True)
     slides.goto_button(slides.running.number + 5, 'Skip 5 Slides',icon='plus')
     
 s2.insert_markdown({-1: f'alert`I was added at end using \`s2.insert_markdown\``'})
@@ -93,8 +93,7 @@ with slides.source.context(auto_display = False) as s:
         write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
         s.show_lines([0,1]).display()
 
-with auto.slide():
-    slides.write('section`Plotting and DataFrame` toc`### Contents`')
+auto.from_markdown('section`Plotting and DataFrame` toc`### Contents`')
     
 # Matplotlib
 with auto.slide() as s:
@@ -109,30 +108,31 @@ with auto.slide() as s:
             _ = ax.plot(x,np.cos(x))
         write([ax, s.focus_lines([1,3,4])])
 # Plotly and Pandas DataFrame only show if you have installed
-try:
-    with slides.source.context(auto_display = False) as source:
+with slides.source.context(auto_display = False) as source:
+    try:
         import pandas as pd 
         df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv')
         df = df.describe() #Small for display
-except:
-    df = '### Install `pandas` to view output'
+    except:
+        df = '### Install `pandas` to view output'
     
 with auto.slide():
     write(('## Writing Pandas DataFrame',df, source))
    
-try:
-    with slides.source.context(False) as s:
+with slides.source.context(False) as s:
+    try:
         import plotly.graph_objects as go
         fig = go.Figure()
         fig.add_trace(go.Bar(y=[1,5,8,9]))
-except:
-    fig = '### Install `plotly` to view output'
+    except:
+        fig = '### Install `plotly` to view output'
     
 with auto.slide():
-    write(('## Writing Plotly Figure',fig))
-    s.display()
+    write(('## Writing Plotly Figure',fig, s))
+    
+    
 # Interactive widgets.   
-with auto.slide() as skip_toc_1:
+with auto.slide():
     with slides.source.context(auto_display = False) as src:
         import ipywidgets as ipw
         import numpy as np, matplotlib.pyplot as plt
@@ -159,8 +159,7 @@ with auto.slide() as skip_toc_1:
         update_plot() #Initialize plot
     slides.notes.insert('## Something to hide from viewers!')
 
-with auto.slide():
-    slides.write('section`Simple Animations with Frames` toc`### Contents`')
+auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
     
 # Animat plot in slides  
 @auto.frames(*range(14,19))
@@ -183,8 +182,7 @@ def func(obj,idx):
         s.show_lines([5,6]).display()
     slides.write(slides.cite('This'))
     
-with auto.slide():
-    slides.write('section`Controlling Content on Frames` toc`### Contents`')
+auto.from_markdown('section`Controlling Content on Frames` toc`### Contents`')
     
 # Frames structure
 boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
@@ -197,35 +195,35 @@ def f(obj,idx):
     slides.running.set_animation(None) #Disable animation for showing bullets list
     slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
     slides.bullets(obj, marker='💘').display()
+    
 @auto.frames(*boxes, repeat=[(0,1),(2,3)])
 def f(obj,idx):
     with slides.source.context(auto_display = False) as s:
         slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)
     s.display()
-with auto.slide() as skip_toc_2:
-    with slides.source.context(auto_display = False) as s:
-        slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
-        slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
-        
-        slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
-        try:
-            slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
-        except:
-            slides.write('Could not retrieve image from url. Check internt connection!',className='error')
-        s.display()
+    
+with auto.slide() as s:
+    slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
+    slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
+    
+    slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
+    try:
+        slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
+    except:
+        slides.write('Could not retrieve image from url. Check internt connection!',className='error')
+    s.get_source().display()
 
 # Youtube
 from IPython.display import YouTubeVideo
 with auto.slide() as previous_slide: # We will use this in next %%magic
-    with slides.source.context(auto_display = False, style='vs',className="Youtube") as s:
-        write(f"### Watching Youtube Video?")
-        write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
-        @slides.notify_later()
-        def push():
-            t = time.localtime()
-            return f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}'
-        s.display() # s = source.context(style='vs', className="Youtube")
+    write(f"### Watching Youtube Video?")
+    write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
+    @slides.notify_later()
+    def push():
+        t = time.localtime()
+        return f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}'
+    previous_slide.get_source().display() # s = source.context(style='vs', className="Youtube")
     
 # Data Table, we will run %%slide magic with slide_number = previous_slide.number
 slides.run_cell(f"""
@@ -250,13 +248,14 @@ $\LaTeX$ needs time to load, so keeping it in view until it loads would help.
 \$\$\int_0^1\\frac{1}{1-x^2}dx\$\$
 $$\int_0^1\\frac{1}{1-x^2}dx$$
 ''', trusted=True)
-with auto.slide():
+
+with auto.slide(), slides.source.context():
     slides.write('## Built-in CSS styles')
-    with slides.source.context():
-        slides.css_styles.display()
-        slides.write('Info',className='info')
-        slides.write('warning',className='warning')
-        slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='align-right rtl')
+    slides.css_styles.display()
+    slides.write('Info',className='info')
+    slides.write('warning',className='warning')
+    slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='align-right rtl')
+
 with auto.slide(),slides.source.context():
     slides.rows(
         '## Can skip `write` commnad sometimes',
@@ -264,21 +263,20 @@ with auto.slide(),slides.source.context():
         '||### Column C {.warning}||### Column D {.success}||',
     ).display()
     
-with auto.slide():
-    slides.write('section`Custom Objects Serilaization` toc`### Contents`')
+auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
 
-with auto.slide():
+with auto.slide() as some_slide:
     slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
     with slides.suppress_stdout(): # suppress stdout from register fuction below
-        with slides.source.context(auto_display = False) as s:
-            @slides.serializer.register(int)
-            def colorize(obj):
-                color = 'red' if obj % 2 == 0 else 'green'
-                return f'<span style="color:{color};">{obj}</span>'
-            slides.write(*range(10))
-        s.display()
+        @slides.serializer.register(int)
+        def colorize(obj):
+            color = 'red' if obj % 2 == 0 else 'green'
+            return f'<span style="color:{color};">{obj}</span>'
+        slides.write(*range(10))
+        
+    some_slide.get_source().display()
     
-with auto.slide() as skip_toc_3:
+with auto.slide():
     slides.write('## This is all code to generate slides section`Code to Generate Slides`')
     slides.source.from_callable(slides.demo).display()
     slides.source.from_file(__file__).display()
@@ -287,15 +285,11 @@ with auto.slide():
     slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.note .info}')
     slides.get_source().display()
      
-with auto.slide():
-    with slides.source.context():
-        slides.write('citations`## Reference via Markdown\n----`',
-                     ['## Reference via Python API\n----',
-                      *slides.citations])
-        slides.write('Markdown is easier to write and read, but Python API is more powerful.')
+with auto.slide(), slides.source.context():
+    slides.write('citations`## Reference via Markdown\n----`',
+                 ['## Reference via Python API\n----',
+                  *slides.citations])
+    slides.write('Markdown is easier to write and read, but Python API is more powerful.')
 
-for slide in slides.sectioned:  # Iterate over all slides in section to update table of contents
-    if slide not in (skip_toc_1,skip_toc_2,skip_toc_3):
-        slide.re_run()
 
 slides.navigate_to(0) # Go to title slide

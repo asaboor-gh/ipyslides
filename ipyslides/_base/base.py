@@ -110,11 +110,11 @@ class BaseSlides:
             return f'Notification at {time}'
         ```
         """
-        if not self._running_slide:
+        if self.running is None:
             raise RuntimeError('You can only use this decorator inside a slide constructor.')
         
         def _notify(func): 
-            self._running_slide._toast = dict(func = func, kwargs = dict(title=title, timeout=timeout))
+            self.running._toast = dict(func = func, kwargs = dict(title=title, timeout=timeout))
         return _notify
         
     def clear_toasts(self):
@@ -221,14 +221,13 @@ class BaseSlides:
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster
         
-        with self.skip_post_run_cell(): 
+        with self.skip_post_run_cell():
             for i,chunk in enumerate(chunks, start = start):
-                # Must run under this to create frames with two dashes (--)
-                self.shell.run_cell_magic('slide', f'{i} -m', chunk)
+                # Must run under this function to create frames with two dashes (--)
+                self._slide(f'{i} -m', chunk)
         
-        if self._post_run_enabled: # Respect user's choice here too
-            self.shell.events.register('post_run_cell', self._post_run_cell)
-            
+        if not self._post_run_enabled:
+            self._remove_post_run_callback() # This is important here
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
     
@@ -269,8 +268,7 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        with auto.slide() as stoc_1:
-            self.write('section`Introduction` toc`### Contents`')
+        auto.from_markdown('section`Introduction` toc`### Contents`')
             
         with auto.slide():
             self.write(['# Main App',self.doc(Slides)])
@@ -297,8 +295,7 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        with auto.slide() as stoc_2:
-            self.write('section`?Layout and color[yellow_black]`Theme` Settings?` toc`### Contents`')
+        auto.from_markdown('section`?Layout and color[yellow_black]`Theme` Settings?` toc`### Contents`')
         
         with auto.slide(): 
             self.write('## Layout and Theme Settings')
@@ -324,8 +321,8 @@ class BaseSlides:
         
         s8, = auto.from_markdown('''
         ## Highlighting Code
-        [pyg]:`[pygments](https://pygments.org/) is used for syntax highlighting.`
-        You can **highlight**{.error} code using `highlight` function or within markdown like this:cite`pyg`
+        [pygments](https://pygments.org/) is used for syntax highlighting.
+        You can **highlight**{.error} code using `highlight` function or within markdown like this:
         ```python
         import ipyslides as isd
         ```
@@ -339,8 +336,7 @@ class BaseSlides:
             self.write('<hr/>This slide was created with `from_markdown` function. '
                 'So its source code can be inserted in the slide later! '
                 'See at last slide how it was done!<hr/>')
-            self.write(s8.citations)
-            s8.source.display()
+            s8.get_source().display()
         
         with auto.slide():
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
@@ -351,8 +347,7 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
-        with auto.slide() as stoc_3:
-            self.write('section`Advanced Functionality` toc`### Contents`')
+        auto.from_markdown('section`Advanced Functionality` toc`### Contents`')
         
         with auto.slide():
             self.write('## Adding User defined Objects/Markdown Extensions')
@@ -400,11 +395,6 @@ class BaseSlides:
         with auto.slide():
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
-        self.shell.user_ns.update({'self':self,'auto':auto}) # Make these variables available in ipython to work, no need for such patch in notebook
-        for s in self.sectioned:
-            if s in [stoc_1, stoc_2, stoc_3]:
-                s.re_run() # Re-run code in each section to update
-            
         self.navigate_to(0) # Go to title
         return self
 

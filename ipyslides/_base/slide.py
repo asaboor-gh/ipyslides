@@ -23,7 +23,7 @@ class Slide:
         self._app = app
         self._contents = captured_output.outputs
             
-        self._extra_outputs = {'start': [], 'end': []}
+        self._extra_outputs = {'warn': [], 'start': [], 'end': []}
         self._css = html('style','')
         self._number = number if isinstance(number, str) else str(number) 
         self._label = None # This should be set in the Slides
@@ -37,6 +37,8 @@ class Slide:
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
         self._section = None # Added from Slides
+        self._meta = {} # Added from Slides
+
         
     def set_source(self, text, language):
         "Set source code for this slide."
@@ -54,7 +56,7 @@ class Slide:
             self._toast = None # Reset toast
             self._notes = '' # Reset notes
             self._citations = {} # Reset citations
-            self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
+            self._extra_outputs = {'warn': [], 'start': [], 'end': []} # Reset extra outputs
             self._section = None # Reset section
         
         try:
@@ -76,18 +78,22 @@ class Slide:
             if assign:
                 self._contents = captured.outputs  
     
-    def re_run(self):
-        "Rerun the source code for this slide if it exists. Useful to update slides in bulk having sections, citations using Slides.sectioned, Slides.cited properties."
-        if self._source['text']:
-            if self._source['language'] == 'python':
-                self._app.run_cell(f'%%slide {self._number}\n{self._source["text"]}')
-            elif self._source['language'] == 'markdown':
-                self._app.run_cell(f'%%slide {self._number} -m\n{self._source["text"]}')
-            else:
-                raise ValueError(f'Unknown language {self._source["language"]!r}. Expected "python" or "markdown".')
-        else:
-            print(f'No source code for slide {self._number} to run. Run it\'s cell manually.')
+    def update_content(self):
+        "Update contents of this slide if it was created from markdown, orthwise add warning that can be removed by running source cell."
+        if self._source['text'] and self._source['language'] == 'markdown':
+            with self._capture(assign = False) as captured:
+                self._app.parse_xmd(self._source['text'], display_inline = True)
+
+            self._contents = captured.outputs
+            self.update_display()
             
+        elif any(self._meta.values()): # If there is any meta data, no need to update page
+            with self._capture(assign = False) as captured:
+                self._app.alert(f'RuntimeError: Contents of {self} got unsynced. Run it\'s cell manually.').display()
+            self._extra_outputs['warn'] = captured.outputs # Already list
+            self.update_display()
+        
+        
     def update_display(self, go_there = True):
         "Update display of this slide."
         if go_there:
@@ -162,7 +168,7 @@ class Slide:
     
     def reset(self):
         "Reset all appended/prepended/inserted objects."
-        self._extra_outputs = {'start': [], 'end': []}
+        self._extra_outputs = {'warn': [], 'start': [], 'end': []}
         self._app._slidelabel = self.label # Go there
         self.update_display() 
     
@@ -221,17 +227,12 @@ class Slide:
         middle_outputs = [[out] for out in self._contents] # Make list for later flattening
         shift = 0
         for k, v in self._extra_outputs.items():
-            if k not in ['start', 'end']:
+            if k not in ['start', 'end', 'warn']:
                 middle_outputs.insert(int(k) + shift, v)
                 shift += 1
                 
         middle_outputs = [o for out in middle_outputs for o in out] # Flatten list
-        return tuple(self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
-    
-    @property
-    def source(self):
-        "Return source code of this slide, markdwon or python if exists."
-        return self.get_source()
+        return tuple(self._extra_outputs['warn'] + self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
     
     def get_source(self, name = None):
         "Return source code of this slide, markdwon or python or None if no source exists."

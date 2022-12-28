@@ -87,7 +87,7 @@ class Slides(BaseSlides):
         self._post_run_enabled = True # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
         with suppress(Exception): # Avoid error when using setuptools to install
             self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
-            self.shell.register_magic_function(self.__slide, magic_kind='cell',magic_name='slide')
+            self.shell.register_magic_function(self._slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
             self.shell.events.register('pre_run_cell', self._pre_run_cell) # Register pre_run_cell event but not post_run_cell here
@@ -366,20 +366,23 @@ class Slides(BaseSlides):
         return self._running_slide
     
     @property
-    def sectioned(self):
-        "Get all slides where section is provided. See demo/docs function for how to used it effectively."
-        return [s for s in self[:] if s._section]
+    def toced(self):
+        "Get all slides where toc is provided. See demo/docs function for how to used it effectively."
+        return [s for s in self[:] if s._meta.get('toced', False)]
     
     @property
     def cited(self):
-        "Get all slides where citations are provided. You can use this to re-execute slides if they have code."
-        return [s for s in self[:] if s._citations]
+        "Get all slides where citations are provided."
+        return [s for s in self[:] if s._meta.get('cited', False)]
     
     @property
     def citations(self):
         "Get All citations as a tuple that can be passed to `write` function."
         # Need to filter unique keys across all slides
         if self._citation_mode == 'global':
+            if self.running:
+                self.running._meta['cited'] = True # written citations should be updated
+                
             _all_citations = {}
             for slide in self.cited:
                 _all_citations.update(slide._citations)
@@ -409,19 +412,21 @@ class Slides(BaseSlides):
         can be set using alert`[key]:\`citationtext\`` syntax. If citation_mode is global, they can be shown using alert`citations\`citation title\`` syntax.
         
         """
-        if not self._running_slide:
+        if self.running is None:
             raise RuntimeError('Citations can be added only inside a slide constructor!')
         
         if self._citation_mode == 'inline':
             return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
         
-        this_slide = self._running_slide
+        this_slide = self.running
+        this_slide._meta['cited'] = True # need for seamless updates in markdown
         _cited = _Citation(slide = this_slide, key = key)
         self._citations_dict[key] = self._citations_dict.get(key, f'Set citation for key {key!r}.') # This to ensure single run shows citation
         
         # Set _id for citation
         if self._citation_mode == 'footnote':
             _cited._id = str(list(this_slide._citations.keys()).index(key) + 1) # Get index of key
+            this_slide._meta['cited'] = False # Footnote auto updates so no need to update
         else:
             prev_keys = list(self._citations_dict.keys())
                     
@@ -445,19 +450,25 @@ class Slides(BaseSlides):
                 if slide.citations:
                     slide.update_display()
         else:
-            self.notify('Citations updated, please rerun the slides with references to see effect.')
-        
+            for slide in self.cited:
+                slide.update_content()
+                
     def section(self,text):
         """Add section to presentation that will appear in table of contents. 
         In markdown, section can be created by using alert`%%section\`section text\`` syntax.
         Sections can be collected using \`Slides.toc\` property or can be written in markdown using alert`toc\`title\`` syntax."""
         self.running._section = text  
         self._update_toc(change = None) # Update toc after each section too
-    
+        
     @property 
     def toc(self):
         """Returns tuple of table of contents that can be passed to write command with desired format. 
         Run the slide containing alert`Slides.toc` at end as well to see all contents."""
+        if not self.running: # If not running, return all sections as raw text
+            return tuple(s._section for s in self[:] if s._section)
+        
+        self.running._meta['toced'] = True # Set metadata to show toc
+        
         sections = []
         this_index = self[:].index(self.running) if self.running in self[:] else self.running.number # Monkey patching index, would work on next run
         for slide in self[:this_index]:
@@ -472,7 +483,7 @@ class Slides(BaseSlides):
         for slide in self[this_index+1:]:
             if slide._section:
                 sections.append(self.html('div', slide._section, style='',className='toc-item next'))
-            
+        
         return tuple(sections)
         
     
@@ -637,7 +648,7 @@ class Slides(BaseSlides):
         self.refresh()
         
     # defining magics and context managers
-    def __slide(self,line,cell):
+    def _slide(self,line,cell):
         """Capture content of a cell as `slide`.
             ---------------- Cell ----------------
             %%slide 1                             
@@ -671,7 +682,7 @@ class Slides(BaseSlides):
             def make_slide(_frame, idx):
                 #s.clear_display(wait = True) # It piles up otherwise due to replacements
                 parse_xmd(_frame, display_inline = True, rich_outputs = False)
-                self._running_slide.set_source(_frame, 'markdown')  # Update cell source
+                self.running.set_source(_frame, 'markdown')  # Update cell source
             
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number_str) as s:
@@ -695,7 +706,7 @@ class Slides(BaseSlides):
         
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
-        return self.__slide('0 -m' if '-m' in line else '0',cell)
+        return self._slide('0 -m' if '-m' in line else '0',cell)
     
     def __xmd(self, line, cell = None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown. 
@@ -861,7 +872,10 @@ class Slides(BaseSlides):
                 
         self.widgets.tocbox.children = children
         
-    
+        if change: # without chnage, it will create loop in section function
+            for slide in self.toced:
+                slide.update_content() # Updates in markdown slides only
+        
     def create(self, *slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is faster than creating one slide each time."
         new_slides = False
