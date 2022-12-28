@@ -156,8 +156,15 @@ class Source:
         #s.raw, s.value are accesible attributes.
         #s.focus_lines, s.show_lines are methods that are used to show selective lines.
         ```
-        """  
-        frame = sys._getframe().f_back.f_back # go two steps back
+        """ 
+        frame = sys._getframe() 
+        depth = 2 # default depth is 2 to catch under itself, others would be given from differnt context managers to get their source.
+        if 'depth' in kwargs:
+            depth = kwargs.pop('depth')
+        
+        for _ in range(depth):
+            frame = frame.f_back # keep going back until required depth is reached.
+              
         lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
         offset = 0 # going back to zero indent level
         while re.match('^\t?^\s+', lines[n1 - offset]): 

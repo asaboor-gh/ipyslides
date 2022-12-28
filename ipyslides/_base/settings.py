@@ -210,7 +210,7 @@ class LayoutSettings:
             display(Javascript(scripts.navigation_js))
     
     @contextmanager
-    def emit_resize_event(self):
+    def _emit_resize_event(self):
         "Emit resize event before and after a code block. Sometimes before is more useful"
         try:
             self.widgets._exec_js(scripts.resize_js)
@@ -294,13 +294,13 @@ class LayoutSettings:
             self.btn_window.icon = 'minus'
             self.widgets.mainbox.add_class('FullWindow') # to Full Window
             
-            with self.emit_resize_event():  # closer is smoother
+            with self._emit_resize_event():  # closer is smoother
                 self.widgets.htmls.window.value =  html('style',_layout_css.viewport_css()).value
         else:
             self.btn_window.icon = 'plus'
             self.widgets.mainbox.remove_class('FullWindow') # back to inline
             
-            with self.emit_resize_event(): # closer is smoother
+            with self._emit_resize_event(): # closer is smoother
                 self.widgets.htmls.window.value = ''
             
         self._update_theme(change=None) # For updating size and breakpoints

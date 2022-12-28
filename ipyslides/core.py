@@ -136,27 +136,25 @@ class Slides(BaseSlides):
         self.set_overlay_url(url = None) # Set overlay url for initial information
         
     @contextmanager
-    def hold_post_run_cell(self):
+    def skip_post_run_cell(self):
         """Context manager to skip post_run_cell event."""
         self._remove_post_run_callback()
         self._post_run_enabled = False
-        self._cell_slides = []
         try:
             yield
         finally:
-            self.shell.events.register('post_run_cell', self._post_run_cell)
             self._post_run_enabled = True
         
-        
-    def run_cell(self, cell):
-        """Run a cell and return the result."""
-        with self.hold_post_run_cell():
-            self.shell.run_cell(cell)
+    def run_cell(self, cell, **kwargs):
+        """Run a cell and return the result. kwargs are passed to `get_ipython().run_cell` method."""
+        with self.skip_post_run_cell():
+            result = self.shell.run_cell(cell, **kwargs)
+        return result # This is important to mimic `get_ipython().run_cell` method.
     
     def _pre_run_cell(self, info):
         self._remove_post_run_callback()
         if self._post_run_enabled:
-            self._cell_slides = []
+            self._cell_slides = [] # reset slides in the cell
     
     def _remove_post_run_callback(self):
         with suppress(Exception):
@@ -166,35 +164,44 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return # Do not display if there is an error
         
-        self.close_view() # Close previous cell output if any  
-        chidlren = []
-        for i, s in enumerate(self._cell_slides):
-            out = ipw.Output().add_class('SlideArea')
-            with out:
-                display(*s.contents)
-                if i == 0:
-                    display(Javascript("let box = document.getElementsByClassName('CellBox')[0];\n"
-                        "box.tabIndex = -1; // Make the box focusable, so user can use keyboard to navigate between slides\n"
-                        "box.focus();"))
-                    
-            chidlren.append(ipw.Box([out], layout=ipw.Layout(max_height='400px',overflow='auto',height='auto')).add_class('SlideBox'))
+        children = []
+        try:
+            for s in self._cell_slides:
+                out = ipw.Output().add_class('SlideArea')
+                
+                with out:
+                    display(*s.contents) 
+
+                children.append(ipw.Box([out], layout=ipw.Layout(max_height='400px',overflow='auto',height='auto')).add_class('SlideBox'))
+        finally:
+            self._cell_slides = [] # reset slides in the cell after displaying
             
-        _cell_theme_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
-        _code_theme_ = ipw.HTML(self.widgets.htmls.hilite.value) # Add value, not itself
-        
-        btn = ipw.Button(description='Switch to Slides Application', button_style='danger').add_class('Switch-Btn')
-        def update_display(b):
-            self._display_box.children = [self._box,self.__jlab_in_cell_display()]
-            self._display_box.remove_class('CellBoxWrapper')
-        
-        btn.on_click(update_display)
-        
-        self._display_box = ipw.HBox([
-                btn,
-                ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),_code_theme_, _cell_theme_, *chidlren]).add_class('CellBox')
-            ]).add_class('CellBoxWrapper')
-        
-        return display(self._display_box)
+        if children:
+            self.close_view() # Close previous cell output if we reach until here, otherwise not
+            out.append_display_data(
+                    Javascript("let box = document.getElementsByClassName('CellBox')[0];\n"
+                        "box.tabIndex = -1; // Make the box focusable, so user can use keyboard to navigate between slides\n"
+                        "box.focus();"
+                    )
+                ) # Need this for carousel to work with keyboard
+            
+            _cell_theme_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
+            _code_theme_ = ipw.HTML(self.widgets.htmls.hilite.value) # Add value, not itself
+
+            btn = ipw.Button(description='Switch to Slides Application', button_style='danger').add_class('Switch-Btn')
+            
+            def update_display(b):
+                self._display_box.children = [self._box,self.__jlab_in_cell_display()]
+                self._display_box.remove_class('CellBoxWrapper')
+
+            btn.on_click(update_display)
+
+            self._display_box = ipw.HBox([
+                    btn,
+                    ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),_code_theme_, _cell_theme_, *children]).add_class('CellBox')
+                ]).add_class('CellBoxWrapper')
+
+            return display(self._display_box)
             
     @property
     def xmd_syntax(self):
@@ -364,12 +371,17 @@ class Slides(BaseSlides):
         return [s for s in self[:] if s._section]
     
     @property
+    def cited(self):
+        "Get all slides where citations are provided. You can use this to re-execute slides if they have code."
+        return [s for s in self[:] if s._citations]
+    
+    @property
     def citations(self):
         "Get All citations as a tuple that can be passed to `write` function."
         # Need to filter unique keys across all slides
         if self._citation_mode == 'global':
             _all_citations = {}
-            for slide in self[:]:
+            for slide in self.cited:
                 _all_citations.update(slide._citations)
             
             return tuple(sorted(_all_citations.values(), key=lambda x: int(x._id)))
@@ -659,14 +671,13 @@ class Slides(BaseSlides):
             def make_slide(_frame, idx):
                 #s.clear_display(wait = True) # It piles up otherwise due to replacements
                 parse_xmd(_frame, display_inline = True, rich_outputs = False)
-                self._running_slide._markdown = _frame # Update markdown, # cell_code will be automatuically cleared in `self.frames`
+                self._running_slide.set_source(_frame, 'markdown')  # Update cell source
             
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            with _build_slide(self, slide_number_str, from_cell = True) as s:
-                self.shell.run_cell(cell) #  Enables citations etc.
+            with _build_slide(self, slide_number_str) as s:
+                self.run_cell(cell) #  Enables citations etc.
             
-            s._cell_code = cell # Update cell code
-            s._markdown = '' # Reset markdown
+            s.set_source(cell, 'python') # Update cell source
     
     @contextmanager
     def slide(self,slide_number):
@@ -676,17 +687,15 @@ class Slides(BaseSlides):
         
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
         
-        with _build_slide(self, f'{slide_number}', from_cell = False) as s:
+        with _build_slide(self, f'{slide_number}') as s, self.source.context(auto_display = False, depth = 4) as c: # depth = 4 to source under context manager
             yield s # Useful to use later
+        
+        s.set_source(c.raw, 'python') # Update cell source
             
         
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
-        with self.slide(0):
-            if '-m' in line:
-                parse_xmd(cell, display_inline = True, rich_outputs = False)
-            else:
-                self.shell.run_cell(cell)
+        return self.__slide('0 -m' if '-m' in line else '0',cell)
     
     def __xmd(self, line, cell = None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown. 
@@ -702,8 +711,10 @@ class Slides(BaseSlides):
     @contextmanager
     def title(self):
         "Use this context manager to write title. It is equivalent to `%%title` magic."
-        with self.slide(0) as s:
+        with self.slide(0) as s, self.source.context(auto_display = False, depth = 4) as c: # depth = 4 to source under context manager
             yield s # Useful to use later
+        
+        s.set_source(c.raw, 'python')
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
@@ -756,7 +767,7 @@ class Slides(BaseSlides):
                 raise ValueError(f'Maximum 99 frames are supported, found {len(_new_objs)} frames!')
            
             # build_slide returns old slide with updated display if exists.
-            with _build_slide(self, f'{slide_number}', from_cell = False, is_frameless = False) as this_slide:
+            with _build_slide(self, f'{slide_number}', is_frameless = False) as this_slide:
                 self.write(self.format_css({'.SlideArea': {'height': frame_height}}))
                 func(_new_objs[0],0) # Main slide content
             
@@ -770,15 +781,13 @@ class Slides(BaseSlides):
                     new_slide = Slide(self, slide_number)
                 else: # Update old frames
                     new_slide = this_slide._frames[i] # Take same frame back
-                
+                    new_slide.set_source('','') # Clear old source
+                    
                 new_frames.append(new_slide)
                 
                 with new_slide._capture(assign = True) as captured:
                     self.write(self.format_css({'.SlideArea': {'height': frame_height}}))
                     func(obj,i+1) # i+1 as main slide is 0
-                
-                new_slide._from_cell = False
-                new_slide._cell_code = ''    
                 
                 
             this_slide._frames = new_frames
@@ -892,7 +901,7 @@ class Slides(BaseSlides):
         ```python
         with auto.slide() as last:
             ...
-        slides.shell.run_cell(f'''%%slide {last.number + 1}
+        slides.run_cell(f'''%%slide {last.number + 1}
         code or makrdown based on -m in above line
         '''
         ```

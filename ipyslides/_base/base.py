@@ -89,11 +89,9 @@ class BaseSlides:
         "Return source code of all slides created using `from_markdown` or `%%slide`."
         sources = []
         for slide in self[:]:
-            if slide._from_cell and slide._cell_code:
-                sources.append(slide._get_source(name=f'Python: Slide {slide.label}'))
-            elif slide._markdown:
-                sources.append(slide._get_source(name=f'Markdown: Slide {slide.label}'))
-        
+            if slide._source['text']:
+                sources.append(slide.get_source(name=f'{slide._source["language"].title()}: Slide {slide.label}'))
+            
         if sources:
             return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
         else:
@@ -141,6 +139,7 @@ class BaseSlides:
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
         Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
+        
         **Markdown Content**
         ```markdown
         # Talk Title
@@ -171,7 +170,7 @@ class BaseSlides:
         Markdown content of each slide is stored as .markdown attribute to slide. You can append content to it like this:
         ```python
         with slides.slide(2):
-            self.parse_xmd(slides[2].markdown) # Instead of write, parse_xmd take cares of code blocks
+            slides.parse_xmd(slides[2].markdown) # Instead of write, parse_xmd take cares of code blocks
             plot_something()
             write_something()
         ```
@@ -222,25 +221,30 @@ class BaseSlides:
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster
         
-        with self.hold_post_run_cell(): 
+        with self.skip_post_run_cell(): 
             for i,chunk in enumerate(chunks, start = start):
                 # Must run under this to create frames with two dashes (--)
                 self.shell.run_cell_magic('slide', f'{i} -m', chunk)
         
+        if self._post_run_enabled: # Respect user's choice here too
+            self.shell.events.register('post_run_cell', self._post_run_cell)
+            
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
     
     def demo(self):
         "Demo slides with a variety of content."
-        from .. import _demo
-        
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        raw_source = self.source.from_callable(_demo.demo).raw
-        N = raw_source.count('auto.') + raw_source.count('.run_cell') # Count number of slides
-        self.create(*range(N)) # Create slides first, this is faster
         
-        return _demo.demo(self) # Run demo
+        with self.set_dir(os.path.split(__file__)[0]):
+            file = '../_demo.py'
+            raw_source = self.source.from_file(file).raw
+            N = raw_source.count('auto.') + raw_source.count('.run_cell') # Count number of slides
+            self.create(*range(N)) # Create slides first, this is faster
+            self.shell.run_line_magic('run', file) # Run demo in same namespace
+            
+        return self #_demo.demo(self) # Run demo
         
         
     def docs(self):
@@ -258,7 +262,6 @@ class BaseSlides:
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center('''
                 alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
-                section`Introduction`
                 today``
                 
                 ::: text-box
@@ -266,8 +269,8 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        with auto.slide():
-            self.write('## Table of Contents')
+        with auto.slide() as stoc_1:
+            self.write('section`Introduction` toc`### Contents`')
             
         with auto.slide():
             self.write(['# Main App',self.doc(Slides)])
@@ -294,8 +297,8 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        with auto.slide():
-            self.write('## Table of Contents section`?Layout and color[yellow_black]`Theme` Settings?`')
+        with auto.slide() as stoc_2:
+            self.write('section`?Layout and color[yellow_black]`Theme` Settings?` toc`### Contents`')
         
         with auto.slide(): 
             self.write('## Layout and Theme Settings')
@@ -348,8 +351,8 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
-        with auto.slide():
-            self.write('## Table of Contents section`Advanced Functionality`')
+        with auto.slide() as stoc_3:
+            self.write('section`Advanced Functionality` toc`### Contents`')
         
         with auto.slide():
             self.write('## Adding User defined Objects/Markdown Extensions')
@@ -397,9 +400,11 @@ class BaseSlides:
         with auto.slide():
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
-        for slide in self.sectioned:
-            slide.insert_markdown({-1: 'toc`------`'}) # Update table of contents at end
-         
+        self.shell.user_ns.update({'self':self,'auto':auto}) # Make these variables available in ipython to work, no need for such patch in notebook
+        for s in self.sectioned:
+            if s in [stoc_1, stoc_2, stoc_3]:
+                s.re_run() # Re-run code in each section to update
+            
         self.navigate_to(0) # Go to title
         return self
 

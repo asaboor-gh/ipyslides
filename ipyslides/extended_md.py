@@ -133,6 +133,8 @@ class _ExtendedMarkdown(Markdown):
     def __init__(self):
         super().__init__(extensions = extender._all, extension_configs=extender._all_configs)
         self._display_inline = False
+        self._shell = get_ipython()
+        self._slides = self._shell.user_ns.get('get_slides_instance',lambda: None)() # It is callable, do not get it in global namespace,need only single reference outside
     
     def _extract_class(self, header):
         out = header.split('.',1) # Can have many classes there
@@ -153,9 +155,8 @@ class _ExtendedMarkdown(Markdown):
         xmd = re.sub('\\\`', '&#96;', xmd) # Escape backticks
         xmd = self._resolve_nested(xmd) # Resolve nested objects in form func`?text?` to func`html_repr`
         
-        slides_instance = get_ipython().user_ns.get('get_slides_instance',lambda: None)() # It is callable, do not get it in global namespace,need only single reference outside
-        if slides_instance and slides_instance._running_slide: # getattr(slides_instance,'_under_with_or_frame',False):
-            xmd = resolve_objs_on_slide(slides_instance,xmd) # Resolve objects in xmd related to current slide
+        if self._slides and self._slides._running_slide: 
+            xmd = resolve_objs_on_slide(self._slides,xmd) # Resolve objects in xmd related to current slide
         
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
@@ -184,12 +185,17 @@ class _ExtendedMarkdown(Markdown):
             return content
         
     def _resolve_nested(self,text_chunk):
-        # match func`?text?` to parse text and return func`html_repr`
-        all_matches = re.findall(r'\`\?(.*?)\?\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
-        for match in all_matches:
-            repr_html = self.parse(match, display_inline = False, rich_outputs = False)
-            repr_html = re.sub('</p>$','',re.sub('^<p>', '', repr_html)) # Remove <p> and </p> tags at start and end
-            text_chunk = text_chunk.replace(f'`?{match}?`', f'`{repr_html}`', 1)
+        old_display_inline = self._display_inline
+        try:
+            # match func`?text?` to parse text and return func`html_repr`
+            all_matches = re.findall(r'\`\?(.*?)\?\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
+            for match in all_matches:
+                repr_html = self.parse(match, display_inline = False, rich_outputs = False)
+                repr_html = re.sub('</p>$','',re.sub('^<p>', '', repr_html)) # Remove <p> and </p> tags at start and end
+                text_chunk = text_chunk.replace(f'`?{match}?`', f'`{repr_html}`', 1)
+        finally:
+            self._display_inline = old_display_inline
+            
         return text_chunk
     
     def _parse_block(self, block):
@@ -233,20 +239,19 @@ class _ExtendedMarkdown(Markdown):
     
     def _parse_python(self, data, header, _class):
         # if inside some writing command, do not run code at all
-        shell = get_ipython()
         if len(header.split()) > 3:
             raise ValueError(f'Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name')
         dedent_data = textwrap.dedent(data)
-        if self._display_inline == False or header.lower() == 'python': # no run given
+        if (self._display_inline == False) or ('run' not in header): # no run given
             return [highlight(dedent_data,language = 'python', className = _class),]
         elif 'run' in header and self._display_inline: 
             source = header.split('run')[1].strip() # Afte run it be source variable
             if source:
-                shell.user_ns[source] = _str2code(dedent_data,language='python',className = _class) 
+                self._shell.user_ns[source] = _str2code(dedent_data,language='python',className = _class) 
             
             # Run Code now 
             with capture_output() as captured:
-                shell.run_cell(dedent_data) 
+                (self._slides or self._shell).run_cell(dedent_data)  # Prefer slides if available
             
             outputs = captured.outputs
             return outputs

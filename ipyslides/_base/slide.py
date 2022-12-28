@@ -31,14 +31,16 @@ class Slide:
         
         self._notes = '' # Should be update by Notes and Slides calss
         self._animation = None
-        self._markdown = '' # Should be update by Slides
-        self._cell_code = '' # Should be update by Slides 
-        self._from_cell = False # Update in build slides
+        self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._toast = None # Update from BaseSlides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
         self._section = None # Added from Slides
+        
+    def set_source(self, text, language):
+        "Set source code for this slide."
+        self._source = {'text': text, 'language': language}
         
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -58,9 +60,13 @@ class Slide:
         try:
             with capture_output() as captured:
                 yield captured
+            
+            if captured.stderr:
+                raise RuntimeError(f'Error in building {self}: {captured.stderr}')
+            
         finally:
-            self._app._cell_slides.append(self) # Add to slides in current cell
             self._app._running_slide = None
+            self._app._cell_slides.append(self) # Add to slides in current cell
             # remove previous event handler safely to vaoid multiple callbacks
             self._app._remove_post_run_callback()
             # Register new event handler so that the most recent slide will cause it, not every slide in the cell
@@ -68,8 +74,20 @@ class Slide:
                 self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
             
             if assign:
-                self._contents = captured.outputs           
-                
+                self._contents = captured.outputs  
+    
+    def re_run(self):
+        "Rerun the source code for this slide if it exists. Useful to update slides in bulk having sections, citations using Slides.sectioned, Slides.cited properties."
+        if self._source['text']:
+            if self._source['language'] == 'python':
+                self._app.run_cell(f'%%slide {self._number}\n{self._source["text"]}')
+            elif self._source['language'] == 'markdown':
+                self._app.run_cell(f'%%slide {self._number} -m\n{self._source["text"]}')
+            else:
+                raise ValueError(f'Unknown language {self._source["language"]!r}. Expected "python" or "markdown".')
+        else:
+            print(f'No source code for slide {self._number} to run. Run it\'s cell manually.')
+            
     def update_display(self, go_there = True):
         "Update display of this slide."
         if go_there:
@@ -79,7 +97,6 @@ class Slide:
             
         with self._widget:
             display(*self.contents)
-            
             
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr/').display()
@@ -152,6 +169,12 @@ class Slide:
     @property
     def frames(self):
         return tuple(self._frames)
+
+    @property
+    def parent(self):
+        if '.' in self._label:
+            return self._app._slides_dict[self._number] # Return parent slide, _number is string
+        
     
     @property
     def notes(self):
@@ -183,7 +206,7 @@ class Slide:
     
     @property
     def markdown(self):
-        return getattr(self, '_markdown', '') # Not All Slides have markdown
+        return self._source['text'] if self._source['language'] == 'markdown' else '' # Not All Slides have markdown
     
     @property
     def animation(self):
@@ -207,18 +230,15 @@ class Slide:
     
     @property
     def source(self):
-        "Return source code of this slide, markdwon or python."
-        return self._get_source()
+        "Return source code of this slide, markdwon or python if exists."
+        return self.get_source()
     
-    def _get_source(self, name = None):
-        if self._from_cell and self._cell_code:
-            return self._app.source.from_string(self._cell_code, language = 'python', name = name)
-        elif self._markdown:
-            return self._app.source.from_string(self._markdown, language = 'markdown', name = name)
+    def get_source(self, name = None):
+        "Return source code of this slide, markdwon or python or None if no source exists."
+        if self._source['text']:
+            return self._app.source.from_string(**self._source, name = name)
         else:
-            return self._app.source.from_string('Source of a slide only exits if it is created (most recently) using `from_markdown` or `%%slide` magic\n'
-                'For `@LiveSlide.frames` and `with Slides.slide` contextmanager, use `with Slides.source.context`  to capture source.',
-                language = 'markdown')
+            return self._app.source.from_string('Source of a slide only exits if it is NOT created (most recently) using @Slides.frames decorator\n',language = 'markdown')
     
     def show(self):
         self.update_display() # Needs to not discard widgets there
@@ -300,13 +320,14 @@ class Slide:
         
 
 @contextmanager
-def _build_slide(app, slide_number_str, from_cell = False, is_frameless = True):
+def _build_slide(app, slide_number_str, is_frameless = True):
     "Use as contextmanager in Slides class to create slide. New in 1.7.0"
     # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
     old_slides = list(app._slides_dict.values()) # Need if update is required later, values decide if slide is changed
         
     if slide_number_str in app._slides_dict:
         _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
+        _slide.set_source('','') # Reset old source
         if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
             _slide = Slide(app, slide_number_str)
             app._slides_dict[slide_number_str] = _slide
@@ -316,10 +337,6 @@ def _build_slide(app, slide_number_str, from_cell = False, is_frameless = True):
             
     with _slide._capture(assign = True) as captured:  
         yield _slide
-    
-    _slide._from_cell = from_cell # Need to determine code source
-    if not from_cell:
-        _slide._cell_code = '' # Clear cell code but not Markdown
     
     for k in [p for ps in _slide.contents for p in ps.data.keys()]:
         if k.startswith('application'): # Widgets in this slide
