@@ -327,7 +327,7 @@ class Slides(BaseSlides):
             raise RuntimeError('Citations can be added only inside a slide constructor!')
         
         if self._citation_mode == 'inline':
-            value = self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`')
+            value = self._citations_dict.get(key,f'Set citation for key {key!r} using .set_citations')
             return utils.textbox(value.replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1] ,left='initial',top='initial').value # Just write here
         
         this_slide = self._running_slide
