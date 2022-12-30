@@ -212,7 +212,7 @@ class Widgets:
     @property
     def assets_dir(self):
         "Returns the assets directory, if not exist, create one"
-        _dir = os.path.join(self._notebook_dir,'ipyslides-assets')
+        _dir = os.path.join(self._notebook_dir,'.ipyslides_assets')
         if not os.path.isdir(_dir):
             os.makedirs(_dir)
         return _dir

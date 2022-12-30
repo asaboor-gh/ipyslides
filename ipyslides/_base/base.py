@@ -221,13 +221,16 @@ class BaseSlides:
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster
         
-        with self.skip_post_run_cell():
+        with self.skip_cell_events():
             for i,chunk in enumerate(chunks, start = start):
                 # Must run under this function to create frames with two dashes (--)
                 self._slide(f'{i} -m', chunk)
         
-        if not self._post_run_enabled:
-            self._remove_post_run_callback() # This is important here
+        # Display slides if called form Notebook Cell only
+        last_hist = list(self.shell.history_manager.get_range())[-1][-1]
+        if re.findall(r'from_markdown\(|from_markdown\s+\(', last_hist):
+            self.shell.events.register('post_run_cell', self._post_run_cell)
+        
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
     
@@ -239,7 +242,7 @@ class BaseSlides:
         with self.set_dir(os.path.split(__file__)[0]):
             file = '../_demo.py'
             raw_source = self.source.from_file(file).raw
-            N = raw_source.count('auto.') + raw_source.count('.run_cell') # Count number of slides
+            N = raw_source.count('auto.') # Count number of slides
             self.create(*range(N)) # Create slides first, this is faster
             self.shell.run_line_magic('run', file) # Run demo in same namespace
             
@@ -256,6 +259,17 @@ class BaseSlides:
         self.settings.set_footer('IPySlides Documentation')
         
         auto = self.AutoSlides() # Does not work inside notebook (should not as well)
+        self.set_resources(
+            sections = {
+                'intro': 'Introduction', 
+                'slides': 'Adding Slides and Content',
+                'rich': 'Useful Functions for alert`Rich Content`',
+                'layout': 'Layout and color[yellow_black]`Theme` Settings',
+                'load': 'Loading from File/Exporting to HTML',
+                'advanced': 'Advanced Functionality',
+                'code': 'Presentation Code',
+            }
+        )
         
         with auto.title(): # Title
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
@@ -268,14 +282,14 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        auto.from_markdown('section`Introduction` toc`### Contents`')
+        auto.from_markdown('section`intro` toc`### Contents`')
             
         with auto.slide():
             self.write(['# Main App',self.doc(Slides)])
         
         with auto.slide():
-            self.write('## Adding Slides section`Adding Slides and Content`')
-            self.write('Besides functions below, you can add slides with `%%title` magics as well.\n{.note .info}')
+            self.write('## Adding Slides section`slides`')
+            self.write('Besides functions below, you can add slides with `%%title`/`%%slide` magics as well.\n{.note .info}')
             self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with auto.slide():
@@ -295,18 +309,18 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        auto.from_markdown('section`?Layout and color[yellow_black]`Theme` Settings?` toc`### Contents`')
+        auto.from_markdown('section`layout` toc`### Contents`')
         
         with auto.slide(): 
             self.write('## Layout and Theme Settings')
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
         with auto.slide():
-            self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
+            self.write('## Useful Functions for Rich Content section`rich`')
             members = ['alert','block', 'bokeh2html', 'bullets','cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
-                        'section', 'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
+                        'section', 'set_dir', 'set_resources', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
@@ -339,7 +353,7 @@ class BaseSlides:
             s8.get_source().display()
         
         with auto.slide():
-            self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
+            self.write('## Loading from File/Exporting to HTML section`load`')
             self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.note .info}')
             self.write([self.doc(self.from_markdown,'Slides'),
                         self.doc(self.demo,'Slides'), 
@@ -347,7 +361,7 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
-        auto.from_markdown('section`Advanced Functionality` toc`### Contents`')
+        auto.from_markdown('section`advanced` toc`### Contents`')
         
         with auto.slide():
             self.write('## Adding User defined Objects/Markdown Extensions')
@@ -393,7 +407,7 @@ class BaseSlides:
             self.write(['# Auto Slide Numbering in Python Scripts', self.doc(self.AutoSlides,'Slides')])
         
         with auto.slide():
-            self.write(['## Presentation Code section`Presentation Code`',self.docs])
+            self.write(['## Presentation Code section`code`',self.docs])
         
         self.navigate_to(0) # Go to title
         return self

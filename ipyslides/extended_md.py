@@ -93,14 +93,6 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
         slide_instance.notes.insert(match)
         text_chunk = text_chunk.replace(f'notes`{match}`', '', 1)
     
-    # [key]:`citation content`
-    all_matches = re.findall(r'\[([^\n\`\,\s+\[\]]*)\]\:\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE) # AVoid \n, `, , [,] and space in key
-    citations_dict = {}
-    for match in all_matches:
-        citations_dict[match[0].strip()] = match[1]
-        slide_instance.set_citations(citations_dict) # Only update under all_matches loop, otherwise it will be a mess of notifications
-        text_chunk = text_chunk.replace(f'[{match[0]}]:`{match[1]}`', '', 1)
-    
     # cite`key` should be after citations`key`, so that available for writing there if any
     all_matches = re.findall(r'cite\`(.*?)\`', text_chunk, flags = re.DOTALL)
     for match in all_matches:
@@ -123,7 +115,7 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     all_matches = re.findall(r'toc\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
         bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(slide_instance.toc, start = 1)])
-        repr_html = slide_instance.format_html([match, bullets]).value
+        repr_html = slide_instance.format_html([match or '<h3>Table of Contents</h3><hr/>', bullets]).value
         text_chunk = text_chunk.replace(f'toc`{match}`', repr_html, 1)
     
     return text_chunk
@@ -168,8 +160,8 @@ class _ExtendedMarkdown(Markdown):
                 out = self.convert(self._sub_vars(section))
                 outputs.append(_HTML(out))
             else:
-                _section = textwrap.dedent(section) # Remove indentation in code block, useuful to write examples inside markdown block
-                outputs.extend(self._parse_block(_section)) # vars are substituted already inside
+                section = textwrap.dedent(section) # Remove indentation in code block, useuful to write examples inside markdown block
+                outputs.extend(self._parse_block(section)) # vars are substituted already inside
         
         if rich_outputs:
             return outputs
@@ -251,7 +243,7 @@ class _ExtendedMarkdown(Markdown):
             
             # Run Code now 
             with capture_output() as captured:
-                (self._slides or self._shell).run_cell(dedent_data)  # Prefer slides if available
+                (self._slides or self._shell).run_cell(dedent_data)
 
             outputs = captured.outputs
             return outputs

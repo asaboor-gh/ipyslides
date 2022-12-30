@@ -134,7 +134,7 @@ slides.extender.extend(extension)
 ```
 ---
 # Full Screen Presentation
-Starting version 3.0 of `ipyslides`, you can press `W` (or associated button in top bar) to toggle viewport,`F` (or associated button in top bar) to toggle fullscreen. Tested on JupyterLab, RetroLab and Classic Notebook.
+Starting version 3.0 of `ipyslides`, you can press `W` (or associated button in top bar) to toggle viewport,`F` (or associated button in top bar) to toggle fullscreen. Tested on JupyterLab, RetroLab, Classic Notebook and Voila.
 ---
 # PDF printing
 To include all type of objects you need to make PDF manually.

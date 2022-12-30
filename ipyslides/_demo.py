@@ -1,14 +1,56 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import time
-from contextlib import suppress
 
 from ipyslides.writers import write, iwrite
 from ipyslides.formatters import libraries, __reprs__
 from ipyslides._base.intro import logo_svg
 
-markdown_str = """
-section`Introduction` toc`### Contents`
+
+try: # If slides already exists, then do not create it again
+    slides = get_ipython().user_ns['get_slides_instance']() # Avialble in markdown file as well that run under ipython
+except:
+    from .. import Slides
+    slides = Slides()
+
+auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
+
+slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
+slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
+slides._citation_mode = 'global' # This could be changed by other functions
+slides.set_resources( # Can be set once anywhere, and load from disk on re-run, so work in both notebook and .py files
+    citations = {
+        'pf': 'This is refernce to FigureWidget using `slides.cite` command',
+        'This': 'I was cited for no reason',
+    },
+    sections = {
+        'intro': 'Introduction',
+        'variety': 'Variety of Content Types to Display',
+        'plot': 'Plotting and DataFrame',
+        'widgets': 'Interactive Widgets',
+        'anim': 'Simple Animations with Frames',
+        'content': 'Controlling Content on Frames',
+        'other':' Miscellaneous Content',
+        'custom': 'Custom Objects Serilaization',
+        'code': 'Code to Generate Slides',
+    }
+)
+
+slides.run_cell("""
+%%title -m
+# Creating Slides
+::: align-center
+    alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
+    center`today```
+    ::: text-box
+        sup`1`My University is somewhere in the middle of nowhere
+        sup`2`Their University is somewhere in the middle of nowhere
+<h4 style=""color:green;"> 👈🏻 Read instructions in left panel</h4>
+""")
+
+#Demo for loading slides from a file or text block
+s1, s2, *others = auto.from_markdown("""
+section`intro` toc`### Contents`
 ---
 # Introduction
 To see how commands work, use `Slides.docs()` to see the documentation.
@@ -31,30 +73,8 @@ Version: {{version}} as executed from below code in markdown.
 
 [^1]: Add references like this per slide. Use slides.cite() or in markdown cite\`key\` to add citations generally.
   
-"""
+""", trusted=True)
 
-slides = get_ipython().user_ns['get_slides_instance']() # Avialble in markdown file as well that run under ipython
-
-auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
-
-slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
-slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
-slides._citation_mode = 'global' # This could be changed by other functions
-slides.set_citations({'pf': 'This is refernce to FigureWidget using `slides.cite` command'})
-slides.run_cell("""
-%%title -m
-# Creating Slides
-::: align-center
-    alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
-    center`today```
-    ::: text-box
-        sup`1`My University is somewhere in the middle of nowhere
-        sup`2`Their University is somewhere in the middle of nowhere
-<h4 style=""color:green;"> 👈🏻 Read instructions in left panel</h4>
-""")
-
-#Demo for loading slides from a file or text block 
-s1, s2, *others = auto.from_markdown(markdown_str, trusted=True)
 
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 # Insert source of slide 2    
@@ -64,8 +84,9 @@ with s2.insert(0):
     
 s2.insert_markdown({-1: f'alert`I was added at end using \`s2.insert_markdown\``'})
 
+
 *others, last = auto.from_markdown(f"""
-section`Variety of Content Types to Display` toc`### Contents`
+section`variety` toc`### Contents`
 ---
 ## IPython Display Objects
 #### Any object with following methods could be in`write` command:
@@ -87,17 +108,18 @@ can be included in `iwrite` command as well as other objects that can be passed 
 ## Commands which do all Magic!
 """, trusted=True)
 
+
 with slides.source.context(auto_display = False) as s:
     with last.insert(-1):
         write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse_xmd,'Slides')])
         write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
         s.show_lines([0,1]).display()
 
-auto.from_markdown('section`Plotting and DataFrame` toc`### Contents`')
+
+auto.from_markdown('section`plot` toc``')
     
 # Matplotlib
-with auto.slide() as s:
-    s.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
+with auto.slide() as sl:
     write('## Plotting with Matplotlib')
     with slides.source.context(auto_display = False) as s:
         import numpy as np, matplotlib.pyplot as plt
@@ -107,6 +129,9 @@ with auto.slide() as s:
             fig, ax = plt.subplots(figsize=(3.4,2.6))
             _ = ax.plot(x,np.cos(x))
         write([ax, s.focus_lines([1,3,4])])
+
+    sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
+        
 # Plotly and Pandas DataFrame only show if you have installed
 with slides.source.context(auto_display = False) as source:
     try:
@@ -138,7 +163,7 @@ with auto.slide():
         import numpy as np, matplotlib.pyplot as plt
         write('## Interactive Apps on color[var(--accent-color)]`Slide`\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
         writer, (plot,button, _), code = slides.iwrite([
-            '## Plot will be here! Click button below to activate it! section`Interactive Widgets`',
+            '## Plot will be here! Click button below to activate it! section`widgets`',
             ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
             "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src.focus_lines([4,5,6,7,*range(24,30)]))
         def update_plot():
@@ -159,7 +184,7 @@ with auto.slide():
         update_plot() #Initialize plot
     slides.notes.insert('## Something to hide from viewers!')
 
-auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
+auto.from_markdown('section`anim` toc`### Contents`')
     
 # Animat plot in slides  
 @auto.frames(*range(14,19))
@@ -182,7 +207,7 @@ def func(obj,idx):
         s.show_lines([5,6]).display()
     slides.write(slides.cite('This'))
     
-auto.from_markdown('section`Controlling Content on Frames` toc`### Contents`')
+auto.from_markdown('section`content` toc`### Contents`')
     
 # Frames structure
 boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
@@ -207,7 +232,7 @@ with auto.slide() as s:
     slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
     slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
     
-    slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
+    slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`other`')
     try:
         slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
     except:
@@ -216,30 +241,26 @@ with auto.slide() as s:
 
 # Youtube
 from IPython.display import YouTubeVideo
-with auto.slide() as previous_slide: # We will use this in next %%magic
+with auto.slide() as ys: # We will use this in next %%magic
     write(f"### Watching Youtube Video?")
     write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
     @slides.notify_later()
     def push():
         t = time.localtime()
         return f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}'
-    previous_slide.get_source().display() # s = source.context(style='vs', className="Youtube")
+    ys.get_source().display() # s = source.context(style='vs', className="Youtube")
     
-# Data Table, we will run %%slide magic with slide_number = previous_slide.number
-slides.run_cell(f"""
-%%slide {previous_slide.number + 1}
-with myslides.source.context(auto_display = False) as s:
+
+with auto.slide() as s:
     write('## Data Tables')
-    # Remember myslides variable was assigned in a python block
-    # in markdown just in start. Magic!
-    write(myslides.block_r('Here is Table','<hr/>','''
+    write(slides.block_r('Here is Table','<hr/>','''
         |h1|h2|h3|
         |---|---|---|
         |d1|d2|d3|
         |r1|r2|r3|
         '''))
-    s.focus_lines([3,4,5,6]).display()
-""")
+    s.get_source().focus_lines([3,4,5,6]).display()
+
 auto.from_markdown('''
 ## $\LaTeX$ in Slides
 Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
@@ -263,7 +284,7 @@ with auto.slide(),slides.source.context():
         '||### Column C {.warning}||### Column D {.success}||',
     ).display()
     
-auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
+auto.from_markdown('section`custom` toc`### Contents`')
 
 with auto.slide() as some_slide:
     slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
@@ -277,13 +298,14 @@ with auto.slide() as some_slide:
     some_slide.get_source().display()
     
 with auto.slide():
-    slides.write('## This is all code to generate slides section`Code to Generate Slides`')
+    slides.write('## This is all code to generate slides section`code`')
     slides.source.from_callable(slides.demo).display()
     slides.source.from_file(__file__).display()
     
 with auto.slide():
     slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.note .info}')
     slides.get_source().display()
+
      
 with auto.slide(), slides.source.context():
     slides.write('citations`## Reference via Markdown\n----`',

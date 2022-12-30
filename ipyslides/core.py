@@ -1,5 +1,5 @@
 
-import sys, os, re, textwrap
+import sys, os, json, re, textwrap
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 
@@ -46,19 +46,26 @@ class _Citation:
     def __format__(self, spec):
         return f'{self.value:{spec}}'
     
-    
     def _repr_html_(self):
         "HTML of this citation"
         return self.value
         
     @property
     def value(self):
-        _value = self._slide._app._citations_dict.get(self._key, f'Set citation for key {self._key!r} using slides.set_citations or [{self._key}]:\`citation text\` in markdown.')
-        return f'''<div class = "citation" id="{self._key}">
-            <a href="#{self._key}-back"> 
-                <span style="color:var(--accent-color);">{self._id}. </span>
-            </a>{_value}</div>'''
-        
+        if (_value := self._slide._app._resources['citations'].get(self._key, None)):
+            return f'''<div class = "citation" id="{self._key}">
+                <a href="#{self._key}-back"> 
+                    <span style="color:var(--accent-color);">{self._id}. </span>
+                </a>{_value}</div>'''
+        else:
+            return f'<div class = "error">Set value for key {self._key!r} using Slides.set_resources function and run again!</div>'
+    
+    @property
+    def inline_value(self):
+        if (_value := self._slide._app._resources['citations'].get(self._key, None)):
+            return utils.textbox(_value.replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1] , left='initial',top='initial').value
+        else:
+            return self.value
         
 class Slides(BaseSlides):
     # This will be overwritten after creating a single object below!
@@ -68,6 +75,9 @@ class Slides(BaseSlides):
         
         for k,v in _under_slides.items(): # Make All methods available in slides
             setattr(self,k,v)
+        
+        if not os.path.isdir(self.assets_dir):
+            os.makedirs(self.assets_dir) # It should be present to load resources
         
         self.extender   = _extender
         self.plt2html   = plt2html
@@ -117,17 +127,19 @@ class Slides(BaseSlides):
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_load_and_refresh.
         self._cell_slides = [] # Slides in the current cell
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
-        self._citations_dict = {} # Initialize citations dictionary, updated by user or by set_citations.
         self._iterable = [] #self._collect_slides() # Collect internally
         self._nslides =  0 # Real number of slides
         self._max_index = 0 # Maximum index including frames
         self._running_slide = None # For Notes, citations etc in markdown, controlled in Slide class
         self._next_number = 0 # Auto numbering of slides should be only in python scripts
         
+        self._resources = {'citations': {}, 'sections': {}} # Initialize resources dictionary, updated by user or by set_resources.
+        with self.set_dir(self.assets_dir): # Set assets directory
+            self._set_resources_from_file('resources.json') # Load resources from file if exists
+        
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
-        self.progress_slider.observe(self._update_toc,names=['options']) # need to be updated if slides change
         
         # All Box of Slides
         self._box =  self.widgets.mainbox 
@@ -136,20 +148,19 @@ class Slides(BaseSlides):
         self.set_overlay_url(url = None) # Set overlay url for initial information
         
     @contextmanager
-    def skip_post_run_cell(self):
+    def skip_cell_events(self):
         """Context manager to skip post_run_cell event."""
+        with suppress(BaseException):
+            self.shell.events.unregister('pre_run_cell', self._pre_run_cell)
+            
         self._remove_post_run_callback()
         self._post_run_enabled = False
         try:
             yield
         finally:
             self._post_run_enabled = True
-        
-    def run_cell(self, cell, **kwargs):
-        """Run a cell and return the result. kwargs are passed to `get_ipython().run_cell` method."""
-        with self.skip_post_run_cell():
-            result = self.shell.run_cell(cell, **kwargs)
-        return result # This is important to mimic `get_ipython().run_cell` method.
+            self.shell.events.register('pre_run_cell', self._pre_run_cell)
+            self._remove_post_run_callback() # Do not register post_run_cell event here
     
     def _pre_run_cell(self, info):
         self._remove_post_run_callback()
@@ -159,6 +170,11 @@ class Slides(BaseSlides):
     def _remove_post_run_callback(self):
         with suppress(Exception):
             self.shell.events.unregister('post_run_cell', self._post_run_cell)
+    
+    def run_cell(self, cell, **kwargs):
+        """Run cell and return result. This is used to run cell without post_run_cell event."""
+        with self.skip_cell_events():
+            return self.shell.run_cell(cell, **kwargs)
                 
     def _post_run_cell(self, result):
         if result.error_before_exec or result.error_in_exec:
@@ -171,10 +187,14 @@ class Slides(BaseSlides):
                 
                 with out:
                     display(*s.contents) 
+                    if s._citations and (self._citation_mode == 'footnote'):
+                        self.html('hr/').display()
+                        self.write(s.citations)
 
                 children.append(ipw.Box([out], layout=ipw.Layout(max_height='400px',overflow='auto',height='auto')).add_class('SlideBox'))
         finally:
             self._cell_slides = [] # reset slides in the cell after displaying
+            self._update_toc() # Should be here and in ipython display too, otherwise toc is not updated
             
         if children:
             self.close_view() # Close previous cell output if we reach until here, otherwise not
@@ -214,10 +234,9 @@ class Slides(BaseSlides):
         
         - alert`notes\`This is slide notes\``  to add notes to current slide
         - alert`cite\`key\`` to add citation to current slide
-        - alert`[key]:\`citation content\`` to add citation value, use these at start, so can be access in alert`cite\`key\``
         - alert`citations\`citations title\``  to add citations at end if `citation_mode = 'global'`.
-        - alert`include\`markdown_file.md\`` to include a file in markdown format. Useful to have citations in a separate file. (2.0.6+)
-        - alert`section\`section text\`` to add a section that will appear in the table of contents. (2.1.7+).
+        - alert`include\`markdown_file.md\`` to include a file in markdown format. (2.0.6+)
+        - alert`section\`key\`` to add a section that will appear in the table of contents. (2.1.7+).
         - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all. (2.1.7+).
         - You can escape backtick with backslash: alert`\\\` → \``. (2.1.7+).
         - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax. (2.1.7+).
@@ -366,69 +385,51 @@ class Slides(BaseSlides):
         return self._running_slide
     
     @property
-    def toced(self):
-        "Get all slides where toc is provided. See demo/docs function for how to used it effectively."
-        return [s for s in self[:] if s._meta.get('toced', False)]
-    
-    @property
-    def cited(self):
-        "Get all slides where citations are provided."
-        return [s for s in self[:] if s._meta.get('cited', False)]
-    
-    @property
     def citations(self):
         "Get All citations as a tuple that can be passed to `write` function."
         # Need to filter unique keys across all slides
-        if self._citation_mode == 'global':
-            if self.running:
-                self.running._meta['cited'] = True # written citations should be updated
-                
+        if self._citation_mode == 'global':  
             _all_citations = {}
-            for slide in self.cited:
+            for slide in self[:]:
                 _all_citations.update(slide._citations)
             
             return tuple(sorted(_all_citations.values(), key=lambda x: int(x._id)))
         
-        return ("No citations in 'inline' or 'footnote' mode",)
+        return (self.alert("No citations in 'inline' or 'footnote' mode").value,)
     
     def clear(self):
-        "Clear all slides."
+        "Clear all slides. This will also clear resources including citations, sections."
         self._slides_dict = {} # Clear slides
-        self._citations_dict = {} # Clear citations as well
+        self._resources = {'citations': {}, 'sections': {}} # Clear resources
+        self.set_resources(citations={}, sections={}) # Clears citations and sections from disk too
         with self.title():
             with suppress(BaseException): # Create a clean title page with no previous toasts/css/animations etc.
                 self.parse_xmd('# Title Page', display_inline=True)
+            self._next_number = 0 # Reset slide number to 0, because user will overwrite title page.
         
         self.refresh() # Clear interface again may be not needed, but it is not that costly.
         
     
     def cite(self, key):
-        """Add citation in presentation, key should be a unique string and citation is text/markdown/HTML.
-        Citations corresponding to keys used can be created by `.set_citations ` method.
+        """Add citation in presentation, key should be a unique string.
+        Citations corresponding to keys used can be created by `Slides.set_resources` method.
         Citation can be accessed by alert`Slides.citations` property and can be passed to `write` function.
         
-        **New in 1.7.2**      
-        In Markdown (under `%%slide int -m` or in `from_markdown`), citations can be created by using alert`cite\`key\`` syntax and 
-        can be set using alert`[key]:\`citationtext\`` syntax. If citation_mode is global, they can be shown using alert`citations\`citation title\`` syntax.
-        
+        You should set resources in start if using python script or voila, otherwise they will not be updated.\n{.note}
         """
         if self.running is None:
             raise RuntimeError('Citations can be added only inside a slide constructor!')
         
-        if self._citation_mode == 'inline':
-            return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
+        _cited = _Citation(slide = self.running, key = key)
         
-        this_slide = self.running
-        this_slide._meta['cited'] = True # need for seamless updates in markdown
-        _cited = _Citation(slide = this_slide, key = key)
-        self._citations_dict[key] = self._citations_dict.get(key, f'Set citation for key {key!r}.') # This to ensure single run shows citation
+        if self._citation_mode == 'inline':
+            return _cited.inline_value # Just write here
         
         # Set _id for citation
         if self._citation_mode == 'footnote':
-            _cited._id = str(list(this_slide._citations.keys()).index(key) + 1) # Get index of key
-            this_slide._meta['cited'] = False # Footnote auto updates so no need to update
+            _cited._id = str(list(self.running._citations.keys()).index(key) + 1) # Get index of key from unsorted ones
         else:
-            prev_keys = list(self._citations_dict.keys())
+            prev_keys = list(self._resources['citations'].keys())
                     
             if key in prev_keys:
                 _cited._id = str(prev_keys.index(key) + 1)
@@ -440,49 +441,110 @@ class Slides(BaseSlides):
         <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
         </a>''' + (_cited.value.replace('citation', 'citation hidden',1) if self._citation_mode == 'global' else '') # will be hidden by default
     
-    def set_citations(self, citations_dict):
-        "Set citations in presentation. citations_dict should be a dict of {key:value,...}"
-        self._citations_dict.update({key:self.parse_xmd(value, display_inline=False, rich_outputs = False)
-                for key, value in citations_dict.items()})
+    def set_resources(self, citations = None, sections = None, resource_file = None):
+        """Set citations and sections from dictionaries or resource file. 
+        Resource file should be a JSON file with citations and sections keys.
         
-        if self._citation_mode == 'footnote':
-            for slide in self[:]:
-                if slide.citations:
-                    slide.update_display()
-        else:
-            for slide in self.cited:
-                slide.update_content()
+        **Note:** You should set resources in start if using python script or voila, otherwise they will not be updated.    
+        **Note:** Citations are updated while sections are replaced with new ones.
+        
+        """
+        if citations is not None:
+            if isinstance(citations, dict):
+                self._resources['citations'].update({
+                    key: self.parse_xmd(value, display_inline=False, rich_outputs = False) for key, value in citations.items()
+                })
                 
-    def section(self,text):
-        """Add section to presentation that will appear in table of contents. 
-        In markdown, section can be created by using alert`%%section\`section text\`` syntax.
-        Sections can be collected using \`Slides.toc\` property or can be written in markdown using alert`toc\`title\`` syntax."""
-        self.running._section = text  
-        self._update_toc(change = None) # Update toc after each section too
+                if self._citation_mode == 'footnote':
+                    for slide in self[:]:
+                        if slide.citations:
+                            slide.update_display()
+            else:
+                raise TypeError(f'citations should be a dict, got {type(citations)}')
         
+        if sections is not None:
+            if isinstance(sections, dict):
+                self._resources['sections'] = {} # Clear sections
+                for key, value in sections.items():
+                    value = self.parse_xmd(value, display_inline=False, rich_outputs = False).replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1]
+                    self._resources['sections'].update({key:value})
+            else:
+                raise TypeError(f'sections should be a dict, got {type(sections)}')
+        
+        if resource_file is not None:
+            if any([citations,sections]):
+                raise ValueError('Cannot set citations and sections from file and dictionaries at the same time!')
+            
+            if isinstance(resource_file, str):
+                self._set_resources_from_file(resource_file)
+            
+        # Here write resources to file in assets
+        with self.set_dir(self.assets_dir):
+            with open('resources.json', 'w') as f:
+                json.dump(self._resources, f)
+                
+    def _set_resources_from_file(self, filename):
+        "Load resources from file if present."
+        if os.path.isfile(filename):
+            with open(filename,'r') as f:
+                d = json.load(f)
+                if len(d) != 2:
+                    raise ValueError(f'Resource file should have only citations and sections keys, got {list(d.keys())}')
+                for k in d:
+                    if k not in ('citations', 'sections'):
+                        raise ValueError(f'Resource file should have only citations and sections keys, got {list(d.keys())}')
+                    if not isinstance(d[k], dict):
+                        raise TypeError(f'Values of citations and sections should be dictionaries, got {type(d[k])}')
+                    
+                self._resources['citations'].update(d['citations'])
+                self._resources['sections'] = d['sections']
+                
+    def section(self,key):
+        """Add section key to presentation that will appear in table of contents. 
+        Sections corresponding to keys used can be created by `Slides.set_resources` method.
+        All sections can be accessed as table of contents by alert` Slides.toc ` property and can be passed to `write` function.
+        
+        You should set resources in start if using python script or voila, otherwise they will not be updated.\n{.note}
+        """
+        self.running._sec_key = key     
+        
+    
+    def _get_section(self, key):
+        "Fetch section from resources if present."
+        if key in self._resources['sections']:
+            return self._resources['sections'][key]
+        else:
+            return  f'<p class="error">Section {key!r} not set!</p>' 
+    
     @property 
     def toc(self):
         """Returns tuple of table of contents that can be passed to write command with desired format. 
         Run the slide containing alert`Slides.toc` at end as well to see all contents."""
         if not self.running: # If not running, return all sections as raw text
-            return tuple(s._section for s in self[:] if s._section)
+            return tuple(self._get_section(s._sec_key) for s in self[:] if s._sec_key)
         
-        self.running._meta['toced'] = True # Set metadata to show toc
-        
-        sections = []
+        sections, keys = [],[]
         this_index = self[:].index(self.running) if self.running in self[:] else self.running.number # Monkey patching index, would work on next run
         for slide in self[:this_index]:
-            if slide._section:
-                sections.append(self.html('div', slide._section, style='',className='toc-item prev'))
-        
-        if self.running._section:
-            sections.append(self.html('div', self.running._section, style='',className='toc-item this'))
+            if slide._sec_key:
+                sections.append(self.html('div', self._get_section(slide._sec_key), style='',className='toc-item prev'))
+                keys.append(slide._sec_key)
+                
+        if self.running._sec_key:
+            sections.append(self.html('div', self._get_section(self.running._sec_key), style='',className='toc-item this'))
+            keys.append(self.running._sec_key)
         elif sections:
             sections[-1] = _HTML(sections[-1].value.replace('toc-item prev','toc-item this'))
         
         for slide in self[this_index+1:]:
-            if slide._section:
-                sections.append(self.html('div', slide._section, style='',className='toc-item next'))
+            if slide._sec_key:
+                sections.append(self.html('div', self._get_section(slide._sec_key), style='',className='toc-item next'))
+                keys.append(slide._sec_key)
+                
+        # left over sections because slide was not built yet
+        for key in self._resources['sections']:
+            if key not in keys:
+                sections.append(self.html('div', self._get_section(key), style='',className='toc-item next'))
         
         return tuple(sections)
         
@@ -533,6 +595,7 @@ class Slides(BaseSlides):
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         self._remove_post_run_callback() # No need to show cell when this is shown
+        self._update_toc() # Update toc before displaying app to include all sections
         self.close_view() # Close previous views
         self._display_box = ipw.HBox(children=[self._box,self.__jlab_in_cell_display()]) # Initialize display box again
         return display(self._display_box) # Display slides
@@ -576,10 +639,10 @@ class Slides(BaseSlides):
             next_slide = self[new_index]
             css = '''.TOC .toc-item.s{idx} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
             .TOC .toc-item {{border-right: 4px solid var(--secondary-bg);}}'''
-            if next_slide._section: # Slide has itw own section
+            if next_slide._sec_key: # Slide has ite own section
                 self.html('style',css.format(idx = next_slide.index)).display()
             else:
-                idxs = [s._index for s in self[:new_index] if s._section] # Get all section indexes before current slide
+                idxs = [s._index for s in self[:new_index] if s._sec_key] # Get all section indexes before current slide
                 sec_index = idxs[-1] if idxs else 0 # Get last section index
                 self.html('style',css.format(idx = sec_index)).display()
             
@@ -686,13 +749,13 @@ class Slides(BaseSlides):
             
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number_str) as s:
-                self.run_cell(cell) #  Enables citations etc.
+                self.run_cell(cell) #  
             
             s.set_source(cell, 'python') # Update cell source
     
     @contextmanager
     def slide(self,slide_number):
-        "Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic."
+        """Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic."""
         if not isinstance(slide_number, int):
             raise ValueError(f'slide_number should be int >= 1, got {slide_number}')
         
@@ -721,7 +784,7 @@ class Slides(BaseSlides):
             
     @contextmanager
     def title(self):
-        "Use this context manager to write title. It is equivalent to `%%title` magic."
+        """Use this context manager to write title. It is equivalent to `%%title` magic."""
         with self.slide(0) as s, self.source.context(auto_display = False, depth = 4) as c: # depth = 4 to source under context manager
             yield s # Useful to use later
         
@@ -810,8 +873,8 @@ class Slides(BaseSlides):
             for s in this_slide._frames:
                 s.update_display()
                 # Remove duplicate sections/toasts/notes if any
-                if s._section == this_slide._section:
-                    s._section = None
+                if s._sec_key == this_slide._sec_key:
+                    s._sec_key = None
                 if s._notes == this_slide._notes:
                     s._notes = ''
                 # Toast has new function each time, needs more than just equal check
@@ -848,8 +911,8 @@ class Slides(BaseSlides):
         
         return tuple(slides_iterable)
     
-    def _update_toc(self,change):
-        tocs_dict = {s._section:s for s in self._iterable if s._section}
+    def _update_toc(self):
+        tocs_dict = {self._get_section(s._sec_key):s for s in self._iterable if s._sec_key}
         children = children = [
             ipw.HBox([
                 self.widgets.buttons.home,
@@ -861,7 +924,7 @@ class Slides(BaseSlides):
         
         if not tocs_dict:
             children.append(ipw.HTML(_fix_repr('No sections found!, create sections with alert`Slides.section` method'
-                    ' or alert`section\`Section content\``/alert`section\`?Section content will be parsed first?\`` in markdown cells')))
+                    ' or alert`section\`key\``')))
         else:
             for i,(sec,slide) in enumerate(tocs_dict.items(), start = 1):
                 slide_number = f"{slide._number}.{slide._label.split('.')[1]}" if '.' in slide._label else slide._number
@@ -871,10 +934,6 @@ class Slides(BaseSlides):
                 children.append(p_btn.add_class('toc-item').add_class(f's{slide._index}')) # class for dynamic CSS
                 
         self.widgets.tocbox.children = children
-        
-        if change: # without chnage, it will create loop in section function
-            for slide in self.toced:
-                slide.update_content() # Updates in markdown slides only
         
     def create(self, *slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is faster than creating one slide each time."
@@ -909,16 +968,6 @@ class Slides(BaseSlides):
         ```
         Use `auto.title`, `auto.slide` contextmanagers, `auto.frames` decorator and `auto.from_markdown` 
         function without thinking about what should be slide number.
-        
-        If somwhow you need to run `%%slide` magic inside python script, read previous slide number
-        and add 1 to it, e.g.:
-        ```python
-        with auto.slide() as last:
-            ...
-        slides.run_cell(f'''%%slide {last.number + 1}
-        code or makrdown based on -m in above line
-        '''
-        ```
         """
         last_hist = list(self.shell.history_manager.get_range())[-1][-1]
         if re.findall(r'AutoSlides\(|AutoSlides\s+\(', last_hist):

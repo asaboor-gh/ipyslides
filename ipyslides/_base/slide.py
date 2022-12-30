@@ -1,6 +1,6 @@
 """Slide Object, should not be instantiated directly"""
 
-import typing
+import typing, re
 from contextlib import contextmanager
 from ipywidgets import Output, Layout
 
@@ -23,7 +23,7 @@ class Slide:
         self._app = app
         self._contents = captured_output.outputs
             
-        self._extra_outputs = {'warn': [], 'start': [], 'end': []}
+        self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
         self._number = number if isinstance(number, str) else str(number) 
         self._label = None # This should be set in the Slides
@@ -36,8 +36,7 @@ class Slide:
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
-        self._section = None # Added from Slides
-        self._meta = {} # Added from Slides
+        self._sec_key = None # Added from Slides
 
         
     def set_source(self, text, language):
@@ -56,8 +55,8 @@ class Slide:
             self._toast = None # Reset toast
             self._notes = '' # Reset notes
             self._citations = {} # Reset citations
-            self._extra_outputs = {'warn': [], 'start': [], 'end': []} # Reset extra outputs
-            self._section = None # Reset section
+            self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
+            self._sec_key = None # Reset sec_key
         
         try:
             with capture_output() as captured:
@@ -77,21 +76,6 @@ class Slide:
             
             if assign:
                 self._contents = captured.outputs  
-    
-    def update_content(self):
-        "Update contents of this slide if it was created from markdown, orthwise add warning that can be removed by running source cell."
-        if self._source['text'] and self._source['language'] == 'markdown':
-            with self._capture(assign = False) as captured:
-                self._app.parse_xmd(self._source['text'], display_inline = True)
-
-            self._contents = captured.outputs
-            self.update_display()
-            
-        elif any(self._meta.values()): # If there is any meta data, no need to update page
-            with self._capture(assign = False) as captured:
-                self._app.alert(f'RuntimeError: Contents of {self} got unsynced. Run it\'s cell manually.').display()
-            self._extra_outputs['warn'] = captured.outputs # Already list
-            self.update_display()
         
         
     def update_display(self, go_there = True):
@@ -168,7 +152,7 @@ class Slide:
     
     def reset(self):
         "Reset all appended/prepended/inserted objects."
-        self._extra_outputs = {'warn': [], 'start': [], 'end': []}
+        self._extra_outputs = {'start': [], 'end': []}
         self._app._slidelabel = self.label # Go there
         self.update_display() 
     
@@ -227,12 +211,12 @@ class Slide:
         middle_outputs = [[out] for out in self._contents] # Make list for later flattening
         shift = 0
         for k, v in self._extra_outputs.items():
-            if k not in ['start', 'end', 'warn']:
+            if k not in ['start', 'end']:
                 middle_outputs.insert(int(k) + shift, v)
                 shift += 1
                 
         middle_outputs = [o for out in middle_outputs for o in out] # Flatten list
-        return tuple(self._extra_outputs['warn'] + self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
+        return tuple(self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
     
     def get_source(self, name = None):
         "Return source code of this slide, markdwon or python or None if no source exists."
@@ -260,12 +244,13 @@ class Slide:
         self._css = _format_css(css_dict, allow_root_attrs = True)
         
         # See effect of changes
-        if self._app._slidelabel != self.label:
-            self._app._slidelabel = self.label # Go there to see effects
-        else:
-            self._app.widgets.outputs.slide.clear_output(wait = True)
-            with self._app.widgets.outputs.slide:
-                display(self.animation, self._css)
+        if not self._app.running: # Otherwise it has side effects
+            if self._app._slidelabel != self.label:
+                self._app._slidelabel = self.label # Go there to see effects
+            else:
+                self._app.widgets.outputs.slide.clear_output(wait = False)
+                with self._app.widgets.outputs.slide:
+                    display(self.animation, self._css)
         
     def _set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for all slides."
@@ -290,12 +275,13 @@ class Slide:
         elif isinstance(name,str) and name in styles.animations:
             self._animation = html('style',styles.animations[name])
             # See effect of changes
-            if self._app._slidelabel != self.label:
-                self._app._slidelabel = self.label # Go there to see effects
-            else:
-                self._app.widgets.outputs.slide.clear_output(wait = True)
-                with self._app.widgets.outputs.slide:
-                    display(self.animation, self._css)
+            if not self._app.running: # Otherwise it has side effects
+                if self._app._slidelabel != self.label:
+                    self._app._slidelabel = self.label # Go there to see effects
+                else:
+                    self._app.widgets.outputs.slide.clear_output(wait = False)
+                    with self._app.widgets.outputs.slide:
+                        display(self.animation, self._css)
         else:
             self._animation = None # It should be None, not '' or don't throw error here
             
@@ -346,9 +332,6 @@ def _build_slide(app, slide_number_str, is_frameless = True):
     
     app._slidelabel = _slide.label # Go there to see effects
     _slide.update_display() # Update Slide, it will not come to this point if has same code
-    
-    # Update table of contents
-    app._update_toc(change = None)
     
     if old_slides != list(app._slides_dict.values()): # If there is a change in slides
         _slide._rebuild_all() # Rebuild all slides

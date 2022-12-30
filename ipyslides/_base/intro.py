@@ -108,18 +108,28 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 **New in 2.1.7**    
  
 - You can now add table of contents using alert`Slides.toc ` and alert`Slides.section `. Remember to run slide with alert` toc ` at last as well to grab all contents.
-- In Markdown settings, same thing can be done using alert`toc\`Toc Title\`` and alert`section\`section text\``.
+- In Markdown settings, same thing can be done using alert`toc\`Toc Title\`` and alert`section\`key\``.
 - You can use `Slides.goto_button` to add a button to go to jump to a slide.
 - Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
 - A new function `Slides.bullets` is added to add powerful bullet list from python objects.
 
 **New in 2.2.0**
+
 - A complete overhaul of CSS is done, so your custom CSS classes may be broken. You need to see `slides.docs` and read docs of `slides.fromat_css` as well as `slides.css_style` to know changes.
 - Now you can use python dictionary inside `slides.format_ccs, slides.set_css, slides[0].set_css` functions to set CSS properties, with extended and concise syntax.
 - In Custom Theme mode, now instead of editing a CSS file, you just need to set colors using `slides.settings.set_theme_colors`.
 
 **New in 2.2.5**
+
 - Inside Python script, you can now use auto numbering of slides with `slides.AutoSlides()`. See it's docs for details.
+
+**New in 3.0.0**
+
+- Python 3.8+, ipywidgets 8, IPython 8.7+ required. Previous version 2.x.x will still be supported for bug fixes.
+- Slides now create a new view after each cell run with only content of that cell. This is streamlined so that Jupyter Lab, Classic Notebook, Voila and Jupyter Retro can all be supported.
+- Citations and sections are provided with `Slides.set_resources` function that accept json file or dictionaries. On next run, these are loaded from disk, so it works in python scripts and voila as well. Make sure to set at start if you don't want to re-run all cells.
+- Old syntax of alert`[key]:\`citation value\`` is removed in favor of single resource setup which works everywhere. 
+- Citations can be passed in any order, but sections need to be passed in order of appearance to render correctly.
 ''',
 f'<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
 )
