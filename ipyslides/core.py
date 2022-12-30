@@ -415,7 +415,8 @@ class Slides(BaseSlides):
         Citations corresponding to keys used can be created by `Slides.set_resources` method.
         Citation can be accessed by alert`Slides.citations` property and can be passed to `write` function.
         
-        You should set resources in start if using python script or voila, otherwise they will not be updated.\n{.note}
+        ::: note
+            You should set resources in start if using python script or voila, otherwise they will not be updated.
         """
         if self.running is None:
             raise RuntimeError('Citations can be added only inside a slide constructor!')
@@ -445,9 +446,9 @@ class Slides(BaseSlides):
         """Set citations and sections from dictionaries or resource file. 
         Resource file should be a JSON file with citations and sections keys.
         
-        **Note:** You should set resources in start if using python script or voila, otherwise they will not be updated.    
-        **Note:** Citations are updated while sections are replaced with new ones.
-        
+        ::: note
+            - You should set resources in start if using python script or voila, otherwise they will not be updated.   
+            - Citations are updated while sections are replaced with new ones.
         """
         if citations is not None:
             if isinstance(citations, dict):
@@ -504,7 +505,8 @@ class Slides(BaseSlides):
         Sections corresponding to keys used can be created by `Slides.set_resources` method.
         All sections can be accessed as table of contents by alert` Slides.toc ` property and can be passed to `write` function.
         
-        You should set resources in start if using python script or voila, otherwise they will not be updated.\n{.note}
+        ::: note
+            You should set resources in start if using python script or voila, otherwise they will not be updated.
         """
         self.running._sec_key = key     
         
