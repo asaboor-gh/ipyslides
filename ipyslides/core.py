@@ -297,7 +297,7 @@ class Slides(BaseSlides):
     def _on_load_and_refresh(self):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
-            with suppress(BaseException):
+            with suppress(BaseException), self.skip_cell_events(): # Otherwise it will trigger cell events during __init__
                 with _build_slide(self, '0') as s:
                     self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
                 with _build_slide(self, '1') as s:
@@ -482,7 +482,7 @@ class Slides(BaseSlides):
         # Here write resources to file in assets
         with self.set_dir(self.assets_dir):
             with open('resources.json', 'w') as f:
-                json.dump(self._resources, f)
+                json.dump(self._resources, f, indent=4)
                 
     def _set_resources_from_file(self, filename):
         "Load resources from file if present."
