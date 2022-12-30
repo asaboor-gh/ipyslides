@@ -185,11 +185,15 @@ class _ExtendedMarkdown(Markdown):
         
     def _resolve_nested(self,text_chunk):
         # match func`?text?` to parse text and return func`html_repr`
-        all_matches = re.findall(r'\`\?(.*?)\?\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
-        for match in all_matches:
-            repr_html = self.parse(match, display_inline = False, rich_outputs = False)
-            repr_html = re.sub('</p>$','',re.sub('^<p>', '', repr_html)) # Remove <p> and </p> tags at start and end
-            text_chunk = text_chunk.replace(f'`?{match}?`', f'`{repr_html}`', 1)
+        old_display = self._display_inline
+        try:
+            all_matches = re.findall(r'\`\?(.*?)\?\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
+            for match in all_matches:
+                repr_html = self.parse(match, display_inline = False, rich_outputs = False)
+                repr_html = re.sub('</p>$','',re.sub('^<p>', '', repr_html)) # Remove <p> and </p> tags at start and end
+                text_chunk = text_chunk.replace(f'`?{match}?`', f'`{repr_html}`', 1)
+        finally:
+            self._display_inline = old_display
         return text_chunk
     
     def _parse_block(self, block):

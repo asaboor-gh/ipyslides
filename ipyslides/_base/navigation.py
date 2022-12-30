@@ -41,7 +41,7 @@ class Navigation:
                 self.progress_slider.index = self.progress_slider.index - 1 # Backwards
     
     def _change_icons(self, change):
-        
+        self.widgets.mainbox.remove_class('InView-Other') # remove heartbeats if user navigates away
         if '.' in self.progress_slider.options[self.progress_slider.index - 1][0]:
             self.btn_prev.icon = 'chevron-up'
         else:

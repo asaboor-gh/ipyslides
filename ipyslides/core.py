@@ -327,7 +327,8 @@ class Slides(BaseSlides):
             raise RuntimeError('Citations can be added only inside a slide constructor!')
         
         if self._citation_mode == 'inline':
-            return utils.textbox(self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`'),left='initial',top='initial').value # Just write here
+            value = self._citations_dict.get(key,f'Set citation for key {key!r} using `.set_citations`')
+            return utils.textbox(value.replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1] ,left='initial',top='initial').value # Just write here
         
         this_slide = self._running_slide
         _cited = _Citation(slide = this_slide, key = key)
@@ -435,6 +436,7 @@ class Slides(BaseSlides):
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         self.close_view() # Close previous views
+        self._update_toc(change = None) # Update toc otherwise last entry does not work
         self._display_box_ = ipw.VBox(children=[self.__jlab_in_cell_display(), self._box]) # Initialize display box again
         return display(self._display_box_)
     
