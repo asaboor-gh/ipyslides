@@ -1,8 +1,8 @@
 
 import os, sys
-from shutil import rmtree, copytree, ignore_patterns
+from shutil import rmtree
 
-from setuptools import setup, Command
+from setuptools import setup, Command, find_packages
 
 # Package meta-data.
 NAME = 'ipyslides'
@@ -64,14 +64,6 @@ class UploadCommand(Command):
             rmtree(os.path.join(here, 'dist'))
         except OSError: pass
         
-        try: # This is important to add updated files
-            self.status('Removing previous build …')
-            rmtree(os.path.join(here, 'build'))
-        except OSError: pass
-        
-        self.status('Copying new files to build/lib …')
-        copytree(os.path.join(here, 'ipyslides'), os.path.join(here, 'build','lib', 'ipyslides'), ignore = ignore_patterns('*.pyc', '__pycache__','*.egg-info'))
-
         self.status('Building Source and Wheel (universal) distribution …')
         os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
 
@@ -97,10 +89,8 @@ setup(
     author_email = EMAIL,
     python_requires = REQUIRES_PYTHON,
     url = URL,
-    #packages = find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
-    # If your package is a single module, use this instead of 'packages':
-    py_modules=['ipyslides'],
-
+    packages = find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    
     # entry_points={
     #     'console_scripts': ['mycli=mymodule:cli'],
     # },

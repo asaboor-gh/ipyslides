@@ -1,8 +1,9 @@
 """Slide Object, should not be instantiated directly"""
 
 import typing
+import traceback
 from contextlib import contextmanager
-from ipywidgets import Output, Layout
+from ipywidgets import Output, Layout, Button
 
 
 from IPython.display import display
@@ -18,6 +19,16 @@ class _LiveRichOutput:
     def __init__(self, func, slide):
         self._func = func
         self._slide = slide
+        self._last_outputs = []
+        self._error_outputs = []
+        self._raise_error = True
+        
+        try: # Initail error in cell to verify code
+            with capture_output():
+                self._func()
+        except Exception as e:
+            self._slide._app._remove_post_run_callback() 
+            raise Exception(f'{e}')
         
     @property
     def outputs(self):
@@ -27,9 +38,38 @@ class _LiveRichOutput:
         try:
             with capture_output() as captured:
                 self._func()
+                
+            self._last_outputs = captured.outputs
+            
+        except:
+            if self._raise_error:
+                with capture_output() as err_captured:
+                    self.capture_error()
+
+                self._error_outputs = err_captured.outputs
+                     
         finally:
             self._slide._app._running_slide = old # should go back
-        return captured.outputs
+            
+        if self._error_outputs: 
+            return self._last_outputs + self._error_outputs
+        return self._last_outputs
+    
+    def capture_error(self):
+        btn = Button(description = '✕ Clear Error and Keep Last Successful Output', layout = Layout(width='auto'))
+        
+        def remove_error_outputs(btn):
+            self._raise_error = False
+            try:
+                self._error_outputs = []
+                btn.close()
+                self._slide.update_display() # This clears up things, but not in cellbox mode, see that
+            finally:
+                self._raise_error = True
+                
+        self._slide._app.builtin_print(traceback.format_exc())
+        btn.on_click(remove_error_outputs)
+        return display(btn)
 
 class Slide:
     "New in 1.7.0"
