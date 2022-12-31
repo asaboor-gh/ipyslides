@@ -10,14 +10,8 @@ class Notes:
         # print(f'Inside: {self.__class__.__name__}')
         self.main = _insatanceSlides
         self.widgets = _instanceWidgets
-        
         self.notes_check = self.widgets.checks.notes
-        self.btn_timer = self.widgets.toggles.timer
-        
-        self.start_time = None
-        
         self.notes_check.observe(self.__open_close_notes, names=['value'])
-        self.btn_timer.observe(self.__timeit,names=['value'])
         
     def insert(self, content):
         """Add notes to current slide. Content could be any object except javascript and interactive widgets.
@@ -38,22 +32,12 @@ class Notes:
                 time_str = f'{current_time.tm_hour-12:0>2}:{current_time.tm_min:0>2} PM'
             else:
                 time_str = f'{current_time.tm_hour:0>2}:{current_time.tm_min:0>2} AM'
-            
-            
-            if self.start_time:
-                spent = time.time() - self.start_time 
-                h, sec = divmod(spent,3600) # Houres
-                m, _ = divmod(sec,60) # Minutes
-                spent_str = f'{int(h):0>2}:{int(m):0>2}' # They are floats by default
-            else:
-                spent_str = '00:00'
 
             _time = f'''<div style="border-radius:4px;padding:8px;background:var(--secondary-bg);min-width:max-content;">
-                        <h2>Time: {time_str}</h2><hr/>
-                        <h3>Elapsed Time: {spent_str}</h3><div>'''
+                        <h2>Time: {time_str}</h2><div>'''
                         
             self.widgets.htmls.notes.value = f'''<div style="margin:-4px;padding:4px;background:var(--secondary-bg);border-radius:4px 4px 0 0;">
-                    <b style="font-size:110%;color:var(--accent-color);">Time: {time_str} | Elapsed Time: {spent_str}</b>
+                    <b style="font-size:110%;color:var(--accent-color);">Time: {time_str}</b>
                     </div>''' + html_str # show alaways
             
             # Next everything for Browser window case
@@ -88,11 +72,3 @@ class Notes:
                 ''')
         else:
             self.widgets._exec_js('window.open("","__Notes_Window__","popup").close();')
-    
-    def __timeit(self,change):
-        if change['new'] == True:
-            self.btn_timer.icon = 'minus'
-            self.start_time = time.time() # Start time here
-        else:
-            self.btn_timer.icon = 'plus'
-            self.start_time = None

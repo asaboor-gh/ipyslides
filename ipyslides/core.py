@@ -140,6 +140,7 @@ class Slides(BaseSlides):
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
+        self.widgets.buttons.refresh.on_click(self._update_display_for_dynamic_content)
         
         # All Box of Slides
         self._box =  self.widgets.mainbox 
@@ -660,9 +661,9 @@ class Slides(BaseSlides):
             self._box.remove_class('InView-Title').remove_class('InView-Last').add_class('InView-Other')
         
         if self._iterable and change:
+            self.notes._display(self.current.notes) # Display notes first
             self.widgets.htmls.toast.value = '' # clear previous content of notification 
             self._display_toast() # or self.toasts._display_toast . Display in start is fine
-            self.notes._display(self.current.notes) # Display notes first
         
             number = f'{self.current.label} / {self._nslides}' if self.current.label != '0' else ''
             self.settings._update_footer(number_str = number) # Update footer privately
@@ -786,10 +787,14 @@ class Slides(BaseSlides):
         self.running._dynamic = True # Set dynamic flag to update
         return self.running._dynamic_private(func)
     
-    def _update_display_for_dynamic_content(self):
-        for slide in self[:]:
-            if getattr(slide, '_dynamic', False): # Handle dynamic content if any, including citations and sections
-                slide.update_display(go_there = False)
+    def _update_display_for_dynamic_content(self, btn = None):
+        self.widgets.buttons.refresh.icon = 'minus'
+        try:
+            for slide in self[:]:
+                if getattr(slide, '_dynamic', False): # Handle dynamic content if any, including citations and sections
+                    slide.update_display(go_there = False)
+        finally:        
+            self.widgets.buttons.refresh.icon = 'plus'
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.

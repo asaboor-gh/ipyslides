@@ -217,6 +217,4 @@ class ScreenShot:
                 im.save(filepath, format= im.format,quality = quality) # Save image to file for later use
                 return image(filepath, **kwargs)
             else:
-                return print('No image on clipboard/file or not supported format.')
-        
-    
+                return print('No image on clipboard/file or not supported format.')  

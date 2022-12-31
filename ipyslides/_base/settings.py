@@ -37,7 +37,6 @@ class LayoutSettings:
         self.btn_window= self.widgets.toggles.window
         self.btn_fscreen= self.widgets.toggles.fscreen
         self.btn_zoom  = self.widgets.toggles.zoom
-        self.btn_timer = self.widgets.toggles.timer
         self.btn_laser = self.widgets.toggles.laser
         self.btn_overlay = self.widgets.toggles.overlay
         self.box = self.widgets.panelbox
@@ -349,7 +348,7 @@ class LayoutSettings:
             self.widgets.htmls.zoom.value = ''
             
     def _toggle_overlay(self,change):
-        _which_disable = [self.btn_laser, self.btn_zoom, self.btn_timer]
+        _which_disable = [self.btn_laser, self.btn_zoom, self.widgets.buttons.refresh]
         if self.btn_overlay.value:
             self.btn_overlay.icon = 'minus'
             self.widgets.htmls.overlay.layout.height = '100%'
@@ -361,5 +360,3 @@ class LayoutSettings:
             self.widgets.htmls.overlay.layout.height = '0px'
             for btn in _which_disable:
                 btn.disabled = False # Enable all buttons
-
-        

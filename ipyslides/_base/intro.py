@@ -142,7 +142,6 @@ key_combs = f'''
 |----------------------------------------------------------------------------|------------------------------------------------------|
 | {_key('&#9141;')} / {_key('▸')} {_icons["R"]}, {_icons["D"]}               | Move to next slide                                   |
 | {_key('⇧')} + {_key('&#9141;')} / {_key('◂')} {_icons["L"]}, {_icons["U"]} | Move to previous slide                               |
-| {_key('T')} {_icons["play"]}, {_icons["pause"]}                            | Start/stop timer                                     |
 | {_key('Z')} {_icons["zoom-in"]}, {_icons["zoom-out"]}                      | Toggle `image/.zoom-self/.zoom-child > *` zoom mode  |
 | {_key('S')} {_icons["camera"]}                                             | Save screenshot of current slide                     |
 | {_key('P')}                                                                | print PDF of current slide                           |

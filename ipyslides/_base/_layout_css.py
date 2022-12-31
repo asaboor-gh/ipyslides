@@ -444,9 +444,9 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '.fa.fa-plus': Icon('expand', color=accent_color, size=_icons_size).css,
             '.fa.fa-minus': Icon('compress', color=accent_color, size=_icons_size).css,
         },
-        '.Timer-Btn': {
-            '.fa.fa-plus': Icon('play', color=accent_color, size=_icons_size).css,
-            '.fa.fa-minus': Icon('pause', color=accent_color, size=_icons_size).css,
+        '.Refresh-Btn': {
+            '.fa.fa-plus': Icon('refresh', color=accent_color, size=_icons_size).css,
+            '.fa.fa-minus': Icon('loading', color=accent_color, size=_icons_size).css,
         },
         '.Screenshot-Btn .fa.fa-camera': Icon('camera', color=accent_color, size=_icons_size).css,
         '.Laser-Btn': {

@@ -25,6 +25,7 @@ class _Buttons:
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
+    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh Dynmaic Content').add_class('Menu-Item').add_class('Refresh-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
     end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
@@ -42,7 +43,6 @@ class _Toggles:
     window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
-    timer   = ipw.ToggleButton(icon='plus',value = False, tooltip='Start/Stop Timer [T]').add_class('Timer-Btn')  
     laser   = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn') 
     overlay = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Overlay Panel').add_class('Overlay-Btn')          
         
@@ -255,7 +255,7 @@ class Widgets:
                 ])
         ]).add_class('NavWrapper')   #class is must
         
-        _many_btns = [self.buttons.setting, self.toggles.overlay, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.toggles.timer]
+        _many_btns = [self.buttons.setting, self.toggles.overlay, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh]
         self.panelbox = VBox([
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),

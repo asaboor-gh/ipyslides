@@ -22,7 +22,6 @@ function main(){
     let fullSc   = document.getElementsByClassName('FullScreen-Btn')[0];
     let capSc    = document.getElementsByClassName('Screenshot-Btn')[0];
     let cursor   = document.getElementsByClassName('LaserPointer')[0];
-    let present  = document.getElementsByClassName('Timer-Btn')[0];
     let panelBtn = document.getElementsByClassName('Settings-Btn')[0];
     let laserBtn = document.getElementsByClassName('Laser-Btn')[0];
     
@@ -62,8 +61,6 @@ function main(){
             capSc.click();  // S for screenshot
         } else if (key === 80) {
             window.print(); // P for PDF print
-        } else if (key === 84) { 
-            present.click(); // T for presenter and timer start
         }; 
         resizeWindow(); // Resize after key press, good for F key
         e.stopPropagation(); // stop propagation to jupyterlab events and other views 

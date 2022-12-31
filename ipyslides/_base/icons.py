@@ -80,8 +80,8 @@ _icons = {
             <circle cx="13" cy="13" r="11" fill="none" stroke="{color}" stroke-width="2"/>
         </svg>''',
     'refresh': '''
-        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
-            <arc x="13" y="13" rx="11" ry="11" start="0" end="360" />
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="13" cy="13" r="11" fill="none" stroke="{color}" stroke-width="2"/>
         </svg>''',
     'laser': '''
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
