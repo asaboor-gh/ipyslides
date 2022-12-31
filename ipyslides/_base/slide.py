@@ -1,6 +1,6 @@
 """Slide Object, should not be instantiated directly"""
 
-import typing, re
+import typing
 from contextlib import contextmanager
 from ipywidgets import Output, Layout
 
@@ -13,6 +13,23 @@ from . import styles
 from ..utils import html, _format_css, _sub_doc, _css_docstring
 
 class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
+
+class _LiveRichOutput:
+    def __init__(self, func, slide):
+        self._func = func
+        self._slide = slide
+        
+    @property
+    def outputs(self):
+        "Executes given function and returns its output as list of outputs."
+        old = self._slide._app._running_slide
+        self._slide._app._running_slide = self._slide
+        try:
+            with capture_output() as captured:
+                self._func()
+        finally:
+            self._slide._app._running_slide = old # should go back
+        return captured.outputs
 
 class Slide:
     "New in 1.7.0"
@@ -36,12 +53,17 @@ class Slide:
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
-        self._sec_key = None # Added from Slides
+        self._section = None # Added from Slides
 
         
     def set_source(self, text, language):
         "Set source code for this slide."
         self._source = {'text': text, 'language': language}
+    
+    def _dynamic_private(self, func):  
+        "Add dynamic content to this slide which updates on refresh/update_display etc. func takes no arguments." 
+        lro = _LiveRichOutput(func, self)
+        return display(html('pre','This gets updated on refresh/update_display'), metadata = {'LiveRichOutput': lro})
         
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -56,7 +78,7 @@ class Slide:
             self._notes = '' # Reset notes
             self._citations = {} # Reset citations
             self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
-            self._sec_key = None # Reset sec_key
+            self._section = None # Reset sec_key
         
         try:
             with capture_output() as captured:
@@ -84,10 +106,10 @@ class Slide:
             self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
         else:
             self._widget.clear_output(wait = True) # Clear, but don't go there
-            
+        
         with self._widget:
             display(*self.contents)
-            
+
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr/').display()
                 self._app.write(self.citations)
@@ -107,6 +129,7 @@ class Slide:
         "Clear display of this slide."
         self._app._slidelabel = self.label # Go there to see effects
         self._widget.clear_output(wait = wait)
+        
     
     @contextmanager
     def append(self):
@@ -216,7 +239,15 @@ class Slide:
                 shift += 1
                 
         middle_outputs = [o for out in middle_outputs for o in out] # Flatten list
-        return tuple(self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']) 
+        all_outputs = self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']
+        updated_outputs = []
+        for out in all_outputs:
+            if 'LiveRichOutput' in out.metadata:
+                updated_outputs.extend(out.metadata['LiveRichOutput'].outputs) # Unpack LiveRichOutput as it can have many outputs
+            else:
+                updated_outputs.append(out)
+                
+        return tuple(updated_outputs) 
     
     def get_source(self, name = None):
         "Return source code of this slide, markdwon or python or None if no source exists."

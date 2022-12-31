@@ -439,14 +439,14 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             'text-align':'right !important',
             'padding':'0 12px !important', # to avoid cuts in rtl 
         },
-        '.info, .warning, .success, .error, .note': {
+        '.info, .warning, .success, .error, .note, .tip': {
             'padding':'0.2em !important',
             '^ > *:last-child': {'margin-bottom':'0.1em !important'},
         },
         '.warning, .warning *:not(span)': {'color':'#FFAC1C !important',},
         '.success, .success *:not(span)': {'color':'green !important',},
         '.error, .error *:not(span)': {'color':'red !important',},
-        '.info, .info *:not(span)': {'color':'skyblue !important',},
+        '.info, .tip, .info *:not(span), .tip *:not(span)' : {'color':'skyblue !important',},
         '.note' : {
             'border-radius': '0.2em',
             'margin-bottom': '0.7em !important',
@@ -461,6 +461,11 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'padding-left': '0.2em',
                 'border-radius': '0.2em 0.2em 0 0',
             },
+            '^.info::before': {'content': '"ℹ️ Info" !important'},
+            '^.warning::before': {'content': '"⚠️ Warning" !important'},
+            '^.success::before': {'content': '"✅ Important" !important'},
+            '^.error::before': {'content': '"⚡ Danger" !important'},
+            '^.tip::before': {'content': '"💡 Tip" !important'},
         },
         '.block' : {
             'border-top': '3px solid var(--accent-color)',

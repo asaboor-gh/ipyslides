@@ -102,8 +102,11 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     # citations`This is citations title` after setting citations and cite
     all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        repr_html = slide_instance.format_html([match, *slide_instance.citations]).value
-        text_chunk = text_chunk.replace(f'citations`{match}`', repr_html, 1)
+        @slide_instance.citations
+        def updatable_citations(objs):
+            slide_instance.format_html([match, *objs]).display()
+            
+        text_chunk = text_chunk.replace(f'citations`{match}`', '', 1)
         
     # section`This is section title`
     all_matches = re.findall(r'section\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
@@ -114,9 +117,12 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     # toc`This is toc title`
     all_matches = re.findall(r'toc\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(slide_instance.toc, start = 1)])
-        repr_html = slide_instance.format_html([match or '<h3>Table of Contents</h3><hr/>', bullets]).value
-        text_chunk = text_chunk.replace(f'toc`{match}`', repr_html, 1)
+        @slide_instance.toc
+        def updatable_toc(objs):
+            bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(objs, start = 1)])
+            slide_instance.format_html([match or '<h3>Table of Contents</h3><hr/>', bullets]).display()
+        
+        text_chunk = text_chunk.replace(f'toc`{match}`', '', 1)
     
     return text_chunk
 

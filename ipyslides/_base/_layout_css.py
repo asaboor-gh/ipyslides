@@ -526,12 +526,16 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'background': 'var(--theme-background,inherit) !important',
             'margin': '8px 0px',
         },
-        '.ExtraControls': {'background':'var(--secondary-bg) !important','padding-left':'8px !important'},
+        '.NotesView': {
+            'background':'var(--secondary-bg) !important',
+            'padding':'8px !important',
+            'margin-top':'12px !important', # Avoid overlap with slides
+        },
         '.jp-LinkedOutputView': {
             '.SlidesWrapper': {
                 'display': 'none !important', # Double Display does not work properly
             },
-            '.ExtraControls': {
+            '.NotesView': {
                 'display': 'block !important', 
                 'box-sizing': 'border-box',
                 '^:before': {

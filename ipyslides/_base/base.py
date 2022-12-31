@@ -67,10 +67,11 @@ class BaseSlides:
          'align-right'      | ------------Text
          'rtl'              | ------ اردو عربی 
          'info'             | Blue Text
+         'tip'              | Blue Text 
          'warning'          | Orange Text
          'success'          | Green Text
          'error'            | Red Text
-         'note'             | Text with info icon
+         'note'             | Text with icon, use note and other classes for other icons.
          'slides-only'      | Text will not appear in exported html report.
          'report-only'      | Text will not appear on slides. Use to fill content in report.
          'export-only'      | Hidden on main slides, but will appear in exported slides/report.
@@ -259,17 +260,6 @@ class BaseSlides:
         self.settings.set_footer('IPySlides Documentation')
         
         auto = self.AutoSlides() # Does not work inside notebook (should not as well)
-        self.set_resources(
-            sections = {
-                'intro': 'Introduction', 
-                'slides': 'Adding Slides and Content',
-                'rich': 'Useful Functions for alert`Rich Content`',
-                'layout': 'Layout and color[yellow_black]`Theme` Settings',
-                'load': 'Loading from File/Exporting to HTML',
-                'advanced': 'Advanced Functionality',
-                'code': 'Presentation Code',
-            }
-        )
         
         with auto.title(): # Title
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
@@ -282,13 +272,13 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        auto.from_markdown('section`intro` toc`### Contents`')
+        auto.from_markdown('section`Introduction` toc`### Contents`')
             
         with auto.slide():
             self.write(['# Main App',self.doc(Slides)])
         
         with auto.slide():
-            self.write('## Adding Slides section`slides`')
+            self.write('## Adding Slides section`Adding Slides and Content`')
             self.write('Besides functions below, you can add slides with `%%title`/`%%slide` magics as well.\n{.note .info}')
             self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
@@ -309,18 +299,18 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        auto.from_markdown('section`layout` toc`### Contents`')
+        auto.from_markdown('section`?Layout and color[yellow_black]`Theme` Settings?` toc`### Contents`')
         
         with auto.slide(): 
             self.write('## Layout and Theme Settings')
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
         with auto.slide():
-            self.write('## Useful Functions for Rich Content section`rich`')
+            self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
             members = ['alert','block', 'bokeh2html', 'bullets','cite',
                        'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'notify_later', 'plt2html', 'raw', 'rows',
-                        'section', 'set_dir', 'set_resources', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
+                        'section', 'set_citations', 'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
@@ -353,7 +343,7 @@ class BaseSlides:
             s8.get_source().display()
         
         with auto.slide():
-            self.write('## Loading from File/Exporting to HTML section`load`')
+            self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
             self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.note .info}')
             self.write([self.doc(self.from_markdown,'Slides'),
                         self.doc(self.demo,'Slides'), 
@@ -361,7 +351,7 @@ class BaseSlides:
                         self.doc(self.export.slides,'Slides.export'),
                         self.doc(self.export.report,'Slides.export')])
         
-        auto.from_markdown('section`advanced` toc`### Contents`')
+        auto.from_markdown('section`Advanced Functionality` toc`### Contents`')
         
         with auto.slide():
             self.write('## Adding User defined Objects/Markdown Extensions')
@@ -407,7 +397,7 @@ class BaseSlides:
             self.write(['# Auto Slide Numbering in Python Scripts', self.doc(self.AutoSlides,'Slides')])
         
         with auto.slide():
-            self.write(['## Presentation Code section`code`',self.docs])
+            self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
         self.navigate_to(0) # Go to title
         return self

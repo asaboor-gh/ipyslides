@@ -52,17 +52,17 @@ class _Citation:
         
     @property
     def value(self):
-        if (_value := self._slide._app._resources['citations'].get(self._key, None)):
+        if (_value := self._slide._app._citations.get(self._key, None)):
             return f'''<div class = "citation" id="{self._key}">
                 <a href="#{self._key}-back"> 
                     <span style="color:var(--accent-color);">{self._id}. </span>
                 </a>{_value}</div>'''
         else:
-            return f'<div class = "error">Set value for key {self._key!r} using Slides.set_resources function and run again!</div>'
+            return f'<div class = "warning note">Set value for cited key {self._key!r} and run again to clear warning!</div>'
     
     @property
     def inline_value(self):
-        if (_value := self._slide._app._resources['citations'].get(self._key, None)):
+        if (_value := self._slide._app._citations.get(self._key, None)):
             return utils.textbox(_value.replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1] , left='initial',top='initial').value
         else:
             return self.value
@@ -133,9 +133,9 @@ class Slides(BaseSlides):
         self._running_slide = None # For Notes, citations etc in markdown, controlled in Slide class
         self._next_number = 0 # Auto numbering of slides should be only in python scripts
         
-        self._resources = {'citations': {}, 'sections': {}} # Initialize resources dictionary, updated by user or by set_resources.
+        self._citations = {} # Initialize citations dictionary
         with self.set_dir(self.assets_dir): # Set assets directory
-            self._set_resources_from_file('resources.json') # Load resources from file if exists
+            self._set_citations_from_file('citations.json') # Load citations from file if exists
         
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
@@ -190,11 +190,12 @@ class Slides(BaseSlides):
                     if s._citations and (self._citation_mode == 'footnote'):
                         self.html('hr/').display()
                         self.write(s.citations)
+                    if s._notes:
+                        self.details(s._notes,'Notes').display()
 
                 children.append(ipw.Box([out], layout=ipw.Layout(max_height='400px',overflow='auto',height='auto')).add_class('SlideBox'))
         finally:
             self._cell_slides = [] # reset slides in the cell after displaying
-            self._update_toc() # Should be here and in ipython display too, otherwise toc is not updated
             
         if children:
             self.close_view() # Close previous cell output if we reach until here, otherwise not
@@ -211,7 +212,9 @@ class Slides(BaseSlides):
             btn = ipw.Button(description='Switch to Slides Application', button_style='danger').add_class('Switch-Btn')
             
             def update_display(b):
-                self._display_box.children = [self._box,self.__jlab_in_cell_display()]
+                self._update_display_for_dynamic_content() # important
+                self._update_toc() # Should be here and in ipython display too, otherwise toc is not updated
+                self._display_box.children = [ipw.VBox([self._box, self._notes_view])]
                 self._display_box.remove_class('CellBoxWrapper')
 
             btn.on_click(update_display)
@@ -384,24 +387,30 @@ class Slides(BaseSlides):
         "Access slide currently being built. Useful inside frames decorator."
         return self._running_slide
     
-    @property
-    def citations(self):
-        "Get All citations as a tuple that can be passed to `write` function."
-        # Need to filter unique keys across all slides
-        if self._citation_mode == 'global':  
-            _all_citations = {}
-            for slide in self[:]:
-                _all_citations.update(slide._citations)
-            
-            return tuple(sorted(_all_citations.values(), key=lambda x: int(x._id)))
+    
+    def citations(self, func):
+        """Decorator to get all citations as a tuple that can be passed to given `func` function. and update dynamically.
+        The output of `func` will appear before all other content in a makrdown block.
+        """
+        def _citations_handler():
+            if self._citation_mode == 'global':  
+                _all_citations = {}
+                for slide in self[:]:
+                    _all_citations.update(slide._citations)
+                    
+                return func(tuple(sorted(_all_citations.values(), key=lambda x: int(x._id))))
+
+            raise ValueError("Citations are not writable in 'inline' or 'footnote' mode. They appear on slide automatically.")
         
-        return (self.alert("No citations in 'inline' or 'footnote' mode").value,)
+        with suppress(BaseException): 
+            self.running._cited =  True # If not ruuning, it will raise error later, don't need to to throws this kind of error
+            
+        return self.dynamic_content(_citations_handler)
     
     def clear(self):
         "Clear all slides. This will also clear resources including citations, sections."
         self._slides_dict = {} # Clear slides
-        self._resources = {'citations': {}, 'sections': {}} # Clear resources
-        self.set_resources(citations={}, sections={}) # Clears citations and sections from disk too
+        self.set_citations({}) # Clears citations from disk too
         with self.title():
             with suppress(BaseException): # Create a clean title page with no previous toasts/css/animations etc.
                 self.parse_xmd('# Title Page', display_inline=True)
@@ -412,8 +421,8 @@ class Slides(BaseSlides):
     
     def cite(self, key):
         """Add citation in presentation, key should be a unique string.
-        Citations corresponding to keys used can be created by `Slides.set_resources` method.
-        Citation can be accessed by alert`Slides.citations` property and can be passed to `write` function.
+        Citations corresponding to keys used can be created by ` Slides.set_citations ` method.
+        Citation can be written by alert`Slides.citations` decorator.
         
         ::: note
             You should set resources in start if using python script or voila, otherwise they will not be updated.
@@ -430,31 +439,36 @@ class Slides(BaseSlides):
         if self._citation_mode == 'footnote':
             _cited._id = str(list(self.running._citations.keys()).index(key) + 1) # Get index of key from unsorted ones
         else:
-            prev_keys = list(self._resources['citations'].keys())
+            prev_keys = list(self._citations.keys())
                     
             if key in prev_keys:
                 _cited._id = str(prev_keys.index(key) + 1)
             else:
                 _cited._id = str(len(prev_keys))
-             
+        
+        if self._citation_mode == 'global':
+            for s in self[:]:
+                if getattr(s, '_cited', False) and s != self.running: # self will be updated at end
+                    s.update_display(go_there = False)
+                    
         # Return string otherwise will be on different place
         return f'''<a href="#{key}" class="citelink">
         <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
         </a>''' + (_cited.value.replace('citation', 'citation hidden',1) if self._citation_mode == 'global' else '') # will be hidden by default
     
-    def set_resources(self, citations = None, sections = None, resource_file = None):
-        """Set citations and sections from dictionaries or resource file. 
-        Resource file should be a JSON file with citations and sections keys.
+    def set_citations(self, citations = None, file = None):
+        """Set citations from dictionary or file. 
+        `file` should be a JSON file with citations keys and values.
         
         ::: note
-            - You should set resources in start if using python script or voila, otherwise they will not be updated.   
-            - Citations are updated while sections are replaced with new ones.
+            - You should set citations in start if using python script or voila, otherwise they may not be updated.   
+            - Citations are replaced with new ones.
         """
         if citations is not None:
             if isinstance(citations, dict):
-                self._resources['citations'].update({
+                self._citations = {
                     key: self.parse_xmd(value, display_inline=False, rich_outputs = False) for key, value in citations.items()
-                })
+                }
                 
                 if self._citation_mode == 'footnote':
                     for slide in self[:]:
@@ -463,92 +477,70 @@ class Slides(BaseSlides):
             else:
                 raise TypeError(f'citations should be a dict, got {type(citations)}')
         
-        if sections is not None:
-            if isinstance(sections, dict):
-                self._resources['sections'] = {} # Clear sections
-                for key, value in sections.items():
-                    value = self.parse_xmd(value, display_inline=False, rich_outputs = False).replace('<p>','',1)[::-1].replace('>p/<','',1)[::-1]
-                    self._resources['sections'].update({key:value})
-            else:
-                raise TypeError(f'sections should be a dict, got {type(sections)}')
         
-        if resource_file is not None:
-            if any([citations,sections]):
-                raise ValueError('Cannot set citations and sections from file and dictionaries at the same time!')
+        if file is not None:
+            if citations is not None:
+                raise ValueError('Cannot set citations from file and dictionary at the same time!')
             
-            if isinstance(resource_file, str):
-                self._set_resources_from_file(resource_file)
+            if isinstance(file, str):
+                self._set_citations_from_file(file)
             
         # Here write resources to file in assets
         with self.set_dir(self.assets_dir):
-            with open('resources.json', 'w') as f:
-                json.dump(self._resources, f, indent=4)
+            with open('citations.json', 'w') as f:
+                json.dump(self._citations, f, indent=4)
                 
-    def _set_resources_from_file(self, filename):
+        # Update citations in all slides
+        for slide in self[:]:
+            if getattr(slide, '_cited', False):
+                slide.update_display()        
+                
+    def _set_citations_from_file(self, filename):
         "Load resources from file if present."
         if os.path.isfile(filename):
             with open(filename,'r') as f:
-                d = json.load(f)
-                if len(d) != 2:
-                    raise ValueError(f'Resource file should have only citations and sections keys, got {list(d.keys())}')
-                for k in d:
-                    if k not in ('citations', 'sections'):
-                        raise ValueError(f'Resource file should have only citations and sections keys, got {list(d.keys())}')
-                    if not isinstance(d[k], dict):
-                        raise TypeError(f'Values of citations and sections should be dictionaries, got {type(d[k])}')
-                    
-                self._resources['citations'].update(d['citations'])
-                self._resources['sections'] = d['sections']
+                self._citations = json.load(f) # set, not update, avoid cluttering
                 
-    def section(self,key):
+    def section(self,text):
         """Add section key to presentation that will appear in table of contents. 
-        Sections corresponding to keys used can be created by `Slides.set_resources` method.
-        All sections can be accessed as table of contents by alert` Slides.toc ` property and can be passed to `write` function.
-        
-        ::: note
-            You should set resources in start if using python script or voila, otherwise they will not be updated.
+        Sections can be written as table of contents by alert` Slides.toc ` decorator.
         """
-        self.running._sec_key = key     
+        if not self.running:
+            raise RuntimeError('Sections can be added only inside a slide constructor!')
         
+        self.running._section = text # assign before updating toc
+        
+        for s in self[:]:
+            if getattr(s, '_toced', False) and s != self.running: # self will be built of course at end
+                s.update_display(go_there = False)
     
-    def _get_section(self, key):
-        "Fetch section from resources if present."
-        if key in self._resources['sections']:
-            return self._resources['sections'][key]
-        else:
-            return  f'<p class="error">Section {key!r} not set!</p>' 
-    
-    @property 
-    def toc(self):
-        """Returns tuple of table of contents that can be passed to write command with desired format. 
-        Run the slide containing alert`Slides.toc` at end as well to see all contents."""
-        if not self.running: # If not running, return all sections as raw text
-            return tuple(self._get_section(s._sec_key) for s in self[:] if s._sec_key)
-        
-        sections, keys = [],[]
-        this_index = self[:].index(self.running) if self.running in self[:] else self.running.number # Monkey patching index, would work on next run
-        for slide in self[:this_index]:
-            if slide._sec_key:
-                sections.append(self.html('div', self._get_section(slide._sec_key), style='',className='toc-item prev'))
-                keys.append(slide._sec_key)
+    def toc(self, func):
+        """Decorator to add dynamic table of contents to slides which get updated on each new section and refresh/update_display.
+        The output of `func` will appear before all other content in a makrdown block.
+        func should take one argument which is the tuple of sections."""
+        def _toc_handler():
+            sections = []
+            this_index = self[:].index(self.running) if self.running in self[:] else self.running.number # Monkey patching index, would work on next run
+            for slide in self[:this_index]:
+                if slide._section:
+                    sections.append(self.html('div', slide._section, style='',className='toc-item prev'))
+
+            if self.running._section:
+                sections.append(self.html('div', self.running._section, style='',className='toc-item this'))
                 
-        if self.running._sec_key:
-            sections.append(self.html('div', self._get_section(self.running._sec_key), style='',className='toc-item this'))
-            keys.append(self.running._sec_key)
-        elif sections:
-            sections[-1] = _HTML(sections[-1].value.replace('toc-item prev','toc-item this'))
+            elif sections:
+                sections[-1] = _HTML(sections[-1].value.replace('toc-item prev','toc-item this'))
+
+            for slide in self[this_index+1:]:
+                if slide._section:
+                    sections.append(self.html('div', slide._section, style='',className='toc-item next'))
+            
+            return func(tuple(sections))
         
-        for slide in self[this_index+1:]:
-            if slide._sec_key:
-                sections.append(self.html('div', self._get_section(slide._sec_key), style='',className='toc-item next'))
-                keys.append(slide._sec_key)
-                
-        # left over sections because slide was not built yet
-        for key in self._resources['sections']:
-            if key not in keys:
-                sections.append(self.html('div', self._get_section(key), style='',className='toc-item next'))
-        
-        return tuple(sections)
+        with suppress(BaseException):
+            self.running._toced = True  # we dont nedd to throw error of this kind if not running, that will be thrown below
+            
+        return self.dynamic_content(_toc_handler)
         
     
     def _goto_button(self, slide_number, text,text_before = '', extra_func=None, **kwargs):
@@ -598,8 +590,9 @@ class Slides(BaseSlides):
         
         self._remove_post_run_callback() # No need to show cell when this is shown
         self._update_toc() # Update toc before displaying app to include all sections
+        self._update_display_for_dynamic_content() # Update dynamic content before displaying app
         self.close_view() # Close previous views
-        self._display_box = ipw.HBox(children=[self._box,self.__jlab_in_cell_display()]) # Initialize display box again
+        self._display_box = ipw.VBox(children=[self._box,self._notes_view]) # Initialize display box again
         return display(self._display_box) # Display slides
     
     def close_view(self):
@@ -607,11 +600,9 @@ class Slides(BaseSlides):
         if hasattr(self,'_display_box') and self._display_box is not None:
             self._display_box.close() # Clear display that removes CSS things there
     
-    def __jlab_in_cell_display(self): 
-        return ipw.VBox([
-            ipw.HTML("""<b style='color:var(--accent-color);font-size:24px;'>IPySlides</b>"""),
-            self.widgets.htmls.notes
-        ],layout=ipw.Layout(width='auto',max_width='300px')).add_class('ExtraControls') 
+    @property
+    def _notes_view(self): 
+        return ipw.Box([self.widgets.htmls.notes]).add_class('NotesView') 
     
     @property
     def _slideindex(self):
@@ -641,10 +632,10 @@ class Slides(BaseSlides):
             next_slide = self[new_index]
             css = '''.TOC .toc-item.s{idx} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
             .TOC .toc-item {{border-right: 4px solid var(--secondary-bg);}}'''
-            if next_slide._sec_key: # Slide has ite own section
+            if next_slide._section: # Slide has ite own section
                 self.html('style',css.format(idx = next_slide.index)).display()
             else:
-                idxs = [s._index for s in self[:new_index] if s._sec_key] # Get all section indexes before current slide
+                idxs = [s._index for s in self[:new_index] if s._section] # Get all section indexes before current slide
                 sec_index = idxs[-1] if idxs else 0 # Get last section index
                 self.html('style',css.format(idx = sec_index)).display()
             
@@ -705,12 +696,7 @@ class Slides(BaseSlides):
         self._slideindex = 0 # goto first slide after refresh
     
     def delete(self, slide_number):
-        "Delete slide or all frames by `slide_number` with which it was created. It reappear if its source code is run again."
-        if not isinstance(slide_number, int):
-            raise TypeError('slide_number must be an integer, even for frames.')
-        number = str(slide_number)
-        self._slides_dict = {k:v for k,v in self._slides_dict.items() if not k.startswith(number)} # Delete all frames too
-        self.refresh()
+        raise Exception('DEPRECATED: Remove slide\'s source cell and re-run (No need for kernel restart) in sequence to clean up.')
         
     # defining magics and context managers
     def _slide(self,line,cell):
@@ -745,15 +731,14 @@ class Slides(BaseSlides):
                 
             @self.frames(int(slide_number_str), *_frames)
             def make_slide(_frame, idx):
-                #s.clear_display(wait = True) # It piles up otherwise due to replacements
+                self.running.set_source(_frame, 'markdown')  # Update source beofore running content to make it available to user inside markdown too
                 parse_xmd(_frame, display_inline = True, rich_outputs = False)
-                self.running.set_source(_frame, 'markdown')  # Update cell source
             
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number_str) as s:
+                s.set_source(cell, 'python') # Update cell source beofore running
                 self.run_cell(cell) #  
             
-            s.set_source(cell, 'python') # Update cell source
     
     @contextmanager
     def slide(self,slide_number):
@@ -764,9 +749,9 @@ class Slides(BaseSlides):
         assert slide_number >= 0 # slides should be >= 1, zero for title slide
         
         with _build_slide(self, f'{slide_number}') as s, self.source.context(auto_display = False, depth = 4) as c: # depth = 4 to source under context manager
+            s.set_source(c.raw, 'python') # Update cell source befor yielding
             yield s # Useful to use later
         
-        s.set_source(c.raw, 'python') # Update cell source
             
         
     def __title(self,line,cell):
@@ -788,9 +773,23 @@ class Slides(BaseSlides):
     def title(self):
         """Use this context manager to write title. It is equivalent to `%%title` magic."""
         with self.slide(0) as s, self.source.context(auto_display = False, depth = 4) as c: # depth = 4 to source under context manager
+            s.set_source(c.raw, 'python') # Update cell source befor yielding to make available inside context manager
             yield s # Useful to use later
         
-        s.set_source(c.raw, 'python')
+        
+    def dynamic_content(self, func):
+        """Decorator for inserting dynamic content on slide, define a function with no arguments.
+        Content updates when `slide.update_display` is called or when `Slides.refresh` is called.
+        """
+        if not self.running:
+            raise RuntimeError('Dynamic content can only be created under a slide constructor!')
+        self.running._dynamic = True # Set dynamic flag to update
+        return self.running._dynamic_private(func)
+    
+    def _update_display_for_dynamic_content(self):
+        for slide in self[:]:
+            if getattr(slide, '_dynamic', False): # Handle dynamic content if any, including citations and sections
+                slide.update_display(go_there = False)
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
@@ -875,8 +874,8 @@ class Slides(BaseSlides):
             for s in this_slide._frames:
                 s.update_display()
                 # Remove duplicate sections/toasts/notes if any
-                if s._sec_key == this_slide._sec_key:
-                    s._sec_key = None
+                if s._section == this_slide._section:
+                    s._section = None
                 if s._notes == this_slide._notes:
                     s._notes = ''
                 # Toast has new function each time, needs more than just equal check
@@ -914,7 +913,7 @@ class Slides(BaseSlides):
         return tuple(slides_iterable)
     
     def _update_toc(self):
-        tocs_dict = {self._get_section(s._sec_key):s for s in self._iterable if s._sec_key}
+        tocs_dict = {s._section:s for s in self._iterable if s._section}
         children = children = [
             ipw.HBox([
                 self.widgets.buttons.home,

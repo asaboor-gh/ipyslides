@@ -127,8 +127,8 @@ Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorph
 
 - Python 3.8+, ipywidgets 8, IPython 8.7+ required. Previous version 2.x.x will still be supported for bug fixes.
 - Slides now create a new view after each cell run with only content of that cell. This is streamlined so that Jupyter Lab, Classic Notebook, Voila and Jupyter Retro can all be supported.
-- Citations and sections are provided with `Slides.set_resources` function that accept json file or dictionaries. On next run, these are loaded from disk, so it works in python scripts and voila as well. Make sure to set at start if you don't want to re-run all cells.
-- Old syntax of alert`[key]:\`citation value\`` is removed in favor of single resource setup which works everywhere. 
+- Citations are provided with ` Slides.set_citations ` function that accept json file or dictionary. On next run, these are loaded from disk, so it works in python scripts and voila as well. Make sure to set at start if you don't want to re-run all cells.
+- Old syntax of alert`[key]:\`citation value\`` is removed in favor of single set_citations method which works everywhere. 
 - Citations can be passed in any order, but sections need to be passed in order of appearance to render correctly.
 ''',
 f'<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
@@ -236,7 +236,7 @@ class CustomSlides(isd.Slides):
 ```
 '''
 
-logo_svg = '''<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+logo_svg = '''<svg width="60px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     <circle cx="50" cy="50" r="50" fill="var(--accent-color)"/>
     <text x="50%" y="50%" fill="var(--secondary-bg" font-size="18px" font-weight="bolder" dominant-baseline="central" text-anchor="middle">IPySlides</text>
 </svg>'''

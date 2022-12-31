@@ -18,23 +18,10 @@ auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not a
 slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
 slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
 slides._citation_mode = 'global' # This could be changed by other functions
-slides.set_resources( # Can be set once anywhere, and load from disk on re-run, so work in both notebook and .py files
-    citations = {
+slides.set_citations({
         'pf': 'This is refernce to FigureWidget using `slides.cite` command',
         'This': 'I was cited for no reason',
-    },
-    sections = {
-        'intro': 'Introduction',
-        'variety': 'Variety of Content Types to Display',
-        'plot': 'Plotting and DataFrame',
-        'widgets': 'Interactive Widgets',
-        'anim': 'Simple Animations with Frames',
-        'content': 'Controlling Content on Frames',
-        'other':' Miscellaneous Content',
-        'custom': 'Custom Objects Serilaization',
-        'code': 'Code to Generate Slides',
-    }
-)
+    })
 
 slides.run_cell("""
 %%title -m
@@ -50,7 +37,7 @@ slides.run_cell("""
 
 #Demo for loading slides from a file or text block
 s1, s2, *others = auto.from_markdown("""
-section`intro` toc`### Contents`
+section`Introduction` toc`### Contents`
 ---
 # Introduction
 To see how commands work, use `Slides.docs()` to see the documentation.
@@ -86,7 +73,7 @@ s2.insert_markdown({-1: f'alert`I was added at end using \`s2.insert_markdown\``
 
 
 *others, last = auto.from_markdown(f"""
-section`variety` toc`### Contents`
+section`Variety of Content Types to Display` toc`### Contents`
 ---
 ## IPython Display Objects
 #### Any object with following methods could be in`write` command:
@@ -116,7 +103,7 @@ with slides.source.context(auto_display = False) as s:
         s.show_lines([0,1]).display()
 
 
-auto.from_markdown('section`plot` toc``')
+auto.from_markdown('section`Plotting and DataFrame` toc``')
     
 # Matplotlib
 with auto.slide() as sl:
@@ -163,7 +150,7 @@ with auto.slide():
         import numpy as np, matplotlib.pyplot as plt
         write('## Interactive Apps on color[var(--accent-color)]`Slide`\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
         writer, (plot,button, _), code = slides.iwrite([
-            '## Plot will be here! Click button below to activate it! section`widgets`',
+            '## Plot will be here! Click button below to activate it! section`Interactive Widgets`',
             ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
             "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src.focus_lines([4,5,6,7,*range(24,30)]))
         def update_plot():
@@ -184,7 +171,7 @@ with auto.slide():
         update_plot() #Initialize plot
     slides.notes.insert('## Something to hide from viewers!')
 
-auto.from_markdown('section`anim` toc`### Contents`')
+auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
     
 # Animat plot in slides  
 @auto.frames(*range(14,19))
@@ -207,7 +194,7 @@ def func(obj,idx):
         s.show_lines([5,6]).display()
     slides.write(slides.cite('This'))
     
-auto.from_markdown('section`content` toc`### Contents`')
+auto.from_markdown('section`Controlling Content on Frames` toc`### Contents`')
     
 # Frames structure
 boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
@@ -232,7 +219,7 @@ with auto.slide() as s:
     slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
     slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
     
-    slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`other`')
+    slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
     try:
         slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
     except:
@@ -284,7 +271,7 @@ with auto.slide(),slides.source.context():
         '||### Column C {.warning}||### Column D {.success}||',
     ).display()
     
-auto.from_markdown('section`custom` toc`### Contents`')
+auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
 
 with auto.slide() as some_slide:
     slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
@@ -298,20 +285,16 @@ with auto.slide() as some_slide:
     some_slide.get_source().display()
     
 with auto.slide():
-    slides.write('## This is all code to generate slides section`code`')
+    slides.write('## This is all code to generate slides section`Code to Generate Slides`')
     slides.source.from_callable(slides.demo).display()
     slides.source.from_file(__file__).display()
     
 with auto.slide():
-    slides.write('Slides made by using `from_markdown` or `%%slide` magic preserve their full code\n{.note .info}')
+    slides.write('Slides keep their full code if they are not made by @frames decorator!\n{.note .info}')
     slides.get_source().display()
 
      
 with auto.slide(), slides.source.context():
-    slides.write('citations`## Reference via Markdown\n----`',
-                 ['## Reference via Python API\n----',
-                  *slides.citations])
-    slides.write('Markdown is easier to write and read, but Python API is more powerful.')
-
+    slides.write('citations`## Reference via Markdown\n----`')
 
 slides.navigate_to(0) # Go to title slide
