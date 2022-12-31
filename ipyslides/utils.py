@@ -131,18 +131,22 @@ def _filter_prints(outputs):
 def suppress_output(keep_stdout = False):
     "Suppress output of a block of code. If `keep_stdout` is True, only display data is suppressed. (2.1.5+)"
     with capture_output() as captured:
-        yield 
+        yield # Do not yield
     
     if keep_stdout:
         outputs = captured.outputs
         _, new_prints = _filter_prints(outputs)
-        return display(*new_prints)
+        if new_prints:
+            return display(*new_prints) # under slides
+        elif captured.stdout:
+            return print(captured.stdout) # outside slides
+
 
 @contextmanager
 def suppress_stdout():
     "Suppress stdout in a block of code, especially unwanted print from functions in other modules. (2.1.0+)"
     with capture_output() as captured:
-        yield 
+        yield # do not yield, we want to suppress under and outside slides
     
     outputs = captured.outputs
     new_outputs, _ = _filter_prints(outputs)

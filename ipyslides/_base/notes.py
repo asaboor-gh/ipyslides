@@ -37,7 +37,7 @@ class Notes:
                         <h2>Time: {time_str}</h2><div>'''
                         
             self.widgets.htmls.notes.value = f'''<div style="margin:-4px;padding:4px;background:var(--secondary-bg);border-radius:4px 4px 0 0;">
-                    <b style="font-size:110%;color:var(--accent-color);">Time: {time_str}</b>
+                    <b style="font-size:105%;color:var(--accent-color);">Time: {time_str}</b>
                     </div>''' + html_str # show alaways
             
             # Next everything for Browser window case

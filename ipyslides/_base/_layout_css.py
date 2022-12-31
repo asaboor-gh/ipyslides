@@ -346,7 +346,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'color': 'var(--primary-fg)',
             'border': '1px solid var(--accent-color)',
             'border-radius':'4px',
-            'width': '85% !important', # To see all of the text
+            'width': '95% !important', # To see all of the text
             'box-sizing': 'border-box',
             '> div': {
                 'display': 'flex',

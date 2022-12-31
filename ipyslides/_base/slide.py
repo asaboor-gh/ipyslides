@@ -1,13 +1,14 @@
 """Slide Object, should not be instantiated directly"""
 
 import typing
-import traceback
+import sys
 from contextlib import contextmanager
 from ipywidgets import Output, Layout, Button
 
 
 from IPython.display import display
 from IPython.utils.capture import capture_output
+from IPython.core.ultratb import FormattedTB
 
 
 from . import styles
@@ -23,11 +24,10 @@ class _LiveRichOutput:
         self._error_outputs = []
         self._raise_error = True
         
-        try: # Initail error in cell to verify code
+        try: # Initail error in cell to verify code is correct
             with capture_output():
                 self._func()
         except Exception as e:
-            self._slide._app._remove_post_run_callback() 
             raise Exception(f'{e}')
         
     @property
@@ -43,9 +43,10 @@ class _LiveRichOutput:
             
         except:
             if self._raise_error:
+                wdgts = self.error_handler() # should capture outside
                 with capture_output() as err_captured:
-                    self.capture_error()
-
+                    display(*wdgts)
+                    
                 self._error_outputs = err_captured.outputs
                      
         finally:
@@ -55,21 +56,27 @@ class _LiveRichOutput:
             return self._last_outputs + self._error_outputs
         return self._last_outputs
     
-    def capture_error(self):
+    def error_handler(self):
         btn = Button(description = '✕ Clear Error and Keep Last Successful Output', layout = Layout(width='auto'))
         
         def remove_error_outputs(btn):
-            self._raise_error = False
+            self._raise_error = False 
             try:
                 self._error_outputs = []
-                btn.close()
                 self._slide.update_display() # This clears up things, but not in cellbox mode, see that
             finally:
                 self._raise_error = True
-                
-        self._slide._app.builtin_print(traceback.format_exc())
+        
+        ftb = FormattedTB(color_scheme='Neutral')  
+        tb = ftb.structured_traceback(*sys.exc_info())  
+        
+        out = Output()
+        with out:
+            self._slide._app.builtin_print('Note: Clearing error only works in full app mode.\n' + '-'*80)
+            self._slide._app.builtin_print(ftb.stb2text(tb)) # Always use builtin print to show correct traceback
+        
         btn.on_click(remove_error_outputs)
-        return display(btn)
+        return btn, out
 
 class Slide:
     "New in 1.7.0"
@@ -121,20 +128,20 @@ class Slide:
             self._section = None # Reset sec_key
         
         try:
+            self._app._remove_post_run_callback() # Remove before capturing
             with capture_output() as captured:
                 yield captured
             
             if captured.stderr:
                 raise RuntimeError(f'Error in building {self}: {captured.stderr}')
             
+            # If no error, then add callback keeping the user preference
+            if self._app._post_run_enabled:
+                self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
+            
         finally:
             self._app._running_slide = None
             self._app._cell_slides.append(self) # Add to slides in current cell
-            # remove previous event handler safely to vaoid multiple callbacks
-            self._app._remove_post_run_callback()
-            # Register new event handler so that the most recent slide will cause it, not every slide in the cell
-            if self._app._post_run_enabled:
-                self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
             
             if assign:
                 self._contents = captured.outputs  

@@ -109,16 +109,20 @@ class Slides(BaseSlides):
             self.builtin_print = builtins.print # Save original print function otherwise it will throw a recursion error
             def print(*args, **kwargs):
                 """Prints object(s) inline with others in corrct order. args and kwargs are passed to builtin `print`.
-                If `file` argument is not `sys.stdout`, then print is passed to given file."""
+                ::: note
+                    - If `file` argument is not `sys.stdout`, then print is passed to given file.
+                    - If oustide slides, then print is same as builtin `print`."""
 
                 if 'file' in kwargs and kwargs['file'] != sys.stdout: # User should be able to redirect print to file
                     return self.builtin_print(*args, **kwargs)
+                elif self.running:
+                    with capture_output() as captured:
+                        self.builtin_print(*args, **kwargs)
 
-                with capture_output() as captured:
-                    self.builtin_print(*args, **kwargs)
-
-                return self.raw(captured.stdout,className = 'custom-print').display() # Display at the end
-                # custom-print is used to avoid the print to be displayed when `with suppress_stdout` is used.
+                    # custom-print is used to avoid the print to be displayed when `with suppress_stdout` is used.
+                    return self.raw(captured.stdout,className = 'custom-print').display() # Display at the end
+                else:
+                    self.builtin_print(*args, **kwargs) # outside slides should behave same as before
             
             builtins.print = print
         
