@@ -957,7 +957,7 @@ class Slides(BaseSlides):
         
         return tuple([self._slides_dict[f'{slide_number}'] for slide_number in slide_numbers])
     
-    def glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
+    def glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
         "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.1+)"
         return self.settings.set_glassmorphic(image_src, opacity = opacity, blur_radius = blur_radius)
     

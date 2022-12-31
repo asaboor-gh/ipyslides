@@ -110,7 +110,7 @@ class LayoutSettings:
             raise ValueError("No slides yet to set CSS.")
         
         
-    def set_glassmorphic(self, image_src, opacity=0.75, blur_radius=50):
+    def set_glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
         "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.8+)"
         if not image_src:
             self.widgets.htmls.glass.value = '' # Hide glassmorphic
