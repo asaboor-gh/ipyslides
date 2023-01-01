@@ -2,7 +2,7 @@ from .icons import Icon as _Icon, _icons
 
 # ONLY INSTRUCTIONS BELOW
 
-how_to_ppt = '''### How to make Powerpoint Presentation from Bunch of Images
+how_to_ppt = '''### Powerpoint Presentation
 - Save all screenshots using `Save PNG` button and go to folder just created.
 - You know the aspect ratio while taking screenshots, if not, read details of any of picture to find it.
 - Open Powerpoint, got to `Design` tab and select `Slide Size`. If pictures here are of aspect ration 4:3 or 16:9, select that,
@@ -11,11 +11,11 @@ otherwise select `Custom Slide Size` and change size there according to found as
 - Select `File/Disk` option to insert pictures and make sure `Picture Layout` option is `Fit to slide`.
 - Now click `Create` and you will see all pictures as slides.
 
-Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
-{.note-warning}
+::: note-warning
+    Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
 '''
 
-how_to_slide = ('''# Creating Slides
+how_to_slide = '''# Creating Slides
 ::: align-center
     alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`     
     center`today```
@@ -24,13 +24,15 @@ how_to_slide = ('''# Creating Slides
         sup`1`My University is somewhere in the middle of nowhere
         sup`2`Their University is somewhere in the middle of nowhere
 
+::: note-warning
+    Python 3.8+, ipywidgets 8+, IPython 8.7+ are required. Previous version 2.x.x will still be supported for bug fixes.
 
-**Assuming you have `slides = ipyslides.Slides()`**
+**After you initialize `slides = ipyslides.Slides()`**
 
-- Proceed to create slides:
-    - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
-    - `%%slide integer -m` can be used to create slide from full markdown (extended one).
-    - You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
+- `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
+- `%%slide integer -m` can be used to create slide from full markdown (extended one).
+- You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
+- Inside python script, you can use auto numbering with `slides.AutoSlides().[tile|slide|frames|from_markdown]`.
 
 ```python
 import ipyslides as isd 
@@ -46,7 +48,7 @@ slides.set_animation(main='flow')
 # slide 1 content
 ```
 ```python
-%%slide 1 -m # new in 1.4.6
+%%slide 1 -m 
 **Markdown here with extended options (see `slides.xmd_syntax` for info). Nested blocks are not supported**
  ```multicol 30 70 .success
  less content
@@ -72,9 +74,10 @@ def func(obj):
 slides # This displays slides if on the last line of cell, or use `slides.show()`.
 ```
 
-- Use `slides.from_markdown` to create multiple slides from markdown file/text.
+Use `slides.from_markdown` to create multiple slides from markdown file/text.
     - Slides are added in order of content.
     - Slides should be separated by `---` (three dashes) in start of line.
+    
 ```python .monokai
 slides.from_markdown(path)
 with slides.slide(2):
@@ -82,74 +85,68 @@ with slides.slide(2):
     plot_something() # Add other things to same file
     write_something()
 ```
-- Use `slides.demo` to create example slides and start editing. Follow steps in first part.
-- Use `slides.docs` to see upto date documentation.
-- You can acess markdown content of an existing slide using `slides[key or index].markdown` if it has been created using `slides.from_markdown` or `%%slide i -m`.
-- You can insert content usign `with slides[key or index].insert(index)` or `slides[key or index].insert_markdown` (1.7.7+).
 
-**New in 1.7.2**
-  
-- Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-- You can now show citations on bottom of each slide by setting `citation_mode = 'footnote'` in `Slides` constructor.
-- You can now access individual slides by indexing `s_i = slides[i]` where `i` is the slide index or by key as `s_3_1 = slides['3.1']` will give you slide which shows 3.1 at bottom.
-- Basides indexing, you can access current displayed slide by `slides.current`.
-- You can add new content to existing slides by using `with s_i.insert(where)` context. All new changes can be reverted by `s_i.reset()`.
-- If a display is not complete, e.g. some widget missing on a slide, you can use `(slides.current, slides[index], slides[key]).update_display()` to update display.
-- You can set overall animation by `slides.settings.set_animation` or per slide by `s_i.set_animation`
-- You can now set CSS for each slide by `s_i.set_css` or `slides.running.set_css` at current slide.
+::: note-tip
+    - Use `Slides.demo` to create example slides.
+    - Use `Slides.docs` to see upto date documentation.
+    - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
+    - Use `Slides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
 
-**New in 1.7.5**    
-Use `Slides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
-Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-    
-**New in 2.0.1**    
-Check out alert`slides.glassmorphic` (later alert`slides.settings.set_glassmorphic` in 2.0.8+) and alert`slides.clipboard_image ` to add glassmorphic and clipboard image support.
+::: note-info
+    - You can access individual slides by indexing `s_i = slides[i]` where `i` is the slide index or by key as `s_3_1 = slides['3.1']` will give you slide which shows 3.1 at bottom.
+    - Basides indexing, you can access current displayed slide by `slides.current`.
+    - You can insert extra content usign `with slides[key or index].insert(index)` or `slides[key or index].insert_markdown`. Make sure if you run base cell again, this needs to be run again.
+    - If a display is not complete, e.g. some widget missing on a slide, you can use `(slides.current, slides[index], slides[key]).update_display()` to update display.
+    - You can set overall animation by `slides.settings.set_animation` or per slide by `s_i.set_animation`
+    - You can set CSS for each slide by `s_i.set_css` or `slides.running.set_css` at current slide.
+    - Check out alert`Slides.glassmorphic` or alert`Slides.settings.set_glassmorphic` to add background effects.
+    - Use alert`Slides.clipboard_image ` to add cliboard image to slide.
+    - Use `Slides.bullets` to add powerful bullet list from python objects.
 
-**New in 2.1.7**    
- 
-- You can now add table of contents using alert`Slides.toc ` and alert`Slides.section `. Remember to run slide with alert` toc ` at last as well to grab all contents.
-- In Markdown settings, same thing can be done using alert`toc\`Toc Title\`` and alert`section\`key\``.
-- You can use `Slides.goto_button` to add a button to go to jump to a slide.
-- Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
-- A new function `Slides.bullets` is added to add powerful bullet list from python objects.
 
-**New in 2.2.0**
+::: note
+    - You can add table of contents using alert`Slides.toc ` and alert`Slides.section ` that gets automatically updated.
+    - In Markdown, same thing can be done using alert`toc\`Toc Title\`` and alert`section\`key\``.
+    - Citations are provided with ` Slides.set_citations ` function that accept json file or dictionary. On next run, these are loaded from disk, so it works in python scripts and voila as well.
+    - You can use `Slides.goto_button` to add a button to go to jump to a slide.
+    - Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
+    - In Custom Theme mode, you can set colors using `slides.settings.set_theme_colors`.
+'''
 
-- A complete overhaul of CSS is done, so your custom CSS classes may be broken. You need to see `slides.docs` and read docs of `slides.fromat_css` as well as `slides.css_style` to know changes.
-- Now you can use python dictionary inside `slides.format_ccs, slides.set_css, slides[0].set_css` functions to set CSS properties, with extended and concise syntax.
-- In Custom Theme mode, now instead of editing a CSS file, you just need to set colors using `slides.settings.set_theme_colors`.
-
-**New in 2.2.5**
-
-- Inside Python script, you can now use auto numbering of slides with `slides.AutoSlides()`. See it's docs for details.
-
-**New in 3.0.0**
-
-- Python 3.8+, ipywidgets 8, IPython 8.7+ required. Previous version 2.x.x will still be supported for bug fixes.
-- Slides now create a new view after each cell run with only content of that cell. This is streamlined so that Jupyter Lab, Classic Notebook, Voila and Jupyter Retro can all be supported.
-- Citations are provided with ` Slides.set_citations ` function that accept json file or dictionary. On next run, these are loaded from disk, so it works in python scripts and voila as well. Make sure to set at start if you don't want to re-run all cells.
-- Old syntax of alert`[key]:\`citation value\`` is removed in favor of single set_citations method which works everywhere. 
-- Citations can be passed in any order, but sections need to be passed in order of appearance to render correctly.
-''',
-f'<h4 style=""color:green;"> 👈🏻 Read more instructions in left panel</h4>'
-)
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
 for k,r  in zip('RLUD',[0,180,-90,90]):  # clockwise rotation sucks!
     _icons[k] = _Icon('chevron', color="var(--accent-color)",rotation=r)
 def _key(k): return f'<span style="border: 1px solid var(--secondary-fg); background:var(--secondary-bg);border-radius:4px;padding:2px 6px;min-width:2em;">{k}</span>'
+
+key_maps = {
+    '▸, Space': 'Next slide',
+    '◂, ⇧ + Space': 'Previous slide',
+    'Z': 'Toggle objects zoom mode',
+    'S': 'Take screenshot',
+    'P': 'Print PDF of current slide',
+    'F': 'Toggle fullscreen',
+    'Esc': 'Exit fullscreen',
+    'W': 'Toggle fit to viewport',
+    'G': 'Toggle settings panel',
+    'L': 'Toggle LASER pointer',
+}
+
 key_combs = f'''
-| Key (comb) and associated button(s)                                        | Action                                               | 
-|----------------------------------------------------------------------------|------------------------------------------------------|
-| {_key('&#9141;')} / {_key('▸')} {_icons["R"]}, {_icons["D"]}               | Move to next slide                                   |
-| {_key('⇧')} + {_key('&#9141;')} / {_key('◂')} {_icons["L"]}, {_icons["U"]} | Move to previous slide                               |
-| {_key('Z')} {_icons["zoom-in"]}, {_icons["zoom-out"]}                      | Toggle `image/.zoom-self/.zoom-child > *` zoom mode  |
-| {_key('S')} {_icons["camera"]}                                             | Save screenshot of current slide                     |
-| {_key('P')}                                                                | print PDF of current slide                           |
-| {_key('F')} {_icons["expand"]}, {_icons["compress"]}                       | Toggle Fullscreen mode                               |
-| {_key('Esc')}                                                              | Exit Fullscreen mode                                 |
-| {_key('W')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | Fit/restore slides to/from window's viewport         |
-| {_key('G')} {_icons["dots"]}, {_icons["close"]}                            | Toggle settings panel                                |
-| {_key('L')} {_icons["laser"]}, {_icons["circle"]}                          | Toggle Laser Pointer ON/OFF                          |
+::: note-warning "warning"
+    Not every frontend is guaranteed to support keyboard shortcuts. Slides are optimized to use without keyboard and with tocuh screen.
+    
+| Keyboard Shortcuts                                                         | Action                 | 
+|----------------------------------------------------------------------------|------------------------|
+| {_key('&#9141;')} / {_key('▸')} {_icons["R"]}, {_icons["D"]}               | Move to next slide     |
+| {_key('⇧')} + {_key('&#9141;')} / {_key('◂')} {_icons["L"]}, {_icons["U"]} | Move to previous slide |
+| {_key('Z')} {_icons["zoom-in"]}, {_icons["zoom-out"]}                      | {key_maps["Z"]}        |
+| {_key('S')} {_icons["camera"]}                                             | {key_maps["S"]}        |
+| {_key('P')}                                                                | {key_maps["P"]}        |
+| {_key('F')} {_icons["expand"]}, {_icons["compress"]}                       | {key_maps["F"]}        |
+| {_key('Esc')}                                                              | {key_maps["Esc"]}      |
+| {_key('W')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | {key_maps["W"]}        |
+| {_key('G')} {_icons["dots"]}, {_icons["close"]}                            | {key_maps["G"]}        |
+| {_key('L')} {_icons["laser"]}, {_icons["circle"]}                          | {key_maps["L"]}        |
 '''
 
 more_instructions =f'''## How to Use
@@ -159,15 +156,13 @@ more_instructions =f'''## How to Use
 Having your cursor over slides, you can use follwoing keys/combinations:
 
 {key_combs}
+::: note
+    You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
 
-> You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
-
-**Tips**{{.success}}
-
-- Other keys are blocked so that you may not delete or do some random actions on notebook cells.
-- Jupyter/Retro Lab is optimized for keyboard. Other frontends like Classic Notebook, VSCode, Voila etc. may not work properly.
-- Pressing `S` to save screenshot of current state of slide. Different slides' screenshots are in order whether you capture in order or not, 
-but captures of multiple times in a slides are first to last in order in time.
+::: note-tip
+    - Other keys are blocked so that you may not delete or do some random actions on notebook cells.
+    - Jupyter[Retro, Notebook, Lab]/Voila is optimized for keyboard. Other frontends like VSCode, may not work properly.
+    - Pressing `S` to save screenshot of current state of slide. Different slides' screenshots are kept in order.
 
 ### PDF Printing
 - Capture screenshot of current state of slide by camera button in toolbar or by pressing `S` key. 
@@ -176,12 +171,13 @@ but captures of multiple times in a slides are first to last in order in time.
 - Press `Capture All` button in side panel to capture a single image of each slide. Then you can add images over it by manually capturing.
 - Press `Save PDF` button to save all screenshots as PDF.
 
-{how_to_slide[0]}
+{how_to_slide}
 
-- Slides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
+::: note-info
+    Slides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 
-Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-{{.note-warning}}
+::: note-warning
+    Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
 '''
 
 instructions = f'''{more_instructions}

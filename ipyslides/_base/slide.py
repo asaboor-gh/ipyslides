@@ -79,7 +79,7 @@ class _LiveRichOutput:
         return btn, out
 
 class Slide:
-    "New in 1.7.0"
+    "Slide object, should not be instantiated directly by user."
     _animations = {'main':'flow','frame':'slide_v'}
     _overall_css = html('style','')
     def __init__(self, app, number, captured_output = _EmptyCaptured):
@@ -107,9 +107,13 @@ class Slide:
         "Set source code for this slide."
         self._source = {'text': text, 'language': language}
     
-    def _dynamic_private(self, func):  
+    def _dynamic_private(self, func, tag = None):  
         "Add dynamic content to this slide which updates on refresh/update_display etc. func takes no arguments." 
         lro = _LiveRichOutput(func, self)
+        
+        if isinstance(tag, str): # To keep track what kind of dynamic content it is
+            setattr(self, tag, True)
+            
         return display(html('pre','This gets updated on refresh/update_display'), metadata = {'LiveRichOutput': lro})
         
     def __repr__(self):
@@ -208,9 +212,7 @@ class Slide:
         
     def insert_markdown(self, index_markdown_dict: typing.Dict[int, str]) -> None:
         """Insert multiple markdown objects (after being parsed) at given indices on slide at once.
-        Give a dictionary as {0: 'Markdown',..., -1:'Markdown'}.
-        
-        New in 1.7.7"""
+        Give a dictionary as {0: 'Markdown',..., -1:'Markdown'}."""
         if not isinstance(index_markdown_dict, dict):
             raise TypeError(f'expects dict as {{index: "Markdown",...}}, got {type(index_markdown_dict)}')
         for index, markdown in index_markdown_dict.items():
@@ -386,7 +388,7 @@ class Slide:
 
 @contextmanager
 def _build_slide(app, slide_number_str, is_frameless = True):
-    "Use as contextmanager in Slides class to create slide. New in 1.7.0"
+    "Use as contextmanager in Slides class to create slide."
     # We need to overwrite previous frame/slides if they exist to clean up residual slide numbers if they are not used anymore
     old_slides = list(app._slides_dict.values()) # Need if update is required later, values decide if slide is changed
         

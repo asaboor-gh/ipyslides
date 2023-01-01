@@ -12,14 +12,12 @@ A
 +++
 This {{var_name}} is a code from above and will be substituted with the value of var_name
 ```
+::: note-warning
+    Nested blocks are not supported.
 
-Note: Nested blocks are not supported.
-
-**New in 1.7.2**    
-Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-
-**New in 1.7.5**
-Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+::: note-info  
+    - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
+    - Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
 
 import textwrap, re
@@ -127,7 +125,6 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     return text_chunk
 
 class _ExtendedMarkdown(Markdown):
-    "New in 1.4.5"
     def __init__(self):
         super().__init__(extensions = extender._all, extension_configs=extender._all_configs)
         self._display_inline = False
@@ -145,8 +142,6 @@ class _ExtendedMarkdown(Markdown):
         Else displays objects and execute python code from '```python run source_var_name' block.
         Precedence of content return/display is:
         rich_outputs = True > display_inline = True > parsed_html_string
-        
-        New in 1.4.5
         """
         self._display_inline = display_inline # Must change here
         xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
@@ -335,20 +330,20 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
      || Inline-column A || Inline-column B ||
     ```
 
-    Each block can have class names (speparated with space or .) (in 1.4.7+) after all other options such as `python .friendly` or `multicol .Sucess.info`.
-    For example, `python .friendly` will be highlighted with friendly theme from pygments.
-    Pygments themes, however, are not supported with `multicol`. You need to write and display CSS for a custom class.
-    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `Slides.export.<export_function>` is called.
+    ::: note-info
+        - Each block can have class names (speparated with space or .) after all other options such as `python .friendly` or `multicol .Sucess.info`.
+            - For example, `python .friendly` will be highlighted with friendly theme from pygments.
+            - Pygments themes, however, are not supported with `multicol`. 
+            - You need to write and display CSS for a custom class.
+        - The block with `::: class_type` syntax accepts extra classes in quotes, for example `::: multicol "Success" "info"`.
+        - There are three special CSS classes `report-only`, `slides-only` and `export-only` that control appearance of content in different modes.
 
-    Note: Nested blocks are not supported.
+    ::: note-warning
+        Nested blocks are not supported.
     
-    This function was added  in 1.4.6
-    
-    **New in 1.7.2**    
-    Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-    
-    **New in 1.7.5**
-    Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+    ::: note-info  
+        - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
+        - Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
     return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline, rich_outputs = rich_outputs)  
     

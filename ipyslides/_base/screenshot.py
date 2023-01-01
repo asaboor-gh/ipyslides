@@ -47,6 +47,7 @@ class ScreenShot:
         hide_widgets = [self.widgets.controls,
                         self.widgets.buttons.setting,
                         self.widgets.buttons.toc,
+                        self.widgets.buttons.sfresh,
                         self.btn_capture,
                         self.widgets.sliders.visible,
                         self.widgets.htmls.toast,
@@ -201,7 +202,7 @@ class ScreenShot:
     def clipboard_image(self, filename, quality = 95, **kwargs):
         """Save image from clipboard to file and return alert`ipyslides.utils.image`. 
         On next run, it loads from saved file under `notebook-dir/ipyslides-assets/screenshots`. Useful to add screenshots from system into IPython.
-        kwargs are passed to `ipyslides.utils.image`. Added in 2.0.1"""
+        kwargs are passed to `ipyslides.utils.image`."""
         directory = os.path.join(self.widgets.assets_dir,'screenshots')
         
         if not os.path.isdir(directory):

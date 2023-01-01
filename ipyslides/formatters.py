@@ -161,9 +161,8 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
 
 def highlight(code, language='python', name = None, className = None, style='default', color = None, background = None, hover_color = 'var(--hover-bg)', lineno = True):
     """Highlight code with given language and style. style only works if className is given.
-    If className is given and matches any of pygments.styles.get_all_styles(), then style will be applied immediately.
-    color is used for text color as some themes dont provide text color.
-    New in version 1.4.3"""
+    If className is given and matches any of `pygments.styles.get_all_styles()`, then style will be applied immediately.
+    color is used for text color as some themes dont provide text color."""
     if style not in pygments.styles.get_all_styles():
         raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     if className in pygments.styles.get_all_styles():
@@ -258,7 +257,7 @@ class Serializer:
                 self._libs.remove(item)
     
     def unregisterall(self):
-        "Unregister all serializer handlers. New in 1.6.8"
+        "Unregister all serializer handlers."
         self._libs = []
     
     def __repr__(self):
@@ -335,8 +334,7 @@ def format_object(obj):
 
 
 def stringify(obj):
-    """Returns string of HTML for given object.
-    New in 1.4.5"""
+    "Returns string of HTML for given object."
     if isinstance(obj,str):
         raise ValueError('can not stringify string')
     elif isinstance(obj,(_HTML, _HTML_Widget)):

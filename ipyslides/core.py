@@ -18,7 +18,7 @@ from . import utils
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
 from ._base.base import BaseSlides
-from ._base.intro import how_to_slide, logo_svg, key_combs
+from ._base.intro import logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon
@@ -33,7 +33,7 @@ except:
     
 
 class _Citation:
-    "Add citation to the slide with a unique key and value. New in 1.7.0"
+    "Add citation to the slide with a unique key and value."
     def __init__(self, slide, key):
         self._slide = slide
         self._key = key
@@ -239,23 +239,25 @@ class Slides(BaseSlides):
         ## Extended Markdown
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
-        **Following syntax works only under currently buidling `slide` or `frame`:**
+        **Following syntax works only under currently building slide:**
         
         - alert`notes\`This is slide notes\``  to add notes to current slide
         - alert`cite\`key\`` to add citation to current slide
         - alert`citations\`citations title\``  to add citations at end if `citation_mode = 'global'`.
-        - alert`include\`markdown_file.md\`` to include a file in markdown format. (2.0.6+)
-        - alert`section\`key\`` to add a section that will appear in the table of contents. (2.1.7+).
-        - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all. (2.1.7+).
-        - You can escape backtick with backslash: alert`\\\` → \``. (2.1.7+).
-        - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax. (2.1.7+).
+        - alert`section\`key\`` to add a section that will appear in the table of contents.
+        - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
-        - Double dashes `--` is used to split markdown text in frames. (1.8.9+)
+        - Double dashes `--` is used to split markdown text in frames.
         
-        **Other syntax can be used everywhere like under `%%slides int -m`, in `write` / `iwrite` / `format_html` / `parse_xmd` / `from_markdown` functions:**\n
+        **Other syntax can be used everywhere in markdown:**
+        
+        - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
+        - You can escape backtick with backslash: alert`\\\` → \``.
+        - alert`include\`markdown_file.md\`` to include a file in markdown format.
         - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
         - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
         - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
+        
         ```markdown     
          ```multicol widthA widthB
          Column A
@@ -306,16 +308,8 @@ class Slides(BaseSlides):
     def _on_load_and_refresh(self):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
-            with suppress(BaseException), self.skip_cell_events(): # Otherwise it will trigger cell events during __init__
-                with _build_slide(self, '0') as s:
-                    self.parse_xmd('\n'.join(how_to_slide), display_inline=True)
-                with _build_slide(self, '1') as s:
-                    self.parse_xmd('# Keys Combinations' + key_combs, display_inline=True)
-                with _build_slide(self, '2') as s:
-                    self.xmd_syntax.display()
+            self._add_clean_title()
             
-            self._slideindex = 0 # Go to title slide
-        
         with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
 
@@ -408,23 +402,30 @@ class Slides(BaseSlides):
 
             raise ValueError("Citations are not writable in 'inline' or 'footnote' mode. They appear on slide automatically.")
         
-        with suppress(BaseException): 
-            self.running._cited =  True # If not ruuning, it will raise error later, don't need to to throws this kind of error
-            
-        return self.dynamic_content(_citations_handler)
+        return self._dynamic_private(_citations_handler, tag = '_cited')
+    
+    def _add_clean_title(self):
+        with suppress(BaseException), self.skip_cell_events(): # Otherwise it will trigger cell events during __init__
+            with _build_slide(self, '0') as s:
+                self.parse_xmd(f'''
+                    # Title Page 
+                    ::: align-center
+                        color[teal]`Author: Abdul Saboor`
+                        
+                        👈🏻 **Read more instructions in left panel**''',
+                display_inline = True)  
+                self.details(self.parse_xmd(key_combs, display_inline = False), 'Keyboard Shortcuts').display()
+                
+        self.refresh() # cleans up initialization setup       
     
     def clear(self):
         "Clear all slides. This will also clear resources including citations, sections."
         self._slides_dict = {} # Clear slides
         self.set_citations({}) # Clears citations from disk too
-        with self.title():
-            with suppress(BaseException): # Create a clean title page with no previous toasts/css/animations etc.
-                self.parse_xmd('# Title Page', display_inline=True)
-            self._next_number = 0 # Reset slide number to 0, because user will overwrite title page.
+        self._next_number = 0 # Reset slide number to 0, because user will overwrite title page.
+        self._add_clean_title() # Add clean title page without messing with resources.
         
-        self.refresh() # Clear interface again may be not needed, but it is not that costly.
         
-    
     def cite(self, key):
         """Add citation in presentation, key should be a unique string.
         Citations corresponding to keys used can be created by ` Slides.set_citations ` method.
@@ -542,11 +543,8 @@ class Slides(BaseSlides):
                     sections.append(self.html('div', slide._section, style='',className='toc-item next'))
             
             return func(tuple(sections))
-        
-        with suppress(BaseException):
-            self.running._toced = True  # we dont nedd to throw error of this kind if not running, that will be thrown below
-            
-        return self.dynamic_content(_toc_handler)
+           
+        return self._dynamic_private(_toc_handler, tag = '_toced')
         
     
     def _goto_button(self, slide_number, text,text_before = '', extra_func=None, **kwargs):
@@ -675,7 +673,7 @@ class Slides(BaseSlides):
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
             # Button for dynamic refresh after switching slide
-            getattr(self.widgets.footerbox, 'add_class' if hasattr(self.current, '_dynamic') else 'remove_class')('InView-Dynamic')
+            getattr(self._box, 'add_class' if hasattr(self.current, '_dynamic') else 'remove_class')('InView-Dynamic')
     
             
     def refresh(self): 
@@ -717,18 +715,15 @@ class Slides(BaseSlides):
             ---------------- Cell ----------------
             %%slide 2 -m
             Everything here and below is treated as markdown, not python code.
-            **New in 1.7.2**    
-            Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-        
-        (1.8.9+) If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
-        Markdown before the first three underscores is written on all frames. This is equivalent to `@Slides.frames` decorator.
+            ::: note-info  
+                Find special syntax to be used in markdown by `Slides.xmd_syntax`.
+        ::: note
+            If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
+            Markdown before the first (--) separator is written on all frames.
         """
         line = line.strip().split() #VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
             raise ValueError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
-        
-        # NOTE: DO NOT bypass creating new slides with same old markdown, some varibale
-        #      may be changed in any of the cells.
         
         slide_number_str = line[0] # First argument is slide number
         
@@ -792,6 +787,7 @@ class Slides(BaseSlides):
         ::: note-tip
             You can use it to dynamically fetch a value from a database or API while presenting, without having to run the cell again.
         ::: note
+            - No return value is required. If any, should be like `display('some value')`, otherwise it will be ignored.
             - A slide with dynamic content enables a refresh button in bottom bar.
             - All slides with dynamic content are updated when refresh button in top bar is clicked.
             
@@ -804,10 +800,14 @@ class Slides(BaseSlides):
         # Updates on update_display or refresh button click
         ```
         """
+        return self._dynamic_private(func, tag = '_dynamic')
+    
+    def _dynamic_private(self, func, tag = None):
+        "Not for user use, internal function for other dynamic content decorators with their own tags."
         if not self.running:
             raise RuntimeError('Dynamic content can only be created under a slide constructor!')
-        self.running._dynamic = True # Set dynamic flag to update
-        return self.running._dynamic_private(func)
+        
+        return self.running._dynamic_private(func, tag = tag)
     
     def _update_dynamic_content(self, btn = None):
         self.widgets.buttons.refresh.icon = 'minus'
@@ -944,6 +944,9 @@ class Slides(BaseSlides):
                     frame._label = f'{nslide}.{jj}' # Label for frames
                     slides_iterable.append(frame)
         
+        if len(slides_iterable) <= 1: self._box.add_class('SingleSlide')
+        else: self._box.remove_class('SingleSlide')
+        
         return tuple(slides_iterable)
     
     def _update_toc(self):
@@ -987,7 +990,7 @@ class Slides(BaseSlides):
         return tuple([self._slides_dict[f'{slide_number}'] for slide_number in slide_numbers])
     
     def glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
-        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.1+)"
+        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional."
         return self.settings.set_glassmorphic(image_src, opacity = opacity, blur_radius = blur_radius)
     
     def AutoSlides(self):
@@ -1058,24 +1061,21 @@ class Slides:
     __doc__ = textwrap.dedent("""
     Interactive Slides in IPython Notebook. Only one instance can exist. 
     
-    All arguments are passed to corresponding methods in `slides.settings`, so you can use those methods to change settings as well.
+    All arguments are passed to corresponding methods in submodules, that you can tweak later as well.
     
-    To suppress unwanted print from other libraries/functions (2.1.0+), use:
+    To suppress unwanted print from other libraries/functions, use:
     ```python
     with slides.suppress_stdout():
         some_function_that_prints() # This will not be printed
         print('This will not be printed either')
         display('Something') # This will be printed
     ```
+    ::: note-tip
+        - Run `slides.demo()` to see a demo of some features.
+        - Run `slides.docs()` to see documentation.
+        - Instructions in left settings panel are always on your fingertips.
     
-    > `slides.demo` and `slides.docs` overwrite all previous slides.
-    
-    Aynthing with class name 'report-only' will not be displayed on slides, but appears in document when `slides.export.report` is called.
-    This is useful to fill-in content in document that is not required in slides.
-    
-    Starting with 1.8, you can provide extensions at initialization time as a list to arguments `extensions`. See [PyMdownx](https://facelessuser.github.io/pymdown-extensions/extensions/arithmatex/) for useful extensions. `'pymdownx.arithmatex'` is a recommended extension to load Maths faster.
-    
-    """) + how_to_slide[0]
+   """)
     def __new__(cls,
                 citation_mode   = 'global',
                 center          = True, 

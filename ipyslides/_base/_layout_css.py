@@ -11,6 +11,24 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
             'z-index': '10 !important',
+            '.Sfresh-Btn': {'display':'none',},
+            '^.SingleSlide .Controls': {'display':'none !important',},
+            '^.InView-Dynamic .Sfresh-Btn': {
+                'display':'flex',
+                'font-size': '14px !important', # it is bit larger than other buttons, so decrease font size
+                'position': 'absolute',
+                'bottom': '4px',
+                'left':'50%',
+                'transform': 'translateX(-50%)',
+                'z-index': '95', # above controls
+                'min-height': '24px',
+                'width': '24px !important', # Make it round
+                'min-width': '24px !important',
+                'border-radius': '50%',
+                'align-items': 'center',
+                'background': 'var(--secondary-bg) !important',
+                '^:hover': {'background': 'var(--hover-bg) !important',},
+                }, 
             '^.CaptureMode': {
                 '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
             },
@@ -30,6 +48,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'animation-duration': '2s',
                 'animation-iteration-count': 'infinite',
                 'animation-timing-function': 'ease-in-out',
+                'animation-delay': '20s',
             },
             '^.InView-Other .Arrows.Next-Btn': {
                 'animation-delay': '60s', # Beet at 60 seconds if left on slide
@@ -179,10 +198,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '.NavBox': {
                 'align-items': 'center',
                 'height':'max-content',
-                'justify-content': 'flex-start',
-                '^.InView-Dynamic .Refresh-Btn': {'display':'flex','font-size': '14px !important'}, # it is bit larger than other buttons, so decrease font size
+                'justify-content': 'flex-start', 
                 '.Toc-Btn': {'min-width':'40px',}, # Avoid overflow in small screens
-                '.Refresh-Btn': {'display':'none',}, 
             },
         },
         '.FloatControl': {
@@ -207,7 +224,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'position':'absolute',
             'right':'16px !important',
             'bottom':'0px !important',
-            'z-index':'95', # below matplotlib fullsreen 
+            'z-index':'94', # below matplotlib fullsreen 
             'padding':'0 !important',
             'justify-content':' flex-end !important',
             'align-items':'center !important',
@@ -311,7 +328,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'border': 'none !important',
                 'box-shadow': 'none !important',
                 'background': 'transparent !important',
-                'backdrop-filter': 'blur(20px)',
+                'backdrop-filter': 'blur(10px)',
                 '> i': { 'color': 'var(--accent-color) !important',},
                 '^:disabled,^[disabled]': {'display': 'none !important',},
             },
@@ -446,7 +463,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '.fa.fa-plus': Icon('expand', color=accent_color, size=_icons_size).css,
             '.fa.fa-minus': Icon('compress', color=accent_color, size=_icons_size).css,
         },
-        '.Refresh-Btn': {
+        '.Refresh-Btn, .Sfresh-Btn': {
             '.fa.fa-plus': Icon('refresh', color=accent_color, size=_icons_size).css,
             '.fa.fa-minus': Icon('loading', color=accent_color, size=_icons_size).css,
         },

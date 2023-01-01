@@ -1,6 +1,6 @@
 __all__ = ['bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format', 'run_doc',
-            'raw','enable_zoom','html','sig','doc','code','today','sub','sup','classproperty']
+            'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
 
@@ -129,7 +129,7 @@ def _filter_prints(outputs):
 
 @contextmanager
 def suppress_output(keep_stdout = False):
-    "Suppress output of a block of code. If `keep_stdout` is True, only display data is suppressed. (2.1.5+)"
+    "Suppress output of a block of code. If `keep_stdout` is True, only display data is suppressed."
     with capture_output() as captured:
         yield # Do not yield
     
@@ -144,7 +144,7 @@ def suppress_output(keep_stdout = False):
 
 @contextmanager
 def suppress_stdout():
-    "Suppress stdout in a block of code, especially unwanted print from functions in other modules. (2.1.0+)"
+    "Suppress stdout in a block of code, especially unwanted print from functions in other modules."
     with capture_output() as captured:
         yield # do not yield, we want to suppress under and outside slides
     
@@ -338,7 +338,7 @@ def html(tag, children = None,className = None,**node_attrs):
     return _HTML(f'{tag_in}{content}</{tag}>')
 
 def vspace(em = 1):
-    "Returns html node with given height in em\nNew in version 1.4.2"
+    "Returns html node with given height in `em`."
     return html('div',style=f'height:{em}em;')
  
 def textbox(text, **css_props):
@@ -379,8 +379,9 @@ def cols(*objs,width_percents=None, className=None):
 
 def block(*objs,className = 'block'):
     """Format a block like in LATEX beamer. *objs expect to be writable with `write` command.   
-    Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,a>`.
-    In 1.7.5+, you can create blocks just by CSS classes in markdown as {.block}, {.block-red}, {.block-green}, etc.
+    ::: block
+        - Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,a>`.
+        - You can create blocks just by CSS classes in markdown as {.block}, {.block-red}, {.block-green}, etc.
     """
     return _HTML(f"<div class='{className}'>{_fmt_write(objs)}</div>")
     
@@ -469,7 +470,7 @@ def run_doc(obj,prepend_str = None):
     parse_xmd(inspect.getdoc(obj).replace('```python', '```python run'), display_inline = True)
     
 def code(callable):
-    "Returns full code of a callable. Added in 1.7.9, you can just pass callable into `write` command or use `ipyslides.Slides().source.from_callable`."
+    "Returns full code of a callable, you can just pass callable into `write` command or use `ipyslides.Slides().source.from_callable`."
     try:
         return _HTML(_fix_repr(callable))
     except:
@@ -494,10 +495,3 @@ def bullets(iterable, ordered = False,marker = None, className = None):
         start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
         _bullets.append(f'{start}{_fmt_write(it)}</li>')
     return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],className = className) # Don't use style, it will remove effect of className
-
-class classproperty(object):
-    "Read-only property that returns a class attribute value."
-    def __init__(self, getter):
-        self.getter= getter
-    def __get__(self, instance, owner):
-        return self.getter(owner)

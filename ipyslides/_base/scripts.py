@@ -4,8 +4,10 @@ resize_js = "window.dispatchEvent(new Event('resize'));"
 multi_slides_alert = """
 let slides = document.getElementsByClassName('SlidesWrapper');
 if (slides.length > 1) {
-    alert('''You have slides open in other notebook(s) in currnet tab. 
-    Please close their view by using `.close_view()` method and re-run here to have smooth navigations via keyboard!''');
+    alert(`You may have slides open in other notebook(s) in currnet tab. In that case use .close_view() method on them 
+and re-run to have smooth navigations via keyboard!
+
+If this is not the case, then there could be left over disconnect slides from previous session. Then restart kernel with clear all outputs option.`);
 };
 """
 

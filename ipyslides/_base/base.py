@@ -168,22 +168,17 @@ class BaseSlides:
         ```
         This will create two slides along with title page if start = 0. Second slide will have two frames.
         
-        Markdown content of each slide is stored as .markdown attribute to slide. You can append content to it like this:
+        Markdown content of each slide is stored as .markdown attribute to slide. You can append content to it later like this:
         ```python
         with slides.slide(2):
             slides.parse_xmd(slides[2].markdown) # Instead of write, parse_xmd take cares of code blocks
             plot_something()
-            write_something()
         ```
-        Starting from version 1.6.2, only those slides will be updated whose content is changed from last run of this function. This increases speed.
         
-        **New in 1.7.2**:     
-        - You can add slides from text blocks/file with a start number. 
-        - It will create slides at numbers `start, start + 1, .... start + N+1` if there are `N` `---` (three dashes) separators in the text.
-        - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
+        ::: note-tip
+            Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         
-        **Returns**:       
-        A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
+        **Returns**: A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
         """
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
@@ -265,7 +260,7 @@ class BaseSlides:
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center('''
                 alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
-                today``
+                center`today```
                 
                 ::: text-box
                     sup`1`My University is somewhere in the middle of nowhere
@@ -283,10 +278,12 @@ class BaseSlides:
             self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with auto.slide():
+            self.xmd_syntax.display() # This will display information about Markdown extended syntax
+            
+        with auto.slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.note .info}')
-            self.xmd_syntax.display() # This will display information about Markdown extended syntax
-            self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse_xmd,'Slides'),self.doc(self.cite,'Slides')])
+            self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse_xmd,'Slides'),self.doc(self.cite,'Slides'),self.doc(self.clipboard_image,'Slides')])
         
         with auto.slide():
             self.write('## Adding Speaker Notes')

@@ -58,8 +58,6 @@ class _HhtmlExporter:
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'report-only' class to generate additional content that only appear in report.
         - Use 'slides-only' class to generate content that only appear in slides.
-        
-        New in 1.5.2
         """
         if self.main.citations and (self.main._citation_mode != 'global'):
             raise ValueError(f'''Citations in {self.main._citation_mode!r} mode are not supported in report. 
@@ -78,8 +76,6 @@ class _HhtmlExporter:
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
         - You can take screenshot (using system's tool) of a widget and add it back to slide using `Slides.image` to keep PNG view of a widget. 
         - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
-        
-        New in 1.5.2
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
         content = self._htmlize(allow_non_html_repr = False, as_slides = True, slide_number = slide_number)

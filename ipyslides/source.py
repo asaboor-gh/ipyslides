@@ -115,7 +115,7 @@ class Source:
         """Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language.  
         `kwargs` are passed to `ipyslides.formatter.highlight`.     
         
-        (1.6.8+) tries to auto detect lanaguage from filename extension, if `language` is not given.
+        It tries to auto detect lanaguage from filename extension, if `language` is not given.
         """
         _title = name or filename
         _lang = language or os.path.splitext(filename)[-1].replace('.','')

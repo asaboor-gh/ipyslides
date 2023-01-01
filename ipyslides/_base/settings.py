@@ -58,7 +58,7 @@ class LayoutSettings:
         self.set_layout(center = True) # Trigger this as well
         self._update_size(change = None) # Trigger this as well
         
-    def _on_load_and_refresh(self): # on_displayed is not working in in 8.0.0+
+    def _on_load_and_refresh(self): # on_displayed is not working in ipywidgets 8.0.0+
         self.__add_js()
 
         with capture_output() as cap:
@@ -79,7 +79,7 @@ class LayoutSettings:
         return f'{int(100*650/span)}px'
     
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
-        "Set animation for slides and frames. (2.0.8+)"
+        "Set animation for slides and frames."
         if len(self._slides[:]) >= 1:
             self._slides[0]._set_overall_animation(main = main,frame = frame)
         else:
@@ -87,7 +87,7 @@ class LayoutSettings:
     
     @_sub_doc(colors = styles.theme_colors['Light'])
     def set_theme_colors(self, colors = {}):
-        """Set theme colors. (2.2.0+), Only take effect when using custom theme.
+        """Set theme colors. Only take effect when using custom theme.
         colors must be a dictionary with exactly like this:
         ```python
         Slides.settings.set_theme_colors({colors})
@@ -101,7 +101,7 @@ class LayoutSettings:
     @_sub_doc(css_docstring = _css_docstring)    
     def set_css(self,css_dict={}):
         """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well. 
-        Individual slide's CSS set by `slides[index].set_css` will override this. (2.1.8+)      
+        Individual slide's CSS set by `slides[index].set_css` will override this.    
         {css_docstring}        
         """
         if len(self._slides[:]) >= 1:
@@ -111,7 +111,7 @@ class LayoutSettings:
         
         
     def set_glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
-        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional. (2.0.8+)"
+        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional."
         if not image_src:
             self.widgets.htmls.glass.value = '' # Hide glassmorphic
             return None

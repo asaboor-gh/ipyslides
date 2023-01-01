@@ -450,6 +450,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
         '.note, .note-info, .note-warning, .note-success, .note-error, .note-tip' : {
             'padding-left': '0.5em',
             'box-sizing': 'border-box',
+            'margin-top': '0.5em',
             'margin-bottom': '0.7em !important',
             'background': 'var(--alternate-bg)', # Fallback  for Inherit and Custom theme
             '+background': f'rgba({light-16},{light-10},{light-10},0.75)',
@@ -461,7 +462,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'color': 'var(--accent-color)',
                 'border-bottom': '1px solid var(--hover-bg)',
                 'padding-left': '0.2em',
-                'margin-left': '-0.5em',
+                'margin-left': '-0.5em', # cancel padding effect of container
                 'box-sizing': 'border-box',
             },
             '^-info::before': {'content': '"ℹ️ Info" !important'},
@@ -515,8 +516,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
         },
         'details': {
             'padding': '0.2em',
-            'background': 'var(--secondary-bg)',
-            '^, > summary, > div': {'padding': '0.2em'},
+            '^, > summary': {'padding': '0.2em'},
             '> summary': {
                 'padding-left': '0.2em !important',
                 'color': 'var(--heading-color) !important',
@@ -525,11 +525,25 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                     'color': 'var(--accent-color) !important',
                     },
                 },
-            '> div': {'background': 'var(--primary-bg)'},
-            '^[open] > summary::marker': {
-                'content':'"≙  "',
-                'color': 'var(--accent-color) !important',
+            '^[open]': {
+                'border-left': '2px solid var(--accent-color)',
+                'max-height': '400px !important',
+                'overflow': 'auto',
+                'padding-bottom': '1em', # for close button
+                '> summary::marker': {
+                    'content':'"≙  "',
+                    'color': 'var(--accent-color) !important',
                 },
+                '> summary::after': {
+                    'display':'block',
+                    'content': '"≙"',
+                    'color': 'var(--accent-color) !important',
+                    'position': 'absolute',
+                    'left': 0,
+                    'bottom': 0,
+                    'padding-left': '0.4em',
+                },
+            },
         },
         '.pygal-chart':{
             'min-width':'300px',

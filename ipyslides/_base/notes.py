@@ -15,9 +15,8 @@ class Notes:
         
     def insert(self, content):
         """Add notes to current slide. Content could be any object except javascript and interactive widgets.
-        
-        **New in 1.7.2**      
-        In markdown, you can use alert`notes\`notes content\``."""
+        ::: note-tip     
+            In markdown, you can use alert`notes\`notes content\``."""
         if self.main.running is None:
             raise RuntimeError('Notes can only be added inside a slide constructor.')
         
