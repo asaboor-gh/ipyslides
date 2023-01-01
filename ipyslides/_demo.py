@@ -231,7 +231,7 @@ from IPython.display import YouTubeVideo
 with auto.slide() as ys: # We will use this in next %%magic
     write(f"### Watching Youtube Video?")
     
-    write(YouTubeVideo('ytfWIYbJteE',width='100%',height='266px'))
+    write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
     @slides.notify_later()
     def push():
         t = time.localtime()
