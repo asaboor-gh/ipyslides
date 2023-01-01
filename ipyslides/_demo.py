@@ -266,7 +266,7 @@ def demo(slides_instance):
     with auto.slide() as previous_slide: # We will use this in next %%magic
         with slides.source.context(auto_display = False, style='vs',className="Youtube") as s:
             write(f"### Watching Youtube Video?")
-            write(YouTubeVideo('Z3iR551KgpI',width='100%',height='266px'))
+            write(YouTubeVideo('ytfWIYbJteE',width='100%',height='266px'))
             @slides.notify_later()
             def push():
                 t = time.localtime()
