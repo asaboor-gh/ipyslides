@@ -58,7 +58,7 @@ class _Citation:
                     <span style="color:var(--accent-color);">{self._id}. </span>
                 </a>{_value}</div>'''
         else:
-            return f'<div class = "warning note">Set value for cited key {self._key!r} and run again to clear warning!</div>'
+            return f'<div class = "warning">Set value for cited key {self._key!r} and run again to clear warning!</div>'
     
     @property
     def inline_value(self):
@@ -144,7 +144,8 @@ class Slides(BaseSlides):
         self.progress_slider = self.widgets.sliders.progress
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
-        self.widgets.buttons.refresh.on_click(self._update_display_for_dynamic_content)
+        self.widgets.buttons.refresh.on_click(self._update_dynamic_content)
+        self.widgets.buttons.sfresh.on_click(self._update_slide_display)
         
         # All Box of Slides
         self._box =  self.widgets.mainbox 
@@ -217,7 +218,7 @@ class Slides(BaseSlides):
             btn = ipw.Button(description='Switch to Slides Application', button_style='danger').add_class('Switch-Btn')
             
             def update_display(b):
-                self._update_display_for_dynamic_content() # important
+                self._update_dynamic_content() # important
                 self._update_toc() # Should be here and in ipython display too, otherwise toc is not updated
                 self._display_box.children = [ipw.VBox([self._box, self._notes_view])]
                 self._display_box.remove_class('CellBoxWrapper')
@@ -595,7 +596,7 @@ class Slides(BaseSlides):
         
         self._remove_post_run_callback() # No need to show cell when this is shown
         self._update_toc() # Update toc before displaying app to include all sections
-        self._update_display_for_dynamic_content() # Update dynamic content before displaying app
+        self._update_dynamic_content() # Update dynamic content before displaying app
         self.close_view() # Close previous views
         self._display_box = ipw.VBox(children=[self._box,self._notes_view]) # Initialize display box again
         return display(self._display_box) # Display slides
@@ -673,6 +674,8 @@ class Slides(BaseSlides):
             self.settings._update_footer(number_str = number) # Update footer privately
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
+            # Button for dynamic refresh after switching slide
+            getattr(self.widgets.footerbox, 'add_class' if hasattr(self.current, '_dynamic') else 'remove_class')('InView-Dynamic')
     
             
     def refresh(self): 
@@ -783,15 +786,30 @@ class Slides(BaseSlides):
         
         
     def dynamic_content(self, func):
-        """Decorator for inserting dynamic content on slide, define a function with no arguments.
+        """
+        Decorator for inserting dynamic content on slide, define a function with no arguments.
         Content updates when `slide.update_display` is called or when `Slides.refresh` is called.
+        ::: note-tip
+            You can use it to dynamically fetch a value from a database or API while presenting, without having to run the cell again.
+        ::: note
+            - A slide with dynamic content enables a refresh button in bottom bar.
+            - All slides with dynamic content are updated when refresh button in top bar is clicked.
+            
+        ```python
+        import time
+        slides = get_slides_instance() # Get slides instance, this is to make doctring runnable
+        @slides.dynamic_content 
+        def update_time():
+            print('Local Time: {3}:{4}:{5}'.format(*time.localtime())) # Print time in HH:MM:SS format
+        # Updates on update_display or refresh button click
+        ```
         """
         if not self.running:
             raise RuntimeError('Dynamic content can only be created under a slide constructor!')
         self.running._dynamic = True # Set dynamic flag to update
         return self.running._dynamic_private(func)
     
-    def _update_display_for_dynamic_content(self, btn = None):
+    def _update_dynamic_content(self, btn = None):
         self.widgets.buttons.refresh.icon = 'minus'
         try:
             for slide in self[:]:
@@ -799,6 +817,13 @@ class Slides(BaseSlides):
                     slide.update_display(go_there = False)
         finally:        
             self.widgets.buttons.refresh.icon = 'plus'
+    
+    def _update_slide_display(self, btn = None):
+        self.widgets.buttons.sfresh.icon = 'minus'
+        try:
+            self.current.update_display()
+        finally:        
+            self.widgets.buttons.sfresh.icon = 'plus'
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
@@ -969,7 +994,8 @@ class Slides(BaseSlides):
         """Returns a named tuple `AutoSlides(title,slide,frames, from_markdown)` if run from inside a
         python script. Functions inside this tuple replace main functions while removing the 'slide_number' paramater.
         Useful to handle auto numbering of slides inside a sequntially running script. Call at top of script before adding slides.
-        > Returns None in Jupyter's context and it is not useful there due to lack of sequence.
+        ::: note-warning
+            Returns None in Jupyter's context and it is not useful there due to lack of sequence.
         
         ```python
         import ipyslides as isd

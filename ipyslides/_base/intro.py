@@ -12,7 +12,7 @@ otherwise select `Custom Slide Size` and change size there according to found as
 - Now click `Create` and you will see all pictures as slides.
 
 Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
-{.note .warning}
+{.note-warning}
 '''
 
 how_to_slide = ('''# Creating Slides
@@ -181,7 +181,7 @@ but captures of multiple times in a slides are first to last in order in time.
 - Slides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 
 Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-{{.note .warning}}
+{{.note-warning}}
 '''
 
 instructions = f'''{more_instructions}
@@ -207,7 +207,7 @@ pio.templates.default = "plotly_white"
 #pio.templates #gives list of styles
 ```
 Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick rendering.
-{{.note .info}}
+{{.note-info}}
 
 **Altair**{{.success}}
 ```python

@@ -66,12 +66,12 @@ class BaseSlides:
          'align-left'       | Text------------
          'align-right'      | ------------Text
          'rtl'              | ------ اردو عربی 
-         'info'             | Blue Text
-         'tip'              | Blue Text 
-         'warning'          | Orange Text
-         'success'          | Green Text
-         'error'            | Red Text
-         'note'             | Text with icon, use note and other classes for other icons.
+         'info'             | Blue text. Icon ℹ️  for note-info class.
+         'tip'              | Blue Text. Icon💡 for note-tip class.
+         'warning'          | Orange Text. Icon ⚠️ for note-warning class.
+         'success'          | Green text. Icon ✅ for note-success class.
+         'error'            | Red Text. Icon⚡ for note-error class.
+         'note'             | 📝 Text with note icon.
          'slides-only'      | Text will not appear in exported html report.
          'report-only'      | Text will not appear on slides. Use to fill content in report.
          'export-only'      | Hidden on main slides, but will appear in exported slides/report.
@@ -291,7 +291,7 @@ class BaseSlides:
         with auto.slide():
             self.write('## Adding Speaker Notes')
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
-                       'This is experimental feature, and may not work as expected.\n{.block-red .error}'])
+                       'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
             self.goto_button(10,'Jump to Slide 10', 'This is kind a alert`alt text` because button will alert`NOT` show in screenshot of slides')
                    
@@ -314,6 +314,12 @@ class BaseSlides:
             self.doc(self.clipboard_image,'Slides').display()
             self.doc(self, 'Slides', members = members, itself = False).display()
             
+        with auto.slide() as s:
+            self.write('## Dynamic Content')
+            self.run_doc(self.dynamic_content,'Slides')
+            s.get_source().display()
+            
+    
         with auto.slide():
             self.write('## Content Styling')
             with self.source.context(auto_display = False) as c:

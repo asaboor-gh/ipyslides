@@ -180,7 +180,9 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'align-items': 'center',
                 'height':'max-content',
                 'justify-content': 'flex-start',
+                '^.InView-Dynamic .Refresh-Btn': {'display':'flex','font-size': '14px !important'}, # it is bit larger than other buttons, so decrease font size
                 '.Toc-Btn': {'min-width':'40px',}, # Avoid overflow in small screens
+                '.Refresh-Btn': {'display':'none',}, 
             },
         },
         '.FloatControl': {

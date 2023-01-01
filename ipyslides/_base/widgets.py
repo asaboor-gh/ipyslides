@@ -25,7 +25,8 @@ class _Buttons:
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
-    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh Dynmaic Content').add_class('Menu-Item').add_class('Refresh-Btn')
+    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh dynmaic content across all slides').add_class('Menu-Item').add_class('Refresh-Btn')
+    sfresh  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh dynmaic content on current slide').add_class('Menu-Item').add_class('Refresh-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
     end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
@@ -243,6 +244,7 @@ class Widgets:
         
         self.footerbox = HBox([
             self.buttons.toc,
+            self.buttons.sfresh,
             HBox([self.htmls.footer]), # should be in Box to avoid overflow
             self.buttons.capture,
         ],layout=Layout(height='28px')).add_class('NavBox')

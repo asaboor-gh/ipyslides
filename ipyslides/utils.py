@@ -1,5 +1,5 @@
 __all__ = ['bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
-            'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format',
+            'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format', 'run_doc',
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup','classproperty']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
@@ -462,6 +462,12 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     
     return _HTML(_full_doc)
 
+def run_doc(obj,prepend_str = None):
+    "Execute python code block inside docstring of an object. Block should start with \`\`\`python."
+    sig(obj,prepend_str = prepend_str).display()
+    from .extended_md import parse_xmd # Import here to avoid circular import
+    parse_xmd(inspect.getdoc(obj).replace('```python', '```python run'), display_inline = True)
+    
 def code(callable):
     "Returns full code of a callable. Added in 1.7.9, you can just pass callable into `write` command or use `ipyslides.Slides().source.from_callable`."
     try:

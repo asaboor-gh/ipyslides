@@ -247,12 +247,21 @@ with auto.slide() as s:
         |r1|r2|r3|
         '''))
     s.get_source().focus_lines([3,4,5,6]).display()
+    
+with auto.slide() as s:
+    slides.write('## Displaying Time that updates on demand\n#### Click  refresh button below to update time')
+    
+    @slides.dynamic_content # slides is an instance of Slides class
+    def update_time():
+        print('Local Time: {3}:{4}:{5}'.format(*time.localtime()))
+    
+    s.get_source().display()
 
 auto.from_markdown('''
 ## $\LaTeX$ in Slides
 Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
 $\LaTeX$ needs time to load, so keeping it in view until it loads would help.
-{.note .warning}
+{.note-warning}
 \$\$\int_0^1\\frac{1}{1-x^2}dx\$\$
 $$\int_0^1\\frac{1}{1-x^2}dx$$
 ''', trusted=True)

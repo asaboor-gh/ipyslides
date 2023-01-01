@@ -440,32 +440,35 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             'padding':'0 12px !important', # to avoid cuts in rtl 
         },
         '.info, .warning, .success, .error, .note, .tip': {
-            'padding':'0.2em !important',
             '^ > *:last-child': {'margin-bottom':'0.1em !important'},
+            '^.admonition > .admonition-title': {'display':'none !important'}, # Remove admonition title if get overlapped
         },
         '.warning, .warning *:not(span)': {'color':'#FFAC1C !important',},
         '.success, .success *:not(span)': {'color':'green !important',},
         '.error, .error *:not(span)': {'color':'red !important',},
         '.info, .tip, .info *:not(span), .tip *:not(span)' : {'color':'skyblue !important',},
-        '.note' : {
-            'border-radius': '0.2em',
+        '.note, .note-info, .note-warning, .note-success, .note-error, .note-tip' : {
+            'padding-left': '0.5em',
+            'box-sizing': 'border-box',
             'margin-bottom': '0.7em !important',
-            'background': 'var(--secondary-bg)', # Fallback  for Inherit and Custom theme
+            'background': 'var(--alternate-bg)', # Fallback  for Inherit and Custom theme
             '+background': f'rgba({light-16},{light-10},{light-10},0.75)',
-            '^.admonition > .admonition-title': {'display':'none !important'}, # Remove Note title from markdown-customblocks
+            '^.admonition > .admonition-title': {'display':'none !important'}, # Remove admonition title
             '^::before': {
                 'content': '"📝 Note"',
                 'display':'block',
-                'background': 'var(--primary-bg)',
+                'background': 'var(--secondary-bg)',
                 'color': 'var(--accent-color)',
+                'border-bottom': '1px solid var(--hover-bg)',
                 'padding-left': '0.2em',
-                'border-radius': '0.2em 0.2em 0 0',
+                'margin-left': '-0.5em',
+                'box-sizing': 'border-box',
             },
-            '^.info::before': {'content': '"ℹ️ Info" !important'},
-            '^.warning::before': {'content': '"⚠️ Warning" !important'},
-            '^.success::before': {'content': '"✅ Important" !important'},
-            '^.error::before': {'content': '"⚡ Danger" !important'},
-            '^.tip::before': {'content': '"💡 Tip" !important'},
+            '^-info::before': {'content': '"ℹ️ Info" !important'},
+            '^-warning::before': {'content': '"⚠️ Alert" !important'},
+            '^-success::before': {'content': '"✅ Important" !important'},
+            '^-error::before': {'content': '"⚡ Danger" !important'},
+            '^-tip::before': {'content': '"💡 Tip" !important'},
         },
         '.block' : {
             'border-top': '3px solid var(--accent-color)',
