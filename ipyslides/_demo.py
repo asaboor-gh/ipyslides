@@ -186,12 +186,12 @@ def func(obj,idx):
         ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {idx+1}')
         ax.set_axis_off()
         slides.notes.insert(f'## This is under @frames decorator!')
-        slides.notify_later()(lambda: f'This is under @frames decorator!')
+        
     slides.write([f'### This is Slide {slides.running.number}.{idx}\n and we are animating matplotlib',
                   s.show_lines([idx])
                   ],ax,width_percents=[40,60])
     if idx == 0: #Only show source code of first frame
-        s.show_lines([5,6]).display()
+        s.show_lines([5]).display()
     slides.write(slides.cite('This'))
     
 auto.from_markdown('section`Controlling Content on Frames` toc`### Contents`')
@@ -232,10 +232,11 @@ with auto.slide() as ys: # We will use this in next %%magic
     write(f"### Watching Youtube Video?")
     
     write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
-    @slides.notify_later()
+    @slides.on_load
     def push():
         t = time.localtime()
-        return f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}'
+        slides.notify(f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}')
+        
     ys.get_source().display() # s = source.context(style='vs', className="Youtube")
     
 
@@ -252,7 +253,7 @@ with auto.slide() as s:
 with auto.slide() as s:
     slides.write('## Displaying Time that updates on demand\n#### Click  refresh button below to update time')
     
-    @slides.dynamic_content # slides is an instance of Slides class
+    @slides.on_refresh # This will be called when refresh button is clicked
     def update_time():
         print('Local Time: {3}:{4}:{5}'.format(*time.localtime()))
     

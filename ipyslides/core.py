@@ -665,14 +665,14 @@ class Slides(BaseSlides):
         
         if self._iterable and change:
             self.notes._display(self.current.notes) # Display notes first
-            self.widgets.htmls.toast.value = '' # clear previous content of notification 
-            self._display_toast() # or self.toasts._display_toast . Display in start is fine
+            self.widgets.htmls.toast.value = '' # clear notification content if any defined by on_load
         
             number = f'{self.current.label} / {self._nslides}' if self.current.label != '0' else ''
             self.settings._update_footer(number_str = number) # Update footer privately
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
-            # Button for dynamic refresh after switching slide
+            # below two lines after switching
+            getattr(self.current, '_on_load', lambda: None)() # Call on_load function if exists
             getattr(self._box, 'add_class' if hasattr(self.current, '_dynamic') else 'remove_class')('InView-Dynamic')
     
             
@@ -781,39 +781,13 @@ class Slides(BaseSlides):
         
         
     def dynamic_content(self, func):
-        """
-        Decorator for inserting dynamic content on slide, define a function with no arguments.
-        Content updates when `slide.update_display` is called or when `Slides.refresh` is called.
-        ::: note-tip
-            You can use it to dynamically fetch a value from a database or API while presenting, without having to run the cell again.
-        ::: note
-            - No return value is required. If any, should be like `display('some value')`, otherwise it will be ignored.
-            - A slide with dynamic content enables a refresh button in bottom bar.
-            - All slides with dynamic content are updated when refresh button in top bar is clicked.
-            
-        ```python
-        import time
-        slides = get_slides_instance() # Get slides instance, this is to make doctring runnable
-        @slides.dynamic_content 
-        def update_time():
-            print('Local Time: {3}:{4}:{5}'.format(*time.localtime())) # Print time in HH:MM:SS format
-        # Updates on update_display or refresh button click
-        ```
-        """
-        return self._dynamic_private(func, tag = '_dynamic')
-    
-    def _dynamic_private(self, func, tag = None):
-        "Not for user use, internal function for other dynamic content decorators with their own tags."
-        if not self.running:
-            raise RuntimeError('Dynamic content can only be created under a slide constructor!')
-        
-        return self.running._dynamic_private(func, tag = tag)
+        raise DeprecationWarning('DEPRECATED: Use `.on_refresh` decorator instead!')
     
     def _update_dynamic_content(self, btn = None):
         self.widgets.buttons.refresh.icon = 'minus'
         try:
             for slide in self[:]:
-                if getattr(slide, '_dynamic', False): # Handle dynamic content if any, including citations and sections
+                if any([getattr(slide, attr, False) for attr in ('_dynamic', '_toced', '_cited')]):
                     slide.update_display(go_there = False)
         finally:        
             self.widgets.buttons.refresh.icon = 'plus'
@@ -907,15 +881,11 @@ class Slides(BaseSlides):
             # Update All displays
             for s in this_slide._frames:
                 s.update_display()
-                # Remove duplicate sections/toasts/notes if any
+                # Remove duplicate sections/notes if any
                 if s._section == this_slide._section:
                     s._section = None
                 if s._notes == this_slide._notes:
                     s._notes = ''
-                # Toast has new function each time, needs more than just equal check
-                if s._toast and this_slide._toast: 
-                    if s._toast['func']() == this_slide._toast['func']():
-                        s._toast = None
             
         return _frames 
 

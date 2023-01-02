@@ -96,7 +96,6 @@ class Slide:
         self._notes = '' # Should be update by Notes and Slides calss
         self._animation = None
         self._source = {'text': '', 'language': ''} # Should be update by Slides
-        self._toast = None # Update from BaseSlides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
@@ -116,6 +115,14 @@ class Slide:
             
         return display(html('pre','This gets updated on refresh/update_display'), metadata = {'LiveRichOutput': lro})
         
+    def _on_load_private(self, func):
+        try: # check if code is correct
+            with capture_output():
+                func()
+        except Exception as e:
+            raise Exception(f'{e}')
+        self._on_load = func # This will be called in main app
+        
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
     
@@ -125,11 +132,12 @@ class Slide:
         self._app._running_slide = self
         if assign:
             self._app._next_number = int(self._number) + 1
-            self._toast = None # Reset toast
             self._notes = '' # Reset notes
             self._citations = {} # Reset citations
             self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
             self._section = None # Reset sec_key
+            if hasattr(self,'_on_load'):
+                del self._on_load # Remove on_load function
         
         try:
             self._app._remove_post_run_callback() # Remove before capturing
@@ -241,10 +249,6 @@ class Slide:
     @property
     def notes(self):
         return self._notes
-
-    @property
-    def toast(self):
-        return self._toast
     
     @property
     def label(self):
@@ -412,7 +416,7 @@ def _build_slide(app, slide_number_str, is_frameless = True):
     
     app._slidelabel = _slide.label # Go there to see effects
     _slide.update_display() # Update Slide, it will not come to this point if has same code
-    
+
     if old_slides != list(app._slides_dict.values()): # If there is a change in slides
         _slide._rebuild_all() # Rebuild all slides
         del old_slides # Delete old slides
