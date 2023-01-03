@@ -40,7 +40,7 @@ Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-
 ```python
 {
     '.A': { # .A is repeated nowhere! But in CSS it is a lot
-        'z-index': '50',
+        'z-index': '2',
         '.B': {
             'font-size': '24px',
             '+font-size': '2em', # Overwrites previous in CSS, note + in start, add many more + for more overwrites
@@ -73,7 +73,7 @@ Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-
 ```css
 <style>
 .SlideArea .A {
-    z-index : 50;
+    z-index : 2;
 }
 .SlideArea .A .B {
     font-size : 24px;

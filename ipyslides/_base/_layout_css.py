@@ -10,7 +10,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
     return _build_css((),{
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
-            'z-index': '10 !important',
+            'z-index': '1 !important',
             '.Sfresh-Btn': {'display':'none',},
             '^.SingleSlide .Controls': {'display':'none !important',},
             '^.InView-Dynamic .Sfresh-Btn': {
@@ -20,7 +20,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'bottom': '4px',
                 'left':'50%',
                 'transform': 'translateX(-50%)',
-                'z-index': '95', # above controls
+                'z-index': '5', # above controls
                 'min-height': '24px',
                 'width': '24px !important', # Make it round
                 'min-width': '24px !important',
@@ -53,6 +53,15 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '^.InView-Other .Arrows.Next-Btn': {
                 'animation-delay': '60s', # Beet at 60 seconds if left on slide
                 'animation-iteration-count': '10', # 10 times to catch attention of speaker
+            },
+            '.Loading': {
+                'position':'absolute',
+                'left':'50%',
+                'top':'50%',
+                'transform':'translate(-50%,-50%)',
+                'z-index':'11', # Above all
+                'backdrop-filter': 'blur(2px)',
+                'border-radius':'50%',
             },
             '.SlideArea': {
                 'align-items': 'center',
@@ -108,7 +117,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'border': 'none',
                 'padding': '8px !important',
                 'width': '60% !important',
-                'z-index': '102',
+                'z-index': '10',
                 'top': '0px !important',
                 'left': '0px !important',
                 'height': '100% !important',
@@ -180,7 +189,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'width':'12px',
             'height':'12px',
             'left':'-50px', # Hides when not required , otherwise handled by javascript*/
-            'z-index':'101', # below side panel but above zoomed image */
+            'z-index':'9', # below side panel but above zoomed image */
             'border-radius':'50%',
             'border':' 2px solid white',
             'background':' var(--pointer-color)',
@@ -208,7 +217,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'top': '0',
             'width': '32px',
             'height': '32px',
-            'z-index': '51',
+            'z-index': '3',
             'background': 'var(--primary-bg)',
             'opacity': '0',
             'overflow': 'hidden',
@@ -224,7 +233,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'position':'absolute',
             'right':'16px !important',
             'bottom':'0px !important',
-            'z-index':'94', # below matplotlib fullsreen 
+            'z-index':'4', # below matplotlib fullsreen 
             'padding':'0 !important',
             'justify-content':' flex-end !important',
             'align-items':'center !important',
@@ -259,6 +268,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 f'@media screen and (max-width: {breakpoint})': {'width': '40%', 'opacity': 0,},
             },
         },
+        
         '.TOC': { # Table of contents panel
             'backdrop-filter':' blur(200px)',
             'margin':' 4px 36px', 
@@ -267,7 +277,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'min-width':' 60% !important',
             'height':' calc(100% - 8px) !important',
             'box-sizing':'border-box',
-            'z-index':' 100',
+            'z-index':' 8',
             'border-radius':' 4px',
             'border':' 1px solid var(--hover-bg)',
             f'@media screen and (max-width: {breakpoint})': {'min-width': 'calc(100% - 72px) !important'},
@@ -335,7 +345,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         },
         '.TopBar.Outside': {
             'position': 'absolute !important',
-            'z-index': '98 !important', # below matplotlib fullsreen
+            'z-index': '7 !important', # below matplotlib fullsreen
             'top': '0 !important',
             'margin': '0 !important',
             'min-height': '32px !important',
@@ -404,7 +414,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         '.OverlayHtml': {
             'backdrop-filter': 'blur(50px)',
             'margin':0,
-            'z-index': 97,
+            'z-index': 6,
             'overflow': 'hidden !important',
             'transition': 'height 200ms',
             '^, > div': {
@@ -548,7 +558,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         '.NotesView': {
             'background':'var(--secondary-bg) !important',
             'padding':'8px !important',
-            'margin-top':'12px !important', # Avoid overlap with slides
+            'margin-top':'4px !important', # Avoid overlap with slides
         },
         '.jp-LinkedOutputView': {
             '.SlidesWrapper': {
@@ -605,7 +615,7 @@ def zoom_hover_css():
                 'backdrop-filter': 'blur(200px)',
                 'left':'50px',
                 'top':'50px',
-                'z-index':100,
+                'z-index':8,
                 'width': 'calc(100% - 100px)',
                 'height': 'calc(100% - 100px)',
                 'object-fit': 'scale-down !important',

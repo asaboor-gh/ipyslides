@@ -57,7 +57,7 @@ class _Htmls:
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
     main    = HTML(html('style',_layout_css.layout_css('650px', styles.theme_colors['Inherit']['accent_color'])).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
-    loading = HTML() #SVG Animation in it
+    loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML()
     tochead = HTML('<h4>Table of Contents</h4><hr/>')
     toast   = HTML().add_class('Toast') # For notifications
@@ -146,13 +146,13 @@ def _custom_progressbar(intslider):
                 'height': '4px !important',
             },
             '.NavBox': {
-                'z-index': '50',
+                'z-index': '2',
                 'overflow': 'hidden',
                 '.Menu-Item': {
                     'font-size': '18px !important',
                     'overflow': 'hidden',
                     'opacity': '0.4',
-                    'z-index': '55',
+                    'z-index': '3',
                     '^:hover': {
                         'opacity': '1',
                     },

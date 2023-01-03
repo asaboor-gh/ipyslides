@@ -129,6 +129,8 @@ _icons = {
         </svg>''',
 }
 
+loading_svg = _icons['loading'].format(size='4em',color='var(--accent-color, gray)',rotation=0) # Required outside
+
 class Icon(_HTML):
     available = tuple(_icons.keys())
     def __init__(self, name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0) :

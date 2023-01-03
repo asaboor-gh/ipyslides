@@ -21,8 +21,7 @@ from ._base.base import BaseSlides
 from ._base.intro import logo_svg, key_combs
 from ._base.scripts import multi_slides_alert
 from ._base.slide import Slide, _build_slide
-from ._base.icons import Icon as _Icon
-from ._base.styles import style_css, cell_box_css
+from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__
 
 try:  # Handle python IDLE etc.
@@ -90,17 +89,13 @@ class Slides(BaseSlides):
         self.parse_xmd = parse_xmd # Parse extended markdown
         self.serializer = serializer # Serialize IPython objects to HTML
         
-        with suppress(Exception): # should be in separate suppress than others
-            self.shell.events.unregister('post_run_cell', self._post_run_cell)
-            self.shell.events.unregister('pre_run_cell', self._pre_run_cell)
-        
+        self._remove_post_run_callback() # Remove post_run_cell callback
         self._post_run_enabled = True # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
         with suppress(Exception): # Avoid error when using setuptools to install
             self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
             self.shell.register_magic_function(self._slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
-            self.shell.events.register('pre_run_cell', self._pre_run_cell) # Register pre_run_cell event but not post_run_cell here
             self.shell.user_ns['get_slides_instance'] = lambda: self
             
         # Override print function to display in order in slides
@@ -129,7 +124,6 @@ class Slides(BaseSlides):
         self._citation_mode = 'global' # One of 'global', 'inline', 'footnote'
             
         self._slides_dict = {} # Initialize slide dictionary, updated by user or by _on_load_and_refresh.
-        self._cell_slides = [] # Slides in the current cell
         self._reverse_mapping = {'0':'0'} # display number -> input number of slide
         self._iterable = [] #self._collect_slides() # Collect internally
         self._nslides =  0 # Real number of slides
@@ -154,24 +148,15 @@ class Slides(BaseSlides):
         self.set_overlay_url(url = None) # Set overlay url for initial information
         
     @contextmanager
-    def skip_cell_events(self):
-        """Context manager to skip post_run_cell event."""
-        with suppress(BaseException):
-            self.shell.events.unregister('pre_run_cell', self._pre_run_cell)
-            
+    def skip_post_run_cell(self):
+        """Context manager to skip post_run_cell event.""" 
         self._remove_post_run_callback()
         self._post_run_enabled = False
         try:
             yield
         finally:
             self._post_run_enabled = True
-            self.shell.events.register('pre_run_cell', self._pre_run_cell)
             self._remove_post_run_callback() # Do not register post_run_cell event here
-    
-    def _pre_run_cell(self, info):
-        self._remove_post_run_callback()
-        if self._post_run_enabled:
-            self._cell_slides = [] # reset slides in the cell
     
     def _remove_post_run_callback(self):
         with suppress(Exception):
@@ -179,132 +164,15 @@ class Slides(BaseSlides):
     
     def run_cell(self, cell, **kwargs):
         """Run cell and return result. This is used to run cell without post_run_cell event."""
-        with self.skip_cell_events():
+        with self.skip_post_run_cell():
             return self.shell.run_cell(cell, **kwargs)
                 
     def _post_run_cell(self, result):
         if result.error_before_exec or result.error_in_exec:
             return # Do not display if there is an error
-        
-        children = []
-        try:
-            for s in self._cell_slides:
-                out = ipw.Output().add_class('SlideArea')
-                
-                with out:
-                    display(*s.contents) 
-                    if s._citations and (self._citation_mode == 'footnote'):
-                        self.html('hr/').display()
-                        self.write(s.citations)
-                    if s._notes:
-                        self.details(s._notes,'Notes').display()
-
-                children.append(ipw.Box([out], layout=ipw.Layout(max_height='400px',overflow='auto',height='auto')).add_class('SlideBox'))
-        finally:
-            self._cell_slides = [] # reset slides in the cell after displaying
-            
-        if children:
-            self.close_view() # Close previous cell output if we reach until here, otherwise not
-            out.append_display_data(
-                    Javascript("let box = document.getElementsByClassName('CellBox')[0];\n"
-                        "box.tabIndex = -1; // Make the box focusable, so user can use keyboard to navigate between slides\n"
-                        "box.focus();"
-                    )
-                ) # Need this for carousel to work with keyboard
-            
-            _cell_theme_ = ipw.HTML(self.html('style', style_css(**self.settings.theme_kws).replace('SlidesWrapper','CellBox')).value)
-            _code_theme_ = ipw.HTML(self.widgets.htmls.hilite.value) # Add value, not itself
-
-            btn = ipw.Button(description='Switch to Slides Application', button_style='danger').add_class('Switch-Btn')
-            
-            def update_display(b):
-                self._update_dynamic_content() # important
-                self._update_toc() # Should be here and in ipython display too, otherwise toc is not updated
-                self._display_box.children = [ipw.VBox([self._box, self._notes_view])]
-                self._display_box.remove_class('CellBoxWrapper')
-
-            btn.on_click(update_display)
-
-            self._display_box = ipw.HBox([
-                    btn,
-                    ipw.HBox(children = [ipw.HTML(self.html('style',cell_box_css).value),_code_theme_, _cell_theme_, *children]).add_class('CellBox')
-                ]).add_class('CellBoxWrapper')
-
-            return display(self._display_box)
-            
-    @property
-    def xmd_syntax(self):
-        "Special syntax for markdown."
-        return _HTML(self.parse_xmd(textwrap.dedent('''
-        ## Extended Markdown
-        Extended syntax for markdown is constructed to support almost full presentation from Markdown.
-        
-        **Following syntax works only under currently building slide:**
-        
-        - alert`notes\`This is slide notes\``  to add notes to current slide
-        - alert`cite\`key\`` to add citation to current slide
-        - alert`citations\`citations title\``  to add citations at end if `citation_mode = 'global'`.
-        - alert`section\`key\`` to add a section that will appear in the table of contents.
-        - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
-        - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
-        - Double dashes `--` is used to split markdown text in frames.
-        
-        **Other syntax can be used everywhere in markdown:**
-        
-        - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
-        - You can escape backtick with backslash: alert`\\\` → \``.
-        - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
-        - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
-        - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
-        
-        ```markdown     
-         ```multicol widthA widthB
-         Column A
-         +++
-         Column B
-         ```
-        ```
-        
-        - Python code blocks can be exectude by syntax 
-        ```markdown
-         ```python run source {.CSS_className}
-         slides = get_slides_instance() 
-         slides.write('Hello, I was written from python code block using slides instance.')
-         ```
-        ```
-        and source then can be emded with \{\{source\}\} syntax and also \{\{my_var\}\} will show 'Hello'.
-        
-        - A whole block of markdown can be CSS-classed using syntax
-        ```markdown
-        ::: block-yellow
-            ### This is Header 3
-            <hr/>
-            Some **bold text**
-        ```
-        gives 
-        ::: block-yellow
-            ### This is Header 3
-            <hr/>
-            Some **bold text**
-            
-        ::: note 
-            You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) 
-            extension to make nested blocks with classes. It is added as dependency and can be used to build nested html blocks.
-            
-        ::: block-red 
-            - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
-                [markdown extensions](https://python-markdown.github.io/extensions/) and 
-                [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
-            - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-                `__format__` method in your class enables to use \{\{object\}\} syntax and `_repr_html_` method enables it to use inside `write` function.
-        
-        - Other options include:
-        
-        color[blue]`color[blue]\`text\``, color[yellow_skyblue]`color[yellow_skyblue]\`text\``, ''') + '\n' + ', '.join(f'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
-        display_inline = False
-        ))
-        
+        if self._post_run_enabled:
+            return self.show() # Display after cell is executed only when enabled
+                     
     def _on_load_and_refresh(self):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
@@ -405,7 +273,7 @@ class Slides(BaseSlides):
         return self._dynamic_private(_citations_handler, tag = '_cited')
     
     def _add_clean_title(self):
-        with suppress(BaseException), self.skip_cell_events(): # Otherwise it will trigger cell events during __init__
+        with suppress(BaseException), self.skip_post_run_cell(): # Otherwise it will trigger cell events during __init__
             with _build_slide(self, '0') as s:
                 self.parse_xmd(f'''
                     # Title Page 
@@ -592,7 +460,7 @@ class Slides(BaseSlides):
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
-        self._remove_post_run_callback() # No need to show cell when this is shown
+        self._remove_post_run_callback() # Avoid duplicate display
         self._update_toc() # Update toc before displaying app to include all sections
         self._update_dynamic_content() # Update dynamic content before displaying app
         self.close_view() # Close previous views
@@ -629,20 +497,24 @@ class Slides(BaseSlides):
         "Set current slide label"
         with suppress(BaseException): # May not be ready yet
             self.progress_slider.label = value
+    
+    @property
+    def _sectionindex(self):
+        "Get current section index"
+        if self.current._section:
+            return self.current.index
+        else:
+            idxs = [s.index for s in self[:self.current.index] if s._section] # Get all section indexes before current slide
+            return idxs[-1] if idxs else 0 # Get last section index
+                
             
     def _switch_slide(self,old_index, new_index): # this change is provide from _update_content
         self.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
         with self.widgets.outputs.slide:
-            next_slide = self[new_index]
-            css = '''.TOC .toc-item.s{idx} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
+            self.html('style',f'''.TOC .toc-item.s{self._sectionindex} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
             .TOC .toc-item {{border-right: 4px solid var(--secondary-bg);}}'''
-            if next_slide._section: # Slide has ite own section
-                self.html('style',css.format(idx = next_slide.index)).display()
-            else:
-                idxs = [s._index for s in self[:new_index] if s._section] # Get all section indexes before current slide
-                sec_index = idxs[-1] if idxs else 0 # Get last section index
-                self.html('style',css.format(idx = sec_index)).display()
-            
+            ).display()
+        
             if self.screenshot.capturing == False:
                 self._iterable[new_index].animation.display()
             self._iterable[new_index].css.display()
@@ -672,9 +544,8 @@ class Slides(BaseSlides):
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
             # below two lines after switching
-            getattr(self.current, '_on_load', lambda: None)() # Call on_load function if exists
-            getattr(self._box, 'add_class' if hasattr(self.current, '_dynamic') else 'remove_class')('InView-Dynamic')
-    
+            self.current.run_on_load() # Run on_load setup
+            
             
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
@@ -783,21 +654,30 @@ class Slides(BaseSlides):
     def dynamic_content(self, func):
         raise DeprecationWarning('DEPRECATED: Use `.on_refresh` decorator instead!')
     
-    def _update_dynamic_content(self, btn = None):
-        self.widgets.buttons.refresh.icon = 'minus'
+    @contextmanager
+    def _loading_private(self, btn):
+        btn.icon = 'minus'
+        btn.disabled = True # Avoid multiple clicks
+        self.widgets.htmls.loading.style.display = 'block'
+        self.widgets.htmls.loading.value = loading_svg
         try:
+            yield
+        finally:
+            btn.icon = 'plus'
+            btn.disabled = False
+            self.widgets.htmls.loading.value = ''
+            self.widgets.htmls.loading.style.display = 'none'
+        
+    
+    def _update_dynamic_content(self, btn = None):
+        with self._loading_private(self.widgets.buttons.refresh):
             for slide in self[:]:
                 if any([getattr(slide, attr, False) for attr in ('_dynamic', '_toced', '_cited')]):
                     slide.update_display(go_there = False)
-        finally:        
-            self.widgets.buttons.refresh.icon = 'plus'
     
     def _update_slide_display(self, btn = None):
-        self.widgets.buttons.sfresh.icon = 'minus'
-        try:
+        with self._loading_private(self.widgets.buttons.sfresh):
             self.current.update_display()
-        finally:        
-            self.widgets.buttons.sfresh.icon = 'plus'
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.

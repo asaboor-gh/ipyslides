@@ -63,7 +63,7 @@ class _LiveRichOutput:
             self._raise_error = False 
             try:
                 self._error_outputs = []
-                self._slide.update_display() # This clears up things, but not in cellbox mode, see that
+                self._slide.update_display() 
             finally:
                 self._raise_error = True
         
@@ -72,7 +72,6 @@ class _LiveRichOutput:
         
         out = Output()
         with out:
-            self._slide._app.builtin_print('Note: Clearing error only works in full app mode.\n' + '-'*80)
             self._slide._app.builtin_print(ftb.stb2text(tb)) # Always use builtin print to show correct traceback
         
         btn.on_click(remove_error_outputs)
@@ -122,6 +121,13 @@ class Slide:
         except Exception as e:
             raise Exception(f'{e}')
         self._on_load = func # This will be called in main app
+    
+    def run_on_load(self):
+        "Called when a slide is loaded into view."
+        if hasattr(self,'_on_load') and callable(self._on_load):
+            self._on_load()
+        getattr(self._app._box, 'add_class' if hasattr(self, '_dynamic') else 'remove_class')('InView-Dynamic')
+    
         
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -153,7 +159,6 @@ class Slide:
             
         finally:
             self._app._running_slide = None
-            self._app._cell_slides.append(self) # Add to slides in current cell
             
             if assign:
                 self._contents = captured.outputs  

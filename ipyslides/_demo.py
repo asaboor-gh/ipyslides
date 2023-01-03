@@ -148,28 +148,60 @@ with auto.slide():
     with slides.source.context(auto_display = False) as src:
         import ipywidgets as ipw
         import numpy as np, matplotlib.pyplot as plt
-        write('## Interactive Apps on color[var(--accent-color)]`Slide`\n Use `ipywidgets`, `bqplot`,`ipyvolume` , `plotly Figurewidget` etc. to show live apps like this!')
+        write('''
+            ## Interactive Apps with Widgets
+            Use `ipywidgets`, `bqplot`,`ipyvolume`, `plotly Figurewidget` etc. to show live apps like this!
+            ''')
+        
         writer, (plot,button, _), code = slides.iwrite([
             '## Plot will be here! Click button below to activate it! section`Interactive Widgets`',
             ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
-            "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src.focus_lines([4,5,6,7,*range(24,30)]))
+            "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src)
+        
         def update_plot():
             x = np.linspace(0,0.9,10)
             y = np.random.random((10,))
             _sort = np.argsort(y)
             fig,ax = plt.subplots(figsize=(3.4,2.6))
             ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
+            
             for s in ['right','top','bottom']:
                 ax.spines[s].set_visible(False)
+            
             ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
             writer.update(plot, fig) #Update plot each time
+        
         def onclick(btn):
             plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
             with plt.style.context(plot_theme):
                 update_plot()
+        
         button.on_click(onclick)
         update_plot() #Initialize plot
+        
     slides.notes.insert('## Something to hide from viewers!')
+    
+with auto.slide() as rslide:
+    import numpy as np, matplotlib.pyplot as plt
+    write('''
+        ## Dynamic Content without Widgets
+        Use refresh button below to update plot! Compare with previous slide!
+        ''')
+    
+    @slides.on_refresh
+    def plot_it():
+        x = np.linspace(0,0.9,10)
+        y = np.random.random((10,))
+        _sort = np.argsort(y)
+        fig,ax = plt.subplots(figsize=(3.4,2.6))
+        ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
+        
+        for s in ['right','top','bottom']:
+            ax.spines[s].set_visible(False)
+        
+        ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
+        write(fig, rslide.get_source()) #Update plot each time refresh button is clicked
+        
 
 auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
     
@@ -250,14 +282,6 @@ with auto.slide() as s:
         '''))
     s.get_source().focus_lines([3,4,5,6]).display()
     
-with auto.slide() as s:
-    slides.write('## Displaying Time that updates on demand\n#### Click  refresh button below to update time')
-    
-    @slides.on_refresh # This will be called when refresh button is clicked
-    def update_time():
-        print('Local Time: {3}:{4}:{5}'.format(*time.localtime()))
-    
-    s.get_source().display()
 
 auto.from_markdown('''
 ## $\LaTeX$ in Slides

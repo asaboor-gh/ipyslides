@@ -85,7 +85,80 @@ class BaseSlides:
          'no-zoom'          | Disables zoom on object when it is child of 'zoom-child'.
         ------------------------------------------------------------------------------------
         ''')
+
+    @property
+    def xmd_syntax(self):
+        "Special syntax for markdown."
+        return _HTML(self.parse_xmd(textwrap.dedent('''
+        ## Extended Markdown
+        Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
+        **Following syntax works only under currently building slide:**
+        
+        - alert`notes\`This is slide notes\``  to add notes to current slide
+        - alert`cite\`key\`` to add citation to current slide
+        - alert`citations\`citations title\``  to add citations at end if `citation_mode = 'global'`.
+        - alert`section\`key\`` to add a section that will appear in the table of contents.
+        - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
+        - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
+        - Double dashes `--` is used to split markdown text in frames.
+        
+        **Other syntax can be used everywhere in markdown:**
+        
+        - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
+        - You can escape backtick with backslash: alert`\\\` → \``.
+        - alert`include\`markdown_file.md\`` to include a file in markdown format.
+        - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
+        - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
+        - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
+        
+        ```markdown     
+         ```multicol widthA widthB
+         Column A
+         +++
+         Column B
+         ```
+        ```
+        
+        - Python code blocks can be exectude by syntax 
+        ```markdown
+         ```python run source {.CSS_className}
+         slides = get_slides_instance() 
+         slides.write('Hello, I was written from python code block using slides instance.')
+         ```
+        ```
+        and source then can be emded with \{\{source\}\} syntax and also \{\{my_var\}\} will show 'Hello'.
+        
+        - A whole block of markdown can be CSS-classed using syntax
+        ```markdown
+        ::: block-yellow
+            ### This is Header 3
+            <hr/>
+            Some **bold text**
+        ```
+        gives 
+        ::: block-yellow
+            ### This is Header 3
+            <hr/>
+            Some **bold text**
+            
+        ::: note 
+            You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) 
+            extension to make nested blocks with classes. It is added as dependency and can be used to build nested html blocks.
+            
+        ::: block-red 
+            - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
+                [markdown extensions](https://python-markdown.github.io/extensions/) and 
+                [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
+            - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
+                `__format__` method in your class enables to use \{\{object\}\} syntax and `_repr_html_` method enables it to use inside `write` function.
+        
+        - Other options include:
+        
+        color[blue]`color[blue]\`text\``, color[yellow_skyblue]`color[yellow_skyblue]\`text\``, ''') + '\n' + ', '.join(f'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
+        display_inline = False
+        ))
+   
     def get_source(self, title = 'Source Code'):
         "Return source code of all slides created using `from_markdown` or `%%slide`."
         sources = []
@@ -240,7 +313,7 @@ class BaseSlides:
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster
         
-        with self.skip_cell_events():
+        with self.skip_post_run_cell():
             for i,chunk in enumerate(chunks, start = start):
                 # Must run under this function to create frames with two dashes (--)
                 self._slide(f'{i} -m', chunk)
