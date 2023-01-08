@@ -82,6 +82,17 @@ _special_funcs = {
     'textbox':'text', # Anything above this can be enclosed in a textbox
     'center':'text or \{\{variable\}\}',} # align-center should be at end of all
 
+_code_ = """
+```python run
+{app} = get_slides_instance()
+{block}
+```
+"""
+
+def fmt_code(code, instance_name = 'slides'):
+    "Format given code block to be runable under markdown. instance_name is the name of the slides instance as used in current code."
+    return _code_.format(app = instance_name, block = textwrap.dedent(code).strip())
+
 
 def resolve_objs_on_slide(slide_instance,text_chunk):
     "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
@@ -100,11 +111,13 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     # citations`This is citations title` after setting citations and cite
     all_matches = re.findall(r'citations\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        @slide_instance.citations
-        def updatable_citations(objs):
-            slide_instance.format_html([match, *objs]).display()
-            
-        text_chunk = text_chunk.replace(f'citations`{match}`', '', 1)
+        block = fmt_code(f"""
+            @slide_instance.citations
+            def updatable_citations(objs):
+                slide_instance.format_html([{match!r}, *objs]).display()
+            """, instance_name = 'slide_instance')
+         
+        text_chunk = text_chunk.replace(f'citations`{match}`', block, 1)
         
     # section`This is section title`
     all_matches = re.findall(r'section\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
@@ -115,13 +128,21 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
     # toc`This is toc title`
     all_matches = re.findall(r'toc\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        @slide_instance.toc
-        def updatable_toc(objs):
-            bullets = '\n'.join([f'{idx}. {text}' for idx,text in enumerate(objs, start = 1)])
-            slide_instance.format_html([match or '<h3>Table of Contents</h3><hr/>', bullets]).display()
+        block = fmt_code(f"""
+            @slide_instance.toc
+            def updatable_toc(objs):
+                bullets = '\\n'.join([f'{{idx}}. {{text}}' for idx,text in enumerate(objs, start = 1)])
+                slide_instance.format_html([{match!r} or '<h3>Table of Contents</h3><hr/>', bullets]).display()
+            """, instance_name = 'slide_instance')
         
-        text_chunk = text_chunk.replace(f'toc`{match}`', '', 1)
+        text_chunk = text_chunk.replace(f'toc`{match}`', block, 1)
     
+    # placeholder`This is placeholder text`
+    all_matches = re.findall(r'placeholder\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
+    for match in all_matches:
+        block = fmt_code(f"slide_instance.placeholder({match!r})", instance_name = 'slide_instance')
+        text_chunk = text_chunk.replace(f'placeholder`{match}`', block, 1)
+       
     return text_chunk
 
 class _ExtendedMarkdown(Markdown):

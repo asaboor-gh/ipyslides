@@ -76,6 +76,36 @@ class _LiveRichOutput:
         
         btn.on_click(remove_error_outputs)
         return btn, out
+    
+class _PlaceHolder:
+    def __init__(self, text, slide):
+        self._text = text
+        self._slide = slide
+        self._outputs = []
+        self._slide._proxies[str(id(self))] = self
+    
+    def _repr_html_(self): # This is called when the placeholder is displayed
+        return html('pre',f'PlaceHolder(text = {self._text!r}, slide = {self._slide!r}').value
+    
+    @property
+    def outputs(self):
+        "Returns the outputs of the placeholder, if it has been replaced."
+        return self._outputs
+    
+    @contextmanager
+    def capture(self):
+        "Context manager to capture output to current placeholder. Use it like this: with placeholder.capture(): ... after a slide is already created."
+        if self._slide._app.running:
+            raise RuntimeError("Can't use PlaceHolder.capture() contextmanager inside a slide constructor.")
+        
+        with capture_output() as captured:
+            yield
+        
+        if captured.stderr:
+            raise RuntimeError(captured.stderr)
+        
+        self._outputs = captured.outputs
+        self._slide.update_display() # Update display to show new output
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -99,6 +129,7 @@ class Slide:
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
         self._section = None # Added from Slides
+        self._proxies = {} # Placeholders added to this slide
 
         
     def set_source(self, text, language):
@@ -113,6 +144,10 @@ class Slide:
             setattr(self, tag, True)
             
         return display(html('pre','This gets updated on refresh/update_display'), metadata = {'LiveRichOutput': lro})
+    
+    def _placeholder_private(self, text):
+        ph = _PlaceHolder(text, self)
+        return display(ph, metadata = {'PlaceHolder': str(id(ph))})
         
     def _on_load_private(self, func):
         try: # check if code is correct
@@ -142,6 +177,7 @@ class Slide:
             self._citations = {} # Reset citations
             self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
             self._section = None # Reset sec_key
+            self._proxies = {} # Reset placeholders
             if hasattr(self,'_on_load'):
                 del self._on_load # Remove on_load function
         
@@ -244,6 +280,11 @@ class Slide:
     @property
     def frames(self):
         return tuple(self._frames)
+    
+    @property
+    def placeholders(self):
+        "Return placeholders in this slide."
+        return tuple(self._proxies.values())
 
     @property
     def parent(self):
@@ -302,6 +343,12 @@ class Slide:
         for out in all_outputs:
             if 'LiveRichOutput' in out.metadata:
                 updated_outputs.extend(out.metadata['LiveRichOutput'].outputs) # Unpack LiveRichOutput as it can have many outputs
+            elif 'PlaceHolder' in out.metadata:
+                outs = self._proxies[out.metadata['PlaceHolder']].outputs
+                if outs:
+                    updated_outputs.extend(outs) # Unpack PlaceHolder as it can have many outputs
+                else:
+                    updated_outputs.append(out) # Placeholder not yet filled
             else:
                 updated_outputs.append(out)
                 

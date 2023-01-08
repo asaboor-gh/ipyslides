@@ -4,12 +4,12 @@ from contextlib import contextmanager, suppress
 from collections import namedtuple
 
 from IPython import get_ipython
-from IPython.display import display, Javascript
+from IPython.display import display
 from IPython.utils.capture import capture_output
 
 import ipywidgets as ipw
 
-from .extended_md import parse_xmd, _special_funcs, extender as _extender
+from .extended_md import parse_xmd, extender as _extender
 from .source import Source
 from .writers import write, iwrite, _fix_repr
 from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer
@@ -258,7 +258,7 @@ class Slides(BaseSlides):
     
     def citations(self, func):
         """Decorator to get all citations as a tuple that can be passed to given `func` function. and update dynamically.
-        The output of `func` will appear before all other content in a makrdown block.
+        `func` must accept a single argument which will be tuple of citations.
         """
         def _citations_handler():
             if self._citation_mode == 'global':  
@@ -391,8 +391,7 @@ class Slides(BaseSlides):
     
     def toc(self, func):
         """Decorator to add dynamic table of contents to slides which get updated on each new section and refresh/update_display.
-        The output of `func` will appear before all other content in a makrdown block.
-        func should take one argument which is the tuple of sections."""
+        `func` should take one argument which is the tuple of sections."""
         def _toc_handler():
             sections = []
             this_index = self[:].index(self.running) if self.running in self[:] else self.running.number # Monkey patching index, would work on next run
@@ -563,7 +562,6 @@ class Slides(BaseSlides):
         opts = [(s.label, round(100*float(s.label)/(n_last or 1), 2)) for s in self._iterable]
         self.progress_slider.options = opts  # update options
         # Update Slides
-        #slides = [ipw.Output(layout=ipw.Layout(width = '0',margin='0')) for s in self._iterable]
         self.widgets.slidebox.children = [it._widget for it in self._iterable]
         for i, s in enumerate(self._iterable):
             s.update_display() 
@@ -573,8 +571,22 @@ class Slides(BaseSlides):
         self._slideindex = 0 # goto first slide after refresh
     
     def delete(self, slide_number):
-        raise Exception('DEPRECATED: Remove slide\'s source cell and re-run (No need for kernel restart) in sequence to clean up.')
+        raise DeprecationWarning('DEPRECATED: Remove slide\'s source cell and re-run (No need for kernel restart) in sequence to clean up.')
         
+    def placeholder(self,text):
+        if self.running is None:
+            raise RuntimeError('PlaceHolder can only be used inside a slide constructor.')
+        
+        return self.running._placeholder_private(text)
+    
+    @property
+    def placeholders(self):
+        "Get all placeholders accross all slides"
+        _phs = []
+        for s in self._iterable:
+            _phs.extend(s.placeholders)
+        return tuple(_phs)
+    
     # defining magics and context managers
     def _slide(self,line,cell):
         """Capture content of a cell as `slide`.

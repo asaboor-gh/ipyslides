@@ -7,6 +7,9 @@ from .settings import LayoutSettings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .intro import key_combs
+from ..formatters import _HTML
+from ..extended_md import _special_funcs
+
 class BaseSlides:
     def __init__(self):
         self.__widgets = Widgets()
