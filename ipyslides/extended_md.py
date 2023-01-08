@@ -137,11 +137,11 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
         
         text_chunk = text_chunk.replace(f'toc`{match}`', block, 1)
     
-    # placeholder`This is placeholder text`
-    all_matches = re.findall(r'placeholder\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
+    # proxy`This is prxoy's placeholder text`
+    all_matches = re.findall(r'proxy\`(.*?)\`', text_chunk, flags = re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        block = fmt_code(f"slide_instance.placeholder({match!r})", instance_name = 'slide_instance')
-        text_chunk = text_chunk.replace(f'placeholder`{match}`', block, 1)
+        block = fmt_code(f"pr = slide_instance.proxy({match!r})", instance_name = 'slide_instance') # assign to avoid __repr__ output in markdown
+        text_chunk = text_chunk.replace(f'proxy`{match}`', block, 1)
        
     return text_chunk
 

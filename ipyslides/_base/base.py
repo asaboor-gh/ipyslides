@@ -103,6 +103,7 @@ class BaseSlides:
         - alert`citations\`citations title\``  to add citations at end if `citation_mode = 'global'`.
         - alert`section\`key\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
+        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         - Double dashes `--` is used to split markdown text in frames.
         
@@ -174,10 +175,6 @@ class BaseSlides:
         else:
             self.html('p', 'No source code found.', className='info')
 
-    
-    def notify_later(self, title='IPySlides Notification', timeout=5):
-        raise DeprecationWarning('notify_later is deprecated. Use @slides.on_load decorator in combination with slides.notify instead.')
-    
     def on_load(self, func):
         """
         Decorator for running a function when slide is loaded into view. No return value is required.
@@ -197,9 +194,7 @@ class BaseSlides:
             - Do not use this to change global state of slides, because that will affect all slides.
             - This can be used single time per slide, overwriting previous function.
         """
-        if self.running is None:
-            raise RuntimeError('Dynamic content can only be created under a slide constructor!')
-        
+        self.verify_running('Dynamic content can only be created under a slide constructor!')
         self.running._on_load_private(func) # This to make sure if code is correct before adding it to slide
     
     def on_refresh(self,func):
@@ -229,9 +224,7 @@ class BaseSlides:
     
     def _dynamic_private(self, func, tag = None):
         "Not for user use, internal function for other dynamic content decorators with their own tags."
-        if not self.running:
-            raise RuntimeError('Dynamic content can only be created under a slide constructor!')
-        
+        self.verify_running('Dynamic content can only be created under a slide constructor!')
         return self.running._dynamic_private(func, tag = tag)
         
     def from_markdown(self, start, file_or_str, trusted = False):
@@ -436,13 +429,11 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
+        proxy`source code of slide will be updated here later using slide_handle.proxies[0].capture contextmanager`
         ''', trusted= True)
         
-        # Update with source of slide
-        with s8.insert(-1): # Insert source code
-            self.write('<hr/>This slide was created with `from_markdown` function. '
-                'So its source code can be inserted in the slide later! '
-                'See at last slide how it was done!<hr/>')
+        # Update proxy with source code
+        with s8.proxies[0].capture(): # Capture to proxy
             s8.get_source().display()
         
         with auto.slide():

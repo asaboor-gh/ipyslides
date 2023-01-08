@@ -60,7 +60,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'top':'50%',
                 'transform':'translate(-50%,-50%)',
                 'z-index':'11', # Above all
-                'backdrop-filter': 'blur(2px)',
+                'text-shadow': '0 0 4px white, 0 0 8px var(--secondary-bg)',
                 'border-radius':'50%',
             },
             '.SlideArea': {

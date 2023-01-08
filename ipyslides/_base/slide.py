@@ -12,14 +12,17 @@ from IPython.core.ultratb import FormattedTB
 
 
 from . import styles
-from ..utils import html, _format_css, _sub_doc, _css_docstring
+from ..utils import html, colored, _format_css, _sub_doc, _css_docstring
 
-class _EmptyCaptured: outputs = [] # Just as placeholder for initialization
+class _EmptyCaptured: outputs = [] # Just for initialization
 
-class _LiveRichOutput:
+class _DProxy:
+    "_DProxy is a proxy for a function that is executed when refresh button is clicked. Should not be instantiated directly."
     def __init__(self, func, slide):
         self._func = func
         self._slide = slide
+        self._key = str(len(self._slide._dproxies))
+        self._slide._dproxies[self._key] = self # Add to slide to use later
         self._last_outputs = []
         self._error_outputs = []
         self._raise_error = True
@@ -29,6 +32,8 @@ class _LiveRichOutput:
                 self._func()
         except Exception as e:
             raise Exception(f'{e}')
+        
+        display('DProxy', metadata= {'DProxy': self._key}) # Display something to get metadata working
         
     @property
     def outputs(self):
@@ -77,35 +82,54 @@ class _LiveRichOutput:
         btn.on_click(remove_error_outputs)
         return btn, out
     
-class _PlaceHolder:
+class Proxy:
+    "Proxy object, should not be instantiated directly by user."
     def __init__(self, text, slide):
         self._text = text
         self._slide = slide
         self._outputs = []
-        self._slide._proxies[str(id(self))] = self
+        self._key = str(len(self._slide._proxies))
+        self._slide._proxies[self._key] = self
+        display(self, metadata= {'Proxy': self._key}) 
     
-    def _repr_html_(self): # This is called when the placeholder is displayed
-        return html('pre',f'PlaceHolder(text = {self._text!r}, slide = {self._slide!r}').value
+    @property
+    def text(self): return self._text # Useful if user wants to filter proxies
+    
+    @property
+    def slide(self): return self._slide # Useful if user wants to test if proxy is in slide
+    
+    def __repr__(self):
+        return f'Proxy(text = {self._text!r}, slide = {self._slide!r})'
+    
+    def _repr_html_(self): # This is called when displayed
+        return colored(f'Proxy(text = {self._text!r}, slide = {self._slide!r})',fg='var(--accent-color)').value
     
     @property
     def outputs(self):
-        "Returns the outputs of the placeholder, if it has been replaced."
-        return self._outputs
+        "Returns the outputs of the proxy, if it has been replaced."
+        if self._outputs:
+            return self._outputs
+        with capture_output() as captured:
+            display(self, metadata= {'Proxy': self._key}) # This will update the slide refrence on each display to provide useful info
+        return captured.outputs
     
     @contextmanager
     def capture(self):
-        "Context manager to capture output to current placeholder. Use it like this: with placeholder.capture(): ... after a slide is already created."
+        "Context manager to capture output to current prpxy. Use it like this: with proxy.capture(): ... after a slide is already created."
         if self._slide._app.running:
-            raise RuntimeError("Can't use PlaceHolder.capture() contextmanager inside a slide constructor.")
-        
-        with capture_output() as captured:
-            yield
-        
-        if captured.stderr:
-            raise RuntimeError(captured.stderr)
-        
-        self._outputs = captured.outputs
-        self._slide.update_display() # Update display to show new output
+            raise RuntimeError("Can't use Proxy.capture() contextmanager inside a slide constructor.")
+        self._slide._app._in_proxy_capture = True # Used to get print statements to work in order
+        try:
+            with capture_output() as captured:
+                yield
+
+            if captured.stderr:
+                raise RuntimeError(captured.stderr)
+
+            self._outputs = captured.outputs
+            self._slide.update_display() # Update display to show new output
+        finally:
+            self._slide._app._in_proxy_capture = False
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -116,7 +140,6 @@ class Slide:
         self._app = app
         self._contents = captured_output.outputs
             
-        self._extra_outputs = {'start': [], 'end': []}
         self._css = html('style','')
         self._number = number if isinstance(number, str) else str(number) 
         self._label = None # This should be set in the Slides
@@ -130,24 +153,20 @@ class Slide:
         self._frames = [] # Added from Slides
         self._section = None # Added from Slides
         self._proxies = {} # Placeholders added to this slide
-
-        
+        self._dproxies = {} # Dynamic content added to this slide
+  
     def set_source(self, text, language):
         "Set source code for this slide."
         self._source = {'text': text, 'language': language}
     
     def _dynamic_private(self, func, tag = None):  
         "Add dynamic content to this slide which updates on refresh/update_display etc. func takes no arguments." 
-        lro = _LiveRichOutput(func, self)
-        
+        _DProxy(func, self) # get auto displayed, no need to save reference
         if isinstance(tag, str): # To keep track what kind of dynamic content it is
             setattr(self, tag, True)
             
-        return display(html('pre','This gets updated on refresh/update_display'), metadata = {'LiveRichOutput': lro})
-    
-    def _placeholder_private(self, text):
-        ph = _PlaceHolder(text, self)
-        return display(ph, metadata = {'PlaceHolder': str(id(ph))})
+    def _proxy_private(self, text):
+        return Proxy(text, self) # get auto displayed
         
     def _on_load_private(self, func):
         try: # check if code is correct
@@ -163,7 +182,6 @@ class Slide:
             self._on_load()
         getattr(self._app._box, 'add_class' if hasattr(self, '_dynamic') else 'remove_class')('InView-Dynamic')
     
-        
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
     
@@ -175,9 +193,9 @@ class Slide:
             self._app._next_number = int(self._number) + 1
             self._notes = '' # Reset notes
             self._citations = {} # Reset citations
-            self._extra_outputs = {'start': [], 'end': []} # Reset extra outputs
             self._section = None # Reset sec_key
             self._proxies = {} # Reset placeholders
+            self._dproxies = {} # Reset dynamic content holders
             if hasattr(self,'_on_load'):
                 del self._on_load # Remove on_load function
         
@@ -214,10 +232,9 @@ class Slide:
                 html('hr/').display()
                 self._app.write(self.citations)
         
-        # Update corresponding CSS and Animation
+        # Update corresponding CSS but avoid animation here for faster and clean update
         self._app.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
         with self._app.widgets.outputs.slide:
-            self.animation.display()
             self.css.display()
         
         # This foreces hard refresh of layout, without it, sometimes CSS is not applied correctly
@@ -233,57 +250,25 @@ class Slide:
     
     @contextmanager
     def append(self):
-        "Contextmanager to append objects to this slide. Use with 'with' statement. Only most recent appended object(s) are displayed."
-        return self.insert(index = -1)
+        raise DeprecationWarning('DEPRECATED: Use proxy placeholder way to update content later.')
     
     @contextmanager
     def insert(self, index: int):
-        "Contextmanager to insert new content at given index. If index is -1, just appends at end. Only most recent inserted object(s) are displayed."
-        if index < -1:
-            raise ValueError(f'expects non-negative index or -1 to append at end, got {index}')
-        
-        with self._capture(assign = False) as captured:
-            yield 
-        
-        outputs = captured.outputs
-        
-        if index == 0:
-            self._extra_outputs['start'] = outputs
-        elif index == -1:
-            self._extra_outputs['end'] = outputs
-        else:
-            if index >= len(self._contents):
-                raise IndexError('Index {} out of range for slide with {} objects'.format(index, len(self._contents)))
-            self._extra_outputs[f'{index}'] = outputs
-        
-        self._app._slidelabel = self.label # Go there
-        self.update_display()
+        raise DeprecationWarning('DEPRECATED: Use proxy placeholder way to update content later.')
         
     def insert_markdown(self, index_markdown_dict: typing.Dict[int, str]) -> None:
-        """Insert multiple markdown objects (after being parsed) at given indices on slide at once.
-        Give a dictionary as {0: 'Markdown',..., -1:'Markdown'}."""
-        if not isinstance(index_markdown_dict, dict):
-            raise TypeError(f'expects dict as {{index: "Markdown",...}}, got {type(index_markdown_dict)}')
-        for index, markdown in index_markdown_dict.items():
-            if not isinstance(index, int):
-                raise TypeError(f'expects int as index, got {type(index)}')
-            
-            with self.insert(index):
-                self._app.parse_xmd(markdown, display_inline = True)
+        raise DeprecationWarning('DEPRECATED: Use proxy placeholder way to update content later.')
     
     def reset(self):
-        "Reset all appended/prepended/inserted objects."
-        self._extra_outputs = {'start': [], 'end': []}
-        self._app._slidelabel = self.label # Go there
-        self.update_display() 
+        raise DeprecationWarning('DEPRECATED: No more required.')
     
     @property
     def frames(self):
         return tuple(self._frames)
     
     @property
-    def placeholders(self):
-        "Return placeholders in this slide."
+    def proxies(self):
+        "Return placeholder proxies in this slide."
         return tuple(self._proxies.values())
 
     @property
@@ -330,29 +315,16 @@ class Slide:
     
     @property
     def contents(self):
-        middle_outputs = [[out] for out in self._contents] # Make list for later flattening
-        shift = 0
-        for k, v in self._extra_outputs.items():
-            if k not in ['start', 'end']:
-                middle_outputs.insert(int(k) + shift, v)
-                shift += 1
-                
-        middle_outputs = [o for out in middle_outputs for o in out] # Flatten list
-        all_outputs = self._extra_outputs['start'] + middle_outputs + self._extra_outputs['end']
-        updated_outputs = []
-        for out in all_outputs:
-            if 'LiveRichOutput' in out.metadata:
-                updated_outputs.extend(out.metadata['LiveRichOutput'].outputs) # Unpack LiveRichOutput as it can have many outputs
-            elif 'PlaceHolder' in out.metadata:
-                outs = self._proxies[out.metadata['PlaceHolder']].outputs
-                if outs:
-                    updated_outputs.extend(outs) # Unpack PlaceHolder as it can have many outputs
-                else:
-                    updated_outputs.append(out) # Placeholder not yet filled
+        outputs = []
+        for out in self._contents:
+            if 'DProxy' in out.metadata:
+                outputs.extend(self._dproxies[out.metadata['DProxy']].outputs) # Unpack DProxy as it can have many outputs
+            elif 'Proxy' in out.metadata:
+                outputs.extend(self._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
             else:
-                updated_outputs.append(out)
+                outputs.append(out)
                 
-        return tuple(updated_outputs) 
+        return tuple(outputs) 
     
     def get_source(self, name = None):
         "Return source code of this slide, markdwon or python or None if no source exists."

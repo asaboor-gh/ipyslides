@@ -78,6 +78,33 @@ class LayoutSettings:
         span = 100 if self.btn_window.value else self.width_slider.value
         return f'{int(100*650/span)}px'
     
+    def set(self, **kwargs):
+        """Add multiple settings at once. keys in kwargs should name of function after `set_` 
+        and values should be dictionary of arguments for that function. See examples below.
+        ```python
+        Slides.settings.set( 
+            glassmorphic = dict(image_src='image_src'),
+            css = dict(css_dict={}),
+            layout = dict(center=True, content_width='80%'),
+        )
+        ```
+        """
+        for k,v in kwargs.items():
+            if not isinstance(v,dict):
+                raise ValueError(f'values in kwargs should be dict, got {v!r}')
+            func = getattr(self,f'set_{k}', False)
+            if func is False:
+                raise ValueError(f'No such function {k!r} in settings')
+            func(**v) # Call function with arguments
+            
+    
+    def show_always(self, b: bool = True):
+        """If True (default), slides are shown after each cell execution where a slide constructor is present (other view will be closed). 
+        Otherwise only when `slides.show()` is called or `slides` is the last line in a cell."""
+        if not isinstance(b, bool):
+            raise ValueError(f'Expected bool, got {b!r}')
+        self._slides._post_run_enabled = True if b else False # Do not rely on user if they really give bool or not
+    
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for slides and frames."
         if len(self._slides[:]) >= 1:

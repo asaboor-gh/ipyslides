@@ -96,7 +96,7 @@ theme_colors = {
         'secondary_fg':'var(--jp-inverse-layout-color4,#454545)',
         'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
         'hover_bg':'var(--jp-border-color1,#D1D9E1)',
-        'accent_color':'var(--jp-brand-color1,gray)', # May be neutral is good for all themes for buttons
+        'accent_color':'var(--jp-brand-color1,gray)', # May be a neutral color is good for all themes for buttons
         'pointer_color':'var(--md-pink-A400,red)',
     },
     'Light': {

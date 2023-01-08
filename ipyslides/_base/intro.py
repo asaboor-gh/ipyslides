@@ -27,6 +27,9 @@ how_to_slide = '''# Creating Slides
 ::: note-warning
     Python 3.8+, ipywidgets 8+, IPython 8.7+ are required. Previous version 2.x.x will still be supported for bug fixes.
 
+::: note-info
+    Slides are shown after each run of cell (where a slide is present) by default to make user experience better (get output where you run). You can disable this by calling `Slides.settings.show_always(False)`.
+
 **After you initialize `slides = ipyslides.Slides()`**
 
 - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
@@ -95,7 +98,7 @@ with slides.slide(2):
 ::: note-info
     - You can access individual slides by indexing `s_i = slides[i]` where `i` is the slide index or by key as `s_3_1 = slides['3.1']` will give you slide which shows 3.1 at bottom.
     - Basides indexing, you can access current displayed slide by `slides.current`.
-    - You can insert extra content usign `with slides[key or index].insert(index)` or `slides[key or index].insert_markdown`. Make sure if you run base cell again, this needs to be run again.
+    - You can insert placeholders usign alert`proxy\`informative text to use later\`` and later can use `Slides.proxies[index].capture` to fill content such as plots.
     - If a display is not complete, e.g. some widget missing on a slide, you can use `(slides.current, slides[index], slides[key]).update_display()` to update display.
     - You can set overall animation by `slides.settings.set_animation` or per slide by `s_i.set_animation`
     - You can set CSS for each slide by `s_i.set_css` or `slides.running.set_css` at current slide.
@@ -116,7 +119,8 @@ with slides.slide(2):
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
 for k,r  in zip('RLUD',[0,180,-90,90]):  # clockwise rotation sucks!
     _icons[k] = _Icon('chevron', color="var(--accent-color)",rotation=r)
-def _key(k): return f'<span style="border: 1px solid var(--secondary-fg); background:var(--secondary-bg);border-radius:4px;padding:2px 6px;min-width:2em;">{k}</span>'
+
+def _key(k): return f'<kbd style="color:var(--secondary-fg);background: var(--secondary-bg); border: 1px solid var(--hover-bg);">{k}</kbd>'
 
 key_maps = {
     '▸, Space': 'Next slide',

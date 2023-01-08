@@ -110,7 +110,7 @@ class Slides(BaseSlides):
 
                 if 'file' in kwargs and kwargs['file'] != sys.stdout: # User should be able to redirect print to file
                     return self.builtin_print(*args, **kwargs)
-                elif self.running:
+                elif self.running or getattr(self,'_in_proxy_capture', False):
                     with capture_output() as captured:
                         self.builtin_print(*args, **kwargs)
 
@@ -151,11 +151,12 @@ class Slides(BaseSlides):
     def skip_post_run_cell(self):
         """Context manager to skip post_run_cell event.""" 
         self._remove_post_run_callback()
+        old = self._post_run_enabled
         self._post_run_enabled = False
         try:
             yield
         finally:
-            self._post_run_enabled = True
+            self._post_run_enabled = old # Restore user prefrence
             self._remove_post_run_callback() # Do not register post_run_cell event here
     
     def _remove_post_run_callback(self):
@@ -173,6 +174,7 @@ class Slides(BaseSlides):
         if self._post_run_enabled:
             return self.show() # Display after cell is executed only when enabled
                      
+    
     def _on_load_and_refresh(self):
         self.widgets._exec_js(multi_slides_alert)
         if self._max_index == 0: # prevent overwrite
@@ -247,13 +249,18 @@ class Slides(BaseSlides):
     
     @property
     def current(self):
-        "Access current visible slide and use operations like insert, set_css etc."
+        "Access current visible slide and use operations like set_css etc."
         return self._iterable[self._slideindex]
     
     @property
     def running(self):
         "Access slide currently being built. Useful inside frames decorator."
         return self._running_slide
+    
+    def verify_running(self, error_msg = ''):
+        "Verify if slide is being built, otherwise raise error."
+        if self.running is None:
+            raise RuntimeError(error_msg or 'This operation is only allowed under slide constructor.')
     
     
     def citations(self, func):
@@ -302,9 +309,7 @@ class Slides(BaseSlides):
         ::: note
             You should set resources in start if using python script or voila, otherwise they will not be updated.
         """
-        if self.running is None:
-            raise RuntimeError('Citations can be added only inside a slide constructor!')
-        
+        self.verify_running('Citations can be added only inside a slide constructor!')
         _cited = _Citation(slide = self.running, key = key)
         
         if self._citation_mode == 'inline':
@@ -380,8 +385,7 @@ class Slides(BaseSlides):
         """Add section key to presentation that will appear in table of contents. 
         Sections can be written as table of contents by alert` Slides.toc ` decorator.
         """
-        if not self.running:
-            raise RuntimeError('Sections can be added only inside a slide constructor!')
+        self.verify_running('Sections can be added only inside a slide constructor!')
         
         self.running._section = text # assign before updating toc
         
@@ -570,21 +574,20 @@ class Slides(BaseSlides):
         
         self._slideindex = 0 # goto first slide after refresh
     
-    def delete(self, slide_number):
-        raise DeprecationWarning('DEPRECATED: Remove slide\'s source cell and re-run (No need for kernel restart) in sequence to clean up.')
-        
-    def placeholder(self,text):
-        if self.running is None:
-            raise RuntimeError('PlaceHolder can only be used inside a slide constructor.')
-        
-        return self.running._placeholder_private(text)
+     
+    def proxy(self,text):
+        """Place a proxy placeholder in your slide and returns it's `handle`. This is useful when you want to update the placeholder later.
+        Use `Slides.proxies[index].capture` or `handle.capture` contextmanager to update the placeholder.
+        """
+        self.verify_running('proxy placeholder can only be used inside a slide constructor.')
+        return self.running._proxy_private(text)
     
     @property
-    def placeholders(self):
-        "Get all placeholders accross all slides"
+    def proxies(self):
+        "Returns all placeholder proxies accross all slides."
         _phs = []
         for s in self._iterable:
-            _phs.extend(s.placeholders)
+            _phs.extend(s.proxies)
         return tuple(_phs)
     
     # defining magics and context managers
@@ -662,10 +665,6 @@ class Slides(BaseSlides):
             s.set_source(c.raw, 'python') # Update cell source befor yielding to make available inside context manager
             yield s # Useful to use later
         
-        
-    def dynamic_content(self, func):
-        raise DeprecationWarning('DEPRECATED: Use `.on_refresh` decorator instead!')
-    
     @contextmanager
     def _loading_private(self, btn):
         btn.icon = 'minus'
@@ -852,8 +851,7 @@ class Slides(BaseSlides):
         return tuple([self._slides_dict[f'{slide_number}'] for slide_number in slide_numbers])
     
     def glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
-        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional."
-        return self.settings.set_glassmorphic(image_src, opacity = opacity, blur_radius = blur_radius)
+        raise DeprecationWarning('DEPRECATED: Use Slides.settings.set_glassmorphic instead')
     
     def AutoSlides(self):
         """Returns a named tuple `AutoSlides(title,slide,frames, from_markdown)` if run from inside a
@@ -912,7 +910,7 @@ class Slides(BaseSlides):
             self.widgets.htmls.overlay.value= _html.value # Set overlay to blank and give docs info
         else:
             raise ValueError(f'url must be a valide string or None, got {url!r}')
-        
+    
         
 # Make available as Singleton Slides
 _private_instance = Slides() # Singleton in use namespace
@@ -953,6 +951,7 @@ class Slides:
                 code_lineno     = True,
                 main_animation  = 'flow',
                 frame_animation = 'slide_v',
+                show_always     = True,
                 extensions      = []
                 ):
         "Returns Same instance each time after applying given settings. Encapsulation."
@@ -963,12 +962,17 @@ class Slides:
         
         _private_instance.extender.extend(extensions)
         _private_instance._citation_mode = citation_mode
-        _private_instance.settings.set_layout(center = center, content_width = content_width)
-        _private_instance.settings.set_footer(text = footer_text, show_date = show_date, show_slideno = show_slideno)
-        _private_instance.settings.set_logo(src = logo_src,width = 60)
-        _private_instance.settings.set_font_scale(font_scale = font_scale)
-        _private_instance.settings.set_font_family(text_font = text_font, code_font = code_font)
-        _private_instance.settings.set_code_style(style = code_style, lineno = code_lineno)
+        _private_instance.settings.show_always(show_always)
+        
+        _private_instance.settings.set(
+            layout      = dict(center = center, content_width = content_width),
+            footer      = dict(text = footer_text, show_date = show_date, show_slideno = show_slideno),
+            logo        = dict(src = logo_src,width = 60),
+            font_scale  = dict(font_scale = font_scale),
+            font_family = dict(text_font = text_font, code_font = code_font),
+            code_style  = dict(style = code_style, lineno = code_lineno),
+        )
+        
         with suppress(BaseException): # Avoid error if no slides exist
             _private_instance.settings.set_animation(main = main_animation, frame = frame_animation)
         return _private_instance

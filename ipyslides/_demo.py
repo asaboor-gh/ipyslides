@@ -39,6 +39,7 @@ slides.run_cell("""
 s1, s2, *others = auto.from_markdown("""
 section`Introduction` toc`### Contents`
 ---
+proxy`something will be here in start`
 # Introduction
 To see how commands work, use `Slides.docs()` to see the documentation.
 Here we will focus on using all that functionality to create slides.
@@ -51,6 +52,7 @@ version = myslides.version
 ```
 Version: {{version}} as executed from below code in markdown. 
 {{source}}
+proxy`something will be here in end`
 ---
 # IPySlides Online Running Sources 
 ::: note
@@ -64,12 +66,14 @@ Version: {{version}} as executed from below code in markdown.
 
 
 slides.shell.user_ns['write'] = write #Inject variable in IPython shell
-# Insert source of slide 2    
-with s2.insert(0):
+# slide s2 has proxies to be filled in later
+p1, p2 = s2.proxies   
+with p1.capture():
     s2.get_source().display(collapsed = True)
-    slides.goto_button(slides.running.number + 5, 'Skip 5 Slides',icon='plus')
-    
-s2.insert_markdown({-1: f'alert`I was added at end using \`s2.insert_markdown\``'})
+    slides.goto_button(s2.number + 5, 'Skip 5 Slides',icon='plus')
+
+with p2.capture():
+    slides.write(f'alert`I was added at end by a given proxy, see the how it was done at the end of the slides`')
 
 
 *others, last = auto.from_markdown(f"""
@@ -93,11 +97,12 @@ can be included in `iwrite` command as well as other objects that can be passed 
 {{.warning}}
 ---
 ## Commands which do all Magic!
+proxy`Add functions here`
 """, trusted=True)
 
 
 with slides.source.context(auto_display = False) as s:
-    with last.insert(-1):
+    with last.proxies[0].capture():
         write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse_xmd,'Slides')])
         write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
         s.show_lines([0,1]).display()
@@ -149,14 +154,13 @@ with auto.slide():
         import ipywidgets as ipw
         import numpy as np, matplotlib.pyplot as plt
         write('''
-            ## Interactive Apps with Widgets
+            ## Interactive Apps with Widgets section`Interactive Widgets`
             Use `ipywidgets`, `bqplot`,`ipyvolume`, `plotly Figurewidget` etc. to show live apps like this!
             ''')
         
-        writer, (plot,button, _), code = slides.iwrite([
-            '## Plot will be here! Click button below to activate it! section`Interactive Widgets`',
-            ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
-            "[Check out this app](https://massgh.github.io/pivotpy/Widgets.html#VasprunApp)"],src)
+        writer, (plot,button), code = slides.iwrite(['plot will be here',
+            ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content'))
+            ],src)
         
         def update_plot():
             x = np.linspace(0,0.9,10)
