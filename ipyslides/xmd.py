@@ -17,7 +17,7 @@ This {{var_name}} is a code from above and will be substituted with the value of
 
 ::: note-info  
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-    - Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+    - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
 
 import textwrap, re
@@ -147,7 +147,7 @@ def resolve_objs_on_slide(slide_instance,text_chunk):
        
     return text_chunk
 
-class _ExtendedMarkdown(Markdown):
+class XMarkdown(Markdown):
     def __init__(self):
         super().__init__(extensions = extender._all, extension_configs=extender._all_configs)
         self._display_inline = False
@@ -336,7 +336,7 @@ class _ExtendedMarkdown(Markdown):
         return html_output # return in main scope
             
 
-def parse(extended_markdown, display_inline = True, rich_outputs = False):
+def parse(xmd, display_inline = True, rich_outputs = False):
     """Parse extended markdown and display immediately. 
     If you need output html, use `display_inline = False` but that won't execute python code blocks.
     Precedence of content return/display is `rich_outputs = True > display_inline = True > parsed_html_string`.
@@ -376,8 +376,8 @@ def parse(extended_markdown, display_inline = True, rich_outputs = False):
     
     ::: note-info  
         - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-        - Use `Slides.extender` or `ipyslides.extended_md.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
+        - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
-    return _ExtendedMarkdown().parse(extended_markdown, display_inline = display_inline, rich_outputs = rich_outputs)  
+    return XMarkdown().parse(xmd, display_inline = display_inline, rich_outputs = rich_outputs)  
     
     
