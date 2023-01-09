@@ -72,6 +72,7 @@ del PyMarkdown_Extender
 
 _special_funcs = {
     'alert':'text',
+    'color':'text',
     'image':'path/src',
     'raw':'text',
     'svg':'path/src', 
@@ -80,6 +81,7 @@ _special_funcs = {
     'sup': 'text',
     'today': 'fmt like %b-%d-%Y',
     'textbox':'text', # Anything above this can be enclosed in a textbox
+    'details':'text',
     'center':'text or \{\{variable\}\}',} # align-center should be at end of all
 
 _code_ = """
@@ -310,15 +312,19 @@ class _ExtendedMarkdown(Markdown):
             _out = f'<div class="columns">{_cols}</div>'
             html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
               
-        # Replace colored text
-        all_matches = re.findall(r'color\[(.*?)\]\`(.*?)\`', html_output, flags = re.DOTALL | re.MULTILINE)
-        for match in all_matches:
-            kws = {'fg':None,'bg':None}
-            if '_' in match[0]:
-                kws['fg'], kws['bg'] = [c.strip() for c in match[0].split('_',1)]
-            else:
-                kws['fg'] = match[0].strip()
-            html_output = html_output.replace(f'color[{match[0]}]`{match[1]}`', utils.colored(match[1],**kws).value, 1)
+        # Replace functions with arguments
+        for func in _special_funcs.keys():
+            all_matches = re.findall(fr'{func}\[(.*?)\]\`(.*?)\`', html_output, flags = re.DOTALL | re.MULTILINE)
+            for match in all_matches:
+                arg0 = match[1].strip() 
+                args = [v.replace('__COM__',',') for v in match[0].replace('\=','__EQ__').replace('\,','__COM__').split(',')] # respect escaped = and ,
+                kws = {k.strip().replace('__EQ__','='):v.strip().replace('__EQ__','=')
+                        for k,v in [a.split('=') for a in args if '=' in a]} 
+                args = [a.strip().replace('__EQ__','=') for a in args if '=' not in a]
+                _func = getattr(utils,func)
+                _out = _func(arg0,*args, **kws).value if arg0 else _func(*args, **kws).value # If no argument, use default
+                
+                html_output = html_output.replace(f'{func}[{match[0]}]`{match[1]}`', _out, 1)
         
         # Run an included file
         all_matches = re.findall(r'include\`(.*?)\`', html_output, flags = re.DOTALL)

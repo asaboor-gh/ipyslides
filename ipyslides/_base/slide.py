@@ -12,7 +12,7 @@ from IPython.core.ultratb import FormattedTB
 
 
 from . import styles
-from ..utils import html, colored, _format_css, _sub_doc, _css_docstring
+from ..utils import html, color, _format_css, _sub_doc, _css_docstring
 
 class _EmptyCaptured: outputs = [] # Just for initialization
 
@@ -102,7 +102,7 @@ class Proxy:
         return f'Proxy(text = {self._text!r}, slide = {self._slide!r})'
     
     def _repr_html_(self): # This is called when displayed
-        return colored(f'Proxy(text = {self._text!r}, slide = {self._slide!r})',fg='var(--accent-color)').value
+        return color(f'Proxy(text = {self._text!r}, slide = {self._slide!r})',fg='var(--accent-color)').value
     
     @property
     def outputs(self):

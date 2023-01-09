@@ -1,5 +1,5 @@
 __all__ = ['bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
-            'image','svg','iframe', 'format_html','format_css','alert','colored','keep_format', 'run_doc',
+            'image','svg','iframe', 'format_html','format_css','alert','color','keep_format', 'run_doc',
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
@@ -353,8 +353,8 @@ def alert(text):
     "Alerts text!"
     return _HTML(f"<span style='color:#DC143C;'>{text}</span>")
     
-def colored(text,fg='blue',bg=None):
-    "Colored text, `fg` and `bg` should be valid CSS colors"
+def color(text,fg='blue',bg=None):
+    "Colors text, `fg` and `bg` should be valid CSS colors"
     return _HTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
 
 def keep_format(plaintext_or_html):
@@ -398,7 +398,7 @@ def sig(callable,prepend_str = None):
     try:
         _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--secondary-fg);">{str(inspect.signature(callable))}</span>'
         if prepend_str: 
-            _sig = f'{colored(prepend_str,"var(--accent-color)")}.{_sig}' # must be inside format string
+            _sig = f'{color(prepend_str,"var(--accent-color)")}.{_sig}' # must be inside format string
         return _HTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')
@@ -427,7 +427,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     if _name.startswith('_'): # Remove private attributes
         return _HTML('') # Must be _HTML to work on memebers
     
-    _sig = _sig or colored(_pstr,"var(--accent-color)") # Picks previous signature if exists
+    _sig = _sig or color(_pstr,"var(--accent-color)") # Picks previous signature if exists
     _full_doc = f"<div class='docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
     _pstr = (prepend_str or _pstr) if itself == False else _pstr # Prefer given string if itself is not to doc
     
@@ -476,9 +476,9 @@ def code(callable):
     except:
         raise TypeError(f'Object {callable} is not a callable')
 
-def today(fmt = '%b %d, %Y',color = 'inherit'): # Should be inherit color for markdown flow
+def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markdown flow
     "Returns today's date in given format."
-    return colored(datetime.datetime.now().strftime(fmt),fg=color, bg = None)
+    return color(datetime.datetime.now().strftime(fmt),fg=fg, bg = None)
 
 def sub(text):
     return html('sub',text,style="font-size:70%;color:inherit;")

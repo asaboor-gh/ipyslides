@@ -201,7 +201,7 @@ class LayoutSettings:
         show_date = self._footer_kws['show_date']
               
         if show_date:
-            text += ((' | ' if text else '') + f'{today(color = "var(--secondary-fg)")}')
+            text += ((' | ' if text else '') + f'{today(fg = "var(--secondary-fg)")}')
         if show_slideno: #Slide number should be replaced from __number__ 
             text += '<b style="color:var(--accent-color);white-space:pre;">  __number__<b>'
         text = f'<p style="white-space:nowrap;display:inline;"> {text} </p>' # To avoid line break in footer

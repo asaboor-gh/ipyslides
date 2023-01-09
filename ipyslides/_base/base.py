@@ -157,9 +157,9 @@ class BaseSlides:
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
                 `__format__` method in your class enables to use \{\{object\}\} syntax and `_repr_html_` method enables it to use inside `write` function.
         
-        - Other options include:
+        - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         
-        color[blue]`color[blue]\`text\``, color[yellow_skyblue]`color[yellow_skyblue]\`text\``, ''') + '\n' + ', '.join(f'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
+        color[blue]`color[blue]\`text\``, color[yellow,skyblue]`color[yellow,skyblue]\`text\``, ''') + '\n' + ', '.join(f'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
         display_inline = False
         ))
    
@@ -388,7 +388,7 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.source,'Slides.source', members = True, itself = False).display()
         
-        auto.from_markdown('section`?Layout and color[yellow_black]`Theme` Settings?` toc`### Contents`')
+        auto.from_markdown('section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
         
         with auto.slide(): 
             self.write('## Layout and Theme Settings')
@@ -397,7 +397,7 @@ class BaseSlides:
         with auto.slide():
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
             members = ['alert','block', 'bokeh2html', 'bullets','cite',
-                       'colored', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
+                       'color', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'plt2html', 'raw', 'rows',
                         'section', 'set_citations', 'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
             self.doc(self.clipboard_image,'Slides').display()
@@ -413,7 +413,7 @@ class BaseSlides:
         with auto.slide():
             self.write('## Content Styling')
             with self.source.context(auto_display = False) as c:
-                self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink_yellow]`text`* with `className` attribute in writing/content functions. ' 
+                self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`* with `className` attribute in writing/content functions. ' 
                        'Provide **CSS**{.info} for that using `.format_css` or use some of the available styles. '
                        'See these **styles**{.success} with `.css_styles` property as below:'))
                 self.css_styles.display()

@@ -82,13 +82,13 @@ section`Variety of Content Types to Display` toc`### Contents`
 ## IPython Display Objects
 #### Any object with following methods could be in`write` command:
 {', '.join([f'`_repr_{rep}_`' for rep in __reprs__])}
-Such as color[navy_skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`{{.warning}}.            
+Such as color[fg=navy,bg=skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`{{.warning}}.            
 ---
 ## Plots and Other **Data**{{style='color:var(--accent-color);'}} Types
 #### These objects are implemented to be writable in `write` command:
 {', '.join([f"`{lib['name']}.{lib['obj']}`" for lib in libraries])}
 Many will be extentended in future. If an object is not implemented, use `display(obj)` to show inline or use library's specific
-command to show in Notebook outside color[teal_whitesmoke]`write`.
+command to show in Notebook outside color[fg=teal,bg=whitesmoke]`write`.
 ---
 ## Interactive Widgets
 ### Any object in `ipywidgets`{slides.textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
