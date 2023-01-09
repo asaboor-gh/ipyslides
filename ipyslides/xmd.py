@@ -165,12 +165,18 @@ class _ExtendedMarkdown(Markdown):
         rich_outputs = True > display_inline = True > parsed_html_string
         """
         self._display_inline = display_inline # Must change here
+        
+        
         xmd = textwrap.dedent(xmd) # Remove leading spaces from each line, better for writing under indented blocks
         xmd = re.sub('\\\`', '&#96;', xmd) # Escape backticks
         xmd = self._resolve_nested(xmd) # Resolve nested objects in form func`?text?` to func`html_repr`
         
         if self._slides and self._slides.running: 
             xmd = resolve_objs_on_slide(self._slides,xmd) # Resolve objects in xmd related to current slide
+        
+        # After resolve_objs_on_slide, xmd can have code blocks which may not be passed from suitable context
+        if not self._display_inline and '\n```python run' in xmd: # Do not match nested blocks
+            raise RuntimeError('Cannot execute code in current context, use Slides.parse(..., display_inline = True) for complete parsing!')
         
         if xmd[:3] == '```': # Could be a block just in start of file or string
             xmd = '\n' + xmd
@@ -324,7 +330,7 @@ class _ExtendedMarkdown(Markdown):
         return html_output # return in main scope
             
 
-def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
+def parse(extended_markdown, display_inline = True, rich_outputs = False):
     """Parse extended markdown and display immediately. 
     If you need output html, use `display_inline = False` but that won't execute python code blocks.
     Precedence of content return/display is `rich_outputs = True > display_inline = True > parsed_html_string`.
@@ -342,7 +348,7 @@ def parse_xmd(extended_markdown, display_inline = True, rich_outputs = False):
      {.info}
      +++
      # Second column is 60% wide
-     This {{var_name}} is code from above and will be substituted with the value of var_name
+     This \{\{var_name\}\} is code from above and will be substituted with the value of var_name
      ```
 
      ```python

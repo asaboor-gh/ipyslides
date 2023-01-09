@@ -8,7 +8,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .intro import key_combs
 from ..formatters import _HTML
-from ..extended_md import _special_funcs
+from ..xmd import _special_funcs
 
 class BaseSlides:
     def __init__(self):
@@ -92,7 +92,7 @@ class BaseSlides:
     @property
     def xmd_syntax(self):
         "Special syntax for markdown."
-        return _HTML(self.parse_xmd(textwrap.dedent('''
+        return _HTML(self.parse(textwrap.dedent('''
         ## Extended Markdown
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
@@ -131,7 +131,7 @@ class BaseSlides:
          slides.write('Hello, I was written from python code block using slides instance.')
          ```
         ```
-        and source then can be emded with \{\{source\}\} syntax and also \{\{my_var\}\} will show 'Hello'.
+        and source then can be emded with \{\{source\}\} syntax.
         
         - A whole block of markdown can be CSS-classed using syntax
         ```markdown
@@ -263,7 +263,7 @@ class BaseSlides:
         Markdown content of each slide is stored as .markdown attribute to slide. You can append content to it later like this:
         ```python
         with slides.slide(2):
-            slides.parse_xmd(slides[2].markdown) # Instead of write, parse_xmd take cares of code blocks
+            slides.parse(slides[2].markdown) # Instead of write, parse take cares of code blocks
             plot_something()
         ```
         
@@ -375,7 +375,7 @@ class BaseSlides:
         with auto.slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.note .info}')
-            self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse_xmd,'Slides'),self.doc(self.cite,'Slides'),self.doc(self.clipboard_image,'Slides')])
+            self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse,'Slides'),self.doc(self.cite,'Slides'),self.doc(self.clipboard_image,'Slides')])
         
         with auto.slide():
             self.write('## Adding Speaker Notes')
@@ -438,7 +438,7 @@ class BaseSlides:
         
         with auto.slide():
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
-            self.write('You can parse and view a markdown file w. The output you can save by exporting notebook in other formats.\n{.note .info}')
+            self.write('You can parse and view a markdown file. The output you can save by exporting notebook in other formats.\n{.note .info}')
             self.write([self.doc(self.from_markdown,'Slides'),
                         self.doc(self.demo,'Slides'), 
                         self.doc(self.docs,'Slides'),

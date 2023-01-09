@@ -11,7 +11,7 @@ from IPython.utils.capture import capture_output
 from ipywidgets import Layout
 
 from ..formatters import fix_ipy_image, code_css
-from ..extended_md import parse_xmd
+from ..xmd import parse
 from ..utils import html, details, today, _sub_doc, _css_docstring
 from . import scripts, intro, styles, _layout_css
 
@@ -63,7 +63,7 @@ class LayoutSettings:
 
         with capture_output() as cap:
             with suppress(BaseException): # When ipython is not running, avoid errors
-                parse_xmd(intro.instructions,display_inline=True)
+                parse(intro.instructions,display_inline=True)
             
         # Only do this if it's in Jupyter, otherwise throws errors
         self.widgets.htmls.intro.value = details('\n'.join(o.data['text/html'] for o in cap.outputs), summary="Instructions").value

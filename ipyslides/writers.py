@@ -4,16 +4,17 @@ write/ iwrite main functions to add content to slides
 
 __all__ = ['write','iwrite']
 
+import textwrap
 import ipywidgets as ipw
 from IPython.display import display as display
 
 from .formatters import _HTML, _HTML_Widget, stringify
-from .extended_md import parse_xmd          
+from .xmd import parse        
 
 def _fix_repr(obj):
     "should return a string"
     if isinstance(obj,str):
-        return parse_xmd(obj, display_inline= False, rich_outputs=False)
+        return parse(obj, display_inline= False, rich_outputs=False)
     else:
         return stringify(obj)        
     
@@ -42,7 +43,7 @@ def write(*columns,width_percents=None,className=None):
     
     - Pass int,float,dict,function etc. Pass list/tuple in a wrapped list for correct print as they used for rows writing too.
     - Give a code object from `Slides.source.context[from_...]` to it, syntax highlight is enabled.
-    - Give a matplotlib `figure/Axes` to it or use `ipyslides.objs_formatter.plt2html()`.
+    - Give a matplotlib `figure/Axes` to it or use `ipyslides.formatters.plt2html()`.
     - Give an interactive plotly figure.
     - Give a pandas dataframe `df` or `df.to_html()`.
     - Give any object which has `to_html` method like Altair chart. (Note that chart will not remain interactive, use display(chart) if need interactivity like brushing etc.)
@@ -55,11 +56,21 @@ def write(*columns,width_percents=None,className=None):
     
     If you give a className, add CSS of it using `format_css` function and provide it to `write` function.
     Get a list of already available classes using `slides.css_styles`. For these you dont need to provide CSS.
-    
-    Note: Use `keep_format` method to bypass markdown parser, for example `keep_format(altair_chart.to_html())`.
-    Note: You can give your own type of data provided that it is converted to an HTML string.
-    Note: `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
+    ::: note
+        - Use `keep_format` method to bypass markdown parser, for example `keep_format(altair_chart.to_html())`.
+        - You can give your own type of data provided that it is converted to an HTML string.
+        - `_repr_<format>_` takes precedence to `to_<format>` methods. So in case you need specific output, use `object.to_<format>`.
+        - If you pass a single string, it will be passed to `ipyslides.xmd.parse` function to execute available code.
     ''' 
+    if len(columns) == 1 and isinstance(columns[0],str):
+        if className:
+            return parse(f'''
+                ::: {className}
+                {textwrap.indent(columns[0],"    ")}    
+                ''', display_inline = True, rich_outputs = False)
+        else:
+            return parse(columns[0], display_inline = True, rich_outputs = False)
+            
     return display(_HTML(_fmt_write(*columns,width_percents=width_percents,className=className)))
 
 

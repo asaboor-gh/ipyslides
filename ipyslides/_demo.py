@@ -103,7 +103,7 @@ proxy`Add functions here`
 
 with slides.source.context(auto_display = False) as s:
     with last.proxies[0].capture():
-        write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse_xmd,'Slides')])
+        write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse,'Slides')])
         write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
         s.show_lines([0,1]).display()
 
@@ -246,15 +246,17 @@ def f(obj,idx):
     
 @auto.frames(*boxes, repeat=[(0,1),(2,3)])
 def f(obj,idx):
+    if idx == 1:
+        slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
+        slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
+    
     with slides.source.context(auto_display = False) as s:
         slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)
+        
     s.display()
     
 with auto.slide() as s:
-    slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
-    slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
-    
     slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
     try:
         slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
@@ -302,13 +304,6 @@ with auto.slide(), slides.source.context():
     slides.write('Info',className='info')
     slides.write('warning',className='warning')
     slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='align-right rtl')
-
-with auto.slide(),slides.source.context():
-    slides.rows(
-        '## Can skip `write` commnad sometimes',
-        slides.cols('### Column A','### Column B',className='info'),
-        '||### Column C {.warning}||### Column D {.success}||',
-    ).display()
     
 auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
 
@@ -333,7 +328,9 @@ with auto.slide():
     slides.get_source().display()
 
      
-with auto.slide(), slides.source.context():
-    slides.write('citations`## Reference via Markdown\n----`')
+with auto.slide() as bib_slide:
+    slides.write('citations`## Reference via Markdown\n----`') 
+    bib_slide.get_source().display()
+    
 
 slides.navigate_to(0) # Go to title slide

@@ -9,7 +9,7 @@ from IPython.utils.capture import capture_output
 
 import ipywidgets as ipw
 
-from .extended_md import parse_xmd, extender as _extender
+from .xmd import parse, extender as _extender
 from .source import Source
 from .writers import write, iwrite, _fix_repr
 from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer
@@ -86,7 +86,7 @@ class Slides(BaseSlides):
         self.icon = _Icon # Icon is useful to add many places
         self.write  = write # Write IPython objects in slides
         self.iwrite = iwrite # Write Widgets/IPython in slides
-        self.parse_xmd = parse_xmd # Parse extended markdown
+        self.parse = parse # Parse extended markdown
         self.serializer = serializer # Serialize IPython objects to HTML
         
         self._remove_post_run_callback() # Remove post_run_cell callback
@@ -146,7 +146,10 @@ class Slides(BaseSlides):
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box = None # Initialize
         self.set_overlay_url(url = None) # Set overlay url for initial information
-        
+    
+    def parse_xmd(self, *args, **kwargs):
+        raise DeprecationWarning('parse_xmd is deprecated, use parse instead with same arguments.')    
+    
     @contextmanager
     def skip_post_run_cell(self):
         """Context manager to skip post_run_cell event.""" 
@@ -282,14 +285,14 @@ class Slides(BaseSlides):
     def _add_clean_title(self):
         with suppress(BaseException), self.skip_post_run_cell(): # Otherwise it will trigger cell events during __init__
             with _build_slide(self, '0') as s:
-                self.parse_xmd(f'''
+                self.parse(f'''
                     # Title Page 
                     ::: align-center
                         color[teal]`Author: Abdul Saboor`
                         
                         👈🏻 **Read more instructions in left panel**''',
                 display_inline = True)  
-                self.details(self.parse_xmd(key_combs, display_inline = False), 'Keyboard Shortcuts').display()
+                self.details(self.parse(key_combs, display_inline = False), 'Keyboard Shortcuts').display()
                 
         self.refresh() # cleans up initialization setup       
     
@@ -347,7 +350,7 @@ class Slides(BaseSlides):
         if citations is not None:
             if isinstance(citations, dict):
                 self._citations = {
-                    key: self.parse_xmd(value, display_inline=False, rich_outputs = False) for key, value in citations.items()
+                    key: self.parse(value, display_inline=False, rich_outputs = False) for key, value in citations.items()
                 }
                 
                 if self._citation_mode == 'footnote':
@@ -621,7 +624,7 @@ class Slides(BaseSlides):
             @self.frames(int(slide_number_str), *_frames)
             def make_slide(_frame, idx):
                 self.running.set_source(_frame, 'markdown')  # Update source beofore running content to make it available to user inside markdown too
-                parse_xmd(_frame, display_inline = True, rich_outputs = False)
+                parse(_frame, display_inline = True, rich_outputs = False)
             
         else: # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number_str) as s:
@@ -654,9 +657,9 @@ class Slides(BaseSlides):
         does some formatting to line in magic. If you just need to format it in string, then `{var}` works as well.
         Inline columns are supported with ||C1||C2|| syntax."""
         if cell is None:
-            return parse_xmd(line, display_inline = True, rich_outputs = False)
+            return parse(line, display_inline = True, rich_outputs = False)
         else:
-            return parse_xmd(cell, display_inline = True, rich_outputs = False)
+            return parse(cell, display_inline = True, rich_outputs = False)
             
     @contextmanager
     def title(self):
