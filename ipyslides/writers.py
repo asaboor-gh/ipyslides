@@ -6,10 +6,101 @@ __all__ = ['write','iwrite']
 
 import textwrap
 import ipywidgets as ipw
+from IPython import get_ipython
 from IPython.display import display as display
+from IPython.utils.capture import capture_output
 
 from .formatters import _HTML, _HTML_Widget, stringify
-from .xmd import parse        
+from .xmd import parse 
+
+class _Writer:
+    def __init__(self,*columns,widths = None):
+        self.columns = columns
+        self._box = ipw.HBox().add_class('columns') # Box to hold columns
+             
+        self._cols = self._capture_objs(*columns, widths = widths)
+        self._slides = get_ipython().user_ns.get('get_slides_instance',lambda:None)()
+        self._slide = self._slides.running if self._slides else None
+        self._in_proxy = getattr(self._slides, '_in_proxy', None)
+        
+        if len(columns) == 1:
+            display(*self._cols[0]['outputs']) # If only one column, display it directly
+        else:
+            current_slide = self._slide if self._slide else self._in_proxy._slide if self._in_proxy else None
+            if current_slide:
+                idx = f'{"p" if self._in_proxy else ""}{len(current_slide._columns)}'
+                current_slide._columns[idx] = self
+                display(self._box, metadata={'COLUMNS': idx}) # Just placeholder to update in main display
+            else:
+                display(self._box) # Just display it
+                
+    def _capture_objs(self, *columns, widths = None):
+        if widths is None: # len(columns) check is done in write
+            widths = [100/len(columns) for _ in columns]
+        
+        assert len(columns) == len(widths)
+        for w in widths:
+            assert isinstance(w,int) or isinstance(w,float)
+        
+        widths = [f'{int(w)}%' for w in widths]
+        cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,columns)]
+        for i, col in enumerate(cols):
+            with capture_output() as cap:
+                for c in col['outputs']:
+                    try:
+                        ipw.Box([c]) # Check if c is a widget by trying to put it in a box
+                        display(c) # If yes, display it
+                    except:
+                        if isinstance(c,str):
+                            parse(c, display_inline = True, rich_outputs = False)
+                        elif callable(c) and c.__name__ == '<lambda>':
+                            _out = c() # If c is a lambda function, call it and it will dispatch whatever is inside
+                            if isinstance(_out, str):
+                                display(_HTML(_out)) # Do not parse lambda function output, it should be something like third party library output
+                        else:
+                            display(_HTML(stringify(c)))
+            
+            if cap.stderr:
+                raise RuntimeError(f'Error in column {i+1}:\n{cap.stderr}')
+            
+            cols[i]['outputs'] = cap.outputs
+            
+        return cols
+    
+    def update_display(self):
+        self._box.children = [ipw.Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
+        for c, out_w in zip(self._cols, self._box.children):
+            with out_w:
+                for out in c['outputs']: # Don't worry as _slide won't be None if DProxy/Proxy is present
+                    if 'DProxy' in out.metadata:
+                        display(*self._slide._dproxies[out.metadata['DProxy']].outputs) # Unpack DProxy as it can have many outputs
+                    elif 'Proxy' in out.metadata:
+                        display(*self._slide._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
+                    else:
+                        display(out)
+    
+    def fmt_html(self, allow_non_html_repr = True):
+        "Make HTML representation of columns that is required for exporting slides to other formats."
+        cols = []
+        for col in self._cols:
+            content = ''
+            for out in col['outputs']:
+                if 'text/html' in out.data:
+                    content += ('\n' + out.data['text/html']) # rows should be on their own line
+                elif allow_non_html_repr:
+                    content += ('\n' + out.data['text/plain'])
+        
+            cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
+        return f'<div class="columns">{"".join(cols)}</div>'
+    
+def _write(*columns,widths = None):
+    """
+    Write content to slides in columns. To create rows in a column, wrap the contents in a list or tuple.
+    
+    """
+    wr = _Writer(*columns,widths = widths)
+    if wr._slides and not any([wr._slides.running, getattr(wr._slides, '_in_proxy', None)]):
+        return wr.update_display() # Update in usual cell
 
 def _fix_repr(obj):
     "should return a string"

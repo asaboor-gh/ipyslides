@@ -20,7 +20,9 @@ class _HhtmlExporter:
         for item in self.main:
             _html = ''
             for out in item.contents:
-                if 'text/html' in out.data:
+                if 'COLUMNS' in out.metadata:
+                    _html += item._columns[out.metadata['COLUMNS']].fmt_html(allow_non_html_repr = allow_non_html_repr)
+                elif 'text/html' in out.data:
                     _html += out.data['text/html']
                 elif allow_non_html_repr and (as_slides == False):
                     if 'text/plain' in out.data:

@@ -110,7 +110,7 @@ class Slides(BaseSlides):
 
                 if 'file' in kwargs and kwargs['file'] != sys.stdout: # User should be able to redirect print to file
                     return self.builtin_print(*args, **kwargs)
-                elif self.running or getattr(self,'_in_proxy_capture', False):
+                elif self.running or getattr(self,'_in_proxy', False):
                     with capture_output() as captured:
                         self.builtin_print(*args, **kwargs)
 

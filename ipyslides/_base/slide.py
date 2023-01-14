@@ -27,11 +27,17 @@ class _DProxy:
         self._error_outputs = []
         self._raise_error = True
         
+        self._slide._in_dproxy = True
         try: # Initail error in cell to verify code is correct
             with capture_output():
                 self._func()
         except Exception as e:
             raise Exception(f'{e}')
+        finally:
+            self._slide._in_dproxy = False
+        
+        # TEST which columns inside this function to pop before next call
+        # Also test if this got written in column, is it still updating? like write(..., lambda: slides.on_refresh(lambda: print('hi'))
         
         display('DProxy', metadata= {'DProxy': self._key}) # Display something to get metadata working
         
@@ -85,6 +91,9 @@ class _DProxy:
 class Proxy:
     "Proxy object, should not be instantiated directly by user."
     def __init__(self, text, slide):
+        if getattr(slide, '_in_dproxy', False):
+            raise RuntimeError("Can't place proxy inside a refreshable function.")
+        
         self._text = text
         self._slide = slide
         self._outputs = []
@@ -118,7 +127,9 @@ class Proxy:
         "Context manager to capture output to current prpxy. Use it like this: with proxy.capture(): ... after a slide is already created."
         if self._slide._app.running:
             raise RuntimeError("Can't use Proxy.capture() contextmanager inside a slide constructor.")
-        self._slide._app._in_proxy_capture = True # Used to get print statements to work in order
+        
+        self._slide._columns = {k:v for k,v in self._slide._columns.items() if k.isdigit()} # Remove all non numeric columns that are made by proxy.capture()
+        self._slide._app._in_proxy = self # Used to get print statements to work in order and coulm aware
         try:
             with capture_output() as captured:
                 yield
@@ -128,8 +139,11 @@ class Proxy:
 
             self._outputs = captured.outputs
             self._slide.update_display() # Update display to show new output
+            for out in self._outputs:
+                if 'COLUMNS' in out.metadata:
+                    self._slide._columns[out.metadata['COLUMNS']].update_display() # 
         finally:
-            self._slide._app._in_proxy_capture = False
+            self._slide._app._in_proxy = None
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -154,6 +168,7 @@ class Slide:
         self._section = None # Added from Slides
         self._proxies = {} # Placeholders added to this slide
         self._dproxies = {} # Dynamic content added to this slide
+        self._columns = {} # Columns added to this slide
   
     def set_source(self, text, language):
         "Set source code for this slide."
@@ -196,6 +211,7 @@ class Slide:
             self._section = None # Reset sec_key
             self._proxies = {} # Reset placeholders
             self._dproxies = {} # Reset dynamic content holders
+            self._columns = {} # Reset columns
             if hasattr(self,'_on_load'):
                 del self._on_load # Remove on_load function
         
@@ -226,7 +242,10 @@ class Slide:
             self._widget.clear_output(wait = True) # Clear, but don't go there
         
         with self._widget:
-            display(*self.contents)
+            for cont in self.contents:
+                display(cont)
+                if 'COLUMNS' in cont.metadata: # Update columns if present
+                    self._columns[cont.metadata['COLUMNS']].update_display()
 
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr/').display()
@@ -276,7 +295,6 @@ class Slide:
         if '.' in self._label:
             return self._app._slides_dict[self._number] # Return parent slide, _number is string
         
-    
     @property
     def notes(self):
         return self._notes
