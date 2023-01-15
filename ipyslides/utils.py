@@ -1,7 +1,7 @@
 __all__ = ['bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','alert','color','keep_format', 'run_doc',
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
-__all__.extend(['rows','cols','block'])
+__all__.extend(['rows','cols','block','classed'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
 
 
@@ -18,8 +18,24 @@ from IPython.core.display import Image, display
 from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
-from .formatters import fix_ipy_image, _HTML
-from .writers import _fmt_write, _fix_repr
+from .formatters import fix_ipy_image, _HTML, _fix_repr
+
+def _fmt_cols(*objs,widths = None):
+    if not widths and len(objs) >= 1:
+        widths = [f'{int(100/len(objs))}%' for _ in objs]
+    else:
+        widths = [f'{w}%' for w in widths]
+    
+    _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in objs] 
+    _cols = ' '.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
+                     {' '.join([_fix_repr(row) for row in _col])}
+                     </div>""" for _col,w in zip(_cols,widths)])
+    
+    if len(objs) == 1:
+        return _cols
+    
+    return f'''<div class="columns">{_cols}</div>'''
+        
 
 def _sub_doc(**kwargs):
     "Substitute docstring with given kwargs."
@@ -163,9 +179,9 @@ def set_dir(path):
     finally:
         os.chdir(current)
 
-def format_html(*columns,width_percents=None,className=None):
-    'Same as `write` except it does not write xplicitly, provide in write function'
-    return _HTML(_fmt_write(*columns,width_percents=width_percents,className=className))
+def format_html(*objs,widths=None):
+    'Format objects in columns, same was as write does, but with limited content types, provide in write function'
+    return _HTML(_fmt_cols(*objs,widths=widths))
 
 def _validate_key(key):
     "Validate key for CSS,allow only string or tuple of strings. commas are allowed only in :is(.A,#B),:has(.A,#B) etc."
@@ -284,7 +300,19 @@ def enable_zoom(obj):
     try:
         return ipw.Box([obj]).add_class('zoom-child')
     except:
-        return _HTML(f'<div class="zoom-child">{_fix_repr(obj)}</div>')
+        return classed(obj, 'zoom-child')
+    
+def classed(obj, className):
+    "Add a class to a given object, whether a widget or html/IPYthon object and pass to `write` command."
+    if not isinstance(className,str):
+        raise ValueError('className must be a string!')
+    if isinstance(obj,(str,bytes)):
+        raise ValueError('Cannnot add class to strings/bytes! Use `::: className [indented block on new line]` pattern in markdown instead.')
+    try:
+        ipw.Box([obj]) # If this get success, it means obj is a widget
+        return obj.add_class(className)
+    except:
+        return _HTML(f'<div class="{className}">{_fix_repr(obj)}</div>')
 
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
@@ -363,27 +391,27 @@ def keep_format(plaintext_or_html):
         return plaintext_or_html # if not string, return as is
     return _HTML(plaintext_or_html) 
 
-def raw(text, className=None):
+def raw(text, className=None): # className is required here
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
     _class = className if className else ''
     escaped_text = escape(textwrap.dedent(text).strip('\n')) # dedent and strip newlines on top and bottom
     return _HTML(f"<div class='raw-text {_class}'>{escaped_text}</div>")
 
-def rows(*objs, className=None):
-    "Returns tuple of objects. Use in `write`, `iwrite` for better readiability of writing rows in a column."
-    return format_html(objs,className = className) # Its already a tuple, so will show in a column with many rows
+def rows(*objs):
+    "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."
+    return format_html(objs) # Its already a tuple, so will show in a column with many rows
 
-def cols(*objs,width_percents=None, className=None):
-    "Returns HTML containing multiple columns of given width_percents."
-    return format_html(*objs,width_percents=width_percents,className = className)
+def cols(*objs,widths=None):
+    "Returns HTML containing multiple columns of given widths."
+    return format_html(*objs,widths=widths)
 
 def block(*objs,className = 'block'):
-    """Format a block like in LATEX beamer. *objs expect to be writable with `write` command.   
+    """Format a block like in LATEX beamer. *objs expect to be a subset of writables with `write` command.   
     ::: block
         - Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,a>`.
         - You can create blocks just by CSS classes in markdown as {.block}, {.block-red}, {.block-green}, etc.
     """
-    return _HTML(f"<div class='{className}'>{_fmt_write(objs)}</div>")
+    return _HTML(f"<div class='{className}'>{_fmt_cols(objs)}</div>")
     
 def block_r(*objs): return block(*objs,className = 'block-red')
 def block_b(*objs): return block(*objs,className = 'block-blue')
@@ -493,5 +521,5 @@ def bullets(iterable, ordered = False,marker = None, className = None):
     _bullets = []
     for it in iterable:
         start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
-        _bullets.append(f'{start}{_fmt_write(it)}</li>')
+        _bullets.append(f'{start}{_fmt_cols(it)}</li>')
     return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],className = className) # Don't use style, it will remove effect of className

@@ -2,8 +2,8 @@
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import time
 
-from ipyslides.writers import write, iwrite
-from ipyslides.formatters import libraries, __reprs__
+from ipyslides.writers import write
+from ipyslides.formatters import libraries, __reprs__, plt2html
 from ipyslides._base.intro import logo_svg
 
 
@@ -93,7 +93,7 @@ command to show in Notebook outside color[fg=teal,bg=whitesmoke]`write`.
 ## Interactive Widgets
 ### Any object in `ipywidgets`{slides.textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
 or libraries based on ipywidgtes such as color[red]`bqplot`,color[green]`ipyvolume`,plotly's `FigureWidget` cite`pf`(reference at end)
-can be included in `iwrite` command as well as other objects that can be passed to `write` with caveat of Javascript.
+can be included as well.
 {{.warning}}
 ---
 ## Commands which do all Magic!
@@ -103,8 +103,7 @@ proxy`Add functions here`
 
 with slides.source.context(auto_display = False) as s:
     with last.proxies[0].capture():
-        write([slides.doc(write,'Slides'), slides.doc(iwrite,'Slides'), slides.doc(slides.parse,'Slides')])
-        write("#### If an object does not render as you want, use `display(object)` or register it as you want using `@Slides.serializer.register` decorator")
+        write([slides.classed(slides.doc(write,'Slides'),'block-green'), slides.classed(slides.doc(slides.parse,'Slides'),'block-red')])
         s.show_lines([0,1]).display()
 
 
@@ -147,34 +146,43 @@ with slides.source.context(False) as s:
 with auto.slide():
     write(('## Writing Plotly Figure',fig, s))
     
+def race_plot():
+    import numpy as np
+    import matplotlib.pyplot as plt
     
+    x = np.linspace(0,0.9,10)
+    y = np.random.random((10,))
+    _sort = np.argsort(y)
+    fig,ax = plt.subplots(figsize=(3.4,2.6))
+    ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
+    
+    for s in ['right','top','bottom']:
+        ax.spines[s].set_visible(False)
+    
+    ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
+    return fig
+            
+
 # Interactive widgets.   
 with auto.slide():
     with slides.source.context(auto_display = False) as src:
         import ipywidgets as ipw
-        import numpy as np, matplotlib.pyplot as plt
+        
         write('''
             ## Interactive Apps with Widgets section`Interactive Widgets`
             Use `ipywidgets`, `bqplot`,`ipyvolume`, `plotly Figurewidget` etc. to show live apps like this!
+            ::: note-tip
+                Export to Slides/Report to see what happens to this slide and next slide!
             ''')
-        
-        writer, (plot,button), code = slides.iwrite(['plot will be here',
-            ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content'))
-            ],src)
+        write([
+            plot_html := ipw.HTML('Plot will be here'),
+            button := ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
+            ], src)
         
         def update_plot():
-            x = np.linspace(0,0.9,10)
-            y = np.random.random((10,))
-            _sort = np.argsort(y)
-            fig,ax = plt.subplots(figsize=(3.4,2.6))
-            ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
+            fig = race_plot()
+            plot_html.value = plt2html(fig).value #Convert to html
             
-            for s in ['right','top','bottom']:
-                ax.spines[s].set_visible(False)
-            
-            ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
-            writer.update(plot, fig) #Update plot each time
-        
         def onclick(btn):
             plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
             with plt.style.context(plot_theme):
@@ -183,10 +191,9 @@ with auto.slide():
         button.on_click(onclick)
         update_plot() #Initialize plot
         
-    slides.notes.insert('## Something to hide from viewers!')
+    slides.source.from_callable(race_plot).display()
     
 with auto.slide() as rslide:
-    import numpy as np, matplotlib.pyplot as plt
     write('''
         ## Dynamic Content without Widgets
         Use refresh button below to update plot! Compare with previous slide!
@@ -194,17 +201,10 @@ with auto.slide() as rslide:
     
     @slides.on_refresh
     def plot_it():
-        x = np.linspace(0,0.9,10)
-        y = np.random.random((10,))
-        _sort = np.argsort(y)
-        fig,ax = plt.subplots(figsize=(3.4,2.6))
-        ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
-        
-        for s in ['right','top','bottom']:
-            ax.spines[s].set_visible(False)
-        
-        ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
+        fig = race_plot()
         write(fig, rslide.get_source()) #Update plot each time refresh button is clicked
+        
+    slides.source.from_callable(race_plot).display() 
         
 
 auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
@@ -225,7 +225,7 @@ def func(obj,idx):
         
     slides.write([f'### This is Slide {slides.running.number}.{idx}\n and we are animating matplotlib',
                   s.show_lines([idx])
-                  ],ax,width_percents=[40,60])
+                  ],ax,widths=[40,60])
     if idx == 0: #Only show source code of first frame
         s.show_lines([5]).display()
     slides.write(slides.cite('This'))
@@ -261,7 +261,7 @@ with auto.slide() as s:
     try:
         slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
     except:
-        slides.write('Could not retrieve image from url. Check internt connection!',className='error')
+        slides.write('Could not retrieve image from url. Check internt connection!\n{.error}')
     s.get_source().display()
 
 # Youtube
@@ -275,7 +275,7 @@ with auto.slide() as ys: # We will use this in next %%magic
         t = time.localtime()
         slides.notify(f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}')
         
-    ys.get_source().display() # s = source.context(style='vs', className="Youtube")
+    ys.get_source().display() 
     
 
 with auto.slide() as s:
@@ -294,16 +294,13 @@ auto.from_markdown('''
 Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
 $\LaTeX$ needs time to load, so keeping it in view until it loads would help.
 {.note-warning}
-\$\$\int_0^1\\frac{1}{1-x^2}dx\$\$
+
 $$\int_0^1\\frac{1}{1-x^2}dx$$
 ''', trusted=True)
 
 with auto.slide(), slides.source.context():
     slides.write('## Built-in CSS styles')
     slides.css_styles.display()
-    slides.write('Info',className='info')
-    slides.write('warning',className='warning')
-    slides.write('سارے جہاں میں دھوم ہماری زباں کی ہے۔',className='align-right rtl')
     
 auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
 

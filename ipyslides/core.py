@@ -11,8 +11,8 @@ import ipywidgets as ipw
 
 from .xmd import parse, extender as _extender
 from .source import Source
-from .writers import write, iwrite, _fix_repr
-from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer
+from .writers import write, iwrite
+from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer, _fix_repr
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
@@ -84,8 +84,8 @@ class Slides(BaseSlides):
         self.highlight  = highlight
         self.source = Source # Code source
         self.icon = _Icon # Icon is useful to add many places
-        self.write  = write # Write IPython objects in slides
-        self.iwrite = iwrite # Write Widgets/IPython in slides
+        self.write  = write 
+        self.iwrite = iwrite # will be discarded at some point
         self.parse = parse # Parse extended markdown
         self.serializer = serializer # Serialize IPython objects to HTML
         
@@ -139,16 +139,12 @@ class Slides(BaseSlides):
         self.progress_slider.label = '0' # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content,names=['index'])
         self.widgets.buttons.refresh.on_click(self._update_dynamic_content)
-        self.widgets.buttons.sfresh.on_click(self._update_slide_display)
         
         # All Box of Slides
         self._box =  self.widgets.mainbox 
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box = None # Initialize
         self.set_overlay_url(url = None) # Set overlay url for initial information
-    
-    def parse_xmd(self, *args, **kwargs):
-        raise DeprecationWarning('parse_xmd is deprecated, use parse instead with same arguments.')    
     
     @contextmanager
     def skip_post_run_cell(self):
@@ -160,8 +156,9 @@ class Slides(BaseSlides):
             yield
         finally:
             self._post_run_enabled = old # Restore user prefrence
-            self._remove_post_run_callback() # Do not register post_run_cell event here
-    
+            if self._post_run_enabled: # If user wants to enable post_run_cell event
+                self.shell.events.register('post_run_cell', self._post_run_cell)
+        
     def _remove_post_run_callback(self):
         with suppress(Exception):
             self.shell.events.unregister('post_run_cell', self._post_run_cell)
@@ -280,7 +277,7 @@ class Slides(BaseSlides):
 
             raise ValueError("Citations are not writable in 'inline' or 'footnote' mode. They appear on slide automatically.")
         
-        return self._dynamic_private(_citations_handler, tag = '_cited')
+        return self._dynamic_private(_citations_handler, tag = '_cited', hide_refresher = True)
     
     def _add_clean_title(self):
         with suppress(BaseException), self.skip_post_run_cell(): # Otherwise it will trigger cell events during __init__
@@ -418,7 +415,7 @@ class Slides(BaseSlides):
             
             return func(tuple(sections))
            
-        return self._dynamic_private(_toc_handler, tag = '_toced')
+        return self._dynamic_private(_toc_handler, tag = '_toced', hide_refresher = True)
         
     
     def _goto_button(self, slide_number, text,text_before = '', extra_func=None, **kwargs):
@@ -686,12 +683,11 @@ class Slides(BaseSlides):
     def _update_dynamic_content(self, btn = None):
         with self._loading_private(self.widgets.buttons.refresh):
             for slide in self[:]:
-                if any([getattr(slide, attr, False) for attr in ('_dynamic', '_toced', '_cited')]):
+                if any([getattr(slide, attr, False) for attr in ('_has_widgets', '_toced', '_cited')]):
                     slide.update_display(go_there = False)
-    
-    def _update_slide_display(self, btn = None):
-        with self._loading_private(self.widgets.buttons.sfresh):
-            self.current.update_display()
+                # Update dynamic content in slide
+                for dp in slide._dproxies.values():
+                    dp.update_display()
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
@@ -762,7 +758,7 @@ class Slides(BaseSlides):
                     
                 new_frames.append(new_slide)
                 
-                with new_slide._capture(assign = True) as captured:
+                with new_slide._capture() as captured:
                     self.write(self.format_css({'.SlideArea': {'height': frame_height}}))
                     func(obj,i+1) # i+1 as main slide is 0
                 
@@ -853,8 +849,6 @@ class Slides(BaseSlides):
         
         return tuple([self._slides_dict[f'{slide_number}'] for slide_number in slide_numbers])
     
-    def glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
-        raise DeprecationWarning('DEPRECATED: Use Slides.settings.set_glassmorphic instead')
     
     def AutoSlides(self):
         """Returns a named tuple `AutoSlides(title,slide,frames, from_markdown)` if run from inside a

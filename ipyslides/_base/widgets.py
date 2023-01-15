@@ -26,7 +26,6 @@ class _Buttons:
     setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh dynmaic content across all slides').add_class('Menu-Item').add_class('Refresh-Btn')
-    sfresh  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh dynmaic content on current slide').add_class('Menu-Item').add_class('Sfresh-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
     end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
@@ -311,7 +310,6 @@ class Widgets:
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
-            self.buttons.sfresh, # Should be on absolute position
             self.sliders.visible,
             self.htmls.overlay, 
             self.navbox, # Navbox should come last

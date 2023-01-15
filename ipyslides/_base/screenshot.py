@@ -47,7 +47,6 @@ class ScreenShot:
         hide_widgets = [self.widgets.controls,
                         self.widgets.buttons.setting,
                         self.widgets.buttons.toc,
-                        self.widgets.buttons.sfresh,
                         self.btn_capture,
                         self.widgets.sliders.visible,
                         self.widgets.htmls.toast,

@@ -11,24 +11,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '.SlidesWrapper': {
             'z-index': '1 !important',
-            '.Sfresh-Btn': {'display':'none',},
-            '^.SingleSlide .Controls': {'display':'none !important',},
-            '^.InView-Dynamic .Sfresh-Btn': {
-                'display':'flex',
-                'font-size': '14px !important', # it is bit larger than other buttons, so decrease font size
-                'position': 'absolute',
-                'bottom': '4px',
-                'left':'50%',
-                'transform': 'translateX(-50%)',
-                'z-index': '5', # above controls
-                'min-height': '24px',
-                'width': '24px !important', # Make it round
-                'min-width': '24px !important',
-                'border-radius': '50%',
-                'align-items': 'center',
-                'background': 'var(--secondary-bg) !important',
-                '^:hover': {'background': 'var(--hover-bg) !important',},
-                }, 
+            '^.SingleSlide .Controls': {'display':'none !important',}, 
             '^.CaptureMode': {
                 '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
             },
@@ -74,6 +57,24 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                     'display': 'none !important'
                 },
                 _zoom_ables: {'cursor':'zoom-in',},
+                '.Sfresh-Box': {'column-gap': '0.2em',},
+                '.Sfresh-Out': {'width': '100%','box-sizing':'border-box'}, # Otherwise it is too close to border
+                '.Sfresh-Btn': {
+                    'display':'flex',
+                    'align-items': 'center',
+                    'font-size': '14px !important', # it is bit larger than other buttons, so decrease font size
+                    'min-height': '24px',
+                    'z-index': '5', # Above controls if collide
+                    'width': '24px !important', # Make it round
+                    'min-width': '24px !important',
+                    'border-radius': '50% !important',
+                    'border': 'none !important',
+                    'transition': 'transform 0.2s ease-in-out',
+                    '^.Hidden': {'display': 'none !important'},
+                    '^:hover': {
+                        'transform': 'scale(1.2)',
+                    },
+                },
             },
             '.export-only': { 'display': 'none !important' },
             '.widget-inline-hbox': {

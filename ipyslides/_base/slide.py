@@ -3,7 +3,7 @@
 import typing
 import sys
 from contextlib import contextmanager
-from ipywidgets import Output, Layout, Button
+from ipywidgets import Output, Layout, Button, HBox, HTML
 
 
 from IPython.display import display
@@ -16,41 +16,99 @@ from ..utils import html, color, _format_css, _sub_doc, _css_docstring
 
 class _EmptyCaptured: outputs = [] # Just for initialization
 
-class _DProxy:
-    "_DProxy is a proxy for a function that is executed when refresh button is clicked. Should not be instantiated directly."
+def _expand_cols(outputs, context):
+    "Put columns inline with rich outputs in a given context."
+    new_outputs = []
+    for out in outputs:
+        if hasattr(out, 'metadata') and ('COLUMNS' in out.metadata): # may be Writer object there without metadata
+            new_outputs.append(context._columns[out.metadata['COLUMNS']])
+        else:
+            new_outputs.append(out)
+    return new_outputs
+
+class DynamicRefresh:
+    "DynamicRefresh is a display for a function that is executed when refresh button is clicked. Should not be instantiated directly."
     def __init__(self, func, slide):
+        if getattr(slide._app, '_in_cols', False):
+            raise Exception('Dynamically refreshable content cannot be written inside Columns!')
+        
+        if getattr(slide._app, '_in_dproxy', None):
+            raise Exception('Dynamically refreshable content cannot be written inside another same type!')
+        
         self._func = func
         self._slide = slide
-        self._key = str(len(self._slide._dproxies))
-        self._slide._dproxies[self._key] = self # Add to slide to use later
+        self._btn = Button(icon= 'plus',layout= Layout(width='24px',height='24px'),tooltip='Refresh dynmaic content').add_class('Sfresh-Btn').add_class('Menu-Item')
+        self._box = HBox(children=[self._btn], layout =Layout(width='100%',height='auto')).add_class('Sfresh-Box')
         self._last_outputs = []
         self._error_outputs = []
         self._raise_error = True
+        self._columns = {}
         
-        self._slide._in_dproxy = True
+        self._idx = str(len(self._slide._dproxies))
+        self._slide._dproxies[self._idx] = self
+        
+        self._slide._app._in_dproxy = self
         try: # Initail error in cell to verify code is correct
             with capture_output():
                 self._func()
         except Exception as e:
             raise Exception(f'{e}')
         finally:
-            self._slide._in_dproxy = False
+            self._slide._app._in_dproxy = None
+            
+        self._btn.on_click(self._on_click)
+    
+    def _ipython_display_(self):            
+        self._box.children = [self._btn, HTML(self.fmt_html())] # First time Output get captured on slide, so avoid it
+        display(self._box, metadata = self.metadata)
         
-        # TEST which columns inside this function to pop before next call
-        # Also test if this got written in column, is it still updating? like write(..., lambda: slides.on_refresh(lambda: print('hi'))
-        
-        display('DProxy', metadata= {'DProxy': self._key}) # Display something to get metadata working
-        
+    def _on_click(self, btn):
+        out = Output(layout = Layout(width='100%')).add_class('Sfresh-Out') # Create new output for each click, otherwise it will not show
+        self._btn.icon = 'minus'
+        self._btn.disabled = True
+        try:
+            with out:
+                display(*self.outputs)
+            self._box.children = [self._btn, out]
+        finally:
+            self._btn.disabled = False
+            self._btn.icon = 'plus'  
+    
+    def update_display(self):
+        "Updates the display of the dynamic content."
+        self._on_click(None)
+    
+    def fmt_html(self, allow_non_html_repr = True): 
+        content = ''
+        for out in self.outputs:
+            if hasattr(out, 'fmt_html'): # Columns
+                content += out.fmt_html(allow_non_html_repr = allow_non_html_repr)
+            else:
+                if 'text/html' in out.data:
+                    content += out.data['text/html']
+                elif allow_non_html_repr:
+                    content += out.data['text/plain']
+        return content
+    
+    @property
+    def metadata(self): return {'DYNAMIC': self._idx} # Important
+    
+    @property
+    def data(self): return getattr(self._box, '_repr_mimebundle_', lambda: {'application':'dproxy'})()
+    
     @property
     def outputs(self):
         "Executes given function and returns its output as list of outputs."
         old = self._slide._app._running_slide
+        #self._columns = {} # Reset columns
+        # TODO: WHAT IS GOING WRONG HERE TO HAVE SO MAY COLUMNS OR NO COLUMNS AT ALL
         self._slide._app._running_slide = self._slide
+        self._slide._app._in_dproxy = self
         try:
             with capture_output() as captured:
                 self._func()
                 
-            self._last_outputs = captured.outputs
+            self._last_outputs = _expand_cols(captured.outputs, self) # Expand columns
             
         except:
             if self._raise_error:
@@ -62,6 +120,7 @@ class _DProxy:
                      
         finally:
             self._slide._app._running_slide = old # should go back
+            self._slide._app._in_dproxy = None
             
         if self._error_outputs: 
             return self._last_outputs + self._error_outputs
@@ -74,7 +133,7 @@ class _DProxy:
             self._raise_error = False 
             try:
                 self._error_outputs = []
-                self._slide.update_display() 
+                self.update_display() 
             finally:
                 self._raise_error = True
         
@@ -91,7 +150,7 @@ class _DProxy:
 class Proxy:
     "Proxy object, should not be instantiated directly by user."
     def __init__(self, text, slide):
-        if getattr(slide, '_in_dproxy', False):
+        if getattr(slide._app, '_in_dproxy', None):
             raise RuntimeError("Can't place proxy inside a refreshable function.")
         
         self._text = text
@@ -99,6 +158,7 @@ class Proxy:
         self._outputs = []
         self._key = str(len(self._slide._proxies))
         self._slide._proxies[self._key] = self
+        self._columns = {} 
         display(self, metadata= {'Proxy': self._key}) 
     
     @property
@@ -128,7 +188,7 @@ class Proxy:
         if self._slide._app.running:
             raise RuntimeError("Can't use Proxy.capture() contextmanager inside a slide constructor.")
         
-        self._slide._columns = {k:v for k,v in self._slide._columns.items() if k.isdigit()} # Remove all non numeric columns that are made by proxy.capture()
+        self._columns = {} # Reset columns
         self._slide._app._in_proxy = self # Used to get print statements to work in order and coulm aware
         try:
             with capture_output() as captured:
@@ -137,11 +197,10 @@ class Proxy:
             if captured.stderr:
                 raise RuntimeError(captured.stderr)
 
-            self._outputs = captured.outputs
+            self._outputs = _expand_cols(captured.outputs, self) # Expand columns
             self._slide.update_display() # Update display to show new output
-            for out in self._outputs:
-                if 'COLUMNS' in out.metadata:
-                    self._slide._columns[out.metadata['COLUMNS']].update_display() # 
+            for dp in self._slide._dproxies.values():
+                dp.update_display() # Update display to show new output, otherwise columns won't be updated
         finally:
             self._slide._app._in_proxy = None
 
@@ -167,18 +226,21 @@ class Slide:
         self._frames = [] # Added from Slides
         self._section = None # Added from Slides
         self._proxies = {} # Placeholders added to this slide
-        self._dproxies = {} # Dynamic content added to this slide
+        self._dproxies = {} # Dynamic placeholders added to this slide
         self._columns = {} # Columns added to this slide
   
     def set_source(self, text, language):
         "Set source code for this slide."
         self._source = {'text': text, 'language': language}
     
-    def _dynamic_private(self, func, tag = None):  
+    def _dynamic_private(self, func, tag = None, hide_refresher = False):  
         "Add dynamic content to this slide which updates on refresh/update_display etc. func takes no arguments." 
-        _DProxy(func, self) # get auto displayed, no need to save reference
+        dr = DynamicRefresh(func, self) 
+        if hide_refresher:
+            dr._btn.add_class('Hidden')
         if isinstance(tag, str): # To keep track what kind of dynamic content it is
             setattr(self, tag, True)
+        return display(dr) # This will be handleded by _ipython_display_ method
             
     def _proxy_private(self, text):
         return Proxy(text, self) # get auto displayed
@@ -195,25 +257,23 @@ class Slide:
         "Called when a slide is loaded into view."
         if hasattr(self,'_on_load') and callable(self._on_load):
             self._on_load()
-        getattr(self._app._box, 'add_class' if hasattr(self, '_dynamic') else 'remove_class')('InView-Dynamic')
     
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
     
     @contextmanager
-    def _capture(self, assign = True):
+    def _capture(self):
         "Capture output to this slide."
         self._app._running_slide = self
-        if assign:
-            self._app._next_number = int(self._number) + 1
-            self._notes = '' # Reset notes
-            self._citations = {} # Reset citations
-            self._section = None # Reset sec_key
-            self._proxies = {} # Reset placeholders
-            self._dproxies = {} # Reset dynamic content holders
-            self._columns = {} # Reset columns
-            if hasattr(self,'_on_load'):
-                del self._on_load # Remove on_load function
+        self._app._next_number = int(self._number) + 1
+        self._notes = '' # Reset notes
+        self._citations = {} # Reset citations
+        self._section = None # Reset sec_key
+        self._proxies = {} # Reset placeholders
+        self._dproxies = {} # Reset dynamic placeholders
+        self._columns = {} # Reset columns
+        if hasattr(self,'_on_load'):
+            del self._on_load # Remove on_load function
         
         try:
             self._app._remove_post_run_callback() # Remove before capturing
@@ -229,9 +289,7 @@ class Slide:
             
         finally:
             self._app._running_slide = None
-            
-            if assign:
-                self._contents = captured.outputs  
+            self._contents = _expand_cols(captured.outputs, self) # Expand columns  
         
         
     def update_display(self, go_there = True):
@@ -242,11 +300,8 @@ class Slide:
             self._widget.clear_output(wait = True) # Clear, but don't go there
         
         with self._widget:
-            for cont in self.contents:
-                display(cont)
-                if 'COLUMNS' in cont.metadata: # Update columns if present
-                    self._columns[cont.metadata['COLUMNS']].update_display()
-
+            display(*self.contents)
+            
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr/').display()
                 self._app.write(self.citations)
@@ -266,21 +321,6 @@ class Slide:
         self._app._slidelabel = self.label # Go there to see effects
         self._widget.clear_output(wait = wait)
         
-    
-    @contextmanager
-    def append(self):
-        raise DeprecationWarning('DEPRECATED: Use proxy placeholder way to update content later.')
-    
-    @contextmanager
-    def insert(self, index: int):
-        raise DeprecationWarning('DEPRECATED: Use proxy placeholder way to update content later.')
-        
-    def insert_markdown(self, index_markdown_dict: typing.Dict[int, str]) -> None:
-        raise DeprecationWarning('DEPRECATED: Use proxy placeholder way to update content later.')
-    
-    def reset(self):
-        raise DeprecationWarning('DEPRECATED: No more required.')
-    
     @property
     def frames(self):
         return tuple(self._frames)
@@ -335,8 +375,8 @@ class Slide:
     def contents(self):
         outputs = []
         for out in self._contents:
-            if 'DProxy' in out.metadata:
-                outputs.extend(self._dproxies[out.metadata['DProxy']].outputs) # Unpack DProxy as it can have many outputs
+            if 'DYNAMIC' in out.metadata:
+                outputs.append(self._dproxies[out.metadata['DYNAMIC']]) # This will get displayed as a widget
             elif 'Proxy' in out.metadata:
                 outputs.extend(self._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
             else:
@@ -448,7 +488,7 @@ def _build_slide(app, slide_number_str, is_frameless = True):
         _slide = Slide(app, slide_number_str)
         app._slides_dict[slide_number_str] = _slide 
             
-    with _slide._capture(assign = True) as captured:  
+    with _slide._capture() as captured:  
         yield _slide
     
     for k in [p for ps in _slide.contents for p in ps.data.keys()]:

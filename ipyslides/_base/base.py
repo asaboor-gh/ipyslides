@@ -58,7 +58,7 @@ class BaseSlides:
     
     @property
     def css_styles(self):
-        """CSS styles for write(..., className = style)."""
+        """CSS styles for markdown or `classed` command."""
         # self.html will be added from Chid class
         return self.raw('''
         Use any or combinations of these styles in className argument of writing functions:
@@ -220,12 +220,12 @@ class BaseSlides:
         ::: note-warning
             Do not use this to change global state of slides, because that will affect all slides.
         """
-        return self._dynamic_private(func, tag = '_dynamic')
+        return self._dynamic_private(func, tag = '_has_widgets', hide_refresher = False)
     
-    def _dynamic_private(self, func, tag = None):
+    def _dynamic_private(self, func, tag = None, hide_refresher = False):
         "Not for user use, internal function for other dynamic content decorators with their own tags."
         self.verify_running('Dynamic content can only be created under a slide constructor!')
-        return self.running._dynamic_private(func, tag = tag)
+        return self.running._dynamic_private(func, tag = tag, hide_refresher = hide_refresher)
         
     def from_markdown(self, start, file_or_str, trusted = False):
         """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
@@ -375,7 +375,7 @@ class BaseSlides:
         with auto.slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.note .info}')
-            self.write([self.doc(self.write,'Slides'),self.doc(self.iwrite,'Slides'), self.doc(self.parse,'Slides'),self.doc(self.cite,'Slides'),self.doc(self.clipboard_image,'Slides')])
+            self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.cite,'Slides'),self.doc(self.clipboard_image,'Slides')])
         
         with auto.slide():
             self.write('## Adding Speaker Notes')
@@ -396,7 +396,7 @@ class BaseSlides:
                 
         with auto.slide():
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
-            members = ['alert','block', 'bokeh2html', 'bullets','cite',
+            members = ['alert','block', 'bokeh2html', 'bullets','cite','classed',
                        'color', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'format_html', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'plt2html', 'raw', 'rows',
                         'section', 'set_citations', 'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
@@ -413,7 +413,7 @@ class BaseSlides:
         with auto.slide():
             self.write('## Content Styling')
             with self.source.context(auto_display = False) as c:
-                self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`* with `className` attribute in writing/content functions. ' 
+                self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
                        'Provide **CSS**{.info} for that using `.format_css` or use some of the available styles. '
                        'See these **styles**{.success} with `.css_styles` property as below:'))
                 self.css_styles.display()
@@ -483,7 +483,7 @@ class BaseSlides:
             with self.source.context():
                 import ipywidgets as ipw
                 btn = ipw.Button(description='Chevron-Down',icon='plus').add_class('MyIcon') # Any free font awesome icon, but class is important to overwrite icon     
-                self.iwrite(btn)
+                self.write(btn)
                 self.format_css({'.MyIcon .fa.fa-plus': self.icon('chevron',color='crimson', size='1.5em',rotation=90).css}).display() # Overwrite icon with your own
 
             

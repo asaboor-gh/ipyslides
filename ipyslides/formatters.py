@@ -191,7 +191,7 @@ def highlight(code, language='python', name = None, className = None, style='def
     
 class Serializer:
     def __init__(self):
-        """HTML serializer for an object to use inside Slides.write/iwrite."""
+        """HTML serializer for an object to use inside Slides.write."""
         self._libs = []
     
     def register(self, obj_type, verbose = True):
@@ -354,3 +354,11 @@ def stringify(obj):
         
         # Return __repr__ if nothing above
         return f"<div class='raw-text'>{obj.__repr__()}</div>"
+
+def _fix_repr(obj):
+    "should return a string"
+    if isinstance(obj,str):
+        from .xmd import parse
+        return parse(obj, display_inline= False, rich_outputs=False)
+    else:
+        return stringify(obj)
