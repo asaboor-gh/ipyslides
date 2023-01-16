@@ -463,6 +463,9 @@ class Slides(BaseSlides):
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
+        # This is useful for readily available objects with slides instead of indexing.
+        self.__dict__.update({f's{item.label}'.replace('.','_'): item for item in self._iterable if item.label})
+        
         self._remove_post_run_callback() # Avoid duplicate display
         self._update_toc() # Update toc before displaying app to include all sections
         self._update_dynamic_content() # Update dynamic content before displaying app

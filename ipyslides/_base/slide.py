@@ -1,9 +1,8 @@
 """Slide Object, should not be instantiated directly"""
 
-import typing
 import sys
 from contextlib import contextmanager
-from ipywidgets import Output, Layout, Button, HBox, HTML
+from ipywidgets import Output, Layout, Button, HBox
 
 
 from IPython.display import display
@@ -26,6 +25,7 @@ def _expand_cols(outputs, context):
             new_outputs.append(out)
     return new_outputs
 
+
 class DynamicRefresh:
     "DynamicRefresh is a display for a function that is executed when refresh button is clicked. Should not be instantiated directly."
     def __init__(self, func, slide):
@@ -37,7 +37,7 @@ class DynamicRefresh:
         
         self._func = func
         self._slide = slide
-        self._btn = Button(icon= 'plus',layout= Layout(width='24px',height='24px'),tooltip='Refresh dynmaic content').add_class('Sfresh-Btn').add_class('Menu-Item')
+        self._btn = Button(icon= 'plus',layout= Layout(width='24px',height='24px'),tooltip='Refresh dynamic content').add_class('Sfresh-Btn').add_class('Menu-Item')
         self._box = HBox(children=[self._btn], layout =Layout(width='100%',height='auto')).add_class('Sfresh-Box')
         self._last_outputs = []
         self._error_outputs = []
@@ -59,7 +59,7 @@ class DynamicRefresh:
         self._btn.on_click(self._on_click)
     
     def _ipython_display_(self):            
-        self._box.children = [self._btn, HTML(self.fmt_html())] # First time Output get captured on slide, so avoid it
+        self._box.children = [self._btn] # First time Output get captured on slide, so avoid it
         display(self._box, metadata = self.metadata)
         
     def _on_click(self, btn):
@@ -68,7 +68,7 @@ class DynamicRefresh:
         self._btn.disabled = True
         try:
             with out:
-                display(*self.outputs)
+                display(*self.outputs) 
             self._box.children = [self._btn, out]
         finally:
             self._btn.disabled = False
@@ -100,15 +100,14 @@ class DynamicRefresh:
     def outputs(self):
         "Executes given function and returns its output as list of outputs."
         old = self._slide._app._running_slide
-        #self._columns = {} # Reset columns
-        # TODO: WHAT IS GOING WRONG HERE TO HAVE SO MAY COLUMNS OR NO COLUMNS AT ALL
         self._slide._app._running_slide = self._slide
         self._slide._app._in_dproxy = self
+        self._columns = {} # Reset columns here just before executing function
         try:
             with capture_output() as captured:
                 self._func()
                 
-            self._last_outputs = _expand_cols(captured.outputs, self) # Expand columns
+            self._last_outputs = _expand_cols(captured.outputs,self) # Expand columns is necessary
             
         except:
             if self._raise_error:
@@ -146,6 +145,7 @@ class DynamicRefresh:
         
         btn.on_click(remove_error_outputs)
         return btn, out
+    
     
 class Proxy:
     "Proxy object, should not be instantiated directly by user."
@@ -199,8 +199,6 @@ class Proxy:
 
             self._outputs = _expand_cols(captured.outputs, self) # Expand columns
             self._slide.update_display() # Update display to show new output
-            for dp in self._slide._dproxies.values():
-                dp.update_display() # Update display to show new output, otherwise columns won't be updated
         finally:
             self._slide._app._in_proxy = None
 
@@ -301,6 +299,8 @@ class Slide:
         
         with self._widget:
             display(*self.contents)
+            for dp in self._dproxies.values():
+                dp.update_display() # Update display to show new output as well
             
             if self._citations and (self._app._citation_mode == 'footnote'):
                 html('hr/').display()

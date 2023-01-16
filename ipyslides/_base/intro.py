@@ -97,6 +97,7 @@ with slides.slide(2):
 
 ::: note-info
     - You can access individual slides by indexing `s_i = slides[i]` where `i` is the slide index or by key as `s_3_1 = slides['3.1']` will give you slide which shows 3.1 at bottom.
+    - You can also access (preferred way) each slide by `slides.s8_1` that gives back slide with label 8.1 and so on.
     - Basides indexing, you can access current displayed slide by `slides.current`.
     - You can insert placeholders usign alert`proxy\`informative text to use later\`` and later can use `Slides.proxies[index].capture` to fill content such as plots.
     - If a display is not complete, e.g. some widget missing on a slide, you can use `(slides.current, slides[index], slides[key]).update_display()` to update display.

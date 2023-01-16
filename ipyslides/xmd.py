@@ -322,8 +322,11 @@ class XMarkdown(Markdown):
                         for k,v in [a.split('=') for a in args if '=' in a]} 
                 args = [a.strip().replace('__EQ__','=') for a in args if '=' not in a]
                 _func = getattr(utils,func)
-                _out = _func(arg0,*args, **kws).value if arg0 else _func(*args, **kws).value # If no argument, use default
-                
+                try:
+                    _out = _func(arg0,*args, **kws).value if arg0 else _func(*args, **kws).value # If no argument, use default
+                except Exception as e:
+                    raise ValueError(f'Error in {func}[{match[0]}]`{match[1]}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside [{match[0]}]')
+                    
                 html_output = html_output.replace(f'{func}[{match[0]}]`{match[1]}`', _out, 1)
         
         # Run an included file

@@ -24,7 +24,7 @@ class Writer:
         if len(objs) == 1:
             display(*self._cols[0]['outputs']) # If only one column, display it directly
         else:
-            context = self._in_proxy or (self._in_dproxy if self._in_dproxy else self._slide) # pick in dproxy before slide
+            context = (self._in_dproxy if self._in_dproxy else self._slide) or self._in_proxy # order strictly matters
             if context:
                 idx = f'{len(context._columns)}' 
                 context._columns[idx] = self
