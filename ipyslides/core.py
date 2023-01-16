@@ -89,7 +89,7 @@ class Slides(BaseSlides):
         self.parse = parse # Parse extended markdown
         self.serializer = serializer # Serialize IPython objects to HTML
         
-        self._remove_post_run_callback() # Remove post_run_cell callback
+        self._remove_post_run_callback() # Remove post_run_cell callback before this and at end
         self._post_run_enabled = True # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
         with suppress(Exception): # Avoid error when using setuptools to install
             self.widgets._notebook_dir = self.shell.starting_dir # This is must after shell is defined
@@ -145,6 +145,7 @@ class Slides(BaseSlides):
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box = None # Initialize
         self.set_overlay_url(url = None) # Set overlay url for initial information
+        self._remove_post_run_callback() # Remove post_run_cell callback at end of init, otherwise it appears during import
     
     @contextmanager
     def skip_post_run_cell(self):
@@ -296,6 +297,7 @@ class Slides(BaseSlides):
     def clear(self):
         "Clear all slides. This will also clear resources including citations, sections."
         self._slides_dict = {} # Clear slides
+        _ = [self.__dict__.pop(s, None) for s in getattr(self, '_links_dict', {})] # clear slides attributes
         self.set_citations({}) # Clears citations from disk too
         self._next_number = 0 # Reset slide number to 0, because user will overwrite title page.
         self._add_clean_title() # Add clean title page without messing with resources.
@@ -463,9 +465,6 @@ class Slides(BaseSlides):
         if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
-        # This is useful for readily available objects with slides instead of indexing.
-        self.__dict__.update({f's{item.label}'.replace('.','_'): item for item in self._iterable if item.label})
-        
         self._remove_post_run_callback() # Avoid duplicate display
         self._update_toc() # Update toc before displaying app to include all sections
         self._update_dynamic_content() # Update dynamic content before displaying app
@@ -559,6 +558,7 @@ class Slides(BaseSlides):
         if not self._iterable:
             self.progress_slider.options = [('0',0)] # Clear options
             self.widgets.slidebox.children = [] # Clear older slides
+            _ = [self.__dict__.pop(s, None) for s in getattr(self, '_links_dict', {})] # clear slides attributes
             return None
         
         n_last = float(self._iterable[-1].label)
@@ -576,6 +576,7 @@ class Slides(BaseSlides):
             self._slideindex = i # goto there to update display
         
         self._slideindex = 0 # goto first slide after refresh
+        self._iterable[0]._reset_links() # Reset links to slides
     
      
     def proxy(self,text):

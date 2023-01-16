@@ -450,6 +450,13 @@ class Slide:
                         display(self.animation, self._css)
         else:
             self._animation = None # It should be None, not '' or don't throw error here
+    
+    def _reset_links(self):
+        # This is useful for readily available objects with slides instead of indexing.
+        old_links = getattr(self._app,'_links_dict', {})
+        _ = [self._app.__dict__.pop(s, None) for s in old_links] # Remove old links
+        self._app._links_dict = {f's{item.label}'.replace('.','_'): item for item in self._app._iterable if item.label}
+        self._app.__dict__.update(self._app._links_dict) # Add new links
             
     def _rebuild_all(self):
         "Update all slides in optimal way when a new slide is added."
@@ -470,6 +477,8 @@ class Slide:
             s._index = i # Update index of slide for __repr__
             if s._has_widgets:
                 s.update_display(go_there =  False) # Refresh all slides with widgets only, other data is not lost
+        
+        self._reset_links() # Update links to slides
         
 
 @contextmanager

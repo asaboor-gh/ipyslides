@@ -386,7 +386,7 @@ def color(text,fg='blue',bg=None):
     return _HTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
 
 def keep_format(plaintext_or_html):
-    "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_raw(obj.to_html()) preserves its actual form."
+    "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_format(obj.to_html()) preserves its actual form."
     if not isinstance(plaintext_or_html,str):
         return plaintext_or_html # if not string, return as is
     return _HTML(plaintext_or_html) 

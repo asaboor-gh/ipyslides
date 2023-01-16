@@ -104,7 +104,7 @@ class Writer:
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
         return f'<div class="columns">{"".join(cols)}</div>'
     
-def write(*objs,widths = None,**kwargs):
+def write(*objs,widths = None):
     """
     Write `objs` to slides in columns. To create rows in a column, wrap objects in a list or tuple.      
     You can optionally specify `widths` as a list of percentages for each column. 
@@ -114,9 +114,10 @@ def write(*objs,widths = None,**kwargs):
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
     - Display another function in order by passing it to a lambda function like `lambda: func()`. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
-    - Display Axes/Plots form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
+    - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.source` API.
     - Other options include but not limited to:
+        - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.
         - IPython display objects such as Image, SVG, HTML, Audio, Video, YouTubeVideo, IFrame, Latex, Markdown, JSON, Javascript, etc.
         - Any object that has a `_repr_html_` method, you can create one for your own objects/third party objects by:
@@ -125,20 +126,15 @@ def write(*objs,widths = None,**kwargs):
             
     ::: note
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
-        - You can avoid `repr(obj)` by `lambda: function_that_displays_objects_for_that_specific_library()` e.g. `lambda: plt.show()`.
+        - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`.
+        - A single string passed to `write` is equivalent to `parse` command.
     """
-    if 'width_percents' in kwargs:
-        parse('`width_percents` is deprecated, use `widths` instead\n{.error}')
-    if 'className' in kwargs:
-        parse('`className` in overall writing is deprecated, encapsulate your objects in `Slides.classed` instead!\n{.error}')
-    
     wr = Writer(*objs,widths = widths)
-    if wr._slides and not any([wr._slides.running, getattr(wr._slides, '_in_proxy', None)]):
-        return wr.update_display() # Update in usual cell
+    if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
+        return wr.update_display() # Update in usual cell to have widgets working
+    
 
 # We can just discourage the use of `iwrite` command in favor of the robust `write` command.        
-    
-    
 
 def _fmt_iwrite(*objs,widths=None):
     if not widths:
@@ -174,10 +170,8 @@ def _fmt_iwrite(*objs,widths=None):
     return ipw.HBox(children = children).add_class('columns'), out_cols #Return display widget and list of objects for later use
 
 class _WidgetsWriter:
-    def __init__(self, *objs, widths=None, className=None):
+    def __init__(self, *objs, widths=None):
         self._grid, self._cols = _fmt_iwrite(*objs,widths=widths)
-        if isinstance(className, str):
-            self._grid.add_class(className)
         self._grid.add_class('columns')
         
     def _ipython_display_(self):
@@ -214,13 +208,12 @@ class _WidgetsWriter:
         self._grid.children[col].children = widgets_row
         return tmp
     
-def iwrite(*objs,widths = None, **kwargs):
+def iwrite(*objs,widths = None):
     """Each obj in objs could be an IPython widget like `ipywidgets`,`bqplots` etc 
     or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
     Other objects (those in `write` command) will be converted to HTML widgets if possible. 
     Object containing javascript code may not work, use `write` command for that.
     
-    If you give a className, add CSS of it using `format_css` function and provide it to `iwrite` function. 
     Get a list of already available classes using `slides.css_styles`. For these you dont need to provide CSS.
     
     **Returns**: writer, objs as reference to use later and update. rows are packed in columns.
@@ -235,11 +228,6 @@ def iwrite(*objs,widths = None, **kwargs):
     new_obj = writer.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
     ```
     """
-    if 'width_percents' in kwargs:
-        parse('`width_percents` is deprecated, use `widths` instead\n{.error}')
-    if 'className' in kwargs:
-        parse('`className` in overall writing is deprecated, encapsulate your objects in `Slides.classed` instead!\n{.error}')
-    
     wr = _WidgetsWriter(*objs,widths=widths)
     display(wr._grid) # Display it must to show it there
     return wr # Return it to use later as writer, columns unpacked
