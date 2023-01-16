@@ -57,7 +57,7 @@ class Writer:
                         else:
                             _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
-                        display(c, metadata = 'WIDGET')
+                        display(c, metadata = {'DOMWidget': '---'})
                     else:
                         display(_HTML(stringify(c)))
             
@@ -226,5 +226,5 @@ def iwrite(*objs,widths = None):
     ```
     """
     wr = _WidgetsWriter(*objs,widths=widths)
-    display(wr._grid) # Display it must to show it there
+    display(wr._grid, metadata = {'DOMWidget':'---'}) # Display it must to show it there with a metadata
     return wr # Return it to use later as writer, columns unpacked
