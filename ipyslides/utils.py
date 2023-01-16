@@ -296,10 +296,10 @@ def iframe(src, width='100%',height='auto',**kwargs):
     return _HTML(f._repr_html_())
 
 def enable_zoom(obj):
-    "Wraps are given obj in a parent with 'zoom-child' class, whether a widget or html/IPYthon object"
-    try:
-        return ipw.Box([obj]).add_class('zoom-child')
-    except:
+    "Wraps a given obj in a parent with 'zoom-child' class or add 'zoom-self' to widget, whether a widget or html/IPYthon object"
+    if isinstance(obj,ipw.DOMWidget):
+        return obj.add_class('zoom-self')
+    else:
         return classed(obj, 'zoom-child')
     
 def classed(obj, className):
@@ -308,17 +308,17 @@ def classed(obj, className):
         raise ValueError('className must be a string!')
     if isinstance(obj,(str,bytes)):
         raise ValueError('Cannnot add class to strings/bytes! Use `::: className [indented block on new line]` pattern in markdown instead.')
-    try:
-        ipw.Box([obj]) # If this get success, it means obj is a widget
+    
+    if isinstance(obj,ipw.DOMWidget):
         return obj.add_class(className)
-    except:
+    else:
         return _HTML(f'<div class="{className}">{_fix_repr(obj)}</div>')
 
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
-    try:
-        return ipw.Box([obj]).add_class('align-center')
-    except:
+    if isinstance(obj,ipw.DOMWidget):
+        return ipw.Box([obj]).add_class('align-center') # needs to wrap in another for cenering
+    else:
         return _HTML(f'<div class="align-center">{_fix_repr(obj)}</div>')
     
 def html(tag, children = None,className = None,**node_attrs):

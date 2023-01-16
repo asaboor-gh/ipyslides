@@ -56,12 +56,10 @@ class Writer:
                                 self._slides._in_cols = False
                         else:
                             _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
+                    elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
+                        display(c, metadata = 'WIDGET')
                     else:
-                        try:
-                            ipw.Box([c]) # Check if c is a widget by trying to put it in a box
-                            display(c, metadata = 'WIDGET') # If yes, display it
-                        except:
-                            display(_HTML(stringify(c)))
+                        display(_HTML(stringify(c)))
             
             if cap.stderr:
                 raise RuntimeError(f'Error in column {i+1}:\n{cap.stderr}')
@@ -149,11 +147,10 @@ def _fmt_iwrite(*objs,widths=None):
     for j, _rows in enumerate(_cols):
         row = []
         for i, item in enumerate(_rows):
-            try: 
-                ipw.Box([item]) # Check for widget first 
+            if isinstance(item, ipw.DOMWidget):
                 item._grid_location = {'row':i,'column':j}
                 row.append(item)
-            except:
+            else:
                 tmp = _HTML_Widget(value = _fix_repr(item))
                 if '</script>' in tmp.value:
                     tmp.value = f'Error displaying object, cannot update object {item!r} as it needs Javascript. Use `write` or `display` commands or `ipywidgets.Outpt()` to display it.'
@@ -194,10 +191,10 @@ class _WidgetsWriter:
         "Updates `old_obj`  with `new_obj`. Returns reference to created/given widget, which can be updated by it's own methods."
         row, col = old_obj._grid_location['row'], old_obj._grid_location['column']
         widgets_row = list(self._grid.children[col].children)
-        try: 
-            ipw.Box([new_obj]) # Check for widget first 
+        
+        if isinstance(new_obj, ipw.DOMWidget):
             tmp = new_obj
-        except:
+        else:
             tmp = _HTML_Widget(value = _fix_repr(new_obj))
             if '</script>' in tmp.value:
                 tmp.value = f'Error displaying object, cannot update object {new_obj!r} as it needs Javascript. Use `write` or `display` commands or `ipywidgets.Outpt()` to display it.'
