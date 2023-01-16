@@ -57,7 +57,11 @@ class Writer:
                         else:
                             _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
-                        display(c, metadata = {'DOMWidget': '---'})
+                        display(c, metadata = {'DOMWidget': '---'}) # Display widget
+                        
+                        # This is enough, Do not go too deep like in boxes to search for HTML, because then we will lose the column structure
+                        if isinstance(c, ipw.HTML):
+                            display(_HTML(f'<div class="export-only">{c.value}</div>')) # Add HTML value that will be shown in exported slides
                     else:
                         display(_HTML(stringify(c)))
             
@@ -126,6 +130,7 @@ def write(*objs,widths = None):
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
         - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`.
         - A single string passed to `write` is equivalent to `parse` command.
+        - `ipywidgets.HTML` and its subclasses will be displayed and also written for html export if given directly, not inside another widget.
     """
     wr = Writer(*objs,widths = widths)
     if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
