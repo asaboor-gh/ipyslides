@@ -186,7 +186,7 @@ def format_html(*objs,widths=None):
 def _validate_key(key):
     "Validate key for CSS,allow only string or tuple of strings. commas are allowed only in :is(.A,#B),:has(.A,#B) etc."
     if not isinstance(key,str):
-        raise ValueError(f'key should be string, got {key!r}')
+        raise TypeError(f'key should be string, got {key!r}')
 
     if ',' in key:
         all_matches = re.findall(r'\((.*?)\)',key,flags=re.DOTALL)
@@ -258,9 +258,9 @@ def format_css(css_dict):
 def alt(widget, obj):
     "Display `widget` for slides and `obj` will be and displayed only in exported formats as HTML."
     if not isinstance(widget, ipw.DOMWidget):
-        raise ValueError(f'widget should be a widget, got {widget!r}')
+        raise TypeError(f'widget should be a widget, got {widget!r}')
     if isinstance(obj, ipw.DOMWidget):
-        raise ValueError(f'obj should not be a widget, got {obj!r}')
+        raise TypeError(f'obj should not be a widget, got {obj!r}')
     class Alt:
         def __init__(self, widget, obj):
             self._widget = widget
@@ -325,9 +325,9 @@ def enable_zoom(obj):
 def classed(obj, className):
     "Add a class to a given object, whether a widget or html/IPYthon object and pass to `write` command."
     if not isinstance(className,str):
-        raise ValueError('className must be a string!')
+        raise TypeError('className must be a string!')
     if isinstance(obj,(str,bytes)):
-        raise ValueError('Cannnot add class to strings/bytes! Use `::: className [indented block on new line]` pattern in markdown instead.')
+        raise TypeError('Cannnot add class to strings/bytes! Use `::: className [indented block on new line]` pattern in markdown instead.')
     
     if isinstance(obj,ipw.DOMWidget):
         return obj.add_class(className)
@@ -359,7 +359,7 @@ def html(tag, children = None,className = None,**node_attrs):
         return _HTML(f'<hr/>') # Special case for hr
     
     if children and tag.endswith('/'):
-        raise ValueError(f'Parametr `children` should be None for self closing tag {tag!r}')
+        raise RuntimeError(f'Parametr `children` should be None for self closing tag {tag!r}')
     
     if tag == 'style':
         node_attrs = {} # Ignore node_attrs for style tag
@@ -380,7 +380,7 @@ def html(tag, children = None,className = None,**node_attrs):
     elif isinstance(children,(list,tuple)):
         content = '\n'.join(_fix_repr(child) for child in children) # Convert to html nodes in sequence of rows
     else:
-        raise ValueError(f'Children should be a list/tuple of objects or str, not {type(children)}')
+        raise TypeError(f'Children should be a list/tuple of objects or str, not {type(children)}')
         
     tag_in =  f'<{tag} {attrs}>' if attrs else f'<{tag}>' # space is must after tag, strip attrs spaces
     return _HTML(f'{tag_in}{content}</{tag}>')

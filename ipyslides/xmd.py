@@ -290,7 +290,7 @@ class XMarkdown(Markdown):
             if _match in user_ns:
                 output = user_ns[_match]
             else:
-                raise ValueError(('{{'+ match + '}}' + ' could not be resolved. ' 
+                raise Exception(('{{'+ match + '}}' + ' could not be resolved. ' 
                 'Only variables are allowed in double curly braces or see Slides.xmd_syntax as well'))
                 
             _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
@@ -325,7 +325,7 @@ class XMarkdown(Markdown):
                 try:
                     _out = _func(arg0,*args, **kws).value if arg0 else _func(*args, **kws).value # If no argument, use default
                 except Exception as e:
-                    raise ValueError(f'Error in {func}[{match[0]}]`{match[1]}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside [{match[0]}]')
+                    raise Exception(f'Error in {func}[{match[0]}]`{match[1]}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside [{match[0]}]')
                     
                 html_output = html_output.replace(f'{func}[{match[0]}]`{match[1]}`', _out, 1)
         

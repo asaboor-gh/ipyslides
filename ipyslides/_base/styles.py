@@ -79,9 +79,9 @@ animations = {'zoom':'''
 def _validate_colors(colors):
     for key, value in colors.items():
         if not isinstance(value, str):
-            raise ValueError(f'Color value for {key!r} must be a string')
+            raise TypeError(f'Color value for {key!r} must be a string')
         if not key in theme_colors['Light']:
-            raise ValueError(f'Invalid color key {key!r}! Use one of {list(theme_colors["Light"].keys())}')
+            raise KeyError(f'Invalid color key {key!r}! Use one of {list(theme_colors["Light"].keys())}')
     
     for k1, k2 in zip(sorted(colors.keys()),sorted(theme_colors['Light'].keys())):
         if k1 != k2:

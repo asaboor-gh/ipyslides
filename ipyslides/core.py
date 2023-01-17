@@ -276,7 +276,7 @@ class Slides(BaseSlides):
                     
                 return func(tuple(sorted(_all_citations.values(), key=lambda x: int(x._id))))
 
-            raise ValueError("Citations are not writable in 'inline' or 'footnote' mode. They appear on slide automatically.")
+            raise RuntimeError("Citations are not writable in 'inline' or 'footnote' mode. They appear on slide automatically.")
         
         return self._dynamic_private(_citations_handler, tag = '_cited', hide_refresher = True)
     
@@ -362,7 +362,7 @@ class Slides(BaseSlides):
         
         if file is not None:
             if citations is not None:
-                raise ValueError('Cannot set citations from file and dictionary at the same time!')
+                raise RuntimeError('Cannot set citations from file and dictionary at the same time!')
             
             if isinstance(file, str):
                 self._set_citations_from_file(file)
@@ -551,7 +551,6 @@ class Slides(BaseSlides):
             # below two lines after switching
             self.current.run_on_load() # Run on_load setup
             
-            
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self._iterable = self._collect_slides() # would be at least one title slide
@@ -615,7 +614,7 @@ class Slides(BaseSlides):
         """
         line = line.strip().split() #VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
-            raise ValueError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
+            raise TypeError(f'You should use %%slide integer >= 1 -m(optional), got {line}')
         
         slide_number_str = line[0] # First argument is slide number
         
@@ -641,13 +640,12 @@ class Slides(BaseSlides):
         if not isinstance(slide_number, int):
             raise ValueError(f'slide_number should be int >= 1, got {slide_number}')
         
-        assert slide_number >= 0 # slides should be >= 1, zero for title slide
+        if slide_number < 0: # zero for title slide
+            raise ValueError(f'slide_number should be int >= 1, got {slide_number}')
         
         with _build_slide(self, f'{slide_number}') as s, self.source.context(auto_display = False, depth = 4) as c: # depth = 4 to source under context manager
             s.set_source(c.raw, 'python') # Update cell source befor yielding
             yield s # Useful to use later
-        
-            
         
     def __title(self,line,cell):
         "Turns to cell magic `title` to capture title"
@@ -729,8 +727,9 @@ class Slides(BaseSlides):
             if not isinstance(slide_number,int):
                 return print(f'slide_number expects integer, got {slide_number!r}')
             
-            assert slide_number >= 0 # Should be >= 0
-
+            if slide_number < 0: # title slide is 0 
+                raise ValueError(f'slide_number should be >= 1, got {slide_number!r}')
+            
             if repeat == True:
                 _new_objs = [objs[:i] for i in range(1,len(objs)+1)]
             elif isinstance(repeat,(list, tuple)):
@@ -776,7 +775,7 @@ class Slides(BaseSlides):
             
             # Update All displays
             for s in this_slide._frames:
-                s.update_display()
+                s.update_display() # This call is much important, otherwise content of many slides do not show
                 # Remove duplicate sections/notes if any
                 if s._section == this_slide._section:
                     s._section = None
@@ -840,7 +839,7 @@ class Slides(BaseSlides):
         self.widgets.tocbox.children = children
         
     def create(self, *slide_numbers):
-        "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is faster than creating one slide each time."
+        "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is much faster than creating one slide each time."
         new_slides = False
         for slide_number in slide_numbers:
             if f'{slide_number}' not in self._slides_dict:
@@ -912,7 +911,7 @@ class Slides(BaseSlides):
                 ])
             self.widgets.htmls.overlay.value= _html.value # Set overlay to blank and give docs info
         else:
-            raise ValueError(f'url must be a valide string or None, got {url!r}')
+            raise TypeError(f'url must be a valide string or None, got {url!r}')
     
         
 # Make available as Singleton Slides
@@ -937,6 +936,7 @@ class Slides:
         - Run `slides.demo()` to see a demo of some features.
         - Run `slides.docs()` to see documentation.
         - Instructions in left settings panel are always on your fingertips.
+        - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
     
    """)
     def __new__(cls,

@@ -296,7 +296,7 @@ class Slide:
             self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
         else:
             self._widget.clear_output(wait = True) # Clear, but don't go there
-        
+
         with self._widget:
             display(*self.contents)
             for dp in self._dproxies.values():
@@ -425,14 +425,14 @@ class Slide:
         elif main in styles.animations:
             self.__class__._animations['main'] = styles.animations[main]
         else:
-            raise ValueError(f'Animation {main!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
+            raise KeyError(f'Animation {main!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
             
         if frame is None:
             self.__class__._animations['frame'] = ''
         elif frame in styles.animations:
             self.__class__._animations['frame'] = styles.animations[frame]
         else:
-            raise ValueError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
+            raise KeyError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
             
     def set_animation(self, name):
         "Set animation of this slide. Provide None if need to stop animation."

@@ -120,7 +120,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
     """
     if style not in pygments.styles.get_all_styles():
-        raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
+        raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     _class = '.highlight' if className is None else f'.highlight.{className}'
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
     if style == 'default':
@@ -164,7 +164,7 @@ def highlight(code, language='python', name = None, className = None, style='def
     If className is given and matches any of `pygments.styles.get_all_styles()`, then style will be applied immediately.
     color is used for text color as some themes dont provide text color."""
     if style not in pygments.styles.get_all_styles():
-        raise ValueError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
+        raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     if className in pygments.styles.get_all_styles():
         style = className
         
@@ -336,7 +336,7 @@ def format_object(obj):
 def stringify(obj):
     "Returns string of HTML for given object."
     if isinstance(obj,str):
-        raise ValueError('can not stringify string')
+        raise TypeError('can not stringify string')
     elif isinstance(obj,(_HTML, _HTML_Widget)):
         return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick   
     else:

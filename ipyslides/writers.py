@@ -36,9 +36,11 @@ class Writer:
         if widths is None: # len(objs) check is done in write
             widths = [100/len(objs) for _ in objs]
         
-        assert len(objs) == len(widths)
+        if len(objs) != len(widths):
+            raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
         for w in widths:
-            assert isinstance(w,int) or isinstance(w,float)
+            if not isinstance(w,(int, float)):
+                raise TypeError(f'widths must be numbers, got {w}')
         
         widths = [f'{int(w)}%' for w in widths]
         cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]

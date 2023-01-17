@@ -136,7 +136,7 @@ class Icon(_HTML):
     def __init__(self, name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0) :
         "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
         if name not in _icons:
-            raise ValueError(f'Icon {name} not found. Available icons: {", ".join(_icons.keys())}')
+            raise KeyError(f'Icon {name} not found. Available icons: {", ".join(_icons.keys())}')
         
         _value = _icons[name].format(color=color, size=size, rotation = rotation).replace('#', '%23')  # replace # with %23 for svg
         super().__init__(_dedent(_value).strip()) # remove leading and trailing whitespace/newlines

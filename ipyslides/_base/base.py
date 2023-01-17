@@ -276,7 +276,7 @@ class BaseSlides:
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         if not isinstance(file_or_str, str): #check path later or it will throw error
-            raise ValueError(f"file_or_str expects a makrdown file path(str) or text block, got {file_or_str!r}")
+            raise TypeError(f"file_or_str expects a makrdown file path(str) or text block, got {file_or_str!r}")
         
         if not trusted:
             try: # Try becuase long string will through error for path
@@ -330,7 +330,7 @@ class BaseSlides:
         with self.set_dir(os.path.split(__file__)[0]):
             file = '../_demo.py'
             raw_source = self.source.from_file(file).raw
-            N = raw_source.count('auto.') # Count number of slides
+            N = raw_source.count('auto.') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
             self.create(*range(N)) # Create slides first, this is faster
             self.shell.run_line_magic('run', file) # Run demo in same namespace
             
@@ -341,7 +341,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(*range(13)) # Create slides faster
+        self.create(*range(22)) # Create slides faster
         
         from ..core import Slides
         self.settings.set_footer('IPySlides Documentation')

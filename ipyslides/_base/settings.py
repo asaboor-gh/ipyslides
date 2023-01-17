@@ -91,10 +91,10 @@ class LayoutSettings:
         """
         for k,v in kwargs.items():
             if not isinstance(v,dict):
-                raise ValueError(f'values in kwargs should be dict, got {v!r}')
+                raise TypeError(f'values in kwargs should be dict, got {v!r}')
             func = getattr(self,f'set_{k}', False)
             if func is False:
-                raise ValueError(f'No such function {k!r} in settings')
+                raise AttributeError(f'No such function {k!r} in settings')
             func(**v) # Call function with arguments
             
     
@@ -102,7 +102,7 @@ class LayoutSettings:
         """If True (default), slides are shown after each cell execution where a slide constructor is present (other view will be closed). 
         Otherwise only when `slides.show()` is called or `slides` is the last line in a cell."""
         if not isinstance(b, bool):
-            raise ValueError(f'Expected bool, got {b!r}')
+            raise TypeError(f'Expected bool, got {b!r}')
         self._slides._post_run_enabled = True if b else False # Do not rely on user if they really give bool or not
     
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
@@ -110,7 +110,7 @@ class LayoutSettings:
         if len(self._slides[:]) >= 1:
             self._slides[0]._set_overall_animation(main = main,frame = frame)
         else:
-            raise ValueError("No slides yet to set animation.")
+            raise RuntimeError("No slides yet to set animation.")
     
     @_sub_doc(colors = styles.theme_colors['Light'])
     def set_theme_colors(self, colors = {}):
@@ -134,7 +134,7 @@ class LayoutSettings:
         if len(self._slides[:]) >= 1:
             self._slides[0]._set_overall_css(css_dict = css_dict)
         else:
-            raise ValueError("No slides yet to set CSS.")
+            raise RuntimeError("No slides yet to set CSS.")
         
         
     def set_glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
@@ -190,7 +190,7 @@ class LayoutSettings:
         elif text and isinstance(text,str):
             self._footer_kws['text'] = text #assign to text
         else:
-            raise ValueError(f'text should be string or None, not {type(text)}')
+            raise TypeError(f'text should be string or None, not {type(text)}')
         
         self._update_footer() # Update footer immediately
         
