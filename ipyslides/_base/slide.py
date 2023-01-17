@@ -450,36 +450,11 @@ class Slide:
                         display(self.animation, self._css)
         else:
             self._animation = None # It should be None, not '' or don't throw error here
-    
-    def _reset_links(self):
-        # This is useful for readily available objects with slides instead of indexing.
-        old_links = getattr(self._app,'_links_dict', {})
-        _ = [self._app.__dict__.pop(s, None) for s in old_links] # Remove old links
-        self._app._links_dict = {f's{item.label}'.replace('.','_'): item for item in self._app._iterable if item.label}
-        self._app.__dict__.update(self._app._links_dict) # Add new links
-            
+       
     def _rebuild_all(self):
         "Update all slides in optimal way when a new slide is added."
-        self._app._iterable = self._app._collect_slides()
-        n_last = float(self._app._iterable[-1].label)
-        self._app._nslides = int(n_last) # Avoid frames number
-        self._app._max_index = len(self._app._iterable) - 1 # This includes all frames
-        
-        # Now update progress bar
-        opts = [(s.label, round(100*float(s.label)/(n_last or 1), 2)) for s in self._app._iterable]
-        self._app.progress_slider.options = opts  # update options
-        # Update Slides after progress bar is updated
-        self._app.widgets.slidebox.children = [it._widget for it in self._app._iterable]
+        self._app.refresh()
         self._app._slidelabel = self.label # Go there after setting children
-        
-        # Update display for slides with widgets
-        for i, s in enumerate(self._app._iterable):
-            s._index = i # Update index of slide for __repr__
-            if s._has_widgets:
-                s.update_display(go_there =  False) # Refresh all slides with widgets only, other data is not lost
-        
-        self._reset_links() # Update links to slides
-        
 
 @contextmanager
 def _build_slide(app, slide_number_str, is_frameless = True):
@@ -505,9 +480,8 @@ def _build_slide(app, slide_number_str, is_frameless = True):
             _slide._has_widgets = True
             break # No need to check other widgets if one exists
     
-    app._slidelabel = _slide.label # Go there to see effects
-    _slide.update_display() # Update Slide, it will not come to this point if has same code
-
+    _slide.update_display(go_there = True) # Update Slide, it will not come to this point if has same code
+    
     if old_slides != list(app._slides_dict.values()): # If there is a change in slides
         _slide._rebuild_all() # Rebuild all slides
         del old_slides # Delete old slides

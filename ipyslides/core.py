@@ -564,21 +564,23 @@ class Slides(BaseSlides):
         n_last = float(self._iterable[-1].label)
         self._nslides = int(n_last) # Avoid frames number
         self._max_index = len(self._iterable) - 1 # This includes all frames
-        self.notify('Refreshing display of slides...')
+        
         # Now update progress bar
         opts = [(s.label, round(100*float(s.label)/(n_last or 1), 2)) for s in self._iterable]
         self.progress_slider.options = opts  # update options
         # Update Slides
         self.widgets.slidebox.children = [it._widget for it in self._iterable]
         for i, s in enumerate(self._iterable):
-            s.update_display() 
             s._index = i # Update index
-            self._slideindex = i # goto there to update display
+            
+        self._update_dynamic_content(None) # Update dynamic content including widgets
         
-        self._slideindex = 0 # goto first slide after refresh
-        self._iterable[0]._reset_links() # Reset links to slides
+        # This is useful for readily available objects with slides instead of indexing.
+        old_links = getattr(self,'_links_dict', {})
+        _ = [self.__dict__.pop(s, None) for s in old_links] # Remove old links
+        self._links_dict = {f's{item.label}'.replace('.','_'): item for item in self._iterable if item.label}
+        self.__dict__.update(self._links_dict) # Add new links      
     
-     
     def proxy(self,text):
         """Place a proxy placeholder in your slide and returns it's `handle`. This is useful when you want to update the placeholder later.
         Use `Slides.proxies[index].capture` or `handle.capture` contextmanager to update the placeholder.
