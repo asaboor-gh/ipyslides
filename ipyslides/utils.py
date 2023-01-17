@@ -1,5 +1,5 @@
-__all__ = ['bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
-            'image','svg','iframe', 'format_html','format_css','alert','color','keep_format', 'run_doc',
+__all__ = ['alt','alert', 'color', 'bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
+            'image','svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block','classed'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
@@ -254,6 +254,26 @@ def _format_css(css_dict, allow_root_attrs = False):
 def format_css(css_dict):
     "{css_docstring}"
     return _format_css(css_dict, allow_root_attrs = False)
+
+def alt(widget, obj):
+    "Display `widget` for slides and `obj` will be and displayed only in exported formats as HTML."
+    if not isinstance(widget, ipw.DOMWidget):
+        raise ValueError(f'widget should be a widget, got {widget!r}')
+    if isinstance(obj, ipw.DOMWidget):
+        raise ValueError(f'obj should not be a widget, got {obj!r}')
+    class Alt:
+        def __init__(self, widget, obj):
+            self._widget = widget
+            self._obj = obj
+            
+        def _ipython_display_(self):
+            return self.display()
+            
+        def display(self):
+            display(widget, metadata = {'DOMWidget': '---'})
+            display(_HTML(f'<div class="export-only">{_fix_repr(obj)}</div>')) # Hide from slides
+         
+    return Alt(widget, obj)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."

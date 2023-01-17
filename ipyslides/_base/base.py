@@ -396,7 +396,7 @@ class BaseSlides:
                 
         with auto.slide():
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
-            members = ['alert','block', 'bokeh2html', 'bullets','cite','classed',
+            members = ['alt', 'alert','block', 'bokeh2html', 'bullets','cite','classed',
                        'color', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'plt2html', 'raw', 'rows',
                         'section', 'set_citations', 'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
