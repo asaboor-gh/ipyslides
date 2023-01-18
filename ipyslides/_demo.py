@@ -266,10 +266,13 @@ with auto.slide() as ys: # We will use this in next %%magic
     write(f"### Watching Youtube Video?")
     
     write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
+    write('**Want to do some drawing instead?**\nClick on pencil icon in toolbar above and draw something on [tldraw](https://tldraw.com)!')
+    
     @slides.on_load
     def push():
         t = time.localtime()
         slides.notify(f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}')
+        slides.set_overlay_url('https://tldraw.com')
         
     ys.get_source().display() 
     

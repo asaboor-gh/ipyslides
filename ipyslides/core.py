@@ -548,8 +548,7 @@ class Slides(BaseSlides):
             self.settings._update_footer(number_str = number) # Update footer privately
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
-            # below two lines after switching
-            self.current.run_on_load() # Run on_load setup
+            self.current.run_on_load() # Run on_load setup after switching slide
             
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
@@ -690,7 +689,7 @@ class Slides(BaseSlides):
                 if any([getattr(slide, attr, False) for attr in ('_has_widgets', '_toced', '_cited')]):
                     slide.update_display(go_there = False)
                 # Update dynamic content in slide
-                for dp in slide._dproxies.values():
+                for dp in slide._dproxies.values(): 
                     dp.update_display()
     
     def frames(self, slide_number, *objs, repeat = False, frame_height = 'auto'):
@@ -900,7 +899,9 @@ class Slides(BaseSlides):
             
             _html = self.html('div',[self.html('span',url), self.iframe(url,height='100%')])
             self.widgets.htmls.overlay.value= _html.value
-            self.settings.btn_overlay.value = True # Bring there when something is available
+            
+            if not self.running: # avoids on swiching slides too
+                self.settings.btn_overlay.value = True # Bring there when something is available
             
         elif url is None:
             _html = self.html('div',[

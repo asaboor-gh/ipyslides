@@ -50,14 +50,7 @@ class Writer:
                     if isinstance(c,str):
                         parse(c, display_inline = True, rich_outputs = False)
                     elif callable(c) and c.__name__ == '<lambda>':
-                        if self._slides:
-                            self._slides._in_cols = True # Need to restrict things in lambda
-                            try:
-                                _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
-                            finally:
-                                self._slides._in_cols = False
-                        else:
-                            _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
+                        _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
                         if self._slides and isinstance(c, ipw.HTML):
                             self._slides.alt(c, c.value).display() # Display HTML widget as slide and its value as hidden HTML

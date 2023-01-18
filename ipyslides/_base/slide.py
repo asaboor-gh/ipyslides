@@ -4,7 +4,7 @@ import sys
 from contextlib import contextmanager
 from ipywidgets import Output, Layout, Button, HBox
 
-
+from IPython import get_ipython
 from IPython.display import display
 from IPython.utils.capture import capture_output
 from IPython.core.ultratb import FormattedTB
@@ -25,14 +25,10 @@ def _expand_cols(outputs, context):
             new_outputs.append(out)
     return new_outputs
 
-
 class DynamicRefresh:
     "DynamicRefresh is a display for a function that is executed when refresh button is clicked. Should not be instantiated directly."
     def __init__(self, func, slide):
-        if getattr(slide._app, '_in_cols', False):
-            raise Exception('Dynamically refreshable content cannot be written inside Columns!')
-        
-        if getattr(slide._app, '_in_dproxy', None):
+        if getattr(slide._app, '_in_dproxy', None): # raise this also because dictionary size get changed during iteration if nested
             raise Exception('Dynamically refreshable content cannot be written inside another same type!')
         
         self._func = func
@@ -49,10 +45,9 @@ class DynamicRefresh:
         
         self._slide._app._in_dproxy = self
         try: # Initail error in cell to verify code is correct
-            with capture_output():
+            with capture_output() as cap:
                 self._func()
-        except Exception as e:
-            raise Exception(f'{e}')
+            if cap.stderr: raise Exception(cap.stderr)
         finally:
             self._slide._app._in_dproxy = None
             
@@ -244,17 +239,27 @@ class Slide:
         return Proxy(text, self) # get auto displayed
         
     def _on_load_private(self, func):
+        old = self._app.running
+        self._app._running_slide = self
         try: # check if code is correct
             with capture_output():
                 func()
         except Exception as e:
             raise Exception(f'{e}')
+        finally:
+            self._app._running_slide = old
+        # This should be outside the try/except block even after finally, if successful, only then assign it.
         self._on_load = func # This will be called in main app
     
     def run_on_load(self):
-        "Called when a slide is loaded into view."
+        "Called when a slide is loaded into view. Use it to register notifications etc."
         if hasattr(self,'_on_load') and callable(self._on_load):
-            self._on_load()
+            old = self._app.running
+            self._app._running_slide = self
+            try:
+                self._on_load() # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
+            finally:
+                self._app._running_slide = old
     
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -299,7 +304,7 @@ class Slide:
 
         with self._widget:
             display(*self.contents)
-            for dp in self._dproxies.values():
+            for dp in self._dproxies.values(): 
                 dp.update_display() # Update display to show new output as well
             
             if self._citations and (self._app._citation_mode == 'footnote'):
