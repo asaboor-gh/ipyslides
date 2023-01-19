@@ -148,6 +148,9 @@ class Proxy:
         if getattr(slide._app, '_in_dproxy', None):
             raise RuntimeError("Can't place proxy inside a refreshable function.")
         
+        if getattr(slide._app, '_in_proxy', None):
+            raise RuntimeError("Can't place proxy inside another proxy being captured.")
+        
         self._text = text
         self._slide = slide
         self._outputs = []
@@ -240,12 +243,14 @@ class Slide:
         
     def _on_load_private(self, func):
         old = self._app.running
-        self._app._running_slide = self
+        self._app._running_slide = None # temporarily set it to None to avoid dynamic things inside on_load
         try: # check if code is correct
             with capture_output():
                 func()
         except Exception as e:
-            raise Exception(f'{e}')
+            if 'constructor' in str(e):
+                raise RuntimeError(f'{e}\nYou may be trying to put dynamic content inside on_load which is restricted!')
+            raise e
         finally:
             self._app._running_slide = old
         # This should be outside the try/except block even after finally, if successful, only then assign it.
@@ -254,12 +259,7 @@ class Slide:
     def run_on_load(self):
         "Called when a slide is loaded into view. Use it to register notifications etc."
         if hasattr(self,'_on_load') and callable(self._on_load):
-            old = self._app.running
-            self._app._running_slide = self
-            try:
-                self._on_load() # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
-            finally:
-                self._app._running_slide = old
+            self._on_load() # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
     
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -293,6 +293,10 @@ class Slide:
         finally:
             self._app._running_slide = None
             self._contents = _expand_cols(captured.outputs, self) # Expand columns  
+        
+        if self._app._warnings:
+            print(*self._app._warnings, sep='\n\n')
+            self._app._warnings = [] # Reset warnings
         
         
     def update_display(self, go_there = True):

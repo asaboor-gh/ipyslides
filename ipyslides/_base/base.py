@@ -12,6 +12,7 @@ from ..xmd import _special_funcs
 
 class BaseSlides:
     def __init__(self):
+        self._warnings = [] # Will be printed at end of building slides
         self.__widgets = Widgets()
         self.__screenshot = ScreenShot(self.__widgets)
         self.clipboard_image = self.__screenshot.clipboard_image # For easy access
@@ -194,7 +195,14 @@ class BaseSlides:
             - Do not use this to change global state of slides, because that will affect all slides.
             - This can be used single time per slide, overwriting previous function.
         """
-        self.verify_running('Dynamic content can only be created under a slide constructor!')
+        for name in ['write','print','display']:
+            if name in func.__code__.co_names:
+                self._warnings.append(f'UserWarning: Output of `{name}` function under `on_load` may be lost while presenting. I hope you know what you are doing!')
+        
+        if 'settings' in func.__code__.co_names:
+            self._warnings.append(f'UserWarning: Changing settings under `on_load` may have side effects on all slides. I hope you know what you are doing!')
+        
+        self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.running._on_load_private(func) # This to make sure if code is correct before adding it to slide
     
     def on_refresh(self,func):
@@ -224,8 +232,14 @@ class BaseSlides:
     
     def _dynamic_private(self, func, tag = None, hide_refresher = False):
         "Not for user use, internal function for other dynamic content decorators with their own tags."
-        self.verify_running('Dynamic content can only be created under a slide constructor!')
+        self.verify_running('Dynamic content can only be used inside slide constructor!')
         return self.running._dynamic_private(func, tag = tag, hide_refresher = hide_refresher)
+    
+    def _called_from_notenook(self, func_name):
+        last_hist = list(self.shell.history_manager.get_range())[-1][-1]
+        if re.findall(rf'{func_name}\(|{func_name}\s+\(', last_hist):
+            return True
+        return False
         
     def from_markdown(self, start, file_or_str, trusted = False):
         """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
@@ -315,8 +329,7 @@ class BaseSlides:
                 self._slide(f'{i} -m', chunk)
         
         # Display slides if called form Notebook Cell only
-        last_hist = list(self.shell.history_manager.get_range())[-1][-1]
-        if re.findall(r'from_markdown\(|from_markdown\s+\(', last_hist):
+        if self._called_from_notenook('from_markdown'):
             self.shell.events.register('post_run_cell', self._post_run_cell)
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames

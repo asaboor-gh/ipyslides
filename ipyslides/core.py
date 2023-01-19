@@ -263,7 +263,6 @@ class Slides(BaseSlides):
         if self.running is None:
             raise RuntimeError(error_msg or 'This operation is only allowed under slide constructor.')
     
-    
     def citations(self, func):
         """Decorator to get all citations as a tuple that can be passed to given `func` function. and update dynamically.
         `func` must accept a single argument which will be tuple of citations.
@@ -583,7 +582,7 @@ class Slides(BaseSlides):
         """Place a proxy placeholder in your slide and returns it's `handle`. This is useful when you want to update the placeholder later.
         Use `Slides.proxies[index].capture` or `handle.capture` contextmanager to update the placeholder.
         """
-        self.verify_running('proxy placeholder can only be used inside a slide constructor.')
+        self.verify_running('proxy placeholder can only be used in a slide constructor!')
         return self.running._proxy_private(text)
     
     @property
@@ -869,8 +868,7 @@ class Slides(BaseSlides):
         Use `auto.title`, `auto.slide` contextmanagers, `auto.frames` decorator and `auto.from_markdown` 
         function without thinking about what should be slide number.
         """
-        last_hist = list(self.shell.history_manager.get_range())[-1][-1]
-        if re.findall(r'AutoSlides\(|AutoSlides\s+\(', last_hist):
+        if self._called_from_notenook('AutoSlides'):
             return None
         
         auto = namedtuple('AutoSlides',['title','slide','frames','from_markdown'])
@@ -899,9 +897,9 @@ class Slides(BaseSlides):
             
             _html = self.html('div',[self.html('span',url), self.iframe(url,height='100%')])
             self.widgets.htmls.overlay.value= _html.value
-            
-            if not self.running: # avoids on swiching slides too
-                self.settings.btn_overlay.value = True # Bring there when something is available
+               
+            if self._called_from_notenook('set_overlay_url') and not getattr(self.current,'_on_load',None):
+                self.settings.btn_overlay.value = True # Do not open panel during presentation by on_load function, otherwise immediately open it
             
         elif url is None:
             _html = self.html('div',[
