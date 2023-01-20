@@ -157,7 +157,7 @@ def race_plot():
         ax.spines[s].set_visible(False)
     
     ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
-    return fig
+    return plt2html(fig, transparent=False, caption='A Silly Plot')
             
 
 # Interactive widgets.   
@@ -177,8 +177,7 @@ with auto.slide():
             ], src)
         
         def update_plot():
-            fig = race_plot()
-            plot_html.value = plt2html(fig).value #Convert to html
+            plot_html.value = race_plot().value #Convert to html string
             
         def onclick(btn):
             plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
@@ -196,13 +195,10 @@ with auto.slide() as rslide:
         Use refresh button below to update plot! Compare with previous slide!
         ''')
     
-    @slides.on_refresh
-    def plot_it():
-        fig = race_plot()
-        write(fig, rslide.get_source()) #Update plot each time refresh button is clicked
-        
-    slides.source.from_callable(race_plot).display() 
-        
+    def display_plot(): return race_plot().display()
+    
+    write(lambda: slides.on_refresh(display_plot), rslide.get_source()) # Only first columns will update
+    slides.source.from_callable(race_plot).display()
 
 auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
     
