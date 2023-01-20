@@ -1,13 +1,14 @@
 # Author: Abdul Saboor
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import time
-from IPython import get_ipython
 
-from ipyslides.writers import write
+from ipyslides.core import Slides
+from ipyslides.writer import write
 from ipyslides.formatters import libraries, __reprs__, plt2html
 from ipyslides._base.intro import logo_svg
 
-slides = get_ipython().user_ns['get_slides_instance']() # This will be availble in ipython namespace after any import of ipyslides
+
+slides = Slides() # It reurns running slides instance or creates a new one
 
 auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
 

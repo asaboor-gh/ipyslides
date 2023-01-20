@@ -1,5 +1,5 @@
 """
-Author Notes: Classes in this module should only be instantiated in LiveSlide class or it's parent class
+Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
 
@@ -79,23 +79,23 @@ class LayoutSettings:
         return f'{int(100*650/span)}px'
     
     def set(self, **kwargs):
-        """Add multiple settings at once. keys in kwargs should name of function after `set_` 
-        and values should be dictionary of arguments for that function. See examples below.
+        """Add multiple settings at once. keys in kwargs should be name of a function after `Slides.settings.set_` 
+        and values should be dictionary or tuple of arguments for that function. See examples below.
         ```python
         Slides.settings.set( 
             glassmorphic = dict(image_src='image_src'),
-            css = dict(css_dict={}),
+            css = ({},), # note trailing comma to make it tuple
             layout = dict(center=True, content_width='80%'),
         )
         ```
         """
         for k,v in kwargs.items():
-            if not isinstance(v,dict):
-                raise TypeError(f'values in kwargs should be dict, got {v!r}')
+            if not isinstance(v,(dict, tuple)):
+                raise TypeError(f'values in kwargs should be dict or tuple, got {v!r}')
             func = getattr(self,f'set_{k}', False)
             if func is False:
                 raise AttributeError(f'No such function {k!r} in settings')
-            func(**v) # Call function with arguments
+            func(**v) if isinstance(v, dict) else func(*v) # Call function with arguments
             
     
     def show_always(self, b: bool = True):
@@ -135,6 +135,12 @@ class LayoutSettings:
             self._slides[0]._set_overall_css(css_dict = css_dict)
         else:
             raise RuntimeError("No slides yet to set CSS.")
+        
+    def set_citation_mode(self, mode = 'global'):
+        "Set mode for citations form ['global', 'inline', 'footnote']."
+        if mode not in ['global', 'inline', 'footnote']:
+            raise ValueError(f'citation mode must be one of "global", "inline", "footnote" but got {mode}')
+        self._slides._citation_mode = mode
         
         
     def set_glassmorphic(self, image_src, opacity=0.85, blur_radius=50):

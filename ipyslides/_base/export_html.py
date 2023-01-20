@@ -63,7 +63,7 @@ class _HhtmlExporter:
         """
         if self.main.citations and (self.main._citation_mode != 'global'):
             raise ValueError(f'''Citations in {self.main._citation_mode!r} mode are not supported in report. 
-            Use LiveSLides(citation_mode = "global" and run all slides again before generating report.''')
+            Use Slides(citation_mode = "global" and run all slides again before generating report.''')
         
         _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
         content = self._htmlize(allow_non_html_repr = allow_non_html_repr, as_slides = False, page_size = page_size)

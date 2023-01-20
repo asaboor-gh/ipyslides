@@ -25,6 +25,19 @@ For development install, clone this repository and then
 ```
 
 ---
+# How to Use
+- In Jupyter Notebook, do the follwoing:
+```python
+%load_ext ipyslides # It will display info to move further
+slides = get_slides_instance()
+```
+- Above is equivalent to:
+```python
+import ipyslides as isd
+slides = isd.Slides()
+```
+---
+
 # Creating Slides
 Please look at two presentations provided with `Slides.docs()`, `Slides.demo()` to see how slides are created. Moreover instruction in settings panel are at your finger tips.
 

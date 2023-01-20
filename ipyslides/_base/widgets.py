@@ -1,5 +1,5 @@
 """
-Author Notes: Classes in this module should only be instantiated in LiveSlide class or it's parent class
+Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
 import os
@@ -198,7 +198,7 @@ def _notification(content,title='IPySlides Notification',timeout=5):
 
 class Widgets:
     """
-    Instantiate under `LiveSLides` class only and provide to other classes after built-up.
+    Instantiate under `Sides` class only and provide to other classes after built-up.
     """
     def __setattr__(self, name , value):
         if name in self.__dict__:

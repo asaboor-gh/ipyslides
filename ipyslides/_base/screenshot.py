@@ -1,5 +1,5 @@
 """
-Author Notes: Classes in this module should only be instantiated in LiveSlide class or it's parent class
+Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
 
@@ -15,7 +15,7 @@ from . import intro
 
 class ScreenShot:
     def __init__(self, _instanceWidgets):
-        "Instnace should be inside `LiveSlide` class."
+        "Instnace should be inside `Slides` class."
         self.widgets = _instanceWidgets
         self.btn_cap_all = self.widgets.buttons.cap_all
         self.btn_pdf = self.widgets.buttons.pdf

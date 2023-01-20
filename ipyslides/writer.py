@@ -10,12 +10,12 @@ from IPython.display import display as display
 from IPython.utils.capture import capture_output
 
 from .formatters import _HTML, _HTML_Widget, stringify, _fix_repr
-from .xmd import parse 
+from .xmd import parse, get_slides_instance
 
 class Writer:
     def __init__(self,*objs,widths = None):
         self._box = ipw.HBox().add_class('columns') # Box to hold columns
-        self._slides = get_ipython().user_ns.get('get_slides_instance',lambda:None)()
+        self._slides = get_slides_instance()
         self._cols = self._capture_objs(*objs, widths = widths) # run after getting slides instance
         self._slide = self._slides.running if self._slides else None
         self._in_proxy = getattr(self._slides, '_in_proxy', None)
@@ -52,11 +52,11 @@ class Writer:
                     elif callable(c) and c.__name__ == '<lambda>':
                         _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
-                        if self._slides and isinstance(c, ipw.HTML):
+                        if self._slides and self._slides.running and isinstance(c, ipw.HTML):
                             self._slides.alt(c, c.value).display() # Display HTML widget as slide and its value as hidden HTML
                             # NOTE: This is enough, Do not go too deep like in boxes to search for HTML, because then we will lose the column structure
                         else:
-                            display(c, metadata = {'DOMWidget': '---'}) # Display widget
+                            display(c, metadata = {'DOMWidget': '---'}) # Display only widget outside slide buuilder
                     else:
                         display(_HTML(stringify(c)))
             
@@ -171,6 +171,9 @@ class _WidgetsWriter:
     def __init__(self, *objs, widths=None):
         self._grid, self._cols = _fmt_iwrite(*objs,widths=widths)
         self._grid.add_class('columns')
+        if slides := get_slides_instance():
+            if slides.running: # slides assigment above works in below block only
+                slides._warnings.append('`iwrite` command will be deprecated. Use `write` command instead that wites widgets as well and handles a lot of formats for exporting to static html.')
         
     def _ipython_display_(self):
         return display(self._grid)

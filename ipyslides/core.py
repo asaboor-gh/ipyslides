@@ -11,7 +11,7 @@ import ipywidgets as ipw
 
 from .xmd import parse, extender as _extender
 from .source import Source
-from .writers import write, iwrite
+from .writer import write, iwrite
 from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer, _fix_repr
 from . import utils
 
@@ -96,7 +96,11 @@ class Slides(BaseSlides):
             self.shell.register_magic_function(self._slide, magic_kind='cell',magic_name='slide')
             self.shell.register_magic_function(self.__title, magic_kind='cell',magic_name='title')
             self.shell.register_magic_function(self.__xmd, magic_kind='line_cell',magic_name='xmd')
-            self.shell.user_ns['get_slides_instance'] = lambda: self
+            
+            def get_slides_instance(): # This will be pointed back from xmd as well
+                return self
+            
+            self.shell.user_ns['get_slides_instance'] = get_slides_instance
             
         # Override print function to display in order in slides
         if self.shell.__class__.__name__ in ('ZMQInteractiveShell','Shell'): # Shell for Colab
@@ -958,21 +962,17 @@ class Slides:
                 ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         _private_instance.__doc__ = cls.__doc__ # copy docstring
-        
-        if citation_mode not in ['global', 'inline', 'footnote']:
-            raise ValueError(f'citation_mode must be one of "global", "inline", "footnote" but got {citation_mode}')
-        
         _private_instance.extender.extend(extensions)
-        _private_instance._citation_mode = citation_mode
         _private_instance.settings.show_always(show_always)
         
         _private_instance.settings.set(
-            layout      = dict(center = center, content_width = content_width),
-            footer      = dict(text = footer_text, show_date = show_date, show_slideno = show_slideno),
-            logo        = dict(src = logo_src,width = 60),
-            font_scale  = dict(font_scale = font_scale),
-            font_family = dict(text_font = text_font, code_font = code_font),
-            code_style  = dict(style = code_style, lineno = code_lineno),
+            citation_mode = dict(mode = citation_mode),
+            layout        = dict(center = center, content_width = content_width),
+            footer        = dict(text = footer_text, show_date = show_date, show_slideno = show_slideno),
+            logo          = dict(src = logo_src,width = 60),
+            font_scale    = dict(font_scale = font_scale),
+            font_family   = dict(text_font = text_font, code_font = code_font),
+            code_style    = dict(style = code_style, lineno = code_lineno),
         )
         
         with suppress(BaseException): # Avoid error if no slides exist

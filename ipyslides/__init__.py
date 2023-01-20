@@ -7,6 +7,17 @@ __version__ = version
 
 __all__ = ['Slides']
 
-if __name__ == '__main__':
-    print('Use this package in Jupyter notebook!')
+
+def load_ipython_extension(ipython):
+    """Load the extension in IPython when someone does `%load_ext ipyslides`"""
+    print(f'''ipyslides {version} is loaded. To get started:
+          
+    * Access the slides as `slides = get_slides_instance()` in current namespace  
+    * Run `slides.demo()` to see a demo of some features
+    * Run `slides.docs()` to see documentation
+    ''')
+
+    
+def unload_ipython_extension(ipython):
+    pass
     

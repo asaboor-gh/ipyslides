@@ -95,6 +95,12 @@ def fmt_code(code, instance_name = 'slides'):
     "Format given code block to be runable under markdown. instance_name is the name of the slides instance as used in current code."
     return _code_.format(app = instance_name, block = textwrap.dedent(code).strip())
 
+def get_slides_instance():
+    "Get the slides instance from the current namespace."
+    if shell := get_ipython():
+        # This will be injected by slides instance in namespace.
+        return shell.user_ns.get('get_slides_instance', lambda: None)()
+    return None
 
 def resolve_objs_on_slide(slide_instance,text_chunk):
     "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
@@ -152,7 +158,7 @@ class XMarkdown(Markdown):
         super().__init__(extensions = extender._all, extension_configs=extender._all_configs)
         self._display_inline = False
         self._shell = get_ipython()
-        self._slides = self._shell.user_ns.get('get_slides_instance',lambda: None)() # It is callable, do not get it in global namespace,need only single reference outside
+        self._slides = get_slides_instance() 
     
     def _extract_class(self, header):
         out = header.split('.',1) # Can have many classes there
@@ -273,7 +279,10 @@ class XMarkdown(Markdown):
             
             # Run Code now 
             with capture_output() as captured:
-                (self._slides or self._shell).run_cell(dedent_data)
+                if current_shell := self._slides or self._shell:
+                    current_shell.run_cell(dedent_data)
+                else:
+                    raise RuntimeError('Cannot execute this outside IPython!')
 
             outputs = captured.outputs
             return outputs
