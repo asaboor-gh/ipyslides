@@ -150,8 +150,11 @@ def race_plot():
     x = np.linspace(0,0.9,10)
     y = np.random.random((10,))
     _sort = np.argsort(y)
-    fig,ax = plt.subplots(figsize=(3.4,2.6))
-    ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
+    
+    plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
+    with plt.style.context(plot_theme):        
+        fig,ax = plt.subplots(figsize=(3.4,2.6))
+        ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
     
     for s in ['right','top','bottom']:
         ax.spines[s].set_visible(False)
@@ -176,16 +179,11 @@ with auto.slide():
             button := ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
             ], src)
         
-        def update_plot():
+        def update_plot(btn):
             plot_html.value = race_plot().value #Convert to html string
             
-        def onclick(btn):
-            plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
-            with plt.style.context(plot_theme):
-                update_plot()
-        
-        button.on_click(onclick)
-        update_plot() #Initialize plot
+        button.on_click(update_plot)
+        update_plot(None) #Initialize plot
         
     slides.source.from_callable(race_plot).display()
     
