@@ -1,31 +1,28 @@
 
 resize_js = "window.dispatchEvent(new Event('resize'));"
 
-multi_slides_alert = """
+clear_disconnected_slides = """
 let slides = document.getElementsByClassName('SlidesWrapper');
-if (slides.length > 1) {
-    alert(`You may have slides open in other notebook(s) in currnet tab. In that case use .close_view() method on them 
-and re-run to have smooth navigations via keyboard!
-
-If this is not the case, then there could be left over disconnect slides from previous session. Then restart kernel with clear all outputs option.`);
+for (slide of Array.from(slides)) {
+    if (slide.classList.contains('jupyter-widgets-disconnected')) {slide.remove();};
 };
 """
 
 navigation_js = '''
-function main(){
+function main(box){
     function resizeWindow() {
         window.dispatchEvent(new Event('resize')); // collapse/uncollapse/ and any time, very important, resize itself is not attribute, avoid that
     }; 
     resizeWindow(); // resize on first display
     // Only get buttons of first view, otherwise it will becomes multiclicks
-    let arrows   = document.getElementsByClassName('Arrows'); // These are 2*instances
-    let mplBtn   = document.getElementsByClassName('Zoom-Btn')[0];
-    let winFs    = document.getElementsByClassName('FullWindow-Btn')[0];
-    let fullSc   = document.getElementsByClassName('FullScreen-Btn')[0];
-    let capSc    = document.getElementsByClassName('Screenshot-Btn')[0];
-    let cursor   = document.getElementsByClassName('LaserPointer')[0];
-    let panelBtn = document.getElementsByClassName('Settings-Btn')[0];
-    let laserBtn = document.getElementsByClassName('Laser-Btn')[0];
+    let arrows   = box.getElementsByClassName('Arrows'); // These are 2*instances
+    let mplBtn   = box.getElementsByClassName('Zoom-Btn')[0];
+    let winFs    = box.getElementsByClassName('FullWindow-Btn')[0];
+    let fullSc   = box.getElementsByClassName('FullScreen-Btn')[0];
+    let capSc    = box.getElementsByClassName('Screenshot-Btn')[0];
+    let cursor   = box.getElementsByClassName('LaserPointer')[0];
+    let panelBtn = box.getElementsByClassName('Settings-Btn')[0];
+    let laserBtn = box.getElementsByClassName('Laser-Btn')[0];
     
     // Keyboard events
     function keyOnSlides(e) {
@@ -51,12 +48,14 @@ function main(){
             e.stopPropagation();   // M key
         } else if (key === 87) { 
             winFs.click(); // Toggle Window with W 
+            resizeWindow(); // Resize event after click
         } else if (key === 70) { 
             // F to enter fullscreen
             fullSc.click(); // Toggle Fullscreen with F
         } else if (key === 27) {  
             // Escape to exit fullscreen
-            document.getElementsByClassName('SlidesWrapper')[0].exitFullscreen();
+            // document.getElementsByClassName('SlidesWrapper')[0].exitFullscreen();
+            box.exitFullscreen();
         } else if (key === 13) {
             return true; // Enter key
         } else if (key === 83) {
@@ -69,14 +68,12 @@ function main(){
         e.preventDefault(); // stop default actions
     };
     
-    let box = document.getElementsByClassName('SlidesWrapper')[0];
-    
     box.tabIndex = -1; // Need for event listeners, should be at top
     box.onkeydown = keyOnSlides; // This is better than event listners as they register multiple times
     box.onmouseenter = function(){box.focus();};
     box.onmouseleave = function(){box.blur();};
     // Cursor pointer functions
-    // let slide = box.getElementsByClassName('SlideBox')[0];
+    
     function onMouseMove(e) {
         let bbox = box.getBoundingClientRect()
         let _display = "display:block;"
@@ -98,11 +95,10 @@ function main(){
 };
 
 // Touch Events are experimental
-function beta_swiper(){
-    let box = document.getElementsByClassName('SlidesWrapper')[0];
+function touchSwiper(box){
     box.tabIndex = -1;
-    let arrows = document.getElementsByClassName('Arrows'); // These are 2*instances
-
+    let arrows = box.getElementsByClassName('Arrows');
+    
     let startX = 0;
     let endX = 0;
     let startY = 0;
@@ -135,11 +131,16 @@ function beta_swiper(){
 // Now execute function to work, handle browser refresh too
 try {
     var waitLoading = setInterval(function() {
-        let boxes = document.getElementsByClassName('SlidesWrapper ');
+        let boxes = document.getElementsByClassName('SlidesWrapper');
+        for (box of Array.from(boxes)) {
+            if (!box.classList.contains('EventsAdded')) { // Check if events are added or not
+                main(box); // Refresh does not work in this case
+                touchSwiper(box); // Touch events
+                box.classList.add('EventsAdded');
+            }
+        }
         if (boxes.length >= 1) {
-            main(); // Refresh does work in this case
-            beta_swiper(); // Touch events
-            clearInterval(waitLoading);
+            clearInterval(waitLoading); // Stop checking after adding to all
         }
     }, 500); // check every 500ms, I do not need be hurry
     

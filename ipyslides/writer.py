@@ -1,11 +1,10 @@
 """
-write/ iwrite main functions to add content to slides
+Main write functions to add content to slides
 """
 
-__all__ = ['write','iwrite']
+__all__ = ['write', 'iwrite']
 
 import ipywidgets as ipw
-from IPython import get_ipython
 from IPython.display import display as display
 from IPython.utils.capture import capture_output
 
@@ -13,10 +12,21 @@ from .formatters import _HTML, _HTML_Widget, stringify, _fix_repr
 from .xmd import parse, get_slides_instance
 
 class Writer:
+    _in_write = False # To prevent write from being called inside write
     def __init__(self,*objs,widths = None):
+        if self.__class__._in_write and len(objs) > 1:
+            # This will only be intercepted if lambda function contains write with multiple columns, becuase they can't be nested
+            raise RuntimeError('write(*objs) for len(objs) > 1 inside a previous call of write is not allowed!')
+        
         self._box = ipw.HBox().add_class('columns') # Box to hold columns
         self._slides = get_slides_instance()
-        self._cols = self._capture_objs(*objs, widths = widths) # run after getting slides instance
+        
+        try:
+            self.__class__._in_write = True # To prevent write from being called inside write, specially by lambda function
+            self._cols = self._capture_objs(*objs, widths = widths) # run after getting slides instance
+        finally:
+            self.__class__._in_write = False
+            
         self._slide = self._slides.running if self._slides else None
         self._in_proxy = getattr(self._slides, '_in_proxy', None)
         self._in_dproxy = getattr(self._slides, '_in_dproxy', None)

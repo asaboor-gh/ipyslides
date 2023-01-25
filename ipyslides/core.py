@@ -19,7 +19,7 @@ _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
 
 from ._base.base import BaseSlides
 from ._base.intro import logo_svg, key_combs
-from ._base.scripts import multi_slides_alert
+from ._base.scripts import clear_disconnected_slides
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__
@@ -85,7 +85,7 @@ class Slides(BaseSlides):
         self.source = Source # Code source
         self.icon = _Icon # Icon is useful to add many places
         self.write  = write 
-        self.iwrite = iwrite # will be discarded at some point
+        self.iwrite = iwrite
         self.parse = parse # Parse extended markdown
         self.serializer = serializer # Serialize IPython objects to HTML
         
@@ -181,7 +181,7 @@ class Slides(BaseSlides):
                      
     
     def _on_load_and_refresh(self):
-        self.widgets._exec_js(multi_slides_alert)
+        self.widgets._exec_js(clear_disconnected_slides)
         if self._max_index == 0: # prevent overwrite
             self._add_clean_title()
             
