@@ -8,10 +8,8 @@ import ipywidgets as ipw
 from IPython.display import display, Javascript
 from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
 from . import styles, _layout_css
-from ..utils import html, _build_css
+from ..utils import html
 
-def _build_style_widget(css_dict):
-    return HTML(html('style',_build_css((), css_dict)).value)
 
 auto_layout =  Layout(width='auto')
 def describe(value): 
@@ -118,54 +116,10 @@ class _Outputs:
 
 
 def _custom_progressbar(intslider):
-    "Retruns a progress bar with custom style html linked to the slider"
-    # This html should not be exposed to user
-    html = _build_style_widget({
-        '.NavWrapper': {
-            '^,^ > div': {
-                'padding': '0px',
-                'margin': '0px',
-                'overflow': 'hidden',
-                'max-width': '100%',
-            },
-            '.progress': {
-                'width': '100% !important',
-                'transform': 'translate(-2px,1px) !important',
-                '^, .progress-bar': {
-                    'border-radius': '0px',
-                    'margin': '0px',
-                    'padding': '0px',
-                    'height': '4px !important',
-                    'overflow': 'hidden',
-                    'left': '0px',
-                    'bottom': '0px',
-                },
-            },
-            '.widget-hprogress': {
-                'height': '4px !important',
-            },
-            '.NavBox': {
-                'z-index': '2',
-                'overflow': 'hidden',
-                '.Menu-Item': {
-                    'font-size': '18px !important',
-                    'overflow': 'hidden',
-                    'opacity': '0.4',
-                    'z-index': '3',
-                    '^:hover': {
-                        'opacity': '1',
-                    },
-                },
-                '.Footer p': {
-                    'font-size': '14px !important',
-                },
-            },
-        },
-    }) # Should be HTML Widget
+    "Retruns a progress bar linked to the slider"
     intprogress = FloatProgress(min=0, max=100,value=0, layout=Layout(width='100%'))
     ipw.link((intslider, 'value'), (intprogress, 'value')) # This link enable auto refresh from outside
-    
-    return intprogress, html
+    return intprogress
 
 def _notification(content,title='IPySlides Notification',timeout=5):
     _title = f'<b>🔔 {title}</b><br/>' if title else '' # better for inslides notification
@@ -230,7 +184,7 @@ class Widgets:
         self.outputs = _Outputs()
         
         # Make the progress bar and link to slides
-        self.progressbar, self._proghtml = _custom_progressbar(self.sliders.progress)
+        self.progressbar = _custom_progressbar(self.sliders.progress)
         
         # Layouts build on these widgets
         self.controls = HBox([
@@ -250,7 +204,6 @@ class Widgets:
         self.navbox = VBox([
             self.footerbox,
             VBox([
-                self._proghtml,
                 self.progressbar
                 ])
         ]).add_class('NavWrapper')   #class is must

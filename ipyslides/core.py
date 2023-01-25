@@ -145,7 +145,7 @@ class Slides(BaseSlides):
         self.widgets.buttons.refresh.on_click(self._update_dynamic_content)
         
         # All Box of Slides
-        self._box =  self.widgets.mainbox 
+        self._box =  self.widgets.mainbox.add_class(self.uid)
         self._on_load_and_refresh() # Load and browser refresh handling
         self._display_box = None # Initialize
         self.set_overlay_url(url = None) # Set overlay url for initial information
@@ -187,7 +187,6 @@ class Slides(BaseSlides):
             
         with suppress(BaseException): # Does not work everywhere.
             self.widgets.inputs.bbox.value = ', '.join(str(a) for a in self.screenshot.screen_bbox) # Useful for knowing scren size
-
     
     def __repr__(self):
         repr_all = ',\n    '.join(repr(s) for s in self._iterable)
@@ -519,8 +518,9 @@ class Slides(BaseSlides):
     def _switch_slide(self,old_index, new_index): # this change is provide from _update_content
         self.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
         with self.widgets.outputs.slide:
-            self.html('style',f'''.TOC .toc-item.s{self._sectionindex} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
-            .TOC .toc-item {{border-right: 4px solid var(--secondary-bg);}}'''
+            uclass = f'.{self.uid} .TOC'
+            self.html('style',f'''{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
+            {uclass} .toc-item {{border-right: 4px solid var(--secondary-bg);}}'''
             ).display()
         
             if self.screenshot.capturing == False:

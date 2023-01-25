@@ -426,20 +426,24 @@ class Slide:
                 self._app.widgets.outputs.slide.clear_output(wait = False)
                 with self._app.widgets.outputs.slide:
                     display(self.animation, self._css)
+    
+    def _instance_animation(self,name):
+        "Create unique animation for this slide instance on fly"
+        return styles.animations[name].replace('.SlideBox',f'.{self._app.uid} .SlideBox')
         
     def _set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for all slides."
         if main is None:
             self.__class__._animations['main'] = ''
         elif main in styles.animations:
-            self.__class__._animations['main'] = styles.animations[main]
+            self.__class__._animations['main'] = self._instance_animation(main)
         else:
             raise KeyError(f'Animation {main!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
             
         if frame is None:
             self.__class__._animations['frame'] = ''
         elif frame in styles.animations:
-            self.__class__._animations['frame'] = styles.animations[frame]
+            self.__class__._animations['frame'] = self._instance_animation(frame)
         else:
             raise KeyError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
             
@@ -448,7 +452,7 @@ class Slide:
         if name is None:
             self._animation = html('style', '')
         elif isinstance(name,str) and name in styles.animations:
-            self._animation = html('style',styles.animations[name])
+            self._animation = html('style',self._instance_animation(name))
             # See effect of changes
             if not self._app.running: # Otherwise it has side effects
                 if self._app._slidelabel != self.label:

@@ -1,15 +1,17 @@
 # This should not be used by user, but is used by ipyslides to generate layout of slides
 
 from ..utils import _build_css
+from ..xmd import get_unique_css_class
 from .icons import Icon
 
 _zoom_ables = '.jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom), .plot-container.plotly'
 _icons_size = '1em' # For all except Chevrons
 
 def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult is off
-    return _build_css((),{
+    uclass = get_unique_css_class()
+    return _build_css((uclass,),{
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
-        '.SlidesWrapper': {
+        '^.SlidesWrapper': {
             'z-index': '1 !important',
             '^.SingleSlide .Controls': {'display':'none !important',}, 
             '^.CaptureMode': {
@@ -45,6 +47,20 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'z-index':'11', # Above all
                 'text-shadow': '0 0 4px white, 0 0 8px var(--secondary-bg)',
                 'border-radius':'50%',
+            },
+            'div.LaserPointer': { # For laser pointer 
+                'position':'absolute !important',
+                'width':'12px',
+                'height':'12px',
+                'left':'-50px', # Hides when not required , otherwise handled by javascript*/
+                'z-index':'9', # below side panel but above zoomed image */
+                'border-radius':'50%',
+                'border':' 2px solid white',
+                'background':' var(--pointer-color)',
+                'box-shadow':' 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color)',
+                'display':'none', # Initial setup. Display will be set using javascript only */
+                'overflow':'hidden !important', # To hide at edges */
+                'opacity': f'{1 if show_laser_pointer else 0} !important',
             },
             '.SlideArea': {
                 'align-items': 'center',
@@ -185,31 +201,52 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 },
             },
         },
-        'div.LaserPointer': { # For laser pointer 
-            'position':'absolute !important',
-            'width':'12px',
-            'height':'12px',
-            'left':'-50px', # Hides when not required , otherwise handled by javascript*/
-            'z-index':'9', # below side panel but above zoomed image */
-            'border-radius':'50%',
-            'border':' 2px solid white',
-            'background':' var(--pointer-color)',
-            'box-shadow':' 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color)',
-            'display':'none', # Initial setup. Display will be set using javascript only */
-            'overflow':'hidden !important', # To hide at edges */
-            'opacity': f'{1 if show_laser_pointer else 0} !important',
-        },
         '.NavWrapper': {
             'max-width': '100% !important',
+            '^,^ > div': {
+                'padding': '0px',
+                'margin': '0px',
+                'overflow': 'hidden',
+                'max-width': '100%',
+            },
             '.progress': {
+                'width': '100% !important',
+                'transform': 'translate(-2px,1px) !important',
                 'background': 'var(--secondary-bg) !important',
                 '.progress-bar': { 'background': 'var(--accent-color) !important' },
+                '^, .progress-bar': {
+                    'border-radius': '0px',
+                    'margin': '0px',
+                    'padding': '0px',
+                    'height': '4px !important',
+                    'overflow': 'hidden',
+                    'left': '0px',
+                    'bottom': '0px',
+                },
+            },
+            '.widget-hprogress': {
+                'height': '4px !important',
             },
             '.NavBox': {
+                'z-index': '2',
+                'overflow': 'hidden',
                 'align-items': 'center',
                 'height':'max-content',
                 'justify-content': 'flex-start', 
+                '.Menu-Item': {
+                    'font-size': '18px !important',
+                    'overflow': 'hidden',
+                    'opacity': '0.4',
+                    'z-index': '3',
+                    '^:hover': {
+                        'opacity': '1',
+                    },
+                },
                 '.Toc-Btn': {'min-width':'40px',}, # Avoid overflow in small screens
+                '.Footer': {
+                    '.widget-html-content': {'display': 'flex', 'align-items': 'center', 'justify-content': 'flex-start',},
+                    'p': {'font-size': '14px !important',},
+                },
             },
         },
         '.FloatControl': {
@@ -583,27 +620,28 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
     })
 
 def viewport_css():
-    return '''
-    html, body, .jp-LabShell {
+    uclass = get_unique_css_class()
+    return f'''
+    html, body, .jp-LabShell {{
     position: fixed;
     left:0;
     top:0;
     width:0 !important;
     min-width: 0 !important; /* This is necessary for lab shell*/
     height:100vh !important;
-    }
-    .SlidesWrapper {
+    }}
+    {uclass}.SlidesWrapper {{
         position: fixed;
         left: 0;
         top:0;
         width:100vw !important;
         height:100vh !important;
-    }
-    #menubar-container { display: none !important; } /* For classic Notebook */
-    body[data-kaggle-source-type] .jp-Notebook { /* For Kaggle */
+    }}
+    #menubar-container {{ display: none !important; }} /* For classic Notebook */
+    body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
         min-width: 0 !important;
         padding-right: 100vw !important;
-    }
+    }}
     '''
 
 def zoom_hover_css():
@@ -651,7 +689,8 @@ def zoom_hover_css():
         
 
 def glass_css(opacity = 0.75,blur_radius = 50):
-    return f'''.BackLayer, .BackLayer .Front {{
+    uclass = get_unique_css_class()
+    return f'''{uclass} .BackLayer, {uclass} .BackLayer .Front {{
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -661,7 +700,7 @@ def glass_css(opacity = 0.75,blur_radius = 50):
         overflow:hidden;
         margin:0;
     }}
-    .BackLayer img{{
+    {uclass} .BackLayer img{{
         position: absolute;
         left:0;
         top:0;
@@ -670,11 +709,11 @@ def glass_css(opacity = 0.75,blur_radius = 50):
         object-fit:cover;
         filter: blur({blur_radius}px);
     }}
-    .BackLayer .Front {{
+    {uclass} .BackLayer .Front {{
         background: var(--primary-bg);
         opacity:{opacity};
     }}
-    .BackLayer.jupyter-widgets-disconnected {{
+    {uclass} .BackLayer.jupyter-widgets-disconnected {{
         display:none;
     }}
     '''

@@ -19,6 +19,7 @@ from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
 from .formatters import fix_ipy_image, _HTML, _fix_repr
+from .xmd import get_unique_css_class
 
 def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
@@ -237,17 +238,18 @@ def _build_css(selector, data):
     return content
 
 def _format_css(css_dict, allow_root_attrs = False):
+    uclass = get_unique_css_class()
     _all_css = '' # All css
     root_attrs = {k:v for k,v in css_dict.items() if not isinstance(v,dict)}
     if allow_root_attrs:
         if root_attrs:
             attrs_str = '\n'.join(f'\t{k} : {v};' for k,v in root_attrs.items())
-            _all_css += f'\n.SlidesWrapper, .BackLayer .Front {{\n{attrs_str}\n}}' # Set background for slide
+            _all_css += f'\n{uclass}.SlidesWrapper, {uclass} .BackLayer .Front {{\n{attrs_str}\n}}' # Set background for slide
     if root_attrs and not allow_root_attrs:
         print(f'Skipping attributes: \n{root_attrs}\nat root level of css_dict!')
     
     css_dict = {k:v for k,v in css_dict.items() if isinstance(v,dict)} # Remove root attrs after they are set above for background, no more use
-    _all_css += _build_css(('.SlideArea',),css_dict) # Build css from dict
+    _all_css += _build_css((f'{uclass} .SlideArea',),css_dict) # Build css from dict
     return html('style', _all_css)
     
 @_sub_doc(css_docstring = _css_docstring)

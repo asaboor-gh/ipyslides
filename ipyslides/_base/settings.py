@@ -364,7 +364,12 @@ class LayoutSettings:
         else:
             self.btn_laser.icon = 'plus'
         # Update Layout CSS
-        self.widgets.htmls.main.value = html('style',_layout_css.layout_css(self.breakpoint, accent_color= self.colors['accent_color'], show_laser_pointer = self.btn_laser.value)).value
+        self.widgets.htmls.main.value = html('style',
+            _layout_css.layout_css(self.breakpoint, 
+                accent_color= self.colors['accent_color'], 
+                show_laser_pointer = self.btn_laser.value
+            )
+        ).value
     
     
     def _push_zoom(self,change):

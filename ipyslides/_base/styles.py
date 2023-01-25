@@ -1,8 +1,11 @@
 # Author: Abdul Saboor
 # CSS for ipyslides
 from ..utils import _build_css
+from ..xmd import get_unique_css_class
 
 _flow_selector = ":is(.highlight code, li, tr)"
+
+# Animations are fixed for instnace on the fly, no need uclass thing here
 animations = {'zoom':'''
 .SlideBox {
     animation-name: zoom; animation-duration: 600ms;
@@ -156,21 +159,23 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%'):
-    return _build_css((),{
-        ':root': {
-            '--heading-color':f'{colors["heading_color"]}',
-            '--primary-fg':f'{colors["primary_fg"]}',
-            '--primary-bg':f'{colors["primary_bg"]}',
-            '--secondary-bg':f'{colors["secondary_bg"]}',
-            '--secondary-fg':f'{colors["secondary_fg"]}',
-            '--alternate-bg':f'{colors["alternate_bg"]}',
-            '--hover-bg':f'{colors["hover_bg"]}',
-            '--accent-color':f'{colors["accent_color"]}',
-            '--pointer-color':f'{colors["pointer_color"]}',
-            '--text-size':f'{text_size}',
-        },
-        '.SlidesWrapper, .SlideArea': {
+def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%', _root = False):
+    uclass = get_unique_css_class()
+    _root_dict = {
+        '--heading-color':f'{colors["heading_color"]}',
+        '--primary-fg':f'{colors["primary_fg"]}',
+        '--primary-bg':f'{colors["primary_bg"]}',
+        '--secondary-bg':f'{colors["secondary_bg"]}',
+        '--secondary-fg':f'{colors["secondary_fg"]}',
+        '--alternate-bg':f'{colors["alternate_bg"]}',
+        '--hover-bg':f'{colors["hover_bg"]}',
+        '--accent-color':f'{colors["accent_color"]}',
+        '--pointer-color':f'{colors["pointer_color"]}',
+        '--text-size':f'{text_size}'
+    }
+    return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
+        **(_root_dict if not _root else {':root': _root_dict}),
+        '^.SlidesWrapper, .SlideArea': {
             '*:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text)': {
                 'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
             },
@@ -179,7 +184,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'font-size':'90% !important',
             },
         },
-        '.SlidesWrapper':{
+        '^.SlidesWrapper':{
             'margin':'auto',
             'padding':'0px',
             'font-size':'var(--text-size)',

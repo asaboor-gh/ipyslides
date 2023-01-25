@@ -3,7 +3,7 @@ resize_js = "window.dispatchEvent(new Event('resize'));"
 
 clear_disconnected_slides = """
 let slides = document.getElementsByClassName('SlidesWrapper');
-for (slide of Array.from(slides)) {
+for (let slide of Array.from(slides)) {
     if (slide.classList.contains('jupyter-widgets-disconnected')) {slide.remove();};
 };
 """
@@ -132,7 +132,7 @@ function touchSwiper(box){
 try {
     var waitLoading = setInterval(function() {
         let boxes = document.getElementsByClassName('SlidesWrapper');
-        for (box of Array.from(boxes)) {
+        for (let box of Array.from(boxes)) {
             if (!box.classList.contains('EventsAdded')) { // Check if events are added or not
                 main(box); // Refresh does not work in this case
                 touchSwiper(box); // Touch events

@@ -2,7 +2,6 @@
 Export Slides to HTML report and static HTML slides. It is used by program itself, 
 not by end user.
 """
-import re
 import os
 from .export_template import doc_css, doc_html, slides_css
 from ..formatters import code_css
@@ -37,9 +36,9 @@ class _HhtmlExporter:
         
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
     
-        theme_css = styles.style_css(**theme_kws) # Theme CSS
+        theme_css = styles.style_css(**theme_kws, _root=True)
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
-        _code_css = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')
+        _code_css = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)').replace(f'.{self.main.uid}','') # Remove uid from code css here
         
         return doc_html(_code_css,_style_css, content).replace(
             '__page_size__',kwargs.get('page_size','letter'))

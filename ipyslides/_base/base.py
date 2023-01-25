@@ -13,6 +13,7 @@ from ..xmd import _special_funcs
 class BaseSlides:
     def __init__(self):
         self._warnings = [] # Will be printed at end of building slides
+        self._uid = f'{self.__class__.__name__}-{id(self)}' # Unique ID for this instance to have CSS, should be before settings
         self.__widgets = Widgets()
         self.__screenshot = ScreenShot(self.__widgets)
         self.clipboard_image = self.__screenshot.clipboard_image # For easy access
@@ -56,6 +57,11 @@ class BaseSlides:
             self.notify('Notifications are enabled now!')
         else:
             self.toast_html.layout.visibility = 'hidden'
+    
+    @property
+    def uid(self):
+        "Unique CCS class for slides."
+        return self._uid
     
     @property
     def css_styles(self):

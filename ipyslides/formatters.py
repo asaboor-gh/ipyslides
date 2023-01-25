@@ -119,9 +119,13 @@ def _ipy_imagestr(image,width='100%'): # Zoom for auto output
 def code_css(style='default',color = None, background = None, hover_color = 'var(--hover-bg)', className = None, lineno = True):
     """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
     """
+    _class = '.highlight' if className is None else f'.highlight.{className}'
+    
+    from .xmd import get_unique_css_class # Avoid circular import
+    _class = get_unique_css_class() + ' ' + _class # Add unique class to avoid conflict with other slides in Jupyter lab
+        
     if style not in pygments.styles.get_all_styles():
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
-    _class = '.highlight' if className is None else f'.highlight.{className}'
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
     if style == 'default':
         _bg_fg = {'background': 'var(--secondary-bg)', 'color': 'var(--primary-fg)'} # Should match inherit theme

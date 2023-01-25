@@ -198,7 +198,7 @@ section span.html-slide-number {
     padding: 0.1em;
     margin: auto 8px 8px auto;
     color: var(--secondary-fg);
-    font-size: 0.7em;
+    font-size: 14px !important;
 }
 .SlidesWrapper::-webkit-scrollbar:vertical,
 .SlidesWrapper::-webkit-scrollbar-button,

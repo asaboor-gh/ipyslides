@@ -102,6 +102,11 @@ def get_slides_instance():
         return shell.user_ns.get('get_slides_instance', lambda: None)()
     return None
 
+def get_unique_css_class():
+    "Get slides unique css class if available."
+    slides = get_slides_instance()
+    return f'.{slides.uid}' if slides else ''
+
 def resolve_objs_on_slide(slide_instance,text_chunk):
     "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
     # notes`This is a note for current slide`
