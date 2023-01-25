@@ -471,7 +471,7 @@ class Slides(BaseSlides):
         self._update_toc() # Update toc before displaying app to include all sections
         self._update_dynamic_content() # Update dynamic content before displaying app
         self.close_view() # Close previous views
-        self._display_box = ipw.VBox(children=[self._box,self._notes_view]) # Initialize display box again
+        self._display_box = ipw.VBox(children=[self._box,self._notes_view]).add_class('DisplayBox') # Initialize display box again
         return display(self._display_box) # Display slides
     
     def close_view(self):

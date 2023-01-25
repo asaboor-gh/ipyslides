@@ -1,7 +1,5 @@
 
 from contextlib import suppress
-import time
-
 
 class Notes:
     "Notes are stored in `Slides` class for consistensy."
@@ -20,24 +18,13 @@ class Notes:
         if self.main.running is None:
             raise RuntimeError('Notes can only be added inside a slide constructor.')
         
-        with suppress(BaseException): # Would work on next run, may not first time
+        with suppress(BaseException): # Would work on next run, may not first
             self.main.running._notes = self.main.format_html(content)._repr_html_()
     
     def _display(self, html_str):
-        self.widgets.htmls.notes.value = 'Notes Area: Time only updates while switching slides' # Must be, so when no notes, should not be there
-        if html_str and isinstance(html_str,str):
-            current_time = time.localtime()
-            if current_time.tm_hour > 12:
-                time_str = f'{current_time.tm_hour-12:0>2}:{current_time.tm_min:0>2} PM'
-            else:
-                time_str = f'{current_time.tm_hour:0>2}:{current_time.tm_min:0>2} AM'
-
-            _time = f'''<div style="border-radius:4px;padding:8px;background:var(--secondary-bg);min-width:max-content;">
-                        <h2>Time: {time_str}</h2><div>'''
-                        
-            self.widgets.htmls.notes.value = f'''<div style="margin:-4px;padding:4px;background:var(--secondary-bg);border-radius:4px 4px 0 0;">
-                    <b style="font-size:105%;color:var(--accent-color);">Time: {time_str}</b>
-                    </div>''' + html_str # show alaways
+        self.widgets.htmls.notes.value = 'Notes Area' # Must be, so when no notes, should not be there
+        if html_str and isinstance(html_str,str):            
+            self.widgets.htmls.notes.value = html_str # show alaways inline
             
             # Next everything for Browser window case
             if self.notes_check.value:  # Only show on demand
@@ -49,7 +36,7 @@ class Notes:
                             </style>'''
                 node = f'''{theme}<div class="SlidesWrapper"> 
                         <div class="SlideBox"> 
-                            <div class="SlideArea"> {code_theme}{html_str} </div> <div>{_time}</div>
+                            <div class="SlideArea"> {code_theme}{html_str} </div>
                         </div></div>'''
                     
 

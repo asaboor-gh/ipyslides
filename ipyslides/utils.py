@@ -49,6 +49,7 @@ _css_docstring = """`css_dict` is a nested dict of css selectors and properties.
 
 - All nested selectors are joined with space, so '.A': {'.B': ... } becomes '.A .B {...}' in CSS.
 - A '^' in start of a selector joins to parent selector without space, so '.A': {'^:hover': ...} becomes '.A:hover {...}' in CSS. You can also use '.A:hover' directly but it will restrict other nested keys to hover only.
+- A '<' in start of a nested selector makes it root selector, so '.A': {'<.B': ...} becomes '.A {}\n.B {...}' in CSS.
 - A '+' in start of a key allows using same key in dict for CSS fallback, so '.A': {'font-size': '20px','+font-size': '2em'} becomes '.A {font-size: 20px; font-size: 2em;}' in CSS.
 
 Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
@@ -214,7 +215,9 @@ def _build_css(selector, data):
         content += "\n}\n"
 
     for key, value in children:
-        if key.startswith('@media'): # Media query can be inside a selector and will be
+        if key.startswith('<'): # Make it root level
+            content += _build_css((key.lstrip('<'),), value)
+        elif key.startswith('@media'): # Media query can be inside a selector and will be
             content += f"{key} {{\n\t"
             content += _build_css(selector, value).replace('\n','\n\t').rstrip('\t') # last tab is bad
             content += "}\n"

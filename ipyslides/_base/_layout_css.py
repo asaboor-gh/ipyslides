@@ -408,7 +408,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '> *:not(.Settings-Btn)' : {'display': 'none !important'},
             '^:hover > *:not(:disabled), ^:focus > *:not(:disabled)': { 'display': 'unset !important'},
         },
-        '.Inline-Notes': {
+        '<.Inline-Notes': {
             'background': 'var(--primary-bg)',
             'color': 'var(--primary-fg)',
             'border': '1px solid var(--accent-color)',
@@ -422,7 +422,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'padding':'4px',
             },
         },
-        '.jp-OutputArea-child': {
+        '<.jp-OutputArea-child': {
             '^, .jp-OutputArea-output': { # For some themes
                 'background': 'transparent !important',
                 'background-color': 'transparent !important', 
@@ -550,7 +550,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'width': '100% !important',
             },
         }, # @media print
-        'body[data-base-url]': { #Voila
+        '<body[data-base-url]': { #Voila
             'position': 'fixed !important',
             'top': '0 !important',
             'left': '0 !important',
@@ -584,35 +584,33 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             },
         },
         # Other issues
-        '#jp-top-panel, #jp-bottom-panel, #jp-menu-panel': {'color': 'inherit'},
-        '.CodeMirror': {
+        '<#jp-top-panel, #jp-bottom-panel, #jp-menu-panel': {'color': 'inherit'},
+        '<.CodeMirror': {
             'padding-bottom':'8px !important',
             'padding-right':'8px !important',
         }, # Jupyter-Lab make space in input cell
-        '.cell-output-ipywidget-background': { # VSCode issue */
+        '<.cell-output-ipywidget-background': { # VSCode issue */
             'background': 'var(--theme-background,inherit) !important',
             'margin': '8px 0px',
         },
-        '.NotesView': {
-            'background':'var(--secondary-bg) !important',
+        '<.NotesView': {
             'padding':'8px !important',
             'margin-top':'4px !important', # Avoid overlap with slides
+            'border':'1px solid gray !important', # neutral color
         },
-        '.jp-LinkedOutputView': {
-            '.SlidesWrapper': {
-                'display': 'none !important', # Double Display does not work properly
+        '<.jp-LinkedOutputView': {
+            '.SlidesWrapper, .DisplayBox': {
+                'width': '100% !important',
+                'height': '100% !important',
+                'min-width': '100% !important',
+                'min-height': '100% !important',
+                'box-sizing': 'border-box !important', 
             },
             '.NotesView': {
-                'display': 'block !important', 
-                'box-sizing': 'border-box',
-                '^:before': {
-                    'content': '"Multiple views of slides do not behave properly, you can use this area for notes though!"',
-                    'display': 'block !important',
-                    'color': 'var(--secondary-fg)',
-                },
+                'display': 'none !important', 
             },   
         },
-        '#ipython-main-app .SlidesWrapper .output_scroll': { # For classic Notebook output
+        '<#ipython-main-app .SlidesWrapper .output_scroll': { # For classic Notebook output
             'height': 'unset !important',
             '-webkit-box-shadow': 'none !important',
             'box-shadow': 'none !important',
