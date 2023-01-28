@@ -79,6 +79,8 @@ class ScreenShot:
         - quality: 95; In term of current screen. Will not chnage too much above 95. 
         - bbox: None; None for full screen on any platform. Given screen position of slides in pixels as [left,top,right,bottom].
         > Note: Auto detection of bbox in frontends where javascript runs is under progress. """
+        if load_time < 0.1:
+            return print("load_time must be greater than 0.1 to at least load the slide")
         if bbox and len(bbox) != 4:
             return print("bbox expects [left,top,right,bottom] in integers")
         self.__capture_settings = {'load_time':load_time,'quality':quality,'bbox':bbox if bbox else self.screen_bbox} # get full if none given

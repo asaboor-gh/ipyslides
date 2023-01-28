@@ -128,6 +128,7 @@ function touchSwiper(box){
         }; 
     };
 };
+
 // Now execute function to work, handle browser refresh too
 try {
     var waitLoading = setInterval(function() {

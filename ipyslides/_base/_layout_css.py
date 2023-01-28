@@ -12,6 +12,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
     return _build_css((uclass,),{
         'a.jp-InternalAnchorLink': {'display': 'none !important'},
         '^.SlidesWrapper': {
+            'container': 'slides / inline-size',
             'z-index': '1 !important',
             '^.SingleSlide .Controls': {'display':'none !important',}, 
             '^.CaptureMode': {
@@ -63,12 +64,13 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'opacity': f'{1 if show_laser_pointer else 0} !important',
             },
             '.SlideArea': {
-                'align-items': 'center',
-                f'@media screen and (max-width: {breakpoint})': {
-                'min-width' : '100% !important', # can't work without min-width
-                'width':'100% !important', 
-                'padding-bottom': '50px !important',
-                },
+                'justify-content': 'center',
+                f'@media screen and (max-width: {breakpoint})': (_breakpoint_css := {
+                    'min-width' : '100% !important', # can't work without min-width
+                    'width':'100% !important', 
+                    'padding-bottom': '50px !important',
+                }),
+                '@container slides (max-width: 650px)': _breakpoint_css,
                 '.report-only': {
                     'display': 'none !important'
                 },
@@ -139,7 +141,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'left': '0px !important',
                 'height': '100% !important',
                 'box-shadow': '0 0 4px 4px var(--secondary-bg)',
-                f'@media screen and (max-width: {breakpoint})': {'width': '100% !important'},
+                f'@media screen and (max-width: {breakpoint})': (_breakpoint_css := {'width': '100% !important'}),
+                '@container slides (max-width: 650px)': _breakpoint_css,
                 '.CaptureHtml' : {
                     'border': '1px solid var(--secondary-fg)',
                     'figure' : {
@@ -277,13 +280,14 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'align-items':'center !important',
             'margin-bottom':'16px !important',
             'color':' var(--accent-color) !important',
-            f'@media screen and (max-width: {breakpoint})': {
+            f'@media screen and (max-width: {breakpoint})': (_breakpoint_css := {
                     'bottom': '30px !important',
                     'right': '0 !important',
                     'width' : '100% !important',
                     'justify-content': 'space-around !important',
                     'button' : {'width': '30% !important'},
-            },
+            }),
+            '@container slides (max-width: 650px)': _breakpoint_css,
             '.widget-button > i': { 'color': 'var(--accent-color) !important',},
             '.Arrows': {
                 'opacity':'0.4',
@@ -303,7 +307,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                     'justify-content': 'center',
                     'opacity': 1,
                 },
-                f'@media screen and (max-width: {breakpoint})': {'width': '40%', 'opacity': 0,},
+                f'@media screen and (max-width: {breakpoint})': (_breakpoint_css := {'width': '40%', 'opacity': 0,}),
+                '@container slides (max-width: 650px)': _breakpoint_css,
             },
         },
         
@@ -318,7 +323,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'z-index':' 8',
             'border-radius':' 4px',
             'border':' 1px solid var(--hover-bg)',
-            f'@media screen and (max-width: {breakpoint})': {'min-width': 'calc(100% - 72px) !important'},
+            f'@media screen and (max-width: {breakpoint})': (_breakpoint_css := {'min-width': 'calc(100% - 72px) !important'}),
+            '@container slides (max-width: 650px)': _breakpoint_css,
             '.goto-box': {
                 'justify-content': 'space-between',
                 'height': 'auto',
@@ -393,7 +399,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '^:hover, ^:focus': {
                 'min-height': '32px !important',
                 'width': '60% !important',
-                f'@media screen and (max-width: {breakpoint})': {'width': 'calc(100% - 16px) !important'}, # There is 8px margin
+                f'@media screen and (max-width: {breakpoint})': (_breakpoint_css :={'width': 'calc(100% - 16px) !important'}), # There is 8px margin
+                '@container slides (max-width: 650px)': _breakpoint_css,
                 '> .Settings-Btn' : {
                     'width': 'auto !important',
                     'opacity': '1 !important',
@@ -594,10 +601,11 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'margin': '8px 0px',
         },
         '<.NotesView': {
-            'padding':'8px !important',
+            'padding':'4px !important',
             'margin-top':'4px !important', # Avoid overlap with slides
-            'border':'1px solid gray !important', # neutral color
+            'border-left':'2px solid gray !important', # neutral color
         },
+        '.InView-Btn': {'display': 'none !important',},
         '<.jp-LinkedOutputView': {
             '.SlidesWrapper, .DisplayBox': {
                 'width': '100% !important',
@@ -605,6 +613,16 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 'min-width': '100% !important',
                 'min-height': '100% !important',
                 'box-sizing': 'border-box !important', 
+                '.InView-Btn': {
+                    'display': 'block !important',
+                    'position': 'absolute',
+                    'bottom': '0',
+                    'right': '0',
+                    'z-index':'10',
+                    'color': 'white !important',
+                    'background': 'green !important',
+                },
+                '.Height-Dd, .Width-Slider': {'display': 'none !important',},
             },
             '.NotesView': {
                 'display': 'none !important', 
@@ -647,7 +665,7 @@ def zoom_hover_css():
         # Matplotlib by plt.show, self zoom, child zoom, plotly
         _zoom_ables: {
             '^:hover, ^:focus': {
-                'cursor': 'default', # Ovverride zoom-in cursor form main layout
+                'cursor': 'auto', # Ovverride zoom-in cursor form main layout
                 'position': 'fixed',
                 'backdrop-filter': 'blur(200px)',
                 'left':'50px',

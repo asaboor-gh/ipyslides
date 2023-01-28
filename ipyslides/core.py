@@ -177,7 +177,7 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return # Do not display if there is an error
         if self._post_run_enabled:
-            return self.show() # Display after cell is executed only when enabled
+            return self._ipython_display_() # Display after cell is executed only when enabled, don call show here, make issues
                      
     
     def _on_load_and_refresh(self):
@@ -471,8 +471,10 @@ class Slides(BaseSlides):
         self._update_toc() # Update toc before displaying app to include all sections
         self._update_dynamic_content() # Update dynamic content before displaying app
         self.close_view() # Close previous views
-        self._display_box = ipw.VBox(children=[self._box,self._notes_view]).add_class('DisplayBox') # Initialize display box again
-        return display(self._display_box) # Display slides
+        self.widgets.navbox.children = [self.widgets.buttons._inview, *self.widgets.navbox.children] # Important to add inview button for each new view
+        self._display_box = ipw.VBox(children=[self._box, self._notes_view]).add_class('DisplayBox') # Initialize display box again
+        h = display(self._display_box, display_id = True) # Display slides
+        self._display_box._DH = h # This is important for Jupyter Lab to optimize experience
     
     def close_view(self):
         "Close slides/cell view, but keep slides in memory than can be shown again."    
@@ -530,10 +532,10 @@ class Slides(BaseSlides):
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index # Just safe
             
-        self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0',margin='0',opacity='0') # Hide old slide
+        self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0', height='100%',margin='0',opacity='0') # Hide old slide
         self.widgets.slidebox.children[old_index].remove_class('SlideArea')
         self.widgets.slidebox.children[new_index].add_class('SlideArea') # First show then set layout
-        self.widgets.slidebox.children[new_index].layout = self.settings._slide_layout 
+        self.widgets.slidebox.children[new_index].layout = self.settings._slide_layout
         
     def _update_content(self,change):
         if self.progress_slider.index == 0: # First slide
@@ -552,6 +554,7 @@ class Slides(BaseSlides):
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
             self.current.run_on_load() # Run on_load setup after switching slide
+           
             
     def refresh(self): 
         "Auto Refresh whenever you create new slide or you can force refresh it"
@@ -940,6 +943,7 @@ class Slides:
         - Run `slides.docs()` to see documentation.
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
+        - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
     
    """)
     def __new__(cls,

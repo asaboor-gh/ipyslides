@@ -185,6 +185,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             },
         },
         '^.SlidesWrapper':{
+            'container': 'slides / inline-size',
             'margin':'auto',
             'padding':'0px',
             'font-size':'var(--text-size)',
@@ -332,13 +333,14 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'flex-direction':'row',
                 'column-gap':'2em',
                 'height':'auto',
-                f'@media screen and (max-width: {breakpoint})': {
+                f'@media screen and (max-width: {breakpoint})': (_breakpoint_css :={
                     'width':'100%',
                     'max-width':'100%',
                     'display':'flex',
                     'flex-direction':'column',
                     '> div[style]': {'width':'100%!important'}, # important to override inline CSS
-               },
+               }),
+                '@container slides (max-width: 650px)': _breakpoint_css,
             }
         },
         '.highlight': {

@@ -1,10 +1,9 @@
 """Slide Object, should not be instantiated directly"""
 
-import sys
+import sys, time
 from contextlib import contextmanager
 from ipywidgets import Output, Layout, Button, HBox
 
-from IPython import get_ipython
 from IPython.display import display
 from IPython.utils.capture import capture_output
 from IPython.core.ultratb import FormattedTB
@@ -50,7 +49,7 @@ class DynamicRefresh:
             if cap.stderr: raise Exception(cap.stderr)
         finally:
             self._slide._app._in_dproxy = None
-            
+        
         self._btn.on_click(self._on_click)
     
     def _ipython_display_(self):            
@@ -243,7 +242,7 @@ class Slide:
         
     def _on_load_private(self, func):
         old = self._app.running
-        self._app._running_slide = None # temporarily set it to None to avoid dynamic things inside on_load
+        self._app._running_slide = None # temporarily set it to None to avoid dynamic things inside on_load, as it will not be running on load
         try: # check if code is correct
             with capture_output():
                 func()
@@ -258,9 +257,16 @@ class Slide:
     
     def run_on_load(self):
         "Called when a slide is loaded into view. Use it to register notifications etc."
-        if hasattr(self,'_on_load') and callable(self._on_load):
-            self._on_load() # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
-    
+        self._widget.layout.height = '100%' # Trigger a height change to reset scroll position
+        start = time.time()
+        try: # Try is to handle errors in on_load, not for attribute errors, and also finally to reset height
+            if hasattr(self,'_on_load') and callable(self._on_load):
+                self._on_load() # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
+        finally:
+            if (t := time.time() - start) < 0.05: # Could not have enought time to resend another event
+                time.sleep(0.05 - t) # Wait at least 50ms, (it does not effect anything else) for the height to change from previous trigger
+            self._widget.layout.height = 'auto' # Reset height to auto
+        
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
     
@@ -399,10 +405,6 @@ class Slide:
             return self._app.source.from_string(**self._source, name = name)
         else:
             return self._app.source.from_string('Source of a slide only exits if it is NOT created (most recently) using @Slides.frames decorator\n',language = 'markdown')
-    
-    def show(self):
-        self.update_display() # Needs to not discard widgets there
-        return display(self._widget)
     
     def _set_overall_css(self, css_dict={}):
         self.__class__._overall_css = html('style','') # Reset overall CSS

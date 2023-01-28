@@ -32,6 +32,7 @@ class _Buttons:
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
     cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
+    _inview = Button(description='Click to Optimize Experience in JupyterLab',layout= Layout(width='auto',height='auto')).add_class('InView-Btn') # For testing if inside LinkedView
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -67,7 +68,7 @@ class _Htmls:
     intro   = HTML().add_class('SidePanel-Text') # Intro HTML
     glass   = HTML().add_class('BackLayer') # For glass effect
     overlay = HTML().add_class('OverlayHtml') # For adding iframe of things
-
+    
 @dataclass(frozen=True)
 class _Inputs:
     """
@@ -202,6 +203,7 @@ class Widgets:
         ],layout=Layout(height='28px')).add_class('NavBox')
         
         self.navbox = VBox([
+            self.buttons._inview,
             self.footerbox,
             VBox([
                 self.progressbar

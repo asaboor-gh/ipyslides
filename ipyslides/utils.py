@@ -217,7 +217,7 @@ def _build_css(selector, data):
     for key, value in children:
         if key.startswith('<'): # Make it root level
             content += _build_css((key.lstrip('<'),), value)
-        elif key.startswith('@media'): # Media query can be inside a selector and will be
+        elif key.startswith('@media') or key.startswith('@container'): # Media query can be inside a selector and will go outside
             content += f"{key} {{\n\t"
             content += _build_css(selector, value).replace('\n','\n\t').rstrip('\t') # last tab is bad
             content += "}\n"

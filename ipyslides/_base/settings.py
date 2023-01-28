@@ -27,7 +27,7 @@ class LayoutSettings:
         self._content_width = '90%' #Better
         self._code_lineno = True
         
-        self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em')
+        self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em') 
         self.width_slider  = self.widgets.sliders.width
         self.aspect_dd = self.widgets.ddowns.aspect
         self.scale_slider  = self.widgets.sliders.scale
@@ -43,6 +43,7 @@ class LayoutSettings:
         self._on_load_and_refresh() # First attempt of Javascript to work
         
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
+        self.widgets.buttons._inview.on_click(self.__block_post_run)
         self.theme_dd.observe(self._update_theme,names=['value'])
         self.scale_slider.observe(self._update_theme,names=['value'])
         self.aspect_dd.observe(self._update_size,names=['value'])
@@ -57,6 +58,15 @@ class LayoutSettings:
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
         self._update_size(change = None) # Trigger this as well
+    
+    def __block_post_run(self,btn):
+        self.show_always(False)
+        self.widgets.navbox.children = [w for w in self.widgets.navbox.children if w is not btn] 
+        dh = getattr(self._slides._display_box, '_DH', None) # Get display handler
+        self._slides._display_box = self._slides._notes_view # Swap display box by just notes view
+        if dh is not None: 
+            dh.update(self._slides._display_box) # Update display box with just notes view
+        
         
     def _on_load_and_refresh(self): # on_displayed is not working in ipywidgets 8.0.0+
         self.__add_js()
@@ -100,7 +110,10 @@ class LayoutSettings:
     
     def show_always(self, b: bool = True):
         """If True (default), slides are shown after each cell execution where a slide constructor is present (other view will be closed). 
-        Otherwise only when `slides.show()` is called or `slides` is the last line in a cell."""
+        Otherwise only when `slides.show()` is called or `slides` is the last line in a cell.
+        :::note
+            In JupyterLab, right click on the slides and select `Create New View for Output` and follow next step there to optimize display.
+        """
         if not isinstance(b, bool):
             raise TypeError(f'Expected bool, got {b!r}')
         self._slides._post_run_enabled = True if b else False # Do not rely on user if they really give bool or not
@@ -216,7 +229,7 @@ class LayoutSettings:
     def set_layout(self,center = True, content_width = None):
         "Central aligment of slide by default. If False, left-top aligned."
         self._content_width = content_width if content_width else self._content_width # user selected
-        style_dict = {'display':'block','width':content_width} #block is must
+        style_dict = {'display':'flex','width':content_width} #block is must
         if center:
             style_dict.update(dict(margin = 'auto',align_items = 'center',justify_content = 'center'))
         else: #container still should be in the center horizontally with auto margin
