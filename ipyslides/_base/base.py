@@ -85,6 +85,7 @@ class BaseSlides:
          'slides-only'      | Text will not appear in exported html report.
          'report-only'      | Text will not appear on slides. Use to fill content in report.
          'export-only'      | Hidden on main slides, but will appear in exported slides/report.
+         'jupyter-only'     | Hidden on exported slides/report, but will appear on main slides.
          'page-break'       | Report will break page in print after object with this class.
          'block'            | Block of text/objects
          'block-[color]'    | Block of text/objects with specific background color from red,

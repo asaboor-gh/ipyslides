@@ -103,7 +103,10 @@ class Writer:
         for col in self._cols:
             content = ''
             for out in col['outputs']:
-                if 'text/html' in out.data:
+                if hasattr(out, 'metadata') and 'DYNAMIC' in out.metadata: # Buried in column
+                    dpx = self._slide._dproxies[out.metadata['DYNAMIC']] # _slide is for sure there if dynamic proxy is there
+                    content += ('\n' + dpx.fmt_html(allow_non_html_repr = allow_non_html_repr))
+                elif 'text/html' in out.data:
                     content += ('\n' + out.data['text/html']) # rows should be on their own line
                 elif allow_non_html_repr:
                     content += ('\n' + out.data['text/plain'])

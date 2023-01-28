@@ -616,11 +616,12 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '.InView-Btn': {
                     'display': 'block !important',
                     'position': 'absolute',
-                    'bottom': '0',
-                    'right': '0',
+                    'top': '0',
+                    'left': '0',
                     'z-index':'10',
                     'color': 'white !important',
                     'background': 'green !important',
+                    'font-size': '14px !important', # Avoid this button font scaling
                 },
                 '.Height-Dd, .Width-Slider': {'display': 'none !important',},
             },

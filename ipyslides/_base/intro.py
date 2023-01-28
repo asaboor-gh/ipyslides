@@ -155,6 +155,8 @@ key_combs = f'''
 '''
 
 more_instructions =f'''## How to Use
+::: note-tip
+    In JupyterLab, right click on the slides and select `Create New View for Output` and follow next there to optimize display.
 
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 

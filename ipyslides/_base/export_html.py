@@ -31,14 +31,16 @@ class _HhtmlExporter:
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
                 _sn = (f'<span class="html-slide-number">{item.label}/{int(float(self.main[-1].label))}</span>'  # Could be 33.1, but we want 33
                         if kwargs.get("slide_number",False) and item.label != '0' else '')
-                content += (f'<section><div class="SlideArea">{_html}</div>{_sn}</section>' 
-                            if as_slides else f'<section>{_html}</section>')
+                sec_id = getattr(item,'_sec_id','')
+                sec_id = f'id="{sec_id}"' if sec_id else ''
+                content += (f'<section {sec_id}><div class="SlideArea">{_html}</div>{_sn}</section>' 
+                            if as_slides else f'<section {sec_id}>{_html}</section>')
         
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
     
         theme_css = styles.style_css(**theme_kws, _root=True)
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
-        _code_css = self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)').replace(f'.{self.main.uid}','') # Remove uid from code css here
+        _code_css = (self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')).replace(f'.{self.main.uid}','') # Remove uid from code css here
         
         return doc_html(_code_css,_style_css, content).replace(
             '__page_size__',kwargs.get('page_size','letter'))

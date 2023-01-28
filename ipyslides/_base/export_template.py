@@ -79,7 +79,9 @@ div.columns > div[style*="width:"] {
     width:100% !important;
     max-width:100% !important;
 }
-.slides-only {display:none !important;}
+.slides-only, .jupyter-only {display:none !important;}
+.toc-item > a {text-decoration:none !important;}
+.toc-item > a:hover {text-decoration:underline !important;}
 
 .SlidesWrapper h1, .SlidesWrapper h2,
 .SlidesWrapper h3, .SlidesWrapper h4,
@@ -162,7 +164,9 @@ div.columns > div[style*="width:"] {
 
 slides_css = """<style>
 __theme_css__
-.report-only { display:none !important;}
+.report-only, .jupyter-only { display:none !important;}
+.toc-item > a {text-decoration:none !important;}
+.toc-item > a:hover {text-decoration:underline !important;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;
     display: flex !important;
@@ -242,6 +246,8 @@ section span.html-slide-number {
         margin: 0 !important;
         page-break-inside: avoid !important;
         page-break-after: always !important;
+        overflow: hidden !important; /* otherwise it throws text to next page */
+        padding-bottom: 2em !important; /* for avoiding overflow to bottom,2em is a reasonable space */
     }
     section:last-of-type {
         page-break-after: avoid !important;
@@ -251,8 +257,9 @@ section span.html-slide-number {
         max-height: 100% !important;
         box-sizing: border-box;
         overflow: hidden !important;
-        max-width: 100% !important;
-        margin: auto !important;
+        width: 90% !important;
+        max-width: 90% !important;
+        margin-left: 5% !important;
         page-break-inside: avoid !important;
     }
     ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }

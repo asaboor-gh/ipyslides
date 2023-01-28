@@ -290,7 +290,10 @@ class Slides(BaseSlides):
                     ::: align-center
                         color[teal]`Author: Abdul Saboor`
                         
-                        👈🏻 **Read more instructions in left panel**''',
+                        👈🏻 **Read more instructions in left panel**
+                    ::: note-tip
+                        In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
+                    ''',
                 display_inline = True)  
                 self.details(self.parse(key_combs, display_inline = False), 'Keyboard Shortcuts').display()
                 
@@ -392,6 +395,7 @@ class Slides(BaseSlides):
         self.verify_running('Sections can be added only inside a slide constructor!')
         
         self.running._section = text # assign before updating toc
+        self.running._sec_id = f's-{id(self.running)}' # Must for enabling links in export
         
         for s in self[:]:
             if getattr(s, '_toced', False) and s != self.running: # self will be built of course at end
@@ -400,22 +404,25 @@ class Slides(BaseSlides):
     def toc(self, func):
         """Decorator to add dynamic table of contents to slides which get updated on each new section and refresh/update_display.
         `func` should take one argument which is the tuple of sections."""
+        def fmt_sec(slide):
+            return f'<a href="#{slide._sec_id}" class="export-only">{slide._section}</a><span class="jupyter-only">{slide._section}</span>'
+        
         def _toc_handler():
             sections = []
             this_index = self[:].index(self.running) if self.running in self[:] else self.running.number # Monkey patching index, would work on next run
             for slide in self[:this_index]:
                 if slide._section:
-                    sections.append(self.html('div', slide._section, style='',className='toc-item prev'))
+                    sections.append(self.html('div', fmt_sec(slide), style='',className='toc-item prev'))
 
             if self.running._section:
-                sections.append(self.html('div', self.running._section, style='',className='toc-item this'))
+                sections.append(self.html('div', fmt_sec(self.running), style='',className='toc-item this'))
                 
             elif sections:
                 sections[-1] = _HTML(sections[-1].value.replace('toc-item prev','toc-item this'))
 
             for slide in self[this_index+1:]:
                 if slide._section:
-                    sections.append(self.html('div', slide._section, style='',className='toc-item next'))
+                    sections.append(self.html('div', fmt_sec(slide), style='',className='toc-item next'))
             
             return func(tuple(sections))
            
