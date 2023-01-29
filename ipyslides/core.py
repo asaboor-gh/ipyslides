@@ -297,7 +297,7 @@ class Slides(BaseSlides):
                 display_inline = True)  
                 self.details(self.parse(key_combs, display_inline = False), 'Keyboard Shortcuts').display()
                 
-        self.refresh() # cleans up initialization setup       
+        self.refresh() # cleans up initialization setup and tocs/other things      
     
     def clear(self):
         "Clear all slides. This will also clear resources including citations, sections."
@@ -478,7 +478,7 @@ class Slides(BaseSlides):
         self._update_toc() # Update toc before displaying app to include all sections
         self._update_dynamic_content() # Update dynamic content before displaying app
         self.close_view() # Close previous views
-        self.widgets.navbox.children = [self.widgets.buttons._inview, *self.widgets.navbox.children] # Important to add inview button for each new view
+        self.__reset_navbox() # Important to add inview button for each new view
         self._display_box = ipw.VBox(children=[self._box, self._notes_view]).add_class('DisplayBox') # Initialize display box again
         h = display(self._display_box, display_id = True) # Display slides
         self._display_box._DH = h # This is important for Jupyter Lab to optimize experience
@@ -487,10 +487,16 @@ class Slides(BaseSlides):
         "Close slides/cell view, but keep slides in memory than can be shown again."    
         if hasattr(self,'_display_box') and self._display_box is not None:
             self._display_box.close() # Clear display that removes CSS things there
+            self.__reset_navbox() # Important to add inview button for next view
     
+    def __reset_navbox(self):
+        "Reset navbox to add inview button for Jupyter Lab"
+        others = [w for w in self.widgets.navbox.children if w is not self.widgets.buttons._inview]
+        self.widgets.navbox.children = [self.widgets.buttons._inview, *others]
+        
     @property
     def _notes_view(self): 
-        return ipw.Box([self.widgets.htmls.notes]).add_class('NotesView') 
+        return ipw.Box([self.widgets.htmls.notes]).add_class('NotesView') # should be in box to avoid accidentally closed
     
     @property
     def _slideindex(self):
@@ -585,6 +591,7 @@ class Slides(BaseSlides):
             s._index = i # Update index
             
         self._update_dynamic_content(None) # Update dynamic content including widgets
+        self._update_toc() # Update table of content if any
         
         # This is useful for readily available objects with slides instead of indexing.
         old_links = getattr(self,'_links_dict', {})
