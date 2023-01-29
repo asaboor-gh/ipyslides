@@ -130,7 +130,7 @@ with slides.source.context(auto_display = False) as source:
         df = '### Install `pandas` to view output'
     
 with auto.slide():
-    write(('## Writing Pandas DataFrame',df, source))
+    write(['## Writing Pandas DataFrame', df, source])
    
 with slides.source.context(False) as s:
     try:
@@ -273,13 +273,24 @@ with auto.slide() as ys: # We will use this in next %%magic
     
 
 with auto.slide() as s:
-    write('## Data Tables')
-    write(slides.block_r('Here is Table','<hr/>','''
-        |h1|h2|h3|
-        |---|---|---|
-        |d1|d2|d3|
-        |r1|r2|r3|
-        '''))
+    write('## Block API\nNew `block` API is as robust as `write` command. On top of it, it makes single unit of related content.')
+    slides.block_red(
+        [
+            '### Table',
+            '''
+            |h1 |h2 |h3 |
+            |---|---|---|
+            |d1 |d2 |d3 |
+            |r1 |r2 |r3 |
+            ''',
+        ], 
+        [
+            '### Widgets',
+            ipw.Checkbox(description='Select to do nothing',indent=False),
+            ipw.IntSlider(),
+            ipw.Button(description='Click to do nothing'),
+        ]
+    )
     s.get_source().focus_lines([3,4,5,6]).display()
     
 

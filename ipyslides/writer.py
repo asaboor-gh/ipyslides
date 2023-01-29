@@ -114,6 +114,7 @@ class Writer:
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
         return f'<div class="columns">{"".join(cols)}</div>'
     
+    
 def write(*objs,widths = None):
     """
     Write `objs` to slides in columns. To create rows in a column, wrap objects in a list or tuple.      
@@ -140,12 +141,12 @@ def write(*objs,widths = None):
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
         - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`.
         - A single string passed to `write` is equivalent to `parse` command.
+        - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """
     wr = Writer(*objs,widths = widths)
     if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
         return wr.update_display() # Update in usual cell to have widgets working
     
-
 # We can just discourage the use of `iwrite` command in favor of the robust `write` command.        
 
 def _fmt_iwrite(*objs,widths=None):

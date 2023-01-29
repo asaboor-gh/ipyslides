@@ -269,6 +269,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             'width':f'{content_width} !important',
             '.toc-item': { # Table of contents on slides 
                 'border-right':'4px solid var(--secondary-bg)',
+                'padding-right':'2em', # To make distance from the border
                 '^.this': {
                     'border-right':'4px solid var(--primary-fg)',
                     'font-weight':'bold !important',
@@ -333,6 +334,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'flex-direction':'row',
                 'column-gap':'2em',
                 'height':'auto',
+                '> *': {'box-sizing':'border-box !important',},
                 f'@media screen and (max-width: {breakpoint})': (_breakpoint_css :={
                     'width':'100%',
                     'max-width':'100%',

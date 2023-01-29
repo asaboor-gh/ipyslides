@@ -3,6 +3,7 @@ __all__ = ['alt','alert', 'color', 'bullets','suppress_output','suppress_stdout'
             'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
 __all__.extend(['rows','cols','block','classed'])
 __all__.extend([f'block_{c}' for c in 'rgbycma'])
+__all__.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
 
 
 import os, re
@@ -20,6 +21,7 @@ import ipywidgets as ipw
 
 from .formatters import fix_ipy_image, _HTML, _fix_repr
 from .xmd import get_unique_css_class
+from .writer import Writer
 
 def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
@@ -430,21 +432,55 @@ def cols(*objs,widths=None):
     "Returns HTML containing multiple columns of given widths."
     return format_html(*objs,widths=widths)
 
-def block(*objs,className = 'block'):
-    """Format a block like in LATEX beamer. *objs expect to be a subset of writables with `write` command.   
-    ::: block
-        - Shortcut functions with pre-specified background colors are available: `block_<r,g,b,y,c,m,a>`.
-        - You can create blocks just by CSS classes in markdown as {.block}, {.block-red}, {.block-green}, etc.
-    """
-    return _HTML(f"<div class='{className}'>{_fmt_cols(objs)}</div>")
+def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class
+    if len(objs) == 0:
+        return # Nothing
     
-def block_r(*objs): return block(*objs,className = 'block-red')
-def block_b(*objs): return block(*objs,className = 'block-blue')
-def block_g(*objs): return block(*objs,className = 'block-green')
-def block_y(*objs): return block(*objs,className = 'block-yellow')
-def block_c(*objs): return block(*objs,className = 'block-cyan')
-def block_m(*objs): return block(*objs,className = 'block-magenta')
-def block_a(*objs): return block(*objs,className = 'block-gray')
+    if suffix and suffix not in 'red green blue yellow cyan magenta gray'.split():
+        raise ValueError(f'Invalid suffix {suffix!r}, should be one of [red, green, blue, yellow, cyan, magenta, gray]')
+    
+    make_grid = False # If only one object, make it grid to remove extra gap
+    if len(objs) == 1:
+        make_grid = True
+        objs = ['',objs[0],''] # Add empty strings to make it three columns and center it, otherwise it will not work as block
+        widths = [1,98,1] # 1% width for empty strings and make content central
+    
+    wr = Writer(*objs,widths = widths) # Displayed
+    wr._box.add_class('block' + (f'-{suffix}' if suffix else '')) # Add class to box
+    if make_grid:
+        wr._box.layout.display = 'grid' # Make it grid
+        wr._box.layout.grid_gap = '1em 0px' # Remove extra gap in columns, but keep row gap
+    
+    if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
+        return wr.update_display() # Update in usual cell to have widgets working
+    
+
+def block_r(*objs): raise AttributeError('Use block_red instead! This is to make it consistent with markdown blocks convention.')
+def block_b(*objs): raise AttributeError('Use block_blue instead! This is to make it consistent with markdown blocks convention.')
+def block_g(*objs): raise AttributeError('Use block_green instead! This is to make it consistent with markdown blocks convention.')
+def block_y(*objs): raise AttributeError('Use block_yellow instead! This is to make it consistent with markdown blocks convention.')
+def block_c(*objs): raise AttributeError('Use block_cyan instead! This is to make it consistent with markdown blocks convention.')
+def block_m(*objs): raise AttributeError('Use block_magenta instead! This is to make it consistent with markdown blocks convention.')
+def block_a(*objs): raise AttributeError('Use block_gray instead! This is to make it consistent with markdown blocks convention.')
+
+def block(*objs, widths = None): 
+    """
+    Format a block like in LATEX beamer with `objs` in columns and immediately display it. Format rows by given an obj as list of objects.   
+    ::: block
+        - Block is automatically displayed and returns nothing.
+        - Available functions include: `block_<red,green,blue,yellow,cyan,magenta,gray>`.
+        - You can create blocks just by CSS classes in markdown as {.block}, {.block-red}, {.block-green}, etc.
+        - See documentation of `write` command for details of `objs` and `widths`.
+    """
+    return _block(*objs, widths = widths)  
+
+def block_red(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'red')
+def block_blue(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'blue')
+def block_green(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'green')
+def block_yellow(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'yellow')
+def block_cyan(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'cyan')
+def block_magenta(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'magenta')
+def block_gray(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'gray')
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
