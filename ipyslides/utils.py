@@ -1,10 +1,9 @@
-__all__ = ['alt','alert', 'color', 'bullets','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
+_attrs = ['alt','alert', 'block', 'bullets', 'classed', 'color', 'cols','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
-            'raw','enable_zoom','html','sig','doc','code','today','sub','sup']
-__all__.extend(['rows','cols','block','classed'])
-__all__.extend([f'block_{c}' for c in 'rgbycma'])
-__all__.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
+            'raw', 'rows', 'enable_zoom','html','sig','doc','code','today','sub','sup']
 
+_attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
+__all__ = sorted(_attrs)
 
 import os, re
 import datetime
@@ -454,15 +453,6 @@ def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} cl
     if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
         return wr.update_display() # Update in usual cell to have widgets working
     
-
-def block_r(*objs): raise AttributeError('Use block_red instead! This is to make it consistent with markdown blocks convention.')
-def block_b(*objs): raise AttributeError('Use block_blue instead! This is to make it consistent with markdown blocks convention.')
-def block_g(*objs): raise AttributeError('Use block_green instead! This is to make it consistent with markdown blocks convention.')
-def block_y(*objs): raise AttributeError('Use block_yellow instead! This is to make it consistent with markdown blocks convention.')
-def block_c(*objs): raise AttributeError('Use block_cyan instead! This is to make it consistent with markdown blocks convention.')
-def block_m(*objs): raise AttributeError('Use block_magenta instead! This is to make it consistent with markdown blocks convention.')
-def block_a(*objs): raise AttributeError('Use block_gray instead! This is to make it consistent with markdown blocks convention.')
-
 def block(*objs, widths = None): 
     """
     Format a block like in LATEX beamer with `objs` in columns and immediately display it. Format rows by given an obj as list of objects.   

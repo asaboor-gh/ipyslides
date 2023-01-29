@@ -39,6 +39,9 @@ class _HhtmlExporter:
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
     
         theme_css = styles.style_css(**theme_kws, _root=True)
+        if self.main.widgets.checks.reflow.value:
+            theme_css = theme_css + f"\n.SlideArea *, ContentWrapper * {{max-height:max-content !important;}}\n" # handle both slides and report
+        
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
         _code_css = (self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')).replace(f'.{self.main.uid}','') # Remove uid from code css here
         
