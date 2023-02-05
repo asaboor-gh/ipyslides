@@ -67,8 +67,7 @@ slides.shell.user_ns['write'] = write #Inject variable in IPython shell
 p1, p2 = s2.proxies   
 with p1.capture():
     s2.get_source().display(collapsed = True)
-    slides.goto_button(s2.number + 5, 'Skip 5 Slides',icon='plus')
-
+    
 with p2.capture():
     slides.write(f'alert`I was added at end by a given proxy, see the how it was done at the end of the slides`')
 
@@ -199,12 +198,15 @@ with auto.slide() as rslide:
     slides.source.from_callable(race_plot).display()
 
 auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
-    
+
+forward_skipper = slides.goto_button('Skip All Next Frames')
+backward_skipper = slides.goto_button('Skip Previous Frames', icon='minus')
 # Animat plot in slides  
 @auto.frames(*range(14,19))
 def func(obj,idx):
     if idx == 0:
-        slides.goto_button(slides.running.number + 5, 'Skip All Next Frames')
+        forward_skipper.display()
+        backward_skipper.set_target()
     
     with slides.source.context(auto_display = False) as s:
         fig, ax = plt.subplots()
@@ -237,10 +239,6 @@ def f(obj,idx):
     
 @auto.frames(*boxes, repeat=[(0,1),(2,3)])
 def f(obj,idx):
-    if idx == 1:
-        slides.goto_button(slides.running.number - 5, 'Skip Frames',icon='minus')
-        slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
-    
     with slides.source.context(auto_display = False) as s:
         slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)
@@ -248,6 +246,9 @@ def f(obj,idx):
     s.display()
     
 with auto.slide() as s:
+    backward_skipper.display()
+    forward_skipper.set_target()
+    slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
     slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
     try:
         slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
@@ -259,7 +260,7 @@ with auto.slide() as s:
 from IPython.display import YouTubeVideo
 with auto.slide() as ys: # We will use this in next %%magic
     write(f"### Watching Youtube Video?")
-    write('**Want to do some drawing instead?**\nClick on pencil icon in toolbar above and draw something on [tldraw](https://tldraw.com)!')
+    write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.overlay_button)
     
     write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
     

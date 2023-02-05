@@ -399,10 +399,10 @@ class BaseSlides:
         
         with auto.slide():
             self.write('## Adding Speaker Notes')
+            (skipper := self.goto_button('Skip to Dynamic Content')).display()
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
-            self.goto_button(10,'Jump to Slide 10', 'This is kind a alert`alt text` because button will alert`NOT` show in screenshot of slides')
                    
         with auto.slide():
             self.write('## Displaying Source Code')
@@ -424,6 +424,7 @@ class BaseSlides:
             self.doc(self, 'Slides', members = members, itself = False).display()
             
         with auto.slide() as s:
+            skipper.set_target() # Set target for skip button
             self.write('## Dynamic Content')
             self.run_doc(self.on_refresh,'Slides')
             self.run_doc(self.on_load,'Slides')

@@ -177,7 +177,7 @@ class LayoutSettings:
         self._code_lineno = lineno # Used in theme to keep track 
         self.widgets.htmls.hilite.value = code_css(style,color = color,background = background, lineno = lineno, hover_color = hover_color)
       
-    def set_font_family(self,text_font=None,code_font=None):
+    def set_font_family(self,text_font = None,code_font = None):
         "Set main fonts for text and code."
         if text_font:
             self._font_family['text'] = text_font

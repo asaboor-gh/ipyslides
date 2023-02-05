@@ -11,7 +11,7 @@ import ipywidgets as ipw
 
 from .xmd import parse, extender as _extender
 from .source import Source
-from .writer import write, iwrite
+from .writer import CustomDisplay, write, iwrite
 from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer, _fix_repr
 from . import utils
 
@@ -134,8 +134,8 @@ class Slides(BaseSlides):
         self._max_index = 0 # Maximum index including frames
         self._running_slide = None # For Notes, citations etc in markdown, controlled in Slide class
         self._next_number = 0 # Auto numbering of slides should be only in python scripts
-        
         self._citations = {} # Initialize citations dictionary
+        
         with self.set_dir(self.assets_dir): # Set assets directory
             self._set_citations_from_file('citations.json') # Load citations from file if exists
         
@@ -260,6 +260,11 @@ class Slides(BaseSlides):
     def running(self):
         "Access slide currently being built. Useful inside frames decorator."
         return self._running_slide
+    
+    @property
+    def overlay_button(self):
+        "Get overlay button to reveal overlay easily from slide. Like opeing a drawer/demo notebook etc."
+        return self.widgets.toggles.overlay
     
     def verify_running(self, error_msg = ''):
         "Verify if slide is being built, otherwise raise error."
@@ -429,41 +434,78 @@ class Slides(BaseSlides):
         return self._dynamic_private(_toc_handler, tag = '_toced', hide_refresher = True)
         
     
-    def _goto_button(self, slide_number, text,text_before = '', extra_func=None, **kwargs):
-        "See docs of `goto_button`. This is internal function to return button box. extra_func is a function to be called on click after going to slide."
-        if not isinstance(slide_number, (int,float,str)): # keep string for internal use only
-            raise TypeError('Slide number should be an integer or float for accessing frames!')
+    def _goto_button(self, text, target_slide = None, _other_text = None, _extra_func=None, **kwargs):
+        if target_slide and not isinstance(target_slide, Slide):
+            raise TypeError(f'target_slide should be Slide, got {type(target_slide)}')
         
-        button = ipw.Button(description=text,**kwargs).add_class('goto-button')
+        kwargs['description'] = text # override description with text
+        button = ipw.Button(**kwargs).add_class('goto-button')
+        setattr(button, '_TargetSlide', target_slide) # Monkey patching target slide
+        
         def on_click(btn):
             try:
-                ss = str(slide_number)
-                if '.' in ss:
-                    s,f = ss.split('.')
-                    slide = self._slides_dict[s].frames[int(f)-1]
-                else:
-                    slide = self._slides_dict[ss]
-                
-                self.progress_slider.index = slide.index # let it throw error if slide does not exist
-                if callable(extra_func): # Call extra function if given after chnaging slides, no need for user
-                    extra_func()
+                self.progress_slider.index = btn._TargetSlide.index # let it throw error if slide does not exist before calling _extra_func
+                if callable(_extra_func): # Call extra function if given after chnaging slides, no need for user
+                    _extra_func()
                     
             except:
-                self.notify(f'Failed to jump to slide {slide_number!r}, it may not exist yet!')
+                self.notify(f'Failed to jump to slide {btn._TargetSlide.index!r}, you may have not used GotoButton.set_target() anywhere!')
 
         button.on_click(on_click)
         
-        html_before = ipw.HTML(_fix_repr(text_before)).add_class('goto-html')
-        return ipw.HBox([html_before,button],layout=ipw.Layout(align_items='center')).add_class('goto-box')
+        if _other_text is not None: # For TOC
+            html_before = ipw.HTML(_fix_repr(_other_text)).add_class('goto-html')
+            return ipw.HBox([html_before,button],layout=ipw.Layout(align_items='center')).add_class('goto-box')
+        
+        else: # For links in exported slides
+            slides_instance = self # need in place of self in closure below
+            
+            class GotoButton(CustomDisplay):
+                def __init__(self, button) -> None:
+                    self._button = button
+                    self._button._TargetSlide = None # Will be set by set_target
+                    self._target_id = f't-{id(button)}'
+                
+                def __repr__(self) -> str:
+                    return '<GotoButton>'
+                
+                def display(self):
+                    alt_link = slides_instance.html('a',self._button.description, href=f'#{self._target_id}', 
+                        style='color:var(--accent-color);text-decoration:none;', 
+                        className='goto-button slides-only export-only'
+                    )
+            
+                    display(self._button, metadata = {'DOMWidget': '---'})
+                    display(alt_link) # Hidden from slides
+                    
+                def set_target(self, force = False):
+                    if not slides_instance.running:
+                        raise RuntimeError("GotoButton's target can be set only inside a slide constructor!")
+                    if self._button._TargetSlide and not force:
+                        raise RuntimeError("GotoButton's target can be set only once! Use `force=True` to link here and remove previous link.")
+                    
+                    if force:
+                        self._button._TargetSlide._target_id = None # Remove previous link
+                    
+                    self._button._TargetSlide = slides_instance.running
+                    self._button._TargetSlide._target_id = self._target_id # Set new link
+                    
+            return GotoButton(button)
     
-    def goto_button(self, slide_number, text,text_before = '', **kwargs):
-        """"Jump to slide_number when clicked. give slide_number as integer of float like 1, 3.1 etc.   
-        `text` is the text to be displayed on button.    
-        `text_before` additional text (will be parsed) on left of the Button. It is useful because button will not show up in sceenshot.        
-        `kwargs` are passed to `ipywidgets.Button` function.          
-        **Note:** This button has a CSS classes nested as 'goto-box' > ('goto-html','goto-button') 
-        that can be used to style it under each slide separately."""
-        return display(self._goto_button(slide_number, text,text_before = text_before, **kwargs))
+    def goto_button(self, text, **kwargs):
+        """"
+        Initialize a button to jump to given target slide when clicked. 
+        `text` is the text to be displayed on button. 
+        `kwargs` are passed to `ipywidgets.Button` function. 
+        
+        - Pass to write command or use `.display()` method to display button in a slide.
+        - Use `.set_target()` method under target slide.
+        
+        ::: note-tip        
+            - `goto_button` is converted to a link in exported slides that can be clicked to jump to slide.
+            - You can use `.set_target()` on a previous slides and `.display()` on a later slide to create a link that jumps backwards.
+        """
+        return self._goto_button(text, target_slide = None, _other_text = None, **kwargs)
         
     def show(self): 
         "Display Slides."
@@ -849,10 +891,9 @@ class Slides(BaseSlides):
                     ' or alert`section\`key\``')))
         else:
             for i,(sec,slide) in enumerate(tocs_dict.items(), start = 1):
-                slide_number = f"{slide._number}.{slide._label.split('.')[1]}" if '.' in slide._label else slide._number
-                text_before = _fix_repr(f'color[var(--accent-color)]`{i}.` {sec}') + f"<p>{slide._label}</p>"
-                extra_func = lambda: self.widgets.buttons.toc.click()
-                p_btn = self._goto_button(slide_number,'', text_before= text_before,extra_func=extra_func)
+                _other_text = _fix_repr(f'color[var(--accent-color)]`{i}.` {sec}') + f"<p>{slide._label}</p>"
+                _extra_func = lambda: self.widgets.buttons.toc.click()
+                p_btn = self._goto_button('', target_slide = slide, _other_text = _other_text,_extra_func = _extra_func)
                 children.append(p_btn.add_class('toc-item').add_class(f's{slide._index}')) # class for dynamic CSS
                 
         self.widgets.tocbox.children = children
@@ -920,7 +961,7 @@ class Slides(BaseSlides):
             self.widgets.htmls.overlay.value= _html.value
                
             if self._called_from_notenook('set_overlay_url') and not getattr(self.current,'_on_load',None):
-                self.settings.btn_overlay.value = True # Do not open panel during presentation by on_load function, otherwise immediately open it
+                self.overlay_button.value = True # Do not open panel during presentation by on_load function, otherwise immediately open it
             
         elif url is None:
             _html = self.html('div',[

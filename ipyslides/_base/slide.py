@@ -283,6 +283,8 @@ class Slide:
         self._columns = {} # Reset columns
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
+        if hasattr(self,'_target_id'):
+            del self._target_id # Remove target_id
         
         try:
             self._app._remove_post_run_callback() # Remove before capturing
@@ -335,6 +337,13 @@ class Slide:
         "Clear display of this slide."
         self._app._slidelabel = self.label # Go there to see effects
         self._widget.clear_output(wait = wait)
+    
+    def show(self):
+        "Show this slide in cell."
+        out = Output().add_class('SlideArea')
+        with out:
+            display(*self.contents)
+        return display(out)
         
     @property
     def frames(self):

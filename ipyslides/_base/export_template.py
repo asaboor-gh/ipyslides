@@ -186,9 +186,16 @@ section {
 	min-width: 100vw !important;
 	box-sizing: border-box !important;
 }
+section .SlideBox {
+    width: 100vw !important;
+    height: calc(100vh - 4px) !important; /* 4px for bottom scrollbar safely */
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+}
 section .SlideArea {
 	height: auto !important;
-	max-height: 100vh !important;
+	max-height: calc(100vh - 20px) !important; /* 16px for slide number, 4 for scrollbar */
 	box-sizing: border-box;
 	overflow-y: auto !important;
 	width: 90vw !important;
@@ -196,11 +203,10 @@ section .SlideArea {
 	padding: 1em !important;
     box-sizing: border-box !important;
 }
-section span.html-slide-number {
-    width: auto;
-    height: 1.3em;
-    padding: 0.1em;
-    margin: auto 8px 8px auto;
+section .html-slide-number {
+    width: max-content;
+    padding: 2px;
+    margin-left: 8px;
     color: var(--secondary-fg);
     font-size: 14px !important;
 }
@@ -216,6 +222,19 @@ section span.html-slide-number {
 .SlidesWrapper::-webkit-scrollbar-thumb, 
 .SlidesWrapper::-webkit-scrollbar-track-piece:start {
     background-color: var(--accent-color, navy) !important;
+}
+a.goto-button {
+    padding: 6px;
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    font-size: 16px;
+}
+a.goto-button:hover, a.goto-button:focus {
+    box-shadow: 2px 2px 4px var(--secondary-bg);
+    background: var(--secondary-bg);
+}
+a.goto-button:active {
+    color: var(--pointer-color);
 }
 
 @media print {
@@ -252,9 +271,12 @@ section span.html-slide-number {
     section:last-of-type {
         page-break-after: avoid !important;
     }
+    section .SlideBox {
+        page-break-inside: avoid !important;
+    }
     section .SlideArea {
         height: auto !important;
-        max-height: 100% !important;
+        max-height: calc(100% - 16px) !important; /* 16px for slide number safely */
         box-sizing: border-box;
         overflow: hidden !important;
         width: 90% !important;

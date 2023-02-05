@@ -11,6 +11,13 @@ from IPython.utils.capture import capture_output
 from .formatters import _HTML, _HTML_Widget, stringify, _fix_repr
 from .xmd import parse, get_slides_instance
 
+class CustomDisplay:
+    def _ipython_display_(self):
+        return self.display()
+    
+    def display(self):
+        raise NotImplementedError("display method must be implemented in subclass")
+
 class Writer:
     _in_write = False # To prevent write from being called inside write
     def __init__(self,*objs,widths = None):
@@ -59,6 +66,8 @@ class Writer:
                 for c in col['outputs']:
                     if isinstance(c,str):
                         parse(c, display_inline = True, rich_outputs = False)
+                    elif isinstance(c, CustomDisplay):
+                        c.display() # Handles all custom display classes like alt, goto_button etc.
                     elif callable(c) and c.__name__ == '<lambda>':
                         _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget

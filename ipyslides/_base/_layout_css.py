@@ -16,7 +16,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             'z-index': '1 !important',
             '^.SingleSlide .Controls': {'display':'none !important',}, 
             '^.CaptureMode': {
-                '.SlideArea .goto-button, .TopBar.Outside': {'display':'none !important'}, # Hide in screenshot
+                '.TopBar.Outside, .SlideArea .goto-button, .Sfresh-Btn': {'visibility':'hidden !important'}, # Hide in screenshot
             },
             '^.FullWindow': {
                 '.Height-Dd, .Width-Slider': {'display': 'none !important'},
@@ -131,7 +131,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 },
             },
             '.SidePanel': {
-                'backdrop-filter': 'blur(200px)',
+                'background': 'var(--alternate-bg)',
                 'position': 'absolute',
                 'border': 'none',
                 'padding': '8px !important',
@@ -333,6 +333,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '^:hover': {'font-weight':'bold',},
             },
             '.goto-button': {
+                'min-width':'max-content',
                 'position': 'absolute',
                 'width': '100%',
                 'height': '100%',

@@ -128,7 +128,7 @@ theme_colors = {
         'heading_color': '#105599',
 	    'primary_fg': '#755',
 	    'primary_bg': '#efefef',
-	    'secondary_bg': '#effffe',
+	    'secondary_bg': '#d9d8df',
 	    'secondary_fg': '#89E',
 	    'alternate_bg': '#deddde',
 	    'hover_bg': '#D1D9E1',
@@ -297,11 +297,11 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'white-space':'break-spaces !important',
             },
             '.citation': {
-                'font-size':'0.8em !important', 
-                'line-height':'0.85em !important',
+                'font-size':'0.9em !important',
                 'display':'flex !important',
                 'flex-direction':'row !important',
                 '> a': {'margin-right':'0.3em !important'},
+                '> p': {'margin':'0 !important'}, # Otherwise it will be huge space
             },
             '.footnote *, .footnote li::marker': {
                 'font-size':'0.9em',
@@ -411,10 +411,6 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
         },
         '.custom-print': {
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
-        },
-        '.goto-box': {
-            '.goto-button': {'min-width':'max-content'},
-            '.goto-html': {},
         },
         'a.citelink > sup': {'font-weight':'bold',},
         '.citation.hidden': {  

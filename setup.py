@@ -4,6 +4,9 @@ from shutil import rmtree
 
 from setuptools import setup, Command, find_packages
 
+if sys.version_info[:2] < (3, 8):
+    sys.exit('Sorry, Python < 3.8 is not supported for ipyslides >= 3.0. You can install ipyslides 2.x.x with Python 3.6 or 3.7.')
+
 # Package meta-data.
 NAME = 'ipyslides'
 DESCRIPTION = 'Live rich content slides in jupyter notebook'

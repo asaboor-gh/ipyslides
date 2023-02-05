@@ -20,7 +20,7 @@ import ipywidgets as ipw
 
 from .formatters import fix_ipy_image, _HTML, _fix_repr
 from .xmd import get_unique_css_class
-from .writer import Writer
+from .writer import Writer, CustomDisplay
 
 def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
@@ -267,10 +267,13 @@ def alt(widget, obj):
         raise TypeError(f'widget should be a widget, got {widget!r}')
     if isinstance(obj, ipw.DOMWidget):
         raise TypeError(f'obj should not be a widget, got {obj!r}')
-    class Alt:
+    class AltForWidget(CustomDisplay):
         def __init__(self, widget, obj):
             self._widget = widget
             self._obj = obj
+            
+        def __repr__(self):
+            return 'AltForWidget(widget, obj)'
             
         def _ipython_display_(self):
             return self.display()
@@ -279,7 +282,7 @@ def alt(widget, obj):
             display(widget, metadata = {'DOMWidget': '---'})
             display(_HTML(f'<div class="export-only">{_fix_repr(obj)}</div>')) # Hide from slides
          
-    return Alt(widget, obj)
+    return AltForWidget(widget, obj)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."

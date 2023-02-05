@@ -31,9 +31,10 @@ class _HhtmlExporter:
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
                 _sn = (f'<span class="html-slide-number">{item.label}/{int(float(self.main[-1].label))}</span>'  # Could be 33.1, but we want 33
                         if kwargs.get("slide_number",False) and item.label != '0' else '')
-                sec_id = getattr(item,'_sec_id','')
-                sec_id = f'id="{sec_id}"' if sec_id else ''
-                content += (f'<section {sec_id}><div class="SlideArea">{_html}</div>{_sn}</section>' 
+                
+                sec_id = self._get_sec_id(item)
+                goto_id = self._get_target_id(item)
+                content += (f'<section {sec_id}><div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{_sn}</div></section>' 
                             if as_slides else f'<section {sec_id}>{_html}</section>')
         
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
@@ -47,6 +48,14 @@ class _HhtmlExporter:
         
         return doc_html(_code_css,_style_css, content).replace(
             '__page_size__',kwargs.get('page_size','letter'))
+    
+    def _get_sec_id(self, slide):
+        sec_id = getattr(slide,'_sec_id','')
+        return f'id="{sec_id}"' if sec_id else ''
+    
+    def _get_target_id(self, slide): # For goto buttons
+        target = getattr(slide, '_target_id', '')
+        return f'id="{target}"' if target else ''
 
     def _writefile(self, path, content, overwrite = False):
         if os.path.isfile(path) and not overwrite:
