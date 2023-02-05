@@ -603,12 +603,9 @@ class Slides(BaseSlides):
         if self._iterable and change:
             self.notes._display(self.current.notes) # Display notes first
             self.widgets.htmls.toast.value = '' # clear notification content if any defined by on_load
-        
-            number = f'{self.current.label} / {self._nslides}' if self.current.label != '0' else ''
-            self.settings._update_footer(number_str = number) # Update footer privately
             
             self._switch_slide(old_index= change['old'], new_index= change['new']) 
-            self.current.run_on_load() # Run on_load setup after switching slide
+            self.current.run_on_load() # Run on_load setup after switching slide, it updates footer as well
            
             
     def refresh(self): 
@@ -1005,9 +1002,8 @@ class Slides:
                 citation_mode   = 'global',
                 center          = True, 
                 content_width   = '90%', 
-                footer_text     = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
-                show_date       = True,
-                show_slideno    = True,
+                short_title     = 'IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>', 
+                date            = 'today',
                 logo_src        = logo_svg, 
                 font_scale      = 1, 
                 text_font       = 'STIX Two Text', 
@@ -1027,7 +1023,7 @@ class Slides:
         _private_instance.settings.set(
             citation_mode = dict(mode = citation_mode),
             layout        = dict(center = center, content_width = content_width),
-            footer        = dict(text = footer_text, show_date = show_date, show_slideno = show_slideno),
+            footer        = dict(text = short_title, date = date),
             logo          = dict(src = logo_src,width = 60),
             font_scale    = dict(font_scale = font_scale),
             font_family   = dict(text_font = text_font, code_font = code_font),

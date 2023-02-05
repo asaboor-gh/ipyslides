@@ -3,6 +3,7 @@ Export Slides to HTML report and static HTML slides. It is used by program itsel
 not by end user.
 """
 import os
+from contextlib import suppress
 from .export_template import doc_css, doc_html, slides_css
 from ..formatters import code_css
 from . import styles
@@ -29,12 +30,10 @@ class _HhtmlExporter:
                     else:
                         _html += f'<p style="color:red;">Object at {hex(id(out))} has no text/HTML representation.</p>'  
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
-                _sn = (f'<span class="html-slide-number">{item.label}/{int(float(self.main[-1].label))}</span>'  # Could be 33.1, but we want 33
-                        if kwargs.get("slide_number",False) and item.label != '0' else '')
-                
                 sec_id = self._get_sec_id(item)
                 goto_id = self._get_target_id(item)
-                content += (f'<section {sec_id}><div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{_sn}</div></section>' 
+                footer = f'<div class="Footer">{item.get_footer()}</div>'
+                content += (f'<section {sec_id}><div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
                             if as_slides else f'<section {sec_id}>{_html}</section>')
         
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
@@ -104,7 +103,8 @@ class _HhtmlExporter:
             
         def further_action(path):
             self.main.notify(f'File saved: {path!r}')
-            os.startfile(path)
+            with suppress(BaseException):
+                os.startfile(path) # Does not work on some systems, so safely continue.
             self.main.widgets.ddowns.export.value = 'Select' # Reset so next click on same button will work
         
         if self.main.widgets.ddowns.export.value == 'Report': 

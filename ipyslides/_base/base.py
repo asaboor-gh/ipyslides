@@ -382,7 +382,8 @@ class BaseSlides:
         auto.from_markdown('section`Introduction` toc`### Contents`')
             
         with auto.slide():
-            self.write(['# Main App',self.doc(Slides)])
+            self.write(['# Main App',self.doc(Slides), '### Jump between slides'])
+            self.doc(self.goto_button, 'Slides').display()
         
         with auto.slide():
             self.write('## Adding Slides section`Adding Slides and Content`')

@@ -23,7 +23,7 @@ class LayoutSettings:
         self._custom_colors = {}
         self._font_family = {'code':'var(--jp-code-font-family)','text':'STIX Two Text'}
         self._footer_kws = {'text':'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>',
-                             'show_slideno': True, 'show_date': True}
+                             'numbering': True, 'date': 'today'}
         self._content_width = '90%' #Better
         self._code_lineno = True
         
@@ -201,9 +201,9 @@ class LayoutSettings:
             self.widgets.htmls.logo.value = f"""<div style='position:absolute;right:{right}px;top:{top}px;width:{width}px;height:auto;'>
                                         {image}</div>"""
                                     
-    def set_footer(self, text = '', show_slideno=True, show_date=True):
-        "Set footer text. `text` should be string. `show_slideno` and `show_date` are booleans."
-        self._footer_kws.update({'show_slideno':show_slideno,'show_date':show_date})
+    def set_footer(self, text = '', numbering = True, date = 'today'):
+        "Set footer text. `text` should be string. `date` should be 'today' or string of date. To skip date, set it to None or ''"
+        self._footer_kws.update({'numbering':numbering,'date':date})
         if text is None or text == '':
             self._footer_kws['text'] = '' #assign to text
         elif text and isinstance(text,str):
@@ -211,20 +211,30 @@ class LayoutSettings:
         else:
             raise TypeError(f'text should be string or None, not {type(text)}')
         
-        self._update_footer() # Update footer immediately
-        
+        if self._slides.current:
+            self.get_footer(self._slides.current, update_widget = True) # Update footer immediately if slide there
+
     
-    def _update_footer(self,number_str = ''):  
+    def get_footer(self, slide, update_widget = False):
+        "Get footer text. `slide` is a slide object."
+        if (type(slide).__name__ != 'Slide') and (type(slide).__module__.split('.')[0] != 'ipyslides'):
+            raise TypeError(f'slide should be Slide object, not {type(slide)}')
+        
+        number = f'{slide.label} / {self._slides._nslides}' if slide.label != '0' else ''
         text = self._footer_kws['text']
-        show_slideno = self._footer_kws['show_slideno']
-        show_date = self._footer_kws['show_date']
+        numbering = self._footer_kws['numbering']
+        date = self._footer_kws['date']
               
-        if show_date:
-            text += ((' | ' if text else '') + f'{today(fg = "var(--secondary-fg)")}')
-        if show_slideno: #Slide number should be replaced from __number__ 
-            text += '<b style="color:var(--accent-color);white-space:pre;">  __number__<b>'
+        if date:
+            text += ((' | ' if text else '') + f'{today(fg = "var(--secondary-fg)") if date == "today" else date}')
+        if numbering: 
+            text += f'<b style="color:var(--accent-color);white-space:pre;">  {number}</b>'
         text = f'<p style="white-space:nowrap;display:inline;"> {text} </p>' # To avoid line break in footer
-        self.widgets.htmls.footer.value = text.replace('__number__',number_str)
+        
+        if update_widget:
+            self.widgets.htmls.footer.value = text
+        
+        return text
         
     def set_layout(self,center = True, content_width = None):
         "Central aligment of slide by default. If False, left-top aligned."

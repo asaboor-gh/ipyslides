@@ -171,6 +171,7 @@ __theme_css__
 	scroll-snap-type: x mandatory !important;
     display: flex !important;
     overflow-x: auto !important;
+    overflow-y: hidden !important; 
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -180,7 +181,7 @@ __theme_css__
 section {
 	scroll-snap-align:start !important;
     scroll-snap-stop: always !important;
-	display: flex !important;
+	display: block !important;
 	height: 100vh !important;
 	max-height: 100vh !important;
 	min-width: 100vw !important;
@@ -188,14 +189,14 @@ section {
 }
 section .SlideBox {
     width: 100vw !important;
-    height: calc(100vh - 4px) !important; /* 4px for bottom scrollbar safely */
+    height: 100vh !important; 
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
 }
 section .SlideArea {
 	height: auto !important;
-	max-height: calc(100vh - 20px) !important; /* 16px for slide number, 4 for scrollbar */
+	max-height: calc(100vh - 20px) !important; /* 20px for footer */ 
 	box-sizing: border-box;
 	overflow-y: auto !important;
 	width: 90vw !important;
@@ -203,12 +204,11 @@ section .SlideArea {
 	padding: 1em !important;
     box-sizing: border-box !important;
 }
-section .html-slide-number {
-    width: max-content;
-    padding: 2px;
-    margin-left: 8px;
-    color: var(--secondary-fg);
+section .SlideBox > .Footer {
     font-size: 14px !important;
+    background: var(--primary-bg) !important;
+    padding: 4px !important;
+    padding-left: 8px !important;
 }
 .SlidesWrapper::-webkit-scrollbar:vertical,
 .SlidesWrapper::-webkit-scrollbar-button,
@@ -261,7 +261,7 @@ a.goto-button:active {
         height: auto !important;
     }
     section {
-        display: flex !important;
+        display: block !important;
         margin: 0 !important;
         page-break-inside: avoid !important;
         page-break-after: always !important;
@@ -276,7 +276,7 @@ a.goto-button:active {
     }
     section .SlideArea {
         height: auto !important;
-        max-height: calc(100% - 16px) !important; /* 16px for slide number safely */
+        max-height: calc(100% - 20px) !important; /* 20px for footer */
         box-sizing: border-box;
         overflow: hidden !important;
         width: 90% !important;

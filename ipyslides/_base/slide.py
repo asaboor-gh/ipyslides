@@ -257,6 +257,7 @@ class Slide:
     
     def run_on_load(self):
         "Called when a slide is loaded into view. Use it to register notifications etc."
+        self.get_footer(update_widget=True) # Update footer with latest slide
         self._widget.layout.height = '100%' # Trigger a height change to reset scroll position
         start = time.time()
         try: # Try is to handle errors in on_load, not for attribute errors, and also finally to reset height
@@ -344,6 +345,10 @@ class Slide:
         with out:
             display(*self.contents)
         return display(out)
+    
+    def get_footer(self, update_widget = False): # Used here and export_html
+        "Return footer of this slide. Optionally update footer widget."
+        return self._app.settings.get_footer(self, update_widget = update_widget)
         
     @property
     def frames(self):
