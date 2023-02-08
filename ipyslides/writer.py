@@ -72,7 +72,11 @@ class Writer:
                         _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
                         if self._slides and self._slides.running and isinstance(c, ipw.HTML):
-                            self._slides.alt(c, c.value).display() # Display HTML widget as slide and its value as hidden HTML
+                            def _alt_html(w):
+                                className = ' '.join(w._dom_classes) # To keep style of HTML widget, latest as well
+                                return f'<div class="{className}">{w.value}</div>' 
+                            
+                            self._slides.alt(c, _alt_html).display() # Display HTML widget and add it to alt
                             # NOTE: This is enough, Do not go too deep like in boxes to search for HTML, because then we will lose the column structure
                         else:
                             display(c, metadata = {'DOMWidget': '---'}) # Display only widget outside slide buuilder
@@ -136,8 +140,8 @@ def write(*objs,widths = None):
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.source` API.
-    - Use `Slides.alt(widget, obj)` function to display widget on slides and alternative content in exported slides/report.
-    - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, value)`. The value of exported HTML will be oldest one.
+    - Use `Slides.alt(widget, obj)` function to display widget on slides and alternative content in exported slides/report, obj can be a function to return possible HTML representation of widget.
+    - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, lambda w: w.value)` where w is given widget. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.
@@ -155,103 +159,8 @@ def write(*objs,widths = None):
     wr = Writer(*objs,widths = widths)
     if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
         return wr.update_display() # Update in usual cell to have widgets working
-    
-# We can just discourage the use of `iwrite` command in favor of the robust `write` command.        
 
-def _fmt_iwrite(*objs,widths=None):
-    if not widths:
-        widths = [f'{int(100/len(objs))}%' for _ in objs]
-    else:
-        widths = [f'{w}%' for w in widths]
-        
-    _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in objs] #Make list if single element
-    
-    # Conver to other objects to HTML
-    fixed_cols = []
-    for j, _rows in enumerate(_cols):
-        row = []
-        for i, item in enumerate(_rows):
-            if isinstance(item, ipw.DOMWidget):
-                item._grid_location = {'row':i,'column':j}
-                row.append(item)
-            else:
-                tmp = _HTML_Widget(value = _fix_repr(item))
-                if '</script>' in tmp.value:
-                    tmp.value = f'Error displaying object, cannot update object {item!r} as it needs Javascript. Use `write` or `display` commands or `ipywidgets.Outpt()` to display it.'
-
-                tmp._grid_location = {'row':i,'column':j}
-                row = [*row,tmp]
-        
-        fixed_cols.append(row)
-
-    children = [ipw.VBox(children = _c, layout = ipw.Layout(width=f'{_w}')) for _c, _w in zip(fixed_cols,widths)]
-    # Format things as given in input
-    out_cols = tuple(tuple(row) if len(row) > 1 else row[0] for row in fixed_cols) # If single element in row, unwrap it
-    out_cols = tuple(out_cols) # Each column is a tuple of rows even if it has only one row
-    return ipw.HBox(children = children).add_class('columns'), out_cols #Return display widget and list of objects for later use
-
-class _WidgetsWriter:
-    def __init__(self, *objs, widths=None):
-        self._grid, self._cols = _fmt_iwrite(*objs,widths=widths)
-        self._grid.add_class('columns')
-        if slides := get_slides_instance():
-            if slides.running: # slides assigment above works in below block only
-                slides._warnings.append('`iwrite` command will be deprecated. Use `write` command instead that wites widgets as well and handles a lot of formats for exporting to static html.')
-        
-    def _ipython_display_(self):
-        return display(self._grid)
-        
-    def __getitem__(self, index): # For unpacking like write, *objs
-        if index == 0:
-            return self
-        elif isinstance(index, int) and index != 0: # != 0 for accessing from -1, -2 as well
-            idx = index - 1 if index > 0 else index
-            return self._cols[idx]
-        else:
-            raise TypeError(f'Index should be integer, got {index!r}')
-    @property
-    def cols(self):
-        "Access columns of the grid. Each column is a list of widgets or single widget if only one row."
-        return self._cols
-    
-    def update(self, old_obj, new_obj):
-        "Updates `old_obj`  with `new_obj`. Returns reference to created/given widget, which can be updated by it's own methods."
-        row, col = old_obj._grid_location['row'], old_obj._grid_location['column']
-        widgets_row = list(self._grid.children[col].children)
-        
-        if isinstance(new_obj, ipw.DOMWidget):
-            tmp = new_obj
-        else:
-            tmp = _HTML_Widget(value = _fix_repr(new_obj))
-            if '</script>' in tmp.value:
-                tmp.value = f'Error displaying object, cannot update object {new_obj!r} as it needs Javascript. Use `write` or `display` commands or `ipywidgets.Outpt()` to display it.'
-                return # Don't update
-        
-        tmp._grid_location = old_obj._grid_location # Keep location
-        widgets_row[row] = tmp
-        self._grid.children[col].children = widgets_row
-        return tmp
-    
+# Keep long enough to raise deprecation warning
 def iwrite(*objs,widths = None):
-    """Each obj in objs could be an IPython widget like `ipywidgets`,`bqplots` etc 
-    or list/tuple (or wrapped in `rows` function) of widgets to display as rows in a column. 
-    Other objects (those in `write` command) will be converted to HTML widgets if possible. 
-    Object containing javascript code may not work, use `write` command for that.
+    raise DeprecationWarning('`iwrite` command is deprecated. Use `write` command instead.')
     
-    Get a list of already available classes using `slides.css_styles`. For these you dont need to provide CSS.
-    
-    **Returns**: writer, objs as reference to use later and update. rows are packed in columns.
-    
-    **Examples**:
-    ```python
-    writer, x = iwrite('X')  # writer = iwrite('X'); x = writer.cols[0] # gives same result
-    writer, (x,y) = iwrite('X','Y')
-    writer, (x,y) = iwrite(['X','Y']) # One column with two rows
-    writer, (x,y),z = iwrite(['X','Y'],'Z')
-    #We unpacked such a way that we can replace objects with new one using `grid.update`
-    new_obj = writer.update(x, 'First column, first row with new data') #You can update same `new_obj` with it's own widget methods. 
-    ```
-    """
-    wr = _WidgetsWriter(*objs,widths=widths)
-    display(wr._grid, metadata = {'DOMWidget':'---'}) # Display it must to show it there with a metadata
-    return wr # Return it to use later as writer, columns unpacked

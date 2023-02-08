@@ -19,7 +19,7 @@ from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
 from .formatters import fix_ipy_image, _HTML, _fix_repr
-from .xmd import get_unique_css_class
+from .xmd import get_unique_css_class, get_slides_instance
 from .writer import Writer, CustomDisplay
 
 def _fmt_cols(*objs,widths = None):
@@ -262,15 +262,33 @@ def format_css(css_dict):
     return _format_css(css_dict, allow_root_attrs = False)
 
 def alt(widget, obj):
-    "Display `widget` for slides and `obj` will be and displayed only in exported formats as HTML."
+    """Display `widget` for slides and `obj` will be and displayed only in exported formats as HTML.
+    If `obj` is a function (that accepts `widget` as arguemnet), it should returns possible HTML representation of widget that will be exported as it is.
+    """
     if not isinstance(widget, ipw.DOMWidget):
         raise TypeError(f'widget should be a widget, got {widget!r}')
     if isinstance(obj, ipw.DOMWidget):
         raise TypeError(f'obj should not be a widget, got {obj!r}')
     class AltForWidget(CustomDisplay):
         def __init__(self, widget, obj):
+            if isinstance(obj, AltForWidget):
+                raise TypeError(f'alt(widget, alt(...)) is not allowed!')
+            
             self._widget = widget
             self._obj = obj
+            self._func = obj if callable(obj) else None # If obj is a function, we use it later
+            
+            if self._func: # Check if function is valid
+                with capture_output() as cap:
+                    out = self._func(self._widget)
+                    if not isinstance(out, str):
+                        raise TypeError(f'Function {obj.__name__!r} should return a string, got {type(out)}')
+                if cap.stderr:
+                    raise RuntimeError(f'Function {obj.__name__!r} raised an error: {cap.stderr}')
+                
+                if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
+                    raise RuntimeError(f'Function {obj.__name__!r} should not display or print anything in its body, it should return a string.')
+                    
             
         def __repr__(self):
             return 'AltForWidget(widget, obj)'
@@ -279,9 +297,20 @@ def alt(widget, obj):
             return self.display()
             
         def display(self):
-            display(widget, metadata = {'DOMWidget': '---'})
-            display(_HTML(f'<div class="export-only">{_fix_repr(obj)}</div>')) # Hide from slides
-         
+            display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
+            slides = get_slides_instance()
+            if slides and slides.running:
+                if getattr(slides.running, '_in_dproxy', None):
+                    raise RuntimeError('Cannot use `alt(widget, func)` inside a refreshable context! `alt(widget, not callable(obj))` is fine though.')
+                
+                if self._func:
+                    def _WidgetAltFunc_():
+                        return self._func(self._widget)
+                        
+                    slides.running._dynamic_private(_WidgetAltFunc_, tag = '_has_widgets', hide_refresher = True)
+                else:
+                    display(_HTML(f'<div class="export-only">{_fix_repr(obj)}</div>')) # Hide from slides
+          
     return AltForWidget(widget, obj)
         
 def details(str_html,summary='Click to show content'):

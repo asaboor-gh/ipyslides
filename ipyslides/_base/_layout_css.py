@@ -313,7 +313,8 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
         },
         
         '.TOC': { # Table of contents panel
-            'backdrop-filter':' blur(200px)',
+            'background':'var(--secondary-bg)',
+            'backdrop-filter':' blur(50px)',
             'margin':' 4px 36px', 
             'padding':' 0.5em',
             'position':' absolute',
@@ -669,7 +670,7 @@ def zoom_hover_css():
             '^:hover, ^:focus': {
                 'cursor': 'auto', # Ovverride zoom-in cursor form main layout
                 'position': 'fixed',
-                'backdrop-filter': 'blur(200px)',
+                'backdrop-filter': 'blur(50px)',
                 'left':'50px',
                 'top':'50px',
                 'z-index':8,

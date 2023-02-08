@@ -8,8 +8,10 @@ from time import sleep
 from contextlib import contextmanager
 
 from PIL import Image, ImageGrab
+from IPython.display import display as ipydisplay
 
 from ..utils import image
+from ..writer import CustomDisplay
 from . import intro
 
 
@@ -200,10 +202,16 @@ class ScreenShot:
         self.widgets.ddowns.clear.value = 'None' # important to get back after operation
     
     
-    def clipboard_image(self, filename, quality = 95, **kwargs):
-        """Save image from clipboard to file and return alert`ipyslides.utils.image`. 
-        On next run, it loads from saved file under `notebook-dir/ipyslides-assets/screenshots`. Useful to add screenshots from system into IPython.
-        kwargs are passed to `ipyslides.utils.image`."""
+    def clipboard_image(self, filename, quality = 95, overwrite = False):
+        """Save image from clipboard to file with a given quality. 
+        On next run, it loads from saved file under `notebook-dir/ipyslides-assets/screenshots`. 
+        Useful to add screenshots from system into IPython. You can use overwite to overwrite existing file.
+        
+        - Output can be directly used in `write` command.
+        - Converts to PIL image using `.to_pil()`.
+        - Convert to HTML representation using `.to_html()`.
+        - Convert to Numpy array using `.to_numpy()` in RGB format that you can plot later.
+        """
         directory = os.path.join(self.widgets.assets_dir,'screenshots')
         
         if not os.path.isdir(directory):
@@ -211,12 +219,38 @@ class ScreenShot:
         
         filepath = os.path.join(directory,filename)
         
-        if os.path.isfile(filepath):
-            return image(filepath, **kwargs)
-        else:
-            im = ImageGrab.grabclipboard()
-            if isinstance(im,Image.Image):
-                im.save(filepath, format= im.format,quality = quality) # Save image to file for later use
-                return image(filepath, **kwargs)
-            else:
-                return print('No image on clipboard/file or not supported format.')  
+        class ClipboardImage(CustomDisplay):
+            def __init__(self, path, quality, overwrite):
+                self._path = path
+                
+                if overwrite or (not os.path.isfile(path)):
+                    im = ImageGrab.grabclipboard()
+                    if isinstance(im,Image.Image):
+                        im.save(path, format= im.format,quality = quality)
+                        im.close() # Close image to save mememory
+                    else:
+                        raise ValueError('No image on clipboard/file or not supported format.')
+                    
+            @property
+            def path(self):
+                "Return path of stored image."
+                return self._path
+            
+            def display(self):
+                return ipydisplay(self.to_pil())
+            
+            def to_pil(self):
+                "Return PIL image."
+                return Image.open(self.path)
+            
+            def to_html(self, **kwargs):
+                "Return HTML of image, with `**kwargs` passed to `ipyslides.utils.image`."
+                return image(self.path, **kwargs)
+            
+            def to_numpy(self):
+                "Return numpy array data of image. Useful for plotting."
+                import numpy # Do not import at top, as it is not a dependency
+                return numpy.asarray(self.to_pil())
+            
+        return ClipboardImage(filepath, quality, overwrite)
+        

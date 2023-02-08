@@ -173,10 +173,10 @@ with auto.slide():
             ::: note-tip
                 Export to Slides/Report to see what happens to this slide and next slide!
             ''')
-        write([
-            plot_html := ipw.HTML('Plot will be here'),
-            button := ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content')),
-            ], src)
+        plot_html = ipw.HTML('Plot will be here')
+        button = ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content'))
+            
+        write([plot_html,button], src)
         
         def update_plot(btn):
             plot_html.value = race_plot().value #Convert to html string
