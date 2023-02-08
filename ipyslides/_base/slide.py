@@ -73,7 +73,7 @@ class DynamicRefresh:
         self._on_click(None)
     
     def fmt_html(self, allow_non_html_repr = True): 
-        if self._func.__name__ == '_WidgetAltFunc_': # _WidgetAltFunc_ is a special case
+        if self._func.__name__ == '_PrivateWidgetAltFunc_': # _PrivateWidgetAltFunc_ is a special case
             return self._func() # return HTML directly
         
         content = ''
@@ -102,7 +102,7 @@ class DynamicRefresh:
         self._columns = {} # Reset columns here just before executing function
         try:
             with capture_output() as captured:
-                if self._func.__name__ != '_WidgetAltFunc_': # We don't want to execute _WidgetAltFunc_ here
+                if self._func.__name__ != '_PrivateWidgetAltFunc_': # We don't want to execute _PrivateWidgetAltFunc_ here
                     self._func()
                 
             self._last_outputs = _expand_cols(captured.outputs,self) # Expand columns is necessary

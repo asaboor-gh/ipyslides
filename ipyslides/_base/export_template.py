@@ -194,6 +194,7 @@ section .SlideBox {
     flex-direction: column !important;
     box-sizing: border-box !important;
 }
+section .SlideBox > .Footer > .Progress { display: none !important; }
 section .SlideArea {
 	height: auto !important;
 	max-height: calc(100vh - 20px) !important; /* 20px for footer */ 
@@ -204,9 +205,9 @@ section .SlideArea {
 	padding: 1em !important;
     box-sizing: border-box !important;
 }
-section .SlideBox > .Footer {
+section .SlideBox > .Footer { background: var(--primary-bg) !important;}
+section .SlideBox > .Footer > p {
     font-size: 14px !important;
-    background: var(--primary-bg) !important;
     padding: 4px !important;
     padding-left: 8px !important;
 }
@@ -244,7 +245,7 @@ a.goto-button:active {
         color-adjust: exact !important;
     }
     @page {
-        size: letter landscape;
+        size: 297mm __HEIGHT__; /* A4 is 297mm x decided by aspect_ratio by user*/
         margin-top: 0 !important;
         margin-right: 0 !important;
         margin-left: 0 !important;
@@ -271,8 +272,14 @@ a.goto-button:active {
     section:last-of-type {
         page-break-after: avoid !important;
     }
+    section:first-of-type .SlideBox > .Footer {display: none !important;} /* remove footer from title slide in print*/
     section .SlideBox {
         page-break-inside: avoid !important;
+    }
+    section .SlideBox > .Footer > .Progress { 
+        display: block !important; 
+        height: 4px !important;
+        width: 100% !important;
     }
     section .SlideArea {
         height: auto !important;

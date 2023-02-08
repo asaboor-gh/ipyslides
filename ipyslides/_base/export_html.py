@@ -32,7 +32,7 @@ class _HhtmlExporter:
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
                 sec_id = self._get_sec_id(item)
                 goto_id = self._get_target_id(item)
-                footer = f'<div class="Footer">{item.get_footer()}</div>'
+                footer = f'<div class="Footer">{item.get_footer()}{self._get_progress(item)}</div>'
                 content += (f'<section {sec_id}><div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
                             if as_slides else f'<section {sec_id}>{_html}</section>')
         
@@ -46,7 +46,8 @@ class _HhtmlExporter:
         _code_css = (self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')).replace(f'.{self.main.uid}','') # Remove uid from code css here
         
         return doc_html(_code_css,_style_css, content).replace(
-            '__page_size__',kwargs.get('page_size','letter'))
+            '__page_size__',kwargs.get('page_size','letter')).replace( # Report
+            '__HEIGHT__', f'{int(297*self.main.settings.aspect_dd.value)}mm') # Slides height is determined by aspect ratio.
     
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')
@@ -55,6 +56,12 @@ class _HhtmlExporter:
     def _get_target_id(self, slide): # For goto buttons
         target = getattr(slide, '_target_id', '')
         return f'id="{target}"' if target else ''
+    
+    def _get_progress(self, slide):
+        prog = int(float(slide.label)/(float(self.main[-1].label) or 1)*100) # Avoid ZeroDivisionError if only one slide
+        gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {prog}%, var(--secondary-bg) {prog}%, var(--secondary-bg) 100%)'
+        return f'<div class="Progress" style="background: {gradient};"></div>'
+                
 
     def _writefile(self, path, content, overwrite = False):
         if os.path.isfile(path) and not overwrite:
@@ -66,7 +73,7 @@ class _HhtmlExporter:
             
     
     def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', overwrite = False):
-        """Build a beutiful html report from the slides that you can print. Widgets are not supported for this purpose.
+        """Build a beutiful html report from the slides that you can print. Widgets are supported via `Slides.alt(widget,...)`.
         
         - allow_non_html_repr: (True), then non-html representation of the slides like text/plain will be used in report.
         - Use 'overrides.css' file in same folder to override CSS styles.
@@ -83,13 +90,16 @@ class _HhtmlExporter:
         self._writefile(_path, content, overwrite = overwrite)
     
     def slides(self, path = 'slides.html', slide_number = True, overwrite = False):
-        """Build beutiful html slides that you can print. Widgets are not supported for this purpose.
+        """Build beutiful html slides that you can print. Widgets are supported via `Slides.alt(widget,...)`.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'slides-only' and 'report-only' classes to generate slides only or report only content.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
         - You can take screenshot (using system's tool) of a widget and add it back to slide using `Slides.image` to keep PNG view of a widget. 
         - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
+        
+        ::: note-info
+            PDF printing of slide is done on paper of width 297mm (as A4). Height is determined by aspect ratio dropdown in sidebar panel.
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
         content = self._htmlize(allow_non_html_repr = False, as_slides = True, slide_number = slide_number)

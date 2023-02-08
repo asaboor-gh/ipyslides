@@ -263,7 +263,14 @@ def format_css(css_dict):
 
 def alt(widget, obj):
     """Display `widget` for slides and `obj` will be and displayed only in exported formats as HTML.
-    If `obj` is a function (that accepts `widget` as arguemnet), it should returns possible HTML representation of widget that will be exported as it is.
+    If `obj` is a function (that accepts `widget` as arguemnet), it should returns possible HTML representation (provided by user) of widget as string.
+    
+    ```python run source
+    import ipywidgets as ipw
+    slides = get_slides_instance()
+    slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">').display()
+    ```
+    {{source}}
     """
     if not isinstance(widget, ipw.DOMWidget):
         raise TypeError(f'widget should be a widget, got {widget!r}')
@@ -304,10 +311,10 @@ def alt(widget, obj):
                     raise RuntimeError('Cannot use `alt(widget, func)` inside a refreshable context! `alt(widget, not callable(obj))` is fine though.')
                 
                 if self._func:
-                    def _WidgetAltFunc_():
+                    def _PrivateWidgetAltFunc_():
                         return self._func(self._widget)
                         
-                    slides.running._dynamic_private(_WidgetAltFunc_, tag = '_has_widgets', hide_refresher = True)
+                    slides.running._dynamic_private(_PrivateWidgetAltFunc_, tag = '_has_widgets', hide_refresher = True)
                 else:
                     display(_HTML(f'<div class="export-only">{_fix_repr(obj)}</div>')) # Hide from slides
           

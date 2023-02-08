@@ -171,7 +171,7 @@ Having your cursor over slides, you can use follwoing keys/combinations:
     - Jupyter[Retro, Notebook, Lab]/Voila is optimized for keyboard. Other frontends like VSCode, may not work properly.
     - Pressing `S` to save screenshot of current state of slide. Different slides' screenshots are kept in order.
 
-### PDF Printing
+### PDF Printing (by Screen Capture)
 - Capture screenshot of current state of slide by camera button in toolbar or by pressing `S` key. 
     This will collect screenshots of current slide in order of capturing. 
     This is a manual process but you can collect content as you want. You can hover top-right corner to use a slider to adjust height of visible content.

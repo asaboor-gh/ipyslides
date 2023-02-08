@@ -288,11 +288,11 @@ with auto.slide() as s:
         [
             '### Widgets',
             ipw.Checkbox(description='Select to do nothing',indent=False),
-            ipw.IntSlider(),
+            slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'),
             ipw.Button(description='Click to do nothing'),
         ]
     )
-    s.get_source().focus_lines([3,4,5,6]).display()
+    s.get_source().display()
     
 
 auto.from_markdown('''

@@ -215,10 +215,11 @@ class Widgets:
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
             VBox([
-                self.sliders.width,
-                self.ddowns.aspect, 
                 self.sliders.scale,
                 self.ddowns.theme,
+                HTML('<hr/>'),
+                self.sliders.width,
+                self.ddowns.aspect, 
                 self.ddowns.export,
                 Box([GridBox([
                     self.checks.notes,

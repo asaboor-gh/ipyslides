@@ -19,7 +19,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '.TopBar.Outside, .SlideArea .goto-button, .Sfresh-Btn': {'visibility':'hidden !important'}, # Hide in screenshot
             },
             '^.FullWindow': {
-                '.Height-Dd, .Width-Slider': {'display': 'none !important'},
+                '.Width-Slider': {'display': 'none !important'},
             },
             '^.FullScreen': {
                 '.FullWindow-Btn': {'display': 'none !important'},
@@ -625,7 +625,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                     'background': 'green !important',
                     'font-size': '14px !important', # Avoid this button font scaling
                 },
-                '.Height-Dd, .Width-Slider': {'display': 'none !important',},
+                '.Width-Slider': {'display': 'none !important',}, # do not hide aspect ratio dropdown, that is needed for export
             },
             '.NotesView': {
                 'display': 'none !important', 
