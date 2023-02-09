@@ -261,9 +261,9 @@ def format_css(css_dict):
     "{css_docstring}"
     return _format_css(css_dict, allow_root_attrs = False)
 
-def alt(widget, obj):
-    """Display `widget` for slides and `obj` will be and displayed only in exported formats as HTML.
-    If `obj` is a function (that accepts `widget` as arguemnet), it should returns possible HTML representation (provided by user) of widget as string.
+def alt(widget, func):
+    """Display `widget` for slides and output of `func(widget)` will be and displayed only in exported formats as HTML.
+    `func` should return possible HTML representation (provided by user) of widget as string.
     
     ```python run source
     import ipywidgets as ipw
@@ -271,54 +271,49 @@ def alt(widget, obj):
     slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">').display()
     ```
     {{source}}
+    
+    ::: note-info
+        - If you happen to be using alt many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.
+        - Inside a `proxy.capture` context, `alt` will display the oldest html representation of widget.
     """
     if not isinstance(widget, ipw.DOMWidget):
         raise TypeError(f'widget should be a widget, got {widget!r}')
-    if isinstance(obj, ipw.DOMWidget):
-        raise TypeError(f'obj should not be a widget, got {obj!r}')
+    if not callable(func):
+        raise TypeError(f'func should not be a callable, got {func!r}')
+    
     class AltForWidget(CustomDisplay):
-        def __init__(self, widget, obj):
-            if isinstance(obj, AltForWidget):
-                raise TypeError(f'alt(widget, alt(...)) is not allowed!')
-            
+        def __init__(self, widget, func):
             self._widget = widget
-            self._obj = obj
-            self._func = obj if callable(obj) else None # If obj is a function, we use it later
+            self._func = func
             
             if self._func: # Check if function is valid
                 with capture_output() as cap:
                     out = self._func(self._widget)
                     if not isinstance(out, str):
-                        raise TypeError(f'Function {obj.__name__!r} should return a string, got {type(out)}')
+                        raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
                 if cap.stderr:
-                    raise RuntimeError(f'Function {obj.__name__!r} raised an error: {cap.stderr}')
+                    raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
                 
                 if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
-                    raise RuntimeError(f'Function {obj.__name__!r} should not display or print anything in its body, it should return a string.')
+                    raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')
                     
             
         def __repr__(self):
-            return 'AltForWidget(widget, obj)'
+            return 'AltForWidget(widget, func)'
             
         def _ipython_display_(self):
             return self.display()
             
         def display(self):
-            display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
             slides = get_slides_instance()
             if slides and slides.running:
-                if getattr(slides.running, '_in_dproxy', None):
-                    raise RuntimeError('Cannot use `alt(widget, func)` inside a refreshable context! `alt(widget, not callable(obj))` is fine though.')
-                
-                if self._func:
-                    def _PrivateWidgetAltFunc_():
-                        return self._func(self._widget)
-                        
-                    slides.running._dynamic_private(_PrivateWidgetAltFunc_, tag = '_has_widgets', hide_refresher = True)
-                else:
-                    display(_HTML(f'<div class="export-only">{_fix_repr(obj)}</div>')) # Hide from slides
+                return slides.running._exp_widget_display(self._widget, self._func)
+            else:
+                display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
+                if slides and slides._in_proxy: # If in proxy, display the alt content hidden
+                    display(_HTML(f'<div class="export-only">{self._func(self._widget)}</div>')) # Hide from slides
           
-    return AltForWidget(widget, obj)
+    return AltForWidget(widget, func)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."

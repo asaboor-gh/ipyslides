@@ -15,14 +15,18 @@ from ..utils import html, color, _format_css, _sub_doc, _css_docstring
 class _EmptyCaptured: outputs = [] # Just for initialization
 
 def _expand_cols(outputs, context):
-    "Put columns inline with rich outputs in a given context."
+    "Put columns and exportable widgets inline with rich outputs in a given context."
     new_outputs = []
     for out in outputs:
         if hasattr(out, 'metadata') and ('COLUMNS' in out.metadata): # may be Writer object there without metadata
             new_outputs.append(context._columns[out.metadata['COLUMNS']])
+        elif hasattr(out, 'metadata') and 'ExpWidget' in out.metadata:
+            slide = context if hasattr(context, '_exportables') else context._slide
+            new_outputs.append(slide._exportables[out.metadata['ExpWidget']])
         else:
             new_outputs.append(out)
     return new_outputs
+                    
 
 class DynamicRefresh:
     "DynamicRefresh is a display for a function that is executed when refresh button is clicked. Should not be instantiated directly."
@@ -73,9 +77,6 @@ class DynamicRefresh:
         self._on_click(None)
     
     def fmt_html(self, allow_non_html_repr = True): 
-        if self._func.__name__ == '_PrivateWidgetAltFunc_': # _PrivateWidgetAltFunc_ is a special case
-            return self._func() # return HTML directly
-        
         content = ''
         for out in self.outputs:
             if hasattr(out, 'fmt_html'): # Columns
@@ -102,8 +103,7 @@ class DynamicRefresh:
         self._columns = {} # Reset columns here just before executing function
         try:
             with capture_output() as captured:
-                if self._func.__name__ != '_PrivateWidgetAltFunc_': # We don't want to execute _PrivateWidgetAltFunc_ here
-                    self._func()
+                self._func()
                 
             self._last_outputs = _expand_cols(captured.outputs,self) # Expand columns is necessary
             
@@ -183,6 +183,18 @@ class Proxy:
             display(self, metadata= {'Proxy': self._key}) # This will update the slide refrence on each display to provide useful info
         return captured.outputs
     
+    def fmt_html(self, allow_non_html_repr = True): 
+        content = ''
+        for out in self.outputs:
+            if hasattr(out, 'fmt_html'): # Columns
+                content += out.fmt_html(allow_non_html_repr = allow_non_html_repr)
+            else:
+                if 'text/html' in out.data:
+                    content += out.data['text/html']
+                elif allow_non_html_repr:
+                    content += out.data['text/plain']
+        return content
+    
     @contextmanager
     def capture(self):
         "Context manager to capture output to current prpxy. Use it like this: with proxy.capture(): ... after a slide is already created."
@@ -202,6 +214,26 @@ class Proxy:
             self._slide.update_display() # Update display to show new output
         finally:
             self._slide._app._in_proxy = None
+            
+class ExpWidget:
+    def __init__(self, widget, func, slide):
+        self._widget = widget
+        self._func = func 
+        self._slide = slide
+        self._key = str(len(self._slide._exportables))
+    
+    def _ipython_display_(self):
+        display(self._widget, metadata= self.metadata)
+    
+    @property
+    def metadata(self): return {'ExpWidget': self._key} # Important
+    
+    @property
+    def data(self): return getattr(self._widget, '_repr_mimebundle_', lambda: {'application':'ExpWidget'})()
+    
+    def fmt_html(self,**kwargs): # kwargs should be there to be similar to other fmt_html methods
+        "Returns alternative html representation of the widget."
+        return self._func(self._widget)
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -226,6 +258,7 @@ class Slide:
         self._section = None # Added from Slides
         self._proxies = {} # Placeholders added to this slide
         self._dproxies = {} # Dynamic placeholders added to this slide
+        self._exportables = {} # Exportable widgets added to this slide
         self._columns = {} # Columns added to this slide
   
     def set_source(self, text, language):
@@ -243,6 +276,11 @@ class Slide:
             
     def _proxy_private(self, text):
         return Proxy(text, self) # get auto displayed
+    
+    def _exp_widget_display(self, widget, func):
+        ew = ExpWidget(widget, func, self)
+        self._exportables[ew._key] = ew # Add to exportables
+        return display(ew)
         
     def _on_load_private(self, func):
         old = self._app.running
@@ -286,6 +324,7 @@ class Slide:
         self._proxies = {} # Reset placeholders
         self._dproxies = {} # Reset dynamic placeholders
         self._columns = {} # Reset columns
+        self._exportables = {} # Reset exportables
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
         if hasattr(self,'_target_id'):
@@ -408,7 +447,9 @@ class Slide:
     def contents(self):
         outputs = []
         for out in self._contents:
-            if 'DYNAMIC' in out.metadata:
+            if 'ExpWidget' in out.metadata:
+                outputs.append(self._exportables[out.metadata['ExpWidget']]) # This will get displayed as a widget
+            elif 'DYNAMIC' in out.metadata:
                 outputs.append(self._dproxies[out.metadata['DYNAMIC']]) # This will get displayed as a widget
             elif 'Proxy' in out.metadata:
                 outputs.extend(self._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information

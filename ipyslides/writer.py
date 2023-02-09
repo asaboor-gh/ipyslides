@@ -8,7 +8,7 @@ import ipywidgets as ipw
 from IPython.display import display as display
 from IPython.utils.capture import capture_output
 
-from .formatters import _HTML, _HTML_Widget, stringify, _fix_repr
+from .formatters import _HTML, stringify, serializer, alt_html
 from .xmd import parse, get_slides_instance
 
 class CustomDisplay:
@@ -71,13 +71,17 @@ class Writer:
                     elif callable(c) and c.__name__ == '<lambda>':
                         _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
-                        if self._slides and self._slides.running and isinstance(c, ipw.HTML):
-                            def _alt_html(w):
-                                className = ' '.join(w._dom_classes) # To keep style of HTML widget, latest as well
-                                return f'<div class="{className}">{w.value}</div>' 
-                            
-                            self._slides.alt(c, _alt_html).display() # Display HTML widget and add it to alt
-                            # NOTE: This is enough, Do not go too deep like in boxes to search for HTML, because then we will lose the column structure
+                        if self._slides and self._slides.running:
+                            if type(c) in [it['obj'] for it in serializer.types]: # Do not check instance here, need specific
+                                for typ in serializer.types:
+                                    if type(c) == typ['obj']:
+                                        self._slides.alt(c, typ['func']).display() # Alternative representation will be available on export
+                                        break # No need to further check
+                            elif isinstance(c, ipw.HTML):
+                                self._slides.alt(c, alt_html).display() # Display HTML widget and add it to alt
+                                # NOTE: This is enough, Do not go too deep like in boxes to search for HTML, because then we will lose the column structure
+                            else:
+                                display(c, metadata = {'DOMWidget': '---'}) # Display only widget
                         else:
                             display(c, metadata = {'DOMWidget': '---'}) # Display only widget outside slide buuilder
                     else:
@@ -116,9 +120,15 @@ class Writer:
         for col in self._cols:
             content = ''
             for out in col['outputs']:
-                if hasattr(out, 'metadata') and 'DYNAMIC' in out.metadata: # Buried in column
+                if hasattr(out, 'metadata') and 'ExpWidget' in out.metadata:
+                    epx = self._slide._exportables[out.metadata['ExpWidget']]
+                    content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
+                elif hasattr(out, 'metadata') and 'DYNAMIC' in out.metadata: # Buried in column
                     dpx = self._slide._dproxies[out.metadata['DYNAMIC']] # _slide is for sure there if dynamic proxy is there
                     content += ('\n' + dpx.fmt_html(allow_non_html_repr = allow_non_html_repr))
+                elif 'Proxy' in out.metadata:
+                    px = self._slide._proxies[out.metadata['Proxy']]
+                    content += ('\n' + px.fmt_html(allow_non_html_repr = allow_non_html_repr))
                 elif 'text/html' in out.data:
                     content += ('\n' + out.data['text/html']) # rows should be on their own line
                 elif allow_non_html_repr:
@@ -140,7 +150,7 @@ def write(*objs,widths = None):
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.source` API.
-    - Use `Slides.alt(widget, obj)` function to display widget on slides and alternative content in exported slides/report, obj can be a function to return possible HTML representation of widget.
+    - Use `Slides.alt(widget, func)` function to display widget on slides and alternative content in exported slides/report, function should return possible HTML representation of widget.
     - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, lambda w: w.value)` where w is given widget. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.

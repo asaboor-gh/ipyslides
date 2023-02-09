@@ -202,7 +202,7 @@ class BaseSlides:
             - Do not use this to change global state of slides, because that will affect all slides.
             - This can be used single time per slide, overwriting previous function.
         """
-        for name in ['write','print','display']:
+        for name in ['write','print','display','alt']:
             if name in func.__code__.co_names:
                 self._warnings.append(f'UserWarning: Output of `{name}` function under `on_load` may be lost while presenting. I hope you know what you are doing!')
         

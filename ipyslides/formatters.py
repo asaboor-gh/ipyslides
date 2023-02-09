@@ -41,34 +41,10 @@ class _HTML(HTML):
         "Returns HTML string."
         return self._repr_html_()
     
-class _HTML_Widget(ipw.HTML):
-    "Class for HTML widgets based on ipywidgets.HTML, but with `_repr_html_` method. Usable in format string. Can add other HTML object or string to it."
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        
-    def _repr_html_(self):
-        "Make it available in `write` command as well."
-        return self.value
-    
-    def __format__(self, spec):
-        return f'{self._repr_html_():{spec}}'
-    
-    def __repr__(self):
-        return repr(self.value)
-    
-    def __str__(self):
-        return str(self.value)
-    
-    def __add__(self, other):
-        if isinstance(other,_HTML_Widget):
-            return _HTML(self._repr_html_() + other._repr_html_())
-        elif isinstance(other,str):
-            return _HTML(self._repr_html_() + other)
-    
-    def display(self):
-        "Display this HTML widget inline"
-        display(self)
-
+def alt_html(w):
+    """Convert ipywidgets.HTML object to HTML string."""
+    className = ' '.join(w._dom_classes) # To keep style of HTML widget, latest as well
+    return f'<div class="{className}">{w.value}</div>' 
 
 def plt2html(plt_fig = None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
@@ -229,13 +205,15 @@ class Serializer:
         my_object = MyObject()
         slides.write(my_object)
         ```
-        
-        **Note**: Serializer function should return html string. It is not validated for correct code on registration time.       
-        **Note**: Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
+        ::: note
+            - Serializer function should return html string. It is not validated for correct code on registration time.       
+            - Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
+            - Serialzers for widgets are equivalent to `Slides.alt(widget, func)` inside `write` command for export purpose. Other commands such as `Slides.format_html` will pick oldest value only.
         """
         def _register(func):
             if obj_type is str:
                 raise TypeError("Cannot register serializer for string type! Use custom class to encapsulate string the way you want.")
+            
             item = {'obj': obj_type, 'func': func}
             already = False
             for i, _lib in enumerate(self._libs):
@@ -254,6 +232,12 @@ class Serializer:
             return func
         return _register
     
+    @property
+    def types(self):
+        "Tuple of all registered types."
+        return tuple(self._libs)
+    
+
     def unregister(self, obj_type):
         "Unregister all serializer handlers for a type."
         for item in self._libs:
@@ -285,9 +269,9 @@ libraries = [
 
 def format_object(obj):
     "Returns string of HTML for given object."
-    for _lib in serializer._libs:
-        if isinstance(obj, _lib['obj']):
-            return True, _lib['func'](obj)
+    for tp in serializer.types:
+        if isinstance(obj, tp['obj']):
+            return True, tp['func'](obj)
     
     # If matplotlib axes given, handle it separately
     if hasattr(obj,'get_figure'): 
@@ -300,6 +284,8 @@ def format_object(obj):
         return True, str(obj)  
     elif isinstance(obj,(set,list,tuple)): # Then prefer other builtins
         return True, f"<div class='raw-text'>{obj}</div>"
+    elif isinstance(obj, ipw.HTML):
+        return True, alt_html(obj) # Only HTML widget is at edge of widgets and static content
     
     # If Code object given
     for _type in ['class','function','module','method','builtin','generator']:
@@ -341,8 +327,8 @@ def stringify(obj):
     "Returns string of HTML for given object."
     if isinstance(obj,str):
         raise TypeError('can not stringify string')
-    elif isinstance(obj,(_HTML, _HTML_Widget)):
-        return obj._repr_html_() #_repr_html_ is a method of _HTML, _HTML_Widget, it is quick   
+    elif isinstance(obj,_HTML):
+        return obj._repr_html_() #_repr_html_ is a method of _HTML and it is quick   
     else:
         # Next prefer custom methods of objects as they are more frequently used
         is_true, _html = format_object(obj)
