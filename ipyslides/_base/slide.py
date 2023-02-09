@@ -14,15 +14,15 @@ from ..utils import html, color, _format_css, _sub_doc, _css_docstring
 
 class _EmptyCaptured: outputs = [] # Just for initialization
 
-def _expand_cols(outputs, context):
+def _expand_objs(outputs, context):
     "Put columns and exportable widgets inline with rich outputs in a given context."
     new_outputs = []
     for out in outputs:
         if hasattr(out, 'metadata') and ('COLUMNS' in out.metadata): # may be Writer object there without metadata
             new_outputs.append(context._columns[out.metadata['COLUMNS']])
-        elif hasattr(out, 'metadata') and 'ExpWidget' in out.metadata:
+        elif hasattr(out, 'metadata') and 'Exp4Widget' in out.metadata:
             slide = context if hasattr(context, '_exportables') else context._slide
-            new_outputs.append(slide._exportables[out.metadata['ExpWidget']])
+            new_outputs.append(slide._exportables[out.metadata['Exp4Widget']])
         else:
             new_outputs.append(out)
     return new_outputs
@@ -105,7 +105,7 @@ class DynamicRefresh:
             with capture_output() as captured:
                 self._func()
                 
-            self._last_outputs = _expand_cols(captured.outputs,self) # Expand columns is necessary
+            self._last_outputs = _expand_objs(captured.outputs,self) # Expand columns is necessary
             
         except:
             if self._raise_error:
@@ -186,7 +186,7 @@ class Proxy:
     def fmt_html(self, allow_non_html_repr = True): 
         content = ''
         for out in self.outputs:
-            if hasattr(out, 'fmt_html'): # Columns
+            if hasattr(out, 'fmt_html'): # Columns and others
                 content += out.fmt_html(allow_non_html_repr = allow_non_html_repr)
             else:
                 if 'text/html' in out.data:
@@ -210,12 +210,12 @@ class Proxy:
             if captured.stderr:
                 raise RuntimeError(captured.stderr)
 
-            self._outputs = _expand_cols(captured.outputs, self) # Expand columns
+            self._outputs = _expand_objs(captured.outputs, self) # Expand columns
             self._slide.update_display() # Update display to show new output
         finally:
             self._slide._app._in_proxy = None
             
-class ExpWidget:
+class Exp4Widget:
     def __init__(self, widget, func, slide):
         self._widget = widget
         self._func = func 
@@ -226,10 +226,10 @@ class ExpWidget:
         display(self._widget, metadata= self.metadata)
     
     @property
-    def metadata(self): return {'ExpWidget': self._key} # Important
+    def metadata(self): return {'Exp4Widget': self._key} # Important
     
     @property
-    def data(self): return getattr(self._widget, '_repr_mimebundle_', lambda: {'application':'ExpWidget'})()
+    def data(self): return getattr(self._widget, '_repr_mimebundle_', lambda: {'application':'Exp4Widget'})()
     
     def fmt_html(self,**kwargs): # kwargs should be there to be similar to other fmt_html methods
         "Returns alternative html representation of the widget."
@@ -278,7 +278,7 @@ class Slide:
         return Proxy(text, self) # get auto displayed
     
     def _exp_widget_display(self, widget, func):
-        ew = ExpWidget(widget, func, self)
+        ew = Exp4Widget(widget, func, self)
         self._exportables[ew._key] = ew # Add to exportables
         return display(ew)
         
@@ -344,7 +344,7 @@ class Slide:
             
         finally:
             self._app._running_slide = None
-            self._contents = _expand_cols(captured.outputs, self) # Expand columns  
+            self._contents = _expand_objs(captured.outputs, self) # Expand columns  
         
         if self._app._warnings:
             print(*self._app._warnings, sep='\n\n')
@@ -447,8 +447,8 @@ class Slide:
     def contents(self):
         outputs = []
         for out in self._contents:
-            if 'ExpWidget' in out.metadata:
-                outputs.append(self._exportables[out.metadata['ExpWidget']]) # This will get displayed as a widget
+            if 'Exp4Widget' in out.metadata:
+                outputs.append(self._exportables[out.metadata['Exp4Widget']]) # This will get displayed as a widget
             elif 'DYNAMIC' in out.metadata:
                 outputs.append(self._dproxies[out.metadata['DYNAMIC']]) # This will get displayed as a widget
             elif 'Proxy' in out.metadata:

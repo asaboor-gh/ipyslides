@@ -17,6 +17,76 @@ class CustomDisplay:
     
     def display(self):
         raise NotImplementedError("display method must be implemented in subclass")
+    
+class GotoButton(CustomDisplay):
+    "Should not be used directly, use `Slides.goto_button` instead."
+    def __init__(self, button, app):
+        self._button = button
+        self._app = app
+        self._button._TargetSlide = None # Will be set by set_target
+        self._target_id = f't-{id(button)}'
+    
+    def __repr__(self) -> str:
+        return '<GotoButton>'
+    
+    def display(self):
+        alt_link = self._app.html('a',self._button.description, href=f'#{self._target_id}', 
+            style='color:var(--accent-color);text-decoration:none;', 
+            className='goto-button slides-only export-only'
+        )
+    
+        display(self._button, metadata = {'DOMWidget': '---'})
+        display(alt_link) # Hidden from slides
+        
+    def set_target(self, force = False):
+        if not self._app.running:
+            raise RuntimeError("GotoButton's target can be set only inside a slide constructor!")
+        if self._button._TargetSlide and not force:
+            raise RuntimeError("GotoButton's target can be set only once! Use `force=True` to link here and remove previous link.")
+        
+        if force:
+            self._button._TargetSlide._target_id = None # Remove previous link
+        
+        self._button._TargetSlide = self._app.running
+        self._button._TargetSlide._target_id = self._target_id # Set new link
+        
+    
+class AltForWidget(CustomDisplay):
+    def __init__(self, widget, func):
+        if not isinstance(widget, ipw.DOMWidget):
+            raise TypeError(f'widget should be a widget, got {widget!r}')
+        if not callable(func):
+            raise TypeError(f'func should be a callable, got {func!r}')
+        self._widget = widget
+        self._func = func
+        
+        if self._func: # Check if function is valid
+            with capture_output() as cap:
+                out = self._func(self._widget)
+                if not isinstance(out, str):
+                    raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
+            if cap.stderr:
+                raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
+            
+            if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
+                raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')
+                
+        
+    def __repr__(self):
+        return 'AltForWidget(widget, func)'
+        
+    def _ipython_display_(self):
+        return self.display()
+        
+    def display(self):
+        slides = get_slides_instance()
+        if slides and slides.running:
+            return slides.running._exp_widget_display(self._widget, self._func)
+        else:
+            display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
+            if slides and slides._in_proxy: # If in proxy, display the alt content hidden
+                display(_HTML(f'<div class="export-only">{self._func(self._widget)}</div>')) # Hide from slides
+          
 
 class Writer:
     _in_write = False # To prevent write from being called inside write
@@ -120,8 +190,8 @@ class Writer:
         for col in self._cols:
             content = ''
             for out in col['outputs']:
-                if hasattr(out, 'metadata') and 'ExpWidget' in out.metadata:
-                    epx = self._slide._exportables[out.metadata['ExpWidget']]
+                if hasattr(out, 'metadata') and 'Exp4Widget' in out.metadata:
+                    epx = self._slide._exportables[out.metadata['Exp4Widget']]
                     content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
                 elif hasattr(out, 'metadata') and 'DYNAMIC' in out.metadata: # Buried in column
                     dpx = self._slide._dproxies[out.metadata['DYNAMIC']] # _slide is for sure there if dynamic proxy is there

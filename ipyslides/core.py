@@ -11,7 +11,7 @@ import ipywidgets as ipw
 
 from .xmd import parse, extender as _extender
 from .source import Source
-from .writer import CustomDisplay, write, iwrite
+from .writer import GotoButton, write, iwrite
 from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer, _fix_repr
 from . import utils
 
@@ -458,39 +458,7 @@ class Slides(BaseSlides):
             return ipw.HBox([html_before,button],layout=ipw.Layout(align_items='center')).add_class('goto-box')
         
         else: # For links in exported slides
-            slides_instance = self # need in place of self in closure below
-            
-            class GotoButton(CustomDisplay):
-                def __init__(self, button) -> None:
-                    self._button = button
-                    self._button._TargetSlide = None # Will be set by set_target
-                    self._target_id = f't-{id(button)}'
-                
-                def __repr__(self) -> str:
-                    return '<GotoButton>'
-                
-                def display(self):
-                    alt_link = slides_instance.html('a',self._button.description, href=f'#{self._target_id}', 
-                        style='color:var(--accent-color);text-decoration:none;', 
-                        className='goto-button slides-only export-only'
-                    )
-            
-                    display(self._button, metadata = {'DOMWidget': '---'})
-                    display(alt_link) # Hidden from slides
-                    
-                def set_target(self, force = False):
-                    if not slides_instance.running:
-                        raise RuntimeError("GotoButton's target can be set only inside a slide constructor!")
-                    if self._button._TargetSlide and not force:
-                        raise RuntimeError("GotoButton's target can be set only once! Use `force=True` to link here and remove previous link.")
-                    
-                    if force:
-                        self._button._TargetSlide._target_id = None # Remove previous link
-                    
-                    self._button._TargetSlide = slides_instance.running
-                    self._button._TargetSlide._target_id = self._target_id # Set new link
-                    
-            return GotoButton(button)
+            return GotoButton(button,app = self)
     
     def goto_button(self, text, **kwargs):
         """"
