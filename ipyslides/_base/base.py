@@ -7,7 +7,7 @@ from .settings import LayoutSettings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .intro import key_combs
-from ..formatters import _HTML
+from ..formatters import XTML
 from ..xmd import _special_funcs
 
 class BaseSlides:
@@ -100,7 +100,7 @@ class BaseSlides:
     @property
     def xmd_syntax(self):
         "Special syntax for markdown."
-        return _HTML(self.parse(textwrap.dedent('''
+        return XTML(self.parse(textwrap.dedent('''
         ## Extended Markdown
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         

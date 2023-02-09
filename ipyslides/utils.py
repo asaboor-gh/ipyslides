@@ -18,7 +18,7 @@ from IPython.core.display import Image, display
 from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
-from .formatters import fix_ipy_image, _HTML, _fix_repr
+from .formatters import XTML, fix_ipy_image, htmlize
 from .xmd import get_unique_css_class
 from .writer import Writer, AltForWidget
 
@@ -30,7 +30,7 @@ def _fmt_cols(*objs,widths = None):
     
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in objs] 
     _cols = ' '.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
-                     {' '.join([_fix_repr(row) for row in _col])}
+                     {' '.join([htmlize(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,widths)])
     
     if len(objs) == 1:
@@ -184,7 +184,7 @@ def set_dir(path):
 
 def format_html(*objs,widths=None):
     'Format objects in columns, same was as write does, but with limited content types, provide in write function'
-    return _HTML(_fmt_cols(*objs,widths=widths))
+    return XTML(_fmt_cols(*objs,widths=widths))
 
 def _validate_key(key):
     "Validate key for CSS,allow only string or tuple of strings. commas are allowed only in :is(.A,#B),:has(.A,#B) etc."
@@ -280,7 +280,7 @@ def alt(widget, func):
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
-    return _HTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>""")
+    return XTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>""")
 
 def __check_pil_image(data):
     "Check if data is a PIL Image or numpy array"
@@ -302,9 +302,9 @@ def image(data=None,width='80%',caption=None, **kwargs):
     if isinstance(width,int):
         width = f'{width}px'
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
-    img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs _HTML object
+    img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
-    return html('figure', img.value + cap, className='zoom-child')  # Add caption,  _HTML + _HTML
+    return html('figure', img.value + cap, className='zoom-child')  # Add caption,  XTML + XTML
 
 def svg(data=None,caption=None,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
@@ -316,7 +316,7 @@ def svg(data=None,caption=None,**kwargs):
 def iframe(src, width='100%',height='auto',**kwargs):
     "Display `src` in an iframe. `kwrags` are passed to IPython.display.IFrame"
     f = IFrame(src,width,height, **kwargs)
-    return _HTML(f._repr_html_())
+    return XTML(f._repr_html_())
 
 def enable_zoom(obj):
     "Wraps a given obj in a parent with 'zoom-child' class or add 'zoom-self' to widget, whether a widget or html/IPYthon object"
@@ -335,14 +335,14 @@ def classed(obj, className):
     if isinstance(obj,ipw.DOMWidget):
         return obj.add_class(className)
     else:
-        return _HTML(f'<div class="{className}">{_fix_repr(obj)}</div>')
+        return XTML(f'<div class="{className}">{htmlize(obj)}</div>')
 
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
     if isinstance(obj,ipw.DOMWidget):
         return ipw.Box([obj]).add_class('align-center') # needs to wrap in another for cenering
     else:
-        return _HTML(f'<div class="align-center">{_fix_repr(obj)}</div>')
+        return XTML(f'<div class="align-center">{htmlize(obj)}</div>')
     
 def html(tag, children = None,className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
@@ -359,7 +359,7 @@ def html(tag, children = None,className = None,**node_attrs):
     ```
     """
     if tag in 'hr/':
-        return _HTML(f'<hr/>') # Special case for hr
+        return XTML(f'<hr/>') # Special case for hr
     
     if children and tag.endswith('/'):
         raise RuntimeError(f'Parametr `children` should be None for self closing tag {tag!r}')
@@ -374,19 +374,19 @@ def html(tag, children = None,className = None,**node_attrs):
         attrs = f'class="{className}" {attrs}'
     
     if tag.endswith('/'): # Self closing tag
-        return _HTML(f'<{tag[:-1]} {attrs} />' if attrs else f'<{tag[:-1]}/>')
+        return XTML(f'<{tag[:-1]} {attrs} />' if attrs else f'<{tag[:-1]}/>')
     
     if children is None:
         content = ''
     elif isinstance(children,str):
         content = children
     elif isinstance(children,(list,tuple)):
-        content = '\n'.join(_fix_repr(child) for child in children) # Convert to html nodes in sequence of rows
+        content = '\n'.join(htmlize(child) for child in children) # Convert to html nodes in sequence of rows
     else:
         raise TypeError(f'Children should be a list/tuple of objects or str, not {type(children)}')
         
     tag_in =  f'<{tag} {attrs}>' if attrs else f'<{tag}>' # space is must after tag, strip attrs spaces
-    return _HTML(f'{tag_in}{content}</{tag}>')
+    return XTML(f'{tag_in}{content}</{tag}>')
 
 def vspace(em = 1):
     "Returns html node with given height in `em`."
@@ -398,27 +398,27 @@ def textbox(text, **css_props):
     css_props = {'display':'inline-block','white-space': 'pre', **css_props} # very important to apply text styles in order
     # white-space:pre preserves whitspacing, text will be viewed as written. 
     _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
-    return _HTML(f"<span class='text-box' style = {_style!r}>{text}</span>")  # markdown="span" will avoid inner parsing
+    return XTML(f"<span class='text-box' style = {_style!r}>{text}</span>")  # markdown="span" will avoid inner parsing
 
 def alert(text):
     "Alerts text!"
-    return _HTML(f"<span style='color:#DC143C;'>{text}</span>")
+    return XTML(f"<span style='color:#DC143C;'>{text}</span>")
     
 def color(text,fg='blue',bg=None):
     "Colors text, `fg` and `bg` should be valid CSS colors"
-    return _HTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
+    return XTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
 
 def keep_format(plaintext_or_html):
     "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_format(obj.to_html()) preserves its actual form."
     if not isinstance(plaintext_or_html,str):
         return plaintext_or_html # if not string, return as is
-    return _HTML(plaintext_or_html) 
+    return XTML(plaintext_or_html) 
 
 def raw(text, className=None): # className is required here
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
     _class = className if className else ''
     escaped_text = escape(textwrap.dedent(text).strip('\n')) # dedent and strip newlines on top and bottom
-    return _HTML(f"<div class='raw-text {_class}'>{escaped_text}</div>")
+    return XTML(f"<div class='raw-text {_class}'>{escaped_text}</div>")
 
 def rows(*objs):
     "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."
@@ -475,7 +475,7 @@ def sig(callable,prepend_str = None):
         _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--secondary-fg);">{str(inspect.signature(callable))}</span>'
         if prepend_str: 
             _sig = f'{color(prepend_str,"var(--accent-color)")}.{_sig}' # must be inside format string
-        return _HTML(_sig)
+        return XTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')
 
@@ -483,12 +483,12 @@ def sig(callable,prepend_str = None):
 def doc(obj,prepend_str = None, members = None, itself = True):
     "Returns documentation of an `obj`. You can prepend a class/module name. members is True/List of attributes to show doc of."
     if obj is None:
-        return _HTML('') # Must be _HTML to work on memebers
+        return XTML('') # Must be XTML to work on memebers
     
     _doc, _sig, _full_doc = '', '', ''
     if itself == True:
         with suppress(BaseException): # if not __doc__, go forwards
-            _doc += _fix_repr((inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775'))
+            _doc += htmlize((inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775'))
 
         with suppress(BaseException): # This allows to get docs of module without signature
             _sig = sig(obj,prepend_str)
@@ -501,7 +501,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     _pstr = f'{str(prepend_str) + "." if prepend_str else ""}{_name}'
     
     if _name.startswith('_'): # Remove private attributes
-        return _HTML('') # Must be _HTML to work on memebers
+        return XTML('') # Must be XTML to work on memebers
     
     _sig = _sig or color(_pstr,"var(--accent-color)") # Picks previous signature if exists
     _full_doc = f"<div class='docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
@@ -537,7 +537,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
             _class_members = inspect.ismodule(obj) and (inspect.isclass(attr) and (attr.__module__ == obj.__name__)) # Restrict imported classes in docs
             _full_doc += doc(attr, prepend_str = _pstr, members = _class_members, itself = True).value
     
-    return _HTML(_full_doc)
+    return XTML(_full_doc)
 
 def run_doc(obj,prepend_str = None):
     "Execute python code block inside docstring of an object. Block should start with '\`\`\`python run'."
@@ -548,7 +548,7 @@ def run_doc(obj,prepend_str = None):
 def code(callable):
     "Returns full code of a callable, you can just pass callable into `write` command or use `ipyslides.Slides().source.from_callable`."
     try:
-        return _HTML(_fix_repr(callable))
+        return XTML(htmlize(callable))
     except:
         raise TypeError(f'Object {callable} is not a callable')
 

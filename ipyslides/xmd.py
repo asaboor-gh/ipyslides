@@ -26,7 +26,7 @@ from IPython.core.display import display
 from IPython import get_ipython
 from IPython.utils.capture import capture_output
 
-from .formatters import _HTML, highlight, stringify
+from .formatters import XTML, highlight, htmlize
 from .source import _str2code
 
 _md_extensions = ['tables','footnotes','attr_list','md_in_html', 'customblocks'] # For Markdown Parser
@@ -199,7 +199,7 @@ class XMarkdown(Markdown):
         for i, section in enumerate(new_strs):
             if i % 2 == 0:
                 out = self.convert(self._sub_vars(section))
-                outputs.append(_HTML(out))
+                outputs.append(XTML(out))
             else:
                 section = textwrap.dedent(section) # Remove indentation in code block, useuful to write examples inside markdown block
                 outputs.extend(self._parse_block(section)) # vars are substituted already inside
@@ -212,7 +212,7 @@ class XMarkdown(Markdown):
             content = ''
             for out in outputs:
                 try:
-                    content += out.value # _HTML, _Source
+                    content += out.value # XTML, SourceCode
                 except:
                     content += out.data['text/html'] # Rich content from python execution
             return content
@@ -236,7 +236,7 @@ class XMarkdown(Markdown):
         header, data = block.split('\n',1)
         line, _class = self._extract_class(header)
         if 'multicol' in line:
-            return [_HTML(self._parse_multicol(data, line, _class)),]
+            return [XTML(self._parse_multicol(data, line, _class)),]
         elif 'python' in line:
             return self._parse_python(data, line, _class) # itself list
         else:
@@ -307,7 +307,7 @@ class XMarkdown(Markdown):
                 raise Exception(('{{'+ match + '}}' + ' could not be resolved. ' 
                 'Only variables are allowed in double curly braces or see Slides.xmd_syntax as well'))
                 
-            _out = (stringify(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
+            _out = (htmlize(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
             html_output = html_output.replace('{{' + match + '}}', _out, 1)
         
         # Replace inline one argumnet functions

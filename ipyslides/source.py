@@ -10,15 +10,16 @@ import pygments
 from contextlib import contextmanager, suppress
 from IPython.display import display
 
-from .formatters import highlight, _HTML
+from .formatters import highlight, XTML
     
 
 # Do not use this in main work, just inside a function
-class _Source(_HTML):
+class SourceCode(XTML):
     "Returns the source code of the object as HTML."
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._raw = ''
+    
     @property
     def raw(self):
         "Return raw source code."
@@ -32,7 +33,7 @@ class _Source(_HTML):
     def display(self,collapsed = False):
         "Display source object in IPython notebook."
         if collapsed:
-            return _HTML(f"""<details style='max-height:100%;overflow:auto;'>
+            return XTML(f"""<details style='max-height:100%;overflow:auto;'>
                 <summary>Show Code</summary>
                 {self.value}
                 </details>""").display()
@@ -90,7 +91,7 @@ def _file2code(filename,language='python',name=None,**kwargs):
 
 def _str2code(text,language='python',name=None,**kwargs):
     "Only reads plain text source code, return source object with `show_lines` and `focus_lines` methods."
-    out = _Source(highlight(text,language = language, name = name, **kwargs).value)
+    out = SourceCode(highlight(text,language = language, name = name, **kwargs).value)
     out.raw = text
     return out
 
@@ -181,7 +182,7 @@ class Source:
 
         n2 = with_node.body[-1].end_lineno #can include multiline expressions in python 3.8+
         source = textwrap.dedent(''.join(lines[n1:][:n2 - offset]))
-        source_html = _Source(highlight(source,language = 'python', **kwargs).value)
+        source_html = SourceCode(highlight(source,language = 'python', **kwargs).value)
         source_html.raw = source # raw source code
         cls.current = source_html
         

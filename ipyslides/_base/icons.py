@@ -1,7 +1,7 @@
 import re
 from textwrap import dedent as _dedent
 
-from ..formatters import _HTML
+from ..formatters import XTML
 
 _icons = {
     'chevron': '''
@@ -131,7 +131,7 @@ _icons = {
 
 loading_svg = _icons['loading'].format(size='4em',color='var(--accent-color, gray)',rotation=0) # Required outside
 
-class Icon(_HTML):
+class Icon(XTML):
     available = tuple(_icons.keys())
     def __init__(self, name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0) :
         "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."

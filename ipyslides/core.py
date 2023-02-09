@@ -11,8 +11,8 @@ import ipywidgets as ipw
 
 from .xmd import parse, extender as _extender
 from .source import Source
-from .writer import GotoButton, write, iwrite
-from .formatters import bokeh2html, plt2html, highlight, _HTML, serializer, _fix_repr
+from .writer import GotoButton, write
+from .formatters import XTML, bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
 
 _under_slides = {k:getattr(utils,k,None) for k in utils.__all__}
@@ -85,7 +85,6 @@ class Slides(BaseSlides):
         self.source = Source # Code source
         self.icon = _Icon # Icon is useful to add many places
         self.write  = write 
-        self.iwrite = iwrite
         self.parse = parse # Parse extended markdown
         self.serializer = serializer # Serialize IPython objects to HTML
         
@@ -423,7 +422,7 @@ class Slides(BaseSlides):
                 sections.append(self.html('div', fmt_sec(self.running), style='',className='toc-item this'))
                 
             elif sections:
-                sections[-1] = _HTML(sections[-1].value.replace('toc-item prev','toc-item this'))
+                sections[-1] = XTML(sections[-1].value.replace('toc-item prev','toc-item this'))
 
             for slide in self[this_index+1:]:
                 if slide._section:
@@ -454,7 +453,7 @@ class Slides(BaseSlides):
         button.on_click(on_click)
         
         if _other_text is not None: # For TOC
-            html_before = ipw.HTML(_fix_repr(_other_text)).add_class('goto-html')
+            html_before = ipw.HTML(htmlize(_other_text)).add_class('goto-html')
             return ipw.HBox([html_before,button],layout=ipw.Layout(align_items='center')).add_class('goto-box')
         
         else: # For links in exported slides
@@ -852,11 +851,11 @@ class Slides(BaseSlides):
         ]
         
         if not tocs_dict:
-            children.append(ipw.HTML(_fix_repr('No sections found!, create sections with alert`Slides.section` method'
+            children.append(ipw.HTML(htmlize('No sections found!, create sections with alert`Slides.section` method'
                     ' or alert`section\`key\``')))
         else:
             for i,(sec,slide) in enumerate(tocs_dict.items(), start = 1):
-                _other_text = _fix_repr(f'color[var(--accent-color)]`{i}.` {sec}') + f"<p>{slide._label}</p>"
+                _other_text = htmlize(f'color[var(--accent-color)]`{i}.` {sec}') + f"<p>{slide._label}</p>"
                 _extra_func = lambda: self.widgets.buttons.toc.click()
                 p_btn = self._goto_button('', target_slide = slide, _other_text = _other_text,_extra_func = _extra_func)
                 children.append(p_btn.add_class('toc-item').add_class(f's{slide._index}')) # class for dynamic CSS

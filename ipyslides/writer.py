@@ -2,13 +2,13 @@
 Main write functions to add content to slides
 """
 
-__all__ = ['write', 'iwrite']
+__all__ = ['write']
 
 import ipywidgets as ipw
 from IPython.display import display as display
 from IPython.utils.capture import capture_output
 
-from .formatters import _HTML, stringify, serializer, alt_html
+from .formatters import XTML, htmlize, serializer, alt_html
 from .xmd import parse, get_slides_instance
 
 class CustomDisplay:
@@ -85,7 +85,7 @@ class AltForWidget(CustomDisplay):
         else:
             display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
             if slides and slides._in_proxy: # If in proxy, display the alt content hidden
-                display(_HTML(f'<div class="export-only">{self._func(self._widget)}</div>')) # Hide from slides
+                display(XTML(f'<div class="export-only">{self._func(self._widget)}</div>')) # Hide from slides
           
 
 class Writer:
@@ -155,7 +155,7 @@ class Writer:
                         else:
                             display(c, metadata = {'DOMWidget': '---'}) # Display only widget outside slide buuilder
                     else:
-                        display(_HTML(stringify(c)))
+                        display(XTML(htmlize(c)))
             
             if cap.stderr:
                 raise RuntimeError(f'Error in column {i+1}:\n{cap.stderr}')
@@ -221,7 +221,7 @@ def write(*objs,widths = None):
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.source` API.
     - Use `Slides.alt(widget, func)` function to display widget on slides and alternative content in exported slides/report, function should return possible HTML representation of widget.
-    - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, lambda w: w.value)` where w is given widget. The value of exported HTML will be most recent.
+    - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, html_converter_func)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.
@@ -240,7 +240,3 @@ def write(*objs,widths = None):
     if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
         return wr.update_display() # Update in usual cell to have widgets working
 
-# Keep long enough to raise deprecation warning
-def iwrite(*objs,widths = None):
-    raise DeprecationWarning('`iwrite` command is deprecated. Use `write` command instead.')
-    

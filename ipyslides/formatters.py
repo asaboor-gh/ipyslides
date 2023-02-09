@@ -12,7 +12,7 @@ from IPython.core.display import __all__ as _all
 from IPython import get_ipython
 
 __reprs__ = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
-class _HTML(HTML):
+class XTML(HTML):
     def __init__(self, *args,**kwargs):
         "This HTML will be diplayable, printable and formatable. Can add other HTML object or string to it."
         super().__init__(*args,**kwargs)
@@ -27,10 +27,10 @@ class _HTML(HTML):
         return str(self._repr_html_())
     
     def __add__(self, other):
-        if isinstance(other,_HTML):
-            return _HTML(self._repr_html_() + other._repr_html_())
+        if isinstance(other,XTML):
+            return XTML(self._repr_html_() + other._repr_html_())
         elif isinstance(other,str):
-            return _HTML(self._repr_html_() + other)
+            return XTML(self._repr_html_() + other)
     
     def display(self):
         "Display this HTML object inline"
@@ -41,10 +41,13 @@ class _HTML(HTML):
         "Returns HTML string."
         return self._repr_html_()
     
-def alt_html(w):
+def alt_html(ipywidget_html):
     """Convert ipywidgets.HTML object to HTML string."""
-    className = ' '.join(w._dom_classes) # To keep style of HTML widget, latest as well
-    return f'<div class="{className}">{w.value}</div>' 
+    if not isinstance(ipywidget_html,ipw.HTML):
+        raise TypeError(f'w must be ipywidgets.HTML, got {type(ipywidget_html)}')
+    
+    className = ' '.join(ipywidget_html._dom_classes) # To keep style of HTML widget, latest as well
+    return f'<div class="{className}">{ipywidget_html.value}</div>' 
 
 def plt2html(plt_fig = None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
@@ -63,7 +66,7 @@ def plt2html(plt_fig = None,transparent=True,caption=None):
     plt.close() #AVoids throwing text outside figure
     svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
-    return _HTML(f"<figure class='zoom-child'>{svg + cap}</figure>")
+    return XTML(f"<figure class='zoom-child'>{svg + cap}</figure>")
 
 def _plt2htmlstr(plt_fig=None,transparent=True,caption=None):
     return plt2html(plt_fig=plt_fig,transparent=transparent,caption=caption).value
@@ -78,7 +81,7 @@ def bokeh2html(bokeh_fig,title=""):
     """
     from bokeh.resources import CDN
     from bokeh.embed import file_html
-    return _HTML(f'<div class="zoom-child">{file_html(bokeh_fig, CDN, title)}</div>')
+    return XTML(f'<div class="zoom-child">{file_html(bokeh_fig, CDN, title)}</div>')
 
 def _bokeh2htmlstr(bokeh_fig,title=""):
     return bokeh2html(bokeh_fig,title).value
@@ -86,7 +89,7 @@ def _bokeh2htmlstr(bokeh_fig,title=""):
 def fix_ipy_image(image,width='100%'): # Do not add zoom class here, it's done in util as well as below
     img = image._repr_mimebundle_() # Picks PNG/JPEG/etc
     _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
-    return _HTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
+    return XTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
 
 def _ipy_imagestr(image,width='100%'): # Zoom for auto output
     return f'<div class="zoom-child">{fix_ipy_image(image,width=width).value}</div>'
@@ -163,7 +166,7 @@ def highlight(code, language='python', name = None, className = None, style='def
     if isinstance(className, str):
         start = start.replace('class="highlight"',f'class="highlight {className}"')
     
-    return _HTML(f'''<div>
+    return XTML(f'''<div>
         <span class='lang-name'>{_title}</span>
         {_style}\n{start}
         <pre>{code_}
@@ -323,12 +326,13 @@ def format_object(obj):
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       
 
 
-def stringify(obj):
-    "Returns string of HTML for given object."
+def htmlize(obj):
+    "Returns string of HTML representation for given object."
     if isinstance(obj,str):
-        raise TypeError('can not stringify string')
-    elif isinstance(obj,_HTML):
-        return obj._repr_html_() #_repr_html_ is a method of _HTML and it is quick   
+        from .xmd import parse # Avoid circular import
+        return parse(obj, display_inline = False, rich_outputs =False)
+    elif isinstance(obj,XTML):
+        return obj._repr_html_() #_repr_html_ is a method of XTML and it is quick   
     else:
         # Next prefer custom methods of objects as they are more frequently used
         is_true, _html = format_object(obj)
@@ -344,11 +348,3 @@ def stringify(obj):
         
         # Return __repr__ if nothing above
         return f"<div class='raw-text'>{obj.__repr__()}</div>"
-
-def _fix_repr(obj):
-    "should return a string"
-    if isinstance(obj,str):
-        from .xmd import parse
-        return parse(obj, display_inline= False, rich_outputs=False)
-    else:
-        return stringify(obj)
