@@ -150,6 +150,26 @@ class Slides(BaseSlides):
         self.set_overlay_url(url = None) # Set overlay url for initial information
         self._remove_post_run_callback() # Remove post_run_cell callback at end of init, otherwise it appears during import
     
+    
+    @contextmanager
+    def _set_running(self, slide):
+        "Context manager to set running slide and turns back to previous."
+        if slide and not isinstance(slide, Slide): # None is acceptable to hold running slide in other function
+            raise TypeError(f"slide must be None or Slide, got {type(slide)}")
+        
+        old = self.running
+        self._running_slide = slide
+        try:
+            yield
+        finally:
+            self._running_slide = old
+    
+    @contextmanager
+    def _hold_running(self):
+        "Context manager to pause running slide and restore it after"
+        with self._set_running(None):
+            yield
+    
     @contextmanager
     def skip_post_run_cell(self):
         """Context manager to skip post_run_cell event.""" 
@@ -259,6 +279,16 @@ class Slides(BaseSlides):
     def running(self):
         "Access slide currently being built. Useful inside frames decorator."
         return self._running_slide
+    
+    @property
+    def in_proxy(self):
+        "Check if proxy is capturing output."
+        return getattr(self, '_in_proxy', None)
+    
+    @property
+    def in_dproxy(self):
+        "Check if dynamic proxy is capturing output."
+        return getattr(self, '_in_dproxy', None)
     
     @property
     def overlay_button(self):

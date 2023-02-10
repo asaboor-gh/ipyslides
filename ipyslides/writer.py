@@ -8,7 +8,7 @@ import ipywidgets as ipw
 from IPython.display import display as display
 from IPython.utils.capture import capture_output
 
-from .formatters import XTML, htmlize, serializer, alt_html
+from .formatters import XTML, htmlize, serializer
 from .xmd import parse, get_slides_instance
 
 class CustomDisplay:
@@ -49,7 +49,6 @@ class GotoButton(CustomDisplay):
         
         self._button._TargetSlide = self._app.running
         self._button._TargetSlide._target_id = self._target_id # Set new link
-        
     
 class AltForWidget(CustomDisplay):
     def __init__(self, widget, func):
@@ -60,17 +59,18 @@ class AltForWidget(CustomDisplay):
         self._widget = widget
         self._func = func
         
-        if self._func: # Check if function is valid
-            with capture_output() as cap:
-                out = self._func(self._widget)
-                if not isinstance(out, str):
-                    raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
-            if cap.stderr:
-                raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
-            
-            if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
-                raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')
-                
+        slides = get_slides_instance()
+        if slides: 
+            with slides._hold_running(): # To prevent dynamic content from being added to alt
+                with capture_output() as cap:
+                    out = self._func(self._widget)
+                    if not isinstance(out, str):
+                        raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
+                if cap.stderr:
+                    raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
+
+                if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
+                    raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')   
         
     def __repr__(self):
         return 'AltForWidget(widget, func)'
@@ -80,13 +80,10 @@ class AltForWidget(CustomDisplay):
         
     def display(self):
         slides = get_slides_instance()
-        if slides and slides.running:
-            return slides.running._exp_widget_display(self._widget, self._func)
+        if slides and (context := (slides.in_proxy or slides.running)):
+            display(context._exp4widget(self._widget, self._func))
         else:
             display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
-            if slides and slides._in_proxy: # If in proxy, display the alt content hidden
-                display(XTML(f'<div class="export-only">{self._func(self._widget)}</div>')) # Hide from slides
-          
 
 class Writer:
     _in_write = False # To prevent write from being called inside write
@@ -105,8 +102,9 @@ class Writer:
             self.__class__._in_write = False
             
         self._slide = self._slides.running if self._slides else None
-        self._in_proxy = getattr(self._slides, '_in_proxy', None)
+        self._in_proxy = getattr(self._slides, '_in_proxy', None) # slide itself can be Non, so get via getattr
         self._in_dproxy = getattr(self._slides, '_in_dproxy', None)
+        self._context = (self._in_dproxy if self._in_dproxy else self._slide) or self._in_proxy # order strictly matters
         
         if len(objs) == 1:
             display(*self._cols[0]['outputs']) # If only one column, display it directly
@@ -142,14 +140,8 @@ class Writer:
                         _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
                         if self._slides and self._slides.running:
-                            if type(c) in [it['obj'] for it in serializer.types]: # Do not check instance here, need specific
-                                for typ in serializer.types:
-                                    if type(c) == typ['obj']:
-                                        self._slides.alt(c, typ['func']).display() # Alternative representation will be available on export
-                                        break # No need to further check
-                            elif isinstance(c, ipw.HTML):
-                                self._slides.alt(c, alt_html).display() # Display HTML widget and add it to alt
-                                # NOTE: This is enough, Do not go too deep like in boxes to search for HTML, because then we will lose the column structure
+                            if (func := serializer.get_func(c)):
+                                self._slides.alt(c, func).display() # Alternative representation will be available on export, specially for ipw.HTML
                             else:
                                 display(c, metadata = {'DOMWidget': '---'}) # Display only widget
                         else:
@@ -191,13 +183,13 @@ class Writer:
             content = ''
             for out in col['outputs']:
                 if hasattr(out, 'metadata') and 'Exp4Widget' in out.metadata:
-                    epx = self._slide._exportables[out.metadata['Exp4Widget']]
+                    epx = self._context._exportables[out.metadata['Exp4Widget']]
                     content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
                 elif hasattr(out, 'metadata') and 'DYNAMIC' in out.metadata: # Buried in column
-                    dpx = self._slide._dproxies[out.metadata['DYNAMIC']] # _slide is for sure there if dynamic proxy is there
+                    dpx = self._context._dproxies[out.metadata['DYNAMIC']] 
                     content += ('\n' + dpx.fmt_html(allow_non_html_repr = allow_non_html_repr))
                 elif 'Proxy' in out.metadata:
-                    px = self._slide._proxies[out.metadata['Proxy']]
+                    px = self._context._proxies[out.metadata['Proxy']]
                     content += ('\n' + px.fmt_html(allow_non_html_repr = allow_non_html_repr))
                 elif 'text/html' in out.data:
                     content += ('\n' + out.data['text/html']) # rows should be on their own line

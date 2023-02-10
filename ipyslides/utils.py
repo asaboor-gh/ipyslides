@@ -273,8 +273,7 @@ def alt(widget, func):
     {{source}}
     
     ::: note-info
-        - If you happen to be using alt many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.
-        - Inside a `proxy.capture` context, `alt` will display the oldest html representation of widget.
+        If you happen to be using alt many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.
     """
     return AltForWidget(widget, func)
         

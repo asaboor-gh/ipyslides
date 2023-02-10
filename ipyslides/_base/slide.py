@@ -21,8 +21,8 @@ def _expand_objs(outputs, context):
         if hasattr(out, 'metadata') and ('COLUMNS' in out.metadata): # may be Writer object there without metadata
             new_outputs.append(context._columns[out.metadata['COLUMNS']])
         elif hasattr(out, 'metadata') and 'Exp4Widget' in out.metadata:
-            slide = context if hasattr(context, '_exportables') else context._slide
-            new_outputs.append(slide._exportables[out.metadata['Exp4Widget']])
+            other_context = context if hasattr(context, '_exportables') else context._slide # Proxy also has exportables
+            new_outputs.append(other_context._exportables[out.metadata['Exp4Widget']])
         else:
             new_outputs.append(out)
     return new_outputs
@@ -31,7 +31,7 @@ def _expand_objs(outputs, context):
 class DynamicRefresh:
     "DynamicRefresh is a display for a function that is executed when refresh button is clicked. Should not be instantiated directly."
     def __init__(self, func, slide):
-        if getattr(slide._app, '_in_dproxy', None): # raise this also because dictionary size get changed during iteration if nested
+        if slide._app.in_dproxy: # raise this also because dictionary size get changed during iteration if nested
             raise Exception('Dynamically refreshable content cannot be written inside another same type!')
         
         self._func = func
@@ -97,27 +97,26 @@ class DynamicRefresh:
     @property
     def outputs(self):
         "Executes given function and returns its output as list of outputs."
-        old = self._slide._app._running_slide
-        self._slide._app._running_slide = self._slide
         self._slide._app._in_dproxy = self
         self._columns = {} # Reset columns here just before executing function
-        try:
-            with capture_output() as captured:
-                self._func()
-                
-            self._last_outputs = _expand_objs(captured.outputs,self) # Expand columns is necessary
-            
-        except:
-            if self._raise_error:
-                wdgts = self.error_handler() # should capture outside
-                with capture_output() as err_captured:
-                    display(*wdgts)
-                    
-                self._error_outputs = err_captured.outputs
-                     
-        finally:
-            self._slide._app._running_slide = old # should go back
-            self._slide._app._in_dproxy = None
+        
+        with self._slide._app._set_running(self._slide): # Set running slide to this slide
+            try:
+                with capture_output() as captured:
+                    self._func()
+
+                self._last_outputs = _expand_objs(captured.outputs,self) # Expand columns is necessary
+
+            except:
+                if self._raise_error:
+                    wdgts = self.error_handler() # should capture outside
+                    with capture_output() as err_captured:
+                        display(*wdgts)
+
+                    self._error_outputs = err_captured.outputs
+
+            finally:
+                self._slide._app._in_dproxy = None
             
         if self._error_outputs: 
             return self._last_outputs + self._error_outputs
@@ -148,10 +147,10 @@ class DynamicRefresh:
 class Proxy:
     "Proxy object, should not be instantiated directly by user."
     def __init__(self, text, slide):
-        if getattr(slide._app, '_in_dproxy', None):
+        if slide._app.in_dproxy:
             raise RuntimeError("Can't place proxy inside a refreshable function.")
         
-        if getattr(slide._app, '_in_proxy', None):
+        if slide._app.in_proxy:
             raise RuntimeError("Can't place proxy inside another proxy being captured.")
         
         self._text = text
@@ -160,7 +159,11 @@ class Proxy:
         self._key = str(len(self._slide._proxies))
         self._slide._proxies[self._key] = self
         self._columns = {} 
+        self._exportables = {}
         display(self, metadata= {'Proxy': self._key}) 
+        
+    def _exp4widget(self, widget, func):
+        return Exp4Widget(widget, func, self)
     
     @property
     def text(self): return self._text # Useful if user wants to filter proxies
@@ -202,6 +205,7 @@ class Proxy:
             raise RuntimeError("Can't use Proxy.capture() contextmanager inside a slide constructor.")
         
         self._columns = {} # Reset columns
+        self._exportables = {} # Reset exportables
         self._slide._app._in_proxy = self # Used to get print statements to work in order and coulm aware
         try:
             with capture_output() as captured:
@@ -216,11 +220,15 @@ class Proxy:
             self._slide._app._in_proxy = None
             
 class Exp4Widget:
-    def __init__(self, widget, func, slide):
+    def __init__(self, widget, func, context):
+        if not isinstance(context, (Slide, Proxy)):
+            raise TypeError("context should be a Slide or Proxy object.")
+        
         self._widget = widget
         self._func = func 
-        self._slide = slide
-        self._key = str(len(self._slide._exportables))
+        self._context = context # Should be slide or proxy
+        self._key = str(len(self._context._exportables))
+        self._context._exportables[self._key] = self # Add to exportables
     
     def _ipython_display_(self):
         display(self._widget, metadata= self.metadata)
@@ -234,6 +242,7 @@ class Exp4Widget:
     def fmt_html(self,**kwargs): # kwargs should be there to be similar to other fmt_html methods
         "Returns alternative html representation of the widget."
         return self._func(self._widget)
+    
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -260,6 +269,9 @@ class Slide:
         self._dproxies = {} # Dynamic placeholders added to this slide
         self._exportables = {} # Exportable widgets added to this slide
         self._columns = {} # Columns added to this slide
+        
+    def _exp4widget(self, widget, func):
+        return Exp4Widget(widget, func, self)
   
     def set_source(self, text, language):
         "Set source code for this slide."
@@ -276,24 +288,17 @@ class Slide:
             
     def _proxy_private(self, text):
         return Proxy(text, self) # get auto displayed
-    
-    def _exp_widget_display(self, widget, func):
-        ew = Exp4Widget(widget, func, self)
-        self._exportables[ew._key] = ew # Add to exportables
-        return display(ew)
         
     def _on_load_private(self, func):
-        old = self._app.running
-        self._app._running_slide = None # temporarily set it to None to avoid dynamic things inside on_load, as it will not be running on load
-        try: # check if code is correct
-            with capture_output():
-                func()
-        except Exception as e:
-            if 'constructor' in str(e):
-                raise RuntimeError(f'{e}\nYou may be trying to put dynamic content inside on_load which is restricted!')
-            raise e
-        finally:
-            self._app._running_slide = old
+        with self._app._hold_running(): # slides will not be running during switch, so make it safe
+            try: # check if code is correct
+                with capture_output():
+                    func()
+            except Exception as e:
+                if 'constructor' in str(e):
+                    raise RuntimeError(f'{e}\nYou may be trying to put dynamic content inside on_load which is restricted!')
+                raise e
+        
         # This should be outside the try/except block even after finally, if successful, only then assign it.
         self._on_load = func # This will be called in main app
     
@@ -316,7 +321,6 @@ class Slide:
     @contextmanager
     def _capture(self):
         "Capture output to this slide."
-        self._app._running_slide = self
         self._app._next_number = int(self._number) + 1
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
@@ -330,20 +334,18 @@ class Slide:
         if hasattr(self,'_target_id'):
             del self._target_id # Remove target_id
         
-        try:
+        with self._app._set_running(self):
             self._app._remove_post_run_callback() # Remove before capturing
             with capture_output() as captured:
                 yield captured
-            
+
             if captured.stderr:
                 raise RuntimeError(f'Error in building {self}: {captured.stderr}')
-            
+
             # If no error, then add callback keeping the user preference
             if self._app._post_run_enabled:
                 self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
-            
-        finally:
-            self._app._running_slide = None
+
             self._contents = _expand_objs(captured.outputs, self) # Expand columns  
         
         if self._app._warnings:

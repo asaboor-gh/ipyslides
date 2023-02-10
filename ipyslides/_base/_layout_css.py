@@ -74,6 +74,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 '.report-only': {
                     'display': 'none !important'
                 },
+                '.jp-OutputArea': { 'width': '100% !important', 'box-sizing': 'border-box !important' }, # Otherwise it shrinks small columns
                 _zoom_ables: {'cursor':'zoom-in',},
                 '.Sfresh-Box': {'column-gap': '0.2em',},
                 '.Sfresh-Out': {'width': '100%','box-sizing':'border-box'}, # Otherwise it is too close to border

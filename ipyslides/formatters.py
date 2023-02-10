@@ -40,14 +40,6 @@ class XTML(HTML):
     def value(self):
         "Returns HTML string."
         return self._repr_html_()
-    
-def alt_html(ipywidget_html):
-    """Convert ipywidgets.HTML object to HTML string."""
-    if not isinstance(ipywidget_html,ipw.HTML):
-        raise TypeError(f'w must be ipywidgets.HTML, got {type(ipywidget_html)}')
-    
-    className = ' '.join(ipywidget_html._dom_classes) # To keep style of HTML widget, latest as well
-    return f'<div class="{className}">{ipywidget_html.value}</div>' 
 
 def plt2html(plt_fig = None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
@@ -236,9 +228,33 @@ class Serializer:
         return _register
     
     @property
-    def types(self):
+    def available(self):
         "Tuple of all registered types."
         return tuple(self._libs)
+    
+    @property
+    def types(self):
+        "Tuple of all registered types."
+        return tuple(item['obj'] for item in self._libs)
+    
+    def get_func(self, obj_type):
+        "Get serializer function for a type. Returns None if not found."
+        if type(obj_type) in serializer.types: # Do not check instance here, need specific information
+            for item in serializer.available:
+                if type(obj_type) == item['obj']:
+                    return item['func']
+        # Check instance for ipywidgets.HTML after user defined types
+        elif isinstance(obj_type, ipw.HTML): # Instance here is fine to include subclasses as they will behave same
+            return self._alt_html
+        return None
+    
+    def _alt_html(self, ipywidget_html):
+        """Convert ipywidgets.HTML object to HTML string."""
+        if not isinstance(ipywidget_html,ipw.HTML):
+            raise TypeError(f'w must be ipywidgets.HTML, got {type(ipywidget_html)}')
+
+        className = ' '.join(ipywidget_html._dom_classes) # To keep style of HTML widget, latest as well
+        return f'<div class="{className}">{ipywidget_html.value}</div>' 
     
 
     def unregister(self, obj_type):
@@ -272,9 +288,8 @@ libraries = [
 
 def format_object(obj):
     "Returns string of HTML for given object."
-    for tp in serializer.types:
-        if isinstance(obj, tp['obj']):
-            return True, tp['func'](obj)
+    if (func := serializer.get_func(obj)):
+        return True, func(obj)
     
     # If matplotlib axes given, handle it separately
     if hasattr(obj,'get_figure'): 
@@ -287,8 +302,6 @@ def format_object(obj):
         return True, str(obj)  
     elif isinstance(obj,(set,list,tuple)): # Then prefer other builtins
         return True, f"<div class='raw-text'>{obj}</div>"
-    elif isinstance(obj, ipw.HTML):
-        return True, alt_html(obj) # Only HTML widget is at edge of widgets and static content
     
     # If Code object given
     for _type in ['class','function','module','method','builtin','generator']:
