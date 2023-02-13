@@ -290,6 +290,7 @@ with auto.slide() as s:
             ipw.Checkbox(description='Select to do nothing',indent=False),
             slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'),
             ipw.Button(description='Click to do nothing'),
+            'proxy`[Paste Widegets Screenshot Here]`'
         ]
     )
     s.get_source().display()

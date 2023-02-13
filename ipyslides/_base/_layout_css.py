@@ -94,6 +94,16 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                         'transform': 'scale(1.2)',
                     },
                 },
+                '.ProxyPasteBtn': {
+                    'background': 'blue !important',
+                    'color': 'white !important',
+                    'border': '1px solid blue !important',
+                },
+                '.ProxyCloseBtn': {
+                    'background': 'red !important',
+                    'color': 'white !important',
+                    'border': '1px solid red !important',
+                },
             },
             '.export-only': { 'display': 'none !important' },
             '.widget-inline-hbox': {

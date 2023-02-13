@@ -197,7 +197,10 @@ class Writer:
                     content += ('\n' + out.data['text/plain'])
         
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
-        return f'<div class="columns">{"".join(cols)}</div>'
+        
+        className = ' '.join(self._box._dom_classes) # handle custom classes in blocks as well
+        style = getattr(self._box, '_extra_style', '') # provided from blocks
+        return f'<div class="{className}" {style}>{"".join(cols)}</div>'
     
     
 def write(*objs,widths = None):

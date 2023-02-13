@@ -79,6 +79,7 @@ class _HhtmlExporter:
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'report-only' class to generate additional content that only appear in report.
         - Use 'slides-only' class to generate content that only appear in slides.
+        - Use `Save as PDF` option in browser to make links work in output PDF.
         """
         if self.main.citations and (self.main._citation_mode != 'global'):
             raise ValueError(f'''Citations in {self.main._citation_mode!r} mode are not supported in report. 
@@ -99,7 +100,8 @@ class _HhtmlExporter:
         - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
         
         ::: note-info
-            PDF printing of slide is done on paper of width 297mm (as A4). Height is determined by aspect ratio dropdown in sidebar panel.
+            - PDF printing of slide is done on paper of width 297mm (as A4). Height is determined by aspect ratio dropdown in sidebar panel.
+            - Use `Save as PDF` option in browser to make links work in output PDF.
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
         content = self._htmlize(allow_non_html_repr = False, as_slides = True, slide_number = slide_number)

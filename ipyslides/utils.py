@@ -445,7 +445,8 @@ def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} cl
     if make_grid:
         wr._box.layout.display = 'grid' # Make it grid
         wr._box.layout.grid_gap = '1em 0px' # Remove extra gap in columns, but keep row gap
-    
+        wr._extra_style = 'style="display:grid;grid-gap:1em 0px;"' # Add extra style to box for fmt_html to use
+        
     if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
         return wr.update_display() # Update in usual cell to have widgets working
     

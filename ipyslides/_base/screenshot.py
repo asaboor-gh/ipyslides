@@ -8,7 +8,6 @@ from time import sleep
 from contextlib import contextmanager
 
 from PIL import Image, ImageGrab
-from IPython.display import display as ipydisplay
 
 from ..utils import image
 from ..writer import CustomDisplay
@@ -237,7 +236,7 @@ class ScreenShot:
                 return self._path
             
             def display(self):
-                return ipydisplay(self.to_pil())
+                return self.to_html().display() # Display HTML to have in export
             
             def to_pil(self):
                 "Return PIL image."

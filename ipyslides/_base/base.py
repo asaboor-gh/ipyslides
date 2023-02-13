@@ -112,6 +112,7 @@ class BaseSlides:
         - alert`section\`key\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
+        - alert`peoxy\`[Button Text]\`` to add a proxy that can be replaced by pasting image from clipboard later.
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         - Double dashes `--` is used to split markdown text in frames.
         

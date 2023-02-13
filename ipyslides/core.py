@@ -638,6 +638,8 @@ class Slides(BaseSlides):
     def proxy(self,text):
         """Place a proxy placeholder in your slide and returns it's `handle`. This is useful when you want to update the placeholder later.
         Use `Slides.proxies[index].capture` or `handle.capture` contextmanager to update the placeholder.
+        ::: note-tip
+            Use square brackets around text like `proxy('[Button Text]')` to create a button that can paste image from clipboard. This is useful to export screenshots of widgets in a given state.
         """
         self.verify_running('proxy placeholder can only be used in a slide constructor!')
         return self.running._proxy_private(text)

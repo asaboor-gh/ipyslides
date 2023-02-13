@@ -153,14 +153,43 @@ class Proxy:
         if slide._app.in_proxy:
             raise RuntimeError("Can't place proxy inside another proxy being captured.")
         
-        self._text = text
         self._slide = slide
+        self._to_display = self
+        self._text = text.strip() # Remove leading and trailing spaces
+        
+        if self._text.startswith('[') and self._text.endswith(']'):
+            self._text = self._text[1:-1]
+            btn = Button(description = f'Paste Proxy: "{self._text}"', layout = Layout(width='auto')).add_class('ProxyPasteBtn')
+            self._to_display = btn
+            
+            def on_click(btn):
+                try:
+                    im = self._slide._app.clipboard_image(f'attachment:{id(self)}.png', overwrite = True)
+                    close_btn = Button(description = 'Keep Image and Close', layout = Layout(width='auto')).add_class('ProxyCloseBtn')
+                    hbox = HBox([btn, close_btn])
+                    
+                    def remove(cb):
+                        hbox.close() # close views, deleting makes issues
+                        cb.close()
+                        btn.close()
+                        
+                    close_btn.on_click(remove)
+                        
+                    with self.capture(): # capture if successful above, otherwise don't
+                        display(hbox)
+                        im.display()
+                        btn.description = f'Replace Image'
+                except: 
+                    self._slide._app.notify('No supported image on clipboard to paste!')
+                    
+            btn.on_click(on_click)
+        
         self._outputs = []
         self._key = str(len(self._slide._proxies))
         self._slide._proxies[self._key] = self
         self._columns = {} 
         self._exportables = {}
-        display(self, metadata= {'Proxy': self._key}) 
+        display(self._to_display, metadata= {'Proxy': self._key}) 
         
     def _exp4widget(self, widget, func):
         return Exp4Widget(widget, func, self)
@@ -181,9 +210,9 @@ class Proxy:
     def outputs(self):
         "Returns the outputs of the proxy, if it has been replaced."
         if self._outputs:
-            return self._outputs
+            return self._outputs 
         with capture_output() as captured:
-            display(self, metadata= {'Proxy': self._key}) # This will update the slide refrence on each display to provide useful info
+            display(self._to_display, metadata= {'Proxy': self._key}) # This will update the slide refrence on each display to provide useful info
         return captured.outputs
     
     def fmt_html(self, allow_non_html_repr = True): 
