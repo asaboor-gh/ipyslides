@@ -14,21 +14,17 @@ class _HhtmlExporter:
         self.main = _instance_BaseSlides
         self.main.widgets.ddowns.export.observe(self._export, names = ['value']) # Export button
         
-    def _htmlize(self, allow_non_html_repr = False, as_slides = False, **kwargs):
+    def _htmlize(self, as_slides = False, **kwargs):
         "page_size, slide_number are in kwargs"
         content = ''
         for item in self.main:
             _html = ''
             for out in item.contents:
                 if hasattr(out, 'fmt_html'): # columns and dynamic data
-                    _html += out.fmt_html(allow_non_html_repr = allow_non_html_repr)
+                    _html += out.fmt_html()
                 elif 'text/html' in out.data:
                     _html += out.data['text/html']
-                elif allow_non_html_repr and (as_slides == False):
-                    if 'text/plain' in out.data:
-                        _html += out.data['text/plain']
-                    else:
-                        _html += f'<p style="color:red;">Object at {hex(id(out))} has no text/HTML representation.</p>'  
+                
             if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
                 sec_id = self._get_sec_id(item)
                 goto_id = self._get_target_id(item)
@@ -72,10 +68,9 @@ class _HhtmlExporter:
             f.write(content) 
             
     
-    def report(self, path='report.html', allow_non_html_repr = True, page_size = 'letter', overwrite = False):
+    def report(self, path='report.html', page_size = 'letter', overwrite = False):
         """Build a beutiful html report from the slides that you can print. Widgets are supported via `Slides.alt(widget,func)`.
         
-        - allow_non_html_repr: (True), then non-html representation of the slides like text/plain will be used in report.
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'report-only' class to generate additional content that only appear in report.
         - Use 'slides-only' class to generate content that only appear in slides.
@@ -86,7 +81,7 @@ class _HhtmlExporter:
             Use Slides(citation_mode = "global" and run all slides again before generating report.''')
         
         _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
-        content = self._htmlize(allow_non_html_repr = allow_non_html_repr, as_slides = False, page_size = page_size)
+        content = self._htmlize(as_slides = False, page_size = page_size)
         content = content.replace('.SlideArea','').replace('SlidesWrapper','ContentWrapper')
         self._writefile(_path, content, overwrite = overwrite)
     
@@ -104,7 +99,7 @@ class _HhtmlExporter:
             - Use `Save as PDF` option in browser to make links work in output PDF.
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
-        content = self._htmlize(allow_non_html_repr = False, as_slides = True, slide_number = slide_number)
+        content = self._htmlize(as_slides = True, slide_number = slide_number)
         self._writefile(_path, content, overwrite = overwrite)
         
     def _export(self,change):
@@ -121,7 +116,7 @@ class _HhtmlExporter:
         
         if self.main.widgets.ddowns.export.value == 'Report': 
             path = os.path.join(_dir, 'report.html')
-            self.report(path, allow_non_html_repr = False, overwrite = True)
+            self.report(path, overwrite = True)
             further_action(path)
             
         elif self.main.widgets.ddowns.export.value == 'Slides': 

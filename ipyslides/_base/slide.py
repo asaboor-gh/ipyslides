@@ -76,16 +76,14 @@ class DynamicRefresh:
         "Updates the display of the dynamic content."
         self._on_click(None)
     
-    def fmt_html(self, allow_non_html_repr = True): 
+    def fmt_html(self): 
         content = ''
         for out in self.outputs:
             if hasattr(out, 'fmt_html'): # Columns
-                content += out.fmt_html(allow_non_html_repr = allow_non_html_repr)
-            else:
-                if 'text/html' in out.data:
-                    content += out.data['text/html']
-                elif allow_non_html_repr:
-                    content += out.data['text/plain']
+                content += out.fmt_html()
+            elif 'text/html' in out.data:
+                content += out.data['text/html']
+            
         return content
     
     @property
@@ -216,16 +214,14 @@ class Proxy:
             display(self._to_display, metadata= {'Proxy': self._key}) # This will update the slide refrence on each display to provide useful info
         return captured.outputs
     
-    def fmt_html(self, allow_non_html_repr = True): 
+    def fmt_html(self): 
         content = ''
         for out in self.outputs:
             if hasattr(out, 'fmt_html'): # Columns and others
-                content += out.fmt_html(allow_non_html_repr = allow_non_html_repr)
-            else:
-                if 'text/html' in out.data:
-                    content += out.data['text/html']
-                elif allow_non_html_repr:
-                    content += out.data['text/plain']
+                content += out.fmt_html()
+            elif 'text/html' in out.data:
+                content += out.data['text/html']
+            
         return content
     
     @contextmanager

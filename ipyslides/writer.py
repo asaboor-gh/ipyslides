@@ -176,7 +176,7 @@ class Writer:
     @property
     def metadata(self): return {} # Required for check in slide display of there are widgets
     
-    def fmt_html(self, allow_non_html_repr = True):
+    def fmt_html(self):
         "Make HTML representation of columns that is required for exporting slides to other formats."
         cols = []
         for col in self._cols:
@@ -187,14 +187,12 @@ class Writer:
                     content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
                 elif hasattr(out, 'metadata') and 'DYNAMIC' in out.metadata: # Buried in column
                     dpx = self._context._dproxies[out.metadata['DYNAMIC']] 
-                    content += ('\n' + dpx.fmt_html(allow_non_html_repr = allow_non_html_repr))
+                    content += ('\n' + dpx.fmt_html())
                 elif 'Proxy' in out.metadata:
                     px = self._context._proxies[out.metadata['Proxy']]
-                    content += ('\n' + px.fmt_html(allow_non_html_repr = allow_non_html_repr))
+                    content += ('\n' + px.fmt_html())
                 elif 'text/html' in out.data:
                     content += ('\n' + out.data['text/html']) # rows should be on their own line
-                elif allow_non_html_repr:
-                    content += ('\n' + out.data['text/plain'])
         
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
         
