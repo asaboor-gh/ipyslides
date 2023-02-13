@@ -18,6 +18,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
             '^.CaptureMode': {
                 '.TopBar.Outside, .SlideArea .goto-button, .Sfresh-Btn': {'visibility':'hidden !important'}, # Hide in screenshot
             },
+            '^.PresentMode .SlideBox .SlideArea .ProxyPasteBtns': {'display':'none !important'}, # Hide in presentation mode
             '^.FullWindow': {
                 '.Width-Slider': {'display': 'none !important'},
             },
@@ -93,16 +94,6 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                     '^:hover': {
                         'transform': 'scale(1.2)',
                     },
-                },
-                '.ProxyPasteBtn': {
-                    'background': 'blue !important',
-                    'color': 'white !important',
-                    'border': '1px solid blue !important',
-                },
-                '.ProxyCloseBtn': {
-                    'background': 'red !important',
-                    'color': 'white !important',
-                    'border': '1px solid red !important',
                 },
             },
             '.export-only': { 'display': 'none !important' },

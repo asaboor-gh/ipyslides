@@ -2,7 +2,7 @@
 
 import sys, time
 from contextlib import contextmanager
-from ipywidgets import Output, Layout, Button, HBox
+from ipywidgets import Output, Layout, Button, HBox, VBox, Label
 
 from IPython.display import display
 from IPython.utils.capture import capture_output
@@ -159,30 +159,31 @@ class Proxy:
         
         if self._text.startswith('[') and self._text.endswith(']'):
             self._text = self._text[1:-1]
-            btn = Button(description = f'Paste Proxy: "{self._text}"', layout = Layout(width='auto')).add_class('ProxyPasteBtn')
-            self._to_display = btn
+            btn1 = Button(description = 'Paste', layout = Layout(width='auto'))
+            btn2 = Button(description = 'Paste for Export Only', layout = Layout(width='auto'))
+            btns = VBox([Label(f'Paste Proxy: "{self._text}"'), HBox([btn1, btn2])], layout = Layout(width='auto',border='1px solid var(--accent-color)')).add_class('ProxyPasteBtns')
+            self._to_display = btns
             
             def on_click(btn):
                 try:
-                    im = self._slide._app.clipboard_image(f'attachment:{id(self)}.png', overwrite = True)
-                    close_btn = Button(description = 'Keep Image and Close', layout = Layout(width='auto')).add_class('ProxyCloseBtn')
-                    hbox = HBox([btn, close_btn])
-                    
-                    def remove(cb):
-                        hbox.close() # close views, deleting makes issues
-                        cb.close()
-                        btn.close()
-                        
-                    close_btn.on_click(remove)
+                    im = self._slide._app.clipboard_image(f'attachment:{id(self)}.png', overwrite = True).to_html()
                         
                     with self.capture(): # capture if successful above, otherwise don't
-                        display(hbox)
-                        im.display()
-                        btn.description = f'Replace Image'
+                        display(self._to_display) # keep buttons there to replace later, won't be displayed in export
+                        if btn is btn1: 
+                            im.display()
+                            btn1.description = 'Replace ?'
+                            btn2.description = 'Paste for Export Only'
+                        elif btn is btn2:
+                            html('div', [im], className='export-only',style = '').display()
+                            btn2.description =  'Pasted for Export Only: Replace ?'
+                            btn1.description = 'Paste'
+                            
                 except: 
                     self._slide._app.notify('No supported image on clipboard to paste!')
                     
-            btn.on_click(on_click)
+            btn1.on_click(on_click)
+            btn2.on_click(on_click)
         
         self._outputs = []
         self._key = str(len(self._slide._proxies))

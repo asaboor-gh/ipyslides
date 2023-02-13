@@ -530,6 +530,7 @@ class Slides(BaseSlides):
     
     def __reset_navbox(self):
         "Reset navbox to add inview button for Jupyter Lab"
+        self.widgets.checks.postrun.disabled = False # Enable it
         others = [w for w in self.widgets.navbox.children if w is not self.widgets.buttons._inview]
         self.widgets.navbox.children = [self.widgets.buttons._inview, *others]
         
@@ -639,7 +640,8 @@ class Slides(BaseSlides):
         """Place a proxy placeholder in your slide and returns it's `handle`. This is useful when you want to update the placeholder later.
         Use `Slides.proxies[index].capture` or `handle.capture` contextmanager to update the placeholder.
         ::: note-tip
-            Use square brackets around text like `proxy('[Button Text]')` to create a button that can paste image from clipboard. This is useful to export screenshots of widgets in a given state.
+            - Use square brackets around text like `proxy('[Button Text]')` to create a button that can paste image from clipboard. This is useful to export screenshots of widgets in a given state.
+            - Show/hide the proxy buttons by a checkbox `Hide Proxy Buttons` in settings panel once you are done with pasting and ready to export/present.
         """
         self.verify_running('proxy placeholder can only be used in a slide constructor!')
         return self.running._proxy_private(text)

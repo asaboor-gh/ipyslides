@@ -53,14 +53,18 @@ class LayoutSettings:
         self.btn_zoom.observe(self._push_zoom,names=['value'])
         self.btn_laser.observe(self._toggle_laser,names=['value'])
         self.reflow_check.observe(self._update_theme,names=['value'])
-        self.btn_overlay.observe(self._toggle_overlay,names=['value'])       
+        self.btn_overlay.observe(self._toggle_overlay,names=['value'])  
+        self.widgets.checks.postrun.observe(self._set_show_always,names=['value'])  
+        self.widgets.checks.navgui.observe(self._toggle_nav_gui,names=['value'])  
+        self.widgets.checks.proxy.observe(self._toggle_proxy_buttons,names=['value']) 
         self._update_theme() #Trigger Theme and Javascript in it
         self.set_code_style() #Trigger CSS in it, must
         self.set_layout(center = True) # Trigger this as well
         self._update_size(change = None) # Trigger this as well
     
     def __block_post_run(self,btn):
-        self.show_always(False)
+        self.widgets.checks.postrun.value = False # Uncheck it
+        self.widgets.checks.postrun.disabled = True # Disable it
         self.widgets.navbox.children = [w for w in self.widgets.navbox.children if w is not btn] 
         dh = getattr(self._slides._display_box, '_DH', None) # Get display handler
         self._slides._display_box = self._slides._notes_view # Swap display box by just notes view
@@ -118,6 +122,26 @@ class LayoutSettings:
             raise TypeError(f'Expected bool, got {b!r}')
         self._slides._post_run_enabled = True if b else False # Do not rely on user if they really give bool or not
     
+    def _set_show_always(self, change):
+        if change['new']:
+            self.show_always(True)
+            self._slides.notify('Post run cell enabled!')
+        else:
+            self.show_always(False)
+            self._slides.notify('Post run cell disabled!')
+        
+    def _toggle_nav_gui(self, change):
+        if change['new']:
+            self.show_navigation_gui()
+        else:
+            self.hide_navigation_gui()
+    
+    def _toggle_proxy_buttons(self, change):
+        if change['new']:
+            self.widgets.mainbox.add_class('PresentMode')
+        else:
+            self.widgets.mainbox.remove_class('PresentMode')
+        
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for slides and frames."
         if len(self._slides[:]) >= 1:

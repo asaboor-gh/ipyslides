@@ -235,6 +235,11 @@ class ScreenShot:
                 "Return path of stored image."
                 return self._path
             
+            @property
+            def value(self):
+                "Return HTML string of image."
+                return self.to_html().value # String
+            
             def display(self):
                 return self.to_html().display() # Display HTML to have in export
             

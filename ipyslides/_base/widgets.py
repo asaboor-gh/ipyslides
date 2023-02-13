@@ -81,9 +81,12 @@ class _Checks:
     """
     Instantiate under `Widgets` class only.
     """
-    reflow = ipw.Checkbox(indent = False, value=False,description='Reflow Content',layout=auto_layout)
-    notes  = ipw.Checkbox(indent = False, value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
-    toast  = ipw.Checkbox(indent = False, value = True, description='Notifications',layout=auto_layout)
+    reflow  = ipw.Checkbox(indent = False, value=False,description='Reflow Content',layout=auto_layout)
+    notes   = ipw.Checkbox(indent = False, value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
+    toast   = ipw.Checkbox(indent = False, value = True, description='Notifications',layout=auto_layout)
+    postrun = ipw.Checkbox(indent = False, value = True, description='Display Per Cell',layout=auto_layout)
+    proxy   = ipw.Checkbox(indent = False, value = False, description='Hide Proxy Buttons',layout=auto_layout)
+    navgui  = ipw.Checkbox(indent = False, value = False, description='Hide Nav. GUI',layout=auto_layout)
 
 @dataclass(frozen=True)
 class _Sliders:
@@ -225,6 +228,9 @@ class Widgets:
                     self.checks.notes,
                     self.checks.toast,
                     self.checks.reflow,
+                    self.checks.proxy,
+                    self.checks.navgui,
+                    self.checks.postrun,
                     self.buttons.cap_all,
                     self.buttons.pdf,
                     self.buttons.png
