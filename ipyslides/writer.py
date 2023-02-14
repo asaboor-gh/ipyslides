@@ -119,13 +119,16 @@ class Writer:
                 
     def _capture_objs(self, *objs, widths = None):
         if widths is None: # len(objs) check is done in write
-            widths = [100/len(objs) for _ in objs]
+            widths = [int(100/len(objs)) for _ in objs]
+        else:
+            if len(objs) != len(widths):
+                raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
         
-        if len(objs) != len(widths):
-            raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
-        for w in widths:
-            if not isinstance(w,(int, float)):
-                raise TypeError(f'widths must be numbers, got {w}')
+            for w in widths:
+                if not isinstance(w,(int, float)):
+                    raise TypeError(f'widths must be numbers, got {w}')
+            widths = [int(w/sum(widths)*100) for w in widths]
+        
         
         widths = [f'{int(w)}%' for w in widths]
         cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]
@@ -191,6 +194,8 @@ class Writer:
                 elif 'Proxy' in out.metadata:
                     px = self._context._proxies[out.metadata['Proxy']]
                     content += ('\n' + px.fmt_html())
+                elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
+                    content += ('\n' + out.metadata['text/html'])
                 elif 'text/html' in out.data:
                     content += ('\n' + out.data['text/html']) # rows should be on their own line
         
@@ -220,12 +225,13 @@ def write(*objs,widths = None):
         - PIL images, SVGs etc.
         - IPython display objects such as Image, SVG, HTML, Audio, Video, YouTubeVideo, IFrame, Latex, Markdown, JSON, Javascript, etc.
         - Any object that has a `_repr_html_` method, you can create one for your own objects/third party objects by:
-            - `Slides.serializer` API.
+            - `Slides.serializer` API. Use its `.get_metadata` method to display object as it is and export its HTML representation from metadata when used as `display(obj, metadata = {'text/html': 'html repr by user or by serializer.get_metadata(obj)'})`.
             - `IPython.core.formatters` API for third party libraries.
             
     ::: note
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
         - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`.
+        - You can use `display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """

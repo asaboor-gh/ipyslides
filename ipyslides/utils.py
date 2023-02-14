@@ -26,7 +26,15 @@ def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
         widths = [f'{int(100/len(objs))}%' for _ in objs]
     else:
-        widths = [f'{w}%' for w in widths]
+        if len(objs) != len(widths):
+            raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
+        
+        for w in widths:
+            if not isinstance(w,(int, float)):
+                raise TypeError(f'widths must be numbers, got {w}')
+        widths = [int(w/sum(widths)*100) for w in widths]
+    
+    widths = [f'{w}%' for w in widths]
     
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in objs] 
     _cols = ' '.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
@@ -273,7 +281,8 @@ def alt(widget, func):
     {{source}}
     
     ::: note-info
-        If you happen to be using alt many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.
+        - If you happen to be using alt many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.
+        - You can also use `display(obj, metadata=`Slides.serializer.get_metadata(obj)` or `{'text/html':'html representation'}`) where obj is widget or any other object, but HTML representation will be oldest as given in metadata.
     """
     return AltForWidget(widget, func)
         

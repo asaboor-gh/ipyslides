@@ -22,15 +22,17 @@ class _HhtmlExporter:
             for out in item.contents:
                 if hasattr(out, 'fmt_html'): # columns and dynamic data
                     _html += out.fmt_html()
+                elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
+                    _html += out.metadata['text/html']
                 elif 'text/html' in out.data:
                     _html += out.data['text/html']
+                    
                 
-            if _html != '':  # If a slide has no content or only widgets, it is not added to the report/slides.    
-                sec_id = self._get_sec_id(item)
-                goto_id = self._get_target_id(item)
-                footer = f'<div class="Footer">{item.get_footer()}{self._get_progress(item)}</div>'
-                content += (f'<section {sec_id}><div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
-                            if as_slides else f'<section {sec_id}>{_html}</section>')
+            sec_id = self._get_sec_id(item)
+            goto_id = self._get_target_id(item)
+            footer = f'<div class="Footer">{item.get_footer()}{self._get_progress(item)}</div>'
+            content += (f'<section {sec_id}><div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
+                        if as_slides else f'<section {sec_id}>{_html}</section>')
         
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
     

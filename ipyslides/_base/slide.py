@@ -81,6 +81,8 @@ class DynamicRefresh:
         for out in self.outputs:
             if hasattr(out, 'fmt_html'): # Columns
                 content += out.fmt_html()
+            elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
+                content += out.metadata['text/html']
             elif 'text/html' in out.data:
                 content += out.data['text/html']
             
@@ -219,6 +221,8 @@ class Proxy:
         for out in self.outputs:
             if hasattr(out, 'fmt_html'): # Columns and others
                 content += out.fmt_html()
+            elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
+                content += out.metadata['text/html']
             elif 'text/html' in out.data:
                 content += out.data['text/html']
             

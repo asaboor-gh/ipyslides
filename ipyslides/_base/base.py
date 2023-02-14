@@ -396,7 +396,7 @@ class BaseSlides:
             
         with auto.slide():
             self.write('## Adding Content')
-            self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd`, `display(obj)` as well.\n{.note .info}')
+            self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
             self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.cite,'Slides'),self.doc(self.clipboard_image,'Slides')])
         
         with auto.slide():
@@ -472,8 +472,13 @@ class BaseSlides:
         
         auto.from_markdown('section`Advanced Functionality` toc`### Contents`')
         
-        with auto.slide():
+        with auto.slide() as s:
             self.write('## Adding User defined Objects/Markdown Extensions')
+            self.write(
+                lambda: display(self.html('h3','I will be on main slides',className='warning'), 
+                metadata = {'text/html': '<h3 class="warning">I will be on exported slides/report</h3>'}), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
+                s.get_source(), widths = [1,3]
+            )
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.note .info}')
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')

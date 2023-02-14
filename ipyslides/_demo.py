@@ -287,10 +287,10 @@ with auto.slide() as s:
         ], 
         [
             '### Widgets',
-            ipw.Checkbox(description='Select to do nothing',indent=False),
-            slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'),
-            ipw.Button(description='Click to do nothing'),
-            'proxy`[Paste Widegets Screenshot Here]`'
+            slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'), # alt only works with widgets, but below display tricks works with any object
+            lambda: display(ipw.Button(description='Click to do nothing'),metadata = {'text/html': '<button>Click to do nothing</button>'}), # This is a hack to display button as html in exported slides/report
+            ipw.Checkbox(description='Select to do nothing',indent=False), # screenshot of this will be pasted in proxy below to export html
+            'proxy`[Paste Checkbox Screenshot Here]`'
         ]
     )
     s.get_source().display()
