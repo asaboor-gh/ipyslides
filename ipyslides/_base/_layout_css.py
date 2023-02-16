@@ -230,7 +230,9 @@ def layout_css(breakpoint, accent_color, show_laser_pointer = False): # Defult i
                 },
             },
             '.widget-hprogress': {
-                'height': '4px !important',
+                'height': '3px !important', #slimmer progress bar
+                'padding': '0px !important', # Avoid ugly space
+                '.widget-inline-hbox': {'margin': '0px !important',}, # To avoid bottom ugly space
             },
             '.NavBox': {
                 'z-index': '2',

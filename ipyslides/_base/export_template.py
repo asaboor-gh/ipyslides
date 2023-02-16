@@ -218,7 +218,7 @@ section .SlideBox > .Footer > p {
 }
 .SlidesWrapper::-webkit-scrollbar {
     background: var(--secondary-bg, whitesmoke) !important;
-    height: 4px !important;
+    height: 3px !important;
 }
 .SlidesWrapper::-webkit-scrollbar-thumb, 
 .SlidesWrapper::-webkit-scrollbar-track-piece:start {
@@ -278,7 +278,7 @@ a.goto-button:active {
     }
     section .SlideBox > .Footer > .Progress { 
         display: block !important; 
-        height: 4px !important;
+        height: 3px !important;
         width: 100% !important;
     }
     section .SlideArea {
