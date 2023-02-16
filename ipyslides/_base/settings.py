@@ -131,10 +131,10 @@ class LayoutSettings:
             self._slides.notify('Post run cell disabled!')
         
     def _toggle_nav_gui(self, change):
-        if change['new']:
-            self.show_navigation_gui()
-        else:
+        if change['new']: # It's checked then hide
             self.hide_navigation_gui()
+        else:
+            self.show_navigation_gui()
     
     def _toggle_proxy_buttons(self, change):
         if change['new']:
