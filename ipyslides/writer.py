@@ -85,6 +85,17 @@ class AltForWidget(CustomDisplay):
         else:
             display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
 
+def _fmt_html(output):
+    "Format captured rich output and others to html if possible. Used in other modules too."
+    if hasattr(output, 'fmt_html'): # Columns
+        return output.fmt_html()
+    # Metadat text.html Should take precedence over data if given
+    elif hasattr(output, 'metadata') and isinstance(output.metadata, dict) and 'text/html' in output.metadata: 
+        return output.metadata['text/html']
+    elif 'text/html' in output.data:
+        return output.data['text/html']  
+    return ''
+
 class Writer:
     _in_write = False # To prevent write from being called inside write
     def __init__(self,*objs,widths = None):
@@ -185,20 +196,18 @@ class Writer:
         for col in self._cols:
             content = ''
             for out in col['outputs']:
-                if hasattr(out, 'metadata') and 'Exp4Widget' in out.metadata:
+                if 'Exp4Widget' in out.metadata:
                     epx = self._context._exportables[out.metadata['Exp4Widget']]
                     content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
-                elif hasattr(out, 'metadata') and 'DYNAMIC' in out.metadata: # Buried in column
+                elif 'DYNAMIC' in out.metadata: # Buried in column
                     dpx = self._context._dproxies[out.metadata['DYNAMIC']] 
                     content += ('\n' + dpx.fmt_html())
                 elif 'Proxy' in out.metadata:
                     px = self._context._proxies[out.metadata['Proxy']]
                     content += ('\n' + px.fmt_html())
-                elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
-                    content += ('\n' + out.metadata['text/html'])
-                elif 'text/html' in out.data:
-                    content += ('\n' + out.data['text/html']) # rows should be on their own line
-        
+                else:
+                    content += ('\n' + _fmt_html(out))
+                
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
         
         className = ' '.join(self._box._dom_classes) # handle custom classes in blocks as well

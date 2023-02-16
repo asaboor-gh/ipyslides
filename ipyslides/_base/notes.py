@@ -20,6 +20,7 @@ class Notes:
         
         with suppress(BaseException): # Would work on next run, may not first
             self.main.running._notes = self.main.format_html(content)._repr_html_()
+    __call__ = insert # Can be called as function
     
     def _display(self, html_str):
         self.widgets.htmls.notes.value = 'Notes Area' # Must be, so when no notes, should not be there

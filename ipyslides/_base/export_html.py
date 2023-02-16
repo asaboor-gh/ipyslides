@@ -5,8 +5,9 @@ not by end user.
 import os
 from contextlib import suppress
 from .export_template import doc_css, doc_html, slides_css
-from ..formatters import code_css
 from . import styles
+from ..formatters import code_css
+from ..writer import _fmt_html
 
 class _HhtmlExporter:
     # Should be used inside Slides class only.
@@ -20,13 +21,7 @@ class _HhtmlExporter:
         for item in self.main:
             _html = ''
             for out in item.contents:
-                if hasattr(out, 'fmt_html'): # columns and dynamic data
-                    _html += out.fmt_html()
-                elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
-                    _html += out.metadata['text/html']
-                elif 'text/html' in out.data:
-                    _html += out.data['text/html']
-                    
+                _html += _fmt_html(out) 
                 
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)

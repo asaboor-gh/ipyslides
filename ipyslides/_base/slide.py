@@ -11,6 +11,7 @@ from IPython.core.ultratb import FormattedTB
 
 from . import styles
 from ..utils import html, color, _format_css, _sub_doc, _css_docstring
+from ..writer import _fmt_html
 
 class _EmptyCaptured: outputs = [] # Just for initialization
 
@@ -26,7 +27,6 @@ def _expand_objs(outputs, context):
         else:
             new_outputs.append(out)
     return new_outputs
-                    
 
 class DynamicRefresh:
     "DynamicRefresh is a display for a function that is executed when refresh button is clicked. Should not be instantiated directly."
@@ -79,13 +79,7 @@ class DynamicRefresh:
     def fmt_html(self): 
         content = ''
         for out in self.outputs:
-            if hasattr(out, 'fmt_html'): # Columns
-                content += out.fmt_html()
-            elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
-                content += out.metadata['text/html']
-            elif 'text/html' in out.data:
-                content += out.data['text/html']
-            
+            content += _fmt_html(out)
         return content
     
     @property
@@ -219,13 +213,7 @@ class Proxy:
     def fmt_html(self): 
         content = ''
         for out in self.outputs:
-            if hasattr(out, 'fmt_html'): # Columns and others
-                content += out.fmt_html()
-            elif hasattr(out, 'metadata') and isinstance(out.metadata, dict) and 'text/html' in out.metadata: # Should take precedence over data if given
-                content += out.metadata['text/html']
-            elif 'text/html' in out.data:
-                content += out.data['text/html']
-            
+            content += _fmt_html(out)
         return content
     
     @contextmanager
