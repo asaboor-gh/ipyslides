@@ -153,7 +153,7 @@ def race_plot():
     plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
     with plt.style.context(plot_theme):        
         fig,ax = plt.subplots(figsize=(3.4,2.6))
-        ax.barh(x,y[_sort],height=0.07,color=plt.cm.get_cmap('plasma')(x[_sort]))
+        ax.barh(x,y[_sort],height=0.07,color = plt.colormaps['plasma'](x[_sort]))
     
     for s in ['right','top','bottom']:
         ax.spines[s].set_visible(False)

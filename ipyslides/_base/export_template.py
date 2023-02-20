@@ -192,6 +192,7 @@ section .SlideBox {
     height: 100vh !important; 
     display: flex !important;
     flex-direction: column !important;
+    padding: 0 !important;
     box-sizing: border-box !important;
 }
 section .SlideBox > .Footer > .Progress { display: none !important; }
@@ -205,7 +206,7 @@ section .SlideArea {
 	padding: 1em !important;
     box-sizing: border-box !important;
 }
-section .SlideBox > .Footer { background: var(--primary-bg) !important;}
+section .SlideBox > .Footer { background: var(--primary-bg) !important; padding: 0 !important; margin: 0 !important; }
 section .SlideBox > .Footer > p {
     font-size: 14px !important;
     padding: 4px !important;
@@ -264,6 +265,7 @@ a.goto-button:active {
     section {
         display: block !important;
         margin: 0 !important;
+        padding: 0 !important;
         page-break-inside: avoid !important;
         page-break-after: always !important;
         overflow: hidden !important; /* otherwise it throws text to next page */
