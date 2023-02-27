@@ -650,7 +650,8 @@ def viewport_css():
         height: 100vh !important;
         max-height: 100vh !important;
     }}
-    .jp-NotebookPanel, /* Somehow notebook itself is treated as viewport in JupyterLab, override it */
+    .jp-LinkedOutputView, /* It can handle sidecar as well, besides intended options */
+    .jp-MainAreaWidget, /* Somehow notebook (and other panels) itself is treated as viewport in JupyterLab, override it */
     {uclass}.SlidesWrapper {{
         position: fixed !important;
         left: 0 !important;
