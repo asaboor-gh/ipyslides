@@ -1,5 +1,5 @@
 
-resize_js = "window.dispatchEvent(new Event('resize'));"
+resize_js = "window.dispatchEvent(new Event('resize'));" # No more required
 
 clear_disconnected_slides = """
 let slides = document.getElementsByClassName('SlidesWrapper');

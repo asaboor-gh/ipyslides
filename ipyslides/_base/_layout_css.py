@@ -646,19 +646,20 @@ def viewport_css():
     uclass = get_unique_css_class()
     return f'''
     html, body, .jp-LabShell {{
-    position: fixed;
-    left:0;
-    top:0;
-    width:0 !important;
-    min-width: 0 !important; /* This is necessary for lab shell*/
-    height:100vh !important;
+        visibility: hidden !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
     }}
+    .jp-NotebookPanel, /* Somehow notebook itself is treated as viewport in JupyterLab, override it */
     {uclass}.SlidesWrapper {{
-        position: fixed;
-        left: 0;
-        top:0;
+        position: fixed !important;
+        left: 0 !important;
+        top:0 !important;
         width:100vw !important;
         height:100vh !important;
+    }}
+    {uclass}.SlidesWrapper {{
+        visibility: visible !important;
     }}
     #menubar-container {{ display: none !important; }} /* For classic Notebook */
     body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */

@@ -358,7 +358,10 @@ class Slide:
                 yield captured
 
             if captured.stderr:
-                raise RuntimeError(f'Error in building {self}: {captured.stderr}')
+                if 'warning' in captured.stderr.lower():
+                    self._app._warnings.append(captured.stderr)
+                else:
+                    raise RuntimeError(f'Error in building {self}: {captured.stderr}')
 
             # If no error, then add callback keeping the user preference
             if self._app._post_run_enabled:
