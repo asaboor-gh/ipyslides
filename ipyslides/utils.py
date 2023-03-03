@@ -314,11 +314,12 @@ def image(data=None,width='80%',caption=None, **kwargs):
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     return html('figure', img.value + cap, className='zoom-child')  # Add caption,  XTML + XTML
 
-def svg(data=None,caption=None,**kwargs):
+def svg(data=None,width = '80%',caption=None,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
-    return html('figure', svg + cap, className='zoom-child')
+    style = f'width:{width}px' if isinstance(width,int) else f'width:{width}'
+    return html('figure', svg + cap, className='zoom-child', style=style) # Add caption,  XTML + XTML
 
 
 def iframe(src, width='100%',height='auto',**kwargs):

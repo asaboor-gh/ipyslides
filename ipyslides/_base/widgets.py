@@ -85,7 +85,7 @@ class _Checks:
     notes   = ipw.Checkbox(indent = False, value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
     toast   = ipw.Checkbox(indent = False, value = True, description='Notifications',layout=auto_layout)
     postrun = ipw.Checkbox(indent = False, value = True, description='Display Per Cell',layout=auto_layout)
-    proxy   = ipw.Checkbox(indent = False, value = False, description='Proxy Buttons',layout=auto_layout)
+    proxy   = ipw.Checkbox(indent = False, value = True, description='Proxy Buttons',layout=auto_layout)
     navgui  = ipw.Checkbox(indent = False, value = False, description='Hide Nav. GUI',layout=auto_layout)
 
 @dataclass(frozen=True)

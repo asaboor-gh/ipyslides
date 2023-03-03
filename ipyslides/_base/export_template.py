@@ -80,8 +80,8 @@ div.columns > div[style*="width:"] {
     max-width:100% !important;
 }
 .slides-only, .jupyter-only {display:none !important;}
-.toc-item > a {text-decoration:none !important;}
-.toc-item > a:hover {text-decoration:underline !important;}
+a {text-decoration:none !important;}
+a:hover {text-decoration:underline !important;}
 
 .SlidesWrapper h1, .SlidesWrapper h2,
 .SlidesWrapper h3, .SlidesWrapper h4,
@@ -89,11 +89,11 @@ div.columns > div[style*="width:"] {
 	color:var(--heading-color);
  	text-align: left !important;
 	overflow:hidden; /* FireFox */
-    margin-block: 0.6em 0.5em !important;
+    margin-block: 0.2em 0.4em !important;
 }
 
 .SlidesWrapper h1, .SlidesWrapper h2 {
-	margin-block: 1.2em 1em !important; /* need more space for h1 and h2 */
+	margin-block: 0.2em 0.4em !important; /* need more space for h1 and h2 */
 }
 
 
@@ -165,8 +165,8 @@ div.columns > div[style*="width:"] {
 slides_css = """<style>
 __theme_css__
 .report-only, .jupyter-only { display:none !important;}
-.toc-item > a {text-decoration:none !important;}
-.toc-item > a:hover {text-decoration:underline !important;}
+a {text-decoration:none !important;}
+a:hover {text-decoration:underline !important;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;
     display: flex !important;
@@ -201,7 +201,7 @@ section .SlideArea {
 	max-height: calc(100vh - 20px) !important; /* 20px for footer */ 
 	box-sizing: border-box;
 	overflow-y: auto !important;
-	width: 90vw !important;
+	width: 95vw !important;
 	margin: auto !important;
 	padding: 1em !important;
     box-sizing: border-box !important;
@@ -288,9 +288,9 @@ a.goto-button:active {
         max-height: calc(100% - 20px) !important; /* 20px for footer */
         box-sizing: border-box;
         overflow: hidden !important;
-        width: 90% !important;
-        max-width: 90% !important;
-        margin-left: 5% !important;
+        width: calc(100% - 32px) !important;
+        max-width: calc(100% - 32px) !important;
+        margin-left: 16px !important;
         page-break-inside: avoid !important;
     }
     ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }

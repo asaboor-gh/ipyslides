@@ -61,7 +61,7 @@ class _HhtmlExporter:
             print(f'File {path!r} already exists. Use overwrite=True to overwrite.')
             return
         
-        with open(path,'w') as f:
+        with open(path,'w', encoding="utf-8") as f: # encode to utf-8 to handle emojis
             f.write(content) 
             
     

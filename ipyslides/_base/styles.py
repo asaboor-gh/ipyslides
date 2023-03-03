@@ -213,7 +213,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             },
             'hr': {
                 'margin':'0 !important',
-                'margin-block':'0.5em !important',
+                'margin-block':'0.25em !important',
                 'border':'none',
                 'width':'auto',
                 'height':'2px',
@@ -224,7 +224,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
                 'color':'var(--heading-color)',
                 'text-align':'center',
                 'overflow':'hidden', # FireFox 
-                'margin-block':'unset',
+                'margin-block': '0.2em 0.4em !important', # Closer to the text of its own scope
                 'line-height':'1.5em',
             },
             'h1': {'font-size':'2.25em'},

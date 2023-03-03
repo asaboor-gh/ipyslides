@@ -138,9 +138,9 @@ class LayoutSettings:
     
     def _toggle_proxy_buttons(self, change):
         if change['new']:
-            self.widgets.mainbox.add_class('PresentMode')
+            self.widgets.mainbox.remove_class('PresentMode') # Show if checked
         else:
-            self.widgets.mainbox.remove_class('PresentMode')
+            self.widgets.mainbox.add_class('PresentMode')
         
     def set_animation(self, main = 'slide_h',frame = 'slide_v'):
         "Set animation for slides and frames."
