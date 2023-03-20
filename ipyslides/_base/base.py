@@ -303,7 +303,7 @@ class BaseSlides:
         if not trusted:
             try: # Try becuase long string will through error for path
                 os.path.isfile(file_or_str) # check if file exists then check code blocks
-                with open(file_or_str, 'r') as f:
+                with open(file_or_str, 'r', encoding='utf-8') as f:
                     lines = f.readlines()
             except:
                 lines = file_or_str.splitlines()
@@ -320,7 +320,7 @@ class BaseSlides:
         
         try:
             if os.path.isfile(file_or_str):
-                with open(file_or_str, 'r') as f:
+                with open(file_or_str, 'r', encoding='utf-8') as f:
                     chunks = _parse_markdown_text(f.read())
             elif file_or_str.endswith('.md'): # File but does not exits
                 raise FileNotFoundError(f'File {file_or_str} does not exist.')

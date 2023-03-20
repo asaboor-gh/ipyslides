@@ -21,7 +21,7 @@ class _HhtmlExporter:
         for item in self.main:
             _html = ''
             for out in item.contents:
-                _html += _fmt_html(out) 
+                _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
                 
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)
@@ -40,8 +40,8 @@ class _HhtmlExporter:
         
         return doc_html(_code_css,_style_css, content).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
-            '__HEIGHT__', f'{int(297*self.main.settings.aspect_dd.value)}mm') # Slides height is determined by aspect ratio.
-    
+            '__HEIGHT__', f'{int(254*self.main.settings.aspect_dd.value)}mm').replace( # Slides height is determined by aspect ratio.
+            '__VH__', 'auto' if theme_kws['centered'] else '100%') # SLidea Area is 100% height if not centered.
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')
         return f'id="{sec_id}"' if sec_id else ''
@@ -92,8 +92,8 @@ class _HhtmlExporter:
         - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
         
         ::: note-info
-            - PDF printing of slide is done on paper of width 297mm (as A4). Height is determined by aspect ratio dropdown in sidebar panel.
-            - Use `Save as PDF` option in browser to make links work in output PDF.
+            - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio dropdown in sidebar panel.
+            - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF.
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
         content = self._htmlize(as_slides = True, slide_number = slide_number)

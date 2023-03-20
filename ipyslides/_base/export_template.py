@@ -197,7 +197,7 @@ section .SlideBox {
 }
 section .SlideBox > .Footer > .Progress { display: none !important; }
 section .SlideArea {
-	height: auto !important;
+	height: __VH__ !important;
 	max-height: calc(100vh - 20px) !important; /* 20px for footer */ 
 	box-sizing: border-box;
 	overflow-y: auto !important;
@@ -246,7 +246,7 @@ a.goto-button:active {
         color-adjust: exact !important;
     }
     @page {
-        size: 297mm __HEIGHT__; /* A4 is 297mm x decided by aspect_ratio by user*/
+        size: 254mm __HEIGHT__; /* 10 inch x decided by aspect_ratio by user*/
         margin-top: 0 !important;
         margin-right: 0 !important;
         margin-left: 0 !important;
@@ -284,7 +284,7 @@ a.goto-button:active {
         width: 100% !important;
     }
     section .SlideArea {
-        height: auto !important;
+        height: __VH__ !important;
         max-height: calc(100% - 20px) !important; /* 20px for footer */
         box-sizing: border-box;
         overflow: hidden !important;

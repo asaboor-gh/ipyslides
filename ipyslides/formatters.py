@@ -255,6 +255,13 @@ class Serializer:
             return {'text/html': func(obj_type)}
         return None
     
+    def display(self, obj):
+        "Display an object with metadata if a serializer available. Same as display(obj, metadata = serializer.get_metadata(obj)))"
+        if (metadata := self.get_metadata(obj)):
+            display(obj, metadata = metadata)
+        else:
+            display(obj)
+    
     def _alt_html(self, ipywidget_html):
         """Convert ipywidgets.HTML object to HTML string."""
         if not isinstance(ipywidget_html,ipw.HTML):

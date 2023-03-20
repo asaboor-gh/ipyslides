@@ -159,7 +159,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%', _root = False):
+def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%', centered = True, _root = False):
     uclass = get_unique_css_class()
     _root_dict = {
         '--heading-color':f'{colors["heading_color"]}',
@@ -222,8 +222,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
             ':is(h1, h2, h3, h4, h5, h6)': {
                 'color':'var(--heading-color)',
-                'text-align':'center',
-                'overflow':'hidden', # FireFox 
+                'text-align':'center' if centered else 'left',
                 'margin-block': '0.2em 0.4em !important', # Closer to the text of its own scope
                 'line-height':'1.5em',
             },
@@ -267,6 +266,13 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
         },
         '.SlideArea': {
             'width':f'{content_width} !important',
+            'display':'flex !important',
+            'flex-direction':'column !important',
+            'margin':'auto !important' if centered else 'unset !important',
+            'align-items': 'center !important' if centered else 'baseline !important', 
+            'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
+            'padding' : '0.2em 2em !important',
+            'overflow': 'auto !important',
             '.toc-item': { # Table of contents on slides 
                 'border-right':'4px solid var(--secondary-bg)',
                 'padding-right':'2em', # To make distance from the border

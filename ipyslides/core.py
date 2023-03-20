@@ -408,7 +408,7 @@ class Slides(BaseSlides):
             
         # Here write resources to file in assets
         with self.set_dir(self.assets_dir):
-            with open('citations.json', 'w') as f:
+            with open('citations.json', 'w', encoding='utf-8') as f:
                 json.dump(self._citations, f, indent=4)
                 
         # Update citations in all slides
@@ -419,7 +419,7 @@ class Slides(BaseSlides):
     def _set_citations_from_file(self, filename):
         "Load resources from file if present."
         if os.path.isfile(filename):
-            with open(filename,'r') as f:
+            with open(filename,'r', encoding='utf-8') as f:
                 self._citations = json.load(f) # set, not update, avoid cluttering
                 
     def section(self,text):
@@ -588,7 +588,7 @@ class Slides(BaseSlides):
         self.widgets.slidebox.children[old_index].layout = ipw.Layout(width = '0', height='100%',margin='0',opacity='0') # Hide old slide
         self.widgets.slidebox.children[old_index].remove_class('SlideArea')
         self.widgets.slidebox.children[new_index].add_class('SlideArea') # First show then set layout
-        self.widgets.slidebox.children[new_index].layout = self.settings._slide_layout
+        self.widgets.slidebox.children[new_index].layout = ipw.Layout() # set empty layout, adjusted by CSS
         
     def _update_content(self,change):
         if self.progress_slider.index == 0: # First slide

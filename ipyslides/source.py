@@ -83,7 +83,7 @@ def _file2code(filename,language='python',name=None,**kwargs):
     try:
         text = filename.read() # if stringIO
     except:
-        with open(filename,'r') as f:
+        with open(filename,'r',encoding='utf-8') as f: # emoji support
             text = f.read()
     
     return _str2code(text,language=language,name=name,**kwargs)

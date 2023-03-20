@@ -234,7 +234,7 @@ def write(*objs,widths = None):
         - PIL images, SVGs etc.
         - IPython display objects such as Image, SVG, HTML, Audio, Video, YouTubeVideo, IFrame, Latex, Markdown, JSON, Javascript, etc.
         - Any object that has a `_repr_html_` method, you can create one for your own objects/third party objects by:
-            - `Slides.serializer` API. Use its `.get_metadata` method to display object as it is and export its HTML representation from metadata when used as `display(obj, metadata = {'text/html': 'html repr by user or by serializer.get_metadata(obj)'})`.
+            - `Slides.serializer` API. Use its `.get_metadata` or `.display` method to display object as it is and export its HTML representation from metadata when used as `display(obj, metadata = {'text/html': 'html repr by user or by serializer.get_metadata(obj)'})` or `serializer.display(obj)`.
             - `IPython.core.formatters` API for third party libraries.
             
     ::: note

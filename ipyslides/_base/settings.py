@@ -25,9 +25,9 @@ class LayoutSettings:
         self._footer_kws = {'text':'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>',
                              'numbering': True, 'date': 'today'}
         self._content_width = '90%' #Better
+        self._centered = True
         self._code_lineno = True
         
-        self._slide_layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em') 
         self.width_slider  = self.widgets.sliders.width
         self.aspect_dd = self.widgets.ddowns.aspect
         self.scale_slider  = self.widgets.sliders.scale
@@ -74,7 +74,7 @@ class LayoutSettings:
         
     def _on_load_and_refresh(self): # on_displayed is not working in ipywidgets 8.0.0+
         self.__add_js()
-
+    
         with capture_output() as cap:
             with suppress(BaseException): # When ipython is not running, avoid errors
                 parse(intro.instructions,display_inline=True)
@@ -263,14 +263,7 @@ class LayoutSettings:
     def set_layout(self,center = True, content_width = None):
         "Central aligment of slide by default. If False, left-top aligned."
         self._content_width = content_width if content_width else self._content_width # user selected
-        style_dict = {'display':'flex','width':content_width} #block is must
-        if center:
-            style_dict.update(dict(margin = 'auto',align_items = 'center',justify_content = 'center'))
-        else: #container still should be in the center horizontally with auto margin
-            style_dict.update(dict(margin = '8px auto',align_items = 'baseline',justify_content = 'flex-start'))
-        
-        for k,v in style_dict.items():
-            setattr(self._slide_layout,k,v)
+        self._centered = center if center is True else False # user selected
         
         self._update_theme(change=None) # Trigger CSS in it to make width change
         
@@ -335,7 +328,7 @@ class LayoutSettings:
     def theme_kws(self):
         return dict(colors = self.colors, light = self.light, text_size = self.text_size,
             text_font = self._font_family['text'], code_font = self._font_family['code'],
-            breakpoint = self.breakpoint, content_width = self._content_width)
+            breakpoint = self.breakpoint, content_width = self._content_width, centered = self._centered)
          
      
     def _update_theme(self,change = None): 

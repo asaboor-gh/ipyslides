@@ -346,7 +346,7 @@ class XMarkdown(Markdown):
         # Run an included file
         all_matches = re.findall(r'include\`(.*?)\`', html_output, flags = re.DOTALL)
         for match in all_matches:
-            with open(match,'r') as f:
+            with open(match,'r', encoding='utf-8') as f:
                 repr_html = self.parse(f.read(),display_inline=False,rich_outputs=False)
             html_output = html_output.replace(f'include`{match}`', repr_html, 1)
         

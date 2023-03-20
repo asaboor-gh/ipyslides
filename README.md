@@ -66,7 +66,7 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 - You can create beautiful HTML/PDF report from slides using `slides.export.report`. See [PDF-Report](IPySlides-Report.pdf)
 - Use `slides.export.slides` to build static slides that you can print as well.
 - Content variety for export is limited. Widgets can not be exported unless an alternative representation is given by `Slides.alt(widget, func(widget))`.
-- Paper width for printing is same as A4 (297mm) and height is determined by aspect ration dropdown in settings panel.
+- Paper width for printing is 10 inch (254mm) and height is determined by aspect ration dropdown in settings panel.
 - Use `Save as PDF` in browser to make links work in ouput PDF.
 
 ---

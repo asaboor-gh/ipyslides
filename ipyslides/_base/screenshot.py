@@ -164,7 +164,7 @@ class ScreenShot:
             for i,im in enumerate(ims):
                 im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= self.__capture_settings['quality'],subsampling=0,optimize=True)  # Do not lose image quality at least here
             md_file = os.path.join(directory,'Make-PPT.md')
-            with open(md_file,'w') as f:
+            with open(md_file,'w', encoding='utf-8') as f:
                 f.write(intro.how_to_ppt)
             self.widgets._push_toast(f'''All captured images are saved in "{directory}"<br/> 
                          <em>See file "{md_file}" as bonus option!</em>''',timeout=10)
