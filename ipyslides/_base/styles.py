@@ -159,7 +159,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code_font = None, breakpoint = '650px', content_width = '70%', centered = True, _root = False):
+def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, breakpoint = '650px', content_width = '80%', centered = True, _root = False):
     uclass = get_unique_css_class()
     _root_dict = {
         '--heading-color':f'{colors["heading_color"]}',
@@ -188,7 +188,7 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             'container': 'slides / inline-size',
             'margin':'auto',
             'padding':'0px',
-            'font-size':'var(--text-size)',
+            'font-size':'var(--text-size) !important',
             'background':'var(--primary-bg)',
             'max-width':'100vw', # This is very important
             '^, *':{ 
@@ -213,23 +213,25 @@ def style_css(colors, *, light = 250, text_size = '20px', text_font = None, code
             },
             'hr': {
                 'margin':'0 !important',
-                'margin-block':'0.25em !important',
+                'margin-block':'0.2em !important',
                 'border':'none',
                 'width':'auto',
                 'height':'2px',
-                'background':'linear-gradient(to right, transparent,  var(--secondary-bg),var(--accent-color), var(--secondary-bg),transparent)',
+                'background':'linear-gradient(to right, var(--primary-bg),  var(--secondary-bg),var(--accent-color), var(--secondary-bg),var(--primary-bg))',
             },
             '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
             ':is(h1, h2, h3, h4, h5, h6)': {
                 'color':'var(--heading-color)',
                 'text-align':'center' if centered else 'left',
-                'margin-block': '0.2em 0.4em !important', # Closer to the text of its own scope
+                'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
                 'line-height':'1.5em',
+                'overflow':'hidden', # Firefox 
             },
-            'h1': {'font-size':'2.25em'},
-            'h2': {'font-size':'2em'},
+            'h1:first-of-type': {'margin-block-start':'0em !important',},
+            'h1': {'font-size':'2.2em'},
+            'h2': {'font-size':'1.7em'},
             'h3': {'font-size':'1.5em'},
-            'h4': {'font-size':'1.25em'},
+            'h4': {'font-size':'1.2em'},
             'h5': {'font-size':'1em'},
             'table': {
                 'border-collapse':'collapse !important',

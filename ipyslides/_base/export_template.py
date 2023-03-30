@@ -89,11 +89,11 @@ a:hover {text-decoration:underline !important;}
 	color:var(--heading-color);
  	text-align: left !important;
 	overflow:hidden; /* FireFox */
-    margin-block: 0.2em 0.4em !important;
+    margin-block: 0.2em 0.3em !important;
 }
 
 .SlidesWrapper h1, .SlidesWrapper h2 {
-	margin-block: 0.2em 0.4em !important; /* need more space for h1 and h2 */
+	margin-block: 0.2em 0.3em !important; /* need more space for h1 and h2 */
 }
 
 
