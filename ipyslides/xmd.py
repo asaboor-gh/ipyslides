@@ -295,8 +295,8 @@ class XMarkdown(Markdown):
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as {{var}} and two inline columns as ||C1||C2||"
         # Check maximum level of indentation if under custom blocks
-        matches = [4,*[4 + len(match) for match in re.findall(r'^(\s*):::', html_output.replace('\t','    '), flags = re.MULTILINE)]] # 4 is default 
-        sub_nl = '\n' + ' '*max(matches) # 4 is default
+        matches = [4 + len(match) for match in re.findall(r'^(\s*):::', html_output.replace('\t','    '), flags = re.MULTILINE)] # 4 is default 
+        sub_nl = '\n' + (' '*max(matches) if matches else '') # If no :::, no indentation is needed
         
         # Replace variables first 
         user_ns = get_ipython().user_ns
