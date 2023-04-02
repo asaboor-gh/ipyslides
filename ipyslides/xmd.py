@@ -294,7 +294,10 @@ class XMarkdown(Markdown):
         
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as {{var}} and two inline columns as ||C1||C2||"
-            
+        # Check maximum level of indentation if under custom blocks
+        matches = [4,*[4 + len(match) for match in re.findall(r'^(\s*):::', html_output.replace('\t','    '), flags = re.MULTILINE)]] # 4 is default 
+        sub_nl = '\n' + ' '*max(matches) # 4 is default
+        
         # Replace variables first 
         user_ns = get_ipython().user_ns
         all_matches = re.findall(r'\{\{(.*?)\}\}', html_output, flags = re.DOTALL)
@@ -308,7 +311,7 @@ class XMarkdown(Markdown):
                 'Only variables are allowed in double curly braces or see Slides.xmd_syntax as well'))
                 
             _out = (htmlize(output) if output is not None else '') if not isinstance(output, str) else output # Avoid None
-            html_output = html_output.replace('{{' + match + '}}', _out.replace('\n', '\n    '), 1) # Replace with htmlized output, replace new line with 4 spaces to keep indentation if block ::: is used
+            html_output = html_output.replace('{{' + match + '}}', _out.replace('\n', sub_nl), 1) # Replace with htmlized output, replace new line with 4 spaces to keep indentation if block ::: is used
         
         # Replace inline one argumnet functions
         from . import utils # Inside function to avoid circular import
@@ -316,14 +319,14 @@ class XMarkdown(Markdown):
             all_matches = re.findall(fr'{func}\`(.*?)\`', html_output, flags = re.DOTALL | re.MULTILINE)
             for match in all_matches:
                 _func = getattr(utils,func)
-                _out = (_func(match) if match else _func()).value.replace('\n', '\n    ') # If no argument, use default, replace new line with 4 spaces to keep indentation if block ::: is used
+                _out = (_func(match) if match else _func()).value.replace('\n', sub_nl) # If no argument, use default, replace new line with 4 spaces to keep indentation if block ::: is used
                 html_output = html_output.replace(f'{func}`{match}`', _out, 1)
         
         # Replace columns after vars, so not to format their brackets
         all_cols = re.findall(r'\|\|(.*?)\|\|(.*?)\|\|', html_output, flags = re.DOTALL | re.MULTILINE) # Matches new line as well, useful for inline plots and big objects
         for cols in all_cols:
             _cols = ''.join(f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols)
-            _out = f'<div class="columns">{_cols}</div>'.replace('\n', '\n    ') # Replace new line with 4 spaces to keep indentation if block ::: is used
+            _out = f'<div class="columns">{_cols}</div>'.replace('\n', sub_nl) # Replace new line with 4 spaces to keep indentation if block ::: is used
             html_output = html_output.replace(f'||{cols[0]}||{cols[1]}||', _out, 1)
               
         # Replace functions with arguments
@@ -338,7 +341,7 @@ class XMarkdown(Markdown):
                 _func = getattr(utils,func)
                 try:
                     _out = _func(arg0,*args, **kws).value if arg0 else _func(*args, **kws).value # If no argument, use default
-                    _out = _out.replace('\n', '\n    ') # Replace new line with 4 spaces to keep indentation if block ::: is used
+                    _out = _out.replace('\n', sub_nl) # Replace new line with 4 spaces to keep indentation if block ::: is used
                     html_output = html_output.replace(f'{func}[{match[0]}]`{match[1]}`', _out, 1)
                 except Exception as e:
                     raise Exception(f'Error in {func}[{match[0]}]`{match[1]}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside [{match[0]}]')
@@ -347,7 +350,7 @@ class XMarkdown(Markdown):
         all_matches = re.findall(r'include\`(.*?)\`', html_output, flags = re.DOTALL)
         for match in all_matches:
             with open(match,'r', encoding='utf-8') as f:
-                repr_html = self.parse(f.read(),display_inline=False,rich_outputs=False).replace('\n', '\n    ') # Replace new line with 4 spaces to keep indentation if block ::: is used
+                repr_html = self.parse(f.read(),display_inline=False,rich_outputs=False).replace('\n', sub_nl) # Replace new line with 4 spaces to keep indentation if block ::: is used
             html_output = html_output.replace(f'include`{match}`', repr_html, 1)
         
         return html_output # return in main scope
