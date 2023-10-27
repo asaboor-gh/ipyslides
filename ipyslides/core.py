@@ -73,6 +73,7 @@ class _Citation:
 
 class Slides(BaseSlides):
     # This will be overwritten after creating a single object below!
+
     def __init__(self):
         super().__init__()  # start Base class in start
         self.shell = SHELL
@@ -925,7 +926,7 @@ class Slides(BaseSlides):
 
     def frames(self, slide_number, *objs, repeat=False, frame_height="auto"):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
-        You can also call it as a function, e.g. `.frames(slide_number = 1,1,2,3,4,5)()` becuase it can write by defualt.
+        You can also call it as a function, e.g. `.frames(1,*objs)()` becuase it can write by defualt.
 
         ```python
         @slides.frames(1,a,b,c) # slides 1.1, 1.2, 1.3 with content a,b,c
@@ -1120,7 +1121,7 @@ class Slides(BaseSlides):
         )
 
     def AutoSlides(self):
-        """Returns a named tuple `AutoSlides(title,slide,frames, from_markdown)` if run from inside a
+        """Returns a named tuple `AutoSlides(get_next_number, title,slide,frames, from_markdown)` if run from inside a
         python script. Functions inside this tuple replace main functions while removing the 'slide_number' paramater.
         Useful to handle auto numbering of slides inside a sequntially running script. Call at top of script before adding slides.
         ::: note-warning
@@ -1129,7 +1130,10 @@ class Slides(BaseSlides):
         ```python
         import ipyslides as isd
         slides = isd.Slides()
-        auto = slides.AutoSlides()
+        auto = slides.AutoSlides() # Call at top of script
+
+        with auto.slide() as s:
+            slides.write(f'This is slide {s.number}')
         ```
         Use `auto.title`, `auto.slide` contextmanagers, `auto.frames` decorator and `auto.from_markdown`
         function without thinking about what should be slide number.
@@ -1137,7 +1141,10 @@ class Slides(BaseSlides):
         if self._called_from_notenook("AutoSlides"):
             return None
 
-        auto = namedtuple("AutoSlides", ["title", "slide", "frames", "from_markdown"])
+        auto = namedtuple(
+            "AutoSlides",
+            ["get_next_number", "title", "slide", "frames", "from_markdown"],
+        )
 
         def slide():
             return self.slide(self._next_number)
@@ -1150,7 +1157,10 @@ class Slides(BaseSlides):
         def from_markdown(file_or_str, trusted=False):
             return self.from_markdown(self._next_number, file_or_str, trusted=trusted)
 
-        return auto(self.title, slide, frames, from_markdown)
+        def get_next_number():
+            return self._next_number
+
+        return auto(get_next_number, self.title, slide, frames, from_markdown)
 
     def set_overlay_url(self, url=None):
         """Sets url in a persistent overlay iframe. Useful to load external sites like drawing pads or even files on jupyter/localhost server.

@@ -2,7 +2,7 @@ from .icons import Icon as _Icon, _icons
 
 # ONLY INSTRUCTIONS BELOW
 
-how_to_ppt = '''### Powerpoint Presentation
+how_to_ppt = """### Powerpoint Presentation
 - Save all screenshots using `Save PNG` button and go to folder just created.
 - You know the aspect ratio while taking screenshots, if not, read details of any of picture to find it.
 - Open Powerpoint, got to `Design` tab and select `Slide Size`. If pictures here are of aspect ration 4:3 or 16:9, select that,
@@ -13,9 +13,9 @@ otherwise select `Custom Slide Size` and change size there according to found as
 
 ::: note-warning
     Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
-'''
+"""
 
-how_to_slide = '''# Creating Slides
+how_to_slide = """# Creating Slides
 ::: align-center
     alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`     
     center`today```
@@ -35,7 +35,7 @@ how_to_slide = '''# Creating Slides
 - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
 - `%%slide integer -m` can be used to create slide from full markdown (extended one).
 - You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
-- Inside python script, you can use auto numbering with `slides.AutoSlides().[tile|slide|frames|from_markdown]`.
+- Inside python script, you can use auto numbering with `slides.AutoSlides().[get_next_number|title|slide|frames|from_markdown]`.
 
 ```python
 import ipyslides as isd 
@@ -115,28 +115,31 @@ with slides.slide(2):
     - You can use `Slides.goto_button` to add a button to go to jump to a slide.
     - Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
     - In Custom Theme mode, you can set colors using `slides.settings.set_theme_colors`.
-'''
+"""
 
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
-for k,r  in zip('RLUD',[0,180,-90,90]):  # clockwise rotation sucks!
-    _icons[k] = _Icon('chevron', color="var(--accent-color)",rotation=r)
+for k, r in zip("RLUD", [0, 180, -90, 90]):  # clockwise rotation sucks!
+    _icons[k] = _Icon("chevron", color="var(--accent-color)", rotation=r)
 
-def _key(k): return f'<kbd style="color:var(--secondary-fg);background: var(--secondary-bg); border: 1px solid var(--hover-bg);">{k}</kbd>'
+
+def _key(k):
+    return f'<kbd style="color:var(--secondary-fg);background: var(--secondary-bg); border: 1px solid var(--hover-bg);">{k}</kbd>'
+
 
 key_maps = {
-    '▸, Space': 'Next slide',
-    '◂, ⇧ + Space': 'Previous slide',
-    'Z': 'Toggle objects zoom mode',
-    'S': 'Take screenshot',
-    'P': 'Print PDF of current slide',
-    'F': 'Toggle fullscreen',
-    'Esc': 'Exit fullscreen',
-    'W': 'Toggle fit to viewport',
-    'G': 'Toggle settings panel',
-    'L': 'Toggle LASER pointer',
+    "▸, Space": "Next slide",
+    "◂, ⇧ + Space": "Previous slide",
+    "Z": "Toggle objects zoom mode",
+    "S": "Take screenshot",
+    "P": "Print PDF of current slide",
+    "F": "Toggle fullscreen",
+    "Esc": "Exit fullscreen",
+    "W": "Toggle fit to viewport",
+    "G": "Toggle settings panel",
+    "L": "Toggle LASER pointer",
 }
 
-key_combs = f'''
+key_combs = f"""
 ::: note-warning "warning"
     Not every frontend is guaranteed to support keyboard shortcuts. Slides are optimized to use without keyboard and with tocuh screen.
     
@@ -152,9 +155,9 @@ key_combs = f'''
 | {_key('W')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | {key_maps["W"]}        |
 | {_key('G')} {_icons["dots"]}, {_icons["close"]}                            | {key_maps["G"]}        |
 | {_key('L')} {_icons["laser"]}, {_icons["circle"]}                          | {key_maps["L"]}        |
-'''
+"""
 
-more_instructions =f'''## How to Use
+more_instructions = f"""## How to Use
 ::: note-tip
     In JupyterLab, right click on the slides and select `Create New View for Output` and follow next there to optimize display.
 
@@ -185,9 +188,9 @@ Having your cursor over slides, you can use follwoing keys/combinations:
 
 ::: note-warning
     Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
-'''
+"""
 
-instructions = f'''{more_instructions}
+instructions = f"""{more_instructions}
 {how_to_ppt}
 ### Custom Theme
 For custom themes, change below `Theme` dropdown to `Custom` and use `Slides.settings.set_theme_colors` to set colors.
@@ -236,9 +239,9 @@ class CustomSlides(isd.Slides):
         else:
             self.widgets.footerbox.layout.visibility = 'hidden'
 ```
-'''
+"""
 
-logo_svg = '''<svg width="60px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+logo_svg = """<svg width="60px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     <circle cx="50" cy="50" r="50" fill="var(--accent-color)"/>
     <text x="50%" y="50%" fill="var(--secondary-bg" font-size="18px" font-weight="bolder" dominant-baseline="central" text-anchor="middle">IPySlides</text>
-</svg>'''
+</svg>"""
