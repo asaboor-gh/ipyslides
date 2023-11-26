@@ -8,7 +8,9 @@ import ipywidgets as ipw
 from IPython.display import display, Javascript
 from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
 from . import styles, _layout_css
+from .interaction import InteractionWidget
 from ..utils import html
+from ..formatters import HtmlWidget
 
 
 auto_layout =  Layout(width='auto')
@@ -115,7 +117,6 @@ class _Outputs:
     """
     slide = ipw.Output(layout= Layout(height='0',width = '0',margin='0',opacity='0') # for hodling slide CSS
             ).add_class('SlideArea')
-    fixed = ipw.Output(layout=Layout(width='auto',height='0px')) # For fixed javascript
     renew = ipw.Output(layout=Layout(width='auto',height='0px')) # Content can be added dynamically
 
 
@@ -186,6 +187,7 @@ class Widgets:
         self.htmls   = _Htmls()
         self.ddowns  = _Dropdowns()
         self.outputs = _Outputs()
+        self.iw = InteractionWidget(self)
         
         # Make the progress bar and link to slides
         self.progressbar = _custom_progressbar(self.sliders.progress)
@@ -241,11 +243,10 @@ class Widgets:
                 self.ddowns.clear,
                 self.inputs.bbox,
                 self.htmls.capture,
-                self.outputs.fixed, 
                 self.outputs.renew,
                 self.outputs.slide,
                 self.htmls.intro  
-            ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0'))
+            ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0')),
         ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('SidePanel') 
         
         self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='100%',overflow='auto',display='none')).add_class('TOC')
@@ -261,6 +262,7 @@ class Widgets:
             self.htmls.main,
             self.htmls.theme,
             self.htmls.logo,
+            self.iw,
             HBox(_many_btns).add_class('TopBar').add_class('Outside'),
             self.htmls.window,
             self.panelbox,

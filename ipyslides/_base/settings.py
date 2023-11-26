@@ -13,7 +13,7 @@ from IPython.utils.capture import capture_output
 from ..formatters import fix_ipy_image, code_css
 from ..xmd import parse
 from ..utils import html, details, today, _sub_doc, _css_docstring
-from . import scripts, intro, styles, _layout_css
+from . import intro, styles, _layout_css
 
 
 class LayoutSettings:
@@ -47,7 +47,7 @@ class LayoutSettings:
         self.btn_laser = self.widgets.toggles.laser
         self.btn_overlay = self.widgets.toggles.overlay
         self.box = self.widgets.panelbox
-        self._on_load_and_refresh()  # First attempt of Javascript to work
+        self._setup()  # Fix up and start up things
 
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
         self.widgets.buttons._inview.on_click(self.__block_post_run)
@@ -84,12 +84,10 @@ class LayoutSettings:
                 self._slides._display_box
             )  # Update display box with just notes view
 
-    def _on_load_and_refresh(self):  # on_displayed is not working in ipywidgets 8.0.0+
+    def _setup(self): 
         # Only add this if in notebook, not in terminal
         shell = get_ipython()
         if shell and shell.__class__.__name__ != "TerminalInteractiveShell":
-            self.__add_js()
-
             with capture_output() as cap:
                 with suppress(BaseException):
                     parse(intro.instructions, display_inline=True)
@@ -324,9 +322,6 @@ class LayoutSettings:
         self.widgets.controls.layout.display = ""
         self.widgets.footerbox.layout.display = ""
 
-    def __add_js(self):
-        with self.widgets.outputs.fixed:
-            display(Javascript(scripts.navigation_js))
 
     def _update_size(self, change):
         if change and change["owner"] == self.width_slider:
@@ -336,7 +331,6 @@ class LayoutSettings:
                 _layout_css.layout_css(
                     self.breakpoint,
                     accent_color=self.colors["accent_color"],
-                    show_laser_pointer=self.btn_laser.value,
                 ),
             ).value
 
@@ -395,7 +389,6 @@ class LayoutSettings:
         layout_css = _layout_css.layout_css(
             breakpoint=self.breakpoint,
             accent_color=self.colors["accent_color"],
-            show_laser_pointer=self.btn_laser.value,
         )
         self.widgets.htmls.main.value = html("style", layout_css).value
 
@@ -433,63 +426,32 @@ class LayoutSettings:
         self._update_theme(change=None)  # For updating size and breakpoints
 
     def _toggle_fullscreen(self, change):
+        self.widgets.iw.msg_tojs = 'TFS'
         if self.btn_fscreen.value:
-            self.widgets._exec_js(
-                "document.getElementsByClassName('SlidesWrapper')[0].requestFullscreen();"
-            )  # Enter Fullscreen
             self.btn_fscreen.icon = "minus"
             self.widgets.mainbox.add_class("FullScreen")
-
-            self._old_window_state = (
-                self.btn_window.value
-            )  # Save old state of window button
-            if not self.btn_window.value:  # Should elevate full window too
-                self.btn_window.value = True
-
-            self.btn_window.disabled = True  # Disable window button to recieve events
         else:
-            self.widgets._exec_js("document.exitFullscreen();")  # To Fullscreen
             self.btn_fscreen.icon = "plus"
             self.widgets.mainbox.remove_class("FullScreen")
 
-            self.btn_window.disabled = False  # Enable window button to receive events
-            if hasattr(self, "_old_window_state"):
-                self.btn_window.value = (
-                    self._old_window_state
-                )  # Restore old state of window button
-
     def _toggle_laser(self, change):
+        self.widgets.iw.msg_tojs = 'TLSR'
         if self.btn_laser.value:
             self.btn_laser.icon = "minus"
         else:
             self.btn_laser.icon = "plus"
-        # Update Layout CSS
-        self.widgets.htmls.main.value = html(
-            "style",
-            _layout_css.layout_css(
-                self.breakpoint,
-                accent_color=self.colors["accent_color"],
-                show_laser_pointer=self.btn_laser.value,
-            ),
-        ).value
 
     def _push_zoom(self, change):
         if self.btn_zoom.value:
-            self.btn_zoom.icon = (
-                "minus"  # Change icon to minus irrespective of layout mode
-            )
+            self.btn_zoom.icon = "minus"
+            self.widgets.htmls.zoom.value = f"<style>\n{_layout_css.zoom_hover_css()}\n</style>"
 
-            if True in [self.btn_window.value, self.btn_fscreen.value]:
-                self.widgets.htmls.zoom.value = (
-                    f"<style>\n{_layout_css.zoom_hover_css()}\n</style>"
-                )
-            else:
-                self.widgets.htmls.zoom.value = (
-                    ""  # Clear zoom css immediately to avoid conflict
-                )
-                self.widgets._push_toast(
-                    "Objects are not zoomable in inline mode!", timeout=2
-                )
+            # If at some point it may not work properly outside fullscreen use belowe
+            # if self.btn_fscreen.value:
+            #     self.widgets.htmls.zoom.value = f"<style>\n{_layout_css.zoom_hover_css()}\n</style>"
+            # else:
+            #     self.widgets.htmls.zoom.value = ""  # Clear zoom css immediately to avoid conflict
+            #     self.widgets._push_toast("Objects are not zoomable in inline mode!", timeout=2)
         else:
             self.btn_zoom.icon = "plus"
             self.widgets.htmls.zoom.value = ""

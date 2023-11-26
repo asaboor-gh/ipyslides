@@ -11,14 +11,13 @@ import ipywidgets as ipw
 from .xmd import parse, extender as _extender
 from .source import Source
 from .writer import GotoButton, write
-from .formatters import XTML, bokeh2html, plt2html, highlight, htmlize, serializer
+from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
 from ._base.base import BaseSlides
 from ._base.intro import logo_svg, key_combs
-from ._base.scripts import clear_disconnected_slides
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__
@@ -155,7 +154,7 @@ class Slides(BaseSlides):
 
         self._slides_dict = (
             {}
-        )  # Initialize slide dictionary, updated by user or by _on_load_and_refresh.
+        )  # Initialize slide dictionary, updated by user or by _setup.
         self._reverse_mapping = {"0": "0"}  # display number -> input number of slide
         self._iterable = []  # self._collect_slides() # Collect internally
         self._nslides = 0  # Real number of slides
@@ -180,7 +179,7 @@ class Slides(BaseSlides):
 
         # All Box of Slides
         self._box = self.widgets.mainbox.add_class(self.uid)
-        self._on_load_and_refresh()  # Load and browser refresh handling
+        self._setup()  # Load some initial data and fixing
         self._display_box = None  # Initialize
         self.set_overlay_url(url=None)  # Set overlay url for initial information
         self._remove_post_run_callback()  # Remove post_run_cell callback at end of init, otherwise it appears during import
@@ -236,10 +235,9 @@ class Slides(BaseSlides):
                 self._ipython_display_()
             )  # Display after cell is executed only when enabled, don call show here, make issues
 
-    def _on_load_and_refresh(self):
+    def _setup(self):
         # Only in Jupyter Notebook
         if self.shell and self.shell.__class__.__name__ != "TerminalInteractiveShell":
-            self.widgets._exec_js(clear_disconnected_slides)
             if self._max_index == 0:  # prevent overwrite
                 self._add_clean_title()
 
@@ -592,7 +590,7 @@ class Slides(BaseSlides):
         button.on_click(on_click)
 
         if _other_text is not None:  # For TOC
-            html_before = ipw.HTML(htmlize(_other_text)).add_class("goto-html")
+            html_before = HtmlWidget(htmlize(_other_text)).add_class("goto-html")
             return ipw.HBox(
                 [html_before, button], layout=ipw.Layout(align_items="center")
             ).add_class("goto-box")

@@ -8,7 +8,7 @@ _zoom_ables = ".jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom
 _icons_size = "1em"  # For all except Chevrons
 
 
-def layout_css(breakpoint, accent_color, show_laser_pointer=False):  # Defult is off
+def layout_css(breakpoint, accent_color):
     uclass = get_unique_css_class()
     return _build_css(
         (uclass,),
@@ -81,7 +81,6 @@ def layout_css(breakpoint, accent_color, show_laser_pointer=False):  # Defult is
                     "box-shadow": " 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color)",
                     "display": "none",  # Initial setup. Display will be set using javascript only */
                     "overflow": "hidden !important",  # To hide at edges */
-                    "opacity": f"{1 if show_laser_pointer else 0} !important",
                 },
                 ".SlideArea": {
                     "justify-content": "center",
@@ -417,7 +416,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer=False):  # Defult is
                     "width": "100%",
                     "height": "max-content",
                     "box-sizing": "border-box",
-                    ".widget-html-content": {
+                    ".custom-html": {
                         "box-sizing": "border-box",
                         "padding-left": "2em !important",
                         "display": "flex",
@@ -653,7 +652,7 @@ def layout_css(breakpoint, accent_color, show_laser_pointer=False):  # Defult is
                     "win-restore", color=accent_color, size=_icons_size
                 ).css,
             },
-            "@media print": {
+            "@media print": { # Needs modification
                 ".SlidesWrapper": {
                     "^, ^.FullWindow": {
                         "height": "auto !important",
@@ -735,9 +734,14 @@ def layout_css(breakpoint, accent_color, show_laser_pointer=False):  # Defult is
                 "display": "none !important",
             },
             "<.jp-LinkedOutputView": {
+                ".jp-OutputArea-child": {
+                    "height": "100% !important"
+                },
                 ".SlidesWrapper, .DisplayBox": {
                     "min-width": "100% !important",
+                    "width": "100% !important",
                     "min-height": "100% !important",
+                    "height": "100% !important",
                     "box-sizing": "border-box !important",
                     ".InView-Btn": {
                         "display": "block !important",
@@ -766,25 +770,22 @@ def layout_css(breakpoint, accent_color, show_laser_pointer=False):  # Defult is
     )
 
 
-def viewport_css():
+def viewport_css(): 
     uclass = get_unique_css_class()
     return f"""
-    html, body, .jp-LabShell {{
-        visibility: hidden !important;
+    html, body {{ /* Voila is handled separately */
         height: 100vh !important;
         max-height: 100vh !important;
+        box-sizing: border-box !important;
     }}
-    .jp-LinkedOutputView, /* It can handle sidecar as well, besides intended options */
-    .jp-MainAreaWidget, /* Somehow notebook (and other panels) itself is treated as viewport in JupyterLab, override it */
-    {uclass}.SlidesWrapper {{
+    .jp-LinkedOutputView {uclass}.SlidesWrapper, /* It can handle sidecar as well, besides intended options */
+    .jp-MainAreaWidget {uclass}.SlidesWrapper, /* Somehow notebook (and other panels) itself is treated as viewport in JupyterLab, override it */
+    body[data-base-url] {uclass}.SlidesWrapper {{ /* for voila */
         position: fixed !important;
         left: 0 !important;
         top:0 !important;
         width:100vw !important;
         height:100vh !important;
-    }}
-    {uclass}.SlidesWrapper {{
-        visibility: visible !important;
     }}
     #menubar-container {{ display: none !important; }} /* For classic Notebook */
     body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */

@@ -5,11 +5,15 @@ import sys
 import textwrap
 import inspect, re, json
 from io import BytesIO
+from traitlets import Unicode, validate
 import pygments
 import ipywidgets as ipw
+import anywidget
+
 from IPython.display import display, HTML 
 from IPython.core.display import __all__ as _all
 from IPython import get_ipython
+
 
 __reprs__ = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 class XTML(HTML):
@@ -40,6 +44,46 @@ class XTML(HTML):
     def value(self):
         "Returns HTML string."
         return self._repr_html_()
+    
+class HtmlWidget(anywidget.AnyWidget):
+    _esm = """
+    export function render({ model, el }) {
+    let div = document.createElement("div");
+    div.classList.add("jp-RenderedHTMLCommon","custom-html","jp-mod-trusted");
+    function set_html() {
+        div.innerHTML = model.get("value");
+    }
+    model.on("change:value", set_html);
+    set_html();
+    el.appendChild(div);  
+    }
+    """
+    _css = """
+    .jp-RenderedHTMLCommon.custom-html *:not(code,span, hr) {
+       padding:0.1em;
+       line-height:150%; /* make text clearly readable on presentation */
+    }
+    """
+    value = Unicode('').tag(sync=True)
+
+    def __init__(self, value, *args, **kwargs):
+        kwargs['value'] = value # initial value set by kwargs
+        super().__init__(*args, **kwargs)
+
+    def __format__(self, spec):
+        "This is needed to merge content of this widget into another one properly when used in formatting."
+        return f'{self.value:{spec}}'
+    
+    def display(self):
+        "Display this HTML object inline"
+        return display(self)
+    
+    def __add__(self, other):
+        if isinstance(other,HtmlWidget):
+            return HtmlWidget(self.value + other.value)
+        elif isinstance(other,str):
+            return HtmlWidget(self.value + other)
+        
 
 def plt2html(plt_fig = None,transparent=True,caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
