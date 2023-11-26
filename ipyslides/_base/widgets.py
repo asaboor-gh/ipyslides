@@ -8,9 +8,8 @@ import ipywidgets as ipw
 from IPython.display import display, Javascript
 from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
 from . import styles, _layout_css
-from .interaction import InteractionWidget
+from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
 from ..utils import html
-from ..formatters import HtmlWidget
 
 
 auto_layout =  Layout(width='auto')
@@ -61,8 +60,7 @@ class _Htmls:
     logo    = HTML()
     tochead = HTML('<h4>Table of Contents</h4><hr/>')
     toast   = HTML().add_class('Toast') # For notifications
-    cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
-    notes   = HTML('Notes Preview').add_class('Inline-Notes') # For below slides area
+    cursor  = HtmlWidget('').add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
     capture = HTML('<span class="info">Edit above box and hit Enter to see screenshot here. ' 
@@ -110,15 +108,6 @@ class _Dropdowns:
     clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
     export = ipw.Dropdown(**describe('Export As'),options=['Slides','Report','Select'], value = 'Select')
     
-@dataclass(frozen=True)
-class _Outputs:
-    """
-    Instantiate under `Widgets` class only.
-    """
-    slide = ipw.Output(layout= Layout(height='0',width = '0',margin='0',opacity='0') # for hodling slide CSS
-            ).add_class('SlideArea')
-    renew = ipw.Output(layout=Layout(width='auto',height='0px')) # Content can be added dynamically
-
 
 def _custom_progressbar(intslider):
     "Retruns a progress bar linked to the slider"
@@ -186,8 +175,9 @@ class Widgets:
         self.checks  = _Checks()
         self.htmls   = _Htmls()
         self.ddowns  = _Dropdowns()
-        self.outputs = _Outputs()
-        self.iw = InteractionWidget(self)
+        self.iw      = InteractionWidget(self)
+        self.notes   = NotesWidget(value = 'Notes Preview')
+        self.tmp_output = ipw.Output(layout= Layout(height='0',width = '0',margin='0',opacity='0')) # for hodling slide CSS
         
         # Make the progress bar and link to slides
         self.progressbar = _custom_progressbar(self.sliders.progress)
@@ -243,8 +233,8 @@ class Widgets:
                 self.ddowns.clear,
                 self.inputs.bbox,
                 self.htmls.capture,
-                self.outputs.renew,
-                self.outputs.slide,
+                self.tmp_output,
+                self.notes, # Just to be there for acting on a popup window
                 self.htmls.intro  
             ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0')),
         ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('SidePanel') 
@@ -291,9 +281,3 @@ class Widgets:
             self.htmls.toast.value = '' # Set first to '', otherwise may not trigger for same value again.
             self.htmls.toast.value = _notification(content=content,title=title,timeout=timeout)
         
-    def _exec_js(self,code_string):
-        "Execute javascript code, output is not permanent."
-        self.outputs.renew.clear_output(wait = True)
-        with self.outputs.renew:
-            display(Javascript(code_string))
-            

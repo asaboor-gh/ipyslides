@@ -632,7 +632,7 @@ class Slides(BaseSlides):
         self._update_dynamic_content()  # Update dynamic content before displaying app
         self.close_view()  # Close previous views
         self.__reset_navbox()  # Important to add inview button for each new view
-        self._display_box = ipw.VBox(children=[self._box, self._notes_view]).add_class(
+        self._display_box = ipw.VBox(children=[self._box]).add_class(
             "DisplayBox"
         )  # Initialize display box again
         h = display(self._display_box, display_id=True)  # Display slides
@@ -655,12 +655,6 @@ class Slides(BaseSlides):
             if w is not self.widgets.buttons._inview
         ]
         self.widgets.navbox.children = [self.widgets.buttons._inview, *others]
-
-    @property
-    def _notes_view(self):
-        return ipw.Box([self.widgets.htmls.notes]).add_class(
-            "NotesView"
-        )  # should be in box to avoid accidentally closed
 
     @property
     def _slideindex(self):
@@ -698,8 +692,8 @@ class Slides(BaseSlides):
     def _switch_slide(
         self, old_index, new_index
     ):  # this change is provide from _update_content
-        self.widgets.outputs.slide.clear_output(wait=False)  # Clear last slide CSS
-        with self.widgets.outputs.slide:
+        self.widgets.tmp_output.clear_output(wait=False)  # Clear last slide CSS
+        with self.widgets.tmp_output:
             uclass = f".{self.uid} .TOC"
             self.html(
                 "style",
@@ -742,7 +736,7 @@ class Slides(BaseSlides):
             ).add_class("InView-Other")
 
         if self._iterable and change:
-            self.notes._display(self.current.notes)  # Display notes first
+            self.notes.display()  # Display notes first
             self.widgets.htmls.toast.value = (
                 ""  # clear notification content if any defined by on_load
             )

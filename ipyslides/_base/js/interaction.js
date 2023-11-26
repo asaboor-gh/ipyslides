@@ -3,14 +3,14 @@ function showLaser(box, cursor){
     function onMouseMove(e) {
         let bbox = box.getBoundingClientRect()
         cursor.style.display = "block"; // show everywhere by default
-        if (e.pageX > (bbox.right - 30) || e.pageY > (bbox.bottom - 30)) {
+        if (e.pageX > (bbox.right - 35) || e.pageY > (bbox.bottom - 35)) {
             cursor.style.display = "none";
         };
         if (e.pageX < (bbox.left + 5) || e.pageY < (bbox.top + 5)) {
             cursor.style.display = "none"; // simulate exit near edges
         };
-        cursor.style.left = (e.pageX - bbox.left + 10) + "px"; 
-        cursor.style.top = (e.pageY - bbox.top + 10) + "px";
+        cursor.style.left = (e.pageX - bbox.left + 20) + "px"; 
+        cursor.style.top = (e.pageY - bbox.top + 20) + "px";
     };
 
     box.onmousemove = onMouseMove;
@@ -19,6 +19,17 @@ function showLaser(box, cursor){
 function hideLaser(box, cursor) {
     cursor.style.display = 'none'; // hide in place
     box.onmousemove = null;
+}
+
+function getBboxScreenPixels(box) {
+    let bbox = box.getBoundingClientRect();
+    let dpr = window.devicePixelRatio
+    let left = (window.screenX + bbox.left)*dpr
+    let top = (window.screenY + bbox.top)*dpr
+    let right = (window.screenX + bbox.right)*dpr 
+    let bottom = (window.screenY + bbox.bottom)*dpr
+    let out_str = "L:" + left + ",T:" + top + ",R:" + right + ",B:" + bottom
+    console.log(out_str) // Not giving correct values, take screenshot in javascript and send data to python I think, to work everywhere
 }
 
 function touchSwiper(box, model){
@@ -40,6 +51,7 @@ function touchSwiper(box, model){
         
             function handleGesture() {
                 let bbox = box.getBoundingClientRect(); // Swipe only from edges
+                console.log(bbox)
                 if (Math.abs(endY - startY) < 20) {
                     // Y axis is not important but we should avoid X component of touch for a long y-scroll
                     if ((endX - startX) < -40 && startX > (bbox.right - 50)) {
@@ -60,7 +72,7 @@ function keyboardEvents(box,model) {
             e.preventDefault();
             let key = e.keyCode;
             let message = '';
-            
+            getBboxScreenPixels(box);
             if (key === 88 || key === 68) {
                 alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
                 e.stopPropagation(); // stop propagation to jupyterlab events
@@ -75,8 +87,6 @@ function keyboardEvents(box,model) {
                 message = 'PREV';
             } else if (key === 39 || key === 32) {
                 message = 'NEXT';
-            } else if (key === 80) {
-                window.print(); // P for PDF print a single slide
             } else if (key === 83) {
                 message = 'SCAP'; // S for screenshot
             } else if (key === 70) { 
@@ -151,7 +161,6 @@ export function render({ model, el }) {
         // Handle changes from Python side  
         model.on("change:msg_tojs", () => {
             let msg = model.get("msg_tojs");
-            console.log(msg)
             if (!msg) {return false}; // empty message, don't waste time
             handleMessage(msg, box, cursor);
         })

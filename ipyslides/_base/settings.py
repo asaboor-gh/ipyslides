@@ -76,13 +76,9 @@ class LayoutSettings:
             w for w in self.widgets.navbox.children if w is not btn
         ]
         dh = getattr(self._slides._display_box, "_DH", None)  # Get display handler
-        self._slides._display_box = (
-            self._slides._notes_view
-        )  # Swap display box by just notes view
+        self._slides._display_box = None  # Swap display box by just None
         if dh is not None:
-            dh.update(
-                self._slides._display_box
-            )  # Update display box with just notes view
+            dh.update(self._slides._display_box) 
 
     def _setup(self): 
         # Only add this if in notebook, not in terminal
@@ -401,6 +397,8 @@ class LayoutSettings:
             )
 
         self.widgets.htmls.theme.value = html("style", theme_css).value
+        if self.widgets.checks.notes.value:
+            self._slides.notes.display() # Update notes window if open
 
     def _toggle_tocbox(self, btn):
         if self.widgets.tocbox.layout.display == "none":

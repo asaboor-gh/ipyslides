@@ -134,7 +134,7 @@ key_maps = {
     "P": "Print PDF of current slide",
     "F": "Toggle fullscreen",
     "Esc": "Exit fullscreen",
-    "W": "Toggle fit to viewport",
+    "V": "Toggle fit to viewport [voila only]",
     "G": "Toggle settings panel",
     "L": "Toggle LASER pointer",
 }
@@ -149,10 +149,9 @@ key_combs = f"""
 | {_key('⇧')} + {_key('&#9141;')} / {_key('◂')} {_icons["L"]}, {_icons["U"]} | Move to previous slide |
 | {_key('Z')} {_icons["zoom-in"]}, {_icons["zoom-out"]}                      | {key_maps["Z"]}        |
 | {_key('S')} {_icons["camera"]}                                             | {key_maps["S"]}        |
-| {_key('P')}                                                                | {key_maps["P"]}        |
 | {_key('F')} {_icons["expand"]}, {_icons["compress"]}                       | {key_maps["F"]}        |
 | {_key('Esc')}                                                              | {key_maps["Esc"]}      |
-| {_key('W')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | {key_maps["W"]}        |
+| {_key('V')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | {key_maps["V"]}        |
 | {_key('G')} {_icons["dots"]}, {_icons["close"]}                            | {key_maps["G"]}        |
 | {_key('L')} {_icons["laser"]}, {_icons["circle"]}                          | {key_maps["L"]}        |
 """

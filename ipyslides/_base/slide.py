@@ -391,8 +391,8 @@ class Slide:
                 self._app.write(self.citations)
         
         # Update corresponding CSS but avoid animation here for faster and clean update
-        self._app.widgets.outputs.slide.clear_output(wait=False) # Clear last slide CSS
-        with self._app.widgets.outputs.slide:
+        self._app.widgets.tmp_output.clear_output(wait=False) # Clear last slide CSS
+        with self._app.widgets.tmp_output:
             self.css.display()
         
         # This foreces hard refresh of layout, without it, sometimes CSS is not applied correctly
@@ -507,8 +507,8 @@ class Slide:
             if self._app._slidelabel != self.label:
                 self._app._slidelabel = self.label # Go there to see effects
             else:
-                self._app.widgets.outputs.slide.clear_output(wait = False)
-                with self._app.widgets.outputs.slide:
+                self._app.widgets.tmp_output.clear_output(wait = False)
+                with self._app.widgets.tmp_output:
                     display(self.animation, self._css)
     
     def _instance_animation(self,name):
@@ -542,8 +542,8 @@ class Slide:
                 if self._app._slidelabel != self.label:
                     self._app._slidelabel = self.label # Go there to see effects
                 else:
-                    self._app.widgets.outputs.slide.clear_output(wait = False)
-                    with self._app.widgets.outputs.slide:
+                    self._app.widgets.tmp_output.clear_output(wait = False)
+                    with self._app.widgets.tmp_output:
                         display(self.animation, self._css)
         else:
             self._animation = None # It should be None, not '' or don't throw error here

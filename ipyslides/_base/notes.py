@@ -22,45 +22,36 @@ class Notes:
             self.main.running._notes = self.main.format_html(content)._repr_html_()
     __call__ = insert # Can be called as function
     
-    def _display(self, html_str):
-        self.widgets.htmls.notes.value = 'Notes Preview' # Must be, so when no notes, should not be there
-        if html_str and isinstance(html_str,str):            
-            self.widgets.htmls.notes.value = html_str # show alaways inline
-            
-            # Next everything for Browser window case
-            if self.notes_check.value:  # Only show on demand
-                theme = self.widgets.htmls.theme.value.replace('FullWindow','') #important
-                code_theme = '''<style> 
-                                pre { display:flex; flex-direction:column; } 
-                                .SlideBox { display:flex; flex-direction:row; justify-content:space-between;}
-                                .SlideBox > div:first-child { margin:auto; }
-                            </style>'''
-                node = f'''{theme}<div class="SlidesWrapper"> 
-                        <div class="SlideBox"> 
-                            <div class="SlideArea"> {code_theme}{html_str} </div>
-                        </div></div>'''
-                    
+    def display(self):
+        def set_value(content):
+            bg = self.main.settings.colors.get('primary_bg','white')
+            fg = self.main.settings.colors.get('primary_fg','black')
+            bg2 = self.main.settings.colors.get('secondary_bg','#181818')
+            return f"""<style>
+        :root {{
+            --primary-bg : {bg};
+            --primary-fg : {fg};
+            --secondary-bg: {bg2};
+        }}
+        .columns {{columns: 2 auto;}}
+        .columns > div > * {{background: {bg2};padding:0.2em;font-size:120%;border-left: 2px inset {bg};}}
+        .columns > div:first-child::before {{content:'This Slide';}}
+        .columns > div:last-child::before {{content:'Next Slide';}}
+        </style>{content}"""
 
-                self.widgets._exec_js(f'''
-                    let notes_win = window.open("","__Notes_Window__","popup");
-                    notes_win.document.title = 'Notes';
-                    notes_win.document.body.innerHTML = {node!r};
-                    notes_win.document.body.style.background = 'var(--primary-bg)';
-                    window.focus(); // Return focus to main window automatically
-                    
-                    setTimeout(() => {{
-                        notes_win.document.body.innerHTML = '<h2 style="color:#D44;background:#444;"> Notes will show up here, do not close it manually, just navigate away!</h2>';
-                    }}, 30000); // Close after 1/2 minute, so it should not mislead user on other slides, 1/2 minute is enough to read notes
-                    ''')
+        this_notes = self.main.current.notes 
+        next_slide_index = (self.main.current.index + 1) % len(self.main)
+        if next_slide_index > 0: # Don't loop notes back
+            next_notes = self.main[next_slide_index].notes
+        else:
+            next_notes = ''
+
+        notes = self.main.cols(this_notes,next_notes)
+        self.widgets.notes.value = set_value(notes) 
     
     def __open_close_notes(self,change):
         if change['new'] == True:
-            self.widgets._exec_js('''
-                let notes_win = window.open("","__Notes_Window__","popup");
-                notes_win.resizeTo(screen.width/2,screen.height/2);
-                notes_win.moveTo(screen.width/4,screen.height*2/5);
-                notes_win.document.title = 'Notes';
-                notes_win.document.body.innerHTML = "<h2 style="color:#D44;background:#444;"> Notes will show up here, do not close it manually, just navigate away!</h2>";
-                ''')
+            self.widgets.notes.popup = True
+            self.display()
         else:
-            self.widgets._exec_js('window.open("","__Notes_Window__","popup").close();')
+            self.widgets.notes.popup = False

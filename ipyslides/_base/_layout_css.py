@@ -20,6 +20,9 @@ def layout_css(breakpoint, accent_color):
                 "^.SingleSlide .Controls": {
                     "display": "none !important",
                 },
+                "^:focus": {
+                    "outline" : "none !important",
+                },
                 "^.CaptureMode": {
                     ".TopBar.Outside, .SlideArea .goto-button, .Sfresh-Btn": {
                         "visibility": "hidden !important"
@@ -494,20 +497,6 @@ def layout_css(breakpoint, accent_color):
                     "display": "unset !important"
                 },
             },
-            "<.Inline-Notes": {
-                "background": "var(--primary-bg)",
-                "color": "var(--primary-fg)",
-                "border": "1px solid var(--accent-color)",
-                "border-radius": "4px",
-                "width": "95% !important",  # To see all of the text
-                "box-sizing": "border-box",
-                "> div": {
-                    "display": "flex",
-                    "flex-direction": "column",
-                    "justify-content": "space-between",
-                    "padding": "4px",
-                },
-            },
             "<.jp-OutputArea-child": {
                 "^, .jp-OutputArea-output": {  # For some themes
                     "background": "transparent !important",
@@ -725,11 +714,6 @@ def layout_css(breakpoint, accent_color):
                 "background": "var(--theme-background,inherit) !important",
                 "margin": "8px 0px",
             },
-            "<.NotesView": {
-                "padding": "4px !important",
-                "margin-top": "4px !important",  # Avoid overlap with slides
-                "border-left": "2px solid gray !important",  # neutral color
-            },
             ".InView-Btn": {
                 "display": "none !important",
             },
@@ -756,9 +740,6 @@ def layout_css(breakpoint, accent_color):
                     ".Width-Slider": {
                         "display": "none !important",
                     },  # do not hide aspect ratio dropdown, that is needed for export
-                },
-                ".NotesView": {
-                    "display": "none !important",
                 },
             },
             "<#ipython-main-app .SlidesWrapper .output_scroll": {  # For classic Notebook output
