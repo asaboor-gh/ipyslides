@@ -20,17 +20,17 @@ function hideLaser(box, cursor) {
     cursor.style.display = 'none'; // hide in place
     box.onmousemove = null;
 }
-
-function getBboxScreenPixels(box) {
-    let bbox = box.getBoundingClientRect();
-    let dpr = window.devicePixelRatio
-    let left = (window.screenX + bbox.left)*dpr
-    let top = (window.screenY + bbox.top)*dpr
-    let right = (window.screenX + bbox.right)*dpr 
-    let bottom = (window.screenY + bbox.bottom)*dpr
-    let out_str = "L:" + left + ",T:" + top + ",R:" + right + ",B:" + bottom
-    console.log(out_str) // Not giving correct values, take screenshot in javascript and send data to python I think, to work everywhere
-}
+// I don't know why it does not work, specially in case of left, right
+// function getBboxScreenPixels(box) {
+//     let bbox = box.getBoundingClientRect();
+//     let dpr = window.devicePixelRatio
+//     let left = (window.screenX + bbox.left + window.outerWidth - window.innerWidth)*dpr
+//     let top = (window.screenY + bbox.top + window.outerHeight - window.innerHeight)*dpr
+//     let right = left + bbox.width*dpr 
+//     let bottom = top + bbox.height*dpr
+//     let out_str = "L:" + left + ",T:" + top + ",R:" + right + ",B:" + bottom
+//     console.log(out_str) // Not giving correct values, take screenshot in javascript and send data to python I think, to work everywhere
+// }
 
 function touchSwiper(box, model){
             let startX = 0;
@@ -72,7 +72,6 @@ function keyboardEvents(box,model) {
             e.preventDefault();
             let key = e.keyCode;
             let message = '';
-            getBboxScreenPixels(box);
             if (key === 88 || key === 68) {
                 alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
                 e.stopPropagation(); // stop propagation to jupyterlab events
