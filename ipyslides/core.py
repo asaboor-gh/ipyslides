@@ -742,6 +742,7 @@ class Slides(BaseSlides):
             )
 
             self._switch_slide(old_index=change["old"], new_index=change["new"])
+            self.widgets.iw.msg_tojs = f'PBW:{self.progress_slider.value}' # Updates progressbar
             self.current.run_on_load()  # Run on_load setup after switching slide, it updates footer as well
 
     def refresh(self):
@@ -772,6 +773,7 @@ class Slides(BaseSlides):
 
         self._update_dynamic_content(None)  # Update dynamic content including widgets
         self._update_toc()  # Update table of content if any
+        self.widgets.iw.msg_tojs = f'PBW:{self.progress_slider.value}' # Updates progressbar
 
         # This is useful for readily available objects with slides instead of indexing.
         old_links = getattr(self, "_links_dict", {})

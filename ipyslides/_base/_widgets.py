@@ -23,6 +23,7 @@ class InteractionWidget(anywidget.AnyWidget):
         self._toggles = _widgets.toggles
         self._buttons = _widgets.buttons
         self._checks = _widgets.checks
+        self._prog = _widgets.sliders.progress
 
     @traitlets.observe("msg_topy")
     def _see_changes(self, change):
@@ -49,10 +50,15 @@ class InteractionWidget(anywidget.AnyWidget):
             self._toggles.window.disabled = True
             self._toggles.window.layout.display = 'none'
         elif msg == 'LOADED':
+            self.msg_tojs = f'PBW:{self._prog.value}' # Updates progressbar
             if self._checks.notes.value: # Notes window already there
                self._checks.notes.value = False # closes unlinked window
                self._checks.notes.value = True # opens new linked window
-
+        elif msg in ('FS','!FS'): # This is to make sure visual state of button and slides are correct
+            if msg == 'FS':
+                self._toggles.fscreen.icon = 'minus'
+            else:
+                self._toggles.fscreen.icon = 'plus'
 
         self.msg_topy = "" # Reset for successive simliar changes
     

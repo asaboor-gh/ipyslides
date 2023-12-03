@@ -57,6 +57,7 @@ class LayoutSettings:
         self.width_slider.observe(self._update_size, names=["value"])
         self.btn_window.observe(self._toggle_viewport, names=["value"])
         self.btn_fscreen.observe(self._toggle_fullscreen, names=["value"])
+        self.btn_fscreen.observe(self._on_icon_change, names=["icon"])
         self.btn_zoom.observe(self._push_zoom, names=["value"])
         self.btn_laser.observe(self._toggle_laser, names=["value"])
         self.reflow_check.observe(self._update_theme, names=["value"])
@@ -424,14 +425,14 @@ class LayoutSettings:
         self._update_theme(change=None)  # For updating size and breakpoints
 
     def _toggle_fullscreen(self, change):
-        self.widgets.iw.msg_tojs = 'TFS'
-        if self.btn_fscreen.value:
-            self.btn_fscreen.icon = "minus"
-            self.widgets.mainbox.add_class("FullScreen")
-        else:
-            self.btn_fscreen.icon = "plus"
-            self.widgets.mainbox.remove_class("FullScreen")
+        self.widgets.iw.msg_tojs = 'TFS' # goes to js, toggle fullscreen and chnage icon of button
 
+    def _on_icon_change(self, change): # icon will changes when Javscript sends a message
+        if change.new == 'minus':
+            self.widgets.mainbox.add_class('FullScreen')
+        else:
+            self.widgets.mainbox.remove_class('FullScreen')
+        
     def _toggle_laser(self, change):
         self.widgets.iw.msg_tojs = 'TLSR'
         if self.btn_laser.value:

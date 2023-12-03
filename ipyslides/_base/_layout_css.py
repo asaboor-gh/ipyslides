@@ -63,6 +63,31 @@ def layout_css(breakpoint, accent_color):
                     "animation-delay": "60s",  # Beet at 60 seconds if left on slide
                     "animation-iteration-count": "10",  # 10 times to catch attention of speaker
                 },
+                ".Toast" : {
+                    "position":"absolute",
+                    "right":"4px", # top is made for animation via javascript
+                    "top": "-120px", # Hides on load
+                    "max-width":"50%",
+                    "min-width":"300px",
+                    "min-height":"100px",
+                    "max-height":"50%",
+                    "z-index":"10000",
+                    "border-radius": "8px",
+                    "padding":"8px",
+                    "overflow":"auto",
+                    "backdrop-filter": "blur(20px)",
+                    "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
+                    "border-image": "linear-gradient(to bottom,rgba(0,0,0,0) 0, rgba(0,0,0,0) 10%, var(--accent-color) 10% , var(--accent-color) 90%, rgba(0,0,0,0) 90%, rgba(0,0,0,0) 100%) 1/ 0 0 0 3px",
+                    "> button": {
+                        "position":"absolute",
+                        "right":"4px",
+                        "top":"4px",
+                        "border":"none",
+                        "background":"none",
+                        "border-radius":"50%",
+                        "font-size":"20px",
+                    },
+                },
                 ".Loading": {
                     "position": "absolute",
                     "left": "50%",
@@ -253,33 +278,12 @@ def layout_css(breakpoint, accent_color):
             },
             ".NavWrapper": {
                 "max-width": "100% !important",
+                "padding-bottom": "4px !important",
                 "^,^ > div": {
                     "padding": "0px",
                     "margin": "0px",
                     "overflow": "hidden",
                     "max-width": "100%",
-                },
-                ".progress": {
-                    "width": "100% !important",
-                    "transform": "translate(-2px,1px) !important",
-                    "background": "var(--secondary-bg) !important",
-                    ".progress-bar": {"background": "var(--accent-color) !important"},
-                    "^, .progress-bar": {
-                        "border-radius": "0px",
-                        "margin": "0px",
-                        "padding": "0px",
-                        "height": "4px !important",
-                        "overflow": "hidden",
-                        "left": "0px",
-                        "bottom": "0px",
-                    },
-                },
-                ".widget-hprogress": {
-                    "height": "3px !important",  # slimmer progress bar
-                    "padding": "0px !important",  # Avoid ugly space
-                    ".widget-inline-hbox": {
-                        "margin": "0px !important",
-                    },  # To avoid bottom ugly space
                 },
                 ".NavBox": {
                     "z-index": "2",

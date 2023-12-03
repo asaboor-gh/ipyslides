@@ -46,9 +46,10 @@ class BaseSlides:
     def settings(self):
         return self.__settings
     
-    def notify(self,content,title='IPySlides Notification',timeout=5):
-        "Send inside notifications for user to know whats happened on some button click. Set `title = None` if need only content. Remain invisible in screenshot."
-        return self.widgets._push_toast(content,title=title,timeout=timeout)
+    def notify(self,content,timeout=5):
+        "Send inside notifications for user to know whats happened on some button click. Remain invisible in screenshot."
+        if self.widgets.checks.toast.value:
+            return self.widgets._push_toast(content,timeout=timeout)
     
     def __toggle_notify(self,change):
         "Blocks notifications if check is not enabled."

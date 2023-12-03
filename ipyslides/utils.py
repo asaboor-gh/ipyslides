@@ -298,6 +298,8 @@ def __check_pil_image(data):
         return im_bytes.getvalue()
     return data # if not return back data
 
+_fig_style_inline = "margin-block:0.5em;margin-inline:0.5em" # its 40px by defualt, ruins space, not working in CSS outside
+
 def image(data=None,width='80%',caption=None, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     You can provide following to `data` parameter:
@@ -312,13 +314,13 @@ def image(data=None,width='80%',caption=None, **kwargs):
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
-    return html('figure', img.value + cap, className='zoom-child')  # Add caption,  XTML + XTML
+    return html('figure', img.value + cap, className='zoom-child', style = _fig_style_inline)  # Add caption,  XTML + XTML
 
 def svg(data=None,width = '80%',caption=None,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
-    style = f'width:{width}px' if isinstance(width,int) else f'width:{width}'
+    style = f'width:{width}px;' if isinstance(width,int) else f'width:{width};' + _fig_style_inline
     return html('figure', svg + cap, className='zoom-child', style=style) # Add caption,  XTML + XTML
 
 

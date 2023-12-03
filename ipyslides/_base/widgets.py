@@ -59,12 +59,10 @@ class _Htmls:
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML()
     tochead = HTML('<h4>Table of Contents</h4><hr/>')
-    toast   = HTML().add_class('Toast') # For notifications
+    toast   = HtmlWidget('').add_class('Toast') # For notifications
     cursor  = HtmlWidget('').add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
-    capture = HTML('<span class="info">Edit above box and hit Enter to see screenshot here. ' 
-                   'If nothing shown, your system does not support taking screenshots with PIL</span>').add_class('CaptureHtml') # Screenshot image here
     intro   = HTML().add_class('SidePanel-Text') # Intro HTML
     glass   = HTML().add_class('BackLayer') # For glass effect
     overlay = HTML().add_class('OverlayHtml') # For adding iframe of things
@@ -107,42 +105,7 @@ class _Dropdowns:
     theme  = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
     clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
     export = ipw.Dropdown(**describe('Export As'),options=['Slides','Report','Select'], value = 'Select')
-    
-
-def _custom_progressbar(intslider):
-    "Retruns a progress bar linked to the slider"
-    intprogress = FloatProgress(min=0, max=100,value=0, layout=Layout(width='100%'))
-    ipw.link((intslider, 'value'), (intprogress, 'value')) # This link enable auto refresh from outside
-    return intprogress
-
-def _notification(content,title='IPySlides Notification',timeout=5):
-    _title = f'<b>🔔 {title}</b><br/>' if title else '' # better for inslides notification
-    return f'''<style>
-        .NotePop {{
-            display:flex;
-            flex-direction:row;
-            border-radius: 4px;
-            padding:8px;
-            width:auto;
-            max-width:400px;
-            height:max-content;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2);
-            animation: popup 0s ease-in {timeout}s;
-            animation-fill-mode: forwards;
-        }}
-        .NotePop > div > b {{color: var(--accent-color); font-size:18px !important;}}
-        .NotePop.NotePop.NotePop.NotePop > div > p {{ border-left: 2px solid var(--accent-color);padding-left:4px;font-size:16px !important;}}
-        @keyframes popup {{
-            to {{
-                visibility:hidden;
-                width:0;
-                height:0;
-            }}
-        }}
-        </style>
-        <div style="position:absolute;left:50%;top:4px;z-index:1000;transform:translateX(-50%);" class="NotePop">
-        <div>{_title}<p>{content}</p></div></div>'''
+        
 
 class Widgets:
     """
@@ -179,9 +142,6 @@ class Widgets:
         self.notes   = NotesWidget(value = 'Notes Preview')
         self.tmp_output = ipw.Output(layout= Layout(height='0',width = '0',margin='0',opacity='0')) # for hodling slide CSS
         
-        # Make the progress bar and link to slides
-        self.progressbar = _custom_progressbar(self.sliders.progress)
-        
         # Layouts build on these widgets
         self.controls = HBox([
             self.buttons.prev,
@@ -200,9 +160,6 @@ class Widgets:
         self.navbox = VBox([
             self.buttons._inview,
             self.footerbox,
-            VBox([
-                self.progressbar
-                ])
         ]).add_class('NavWrapper')   #class is must
         
         _many_btns = [self.buttons.setting, self.toggles.overlay, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh]
@@ -231,8 +188,8 @@ class Widgets:
                                 padding='4px',margin='auto')
                 )],layout=Layout(min_height='120px')),# This ensures no collapse and scrollable Grid
                 self.ddowns.clear,
+                HTML('<span style="font-size:14px;">Set screenshot bounding box (if slides not fullscreen)</span>'),
                 self.inputs.bbox,
-                self.htmls.capture,
                 self.tmp_output,
                 self.notes, # Just to be there for acting on a popup window
                 self.htmls.intro  
@@ -275,9 +232,14 @@ class Widgets:
             btn.layout.min_width = 'max-content' #very important parameter
             btn 
     
-    def _push_toast(self,content,title='IPySlides Notification',timeout=5):
-        "Send inside notifications for user to know whats happened on some button click. Set `title = None` if need only content. Remain invisible in screenshot."
+    def _push_toast(self,content,timeout=5):
+        "Send inside notifications for user to know whats happened on some button click. Remain invisible in screenshot."
         if content and isinstance(content,str):
-            self.htmls.toast.value = '' # Set first to '', otherwise may not trigger for same value again.
-            self.htmls.toast.value = _notification(content=content,title=title,timeout=timeout)
+            to_send = {'content': content}
+            if isinstance(timeout,(int, float)):
+                to_send['timeout'] = int(timeout*1000) # convert to ms
+            elif timeout is not None:
+                raise ValueError(f"timout should be int/float in seconds or None, got {timeout}")
+            
+            self.iw.send(to_send) # Send notification
         

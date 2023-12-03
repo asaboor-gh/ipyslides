@@ -39,8 +39,8 @@ class ScreenShot:
     def __set_bbox(self,change):
         bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]  
         img = self.capture_setup(**{**self.capture_settings(), 'bbox':bbox})
-        self.widgets.htmls.capture.value = img.value # Display it below the input  
-    
+        self.widgets._push_toast(img.value, timeout=20) # needs enough time to see result
+
     @contextmanager
     def capture_mode(self, *additional_widgets_to_hide):
         """Hide some widgets and while capturing a screenshot, show them back again.
@@ -108,8 +108,10 @@ class ScreenShot:
             sleep(0.05) # Just for above clearance of widgets views
             if self.widgets.sliders.progress.label not in self.__images:
                 self.__images[self.widgets.sliders.progress.label] = [] # container to store images
-                
-            self.__images[self.widgets.sliders.progress.label].append(ImageGrab.grab(bbox = self.__capture_settings['bbox'])) # Append to existing list
+            
+            # Keep full image if in fullscreen
+            bbox = None if "FullScreen" in self.widgets.mainbox._dom_classes else self.__capture_settings['bbox']
+            self.__images[self.widgets.sliders.progress.label].append(ImageGrab.grab(bbox = bbox)) # Append to existing list
     
     def __sort_images(self):
         ims = [] #sorting

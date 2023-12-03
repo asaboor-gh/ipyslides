@@ -17,7 +17,7 @@ REQUIRES_PYTHON = '>=3.8'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'markdown', 'markdown-customblocks', 'ipywidgets>=8.0.4', 'pillow>=9.3.0'
+    'markdown', 'markdown-customblocks', 'ipywidgets>=8.0.4', 'pillow>=9.3.0', 'anywidget==0.7.1'
 ]
 
 # What packages are optional?
@@ -93,6 +93,10 @@ setup(
     python_requires = REQUIRES_PYTHON,
     url = URL,
     packages = find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    package_data= {
+        # all .js files at any package depth
+        '': ['**/*.js'],
+    },
     
     # entry_points={
     #     'console_scripts': ['mycli=mymodule:cli'],

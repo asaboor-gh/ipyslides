@@ -81,6 +81,7 @@ function keyboardEvents(box,model) {
                 e.stopPropagation();   // M key
                 return false;
             }  else if (key === 13 || key === 27) {
+                e.stopPropagation();   // Don't let it pass over slides though, still can't hold Shift + Enter
                 return true; // Enter key or Escape key should act properly
             } else if (key === 37 || (e.shiftKey && key === 32)) {
                 message = 'PREV';
@@ -124,8 +125,43 @@ function handleMessage(msg, box, cursor) {
         } else {
             showLaser(box, cursor);
         };
+    } else if (msg.includes("PBW:")) {
+        let w = msg.replace("PBW:","");
+        let color = "var(--accent-color) 0%,  var(--accent-color) " + w + "%, var(--secondary-bg) " + w + "%, var(--secondary-bg) 100%";
+        box.style.borderImage = "linear-gradient(to right," + color + ") 1 / 0  0 3px 0";
     }
 };
+
+function handleChangeFS(box,model){
+    if (box === document.fullscreenElement) {
+        console.log(box);
+        model.set("msg_topy", "FS")
+    } else {
+        model.set("msg_topy", "!FS")
+    };
+    model.save_changes();
+}
+
+function handleToastMessage(toast, msg) {
+    if (msg.content){
+        let timerId = null; // need to revoke previous timer if new notification appears
+        function onClick(){toast.style.top="-120%";toast.innerHTML = "";clearTimeout(timerId);};
+        onClick(); // Clear up previous things
+        let div = document.createElement('div');
+        div.style = "padding:8px;font-size:16px;" // inline fonts are better
+        div.innerHTML = "🔔 <b>Notification</b> <br/>" + msg.content;
+        let btn = document.createElement('button');
+        btn.innerHTML = "✕";
+        btn.onclick = onClick;
+        toast.appendChild(btn);
+        toast.appendChild(div);
+        toast.style.top="4px";
+
+        if (msg.timeout) {
+            timerId = setTimeout(onClick,msg.timeout) // already set to ms in python 
+        }
+    }
+}
 
 
 export function render({ model, el }) {
@@ -147,6 +183,9 @@ export function render({ model, el }) {
         // Touch Events are experimental
         touchSwiper(box, model);
 
+        // Sends a message if fullscreen is changed by some other mechanism
+        box.onfullscreenchange = ()=>{handleChangeFS(box,model)};
+
         // If voila, turn on full viewport
         let loc = window.location.toString()
         if (loc.includes("voila")) {
@@ -162,6 +201,13 @@ export function render({ model, el }) {
             let msg = model.get("msg_tojs");
             if (!msg) {return false}; // empty message, don't waste time
             handleMessage(msg, box, cursor);
+        })
+
+        // Handle notifications
+        model.on("msg:custom", (msg) => {
+            let toast = box.getElementsByClassName('Toast')[0];
+            toast.style = "top:-120%;transition: top 200ms"; // other props in CSS
+            handleToastMessage(toast, msg);
         })
     }  
     el.appendChild(style);
