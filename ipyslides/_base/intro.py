@@ -122,8 +122,8 @@ for k, r in zip("RLUD", [0, 180, -90, 90]):  # clockwise rotation sucks!
     _icons[k] = _Icon("chevron", color="var(--accent-color)", rotation=r)
 
 
-def _key(k):
-    return f'<kbd style="color:var(--secondary-fg);background: var(--secondary-bg); border: 1px solid var(--hover-bg);">{k}</kbd>'
+def _key(k): # other properties in CSS
+    return f'<kbd style="min-width:2em;text-align:center;display:inline-block;">{k}</kbd>'
 
 
 key_maps = {
@@ -137,24 +137,23 @@ key_maps = {
     "V": "Toggle fit to viewport [voila only]",
     "G": "Toggle settings panel",
     "L": "Toggle LASER pointer",
+    "K": "Show keyboard shortcuts",
 }
 
 key_combs = f"""
-::: note-warning "warning"
-    Not every frontend is guaranteed to support keyboard shortcuts. Slides are optimized to use without keyboard and with tocuh screen.
-    
-| Keyboard Shortcuts                                                         | Action                 | 
-|----------------------------------------------------------------------------|------------------------|
-| {_key('&#9141;')} / {_key('▸')} {_icons["R"]}, {_icons["D"]}               | Move to next slide     |
-| {_key('⇧')} + {_key('&#9141;')} / {_key('◂')} {_icons["L"]}, {_icons["U"]} | Move to previous slide |
-| {_key('Z')} {_icons["zoom-in"]}, {_icons["zoom-out"]}                      | {key_maps["Z"]}        |
-| {_key('S')} {_icons["camera"]}                                             | {key_maps["S"]}        |
-| {_key('F')} {_icons["expand"]}, {_icons["compress"]}                       | {key_maps["F"]}        |
-| {_key('Esc')}                                                              | {key_maps["Esc"]}      |
-| {_key('V')} {_icons["win-maximize"]}, {_icons["win-restore"]}              | {key_maps["V"]}        |
-| {_key('G')} {_icons["dots"]}, {_icons["close"]}                            | {key_maps["G"]}        |
-| {_key('L')} {_icons["laser"]}, {_icons["circle"]}                          | {key_maps["L"]}        |
-"""
+| Shortcut                                    | Button                                            | Action                 | 
+|---------------------------------------------|---------------------------------------------------|------------------------|
+| {_key('&#9141;')}/{_key('▸')}               | {_icons["R"]}, {_icons["D"]}                      | Move to next slide     |
+| {_key('⇧')} + {_key('&#9141;')}/{_key('◂')} | {_icons["L"]}, {_icons["U"]}                      | Move to previous slide |
+| {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
+| {_key('S')}                                 | {_icons["camera"]}                                | {key_maps["S"]}        |
+| {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
+| {_key('Esc')}                               |                                                   | {key_maps["Esc"]}      |
+| {_key('V')}                                 | {_icons["win-maximize"]}, {_icons["win-restore"]} | {key_maps["V"]}        |
+| {_key('G')}                                 | {_icons["dots"]}, {_icons["close"]}               | {key_maps["G"]}        |
+| {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
+| {_key('K')}                                 |                                                   | {key_maps["K"]}        |
+""" 
 
 more_instructions = f"""## How to Use
 ::: note-tip
@@ -164,6 +163,9 @@ more_instructions = f"""## How to Use
 
 Having your cursor over slides, you can use follwoing keys/combinations:
 
+::: note-warning "warning"
+    Not every frontend is guaranteed to support keyboard shortcuts. Slides are optimized to use without keyboard and with tocuh screen.
+    
 {key_combs}
 ::: note
     You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.

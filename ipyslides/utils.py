@@ -314,14 +314,14 @@ def image(data=None,width='80%',caption=None, **kwargs):
     _data = __check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
-    return html('figure', img.value + cap, className='zoom-child', style = _fig_style_inline)  # Add caption,  XTML + XTML
+    return html('figure', img.value + cap, className='zoom-child', style = _fig_style_inline)  
 
 def svg(data=None,width = '80%',caption=None,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     style = f'width:{width}px;' if isinstance(width,int) else f'width:{width};' + _fig_style_inline
-    return html('figure', svg + cap, className='zoom-child', style=style) # Add caption,  XTML + XTML
+    return html('figure', svg + cap, className='zoom-child', style=style) 
 
 
 def iframe(src, width='100%',height='auto',**kwargs):

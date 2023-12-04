@@ -2,7 +2,7 @@ from pathlib import Path
 import traitlets
 import sysconfig
 import anywidget
-import ipywidgets as ipw
+from IPython.display import display
 
 
 def _hot_reload_dev_only(file):
@@ -23,6 +23,7 @@ class InteractionWidget(anywidget.AnyWidget):
         self._toggles = _widgets.toggles
         self._buttons = _widgets.buttons
         self._checks = _widgets.checks
+        self._toast_html = _widgets.htmls.toast
         self._prog = _widgets.sliders.progress
 
     @traitlets.observe("msg_topy")
@@ -59,6 +60,8 @@ class InteractionWidget(anywidget.AnyWidget):
                 self._toggles.fscreen.icon = 'minus'
             else:
                 self._toggles.fscreen.icon = 'plus'
+        elif msg == 'KSC':
+            self._toast_html.value = 'KSC'
 
         self.msg_topy = "" # Reset for successive simliar changes
     
@@ -98,13 +101,7 @@ class HtmlWidget(anywidget.AnyWidget):
     
     def display(self):
         "Display this HTML object inline"
-        return display(self)
-    
-    def __add__(self, other):
-        if isinstance(other,HtmlWidget):
-            return HtmlWidget(self.value + other.value)
-        elif isinstance(other,str):
-            return HtmlWidget(self.value + other)
+        return display(self, metadata= {'text/html':self.value}) # metadat to direct display
         
 
 class NotesWidget(anywidget.AnyWidget):

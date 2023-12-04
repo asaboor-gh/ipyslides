@@ -63,7 +63,7 @@ class _Htmls:
     cursor  = HtmlWidget('').add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
-    intro   = HTML().add_class('SidePanel-Text') # Intro HTML
+    intro   = HtmlWidget('',layout = Layout(min_height='100%')).add_class('SidePanel-Text') # Intro HTML
     glass   = HTML().add_class('BackLayer') # For glass effect
     overlay = HTML().add_class('OverlayHtml') # For adding iframe of things
     

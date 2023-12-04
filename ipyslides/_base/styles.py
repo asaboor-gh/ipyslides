@@ -235,11 +235,10 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'h5': {'font-size':'1em'},
             'table': {
                 'border-collapse':'collapse !important',
-                'font-size':'0.95em',
-                'min-width':'auto',
-                'width':'100%',
+                'font-size':'0.85em',
                 'word-break':'break-all',
                 'overflow':'auto',
+                'margin': 'auto', # keep in center
                 'color':'var(--primary-fg)!important',
                 'background':'var(--primary-bg)!important',
                 'border':'1px solid var(--alternate-bg) !important', # Makes it pleasant to view
@@ -462,7 +461,10 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         '.info, .tip, .info *:not(span), .tip *:not(span)' : {'color':'skyblue !important',},
         '.note, .note-info, .note-warning, .note-success, .note-error, .note-tip' : {
             'padding-left': '0.5em',
+            'padding-right': '0.5em',
             'box-sizing': 'border-box',
+            'border-radius': '2px',
+            'border-left': '2px inset var(--accent-color)',
             'margin-top': '0.5em',
             'margin-bottom': '0.7em !important',
             'background': 'var(--alternate-bg)', # Fallback  for Inherit and Custom theme
@@ -471,14 +473,11 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '^::before': {
                 'content': '"📝 Note"',
                 'display':'block',
-                'background': 'var(--secondary-bg)',
                 'color': 'var(--accent-color)',
                 'border-bottom': '1px solid var(--hover-bg)',
-                'padding-left': '0.2em',
-                'margin-left': '-0.5em', # cancel padding effect of container
                 'box-sizing': 'border-box',
             },
-            '^-info::before': {'content': '"ℹ️ Info" !important'},
+            '^-info::before': {'content': '"❇️ Info" !important'},
             '^-warning::before': {'content': '"⚠️ Alert" !important'},
             '^-success::before': {'content': '"✅ Important" !important'},
             '^-error::before': {'content': '"⚡ Danger" !important'},

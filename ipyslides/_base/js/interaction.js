@@ -96,6 +96,8 @@ function keyboardEvents(box,model) {
                 message = 'ZOOM'; // Z 
             } else if (key === 71) { 
                 message = 'TPAN'; // G toggle panel
+            } else if (key === 75) {
+                message = 'KSC'; // K for keyboard shortcuts
             } else if (key === 76) {
                 message = 'TLSR'; // L toggle laser
             } else if (key === 86) {
@@ -144,8 +146,11 @@ function handleChangeFS(box,model){
 
 function handleToastMessage(toast, msg) {
     if (msg.content){
-        let timerId = null; // need to revoke previous timer if new notification appears
-        function onClick(){toast.style.top="-120%";toast.innerHTML = "";clearTimeout(timerId);};
+        function onClick(){
+            clearTimeout(toast.timerId); // clear previous timout even if null
+            toast.style.top="-120%";
+            toast.innerHTML = "";
+        };
         onClick(); // Clear up previous things
         let div = document.createElement('div');
         div.style = "padding:8px;font-size:16px;" // inline fonts are better
@@ -158,7 +163,7 @@ function handleToastMessage(toast, msg) {
         toast.style.top="4px";
 
         if (msg.timeout) {
-            timerId = setTimeout(onClick,msg.timeout) // already set to ms in python 
+            toast.timerId = setTimeout(onClick,msg.timeout) // already set to ms in python 
         }
     }
 }
@@ -204,9 +209,12 @@ export function render({ model, el }) {
         })
 
         // Handle notifications
+
+        let toast = box.getElementsByClassName('Toast')[0]; // Define once
+        toast.style = "top:-120%;transition: top 200ms"; // other props in CSS
+        toast.timerId = null; // Need to auto remove after some time
+
         model.on("msg:custom", (msg) => {
-            let toast = box.getElementsByClassName('Toast')[0];
-            toast.style = "top:-120%;transition: top 200ms"; // other props in CSS
             handleToastMessage(toast, msg);
         })
     }  

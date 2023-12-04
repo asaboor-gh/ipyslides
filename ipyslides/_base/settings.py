@@ -7,12 +7,12 @@ from contextlib import suppress
 import os
 import math
 from IPython import get_ipython
-from IPython.display import display, Image, Javascript
+from IPython.display import Image
 from IPython.utils.capture import capture_output
 
 from ..formatters import fix_ipy_image, code_css
 from ..xmd import parse
-from ..utils import html, details, today, _sub_doc, _css_docstring
+from ..utils import html, today, _sub_doc, _css_docstring
 from . import intro, styles, _layout_css
 
 
@@ -51,6 +51,7 @@ class LayoutSettings:
 
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
         self.widgets.buttons._inview.on_click(self.__block_post_run)
+        self.widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self.theme_dd.observe(self._update_theme, names=["value"])
         self.scale_slider.observe(self._update_theme, names=["value"])
         self.aspect_dd.observe(self._update_size, names=["value"])
@@ -77,9 +78,17 @@ class LayoutSettings:
             w for w in self.widgets.navbox.children if w is not btn
         ]
         dh = getattr(self._slides._display_box, "_DH", None)  # Get display handler
-        self._slides._display_box = None  # Swap display box by just None
+        self._slides._display_box = self._slides.alert("Slides → Linked Output View").as_widget()  # Swap display box by info, still widget to be closable
         if dh is not None:
             dh.update(self._slides._display_box) 
+    
+    def _toast_on_value_change(self, change):
+        if change.new:
+            if change.new == 'KSC': # Keyboard shortcute
+                content = parse(intro.key_combs, display_inline=False)
+                self.widgets._push_toast(content, timeout=15)
+
+            self.widgets.htmls.toast.value = "" # Reset to make a new signal
 
     def _setup(self): 
         # Only add this if in notebook, not in terminal
@@ -89,10 +98,7 @@ class LayoutSettings:
                 with suppress(BaseException):
                     parse(intro.instructions, display_inline=True)
 
-            self.widgets.htmls.intro.value = details(
-                "\n".join(o.data.get("text/html", "") for o in cap.outputs),
-                summary="Instructions",
-            ).value
+            self.widgets.htmls.intro.value = "\n".join(o.data.get("text/html", "") for o in cap.outputs)
             self.widgets.htmls.intro.add_class("Intro")
 
     @property

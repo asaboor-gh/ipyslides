@@ -18,7 +18,7 @@ from ._base._widgets import HtmlWidget
 __reprs__ = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 class XTML(HTML):
     def __init__(self, *args,**kwargs):
-        "This HTML will be diplayable, printable and formatable. Can add other HTML object or string to it."
+        "This HTML will be diplayable, printable and formatable. Use `self.as_widget()` to get a widget with same content."
         super().__init__(*args,**kwargs)
         
     def __format__(self, spec):
@@ -30,12 +30,6 @@ class XTML(HTML):
     def __str__(self):
         return str(self._repr_html_())
     
-    def __add__(self, other):
-        if isinstance(other,XTML):
-            return XTML(self._repr_html_() + other._repr_html_())
-        elif isinstance(other,str):
-            return XTML(self._repr_html_() + other)
-    
     def display(self):
         "Display this HTML object inline"
         display(self)
@@ -44,6 +38,10 @@ class XTML(HTML):
     def value(self):
         "Returns HTML string."
         return self._repr_html_()
+    
+    def as_widget(self):
+        "Returns HtmlWidget with same data."
+        return HtmlWidget(self.value)
         
 
 def plt2html(plt_fig = None,transparent=True,caption=None):
@@ -250,7 +248,7 @@ class Serializer:
                 if type(obj_type) == item['obj']:
                     return item['func']
         # Check instance for ipywidgets.HTML after user defined types
-        elif isinstance(obj_type, ipw.HTML): # Instance here is fine to include subclasses as they will behave same
+        elif isinstance(obj_type, (ipw.HTML, HtmlWidget)): # Instance here is fine to include subclasses as they will behave same
             return self._alt_html
         return None
     
@@ -267,13 +265,13 @@ class Serializer:
         else:
             display(obj)
     
-    def _alt_html(self, ipywidget_html):
+    def _alt_html(self, html_widget):
         """Convert ipywidgets.HTML object to HTML string."""
-        if not isinstance(ipywidget_html,ipw.HTML):
-            raise TypeError(f'w must be ipywidgets.HTML, got {type(ipywidget_html)}')
+        if not isinstance(html_widget,(ipw.HTML, HtmlWidget)):
+            raise TypeError(f"Expects ipywidgets.HTML or ipyslides's HtmlWidget, got {type(html_widget)}")
 
-        className = ' '.join(ipywidget_html._dom_classes) # To keep style of HTML widget, latest as well
-        return f'<div class="{className}">{ipywidget_html.value}</div>' 
+        className = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
+        return f'<div class="{className}">{html_widget.value}</div>' 
     
 
     def unregister(self, obj_type):

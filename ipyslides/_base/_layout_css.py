@@ -63,14 +63,17 @@ def layout_css(breakpoint, accent_color):
                     "animation-delay": "60s",  # Beet at 60 seconds if left on slide
                     "animation-iteration-count": "10",  # 10 times to catch attention of speaker
                 },
+                ".Toast, .TOC, .SidePanel": {
+                    "--text-size": "20px", # Don't need thes to be zoomed in
+                },
                 ".Toast" : {
                     "position":"absolute",
                     "right":"4px", # top is made for animation via javascript
                     "top": "-120px", # Hides on load
-                    "max-width":"50%",
+                    "max-width":"55%",
                     "min-width":"300px",
                     "min-height":"100px",
-                    "max-height":"50%",
+                    "max-height":"65%", # so that a screenshot can show full
                     "z-index":"10000",
                     "border-radius": "8px",
                     "padding":"8px",
@@ -151,6 +154,12 @@ def layout_css(breakpoint, accent_color):
                             "transform": "scale(1.2)",
                         },
                     },
+                },
+                "kbd" : {
+                    "color":"var(--secondary-fg)",
+                    "background": "var(--secondary-bg)",
+                    "border": "1px solid var(--hover-bg)",
+                    "border-radius": "0.2em",
                 },
                 ".export-only": {"display": "none !important"},
                 ".widget-inline-hbox": {
@@ -268,11 +277,13 @@ def layout_css(breakpoint, accent_color):
                     "color": "var(--primary-fg) !important"
                 },  # All widgets text color
                 ".Intro": {
-                    "summary": {
-                        "background": "var(--secondary-bg)",
-                        "padding-left": "0.2em",
-                        "color": "var(--heading-color)",
-                        "font-weight": "bold",
+                    "background": "var(--primary-bg)",
+                    "overflow": "auto",
+                    "border": "1px inset var(--primary-bg)",
+                    "margin-top": "0.5em",
+                    "padding": "0.25em !important",
+                    ":is(h1, h2, h3, h4, h5, h6)": {
+                        "text-align":"left", # Look better left here always
                     },
                 },
             },
@@ -721,10 +732,8 @@ def layout_css(breakpoint, accent_color):
             ".InView-Btn": {
                 "display": "none !important",
             },
-            "<.jp-LinkedOutputView": {
-                ".jp-OutputArea-child": {
-                    "height": "100% !important"
-                },
+            "<.jp-LinkedOutputView > .jp-OutputArea > .jp-OutputArea-child": {
+                "height": "100% !important", # This needs to in same selector order to not effect slide content
                 ".SlidesWrapper, .DisplayBox": {
                     "min-width": "100% !important",
                     "width": "100% !important",
