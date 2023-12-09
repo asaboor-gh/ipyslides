@@ -2,6 +2,13 @@ from .icons import Icon as _Icon, _icons
 
 # ONLY INSTRUCTIONS BELOW
 
+logo_svg = '''<svg width="60px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
+   <path d="M27.5 17.5L40 30L27.5 42.5" stroke="teal"/>
+   <path d="M22.5 32.5L10 20L22.5 7.5" stroke="teal"/>
+   <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
+   <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
+</svg>'''
+
 how_to_ppt = """### Powerpoint Presentation
 - Save all screenshots using `Save PNG` button and go to folder just created.
 - You know the aspect ratio while taking screenshots, if not, read details of any of picture to find it.
@@ -155,7 +162,8 @@ key_combs = f"""
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 
 
-more_instructions = f"""## How to Use
+more_instructions = f"""<div style='position:absolute;right:0;'>{logo_svg}</div>
+## How to Use
 ::: note-tip
     In JupyterLab, right click on the slides and select `Create New View for Output` and follow next there to optimize display.
 
@@ -241,8 +249,3 @@ class CustomSlides(isd.Slides):
             self.widgets.footerbox.layout.visibility = 'hidden'
 ```
 """
-
-logo_svg = """<svg width="60px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="50" fill="var(--accent-color)"/>
-    <text x="50%" y="50%" fill="var(--secondary-bg" font-size="18px" font-weight="bolder" dominant-baseline="central" text-anchor="middle">IPySlides</text>
-</svg>"""

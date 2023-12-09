@@ -249,18 +249,22 @@ class LayoutSettings:
         "Set font scale to increase or decrease text size. 1 is default."
         self.scale_slider.value = font_scale
 
-    def set_logo(self, src, width=80, top=0, right=16):
-        "`src` should be PNG/JPEG file name or SVG string. width,top,right are pixels, should be integer."
+    def set_logo(self, src, width=80, top=0, right=0):
+        "`src` should be PNG/JPEG file name or SVG string. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
+        kwargs = {k:v for k,v in locals().items() if k not in ('self','src')}
+        for k,v in kwargs.items():
+            if isinstance(v, (int,float)):
+                kwargs[k] = f"{v}px"
+
         if isinstance(src, str):
             if "<svg" in src and "</svg>" in src:
                 image = src
             else:
                 image = fix_ipy_image(
                     Image(src, width=width), width=width
-                )  # width both in Image and its fixing
-
-            self.widgets.htmls.logo.value = f"""<div style='position:absolute;right:{right}px;top:{top}px;width:{width}px;height:auto;'>
-                                        {image}</div>"""
+                ).value  
+            self.widgets.htmls.logo.layout = dict(**kwargs, height='max-content')
+            self.widgets.htmls.logo.value = image 
 
     def set_footer(self, text="", numbering=True, date="today"):
         "Set footer text. `text` should be string. `date` should be 'today' or string of date. To skip date, set it to None or ''"

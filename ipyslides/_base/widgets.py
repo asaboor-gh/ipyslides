@@ -57,7 +57,7 @@ class _Htmls:
     main    = HTML(html('style',_layout_css.layout_css('650px', styles.theme_colors['Inherit']['accent_color'])).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
-    logo    = HTML()
+    logo    = HtmlWidget('').add_class('LogoHtml')
     tochead = HTML('<h4>Table of Contents</h4><hr/>')
     toast   = HtmlWidget('').add_class('Toast') # For notifications
     cursor  = HtmlWidget('').add_class('LaserPointer') # For beautiful cursor

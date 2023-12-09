@@ -91,6 +91,7 @@ def layout_css(breakpoint, accent_color):
                         "font-size":"20px",
                     },
                 },
+                ".LogoHtml": {"position": "absolute !important",}, # other properties are set internally
                 ".Loading": {
                     "position": "absolute",
                     "left": "50%",
