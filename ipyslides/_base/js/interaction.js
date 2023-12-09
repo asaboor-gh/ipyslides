@@ -131,6 +131,11 @@ function handleMessage(msg, box, cursor) {
         let w = msg.replace("PBW:","");
         let color = "var(--accent-color) 0%,  var(--accent-color) " + w + "%, var(--secondary-bg) " + w + "%, var(--secondary-bg) 100%";
         box.style.borderImage = "linear-gradient(to right," + color + ") 1 / 0  0 3px 0";
+    } else if (msg.includes("THEME:")) {
+        let theme = msg.replace("THEME:","");
+        let container = box.getElementsByClassName("Draw-Widget")[0].getElementsByClassName("tl-container")[0];
+        container.classList.remove((theme === "light") ? "tl-theme__dark" : "tl-theme__light")
+        container.classList.add("tl-theme__" + theme)
     }
 };
 
@@ -154,10 +159,7 @@ function handleToastMessage(toast, msg) {
         onClick(); // Clear up previous things
         let div = document.createElement('div');
         div.style = "padding:8px;font-size:16px;" // inline fonts are better
-        let logo = `<svg height="2em" viewBox="0 0 400 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
-        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/><text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:2em;font-weight:bold;">Notification</text>
-        <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/><path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/></svg>`
-        div.innerHTML = logo + "<br/>" + msg.content;
+        div.innerHTML = msg.content;
         let btn = document.createElement('button');
         btn.innerHTML = "✕";
         btn.onclick = onClick;
@@ -220,6 +222,16 @@ export function render({ model, el }) {
         model.on("msg:custom", (msg) => {
             handleToastMessage(toast, msg);
         })
+
+        // Reset size of drawing board instead of provided by widget
+        let drawing = box.getElementsByClassName('Draw-Widget')[0];
+        // Let all keys work here but don't go further up and avoid navigation of slides too.
+        drawing.onkeydown = (e) => {e.stopPropagation();} 
+        
+        for (let c of drawing.childNodes) {
+            c.style.width = '100%';
+            c.style.height = '100%';
+        }
     }  
     el.appendChild(style);
     model.set("msg_topy", "LOADED"); // to run onload functionality

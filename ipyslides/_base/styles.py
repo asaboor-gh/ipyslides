@@ -191,7 +191,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'font-size':'var(--text-size) !important',
             'background':'var(--primary-bg)',
             'max-width':'100vw', # This is very important
-            '^, *':{ 
+            '^, *:not(.tl-container):not(.tlui-icon):not(.tlui-button)':{ 
                 'color':'var(--primary-fg)',
                 'scrollbar-width':'thin', # FireFox <3
                 'scrollbar-color':'var(--alternate-bg) transparent',

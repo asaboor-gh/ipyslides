@@ -5,10 +5,11 @@ and then provided to other classes via composition, not inheritance.
 import os
 from dataclasses import dataclass
 import ipywidgets as ipw
-from IPython.display import display, Javascript
-from ipywidgets import HTML, FloatProgress, VBox, HBox, Box, GridBox, Layout, Button
+from ipywidgets import HTML, VBox, HBox, Box, GridBox, Layout, Button
+from tldraw import TldrawWidget
 from . import styles, _layout_css
 from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
+from .intro import get_logo
 from ..utils import html
 
 
@@ -44,7 +45,7 @@ class _Toggles:
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
     laser   = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn') 
-    overlay = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Overlay Panel').add_class('Overlay-Btn')          
+    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Drawing Panel').add_class('Draw-Btn')          
         
 
 @dataclass(frozen=True)
@@ -65,7 +66,6 @@ class _Htmls:
     zoom    = HTML() # zoom CSS, do not add here!
     intro   = HtmlWidget('',layout = Layout(min_height='100%')).add_class('SidePanel-Text') # Intro HTML
     glass   = HTML().add_class('BackLayer') # For glass effect
-    overlay = HTML().add_class('OverlayHtml') # For adding iframe of things
     
 @dataclass(frozen=True)
 class _Inputs:
@@ -140,6 +140,8 @@ class Widgets:
         self.ddowns  = _Dropdowns()
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
+        self.drawer  = TldrawWidget().add_class('Draw-Widget')
+        self.drawer.layout = dict(width='100%',height='0px') # heght will be chnaged by button
         self.tmp_output = ipw.Output(layout= Layout(height='0',width = '0',margin='0',opacity='0')) # for hodling slide CSS
         
         # Layouts build on these widgets
@@ -162,7 +164,7 @@ class Widgets:
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
         
-        _many_btns = [self.buttons.setting, self.toggles.overlay, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh]
+        _many_btns = [self.buttons.setting, self.toggles.draw, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh]
         self.panelbox = VBox([
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
@@ -222,7 +224,7 @@ class Widgets:
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.sliders.visible,
-            self.htmls.overlay, 
+            self.drawer, 
             self.navbox, # Navbox should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*self.ddowns.aspect.value)}vw',margin='auto')
         ).add_class('SlidesWrapper')  #Very Important to add this class
@@ -235,7 +237,7 @@ class Widgets:
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Remain invisible in screenshot."
         if content and isinstance(content,str):
-            to_send = {'content': content}
+            to_send = {'content': get_logo("2em","Notification") + content}
             if isinstance(timeout,(int, float)):
                 to_send['timeout'] = int(timeout*1000) # convert to ms
             elif timeout is not None:

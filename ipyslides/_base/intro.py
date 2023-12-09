@@ -2,11 +2,16 @@ from .icons import Icon as _Icon, _icons
 
 # ONLY INSTRUCTIONS BELOW
 
-logo_svg = '''<svg width="60px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
-   <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
-   <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
-   <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
-</svg>'''
+def get_logo(height="60px", text = None):
+    width = 250 if text else 50
+    V = text if isinstance(text, str) else ''
+    return f'''<svg height="{height}" viewBox="0 0 {width} 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
+        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
+        <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
+        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
+        <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;">{V}</text>
+    </svg>'''
+
 
 how_to_ppt = """### Powerpoint Presentation
 - Save all screenshots using `Save PNG` button and go to folder just created.
@@ -161,8 +166,7 @@ key_combs = f"""
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 
 
-more_instructions = f"""<div style='position:absolute;right:0;'>{logo_svg}</div>
-## How to Use
+more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
     In JupyterLab, right click on the slides and select `Create New View for Output` and follow next there to optimize display.
 

@@ -17,7 +17,7 @@ from . import utils
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
 from ._base.base import BaseSlides
-from ._base.intro import logo_svg, key_combs
+from ._base.intro import get_logo, key_combs
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__
@@ -181,7 +181,6 @@ class Slides(BaseSlides):
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
         self._display_box = None  # Initialize
-        self.set_overlay_url(url=None)  # Set overlay url for initial information
         self._remove_post_run_callback()  # Remove post_run_cell callback at end of init, otherwise it appears during import
 
     @contextmanager
@@ -336,9 +335,9 @@ class Slides(BaseSlides):
         return getattr(self, "_in_dproxy", None)
 
     @property
-    def overlay_button(self):
-        "Get overlay button to reveal overlay easily from slide. Like opeing a drawer/demo notebook etc."
-        return self.widgets.toggles.overlay
+    def draw_button(self):
+        "Get a button to reveal drawing board easily from slide. Like it lets you remeber to draw now."
+        return self.widgets.toggles.draw
 
     def verify_running(self, error_msg=""):
         "Verify if slide is being built, otherwise raise error."
@@ -1156,56 +1155,6 @@ class Slides(BaseSlides):
 
         return auto(get_next_number, self.title, slide, frames, from_markdown)
 
-    def set_overlay_url(self, url=None):
-        """Sets url in a persistent overlay iframe. Useful to load external sites like drawing pads or even files on jupyter/localhost server.
-        You can load a notebook file there by passing url like `http://localhost:{port}{server}{path/to/file.ipynb}`.
-
-        > Some sites may not allow loading inside an iframe.
-
-        You can find open source drawing programs online to use here, or install e.g. `jupyterlab-drawio` extension to load in iframe.
-        """
-        if url and isinstance(url, str):
-            if not url.strip():
-                raise ValueError("Empty string is not a valid url")
-
-            if not os.path.isfile(url):
-                from urllib.parse import urlparse
-
-                scheme, netloc, path, *others = urlparse(
-                    url
-                )  # to check if it is a valid url/filepath
-                if not all([scheme, netloc or path]):
-                    raise ValueError(f"Invalid url: {url!r}")
-
-            _html = self.html(
-                "div", [self.html("span", url), self.iframe(url, height="100%")]
-            )
-            self.widgets.htmls.overlay.value = _html.value
-
-            if self._called_from_notenook("set_overlay_url") and not getattr(
-                self.current, "_on_load", None
-            ):
-                self.overlay_button.value = True  # Do not open panel during presentation by on_load function, otherwise immediately open it
-
-        elif url is None:
-            _html = self.html(
-                "div",
-                [
-                    self.html("span", "About this overlay"),
-                    self.html(
-                        "div",
-                        [self.doc(self.set_overlay_url, "Slides")],
-                        className="block",
-                    ),
-                ],
-            )
-            self.widgets.htmls.overlay.value = (
-                _html.value
-            )  # Set overlay to blank and give docs info
-        else:
-            raise TypeError(f"url must be a valide string or None, got {url!r}")
-
-
 # Make available as Singleton Slides
 _private_instance = Slides()  # Singleton in use namespace
 # This is overwritten below to just have a singleton
@@ -1245,7 +1194,7 @@ class Slides:
         content_width="90%",
         short_title='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
         date="today",
-        logo_src=logo_svg,
+        logo_src=get_logo(),
         font_scale=1,
         text_font="STIX Two Text",
         code_font="var(--jp-code-font-family)",

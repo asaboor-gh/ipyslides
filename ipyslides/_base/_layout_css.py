@@ -246,7 +246,7 @@ def layout_css(breakpoint, accent_color):
                 "^, *": {
                     "box-sizing": "border-box",
                 },
-                "button": {
+                "button:not(.tlui-button)": {
                     "color": "var(--accent-color)!important",
                     "border-radius": "0px",
                     "background": "transparent !important",
@@ -544,7 +544,7 @@ def layout_css(breakpoint, accent_color):
                     "color": "var(--primary-fg) !important",
                 },
             },
-            ".OverlayHtml": {
+            ".Draw-Widget": {
                 "backdrop-filter": "blur(50px)",
                 "margin": 0,
                 "z-index": 6,
@@ -555,38 +555,13 @@ def layout_css(breakpoint, accent_color):
                     "left": "0",
                     "top": "0",
                     "width": "100%",
+                    "height": "100%",
                     "box-sizing": "border-box",
                 },
                 "> div": {
+                    "width": "100% !important", # inner div issue, override
                     "height": "100% !important",
-                },  # Do not set height for .OverlayHtml, it is done by widgets
-                ".widget-html-content > div": {
-                    "> span": {
-                        "height": "32px !important",
-                        "overflow": "hidden !important",
-                        "position": "absolute",
-                        "top": 0,
-                        "padding-left": "36px !important",
-                        "padding-right": "8px",
-                        "padding-top": "2px !important",
-                        "color": "var(--secondary-fg)",
-                        "background": "var(--secondary-bg) !important",
-                        "font-size": "18px",
-                        "border": "1px solid var(--hover-bg)",
-                        "border-bottom": "none",
-                        "border-radius": "0.4em 0.4em 0 0",
-                    },
-                    "> iframe, > .block": {
-                        "position": "absolute",
-                        "top": "32px !important",
-                        "height": "calc(100% - 32px) !important",
-                    },
-                    "> .block": {
-                        "^, .docs": {
-                            "overflow": "scroll !important",
-                        },
-                    },
-                },
+                },  
             },
             ".Arrows": {
                 ".fa.fa-chevron-left": Icon(
@@ -610,7 +585,7 @@ def layout_css(breakpoint, accent_color):
                 ".fa.fa-plus": Icon("bars", color=accent_color, size=_icons_size).css,
                 ".fa.fa-minus": Icon("close", color=accent_color, size=_icons_size).css,
             },
-            ".Overlay-Btn": {
+            ".Draw-Btn": {
                 ".fa.fa-plus": Icon(
                     "pencil", color=accent_color, size=_icons_size, rotation=45
                 ).css,

@@ -1,6 +1,7 @@
 # For Binder
 
 anywidget==0.7.1
+tldraw==2.0.2
 ipython>=8.7
 jupyterlab>=3.5.2
 markdown

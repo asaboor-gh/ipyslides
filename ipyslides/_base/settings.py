@@ -45,7 +45,7 @@ class LayoutSettings:
         self.btn_fscreen = self.widgets.toggles.fscreen
         self.btn_zoom = self.widgets.toggles.zoom
         self.btn_laser = self.widgets.toggles.laser
-        self.btn_overlay = self.widgets.toggles.overlay
+        self.btn_draw = self.widgets.toggles.draw
         self.box = self.widgets.panelbox
         self._setup()  # Fix up and start up things
 
@@ -62,7 +62,7 @@ class LayoutSettings:
         self.btn_zoom.observe(self._push_zoom, names=["value"])
         self.btn_laser.observe(self._toggle_laser, names=["value"])
         self.reflow_check.observe(self._update_theme, names=["value"])
-        self.btn_overlay.observe(self._toggle_overlay, names=["value"])
+        self.btn_draw.observe(self._toggle_overlay, names=["value"])
         self.widgets.checks.postrun.observe(self._set_show_always, names=["value"])
         self.widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self.widgets.checks.proxy.observe(self._toggle_proxy_buttons, names=["value"])
@@ -411,6 +411,9 @@ class LayoutSettings:
         if self.widgets.checks.notes.value:
             self._slides.notes.display() # Update notes window if open
 
+        msg = 'THEME:dark' if "Dark" in self.theme_dd.value else 'THEME:light'
+        self.widgets.iw.msg_tojs = msg # changes theme of board
+
     def _toggle_tocbox(self, btn):
         if self.widgets.tocbox.layout.display == "none":
             self.widgets.tocbox.layout.display = "unset"
@@ -467,14 +470,15 @@ class LayoutSettings:
 
     def _toggle_overlay(self, change):
         _which_disable = [self.btn_laser, self.btn_zoom, self.widgets.buttons.refresh]
-        if self.btn_overlay.value:
-            self.btn_overlay.icon = "minus"
-            self.widgets.htmls.overlay.layout.height = "100%"
+        if self.btn_draw.value:
+            self.btn_draw.icon = "minus"
+            self.widgets.drawer.layout.height = "100%"
             for btn in _which_disable:
                 btn.disabled = True  # Disable all buttons
 
         else:
-            self.btn_overlay.icon = "plus"
-            self.widgets.htmls.overlay.layout.height = "0px"
+            self.btn_draw.icon = "plus"
+            self.widgets.drawer.layout.height = "0px"
+            self.widgets.mainbox.focus() # it doesn't stay their otherwise
             for btn in _which_disable:
                 btn.disabled = False  # Enable all buttons

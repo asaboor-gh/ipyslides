@@ -368,6 +368,9 @@ def html(tag, children = None,className = None,**node_attrs):
     ```python
     html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
     ```
+    
+    ::: note-tip 
+        To keep an image persistently embeded, use `ipyslides.utils.imge` function instead of just an html tag.
     """
     if tag in 'hr/':
         return XTML(f'<hr/>') # Special case for hr

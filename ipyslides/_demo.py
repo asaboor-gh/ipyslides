@@ -5,7 +5,6 @@ import time
 from ipyslides.core import Slides
 from ipyslides.writer import write
 from ipyslides.formatters import libraries, __reprs__, plt2html
-from ipyslides._base.intro import logo_svg
 
 
 slides = Slides() # It reurns running slides instance or creates a new one
@@ -13,7 +12,6 @@ slides = Slides() # It reurns running slides instance or creates a new one
 auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
 
 slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
-slides.settings.set_logo(logo_svg,width=60) # This is by defualt a logo of ipyslides
 slides._citation_mode = 'global' # This could be changed by other functions
 slides.set_citations({
         'pf': 'This is refernce to FigureWidget using `slides.cite` command',
@@ -260,7 +258,7 @@ with auto.slide() as s:
 from IPython.display import YouTubeVideo
 with auto.slide() as ys: # We will use this in next %%magic
     write(f"### Watching Youtube Video?")
-    write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.overlay_button)
+    write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.drawer_button)
     
     write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
     
@@ -268,7 +266,6 @@ with auto.slide() as ys: # We will use this in next %%magic
     def push():
         t = time.localtime()
         slides.notify(f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}')
-        slides.set_overlay_url('https://tldraw.com')
         
     ys.get_source().display() 
     
