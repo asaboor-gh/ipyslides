@@ -154,7 +154,10 @@ function handleToastMessage(toast, msg) {
         onClick(); // Clear up previous things
         let div = document.createElement('div');
         div.style = "padding:8px;font-size:16px;" // inline fonts are better
-        div.innerHTML = "🔔 <b>Notification</b> <br/>" + msg.content;
+        let logo = `<svg height="2em" viewBox="0 0 400 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
+        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/><text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:2em;font-weight:bold;">Notification</text>
+        <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/><path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/></svg>`
+        div.innerHTML = logo + "<br/>" + msg.content;
         let btn = document.createElement('button');
         btn.innerHTML = "✕";
         btn.onclick = onClick;
