@@ -1,4 +1,4 @@
-<svg width="60px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476" style="position:absolute;right:0;top:0;">
+<svg width="60px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
    <path d="M27.5 17.5L40 30L27.5 42.5" stroke="teal"/>
    <path d="M22.5 32.5L10 20L22.5 7.5" stroke="teal"/>
    <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
