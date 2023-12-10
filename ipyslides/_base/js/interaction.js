@@ -135,7 +135,7 @@ function handleMessage(msg, box, cursor) {
         let theme = msg.replace("THEME:","");
         let container = box.getElementsByClassName("Draw-Widget")[0].getElementsByClassName("tl-container")[0];
         container.classList.remove((theme === "light") ? "tl-theme__dark" : "tl-theme__light")
-        container.classList.add("tl-theme__" + theme)
+        container.classList.add("tl-theme__" + theme) // worst way to do it, internal frames are changed with CSS
     }
 };
 

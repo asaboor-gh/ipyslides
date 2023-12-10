@@ -562,6 +562,10 @@ def layout_css(breakpoint, accent_color):
                     "width": "100% !important", # inner div issue, override
                     "height": "100% !important",
                 },  
+                'rect.tl-frame__body': { # Due to lack of dark mode in widget
+                    'fill':'var(--primary-bg)',
+                    'stroke':'var(--secondary-bg)',
+                },
             },
             ".Arrows": {
                 ".fa.fa-chevron-left": Icon(
