@@ -182,7 +182,9 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': f'{code_font!r}, "Cascadia Code", "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
                 'font-size':'90% !important',
-            },
+            }, # Define color below at low specificity, otherwise it can overwrite code
+            '*': {'color':'var(--primary-fg)',},
+            '.tl-container, .tlui-icon, .tlui-button': {'color':'unset',},
         },
         '^.SlidesWrapper':{
             'container': 'slides / inline-size',
@@ -191,8 +193,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'font-size':'var(--text-size) !important',
             'background':'var(--primary-bg)',
             'max-width':'100vw', # This is very important
-            '^, *:not(.tl-container):not(.tlui-icon):not(.tlui-button)':{ 
-                'color':'var(--primary-fg)',
+            '^, *':{ 
                 'scrollbar-width':'thin', # FireFox <3
                 'scrollbar-color':'var(--alternate-bg) transparent',
             },

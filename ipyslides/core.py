@@ -509,14 +509,14 @@ class Slides(BaseSlides):
             ):  # self will be built of course at end
                 s.update_display(go_there=False)
 
-    def toc(self, func):
+    def toc(self, func = lambda items: write(['### Table of Contents<hr/>', utils.bullets(items, ordered=True)])): # Markdown gives same output, don't change
         """Decorator to add dynamic table of contents to slides which get updated on each new section and refresh/update_display.
-        `func` should take one argument which is the tuple of sections."""
+        `func` should take one argument which is the tuple of sections. You can call it directly too with  default function, which adds bullet points."""
 
         def fmt_sec(s, _class):
-            return self.html("div",
-                f'<a href="#{s._sec_id}" class="export-only">{s._section}</a><span class="jupyter-only">{s._section}</span>',
-                style = "", className=f"toc-item {_class}")
+            return XTML(f'''<div class="toc-item {_class}">
+                <a href="#{s._sec_id}" class="export-only">{s._section}</a>
+                <span class="jupyter-only">{s._section}</span></div>''')
 
         def _toc_handler():
             sections = []
@@ -530,8 +530,7 @@ class Slides(BaseSlides):
                     sections.append(fmt_sec(slide,"prev"))
 
             if self.running._section:
-                sections.append(fmt_sec(slide,"this"))
-
+                sections.append(fmt_sec(self.running,"this"))
             elif sections:
                 sections[-1] = XTML(
                     sections[-1].value.replace("toc-item prev", "toc-item this")
@@ -681,7 +680,7 @@ class Slides(BaseSlides):
             self.html(
                 "style",
                 f"""{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
-            {uclass} .toc-item {{border-right: 4px solid var(--secondary-bg);}}""",
+            {uclass} .toc-item {{border-right: 4px solid var(--primary-bg);}}""",
             ).display()
 
             if self.screenshot.capturing == False:

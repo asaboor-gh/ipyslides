@@ -398,6 +398,7 @@ def layout_css(breakpoint, accent_color):
                 "position":"absolute",
                 "left": "0",
                 "bottom": "0",
+                "display": "table-column-group !important", # This to avoid collapsing divs
                 "background": "var(--secondary-bg)",
                 "backdrop-filter": " blur(50px)",
                 "margin": "4px 36px",
@@ -415,9 +416,13 @@ def layout_css(breakpoint, accent_color):
                     "justify-content": "space-between",
                     "height": "auto",
                     "width": "auto",
+                    "padding-right": "8px",
+                    "border-right": "4px solid var(--alternate-bg)",
                     "box-sizing": "border-box !important",
                     "^:hover": {
                         "font-weight": "bold",
+                        "border-right": "4px solid var(--alternate-bg)",
+                        "background": "var(--alternate-bg)",
                     },
                 },
                 ".goto-button": {
