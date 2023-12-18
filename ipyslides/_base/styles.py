@@ -283,6 +283,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 }, 
                 '^.next': {'opacity':'0.5',},
             },
+            '.FirstTOC .toc-item.next' : {'opacity':'1',}, # In start, see full as same opacity
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
                 'font-family': f'{code_font!r}, "Cascadia Code","Ubuntu Mono", "SimSun-ExtB", "Courier New" !important', # Should be same in notebook cell
@@ -467,8 +468,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'border-left': '2px inset var(--accent-color)',
             'margin-top': '0.5em',
             'margin-bottom': '0.7em !important',
-            'background': 'var(--alternate-bg)', # Fallback  for Inherit and Custom theme
-            '+background': f'rgba({light-16},{light-10},{light-10},0.75)',
+            'background': ('var(--alternate-bg)',f'rgba({light-16},{light-10},{light-10},0.75)'), # Fallback  for Inherit and Custom theme
             '^.admonition > .admonition-title': {'display':'none !important'}, # Remove admonition title
             '^::before': {
                 'content': '"📝 Note"',
@@ -491,38 +491,31 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'background': 'var(--secondary-bg)', # Fallback  for Inherit and Custom theme
             },
             '^-red' : {
-                'border-top': '3px solid red', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, 0, 0)',
+                'border-top': ('3px solid red',f'3px solid rgb({light}, 0, 0)'), # Fallback  for Inherit and Custom theme
                 'background':f'rgba({light},{light - 20},{light - 20},0.75)',
             },
             '^-green' : {
-                'border-top': '3px solid green', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb(0, {light}, 0)',
+                'border-top': ('3px solid green',f'3px solid rgb(0, {light}, 0)'), # Fallback  for Inherit and Custom theme
                 'background':f'rgba({light - 20},{light},{light - 20},0.75)',
             },
             '^-blue' : {
-                'border-top': '3px solid blue', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb(0,0,{light})',
+                'border-top': ('3px solid blue',f'3px solid rgb(0,0,{light})'), # Fallback  for Inherit and Custom theme
                 'background':f'rgba({light -20},{light - 20},{light},0.75)',
             },
             '^-yellow' : {
-                'border-top': '3px solid yellow', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, {light}, 0)',
+                'border-top': ('3px solid yellow',f'3px solid rgb({light}, {light}, 0)'), # Fallback  for Inherit and Custom theme
                 'background': f'rgba({light},{light},{light - 20},0.75)',
             },
             '^-magenta' : {
-                'border-top': '3px solid magenta', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light}, 0, {light})',
+                'border-top': ('3px solid magenta',f'3px solid rgb({light}, 0, {light})'), # Fallback  for Inherit and Custom theme
                 'background':f'rgba({light},{light - 20},{light},0.75)',
             },
             '^-cyan' : {
-                'border-top': '3px solid cyan', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb(0, {light}, {light})',
+                'border-top': ('3px solid cyan',f'3px solid rgb(0, {light}, {light})'), # Fallback  for Inherit and Custom theme
                 'background':f'rgba({light -20},{light},{light},0.75)',
             },
             '^-gray' : {
-                'border-top': '3px solid gray', # Fallback  for Inherit and Custom theme
-                '+border-top': f'3px solid rgb({light - 10}, {light - 10}, {light - 10})',
+                'border-top': ('3px solid gray', f'3px solid rgb({light - 10}, {light - 10}, {light - 10})'),# Fallback  for Inherit and Custom theme
                 'background':f'rgba({light -20},{light - 20},{light - 20},0.75)',
             },
         },

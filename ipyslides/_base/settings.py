@@ -415,11 +415,15 @@ class LayoutSettings:
         self.widgets.iw.msg_tojs = msg # changes theme of board
 
     def _toggle_tocbox(self, btn):
-        if self.widgets.tocbox.layout.display == "none":
-            self.widgets.tocbox.layout.display = "unset"
+        if self.widgets.tocbox.layout.height == "0":
+            self.widgets.tocbox.layout.height = "calc(100% - 8px)"
+            self.widgets.tocbox.layout.border = "1px solid var(--hover-bg)"
+            self.widgets.tocbox.layout.padding = "0.5em"
             self.widgets.buttons.toc.icon = "minus"
         else:
-            self.widgets.tocbox.layout.display = "none"
+            self.widgets.tocbox.layout.height = "0"
+            self.widgets.tocbox.layout.border = "none"
+            self.widgets.tocbox.layout.padding = "0"
             self.widgets.buttons.toc.icon = "plus"
 
     def _toggle_viewport(self, change):

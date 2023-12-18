@@ -195,10 +195,10 @@ class Widgets:
                 self.tmp_output,
                 self.notes, # Just to be there for acting on a popup window
                 self.htmls.intro  
-            ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='8px',margin='0')),
-        ],layout = Layout(width='70%',min_width='50%',height='100%',overflow='hidden',display='none')).add_class('SidePanel') 
+            ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='12px',margin='0')),
+        ],layout = Layout(width='70%',min_width='50%',height='0',overflow='hidden')).add_class('SidePanel') 
         
-        self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='100%',overflow='auto',display='none')).add_class('TOC')
+        self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='0',overflow='auto')).add_class('TOC')
         
         self.slidebox = Box([
             # Slides are added here dynamically
@@ -237,7 +237,7 @@ class Widgets:
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Remain invisible in screenshot."
         if content and isinstance(content,str):
-            to_send = {'content': get_logo("2em","Notification") + content}
+            to_send = {'content': get_logo("2em","Notification") + "<br/>" + content}
             if isinstance(timeout,(int, float)):
                 to_send['timeout'] = int(timeout*1000) # convert to ms
             elif timeout is not None:

@@ -10,7 +10,7 @@ from IPython.core.ultratb import FormattedTB
 
 
 from . import styles
-from ..utils import html, color, _format_css, _sub_doc, _css_docstring
+from ..utils import XTML, html, color, _format_css, _sub_doc, _css_docstring
 from ..writer import _fmt_html
 
 class _EmptyCaptured: outputs = [] # Just for initialization
@@ -80,7 +80,8 @@ class DynamicRefresh:
         content = ''
         for out in self.outputs:
             content += _fmt_html(out)
-        return content
+        _class = ' '.join(self._box._dom_classes) # keep styling
+        return f'<div class="{_class}">{content}</div>'
     
     @property
     def metadata(self): return {'DYNAMIC': self._idx} # Important
@@ -283,6 +284,7 @@ class Slide:
         self._citations = {} # Added from Slides
         self._frames = [] # Added from Slides
         self._section = None # Added from Slides
+        self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
         self._proxies = {} # Placeholders added to this slide
         self._dproxies = {} # Dynamic placeholders added to this slide
         self._exportables = {} # Exportable widgets added to this slide
@@ -302,6 +304,8 @@ class Slide:
             dr._btn.add_class('Hidden')
         if isinstance(tag, str): # To keep track what kind of dynamic content it is
             setattr(self, tag, True)
+            if tag == '_toced':
+                setattr(self, '_slide_tocbox',dr._box) # need in refresh
         return display(dr) # This will be handleded by _ipython_display_ method
             
     def _proxy_private(self, text):
@@ -448,7 +452,7 @@ class Slide:
     
     @property
     def css(self):
-        return self._overall_css + self._css # Add overall CSS but self._css should override it
+        return XTML(f'{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
     
     @property
     def index(self):

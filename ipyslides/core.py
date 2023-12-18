@@ -502,10 +502,7 @@ class Slides(BaseSlides):
         self.verify_running("Sections can be added only inside a slide constructor!")
 
         self.running._section = text  # assign before updating toc
-        self.running._sec_id = (
-            f"s-{id(self.running)}"  # Must for enabling links in export
-        )
-
+        
         for s in self[:]:
             if (
                 getattr(s, "_toced", False) and s != self.running
@@ -516,8 +513,10 @@ class Slides(BaseSlides):
         """Decorator to add dynamic table of contents to slides which get updated on each new section and refresh/update_display.
         `func` should take one argument which is the tuple of sections."""
 
-        def fmt_sec(slide):
-            return f'<a href="#{slide._sec_id}" class="export-only">{slide._section}</a><span class="jupyter-only">{slide._section}</span>'
+        def fmt_sec(s, _class):
+            return self.html("div",
+                f'<a href="#{s._sec_id}" class="export-only">{s._section}</a><span class="jupyter-only">{s._section}</span>',
+                style = "", className=f"toc-item {_class}")
 
         def _toc_handler():
             sections = []
@@ -528,21 +527,10 @@ class Slides(BaseSlides):
             )  # Monkey patching index, would work on next run
             for slide in self[:this_index]:
                 if slide._section:
-                    sections.append(
-                        self.html(
-                            "div", fmt_sec(slide), style="", className="toc-item prev"
-                        )
-                    )
+                    sections.append(fmt_sec(slide,"prev"))
 
             if self.running._section:
-                sections.append(
-                    self.html(
-                        "div",
-                        fmt_sec(self.running),
-                        style="",
-                        className="toc-item this",
-                    )
-                )
+                sections.append(fmt_sec(slide,"this"))
 
             elif sections:
                 sections[-1] = XTML(
@@ -551,11 +539,7 @@ class Slides(BaseSlides):
 
             for slide in self[this_index + 1 :]:
                 if slide._section:
-                    sections.append(
-                        self.html(
-                            "div", fmt_sec(slide), style="", className="toc-item next"
-                        )
-                    )
+                    sections.append(fmt_sec(slide,"next"))
 
             return func(tuple(sections))
 
@@ -905,6 +889,7 @@ class Slides(BaseSlides):
 
     def _update_dynamic_content(self, btn=None):
         with self._loading_private(self.widgets.buttons.refresh):
+            first_toc = True
             for slide in self[:]:
                 if any(
                     [
@@ -916,6 +901,16 @@ class Slides(BaseSlides):
                 # Update dynamic content in slide
                 for dp in slide._dproxies.values():
                     dp.update_display()
+                
+                # Take care of first TOC on slides
+                if hasattr(slide, '_slide_tocbox'):
+                    if first_toc:
+                        slide._slide_tocbox.add_class("FirstTOC")
+                        first_toc = False
+                    else:
+                        slide._slide_tocbox.remove_class("FirstTOC")
+                
+                
 
     def frames(self, slide_number, *objs, repeat=False, frame_height="auto"):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.

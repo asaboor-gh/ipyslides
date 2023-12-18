@@ -59,7 +59,7 @@ _css_docstring = """`css_dict` is a nested dict of css selectors and properties.
 - All nested selectors are joined with space, so '.A': {'.B': ... } becomes '.A .B {...}' in CSS.
 - A '^' in start of a selector joins to parent selector without space, so '.A': {'^:hover': ...} becomes '.A:hover {...}' in CSS. You can also use '.A:hover' directly but it will restrict other nested keys to hover only.
 - A '<' in start of a nested selector makes it root selector, so '.A': {'<.B': ...} becomes '.A {}\n.B {...}' in CSS.
-- A '+' in start of a key allows using same key in dict for CSS fallback, so '.A': {'font-size': '20px','+font-size': '2em'} becomes '.A {font-size: 20px; font-size: 2em;}' in CSS.
+- A list/tuple of values for a key in dict generates CSS fallback, so '.A': {'font-size': ('20px','2em')} becomes '.A {font-size: 20px; font-size: 2em;}' in CSS.
 
 Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
 
@@ -69,8 +69,7 @@ Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-
     '.A': { # .A is repeated nowhere! But in CSS it is a lot
         'z-index': '2',
         '.B': {
-            'font-size': '24px',
-            '+font-size': '2em', # Overwrites previous in CSS, note + in start, add many more + for more overwrites
+            'font-size': ('24px','2em'), # fallbacks given as tuple
             '^:hover': {'opacity': '1'}, # Attach pseudo class to parent by prepending ^, or .B:hover works too
         },
         '> div': { # Direct nesting by >
@@ -104,7 +103,7 @@ Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-
 }
 .SlideArea .A .B {
     font-size : 24px;
-    font-size : 2em;
+    font-size : 2em; /* This was second item in tuple in source dictionary*/
 }
 .SlideArea .A .B:hover {
     opacity : 1;
@@ -206,7 +205,7 @@ def _validate_key(key):
     return key
 
 def _build_css(selector, data):
-    "selctor is tuple of string(s), data contains nested dictionaries of selectors, attributes etc."
+    "selector is tuple of string(s), data contains nested dictionaries of selectors, attributes etc."
     content = '\n' # Start with new line so style tag is above it
     children = []
     attributes = []
@@ -215,12 +214,14 @@ def _build_css(selector, data):
         key = _validate_key(key) # Just validate key
         if isinstance(value, dict):
             children.append( (key, value) )
-        else:
+        elif isinstance(value, (list, tuple)): # Fallbacks
+            for item in value:
+                attributes.append( (key, item) )
+        else: # str, int, float etc. No need to check. User is responsible for it
             attributes.append( (key, value) )
-
     if attributes:
         content += re.sub(r'\s+\^','', (' '.join(selector) + " {\n").lstrip()) # Join nested tags to parent if it starts with ^
-        content += '\n'.join(f"\t{key.lstrip('+')} : {value};"  for key, value in attributes)  #  + is multiple keys handler
+        content += '\n'.join(f"\t{key} : {value};"  for key, value in attributes)  
         content += "\n}\n"
 
     for key, value in children:
@@ -254,9 +255,9 @@ def _format_css(css_dict, allow_root_attrs = False):
     _all_css = '' # All css
     root_attrs = {k:v for k,v in css_dict.items() if not isinstance(v,dict)}
     if allow_root_attrs:
-        if root_attrs:
-            attrs_str = '\n'.join(f'\t{k} : {v};' for k,v in root_attrs.items())
-            _all_css += f'\n{uclass}.SlidesWrapper, {uclass} .BackLayer .Front {{\n{attrs_str}\n}}' # Set background for slide
+        if root_attrs: # Applies to background mostly
+            _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .BackLayer .Front',), root_attrs)
+
     if root_attrs and not allow_root_attrs:
         print(f'Skipping attributes: \n{root_attrs}\nat root level of css_dict!')
     

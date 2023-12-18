@@ -2,7 +2,7 @@
 
 function setuNotesWindow(notes_win) {
     notes_win.resizeTo(screen.width/2,screen.height/2);
-    notes_win.moveTo(screen.width/4,screen.height*2/5);
+    notes_win.moveTo(0,0); // top left corner
     notes_win.document.title = 'Notes';
     notes_win.document.body.style.background = 'var(--primary-bg)';
     notes_win.document.body.style.color = 'var(--primary-fg)';
@@ -10,7 +10,7 @@ function setuNotesWindow(notes_win) {
 };
 
 function setContent(notes_win, value){
-    if (notes_win) {
+    if (notes_win && !notes_win.closed) { // Close window by user is possible
         function pad(number) {return (number < 10) ? '0' + number : number}
         let date = new Date();
         let out = value + "<hr/><b>⌛ " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + "</b> (at lastest slide switch)";
@@ -31,7 +31,7 @@ export function render({model, el}) {
         } else {
             if (notes_win) {
                 notes_win.close();
-                notes_win= null;
+                notes_win = null;
             };
         }
     })

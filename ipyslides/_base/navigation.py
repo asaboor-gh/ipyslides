@@ -55,12 +55,12 @@ class Navigation:
     def _toggle_panel(self,change):
         if self.btn_settings.icon == 'plus':
             self.btn_settings.icon  = 'minus'
-            self.widgets.panelbox.layout.display = 'flex'
+            self.widgets.panelbox.layout.height = "100%"
             self.btn_next.disabled = True
             self.btn_prev.disabled = True
         else:
             self.btn_settings.icon = 'plus' #'ellipsis-v'
-            self.widgets.panelbox.layout.display = 'none'
+            self.widgets.panelbox.layout.height = "0"
             self.btn_next.disabled = False
             self.btn_prev.disabled = False
             

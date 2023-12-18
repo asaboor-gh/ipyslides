@@ -64,7 +64,7 @@ def layout_css(breakpoint, accent_color):
                     "animation-iteration-count": "10",  # 10 times to catch attention of speaker
                 },
                 ".Toast, .TOC, .SidePanel": {
-                    "--text-size": "20px", # Don't need thes to be zoomed in
+                    "--text-size": "20px", # Don't need these to be zoomed in
                 },
                 ".Toast" : {
                     "position":"absolute",
@@ -204,13 +204,13 @@ def layout_css(breakpoint, accent_color):
                     "background": "var(--alternate-bg)",
                     "position": "absolute",
                     "border": "none",
-                    "padding": "8px !important",
+                    "padding": "0 !important",
                     "width": "60% !important",
                     "z-index": "10",
                     "top": "0px !important",
                     "left": "0px !important",
-                    "height": "100% !important",
-                    "box-shadow": "0 0 4px 4px var(--secondary-bg)",
+                    "transition": "height 400ms ease-in-out",
+                    "border-right" : "2px inset var(--alternate-bg)",
                     f"@media screen and (max-width: {breakpoint})": (
                         _breakpoint_css := {"width": "100% !important"}
                     ),
@@ -395,17 +395,18 @@ def layout_css(breakpoint, accent_color):
                 },
             },
             ".TOC": {  # Table of contents panel
+                "position":"absolute",
+                "left": "0",
+                "bottom": "0",
                 "background": "var(--secondary-bg)",
                 "backdrop-filter": " blur(50px)",
-                "margin": " 4px 36px",
-                "padding": " 0.5em",
+                "margin": "4px 36px",
                 "position": " absolute",
                 "min-width": " 60% !important",
-                "height": " calc(100% - 8px) !important",
-                "box-sizing": "border-box",
-                "z-index": " 8",
-                "border-radius": " 4px",
-                "border": " 1px solid var(--hover-bg)",
+                "box-sizing": "border-box !important",
+                "z-index": "8",
+                "border-radius": "4px",
+                "transition": "height 400ms ease-in-out",
                 f"@media screen and (max-width: {breakpoint})": (
                     _breakpoint_css := {"min-width": "calc(100% - 72px) !important"}
                 ),
@@ -459,11 +460,13 @@ def layout_css(breakpoint, accent_color):
             ".TopBar": {
                 "margin-top": "8px !important",  # Avoid overlap with topbar outside
                 "display": "flex",
-                "overflow": "scroll",
+                "overflow-x": "auto",
+                "overflow-y": "hidden", # hides useless scrollbars
                 "min-height": "36px !important",
                 "align-items": "center !important",
                 "padding-top": "4px !important",
                 "box-sizing": "border-box !important",
+                "^.Inside": {"padding-left": "12px","padding-right": "12px"},
                 "button": {
                     "font-size": "18px !important",
                     "padding-top": "2px !important",
@@ -486,6 +489,7 @@ def layout_css(breakpoint, accent_color):
                 "z-index": "7 !important",  # below matplotlib fullsreen
                 "top": "0 !important",
                 "margin": "0 !important",
+                "overflow": "hidden", # hides scrollbars with single button
                 "min-height": "32px !important",
                 "width": "60px !important",
                 "padding-top": "0 !important",
@@ -493,6 +497,7 @@ def layout_css(breakpoint, accent_color):
                 "^:hover, ^:focus": {
                     "min-height": "32px !important",
                     "width": "60% !important",
+                    "overflow-x": "auto", # Let access all buttons
                     f"@media screen and (max-width: {breakpoint})": (
                         _breakpoint_css := {"width": "calc(100% - 16px) !important"}
                     ),  # There is 8px margin
@@ -685,7 +690,7 @@ def layout_css(breakpoint, accent_color):
                     },
                 },
                 "::-webkit-scrollbar-corner": {
-                    "display": "none",
+                    "display": "none !important",
                 },
                 ".widget-text input": {
                     "background": "var(--primary-bg)",
