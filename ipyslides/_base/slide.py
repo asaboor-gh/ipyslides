@@ -384,7 +384,7 @@ class Slide:
             self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
         else:
             self._widget.clear_output(wait = True) # Clear, but don't go there
-
+    
         with self._widget:
             display(*self.contents)
             for dp in self._dproxies.values(): 
@@ -576,7 +576,14 @@ def _build_slide(app, slide_number_str, is_frameless = True):
     with _slide._capture() as captured:  
         yield _slide
     
-    for k in [p for ps in _slide.contents for p in ps.data.keys()]:
+    def get_keys(data):
+        keys = [k for k in data.keys()] if isinstance(data, dict) else [] # Most _reprs_
+        if isinstance(data, tuple): # _repr_mimebublde_ of widgets
+            for d in data:
+                keys.extend(d.keys())
+        return keys
+    
+    for k in [p for ps in _slide.contents for p in get_keys(ps.data)]:
         if k.startswith('application'): # Widgets in this slide
             _slide._has_widgets = True
             break # No need to check other widgets if one exists

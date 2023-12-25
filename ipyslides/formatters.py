@@ -248,7 +248,7 @@ class Serializer:
                 if type(obj_type) == item['obj']:
                     return item['func']
         # Check instance for ipywidgets.HTML after user defined types
-        elif isinstance(obj_type, (ipw.HTML, HtmlWidget)): # Instance here is fine to include subclasses as they will behave same
+        elif isinstance(obj_type, (ipw.HTML, ipw.HTMLMath, HtmlWidget)): # Instance here is fine to include subclasses as they will behave same
             return self._alt_html
         return None
     
@@ -267,8 +267,8 @@ class Serializer:
     
     def _alt_html(self, html_widget):
         """Convert ipywidgets.HTML object to HTML string."""
-        if not isinstance(html_widget,(ipw.HTML, HtmlWidget)):
-            raise TypeError(f"Expects ipywidgets.HTML or ipyslides's HtmlWidget, got {type(html_widget)}")
+        if not isinstance(html_widget,(ipw.HTML,ipw.HTMLMath,HtmlWidget)):
+            raise TypeError(f"Expects ipywidgets.(HTML/HTMLMath) or ipyslides's HtmlWidget, got {type(html_widget)}")
 
         className = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
         return f'<div class="{className}">{html_widget.value}</div>' 

@@ -3,11 +3,33 @@ Export Slides to HTML report and static HTML slides. It is used by program itsel
 not by end user.
 """
 import os
+import json
 from contextlib import suppress
 from .export_template import doc_css, doc_html, slides_css
 from . import styles
 from ..formatters import code_css
 from ..writer import _fmt_html
+
+manager_state_content = '''<!-- Load RequireJS, used by the IPywidgets for dependency management -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"
+      integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA="
+      crossorigin="anonymous">
+    </script>
+
+    <!-- Load IPywidgets bundle for embedding. -->
+    <script
+      data-jupyter-widgets-cdn="https://unpkg.com/"
+      data-jupyter-widgets-cdn-only
+      src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@*/dist/embed-amd.js"
+      crossorigin="anonymous">
+    </script>
+
+    <!-- The state of all the widget models on the page -->
+    <script type="application/vnd.jupyter.widget-state+json">
+      {manager_state}
+    </script>
+'''
 
 class _HhtmlExporter:
     # Should be used inside Slides class only.
@@ -38,10 +60,12 @@ class _HhtmlExporter:
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
         _code_css = (self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')).replace(f'.{self.main.uid}','') # Remove uid from code css here
         
+        
         return doc_html(_code_css,_style_css, content).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
             '__HEIGHT__', f'{int(254*self.main.settings.aspect_dd.value)}mm').replace( # Slides height is determined by aspect ratio.
             '__VH__', 'auto' if theme_kws['centered'] else '100%') # SLidea Area is 100% height if not centered.
+    
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')
         return f'id="{sec_id}"' if sec_id else ''

@@ -94,6 +94,8 @@ def _fmt_html(output):
         return output.metadata['text/html']
     elif 'text/html' in output.data:
         return output.data['text/html']  
+    elif 'text/latex' in output.data:
+        return output.data['text/latex']
     return ''
 
 class Writer:

@@ -258,7 +258,7 @@ with auto.slide() as s:
 from IPython.display import YouTubeVideo
 with auto.slide() as ys: # We will use this in next %%magic
     write(f"### Watching Youtube Video?")
-    write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.drawer_button)
+    write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.draw_button)
     
     write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
     

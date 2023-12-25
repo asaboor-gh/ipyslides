@@ -908,7 +908,8 @@ class Slides(BaseSlides):
                         first_toc = False
                     else:
                         slide._slide_tocbox.remove_class("FirstTOC")
-                
+        
+        self.notify('Dynamic content updated everywhere!')
                 
 
     def frames(self, slide_number, *objs, repeat=False, frame_height="auto"):

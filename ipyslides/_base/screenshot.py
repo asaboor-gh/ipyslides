@@ -38,7 +38,7 @@ class ScreenShot:
     
     def __set_bbox(self,change):
         bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]  
-        img = self.capture_setup(**{**self.capture_settings(), 'bbox':bbox})
+        img = self.capture_setup(**{**self.capture_settings, 'bbox':bbox})
         self.widgets._push_toast(img.value, timeout=20) # needs enough time to see result
 
     @contextmanager
@@ -88,8 +88,10 @@ class ScreenShot:
         # Display what user sets
         if bbox:
             return image(ImageGrab.grab(bbox=bbox),width='100%')
-            
+
+    @property  
     def capture_settings(self):
+        "See the settings applied for screenshot. Use `self.capture_setup` function to adjust settings."
         return self.__capture_settings    
     
     def __set_resolution(self,image):
@@ -110,7 +112,7 @@ class ScreenShot:
                 self.__images[self.widgets.sliders.progress.label] = [] # container to store images
             
             # Keep full image if in fullscreen
-            bbox = None if "FullScreen" in self.widgets.mainbox._dom_classes else self.__capture_settings['bbox']
+            bbox = None if "FullScreen" in self.widgets.mainbox._dom_classes else self.capture_settings['bbox']
             self.__images[self.widgets.sliders.progress.label].append(ImageGrab.grab(bbox = bbox)) # Append to existing list
     
     def __sort_images(self):
@@ -125,7 +127,7 @@ class ScreenShot:
         ims = self.__sort_images()    
         if ims: # make sure not empty
             self.btn_pdf.description = 'Generatingting PDF...'
-            ims[0].save(filename,'PDF',quality= self.__capture_settings['quality'] ,save_all=True,append_images=ims[1:],
+            ims[0].save(filename,'PDF',quality= self.capture_settings['quality'] ,save_all=True,append_images=ims[1:],
                         resolution=self.__set_resolution(ims[0]),subsampling=0)
             self.btn_pdf.description = 'Save PDF'
             self.widgets._push_toast(f'File "{filename}" is created')
@@ -141,8 +143,8 @@ class ScreenShot:
         for label, _ in self.widgets.sliders.progress.options:
             with self.capture_mode():
                 self.widgets.sliders.progress.label = label # swicth to that slide
-                sleep(self.__capture_settings['load_time']) #keep waiting here until it almost loads 
-                self.__images[label] = [ImageGrab.grab(bbox = self.__capture_settings['bbox']),] # Save image in a list on which we can add others
+                sleep(self.capture_settings['load_time']) #keep waiting here until it almost loads 
+                self.__images[label] = [ImageGrab.grab(bbox = self.capture_settings['bbox']),] # Save image in a list on which we can add others
         
         self.widgets._push_toast("All slides captured. Use Save PDF/Save PNG buttons to save them.") 
          
@@ -164,7 +166,7 @@ class ScreenShot:
         ims = self.images
         if ims:    
             for i,im in enumerate(ims):
-                im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= self.__capture_settings['quality'],subsampling=0,optimize=True)  # Do not lose image quality at least here
+                im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= self.capture_settings['quality'],subsampling=0,optimize=True)  # Do not lose image quality at least here
             md_file = os.path.join(directory,'Make-PPT.md')
             with open(md_file,'w', encoding='utf-8') as f:
                 f.write(intro.how_to_ppt)

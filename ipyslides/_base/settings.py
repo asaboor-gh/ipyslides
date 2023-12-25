@@ -364,6 +364,7 @@ class LayoutSettings:
     @property
     def light(self):
         "Lightness of theme. 20-255. NaN if theme is inherit or custom."
+        self.set_code_style("default", lineno=self._code_lineno) # in any case
         if self.theme_dd.value in ["Inherit", "Custom"]:
             return (
                 math.nan
@@ -375,7 +376,6 @@ class LayoutSettings:
             self.set_code_style("borland", lineno=self._code_lineno)
             return 230
         else:
-            self.set_code_style("default", lineno=self._code_lineno)
             return 250
 
     @property
