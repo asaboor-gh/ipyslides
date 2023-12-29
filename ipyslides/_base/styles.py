@@ -176,7 +176,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .SlideArea': {
-            '*:not(.fa):not(i):not(span):not(pre):not(code):not(.raw-text)': {
+            ':is(p,div,em,b,i,table,img,svg)': {
                 'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
             },
             'code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
@@ -222,6 +222,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             },
             '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
             ':is(h1, h2, h3, h4, h5, h6)': {
+                'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
                 'color':'var(--heading-color)',
                 'text-align':'center' if centered else 'left',
                 'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
@@ -267,14 +268,24 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'padding':'0 0.3em !important',
         },
         '.SlideArea': {
+            'left': '50% !important' if centered else '0 !important',
+            'top': '50% !important' if centered else '0 !important',
+            'transform': 'translate(-50%, -50%) !important' if centered else 'none !important',
             'width':f'{content_width} !important',
+            'height': '100% !important',
             'display':'flex !important',
             'flex-direction':'column !important',
-            'margin':'auto !important' if centered else 'unset !important',
             'align-items': 'center !important' if centered else 'baseline !important', 
             'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
-            'padding' : '0.2em 2em !important',
+            'padding' : '0.2em 1em !important',
             'overflow': 'auto !important',
+            '> .jp-OutputArea': {
+                'margin':'auto !important' if centered else 'unset !important',
+                'padding': '0 !important',
+                'width': '100% !important',
+                'max-width': '100% !important',
+                'box-sizing': 'border-box !important',
+            },
             '.toc-item': { # Table of contents on slides 
                 'border-right':'4px solid var(--secondary-bg)',
                 'padding-right':'2em', # To make distance from the border

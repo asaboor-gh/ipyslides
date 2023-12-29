@@ -482,7 +482,7 @@ class LayoutSettings:
 
         else:
             self.btn_draw.icon = "plus"
-            self.widgets.drawer.layout.height = "0px"
+            self.widgets.drawer.layout.height = "0"
             self.widgets.mainbox.focus() # it doesn't stay their otherwise
             for btn in _which_disable:
                 btn.disabled = False  # Enable all buttons

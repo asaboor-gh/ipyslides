@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass
 import ipywidgets as ipw
 from ipywidgets import HTML, VBox, HBox, Box, GridBox, Layout, Button
+from IPython.display import display
 from tldraw import TldrawWidget
 from . import styles, _layout_css
 from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
@@ -16,6 +17,8 @@ from ..utils import html
 auto_layout =  Layout(width='auto')
 def describe(value): 
     return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
+
+
 @dataclass(frozen=True)
 class _Buttons:
     """
@@ -127,10 +130,17 @@ class Widgets:
         if not os.path.isdir(_dir):
             os.makedirs(_dir)
         return _dir
+    
+    def update_tmp_output(self, *objs):
+        "Used for CSS/animations etc. HTML widget does not work properly."
+        self._tmp_out.clear_output(wait=True)
+        with self._tmp_out:
+            display(*objs)
         
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
         self._notebook_dir = '.' # This will be updated later
+        self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -140,9 +150,8 @@ class Widgets:
         self.ddowns  = _Dropdowns()
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
-        self.drawer  = TldrawWidget().add_class('Draw-Widget')
-        self.drawer.layout = dict(width='100%',height='0px') # heght will be chnaged by button
-        self.tmp_output = ipw.Output(layout= Layout(height='0',width = '0',margin='0',opacity='0')) # for hodling slide CSS
+        self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget')]).add_class('Draw-Wrapper')
+        self.drawer.layout = dict(width='100%',height='0',overflow='hidden') # height will be chnaged by button
         
         # Layouts build on these widgets
         self.controls = HBox([
@@ -192,7 +201,7 @@ class Widgets:
                 self.ddowns.clear,
                 HTML('<span style="font-size:14px;">Set screenshot bounding box (if slides not fullscreen)</span>'),
                 self.inputs.bbox,
-                self.tmp_output,
+                self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
                 self.htmls.intro  
             ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='12px',margin='0')),
@@ -202,7 +211,7 @@ class Widgets:
         
         self.slidebox = Box([
             # Slides are added here dynamically
-        ],layout= Layout(min_width='100%',overflow='auto')).add_class('SlideBox') 
+        ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
         self.mainbox = VBox([
             self.htmls.glass, # This is the glass pane, should be before everything, otherwise it will cover the slide area

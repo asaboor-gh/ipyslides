@@ -114,7 +114,9 @@ def layout_css(breakpoint, accent_color):
                     "display": "none",  # Initial setup. Display will be set using javascript only */
                     "overflow": "hidden !important",  # To hide at edges */
                 },
+                ".SlideBox" : {"overflow":"hidden !important", "box-sizing": "border-box !important"},
                 ".SlideArea": {
+                    "position": "absolute !important",
                     "justify-content": "center",
                     f"@media screen and (max-width: {breakpoint})": (
                         _breakpoint_css := {
@@ -127,6 +129,7 @@ def layout_css(breakpoint, accent_color):
                     ".report-only": {"display": "none !important"},
                     ".jp-OutputArea": {
                         "width": "100% !important",
+                        "height": "auto !important", # This is must for layout
                         "box-sizing": "border-box !important",
                     },  # Otherwise it shrinks small columns
                     _zoom_ables: {
@@ -281,8 +284,8 @@ def layout_css(breakpoint, accent_color):
                     "background": "var(--primary-bg)",
                     "overflow": "auto",
                     "border": "1px inset var(--primary-bg)",
-                    "margin-top": "0.5em",
-                    "padding": "0.25em !important",
+                    "margin-top": "10px",
+                    "padding": "8px !important",
                     ":is(h1, h2, h3, h4, h5, h6)": {
                         "text-align":"left", # Look better left here always
                     },
@@ -553,6 +556,13 @@ def layout_css(breakpoint, accent_color):
                 "^, pre": {
                     "color": "var(--primary-fg) !important",
                 },
+            },
+            ".Draw-Wrapper": { # height is set dynamically
+                "position": "absolute !important",
+                "left": 0,
+                "top":0,
+                "overflow": "hidden !important",
+                "transition": "height 200ms",
             },
             ".Draw-Widget": {
                 "backdrop-filter": "blur(50px)",

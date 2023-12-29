@@ -127,6 +127,17 @@ function handleMessage(msg, box, cursor) {
         } else {
             showLaser(box, cursor);
         };
+
+    } else if (msg === "SwitchView") {
+        let slideNew = box.getElementsByClassName("ShowSlide")[0];
+        slideNew.style.visibility = 'visible';
+
+        let others = box.getElementsByClassName("HideSlide");
+        for (let slide of others) {
+            if (slide.style.visibility === 'visible') {
+                slide.style.visibility = 'hidden';
+            };
+        }
     } else if (msg.includes("PBW:")) {
         let w = msg.replace("PBW:","");
         let color = "var(--accent-color) 0%,  var(--accent-color) " + w + "%, var(--secondary-bg) " + w + "%, var(--secondary-bg) 100%";

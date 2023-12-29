@@ -268,7 +268,7 @@ class Slide:
     _animations = {'main':'flow','frame':'slide_v'}
     _overall_css = html('style','')
     def __init__(self, app, number, captured_output = _EmptyCaptured):
-        self._widget = Output(layout = Layout(height='auto',margin='auto',overflow='auto',padding='0.2em 2em'))
+        self._widget = Output(layout = Layout(margin='auto',overflow='auto',padding='0.2em 1em')).add_class("SlideArea")
         self._app = app
         self._contents = captured_output.outputs
             
@@ -335,7 +335,7 @@ class Slide:
         finally:
             if (t := time.time() - start) < 0.05: # Could not have enought time to resend another event
                 time.sleep(0.05 - t) # Wait at least 50ms, (it does not effect anything else) for the height to change from previous trigger
-            self._widget.layout.height = 'auto' # Reset height to auto
+            self._widget.layout.height = '' # Reset height to auto
         
     def __repr__(self):
         return f'Slide(number = {self._number}, label = {self.label!r}, index = {self._index})'
@@ -395,14 +395,8 @@ class Slide:
                 self._app.write(self.citations)
         
         # Update corresponding CSS but avoid animation here for faster and clean update
-        self._app.widgets.tmp_output.clear_output(wait=False) # Clear last slide CSS
-        with self._app.widgets.tmp_output:
-            self.css.display()
-        
-        # This foreces hard refresh of layout, without it, sometimes CSS is not applied correctly
-        if 'SlideArea' in self._widget._dom_classes: # Only if slide is present there.
-            self._widget.remove_class('SlideArea') 
-            self._widget.add_class('SlideArea')
+        self._app.widgets.update_tmp_output(self.css)
+        self._widget.remove_class('SlideArea').add_class('SlideArea') # Hard refresh
     
     def clear_display(self, wait = False):
         "Clear display of this slide."
@@ -511,9 +505,7 @@ class Slide:
             if self._app._slidelabel != self.label:
                 self._app._slidelabel = self.label # Go there to see effects
             else:
-                self._app.widgets.tmp_output.clear_output(wait = False)
-                with self._app.widgets.tmp_output:
-                    display(self.animation, self._css)
+                self._app.widgets.update_tmp_output(self.animation, self._css)
     
     def _instance_animation(self,name):
         "Create unique animation for this slide instance on fly"
@@ -534,6 +526,8 @@ class Slide:
             self.__class__._animations['frame'] = self._instance_animation(frame)
         else:
             raise KeyError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
+        
+        self._app.widgets.update_tmp_output(self.animation, self.css) # See effect
             
     def set_animation(self, name):
         "Set animation of this slide. Provide None if need to stop animation."
@@ -546,9 +540,7 @@ class Slide:
                 if self._app._slidelabel != self.label:
                     self._app._slidelabel = self.label # Go there to see effects
                 else:
-                    self._app.widgets.tmp_output.clear_output(wait = False)
-                    with self._app.widgets.tmp_output:
-                        display(self.animation, self._css)
+                    self._app.widgets.update_tmp_output(self._animation, self.css)
         else:
             self._animation = None # It should be None, not '' or don't throw error here
        

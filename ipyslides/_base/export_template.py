@@ -93,7 +93,7 @@ a:hover {text-decoration:underline !important;}
 }
 
 .SlidesWrapper h1, .SlidesWrapper h2 {
-	margin-block: 0.2em 0.3em !important; /* need more space for h1 and h2 */
+	margin-block: 0.4em 0.7em !important; /* need more space for h1 and h2 */
 }
 
 
@@ -197,6 +197,10 @@ section .SlideBox {
 }
 section .SlideBox > .Footer > .Progress { display: none !important; }
 section .SlideArea {
+    left: 0 !important;
+    top: 0 !important;
+    transform: none !important;
+    /* Above properties must be overwritten */   
 	height: __VH__ !important;
 	max-height: calc(100vh - 20px) !important; /* 20px for footer */ 
 	box-sizing: border-box;

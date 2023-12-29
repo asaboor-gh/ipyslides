@@ -671,35 +671,30 @@ class Slides(BaseSlides):
             ]  # Get all section indexes before current slide
             return idxs[-1] if idxs else 0  # Get last section index
 
-    def _switch_slide(
-        self, old_index, new_index
-    ):  # this change is provide from _update_content
-        self.widgets.tmp_output.clear_output(wait=False)  # Clear last slide CSS
-        with self.widgets.tmp_output:
-            uclass = f".{self.uid} .TOC"
+    def _switch_slide(self, old_index, new_index):  
+        uclass = f".{self.uid} .TOC"
+        _objs = [
+            self._iterable[new_index].css,
             self.html(
                 "style",
                 f"""{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
             {uclass} .toc-item {{border-right: 4px solid var(--primary-bg);}}""",
-            ).display()
+            )]
 
-            if self.screenshot.capturing == False:
-                self._iterable[new_index].animation.display()
-            self._iterable[new_index].css.display()
+        if self.screenshot.capturing == False:
+            _objs.append(self._iterable[new_index].animation)
+
+        self.widgets.update_tmp_output(*_objs)
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index  # Just safe
 
-        self.widgets.slidebox.children[old_index].layout = ipw.Layout(
-            width="0", height="100%", margin="0", opacity="0"
-        )  # Hide old slide
-        self.widgets.slidebox.children[old_index].remove_class("SlideArea")
-        self.widgets.slidebox.children[new_index].add_class(
-            "SlideArea"
-        )  # First show then set layout
-        self.widgets.slidebox.children[
-            new_index
-        ].layout = ipw.Layout()  # set empty layout, adjusted by CSS
+        self.widgets.slidebox.children[old_index].layout.visibility = 'hidden'
+        self.widgets.slidebox.children[new_index].layout.visibility = 'visible'
+        # Above code can be enforced if does not work in multiwindows
+        self.widgets.slidebox.children[old_index].remove_class("ShowSlide").add_class("HideSlide")
+        self.widgets.slidebox.children[new_index].add_class("ShowSlide").remove_class("HideSlide")
+        self.widgets.iw.msg_tojs = 'SwitchView'
 
     def _update_content(self, change):
         if self.progress_slider.index == 0:  # First slide
@@ -766,6 +761,11 @@ class Slides(BaseSlides):
             if item.label
         }
         self.__dict__.update(self._links_dict)  # Add new links
+
+        if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
+            self.widgets.slidebox.children[0].add_class('ShowSlide')
+
+        self.widgets.iw.msg_tojs = 'SwitchView' # Trigger view
 
     def proxy(self, text):
         """Place a proxy placeholder in your slide and returns it's `handle`. This is useful when you want to update the placeholder later.

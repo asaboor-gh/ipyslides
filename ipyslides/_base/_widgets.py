@@ -55,6 +55,9 @@ class InteractionWidget(anywidget.AnyWidget):
             if self._checks.notes.value: # Notes window already there
                self._checks.notes.value = False # closes unlinked window
                self._checks.notes.value = True # opens new linked window
+
+            self.msg_tojs = 'SwitchView' # Trigger view
+
         elif msg in ('FS','!FS'): # This is to make sure visual state of button and slides are correct
             if msg == 'FS':
                 self._toggles.fscreen.icon = 'minus'
