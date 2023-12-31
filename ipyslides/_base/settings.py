@@ -410,8 +410,11 @@ class LayoutSettings:
         self.widgets.htmls.theme.value = html("style", theme_css).value
         if self.widgets.checks.notes.value:
             self._slides.notes.display() # Update notes window if open
-
-        msg = 'THEME:dark' if "Dark" in self.theme_dd.value else 'THEME:light'
+        
+        if self.theme_dd.value == "Inherit":
+            msg = "THEME:jupyterlab"
+        else:
+            msg = 'THEME:dark' if "Dark" in self.theme_dd.value else 'THEME:light'
         self.widgets.iw.msg_tojs = msg # changes theme of board
 
     def _toggle_tocbox(self, btn):
@@ -475,6 +478,9 @@ class LayoutSettings:
     def _toggle_overlay(self, change):
         _which_disable = [self.btn_laser, self.btn_zoom, self.widgets.buttons.refresh]
         if self.btn_draw.value:
+            if self.theme_dd.value == "Inherit":
+                self.widgets.iw.msg_tojs = "THEME:jupyterlab" # make like that
+
             self.btn_draw.icon = "minus"
             self.widgets.drawer.layout.height = "100%"
             for btn in _which_disable:

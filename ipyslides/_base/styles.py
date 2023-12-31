@@ -271,21 +271,23 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             "position": "relative !important",
             'display': 'flex !important',
             "flex-direction": "column !important",
+            "overflow":"hidden !important", 
+            "box-sizing": "border-box !important",
             **({
                 "align-items": "center !important",
                 "justify-content": "center !important",
             } if centered else { # why above not working for top left alignment as flex-start???
-                "top": "var(--contentTop,0) !important", # TODO: This does not work either with zero, but JS
-                "left": "var(--contentLeft,0) !important",
+                "align-items": "flex-start !important",
+                "justify-content": "flex-start !important",
             }),
 
         },
         '.SlideArea': {
-            'height': '100% !important',
             'position': 'absolute !important',
             'width':'254mm !important',
 	        'height': f'{int(254*aspect_ratio)}mm !important',
-            'transform': 'scale(var(--contentScale,1)) !important', # Set by Javascript 
+            'transform-origin': 'center !important' if centered else 'left top !important',
+            'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
 	        'box-sizing': 'border-box !important',
             'display':'flex !important',
             'flex-direction':'column !important',
@@ -367,7 +369,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'max-width':'100%',
                 'display':'inline-flex',
                 'flex-direction':'row',
-                'column-gap':'2em',
+                'column-gap':'0.2em',
                 'height':'auto',
                 '> *': {'box-sizing':'border-box !important',}
             },

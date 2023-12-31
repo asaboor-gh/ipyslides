@@ -127,6 +127,13 @@ _icons = {
             <polygon points="2 2,23 2,23 8,2 8,2 2" fill="{color}" stroke="{color}"></polygon>
             <line x1="12.5" y1="2" x2="12.5" y2="23" stroke="{color}"/>
         </svg>''',
+    'settings': '''
+    <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="5" stroke="{color}" fill="{color}" transform="rotate({rotation})">
+        <line x1="1" y1="12.5" x2="24" y2="12.5"/>
+        <line x1="6.75" y1="22.46" x2="18.25" y2="2.54"/>
+        <line x1="18.25" y1="22.46" x2="6.75" y2="2.54"/>
+        <circle fill="white" cx="12.5" cy="12.5" r="6"/>
+    </svg>'''
 }
 
 loading_svg = _icons['loading'].format(size='4em',color='var(--accent-color, gray)',rotation=0) # Required outside

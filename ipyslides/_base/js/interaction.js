@@ -135,6 +135,16 @@ function handleMessage(msg, box, cursor) {
         box.style.borderImage = "linear-gradient(to right," + color + ") 1 / 0  0 3px 0";
     } else if (msg.includes("THEME:")) {
         let theme = msg.replace("THEME:","");
+
+        if (theme.includes("jupyterlab")) {
+            let jpTheme = document.body.getAttribute('data-jp-theme-name');
+            jpTheme = (jpTheme?jpTheme:"").toLowerCase(); // handle custom themes name too by lowercase
+            if (jpTheme.includes("dark")) {
+                theme = "dark"; // update
+            } else if (jpTheme.includes("light")) {
+                theme = "light"; // update
+            }
+        }
         let container = box.getElementsByClassName("Draw-Widget")[0].getElementsByClassName("tl-container")[0];
         container.classList.remove((theme === "light") ? "tl-theme__dark" : "tl-theme__light")
         container.classList.add("tl-theme__" + theme) // worst way to do it, internal frames are changed with CSS
@@ -188,14 +198,10 @@ function setScale(box) {
     }
    
     let scaleH = oldScale*rectBox.height/rectSlide.height;
-    let scaleW = oldScale*rectBox.width/rectSlide.width;
+    let scaleW = oldScale*rectBox.width/rectSlide.width; 
     let scale = scaleH > scaleW ? scaleW : scaleH;
     
     box.style.setProperty('--contentScale',scale);
-    // New scaled slide has different top/left
-    // let rectAfter = slide.getBoundingClientRect();
-    // box.style.setProperty('--contentLeft', rectBox.left - rectSlide.left + "px") // This sucks alone in CSS
-    // box.style.setProperty('--contentTop', rectBox.top - rectSlide.top + "px")
 }
 
 function handleScale(box) {

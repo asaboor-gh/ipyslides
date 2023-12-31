@@ -64,8 +64,7 @@ class _HhtmlExporter:
         
         return doc_html(_code_css,_style_css, content).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
-            '__HEIGHT__', f'{int(254*self.main.settings.aspect_dd.value)}mm').replace( # Slides height is determined by aspect ratio.
-            '__VH__', 'auto' if theme_kws['centered'] else '100%') # SLidea Area is 100% height if not centered.
+            '__HEIGHT__', f'{int(254*self.main.settings.aspect_dd.value)}mm') # Slides height is determined by aspect ratio.
     
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')

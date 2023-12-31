@@ -114,7 +114,6 @@ def layout_css(breakpoint, accent_color):
                     "display": "none",  # Initial setup. Display will be set using javascript only */
                     "overflow": "hidden !important",  # To hide at edges */
                 },
-                ".SlideBox" : {"overflow":"hidden !important", "box-sizing": "border-box !important"},
                 ".SlideArea": {
                     ".report-only": {"display": "none !important"},
                     ".jp-OutputArea": {
@@ -299,7 +298,7 @@ def layout_css(breakpoint, accent_color):
                     ".Menu-Item": {
                         "font-size": "18px !important",
                         "overflow": "hidden",
-                        "opacity": "0.4",
+                        "opacity": "0.7",
                         "z-index": "3",
                         "^:hover": {
                             "opacity": "1",
@@ -473,7 +472,6 @@ def layout_css(breakpoint, accent_color):
                     "border": "none !important",
                     "box-shadow": "none !important",
                     "background": "transparent !important",
-                    "backdrop-filter": "blur(10px)",
                     "> i": {
                         "color": "var(--accent-color) !important",
                     },
@@ -485,16 +483,20 @@ def layout_css(breakpoint, accent_color):
             ".TopBar.Outside": {
                 "position": "absolute !important",
                 "z-index": "7 !important",  # below matplotlib fullsreen
-                "top": "0 !important",
+                "bottom": "0 !important", 
                 "margin": "0 !important",
                 "overflow": "hidden", # hides scrollbars with single button
                 "min-height": "32px !important",
-                "width": "60px !important",
+                "width": "36px !important",
                 "padding-top": "0 !important",
+                "padding-bottom": "2px !important",
                 "transition": "width 400ms",
                 "^:hover, ^:focus": {
                     "min-height": "32px !important",
                     "width": "60% !important",
+                    "backdrop-filter": "blur(10px) !important",
+                    "bottom": "3px !important", # Make space for progressbar progressbar
+                    "padding-bottom": "0 !important",
                     "overflow-x": "auto", # Let access all buttons
                     f"@media screen and (max-width: {breakpoint})": (
                         _breakpoint_css := {"width": "calc(100% - 16px) !important"}
@@ -509,7 +511,7 @@ def layout_css(breakpoint, accent_color):
                 "> .Settings-Btn": {
                     "width": "30px !important",
                     "margin-right": "30px !important",  # need for hover, foucs
-                    "opacity": "0.4 !important",  # make same as other buttons
+                    "opacity": "0.7 !important",  # make same as other buttons
                 },
                 "> *:not(.Settings-Btn)": {"display": "none !important"},
                 "^:hover > *:not(:disabled), ^:focus > *:not(:disabled)": {
@@ -592,7 +594,7 @@ def layout_css(breakpoint, accent_color):
                 ).css,
             },
             ".Settings-Btn": {
-                ".fa.fa-plus": Icon("dots", color=accent_color, size=_icons_size).css,
+                ".fa.fa-plus": Icon("settings", color=accent_color, size=_icons_size).css,
                 ".fa.fa-minus": Icon("close", color=accent_color, size=_icons_size).css,
             },
             ".Toc-Btn": {

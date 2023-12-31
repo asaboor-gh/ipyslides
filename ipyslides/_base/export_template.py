@@ -62,8 +62,6 @@ def doc_html(code_css, style_css, content):
         let scaleW = old*rectBox.width/rectSlide.width;
         let scale = scaleH > scaleW ? scaleW : scaleH;
         document.documentElement.style.setProperty('--contentScale',scale);
-        document.documentElement.style.setProperty('--contentLeft', rectSlide.left - rectBox.left) // This sucks alone in CSS
-        document.documentElement.style.setProperty('--contentTop', rectSlide.top - rectBox.top)
     }}
     window.dispatchEvent(new window.Event('resize')); // First time programatically
 </script>
@@ -309,13 +307,8 @@ a.goto-button:active {
         width: 100% !important;
     }
     section .SlideArea {
-        height: __VH__ !important;
-        max-height: calc(100% - 20px) !important; /* 20px for footer */
-        box-sizing: border-box;
+        position: static !important; /*override from document as printing absolute is issue */
         overflow: hidden !important;
-        width: calc(100% - 32px) !important;
-        max-width: calc(100% - 32px) !important;
-        margin-left: 16px !important;
         page-break-inside: avoid !important;
     }
     ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }

@@ -161,19 +161,21 @@ class Widgets:
             ]).add_class('ProgBox') ,
             self.buttons.next
         ]).add_class('Controls') 
+
         
         self.footerbox = HBox([
             self.buttons.toc,
             HBox([self.htmls.footer]), # should be in Box to avoid overflow
             self.buttons.capture,
-        ],layout=Layout(height='28px')).add_class('NavBox')
+        ],layout=Layout(height='28px',margin='0 0 0 28px')).add_class('NavBox')
         
         self.navbox = VBox([
             self.buttons._inview,
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
-        
+
         _many_btns = [self.buttons.setting, self.toggles.draw, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh]
+        
         self.panelbox = VBox([
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
