@@ -48,6 +48,25 @@ def doc_html(code_css, style_css, content):
     </div>
 </div>
 </body>
+<script>
+    let box = document.getElementsByClassName('SlideBox')[0];
+    let slide = box.getElementsByClassName('SlideArea')[0];
+
+    window.onresize = function() {{
+        let rectBox = box.getBoundingClientRect();
+        let rectSlide = slide.getBoundingClientRect();
+        console.log(rectBox, rectSlide);
+        let oldScale = document.documentElement.style.getPropertyValue('--contentScale');
+        let old = oldScale ? oldScale : 1;
+        let scaleH = old*rectBox.height/rectSlide.height;
+        let scaleW = old*rectBox.width/rectSlide.width;
+        let scale = scaleH > scaleW ? scaleW : scaleH;
+        document.documentElement.style.setProperty('--contentScale',scale);
+        document.documentElement.style.setProperty('--contentLeft', rectSlide.left - rectBox.left) // This sucks alone in CSS
+        document.documentElement.style.setProperty('--contentTop', rectSlide.top - rectBox.top)
+    }}
+    window.dispatchEvent(new window.Event('resize')); // First time programatically
+</script>
 </html>
 '''
 
@@ -110,6 +129,7 @@ a:hover {text-decoration:underline !important;}
 }
 @media print {
     :root {
+        --contentScale : 1 !important; /* Deafult for printing at same value */
 	    --heading-color: navy;
 	    --primary-fg: black;
 	    --primary-bg: white;
@@ -190,31 +210,31 @@ section {
 section .SlideBox {
     width: 100vw !important;
     height: 100vh !important; 
-    display: flex !important;
-    flex-direction: column !important;
+    /* Extra CSS will come from export here */
     padding: 0 !important;
     box-sizing: border-box !important;
 }
 section .SlideBox > .Footer > .Progress { display: none !important; }
 section .SlideArea {
-    left: 0 !important;
-    top: 0 !important;
-    transform: none !important;
-    /* Above properties must be overwritten */   
-	height: __VH__ !important;
-	max-height: calc(100vh - 20px) !important; /* 20px for footer */ 
-	box-sizing: border-box;
-	overflow-y: auto !important;
-	width: 95vw !important;
+    /* Will be added by export */
 	margin: auto !important;
 	padding: 1em !important;
     box-sizing: border-box !important;
 }
-section .SlideBox > .Footer { background: var(--primary-bg) !important; padding: 0 !important; margin: 0 !important; }
+section .SlideBox > .Footer { 
+    background: var(--primary-bg);
+    padding: 0 !important; margin: 0 !important; 
+    position:absolute;
+    left:0;
+    width: 100%;
+    bottom: 0;
+}
 section .SlideBox > .Footer > p {
     font-size: 14px !important;
     padding: 4px !important;
     padding-left: 8px !important;
+    display:block !important;
+    margin:0 !important;
 }
 .SlidesWrapper::-webkit-scrollbar:vertical,
 .SlidesWrapper::-webkit-scrollbar-button,
@@ -245,6 +265,7 @@ a.goto-button:active {
 
 @media print {
     * {
+        --contentScale : 1 !important; /* Deafult for printing at same value */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;

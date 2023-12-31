@@ -8,8 +8,8 @@ _flow_selector = ":is(.highlight code, li, tr)"
 # Animations are fixed for instnace on the fly, no need uclass thing here
 animations = {'zoom':'''
 .SlideBox {
-    animation-name: zoom; animation-duration: 600ms;
-    animation-timing-function: linear;
+    animation-name: zoom; animation-duration: 400ms;
+    animation-timing-function: ease-in-out;
 }
 @keyframes zoom {
      0% { transform: scale(0.05); }
@@ -22,11 +22,11 @@ animations = {'zoom':'''
 'slide_h': '''
 .SlideBox {
     animation-name: slide; animation-duration: 400ms;
-    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+    animation-timing-function: ease-in-out;
 }
 .SlideBox.Prev { /* .Prev acts when moving slides backward */
     animation-name: slidePrev; animation-duration: 400ms;
-    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+    animation-timing-function: ease-in-out;
 }
 @keyframes slide {
      from { transform: translateX(100%);}
@@ -40,11 +40,11 @@ animations = {'zoom':'''
 'slide_v': '''
 .SlideBox {
     animation-name: slide; animation-duration: 400ms;
-    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+    animation-timing-function: ease-in-out;
 }
 .SlideBox.Prev { /* .Prev acts when moving slides backward */
     animation-name: slidePrev; animation-duration: 400ms;
-    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+    animation-timing-function: ease-in-out;
 }
 @keyframes slide {
      from { transform: translateY(100%);}
@@ -58,11 +58,11 @@ animations = {'zoom':'''
 'flow': f'''
 .SlideBox {_flow_selector} {{
     animation-name: flow; animation-duration: 600ms;
-    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+    animation-timing-function: ease-in-out;
 }}
 .SlideBox.Prev {_flow_selector} {{ /* .Prev acts when moving slides backward */
     animation-name: flowPrev; animation-duration: 600ms;
-    animation-timing-function: cubic-bezier(.2,.7,.8,.9);
+    animation-timing-function: ease-in-out;
 }}
 ''' + _build_css((f".SlideBox {_flow_selector}",), {
     **{f"^:nth-child({i})":{"animation-delay": f"{int(i*15)}ms"} for i in range(2, 16)},
@@ -159,7 +159,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, breakpoint = '650px', content_width = '80%', centered = True, _root = False):
+def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, breakpoint = '650px', scroll = True, centered = True, aspect_ratio = 9/16, cwidth=100, _root = False):
     uclass = get_unique_css_class()
     _root_dict = {
         '--heading-color':f'{colors["heading_color"]}',
@@ -267,24 +267,39 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'overflow-wrap':'break-word !important',
             'padding':'0 0.3em !important',
         },
+        '.SlideBox': { # This needs to be exported as well
+            "position": "relative !important",
+            'display': 'flex !important',
+            "flex-direction": "column !important",
+            **({
+                "align-items": "center !important",
+                "justify-content": "center !important",
+            } if centered else { # why above not working for top left alignment as flex-start???
+                "top": "var(--contentTop,0) !important", # TODO: This does not work either with zero, but JS
+                "left": "var(--contentLeft,0) !important",
+            }),
+
+        },
         '.SlideArea': {
-            'left': '50% !important' if centered else '0 !important',
-            'top': '50% !important' if centered else '0 !important',
-            'transform': 'translate(-50%, -50%) !important' if centered else 'none !important',
-            'width':f'{content_width} !important',
             'height': '100% !important',
+            'position': 'absolute !important',
+            'width':'254mm !important',
+	        'height': f'{int(254*aspect_ratio)}mm !important',
+            'transform': 'scale(var(--contentScale,1)) !important', # Set by Javascript 
+	        'box-sizing': 'border-box !important',
             'display':'flex !important',
             'flex-direction':'column !important',
             'align-items': 'center !important' if centered else 'baseline !important', 
             'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
             'padding' : '0.2em 1em !important',
-            'overflow': 'auto !important',
+            'overflow': 'auto !important' if scroll else 'hidden !important',
             '> .jp-OutputArea': {
                 'margin':'auto !important' if centered else 'unset !important',
                 'padding': '0 !important',
-                'width': '100% !important',
-                'max-width': '100% !important',
+                'width': f'{cwidth}% !important',
+                'max-width': f'{cwidth}% !important',
                 'box-sizing': 'border-box !important',
+                'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
             },
             '.toc-item': { # Table of contents on slides 
                 'border-right':'4px solid var(--secondary-bg)',
@@ -354,16 +369,8 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'flex-direction':'row',
                 'column-gap':'2em',
                 'height':'auto',
-                '> *': {'box-sizing':'border-box !important',},
-                f'@media screen and (max-width: {breakpoint})': (_breakpoint_css :={
-                    'width':'100%',
-                    'max-width':'100%',
-                    'display':'flex',
-                    'flex-direction':'column',
-                    '> div[style]': {'width':'100%!important'}, # important to override inline CSS
-               }),
-                '@container slides (max-width: 650px)': _breakpoint_css,
-            }
+                '> *': {'box-sizing':'border-box !important',}
+            },
         },
         '.highlight': {
             'min-width':'100% !important',

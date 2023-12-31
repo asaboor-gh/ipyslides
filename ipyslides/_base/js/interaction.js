@@ -20,17 +20,6 @@ function hideLaser(box, cursor) {
     cursor.style.display = 'none'; // hide in place
     box.onmousemove = null;
 }
-// I don't know why it does not work, specially in case of left, right
-// function getBboxScreenPixels(box) {
-//     let bbox = box.getBoundingClientRect();
-//     let dpr = window.devicePixelRatio
-//     let left = (window.screenX + bbox.left + window.outerWidth - window.innerWidth)*dpr
-//     let top = (window.screenY + bbox.top + window.outerHeight - window.innerHeight)*dpr
-//     let right = left + bbox.width*dpr 
-//     let bottom = top + bbox.height*dpr
-//     let out_str = "L:" + left + ",T:" + top + ",R:" + right + ",B:" + bottom
-//     console.log(out_str) // Not giving correct values, take screenshot in javascript and send data to python I think, to work everywhere
-// }
 
 function touchSwiper(box, model){
             let startX = 0;
@@ -127,7 +116,9 @@ function handleMessage(msg, box, cursor) {
         } else {
             showLaser(box, cursor);
         };
-
+    
+    } else if (msg === 'RESCALE') {
+        setScale(box);
     } else if (msg === "SwitchView") {
         let slideNew = box.getElementsByClassName("ShowSlide")[0];
         slideNew.style.visibility = 'visible';
@@ -184,6 +175,38 @@ function handleToastMessage(toast, msg) {
     }
 }
 
+function setScale(box) {
+    let sbox = box.getElementsByClassName('SlideBox')[0];
+    let slide = box.getElementsByClassName('SlideArea')[0];
+    let rectBox = sbox.getBoundingClientRect();
+    let rectSlide = slide.getBoundingClientRect();
+
+    let oldScale = box.style.getPropertyValue('--contentScale');
+    
+    if (!oldScale) {
+        oldScale = 1; // default
+    }
+   
+    let scaleH = oldScale*rectBox.height/rectSlide.height;
+    let scaleW = oldScale*rectBox.width/rectSlide.width;
+    let scale = scaleH > scaleW ? scaleW : scaleH;
+    
+    box.style.setProperty('--contentScale',scale);
+    // New scaled slide has different top/left
+    // let rectAfter = slide.getBoundingClientRect();
+    // box.style.setProperty('--contentLeft', rectBox.left - rectSlide.left + "px") // This sucks alone in CSS
+    // box.style.setProperty('--contentTop', rectBox.top - rectSlide.top + "px")
+}
+
+function handleScale(box) {
+    const resizeObs = new ResizeObserver((entry) => {
+        setScale(box);
+    });
+
+    resizeObs.observe(box);
+    setScale(box); // First time set
+}
+
 
 export function render({ model, el }) {
     let style = document.createElement('style');
@@ -203,6 +226,9 @@ export function render({ model, el }) {
         
         // Touch Events are experimental
         touchSwiper(box, model);
+
+        // handle scale of slides size
+        handleScale(box);
 
         // Sends a message if fullscreen is changed by some other mechanism
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};

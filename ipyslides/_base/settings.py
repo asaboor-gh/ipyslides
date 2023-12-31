@@ -31,8 +31,8 @@ class LayoutSettings:
             "numbering": True,
             "date": "today",
         }
-        self._content_width = "90%"  # Better
-        self._centered = True
+        
+        self._layout = {'cwidth':100, 'scroll': True, 'centered': True}
         self._code_lineno = True
 
         self.width_slider = self.widgets.sliders.width
@@ -117,7 +117,7 @@ class LayoutSettings:
         Slides.settings.set(
             glassmorphic = dict(image_src='image_src'),
             css = ({},), # note trailing comma to make it tuple
-            layout = dict(center=True, content_width='80%'),
+            layout = dict(scroll=True),
         )
         ```
         """
@@ -310,14 +310,13 @@ class LayoutSettings:
 
         return text
 
-    def set_layout(self, center=True, content_width=None):
+    def set_layout(self, center=True, scroll=True, width=100):
         "Central aligment of slide by default. If False, left-top aligned."
-        self._content_width = (
-            content_width if content_width else self._content_width
-        )  # user selected
-        self._centered = center if center is True else False  # user selected
-
+        if (not isinstance(width, int)) or (width not in range(101)):
+            raise ValueError("width should be int in range [0,100]")
+        self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center}
         self._update_theme(change=None)  # Trigger CSS in it to make width change
+        self.widgets.iw.msg_tojs = 'RESCALE' 
 
     def hide_navigation_gui(self):
         "Hide all navigation elements, but keyboard or touch still work."
@@ -348,6 +347,7 @@ class LayoutSettings:
         self._update_theme(
             change=None
         )  # For updating size and breakpoints and zoom CSS
+        self.widgets.iw.msg_tojs = 'RESCALE'
 
     @property
     def text_size(self):
@@ -387,8 +387,8 @@ class LayoutSettings:
             text_font=self._font_family["text"],
             code_font=self._font_family["code"],
             breakpoint=self.breakpoint,
-            content_width=self._content_width,
-            centered=self._centered,
+            aspect_ratio = self.aspect_dd.value,
+            **self._layout
         )
 
     def _update_theme(self, change=None):

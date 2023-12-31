@@ -265,10 +265,10 @@ class Exp4Widget:
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
-    _animations = {'main':'flow','frame':'slide_v'}
+    _animations = {'main':'slide_h','frame':'slide_v'}
     _overall_css = html('style','')
     def __init__(self, app, number, captured_output = _EmptyCaptured):
-        self._widget = Output(layout = Layout(margin='auto',overflow='auto',padding='0.2em 1em')).add_class("SlideArea")
+        self._widget = Output(layout = Layout(margin='auto',padding='0.2em 1em')).add_class("SlideArea")
         self._app = app
         self._contents = captured_output.outputs
             

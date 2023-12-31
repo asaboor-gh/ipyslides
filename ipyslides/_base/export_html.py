@@ -44,7 +44,8 @@ class _HhtmlExporter:
             _html = ''
             for out in item.contents:
                 _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
-                
+            
+            _html = f'<div class="jp-OutputArea">{_html}</div>'
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)
             footer = f'<div class="Footer">{item.get_footer()}{self._get_progress(item)}</div>'

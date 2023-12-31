@@ -1186,7 +1186,8 @@ class Slides:
         cls,
         citation_mode="global",
         center=True,
-        content_width="90%",
+        scroll=True,
+        width = 100,
         short_title='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
         date="today",
         logo_src=get_logo(),
@@ -1195,7 +1196,7 @@ class Slides:
         code_font="var(--jp-code-font-family)",
         code_style="default",
         code_lineno=True,
-        main_animation="flow",
+        main_animation="slide_h",
         frame_animation="slide_v",
         show_always=True,
         extensions=[],
@@ -1207,7 +1208,7 @@ class Slides:
 
         _private_instance.settings.set(
             citation_mode=dict(mode=citation_mode),
-            layout=dict(center=center, content_width=content_width),
+            layout=dict(center=center, scroll=scroll, width = width),
             footer=dict(text=short_title, date=date),
             logo=dict(src=logo_src, width=60),
             font_scale=dict(font_scale=font_scale),

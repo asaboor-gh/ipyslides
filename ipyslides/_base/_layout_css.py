@@ -116,16 +116,6 @@ def layout_css(breakpoint, accent_color):
                 },
                 ".SlideBox" : {"overflow":"hidden !important", "box-sizing": "border-box !important"},
                 ".SlideArea": {
-                    "position": "absolute !important",
-                    "justify-content": "center",
-                    f"@media screen and (max-width: {breakpoint})": (
-                        _breakpoint_css := {
-                            "min-width": "100% !important",  # can't work without min-width
-                            "width": "100% !important",
-                            "padding-bottom": "50px !important",
-                        }
-                    ),
-                    "@container slides (max-width: 650px)": _breakpoint_css,
                     ".report-only": {"display": "none !important"},
                     ".jp-OutputArea": {
                         "width": "100% !important",
