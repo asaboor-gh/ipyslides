@@ -95,16 +95,29 @@ def _str2code(text,language='python',name=None,**kwargs):
     out.raw = text
     return out
 
-class Source:
+class Code:
     current = None
-    def __init__(self):
+    def __init__(self,*args,**kwargs):
         raise Exception("""This class is not meant to be instantiated.
-        Use Source.context() to get a context manager for source.
-        Use Source.current to get the current source object.
-        Use Source.from_file(filename) to get a source object from a file.
-        Use Source.from_string(string) to get a source object from a string.
-        Use Source.from_callable(callable) to get a source object from a callable.
+        Use cls.context() to get a context manager for source.
+        Use cls.current to get the current source object.
+        Use cls.create(obj) to get a source code from text, file or callable. Or explicitly:
+            - cls.from_file(filename) to get a source object from a file.
+            - cls.from_string(string) to get a source object from a string.
+            - cls.from_callable(callable) to get a source object from a callable.
         """)
+    
+    @classmethod
+    def cast(cls, obj, language='python',name=None, **kwargs):
+        "Create source code object from file, text or callable."
+        if isinstance(obj, str):
+            try:
+                return cls.from_file(obj,language=language,name=name, **kwargs)
+            except:
+                return cls.from_string(obj, language=language,name=name, **kwargs)
+        else:
+            return cls.from_callable(obj, **kwargs)
+    
     @classmethod
     def from_string(cls,text,language='python',name=None,**kwargs):
         "Creates source object from string. `name` is alternate used name for language. `kwargs` are passed to `ipyslides.formatter.highlight`."
@@ -140,6 +153,9 @@ class Source:
                 source = inspect.getsource(callable)
                 cls.current = _str2code(source,language='python',name=None)
                 return cls.current
+            
+        # If things above do not work, raise error
+        raise TypeError(f"Object {callable} is not callable!")
     
     @classmethod
     @contextmanager 

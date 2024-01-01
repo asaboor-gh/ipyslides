@@ -9,7 +9,7 @@ from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
 from .xmd import parse, extender as _extender
-from .source import Source
+from .source import Code
 from .writer import GotoButton, write
 from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
@@ -87,7 +87,7 @@ class Slides(BaseSlides):
         self.plt2html = plt2html
         self.bokeh2html = bokeh2html
         self.highlight = highlight
-        self.source = Source  # Code source
+        self.code = Code  # Code source
         self.icon = _Icon  # Icon is useful to add many places
         self.write = write
         self.parse = parse  # Parse extended markdown
@@ -840,7 +840,7 @@ class Slides(BaseSlides):
         if slide_number < 0:  # zero for title slide
             raise ValueError(f"slide_number should be int >= 1, got {slide_number}")
 
-        with _build_slide(self, f"{slide_number}") as s, self.source.context(
+        with _build_slide(self, f"{slide_number}") as s, self.code.context(
             auto_display=False, depth=4
         ) as c:  # depth = 4 to source under context manager
             s.set_source(c.raw, "python")  # Update cell source befor yielding
@@ -864,7 +864,7 @@ class Slides(BaseSlides):
     @contextmanager
     def title(self):
         """Use this context manager to write title. It is equivalent to `%%title` magic."""
-        with self.slide(0) as s, self.source.context(
+        with self.slide(0) as s, self.code.context(
             auto_display=False, depth=4
         ) as c:  # depth = 4 to source under context manager
             s.set_source(

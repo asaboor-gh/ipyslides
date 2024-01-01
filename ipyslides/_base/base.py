@@ -350,7 +350,7 @@ class BaseSlides:
         
         with self.set_dir(os.path.split(__file__)[0]):
             file = '../_demo.py'
-            raw_source = self.source.from_file(file).raw
+            raw_source = self.code.cast(file).raw
             N = raw_source.count('auto.') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
             self.create(*range(N)) # Create slides first, this is faster
             self.shell.run_line_magic('run', file) # Run demo in same namespace
@@ -437,7 +437,7 @@ class BaseSlides:
     
         with auto.slide():
             self.write('## Content Styling')
-            with self.source.context(auto_display = False) as c:
+            with self.code.context(auto_display = False) as c:
                 self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
                        'Provide **CSS**{.info} for that using `.format_css` or use some of the available styles. '
                        'See these **styles**{.success} with `.css_styles` property as below:'))
@@ -510,7 +510,7 @@ class BaseSlides:
                 ''')
             self.write(' '.join([f'`{k}`: ' + self.icon(k,color='crimson').svg for k in self.icon.available]))
             
-            with self.source.context():
+            with self.code.context():
                 import ipywidgets as ipw
                 btn = ipw.Button(description='Chevron-Down',icon='plus').add_class('MyIcon') # Any free font awesome icon, but class is important to overwrite icon     
                 self.write(btn)

@@ -562,7 +562,7 @@ def run_doc(obj,prepend_str = None):
     parse(inspect.getdoc(obj), display_inline = True)
     
 def code(callable):
-    "Returns full code of a callable, you can just pass callable into `write` command or use `ipyslides.Slides().source.from_callable`."
+    "Returns full code of a callable, you can just pass callable into `write` command or use `ipyslides.Slides.code.cast`."
     try:
         return XTML(htmlize(callable))
     except:

@@ -482,9 +482,9 @@ class Slide:
     def get_source(self, name = None):
         "Return source code of this slide, markdwon or python or None if no source exists."
         if self._source['text']:
-            return self._app.source.from_string(**self._source, name = name)
+            return self._app.code.from_string(**self._source, name = name)
         else:
-            return self._app.source.from_string('Source of a slide only exits if it is NOT created (most recently) using @Slides.frames decorator\n',language = 'markdown')
+            return self._app.code.cast('Source of a slide only exits if it is NOT created (most recently) using @Slides.frames decorator\n',language = 'markdown')
     
     def _set_overall_css(self, css_dict={}):
         self.__class__._overall_css = html('style','') # Reset overall CSS

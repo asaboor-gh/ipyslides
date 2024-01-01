@@ -95,7 +95,7 @@ proxy`Add functions here`
 """, trusted=True)
 
 
-with slides.source.context(auto_display = False) as s:
+with slides.code.context(auto_display = False) as s:
     with last.proxies[0].capture():
         write([slides.classed(slides.doc(write,'Slides'),'block-green'), slides.classed(slides.doc(slides.parse,'Slides'),'block-red')])
         s.show_lines([0,1]).display()
@@ -106,7 +106,7 @@ auto.from_markdown('section`Plotting and DataFrame` toc``')
 # Matplotlib
 with auto.slide() as sl:
     write('## Plotting with Matplotlib')
-    with slides.source.context(auto_display = False) as s:
+    with slides.code.context(auto_display = False) as s:
         import numpy as np, matplotlib.pyplot as plt
         plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation
         x = np.linspace(0,2*np.pi)
@@ -118,7 +118,7 @@ with auto.slide() as sl:
     sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
         
 # Plotly and Pandas DataFrame only show if you have installed
-with slides.source.context(auto_display = False) as source:
+with slides.code.context(auto_display = False) as source:
     try:
         import pandas as pd 
         df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv')
@@ -129,7 +129,7 @@ with slides.source.context(auto_display = False) as source:
 with auto.slide():
     write(['## Writing Pandas DataFrame', df, source])
    
-with slides.source.context(False) as s:
+with slides.code.context(False) as s:
     try:
         import plotly.graph_objects as go
         fig = go.Figure()
@@ -162,7 +162,7 @@ def race_plot():
 
 # Interactive widgets.   
 with auto.slide():
-    with slides.source.context(auto_display = False) as src:
+    with slides.code.context(auto_display = False) as src:
         import ipywidgets as ipw
         
         write('''
@@ -182,7 +182,7 @@ with auto.slide():
         button.on_click(update_plot)
         update_plot(None) #Initialize plot
         
-    slides.source.from_callable(race_plot).display()
+    slides.code.cast(race_plot).display()
     
 with auto.slide() as rslide:
     write('''
@@ -193,7 +193,7 @@ with auto.slide() as rslide:
     def display_plot(): return race_plot().display()
     
     write(lambda: slides.on_refresh(display_plot), rslide.get_source()) # Only first columns will update
-    slides.source.from_callable(race_plot).display()
+    slides.code.cast(race_plot).display()
 
 auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
 
@@ -206,7 +206,7 @@ def func(obj,idx):
         forward_skipper.display()
         backward_skipper.set_target()
     
-    with slides.source.context(auto_display = False) as s:
+    with slides.code.context(auto_display = False) as s:
         fig, ax = plt.subplots()
         x = np.linspace(0,obj+1,50+10*(idx+1))
         ax.plot(x,np.sin(x));
@@ -237,7 +237,7 @@ def f(obj,idx):
     
 @auto.frames(*boxes, repeat=[(0,1),(2,3)])
 def f(obj,idx):
-    with slides.source.context(auto_display = False) as s:
+    with slides.code.context(auto_display = False) as s:
         slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)
         
@@ -302,7 +302,7 @@ $\LaTeX$ needs time to load, so keeping it in view until it loads would help.
 $$\int_0^1\\frac{1}{1-x^2}dx$$
 ''', trusted=True)
 
-with auto.slide(), slides.source.context():
+with auto.slide(), slides.code.context():
     slides.write('## Built-in CSS styles')
     slides.css_styles.display()
     
@@ -321,8 +321,8 @@ with auto.slide() as some_slide:
     
 with auto.slide():
     slides.write('## This is all code to generate slides section`Code to Generate Slides`')
-    slides.source.from_callable(slides.demo).display()
-    slides.source.from_file(__file__).display()
+    slides.code.cast(slides.demo).display()
+    slides.code.cast(__file__).display()
     
 with auto.slide():
     slides.write('Slides keep their full code if they are not made by @frames decorator!\n{.note .info}')
