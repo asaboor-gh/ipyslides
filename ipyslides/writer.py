@@ -228,7 +228,7 @@ def write(*objs,widths = None):
     - Display another function in order by passing it to a lambda function like `lambda: func()`. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
-    - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.source` API.
+    - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
     - Use `Slides.alt(widget, func)` function to display widget on slides and alternative content in exported slides/report, function should return possible HTML representation of widget.
     - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, html_converter_func)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:

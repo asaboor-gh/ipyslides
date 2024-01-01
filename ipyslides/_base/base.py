@@ -408,7 +408,7 @@ class BaseSlides:
                    
         with auto.slide():
             self.write('## Displaying Source Code')
-            self.doc(self.source,'Slides.source', members = True, itself = False).display()
+            self.doc(self.code,'Slides.code', members = True, itself = False).display()
         
         auto.from_markdown('section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
         

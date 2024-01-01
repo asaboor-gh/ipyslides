@@ -28,6 +28,7 @@ class InteractionWidget(anywidget.AnyWidget):
 
     @traitlets.observe("msg_topy")
     def _see_changes(self, change):
+        quick_menu_was_open = self._toggles.menu.value # JS message should not result in its closing
         msg = change.new
         if not msg:
             return # Message set empty, do not waste time
@@ -65,6 +66,9 @@ class InteractionWidget(anywidget.AnyWidget):
                 self._toggles.fscreen.icon = 'plus'
         elif msg == 'KSC':
             self._toast_html.value = 'KSC'
+
+        if quick_menu_was_open: 
+            self._toggles.menu.value = True # it might get closed by using some buttons. reset it
 
         self.msg_topy = "" # Reset for successive simliar changes
     

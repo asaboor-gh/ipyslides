@@ -282,7 +282,11 @@ def layout_css(breakpoint, accent_color):
             },
             ".NavWrapper": {
                 "max-width": "100% !important",
-                "padding-bottom": "4px !important",
+                "position": "absolute !important",
+                "left": "0 !important",
+                "bottom": "3px !important", # leave space for progressbar
+                "background": "var(--primary-bg) !important",
+                "width": "100% !important",
                 "^,^ > div": {
                     "padding": "0px",
                     "margin": "0px",
@@ -303,9 +307,14 @@ def layout_css(breakpoint, accent_color):
                         "^:hover": {
                             "opacity": "1",
                         },
+                        "^:active, ^.mod-active": {
+                            "box-shadow": "none !important",
+                            "opacity": "1 !important",
+                        },
                     },
-                    ".Toc-Btn": {
-                        "min-width": "40px",
+                    ".Toc-Btn, .Menu-Btn": {
+                        "min-width": "28px",
+                        "width": "28px", # need this too
                     },  # Avoid overflow in small screens
                     ".Footer": {
                         ".widget-html-content": {
@@ -395,7 +404,7 @@ def layout_css(breakpoint, accent_color):
                 "backdrop-filter": " blur(50px)",
                 "margin": "4px 36px",
                 "position": " absolute",
-                "min-width": " 60% !important",
+                "min-width": "60% !important",
                 "box-sizing": "border-box !important",
                 "z-index": "8",
                 "border-radius": "4px",
@@ -483,40 +492,25 @@ def layout_css(breakpoint, accent_color):
             ".TopBar.Outside": {
                 "position": "absolute !important",
                 "z-index": "7 !important",  # below matplotlib fullsreen
-                "bottom": "0 !important", 
-                "margin": "0 !important",
+                "left" : "4px !important",
+                "bottom": "30px !important", 
+                "padding": "0 !important",
+                "min-height": "0 !important", #override panel top bar
+                "max-height": "calc(100% - 30px) !important",
+                "overflow-y": "auto !important",
                 "overflow": "hidden", # hides scrollbars with single button
-                "min-height": "32px !important",
-                "width": "36px !important",
-                "padding-top": "0 !important",
-                "padding-bottom": "2px !important",
-                "transition": "width 400ms",
-                "^:hover, ^:focus": {
-                    "min-height": "32px !important",
-                    "width": "60% !important",
-                    "backdrop-filter": "blur(10px) !important",
-                    "bottom": "3px !important", # Make space for progressbar progressbar
-                    "padding-bottom": "0 !important",
-                    "overflow-x": "auto", # Let access all buttons
-                    f"@media screen and (max-width: {breakpoint})": (
-                        _breakpoint_css := {"width": "calc(100% - 16px) !important"}
-                    ),  # There is 8px margin
-                    "@container slides (max-width: 650px)": _breakpoint_css,
-                    "> .Settings-Btn": {
-                        "width": "auto !important",
-                        "opacity": "1 !important",
-                        "margin-right": "unset !important",  # Unset after hover, foucs
-                    },
-                },  # Should be same as side panel
-                "> .Settings-Btn": {
-                    "width": "30px !important",
-                    "margin-right": "30px !important",  # need for hover, foucs
-                    "opacity": "0.7 !important",  # make same as other buttons
-                },
-                "> *:not(.Settings-Btn)": {"display": "none !important"},
-                "^:hover > *:not(:disabled), ^:focus > *:not(:disabled)": {
-                    "display": "unset !important"
-                },
+                "background": "var(--secondary-bg) !important",
+                "box-sizing": "border-box !important",
+                "border-radius": "4px",
+                "transition": "height 400ms ease-in-out",
+                "display": "table-column-group !important", # avoid collapse
+                "> button > i": {"margin-right": "8px !important",}, # Make uniform
+                ".Menu-Btn" : {"z-index": "7 !important",}, # show on top of overlay
+                "> button::after":{
+                    "content": "attr(title)",
+                    "font-size": "14px !important",
+                    "color": "var(--primary-fg) !important",
+                },     
             },
             "<.jp-OutputArea-child": {
                 "^, .jp-OutputArea-output": {  # For some themes
@@ -553,8 +547,17 @@ def layout_css(breakpoint, accent_color):
                 "position": "absolute !important",
                 "left": 0,
                 "top":0,
+                "z-index": "8 !important",
                 "overflow": "hidden !important",
                 "transition": "height 200ms",
+                "> .Draw-Btn" : {
+                    "position": "absolute !important",
+                    "left": 0,
+                    "top":0,
+                    "z-index": "9 !important",
+                    "width": "36px !important",
+                    "^:active, ^.mod-active": {"box-shadow": "none !important","opacity": "1 !important",},
+                },
             },
             ".Draw-Widget": {
                 "backdrop-filter": "blur(50px)",
@@ -646,6 +649,14 @@ def layout_css(breakpoint, accent_color):
                 ).css,
                 ".fa.fa-minus": Icon(
                     "win-restore", color=accent_color, size=_icons_size
+                ).css,
+            },
+            ".Menu-Btn": {
+                ".fa.fa-plus": Icon(
+                    "dots", color=accent_color, size=_icons_size
+                ).css,
+                ".fa.fa-minus": Icon(
+                    "close", color=accent_color, size=_icons_size
                 ).css,
             },
             "@media print": { # Needs modification

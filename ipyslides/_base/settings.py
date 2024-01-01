@@ -46,6 +46,7 @@ class LayoutSettings:
         self.btn_zoom = self.widgets.toggles.zoom
         self.btn_laser = self.widgets.toggles.laser
         self.btn_draw = self.widgets.toggles.draw
+        self.btn_menu = self.widgets.toggles.menu
         self.box = self.widgets.panelbox
         self._setup()  # Fix up and start up things
 
@@ -63,6 +64,7 @@ class LayoutSettings:
         self.btn_laser.observe(self._toggle_laser, names=["value"])
         self.reflow_check.observe(self._update_theme, names=["value"])
         self.btn_draw.observe(self._toggle_overlay, names=["value"])
+        self.btn_menu.observe(self._toggle_menu, names = ["value"])
         self.widgets.checks.postrun.observe(self._set_show_always, names=["value"])
         self.widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self.widgets.checks.proxy.observe(self._toggle_proxy_buttons, names=["value"])
@@ -81,6 +83,11 @@ class LayoutSettings:
         self._slides._display_box = self._slides.alert("Slides → Linked Output View").as_widget()  # Swap display box by info, still widget to be closable
         if dh is not None:
             dh.update(self._slides._display_box) 
+
+    def _close_quick_menu(self):
+        "Need for actions on all buttons inside menu."
+        if self.btn_menu.value:
+            self.btn_menu.value = False
     
     def _toast_on_value_change(self, change):
         if change.new:
@@ -249,7 +256,7 @@ class LayoutSettings:
         "Set font scale to increase or decrease text size. 1 is default."
         self.scale_slider.value = font_scale
 
-    def set_logo(self, src, width=80, top=0, right=0):
+    def set_logo(self, src, width=60, top=0, right=0):
         "`src` should be PNG/JPEG file name or SVG string. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
         kwargs = {k:v for k,v in locals().items() if k not in ('self','src')}
         for k,v in kwargs.items():
@@ -433,12 +440,14 @@ class LayoutSettings:
         self._push_zoom(change=None)  # Adjust zoom CSS for expected layout
         if self.btn_window.value:
             self.btn_window.icon = "minus"
+            self.btn_window.tooltip = "Restore Viewport [W]"
             self.widgets.mainbox.add_class("FullWindow")  # to Full Window
             self.widgets.htmls.window.value = html(
                 "style", _layout_css.viewport_css()
             ).value
         else:
             self.btn_window.icon = "plus"
+            self.btn_window.tooltip = "Fill Viewport [W]"
             self.widgets.mainbox.remove_class("FullWindow")  # back to inline
             self.widgets.htmls.window.value = ""
 
@@ -450,19 +459,24 @@ class LayoutSettings:
     def _on_icon_change(self, change): # icon will changes when Javscript sends a message
         if change.new == 'minus':
             self.widgets.mainbox.add_class('FullScreen')
+            self.btn_fscreen.tooltip = "Exit Fullscreen [F]"
         else:
             self.widgets.mainbox.remove_class('FullScreen')
+            self.btn_fscreen.tooltip = "Enter Fullscreen [F]"
         
     def _toggle_laser(self, change):
         self.widgets.iw.msg_tojs = 'TLSR'
         if self.btn_laser.value:
             self.btn_laser.icon = "minus"
+            self.btn_laser.tooltip = "Hide Laser Pointer [L]"
         else:
             self.btn_laser.icon = "plus"
+            self.btn_laser.tooltip = "Show Laser Pointer [L]"
 
     def _push_zoom(self, change):
         if self.btn_zoom.value:
             self.btn_zoom.icon = "minus"
+            self.btn_zoom.tooltip = "Disbale Zooming Items [Z]"
             self.widgets.htmls.zoom.value = f"<style>\n{_layout_css.zoom_hover_css()}\n</style>"
 
             # If at some point it may not work properly outside fullscreen use belowe
@@ -473,22 +487,29 @@ class LayoutSettings:
             #     self.widgets._push_toast("Objects are not zoomable in inline mode!", timeout=2)
         else:
             self.btn_zoom.icon = "plus"
+            self.btn_zoom.tooltip = "Enable Zooming Items [Z]"
             self.widgets.htmls.zoom.value = ""
 
     def _toggle_overlay(self, change):
-        _which_disable = [self.btn_laser, self.btn_zoom, self.widgets.buttons.refresh]
         if self.btn_draw.value:
             if self.theme_dd.value == "Inherit":
                 self.widgets.iw.msg_tojs = "THEME:jupyterlab" # make like that
 
             self.btn_draw.icon = "minus"
+            self.btn_draw.tooltip = "Close Drawing Panel"
             self.widgets.drawer.layout.height = "100%"
-            for btn in _which_disable:
-                btn.disabled = True  # Disable all buttons
-
         else:
             self.btn_draw.icon = "plus"
+            self.btn_draw.tooltip = "Open Drawing Panel"
             self.widgets.drawer.layout.height = "0"
             self.widgets.mainbox.focus() # it doesn't stay their otherwise
-            for btn in _which_disable:
-                btn.disabled = False  # Enable all buttons
+
+    def _toggle_menu(self, change):
+        if self.btn_menu.value:
+            self.btn_menu.icon = 'minus'
+            self.widgets.quick_menu.layout.height = 'auto'
+            self.widgets.quick_menu.layout.border = "1px solid var(--hover-bg)"
+        else:
+            self.btn_menu.icon = 'plus'
+            self.widgets.quick_menu.layout.height = '0'
+            self.widgets.quick_menu.layout.border = "none"

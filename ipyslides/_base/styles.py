@@ -293,7 +293,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'flex-direction':'column !important',
             'align-items': 'center !important' if centered else 'baseline !important', 
             'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
-            'padding' : '0.2em 1em !important',
+            'padding' : '1em !important',
             'overflow': 'auto !important' if scroll else 'hidden !important',
             '> .jp-OutputArea': {
                 'margin':'auto !important' if centered else 'unset !important',

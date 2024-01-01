@@ -109,7 +109,7 @@ class Code:
     
     @classmethod
     def cast(cls, obj, language='python',name=None, **kwargs):
-        "Create source code object from file, text or callable."
+        "Create source code object from file, text or callable. `kwargs` are passed to `ipyslides.formatter.highlight`."
         if isinstance(obj, str):
             try:
                 return cls.from_file(obj,language=language,name=name, **kwargs)

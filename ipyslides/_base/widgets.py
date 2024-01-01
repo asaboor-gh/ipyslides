@@ -26,9 +26,9 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows').add_class('Prev-Btn')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
-    setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
+    setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
-    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh dynmaic content across all slides').add_class('Menu-Item').add_class('Refresh-Btn')
+    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh dynmaic content').add_class('Menu-Item').add_class('Refresh-Btn')
     home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
     end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
@@ -44,12 +44,12 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fit/Restore Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
-    fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
-    zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Zooming Items [Z]').add_class('Zoom-Btn')
-    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Laser Pointer [L]').add_class('Laser-Btn') 
-    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Drawing Panel').add_class('Draw-Btn')          
-        
+    window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fill Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
+    fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
+    zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Enable Zooming Items [Z]').add_class('Zoom-Btn')
+    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip='Show Laser Pointer [L]').add_class('Laser-Btn') 
+    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip='Open Drawing Panel').add_class('Draw-Btn') 
+    menu    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')      
 
 @dataclass(frozen=True)
 class _Htmls:
@@ -95,7 +95,6 @@ class _Sliders:
     Instantiate under `Widgets` class only.
     """
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
-    visible  = ipw.IntSlider(description='View (%)',min=0,value=100,max=100,orientation='vertical').add_class('FloatControl')
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 70,continuous_update=False).add_class('Width-Slider') 
     scale    = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
         
@@ -150,7 +149,7 @@ class Widgets:
         self.ddowns  = _Dropdowns()
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
-        self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget')]).add_class('Draw-Wrapper')
+        self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget'), self.toggles.draw]).add_class('Draw-Wrapper')
         self.drawer.layout = dict(width='100%',height='0',overflow='hidden') # height will be chnaged by button
         
         # Layouts build on these widgets
@@ -164,10 +163,11 @@ class Widgets:
 
         
         self.footerbox = HBox([
+            self.toggles.menu,
             self.buttons.toc,
             HBox([self.htmls.footer]), # should be in Box to avoid overflow
             self.buttons.capture,
-        ],layout=Layout(height='28px',margin='0 0 0 28px')).add_class('NavBox')
+        ],layout=Layout(height='28px')).add_class('NavBox')
         
         self.navbox = VBox([
             self.buttons._inview,
@@ -215,6 +215,17 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
+        self.quick_menu =  VBox(_many_btns[::-1],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
+
+        def close_quick_menu(change):
+            self.toggles.menu.value = False
+
+        for btn in self.quick_menu.children: # All buttons should close menu
+            if hasattr(btn, 'on_click'):
+                btn.on_click(close_quick_menu)
+            else:
+                btn.observe(close_quick_menu, names=["value"])
+
         self.mainbox = VBox([
             self.htmls.glass, # This is the glass pane, should be before everything, otherwise it will cover the slide area
             self.htmls.loading, 
@@ -223,7 +234,7 @@ class Widgets:
             self.htmls.theme,
             self.htmls.logo,
             self.iw,
-            HBox(_many_btns).add_class('TopBar').add_class('Outside'),
+            self.quick_menu,
             self.htmls.window,
             self.panelbox,
             self.htmls.cursor,
@@ -234,16 +245,19 @@ class Widgets:
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
-            self.sliders.visible,
             self.drawer, 
             self.navbox, # Navbox should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*self.ddowns.aspect.value)}vw',margin='auto')
         ).add_class('SlidesWrapper')  #Very Important to add this class
 
+        for child in self.mainbox.children:
+            if isinstance(child, (HTML, HtmlWidget)):
+                child.layout.margin = "0" # Important to reclaim useless space
+
         for btn in [self.buttons.next, self.buttons.prev, self.buttons.setting,self.buttons.capture]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
-            btn 
+            
     
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Remain invisible in screenshot."

@@ -12,15 +12,13 @@ class Navigation:
         self.btn_next = self.widgets.buttons.next
         self.btn_prev = self.widgets.buttons.prev
         self.btn_settings = self.widgets.buttons.setting
-        self.visible_slider = self.widgets.sliders.visible
-    
+        
         self.btn_prev.on_click(self._shift_left)
         self.btn_next.on_click(self._shift_right)
         self.btn_settings.on_click(self._toggle_panel)
         self.widgets.buttons.home.on_click(self._goto_home)
         self.widgets.buttons.end.on_click(self._goto_end)
         self.progress_slider.observe(self._change_icons,names=['index'])
-        self.visible_slider.observe(self._set_hidden_height,names=['value'])
         
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
@@ -55,11 +53,13 @@ class Navigation:
     def _toggle_panel(self,change):
         if self.btn_settings.icon == 'plus':
             self.btn_settings.icon  = 'minus'
+            self.btn_settings.tooltip = "Close Settings [G]"
             self.widgets.panelbox.layout.height = "100%"
             self.btn_next.disabled = True
             self.btn_prev.disabled = True
         else:
             self.btn_settings.icon = 'plus' #'ellipsis-v'
+            self.btn_settings.tooltip = "Open Settings [G]"
             self.widgets.panelbox.layout.height = "0"
             self.btn_next.disabled = False
             self.btn_prev.disabled = False
@@ -77,9 +77,3 @@ class Navigation:
             self.widgets.buttons.toc.click() # Close TOC
         except:
             self.widgets._push_toast('Cannot got to end of slides, may not enough slides exist.')
-            
-    def _set_hidden_height(self,change):
-        self.widgets.slidebox.layout.height = f'{self.visible_slider.value}%'
-        self.widgets.slidebox.layout.margin='auto 4px'
-        
-        
