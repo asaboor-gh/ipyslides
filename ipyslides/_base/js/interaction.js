@@ -40,7 +40,6 @@ function touchSwiper(box, model){
         
             function handleGesture() {
                 let bbox = box.getBoundingClientRect(); // Swipe only from edges
-                console.log(bbox)
                 if (Math.abs(endY - startY) < 20) {
                     // Y axis is not important but we should avoid X component of touch for a long y-scroll
                     if ((endX - startX) < -40 && startX > (bbox.right - 50)) {
@@ -149,7 +148,6 @@ function handleMessage(msg, box, cursor) {
 
 function handleChangeFS(box,model){
     if (box === document.fullscreenElement) {
-        console.log(box);
         model.set("msg_topy", "FS")
     } else {
         model.set("msg_topy", "!FS")
@@ -198,6 +196,14 @@ function setScale(box) {
     let scale = scaleH > scaleW ? scaleW : scaleH;
     
     box.style.setProperty('--contentScale',scale);
+
+    let navbox = box.getElementsByClassName("NavWrapper")[0];
+    let vis = navbox.style.visibility;
+    if ((vis?vis:"") === "hidden") {
+        box.style.setProperty('--paddingBottom',Number(28/scale) + "px");
+    } else {
+        box.style.setProperty('--paddingBottom',"0px");
+    }
 }
 
 function handleScale(box) {

@@ -37,6 +37,7 @@ class _HhtmlExporter:
         
     def _htmlize(self, as_slides = False, **kwargs):
         "page_size, slide_number are in kwargs"
+        navui_class = 'NavHidden' if self.main.widgets.checks.navgui.value else '' # it hides when True
         content = ''
         for item in self.main:
             _html = ''
@@ -46,7 +47,7 @@ class _HhtmlExporter:
             _html = f'<div class="jp-OutputArea">{_html}</div>'
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)
-            footer = f'<div class="Footer">{item.get_footer()}{self._get_progress(item)}</div>'
+            footer = f'<div class="Footer {navui_class}">{item.get_footer()}{self._get_progress(item)}</div>'
             content += (f'<section {sec_id}>{self._get_css(item)}<div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
                         if as_slides else f'<section {sec_id}>{_html}</section>')
         

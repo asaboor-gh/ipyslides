@@ -327,13 +327,16 @@ class LayoutSettings:
 
     def hide_navigation_gui(self):
         "Hide all navigation elements, but keyboard or touch still work."
-        self.widgets.controls.layout.display = "none"
-        self.widgets.footerbox.layout.display = "none"
+        self.widgets.controls.layout.visibility = "hidden"
+        self.widgets.navbox.layout.visibility = "hidden"
+        self.widgets.toggles.menu.layout.visibility = "visible" # keep for accessing things
+        self.widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
 
     def show_navigation_gui(self):
         "Show all navigation elements."
-        self.widgets.controls.layout.display = ""
-        self.widgets.footerbox.layout.display = ""
+        self.widgets.controls.layout.visibility = "visible"
+        self.widgets.navbox.layout.visibility = "visible"
+        self.widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
 
 
     def _update_size(self, change):

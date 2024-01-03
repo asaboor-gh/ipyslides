@@ -212,12 +212,18 @@ section .SlideBox > .Footer {
     width: 100%;
     bottom: 0;
 }
+section .SlideBox > .Footer.NavHidden {
+    background: none; /* no important here */
+}
 section .SlideBox > .Footer > p {
     font-size: 14px !important;
     padding: 4px !important;
     padding-left: 8px !important;
     display:block !important;
     margin:0 !important;
+}
+section .SlideBox > .Footer.NavHidden > p {
+    display:none !important;
 }
 .SlidesWrapper::-webkit-scrollbar:vertical,
 .SlidesWrapper::-webkit-scrollbar-button,

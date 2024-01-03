@@ -178,7 +178,7 @@ class Widgets:
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
 
-        _many_btns = [self.buttons.setting, self.toggles.draw, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh]
+        _many_btns = [self.buttons.setting, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
         
         self.panelbox = VBox([
             self.htmls.glass,

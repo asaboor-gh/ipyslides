@@ -107,15 +107,16 @@ auto.from_markdown('section`Plotting and DataFrame` toc``')
 with auto.slide() as sl:
     write('## Plotting with Matplotlib')
     with slides.code.context(auto_display = False) as s:
+        sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
+        
         import numpy as np, matplotlib.pyplot as plt
         plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation
         x = np.linspace(0,2*np.pi)
         with plt.style.context('ggplot'):
             fig, ax = plt.subplots(figsize=(3.4,2.6))
             _ = ax.plot(x,np.cos(x))
-        write([ax, s.focus_lines([1,3,4])])
+        write(ax, s.focus_lines([0,3,4]))
 
-    sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
         
 # Plotly and Pandas DataFrame only show if you have installed
 with slides.code.context(auto_display = False) as source:

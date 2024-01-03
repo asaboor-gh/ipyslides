@@ -299,6 +299,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '> .jp-OutputArea': {
                 'margin':'auto !important' if centered else 'unset !important',
                 'padding': '0 !important',
+                'padding-bottom': 'var(--paddingBottom, 0px) !important', # Set by JS dynamically
                 'width': f'{cwidth}% !important',
                 'max-width': f'{cwidth}% !important',
                 'box-sizing': 'border-box !important',
