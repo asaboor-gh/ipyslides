@@ -24,7 +24,7 @@ class LayoutSettings:
         self._custom_colors = {}
         self._font_family = {
             "code": "var(--jp-code-font-family)",
-            "text": "STIX Two Text",
+            "text": "Roboto",
         }
         self._footer_kws = {
             "text": 'IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>',
@@ -193,7 +193,7 @@ class LayoutSettings:
     @_sub_doc(css_docstring=_css_docstring)
     def set_css(self, css_dict={}):
         """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well.
-        Individual slide's CSS set by `slides[index].set_css` will override this.
+        Individual slide's CSS set by `slides[index].set_css` will override this. This is exported only to html slides, not to report.
         {css_docstring}
         """
         if len(self._slides[:]) >= 1:
@@ -440,14 +440,14 @@ class LayoutSettings:
         self._push_zoom(change=None)  # Adjust zoom CSS for expected layout
         if self.btn_window.value:
             self.btn_window.icon = "minus"
-            self.btn_window.tooltip = "Restore Viewport [W]"
+            self.btn_window.tooltip = "Restore Viewport [V]"
             self.widgets.mainbox.add_class("FullWindow")  # to Full Window
             self.widgets.htmls.window.value = html(
                 "style", _layout_css.viewport_css()
             ).value
         else:
             self.btn_window.icon = "plus"
-            self.btn_window.tooltip = "Fill Viewport [W]"
+            self.btn_window.tooltip = "Fill Viewport [V]"
             self.widgets.mainbox.remove_class("FullWindow")  # back to inline
             self.widgets.htmls.window.value = ""
 
@@ -458,9 +458,13 @@ class LayoutSettings:
 
     def _on_icon_change(self, change): # icon will changes when Javscript sends a message
         if change.new == 'minus':
+            self._wsv = self.width_slider.value
+            self.width_slider.value = 100
             self.widgets.mainbox.add_class('FullScreen')
             self.btn_fscreen.tooltip = "Exit Fullscreen [F]"
         else:
+            if hasattr(self, '_wsv'):
+                self.width_slider.value = self._wsv  # restore
             self.widgets.mainbox.remove_class('FullScreen')
             self.btn_fscreen.tooltip = "Enter Fullscreen [F]"
         

@@ -31,7 +31,7 @@ def layout_css(breakpoint, accent_color):
                 "^.PresentMode .SlideBox .SlideArea .ProxyPasteBtns": {
                     "display": "none !important"
                 },  # Hide in presentation mode
-                "^.FullWindow": {
+                "^.FullWindow, ^.FullScreen": {
                     ".Width-Slider": {"display": "none !important"},
                 },
                 "^.FullScreen": {
@@ -62,6 +62,20 @@ def layout_css(breakpoint, accent_color):
                 "^.InView-Other .Arrows.Next-Btn": {
                     "animation-delay": "60s",  # Beet at 60 seconds if left on slide
                     "animation-iteration-count": "10",  # 10 times to catch attention of speaker
+                },
+                ".Progress-Box": {
+                    "margin": "0 !important",
+                    "padding": "0 !important",
+                    "position": "absolute !important",
+                    "left":"0 !important",
+                    "bottom": "0 !important",
+                    "background": "var(--secondary-bg) !important",
+                    ".Progress" : {
+                        "margin": "0 !important",
+                        "padding": "0 !important",
+                        "transition": "width 250ms ease-in-out !important",
+                        "background": "var(--accent-color) !important",
+                    }
                 },
                 ".Toast, .TOC, .SidePanel": {
                     "--text-size": "20px", # Don't need these to be zoomed in
@@ -285,7 +299,7 @@ def layout_css(breakpoint, accent_color):
                 "position": "absolute !important",
                 "left": "0 !important",
                 "bottom": "3px !important", # leave space for progressbar
-                "background": "var(--primary-bg) !important",
+                "background": "var(--primary-bg)", # Do not use important, let user change it with set_css
                 "width": "100% !important",
                 "^,^ > div": {
                     "padding": "0px",
@@ -326,23 +340,6 @@ def layout_css(breakpoint, accent_color):
                             "font-size": "14px !important",
                         },
                     },
-                },
-            },
-            ".FloatControl": {
-                "position": " absolute",
-                "right": "0",
-                "top": "0",
-                "width": "32px",
-                "height": "32px",
-                "z-index": "3",
-                "background": "var(--primary-bg)",
-                "opacity": "0",
-                "overflow": "hidden",
-                "padding": "4px",
-                "^:hover, ^:focus": {
-                    "width": "max-content",
-                    "height": "50%",
-                    "opacity": 1,
                 },
             },
             ".Controls": {
@@ -665,7 +662,7 @@ def layout_css(breakpoint, accent_color):
                         "height": "auto !important",
                     },
                 },
-                ".Controls, .NavWrapper button, .FloatControl, div.LaserPointer": {
+                ".Controls, .NavWrapper button, div.LaserPointer": {
                     "display": "none !important",
                 },
                 ".NavWrapper p": {
@@ -783,6 +780,7 @@ def viewport_css():
         top:0 !important;
         width:100vw !important;
         height:100vh !important;
+        z-index: 100 !important; /* Show on top of everything */
     }}
     #menubar-container {{ display: none !important; }} /* For classic Notebook */
     body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */

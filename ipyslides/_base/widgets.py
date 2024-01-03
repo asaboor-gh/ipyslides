@@ -44,7 +44,7 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fill Viewport [W]').add_class('FullWindow-Btn').add_class('Menu-Item')
+    window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fill Viewport [V]').add_class('FullWindow-Btn').add_class('Menu-Item')
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Enable Zooming Items [Z]').add_class('Zoom-Btn')
     laser   = ipw.ToggleButton(icon='plus',value = False, tooltip='Show Laser Pointer [L]').add_class('Laser-Btn') 
@@ -75,8 +75,8 @@ class _Inputs:
     """
     Instantiate under `Widgets` class only.
     """
-    bbox = ipw.Text(description='L,T,R,B (px)',layout=auto_layout,value='Type left,top,right,bottom pixel values and press ↲').add_class('Bbox-Input')
-
+    bbox = ipw.Text(description='L,T,R,B (px)',layout=auto_layout,value='Type left,top, right,bottom pixel values and press ↲').add_class('Bbox-Input')
+    
 @dataclass(frozen=True)
 class _Checks:
     """
@@ -135,11 +135,15 @@ class Widgets:
         self._tmp_out.clear_output(wait=True)
         with self._tmp_out:
             display(*objs)
+    
+    def update_progressbar(self):
+        self._progbar.children[0].layout.width = f"{self.sliders.progress.value}%"
         
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
         self._notebook_dir = '.' # This will be updated later
         self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
+        self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px")).add_class("Progress-Box") # border not working everywhere
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -246,7 +250,8 @@ class Widgets:
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.drawer, 
-            self.navbox, # Navbox should come last
+            self.navbox, 
+            self._progbar # progressbar should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*self.ddowns.aspect.value)}vw',margin='auto')
         ).add_class('SlidesWrapper')  #Very Important to add this class
 

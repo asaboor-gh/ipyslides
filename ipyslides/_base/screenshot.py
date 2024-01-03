@@ -8,8 +8,9 @@ from time import sleep
 from contextlib import contextmanager
 
 from PIL import Image, ImageGrab
+import numpy as np
 
-from ..utils import image
+from ..utils import image, alert
 from ..writer import CustomDisplay
 from . import intro
 
@@ -23,7 +24,7 @@ class ScreenShot:
         self.btn_png = self.widgets.buttons.png
         self.btn_capture = self.widgets.buttons.capture
         self.btn_settings = self.widgets.buttons.setting
-        self.bbox_input = self.widgets.inputs.bbox
+        self.bbox = self.widgets.inputs.bbox
         
         self.__images = {} #Store screenshots
         self.__capture_settings = {'load_time':0.8,'quality':95,'bbox':None}
@@ -34,12 +35,22 @@ class ScreenShot:
         self.btn_png.on_click(self.__save_images)
         self.btn_cap_all.on_click(self.__capture_all)
         self.widgets.ddowns.clear.observe(self.__clear_images)
-        self.bbox_input.on_submit(self.__set_bbox)
-    
-    def __set_bbox(self,change):
-        bbox = [int(v) for v in self.bbox_input.value.split(',')][:4]  
-        img = self.capture_setup(**{**self.capture_settings, 'bbox':bbox})
+        self.bbox.on_submit(self._set_bbox)
+
+    def _set_bbox(self, change):
+        x1,y1,x2,y2 = tuple(map(int,self.bbox.value.split(',')[:4]))
+
+        if (x2 < x1) or (y2 < y1):
+            self.widgets._push_toast(alert('left < right and top < bottom should hold!').value, timeout=10)
+        
+        arr = np.asarray(ImageGrab.grab(bbox=(x1,y1,x2,y2)))
+        new_arr = np.concatenate([arr[:100],np.zeros_like(arr[:5]), arr[-100:]])
+        new_arr = np.concatenate([new_arr[:,:160], np.zeros_like(new_arr[:, :5]), new_arr[:,-160:]],axis=1)
+
+        img = image(Image.fromarray(new_arr),width='100%') 
         self.widgets._push_toast(img.value, timeout=20) # needs enough time to see result
+
+        self.capture_setup(**{**self.capture_settings, 'bbox':(x1,y1,x2,y2)})
 
     @contextmanager
     def capture_mode(self, *additional_widgets_to_hide):

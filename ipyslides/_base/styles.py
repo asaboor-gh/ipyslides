@@ -223,6 +223,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
             ':is(h1, h2, h3, h4, h5, h6)': {
                 'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+                'font-weight':'normal',
                 'color':'var(--heading-color)',
                 'text-align':'center' if centered else 'left',
                 'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope

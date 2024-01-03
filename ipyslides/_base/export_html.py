@@ -10,26 +10,24 @@ from . import styles
 from ..formatters import code_css
 from ..writer import _fmt_html
 
-manager_state_content = '''<!-- Load RequireJS, used by the IPywidgets for dependency management -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"
-      integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA="
-      crossorigin="anonymous">
-    </script>
+_script = '''<script>
+    let box = document.getElementsByClassName('SlideBox')[0];
+    let slide = box.getElementsByClassName('SlideArea')[0];
 
-    <!-- Load IPywidgets bundle for embedding. -->
-    <script
-      data-jupyter-widgets-cdn="https://unpkg.com/"
-      data-jupyter-widgets-cdn-only
-      src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@*/dist/embed-amd.js"
-      crossorigin="anonymous">
-    </script>
+    window.onresize = function() {
+        let rectBox = box.getBoundingClientRect();
+        let rectSlide = slide.getBoundingClientRect();
+        console.log(rectBox, rectSlide);
+        let oldScale = document.documentElement.style.getPropertyValue('--contentScale');
+        let old = oldScale ? oldScale : 1;
+        let scaleH = old*rectBox.height/rectSlide.height;
+        let scaleW = old*rectBox.width/rectSlide.width;
+        let scale = scaleH > scaleW ? scaleW : scaleH;
+        document.documentElement.style.setProperty('--contentScale',scale);
+    }
+    window.dispatchEvent(new window.Event('resize')); // First time programatically
+</script>'''
 
-    <!-- The state of all the widget models on the page -->
-    <script type="application/vnd.jupyter.widget-state+json">
-      {manager_state}
-    </script>
-'''
 
 class _HhtmlExporter:
     # Should be used inside Slides class only.
@@ -49,7 +47,7 @@ class _HhtmlExporter:
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)
             footer = f'<div class="Footer">{item.get_footer()}{self._get_progress(item)}</div>'
-            content += (f'<section {sec_id}><div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
+            content += (f'<section {sec_id}>{self._get_css(item)}<div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
                         if as_slides else f'<section {sec_id}>{_html}</section>')
         
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
@@ -61,8 +59,9 @@ class _HhtmlExporter:
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
         _code_css = (self.main.widgets.htmls.hilite.value if as_slides else code_css(color='var(--primary-fg)')).replace(f'.{self.main.uid}','') # Remove uid from code css here
         
+        script = _script if as_slides else '' # No need in report
         
-        return doc_html(_code_css,_style_css, content).replace(
+        return doc_html(_code_css,_style_css, content, script).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
             '__HEIGHT__', f'{int(254*self.main.settings.aspect_dd.value)}mm') # Slides height is determined by aspect ratio.
     
@@ -78,6 +77,16 @@ class _HhtmlExporter:
         prog = int(float(slide.label)/(float(self.main[-1].label) or 1)*100) # Avoid ZeroDivisionError if only one slide
         gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {prog}%, var(--secondary-bg) {prog}%, var(--secondary-bg) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'
+    
+    def _get_css(self, slide):
+        "uclass.SlidesWrapper -> sec_id , .SlidesWrapper -> sec_id, NavWrapper -> Footer"
+        sec_id = f"#{getattr(slide,'_sec_id','')}"
+        return slide.css.value.replace(
+            f".{self.main.uid}.SlidesWrapper", sec_id).replace(
+            f".{self.main.uid}", sec_id).replace(
+            ".NavWrapper", ".Footer"
+            )
+
                 
 
     def _writefile(self, path, content, overwrite = False):

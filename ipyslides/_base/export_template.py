@@ -1,6 +1,6 @@
 # Template for building a report from slides 
 
-def doc_html(code_css, style_css, content):
+def doc_html(code_css, style_css, content, script):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,23 +48,7 @@ def doc_html(code_css, style_css, content):
     </div>
 </div>
 </body>
-<script>
-    let box = document.getElementsByClassName('SlideBox')[0];
-    let slide = box.getElementsByClassName('SlideArea')[0];
-
-    window.onresize = function() {{
-        let rectBox = box.getBoundingClientRect();
-        let rectSlide = slide.getBoundingClientRect();
-        console.log(rectBox, rectSlide);
-        let oldScale = document.documentElement.style.getPropertyValue('--contentScale');
-        let old = oldScale ? oldScale : 1;
-        let scaleH = old*rectBox.height/rectSlide.height;
-        let scaleW = old*rectBox.width/rectSlide.width;
-        let scale = scaleH > scaleW ? scaleW : scaleH;
-        document.documentElement.style.setProperty('--contentScale',scale);
-    }}
-    window.dispatchEvent(new window.Event('resize')); // First time programatically
-</script>
+{script}
 </html>
 '''
 
@@ -105,6 +89,7 @@ a:hover {text-decoration:underline !important;}
 .SlidesWrapper h5, .SlidesWrapper h6 {
 	color:var(--heading-color);
  	text-align: left !important;
+    font-weight:normal;
 	overflow:hidden; /* FireFox */
     margin-block: 0.2em 0.3em !important;
 }
@@ -220,7 +205,7 @@ section .SlideArea {
     box-sizing: border-box !important;
 }
 section .SlideBox > .Footer { 
-    background: var(--primary-bg);
+    background: var(--primary-bg); /* no important here */
     padding: 0 !important; margin: 0 !important; 
     position:absolute;
     left:0;

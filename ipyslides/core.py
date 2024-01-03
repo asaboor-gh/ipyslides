@@ -241,9 +241,7 @@ class Slides(BaseSlides):
                 self._add_clean_title()
 
             with suppress(BaseException):  # Does not work everywhere.
-                self.widgets.inputs.bbox.value = ", ".join(
-                    str(a) for a in self.screenshot.screen_bbox
-                )  # Useful for knowing scren size
+                self.widgets.inputs.bbox.value = ", ".join(map(str,self.screenshot.screen_bbox))
         else:
             if self._max_index == 0:  # prevent overwrite
                 self._slides_dict["0"] = Slide(self, "0")  # just for completeness
@@ -685,6 +683,7 @@ class Slides(BaseSlides):
             _objs.append(self._iterable[new_index].animation)
 
         self.widgets.update_tmp_output(*_objs)
+        self.widgets.update_progressbar()
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index  # Just safe
@@ -719,7 +718,6 @@ class Slides(BaseSlides):
             )
 
             self._switch_slide(old_index=change["old"], new_index=change["new"])
-            self.widgets.iw.msg_tojs = f'PBW:{self.progress_slider.value}' # Updates progressbar
             self.current.run_on_load()  # Run on_load setup after switching slide, it updates footer as well
 
     def refresh(self):
@@ -750,7 +748,6 @@ class Slides(BaseSlides):
 
         self._update_dynamic_content(None)  # Update dynamic content including widgets
         self._update_toc()  # Update table of content if any
-        self.widgets.iw.msg_tojs = f'PBW:{self.progress_slider.value}' # Updates progressbar
 
         # This is useful for readily available objects with slides instead of indexing.
         old_links = getattr(self, "_links_dict", {})
@@ -1192,7 +1189,7 @@ class Slides:
         date="today",
         logo_src=get_logo(),
         font_scale=1,
-        text_font="STIX Two Text",
+        text_font="Roboto",
         code_font="var(--jp-code-font-family)",
         code_style="default",
         code_lineno=True,

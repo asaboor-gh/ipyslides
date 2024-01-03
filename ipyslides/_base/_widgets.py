@@ -52,7 +52,6 @@ class InteractionWidget(anywidget.AnyWidget):
             self._toggles.window.disabled = True
             self._toggles.window.layout.display = 'none'
         elif msg == 'LOADED':
-            self.msg_tojs = f'PBW:{self._prog.value}' # Updates progressbar
             if self._checks.notes.value: # Notes window already there
                self._checks.notes.value = False # closes unlinked window
                self._checks.notes.value = True # opens new linked window

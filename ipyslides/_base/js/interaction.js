@@ -129,10 +129,6 @@ function handleMessage(msg, box, cursor) {
                 slide.style.visibility = 'hidden';
             };
         }
-    } else if (msg.includes("PBW:")) {
-        let w = msg.replace("PBW:","");
-        let color = "var(--accent-color) 0%,  var(--accent-color) " + w + "%, var(--secondary-bg) " + w + "%, var(--secondary-bg) 100%";
-        box.style.borderImage = "linear-gradient(to right," + color + ") 1 / 0  0 3px 0";
     } else if (msg.includes("THEME:")) {
         let theme = msg.replace("THEME:","");
 

@@ -496,7 +496,7 @@ class Slide:
     @_sub_doc(css_docstring = _css_docstring)
     def set_css(self,css_dict = {}):
         """Attributes at the root level of the dictionary will be applied to the slide.  
-        use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
+        use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once. This is exported only to html slides, not to report.
         {css_docstring}"""
         self._css = _format_css(css_dict, allow_root_attrs = True)
         

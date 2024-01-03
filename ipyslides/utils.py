@@ -254,9 +254,12 @@ def _format_css(css_dict, allow_root_attrs = False):
     uclass = get_unique_css_class()
     _all_css = '' # All css
     root_attrs = {k:v for k,v in css_dict.items() if not isinstance(v,dict)}
+    allowed_attrs = {k:v for k,v in root_attrs.items() if "background" in k} # only allow background CSS to change at root
     if allow_root_attrs:
-        if root_attrs: # Applies to background mostly
-            _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .BackLayer .Front',), root_attrs)
+        if allowed_attrs: # Applies to background mostly
+            _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .NavWrapper, {uclass} .BackLayer .Front',), allowed_attrs)
+            if (root_attrs := {k:v for k,v in root_attrs.items() if k not in allowed_attrs}):
+                print(f'Skipping attributes: \n{root_attrs}\nat root level of css_dict!\nOnly background-related attributes are allowed at top!' )
 
     if root_attrs and not allow_root_attrs:
         print(f'Skipping attributes: \n{root_attrs}\nat root level of css_dict!')
