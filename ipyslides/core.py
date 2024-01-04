@@ -909,7 +909,7 @@ class Slides(BaseSlides):
         self.notify('Dynamic content updated everywhere!')
                 
 
-    def frames(self, slide_number, *objs, repeat=False, frame_height="auto"):
+    def frames(self, slide_number, *objs, repeat=False):
         """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
         You can also call it as a function, e.g. `.frames(1,*objs)()` becuase it can write by defualt.
 
@@ -935,8 +935,7 @@ class Slides(BaseSlides):
             If True, one frame are generated in sequence of ojects linke `[a,b,c]` will generate 3 frames with [a], [a,b], [a,b,c] to given in function and will be written top to bottom.
             If list or tuple, it will be used as the sequence of frames to generate and number of frames = len(repeat).
             [(0,1),(1,2)] will generate 2 frames with [a,b] and [b,c] to given in function and will be written top to bottom or the way you write in your function.
-        - frame_height: ('N%', 'Npx', 'auto') height of the frame that keeps incoming frames object at static place.
-
+        
         No return of defined function required, if any, only should be display/show etc.
         CSS properties from `prop_dict` are applied to all slides from *objs."""
 
@@ -971,7 +970,6 @@ class Slides(BaseSlides):
             with _build_slide(
                 self, f"{slide_number}", is_frameless=False
             ) as this_slide:
-                self.write(self.format_css({".SlideArea": {"height": frame_height}}))
                 func(_new_objs[0], 0)  # Main slide content
 
             _new_objs = _new_objs[1:]  # Fisrt one is already written
@@ -989,9 +987,6 @@ class Slides(BaseSlides):
                 new_frames.append(new_slide)
 
                 with new_slide._capture() as captured:
-                    self.write(
-                        self.format_css({".SlideArea": {"height": frame_height}})
-                    )
                     func(obj, i + 1)  # i+1 as main slide is 0
 
             this_slide._frames = new_frames
@@ -1134,10 +1129,8 @@ class Slides(BaseSlides):
         def slide():
             return self.slide(self._next_number)
 
-        def frames(*objs, repeat=False, frame_height="auto"):
-            return self.frames(
-                self._next_number, *objs, repeat=repeat, frame_height=frame_height
-            )
+        def frames(*objs, repeat=False):
+            return self.frames(self._next_number, *objs, repeat=repeat)
 
         def from_markdown(file_or_str, trusted=False):
             return self.from_markdown(self._next_number, file_or_str, trusted=trusted)

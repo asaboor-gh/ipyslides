@@ -20,7 +20,7 @@ This {{var_name}} is a code from above and will be substituted with the value of
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
 
-import textwrap, re
+import textwrap, re, sys
 from markdown import Markdown
 from IPython.core.display import display
 from IPython import get_ipython
@@ -110,7 +110,7 @@ def fmt_code(code, instance_name="slides"):
 
 def get_slides_instance():
     "Get the slides instance from the current namespace."
-    if shell := get_ipython():
+    if (shell := get_ipython()):
         # This will be injected by slides instance in namespace.
         return shell.user_ns.get('get_slides_instance', lambda: None)()
     return None

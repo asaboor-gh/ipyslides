@@ -2,12 +2,12 @@
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 import time
 
-from ipyslides.core import Slides
+from IPython import get_ipython
 from ipyslides.writer import write
 from ipyslides.formatters import libraries, __reprs__, plt2html
 
-
-slides = Slides() # It reurns running slides instance or creates a new one
+# This line assumes that ipyslides is already imported in Notebook
+slides = get_ipython().user_ns['get_slides_instance']() # This preserves user's initialized settings on previous call
 
 auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
 
@@ -230,7 +230,8 @@ boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:
 def f(obj,idx):
     slides.write('# Frames with \n#### `repeat = False`')
     slides.write(obj)
-@auto.frames(*boxes, repeat=True,frame_height='100%')
+
+@auto.frames(*boxes, repeat=True)
 def f(obj,idx):
     slides.running.set_animation(None) #Disable animation for showing bullets list
     slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')

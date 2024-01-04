@@ -297,6 +297,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'padding' : '1em !important',
             'overflow': 'auto !important' if scroll else 'hidden !important',
             '> .jp-OutputArea': {
+                'position': 'relative !important', # absolute content should not go outside
                 'margin':'auto !important' if centered else 'unset !important',
                 'padding': '0 !important',
                 'padding-bottom': 'var(--paddingBottom, 0px) !important', # Set by JS dynamically
