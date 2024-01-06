@@ -265,7 +265,7 @@ class Exp4Widget:
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
-    _animations = {'main':'slide_h','frame':'slide_v'}
+    _animations = {'main':'slide_h','frame':'appear'}
     _overall_css = html('style','')
     def __init__(self, app, number, captured_output = _EmptyCaptured):
         self._widget = Output(layout = Layout(margin='auto',padding='1em')).add_class("SlideArea")
@@ -511,7 +511,7 @@ class Slide:
         "Create unique animation for this slide instance on fly"
         return styles.animations[name].replace('.SlideBox',f'.{self._app.uid} .SlideBox')
         
-    def _set_overall_animation(self, main = 'slide_h',frame = 'slide_v'):
+    def _set_overall_animation(self, main = 'slide_h',frame = 'appear'):
         "Set animation for all slides."
         if main is None:
             self.__class__._animations['main'] = ''

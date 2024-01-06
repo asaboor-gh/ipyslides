@@ -143,7 +143,7 @@ class Widgets:
         # print(f'Inside: {self.__class__.__name__}')
         self._notebook_dir = '.' # This will be updated later
         self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
-        self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px")).add_class("Progress-Box") # border not working everywhere
+        self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()

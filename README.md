@@ -33,12 +33,7 @@ For development install, clone this repository and then
 
 ---
 # How to Use
-- In Jupyter Notebook, do the follwoing:
-```python
-%load_ext ipyslides # It will display info to move further
-slides = get_slides_instance()
-```
-- Above is equivalent to:
+In Jupyter Notebook:
 ```python
 import ipyslides as isd
 slides = isd.Slides()

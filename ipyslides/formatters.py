@@ -15,7 +15,10 @@ from IPython import get_ipython
 from ._base._widgets import HtmlWidget
 
 
-__reprs__ = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
+__reprs = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
+
+supported_reprs = tuple(__reprs) # don't let user change it
+
 class XTML(HTML):
     def __init__(self, *args,**kwargs):
         "This HTML will be diplayable, printable and formatable. Use `self.as_widget()` to get a widget with same content."
@@ -370,7 +373,7 @@ def htmlize(obj):
             return _html # it is a string
         
         # Ipython objects
-        _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs__] if rep]   
+        _reprs_ = [rep for rep in [getattr(obj,f'_repr_{r}_',None) for r in __reprs] if rep]   
         for _rep_ in _reprs_:
             _out_ = _rep_()
             if _out_: # If there is object in _repr_<>_, don't return None

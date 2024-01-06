@@ -109,11 +109,6 @@ class Slides(BaseSlides):
                 self.__xmd, magic_kind="line_cell", magic_name="xmd"
             )
 
-            def get_slides_instance():  # This will be pointed back from xmd as well
-                return self
-
-            self.shell.user_ns["get_slides_instance"] = get_slides_instance
-
         # Override print function to display in order in slides
         if self.shell.__class__.__name__ in (
             "ZMQInteractiveShell",
@@ -579,7 +574,7 @@ class Slides(BaseSlides):
             return GotoButton(button, app=self)
 
     def goto_button(self, text, **kwargs):
-        """ "
+        """
         Initialize a button to jump to given target slide when clicked.
         `text` is the text to be displayed on button.
         `kwargs` are passed to `ipywidgets.Button` function.
@@ -850,8 +845,8 @@ class Slides(BaseSlides):
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
         Can use in place of `write` commnad for strings.
-        When using `%xmd`, variables should be `{{{{var}}}}` or `\{\{var\}\}`, not `{{var}}` as IPython
-        does some formatting to line in magic. If you just need to format it in string, then `{var}` works as well.
+        When using `%xmd`, you can pass variables as ~`var` which will substitute HTML representation. 
+        If you just need to format it in string, then {var} works as well.
         Inline columns are supported with ||C1||C2|| syntax."""
         if cell is None:
             return parse(line, display_inline=True, rich_outputs=False)
@@ -1163,6 +1158,7 @@ class Slides:
         display('Something') # This will be printed
     ```
     ::: note-tip
+        - Use `Slides.instance()` class method to keep older settings. `Slides()` apply default settings every time.
         - Run `slides.demo()` to see a demo of some features.
         - Run `slides.docs()` to see documentation.
         - Instructions in left settings panel are always on your fingertips.
@@ -1171,6 +1167,10 @@ class Slides:
     
    """
     )
+    @classmethod
+    def instance(cls):
+        "Access current instnace without changing the settings."
+        return _private_instance
 
     def __new__(
         cls,
@@ -1187,8 +1187,9 @@ class Slides:
         code_style="default",
         code_lineno=True,
         main_animation="slide_h",
-        frame_animation="slide_v",
+        frame_animation="appear",
         show_always=True,
+        nav_gui = True,
         extensions=[],
     ):
         "Returns Same instance each time after applying given settings. Encapsulation."
@@ -1204,6 +1205,7 @@ class Slides:
             font_scale=dict(font_scale=font_scale),
             font_family=dict(text_font=text_font, code_font=code_font),
             code_style=dict(style=code_style, lineno=code_lineno),
+            nav_gui = dict(visible= nav_gui),
         )
 
         with suppress(BaseException):  # Avoid error if no slides exist

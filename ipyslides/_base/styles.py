@@ -3,7 +3,7 @@
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
 
-_flow_selector = ":is(.highlight code, li, tr)"
+_flow_selector = ":is(.jp-OutputArea-child, .columns > div, li)" #":is(.highlight code, li, tr)"
 
 # Animations are fixed for instnace on the fly, no need uclass thing here
 animations = {'zoom':'''
@@ -19,6 +19,19 @@ animations = {'zoom':'''
    100% { transform: scale(1); }
 }
 ''',
+'appear': f'''
+.SlideBox {_flow_selector} {{
+    animation-name: appear;
+    animation-timing-function: ease-in;
+}}
+''' + _build_css((f".SlideBox {_flow_selector}",), {
+    **{f"^:nth-child({i + 1})":{"animation-duration": f"{int(400 + i*200)}ms"} for i in range(21)},
+    "@keyframes appear" : {
+        "0%" : { "opacity": 0},
+        "50%" : { "opacity": 0},
+        "100%" : { "opacity": 1},
+    },
+}),
 'slide_h': '''
 .SlideBox {
     animation-name: slide; animation-duration: 400ms;
@@ -57,16 +70,15 @@ animations = {'zoom':'''
 ''',
 'flow': f'''
 .SlideBox {_flow_selector} {{
-    animation-name: flow; animation-duration: 600ms;
+    animation-name: flow;
     animation-timing-function: ease-in-out;
 }}
 .SlideBox.Prev {_flow_selector} {{ /* .Prev acts when moving slides backward */
-    animation-name: flowPrev; animation-duration: 600ms;
+    animation-name: flowPrev;
     animation-timing-function: ease-in-out;
 }}
 ''' + _build_css((f".SlideBox {_flow_selector}",), {
-    **{f"^:nth-child({i})":{"animation-delay": f"{int(i*15)}ms"} for i in range(2, 16)},
-    "^:nth-child(n+16)":{"animation-delay": "240ms"},
+    **{f"^:nth-child({i + 1})":{"animation-duration": f"{int(400 + i*200)}ms"} for i in range(21)},
     '@keyframes flow':{
         'from' : {'transform': 'translateX(50%)', 'opacity': 0},
         'to' : {'transform': 'translateX(0)', 'opacity': 1}

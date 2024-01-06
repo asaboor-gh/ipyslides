@@ -121,7 +121,7 @@ class BaseSlides:
         - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - You can escape backtick with backslash: alert`\\\` → \``.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Variables can be replaced with their HTML value (if possible) using \{\{variable\}\} syntax.
+        - Variables can be replaced with their HTML value (if possible) using alert`~\`variable\`` syntax which gives same result as alert`slides.format_html(variable)`.
         - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
         - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
         
@@ -140,7 +140,7 @@ class BaseSlides:
          slides.write('Hello, I was written from python code block using slides instance.')
          ```
         ```
-        and source then can be emded with \{\{source\}\} syntax.
+        and source then can be emded with ~\`source\` syntax.
         
         - A whole block of markdown can be CSS-classed using syntax
         ```markdown
@@ -164,7 +164,7 @@ class BaseSlides:
                 [markdown extensions](https://python-markdown.github.io/extensions/) and 
                 [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-                `__format__` method in your class enables to use \{\{object\}\} syntax and `_repr_html_` method enables it to use inside `write` function.
+                `__format__` method in your class enables to use \{obj\} syntax in python formatting and ~\`obj\` in extended Markdown.
         
         - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         
@@ -261,12 +261,12 @@ class BaseSlides:
         ---
         # Slide 1 
         || Inline - Column A || Inline - Column B ||
-        {{some_var}} that will be replaced by it's html value.
+        ~`some_var` that will be replaced by it's html value.
          ```python run source
          myslides = get_slides_instance() # Access slides instance under python code block in markdown
          # code here will be executed and it's output will be shown in slide.
          ```
-         {{source}} from above code block will be replaced by it's html value.
+         ~`source` from above code block will be replaced by it's html value.
         ---
         # Slide 2
         --
@@ -345,17 +345,8 @@ class BaseSlides:
     
     def demo(self):
         "Demo slides with a variety of content."
-        self.close_view() # Close any previous view to speed up loading 10x faster on average
-        self.clear() # Clear previous content
-        
-        with self.set_dir(os.path.split(__file__)[0]):
-            file = '../_demo.py'
-            raw_source = self.code.cast(file).raw
-            N = raw_source.count('auto.') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
-            self.create(*range(N)) # Create slides first, this is faster
-            self.shell.run_line_magic('run', file) # Run demo in same namespace
-            
-        return self #_demo.demo(self) # Run demo
+        from .._demo import demo_slides
+        return demo_slides(self)
         
         
     def docs(self):

@@ -326,6 +326,15 @@ def layout_css(breakpoint, accent_color):
                             "opacity": "1 !important",
                         },
                     },
+                    ".Menu-Btn.Hover-Only": {
+                        " > i" : {"opacity": "0 !important",},
+                        "^:hover, ^:focus, ^:active ^.mod-active": {
+                        " > i" : {
+                            "opacity": "1 !important",
+                            "transition": "opacity 400ms ease-in-out",
+                        },
+                    },
+                },
                     ".Toc-Btn, .Menu-Btn": {
                         "min-width": "28px",
                         "width": "28px", # need this too
@@ -502,12 +511,11 @@ def layout_css(breakpoint, accent_color):
                 "transition": "height 400ms ease-in-out",
                 "display": "table-column-group !important", # avoid collapse
                 "> button > i": {"margin-right": "8px !important",}, # Make uniform
-                ".Menu-Btn" : {"z-index": "7 !important",}, # show on top of overlay
                 "> button::after":{
                     "content": "attr(title)",
                     "font-size": "14px !important",
                     "color": "var(--primary-fg) !important",
-                },     
+                },    
             },
             "<.jp-OutputArea-child": {
                 "^, .jp-OutputArea-output": {  # For some themes

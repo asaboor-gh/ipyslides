@@ -282,7 +282,7 @@ def alt(widget, func):
     slides = get_slides_instance()
     slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">').display()
     ```
-    {{source}}
+    ~`source`
     
     ::: note-info
         - If you happen to be using alt many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.

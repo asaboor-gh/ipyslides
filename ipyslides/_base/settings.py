@@ -160,9 +160,9 @@ class LayoutSettings:
 
     def _toggle_nav_gui(self, change):
         if change["new"]:  # It's checked then hide
-            self.hide_navigation_gui()
+            self.set_nav_gui(False)
         else:
-            self.show_navigation_gui()
+            self.set_nav_gui(True)
 
     def _toggle_proxy_buttons(self, change):
         if change["new"]:
@@ -170,7 +170,7 @@ class LayoutSettings:
         else:
             self.widgets.mainbox.add_class("PresentMode")
 
-    def set_animation(self, main="slide_h", frame="slide_v"):
+    def set_animation(self, main="slide_h", frame="appear"):
         "Set animation for slides and frames."
         if len(self._slides[:]) >= 1:
             self._slides[0]._set_overall_animation(main=main, frame=frame)
@@ -323,21 +323,20 @@ class LayoutSettings:
             raise ValueError("width should be int in range [0,100]")
         self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center}
         self._update_theme(change=None)  # Trigger CSS in it to make width change
-        self.widgets.iw.msg_tojs = 'RESCALE' 
+        self.widgets.iw.msg_tojs = 'RESCALE'
 
-    def hide_navigation_gui(self):
-        "Hide all navigation elements, but keyboard or touch still work."
-        self.widgets.controls.layout.visibility = "hidden"
-        self.widgets.navbox.layout.visibility = "hidden"
+    def set_nav_gui(self, visible = True):
+        """Show/Hide navigation GUI, keyboard or touch still work. Hover on left-bottom corner to acess settings."""
+        self.widgets.controls.layout.visibility = "visible" if visible else "hidden"
+        self.widgets.navbox.layout.visibility = "visible" if visible else "hidden"
         self.widgets.toggles.menu.layout.visibility = "visible" # keep for accessing things
         self.widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
 
-    def show_navigation_gui(self):
-        "Show all navigation elements."
-        self.widgets.controls.layout.visibility = "visible"
-        self.widgets.navbox.layout.visibility = "visible"
-        self.widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
-
+        if visible:
+            self.widgets.toggles.menu.remove_class("Hover-Only")
+        else:
+            self.widgets.toggles.menu.add_class("Hover-Only")
+            self._slides.notify("Navigation controls hidden. Hover on left-bottom corner to access settings!")
 
     def _update_size(self, change):
         if change and change["owner"] == self.width_slider:
@@ -514,9 +513,14 @@ class LayoutSettings:
     def _toggle_menu(self, change):
         if self.btn_menu.value:
             self.btn_menu.icon = 'minus'
+            self._hover_only = 'Hover-Only' in self.btn_menu._dom_classes
+            self.btn_menu.remove_class('Hover-Only') # If navigation menu hidden by user
             self.widgets.quick_menu.layout.height = 'auto'
             self.widgets.quick_menu.layout.border = "1px solid var(--hover-bg)"
         else:
             self.btn_menu.icon = 'plus'
             self.widgets.quick_menu.layout.height = '0'
             self.widgets.quick_menu.layout.border = "none"
+
+            if hasattr(self, '_hover_only') and self._hover_only:
+                self.btn_menu.add_class('Hover-Only')

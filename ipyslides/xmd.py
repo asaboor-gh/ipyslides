@@ -10,7 +10,7 @@ import numpy as np
 ```multicol
 A
 +++
-This {{var_name}} is a code from above and will be substituted with the value of var_name
+This ~`var_name` is a code from above and will be substituted with the value of var_name
 ```
 ::: note-warning
     Nested blocks are not supported.
@@ -20,7 +20,7 @@ This {{var_name}} is a code from above and will be substituted with the value of
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
 
-import textwrap, re, sys
+import textwrap, re, ast, sys
 from markdown import Markdown
 from IPython.core.display import display
 from IPython import get_ipython
@@ -92,7 +92,7 @@ _special_funcs = {
     "today": "fmt like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "details": "text",
-    "center": "text or \{\{variable\}\}",
+    "center": "text or ~\`variable\`",
 }  # align-center should be at end of all
 
 _code_ = """
@@ -107,19 +107,30 @@ def fmt_code(code, instance_name="slides"):
     "Format given code block to be runable under markdown. instance_name is the name of the slides instance as used in current code."
     return _code_.format(app=instance_name, block=textwrap.dedent(code).strip())
 
-
 def get_slides_instance():
     "Get the slides instance from the current namespace."
-    if (shell := get_ipython()):
-        # This will be injected by slides instance in namespace.
-        return shell.user_ns.get('get_slides_instance', lambda: None)()
-    return None
+    if (isd:= sys.modules.get('ipyslides',None)):
+        if (slides := getattr(isd, "Slides",None)): # Avoid partial initialization
+            return slides.instance()
 
 
 def get_unique_css_class():
     "Get slides unique css class if available."
     slides = get_slides_instance()
     return f".{slides.uid}" if slides else ""
+
+
+def is_var(name):
+    try:
+        ast.parse(f"{name} = None") # if not valid variable name, it will fail
+        return True
+    except:
+        return False
+    
+def get_user_ns():
+    "Top level user namespace"
+    main = sys.modules.get('__main__',None) # __main__ is current top module
+    return main.__dict__ if main else {}
 
 
 def resolve_objs_on_slide(slide_instance, text_chunk):
@@ -354,14 +365,19 @@ class XMarkdown(Markdown):
         elif "run" in header and self._display_inline:
             source = header.split("run")[1].strip()  # Afte run it be source variable
             if source:
-                self._shell.user_ns[source] = _str2code(
+                get_user_ns()[source] = _str2code(
                     dedent_data, language="python", className=_class
                 )
 
             # Run Code now
             with capture_output() as captured:
                 if current_shell := self._slides or self._shell:
-                    current_shell.run_cell(dedent_data)
+                    try: # Need slides to be  accessible in namespace
+                        get_user_ns()['get_slides_instance'] = get_slides_instance
+                        current_shell.run_cell(dedent_data)
+                    finally:
+                        get_user_ns().pop('get_slides_instance') # don't keep
+
                 else:
                     raise RuntimeError("Cannot execute this outside IPython!")
 
@@ -369,7 +385,7 @@ class XMarkdown(Markdown):
             return outputs
 
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as {{var}} and two inline columns as ||C1||C2||"
+        "Substitute variables in html_output given as ~`var` and two inline columns as ||C1||C2||"
         # Check maximum level of indentation if under custom blocks
         matches = [
             4 + len(match)
@@ -382,28 +398,25 @@ class XMarkdown(Markdown):
         )  # If no :::, no indentation is needed
 
         # Replace variables first
-        user_ns = get_ipython().user_ns
         all_matches = re.findall(r"\{\{(.*?)\}\}", html_output, flags=re.DOTALL)
+        if all_matches:
+            raise ValueError('Use ~`variable` syntax instead of {{variable}} in extended markdown. Use {variable} in standard string formatting.')
+        
+        all_matches = re.findall(r"\~\`(.*?)\`", html_output, flags=re.DOTALL)
         for match in all_matches:
             output = match  # If below fails, it will be the same as input line
             _match = match.strip()
-            if _match in user_ns:
-                output = user_ns[_match]
-            else:
-                raise Exception(
-                    (
-                        "{{" + match + "}}" + " could not be resolved. "
-                        "Only variables are allowed in double curly braces or see Slides.xmd_syntax as well"
-                    )
-                )
-
+            if not is_var(_match):
+                raise ValueError(f"Only variables are allowed inside ~`variable` syntax, got {_match!r}. Use string formatting for arbitrary expressions.")
+            
+            output = get_user_ns().get(_match, f"<pre>alert`**NameError**`: name {match!r} is not defined</pre>")
             _out = (
                 (htmlize(output) if output is not None else "")
                 if not isinstance(output, str)
                 else output
             )  # Avoid None
             html_output = html_output.replace(
-                "{{" + match + "}}", _out.replace("\n", sub_nl), 1
+                "~`" + match + "`", _out.replace("\n", sub_nl), 1
             )  # Replace with htmlized output, replace new line with 4 spaces to keep indentation if block ::: is used
 
         # Replace inline one argumnet functions
@@ -504,7 +517,7 @@ def parse(xmd, display_inline=True, rich_outputs=False):
      {.info}
      +++
      # Second column is 60% wide
-     This \{\{var_name\}\} is code from above and will be substituted with the value of var_name
+     This ~\`var_name\` is code from above and will be substituted with the value of var_name
      ```
 
      ```python
