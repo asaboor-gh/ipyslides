@@ -75,10 +75,10 @@ slides.set_animation(main='flow')
 x = 1 + 2
 print(x) 
 ```
-There is a python block above with header `python run source`. We can display that block by  &lcub;&lcub;source&rcub;&rcub; as below:
+There is a python block above with header `python run source`. We can display that block by  ~\`source\` as below:
 ~`source`
 
-variable `x` defined there is shown here x = ~`x`. Only variables can be embeded in &lcub;&lcub;var&rcub;&rcub;, not expressions.
+variable `x` defined there is shown here x = ~`x`. Only variables can be embeded in ~\`var\`, use string formatting for expressions.
 ```python
 @slides.frames(1,*objs)
 def func(obj):
