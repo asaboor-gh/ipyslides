@@ -161,7 +161,7 @@ key_combs = f"""
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
 | {_key('Esc')}                               |                                                   | {key_maps["Esc"]}      |
 | {_key('V')}                                 | {_icons["win-maximize"]}, {_icons["win-restore"]} | {key_maps["V"]}        |
-| {_key('G')}                                 | {_icons["settings"]}, {_icons["close"]}               | {key_maps["G"]}        |
+| {_key('G')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["G"]}        |
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 

@@ -398,10 +398,6 @@ class XMarkdown(Markdown):
         )  # If no :::, no indentation is needed
 
         # Replace variables first
-        all_matches = re.findall(r"\{\{(.*?)\}\}", html_output, flags=re.DOTALL)
-        if all_matches:
-            raise ValueError('Use ~`variable` syntax instead of {{variable}} in extended markdown. Use {variable} in standard string formatting.')
-        
         all_matches = re.findall(r"\~\`(.*?)\`", html_output, flags=re.DOTALL)
         for match in all_matches:
             output = match  # If below fails, it will be the same as input line
@@ -409,7 +405,7 @@ class XMarkdown(Markdown):
             if not is_var(_match):
                 raise ValueError(f"Only variables are allowed inside ~`variable` syntax, got {_match!r}. Use string formatting for arbitrary expressions.")
             
-            output = get_user_ns().get(_match, f"<pre>alert`**NameError**`: name {match!r} is not defined</pre>")
+            output = get_user_ns().get(_match, f"<pre>alert`NameError`: name {match!r} is not defined</pre>")
             _out = (
                 (htmlize(output) if output is not None else "")
                 if not isinstance(output, str)

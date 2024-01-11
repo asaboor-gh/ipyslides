@@ -794,7 +794,7 @@ class Slides(BaseSlides):
                 Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         ::: note
             If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
-            Markdown before the first (--) separator is written on all frames.
+            Markdown before the first (--) separator is written on all frames. 
         """
         line = line.strip().split()  # VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
@@ -805,17 +805,23 @@ class Slides(BaseSlides):
         slide_number_str = line[0]  # First argument is slide number
 
         if "-m" in line[1:]:
+            repeat = False
+            if '<->' in cell:
+                cell = cell.replace('<->','',1).strip() # remove leading empty line !important
+                repeat = True
+
             _frames = re.split(
                 r"^--$|^--\s+$", cell, flags=re.DOTALL | re.MULTILINE
-            )  # Split on --- or ---\s+
-            if len(_frames) > 1:
+            )  # Split on -- or --\s+
+            if len(_frames) > 1 and not repeat:
                 _frames = [_frames[0] + "\n" + obj for obj in _frames[1:]]
+            
+            if repeat:
+                _frames = ["\n".join([_frames[0], *_frames[1:i]]) for i in range(2, len(_frames) + 1)]
 
-            @self.frames(int(slide_number_str), *_frames)
+            @self.frames(int(slide_number_str), *_frames, repeat=False) # here repeat handled above
             def make_slide(_frame, idx):
-                self.running.set_source(
-                    _frame, "markdown"
-                )  # Update source beofore running content to make it available to user inside markdown too
+                self.running.set_source(_frame, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
                 parse(_frame, display_inline=True, rich_outputs=False)
 
         else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file

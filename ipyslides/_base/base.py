@@ -1,5 +1,8 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
+from ipywidgets import Play, HBox, Label
+from IPython.display import display
+
 from .widgets import Widgets
 from .screenshot import ScreenShot
 from .navigation import Navigation
@@ -254,6 +257,7 @@ class BaseSlides:
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
         Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
+        With two dashes, you can add <-> to add content incrementally on frames.
         
         **Markdown Content**
         ```markdown
@@ -322,6 +326,29 @@ class BaseSlides:
             if os.path.isfile(file_or_str):
                 with open(file_or_str, 'r', encoding='utf-8') as f:
                     chunks = _parse_markdown_text(f.read())
+
+                # In case of markdown file, enable update on click, background threads and other ways do NOT work here
+                if not hasattr(self, '_update_args'):
+                    self._update_args = (start, file_or_str, trusted)
+                    p = Play(value=0,min=0,max=100,interval=500,show_repeat=False, repeat=True)
+                    self._mtime = os.stat(file_or_str).st_mtime
+
+                    def update(change):
+                        mtime = os.stat(file_or_str).st_mtime
+                        if mtime > self._mtime:
+                            self._mtime = mtime
+                            try: # Hold and disable other refresh button while doing it
+                                with self._loading_private(self.widgets.buttons.refresh):
+                                    self.from_markdown(*self._update_args)
+                            except:
+                                self.notify("Something went wrong!")
+                                delattr(self, '_update_args')
+
+                    p.observe(update)
+                    display(HBox([Label("Watch for markdown changes"),p]))
+                    p.playing = True # set after all, not working otherwise
+                    
+
             elif file_or_str.endswith('.md'): # File but does not exits
                 raise FileNotFoundError(f'File {file_or_str} does not exist.')
             else:
@@ -329,16 +356,20 @@ class BaseSlides:
         except:
             chunks = _parse_markdown_text(file_or_str)
             
-        handles = self.create(*range(start, start + len(chunks))) # create slides faster
-        
+        handles = self.create(*range(start, start + len(chunks))) # create slides faster or return older
+        navigate_to = None 
+
         with self.skip_post_run_cell():
             for i,chunk in enumerate(chunks, start = start):
-                # Must run under this function to create frames with two dashes (--)
-                self._slide(f'{i} -m', chunk)
+                # Must run under this function to create frames with two dashes (--) and update only if things/variables change
+                if chunk != getattr(handles[i],'_mdff','') or re.findall(r"\~\`(.*?)\`", chunk, flags=re.DOTALL):
+                    self._slide(f'{i} -m', chunk)
+                    navigate_to = handles[i].index # keep updating to latest
+
+                handles[i]._mdff = chunk # This is need for update while editing
         
-        # Display slides if called form Notebook Cell only
-        if self._called_from_notenook('from_markdown'):
-            self.shell.events.register('post_run_cell', self._post_run_cell)
+        if navigate_to is not None:
+            self.navigate_to(navigate_to) # Reach where editing latest
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles

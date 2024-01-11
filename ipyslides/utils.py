@@ -304,7 +304,7 @@ def __check_pil_image(data):
 
 _fig_style_inline = "margin-block:0.5em;margin-inline:0.5em" # its 40px by defualt, ruins space, not working in CSS outside
 
-def image(data=None,width='80%',caption=None, **kwargs):
+def image(data=None,width='95%',caption=None, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     You can provide following to `data` parameter:
         
@@ -320,7 +320,7 @@ def image(data=None,width='80%',caption=None, **kwargs):
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     return html('figure', img.value + cap, className='zoom-child', style = _fig_style_inline)  
 
-def svg(data=None,width = '80%',caption=None,**kwargs):
+def svg(data=None,width = '95%',caption=None,**kwargs):
     "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
     svg = SVG(data=data, **kwargs)._repr_svg_()
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
