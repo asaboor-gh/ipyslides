@@ -97,7 +97,7 @@ class _Sliders:
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 70,continuous_update=False).add_class('Width-Slider') 
     scale    = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
-        
+
 @dataclass(frozen=True)
 class _Dropdowns:
     """
@@ -130,12 +130,6 @@ class Widgets:
             os.makedirs(_dir)
         return _dir
     
-    def update_tmp_output(self, *objs):
-        "Used for CSS/animations etc. HTML widget does not work properly."
-        self._tmp_out.clear_output(wait=True)
-        with self._tmp_out:
-            display(*objs)
-    
     def update_progressbar(self):
         self._progbar.children[0].layout.width = f"{self.sliders.progress.value}%"
         
@@ -144,6 +138,7 @@ class Widgets:
         self._notebook_dir = '.' # This will be updated later
         self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
+        self._syncer = ipw.Play(value=0,min=0,max=100,interval=500,show_repeat=False, repeat=True, tooltip = "Sync with markdown from file", layout=dict(display="none")).add_class("Markdown-Sync")
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -190,6 +185,7 @@ class Widgets:
                 self.sliders.width,
                 self.ddowns.aspect, 
                 self.ddowns.export,
+                self._syncer,
                 Box([GridBox([
                     self.checks.notes,
                     self.checks.toast,

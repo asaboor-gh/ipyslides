@@ -16,7 +16,7 @@ from . import utils
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
-from ._base.base import BaseSlides
+from ._base.base import BaseSlides, is_jupyter_session, inside_jupyter_notebook
 from ._base.intro import get_logo, key_combs
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
@@ -110,10 +110,7 @@ class Slides(BaseSlides):
             )
 
         # Override print function to display in order in slides
-        if self.shell.__class__.__name__ in (
-            "ZMQInteractiveShell",
-            "Shell",
-        ):  # Shell for Colab
+        if is_jupyter_session():
             import builtins
 
             self.builtin_print = (
@@ -594,13 +591,8 @@ class Slides(BaseSlides):
 
     def _ipython_display_(self):
         "Auto display when self is on last line of a cell"
-        if (
-            self.shell is None
-            or self.shell.__class__.__name__ == "TerminalInteractiveShell"
-        ):
-            raise Exception(
-                "Python/IPython REPL cannot show slides. Use IPython notebook instead."
-            )
+        if not is_jupyter_session():
+            raise Exception("Python/IPython REPL cannot show slides. Use IPython notebook instead.")
 
         self._remove_post_run_callback()  # Avoid duplicate display
         self._update_toc()  # Update toc before displaying app to include all sections
@@ -677,7 +669,7 @@ class Slides(BaseSlides):
         if self.screenshot.capturing == False:
             _objs.append(self._iterable[new_index].animation)
 
-        self.widgets.update_tmp_output(*_objs)
+        self.update_tmp_output(*_objs)
         self.widgets.update_progressbar()
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
@@ -795,6 +787,7 @@ class Slides(BaseSlides):
         ::: note
             If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
             Markdown before the first (--) separator is written on all frames. 
+            In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
         """
         line = line.strip().split()  # VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
@@ -806,8 +799,8 @@ class Slides(BaseSlides):
 
         if "-m" in line[1:]:
             repeat = False
-            if '<->' in cell:
-                cell = cell.replace('<->','',1).strip() # remove leading empty line !important
+            if '%++' in cell:
+                cell = cell.replace('%++','',1).strip() # remove leading empty line !important
                 repeat = True
 
             _frames = re.split(
@@ -1119,8 +1112,8 @@ class Slides(BaseSlides):
         Use `auto.title`, `auto.slide` contextmanagers, `auto.frames` decorator and `auto.from_markdown`
         function without thinking about what should be slide number.
         """
-        if self._called_from_notenook("AutoSlides"):
-            return None
+        if inside_jupyter_notebook(self.AutoSlides): # File still should be imported in Jupyter
+            raise Exception("This function should be called inside a .py file that should be imported in Jupyter Notebook!")
 
         auto = namedtuple(
             "AutoSlides",

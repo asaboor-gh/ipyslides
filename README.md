@@ -79,7 +79,7 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 
 ---
 # Known Limitations
-- Since Markdown is parsed using python (and we do not run notebook from outside e.g. with nbconvert), markdown cells are of no use. You can still write markdown there and then convert to code cell with slide magic `%%slide number -m` to add to slides. 
+- Since Markdown is parsed using python (and we do not run notebook from outside e.g. with nbconvert), markdown cells are of no use. A better alternative is linking a markodwn file using `Slides.sync_with_file` and slides auto update when you save your edits. You can still write markdown in code cell with slide magic `%%slide number -m` to add to slides. 
 - Slide number is necessary to be tracked by user in notebook, because cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. Inside python scripts that run in linear fashion, you can use `Slides.AutoSlide().[title,slide,frames,from_markdown]`.
 - Bounding box of slides for screenshots should be set by user (if not in fullscreen).
 

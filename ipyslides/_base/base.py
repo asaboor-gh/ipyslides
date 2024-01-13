@@ -1,6 +1,6 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
-from ipywidgets import Play, HBox, Label
+from IPython import get_ipython
 from IPython.display import display
 
 from .widgets import Widgets
@@ -12,6 +12,22 @@ from .export_html import _HhtmlExporter
 from .intro import key_combs
 from ..formatters import XTML
 from ..xmd import _special_funcs
+
+def is_jupyter_session():
+     "Return True if code is executed inside jupyter session even while being imported."
+     shell = get_ipython()
+     if shell.__class__.__name__ in ("ZMQInteractiveShell","Shell"):
+         return True # Verify Jupyter and Colab
+     else:
+         return False
+     
+def inside_jupyter_notebook(func):
+    "Returns True only if a func is called inside notebook, excluding imports."
+    shell = get_ipython()
+    current_code = getattr(shell,'get_parent', lambda: {})().get('content',{}).get('code','')
+    if getattr(func,'__name__') in current_code:
+        return is_jupyter_session()
+    return False
 
 class BaseSlides:
     def __init__(self):
@@ -245,19 +261,20 @@ class BaseSlides:
         "Not for user use, internal function for other dynamic content decorators with their own tags."
         self.verify_running('Dynamic content can only be used inside slide constructor!')
         return self.running._dynamic_private(func, tag = tag, hide_refresher = hide_refresher)
-    
-    def _called_from_notenook(self, func_name):
-        last_hist = list(self.shell.history_manager.get_range())[-1][-1]
-        if re.findall(rf'{func_name}\(|{func_name}\s+\(', last_hist):
-            return True
-        return False
+        
+    def update_tmp_output(self, *objs):
+        "Used for CSS/animations etc. HTML widget does not work properly."
+        if is_jupyter_session():
+            self.widgets._tmp_out.clear_output(wait=True)
+            with self.widgets._tmp_out:
+                display(*objs)
         
     def from_markdown(self, start, file_or_str, trusted = False):
         """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         Slides separator should be --- (three dashes) in start of line.
         Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
-        With two dashes, you can add <-> to add content incrementally on frames.
+        In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
         
         **Markdown Content**
         ```markdown
@@ -296,9 +313,12 @@ class BaseSlides:
         ::: note-tip
             Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         
+        ::: note-tip
+            Use `Slides.sync_with_file` to auto update slides as markdown content changes.
+        
         **Returns**: A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
         """
-        if self.shell is None or self.shell.__class__.__name__ == 'TerminalInteractiveShell':
+        if not is_jupyter_session():
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         if not isinstance(file_or_str, str): #check path later or it will throw error
@@ -326,29 +346,6 @@ class BaseSlides:
             if os.path.isfile(file_or_str):
                 with open(file_or_str, 'r', encoding='utf-8') as f:
                     chunks = _parse_markdown_text(f.read())
-
-                # In case of markdown file, enable update on click, background threads and other ways do NOT work here
-                if not hasattr(self, '_update_args'):
-                    self._update_args = (start, file_or_str, trusted)
-                    p = Play(value=0,min=0,max=100,interval=500,show_repeat=False, repeat=True)
-                    self._mtime = os.stat(file_or_str).st_mtime
-
-                    def update(change):
-                        mtime = os.stat(file_or_str).st_mtime
-                        if mtime > self._mtime:
-                            self._mtime = mtime
-                            try: # Hold and disable other refresh button while doing it
-                                with self._loading_private(self.widgets.buttons.refresh):
-                                    self.from_markdown(*self._update_args)
-                            except:
-                                self.notify("Something went wrong!")
-                                delattr(self, '_update_args')
-
-                    p.observe(update)
-                    display(HBox([Label("Watch for markdown changes"),p]))
-                    p.playing = True # set after all, not working otherwise
-                    
-
             elif file_or_str.endswith('.md'): # File but does not exits
                 raise FileNotFoundError(f'File {file_or_str} does not exist.')
             else:
@@ -360,10 +357,10 @@ class BaseSlides:
         navigate_to = None 
 
         with self.skip_post_run_cell():
-            for i,chunk in enumerate(chunks, start = start):
+            for i,chunk in enumerate(chunks):
                 # Must run under this function to create frames with two dashes (--) and update only if things/variables change
                 if chunk != getattr(handles[i],'_mdff','') or re.findall(r"\~\`(.*?)\`", chunk, flags=re.DOTALL):
-                    self._slide(f'{i} -m', chunk)
+                    self._slide(f'{i + start} -m', chunk)
                     navigate_to = handles[i].index # keep updating to latest
 
                 handles[i]._mdff = chunk # This is need for update while editing
@@ -373,6 +370,54 @@ class BaseSlides:
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
+    
+    def sync_with_file(self, start, path, trusted = False):
+        """Auto update slides when content of markdown file changes. You can puase/start syncing in setting panel.
+        """
+        if not inside_jupyter_notebook(self.sync_with_file):
+            raise Exception("Notebook-only function executed in another context!")
+        
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"File {path!r} does not exists!")
+        
+        # NOTE: Background threads and other methods do not work. Do NOT change this way
+        syncer = self.widgets._syncer
+        syncer.unobserve_all() # on each call remove old
+        syncer.playing = False
+
+        self._mtime = os.stat(path).st_mtime
+
+        def runfile():
+            i, *_, f = self.from_markdown(start, path, trusted)
+            syncer.tooltip = f"Syncing slides number (given) {i.number}-{f.number}"
+
+        def update(change):
+            mtime = os.stat(path).st_mtime
+            if mtime > self._mtime:
+                self._mtime = mtime
+                try: # Hold and disable other refresh button while doing it
+                    with self._loading_private(self.widgets.buttons.refresh):
+                        runfile()
+                except:
+                    self.notify("Something went wrong with Markdown sync. Run `Slides.sync_with_file` function again!")
+                    syncer.unobserve_all()
+                    syncer.tooltip = "Sync with Markdown from file"
+                    syncer.layout.display = "none"
+        
+        def watch_playing(change):
+            if syncer.playing:
+                syncer.observe(update, names = ["value"])
+            else:
+                syncer.unobserve(update, names = ["value"])
+                syncer.tooltip = "Sync with Markdown from file"
+        
+        syncer.layout.display = "" # Make visible
+        syncer.observe(watch_playing, names= ["playing"])
+        syncer.playing = True # start observing
+
+        with self.skip_post_run_cell():
+            runfile() # First call itself
+
     
     def demo(self):
         "Demo slides with a variety of content."
@@ -486,7 +531,8 @@ class BaseSlides:
         with auto.slide():
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
             self.write('You can parse and view a markdown file. The output you can save by exporting notebook in other formats.\n{.note .info}')
-            self.write([self.doc(self.from_markdown,'Slides'),
+            self.write([self.doc(self.sync_with_file,'Slides'),
+                        self.doc(self.from_markdown,'Slides'),
                         self.doc(self.demo,'Slides'), 
                         self.doc(self.docs,'Slides'),
                         self.doc(self.export.slides,'Slides.export'),

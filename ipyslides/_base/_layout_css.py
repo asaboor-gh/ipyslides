@@ -664,6 +664,27 @@ def layout_css(breakpoint, accent_color):
                     "close", color=accent_color, size=_icons_size
                 ).css,
             },
+            ".Markdown-Sync": {
+                "width": "100% !important",
+                "^:before" : {
+                    "content": "attr(title) !important",
+                    "font-size": "14px !important",
+                    "color": "var(--primary-fg) !important",
+                    "padding-right": "8px !important",
+                },
+                "> button": {
+                    "^:nth-child(2), ^:nth-child(3)" : {"display":"none !important",}, # only need pause/play
+                    ".fa.fa-play": Icon(
+                        "play", color=accent_color, size=_icons_size
+                    ).css,
+                    ".fa.fa-pause": Icon(
+                        "pause", color=accent_color, size=_icons_size
+                    ).css,
+                    ".fa.fa-stop": Icon(
+                        "stop", color=accent_color, size=_icons_size
+                    ).css,
+                },
+            },
             "@media print": { # Needs modification
                 ".SlidesWrapper": {
                     "^, ^.FullWindow": {

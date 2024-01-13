@@ -395,7 +395,7 @@ class Slide:
                 self._app.write(self.citations)
         
         # Update corresponding CSS but avoid animation here for faster and clean update
-        self._app.widgets.update_tmp_output(self.css)
+        self._app.update_tmp_output(self.css)
         self._widget.remove_class('SlideArea').add_class('SlideArea') # Hard refresh
     
     def clear_display(self, wait = False):
@@ -505,7 +505,7 @@ class Slide:
             if self._app._slidelabel != self.label:
                 self._app._slidelabel = self.label # Go there to see effects
             else:
-                self._app.widgets.update_tmp_output(self.animation, self._css)
+                self._app.update_tmp_output(self.animation, self._css)
     
     def _instance_animation(self,name):
         "Create unique animation for this slide instance on fly"
@@ -527,7 +527,7 @@ class Slide:
         else:
             raise KeyError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
         
-        self._app.widgets.update_tmp_output(self.animation, self.css) # See effect
+        self._app.update_tmp_output(self.animation, self.css) # See effect
             
     def set_animation(self, name):
         "Set animation of this slide. Provide None if need to stop animation."
@@ -540,7 +540,7 @@ class Slide:
                 if self._app._slidelabel != self.label:
                     self._app._slidelabel = self.label # Go there to see effects
                 else:
-                    self._app.widgets.update_tmp_output(self._animation, self.css)
+                    self._app.update_tmp_output(self._animation, self.css)
         else:
             self._animation = None # It should be None, not '' or don't throw error here
        
