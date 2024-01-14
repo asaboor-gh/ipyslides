@@ -297,6 +297,11 @@ class Slide:
         "Set source code for this slide."
         self._source = {'text': text, 'language': language}
     
+    def reset_source(self):
+        "Reset old source but leave markdown source for observing chnages"
+        if not self.markdown:
+            self.set_source("","")
+    
     def _dynamic_private(self, func, tag = None, hide_refresher = False):  
         "Add dynamic content to this slide which updates on refresh/update_display etc. func takes no arguments." 
         dr = DynamicRefresh(func, self) 
@@ -366,7 +371,7 @@ class Slide:
                     self._app._warnings.append(captured.stderr)
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
-
+                
             # If no error, then add callback keeping the user preference
             if self._app._post_run_enabled:
                 self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
@@ -557,7 +562,7 @@ def _build_slide(app, slide_number_str, is_frameless = True):
         
     if slide_number_str in app._slides_dict:
         _slide = app._slides_dict[slide_number_str] # Use existing slide is better as display is already there
-        _slide.set_source('','') # Reset old source
+        _slide.reset_source() # Reset old source but keep markdown for observing edits
         if _slide._frames and is_frameless: # If previous has frames but current does not, construct new one at this position
             _slide = Slide(app, slide_number_str)
             app._slides_dict[slide_number_str] = _slide

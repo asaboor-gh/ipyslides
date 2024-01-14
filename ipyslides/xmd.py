@@ -429,19 +429,6 @@ class XMarkdown(Markdown):
                 )  # If no argument, use default, replace new line with 4 spaces to keep indentation if block ::: is used
                 html_output = html_output.replace(f"{func}`{match}`", _out, 1)
 
-        # Replace columns after vars, so not to format their brackets
-        all_cols = re.findall(
-            r"\|\|(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
-        )  # Matches new line as well, useful for inline plots and big objects
-        for cols in all_cols:
-            _cols = "".join(
-                f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols
-            )
-            _out = f'<div class="columns">{_cols}</div>'.replace(
-                "\n", sub_nl
-            )  # Replace new line with 4 spaces to keep indentation if block ::: is used
-            html_output = html_output.replace(f"||{cols[0]}||{cols[1]}||", _out, 1)
-
         # Replace functions with arguments
         for func in _special_funcs.keys():
             all_matches = re.findall(
@@ -480,17 +467,29 @@ class XMarkdown(Markdown):
                     raise Exception(
                         f"Error in {func}[{match[0]}]`{match[1]}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside [{match[0]}]"
                     )
+        
 
         # Run an included file
         all_matches = re.findall(r"include\`(.*?)\`", html_output, flags=re.DOTALL)
         for match in all_matches:
             with open(match, "r", encoding="utf-8") as f:
-                repr_html = self.parse(
-                    f.read(), display_inline=False, rich_outputs=False
-                ).replace(
-                    "\n", sub_nl
-                )  # Replace new line with 4 spaces to keep indentation if block ::: is used
+                repr_html = self.parse(f.read(), display_inline=False, rich_outputs=False
+                ).replace("\n", sub_nl)  # Replace new line with 4 spaces to keep indentation if block ::: is used
             html_output = html_output.replace(f"include`{match}`", repr_html, 1)
+
+        # Replace columns at end because they will convert HTML
+        all_cols = re.findall(
+            r"\|\|(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
+        )  # Matches new line as well, useful for inline plots and big objects
+        for cols in all_cols:
+            _cols = "".join(
+                f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols
+            )
+            _out = f'<div class="columns">{_cols}</div>'.replace(
+                "\n", sub_nl
+            )  # Replace new line with 4 spaces to keep indentation if block ::: is used
+            html_output = html_output.replace(f"||{cols[0]}||{cols[1]}||", _out, 1)
+
 
         return html_output  # return in main scope
 

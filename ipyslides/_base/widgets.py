@@ -44,12 +44,12 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    window  = ipw.ToggleButton(icon='plus',value = False, tooltip='Fill Viewport [V]').add_class('FullWindow-Btn').add_class('Menu-Item')
-    fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
-    zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip='Enable Zooming Items [Z]').add_class('Zoom-Btn')
-    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip='Show Laser Pointer [L]').add_class('Laser-Btn') 
-    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip='Open Drawing Panel').add_class('Draw-Btn') 
-    menu    = ipw.ToggleButton(icon='plus',value = False, tooltip='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')      
+    window  = ipw.ToggleButton(icon='plus',value = False, tooltip ='Fill Viewport [V]').add_class('FullWindow-Btn').add_class('Menu-Item')
+    fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
+    zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enable Zooming Items [Z]').add_class('Zoom-Btn')
+    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [L]').add_class('Laser-Btn') 
+    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Open Drawing Panel').add_class('Draw-Btn') 
+    menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')        
 
 @dataclass(frozen=True)
 class _Htmls:
@@ -138,7 +138,6 @@ class Widgets:
         self._notebook_dir = '.' # This will be updated later
         self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
-        self._syncer = ipw.Play(value=0,min=0,max=100,interval=500,show_repeat=False, repeat=True, tooltip = "Sync with markdown from file", layout=dict(display="none")).add_class("Markdown-Sync")
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -185,7 +184,6 @@ class Widgets:
                 self.sliders.width,
                 self.ddowns.aspect, 
                 self.ddowns.export,
-                self._syncer,
                 Box([GridBox([
                     self.checks.notes,
                     self.checks.toast,
@@ -215,7 +213,7 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
-        self.quick_menu =  VBox(_many_btns[::-1],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
+        self.quick_menu = VBox(_many_btns[::-1],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
 
         def close_quick_menu(change):
             self.toggles.menu.value = False

@@ -101,7 +101,7 @@ function keyboardEvents(box,model) {
         box.onkeydown = keyOnSlides;
 };
 
-function handleMessage(msg, box, cursor) {
+function handleMessage(model, msg, box, cursor) {
     if (msg === "TFS") {
         if (document.fullscreenElement) {
             document.exitFullscreen(); // No box.fullscreen
@@ -143,6 +143,19 @@ function handleMessage(msg, box, cursor) {
         let container = box.getElementsByClassName("Draw-Widget")[0].getElementsByClassName("tl-container")[0];
         container.classList.remove((theme === "light") ? "tl-theme__dark" : "tl-theme__light")
         container.classList.add("tl-theme__" + theme) // worst way to do it, internal frames are changed with CSS
+    } else if (msg.includes("SYNC:")) {
+        let sync = msg.replace("SYNC:","");
+        if (sync.includes("ON:")) {
+            clearInterval(model.syncIntervalID); // Remove previous one to avoid multiple calls
+
+            let interval = Number(sync.replace("ON:",""));
+            model.syncIntervalID = setInterval(() => {
+                model.send({sync:true})
+            }, interval)
+        } else if (sync === "OFF") {
+            clearInterval(model.syncIntervalID);
+        }
+
     }
 };
 
@@ -217,6 +230,7 @@ function handleScale(box) {
 
 
 export function render({ model, el }) {
+    model.syncIntervalID = null; // Need for Markdown Sync
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
     style.onload = () => { 
@@ -255,7 +269,7 @@ export function render({ model, el }) {
         model.on("change:msg_tojs", () => {
             let msg = model.get("msg_tojs");
             if (!msg) {return false}; // empty message, don't waste time
-            handleMessage(msg, box, cursor);
+            handleMessage(model, msg, box, cursor);
         })
 
         // Handle notifications
@@ -287,4 +301,7 @@ export function render({ model, el }) {
     for (let slide of Array.from(slides)) {
         if (slide.classList.contains('jupyter-widgets-disconnected')) {slide.remove();};
     };
+    return () => { // clean up at removal time
+		clearInterval(model.syncIntervalID); // remove it to avoid conflict
+	};
 }

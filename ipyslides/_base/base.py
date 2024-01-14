@@ -321,6 +321,9 @@ class BaseSlides:
         if not is_jupyter_session():
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
+        if self.running:
+            raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
+        
         if not isinstance(file_or_str, str): #check path later or it will throw error
             raise TypeError(f"file_or_str expects a makrdown file path(str) or text block, got {file_or_str!r}")
         
@@ -354,71 +357,63 @@ class BaseSlides:
             chunks = _parse_markdown_text(file_or_str)
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster or return older
-        navigate_to = None 
 
         with self.skip_post_run_cell():
             for i,chunk in enumerate(chunks):
                 # Must run under this function to create frames with two dashes (--) and update only if things/variables change
                 if chunk != getattr(handles[i],'_mdff','') or re.findall(r"\~\`(.*?)\`", chunk, flags=re.DOTALL):
-                    self._slide(f'{i + start} -m', chunk)
-                    navigate_to = handles[i].index # keep updating to latest
+                    with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
+                        self._slide(f'{i + start} -m', chunk)
 
                 handles[i]._mdff = chunk # This is need for update while editing
-        
-        if navigate_to is not None:
-            self.navigate_to(navigate_to) # Reach where editing latest
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
     
-    def sync_with_file(self, start, path, trusted = False):
-        """Auto update slides when content of markdown file changes. You can puase/start syncing in setting panel.
-        """
+    def sync_with_file(self, start, path, trusted = False, interval=500):
+        """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
+        interval is in milliseconds, 500 ms default."""
         if not inside_jupyter_notebook(self.sync_with_file):
             raise Exception("Notebook-only function executed in another context!")
         
         if not os.path.isfile(path):
             raise FileNotFoundError(f"File {path!r} does not exists!")
         
+        if not isinstance(interval, int) or interval < 100:
+            raise ValueError("interval should be integer greater than 100 millieconds.")
+        
         # NOTE: Background threads and other methods do not work. Do NOT change this way
-        syncer = self.widgets._syncer
-        syncer.unobserve_all() # on each call remove old
-        syncer.playing = False
-
+        self.from_markdown(start, path, trusted) # First call itself before declaring other things, so errors can be captured safely
         self._mtime = os.stat(path).st_mtime
 
-        def runfile():
-            i, *_, f = self.from_markdown(start, path, trusted)
-            syncer.tooltip = f"Syncing slides number (given) {i.number}-{f.number}"
-
-        def update(change):
-            mtime = os.stat(path).st_mtime
-            if mtime > self._mtime:
-                self._mtime = mtime
-                try: # Hold and disable other refresh button while doing it
-                    with self._loading_private(self.widgets.buttons.refresh):
-                        runfile()
-                except:
-                    self.notify("Something went wrong with Markdown sync. Run `Slides.sync_with_file` function again!")
-                    syncer.unobserve_all()
-                    syncer.tooltip = "Sync with Markdown from file"
-                    syncer.layout.display = "none"
-        
-        def watch_playing(change):
-            if syncer.playing:
-                syncer.observe(update, names = ["value"])
+        def update(widget, content, buffer):
+            if os.path.isfile(path):
+                mtime = os.stat(path).st_mtime
+                if mtime > self._mtime:  # set by interaction widget
+                    self._mtime = mtime
+                    try: 
+                        self.from_markdown(start, path, trusted)
+                    except:
+                        self.notify("Something went wrong with Markdown sync. Run `Slides.sync_with_file` function again!", 20)
             else:
-                syncer.unobserve(update, names = ["value"])
-                syncer.tooltip = "Sync with Markdown from file"
+                self.notify(f"File: {path!r} does not exists. Run `Slides.sync_with_file` function again!", 20)
+
+        self.widgets.iw.on_msg(update)
+        self.widgets.iw.msg_tojs = f'SYNC:ON:{interval}'
+        self.widgets.iw._sync_args = {"func": update, "interval": interval}
+        self.notify(f"Syncing content from file {path!r}")
         
-        syncer.layout.display = "" # Make visible
-        syncer.observe(watch_playing, names= ["playing"])
-        syncer.playing = True # start observing
 
-        with self.skip_post_run_cell():
-            runfile() # First call itself
+    def unsync(self):
+        "Stop syncing markdown file synced with `Slides.sync_with_file` function."
+        if hasattr(self.widgets.iw,'_sync_args'):
+            self.widgets.iw.on_msg(self.widgets.iw._sync_args["func"],remove=True)
+            self.widgets.iw.msg_tojs = 'SYNC:OFF'
+            delattr(self.widgets.iw,'_sync_args')
+        else:
+            print("There was no markdown file linked to sync!")
 
-    
+
     def demo(self):
         "Demo slides with a variety of content."
         from .._demo import demo_slides

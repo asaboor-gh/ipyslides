@@ -197,7 +197,7 @@ class Slides(BaseSlides):
             yield
 
     @contextmanager
-    def skip_post_run_cell(self):
+    def skip_post_run_cell(self, force = False):
         """Context manager to skip post_run_cell event."""
         self._remove_post_run_callback()
         old = self._post_run_enabled
@@ -205,9 +205,7 @@ class Slides(BaseSlides):
         try:
             yield
         finally:
-            self._post_run_enabled = old  # Restore user prefrence
-            if self._post_run_enabled:  # If user wants to enable post_run_cell event
-                self.shell.events.register("post_run_cell", self._post_run_cell)
+            self._post_run_enabled = old  # Restore user prefrence, will be registered in slides start
 
     def _remove_post_run_callback(self):
         with suppress(Exception):
@@ -809,13 +807,23 @@ class Slides(BaseSlides):
             if len(_frames) > 1 and not repeat:
                 _frames = [_frames[0] + "\n" + obj for obj in _frames[1:]]
             
-            if repeat:
+            if len(_frames) > 1 and repeat:
                 _frames = ["\n".join([_frames[0], *_frames[1:i]]) for i in range(2, len(_frames) + 1)]
-
+            
+            self._editing_index = None
+            
             @self.frames(int(slide_number_str), *_frames, repeat=False) # here repeat handled above
             def make_slide(_frame, idx):
+                if (self.running.markdown != _frame) or (idx == 0):
+                    self._editing_index = self.running.index # Go to latest editing markdown frame, or start of frames
+
                 self.running.set_source(_frame, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
                 parse(_frame, display_inline=True, rich_outputs=False)
+            
+            if self._editing_index is not None:
+                self.navigate_to(self._editing_index)
+            
+            delattr(self, '_editing_index')
 
         else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number_str) as s:
@@ -858,9 +866,7 @@ class Slides(BaseSlides):
         with self.slide(0) as s, self.code.context(
             auto_display=False, depth=4
         ) as c:  # depth = 4 to source under context manager
-            s.set_source(
-                c.raw, "python"
-            )  # Update cell source befor yielding to make available inside context manager
+            s.set_source(c.raw, "python")  # Update cell source befor yielding to make available inside context manager
             yield s  # Useful to use later
 
     @contextmanager
@@ -976,7 +982,7 @@ class Slides(BaseSlides):
                     new_slide = Slide(self, slide_number)
                 else:  # Update old frames
                     new_slide = this_slide._frames[i]  # Take same frame back
-                    new_slide.set_source("", "")  # Clear old source
+                    new_slide.reset_source() # Reset old source but keep markdown for observing edits
 
                 new_frames.append(new_slide)
 

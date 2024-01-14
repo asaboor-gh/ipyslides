@@ -58,6 +58,9 @@ class InteractionWidget(anywidget.AnyWidget):
 
             self.msg_tojs = 'SwitchView' # Trigger view
 
+            if hasattr(self,'_sync_args'):
+                self.msg_tojs = f'SYNC:ON:{self._sync_args["interval"]}'
+
         elif msg in ('FS','!FS'): # This is to make sure visual state of button and slides are correct
             if msg == 'FS':
                 self._toggles.fscreen.icon = 'minus'
@@ -65,7 +68,7 @@ class InteractionWidget(anywidget.AnyWidget):
                 self._toggles.fscreen.icon = 'plus'
         elif msg == 'KSC':
             self._toast_html.value = 'KSC'
-
+        
         if quick_menu_was_open: 
             self._toggles.menu.value = True # it might get closed by using some buttons. reset it
 
