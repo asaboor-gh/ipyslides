@@ -81,6 +81,7 @@ extender = PyMarkdown_Extender()
 del PyMarkdown_Extender
 
 _special_funcs = {
+    "vspace": "number in units of em",
     "alert": "text",
     "color": "text",
     "image": "path/src",
@@ -225,6 +226,8 @@ class XMarkdown(Markdown):
         rich_outputs = True > display_inline = True > parsed_html_string
         """
         self._display_inline = display_inline  # Must change here
+        # included file before other parsing
+        xmd = self._resolve_files(xmd)
 
         xmd = textwrap.dedent(
             xmd
@@ -240,9 +243,7 @@ class XMarkdown(Markdown):
             )  # Resolve objects in xmd related to current slide
 
         # After resolve_objs_on_slide, xmd can have code blocks which may not be passed from suitable context
-        if (
-            not self._display_inline and "\n```python run" in xmd
-        ):  # Do not match nested blocks
+        if ("\n```python run" in xmd) and not self._display_inline: # Do not match nested blocks
             raise RuntimeError(
                 "Cannot execute code in current context, use Slides.parse(..., display_inline = True) for complete parsing!"
             )
@@ -278,6 +279,15 @@ class XMarkdown(Markdown):
                         "text/html"
                     ]  # Rich content from python execution
             return content
+    
+    def _resolve_files(self, text_chunk):
+        "Markdown files added by include`file.md` should be inserted a plain."
+        all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags=re.DOTALL)
+        for match in all_matches:
+            with open(match, "r", encoding="utf-8") as f:
+                text = "\n" + f.read() + "\n"
+                text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
+        return text_chunk
 
     def _resolve_nested(self, text_chunk):
         old_display_inline = self._display_inline
@@ -322,32 +332,31 @@ class XMarkdown(Markdown):
         "Returns parsed block or columns or code, input is without \`\`\` but includes langauge name."
         cols = data.split("+++")  # Split by columns
         cols = [self.convert(self._sub_vars(col)) for col in cols]
-        if len(cols) == 1:
-            return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]
 
         if header.strip() == "multicol":
             widths = [f"{int(100/len(cols))}%" for _ in cols]
         else:
             widths = header.split("multicol")[1].split()
-            if len(widths) != len(cols):
+            if len(widths) > len(cols): # This allows merging column notation with frames
+                for _ in range(len(cols), len(widths)):
+                    cols.append("")
+
+            if len(widths) < len(cols):
                 raise ValueError(
-                    f"Number of columns {len(cols)} does not match with given widths in {header!r}"
+                    f"Number of columns {len(cols)} should be <= given widths in {header!r}"
                 )
             for w in widths:
                 if not w.strip().isdigit():
                     raise TypeError(f"{w} is not an integer")
 
             widths = [f"{w}%" for w in widths]
+        
+        if len(cols) == 1: # do not return before checking widths and adding extra cols if needed
+            return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]
 
         cols = "".join(
-            [
-                f"""
-        <div style='width:{w};overflow-x:auto;height:auto'>
-            {col}
-        </div>"""
-                for col, w in zip(cols, widths)
-            ]
-        )
+            [f"""<div style='width:{w};overflow-x:auto;height:auto'>{col}</div>"""
+                for col, w in zip(cols, widths)])
 
         return f'<div class="columns {_class}">{cols}\n</div>'
 
@@ -467,15 +476,6 @@ class XMarkdown(Markdown):
                     raise Exception(
                         f"Error in {func}[{match[0]}]`{match[1]}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside [{match[0]}]"
                     )
-        
-
-        # Run an included file
-        all_matches = re.findall(r"include\`(.*?)\`", html_output, flags=re.DOTALL)
-        for match in all_matches:
-            with open(match, "r", encoding="utf-8") as f:
-                repr_html = self.parse(f.read(), display_inline=False, rich_outputs=False
-                ).replace("\n", sub_nl)  # Replace new line with 4 spaces to keep indentation if block ::: is used
-            html_output = html_output.replace(f"include`{match}`", repr_html, 1)
 
         # Replace columns at end because they will convert HTML
         all_cols = re.findall(

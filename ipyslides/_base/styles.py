@@ -195,7 +195,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'font-family': f'{code_font!r}, "Cascadia Code", "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
                 'font-size':'90% !important',
             }, # Define color below at low specificity, otherwise it can overwrite code
-            '*': {'color':'var(--primary-fg)',},
+            '*:not(mjx-c)': {'color':'var(--primary-fg)',}, 
             '.tl-container, .tlui-icon, .tlui-button': {'color':'unset',},
         },
         '^.SlidesWrapper':{
@@ -318,6 +318,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
             },
+            '.columns > div': {"position": "relative !important"}, # keep absolute items inside column itself
             '.toc-item': { # Table of contents on slides 
                 'border-right':'4px solid var(--secondary-bg)',
                 'padding-right':'2em', # To make distance from the border
@@ -347,6 +348,21 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 # Below are required to override behavior of span tag
                 'display':'inline-block !important',
                 'white-space':'break-spaces !important',
+            },
+            ".text-tiny" : {
+                "font-size": "0.5em !important",
+            },
+            ".text-small" : {
+                "font-size": "0.8em !important",
+            },
+            ".text-big" : {
+                "font-size": "1.2em !important",
+            },
+            ".text-large" : {
+                "font-size": "1.5em !important",
+            },
+            ".text-huge" : {
+                "font-size": "2em !important",
             },
             '.citation': {
                 'font-size':'0.9em !important',

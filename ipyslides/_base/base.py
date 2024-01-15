@@ -1,5 +1,7 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
+import traceback
+
 from IPython import get_ipython
 from IPython.display import display
 
@@ -91,9 +93,8 @@ class BaseSlides:
         ------------------------------------------------------------------------------------
          className          | Formatting Style                                              
         ====================================================================================
-         'align-center'     | ------Text------
-         'align-left'       | Text------------
-         'align-right'      | ------------Text
+         'text-[value]'     | [value] should be one of tiny, small, big, large, huge.
+         'align-[value]'    | [value] should be one of center, left, right.
          'rtl'              | ------ اردو عربی 
          'info'             | Blue text. Icon ℹ️  for note-info class.
          'tip'              | Blue Text. Icon💡 for note-tip class.
@@ -114,6 +115,7 @@ class BaseSlides:
          'zoom-child'       | Zooms child object on hover, when Zoom is enabled.
          'no-zoom'          | Disables zoom on object when it is child of 'zoom-child'.
         ------------------------------------------------------------------------------------
+        Besides these CSS classes, you always have `Slide.format_css` function at your disposal.
         ''')
 
     @property
@@ -142,7 +144,7 @@ class BaseSlides:
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
         - Variables can be replaced with their HTML value (if possible) using alert`~\`variable\`` syntax which gives same result as alert`slides.format_html(variable)`.
         - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
-        - Block multicolumns are made using follwong syntax, column separtor is tiple plus `+++`: 
+        - Block multicolumns are made using follwong syntax, column separator is tiple plus `+++`:
         
         ```markdown     
          ```multicol widthA widthB
@@ -152,6 +154,7 @@ class BaseSlides:
          ```
         ```
         
+        - `multicol` syntax supports frames separator `--` within itself.
         - Python code blocks can be exectude by syntax 
         ```markdown
          ```python run source {.CSS_className}
@@ -272,9 +275,12 @@ class BaseSlides:
     def from_markdown(self, start, file_or_str, trusted = False):
         """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
-        Slides separator should be --- (three dashes) in start of line.
-        Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
-        In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
+        
+        - Slides separator should be --- (three dashes) in start of line.
+        - Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
+        - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
+        - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
+        - Variables defined in jupyter notebook can be passed to markdown file through ~\`var\` syntax.
         
         **Markdown Content**
         ```markdown
@@ -372,7 +378,7 @@ class BaseSlides:
     
     def sync_with_file(self, start, path, trusted = False, interval=500):
         """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
-        interval is in milliseconds, 500 ms default."""
+        interval is in milliseconds, 500 ms default. Read `Slides.from_markdown` docs about content of file."""
         if not inside_jupyter_notebook(self.sync_with_file):
             raise Exception("Notebook-only function executed in another context!")
         
@@ -384,6 +390,10 @@ class BaseSlides:
         
         # NOTE: Background threads and other methods do not work. Do NOT change this way
         self.from_markdown(start, path, trusted) # First call itself before declaring other things, so errors can be captured safely
+        
+        if hasattr(self.widgets.iw,'_sync_args'): # remove previous updates
+            self.unsync()
+
         self._mtime = os.stat(path).st_mtime
 
         def update(widget, content, buffer):
@@ -394,14 +404,15 @@ class BaseSlides:
                     try: 
                         self.from_markdown(start, path, trusted)
                     except:
-                        self.notify("Something went wrong with Markdown sync. Run `Slides.sync_with_file` function again!", 20)
+                        e, text = traceback.format_exc(limit=0).split(':',1) # onlly get last error for notification
+                        self.notify(f'{self.alert(f"SyncError").value}: something went wrong<br/><br/>{self.alert(e).value}: {text}', 20)
             else:
-                self.notify(f"File: {path!r} does not exists. Run `Slides.sync_with_file` function again!", 20)
+                self.notify(self.alert("SyncError").value + f": file {path!r} no longer exists!", 20)
 
         self.widgets.iw.on_msg(update)
         self.widgets.iw.msg_tojs = f'SYNC:ON:{interval}'
         self.widgets.iw._sync_args = {"func": update, "interval": interval}
-        self.notify(f"Syncing content from file {path!r}")
+        print(f"Syncing content from file {path!r}\nYou can use `Slides.unsync()` to stop syncing.")
         
 
     def unsync(self):

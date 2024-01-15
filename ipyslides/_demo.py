@@ -297,12 +297,21 @@ def demo_slides(slides):
 
 
     auto.from_markdown('''
-    ## $\LaTeX$ in Slides
+    %++
+    ## $ \LaTeX $ in Slides
+    --
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
-    $\LaTeX$ needs time to load, so keeping it in view until it loads would help.
-    {.note-warning}
-
-    $$\int_0^1\\frac{1}{1-x^2}dx$$
+    $ \LaTeX $ needs time to load, so keeping it in view until it loads would help.
+    {.info}
+    --
+    ```multicol 50 50
+    $ \int_0^1\\frac{1}{1-x^2}dx $
+    {.align-center .text-big .info}
+    +++
+    --
+    $ ax^2 + bx + c = 0 $
+    {.align-center .text-huge .success}
+    ```
     ''', trusted=True)
 
     with auto.slide(), slides.code.context():

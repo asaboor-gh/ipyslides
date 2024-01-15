@@ -783,9 +783,11 @@ class Slides(BaseSlides):
             ::: note-info
                 Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         ::: note
-            If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
-            Markdown before the first (--) separator is written on all frames. 
-            In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
+            - If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
+            - Markdown before the first (--) separator is written on all frames. 
+            - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
+            - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
+
         """
         line = line.strip().split()  # VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
@@ -801,24 +803,25 @@ class Slides(BaseSlides):
                 cell = cell.replace('%++','',1).strip() # remove leading empty line !important
                 repeat = True
 
-            _frames = re.split(
+            frames = re.split(
                 r"^--$|^--\s+$", cell, flags=re.DOTALL | re.MULTILINE
             )  # Split on -- or --\s+
-            if len(_frames) > 1 and not repeat:
-                _frames = [_frames[0] + "\n" + obj for obj in _frames[1:]]
+
+            if len(frames) > 1 and not repeat:
+                frames = [frames[0] + "\n" + obj for obj in frames[1:]]
             
-            if len(_frames) > 1 and repeat:
-                _frames = ["\n".join([_frames[0], *_frames[1:i]]) for i in range(2, len(_frames) + 1)]
+            if len(frames) > 1 and repeat:
+                frames = ["\n".join([frames[0], *frames[1:i]]) for i in range(2, len(frames) + 1)]
             
             self._editing_index = None
             
-            @self.frames(int(slide_number_str), *_frames, repeat=False) # here repeat handled above
-            def make_slide(_frame, idx):
-                if (self.running.markdown != _frame) or (idx == 0):
+            @self.frames(int(slide_number_str), *frames, repeat=False) # here repeat handled above
+            def make_slide(frm, idx):
+                if (self.running.markdown != frm) or (idx == 0):
                     self._editing_index = self.running.index # Go to latest editing markdown frame, or start of frames
 
-                self.running.set_source(_frame, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
-                parse(_frame, display_inline=True, rich_outputs=False)
+                self.running.set_source(frm, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
+                parse(frm, display_inline=True, rich_outputs=False)
             
             if self._editing_index is not None:
                 self.navigate_to(self._editing_index)

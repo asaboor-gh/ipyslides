@@ -664,14 +664,6 @@ def layout_css(breakpoint, accent_color):
                     "close", color=accent_color, size=_icons_size
                 ).css,
             },
-            ".Sync-Btn": {
-                ".fa.fa-play": Icon(
-                    "play", color=accent_color, size=_icons_size
-                ).css,
-                ".fa.fa-pause": Icon(
-                    "pause", color=accent_color, size=_icons_size
-                ).css,
-            },
             "@media print": { # Needs modification
                 ".SlidesWrapper": {
                     "^, ^.FullWindow": {
