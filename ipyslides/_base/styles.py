@@ -104,7 +104,7 @@ def _validate_colors(colors):
         
 theme_colors = {
     'Inherit': {
-        'heading_color':'var(--jp-inverse-layout-color1,navy)',
+        'heading_color':'var(--jp-inverse-layout-color1,black)',
         'primary_fg':'var(--jp-inverse-layout-color0,black)',
         'primary_bg':'var(--jp-layout-color0,white)',
         'secondary_bg':'var(--jp-layout-color2,whitesmoke)',
@@ -196,6 +196,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'font-size':'90% !important',
             }, # Define color below at low specificity, otherwise it can overwrite code
             '*:not(mjx-c)': {'color':'var(--primary-fg)',}, 
+            'mjx-c, .MathJax span': {"color":"inherit",}, # important to avoid heading color, MathJax span is for export
             '.tl-container, .tlui-icon, .tlui-button': {'color':'unset',},
         },
         '^.SlidesWrapper':{
@@ -241,6 +242,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
                 'line-height':'1.5em',
                 'overflow':'hidden', # Firefox 
+                'mjx-c, .MathJax span': {"color":"var(--heading-color)",}, # MathJax span is for export
             },
             'h1:first-of-type': {'margin-block-start':'0em !important',},
             'h1': {'font-size':'2.2em'},

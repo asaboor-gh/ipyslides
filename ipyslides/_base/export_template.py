@@ -42,8 +42,11 @@ def doc_html(code_css, style_css, content, script):
 </head>
 <body>
 <div>
+    <div class="slides-only" style="position:fixed;right:4px;top:4px;z-index:6;"> __LOGO__ </div>
+    <div class="slides-only click-wrapper" style="position:fixed;left:0;bottom:3px;z-index:6;height:15px;width:100%;"> __FOOTER__ </div>
     <!-- Classes below work for both scenerios -->
     <div class="SlidesWrapper">
+    <center class="report-only" style="padding:16px;"> __LOGO__ </center>
     {content}
     </div>
 </div>
@@ -97,7 +100,6 @@ a:hover {text-decoration:underline !important;}
 .SlidesWrapper h1, .SlidesWrapper h2 {
 	margin-block: 0.4em 0.7em !important; /* need more space for h1 and h2 */
 }
-.MathJax span {color:inherit;} /* adopts color of container */
 @page {
     size: __page_size__;
     margin-top: 18mm !important;
@@ -145,7 +147,9 @@ a:hover {text-decoration:underline !important;}
         max-height: auto !important; 
         overflow-wrap: break-word !important; 
     }
-    section:first-child {page-break-after: always;margin: auto auto !important;}
+    section:first-child {
+        page-break-after: always;
+    }
     .page-break {page-break-after: always !important;}
     table { page-break-inside:auto; }
     tr    { page-break-inside:avoid; page-break-after:auto; }
@@ -169,6 +173,12 @@ __theme_css__
 .report-only, .jupyter-only { display:none !important;}
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
+.click-wrapper {
+    display:flex;
+    justify-content: space-evenly;
+}
+.click-wrapper .clicker {display:block;flex-grow:1;text-align:center;font-size:14px;height:15px;opacity:0;}
+.click-wrapper .clicker:hover {background:var(--secondary-bg);color:var(--accent-color);opacity:1;text-decoration:none !important;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;
     display: flex !important;
@@ -250,7 +260,6 @@ a.goto-button:hover, a.goto-button:focus {
 a.goto-button:active {
     color: var(--pointer-color);
 }
-.MathJax span {color:inherit;} /* adopts color of container */
 
 @media print {
     * {
@@ -266,7 +275,7 @@ a.goto-button:active {
         margin-left: 0 !important;
         margin-bottom: 0 !important;
     }
-
+    .click-wrapper .clicker {opacity:1 !important;color:transparent !important;} /* without full opacity it does not show*/
     .SlidesWrapper {
         display: flex !important;
         flex-direction: column !important;

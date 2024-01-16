@@ -63,6 +63,8 @@ class _HhtmlExporter:
         script = _script if as_slides else '' # No need in report
         
         return doc_html(_code_css,_style_css, content, script).replace(
+            '__FOOTER__', self._get_clickables()).replace(
+            '__LOGO__', self.main.widgets.htmls.logo.value).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
             '__HEIGHT__', f'{int(254*theme_kws["aspect_ratio"])}mm') # Slides height is determined by aspect ratio.
     
@@ -87,9 +89,10 @@ class _HhtmlExporter:
             f".{self.main.uid}", sec_id).replace(
             ".NavWrapper", ".Footer"
             )
-
+    def _get_clickables(self):
+        items = [(item.label, getattr(item,'_sec_id','')) for item in self.main]
+        return "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in items)
                 
-
     def _writefile(self, path, content, overwrite = False):
         if os.path.isfile(path) and not overwrite:
             print(f'File {path!r} already exists. Use overwrite=True to overwrite.')
@@ -107,10 +110,6 @@ class _HhtmlExporter:
         - Use 'slides-only' class to generate content that only appear in slides.
         - Use `Save as PDF` option in browser to make links work in output PDF.
         """
-        if self.main.citations and (self.main._citation_mode != 'global'):
-            raise ValueError(f'''Citations in {self.main._citation_mode!r} mode are not supported in report. 
-            Use Slides(citation_mode = "global" and run all slides again before generating report.''')
-        
         _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
         content = self._htmlize(as_slides = False, page_size = page_size)
         content = content.replace('.SlideArea','').replace('SlidesWrapper','ContentWrapper')

@@ -139,7 +139,7 @@ def _key(k): # other properties in CSS
 
 key_maps = {
     "▸, Space": "Next slide",
-    "◂, ⇧ + Space": "Previous slide",
+    "◂, Ctrl + Space": "Previous slide",
     "Z": "Toggle objects zoom mode",
     "S": "Take screenshot",
     "P": "Print PDF of current slide",
@@ -155,7 +155,9 @@ key_combs = f"""
 | Shortcut                                    | Button                                            | Action                 | 
 |---------------------------------------------|---------------------------------------------------|------------------------|
 | {_key('&#9141;')}/{_key('▸')}               | {_icons["R"]}, {_icons["D"]}                      | Move to next slide     |
-| {_key('⇧')} + {_key('&#9141;')}/{_key('◂')} | {_icons["L"]}, {_icons["U"]}                      | Move to previous slide |
+| {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["L"]}, {_icons["U"]}                   | Move to previous slide |
+| {_key('[1-9]')}                             |                                                   | Move [1-9] slides right|
+| {_key('Ctrl')} + {_key('[1-9]')}            |                                                   | Move [1-9] slides left |
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
 | {_key('S')}                                 | {_icons["camera"]}                                | {key_maps["S"]}        |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
@@ -179,7 +181,8 @@ Having your cursor over slides, you can use follwoing keys/combinations:
     
 {key_combs}
 ::: note
-    You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
+    - You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
+    - In exported slides, bottom bar is clickable to jump between slides quickly. Whole bar is divided into as many clicker as slides.
 
 ::: note-tip
     - Other keys are blocked so that you may not delete or do some random actions on notebook cells.

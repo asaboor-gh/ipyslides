@@ -54,42 +54,41 @@ function touchSwiper(box, model){
             };
         };
 
+const keyMessage = {
+    's': 'SCAP', // Screenshot
+    'f': 'TFS', // Toggle Fullscreen with F but with click from button
+    'z': 'ZOOM', // Enable zooming items
+    'g': 'TPAN', // Setting panel
+    'k': 'KSC', // keyboard shortcuts
+    'l': 'TLSR', // L toggle laser
+    'v': 'TVP', // V for toggle viewport, only in voila and LinkedOutputView
+}
+
 
 function keyboardEvents(box,model) {
         function keyOnSlides(e) {
             e.preventDefault();
-            let key = e.keyCode;
+            let key = e.key; // True unicode key
             let message = '';
-            if (key === 88 || key === 68) {
+            if ('123456789'.includes(key)) { // send to shift slides by numbers
+                message = (e.ctrlKey? "SHIFT:-" + key: "SHIFT:" + key);
+            } else if (key === 'x' || key === 'd') {
                 alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
                 e.stopPropagation(); // stop propagation to jupyterlab events
                 return false;
-            } else if (key===77){
+            } else if (key === 'm'){
                 alert("Pressing M could change cell to Markdown and vanish away slides!");
                 e.stopPropagation();   // M key
                 return false;
-            }  else if (key === 13 || key === 27) {
+            }  else if (key === 'Enter') { 
                 e.stopPropagation();   // Don't let it pass over slides though, still can't hold Shift + Enter
                 return true; // Enter key or Escape key should act properly
-            } else if (key === 37 || (e.shiftKey && key === 32)) {
+            } else if (key === 'ArrowLeft' || (e.ctrlKey && key === ' ')) { // ^ + Space, <
                 message = 'PREV';
-            } else if (key === 39 || key === 32) {
+            } else if (key === 'ArrowRight' || key === ' ') { // Space, >
                 message = 'NEXT';
-            } else if (key === 83) {
-                message = 'SCAP'; // S for screenshot
-            } else if (key === 70) { 
-                // Toggle Fullscreen with F but with click from button
-                message = 'TFS'; 
-            }  else if (key === 90) { 
-                message = 'ZOOM'; // Z 
-            } else if (key === 71) { 
-                message = 'TPAN'; // G toggle panel
-            } else if (key === 75) {
-                message = 'KSC'; // K for keyboard shortcuts
-            } else if (key === 76) {
-                message = 'TLSR'; // L toggle laser
-            } else if (key === 86) {
-                message = 'TVP'; // V for toggle viewport, only in voila and LinkedOutputView
+            } else if (key in keyMessage){
+                message = keyMessage[key];
             }
         
             e.stopPropagation(); // stop propagation to jupyterlab events and other views 
