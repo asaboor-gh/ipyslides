@@ -3,7 +3,7 @@ Export Slides to HTML report and static HTML slides. It is used by program itsel
 not by end user.
 """
 import os
-import json
+import textwrap
 from contextlib import suppress
 from .export_template import doc_css, doc_html, slides_css
 from . import styles
@@ -38,9 +38,9 @@ class _HhtmlExporter:
     def _htmlize(self, as_slides = False, **kwargs):
         "page_size, slide_number are in kwargs"
         navui_class = 'NavHidden' if self.main.widgets.checks.navgui.value else '' # it hides when True
-        content = ''
+        content = '' if as_slides else f'<center class="report-only" style="padding:16px;">{self.main.widgets.htmls.logo.value}</center>' #only top logo
         for item in self.main:
-            _html = ''
+            _html = '' 
             for out in item.contents:
                 _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
             
@@ -48,8 +48,17 @@ class _HhtmlExporter:
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)
             footer = f'<div class="Footer {navui_class}">{item.get_footer()}{self._get_progress(item)}</div>'
-            content += (f'<section {sec_id}>{self._get_css(item)}<div class="SlideBox"><div {goto_id} class="SlideArea">{_html}</div>{footer}</div></section>' 
-                        if as_slides else f'<section {sec_id}>{_html}</section>')
+            content += textwrap.dedent(f'''
+                <section {sec_id}>
+                    {self._get_css(item)}
+                    <div class="SlideBox">
+                        {self._get_logo()}
+                        <div {goto_id} class="SlideArea">
+                            {_html}
+                        </div>
+                        {footer}
+                    </div>
+                </section>''' if as_slides else f'<section {sec_id}>{_html}</section>')
         
         theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
     
@@ -64,7 +73,6 @@ class _HhtmlExporter:
         
         return doc_html(_code_css,_style_css, content, script).replace(
             '__FOOTER__', self._get_clickables()).replace(
-            '__LOGO__', self.main.widgets.htmls.logo.value).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
             '__HEIGHT__', f'{int(254*theme_kws["aspect_ratio"])}mm') # Slides height is determined by aspect ratio.
     
@@ -89,6 +97,11 @@ class _HhtmlExporter:
             f".{self.main.uid}", sec_id).replace(
             ".NavWrapper", ".Footer"
             )
+    def _get_logo(self):
+        return f'''<div class="slides-only" style="position:absolute;right:4px;top:4px;"> 
+            {self.main.widgets.htmls.logo.value} 
+        </div>'''
+
     def _get_clickables(self):
         items = [(item.label, getattr(item,'_sec_id','')) for item in self.main]
         return "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in items)

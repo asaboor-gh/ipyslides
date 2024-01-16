@@ -42,11 +42,9 @@ def doc_html(code_css, style_css, content, script):
 </head>
 <body>
 <div>
-    <div class="slides-only" style="position:fixed;right:4px;top:4px;z-index:6;"> __LOGO__ </div>
     <div class="slides-only click-wrapper" style="position:fixed;left:0;bottom:3px;z-index:6;height:15px;width:100%;"> __FOOTER__ </div>
     <!-- Classes below work for both scenerios -->
     <div class="SlidesWrapper">
-    <center class="report-only" style="padding:16px;"> __LOGO__ </center>
     {content}
     </div>
 </div>
@@ -206,7 +204,13 @@ section .SlideBox {
     padding: 0 !important;
     box-sizing: border-box !important;
 }
-section .SlideBox > .Footer > .Progress { display: none !important; }
+section .SlideBox > .Footer > .Progress { 
+        display: block !important; 
+        box-sizing: border-box;
+        height: 3px !important;
+        width: 100% !important;
+}
+section:first-of-type .SlideBox > .Footer > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
 section .SlideArea {
     /* Will be added by export */
 	margin: auto !important;
@@ -234,18 +238,10 @@ section .SlideBox > .Footer > p {
 section .SlideBox > .Footer.NavHidden > p {
     display:none !important;
 }
-.SlidesWrapper::-webkit-scrollbar:vertical,
+.SlidesWrapper::-webkit-scrollbar,
 .SlidesWrapper::-webkit-scrollbar-button,
 .SlidesWrapper::-webkit-scrollbar-corner {
     display:none !important;
-}
-.SlidesWrapper::-webkit-scrollbar {
-    background: var(--secondary-bg, whitesmoke) !important;
-    height: 3px !important;
-}
-.SlidesWrapper::-webkit-scrollbar-thumb, 
-.SlidesWrapper::-webkit-scrollbar-track-piece:start {
-    background-color: var(--accent-color, navy) !important;
 }
 a.goto-button {
     padding: 2px;
@@ -300,13 +296,6 @@ a.goto-button:active {
     section .SlideBox {
         page-break-inside: avoid !important;
     }
-    section .SlideBox > .Footer > .Progress { 
-        display: block !important; 
-        box-sizing: border-box;
-        height: 3px !important;
-        width: 100% !important;
-    }
-    section:first-of-type .SlideBox > .Footer > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
     section .SlideArea {
         position: static !important; /*override from document as printing absolute is issue */
         overflow: hidden !important;
