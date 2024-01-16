@@ -103,7 +103,6 @@ class _Dropdowns:
     """
     Instantiate under `Widgets` class only.
     """
-    aspect = ipw.Dropdown(**describe('Aspect Ratio'),options=[('2:1',0.50),('16:9',0.56),('16:10',0.63),('3:2',0.67), ('7:5',0.71),('4:3',0.75),('5:4',0.80)], value = 0.56,continuous_update=False).add_class('Height-Dd') #16:9 is better for in cell display
     theme  = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
     clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
     export = ipw.Dropdown(**describe('Export As'),options=['Slides','Report','Select'], value = 'Select')
@@ -132,12 +131,14 @@ class Widgets:
     
     def update_progressbar(self):
         self._progbar.children[0].layout.width = f"{self.sliders.progress.value}%"
+        self._snum.description = self.sliders.progress.label
         
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
         self._notebook_dir = '.' # This will be updated later
         self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
+        self._snum   = Button(description='',layout= Layout(width='auto',height='auto')).add_class("Slide-Number").add_class('Menu-Item')
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -161,11 +162,13 @@ class Widgets:
 
         
         self.footerbox = HBox([
-            self.toggles.menu,
-            self.buttons.toc,
+            HBox([
+                self.toggles.menu,
+                self.buttons.capture,
+                self.buttons.toc,
+            ]).add_class('Menu-Box'),
             HBox([self.htmls.footer]), # should be in Box to avoid overflow
-            self.buttons.capture,
-        ],layout=Layout(height='28px')).add_class('NavBox')
+        ],layout=Layout(height='28px')).add_class('NavBox').add_class("Active-Start")
         
         self.navbox = VBox([
             self.buttons._inview,
@@ -182,7 +185,6 @@ class Widgets:
                 self.ddowns.theme,
                 HTML('<hr/>'),
                 self.sliders.width,
-                self.ddowns.aspect, 
                 self.ddowns.export,
                 Box([GridBox([
                     self.checks.notes,
@@ -245,8 +247,9 @@ class Widgets:
             self.controls, # Importnat for unique display
             self.drawer, 
             self.navbox, 
+            self._snum,
             self._progbar # progressbar should come last
-            ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*self.ddowns.aspect.value)}vw',margin='auto')
+            ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto') # 9/16 is default, will change by setting
         ).add_class('SlidesWrapper')  #Very Important to add this class
 
         for child in self.mainbox.children:

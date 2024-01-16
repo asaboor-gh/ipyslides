@@ -1183,9 +1183,7 @@ class Slides:
     def __new__(
         cls,
         citation_mode="global",
-        center=True,
-        scroll=True,
-        width = 100,
+        layout = dict(center=True, scroll=True, width=100, aspect=16/9),
         short_title='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
         date="today",
         logo_src=get_logo(),
@@ -1194,8 +1192,7 @@ class Slides:
         code_font="var(--jp-code-font-family)",
         code_style="default",
         code_lineno=True,
-        main_animation="slide_h",
-        frame_animation="appear",
+        animation = dict(main="slide_h", frame = "appear"),
         show_always=True,
         nav_gui = True,
         extensions=[],
@@ -1205,9 +1202,15 @@ class Slides:
         _private_instance.extender.extend(extensions)
         _private_instance.settings.show_always(show_always)
 
+        if not isinstance(layout, dict):
+            raise TypeError(f"layout expects a dictionary with keys center:bool, scroll:bool, width:int, aspect:float. got {layout!r}")
+        
+        if not isinstance(animation, dict):
+            raise TypeError(f"animation expects a dictionary with keys main:str and frame:str. got {animation!r}")
+
         _private_instance.settings.set(
             citation_mode=dict(mode=citation_mode),
-            layout=dict(center=center, scroll=scroll, width = width),
+            layout=layout, # Defaults are kept by set_layout
             footer=dict(text=short_title, date=date),
             logo=dict(src=logo_src, width=60),
             font_scale=dict(font_scale=font_scale),
@@ -1217,9 +1220,7 @@ class Slides:
         )
 
         with suppress(BaseException):  # Avoid error if no slides exist
-            _private_instance.settings.set_animation(
-                main=main_animation, frame=frame_animation
-            )
+            _private_instance.settings.set_animation(**animation)
         return _private_instance
 
     # No need to define __init__, __new__ is enough to show signature and docs

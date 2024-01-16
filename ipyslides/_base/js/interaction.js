@@ -208,6 +208,10 @@ function setScale(box) {
     let scaleW = oldScale*rectBox.width/rectSlide.width; 
     let scale = scaleH > scaleW ? scaleW : scaleH;
     
+    if(!scale) { // Only set if there is one, don't set null
+        return false; // This will ensure if Notebook is hidden, scale stays same
+    }
+    
     box.style.setProperty('--contentScale',scale);
 
     let navbox = box.getElementsByClassName("NavWrapper")[0];
@@ -216,7 +220,7 @@ function setScale(box) {
         box.style.setProperty('--paddingBottom',Number(28/scale) + "px");
     } else {
         box.style.setProperty('--paddingBottom',"0px");
-    }
+    } 
 }
 
 function handleScale(box) {
@@ -291,6 +295,13 @@ export function render({ model, el }) {
             c.style.width = '100%';
             c.style.height = '100%';
         }
+        // Remove menu active class for initial user intros
+        setTimeout(() => {
+            let actives = box.getElementsByClassName("Active-Start");
+            for (let active of Array.from(actives)) {
+                active.classList.remove("Active-Start");
+            };
+        }, 10000); // Remove after 10 seconds
     }  
     el.appendChild(style);
     model.set("msg_topy", "LOADED"); // to run onload functionality

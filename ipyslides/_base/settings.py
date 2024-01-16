@@ -32,11 +32,10 @@ class LayoutSettings:
             "date": "today",
         }
         
-        self._layout = {'cwidth':100, 'scroll': True, 'centered': True}
+        self._layout = {'cwidth':100, 'scroll': True, 'centered': True, 'aspect_ratio': 9/16}
         self._code_lineno = True
 
         self.width_slider = self.widgets.sliders.width
-        self.aspect_dd = self.widgets.ddowns.aspect
         self.scale_slider = self.widgets.sliders.scale
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
@@ -55,7 +54,6 @@ class LayoutSettings:
         self.widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self.theme_dd.observe(self._update_theme, names=["value"])
         self.scale_slider.observe(self._update_theme, names=["value"])
-        self.aspect_dd.observe(self._update_size, names=["value"])
         self.width_slider.observe(self._update_size, names=["value"])
         self.btn_window.observe(self._toggle_viewport, names=["value"])
         self.btn_fscreen.observe(self._toggle_fullscreen, names=["value"])
@@ -295,9 +293,7 @@ class LayoutSettings:
         ):
             raise TypeError(f"slide should be Slide object, not {type(slide)}")
 
-        number = (
-            f"{slide.label} / {self._slides._nslides}" if slide.label != "0" else ""
-        )
+        number = slide.label if slide.label != "0" else ""
         text = self._footer_kws["text"]
         numbering = self._footer_kws["numbering"]
         date = self._footer_kws["date"]
@@ -307,36 +303,37 @@ class LayoutSettings:
                 " | " if text else ""
             ) + f'{today(fg = "var(--secondary-fg)") if date == "today" else date}'
         if numbering:
-            text += (
-                f'<b style="color:var(--accent-color);white-space:pre;">  {number}</b>'
-            )
-        text = f'<p style="white-space:nowrap;display:inline;"> {text} </p>'  # To avoid line break in footer
+            if update_widget:
+                self._slides.widgets._snum.layout.display = ""
+            else:
+                text += f'<span style="color:var(--accent-color);position:absolute;right:8px;">{number}</span>'
+        else:
+            self._slides.widgets._snum.layout.display = "none" # hide slide number
+
+        text = f'<p style="white-space:nowrap;display:inline;margin-block:0;padding-left:0.7em;"> {text} </p>'  # To avoid line break in footer
 
         if update_widget:
             self.widgets.htmls.footer.value = text
 
         return text
 
-    def set_layout(self, center=True, scroll=True, width=100):
+    def set_layout(self, center=True, scroll=True, width=100, aspect = 16/9):
         "Central aligment of slide by default. If False, left-top aligned."
         if (not isinstance(width, int)) or (width not in range(101)):
             raise ValueError("width should be int in range [0,100]")
-        self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center}
+        if not isinstance(aspect, (int,float)):
+            raise TypeError("aspect should be int/float of ratio width/height.")
+        self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center, 'aspect_ratio': 1/aspect}
         self._update_theme(change=None)  # Trigger CSS in it to make width change
         self.widgets.iw.msg_tojs = 'RESCALE'
 
     def set_nav_gui(self, visible = True):
         """Show/Hide navigation GUI, keyboard or touch still work. Hover on left-bottom corner to acess settings."""
         self.widgets.controls.layout.visibility = "visible" if visible else "hidden"
-        self.widgets.navbox.layout.visibility = "visible" if visible else "hidden"
-        self.widgets.toggles.menu.layout.visibility = "visible" # keep for accessing things
         self.widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
 
-        if visible:
-            self.widgets.toggles.menu.remove_class("Hover-Only")
-        else:
-            self.widgets.toggles.menu.add_class("Hover-Only")
-            self._slides.notify("Navigation controls hidden. Hover on left-bottom corner to access settings!")
+        if not visible:
+            self._slides.notify("Navigation controls hidden. But keyboard and touch gestures are working!")
 
     def _update_size(self, change):
         if change and change["owner"] == self.width_slider:
@@ -350,7 +347,7 @@ class LayoutSettings:
             ).value
 
         self.widgets.mainbox.layout.height = "{}vw".format(
-            int(self.width_slider.value * self.aspect_dd.value)
+            int(self.width_slider.value * self._layout["aspect_ratio"])
         )
         self.widgets.mainbox.layout.width = "{}vw".format(self.width_slider.value)
         self._update_theme(
@@ -396,7 +393,6 @@ class LayoutSettings:
             text_font=self._font_family["text"],
             code_font=self._font_family["code"],
             breakpoint=self.breakpoint,
-            aspect_ratio = self.aspect_dd.value,
             **self._layout
         )
 

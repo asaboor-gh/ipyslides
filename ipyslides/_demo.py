@@ -305,12 +305,12 @@ def demo_slides(slides):
     {.info}
     --
     ```multicol 50 50
-    $ \int_0^1\\frac{1}{1-x^2}dx $
-    {.align-center .text-big .info}
+    $$ \int_0^1\\frac{1}{1-x^2}dx $$
+    {.align-left .text-big .info}
     +++
     --
-    $ ax^2 + bx + c = 0 $
-    {.align-center .text-huge .success}
+    $$ ax^2 + bx + c = 0 $$
+    {.text-huge .success}
     ```
     ''', trusted=True)
 

@@ -56,11 +56,7 @@ class ScreenShot:
     def capture_mode(self, *additional_widgets_to_hide):
         """Hide some widgets and while capturing a screenshot, show them back again.
         You can provide additional widgets to hide while capturing as well."""
-        hide_widgets = [self.widgets.controls,
-                        self.widgets.buttons.setting,
-                        self.widgets.buttons.toc,
-                        self.widgets.toggles.menu,
-                        self.btn_capture,
+        hide_widgets = [self.widgets.controls, # now other buttons are inside Menu-Box which gets hidden 
                         self.widgets.htmls.toast,
                         self.widgets.htmls.cursor,
                         *additional_widgets_to_hide

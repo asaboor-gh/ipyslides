@@ -27,6 +27,7 @@ def layout_css(breakpoint, accent_color):
                     ".TopBar.Outside, .SlideArea .goto-button, .Sfresh-Btn": {
                         "visibility": "hidden !important"
                     },  # Hide in screenshot
+                    ".Menu-Box" : {"display": "none !important",},
                 },
                 "^.PresentMode .SlideBox .SlideArea .ProxyPasteBtns": {
                     "display": "none !important"
@@ -38,15 +39,13 @@ def layout_css(breakpoint, accent_color):
                     ".FullWindow-Btn": {"display": "none !important"},
                 },
                 "@keyframes heart-beat": {
-                    "0%": {
-                        "transform": "scale(1)",
+                    "from": {
+                        "transform": "translateX(-16px)",
                         "opacity": "0.5",
-                        "filter": "drop-shadow(0 0 2px var(--hover-color))",
                     },
-                    "50%": {
-                        "transform": "scale(0.7)",
+                    "to": {
+                        "transform": "translateX(0)",
                         "opacity": "1",
-                        "filter": "drop-shadow(0 0 4px var(--pointer-color))",
                     },
                 },
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn": {
@@ -55,13 +54,17 @@ def layout_css(breakpoint, accent_color):
                 "^.InView-Title .Arrows.Next-Btn, ^.InView-Other .Arrows.Next-Btn": {
                     "animation-name": "heart-beat",
                     "animation-duration": "2s",
-                    "animation-iteration-count": "infinite",
-                    "animation-timing-function": "ease-in-out",
+                    "animation-iteration-count": "10", # 10 times to catch attention of speaker
+                    "animation-timing-function": "steps(8, end)",
                     "animation-delay": "20s",
                 },
                 "^.InView-Other .Arrows.Next-Btn": {
                     "animation-delay": "60s",  # Beet at 60 seconds if left on slide
-                    "animation-iteration-count": "10",  # 10 times to catch attention of speaker
+                },
+                ".Slide-Number" : { # slide number
+                    "position": "absolute !important",
+                    "right": "0 !important",
+                    "bottom": "0 !important",
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
@@ -326,16 +329,18 @@ def layout_css(breakpoint, accent_color):
                             "opacity": "1 !important",
                         },
                     },
-                    ".Menu-Btn.Hover-Only": {
-                        " > i" : {"opacity": "0 !important",},
-                        "^:hover, ^:focus, ^:active ^.mod-active": {
-                        " > i" : {
-                            "opacity": "1 !important",
-                            "transition": "opacity 400ms ease-in-out",
+                    ".Menu-Box": {
+                        "width": "0 !important",
+                        "transition": "width 400ms ease-in-out", # transition on exit
+                        "overflow": "hidden !important", # needs to not jump on chnage of width
+                    },
+                    "^:hover, ^:focus, ^:active, ^.mod-active, ^.Active-Start" : {
+                        ".Menu-Box" : {
+                            "width": "104px !important", # 3*28 + margin + paddings
+                            "transition": "width 400ms ease-in-out", # transition on enter hoevr
                         },
                     },
-                },
-                    ".Toc-Btn, .Menu-Btn": {
+                    ".Toc-Btn, .Menu-Btn, .Screenshot-Btn": {
                         "min-width": "28px",
                         "width": "28px", # need this too
                     },  # Avoid overflow in small screens
@@ -385,12 +390,13 @@ def layout_css(breakpoint, accent_color):
                     "padding": "0px 4px",
                     "opacity": 0,
                     "overflow": "hidden",
-                    "transition": "width 0.4s",
+                    "transition": "width 0.4s", #on exit hover
                     "^:hover, ^:focus": {
                         "width": "50%",
                         "min-width": "30%",  # This is very important to force it
                         "justify-content": "center",
                         "opacity": 1,
+                        "transition": "width 0.4s", # on enter
                     },
                     f"@media screen and (max-width: {breakpoint})": (
                         _breakpoint_css := {
@@ -760,7 +766,7 @@ def layout_css(breakpoint, accent_color):
                     },
                     ".Width-Slider": {
                         "display": "none !important",
-                    },  # do not hide aspect ratio dropdown, that is needed for export
+                    },
                 },
             },
             "<#ipython-main-app .SlidesWrapper .output_scroll": {  # For classic Notebook output

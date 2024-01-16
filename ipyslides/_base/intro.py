@@ -16,7 +16,7 @@ def get_logo(height="60px", text = None):
 how_to_ppt = """### Powerpoint Presentation
 - Save all screenshots using `Save PNG` button and go to folder just created.
 - You know the aspect ratio while taking screenshots, if not, read details of any of picture to find it.
-- Open Powerpoint, got to `Design` tab and select `Slide Size`. If pictures here are of aspect ration 4:3 or 16:9, select that,
+- Open Powerpoint, got to `Design` tab and select `Slide Size`. If pictures here are of aspect ratio 4:3 or 16:9, select that,
 otherwise select `Custom Slide Size` and change size there according to found aspect ratio. 
 - You will see a slide of your prefered size now. Go to `Insert` tab and select `Photo Album > New Photo Album`.
 - Select `File/Disk` option to insert pictures and make sure `Picture Layout` option is `Fit to slide`.

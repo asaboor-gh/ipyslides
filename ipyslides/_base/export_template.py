@@ -97,8 +97,7 @@ a:hover {text-decoration:underline !important;}
 .SlidesWrapper h1, .SlidesWrapper h2 {
 	margin-block: 0.4em 0.7em !important; /* need more space for h1 and h2 */
 }
-
-
+.MathJax span {color:inherit;} /* adopts color of container */
 @page {
     size: __page_size__;
     margin-top: 18mm !important;
@@ -218,7 +217,7 @@ section .SlideBox > .Footer.NavHidden {
 section .SlideBox > .Footer > p {
     font-size: 14px !important;
     padding: 4px !important;
-    padding-left: 8px !important;
+    padding-left: 0.7em !important; 
     display:block !important;
     margin:0 !important;
 }
@@ -239,7 +238,7 @@ section .SlideBox > .Footer.NavHidden > p {
     background-color: var(--accent-color, navy) !important;
 }
 a.goto-button {
-    padding: 6px;
+    padding: 2px;
     border: 1px solid var(--accent-color);
     border-radius: 6px;
     font-size: 16px;
@@ -251,6 +250,7 @@ a.goto-button:hover, a.goto-button:focus {
 a.goto-button:active {
     color: var(--pointer-color);
 }
+.MathJax span {color:inherit;} /* adopts color of container */
 
 @media print {
     * {
@@ -288,15 +288,16 @@ a.goto-button:active {
     section:last-of-type {
         page-break-after: avoid !important;
     }
-    section:first-of-type .SlideBox > .Footer {display: none !important;} /* remove footer from title slide in print*/
     section .SlideBox {
         page-break-inside: avoid !important;
     }
     section .SlideBox > .Footer > .Progress { 
         display: block !important; 
+        box-sizing: border-box;
         height: 3px !important;
         width: 100% !important;
     }
+    section:first-of-type .SlideBox > .Footer > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
     section .SlideArea {
         position: static !important; /*override from document as printing absolute is issue */
         overflow: hidden !important;

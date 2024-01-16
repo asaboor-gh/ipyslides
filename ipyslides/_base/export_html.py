@@ -64,7 +64,7 @@ class _HhtmlExporter:
         
         return doc_html(_code_css,_style_css, content, script).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
-            '__HEIGHT__', f'{int(254*self.main.settings.aspect_dd.value)}mm') # Slides height is determined by aspect ratio.
+            '__HEIGHT__', f'{int(254*theme_kws["aspect_ratio"])}mm') # Slides height is determined by aspect ratio.
     
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')
@@ -126,7 +126,7 @@ class _HhtmlExporter:
         - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
         
         ::: note-info
-            - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio dropdown in sidebar panel.
+            - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF.
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
