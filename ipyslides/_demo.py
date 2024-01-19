@@ -13,7 +13,7 @@ def demo_slides(slides):
     write = slides.write # short name
     auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
 
-    slides.settings.set_footer('Author: Abdul Saboor عبدالصبور | <span class="export-only">This bottom area works as clickable slides navigation!</span>')
+    slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
     slides._citation_mode = 'global' # This could be changed by other functions
     slides.set_citations({
             'pf': 'This is refernce to FigureWidget using `slides.cite` command',

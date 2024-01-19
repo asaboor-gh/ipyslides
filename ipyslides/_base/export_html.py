@@ -23,9 +23,20 @@ _script = '''<script>
         let scaleH = old*rectBox.height/rectSlide.height;
         let scaleW = old*rectBox.width/rectSlide.width;
         let scale = scaleH > scaleW ? scaleW : scaleH;
-        document.documentElement.style.setProperty('--contentScale',scale);
-    }
+        if (scale) { // Only add if not null or somethings
+            document.documentElement.style.setProperty('--contentScale',scale);
+        };
+    };
     window.dispatchEvent(new window.Event('resize')); // First time programatically
+
+    let slides = document.getElementsByClassName("SlidesWrapper")[0];
+
+    slides.addEventListener("scroll", (event) => {
+        slides.classList.add("Scrolling");
+    })
+    slides.addEventListener("scrollend", (event) => {
+        slides.classList.remove("Scrolling");
+    })
 </script>'''
 
 
@@ -98,13 +109,18 @@ class _HhtmlExporter:
             ".NavWrapper", ".Footer"
             )
     def _get_logo(self):
-        return f'''<div class="slides-only" style="position:absolute;right:4px;top:4px;"> 
+        return f'''<div class="slides-only SlideLogo" style="position:absolute;right:4px;top:4px;"> 
             {self.main.widgets.htmls.logo.value} 
         </div>'''
 
     def _get_clickables(self):
-        items = [(item.label, getattr(item,'_sec_id','')) for item in self.main]
-        return "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in items)
+        items = [getattr(item,'_sec_id','') for item in self.main if '.' not in item.label] # only main slides
+        if len(items) > 5: # we need only 0,25,50,75,100 % clickers
+            imax = len(items) - 1
+            items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
+        names = '◀◔◑◕▶'
+
+        return "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(names,items))
                 
     def _writefile(self, path, content, overwrite = False):
         if os.path.isfile(path) and not overwrite:

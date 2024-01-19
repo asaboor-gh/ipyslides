@@ -42,7 +42,7 @@ def doc_html(code_css, style_css, content, script):
 </head>
 <body>
 <div>
-    <div class="slides-only click-wrapper" style="position:fixed;left:0;bottom:3px;z-index:6;height:15px;width:100%;"> __FOOTER__ </div>
+    <div class="slides-only click-wrapper"> __FOOTER__ </div>
     <!-- Classes below work for both scenerios -->
     <div class="SlidesWrapper">
     {content}
@@ -105,9 +105,6 @@ a:hover {text-decoration:underline !important;}
     margin-left: 0 !important;
     margin-right: 0 !important;
     padding: 0 18mm 0 15mm !important;
-}
-@page:first {
-    margin-top: 0mm !important; /* already 18mm padding */
 }
 @media print {
     :root {
@@ -172,17 +169,24 @@ __theme_css__
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
 .click-wrapper {
-    display:flex;
-    justify-content: space-evenly;
+    position: fixed !important;
+    left:calc(100% - 150px) !important; /* extra space for slide number */
+    bottom:3px !important;
+    width: 110px !important;
+    height: 21px !important;
+    display:flex !important;
+    z-index: 6 !important;
+    justify-content: space-evenly !important;
 }
-.click-wrapper .clicker {display:block;flex-grow:1;text-align:center;font-size:14px;height:15px;opacity:0;}
-.click-wrapper .clicker:hover {background:var(--secondary-bg);color:var(--accent-color);opacity:1;text-decoration:none !important;}
+.click-wrapper .clicker {display:block;flex-grow:1;color:color:var(--secondary-fg);text-align:center;font-size:14px;height:21px;text-decoration:none !important;opacity:0.4;}
+.click-wrapper .clicker:hover {var(--accent-color);opacity:1;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;
     display: flex !important;
     overflow-x: auto !important;
     overflow-y: hidden !important; 
     position: fixed !important;
+    scroll-behavior: smooth;
     top: 0 !important;
     left: 0 !important;
     height: 100vh !important;
@@ -257,6 +261,11 @@ a.goto-button:active {
     color: var(--pointer-color);
 }
 
+.SlidesWrapper.Scrolling .Footer,
+.SlidesWrapper.Scrolling .SlideLogo {
+    display:none !important;
+}
+
 @media print {
     * {
         --contentScale : 1 !important; /* Deafult for printing at same value */
@@ -271,7 +280,6 @@ a.goto-button:active {
         margin-left: 0 !important;
         margin-bottom: 0 !important;
     }
-    .click-wrapper .clicker {opacity:1 !important;color:transparent !important;} /* without full opacity it does not show*/
     .SlidesWrapper {
         display: flex !important;
         flex-direction: column !important;

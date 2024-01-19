@@ -511,7 +511,7 @@ class LayoutSettings:
             self.btn_menu.icon = 'minus'
             self._hover_only = 'Hover-Only' in self.btn_menu._dom_classes
             self.btn_menu.remove_class('Hover-Only') # If navigation menu hidden by user
-            self.widgets.quick_menu.layout.height = 'auto'
+            self.widgets.quick_menu.layout.height = 'min(190px, calc(100% - 30px))'
             self.widgets.quick_menu.layout.border = "1px solid var(--hover-bg)"
         else:
             self.btn_menu.icon = 'plus'
