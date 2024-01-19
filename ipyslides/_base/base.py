@@ -15,22 +15,6 @@ from .intro import key_combs
 from ..formatters import XTML
 from ..xmd import _special_funcs
 
-def is_jupyter_session():
-     "Return True if code is executed inside jupyter session even while being imported."
-     shell = get_ipython()
-     if shell.__class__.__name__ in ("ZMQInteractiveShell","Shell"):
-         return True # Verify Jupyter and Colab
-     else:
-         return False
-     
-def inside_jupyter_notebook(func):
-    "Returns True only if a func is called inside notebook, excluding imports."
-    shell = get_ipython()
-    current_code = getattr(shell,'get_parent', lambda: {})().get('content',{}).get('code','')
-    if getattr(func,'__name__') in current_code:
-        return is_jupyter_session()
-    return False
-
 class BaseSlides:
     def __init__(self):
         self._warnings = [] # Will be printed at end of building slides
@@ -267,7 +251,7 @@ class BaseSlides:
         
     def update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
-        if is_jupyter_session():
+        if self.is_jupyter_session():
             self.widgets._tmp_out.clear_output(wait=True)
             with self.widgets._tmp_out:
                 display(*objs)
@@ -324,7 +308,7 @@ class BaseSlides:
         
         **Returns**: A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
         """
-        if not is_jupyter_session():
+        if not self.is_jupyter_session():
             raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
         
         if self.running:
@@ -379,7 +363,7 @@ class BaseSlides:
     def sync_with_file(self, start, path, trusted = False, interval=500):
         """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
         interval is in milliseconds, 500 ms default. Read `Slides.from_markdown` docs about content of file."""
-        if not inside_jupyter_notebook(self.sync_with_file):
+        if not self.inside_jupyter_notebook(self.sync_with_file):
             raise Exception("Notebook-only function executed in another context!")
         
         if not os.path.isfile(path):

@@ -9,6 +9,7 @@ from .export_template import doc_css, doc_html, slides_css
 from . import styles
 from ..formatters import code_css
 from ..writer import _fmt_html
+from ..utils import get_child_dir
 
 _script = '''<script>
     let box = document.getElementsByClassName('SlideBox')[0];
@@ -118,7 +119,7 @@ class _HhtmlExporter:
         if len(items) > 5: # we need only 0,25,50,75,100 % clickers
             imax = len(items) - 1
             items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
-        names = '◀◔◑◕▶'
+        names = '⨽◔◑◕⨼' # ◀▶
 
         return "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(names,items))
                 
@@ -163,9 +164,7 @@ class _HhtmlExporter:
         
     def _export(self,change):
         "Export to HTML report and slides on button click."
-        _dir = os.path.abspath(os.path.join(self.main.notebook_dir, 'ipyslides-export'))
-        if not os.path.isdir(_dir):
-            os.makedirs(_dir)
+        _dir = get_child_dir('ipyslides-export', create = True)
             
         def further_action(path):
             self.main.notify(f'File saved: {path!r}')

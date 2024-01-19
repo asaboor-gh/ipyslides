@@ -133,7 +133,7 @@ theme_colors = {
         'secondary_fg' : 'powderblue',
         'alternate_bg' : '#282828',
         'hover_bg' : '#264348',
-        'accent_color' : '#A9143C',
+        'accent_color' : '#f5e8b7',
         'pointer_color' : '#ff1744',
     },
     'Fancy': {

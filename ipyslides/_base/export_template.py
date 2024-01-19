@@ -178,8 +178,8 @@ a:hover {text-decoration:underline !important;}
     z-index: 6 !important;
     justify-content: space-evenly !important;
 }
-.click-wrapper .clicker {display:block;flex-grow:1;color:color:var(--secondary-fg);text-align:center;font-size:14px;height:21px;text-decoration:none !important;opacity:0.4;}
-.click-wrapper .clicker:hover {var(--accent-color);opacity:1;}
+.click-wrapper .clicker {display:block;flex-grow:1;color:var(--accent-color);text-align:center;font-size:14px;height:21px;text-decoration:none !important;opacity:0.4;}
+.click-wrapper .clicker:hover {color:var(--primary-fg);opacity:1;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;
     display: flex !important;

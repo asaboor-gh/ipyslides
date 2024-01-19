@@ -1,6 +1,6 @@
 _attrs = ['alt','alert', 'block', 'bullets', 'classed', 'color', 'cols','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
-            'raw', 'rows', 'enable_zoom','html','sig','doc','code','today','sub','sup']
+            'raw', 'rows', 'enable_zoom','html','sig','doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
 __all__ = sorted(_attrs)
@@ -9,10 +9,13 @@ import os, re
 import datetime
 import inspect
 import textwrap
+
+from pathlib import Path
 from html import escape # Builtin library
 from io import BytesIO # For PIL image
 from contextlib import contextmanager, suppress
 
+from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 from IPython.utils.capture import capture_output
@@ -21,6 +24,40 @@ import ipywidgets as ipw
 from .formatters import XTML, fix_ipy_image, htmlize
 from .xmd import get_unique_css_class
 from .writer import Writer, AltForWidget
+
+def is_jupyter_session():
+     "Return True if code is executed inside jupyter session even while being imported."
+     shell = get_ipython()
+     if shell.__class__.__name__ in ("ZMQInteractiveShell","Shell"):
+         return True # Verify Jupyter and Colab
+     else:
+         return False
+     
+def inside_jupyter_notebook(func):
+    "Returns True only if a func is called inside notebook, excluding imports."
+    shell = get_ipython()
+    current_code = getattr(shell,'get_parent', lambda: {})().get('content',{}).get('code','')
+    if getattr(func,'__name__') in current_code:
+        return is_jupyter_session()
+    return False
+
+def get_notebook_dir():
+    if is_jupyter_session() and (shell := get_ipython()):
+        return Path(shell.starting_dir).absolute()
+    else:
+        raise RuntimeError("Not in a Notebook!")
+    
+
+def get_child_dir(name, *names, create = False):
+    "Returns a child directory inside notebook directory with given name and names in order, if not exist, create one if create=True"
+    notebook_dir = get_notebook_dir()
+    _dir = notebook_dir.joinpath(name, *names)
+    if not _dir.exists():
+        if create:
+            os.makedirs(_dir)
+        else:
+            raise FileNotFoundError(f"Directory: {_dir!r} does not exists. Use create = True to make it.")
+    return _dir
 
 def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
@@ -294,7 +331,7 @@ def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
     return XTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>""")
 
-def __check_pil_image(data):
+def _check_pil_image(data):
     "Check if data is a PIL Image or numpy array"
     if data.__repr__().startswith('<PIL'):
         im_bytes = BytesIO()
@@ -312,10 +349,17 @@ def image(data=None,width='95%',caption=None, **kwargs):
     - A file path to image file.
     - A url to image file.
     - A str/bytes object containing image data.  
+    - A str like "clip:image.png" will load an image saved using `Slides.clipboard_image('image.png')`. 
     """
     if isinstance(width,int):
         width = f'{width}px'
-    _data = __check_pil_image(data) #Check if data is a PIL Image or return data
+    
+    if isinstance(data, str) and data.startswith("clip:"):
+        data = get_child_dir(".ipyslides-assets", "clips", create = True) / data[5:] # strip clip by index, don't strip other characters
+        if not data.exists():
+            raise FileNotFoundError(f"File: {data!r} does not exist!")
+    
+    _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     return html('figure', img.value + cap, className='zoom-child', style = _fig_style_inline)  

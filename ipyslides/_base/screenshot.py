@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from PIL import Image, ImageGrab
 import numpy as np
 
-from ..utils import image, alert
+from ..utils import image, alert, get_child_dir
 from ..writer import CustomDisplay
 from . import intro
 
@@ -161,14 +161,10 @@ class ScreenShot:
         "Get all captured screenshots in order."
         return self.__sort_images()
     
-    def save_images(self,directory = None):
-        "Save all screenshots as PNG in given `directory`. Names are auto ordered"
+    def save_images(self):
+        "Save all screenshots as PNG in given `notebook_dir/.ipyslides-assets/images`. Names are auto ordered"
         self.btn_png.description = 'Saving PNGs...'
-        if directory is None:
-            directory = os.path.join(self.widgets.assets_dir,'images')
-        
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
+        directory = get_child_dir('.ipyslides-assets', 'images', create=True)
         
         ims = self.images
         if ims:    
@@ -214,20 +210,17 @@ class ScreenShot:
     
     def clipboard_image(self, filename, quality = 95, overwrite = False):
         """Save image from clipboard to file with a given quality. 
-        On next run, it loads from saved file under `notebook-dir/ipyslides-assets/screenshots`. 
+        On next run, it loads from saved file under `notebook-dir/.ipyslides-assets/clips`. 
         Useful to add screenshots from system into IPython. You can use overwite to overwrite existing file.
+        You can add saved clips using a "clip:" prefix in path in `Slides.image("clip:filename.png")` function and also in markdown.
         
         - Output can be directly used in `write` command.
         - Converts to PIL image using `.to_pil()`.
         - Convert to HTML representation using `.to_html()`.
         - Convert to Numpy array using `.to_numpy()` in RGB format that you can plot later.
         """
-        directory = os.path.join(self.widgets.assets_dir,'screenshots')
-        
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
-        
-        filepath = os.path.join(directory,filename)
+        directory = get_child_dir('.ipyslides-assets', 'clips', create = True)
+        filepath = directory / filename
         
         class ClipboardImage(CustomDisplay):
             def __init__(self, path, quality, overwrite):

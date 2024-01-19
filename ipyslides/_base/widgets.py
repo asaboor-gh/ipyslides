@@ -114,20 +114,9 @@ class Widgets:
     """
     def __setattr__(self, name , value):
         if name in self.__dict__:
-            if name == '_notebook_dir':
-                self.__dict__[name] = value
-            else:
-                raise AttributeError(f'{name} is a read-only attribute')
+            raise AttributeError(f'{name} is a read-only attribute')
         
         self.__dict__[name] = value
-        
-    @property
-    def assets_dir(self):
-        "Returns the assets directory, if not exist, create one"
-        _dir = os.path.join(self._notebook_dir,'.ipyslides_assets')
-        if not os.path.isdir(_dir):
-            os.makedirs(_dir)
-        return _dir
     
     def update_progressbar(self):
         self._progbar.children[0].layout.width = f"{self.sliders.progress.value}%"
@@ -135,7 +124,6 @@ class Widgets:
         
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
-        self._notebook_dir = '.' # This will be updated later
         self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self._snum   = Button(description='',layout= Layout(width='auto',height='auto')).add_class("Slide-Number").add_class('Menu-Item')

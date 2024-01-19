@@ -16,7 +16,7 @@ from . import utils
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
-from ._base.base import BaseSlides, is_jupyter_session, inside_jupyter_notebook
+from ._base.base import BaseSlides
 from ._base.intro import get_logo, key_combs
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
@@ -80,9 +80,8 @@ class Slides(BaseSlides):
         for k, v in _under_slides.items():  # Make All methods available in slides
             setattr(self, k, v)
 
-        if not os.path.isdir(self.assets_dir):
-            os.makedirs(self.assets_dir)  # It should be present to load resources
-
+        self.get_child_dir('.ipyslides-assets', create = True) # It should be present/created to load resources
+        
         self.extender = _extender
         self.plt2html = plt2html
         self.bokeh2html = bokeh2html
@@ -96,9 +95,6 @@ class Slides(BaseSlides):
         self._remove_post_run_callback()  # Remove post_run_cell callback before this and at end
         self._post_run_enabled = True  # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
         with suppress(Exception):  # Avoid error when using setuptools to install
-            self.widgets._notebook_dir = (
-                self.shell.starting_dir
-            )  # This is must after shell is defined
             self.shell.register_magic_function(
                 self._slide, magic_kind="cell", magic_name="slide"
             )
@@ -110,7 +106,7 @@ class Slides(BaseSlides):
             )
 
         # Override print function to display in order in slides
-        if is_jupyter_session():
+        if self.is_jupyter_session():
             import builtins
 
             self.builtin_print = (
@@ -159,7 +155,7 @@ class Slides(BaseSlides):
         )
         self._citations = {}  # Initialize citations dictionary
 
-        with self.set_dir(self.assets_dir):  # Set assets directory
+        with self.set_dir(self._assets_dir):  # Set assets directory
             self._set_citations_from_file(
                 "citations.json"
             )  # Load citations from file if exists
@@ -291,16 +287,12 @@ class Slides(BaseSlides):
     @version.setter
     def version(self, value):
         raise AttributeError("Cannot set version.")
-
+    
     @property
-    def notebook_dir(self):
-        "Get notebook directory."
-        return self.shell.starting_dir
-
-    @property
-    def assets_dir(self):
-        "Get assets directory."
-        return self.widgets.assets_dir  # Creates automatically
+    def _assets_dir(self):
+        "Get assets directoty."
+        return utils.get_child_dir('.ipyslides-assets', create = True)
+    
 
     @property
     def current(self):
@@ -468,7 +460,7 @@ class Slides(BaseSlides):
                 self._set_citations_from_file(file)
 
         # Here write resources to file in assets
-        with self.set_dir(self.assets_dir):
+        with self.set_dir(self._assets_dir):
             with open("citations.json", "w", encoding="utf-8") as f:
                 json.dump(self._citations, f, indent=4)
 
@@ -589,7 +581,7 @@ class Slides(BaseSlides):
 
     def _ipython_display_(self):
         "Auto display when self is on last line of a cell"
-        if not is_jupyter_session():
+        if not self.is_jupyter_session():
             raise Exception("Python/IPython REPL cannot show slides. Use IPython notebook instead.")
 
         self._remove_post_run_callback()  # Avoid duplicate display
@@ -1121,7 +1113,7 @@ class Slides(BaseSlides):
         Use `auto.title`, `auto.slide` contextmanagers, `auto.frames` decorator and `auto.from_markdown`
         function without thinking about what should be slide number.
         """
-        if inside_jupyter_notebook(self.AutoSlides): # File still should be imported in Jupyter
+        if self.inside_jupyter_notebook(self.AutoSlides): # File still should be imported in Jupyter
             raise Exception("This function should be called inside a .py file that should be imported in Jupyter Notebook!")
 
         auto = namedtuple(

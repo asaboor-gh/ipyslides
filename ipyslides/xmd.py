@@ -84,7 +84,7 @@ _special_funcs = {
     "vspace": "number in units of em",
     "alert": "text",
     "color": "text",
-    "image": "path/src",
+    "image": "path/src or clip:filename",
     "raw": "text",
     "svg": "path/src",
     "iframe": "src",

@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .ipynb_checkpoints/
-.ipyslides_assets/
+.ipyslides-assets/
 
 # C extensions
 *.so
