@@ -171,8 +171,12 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, breakpoint = '650px', scroll = True, centered = True, aspect_ratio = 9/16, cwidth=100, _root = False):
+def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, breakpoint = '650px', scroll = True, centered = True, aspect = 16/9, cwidth=100, _root = False):
     uclass = get_unique_css_class()
+    margin = 'auto' if centered else 'unset'
+    if (cwidth < 100) and (centered is False):
+        margin = '0 auto' # if not 100%, horizontally still in center, vertically top
+
     _root_dict = {
         '--heading-color':f'{colors["heading_color"]}',
         '--primary-fg':f'{colors["primary_fg"]}',
@@ -300,7 +304,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         '.SlideArea': {
             'position': 'absolute !important',
             'width':'254mm !important',
-	        'height': f'{int(254*aspect_ratio)}mm !important',
+	        'height': f'{int(254/aspect)}mm !important',
             'transform-origin': 'center !important' if centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
 	        'box-sizing': 'border-box !important',
@@ -308,11 +312,11 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'flex-direction':'column !important',
             'align-items': 'center !important' if centered else 'baseline !important', 
             'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
-            'padding' : '1em !important',
+            'padding' : '16px !important', # don't make 1em to avoid zoom with fonts
             'overflow': 'auto !important' if scroll else 'hidden !important',
             '> .jp-OutputArea': {
                 'position': 'relative !important', # absolute content should not go outside
-                'margin':'auto !important' if centered else 'unset !important',
+                'margin': f'{margin} !important',
                 'padding': '0 !important',
                 'padding-bottom': 'var(--paddingBottom, 0px) !important', # Set by JS dynamically
                 'width': f'{cwidth}% !important',

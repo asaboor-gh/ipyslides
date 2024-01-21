@@ -1176,10 +1176,12 @@ class Slides:
         cls,
         citation_mode="global",
         layout = dict(center=True, scroll=True, width=100, aspect=16/9),
-        short_title='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
-        date="today",
+        footer = dict(
+            text='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
+            numbering = True, 
+            date="today",
+        ),
         logo_src=get_logo(),
-        font_scale=1,
         text_font="Roboto",
         code_font="var(--jp-code-font-family)",
         code_style="default",
@@ -1199,13 +1201,15 @@ class Slides:
         
         if not isinstance(animation, dict):
             raise TypeError(f"animation expects a dictionary with keys main:str and frame:str. got {animation!r}")
+        
+        if not isinstance(footer, dict):
+            raise TypeError(f"footer expects a dictionary with keys text, numbering and date. got {footer!r}")
 
         _private_instance.settings.set(
             citation_mode=dict(mode=citation_mode),
             layout=layout, # Defaults are kept by set_layout
-            footer=dict(text=short_title, date=date),
+            footer= footer,
             logo=dict(src=logo_src, width=60),
-            font_scale=dict(font_scale=font_scale),
             font_family=dict(text_font=text_font, code_font=code_font),
             code_style=dict(style=code_style, lineno=code_lineno),
             nav_gui = dict(visible= nav_gui),

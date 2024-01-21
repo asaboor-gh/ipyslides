@@ -32,7 +32,7 @@ class LayoutSettings:
             "date": "today",
         }
         
-        self._layout = {'cwidth':100, 'scroll': True, 'centered': True, 'aspect_ratio': 9/16}
+        self._layout = {'cwidth':100, 'scroll': True, 'centered': True, 'aspect': 16/9}
         self._code_lineno = True
 
         self.width_slider = self.widgets.sliders.width
@@ -250,12 +250,21 @@ class LayoutSettings:
 
         self._update_theme()  # Changes Finally
 
-    def set_font_scale(self, font_scale=1):
-        "Set font scale to increase or decrease text size. 1 is default."
-        self.scale_slider.value = font_scale
+    def set_font_scale(self, value, *, max=3):
+        """Set font scale to increase or decrease text size. 1 is default. 
+        You can update max value of font slider too, if you need more than 3."""
+        if value > max:
+            raise ValueError(f"Increase max value as well if you want to set scale to {value}")
+        
+        self.scale_slider.max = max
+        self.scale_slider.value = value
 
     def set_logo(self, src, width=60, top=0, right=0):
-        "`src` should be PNG/JPEG file name or SVG string. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
+        "`src` should be PNG/JPEG file name or SVG string or None. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
+        if not src: # give as None, '' etc
+            self.widgets.htmls.logo.value = ''
+            return None
+        
         kwargs = {k:v for k,v in locals().items() if k not in ('self','src')}
         for k,v in kwargs.items():
             if isinstance(v, (int,float)):
@@ -318,14 +327,13 @@ class LayoutSettings:
         return text
 
     def set_layout(self, center=True, scroll=True, width=100, aspect = 16/9):
-        "Central aligment of slide by default. If False, left-top aligned."
+        "Aligment of slide is center-center by default. If center=False, top-center is applied. It becomes top-left if width=100."
         if (not isinstance(width, int)) or (width not in range(101)):
             raise ValueError("width should be int in range [0,100]")
         if not isinstance(aspect, (int,float)):
             raise TypeError("aspect should be int/float of ratio width/height.")
-        self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center, 'aspect_ratio': 1/aspect}
-        self._update_theme(change=None)  # Trigger CSS in it to make width change
-        self.widgets.iw.msg_tojs = 'RESCALE'
+        self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center, 'aspect': aspect}
+        self._update_size(change = None) # will reset theme and send RESCALE message
 
     def set_nav_gui(self, visible = True):
         """Show/Hide navigation GUI, keyboard or touch still work. Hover on left-bottom corner to acess settings."""
@@ -347,7 +355,7 @@ class LayoutSettings:
             ).value
 
         self.widgets.mainbox.layout.height = "{}vw".format(
-            int(self.width_slider.value * self._layout["aspect_ratio"])
+            int(self.width_slider.value / self._layout["aspect"])
         )
         self.widgets.mainbox.layout.width = "{}vw".format(self.width_slider.value)
         self._update_theme(

@@ -218,7 +218,7 @@ section:first-of-type .SlideBox > .Footer > .Progress {width: 0 !important;}  /*
 section .SlideArea {
     /* Will be added by export */
 	margin: auto !important;
-	padding: 1em !important;
+	padding: 16px !important;
     box-sizing: border-box !important;
 }
 section .SlideBox > .Footer { 
@@ -274,7 +274,7 @@ a.goto-button:active {
         color-adjust: exact !important;
     }
     @page {
-        size: 254mm __HEIGHT__; /* 10 inch x decided by aspect_ratio by user*/
+        size: 254mm __HEIGHT__; /* 10 inch x decided by aspect by user*/
         margin-top: 0 !important;
         margin-right: 0 !important;
         margin-left: 0 !important;
