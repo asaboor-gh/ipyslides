@@ -3,9 +3,12 @@ Author Notes: Classes in this module should only be instantiated in Slides class
 and then provided to other classes via composition, not inheritance.
 """
 
-from contextlib import suppress
 import os
 import math
+
+from inspect import signature
+from contextlib import suppress
+
 from IPython import get_ipython
 from IPython.display import Image
 from IPython.utils.capture import capture_output
@@ -36,7 +39,7 @@ class LayoutSettings:
         self._code_lineno = True
 
         self.width_slider = self.widgets.sliders.width
-        self.scale_slider = self.widgets.sliders.scale
+        self.fontsize_slider = self.widgets.sliders.fontsize
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
 
@@ -53,7 +56,7 @@ class LayoutSettings:
         self.widgets.buttons._inview.on_click(self.__block_post_run)
         self.widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self.theme_dd.observe(self._update_theme, names=["value"])
-        self.scale_slider.observe(self._update_theme, names=["value"])
+        self.fontsize_slider.observe(self._update_theme, names=["value"])
         self.width_slider.observe(self._update_size, names=["value"])
         self.btn_window.observe(self._toggle_viewport, names=["value"])
         self.btn_fscreen.observe(self._toggle_fullscreen, names=["value"])
@@ -67,7 +70,7 @@ class LayoutSettings:
         self.widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self.widgets.checks.proxy.observe(self._toggle_proxy_buttons, names=["value"])
         self._update_theme()  # Trigger Theme and Javascript in it
-        self.set_code_style()  # Trigger CSS in it, must
+        self.set_code_theme()  # Trigger CSS in it, must
         self.set_layout(center=True)  # Trigger this as well
         self._update_size(change=None)  # Trigger this as well
 
@@ -120,7 +123,7 @@ class LayoutSettings:
         and values should be dictionary or tuple of arguments for that function. See examples below.
         ```python
         Slides.settings.set(
-            glassmorphic = dict(image_src='image_src'),
+            bg_image = dict(src='image_src'),
             css = ({},), # note trailing comma to make it tuple
             layout = dict(scroll=True),
         )
@@ -131,7 +134,17 @@ class LayoutSettings:
                 raise TypeError(f"values in kwargs should be dict or tuple, got {v!r}")
             func = getattr(self, f"set_{k}", False)
             if func is False:
-                raise AttributeError(f"No such function {k!r} in settings")
+                funcs = ', '.join(k for k in self.__dir__() if k.startswith('set_'))
+                raise AttributeError(f"No such function '{k}' -> 'set_{k}' in settings. Available functions are: \n{funcs}")
+            
+            # Test parameters and give hints
+            sig = signature(func)
+            param_keys = tuple(sig.parameters.keys())
+            if isinstance(v,dict):
+                for key in v.keys():
+                    if key not in param_keys:
+                        raise ValueError(f"function '{k}' -> 'set_{k}' expects these parameters: {str(sig)}")
+                    
             func(**v) if isinstance(v, dict) else func(
                 *v
             )  # Call function with arguments
@@ -199,31 +212,40 @@ class LayoutSettings:
         else:
             raise RuntimeError("No slides yet to set CSS.")
 
-    def set_citation_mode(self, mode="global"):
-        "Set mode for citations form ['global', 'inline', 'footnote']."
+    def set_cite_mode(self, mode="global", ncol=1):
+        """Set mode for citations form ['global', 'inline', 'footnote']. Use before creating slides. ncol will be used in citations.
+        ncol will be used while formatting citations and footnotes."""
         if mode not in ["global", "inline", "footnote"]:
             raise ValueError(
                 f'citation mode must be one of "global", "inline", "footnote" but got {mode}'
             )
-        self._slides._citation_mode = mode
+        cite_attrs = dict(mode=mode,ncol=ncol)
+        if self._slides.cite_mode and (self._slides._cite_attrs != cite_attrs): # avoids print on first time
+            self._slides._set_unsynced()
+            self._slides._update_dynamic_content() # shift references
 
-    def set_glassmorphic(self, image_src, opacity=0.85, blur_radius=50):
-        "Adds glassmorphic effect to the background. `image_src` can be a url or a local image path. `opacity` and `blur_radius` are optional."
-        if not image_src:
-            self.widgets.htmls.glass.value = ""  # Hide glassmorphic
-            return None
+        self._slides._cite_attrs = cite_attrs
 
-        if not os.path.isfile(image_src):
-            raise FileNotFoundError(f"Image not found at {image_src!r}")
 
-        self.widgets.htmls.glass.value = f"""<style>
-        {_layout_css.glass_css(opacity=opacity, blur_radius=blur_radius)}
-        </style>
-        {self._slides.image(image_src,width='100%')}
-        <div class="Front"></div>
-        """
+    def set_bg_image(self, src, opacity=0.25, blur_radius=None):
+        "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."
+        if not src:
+            self.widgets.htmls.glass.value = ""  # clear
+            self._bg_image = ""
+            return
 
-    def set_code_style(
+        if not os.path.isfile(src):
+            raise FileNotFoundError(f"Image not found at {src!r}")
+
+        self._bg_image = f"""
+            <style>
+                {_layout_css.glass_css(opacity= 1 - opacity, blur_radius=blur_radius)}
+            </style>
+            {self._slides.image(src,width='100%')}
+            <div class="Front"></div>""" # opacity of layer would be opposite to supplied
+        self.widgets.htmls.glass.value = self._bg_image
+
+    def set_code_theme(
         self,
         style="default",
         color=None,
@@ -241,23 +263,29 @@ class LayoutSettings:
             hover_color=hover_color,
         )
 
-    def set_font_family(self, text_font=None, code_font=None):
+    def set_font_family(self, text=None, code=None):
         "Set main fonts for text and code."
-        if text_font:
-            self._font_family["text"] = text_font
-        if code_font:
-            self._font_family["code"] = code_font
+        if text:
+            self._font_family["text"] = text
+        if code:
+            self._font_family["code"] = code
 
         self._update_theme()  # Changes Finally
 
-    def set_font_scale(self, value, *, max=3):
+    def set_font_size(self, value, update_range=False):
         """Set font scale to increase or decrease text size. 1 is default. 
-        You can update max value of font slider too, if you need more than 3."""
-        if value > max:
-            raise ValueError(f"Increase max value as well if you want to set scale to {value}")
+        You can update min/max if value is not in [8,64] interval by setting update_range = True"""
+        if (not isinstance(value, int)) or (value < 1):
+            raise TypeError("font size should be positive integer")
         
-        self.scale_slider.max = max
-        self.scale_slider.value = value
+        if (value < self.fontsize_slider.min) or (value > self.fontsize_slider.max):
+            if not update_range:
+                raise ValueError(f"Given {value} is out of range. Use update_range = True to extend range as well")
+            else:
+                self.fontsize_slider.max = max(value, self.fontsize_slider.max)
+                self.fontsize_slider.min = min(value, self.fontsize_slider.min)
+        
+        self.fontsize_slider.value = value
 
     def set_logo(self, src, width=60, top=0, right=0):
         "`src` should be PNG/JPEG file name or SVG string or None. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
@@ -366,7 +394,7 @@ class LayoutSettings:
     @property
     def text_size(self):
         "Text size in px."
-        return f"{int(self.scale_slider.value*20)}px"
+        return f"{self.fontsize_slider.value}px"
 
     @property
     def colors(self):
@@ -378,16 +406,16 @@ class LayoutSettings:
     @property
     def light(self):
         "Lightness of theme. 20-255. NaN if theme is inherit or custom."
-        self.set_code_style("default", lineno=self._code_lineno) # in any case
+        self.set_code_theme("default", lineno=self._code_lineno) # in any case
         if self.theme_dd.value in ["Inherit", "Custom"]:
             return (
                 math.nan
             )  # Use Fallback colors, can't have idea which themes colors would be there
         elif "Dark" in self.theme_dd.value:
-            self.set_code_style("monokai", color="#f8f8f2", lineno=self._code_lineno)
+            self.set_code_theme("monokai", color="#f8f8f2", lineno=self._code_lineno)
             return 120
         elif self.theme_dd.value == "Fancy":
-            self.set_code_style("borland", lineno=self._code_lineno)
+            self.set_code_theme("borland", lineno=self._code_lineno)
             return 230
         else:
             return 250
@@ -400,7 +428,6 @@ class LayoutSettings:
             text_size=self.text_size,
             text_font=self._font_family["text"],
             code_font=self._font_family["code"],
-            breakpoint=self.breakpoint,
             **self._layout
         )
 

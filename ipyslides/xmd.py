@@ -149,23 +149,7 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
     for match in all_matches:
         key = match.strip()
         text_chunk = text_chunk.replace(f"cite`{match}`", slide_instance.cite(key), 1)
-
-    # citations`This is citations title` after setting citations and cite
-    all_matches = re.findall(
-        r"citations\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
-    )
-    for match in all_matches:
-        block = fmt_code(
-            f"""
-            @slide_instance.citations
-            def updatable_citations(objs):
-                slide_instance.format_html([{match!r}, *objs]).display()
-            """,
-            instance_name="slide_instance",
-        )
-
-        text_chunk = text_chunk.replace(f"citations`{match}`", block, 1)
-
+    
     # section`This is section title`
     all_matches = re.findall(
         r"section\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE

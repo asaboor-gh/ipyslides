@@ -114,7 +114,7 @@ with slides.slide(2):
     - If a display is not complete, e.g. some widget missing on a slide, you can use `(slides.current, slides[index], slides[key]).update_display()` to update display.
     - You can set overall animation by `slides.settings.set_animation` or per slide by `s_i.set_animation`
     - You can set CSS for each slide by `s_i.set_css` or `slides.running.set_css` at current slide.
-    - Check out alert`Slides.glassmorphic` or alert`Slides.settings.set_glassmorphic` to add background effects.
+    - Check out  alert`[Slides.settings, slide].set_bg_image` to add background effects overall and individual slides.
     - Use alert`Slides.clipboard_image ` to add cliboard image to slide.
     - Use `Slides.bullets` to add powerful bullet list from python objects.
 

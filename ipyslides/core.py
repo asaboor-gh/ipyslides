@@ -138,7 +138,7 @@ class Slides(BaseSlides):
 
             builtins.print = print
 
-        self._citation_mode = "global"  # One of 'global', 'inline', 'footnote'
+        self._cite_attrs = {}  # Will be set during other class's __new__ method. One of 'global', 'inline', 'footnote'
 
         self._slides_dict = (
             {}
@@ -293,6 +293,9 @@ class Slides(BaseSlides):
         "Get assets directoty."
         return utils.get_child_dir('.ipyslides-assets', create = True)
     
+    @property
+    def cite_mode(self):
+        return self._cite_attrs.get('mode','')
 
     @property
     def current(self):
@@ -325,29 +328,6 @@ class Slides(BaseSlides):
             raise RuntimeError(
                 error_msg or "This operation is only allowed under slide constructor."
             )
-
-    def citations(self, func):
-        """Decorator to get all citations as a tuple that can be passed to given `func` function. and update dynamically.
-        `func` must accept a single argument which will be tuple of citations.
-        """
-
-        def _citations_handler():
-            if self._citation_mode == "global":
-                _all_citations = {}
-                for slide in self[:]:
-                    _all_citations.update(slide._citations)
-
-                return func(
-                    tuple(sorted(_all_citations.values(), key=lambda x: int(x._id)))
-                )
-
-            raise RuntimeError(
-                "Citations are not writable in 'inline' or 'footnote' mode. They appear on slide automatically."
-            )
-
-        return self._dynamic_private(
-            _citations_handler, tag="_cited", hide_refresher=True
-        )
 
     def _add_clean_title(self):
         with suppress(
@@ -388,45 +368,41 @@ class Slides(BaseSlides):
     def cite(self, key):
         """Add citation in presentation, key should be a unique string.
         Citations corresponding to keys used can be created by ` Slides.set_citations ` method.
-        Citation can be written by alert`Slides.citations` decorator.
+        Citation are added automatically in a suitable place according to cite_mode.
 
         ::: note
             You should set resources in start if using python script or voila, otherwise they will not be updated.
         """
         self.verify_running("Citations can be added only inside a slide constructor!")
-        _cited = _Citation(slide=self.running, key=key)
+        cited = _Citation(slide=self.running, key=key)
 
-        if self._citation_mode == "inline":
-            return _cited.inline_value  # Just write here
+        if self.cite_mode == "inline":
+            return cited.inline_value  # Just write here
 
         # Set _id for citation
-        if self._citation_mode == "footnote":
-            _cited._id = str(
+        if self.cite_mode == "footnote":
+            cited._id = str(
                 list(self.running._citations.keys()).index(key) + 1
             )  # Get index of key from unsorted ones
         else:
             prev_keys = list(self._citations.keys())
 
             if key in prev_keys:
-                _cited._id = str(prev_keys.index(key) + 1)
+                cited._id = str(prev_keys.index(key) + 1)
             else:
-                _cited._id = str(len(prev_keys))
-
-        if self._citation_mode == "global":
-            for s in self[:]:
-                if (
-                    getattr(s, "_cited", False) and s != self.running
-                ):  # self will be updated at end
-                    s.update_display(go_there=False)
+                cited._id = str(len(prev_keys))
 
         # Return string otherwise will be on different place
         return f"""<a href="#{key}" class="citelink">
-        <sup id ="{key}-back" style="color:var(--accent-color);">{_cited._id}</sup>
-        </a>""" + (
-            _cited.value.replace("citation", "citation hidden", 1)
-            if self._citation_mode == "global"
-            else ""
-        )  # will be hidden by default
+        <sup id ="{key}-back" style="color:var(--accent-color);">{cited._id}</sup>
+        {cited.inline_value.replace('text-box','',1) if self.cite_mode == 'global' else ''}</a>"""
+    
+    def _set_unsynced(self):
+        "Will go in sync after rerun."
+        for slide in self[:]:
+            if slide._citations or getattr(slide, '_cite', False):
+                slide._widget.add_class('Out-Sync')
+
 
     def set_citations(self, citations=None, file=None):
         """Set citations from dictionary or file.
@@ -443,9 +419,9 @@ class Slides(BaseSlides):
                     for key, value in citations.items()
                 }
 
-                if self._citation_mode == "footnote":
+                if self.cite_mode == "footnote":
                     for slide in self[:]:
-                        if slide.citations:
+                        if slide._citations:
                             slide.update_display()
             else:
                 raise TypeError(f"citations should be a dict, got {type(citations)}")
@@ -463,11 +439,10 @@ class Slides(BaseSlides):
         with self.set_dir(self._assets_dir):
             with open("citations.json", "w", encoding="utf-8") as f:
                 json.dump(self._citations, f, indent=4)
+        
+        self._set_unsynced()
+        self._update_dynamic_content() # shift refrences
 
-        # Update citations in all slides
-        for slide in self[:]:
-            if getattr(slide, "_cited", False):
-                slide.update_display()
 
     def _set_citations_from_file(self, filename):
         "Load resources from file if present."
@@ -885,7 +860,7 @@ class Slides(BaseSlides):
                 if any(
                     [
                         getattr(slide, attr, False)
-                        for attr in ("_has_widgets", "_toced", "_cited")
+                        for attr in ("_has_widgets", "_toced","_refs") # _refs will be removed from inner slides for global
                     ]
                 ):
                     slide.update_display(go_there=False)
@@ -900,6 +875,9 @@ class Slides(BaseSlides):
                         first_toc = False
                     else:
                         slide._slide_tocbox.remove_class("FirstTOC")
+            else: # at end of for loop last slide
+                if self.cite_mode == 'global': # Add references at end
+                    slide.update_display(go_there=False)
         
         self.notify('Dynamic content updated everywhere!')
                 
@@ -1148,7 +1126,7 @@ class Slides:
         """
     Interactive Slides in IPython Notebook. Only one instance can exist. 
     
-    All arguments are passed to corresponding methods in submodules, that you can tweak later as well.
+    All arguments and kwargs are passed to corresponding methods in submodules, that you can tweak later as well.
     
     To suppress unwanted print from other libraries/functions, use:
     ```python
@@ -1174,49 +1152,38 @@ class Slides:
 
     def __new__(
         cls,
-        citation_mode="global",
+        extensions=[],
+        show_always=True,
+        cite_mode = dict(mode="footnote",ncol=2),
         layout = dict(center=True, scroll=True, width=100, aspect=16/9),
         footer = dict(
             text='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
             numbering = True, 
             date="today",
         ),
-        logo_src=get_logo(),
-        text_font="Roboto",
-        code_font="var(--jp-code-font-family)",
-        code_style="default",
-        code_lineno=True,
+        logo = dict(src=get_logo(), width=60),
+        font_family = dict(text = "Roboto", code = "var(--jp-code-font-family)"),
+        code_theme = dict(style="default",lineno=True),
         animation = dict(main="slide_h", frame = "appear"),
-        show_always=True,
-        nav_gui = True,
-        extensions=[],
+        **kwargs
     ):
         "Returns Same instance each time after applying given settings. Encapsulation."
-        _private_instance.__doc__ = cls.__doc__  # copy docstring
-        _private_instance.extender.extend(extensions)
-        _private_instance.settings.show_always(show_always)
-
-        if not isinstance(layout, dict):
-            raise TypeError(f"layout expects a dictionary with keys center:bool, scroll:bool, width:int, aspect:float. got {layout!r}")
-        
-        if not isinstance(animation, dict):
-            raise TypeError(f"animation expects a dictionary with keys main:str and frame:str. got {animation!r}")
-        
-        if not isinstance(footer, dict):
-            raise TypeError(f"footer expects a dictionary with keys text, numbering and date. got {footer!r}")
-
-        _private_instance.settings.set(
-            citation_mode=dict(mode=citation_mode),
-            layout=layout, # Defaults are kept by set_layout
-            footer= footer,
-            logo=dict(src=logo_src, width=60),
-            font_family=dict(text_font=text_font, code_font=code_font),
-            code_style=dict(style=code_style, lineno=code_lineno),
-            nav_gui = dict(visible= nav_gui),
+        instance = cls.instance()
+        instance.__doc__ = cls.__doc__  # copy docstring
+        instance.extender.extend(extensions)
+        instance.settings.show_always(show_always)
+        instance.settings.set(
+            cite_mode = cite_mode,
+            layout = layout, # Defaults are kept by set_layout
+            footer = footer,
+            logo = logo,
+            font_family = font_family,
+            code_theme = code_theme,
+            **kwargs
         )
 
         with suppress(BaseException):  # Avoid error if no slides exist
-            _private_instance.settings.set_animation(**animation)
-        return _private_instance
+            instance.settings.set_animation(**animation)
+        return instance
 
     # No need to define __init__, __new__ is enough to show signature and docs

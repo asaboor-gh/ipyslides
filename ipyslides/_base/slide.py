@@ -273,6 +273,7 @@ class Slide:
         self._contents = captured_output.outputs
             
         self._css = html('style','')
+        self._bg_image = ''
         self._number = number if isinstance(number, str) else str(number) 
         self._label = None # This should be set in the Slides
         self._index = None # This should be set in the Slides
@@ -333,6 +334,8 @@ class Slide:
         "Called when a slide is loaded into view. Use it to register notifications etc."
         self._widget.layout.height = '100%' # Trigger a height change to reset scroll position
         start = time.time()
+        self._app.widgets.htmls.glass.value = self._bg_image or getattr(self._app.settings,'_bg_image','') # slide first
+
         try: # Try is to handle errors in on_load, not for attribute errors, and also finally to reset height
             if hasattr(self,'_on_load') and callable(self._on_load):
                 self._on_load() # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
@@ -376,6 +379,7 @@ class Slide:
                 self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
 
             self._contents = _expand_objs(captured.outputs, self) # Expand columns  
+            self._widget.remove_class('Out-Sync') #
         
         if self._app._warnings:
             print(*self._app._warnings, sep='\n\n')
@@ -393,14 +397,37 @@ class Slide:
             display(*self.contents)
             for dp in self._dproxies.values(): 
                 dp.update_display() # Update display to show new output as well
-            
-            if self._citations and (self._app._citation_mode == 'footnote'):
-                html('hr/').display()
-                self._app.write(self.citations)
+
+            self._handle_refs()
         
         # Update corresponding CSS but avoid animation here for faster and clean update
         self._app.update_tmp_output(self.css)
         self._widget.remove_class('SlideArea').add_class('SlideArea') # Hard refresh
+
+    def _handle_refs(self):
+        if hasattr(self, '_refs'): # from some previous settings and change
+            delattr(self, '_refs') # added later  only if need
+        
+        ncol = self._app._cite_attrs.get('ncol',1) # columns set by user
+        style=f"column-count:{ncol};column-gap:1em;border-top:1px solid var(--secondary-fg);margin-block:0.5em;"
+        
+        if self._app.cite_mode == 'footnote':
+            if self._citations:
+                self._refs = html('div', # need to store attribute for export
+                    sorted(self._citations.values(), key=lambda x: int(x._id)), 
+                    className='Citations', style = style)
+                self._refs.display()
+        elif self._app.cite_mode == 'global':
+            all_citations = {}
+            for slide in self._app[:]:
+                all_citations.update(slide._citations)
+
+            if all_citations and (self.index == self._app._max_index):
+                self._refs = html('div',
+                    sorted(all_citations.values(), key=lambda x: int(x._id)), 
+                    className='Citations',style=style)
+                self._refs.display()
+
     
     def clear_display(self, wait = False):
         "Clear display of this slide."
@@ -443,10 +470,6 @@ class Slide:
     @property
     def number(self):
         return int(self._number) # Return as int
-    
-    @property
-    def citations(self):
-        return tuple(sorted(self._citations.values(), key=lambda x: int(x._id)))
     
     @property
     def css(self):
@@ -510,6 +533,14 @@ class Slide:
                 self._app._slidelabel = self.label # Go there to see effects
             else:
                 self._app.update_tmp_output(self.animation, self._css)
+    
+    def set_bg_image(self, src, opacity=0.25, blur_radius=None):
+        "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."
+        overall = getattr(self._app.settings, '_bg_image','')
+        self._app.settings.set_bg_image(src, opacity=opacity, blur_radius=blur_radius)
+        self._bg_image = self._app.widgets.htmls.glass.value # Update for this slide
+        self._app.settings._bg_image = overall # Reset back 
+        self._app.navigate_to(self.index) # Go there to see effects while changing on_load
     
     def _instance_animation(self,name):
         "Create unique animation for this slide instance on fly"

@@ -171,7 +171,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, breakpoint = '650px', scroll = True, centered = True, aspect = 16/9, cwidth=100, _root = False):
+def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, cwidth=100, _root = False):
     uclass = get_unique_css_class()
     margin = 'auto' if centered else 'unset'
     if (cwidth < 100) and (centered is False):
@@ -344,7 +344,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'white-space':'pre !important',
             },
             '.text-box': { # general text box for writing inline refrences etc. 
-                'font-size':'0.7em !important', 
+                'font-size':'0.85em !important', 
                 'line-height':'0.99em !important',
                 'position':'relative', 
                 'left':'initial',
@@ -421,7 +421,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'margin':'4px 0px !important', # Opposite to padding to balance it 
             'max-height':'400px', # Try avoiding important here 
             'height':'auto !important',
-            # colors are set via settigs.set_code_style 
+            # colors are set via settigs.set_code_theme
             'pre': {  # works for both case, do not use > 
                 'display':'grid !important',
                 'padding':'8px 4px 8px 4px !important', 
@@ -478,15 +478,24 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         '.custom-print': {
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
         },
-        'a.citelink > sup': {'font-weight':'bold',},
-        '.citation.hidden': {  
-            'display':'none !important',
-        },
-        '*:hover + .citation.hidden': { # Citations on hover of object before it
-            'display':'flex !important',
-            'border':'1px inset var(--hover-bg)',
-            'background':'var(--secondary-bg)',
-            'padding':'0.2em',
+        'a.citelink' : {
+            '> sup': {'font-weight':'bold',},
+            '> span': {
+                'position':'absolute',
+                'visibility':'hidden',
+                'top':'initial !important',
+                'right':'0 !important',
+                'z-index':'8',
+                'padding':'2px 8px',
+                'border-radius':'8px',
+                'background':'var(--accent-color)',
+                'border':'2px solid var(--accent-color)',
+            },
+            '^:hover > span' : {
+                'visibility':'visible',
+                'background':'var(--secondary-bg)',
+                'transition':'background 800ms ease-in-out',
+            },
         },
         '.align-center:not(.columns), .align-center > *:not(.columns)': {
             'display':'table !important',

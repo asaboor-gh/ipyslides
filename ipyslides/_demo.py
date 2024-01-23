@@ -14,7 +14,7 @@ def demo_slides(slides):
     auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
 
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
-    slides._citation_mode = 'global' # This could be changed by other functions
+    slides.settings.set_cite_mode('global') # This could be changed by other functions
     slides.set_citations({
             'pf': 'This is refernce to FigureWidget using `slides.cite` command',
             'This': 'I was cited for no reason',
@@ -342,8 +342,8 @@ def demo_slides(slides):
 
 
     with auto.slide() as bib_slide:
-        slides.write('citations`## Reference via Markdown\n----`') 
         bib_slide.get_source().display()
+        slides.write('### Reference {.align-left}') 
 
 
     slides.navigate_to(0) # Go to title slide

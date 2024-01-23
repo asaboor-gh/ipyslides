@@ -96,7 +96,7 @@ class _Sliders:
     """
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 70,continuous_update=False).add_class('Width-Slider') 
-    scale    = ipw.FloatSlider(**describe('Font Scale'),min=0.5,max=3,step=0.0625, value = 1.0,readout_format='5.3f',continuous_update=False)
+    fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
 
 @dataclass(frozen=True)
 class _Dropdowns:
@@ -169,7 +169,7 @@ class Widgets:
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
             VBox([
-                self.sliders.scale,
+                self.sliders.fontsize,
                 self.ddowns.theme,
                 HTML('<hr/>'),
                 self.sliders.width,

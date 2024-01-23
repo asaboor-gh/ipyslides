@@ -132,6 +132,20 @@ def layout_css(breakpoint, accent_color):
                     "overflow": "hidden !important",  # To hide at edges */
                 },
                 ".SlideArea": {
+                    "^.Out-Sync" : {
+                        "visibility": "visible !important",
+                        "z-index": "12 !important",
+                        "height": "33% !important", # see behind
+                        "border": "2px solid red !important",
+                        "background": "#fdd",
+                        "^:nth-child(1)" : {"translate": "-16px -16px !important"},
+                        "^:nth-child(2)" : {"translate": "-8px -8px !important"},
+                        "^::before" : {
+                            "content": "'content out of sync, rerun slide to update'",
+                            "font-size": "200%",
+                            "color":"red",
+                        }
+                    },
                     ".report-only": {"display": "none !important"},
                     ".jp-OutputArea": {
                         "width": "100% !important",

@@ -56,6 +56,9 @@ class _HhtmlExporter:
             for out in item.contents:
                 _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
             
+            if hasattr(item,'_refs'):
+                _html += item._refs.value # in case of global and footnote citations
+            
             _html = f'<div class="jp-OutputArea">{_html}</div>'
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)
@@ -72,9 +75,7 @@ class _HhtmlExporter:
                     </div>
                 </section>''' if as_slides else f'<section {sec_id}>{_html}</section>')
         
-        theme_kws = {**self.main.settings.theme_kws,'breakpoint':'650px'}
-    
-        theme_css = styles.style_css(**theme_kws, _root=True)
+        theme_css = styles.style_css(**self.main.settings.theme_kws, _root=True)
         if self.main.widgets.checks.reflow.value:
             theme_css = theme_css + f"\n.SlideArea *, ContentWrapper * {{max-height:max-content !important;}}\n" # handle both slides and report
         
@@ -86,7 +87,7 @@ class _HhtmlExporter:
         return doc_html(_code_css,_style_css, content, script).replace(
             '__FOOTER__', self._get_clickables()).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
-            '__HEIGHT__', f'{int(254/theme_kws["aspect"])}mm') # Slides height is determined by aspect ratio.
+            '__HEIGHT__', f'{int(254/self.main.settings.theme_kws["aspect"])}mm') # Slides height is determined by aspect ratio.
     
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')
@@ -145,6 +146,9 @@ class _HhtmlExporter:
         - Use 'slides-only' class to generate content that only appear in slides.
         - Use `Save as PDF` option in browser to make links work in output PDF.
         """
+        if self.main.cite_mode != 'global':
+            raise ValueError("report can only be created if cite_mode is 'global'")
+        
         _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
         content = self._htmlize(as_slides = False, page_size = page_size)
         content = content.replace('.SlideArea','').replace('SlidesWrapper','ContentWrapper')
@@ -178,6 +182,10 @@ class _HhtmlExporter:
             self.main.widgets.ddowns.export.value = 'Select' # Reset so next click on same button will work
         
         if self.main.widgets.ddowns.export.value == 'Report': 
+            if self.main.cite_mode != 'global':
+                self.main.widgets.ddowns.export.value = 'Select' # Reset
+                return self.main.notify("report can only be created if cite_mode is 'global'", 10)
+            
             path = os.path.join(_dir, 'report.html')
             self.report(path, overwrite = True)
             further_action(path)

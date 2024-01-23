@@ -112,8 +112,7 @@ class BaseSlides:
         **Following syntax works only under currently building slide:**
         
         - alert`notes\`This is slide notes\``  to add notes to current slide
-        - alert`cite\`key\`` to add citation to current slide
-        - alert`citations\`citations title\``  to add citations at end if `citation_mode = 'global'`.
+        - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place.
         - alert`section\`key\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
