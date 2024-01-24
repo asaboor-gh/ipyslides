@@ -408,24 +408,21 @@ class Slide:
         if hasattr(self, '_refs'): # from some previous settings and change
             delattr(self, '_refs') # added later  only if need
         
-        ncol = self._app._cite_attrs.get('ncol',1) # columns set by user
-        style=f"column-count:{ncol};column-gap:1em;border-top:1px solid var(--secondary-fg);margin-block:0.5em;"
-        
         if self._app.cite_mode == 'footnote':
             if self._citations:
                 self._refs = html('div', # need to store attribute for export
                     sorted(self._citations.values(), key=lambda x: int(x._id)), 
-                    className='Citations', style = style)
+                    className='Citations', style = '')
                 self._refs.display()
         elif self._app.cite_mode == 'global':
             all_citations = {}
-            for slide in self._app[:]:
+            for slide in self._app.cited_slides:
                 all_citations.update(slide._citations)
 
             if all_citations and (self.index == self._app._max_index):
                 self._refs = html('div',
                     sorted(all_citations.values(), key=lambda x: int(x._id)), 
-                    className='Citations',style=style)
+                    className='Citations',style='')
                 self._refs.display()
 
     

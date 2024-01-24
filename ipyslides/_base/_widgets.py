@@ -41,6 +41,10 @@ class InteractionWidget(anywidget.AnyWidget):
             self._buttons.next.click()
         elif msg == 'PREV':
             self._buttons.prev.click()
+        elif msg == 'HOME':
+            self._buttons.home.click()
+        elif msg == 'END':
+            self._buttons.end.click()
         elif msg == 'TLSR':
             self._toggles.laser.value = not self._toggles.laser.value
         elif msg == 'ZOOM':

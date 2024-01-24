@@ -8,7 +8,7 @@ _zoom_ables = ".jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom
 _icons_size = "1em"  # For all except Chevrons
 
 
-def layout_css(breakpoint, accent_color):
+def layout_css(accent_color):#TODO: should be updated in theme as well
     uclass = get_unique_css_class()
     return _build_css(
         (uclass,),
@@ -49,7 +49,7 @@ def layout_css(breakpoint, accent_color):
                     },
                 },
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn": {
-                    "opacity": "0.02",
+                    "display": "none !important",
                 },  # still should be clickable
                 "^.InView-Title .Arrows.Next-Btn, ^.InView-Other .Arrows.Next-Btn": {
                     "animation-name": "heart-beat",
@@ -135,14 +135,15 @@ def layout_css(breakpoint, accent_color):
                     "^.Out-Sync" : {
                         "visibility": "visible !important",
                         "z-index": "12 !important",
-                        "height": "33% !important", # see behind
+                        "height": "50% !important", # see behind
+                        "width": "50% !important", # see behind
                         "border": "2px solid red !important",
                         "background": "#fdd",
                         "^:nth-child(1)" : {"translate": "-16px -16px !important"},
                         "^:nth-child(2)" : {"translate": "-8px -8px !important"},
                         "^::before" : {
-                            "content": "'content out of sync, rerun slide to update'",
-                            "font-size": "200%",
+                            "content": "'citations got out of sync, rerun corresponding slides to update'",
+                            "font-size": "120%",
                             "color":"red",
                         }
                     },
@@ -234,10 +235,7 @@ def layout_css(breakpoint, accent_color):
                     "left": "0px !important",
                     "transition": "height 400ms ease-in-out",
                     "border-right" : "2px inset var(--alternate-bg)",
-                    f"@media screen and (max-width: {breakpoint})": (
-                        _breakpoint_css := {"width": "100% !important"}
-                    ),
-                    "@container slides (max-width: 650px)": _breakpoint_css,
+                    "@container slides (max-width: 650px)": {"width": "100% !important"},
                     ".CaptureHtml": {
                         "border": "1px solid var(--secondary-fg)",
                         "figure": {
@@ -380,16 +378,6 @@ def layout_css(breakpoint, accent_color):
                 "align-items": "center !important",
                 "margin-bottom": "16px !important",
                 "color": " var(--accent-color) !important",
-                f"@media screen and (max-width: {breakpoint})": (
-                    _breakpoint_css := {
-                        "bottom": "30px !important",
-                        "right": "0 !important",
-                        "width": "100% !important",
-                        "justify-content": "space-around !important",
-                        "button": {"width": "30% !important"},
-                    }
-                ),
-                "@container slides (max-width: 650px)": _breakpoint_css,
                 ".widget-button > i": {
                     "color": "var(--accent-color) !important",
                 },
@@ -401,7 +389,7 @@ def layout_css(breakpoint, accent_color):
                 },
                 ".ProgBox": {
                     "width": "16px",
-                    "padding": "0px 4px",
+                    "padding": "0px 8px",
                     "opacity": 0,
                     "overflow": "hidden",
                     "transition": "width 0.4s", #on exit hover
@@ -412,13 +400,6 @@ def layout_css(breakpoint, accent_color):
                         "opacity": 1,
                         "transition": "width 0.4s", # on enter
                     },
-                    f"@media screen and (max-width: {breakpoint})": (
-                        _breakpoint_css := {
-                            "width": "40%",
-                            "opacity": 0,
-                        }
-                    ),
-                    "@container slides (max-width: 650px)": _breakpoint_css,
                 },
             },
             ".TOC": {  # Table of contents panel
@@ -435,10 +416,7 @@ def layout_css(breakpoint, accent_color):
                 "z-index": "8",
                 "border-radius": "4px",
                 "transition": "height 400ms ease-in-out",
-                f"@media screen and (max-width: {breakpoint})": (
-                    _breakpoint_css := {"min-width": "calc(100% - 72px) !important"}
-                ),
-                "@container slides (max-width: 650px)": _breakpoint_css,
+                "@container slides (max-width: 650px)": {"min-width": "calc(100% - 72px) !important"},
                 ".goto-box": {
                     "justify-content": "space-between",
                     "height": "auto",
@@ -530,6 +508,11 @@ def layout_css(breakpoint, accent_color):
                 "border-radius": "4px",
                 "transition": "height 400ms ease-in-out",
                 "display": "table-column-group !important", # avoid collapse
+                "> .widget-hbox": { # upper buttons
+                    "border-bottom": "1px solid #8988",
+                    "margin": "0 4px !important",
+                    "> button" : {"width": "36px !important"},
+                },
                 "> button > i": {"margin-right": "8px !important",}, # Make uniform
                 "> button::after":{
                     "content": "attr(title)",

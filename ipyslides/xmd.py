@@ -148,7 +148,7 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
     all_matches = re.findall(r"cite\`(.*?)\`", text_chunk, flags=re.DOTALL)
     for match in all_matches:
         key = match.strip()
-        text_chunk = text_chunk.replace(f"cite`{match}`", slide_instance.cite(key), 1)
+        text_chunk = text_chunk.replace(f"cite`{match}`", slide_instance._cite(key), 1)
     
     # section`This is section title`
     all_matches = re.findall(

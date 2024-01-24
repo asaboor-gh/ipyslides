@@ -14,11 +14,10 @@ def demo_slides(slides):
     auto = slides.AutoSlides() # Does not work inside Jupyter notebook (should not as well)
 
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
-    slides.settings.set_cite_mode('global') # This could be changed by other functions
     slides.set_citations({
-            'pf': 'This is refernce to FigureWidget using `slides.cite` command',
+            'pf': 'This is refernce to FigureWidget using alert`cite\`pf\`` syntax',
             'This': 'I was cited for no reason',
-        })
+        }, mode = 'global')
 
     slides.run_cell("""
     %%title -m
@@ -57,7 +56,7 @@ def demo_slides(slides):
         - Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
         - Watch a [Youtube Video](https://www.youtube.com/watch?v=ytfWIYbJteE)
 
-    [^1]: Add references like this per slide. Use slides.cite() or in markdown cite\`key\` to add citations generally.
+    [^1]: Add references like this per slide or cite\`key\` to add citations generally.
     
     """, trusted=True)
 
@@ -220,7 +219,7 @@ def demo_slides(slides):
                       ],ax,widths=[40,60])
         if idx == 0: #Only show source code of first frame
             s.show_lines([5]).display()
-        slides.write(slides.cite('This'))
+        slides.write('cite`This`')
 
     auto.from_markdown('section`Controlling Content on Frames` toc`### Contents`')
 

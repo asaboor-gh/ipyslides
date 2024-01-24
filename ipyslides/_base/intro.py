@@ -156,8 +156,8 @@ key_combs = f"""
 |---------------------------------------------|---------------------------------------------------|------------------------|
 | {_key('&#9141;')}/{_key('▸')}               | {_icons["R"]}, {_icons["D"]}                      | Move to next slide     |
 | {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["L"]}, {_icons["U"]}                   | Move to previous slide |
-| {_key('[1-9]')}                             |                                                   | Move [1-9] slides right|
-| {_key('Ctrl')} + {_key('[1-9]')}            |                                                   | Move [1-9] slides left |
+| {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_key('HOME')}/{_key('END')}                  | Jump to Star/End of slides |
+| {_key('Ctrl')} + {_key('[1-9]')}/{_key('[1-9]')} |                                       | Shift [1-9] slides left/right |
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
 | {_key('S')}                                 | {_icons["camera"]}                                | {key_maps["S"]}        |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |

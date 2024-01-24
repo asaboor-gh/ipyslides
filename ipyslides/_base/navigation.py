@@ -23,18 +23,14 @@ class Navigation:
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
         if change:
-            try:
+            if self.progress_slider.index < (len(self.progress_slider.options) - 1):
                 self.progress_slider.index = self.progress_slider.index + 1 # Forwards
-            except:
-                self.progress_slider.index = 0 # loop back to title page at end of presentation
             
     def _shift_left(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
         if change:
             self.widgets.slidebox.add_class('Prev') # Backwards Animation
-            if self.progress_slider.index == 0:
-                self.progress_slider.index = len(self.progress_slider.options) - 1 # loop back to last slide
-            else:
+            if self.progress_slider.index > 0:
                 self.progress_slider.index = self.progress_slider.index - 1 # Backwards
     
     def _change_icons(self, change):
@@ -67,13 +63,15 @@ class Navigation:
     def _goto_home(self,btn):
         try:
             self.progress_slider.index = 0
-            self.widgets.buttons.toc.click() # Close TOC
+            if self.widgets.buttons.toc.icon == 'minus':
+                self.widgets.buttons.toc.click() # Close TOC but only if it was open, let other things work
         except:
             self.widgets._push_toast('Cannot go to home page. No slides found.')
             
     def _goto_end(self,btn):
         try:
             self.progress_slider.index = len(self.progress_slider.options) - 1
-            self.widgets.buttons.toc.click() # Close TOC
+            if self.widgets.buttons.toc.icon == 'minus':
+                self.widgets.buttons.toc.click() # Close TOC but only if it was open, let other things work
         except:
             self.widgets._push_toast('Cannot got to end of slides, may not enough slides exist.')

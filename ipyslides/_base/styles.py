@@ -171,7 +171,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, cwidth=100, _root = False):
+def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, cwidth=100, ncol_refs = 2, _root = False):
     uclass = get_unique_css_class()
     margin = 'auto' if centered else 'unset'
     if (cwidth < 100) and (centered is False):
@@ -324,12 +324,16 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
             },
+            '.Citations' : {
+                'column-count' :f'{ncol_refs} !important',
+                'column-gap':'1em',
+                'border-top':'1px solid #8988', # for all colors
+                'margin-block':'0.5em',
+            },
             '.columns > div': {"position": "relative !important"}, # keep absolute items inside column itself
             '.toc-item': { # Table of contents on slides 
-                'border-right':'4px solid var(--secondary-bg)',
-                'padding-right':'2em', # To make distance from the border
+                'padding-right':'0.5em', # To make distance from the border
                 '^.this': {
-                    'border-right':'4px solid var(--primary-fg)',
                     'font-weight':'bold !important',
                 }, 
                 '^.next': {'opacity':'0.5',},

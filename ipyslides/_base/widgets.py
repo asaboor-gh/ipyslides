@@ -58,11 +58,10 @@ class _Htmls:
     """
     footer  = HTML('<p>Put Your Info Here using `slides.settings.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
-    main    = HTML(html('style',_layout_css.layout_css('650px', styles.theme_colors['Inherit']['accent_color'])).value) # Will be update in theme as well
+    main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent_color'])).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HtmlWidget('').add_class('LogoHtml')
-    tochead = HTML('<h4>Table of Contents</h4><hr/>')
     toast   = HtmlWidget('').add_class('Toast') # For notifications
     cursor  = HtmlWidget('').add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
@@ -203,7 +202,7 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
-        self.quick_menu = VBox(_many_btns[::-1],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
+        self.quick_menu = VBox([HBox([self.buttons.home, self.buttons.end, self.toggles.menu]),*_many_btns[::-1]],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
 
         def close_quick_menu(change):
             self.toggles.menu.value = False

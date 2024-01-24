@@ -112,7 +112,7 @@ class BaseSlides:
         **Following syntax works only under currently building slide:**
         
         - alert`notes\`This is slide notes\``  to add notes to current slide
-        - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place.
+        - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
         - alert`section\`key\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
@@ -418,9 +418,11 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(*range(22)) # Create slides faster
+        self.create(*range(23)) # Create slides faster
         
         from ..core import Slides
+
+        self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'global')
         self.settings.set_footer('IPySlides Documentation')
         
         auto = self.AutoSlides() # Does not work inside notebook (should not as well)
@@ -453,7 +455,7 @@ class BaseSlides:
         with auto.slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.cite,'Slides'),self.doc(self.clipboard_image,'Slides')])
+            self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clipboard_image,'Slides')])
         
         with auto.slide():
             self.write('## Adding Speaker Notes')
@@ -477,11 +479,23 @@ class BaseSlides:
             self.doc(self.clipboard_image,'Slides').display()
             self.run_doc(self.alt,'Slides')
             
-            members = ['alert','block', 'bokeh2html', 'bullets','cite','classed',
+            members = ['alert','block', 'bokeh2html', 'bullets','classed',
                        'color', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'plt2html', 'raw', 'rows',
-                        'section', 'set_citations', 'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
+                        'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']
             self.doc(self, 'Slides', members = members, itself = False).display()
+
+        with auto.slide():
+            self.write('''
+                ## Citations and Sections
+                Use syntax alert`cite\`key\`` to add citations which should be already set by `Slides.set_citations(data, mode)` method.
+                Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
+                `Slides.settings.set_layout(..., ncol_refs = int)`. cite`A`
+                       
+                Add sections in slides to separate content by alert`section\`text\`` or ` Slides.section ` method. Corresponding table of contents
+                can be added with ` Slides.toc ` decorator or alert`toc\`heading content\``.
+            ''')
+            self.doc(self, 'Slides', members = ['set_citations','section', 'toc'], itself = False).display()
             
         with auto.slide() as s:
             skipper.set_target() # Set target for skip button
@@ -502,8 +516,8 @@ class BaseSlides:
         
         s8, = auto.from_markdown('''
         ## Highlighting Code
-        [pygments](https://pygments.org/) is used for syntax highlighting.
-        You can **highlight**{.error} code using `highlight` function or within markdown like this:
+        [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
+        You can **highlight**{.error} code using `highlight` function cite`B` or within markdown like this:
         ```python
         import ipyslides as isd
         ```

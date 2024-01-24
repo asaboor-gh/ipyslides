@@ -138,7 +138,7 @@ class Slides(BaseSlides):
 
             builtins.print = print
 
-        self._cite_attrs = {}  # Will be set during other class's __new__ method. One of 'global', 'inline', 'footnote'
+        self._cite_mode = 'global'
 
         self._slides_dict = (
             {}
@@ -295,7 +295,7 @@ class Slides(BaseSlides):
     
     @property
     def cite_mode(self):
-        return self._cite_attrs.get('mode','')
+        return self._cite_mode
 
     @property
     def current(self):
@@ -365,13 +365,9 @@ class Slides(BaseSlides):
         )
         self._add_clean_title()  # Add clean title page without messing with resources.
 
-    def cite(self, key):
-        """Add citation in presentation, key should be a unique string.
-        Citations corresponding to keys used can be created by ` Slides.set_citations ` method.
-        Citation are added automatically in a suitable place according to cite_mode.
-
-        ::: note
-            You should set resources in start if using python script or voila, otherwise they will not be updated.
+    def _cite(self, key):
+        """Use markdown syntax cite`key` to add citations since output has to be inline. 
+        Citations corresponding to keys used can be added by ` Slides.set_citations ` method.
         """
         self.verify_running("Citations can be added only inside a slide constructor!")
         cited = _Citation(slide=self.running, key=key)
@@ -397,58 +393,67 @@ class Slides(BaseSlides):
         <sup id ="{key}-back" style="color:var(--accent-color);">{cited._id}</sup>
         {cited.inline_value.replace('text-box','',1) if self.cite_mode == 'global' else ''}</a>"""
     
-    def _set_unsynced(self):
-        "Will go in sync after rerun."
-        for slide in self[:]:
-            if slide._citations or getattr(slide, '_cite', False):
-                slide._widget.add_class('Out-Sync')
+    def _set_ctns(self, d):
+        # Here other formatting does not work for citations
+        new_citations = {k: self.parse(v, display_inline=False, rich_outputs=False) for k, v in d.items()}
+        if self._citations != new_citations: # same call again should not change anythong
+            self._citations = new_citations
+            for slide in self.cited_slides:
+                slide._widget.add_class('Out-Sync') # will go synced after rerun
+        
 
-
-    def set_citations(self, citations=None, file=None):
-        """Set citations from dictionary or file.
-        `file` should be a JSON file with citations keys and values.
+    def set_citations(self, data, mode='global'):
+        """Set citations from dictionary or file that should be a JSON file with citations keys and values, key shopuld be cited in markdown as cite\`key\`.
+        `mode` for citations should be one of ['global', 'inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.set_layout(..., ncol_refs=N)`.
 
         ::: note
-            - You should set citations in start if using python script or voila, otherwise they may not be updated.
-            - Citations are replaced with new ones.
+            - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
+            - Citations are replaced with new ones, so latest use of this function reprsents avilable citations.
         """
-        if citations is not None:
-            if isinstance(citations, dict):
-                self._citations = {
-                    key: self.parse(value, display_inline=False, rich_outputs=False)
-                    for key, value in citations.items()
-                }
+        if isinstance(data, dict):
+            self._set_ctns(data)
+        elif isinstance(data, str):
+            if not os.path.isfile(data): # raise error here, not in file to let it load by __init__ silently
+                raise FileNotFoundError(f"File: {data!r} does not exists.")
+            
+            self._set_citations_from_file(data) 
+        else:
+            raise TypeError(f"data should be a dict or path to a json file for citations, got {type(data)}")
+        
+        if self._cite_mode != mode:
+            self._cite_mode = mode # Update first as they need in display update
+            for slide in self.cited_slides:
+                slide._widget.add_class('Out-Sync') # will go synced after rerun
+    
+        # Update mode and display after setting citations
+        if mode not in ["global", "inline", "footnote"]:
+            raise ValueError(f'citation mode must be one of "global", "inline", "footnote" but got {mode}')
+        
+        # Make some possible updates
+        for slide in self[:]:
+            if hasattr(slide, '_refs') or (self.cite_mode == "footnote"): 
+                slide.update_display(go_there=False) # will reset slides refrences
+                    
+        if self.cite_mode == 'global':
+            self[-1].update_display(go_there=False) # last slide for global
 
-                if self.cite_mode == "footnote":
-                    for slide in self[:]:
-                        if slide._citations:
-                            slide.update_display()
-            else:
-                raise TypeError(f"citations should be a dict, got {type(citations)}")
-
-        if file is not None:
-            if citations is not None:
-                raise RuntimeError(
-                    "Cannot set citations from file and dictionary at the same time!"
-                )
-
-            if isinstance(file, str):
-                self._set_citations_from_file(file)
-
-        # Here write resources to file in assets
+        
+        # Finally write resources to file in assets
         with self.set_dir(self._assets_dir):
             with open("citations.json", "w", encoding="utf-8") as f:
                 json.dump(self._citations, f, indent=4)
-        
-        self._set_unsynced()
-        self._update_dynamic_content() # shift refrences
 
 
     def _set_citations_from_file(self, filename):
-        "Load resources from file if present."
+        "Load resources from file if present silently"
         if os.path.isfile(filename):
             with open(filename, "r", encoding="utf-8") as f:
-                self._citations = json.load(f)  # set, not update, avoid cluttering
+                self._set_ctns(json.load(f))
+    
+    @property
+    def cited_slides(self):
+        "Return slides which have citations."
+        return tuple([s for s in self[:] if s._citations])
 
     def section(self, text):
         """Add section key to presentation that will appear in table of contents.
@@ -627,8 +632,7 @@ class Slides(BaseSlides):
             self._iterable[new_index].css,
             self.html(
                 "style",
-                f"""{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;border-right: 4px solid var(--primary-fg);}}
-            {uclass} .toc-item {{border-right: 4px solid var(--primary-bg);}}""",
+                f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
             )]
 
         if self.screenshot.capturing == False:
@@ -1020,9 +1024,8 @@ class Slides(BaseSlides):
                     self.widgets.buttons.home,
                     self.widgets.buttons.end,
                     self.widgets.buttons.toc,
-                ]
+                ], layout = dict(border_bottom="1px solid #8988",margin="0 0 8px 0") # neutral border
             ),
-            self.widgets.htmls.tochead,
         ]
 
         if not tocs_dict:
@@ -1154,8 +1157,7 @@ class Slides:
         cls,
         extensions=[],
         show_always=True,
-        cite_mode = dict(mode="footnote",ncol=2),
-        layout = dict(center=True, scroll=True, width=100, aspect=16/9),
+        layout = dict(center=True, scroll=True, width=100, aspect=16/9, ncol_refs = 2),
         footer = dict(
             text='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
             numbering = True, 
@@ -1173,7 +1175,6 @@ class Slides:
         instance.extender.extend(extensions)
         instance.settings.show_always(show_always)
         instance.settings.set(
-            cite_mode = cite_mode,
             layout = layout, # Defaults are kept by set_layout
             footer = footer,
             logo = logo,

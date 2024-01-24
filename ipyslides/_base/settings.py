@@ -35,7 +35,7 @@ class LayoutSettings:
             "date": "today",
         }
         
-        self._layout = {'cwidth':100, 'scroll': True, 'centered': True, 'aspect': 16/9}
+        self._layout = {'cwidth':100, 'scroll': True, 'centered': True, 'aspect': 16/9,'ncol_refs': 2}
         self._code_lineno = True
 
         self.width_slider = self.widgets.sliders.width
@@ -112,11 +112,6 @@ class LayoutSettings:
     @property
     def widgets(self):
         return self._widgets  # To avoid breaking code by user
-
-    @property
-    def breakpoint(self):
-        span = 100 if self.btn_window.value else self.width_slider.value
-        return f"{int(100*650/span)}px"
 
     def set(self, **kwargs):
         """Add multiple settings at once. keys in kwargs should be name of a function after `Slides.settings.set_`
@@ -199,7 +194,7 @@ class LayoutSettings:
         styles._validate_colors(self._custom_colors)  # Validate colors before using
         self._custom_colors = colors
         self.theme_dd.value = "Custom"  # Trigger theme update
-        self._update_theme()
+        self._update_theme({'owner':self.theme_dd}) # This chnage is important to update layout theme as well
 
     @_sub_doc(css_docstring=_css_docstring)
     def set_css(self, css_dict={}):
@@ -211,20 +206,6 @@ class LayoutSettings:
             self._slides[0]._set_overall_css(css_dict=css_dict)
         else:
             raise RuntimeError("No slides yet to set CSS.")
-
-    def set_cite_mode(self, mode="global", ncol=1):
-        """Set mode for citations form ['global', 'inline', 'footnote']. Use before creating slides. ncol will be used in citations.
-        ncol will be used while formatting citations and footnotes."""
-        if mode not in ["global", "inline", "footnote"]:
-            raise ValueError(
-                f'citation mode must be one of "global", "inline", "footnote" but got {mode}'
-            )
-        cite_attrs = dict(mode=mode,ncol=ncol)
-        if self._slides.cite_mode and (self._slides._cite_attrs != cite_attrs): # avoids print on first time
-            self._slides._set_unsynced()
-            self._slides._update_dynamic_content() # shift references
-
-        self._slides._cite_attrs = cite_attrs
 
 
     def set_bg_image(self, src, opacity=0.25, blur_radius=None):
@@ -354,13 +335,15 @@ class LayoutSettings:
 
         return text
 
-    def set_layout(self, center=True, scroll=True, width=100, aspect = 16/9):
-        "Aligment of slide is center-center by default. If center=False, top-center is applied. It becomes top-left if width=100."
+    def set_layout(self, center=True, scroll=True, width=100, aspect = 16/9, ncol_refs = 2):
+        """Aligment of slide is center-center by default. If center=False, top-center is applied. It becomes top-left if width=100.
+        `ncol_refs` is used to determine number of columns in citations/footnotes
+        """
         if (not isinstance(width, int)) or (width not in range(101)):
             raise ValueError("width should be int in range [0,100]")
         if not isinstance(aspect, (int,float)):
             raise TypeError("aspect should be int/float of ratio width/height.")
-        self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center, 'aspect': aspect}
+        self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center, 'aspect': aspect, 'ncol_refs': ncol_refs}
         self._update_size(change = None) # will reset theme and send RESCALE message
 
     def set_nav_gui(self, visible = True):
@@ -372,23 +355,13 @@ class LayoutSettings:
             self._slides.notify("Navigation controls hidden. But keyboard and touch gestures are working!")
 
     def _update_size(self, change):
-        if change and change["owner"] == self.width_slider:
-            # Update Layout CSS
-            self.widgets.htmls.main.value = html(
-                "style",
-                _layout_css.layout_css(
-                    self.breakpoint,
-                    accent_color=self.colors["accent_color"],
-                ),
-            ).value
-
         self.widgets.mainbox.layout.height = "{}vw".format(
             int(self.width_slider.value / self._layout["aspect"])
         )
         self.widgets.mainbox.layout.width = "{}vw".format(self.width_slider.value)
         self._update_theme(
             change=None
-        )  # For updating size and breakpoints and zoom CSS
+        )  # For updating size and zoom CSS
         self.widgets.iw.msg_tojs = 'RESCALE'
 
     @property
@@ -432,13 +405,12 @@ class LayoutSettings:
         )
 
     def _update_theme(self, change=None):
-        # Update Layout CSS
-        layout_css = _layout_css.layout_css(
-            breakpoint=self.breakpoint,
-            accent_color=self.colors["accent_color"],
-        )
-        self.widgets.htmls.main.value = html("style", layout_css).value
-
+        # Only update layout CSS if theme changes, not on each call
+        if change and (change['owner'] == self.theme_dd): # function called with owner without widget works too
+            self.widgets.htmls.main.value = html('style',
+                _layout_css.layout_css(self.colors['accent_color'])
+            ).value
+        
         # Update Theme CSS
         theme_css = styles.style_css(**self.theme_kws)
 
@@ -484,7 +456,7 @@ class LayoutSettings:
             self.widgets.mainbox.remove_class("FullWindow")  # back to inline
             self.widgets.htmls.window.value = ""
 
-        self._update_theme(change=None)  # For updating size and breakpoints
+        self._update_theme(change=None)  # For updating size zoom etc
 
     def _toggle_fullscreen(self, change):
         self.widgets.iw.msg_tojs = 'TFS' # goes to js, toggle fullscreen and chnage icon of button
@@ -546,7 +518,7 @@ class LayoutSettings:
             self.btn_menu.icon = 'minus'
             self._hover_only = 'Hover-Only' in self.btn_menu._dom_classes
             self.btn_menu.remove_class('Hover-Only') # If navigation menu hidden by user
-            self.widgets.quick_menu.layout.height = 'min(190px, calc(100% - 30px))'
+            self.widgets.quick_menu.layout.height = 'min(225px, calc(100% - 30px))'
             self.widgets.quick_menu.layout.border = "1px solid var(--hover-bg)"
         else:
             self.btn_menu.icon = 'plus'

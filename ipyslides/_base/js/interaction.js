@@ -87,6 +87,8 @@ function keyboardEvents(box,model) {
                 message = 'PREV';
             } else if (key === 'ArrowRight' || key === ' ') { // Space, >
                 message = 'NEXT';
+            } else if (key === '0') {
+                message = (e.ctrlKey? "HOME": "END"); // Numbers don't change with control
             } else if (key in keyMessage){
                 message = keyMessage[key];
             }
