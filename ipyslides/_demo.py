@@ -70,7 +70,21 @@ def demo_slides(slides):
 
 
     *others, last = auto.from_markdown(f"""
-    section`Variety of Content Types to Display` toc`### Contents`
+    section`Variety of Content Types to Display` 
+    ```toc ### Contents
+    vspace`2` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
+                                       
+    - Item 1
+    - Item 2
+
+    $$ E = mc^2 $$
+    {{.success}}                          
+    ```
+    ```markdown
+     ```toc Table of contents
+     Extra content for current section which is on right
+     ```
+    ``` 
     ---
     ## IPython Display Objects
     #### Any object with following methods could be in`write` command:

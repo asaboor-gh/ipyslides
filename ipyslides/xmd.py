@@ -155,25 +155,35 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
         r"section\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
     )
     for match in all_matches:
-        slide_instance.section(match)  # This will be attached to the running slide
+        slide_instance._section(match)  # This will be attached to the running slide
         text_chunk = text_chunk.replace(f"section`{match}`", "", 1)
 
     # toc`This is toc title`
-    all_matches = re.findall(
-        r"toc\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
-    )
+    all_matches = re.findall(r"toc\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for match in all_matches:
         block = fmt_code(
             f"""
-            @slide_instance.toc
-            def updatable_toc(objs):
-                bullets = '\\n'.join([f'{{idx}}. {{text}}' for idx,text in enumerate(objs, start = 1)])
-                slide_instance.format_html([{match!r} or '<h3>Table of Contents</h3><hr/>', bullets]).display()
-            """,
-            instance_name="slide_instance",
+            kwargs = dict(title = {match!r}) if {match!r} else {{}} # auto
+            slide_instance._toc(**kwargs)
+            """, instance_name="slide_instance",
         )
 
         text_chunk = text_chunk.replace(f"toc`{match}`", block, 1)
+    
+    # ```toc title\n text\n``` as block start with new line 
+    all_matches = re.findall(r"\n\`\`\`toc(.*?)\n\`\`\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
+    for match in all_matches:
+        title, extra = [v.strip() for v in (match + '\n').split('\n', 1)] # Make sure a new line is there and then strip
+        extra_str = f'kwargs.update(dict(extra = {extra!r}))' if extra else ''
+        block = fmt_code(
+            f"""
+            kwargs = dict(title = {title!r}) if {title!r} else {{}} # auto
+            {extra_str}
+            slide_instance._toc(**kwargs)
+            """, instance_name="slide_instance",
+        )
+
+        text_chunk = text_chunk.replace(f"\n```toc{match}\n```", block, 1)
 
     # proxy`This is prxoy's placeholder text`
     all_matches = re.findall(
@@ -227,7 +237,7 @@ class XMarkdown(Markdown):
             )  # Resolve objects in xmd related to current slide
 
         # After resolve_objs_on_slide, xmd can have code blocks which may not be passed from suitable context
-        if ("\n```python run" in xmd) and not self._display_inline: # Do not match nested blocks
+        if (r"\n```python run" in xmd) and not self._display_inline: # Do not match nested blocks, r"" is important
             raise RuntimeError(
                 "Cannot execute code in current context, use Slides.parse(..., display_inline = True) for complete parsing!"
             )

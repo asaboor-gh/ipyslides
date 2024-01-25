@@ -76,7 +76,7 @@ class _HhtmlExporter:
                 </section>''' if as_slides else f'<section {sec_id}>{_html}</section>')
         
         theme_css = styles.style_css(**self.main.settings.theme_kws, _root=True)
-        if self.main.widgets.checks.reflow.value:
+        if self.main.widgets.checks.reflow.value or kwargs.get('reflow',False): # reflow kwarg only in report, other based on user
             theme_css = theme_css + f"\n.SlideArea *, ContentWrapper * {{max-height:max-content !important;}}\n" # handle both slides and report
         
         _style_css = (slides_css if as_slides else doc_css).replace('__theme_css__', theme_css) # They have style tag in them.
@@ -138,9 +138,10 @@ class _HhtmlExporter:
             f.write(content) 
             
     
-    def report(self, path='report.html', page_size = 'letter', overwrite = False):
+    def report(self, path='report.html', page_size = 'letter', overwrite = False, reflow = True):
         """Build a beutiful html report from the slides that you can print. Widgets are supported via `Slides.alt(widget,func)`.
         
+        - Report content is reflown by default i.e. height of boxes is expanded to reveal all content. You can turn it off thought.
         - Use 'overrides.css' file in same folder to override CSS styles.
         - Use 'report-only' class to generate additional content that only appear in report.
         - Use 'slides-only' class to generate content that only appear in slides.
@@ -150,7 +151,7 @@ class _HhtmlExporter:
             raise ValueError("report can only be created if cite_mode is 'global'")
         
         _path = os.path.splitext(path)[0] + '.html' if path != 'report.html' else path
-        content = self._htmlize(as_slides = False, page_size = page_size)
+        content = self._htmlize(as_slides = False, page_size = page_size, reflow = reflow)
         content = content.replace('.SlideArea','').replace('SlidesWrapper','ContentWrapper')
         self._writefile(_path, content, overwrite = overwrite)
     

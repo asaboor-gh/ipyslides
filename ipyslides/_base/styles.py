@@ -331,6 +331,15 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'margin-block':'0.5em',
             },
             '.columns > div': {"position": "relative !important"}, # keep absolute items inside column itself
+            '.toc-list.toc-extra' : {
+                'margin-right': '1em',
+                '.toc-item.this' : {
+                    'background': 'var(--secondary-bg)',
+                    'padding': '0 0.5em',
+                    'font-size': '110%', # Make more prominent
+                    'border-left': '2px solid var(--accent-color)',
+                },
+            },
             '.toc-item': { # Table of contents on slides 
                 'padding-right':'0.5em', # To make distance from the border
                 '^.this': {

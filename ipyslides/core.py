@@ -398,12 +398,14 @@ class Slides(BaseSlides):
         new_citations = {k: self.parse(v, display_inline=False, rich_outputs=False) for k, v in d.items()}
         if self._citations != new_citations: # same call again should not change anythong
             self._citations = new_citations
-            for slide in self.cited_slides:
-                slide._widget.add_class('Out-Sync') # will go synced after rerun
-        
+            self._set_unsynced() # will go synced after rerun
+    
+    def _set_unsynced(self):
+        for slide in self.cited_slides:
+            slide.set_dom_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='global'):
-        """Set citations from dictionary or file that should be a JSON file with citations keys and values, key shopuld be cited in markdown as cite\`key\`.
+        """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
         `mode` for citations should be one of ['global', 'inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.set_layout(..., ncol_refs=N)`.
 
         ::: note
@@ -422,8 +424,7 @@ class Slides(BaseSlides):
         
         if self._cite_mode != mode:
             self._cite_mode = mode # Update first as they need in display update
-            for slide in self.cited_slides:
-                slide._widget.add_class('Out-Sync') # will go synced after rerun
+            self._set_unsynced() # will go synced after rerun
     
         # Update mode and display after setting citations
         if mode not in ["global", "inline", "footnote"]:
@@ -455,9 +456,9 @@ class Slides(BaseSlides):
         "Return slides which have citations."
         return tuple([s for s in self[:] if s._citations])
 
-    def section(self, text):
-        """Add section key to presentation that will appear in table of contents.
-        Sections can be written as table of contents by alert` Slides.toc ` decorator.
+    def _section(self, text):
+        """Add section key to presentation that will appear in table of contents using section`content` syntax.
+        Sections can be written as table of contents.
         """
         self.verify_running("Sections can be added only inside a slide constructor!")
 
@@ -468,17 +469,15 @@ class Slides(BaseSlides):
                 getattr(s, "_toced", False) and s != self.running
             ):  # self will be built of course at end
                 s.update_display(go_there=False)
-
-    def toc(self, func = lambda items: write(['### Table of Contents<hr/>', utils.bullets(items, ordered=True)])): # Markdown gives same output, don't change
-        """Decorator to add dynamic table of contents to slides which get updated on each new section and refresh/update_display.
-        `func` should take one argument which is the tuple of sections. You can call it directly too with  default function, which adds bullet points."""
-
+ 
+    def _toc(self, title='## Contents {.align-left}', extra = None):
+        "Use markdown syntax to add it like toc`title` or ```toc title\n extra\n```. Extra is like a summary of current section shown on right."
         def fmt_sec(s, _class):
-            return XTML(f'''<div class="toc-item {_class}">
+            return XTML(f'''<li class="toc-item {_class}">
                 <a href="#{s._sec_id}" class="export-only">{s._section}</a>
-                <span class="jupyter-only">{s._section}</span></div>''')
+                <span class="jupyter-only">{s._section}</span></li>''')
 
-        def _toc_handler():
+        def toc_handler():
             sections = []
             this_index = (
                 self[:].index(self.running)
@@ -500,9 +499,15 @@ class Slides(BaseSlides):
                 if slide._section:
                     sections.append(fmt_sec(slide,"next"))
 
-            return func(tuple(sections))
+            className = 'toc-list toc-extra' if extra else 'toc-list'
+            items = self.html('ol', sections, style='', className=className)
+            if extra:
+                self.write([title, items], extra)
+            else:
+                self.write([title, items])
 
-        return self._dynamic_private(_toc_handler, tag="_toced", hide_refresher=True)
+        return self._dynamic_private(toc_handler, tag="_toced", hide_refresher=True)
+
 
     def _goto_button(
         self, text, target_slide=None, _other_text=None, _extra_func=None, **kwargs
@@ -632,7 +637,7 @@ class Slides(BaseSlides):
             self._iterable[new_index].css,
             self.html(
                 "style",
-                f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
+                f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;background:var(--primary-bg);}}",
             )]
 
         if self.screenshot.capturing == False:
@@ -1029,14 +1034,9 @@ class Slides(BaseSlides):
         ]
 
         if not tocs_dict:
-            children.append(
-                ipw.HTML(
-                    htmlize(
-                        "No sections found!, create sections with alert`Slides.section` method"
-                        " or alert`section\`key\``"
-                    )
-                )
-            )
+            children.append(self.format_html(
+                "No sections found!, create sections with markdown syntax alert`section\`content\``"
+            ).as_widget())
         else:
             for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):
                 _other_text = (

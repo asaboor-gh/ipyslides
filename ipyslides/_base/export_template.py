@@ -70,17 +70,6 @@ body div.highlight, body div.highlight pre {
     }
     
 figure, img, .zoom-child, table, .block {margin: 0 auto !important;} /* center images */
-div.columns { /* ovveride slides css */
-    width:100%;
-    max-width:100%;
-    display:inline-flex !important;
-    flex-direction:column !important;
-    height:auto;
-}
-div.columns > div[style*="width:"] {
-    width:100% !important;
-    max-width:100% !important;
-}
 .slides-only, .jupyter-only {display:none !important;}
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}

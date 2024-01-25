@@ -113,12 +113,20 @@ class BaseSlides:
         
         - alert`notes\`This is slide notes\``  to add notes to current slide
         - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
-        - alert`section\`key\`` to add a section that will appear in the table of contents.
-        - alert`toc\`Table of content header text\`` to add a table of contents. Run at last again to collect all.
+        - alert`section\`content\`` to add a section that will appear in the table of contents.
+        - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
         - alert`peoxy\`[Button Text]\`` to add a proxy that can be replaced by pasting image from clipboard later.
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
         - Double dashes `--` is used to split markdown text in frames.
+        
+        Block table of contents with extra content can be added as follows:
+        ```markdown
+         ```toc Table of contents
+         Extra content for current section appears on right
+         Can use small column notation here || A || B || but not `multicol`
+         ```
+        ```
         
         **Other syntax can be used everywhere in markdown:**
         
@@ -140,7 +148,7 @@ class BaseSlides:
         - `multicol` syntax supports frames separator `--` within itself.
         - Python code blocks can be exectude by syntax 
         ```markdown
-         ```python run source {.CSS_className}
+         ```python run source {.CSS_className} 
          slides = get_slides_instance() 
          slides.write('Hello, I was written from python code block using slides instance.')
          ```
@@ -350,7 +358,8 @@ class BaseSlides:
         with self.skip_post_run_cell():
             for i,chunk in enumerate(chunks):
                 # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-                if chunk != getattr(handles[i],'_mdff','') or re.findall(r"\~\`(.*?)\`", chunk, flags=re.DOTALL):
+                checks = (chunk != getattr(handles[i],'_mdff',''), re.findall(r"\~\`(.*?)\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
+                if  any(checks):
                     with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                         self._slide(f'{i + start} -m', chunk)
 
@@ -382,7 +391,8 @@ class BaseSlides:
         def update(widget, content, buffer):
             if os.path.isfile(path):
                 mtime = os.stat(path).st_mtime
-                if mtime > self._mtime:  # set by interaction widget
+                out_sync = any(['Out-Sync' in s.dom_classes for s in self.cited_slides]) or False
+                if out_sync or (mtime > self._mtime):  # set by interaction widget
                     self._mtime = mtime
                     try: 
                         self.from_markdown(start, path, trusted)
@@ -438,7 +448,18 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        auto.from_markdown('section`Introduction` toc`### Contents`')
+        auto.from_markdown(f'''
+            section`Introduction` 
+            ```toc ## Table of contents
+            vspace`2`
+            ### This is summary of current section
+            Oh we can use inline columns || Column A || Column B || here and what not!
+            ```
+            ```markdown
+             ```toc Table of contents
+             Extra content for current section which is on right
+             ```
+            ```''')
             
         with auto.slide():
             self.write(['# Main App',self.doc(Slides), '### Jump between slides'])
@@ -492,10 +513,10 @@ class BaseSlides:
                 Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
                 `Slides.settings.set_layout(..., ncol_refs = int)`. cite`A`
                        
-                Add sections in slides to separate content by alert`section\`text\`` or ` Slides.section ` method. Corresponding table of contents
-                can be added with ` Slides.toc ` decorator or alert`toc\`heading content\``.
+                Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
+                can be added with alert`toc\`title\``/alert`\`\`\`toc title\\n summary of current section \\n\`\`\``.
             ''')
-            self.doc(self, 'Slides', members = ['set_citations','section', 'toc'], itself = False).display()
+            self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
         with auto.slide() as s:
             skipper.set_target() # Set target for skip button

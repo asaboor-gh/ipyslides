@@ -94,7 +94,8 @@ class DynamicRefresh:
         "Executes given function and returns its output as list of outputs."
         self._slide._app._in_dproxy = self
         self._columns = {} # Reset columns here just before executing function
-        
+        self._error_outputs = [] # Reset error output in start of next capture each time
+
         with self._slide._app._set_running(self._slide): # Set running slide to this slide
             try:
                 with capture_output() as captured:
@@ -358,6 +359,7 @@ class Slide:
         self._dproxies = {} # Reset dynamic placeholders
         self._columns = {} # Reset columns
         self._exportables = {} # Reset exportables
+    
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
         if hasattr(self,'_target_id'):
@@ -379,7 +381,7 @@ class Slide:
                 self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
 
             self._contents = _expand_objs(captured.outputs, self) # Expand columns  
-            self._widget.remove_class('Out-Sync') #
+            self.set_dom_classes(remove = 'Out-Sync') # Now synced
         
         if self._app._warnings:
             print(*self._app._warnings, sep='\n\n')
@@ -402,7 +404,7 @@ class Slide:
         
         # Update corresponding CSS but avoid animation here for faster and clean update
         self._app.update_tmp_output(self.css)
-        self._widget.remove_class('SlideArea').add_class('SlideArea') # Hard refresh
+        self.set_dom_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
 
     def _handle_refs(self):
         if hasattr(self, '_refs'): # from some previous settings and change
@@ -519,7 +521,7 @@ class Slide:
     
     @_sub_doc(css_docstring = _css_docstring)
     def set_css(self,css_dict = {}):
-        """Attributes at the root level of the dictionary will be applied to the slide.  
+        """Attributes at the root level of the dictionary will be applied to the slide. You can add CSS classes by `Slide.set_dom_classes`.
         use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once. This is exported only to html slides, not to report.
         {css_docstring}"""
         self._css = _format_css(css_dict, allow_root_attrs = True)
@@ -530,6 +532,25 @@ class Slide:
                 self._app._slidelabel = self.label # Go there to see effects
             else:
                 self._app.update_tmp_output(self.animation, self._css)
+
+    def set_dom_classes(self, add=None, remove=None):
+        "Sett CSS classes on this slide separated by space. classes are remove first and add after it."
+        if remove is not None: # remove first to enable toggle
+            if not isinstance(remove, str):
+                raise TypeError("CSS classes should be a string with each class separated by space")
+            for c in remove.split():
+                self._widget.remove_class(c)
+        
+        if add is not None:
+            if not isinstance(add, str):
+                raise TypeError("CSS classes should be a string with each class separated by space")
+            for c in add.split():
+                self._widget.add_class(c)
+
+    @property
+    def dom_classes(self):
+        "Readonly dom_classes on this slide sepaarated by space."
+        return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
     def set_bg_image(self, src, opacity=0.25, blur_radius=None):
         "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."

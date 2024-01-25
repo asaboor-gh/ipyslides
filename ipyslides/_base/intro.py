@@ -120,8 +120,7 @@ with slides.slide(2):
 
 
 ::: note
-    - You can add table of contents using alert`Slides.toc ` and alert`Slides.section ` that gets automatically updated.
-    - In Markdown, same thing can be done using alert`toc\`Toc Title\`` and alert`section\`key\``.
+    - You can add table of contents using using alert`toc\`Toc Title\``/alert`\`\`\`toc title \n summary of this section \n\`\`\`` and alert`section\`content\``.
     - Citations are provided with ` Slides.set_citations ` function that accept json file or dictionary. On next run, these are loaded from disk, so it works in python scripts and voila as well.
     - You can use `Slides.goto_button` to add a button to go to jump to a slide.
     - Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
