@@ -20,7 +20,7 @@ This ~`var_name` is a code from above and will be substituted with the value of 
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
 
-import textwrap, re, ast, sys
+import textwrap, re, ast, sys, json
 from markdown import Markdown
 from IPython.core.display import display
 from IPython import get_ipython
@@ -128,6 +128,20 @@ def is_var(name):
     except:
         return False
     
+def get_var(match, user_ns):
+    parts = match.split('.')
+    if parts[0] not in user_ns:
+        return f"<pre>alert`NameError`: name {match!r} is not defined</pre>"
+    
+    var = user_ns[parts[0]]
+    for part in parts[1:]:
+        if not hasattr(var, part):
+            return f"<pre>alert`AttributeError`: {var!r} object has no attribute {part!r}</pre>"
+        var = getattr(var, part)
+    
+    return var 
+
+    
 def get_user_ns():
     "Top level user namespace"
     main = sys.modules.get('__main__',None) # __main__ is current top module
@@ -174,12 +188,11 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
     all_matches = re.findall(r"\n\`\`\`toc(.*?)\n\`\`\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for match in all_matches:
         title, extra = [v.strip() for v in (match + '\n').split('\n', 1)] # Make sure a new line is there and then strip
-        extra_str = f'kwargs.update(dict(extra = {extra!r}))' if extra else ''
+        jstr = json.dumps({"title": title, "extra" : extra.strip()}) # qoutes fail otherwise
         block = fmt_code(
             f"""
-            kwargs = dict(title = {title!r}) if {title!r} else {{}} # auto
-            {extra_str}
-            slide_instance._toc(**kwargs)
+            import json
+            slide_instance._toc(**json.loads({jstr!r}))
             """, instance_name="slide_instance",
         )
 
@@ -213,18 +226,19 @@ class XMarkdown(Markdown):
             return out[0].strip(), ""
         return out[0].strip(), out[1].replace(".", " ").strip()
 
-    def parse(self, xmd, display_inline=False, rich_outputs=False):
+    def parse(self, xmd, display_inline=False):
         """Return a string after fixing markdown and code/multicol blocks if display_inline is False
-        Else displays objects and execute python code from '```python run source_var_name' block.
-        Precedence of content return/display is:
-        rich_outputs = True > display_inline = True > parsed_html_string
+        otherwise displays objects and execute python code from '```python run source_var_name' block.
         """
         self._display_inline = display_inline  # Must change here
+        if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
+            xmd = "\n" + xmd
+
         # included file before other parsing
         xmd = self._resolve_files(xmd)
 
         xmd = textwrap.dedent(
-            xmd
+            xmd 
         )  # Remove leading spaces from each line, better for writing under indented blocks
         xmd = re.sub("\\\`", "&#96;", xmd)  # Escape backticks
         xmd = self._resolve_nested(
@@ -236,33 +250,26 @@ class XMarkdown(Markdown):
                 self._slides, xmd
             )  # Resolve objects in xmd related to current slide
 
+
         # After resolve_objs_on_slide, xmd can have code blocks which may not be passed from suitable context
         if (r"\n```python run" in xmd) and not self._display_inline: # Do not match nested blocks, r"" is important
             raise RuntimeError(
                 "Cannot execute code in current context, use Slides.parse(..., display_inline = True) for complete parsing!"
             )
 
-        if xmd[:3] == "```":  # Could be a block just in start of file or string
-            xmd = "\n" + xmd
-
         new_strs = xmd.split("\n```")  # This avoids nested blocks and it should be
         outputs = []
         for i, section in enumerate(new_strs):
             if i % 2 == 0:
-                out = self.convert(self._sub_vars(section))
-                outputs.append(XTML(out))
+                outputs.append(XTML(self.convert(self._sub_vars(section))))
             else:
-                section = textwrap.dedent(
-                    section
-                )  # Remove indentation in code block, useuful to write examples inside markdown block
+                section = textwrap.dedent(section)  # Remove indentation in code block, useuful to write examples inside markdown block
                 outputs.extend(
                     self._parse_block(section)
                 )  # vars are substituted already inside
 
-        if rich_outputs:
-            return outputs
-        elif display_inline:
-            display(*outputs)
+        if display_inline:
+            return display(*outputs)
         else:
             content = ""
             for out in outputs:
@@ -291,7 +298,7 @@ class XMarkdown(Markdown):
                 r"\`\?(.*?)\?\`", text_chunk, flags=re.DOTALL | re.MULTILINE
             )
             for match in all_matches:
-                repr_html = self.parse(match, display_inline=False, rich_outputs=False)
+                repr_html = self.parse(match, display_inline=False)
                 repr_html = re.sub(
                     "</p>$", "", re.sub("^<p>", "", repr_html)
                 )  # Remove <p> and </p> tags at start and end
@@ -306,11 +313,11 @@ class XMarkdown(Markdown):
         header, data = block.split("\n", 1)
         line, _class = self._extract_class(header)
         if "multicol" in line:
-            return [
-                XTML(self._parse_multicol(data, line, _class)),
-            ]
+            return [XTML(self._parse_multicol(data, line, _class)),]
         elif "python" in line:
             return self._parse_python(data, line, _class)  # itself list
+        elif "toc" in line:
+            raise RuntimeError("Some blocks with may not be properly formatted. Check each block is closed with three backticks!")
         else:
             language = (
                 line.strip() if line.strip() else "text"
@@ -406,9 +413,9 @@ class XMarkdown(Markdown):
             output = match  # If below fails, it will be the same as input line
             _match = match.strip()
             if not is_var(_match):
-                raise ValueError(f"Only variables are allowed inside ~`variable` syntax, got {_match!r}. Use string formatting for arbitrary expressions.")
+                raise ValueError(f"Only variables/var.attr are allowed inside ~`variable` syntax, got {_match!r}. Use string formatting for arbitrary expressions.")
             
-            output = get_user_ns().get(_match, f"<pre>alert`NameError`: name {match!r} is not defined</pre>")
+            output = get_var(_match, get_user_ns())
             _out = (
                 (htmlize(output) if output is not None else "")
                 if not isinstance(output, str)
@@ -488,10 +495,9 @@ class XMarkdown(Markdown):
         return html_output  # return in main scope
 
 
-def parse(xmd, display_inline=True, rich_outputs=False):
+def parse(xmd, display_inline=True):
     """Parse extended markdown and display immediately.
     If you need output html, use `display_inline = False` but that won't execute python code blocks.
-    Precedence of content return/display is `rich_outputs = True > display_inline = True > parsed_html_string`.
 
     **Example**
     ```markdown
@@ -530,6 +536,4 @@ def parse(xmd, display_inline=True, rich_outputs=False):
         - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
-    return XMarkdown().parse(
-        xmd, display_inline=display_inline, rich_outputs=rich_outputs
-    )
+    return XMarkdown().parse(xmd, display_inline=display_inline)

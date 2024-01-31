@@ -107,6 +107,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                         "border-radius":"50%",
                         "font-size":"20px",
                     },
+                    ":is(h1, h2, h3, h4, h5, h6)" : {"text-align": "left !important"},
                 },
                 ".LogoHtml": {"position": "absolute !important",}, # other properties are set internally
                 ".Loading": {
@@ -254,9 +255,6 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                             "color": "var(--accent-color) !important",
                         },
                     },
-                    ".SidePanel-Text .widget-html-content": {
-                        "line-height": "inherit !important",
-                    },
                 },
                 ":is(.SlideBox, .SidePanel) :is(button, .jupyter-button)": {
                     "border": "1px solid var(--accent-color)",
@@ -298,16 +296,6 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 ".jupyter-widgets:not(button)": {
                     "color": "var(--primary-fg) !important"
                 },  # All widgets text color
-                ".Intro": {
-                    "background": "var(--primary-bg)",
-                    "overflow": "auto",
-                    "border": "1px inset var(--primary-bg)",
-                    "margin-top": "10px",
-                    "padding": "8px !important",
-                    ":is(h1, h2, h3, h4, h5, h6)": {
-                        "text-align":"left", # Look better left here always
-                    },
-                },
             },
             ".NavWrapper": {
                 "max-width": "100% !important",
@@ -511,7 +499,10 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 "> .widget-hbox": { # upper buttons
                     "border-bottom": "1px solid #8988",
                     "margin": "0 4px !important",
-                    "> button" : {"width": "36px !important"},
+                    "> button" : {
+                        "width": "36px !important",
+                        "^.Menu-Btn" : {"margin-left": "auto !important"}, # keep cross right most
+                    },
                 },
                 "> button > i": {"margin-right": "8px !important",}, # Make uniform
                 "> button::after":{

@@ -340,7 +340,7 @@ class Slides(BaseSlides):
                     ::: align-center
                         color[teal]`Author: Abdul Saboor`
 
-                        👈🏻 **Read more instructions in left panel**
+                        **Read more instructions by clicking ℹ️ button in quick menu:**
                     ::: note-tip
                         In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
                     """,
@@ -395,7 +395,7 @@ class Slides(BaseSlides):
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
-        new_citations = {k: self.parse(v, display_inline=False, rich_outputs=False) for k, v in d.items()}
+        new_citations = {k: self.parse(v, display_inline=False) for k, v in d.items()}
         if self._citations != new_citations: # same call again should not change anythong
             self._citations = new_citations
             self._set_unsynced() # will go synced after rerun
@@ -797,7 +797,7 @@ class Slides(BaseSlides):
                     self._editing_index = self.running.index # Go to latest editing markdown frame, or start of frames
 
                 self.running.set_source(frm, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
-                parse(frm, display_inline=True, rich_outputs=False)
+                parse(frm, display_inline=True)
             
             if self._editing_index is not None:
                 self.navigate_to(self._editing_index)
@@ -835,9 +835,9 @@ class Slides(BaseSlides):
         If you just need to format it in string, then {var} works as well.
         Inline columns are supported with ||C1||C2|| syntax."""
         if cell is None:
-            return parse(line, display_inline=True, rich_outputs=False)
+            return parse(line, display_inline=True)
         else:
-            return parse(cell, display_inline=True, rich_outputs=False)
+            return parse(cell, display_inline=True)
 
     @contextmanager
     def title(self):

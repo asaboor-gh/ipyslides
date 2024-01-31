@@ -133,7 +133,7 @@ class BaseSlides:
         - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - You can escape backtick with backslash: alert`\\\` → \``.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Variables can be replaced with their HTML value (if possible) using alert`~\`variable\`` syntax which gives same result as alert`slides.format_html(variable)`.
+        - Variables can be replaced with their HTML value (if possible) using alert`~\`variable\`` syntax.
         - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
         - Block multicolumns are made using follwong syntax, column separator is tiple plus `+++`:
         

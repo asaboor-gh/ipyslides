@@ -149,7 +149,7 @@ class Writer:
             with capture_output() as cap:
                 for c in col['outputs']:
                     if isinstance(c,str):
-                        parse(c, display_inline = True, rich_outputs = False)
+                        parse(c, display_inline = True)
                     elif isinstance(c, CustomDisplay):
                         c.display() # Handles all custom display classes like alt, goto_button etc.
                     elif callable(c) and c.__name__ == '<lambda>':

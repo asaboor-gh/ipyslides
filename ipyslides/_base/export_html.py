@@ -74,8 +74,12 @@ class _HhtmlExporter:
                         {footer}
                     </div>
                 </section>''' if as_slides else f'<section {sec_id}>{_html}</section>')
+            
+        theme_kws = self.main.settings.theme_kws
+        if not as_slides:
+            theme_kws['text_size'] = '12px' # Report fonts should be standard
         
-        theme_css = styles.style_css(**self.main.settings.theme_kws, _root=True)
+        theme_css = styles.style_css(**theme_kws, _root=True)
         if self.main.widgets.checks.reflow.value or kwargs.get('reflow',False): # reflow kwarg only in report, other based on user
             theme_css = theme_css + f"\n.SlideArea *, ContentWrapper * {{max-height:max-content !important;}}\n" # handle both slides and report
         
@@ -87,7 +91,7 @@ class _HhtmlExporter:
         return doc_html(_code_css,_style_css, content, script).replace(
             '__FOOTER__', self._get_clickables()).replace(
             '__page_size__',kwargs.get('page_size','letter')).replace( # Report
-            '__HEIGHT__', f'{int(254/self.main.settings.theme_kws["aspect"])}mm') # Slides height is determined by aspect ratio.
+            '__HEIGHT__', f'{int(254/theme_kws["aspect"])}mm') # Slides height is determined by aspect ratio.
     
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')
@@ -120,12 +124,12 @@ class _HhtmlExporter:
             return '' # no clicks for only title
         
         items = [getattr(item,'_sec_id','') for item in self.main if '.' not in item.label] # only main slides
-        names = ['⨽', *['●' for _ in items[1:-1]],'⨼']
+        names = ['⇤', *['●' for _ in items[1:-1]],'⇥']
         
         if len(items) > 5: # we need only 0,25,50,75,100 % clickers
             imax = len(items) - 1
             items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
-            names = '⨽◔◑◕⨼'
+            names = '⇤◔◑◕⇥'
 
         return "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(names,items))
                 

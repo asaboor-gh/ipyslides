@@ -29,8 +29,9 @@ class _Buttons:
     setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh Dynamic Content').add_class('Menu-Item').add_class('Refresh-Btn')
-    home    =  Button(description= 'Home',layout= Layout(width='auto',height='auto', tooltip='Go to Title Page')).add_class('Menu-Item')
-    end     =  Button(description= 'End',layout= Layout(width='auto',height='auto', tooltip='Go To End of Slides')).add_class('Menu-Item')
+    home    =  Button(description= '⇤',layout= Layout(width='auto',height='auto'), tooltip='Go to Title Page').add_class('Menu-Item')
+    end     =  Button(description= '⇥',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item')
+    info    =  Button(description= 'ℹ️',layout= Layout(width='auto',height='auto'), tooltip='Information').add_class('Menu-Item')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
                 tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved! [S]',
                 ).add_class('Screenshot-Btn').add_class('Menu-Item')
@@ -66,7 +67,6 @@ class _Htmls:
     cursor  = HtmlWidget('').add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
-    intro   = HtmlWidget('',layout = Layout(min_height='100%')).add_class('SidePanel-Text') # Intro HTML
     glass   = HTML().add_class('BackLayer') # For glass effect
     
 @dataclass(frozen=True)
@@ -192,7 +192,6 @@ class Widgets:
                 self.inputs.bbox,
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
-                self.htmls.intro  
             ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='12px',margin='0')),
         ],layout = Layout(width='70%',min_width='50%',height='0',overflow='hidden')).add_class('SidePanel') 
         
@@ -202,7 +201,7 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
-        self.quick_menu = VBox([HBox([self.buttons.home, self.buttons.end, self.toggles.menu]),*_many_btns[::-1]],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
+        self.quick_menu = VBox([HBox([self.buttons.home, self.buttons.end, self.buttons.info, self.toggles.menu]),*_many_btns[::-1]],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
 
         def close_quick_menu(change):
             self.toggles.menu.value = False

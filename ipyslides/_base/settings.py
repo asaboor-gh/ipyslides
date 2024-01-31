@@ -7,15 +7,12 @@ import os
 import math
 
 from inspect import signature
-from contextlib import suppress
 
-from IPython import get_ipython
 from IPython.display import Image
-from IPython.utils.capture import capture_output
 
 from ..formatters import fix_ipy_image, code_css
 from ..xmd import parse
-from ..utils import html, today, _sub_doc, _css_docstring
+from ..utils import html, today, format_html, _sub_doc, _css_docstring
 from . import intro, styles, _layout_css
 
 
@@ -50,9 +47,9 @@ class LayoutSettings:
         self.btn_draw = self.widgets.toggles.draw
         self.btn_menu = self.widgets.toggles.menu
         self.box = self.widgets.panelbox
-        self._setup()  # Fix up and start up things
 
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
+        self.widgets.buttons.info.on_click(self._show_info)
         self.widgets.buttons._inview.on_click(self.__block_post_run)
         self.widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self.theme_dd.observe(self._update_theme, names=["value"])
@@ -97,17 +94,12 @@ class LayoutSettings:
                 self.widgets._push_toast(content, timeout=15)
 
             self.widgets.htmls.toast.value = "" # Reset to make a new signal
-
-    def _setup(self): 
-        # Only add this if in notebook, not in terminal
-        shell = get_ipython()
-        if shell and shell.__class__.__name__ != "TerminalInteractiveShell":
-            with capture_output() as cap:
-                with suppress(BaseException):
-                    parse(intro.instructions, display_inline=True)
-
-            self.widgets.htmls.intro.value = "\n".join(o.data.get("text/html", "") for o in cap.outputs)
-            self.widgets.htmls.intro.add_class("Intro")
+    
+    def _show_info(self, btn):
+        self.widgets.iw.send({
+            "content": format_html(intro.instructions).value,
+            "timeout": 120000 # 2 minutes
+        })
 
     @property
     def widgets(self):

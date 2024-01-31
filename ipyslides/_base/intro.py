@@ -155,7 +155,7 @@ key_combs = f"""
 |---------------------------------------------|---------------------------------------------------|------------------------|
 | {_key('&#9141;')}/{_key('▸')}               | {_icons["R"]}, {_icons["D"]}                      | Move to next slide     |
 | {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["L"]}, {_icons["U"]}                   | Move to previous slide |
-| {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_key('HOME')}/{_key('END')}                  | Jump to Star/End of slides |
+| {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_key('⇤')}/{_key('⇥')}                      | Jump to Star/End of slides |
 | {_key('Ctrl')} + {_key('[1-9]')}/{_key('[1-9]')} |                                       | Shift [1-9] slides left/right |
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
 | {_key('S')}                                 | {_icons["camera"]}                                | {key_maps["S"]}        |
@@ -173,15 +173,12 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 
-Having your cursor over slides, you can use follwoing keys/combinations:
+Having slides in focus, you can use follwoing keys/combinations:
 
-::: note-warning "warning"
-    Not every frontend is guaranteed to support keyboard shortcuts. Slides are optimized to use without keyboard and with tocuh screen.
-    
 {key_combs}
 ::: note
     - You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
-    - In exported slides, bottom bar is clickable to jump between slides quickly. Whole bar is divided into as many clicker as slides.
+    - In exported slides, bottom-right includes few buttons to jump accross slides.
 
 ::: note-tip
     - Other keys are blocked so that you may not delete or do some random actions on notebook cells.

@@ -28,7 +28,8 @@ def demo_slides(slides):
         ::: text-box
             sup`1`My University is somewhere in the middle of nowhere
             sup`2`Their University is somewhere in the middle of nowhere
-    <h4 style=""color:green;"> 👈🏻 Read instructions in left panel</h4>
+                    
+    Read instructions by clicking ℹ️ button in quick menu.
     """)
 
     #Demo for loading slides from a file or text block

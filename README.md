@@ -60,7 +60,7 @@ You can embed anything that you can include in Jupyter notebook like ipywidgets,
 ---
 # PDF printing
 To include all type of objects you need to make PDF manually.
-Read instructions in side panel about PDF printing. See [PDF-Slides](IPySlides-Print.pdf)
+Read instructions by clicking ℹ️ button in quick menu. See [PDF-Slides](IPySlides-Print.pdf)
 If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bokeh` charts etc. and not something like `ipywidgets`, see next section.
 
 ---
