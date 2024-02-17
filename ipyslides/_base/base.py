@@ -13,7 +13,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .intro import key_combs
 from ..formatters import XTML
-from ..xmd import _special_funcs
+from ..xmd import _special_funcs, error
 
 class BaseSlides:
     def __init__(self):
@@ -29,7 +29,7 @@ class BaseSlides:
         
         self.toast_html = self.widgets.htmls.toast
         
-        self.widgets.checks.toast.observe(self.__toggle_notify,names=['value'])
+        self.widgets.checks.toast.observe(self._toggle_notify,names=['value'])
     
     @property
     def notes(self):
@@ -52,10 +52,12 @@ class BaseSlides:
         return self.__settings
     
     def notify(self,content,timeout=5):
-        "Send inside notifications for user to know whats happened on some button click. Remain invisible in screenshot."
+        """Send inside notifications for user to know whats happened on some button click. 
+        Remain invisible in screenshot.
+        Send 'x' in content to clear previous notification immediately."""
         return self.widgets._push_toast(content,timeout=timeout)
     
-    def __toggle_notify(self,change):
+    def _toggle_notify(self,change):
         "Blocks notifications if check is not enabled."
         if self.widgets.checks.toast.value:
             self.toast_html.layout.visibility = 'visible' 
@@ -113,6 +115,7 @@ class BaseSlides:
         
         - alert`notes\`This is slide notes\``  to add notes to current slide
         - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
+        - With citations mode set as 'footenote', you can add alert`refs\`ncol\`` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
         - alert`section\`content\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
@@ -121,6 +124,7 @@ class BaseSlides:
         - Double dashes `--` is used to split markdown text in frames.
         
         Block table of contents with extra content can be added as follows:
+                                               
         ```markdown
          ```toc Table of contents
          Extra content for current section appears on right
@@ -130,10 +134,17 @@ class BaseSlides:
         
         **Other syntax can be used everywhere in markdown:**
         
+        - Variables can be replaced with their HTML value (if no other formatting given) using alert`\`{variable}\`` 
+            (should be single curly braces pair wrapped by backticks after other formattings done) syntax.
+        
+            ::: note-info
+                - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
+                - Variables are substituted from top level scope (e.g. Notebook's `locals()`/`globals()`). To use varirables from a nested scope,
+                   use `parse`, `write` and similar functions under alert`Slides.use_ns` context manager to pick your supplied variables.
+                                               
         - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - You can escape backtick with backslash: alert`\\\` → \``.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Variables can be replaced with their HTML value (if possible) using alert`~\`variable\`` syntax.
         - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
         - Block multicolumns are made using follwong syntax, column separator is tiple plus `+++`:
         
@@ -153,7 +164,7 @@ class BaseSlides:
          slides.write('Hello, I was written from python code block using slides instance.')
          ```
         ```
-        and source then can be emded with ~\`source\` syntax.
+        and source then can be emded with \`{source}\` syntax.
         
         - A whole block of markdown can be CSS-classed using syntax
         ```markdown
@@ -177,7 +188,7 @@ class BaseSlides:
                 [markdown extensions](https://python-markdown.github.io/extensions/) and 
                 [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-                `__format__` method in your class enables to use \{obj\} syntax in python formatting and ~\`obj\` in extended Markdown.
+                `__format__` method in your class enables to use {obj} syntax in python formatting and \`{obj}\` in extended Markdown.
         
         - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         
@@ -271,36 +282,9 @@ class BaseSlides:
         - Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
         - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
         - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
-        - Variables defined in jupyter notebook can be passed to markdown file through ~\`var\` syntax.
         
-        **Markdown Content**
-        ```markdown
-        # Talk Title
-        ---
-        # Slide 1 
-        || Inline - Column A || Inline - Column B ||
-        ~`some_var` that will be replaced by it's html value.
-         ```python run source
-         myslides = get_slides_instance() # Access slides instance under python code block in markdown
-         # code here will be executed and it's output will be shown in slide.
-         ```
-         ~`source` from above code block will be replaced by it's html value.
-        ---
-        # Slide 2
-        --
-        ## First Frame
-         ```multicol 40 60
-        # Block column 1
-        +++
-        # Block column 2
-        || Mini - Column A || Mini - Column B ||
-         ```
-        --
-        ## Second Frame
-        ```
-        This will create two slides along with title page if start = 0. Second slide will have two frames.
-        
-        Markdown content of each slide is stored as .markdown attribute to slide. You can append content to it later like this:
+
+        Markdown content of each slide is stored as `.markdown` attribute to slide. You can append content to it later like this:
         ```python
         with slides.slide(2):
             slides.parse(slides[2].markdown) # Instead of write, parse take cares of code blocks
@@ -358,7 +342,7 @@ class BaseSlides:
         with self.skip_post_run_cell():
             for i,chunk in enumerate(chunks):
                 # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-                checks = (chunk != getattr(handles[i],'_mdff',''), re.findall(r"\~\`(.*?)\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
+                checks = (chunk != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
                 if  any(checks):
                     with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                         self._slide(f'{i + start} -m', chunk)
@@ -396,11 +380,12 @@ class BaseSlides:
                     self._mtime = mtime
                     try: 
                         self.from_markdown(start, path, trusted)
+                        self.notify('x') # need to remove any notification from previous error
                     except:
                         e, text = traceback.format_exc(limit=0).split(':',1) # onlly get last error for notification
-                        self.notify(f'{self.alert(f"SyncError").value}: something went wrong<br/><br/>{self.alert(e).value}: {text}', 20)
+                        self.notify(f"{error('SyncError','something went wrong')}<br/><br/>{error(e,text)}",20)
             else:
-                self.notify(self.alert("SyncError").value + f": file {path!r} no longer exists!", 20)
+                self.notify(error("SyncError", f"file {path!r} no longer exists!").value, 20)
 
         self.widgets.iw.on_msg(update)
         self.widgets.iw.msg_tojs = f'SYNC:ON:{interval}'
@@ -470,8 +455,9 @@ class BaseSlides:
             self.write('Besides functions below, you can add slides with `%%title`/`%%slide` magics as well.\n{.note .info}')
             self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
-        with auto.slide():
-            self.xmd_syntax.display() # This will display information about Markdown extended syntax
+        with auto.slide(), self.code.context():
+            with self.use_ns(locals()): # to pass self to extended markdown parser
+                self.write('`{self.docs!r}` `{self.xmd_syntax}`')
             
         with auto.slide():
             self.write('## Adding Content')

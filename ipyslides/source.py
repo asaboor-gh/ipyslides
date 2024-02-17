@@ -204,6 +204,6 @@ class Code:
         
         if auto_display:
             source_html.display()
-            
+        
         yield source_html
-        # No need to try as it is not possible to get here if not in context manager
+        

@@ -269,7 +269,7 @@ class Slide:
     _animations = {'main':'slide_h','frame':'appear'}
     _overall_css = html('style','')
     def __init__(self, app, number, captured_output = _EmptyCaptured):
-        self._widget = Output(layout = Layout(margin='auto',padding='1em')).add_class("SlideArea")
+        self._widget = Output(layout = Layout(margin='auto',padding='1em', visibility='hidden')).add_class("SlideArea")
         self._app = app
         self._contents = captured_output.outputs
             
@@ -411,9 +411,11 @@ class Slide:
             delattr(self, '_refs') # added later  only if need
         
         if self._app.cite_mode == 'footnote':
-            if self._citations:
+            if hasattr(self, '_refs_consumed'):
+                delattr(self, '_refs_consumed') # for next time
+            elif self._citations:
                 self._refs = html('div', # need to store attribute for export
-                    sorted(self._citations.values(), key=lambda x: int(x._id)), 
+                    sorted(self._citations.values(), key=lambda x: x._id), 
                     className='Citations', style = '')
                 self._refs.display()
         elif self._app.cite_mode == 'global':
@@ -423,7 +425,7 @@ class Slide:
 
             if all_citations and (self.index == self._app._max_index):
                 self._refs = html('div',
-                    sorted(all_citations.values(), key=lambda x: int(x._id)), 
+                    sorted(all_citations.values(), key=lambda x: x._id), 
                     className='Citations',style='')
                 self._refs.display()
 

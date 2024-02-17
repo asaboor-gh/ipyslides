@@ -1,4 +1,4 @@
-import sys, os, json, re, textwrap
+import sys, os, json, re, textwrap, math
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 
@@ -8,7 +8,7 @@ from IPython.utils.capture import capture_output
 
 import ipywidgets as ipw
 
-from .xmd import parse, extender as _extender
+from .xmd import use_ns, parse, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
 from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
@@ -35,11 +35,11 @@ class _Citation:
     def __init__(self, slide, key):
         self._slide = slide
         self._key = key
-        self._id = "?"
+        self._id = math.nan
         self._slide._citations[key] = self  # Add to slide's citations
 
     def __repr__(self):
-        return f"Citation(key = {self._key!r}, id = {self._id!r}, slide_label = {self._slide.label!r})"
+        return f"Citation(key = {self._key!r}, id = {self._id}, slide_label = {self._slide.label!r})"
 
     def __format__(self, spec):
         return f"{self.value:{spec}}"
@@ -61,8 +61,7 @@ class _Citation:
     @property
     def inline_value(self):
         if _value := self._slide._app._citations.get(self._key, None):
-            return utils.textbox(
-                _value.replace("<p>", "", 1)[::-1].replace(">p/<", "", 1)[::-1],
+            return utils.textbox(_value.partition("<p>")[-1].rpartition("</p>")[0],
                 left="initial",
                 top="initial",
             ).value
@@ -90,6 +89,7 @@ class Slides(BaseSlides):
         self.icon = _Icon  # Icon is useful to add many places
         self.write = write
         self.parse = parse  # Parse extended markdown
+        self.use_ns = use_ns # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
 
         self._remove_post_run_callback()  # Remove post_run_cell callback before this and at end
@@ -365,11 +365,22 @@ class Slides(BaseSlides):
         )
         self._add_clean_title()  # Add clean title page without messing with resources.
 
-    def _cite(self, key):
+    def _cite(self, keys):
+        self.verify_running("Citations can be added only inside a slide constructor!")
+        citeds = [self._cite_key(key.strip()) for key in keys.split(',')] # avoid whitespaces around key
+
+        if self.cite_mode == "inline":
+            return '<br/>'.join(citeds)
+
+        if len(citeds) > 2:
+            return f"{citeds[0]}<sup>-</sup>{citeds[-1]}" # dash goes up
+        
+        return '<sup>,</sup>'.join(citeds) 
+
+    def _cite_key(self, key):
         """Use markdown syntax cite`key` to add citations since output has to be inline. 
         Citations corresponding to keys used can be added by ` Slides.set_citations ` method.
         """
-        self.verify_running("Citations can be added only inside a slide constructor!")
         cited = _Citation(slide=self.running, key=key)
 
         if self.cite_mode == "inline":
@@ -377,16 +388,14 @@ class Slides(BaseSlides):
 
         # Set _id for citation
         if self.cite_mode == "footnote":
-            cited._id = str(
-                list(self.running._citations.keys()).index(key) + 1
-            )  # Get index of key from unsorted ones
+            cited._id = list(self.running._citations.keys()).index(key) + 1 # Get index of key from unsorted ones
         else:
             prev_keys = list(self._citations.keys())
 
             if key in prev_keys:
-                cited._id = str(prev_keys.index(key) + 1)
+                cited._id = prev_keys.index(key) + 1
             else:
-                cited._id = str(len(prev_keys))
+                cited._id = len(prev_keys)
 
         # Return string otherwise will be on different place
         return f"""<a href="#{key}" class="citelink">
@@ -403,6 +412,9 @@ class Slides(BaseSlides):
     def _set_unsynced(self):
         for slide in self.cited_slides:
             slide.set_dom_classes(add = 'Out-Sync') # will go synced after rerun
+        
+        if self._max_index > 0:
+            self[-1].update_display(go_there=False) # auto update last slide in all cases
 
     def set_citations(self, data, mode='global'):
         """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
@@ -421,23 +433,20 @@ class Slides(BaseSlides):
             self._set_citations_from_file(data) 
         else:
             raise TypeError(f"data should be a dict or path to a json file for citations, got {type(data)}")
-        
-        if self._cite_mode != mode:
-            self._cite_mode = mode # Update first as they need in display update
-            self._set_unsynced() # will go synced after rerun
     
         # Update mode and display after setting citations
         if mode not in ["global", "inline", "footnote"]:
             raise ValueError(f'citation mode must be one of "global", "inline", "footnote" but got {mode}')
         
+        if self._cite_mode != mode:
+            self._cite_mode = mode # Update first as they need in display update
+            self._set_unsynced() # will go synced after rerun
+
         # Make some possible updates
         for slide in self[:]:
             if hasattr(slide, '_refs') or (self.cite_mode == "footnote"): 
                 slide.update_display(go_there=False) # will reset slides refrences
-                    
-        if self.cite_mode == 'global':
-            self[-1].update_display(go_there=False) # last slide for global
-
+            
         
         # Finally write resources to file in assets
         with self.set_dir(self._assets_dir):
@@ -456,8 +465,8 @@ class Slides(BaseSlides):
         "Return slides which have citations."
         return tuple([s for s in self[:] if s._citations])
 
-    def _section(self, text):
-        """Add section key to presentation that will appear in table of contents using section`content` syntax.
+    def section(self, text):
+        """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
         Sections can be written as table of contents.
         """
         self.verify_running("Sections can be added only inside a slide constructor!")
@@ -470,8 +479,8 @@ class Slides(BaseSlides):
             ):  # self will be built of course at end
                 s.update_display(go_there=False)
  
-    def _toc(self, title='## Contents {.align-left}', extra = None):
-        "Use markdown syntax to add it like toc`title` or ```toc title\n extra\n```. Extra is like a summary of current section shown on right."
+    def toc(self, title='## Contents {.align-left}', extra = None):
+        "You can also use markdown syntax to add it like toc`title` or ```toc title\n extra\n```. Extra is passed to write command in right column."
         def fmt_sec(s, _class):
             return XTML(f'''<li class="toc-item {_class}">
                 <a href="#{s._sec_id}" class="export-only">{s._section}</a>
@@ -674,10 +683,7 @@ class Slides(BaseSlides):
 
         if self._iterable and change:
             self.notes.display()  # Display notes first
-            self.widgets.htmls.toast.value = (
-                ""  # clear notification content if any defined by on_load
-            )
-
+            self.notify('x') # clear notification
             self._switch_slide(old_index=change["old"], new_index=change["new"])
             self.current.run_on_load()  # Run on_load setup after switching slide, it updates footer as well
 
@@ -831,8 +837,8 @@ class Slides(BaseSlides):
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
         Can use in place of `write` commnad for strings.
-        When using `%xmd`, you can pass variables as ~`var` which will substitute HTML representation. 
-        If you just need to format it in string, then {var} works as well.
+        When using `%xmd`, you can pass variables as `{var}` which will substitute HTML representation
+        if no other formatting specified.
         Inline columns are supported with ||C1||C2|| syntax."""
         if cell is None:
             return parse(line, display_inline=True)
@@ -1145,7 +1151,7 @@ class Slides:
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
-    
+        - See `Slides.xmd_syntax` for extended markdown syntax
    """
     )
     @classmethod

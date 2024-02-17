@@ -210,7 +210,7 @@ class Serializer:
             - Serializer function should return html string. It is not validated for correct code on registration time.       
             - Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
             - Serialzers for widgets are equivalent to `Slides.alt(widget, func)` inside `write` command for export purpose. Other commands such as `Slides.format_html` will pick oldest value only.
-            - Use `Slides.serializer.get_metadata(obj)` to get metadata of a registerd type and then use `display(obj, metadata = metadata)` to display as it is and export html from metadata. metadata is a dict with `{'text/html': 'html string'}`.
+            - Use `Slides.serializer.get_metadata(obj)` to get metadata of a registerd type and then use `display(obj, metadata = metadata)` to display as it is and export html from metadata. metadata is a dict with ` {'text/html': 'html string'} `.
         """
         def _register(func):
             if obj_type is str:

@@ -177,6 +177,11 @@ function handleToastMessage(toast, msg) {
             toast.innerHTML = "";
         };
         onClick(); // Clear up previous things
+        
+        if (msg.content === "x") {
+            return false; // do nothing, cleared above 
+        }
+
         let div = document.createElement('div');
         div.style = "padding:8px;font-size:16px;" // inline fonts are better
         div.innerHTML = msg.content;

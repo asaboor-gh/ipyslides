@@ -47,8 +47,8 @@ def demo_slides(slides):
     version = myslides.version
     %xmd #### This is inline markdown parsed by magic {.note .warning}
     ```
-    Version: ~`version` as executed from below code in markdown. 
-    ~`source`
+    Version: `{version}` as executed from below code in markdown. 
+    `{source}`
     proxy`something will be here in end`
     ---
     # IPySlides Online Running Sources 
@@ -90,7 +90,7 @@ def demo_slides(slides):
     ## IPython Display Objects
     #### Any object with following methods could be in`write` command:
     {', '.join([f'`_repr_{rep}_`' for rep in supported_reprs])}
-    Such as color[fg=navy,bg=skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`{{.warning}}.            
+    Such as color[fg=navy,bg=skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure` {{.warning}}.            
     ---
     ## Plots and Other **Data**{{style='color:var(--accent-color);'}} Types
     #### These objects are implemented to be writable in `write` command:
@@ -99,7 +99,7 @@ def demo_slides(slides):
     command to show in Notebook outside color[fg=teal,bg=whitesmoke]`write`.
     ---
     ## Interactive Widgets
-    ### Any object in `ipywidgets`{slides.textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
+    ### Any object in `ipywidgets` {slides.textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
     or libraries based on ipywidgtes such as color[red]`bqplot`,color[green]`ipyvolume`,plotly's `FigureWidget` cite`pf`(reference at end)
     can be included as well.
     {{.warning}}
@@ -329,8 +329,8 @@ def demo_slides(slides):
     ''', trusted=True)
 
     with auto.slide(), slides.code.context():
-        slides.write('## Built-in CSS styles')
-        slides.css_styles.display()
+        with slides.use_ns(locals()): # This is to pass slides in formatting below
+            slides.write('## Built-in CSS styles\n`{slides.css_styles}`')
 
     auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
 

@@ -10,7 +10,8 @@ import numpy as np
 ```multicol
 A
 +++
-This ~`var_name` is a code from above and will be substituted with the value of var_name
+This \`{var_name}\` is a code from above and will be substituted with the value of var_name as:
+`{var_name}`
 ```
 ::: note-warning
     Nested blocks are not supported.
@@ -19,8 +20,10 @@ This ~`var_name` is a code from above and will be substituted with the value of 
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
+import string
+import textwrap, re, sys, json
+from contextlib import contextmanager
 
-import textwrap, re, ast, sys, json
 from markdown import Markdown
 from IPython.core.display import display
 from IPython import get_ipython
@@ -93,7 +96,7 @@ _special_funcs = {
     "today": "fmt like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "details": "text",
-    "center": "text or ~\`variable\`",
+    "center": "text or \`{variable}\`",
 }  # align-center should be at end of all
 
 _code_ = """
@@ -103,6 +106,9 @@ _code_ = """
 ```
 """
 
+def error(name, msg):
+    "Add error without breaking execution."
+    return XTML(f"<b style='color:crimson;'>{name}</b>: {msg}")
 
 def fmt_code(code, instance_name="slides"):
     "Format given code block to be runable under markdown. instance_name is the name of the slides instance as used in current code."
@@ -119,33 +125,6 @@ def get_unique_css_class():
     "Get slides unique css class if available."
     slides = get_slides_instance()
     return f".{slides.uid}" if slides else ""
-
-
-def is_var(name):
-    try:
-        ast.parse(f"{name} = None") # if not valid variable name, it will fail
-        return True
-    except:
-        return False
-    
-def get_var(match, user_ns):
-    parts = match.split('.')
-    if parts[0] not in user_ns:
-        return f"<pre>alert`NameError`: name {match!r} is not defined</pre>"
-    
-    var = user_ns[parts[0]]
-    for part in parts[1:]:
-        if not hasattr(var, part):
-            return f"<pre>alert`AttributeError`: {var!r} object has no attribute {part!r}</pre>"
-        var = getattr(var, part)
-    
-    return var 
-
-    
-def get_user_ns():
-    "Top level user namespace"
-    main = sys.modules.get('__main__',None) # __main__ is current top module
-    return main.__dict__ if main else {}
 
 
 def resolve_objs_on_slide(slide_instance, text_chunk):
@@ -169,20 +148,9 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
         r"section\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
     )
     for match in all_matches:
-        slide_instance._section(match)  # This will be attached to the running slide
+        slide_instance.section(match)  # This will be attached to the running slide
         text_chunk = text_chunk.replace(f"section`{match}`", "", 1)
 
-    # toc`This is toc title`
-    all_matches = re.findall(r"toc\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
-    for match in all_matches:
-        block = fmt_code(
-            f"""
-            kwargs = dict(title = {match!r}) if {match!r} else {{}} # auto
-            slide_instance._toc(**kwargs)
-            """, instance_name="slide_instance",
-        )
-
-        text_chunk = text_chunk.replace(f"toc`{match}`", block, 1)
     
     # ```toc title\n text\n``` as block start with new line 
     all_matches = re.findall(r"\n\`\`\`toc(.*?)\n\`\`\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
@@ -192,11 +160,23 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
         block = fmt_code(
             f"""
             import json
-            slide_instance._toc(**json.loads({jstr!r}))
+            slide_instance.toc(**json.loads({jstr!r}))
             """, instance_name="slide_instance",
         )
 
         text_chunk = text_chunk.replace(f"\n```toc{match}\n```", block, 1)
+
+    # toc`This is toc title`, should be after block
+    all_matches = re.findall(r"toc\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
+    for match in all_matches:
+        block = fmt_code(
+            f"""
+            kwargs = dict(title = {match!r}) if {match!r} else {{}} # auto
+            slide_instance.toc(**kwargs)
+            """, instance_name="slide_instance",
+        )
+
+        text_chunk = text_chunk.replace(f"toc`{match}`", block, 1)
 
     # proxy`This is prxoy's placeholder text`
     all_matches = re.findall(
@@ -207,15 +187,47 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
             f"pr = slide_instance.proxy({match!r})", instance_name="slide_instance"
         )  # assign to avoid __repr__ output in markdown
         text_chunk = text_chunk.replace(f"proxy`{match}`", block, 1)
+    
+    # Footnotes at place user likes
+    all_matches = re.findall(r"refs\`([\d+]?)\`", text_chunk) # match digit or empty
+    for match in all_matches:
+        slide_instance.running._refs_consumed = True
+        _cits = ''.join(v.value for v in sorted(slide_instance.running._citations.values(), key=lambda x: x._id))
+        out = f"<div class='Citations' style='column-count: {match} !important;'>{_cits}</div>"
+        text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
 
     return text_chunk
 
+class StrFormatter(string.Formatter):
+    def format_field(self, value, format_spec):
+        if not format_spec:
+            if not isinstance(value, str): # keep str as it is
+                return htmlize(value) if value is not None else "" # Avoid None
+            else:
+                return value # Just return string
+
+        return super().format_field(value, format_spec)
+        
+    def get_value(self, key, args, kwargs):
+        kwargs = kwargs.get('ns',{}) # avoids unpacking huge dictionary each time
+        if isinstance(key, int):
+            return f"<pre>{error('RuntimeError','Positional arguments are not supported in custom formatting!')}<pre>"
+        elif isinstance(key, str) and key not in kwargs:
+            return f"<pre>{error('KeyError', f'{key!r} not found in given namespace')}</pre>"
+        return super().get_value(key, args, kwargs)
+    
+
+frmtr = StrFormatter() # custom format
+del StrFormatter
+
 
 class XMarkdown(Markdown):
+    __EXTRA_NS__ = {}
     def __init__(self):
         super().__init__(
             extensions=extender._all, extension_configs=extender._all_configs
         )
+        self._vars = {}
         self._display_inline = False
         self._shell = get_ipython()
         self._slides = get_slides_instance()
@@ -225,6 +237,18 @@ class XMarkdown(Markdown):
         if len(out) == 1:
             return out[0].strip(), ""
         return out[0].strip(), out[1].replace(".", " ").strip()
+    
+    def user_ns(self):
+        "Top level namespace or set by user with `Slides.use_ns` contextmanager."
+        if self.__EXTRA_NS__:
+            return self.__EXTRA_NS__
+        # Otherwise get top level namespace only
+        return self.main_ns()
+        
+
+    def main_ns(self): # This is required to set variables
+        main = sys.modules.get('__main__',None) # __main__ is current top module
+        return main.__dict__ if main else {}
 
     def parse(self, xmd, display_inline=False):
         """Return a string after fixing markdown and code/multicol blocks if display_inline is False
@@ -261,12 +285,14 @@ class XMarkdown(Markdown):
         outputs = []
         for i, section in enumerate(new_strs):
             if i % 2 == 0:
-                outputs.append(XTML(self.convert(self._sub_vars(section))))
+                outputs.append(XTML(self.convert(section)))
             else:
                 section = textwrap.dedent(section)  # Remove indentation in code block, useuful to write examples inside markdown block
                 outputs.extend(
                     self._parse_block(section)
                 )  # vars are substituted already inside
+
+        self._vars = {} # reset at end to release references
 
         if display_inline:
             return display(*outputs)
@@ -317,22 +343,21 @@ class XMarkdown(Markdown):
         elif "python" in line:
             return self._parse_python(data, line, _class)  # itself list
         elif "toc" in line:
-            raise RuntimeError("Some blocks with may not be properly formatted. Check each block is closed with three backticks!")
+            raise RuntimeError("Some blocks with may not be properly closed by three backticks, or '```toc' is not allowed in current context.")
         else:
-            language = (
-                line.strip() if line.strip() else "text"
-            )  # If no language, assume
-            name = (
-                " " if language == "text" else None
-            )  # If no language or text, don't show name
-            return [
-                highlight(data, language=language, name=name, className=_class),
-            ]  # no need to highlight with className separately
+            out = XTML() # empty placeholder
+            try:
+                name = " " if line.strip().lower() == "text" else None
+                out.data = highlight(data, language=line.strip(), name=name, className=_class).value # intercept code highlight
+            except:
+                out.data = self.convert(f'```{data}\n```') # Let other extensions parse block
+            
+            return [out,] # list 
 
     def _parse_multicol(self, data, header, _class):
         "Returns parsed block or columns or code, input is without \`\`\` but includes langauge name."
         cols = data.split("+++")  # Split by columns
-        cols = [self.convert(self._sub_vars(col)) for col in cols]
+        cols = [self.convert(col) for col in cols]
 
         if header.strip() == "multicol":
             widths = [f"{int(100/len(cols))}%" for _ in cols]
@@ -374,8 +399,9 @@ class XMarkdown(Markdown):
             ]
         elif "run" in header and self._display_inline:
             source = header.split("run")[1].strip()  # Afte run it be source variable
+            main_ns = self.main_ns() # get once
             if source:
-                get_user_ns()[source] = _str2code(
+                main_ns[source] = _str2code(
                     dedent_data, language="python", className=_class
                 )
 
@@ -383,48 +409,37 @@ class XMarkdown(Markdown):
             with capture_output() as captured:
                 if current_shell := self._slides or self._shell:
                     try: # Need slides to be  accessible in namespace
-                        get_user_ns()['get_slides_instance'] = get_slides_instance
+                        main_ns['get_slides_instance'] = get_slides_instance
                         current_shell.run_cell(dedent_data)
                     finally:
-                        get_user_ns().pop('get_slides_instance') # don't keep
+                        main_ns.pop('get_slides_instance') # don't keep
 
                 else:
                     raise RuntimeError("Cannot execute this outside IPython!")
 
             outputs = captured.outputs
             return outputs
-
+    
+    def convert(self, text):
+        "Replaces variables with placeholder after conversion to respect all other extensions."
+        output = super().convert(self._sub_vars(text))
+        
+        for key, value in self._vars.items():
+            output = output.replace(key, value)
+        return output
+    
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as ~`var` and two inline columns as ||C1||C2||"
-        # Check maximum level of indentation if under custom blocks
-        matches = [
-            4 + len(match)
-            for match in re.findall(
-                r"^(\s*):::", html_output.replace("\t", "    "), flags=re.MULTILINE
-            )
-        ]  # 4 is default
-        sub_nl = "\n" + (
-            " " * max(matches) if matches else ""
-        )  # If no :::, no indentation is needed
-
-        # Replace variables first
-        all_matches = re.findall(r"\~\`(.*?)\`", html_output, flags=re.DOTALL)
-        for match in all_matches:
-            output = match  # If below fails, it will be the same as input line
-            _match = match.strip()
-            if not is_var(_match):
-                raise ValueError(f"Only variables/var.attr are allowed inside ~`variable` syntax, got {_match!r}. Use string formatting for arbitrary expressions.")
-            
-            output = get_var(_match, get_user_ns())
-            _out = (
-                (htmlize(output) if output is not None else "")
-                if not isinstance(output, str)
-                else output
-            )  # Avoid None
-            html_output = html_output.replace(
-                "~`" + match + "`", _out.replace("\n", sub_nl), 1
-            )  # Replace with htmlized output, replace new line with 4 spaces to keep indentation if block ::: is used
-
+        "Substitute variables in html_output given as `{var}` and two inline columns as ||C1||C2||"
+        
+        def handle_var(value): # Put a temporary variable that will be replaced at end of other conversions.
+            key = f"PrivateXmdVar-{len(self._vars)}" 
+            self._vars[key] = value
+            return key 
+        
+        user_ns = self.user_ns() # get once, will be called multiple time
+        # Replace variables first to have small data # ns let avoiding huge dictionary unpacking
+        html_output = re.sub(r"\`\{(.*?)\}\`", lambda match: handle_var(frmtr.format(match.group()[1:-1], ns = user_ns)), html_output, flags=re.DOTALL)
+        
         # Replace inline one argumnet functions
         from . import utils  # Inside function to avoid circular import
 
@@ -434,10 +449,8 @@ class XMarkdown(Markdown):
             )
             for match in all_matches:
                 _func = getattr(utils, func)
-                _out = (_func(match) if match else _func()).value.replace(
-                    "\n", sub_nl
-                )  # If no argument, use default, replace new line with 4 spaces to keep indentation if block ::: is used
-                html_output = html_output.replace(f"{func}`{match}`", _out, 1)
+                _out = (_func(match) if match else _func()).value # If no argument, use default, replace new line with 4 spaces to keep indentation if block ::: is used
+                html_output = html_output.replace(f"{func}`{match}`", handle_var(_out), 1)
 
         # Replace functions with arguments
         for func in _special_funcs.keys():
@@ -462,16 +475,10 @@ class XMarkdown(Markdown):
                 args = [a.strip().replace("__EQ__", "=") for a in args if "=" not in a]
                 _func = getattr(utils, func)
                 try:
-                    _out = (
-                        _func(arg0, *args, **kws).value
-                        if arg0
-                        else _func(*args, **kws).value
-                    )  # If no argument, use default
-                    _out = _out.replace(
-                        "\n", sub_nl
-                    )  # Replace new line with 4 spaces to keep indentation if block ::: is used
+                    _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)).value
+                     # If no argument, use default and Replace new line with 4 spaces to keep indentation if block ::: is used
                     html_output = html_output.replace(
-                        f"{func}[{match[0]}]`{match[1]}`", _out, 1
+                        f"{func}[{match[0]}]`{match[1]}`", handle_var(_out), 1
                     )
                 except Exception as e:
                     raise Exception(
@@ -486,13 +493,24 @@ class XMarkdown(Markdown):
             _cols = "".join(
                 f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols
             )
-            _out = f'<div class="columns">{_cols}</div>'.replace(
-                "\n", sub_nl
-            )  # Replace new line with 4 spaces to keep indentation if block ::: is used
-            html_output = html_output.replace(f"||{cols[0]}||{cols[1]}||", _out, 1)
+            _out = f'<div class="columns">{_cols}</div>'  # Replace new line with 4 spaces to keep indentation if block ::: is used
+            html_output = html_output.replace(f"||{cols[0]}||{cols[1]}||", handle_var(_out), 1)
 
 
         return html_output  # return in main scope
+    
+@contextmanager
+def use_ns(d):
+    """Context manager to access user-defined namespace to use for variable substitution in extended markdown
+    which otherwise only pick top level scope. You can use locals(), globals() or any dictionary."""
+    if not isinstance(d, dict):
+        raise TypeError(f"use_ns expects a dictionary, got {type(d)}!")
+    
+    try:
+        XMarkdown.__EXTRA_NS__ = d 
+        yield
+    finally:
+        XMarkdown.__EXTRA_NS__ = {} # reset back
 
 
 def parse(xmd, display_inline=True):
@@ -512,7 +530,7 @@ def parse(xmd, display_inline=True):
      {.info}
      +++
      # Second column is 60% wide
-     This ~\`var_name\` is code from above and will be substituted with the value of var_name
+     This \`{var_name}\` is code from above and will be substituted with the value of var_name
      ```
 
      ```python

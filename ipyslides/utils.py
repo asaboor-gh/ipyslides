@@ -1,4 +1,4 @@
-_attrs = ['alt','alert', 'block', 'bullets', 'classed', 'color', 'cols','suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
+_attrs = ['alt','alert', 'block', 'bullets', 'classed', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
             'image','svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
             'raw', 'rows', 'enable_zoom','html','sig','doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
@@ -22,7 +22,7 @@ from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
 from .formatters import XTML, fix_ipy_image, htmlize
-from .xmd import get_unique_css_class
+from .xmd import get_unique_css_class, error
 from .writer import Writer, AltForWidget
 
 def is_jupyter_session():
@@ -319,11 +319,11 @@ def alt(widget, func):
     slides = get_slides_instance()
     slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">').display()
     ```
-    ~`source`
+    `{source}`
     
     ::: note-info
         - If you happen to be using alt many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.
-        - You can also use `display(obj, metadata=`Slides.serializer.get_metadata(obj)` or `{'text/html':'html representation'}`) where obj is widget or any other object, but HTML representation will be oldest as given in metadata.
+        - You can also use `display(obj, metadata=`Slides.serializer.get_metadata(obj)` or ` {'text/html':'html representation'} `) where obj is widget or any other object, but HTML representation will be oldest as given in metadata.
     """
     return AltForWidget(widget, func)
         

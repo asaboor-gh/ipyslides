@@ -367,6 +367,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 # Below are required to override behavior of span tag
                 'display':'inline-block !important',
                 'white-space':'break-spaces !important',
+                '*': {'color':'var(--secondary-fg)',}, # should be same color 
             },
             ".text-tiny" : {
                 "font-size": "0.5em !important",
