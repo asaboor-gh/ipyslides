@@ -32,7 +32,7 @@ class GotoButton(CustomDisplay):
     def display(self):
         alt_link = self._app.html('a',self._button.description, href=f'#{self._target_id}', 
             style='color:var(--accent-color);text-decoration:none;', 
-            className='goto-button slides-only export-only'
+            className='goto-button export-only'
         )
     
         display(self._button, metadata = {'DOMWidget': '---'})
@@ -229,7 +229,7 @@ def write(*objs,widths = None):
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
-    - Use `Slides.alt(widget, func)` function to display widget on slides and alternative content in exported slides/report, function should return possible HTML representation of widget.
+    - Use `Slides.alt(widget, func)` function to display widget on slides and alternative content in exported slides, function should return possible HTML representation of widget.
     - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, html_converter_func)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.

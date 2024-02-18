@@ -138,7 +138,7 @@ class Slides(BaseSlides):
 
             builtins.print = print
 
-        self._cite_mode = 'global'
+        self._cite_mode = 'footnote'
 
         self._slides_dict = (
             {}
@@ -371,9 +371,6 @@ class Slides(BaseSlides):
 
         if self.cite_mode == "inline":
             return '<br/>'.join(citeds)
-
-        if len(citeds) > 2:
-            return f"{citeds[0]}<sup>-</sup>{citeds[-1]}" # dash goes up
         
         return '<sup>,</sup>'.join(citeds) 
 
@@ -385,22 +382,12 @@ class Slides(BaseSlides):
 
         if self.cite_mode == "inline":
             return cited.inline_value  # Just write here
-
-        # Set _id for citation
-        if self.cite_mode == "footnote":
+        else: # Set _id for citation in footnote mode
             cited._id = list(self.running._citations.keys()).index(key) + 1 # Get index of key from unsorted ones
-        else:
-            prev_keys = list(self._citations.keys())
-
-            if key in prev_keys:
-                cited._id = prev_keys.index(key) + 1
-            else:
-                cited._id = len(prev_keys)
 
         # Return string otherwise will be on different place
         return f"""<a href="#{key}" class="citelink">
-        <sup id ="{key}-back" style="color:var(--accent-color);">{cited._id}</sup>
-        {cited.inline_value.replace('text-box','',1) if self.cite_mode == 'global' else ''}</a>"""
+        <sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>"""
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
@@ -416,9 +403,9 @@ class Slides(BaseSlides):
         if self._max_index > 0:
             self[-1].update_display(go_there=False) # auto update last slide in all cases
 
-    def set_citations(self, data, mode='global'):
+    def set_citations(self, data, mode='footnote'):
         """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
-        `mode` for citations should be one of ['global', 'inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.set_layout(..., ncol_refs=N)`.
+        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.set_layout(..., ncol_refs=N)`.
 
         ::: note
             - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
@@ -435,8 +422,8 @@ class Slides(BaseSlides):
             raise TypeError(f"data should be a dict or path to a json file for citations, got {type(data)}")
     
         # Update mode and display after setting citations
-        if mode not in ["global", "inline", "footnote"]:
-            raise ValueError(f'citation mode must be one of "global", "inline", "footnote" but got {mode}')
+        if mode not in ["inline", "footnote"]:
+            raise ValueError(f'citation mode must be one of "inline" or "footnote" but got {mode}')
         
         if self._cite_mode != mode:
             self._cite_mode = mode # Update first as they need in display update
@@ -890,9 +877,6 @@ class Slides(BaseSlides):
                         first_toc = False
                     else:
                         slide._slide_tocbox.remove_class("FirstTOC")
-            else: # at end of for loop last slide
-                if self.cite_mode == 'global': # Add references at end
-                    slide.update_display(go_there=False)
         
         self.notify('Dynamic content updated everywhere!')
                 

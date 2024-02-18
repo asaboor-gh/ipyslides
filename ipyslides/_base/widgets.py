@@ -38,6 +38,7 @@ class _Buttons:
     pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
     cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
+    export  = Button(description="Export to HTML",layout= Layout(width='auto',height='auto'))
     _inview = Button(description='Click to Optimize Experience in JupyterLab',layout= Layout(width='auto',height='auto')).add_class('InView-Btn') # For testing if inside LinkedView
     
 @dataclass(frozen=True)
@@ -103,9 +104,7 @@ class _Dropdowns:
     Instantiate under `Widgets` class only.
     """
     theme  = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
-    clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])
-    export = ipw.Dropdown(**describe('Export As'),options=['Slides','Report','Select'], value = 'Select')
-        
+    clear  = ipw.Dropdown(**describe('Delete'),options = ['None','Delete Current Slide Screenshots','Delete All Screenshots'])    
 
 class Widgets:
     """
@@ -169,20 +168,14 @@ class Widgets:
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
             VBox([
                 self.sliders.fontsize,
+                self.sliders.width,
                 self.ddowns.theme,
                 HTML('<hr/>'),
-                self.sliders.width,
-                self.ddowns.export,
                 Box([GridBox([
-                    self.checks.notes,
-                    self.checks.toast,
-                    self.checks.reflow,
-                    self.checks.proxy,
-                    self.checks.navgui,
-                    self.checks.postrun,
-                    self.buttons.cap_all,
-                    self.buttons.pdf,
-                    self.buttons.png
+                    self.buttons.export, self.buttons.info, HTML(), # one empty button place
+                    self.checks.notes,self.checks.toast,self.checks.reflow,
+                    self.checks.proxy,self.checks.navgui,self.checks.postrun,
+                    self.buttons.cap_all,self.buttons.pdf,self.buttons.png,
                 ],layout=Layout(width='auto',overflow_x='scroll',
                                 grid_template_columns='1fr 1fr 1fr',grid_gap='4px',
                                 padding='4px',margin='auto')

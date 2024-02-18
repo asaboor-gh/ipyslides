@@ -148,7 +148,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                             "color":"red",
                         }
                     },
-                    ".report-only": {"display": "none !important"},
+                    ".export-only": {"display": "none !important"},
                     ".jp-OutputArea": {
                         "width": "100% !important",
                         "height": "auto !important", # This is must for layout

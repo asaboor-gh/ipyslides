@@ -24,7 +24,7 @@ class BaseSlides:
         self.clipboard_image = self.__screenshot.clipboard_image # For easy access
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
         self.__settings = LayoutSettings(self, self.__widgets)
-        self.__export = _HhtmlExporter(self)
+        self.export_html = _HhtmlExporter(self).to_html
         self.__notes = Notes(self, self.__widgets) # Needs main class for access to notes
         
         self.toast_html = self.widgets.htmls.toast
@@ -38,10 +38,6 @@ class BaseSlides:
     @property
     def widgets(self):
         return self.__widgets
-    
-    @property
-    def export(self):
-        return self.__export
     
     @property
     def screenshot(self):
@@ -88,10 +84,8 @@ class BaseSlides:
          'success'          | Green text. Icon ✅ for note-success class.
          'error'            | Red Text. Icon⚡ for note-error class.
          'note'             | 📝 Text with note icon.
-         'slides-only'      | Text will not appear in exported html report.
-         'report-only'      | Text will not appear on slides. Use to fill content in report.
-         'export-only'      | Hidden on main slides, but will appear in exported slides/report.
-         'jupyter-only'     | Hidden on exported slides/report, but will appear on main slides.
+         'export-only'      | Hidden on main slides, but will appear in exported slides.
+         'jupyter-only'     | Hidden on exported slides, but will appear on main slides.
          'page-break'       | Report will break page in print after object with this class.
          'block'            | Block of text/objects
          'block-[color]'    | Block of text/objects with specific background color from red,
@@ -417,7 +411,7 @@ class BaseSlides:
         
         from ..core import Slides
 
-        self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'global')
+        self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'footnote')
         self.settings.set_footer('IPySlides Documentation')
         
         auto = self.AutoSlides() # Does not work inside notebook (should not as well)
@@ -545,8 +539,7 @@ class BaseSlides:
                         self.doc(self.from_markdown,'Slides'),
                         self.doc(self.demo,'Slides'), 
                         self.doc(self.docs,'Slides'),
-                        self.doc(self.export.slides,'Slides.export'),
-                        self.doc(self.export.report,'Slides.export')])
+                        self.doc(self.export_html,'Slides')])
         
         auto.from_markdown('section`Advanced Functionality` toc`### Contents`')
         
@@ -554,7 +547,7 @@ class BaseSlides:
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write(
                 lambda: display(self.html('h3','I will be on main slides',className='warning'), 
-                metadata = {'text/html': '<h3 class="warning">I will be on exported slides/report</h3>'}), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
+                metadata = {'text/html': '<h3 class="warning">I will be on exported slides</h3>'}), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
                 s.get_source(), widths = [1,3]
             )
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.note .info}')

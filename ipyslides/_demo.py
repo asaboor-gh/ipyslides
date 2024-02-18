@@ -17,7 +17,7 @@ def demo_slides(slides):
     slides.set_citations({
             'pf': 'This is refernce to FigureWidget using alert`cite\`pf\`` syntax',
             'This': 'I was cited for no reason',
-        }, mode = 'global')
+        }, mode = 'footnote')
 
     slides.run_cell("""
     %%title -m
@@ -31,7 +31,6 @@ def demo_slides(slides):
                     
     Read instructions by clicking ℹ️ button in quick menu.
     """)
-
     #Demo for loading slides from a file or text block
     s1, s2, *others = auto.from_markdown("""
     section`Introduction` toc`### Contents`
@@ -302,7 +301,7 @@ def demo_slides(slides):
             [
                 '### Widgets',
                 slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'), # alt only works with widgets, but below display tricks works with any object
-                lambda: display(ipw.Button(description='Click to do nothing'),metadata = {'text/html': '<button>Click to do nothing</button>'}), # This is a hack to display button as html in exported slides/report
+                lambda: display(ipw.Button(description='Click to do nothing'),metadata = {'text/html': '<button>Click to do nothing</button>'}), # This is a hack to display button as html in exported slides
                 ipw.Checkbox(description='Select to do nothing',indent=False), # screenshot of this will be pasted in proxy below to export html
                 'proxy`[Paste Checkbox Screenshot Here]`'
             ]

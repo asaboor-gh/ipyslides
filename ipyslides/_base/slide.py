@@ -410,23 +410,13 @@ class Slide:
         if hasattr(self, '_refs'): # from some previous settings and change
             delattr(self, '_refs') # added later  only if need
         
-        if self._app.cite_mode == 'footnote':
+        if self._app.cite_mode == 'footnote': # don't do in inline mode
             if hasattr(self, '_refs_consumed'):
                 delattr(self, '_refs_consumed') # for next time
             elif self._citations:
                 self._refs = html('div', # need to store attribute for export
                     sorted(self._citations.values(), key=lambda x: x._id), 
                     className='Citations', style = '')
-                self._refs.display()
-        elif self._app.cite_mode == 'global':
-            all_citations = {}
-            for slide in self._app.cited_slides:
-                all_citations.update(slide._citations)
-
-            if all_citations and (self.index == self._app._max_index):
-                self._refs = html('div',
-                    sorted(all_citations.values(), key=lambda x: x._id), 
-                    className='Citations',style='')
                 self._refs.display()
 
     
@@ -524,7 +514,7 @@ class Slide:
     @_sub_doc(css_docstring = _css_docstring)
     def set_css(self,css_dict = {}):
         """Attributes at the root level of the dictionary will be applied to the slide. You can add CSS classes by `Slide.set_dom_classes`.
-        use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once. This is exported only to html slides, not to report.
+        use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
         {css_docstring}"""
         self._css = _format_css(css_dict, allow_root_attrs = True)
         

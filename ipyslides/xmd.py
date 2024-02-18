@@ -250,7 +250,7 @@ class XMarkdown(Markdown):
         main = sys.modules.get('__main__',None) # __main__ is current top module
         return main.__dict__ if main else {}
 
-    def parse(self, xmd, display_inline=False):
+    def _parse(self, xmd, display_inline=False): # not intended to be used directly
         """Return a string after fixing markdown and code/multicol blocks if display_inline is False
         otherwise displays objects and execute python code from '```python run source_var_name' block.
         """
@@ -324,7 +324,7 @@ class XMarkdown(Markdown):
                 r"\`\?(.*?)\?\`", text_chunk, flags=re.DOTALL | re.MULTILINE
             )
             for match in all_matches:
-                repr_html = self.parse(match, display_inline=False)
+                repr_html = self._parse(match, display_inline=False)
                 repr_html = re.sub(
                     "</p>$", "", re.sub("^<p>", "", repr_html)
                 )  # Remove <p> and </p> tags at start and end
@@ -426,6 +426,7 @@ class XMarkdown(Markdown):
         
         for key, value in self._vars.items():
             output = output.replace(key, value)
+        
         return output
     
     def _sub_vars(self, html_output):
@@ -523,7 +524,7 @@ def parse(xmd, display_inline=True):
      #If no var_name, code will be executed without assigning it to any variable
      import numpy as np
      ```
-     # Normal Markdown {.report-only}
+     # Normal Markdown
      ```multicol 40 60
      # First column is 40% width
      If 40 60 was not given, all columns will be of equal width, this paragraph will be inside info block due to class at bottom
@@ -545,7 +546,7 @@ def parse(xmd, display_inline=True):
             - Pygments themes, however, are not supported with `multicol`.
             - You need to write and display CSS for a custom class.
         - The block with `::: class_type` syntax accepts extra classes in quotes, for example `::: multicol "Success" "info"`.
-        - There are three special CSS classes `report-only`, `slides-only` and `export-only` that control appearance of content in different modes.
+        - There are special CSS classes `jupyter-only` and `export-only` that control appearance of content in different modes.
 
     ::: note-warning
         Nested blocks are not supported.
@@ -554,4 +555,4 @@ def parse(xmd, display_inline=True):
         - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
-    return XMarkdown().parse(xmd, display_inline=display_inline)
+    return XMarkdown()._parse(xmd, display_inline=display_inline)

@@ -191,7 +191,7 @@ class LayoutSettings:
     @_sub_doc(css_docstring=_css_docstring)
     def set_css(self, css_dict={}):
         """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well.
-        Individual slide's CSS set by `slides[index].set_css` will override this. This is exported only to html slides, not to report.
+        Individual slide's CSS set by `slides[index].set_css` will override this.
         {css_docstring}
         """
         if len(self._slides[:]) >= 1:

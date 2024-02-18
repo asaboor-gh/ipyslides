@@ -1,4 +1,4 @@
-# Template for building a report from slides 
+# Template for building HTML from slides 
 
 def doc_html(code_css, style_css, content, script):
     return f'''<!DOCTYPE html>
@@ -42,7 +42,7 @@ def doc_html(code_css, style_css, content, script):
 </head>
 <body>
 <div>
-    <div class="slides-only click-wrapper"> __FOOTER__ </div>
+    <div class="click-wrapper"> __FOOTER__ </div>
     <!-- Classes below work for both scenerios -->
     <div class="SlidesWrapper">
     {content}
@@ -53,108 +53,9 @@ def doc_html(code_css, style_css, content, script):
 </html>
 '''
 
-doc_css = '''<style type="text/css">
-/* Author: Abdul Saboor */
-__theme_css__
-html { background: var(--secondary-bg, whitesmoke);}
-body {
-    background: var(--primary-bg, white);
-    color: var(--primary-fg, black);
-    width: 216mm;
-    margin: 10mm auto;
-    padding: 18mm 15mm 15mm 18mm;
-}
-
-body div.highlight, body div.highlight pre {
-    width: 100% !important;
-    }
-    
-figure, img, .zoom-child, table, .block {margin: 0 auto !important;} /* center images */
-.slides-only, .jupyter-only {display:none !important;}
-a {text-decoration:none !important;}
-a:hover {text-decoration:underline !important;}
-
-.SlidesWrapper h1, .SlidesWrapper h2,
-.SlidesWrapper h3, .SlidesWrapper h4,
-.SlidesWrapper h5, .SlidesWrapper h6 {
-	color:var(--heading-color);
- 	text-align: left !important;
-    font-weight:normal;
-	overflow:hidden; /* FireFox */
-    margin-block: 0.2em 0.3em !important;
-}
-
-.SlidesWrapper h1, .SlidesWrapper h2 {
-	margin-block: 0.4em 0.7em !important; /* need more space for h1 and h2 */
-}
-@page {
-    size: __page_size__;
-    margin-top: 18mm !important;
-    margin-bottom: 15mm !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding: 0 18mm 0 15mm !important;
-}
-@media print {
-    :root {
-        --contentScale : 1 !important; /* Deafult for printing at same value */
-	    --heading-color: navy;
-	    --primary-fg: black;
-	    --primary-bg: white;
-	    --secondary-bg: whitesmoke;
-	    --secondary-fg: #454545;
-	    --alternate-bg: whitesmoke;
-	    --hover-bg: #D1D9E1;
-	    --accent-color: navy;
-    }
-    * {
-        color-adjust: exact !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-    body {
-        background: var(--primary-bg, white) !important;
-        color: var(--primary-fg, black) !important;
-        margin: 0 !important;
-        display: table;
-        table-layout: fixed;
-        padding-top: 18mm;
-        padding-bottom: 18mm;
-        height: auto;
-    }
-    code, span, figure, img, svg, .zoom-child, .zoom-self, blockquote { 
-        page-break-inside: avoid !important; 
-    }
-    ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
-    div.highlight, pre, .raw-text {
-        height:auto;
-        max-height: auto !important; 
-        overflow-wrap: break-word !important; 
-    }
-    section:first-child {
-        page-break-after: always;
-    }
-    .page-break {page-break-after: always !important;}
-    table { page-break-inside:auto; }
-    tr    { page-break-inside:avoid; page-break-after:auto; }
-    h1,h2,h3,h4 { page-break-before : auto !important; page-break-after : avoid !important; page-break-inside : avoid !important; }
-    
-    /* Blocks should be handled properly in white scenerio*/
-    .note {background: rgba(250,250,250,0.75);}
-    .block-red {background: rgba(250,230,230,0.75);}
-    .block-green {background: rgba(230,250,230,0.75);}
-    .block-blue {background: rgba(230,230,250,0.75);}
-    .block-yellow {background: rgba(250,250,230,0.75);}
-    .block-cyan {background: rgba(230,250,250,0.75);}
-    .block-gray {background: rgba(230,230,230,0.75);}
-    .block-magenta {background: rgba(250,230,250,0.75);}
-}
-</style>
-'''
-
 slides_css = """<style>
 __theme_css__
-.report-only, .jupyter-only { display:none !important;}
+.jupyter-only { display:none !important;}
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
 .click-wrapper {

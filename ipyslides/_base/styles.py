@@ -493,23 +493,8 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
         },
         'a.citelink' : {
+            'color': 'var(--accent-color)',
             '> sup': {'font-weight':'bold',},
-            '> span': {
-                'position':'absolute',
-                'visibility':'hidden',
-                'top':'initial !important',
-                'right':'0 !important',
-                'z-index':'8',
-                'padding':'2px 8px',
-                'border-radius':'8px',
-                'background':'var(--accent-color)',
-                'border':'2px solid var(--accent-color)',
-            },
-            '^:hover > span' : {
-                'visibility':'visible',
-                'background':'var(--secondary-bg)',
-                'transition':'background 800ms ease-in-out',
-            },
         },
         '.align-center:not(.columns), .align-center > *:not(.columns)': {
             'display':'table !important',
