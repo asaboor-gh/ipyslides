@@ -185,7 +185,7 @@ def demo_slides(slides):
                 ## Interactive Apps with Widgets section`Interactive Widgets`
                 Use `ipywidgets`, `bqplot`,`ipyvolume`, `plotly Figurewidget` etc. to show live apps like this!
                 ::: note-tip
-                    Export to Slides/Report to see what happens to this slide and next slide!
+                    Export to Slides to see what happens to this slide and next slide!
                 ''')
             plot_html = ipw.HTML('Plot will be here')
             button = ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content'))

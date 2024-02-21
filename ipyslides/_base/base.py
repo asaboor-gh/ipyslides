@@ -86,7 +86,6 @@ class BaseSlides:
          'note'             | 📝 Text with note icon.
          'export-only'      | Hidden on main slides, but will appear in exported slides.
          'jupyter-only'     | Hidden on exported slides, but will appear on main slides.
-         'page-break'       | Report will break page in print after object with this class.
          'block'            | Block of text/objects
          'block-[color]'    | Block of text/objects with specific background color from red,
                             | green, blue, yellow, cyan, magenta and gray.

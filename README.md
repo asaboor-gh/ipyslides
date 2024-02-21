@@ -12,7 +12,6 @@ Create interactive slides programatically in [Jupyter](https://jupyter.org/)/[Vo
 - See a [Demo Notebook](https://www.kaggle.com/massgh/ipyslides) at [Kaggle](https://www.kaggle.com/massgh)
 - Watch a [Youtube Video](https://www.youtube.com/watch?v=thgLGl14-tg)
 - See [PDF-Slides](Slides.pdf)
-- See [PDF-Report](Report.pdf)
 ![Overview](slide.png)
 
 ---
