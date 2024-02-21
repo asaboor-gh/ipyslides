@@ -210,10 +210,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'font-size':'var(--text-size) !important',
             'background':'var(--primary-bg)',
             'max-width':'100vw', # This is very important
-            '^, *':{ 
-                'scrollbar-width':'thin', # FireFox <3
-                'scrollbar-color':'var(--alternate-bg) transparent',
-            },
             '::-webkit-scrollbar': {
                 'height':'4px',
                 'width':'4px',

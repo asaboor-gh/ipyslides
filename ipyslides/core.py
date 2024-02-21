@@ -8,7 +8,7 @@ from IPython.utils.capture import capture_output
 
 import ipywidgets as ipw
 
-from .xmd import use_ns, parse, extender as _extender
+from .xmd import fmt, parse, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
 from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
@@ -89,7 +89,7 @@ class Slides(BaseSlides):
         self.icon = _Icon  # Icon is useful to add many places
         self.write = write
         self.parse = parse  # Parse extended markdown
-        self.use_ns = use_ns # So important for flexibility
+        self.fmt = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
 
         self._remove_post_run_callback()  # Remove post_run_cell callback before this and at end
@@ -385,9 +385,8 @@ class Slides(BaseSlides):
         else: # Set _id for citation in footnote mode
             cited._id = list(self.running._citations.keys()).index(key) + 1 # Get index of key from unsorted ones
 
-        # Return string otherwise will be on different place
-        return f"""<a href="#{key}" class="citelink">
-        <sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>"""
+        # Return string otherwise will be on different place, avoid newline here
+        return f'<a href="#{key}" class="citelink"><sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>'
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations

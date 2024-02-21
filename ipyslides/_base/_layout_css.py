@@ -65,6 +65,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                     "position": "absolute !important",
                     "right": "0 !important",
                     "bottom": "0 !important",
+                    "backdrop-filter": "blur(8px)",
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
@@ -337,7 +338,8 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                     "^:hover, ^:focus, ^:active, ^.mod-active, ^.Active-Start" : {
                         ".Menu-Box" : {
                             "width": "104px !important", # 3*28 + margin + paddings
-                            "transition": "width 400ms ease-in-out", # transition on enter hoevr
+                            "transition": "width 400ms ease-in-out", # transition on enter hover
+                             "overflow": "hidden !important", # avoid jump on hover too
                         },
                     },
                     ".Toc-Btn, .Menu-Btn, .Screenshot-Btn": {
@@ -689,8 +691,6 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 "background": "var(--alternate-bg)",
                 "^, *": {
                     "color": "var(--primary-fg)",
-                    "scrollbar-width": "thin",  # FireFox <3
-                    "scrollbar-color": "var(--alternate-bg) transparent",
                 },
                 "::-webkit-scrollbar": {
                     "height": "4px",

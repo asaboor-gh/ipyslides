@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 .ipynb_checkpoints/
 .ipyslides-assets/
+.ipyslides_assets/
+server_user_id.txt
 
 # C extensions
 *.so
@@ -104,6 +106,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.gitignore
 .env
 .venv
 env/

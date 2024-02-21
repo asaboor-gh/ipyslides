@@ -154,7 +154,7 @@ class Widgets:
                 self.buttons.toc,
             ]).add_class('Menu-Box'),
             HBox([self.htmls.footer]), # should be in Box to avoid overflow
-        ],layout=Layout(height='28px')).add_class('NavBox').add_class("Active-Start")
+        ],layout=Layout(height='28px')).add_class('NavBox')
         
         self.navbox = VBox([
             self.buttons._inview,
@@ -238,7 +238,17 @@ class Widgets:
         for btn in [self.buttons.next, self.buttons.prev, self.buttons.setting,self.buttons.capture]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
-            
+
+        self._active_start(self.footerbox)
+
+    def _deactivate(self):
+        for w in getattr(self, '_aws',[]):
+            w.remove_class("Active-Start")  
+    
+    def _active_start(self, *ws):
+        self._aws = ws 
+        for w in ws:
+            w.add_class("Active-Start")
     
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click. Remain invisible in screenshot."

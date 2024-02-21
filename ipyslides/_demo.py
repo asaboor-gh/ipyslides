@@ -2,6 +2,7 @@
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 
 from ipyslides.formatters import libraries, supported_reprs
+from ipyslides.xmd import fmt
 
 def demo_slides(slides):
     slides.close_view() # Close any previous view to speed up loading 10x faster on average
@@ -89,7 +90,8 @@ def demo_slides(slides):
     ## IPython Display Objects
     #### Any object with following methods could be in`write` command:
     {', '.join([f'`_repr_{rep}_`' for rep in supported_reprs])}
-    Such as color[fg=navy,bg=skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure` {{.warning}}.            
+    Such as color[fg=navy,bg=skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`.
+    {{.warning}}
     ---
     ## Plots and Other **Data**{{style='color:var(--accent-color);'}} Types
     #### These objects are implemented to be writable in `write` command:
@@ -229,11 +231,11 @@ def demo_slides(slides):
             slides.notes.insert(f'## This is under @frames decorator!')
 
         slides.write([f'### This is Slide {slides.running.number}.{idx}\n and we are animating matplotlib',
-                      s.show_lines([idx])
+                      s.show_lines([idx]),
+                      'cite`This` refs`1`'
                       ],ax,widths=[40,60])
         if idx == 0: #Only show source code of first frame
             s.show_lines([5]).display()
-        slides.write('cite`This`')
 
     auto.from_markdown('section`Controlling Content on Frames` toc`### Contents`')
 
@@ -316,20 +318,21 @@ def demo_slides(slides):
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
     $ \LaTeX $ needs time to load, so keeping it in view until it loads would help.
     {.info}
+    
     --
     ```multicol 50 50
     $$ \int_0^1\\frac{1}{1-x^2}dx $$
     {.align-left .text-big .info}
     +++
     --
-    $$ ax^2 + bx + c = 0 $$
-    {.text-huge .success}
+    ::: success
+        $$ ax^2 + bx + c = 0 $$
+        {.text-huge}
     ```
     ''', trusted=True)
 
     with auto.slide(), slides.code.context():
-        with slides.use_ns(locals()): # This is to pass slides in formatting below
-            slides.write('## Built-in CSS styles\n`{slides.css_styles}`')
+        slides.write(fmt('## Built-in CSS styles\n`{s.css_styles}`',s=slides))
 
     auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
 
@@ -352,11 +355,6 @@ def demo_slides(slides):
     with auto.slide():
         slides.write('Slides keep their full code if they are not made by @frames decorator!\n{.note .info}')
         slides.get_source().display()
-
-
-    with auto.slide() as bib_slide:
-        bib_slide.get_source().display()
-        slides.write('### Reference {.align-left}') 
 
 
     slides.navigate_to(0) # Go to title slide

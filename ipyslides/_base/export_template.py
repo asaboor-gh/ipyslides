@@ -162,6 +162,7 @@ a.goto-button:active {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+        ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
     }
     @page {
         size: 254mm __HEIGHT__; /* 10 inch x decided by aspect by user*/
@@ -199,7 +200,6 @@ a.goto-button:active {
         overflow: hidden !important;
         page-break-inside: avoid !important;
     }
-    ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
 }
 </style>
 """

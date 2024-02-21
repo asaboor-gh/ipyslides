@@ -133,8 +133,7 @@ class BaseSlides:
         
             ::: note-info
                 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
-                - Variables are substituted from top level scope (e.g. Notebook's `locals()`/`globals()`). To use varirables from a nested scope,
-                   use `parse`, `write` and similar functions under alert`Slides.use_ns` context manager to pick your supplied variables.
+                - Variables are substituted from top level scope (Notebook's `locals()`/`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well.
                                                
         - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - You can escape backtick with backslash: alert`\\\` → \``.
@@ -450,8 +449,7 @@ class BaseSlides:
             self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with auto.slide(), self.code.context():
-            with self.use_ns(locals()): # to pass self to extended markdown parser
-                self.write('`{self.docs!r}` `{self.xmd_syntax}`')
+            self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`', self=self))
             
         with auto.slide():
             self.write('## Adding Content')
@@ -480,7 +478,7 @@ class BaseSlides:
             self.doc(self.clipboard_image,'Slides').display()
             self.run_doc(self.alt,'Slides')
             
-            members = ['alert','block', 'bokeh2html', 'bullets','classed',
+            members = ['alert','block', 'bokeh2html', 'bullets','classed','format_html', 'fmt',
                        'color', 'cols', 'details', 'doc','sub','sup', 'today', 'enable_zoom', 'format_css', 'highlight',
                        'html', 'iframe', 'image', 'keep_format', 'notify', 'plt2html', 'raw', 'rows',
                         'set_dir', 'sig', 'textbox', 'suppress_output','suppress_stdout','svg', 'vspace']

@@ -25,6 +25,7 @@ class InteractionWidget(anywidget.AnyWidget):
         self._checks = _widgets.checks
         self._toast_html = _widgets.htmls.toast
         self._prog = _widgets.sliders.progress
+        self._deactivate = _widgets._deactivate
 
     @traitlets.observe("msg_topy")
     def _see_changes(self, change):
@@ -75,6 +76,8 @@ class InteractionWidget(anywidget.AnyWidget):
                 self._toggles.fscreen.icon = 'plus'
         elif msg == 'KSC':
             self._toast_html.value = 'KSC'
+        elif msg == 'RACTIVE': # Remove active states for intro
+            self._deactivate()
         
         if quick_menu_was_open: 
             self._toggles.menu.value = True # it might get closed by using some buttons. reset it

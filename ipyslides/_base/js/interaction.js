@@ -219,14 +219,7 @@ function setScale(box) {
     }
     
     box.style.setProperty('--contentScale',scale);
-
-    let navbox = box.getElementsByClassName("NavWrapper")[0];
-    let vis = navbox.style.visibility;
-    if ((vis?vis:"") === "hidden") {
-        box.style.setProperty('--paddingBottom',Number(28/scale) + "px");
-    } else {
-        box.style.setProperty('--paddingBottom',"0px");
-    } 
+    box.style.setProperty('--paddingBottom',Number(28/scale) + "px");
 }
 
 function handleScale(box) {
@@ -301,12 +294,10 @@ export function render({ model, el }) {
             c.style.width = '100%';
             c.style.height = '100%';
         }
-        // Remove menu active class for initial user intros
+        // Remove menu active class for initial user intros, but with python
         setTimeout(() => {
-            let actives = box.getElementsByClassName("Active-Start");
-            for (let active of Array.from(actives)) {
-                active.classList.remove("Active-Start");
-            };
+            model.set("msg_topy", "RACTIVE"); 
+            model.save_changes();
         }, 10000); // Remove after 10 seconds
     }  
     el.appendChild(style);

@@ -22,7 +22,6 @@ This \`{var_name}\` is a code from above and will be substituted with the value 
 """
 import string
 import textwrap, re, sys, json
-from contextlib import contextmanager
 
 from markdown import Markdown
 from IPython.core.display import display
@@ -110,7 +109,7 @@ def error(name, msg):
     "Add error without breaking execution."
     return XTML(f"<b style='color:crimson;'>{name}</b>: {msg}")
 
-def fmt_code(code, instance_name="slides"):
+def _fmt_code(code, instance_name="slides"):
     "Format given code block to be runable under markdown. instance_name is the name of the slides instance as used in current code."
     return _code_.format(app=instance_name, block=textwrap.dedent(code).strip())
 
@@ -157,7 +156,7 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
     for match in all_matches:
         title, extra = [v.strip() for v in (match + '\n').split('\n', 1)] # Make sure a new line is there and then strip
         jstr = json.dumps({"title": title, "extra" : extra.strip()}) # qoutes fail otherwise
-        block = fmt_code(
+        block = _fmt_code(
             f"""
             import json
             slide_instance.toc(**json.loads({jstr!r}))
@@ -169,7 +168,7 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
     # toc`This is toc title`, should be after block
     all_matches = re.findall(r"toc\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        block = fmt_code(
+        block = _fmt_code(
             f"""
             kwargs = dict(title = {match!r}) if {match!r} else {{}} # auto
             slide_instance.toc(**kwargs)
@@ -183,7 +182,7 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
         r"proxy\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
     )
     for match in all_matches:
-        block = fmt_code(
+        block = _fmt_code(
             f"pr = slide_instance.proxy({match!r})", instance_name="slide_instance"
         )  # assign to avoid __repr__ output in markdown
         text_chunk = text_chunk.replace(f"proxy`{match}`", block, 1)
@@ -198,7 +197,7 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
 
     return text_chunk
 
-class StrFormatter(string.Formatter):
+class HtmlFormatter(string.Formatter):
     def format_field(self, value, format_spec):
         if not format_spec:
             if not isinstance(value, str): # keep str as it is
@@ -213,12 +212,12 @@ class StrFormatter(string.Formatter):
         if isinstance(key, int):
             return f"<pre>{error('RuntimeError','Positional arguments are not supported in custom formatting!')}<pre>"
         elif isinstance(key, str) and key not in kwargs:
-            return f"<pre>{error('KeyError', f'{key!r} not found in given namespace')}</pre>"
+            return f"<pre>{error('KeyError', f'{key!r} not found in given namespace.')}</pre>"
         return super().get_value(key, args, kwargs)
     
 
-frmtr = StrFormatter() # custom format
-del StrFormatter
+hfmtr = HtmlFormatter() # custom format
+del HtmlFormatter
 
 
 class XMarkdown(Markdown):
@@ -239,7 +238,7 @@ class XMarkdown(Markdown):
         return out[0].strip(), out[1].replace(".", " ").strip()
     
     def user_ns(self):
-        "Top level namespace or set by user with `Slides.use_ns` contextmanager."
+        "Top level namespace or set by user inside `Slides.fmt`."
         if self.__EXTRA_NS__:
             return self.__EXTRA_NS__
         # Otherwise get top level namespace only
@@ -423,23 +422,23 @@ class XMarkdown(Markdown):
     def convert(self, text):
         "Replaces variables with placeholder after conversion to respect all other extensions."
         output = super().convert(self._sub_vars(text))
-        
-        for key, value in self._vars.items():
-            output = output.replace(key, value)
-        
-        return output
+        return self._resolve_vars(output)
+    
+    def _resolve_vars(self, text):
+        "Substitute saved variables"
+        return re.sub(r"PrivateXmdVar(\d+)X", lambda m: self._vars.get(m.group(), m.group()), text)
     
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as `{var}` and two inline columns as ||C1||C2||"
         
         def handle_var(value): # Put a temporary variable that will be replaced at end of other conversions.
-            key = f"PrivateXmdVar-{len(self._vars)}" 
-            self._vars[key] = value
+            key = f"PrivateXmdVar{len(self._vars)}X" # end X to make sure separate it 
+            self._vars[key] = self._resolve_vars(value) # Handle nested like center`alert`text`` things before saving next varibale
             return key 
         
         user_ns = self.user_ns() # get once, will be called multiple time
         # Replace variables first to have small data # ns let avoiding huge dictionary unpacking
-        html_output = re.sub(r"\`\{(.*?)\}\`", lambda match: handle_var(frmtr.format(match.group()[1:-1], ns = user_ns)), html_output, flags=re.DOTALL)
+        html_output = re.sub(r"\`\{(.*?)\}\`", lambda match: handle_var(hfmtr.format(match.group()[1:-1], ns = user_ns)), html_output, flags=re.DOTALL)
         
         # Replace inline one argumnet functions
         from . import utils  # Inside function to avoid circular import
@@ -499,19 +498,6 @@ class XMarkdown(Markdown):
 
 
         return html_output  # return in main scope
-    
-@contextmanager
-def use_ns(d):
-    """Context manager to access user-defined namespace to use for variable substitution in extended markdown
-    which otherwise only pick top level scope. You can use locals(), globals() or any dictionary."""
-    if not isinstance(d, dict):
-        raise TypeError(f"use_ns expects a dictionary, got {type(d)}!")
-    
-    try:
-        XMarkdown.__EXTRA_NS__ = d 
-        yield
-    finally:
-        XMarkdown.__EXTRA_NS__ = {} # reset back
 
 
 def parse(xmd, display_inline=True):
@@ -556,3 +542,19 @@ def parse(xmd, display_inline=True):
         - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
     return XMarkdown()._parse(xmd, display_inline=display_inline)
+
+
+def fmt(obj, **vars):
+    """Explicity format text that includes the syntax `{var}` with given vars or any other object. 
+    You need this in python file or inside functions or string formatting where third party objects need to be converted to html representation such as matplotlib figure.
+    """
+    if isinstance(obj, str):
+        try:
+            XMarkdown.__EXTRA_NS__ = vars
+            return XTML(parse(obj, display_inline=False)) # avoids further processing
+        except Exception as e:
+            raise e("Faild parsing given text!")
+        finally:
+            XMarkdown.__EXTRA_NS__ = {} # reset back
+    else:
+        return XTML(htmlize(obj))

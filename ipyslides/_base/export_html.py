@@ -56,7 +56,7 @@ class _HhtmlExporter:
                 _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
             
             if hasattr(item,'_refs'):
-                _html += item._refs.value # in case of global and footnote citations
+                _html += item._refs.value # in case of footnote citations
             
             _html = f'<div class="jp-OutputArea">{_html}</div>'
             sec_id = self._get_sec_id(item)
@@ -153,6 +153,6 @@ class _HhtmlExporter:
         _dir = get_child_dir('ipyslides-export', create = True)
         path = os.path.join(_dir, 'slides.html')
         self.to_html(path, overwrite = True)  
-        self.main.notify(f'File saved: {path!r}')
+        self.main.notify(f'File saved: {path!r}',10)
         with suppress(BaseException):
             os.startfile(path) # Does not work on some systems, so safely continue.
