@@ -93,7 +93,7 @@ Use `slides.from_markdown` to create multiple slides from markdown file/text.
     - Slides should be separated by `---` (three dashes) in start of line.
     
 ```python .monokai
-slides.from_markdown(path)
+slides.from_markdown(start, content)
 with slides.slide(2):
     write(slides[2].markdown) # write content of slide 2 from file
     plot_something() # Add other things to same file

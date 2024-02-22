@@ -1,8 +1,8 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
 import traceback
+from pathlib import Path
 
-from IPython import get_ipython
 from IPython.display import display
 
 from .widgets import Widgets
@@ -13,7 +13,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .intro import key_combs
 from ..formatters import XTML
-from ..xmd import _special_funcs, error
+from ..xmd import _special_funcs, error, xtr
 
 class BaseSlides:
     def __init__(self):
@@ -113,7 +113,7 @@ class BaseSlides:
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
         - alert`peoxy\`[Button Text]\`` to add a proxy that can be replaced by pasting image from clipboard later.
-        - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, file_or_str)` function.
+        - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, content)` function.
         - Double dashes `--` is used to split markdown text in frames.
         
         Block table of contents with extra content can be added as follows:
@@ -266,8 +266,8 @@ class BaseSlides:
             with self.widgets._tmp_out:
                 display(*objs)
         
-    def from_markdown(self, start, file_or_str, trusted = False):
-        """You can create slides from a markdown file or tex block as well. It creates slides `start + (0,1,2,3...)` in order.
+    def from_markdown(self, start, content, trusted = False):
+        """You can create slides from a markdown tex block as well. It creates slides `start + (0,1,2,3...)` in order.
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         
         - Slides separator should be --- (three dashes) in start of line.
@@ -297,16 +297,11 @@ class BaseSlides:
         if self.running:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
         
-        if not isinstance(file_or_str, str): #check path later or it will throw error
-            raise TypeError(f"file_or_str expects a makrdown file path(str) or text block, got {file_or_str!r}")
+        if not isinstance(content, str): #check path later or it will throw error
+            raise TypeError(f"content expects a makrdown text block, got {content!r}")
         
         if not trusted:
-            try: # Try becuase long string will through error for path
-                os.path.isfile(file_or_str) # check if file exists then check code blocks
-                with open(file_or_str, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
-            except:
-                lines = file_or_str.splitlines()
+            lines = content.splitlines()
                     
             untrusted_lines = []
             for i, line in enumerate(lines, start = 1):
@@ -314,50 +309,46 @@ class BaseSlides:
                     untrusted_lines.append(i)
             
             if untrusted_lines:
-                raise Exception(f'Given file/text may contain unsafe code to be executed at lines: {untrusted_lines}'
+                raise Exception(f'Given text may contain unsafe code to be executed at lines: {untrusted_lines}'
                     ' Verify code is safe and try again with argument `trusted = True`.'
                     ' Never run files that you did not create yourself or not verified by you.')
         
-        try:
-            if os.path.isfile(file_or_str):
-                with open(file_or_str, 'r', encoding='utf-8') as f:
-                    chunks = _parse_markdown_text(f.read())
-            elif file_or_str.endswith('.md'): # File but does not exits
-                raise FileNotFoundError(f'File {file_or_str} does not exist.')
-            else:
-                chunks = _parse_markdown_text(file_or_str)
-        except:
-            chunks = _parse_markdown_text(file_or_str)
+        chunks = _parse_markdown_text(content)
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster or return older
 
         with self.skip_post_run_cell():
             for i,chunk in enumerate(chunks):
                 # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-                checks = (chunk != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
+                checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
                 if  any(checks):
                     with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                         self._slide(f'{i + start} -m', chunk)
 
-                handles[i]._mdff = chunk # This is need for update while editing
+                handles[i]._mdff = str(chunk) # This is need for update while editing, chunk could be ns_str, avoid that
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
     
     def sync_with_file(self, start, path, trusted = False, interval=500):
         """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
-        interval is in milliseconds, 500 ms default. Read `Slides.from_markdown` docs about content of file."""
+        interval is in milliseconds, 500 ms default. Read `Slides.from_markdown` docs about content of file.
+        
+        The variables inserted in file content are used from top scope.
+        """
         if not self.inside_jupyter_notebook(self.sync_with_file):
             raise Exception("Notebook-only function executed in another context!")
         
-        if not os.path.isfile(path):
+        path = Path(path) # keep as Path object
+        
+        if not path.is_file():
             raise FileNotFoundError(f"File {path!r} does not exists!")
         
         if not isinstance(interval, int) or interval < 100:
             raise ValueError("interval should be integer greater than 100 millieconds.")
         
         # NOTE: Background threads and other methods do not work. Do NOT change this way
-        self.from_markdown(start, path, trusted) # First call itself before declaring other things, so errors can be captured safely
+        self.from_markdown(start, path.read_text(encoding="utf-8"), trusted) # First call itself before declaring other things, so errors can be captured safely
         
         if hasattr(self.widgets.iw,'_sync_args'): # remove previous updates
             self.unsync()
@@ -365,13 +356,13 @@ class BaseSlides:
         self._mtime = os.stat(path).st_mtime
 
         def update(widget, content, buffer):
-            if os.path.isfile(path):
+            if path.is_file():
                 mtime = os.stat(path).st_mtime
                 out_sync = any(['Out-Sync' in s.dom_classes for s in self.cited_slides]) or False
                 if out_sync or (mtime > self._mtime):  # set by interaction widget
                     self._mtime = mtime
                     try: 
-                        self.from_markdown(start, path, trusted)
+                        self.from_markdown(start, path.read_text(encoding="utf-8"), trusted)
                         self.notify('x') # need to remove any notification from previous error
                     except:
                         e, text = traceback.format_exc(limit=0).split(':',1) # onlly get last error for notification
@@ -596,6 +587,7 @@ class BaseSlides:
 
 def _parse_markdown_text(text_block):
     "Parses a Markdown text block and returns text for title and each slide."
+    # user may used fmt
     lines = textwrap.dedent(text_block).splitlines() # Remove overall indentation
     breaks = [-1] # start, will add +1 next
     for i,line in enumerate(lines):
@@ -604,5 +596,5 @@ def _parse_markdown_text(text_block):
     breaks.append(len(lines)) # Last one
     
     ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
-    return ['\n'.join(lines[x.start:x.stop]) for x in ranges]
+    return [xtr.copy_ns(text_block, '\n'.join(lines[x.start:x.stop])) for x in ranges]
         

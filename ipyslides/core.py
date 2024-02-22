@@ -8,7 +8,7 @@ from IPython.utils.capture import capture_output
 
 import ipywidgets as ipw
 
-from .xmd import fmt, parse, extender as _extender
+from .xmd import fmt, parse, xtr, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
 from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
@@ -766,9 +766,10 @@ class Slides(BaseSlides):
         slide_number_str = line[0]  # First argument is slide number
 
         if "-m" in line[1:]:
+            # user may used fmt
             repeat = False
             if '%++' in cell:
-                cell = cell.replace('%++','',1).strip() # remove leading empty line !important
+                cell = xtr.copy_ns(cell, cell.replace('%++','',1).strip()) # remove leading empty line !important
                 repeat = True
 
             frames = re.split(
@@ -789,7 +790,7 @@ class Slides(BaseSlides):
                     self._editing_index = self.running.index # Go to latest editing markdown frame, or start of frames
 
                 self.running.set_source(frm, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
-                parse(frm, display_inline=True)
+                parse(xtr.copy_ns(cell, frm), display_inline=True)
             
             if self._editing_index is not None:
                 self.navigate_to(self._editing_index)
@@ -1097,8 +1098,8 @@ class Slides(BaseSlides):
         def frames(*objs, repeat=False):
             return self.frames(self._next_number, *objs, repeat=repeat)
 
-        def from_markdown(file_or_str, trusted=False):
-            return self.from_markdown(self._next_number, file_or_str, trusted=trusted)
+        def from_markdown(content, trusted=False):
+            return self.from_markdown(self._next_number, content, trusted=trusted)
 
         def get_next_number():
             return self._next_number

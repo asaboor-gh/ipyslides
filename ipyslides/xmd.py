@@ -219,14 +219,56 @@ class HtmlFormatter(string.Formatter):
 hfmtr = HtmlFormatter() # custom format
 del HtmlFormatter
 
+class xtr(str):
+    """String that will be parsed with given namespace lazily. Python's default str will be parsed in top level namespace only!
+    If you apply some str operations on it, make sure to use 'copy_ns' method on every generated string to bring it's type back, otherwise it will discard given namespace.
+    """
+    def with_ns(self, ns): # cannot add ns in __init__
+        if not isinstance(ns, dict):
+            raise TypeError(f"ns should be a dictionary, got {type(ns)}")
+        self._ns = ns
+        return self
+    
+    @property
+    def data(self):
+        return super().__str__()
+    
+    @property
+    def ns(self):
+        return self._ns
+    
+    def __format__(self, spec):
+        raise RuntimeError("xtr is not allowed inside a string formatting!")
+    
+    def __add__(self, other):
+        raise RuntimeError("xtr does not support addition!")
+    
+    def __mul__(self, other):
+        raise RuntimeError("xtr does not support multiplication!")
+    
+    def __rmul__(self, other):
+        raise RuntimeError("xtr does not support multiplication!")
+    
+    def __repr__(self):
+        return f"xtr(data = {self.data!r}, ns = {self.ns})" 
+    
+    def copy_ns(source, target): # This works with xtr as source as well as str and others when called from class
+        "Add ns of source to target str and return target wrapped in source type if source is a 'xtr', otherwise return target."
+        if type(source) == xtr:  # do not check instances here
+            if not hasattr(source, '_ns'):
+                raise AttributeError("The method 'with_ns' was never used on source!")
+            if type(target) == str:
+                return xtr(target).with_ns(source._ns)
+        return target
+    
 
 class XMarkdown(Markdown):
-    __EXTRA_NS__ = {}
     def __init__(self):
         super().__init__(
             extensions=extender._all, extension_configs=extender._all_configs
         )
         self._vars = {}
+        self._ns = {} # provided by fmt and xtr
         self._display_inline = False
         self._shell = get_ipython()
         self._slides = get_slides_instance()
@@ -239,8 +281,8 @@ class XMarkdown(Markdown):
     
     def user_ns(self):
         "Top level namespace or set by user inside `Slides.fmt`."
-        if self.__EXTRA_NS__:
-            return self.__EXTRA_NS__
+        if self._ns:
+            return self._ns
         # Otherwise get top level namespace only
         return self.main_ns()
         
@@ -254,6 +296,9 @@ class XMarkdown(Markdown):
         otherwise displays objects and execute python code from '```python run source_var_name' block.
         """
         self._display_inline = display_inline  # Must change here
+        if isinstance(xmd, xtr):
+            self._ns = xmd._ns
+
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
 
@@ -292,6 +337,7 @@ class XMarkdown(Markdown):
                 )  # vars are substituted already inside
 
         self._vars = {} # reset at end to release references
+        self._ns = {} # reset back at end
 
         if display_inline:
             return display(*outputs)
@@ -544,17 +590,14 @@ def parse(xmd, display_inline=True):
     return XMarkdown()._parse(xmd, display_inline=display_inline)
 
 
-def fmt(obj, **vars):
-    """Explicity format text that includes the syntax `{var}` with given vars or any other object. 
+def fmt(text, **vars):
+    """Explicity lazily format text that includes the syntax `{var}` with given vars. You need this if not in top level scope of Notebook.
     You need this in python file or inside functions or string formatting where third party objects need to be converted to html representation such as matplotlib figure.
+    If you do some str operations on output of this function, use `output.copy_ns(target)` to attch namespace to new string.
+
+    Returns a xtr object which delays formatting until it is intercepted by markdown parser.
     """
-    if isinstance(obj, str):
-        try:
-            XMarkdown.__EXTRA_NS__ = vars
-            return XTML(parse(obj, display_inline=False)) # avoids further processing
-        except Exception as e:
-            raise e("Faild parsing given text!")
-        finally:
-            XMarkdown.__EXTRA_NS__ = {} # reset back
-    else:
-        return XTML(htmlize(obj))
+    if isinstance(text, str):
+        return xtr(text).with_ns(vars) # should return as string to be parsed
+    else: # should not allow anything else because it will cause issues in Makrdown formatting
+        return TypeError(f"fmt expects a str, got {type(text)}!")

@@ -78,9 +78,9 @@ def demo_slides(slides):
     - Item 1
     - Item 2
 
-    $$ E = mc^2 $$
-    {{.success}}                          
+    $$ E = mc^2 $$                        
     ```
+                                       
     ```markdown
      ```toc Table of contents
      Extra content for current section which is on right
@@ -311,13 +311,16 @@ def demo_slides(slides):
         s.get_source().display()
 
 
-    auto.from_markdown('''
+    auto.from_markdown(slides.fmt('''
     %++
     ## $ \LaTeX $ in Slides
     --
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
     $ \LaTeX $ needs time to load, so keeping it in view until it loads would help.
     {.info}
+    
+    ::: note-tip
+        Varibale formatting alongwith $ \LaTeX $ alert` \`{var}\` → `{var}`` is seamless.
     
     --
     ```multicol 50 50
@@ -329,7 +332,7 @@ def demo_slides(slides):
         $$ ax^2 + bx + c = 0 $$
         {.text-huge}
     ```
-    ''', trusted=True)
+    ''',var = "I was a variable" ), trusted=True)
 
     with auto.slide(), slides.code.context():
         slides.write(fmt('## Built-in CSS styles\n`{s.css_styles}`',s=slides))
