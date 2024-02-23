@@ -238,6 +238,9 @@ class xtr(str):
     def ns(self):
         return self._ns
     
+    def format(self, *args, **kwargs):
+        raise RuntimeError("xtr does not support explicit formatting!")
+    
     def __format__(self, spec):
         raise RuntimeError("xtr is not allowed inside a string formatting!")
     
@@ -486,10 +489,6 @@ class XMarkdown(Markdown):
         user_ns = self.user_ns() # get once, will be called multiple time
         # Replace variables first to have small data # ns let avoiding huge dictionary unpacking
         html_output = re.sub(r"\`\{(.*?)\}\`", lambda match: handle_var(hfmtr.format(match.group()[1:-1], ns = user_ns)), html_output, flags=re.DOTALL)
-        
-        # Replace sub/sup directly
-        html_output = re.sub(r"\_\`(.*?)\`", r"<sub>\1</sub>", html_output, flags=re.DOTALL)
-        html_output = re.sub(r"\^\`(.*?)\`", r"<sup>\1</sup>", html_output, flags=re.DOTALL)
 
         # Replace inline one argumnet functions
         from . import utils  # Inside function to avoid circular import
@@ -525,9 +524,10 @@ class XMarkdown(Markdown):
                 }
                 args = [a.strip().replace("__EQ__", "=") for a in args if "=" not in a]
                 _func = getattr(utils, func)
+
                 try:
                     _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)).value
-                     # If no argument, use default and Replace new line with 4 spaces to keep indentation if block ::: is used
+                     # If no argument, use default 
                     html_output = html_output.replace(
                         f"{func}[{match[0]}]`{match[1]}`", handle_var(_out), 1
                     )
@@ -546,7 +546,6 @@ class XMarkdown(Markdown):
             )
             _out = f'<div class="columns">{_cols}</div>'  # Replace new line with 4 spaces to keep indentation if block ::: is used
             html_output = html_output.replace(f"||{cols[0]}||{cols[1]}||", handle_var(_out), 1)
-
 
         return html_output  # return in main scope
 
@@ -594,7 +593,7 @@ def parse(xmd, display_inline=True):
     """
     return XMarkdown()._parse(xmd, display_inline=display_inline)
 
-def _get_ns(text, depth):
+def _get_ns(text, depth, **kwargs): # kwargs are preferred
     fr = inspect.currentframe()
     for _ in range(depth):
         fr = fr.f_back
@@ -604,18 +603,20 @@ def _get_ns(text, depth):
     
     ns = {} 
     for m in matches:
-        if m in ls: # prefers locals
+        if m in kwargs: # prefers user given, but only keep matching
+            ns[m] = kwargs[m]
+        elif m in ls: # then prefers locals
             ns[m] = ls[m]
         elif m in gs:
             ns[m] = gs[m]
         # Will be a soft error on formatting time, no need to add it here
  
-    del fr, ls, gs
+    del fr, ls, gs, kwargs
     return ns
 
-def fmt(text):
+def fmt(text, **kwargs):
     """Stores refrences to variables used in syntax `{var}` from current namespace until markdown parsed by function it is passed to. 
-    You need this if not in top level scope of Notebook.
+    You need this if not in top level scope of Notebook. kwargs can be used to add extra vairables without clutering user namespace.
     If you do some str operations on output of this function, use `output.copy_ns(target)` to attch namespace to new string.
 
     Output is not intended to do string operations, just to hold namespace for extended markdown.
@@ -623,6 +624,6 @@ def fmt(text):
     Returns an xtr object which delays formatting until it is intercepted by markdown parser.
     """
     if isinstance(text, str): # depth belowshoul be 2 to go where fmt will run
-        return xtr(text).with_ns(_get_ns(text, 2)) # should return as string to be parsed
+        return xtr(text).with_ns(_get_ns(text, 2, **kwargs)) # should return as string to be parsed
     else: # should not allow anything else because it will cause issues in Makrdown formatting
         return TypeError(f"fmt expects a str, got {type(text)}!")

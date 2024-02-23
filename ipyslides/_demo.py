@@ -310,7 +310,6 @@ def demo_slides(slides):
         )
         s.get_source().display()
 
-    var = "I was a variable" 
     auto.from_markdown(slides.fmt('''
     %++
     ## $ \LaTeX $ in Slides
@@ -332,7 +331,7 @@ def demo_slides(slides):
         $$ ax^2 + bx + c = 0 $$
         {.text-huge}
     ```
-    '''), trusted=True)
+    ''', var = "I was a variable" ), trusted=True)
 
     with auto.slide(), slides.code.context():
         slides.write(fmt('## Built-in CSS styles\n`{slides.css_styles}`'))
