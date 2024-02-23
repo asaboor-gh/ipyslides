@@ -20,7 +20,7 @@ This \`{var_name}\` is a code from above and will be substituted with the value 
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
-import string
+import string, inspect
 import textwrap, re, sys, json
 
 from markdown import Markdown
@@ -212,7 +212,7 @@ class HtmlFormatter(string.Formatter):
         if isinstance(key, int):
             return f"<pre>{error('RuntimeError','Positional arguments are not supported in custom formatting!')}<pre>"
         elif isinstance(key, str) and key not in kwargs:
-            return f"<pre>{error('KeyError', f'{key!r} not found in given namespace.')}</pre>"
+            return f"<pre>{error('KeyError', f'{key!r} not found in given namespace. You may need to enclose input text in Slides.fmt function!')}</pre>"
         return super().get_value(key, args, kwargs)
     
 
@@ -222,6 +222,7 @@ del HtmlFormatter
 class xtr(str):
     """String that will be parsed with given namespace lazily. Python's default str will be parsed in top level namespace only!
     If you apply some str operations on it, make sure to use 'copy_ns' method on every generated string to bring it's type back, otherwise it will discard given namespace.
+    This is not intended to do string operations, just to hold namespace for extended markdown.
     """
     def with_ns(self, ns): # cannot add ns in __init__
         if not isinstance(ns, dict):
@@ -486,6 +487,10 @@ class XMarkdown(Markdown):
         # Replace variables first to have small data # ns let avoiding huge dictionary unpacking
         html_output = re.sub(r"\`\{(.*?)\}\`", lambda match: handle_var(hfmtr.format(match.group()[1:-1], ns = user_ns)), html_output, flags=re.DOTALL)
         
+        # Replace sub/sup directly
+        html_output = re.sub(r"\_\`(.*?)\`", r"<sub>\1</sub>", html_output, flags=re.DOTALL)
+        html_output = re.sub(r"\^\`(.*?)\`", r"<sup>\1</sup>", html_output, flags=re.DOTALL)
+
         # Replace inline one argumnet functions
         from . import utils  # Inside function to avoid circular import
 
@@ -495,7 +500,7 @@ class XMarkdown(Markdown):
             )
             for match in all_matches:
                 _func = getattr(utils, func)
-                _out = (_func(match) if match else _func()).value # If no argument, use default, replace new line with 4 spaces to keep indentation if block ::: is used
+                _out = (_func(match) if match else _func()).value # If no argument, use default
                 html_output = html_output.replace(f"{func}`{match}`", handle_var(_out), 1)
 
         # Replace functions with arguments
@@ -589,15 +594,35 @@ def parse(xmd, display_inline=True):
     """
     return XMarkdown()._parse(xmd, display_inline=display_inline)
 
+def _get_ns(text, depth):
+    fr = inspect.currentframe()
+    for _ in range(depth):
+        fr = fr.f_back
 
-def fmt(text, **vars):
-    """Explicity lazily format text that includes the syntax `{var}` with given vars. You need this if not in top level scope of Notebook.
-    You need this in python file or inside functions or string formatting where third party objects need to be converted to html representation such as matplotlib figure.
+    ls, gs = fr.f_locals, fr.f_globals
+    matches = [match.strip() for match in re.findall(r"\`\{(.*?)[\.\[\:\!\s+].*?\}\`", text.replace('}`', ' }`'), flags=re.DOTALL) if not re.search("\{|\}", match)]
+    
+    ns = {} 
+    for m in matches:
+        if m in ls: # prefers locals
+            ns[m] = ls[m]
+        elif m in gs:
+            ns[m] = gs[m]
+        # Will be a soft error on formatting time, no need to add it here
+ 
+    del fr, ls, gs
+    return ns
+
+def fmt(text):
+    """Stores refrences to variables used in syntax `{var}` from current namespace until markdown parsed by function it is passed to. 
+    You need this if not in top level scope of Notebook.
     If you do some str operations on output of this function, use `output.copy_ns(target)` to attch namespace to new string.
 
-    Returns a xtr object which delays formatting until it is intercepted by markdown parser.
+    Output is not intended to do string operations, just to hold namespace for extended markdown.
+
+    Returns an xtr object which delays formatting until it is intercepted by markdown parser.
     """
-    if isinstance(text, str):
-        return xtr(text).with_ns(vars) # should return as string to be parsed
+    if isinstance(text, str): # depth belowshoul be 2 to go where fmt will run
+        return xtr(text).with_ns(_get_ns(text, 2)) # should return as string to be parsed
     else: # should not allow anything else because it will cause issues in Makrdown formatting
         return TypeError(f"fmt expects a str, got {type(text)}!")

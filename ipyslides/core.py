@@ -1135,7 +1135,7 @@ class Slides:
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
-        - See `Slides.xmd_syntax` for extended markdown syntax
+        - See `Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
    """
     )
     @classmethod

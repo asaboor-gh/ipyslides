@@ -128,11 +128,12 @@ class BaseSlides:
         **Other syntax can be used everywhere in markdown:**
         
         - Variables can be replaced with their HTML value (if no other formatting given) using alert`\`{variable}\`` 
-            (should be single curly braces pair wrapped by backticks after other formattings done) syntax.
+            (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
+            alert`\`{variable:format_spec}\`` or alert`\`{variable!conversion}\``, that will take preference.
         
             ::: note-info
-                - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
-                - Variables are substituted from top level scope (Notebook's `locals()`/`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well.
+                - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
+                - Variables are substituted from top level scope (Notebook's `locals()`/`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
                                                
         - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - You can escape backtick with backslash: alert`\\\` → \``.
@@ -439,7 +440,7 @@ class BaseSlides:
             self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with auto.slide(), self.code.context():
-            self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`', self=self))
+            self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`'))
             
         with auto.slide():
             self.write('## Adding Content')
