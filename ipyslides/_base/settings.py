@@ -90,7 +90,7 @@ class LayoutSettings:
     def _toast_on_value_change(self, change):
         if change.new:
             if change.new == 'KSC': # Keyboard shortcute
-                content = parse(intro.key_combs, display_inline=False)
+                content = parse(intro.key_combs, returns = True)
                 self.widgets._push_toast(content, timeout=15)
 
             self.widgets.htmls.toast.value = "" # Reset to make a new signal

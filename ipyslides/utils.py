@@ -606,7 +606,7 @@ def run_doc(obj,prepend_str = None):
     "Execute python code block inside docstring of an object. Block should start with '\`\`\`python run'."
     sig(obj,prepend_str = prepend_str).display()
     from .xmd import parse # Import here to avoid circular import
-    parse(inspect.getdoc(obj), display_inline = True)
+    parse(inspect.getdoc(obj), returns = False)
     
 def code(callable):
     "Returns full code of a callable, you can just pass callable into `write` command or use `ipyslides.Slides.code.cast`."

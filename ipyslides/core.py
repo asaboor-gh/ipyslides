@@ -344,10 +344,10 @@ class Slides(BaseSlides):
                     ::: note-tip
                         In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
                     """,
-                    display_inline=True,
+                    returns = False,
                 )
                 self.details(
-                    self.parse(key_combs, display_inline=False),
+                    self.parse(key_combs, returns = True),
                     "Keyboard Shortcuts",
                 ).display()
 
@@ -390,7 +390,7 @@ class Slides(BaseSlides):
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
-        new_citations = {k: self.parse(v, display_inline=False) for k, v in d.items()}
+        new_citations = {k: self.parse(v, returns = True) for k, v in d.items()}
         if self._citations != new_citations: # same call again should not change anythong
             self._citations = new_citations
             self._set_unsynced() # will go synced after rerun
@@ -790,7 +790,7 @@ class Slides(BaseSlides):
                     self._editing_index = self.running.index # Go to latest editing markdown frame, or start of frames
 
                 self.running.set_source(frm, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
-                parse(xtr.copy_ns(cell, frm), display_inline=True)
+                parse(xtr.copy_ns(cell, frm), returns = False)
             
             if self._editing_index is not None:
                 self.navigate_to(self._editing_index)
@@ -812,7 +812,7 @@ class Slides(BaseSlides):
             raise ValueError(f"slide_number should be int >= 1, got {slide_number}")
 
         with _build_slide(self, f"{slide_number}") as s, self.code.context(
-            auto_display=False, depth=4
+            returns = True, depth=4
         ) as c:  # depth = 4 to source under context manager
             s.set_source(c.raw, "python")  # Update cell source befor yielding
             yield s  # Useful to use later
@@ -828,15 +828,15 @@ class Slides(BaseSlides):
         if no other formatting specified.
         Inline columns are supported with ||C1||C2|| syntax."""
         if cell is None:
-            return parse(line, display_inline=True)
+            return parse(line, returns = False)
         else:
-            return parse(cell, display_inline=True)
+            return parse(cell, returns = False)
 
     @contextmanager
     def title(self):
         """Use this context manager to write title. It is equivalent to `%%title` magic."""
         with self.slide(0) as s, self.code.context(
-            auto_display=False, depth=4
+            returns = True, depth=4
         ) as c:  # depth = 4 to source under context manager
             s.set_source(c.raw, "python")  # Update cell source befor yielding to make available inside context manager
             yield s  # Useful to use later

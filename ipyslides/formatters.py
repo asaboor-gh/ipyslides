@@ -363,7 +363,7 @@ def htmlize(obj):
     "Returns string of HTML representation for given object."
     if isinstance(obj,str):
         from .xmd import parse # Avoid circular import
-        return parse(obj, display_inline = False)
+        return parse(obj, returns = True)
     elif isinstance(obj,XTML):
         return obj._repr_html_() #_repr_html_ is a method of XTML and it is quick   
     else:

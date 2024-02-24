@@ -186,7 +186,7 @@ class BaseSlides:
         - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         
         color[blue]`color[blue]\`text\``, color[yellow,skyblue]`color[yellow,skyblue]\`text\``, ''') + '\n' + ', '.join(f'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
-        display_inline = False
+        returns = True
         ))
    
     def get_source(self, title = 'Source Code'):
@@ -497,7 +497,7 @@ class BaseSlides:
     
         with auto.slide():
             self.write('## Content Styling')
-            with self.code.context(auto_display = False) as c:
+            with self.code.context(returns = True) as c:
                 self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
                        'Provide **CSS**{.info} for that using `.format_css` or use some of the available styles. '
                        'See these **styles**{.success} with `.css_styles` property as below:'))

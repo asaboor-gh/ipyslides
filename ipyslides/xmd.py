@@ -224,7 +224,7 @@ class xtr(str):
     If you apply some str operations on it, make sure to use 'copy_ns' method on every generated string to bring it's type back, otherwise it will discard given namespace.
     This is not intended to do string operations, just to hold namespace for extended markdown.
     
-    Being as last expression of notebook cell or using self.display() will parse markdown content and display immediately.
+    Being as last expression of notebook cell or using self.parse() will parse markdown content.
     """
     def with_ns(self, ns): # cannot add ns in __init__
         if not isinstance(ns, dict):
@@ -267,12 +267,12 @@ class xtr(str):
                 return xtr(target).with_ns(source._ns)
         return target
     
-    def display(self):
-        "Parse markdown content of itself and display."
-        return parse(self, display_inline = True) # returns None
+    def parse(self, returns = False):
+        "Parse markdown content of itself and returns parsed html or display."
+        return parse(self, returns = returns) # parse from top level
     
     def _ipython_display_(self):
-        return self.display()
+        return self.parse(returns = False)
     
 
 class XMarkdown(Markdown):
@@ -282,7 +282,7 @@ class XMarkdown(Markdown):
         )
         self._vars = {}
         self._ns = {} # provided by fmt and xtr
-        self._display_inline = False
+        self._returns = True
         self._shell = get_ipython()
         self._slides = get_slides_instance()
 
@@ -304,11 +304,11 @@ class XMarkdown(Markdown):
         main = sys.modules.get('__main__',None) # __main__ is current top module
         return main.__dict__ if main else {}
 
-    def _parse(self, xmd, display_inline=False): # not intended to be used directly
-        """Return a string after fixing markdown and code/multicol blocks if display_inline is False
+    def _parse(self, xmd, returns = True): # not intended to be used directly
+        """Return a string after fixing markdown and code/multicol blocks returns = True
         otherwise displays objects and execute python code from '```python run source_var_name' block.
         """
-        self._display_inline = display_inline  # Must change here
+        self._returns = returns  # Must change here
         if isinstance(xmd, xtr):
             self._ns = xmd._ns
 
@@ -333,9 +333,9 @@ class XMarkdown(Markdown):
 
 
         # After resolve_objs_on_slide, xmd can have code blocks which may not be passed from suitable context
-        if (r"\n```python run" in xmd) and not self._display_inline: # Do not match nested blocks, r"" is important
+        if (r"\n```python run" in xmd) and self._returns: # Do not match nested blocks, r"" is important
             raise RuntimeError(
-                "Cannot execute code in current context, use Slides.parse(..., display_inline = True) for complete parsing!"
+                "Cannot execute code in current context, use Slides.parse(..., returns = False) for complete parsing!"
             )
 
         new_strs = xmd.split("\n```")  # This avoids nested blocks and it should be
@@ -352,9 +352,7 @@ class XMarkdown(Markdown):
         self._vars = {} # reset at end to release references
         self._ns = {} # reset back at end
 
-        if display_inline:
-            return display(*outputs)
-        else:
+        if returns:
             content = ""
             for out in outputs:
                 try:
@@ -364,6 +362,8 @@ class XMarkdown(Markdown):
                         "text/html"
                     ]  # Rich content from python execution
             return content
+        else:
+            return display(*outputs)
     
     def _resolve_files(self, text_chunk):
         "Markdown files added by include`file.md` should be inserted a plain."
@@ -375,20 +375,20 @@ class XMarkdown(Markdown):
         return text_chunk
 
     def _resolve_nested(self, text_chunk):
-        old_display_inline = self._display_inline
+        old_returns = self._returns
         try:
             # match func`?text?` to parse text and return func`html_repr`
             all_matches = re.findall(
                 r"\`\?(.*?)\?\`", text_chunk, flags=re.DOTALL | re.MULTILINE
             )
             for match in all_matches:
-                repr_html = self._parse(match, display_inline=False)
+                repr_html = self._parse(match, returns = True)
                 repr_html = re.sub(
                     "</p>$", "", re.sub("^<p>", "", repr_html)
                 )  # Remove <p> and </p> tags at start and end
                 text_chunk = text_chunk.replace(f"`?{match}?`", f"`{repr_html}`", 1)
         finally:
-            self._display_inline = old_display_inline
+            self._returns = old_returns
 
         return text_chunk
 
@@ -451,11 +451,11 @@ class XMarkdown(Markdown):
                 f"Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name"
             )
         dedent_data = textwrap.dedent(data)
-        if (self._display_inline == False) or ("run" not in header):  # no run given
+        if (self._returns == True) or ("run" not in header):  # no run given
             return [
                 highlight(dedent_data, language="python", className=_class),
             ]
-        elif "run" in header and self._display_inline:
+        elif ("run" in header) and (not self._returns):
             source = header.split("run")[1].strip()  # Afte run it be source variable
             main_ns = self.main_ns() # get once
             if source:
@@ -559,9 +559,9 @@ class XMarkdown(Markdown):
         return html_output  # return in main scope
 
 
-def parse(xmd, display_inline=True):
+def parse(xmd, returns = False):
     """Parse extended markdown and display immediately.
-    If you need output html, use `display_inline = False` but that won't execute python code blocks.
+    If you need output html, use `returns = True` but that won't execute python code blocks.
 
     **Example**
     ```markdown
@@ -600,7 +600,7 @@ def parse(xmd, display_inline=True):
         - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
     """
-    return XMarkdown()._parse(xmd, display_inline=display_inline)
+    return XMarkdown()._parse(xmd, returns = returns)
 
 def _get_ns(text, depth, **kwargs): # kwargs are preferred
     fr = inspect.currentframe()

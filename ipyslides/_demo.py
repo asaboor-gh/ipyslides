@@ -110,7 +110,7 @@ def demo_slides(slides):
     """, trusted=True)
 
 
-    with slides.code.context(auto_display = False) as s:
+    with slides.code.context(returns = True) as s:
         with last.proxies[0].capture():
             write([slides.classed(slides.doc(write,'Slides'),'block-green'), slides.classed(slides.doc(slides.parse,'Slides'),'block-red')])
             s.show_lines([0,1]).display()
@@ -121,7 +121,7 @@ def demo_slides(slides):
     # Matplotlib
     with auto.slide() as sl:
         write('## Plotting with Matplotlib')
-        with slides.code.context(auto_display = False) as s:
+        with slides.code.context(returns = True) as s:
             sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
 
             import numpy as np, matplotlib.pyplot as plt
@@ -134,7 +134,7 @@ def demo_slides(slides):
 
 
     # Plotly and Pandas DataFrame only show if you have installed
-    with slides.code.context(auto_display = False) as source:
+    with slides.code.context(returns = True) as source:
         try:
             import pandas as pd 
             df = pd.read_csv('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv')
@@ -145,7 +145,7 @@ def demo_slides(slides):
     with auto.slide():
         write(['## Writing Pandas DataFrame', df, source])
     
-    with slides.code.context(False) as s:
+    with slides.code.context(returns = True) as s:
         try:
             import plotly.graph_objects as go
             fig = go.Figure()
@@ -178,7 +178,7 @@ def demo_slides(slides):
 
     # Interactive widgets.   
     with auto.slide():
-        with slides.code.context(auto_display = False) as src:
+        with slides.code.context(returns = True) as src:
             import ipywidgets as ipw
 
             write('''
@@ -222,7 +222,7 @@ def demo_slides(slides):
             forward_skipper.display()
             backward_skipper.set_target()
 
-        with slides.code.context(auto_display = False) as s:
+        with slides.code.context(returns = True) as s:
             fig, ax = plt.subplots()
             x = np.linspace(0,obj+1,50+10*(idx+1))
             ax.plot(x,np.sin(x));
@@ -254,7 +254,7 @@ def demo_slides(slides):
 
     @auto.frames(*boxes, repeat=[(0,1),(2,3)])
     def f(obj,idx):
-        with slides.code.context(auto_display = False) as s:
+        with slides.code.context(returns = True) as s:
             slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
             slides.write(*obj)
 
