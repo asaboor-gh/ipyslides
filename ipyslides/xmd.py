@@ -223,6 +223,8 @@ class xtr(str):
     """String that will be parsed with given namespace lazily. Python's default str will be parsed in top level namespace only!
     If you apply some str operations on it, make sure to use 'copy_ns' method on every generated string to bring it's type back, otherwise it will discard given namespace.
     This is not intended to do string operations, just to hold namespace for extended markdown.
+    
+    Being as last expression of notebook cell or using self.display() will parse markdown content and display immediately.
     """
     def with_ns(self, ns): # cannot add ns in __init__
         if not isinstance(ns, dict):
@@ -264,6 +266,13 @@ class xtr(str):
             if type(target) == str:
                 return xtr(target).with_ns(source._ns)
         return target
+    
+    def display(self):
+        "Parse markdown content of itself and display."
+        return parse(self, display_inline = True) # returns None
+    
+    def _ipython_display_(self):
+        return self.display()
     
 
 class XMarkdown(Markdown):

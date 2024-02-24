@@ -620,10 +620,10 @@ def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markd
     return color(datetime.datetime.now().strftime(fmt),fg=fg, bg = None)
 
 def sub(text):
-    return html('sub',text,style="font-size:70%;color:inherit;")
+    return html('sub',text,style="font-size:85%;color:inherit;")
 
 def sup(text):
-    return html('sup',text,style="font-size:70%;color:inherit;")
+    return html('sup',text,style="font-size:85%;color:inherit;")
 
 def bullets(iterable, ordered = False,marker = None, className = None):
     """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command.    
