@@ -2,16 +2,42 @@
 Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
-import os
+import sys
 from dataclasses import dataclass
 import ipywidgets as ipw
 from ipywidgets import HTML, VBox, HBox, Box, GridBox, Layout, Button
-from IPython.display import display
+from IPython import get_ipython
 from tldraw import TldrawWidget
 from . import styles, _layout_css
 from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
 from .intro import get_logo
 from ..utils import html
+
+
+class Output(ipw.Output):
+    __doc__ = """ipywidgets.Output subclassed to manage IPython's capture_output redirect back to widget.
+    Use this instead of ipywidgets.Output to be sure that display items will be captured in widget.
+    Replace `from ipywidgets import Output` with `from ipyslides import Output` and then rest of code is same.
+    ---------------------------------------------
+    """ + ipw.Output.__doc__
+
+    _ipyshell = get_ipython()
+    _hooks = (sys.displayhook, _ipyshell.display_pub if _ipyshell else None) # store once in start
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def __enter__(self):
+        if self._ipyshell:
+            self._chooks = (sys.displayhook, self._ipyshell.display_pub) # current hooks in top capture
+            sys.displayhook, self._ipyshell.display_pub = self._hooks
+        
+        super().__enter__()
+
+    def __exit__(self, etype, evalue, tb):
+        if self._ipyshell:
+            sys.displayhook, self._ipyshell.display_pub = self._chooks
+        super().__exit__(etype, evalue, tb)
 
 
 auto_layout =  Layout(width='auto')
@@ -122,7 +148,7 @@ class Widgets:
         
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
-        self._tmp_out = ipw.Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
+        self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self._snum   = Button(description='',layout= Layout(width='auto',height='auto')).add_class("Slide-Number").add_class('Menu-Item')
         self.buttons = _Buttons()

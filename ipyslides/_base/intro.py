@@ -62,7 +62,7 @@ slides.set_animation(main='flow')
 # slide 1 content
 ```
 ```python
-%%slide 1 -m 
+%%slide 2 -m 
 **Markdown here with extended options (see `slides.xmd_syntax` for info). Nested blocks are not supported**
  ```multicol 30 70 .success
  less content
@@ -71,16 +71,8 @@ slides.set_animation(main='flow')
  ```
 ```
 
-```python run source
-x = 1 + 2
-print(x) 
-```
-There is a python block above with header `python run source` shown below:
-`{source}`
-
-variable `x` defined there is shown here x = `{x}`.
 ```python
-@slides.frames(1,*objs)
+@slides.frames(3,*objs)
 def func(obj):
     write(obj) #This will create as many slides after the slide number 1 as length(objs)
 ```
@@ -170,6 +162,10 @@ key_combs = f"""
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
     In JupyterLab, right click on the slides and select `Create New View for Output` and follow next there to optimize display.
+
+::: note-warning
+    If you use alert`ipywidgets.Output` under slides, it may not capture anything during building of slides, 
+    use alert`from ipyslides import Output` instead and rest of the code is same.
 
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 

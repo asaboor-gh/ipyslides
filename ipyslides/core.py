@@ -4,11 +4,10 @@ from collections import namedtuple
 
 from IPython import get_ipython
 from IPython.display import display
-from IPython.utils.capture import capture_output
 
 import ipywidgets as ipw
 
-from .xmd import fmt, parse, xtr, extender as _extender
+from .xmd import fmt, parse, capture_content, xtr, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
 from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
@@ -17,6 +16,7 @@ from . import utils
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
 from ._base.base import BaseSlides
+from ._base.widgets import Output
 from ._base.intro import get_logo, key_combs
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
@@ -91,6 +91,7 @@ class Slides(BaseSlides):
         self.parse = parse  # Parse extended markdown
         self.fmt = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
+        self.Output = Output # have in one place
 
         self._remove_post_run_callback()  # Remove post_run_cell callback before this and at end
         self._post_run_enabled = True  # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
@@ -104,39 +105,6 @@ class Slides(BaseSlides):
             self.shell.register_magic_function(
                 self.__xmd, magic_kind="line_cell", magic_name="xmd"
             )
-
-        # Override print function to display in order in slides
-        if self.is_jupyter_session():
-            import builtins
-
-            self.builtin_print = (
-                builtins.print
-            )  # Save original print function otherwise it will throw a recursion error
-
-            def print(*args, **kwargs):
-                """Prints object(s) inline with others in corrct order. args and kwargs are passed to builtin `print`.
-                ::: note
-                    - If `file` argument is not `sys.stdout`, then print is passed to given file.
-                    - If oustide slides, then print is same as builtin `print`."""
-
-                if (
-                    "file" in kwargs and kwargs["file"] != sys.stdout
-                ):  # User should be able to redirect print to file
-                    return self.builtin_print(*args, **kwargs)
-                elif self.running or getattr(self, "_in_proxy", False):
-                    with capture_output() as captured:
-                        self.builtin_print(*args, **kwargs)
-
-                    # custom-print is used to avoid the print to be displayed when `with suppress_stdout` is used.
-                    return self.raw(
-                        captured.stdout, className="custom-print"
-                    ).display()  # Display at the end
-                else:
-                    self.builtin_print(
-                        *args, **kwargs
-                    )  # outside slides should behave same as before
-
-            builtins.print = print
 
         self._cite_mode = 'footnote'
 
@@ -1051,7 +1019,7 @@ class Slides(BaseSlides):
         new_slides = False
         for slide_number in slide_numbers:
             if f"{slide_number}" not in self._slides_dict:
-                with capture_output() as captured:
+                with capture_content() as captured:
                     self.write(f"### Slide-{slide_number}")
 
                 self._slides_dict[f"{slide_number}"] = Slide(
@@ -1136,7 +1104,11 @@ class Slides:
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
         - See `Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
-   """
+    
+    ::: note-warning
+        If you use alert`ipywidgets.Output` under slides, it may not capture anything during building of slides, 
+        use alert`from ipyslides import Output` instead and rest of the code is same.
+    """
     )
     @classmethod
     def instance(cls):

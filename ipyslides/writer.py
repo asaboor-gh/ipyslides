@@ -6,10 +6,9 @@ __all__ = ['write']
 
 import ipywidgets as ipw
 from IPython.display import display as display
-from IPython.utils.capture import capture_output
 
 from .formatters import XTML, htmlize, serializer
-from .xmd import parse, get_slides_instance
+from .xmd import parse, get_slides_instance, capture_content
 
 class CustomDisplay:
     def _ipython_display_(self):
@@ -62,7 +61,7 @@ class AltForWidget(CustomDisplay):
         slides = get_slides_instance()
         if slides: 
             with slides._hold_running(): # To prevent dynamic content from being added to alt
-                with capture_output() as cap:
+                with capture_content() as cap:
                     out = self._func(self._widget)
                     if not isinstance(out, str):
                         raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
@@ -146,7 +145,7 @@ class Writer:
         widths = [f'{int(w)}%' for w in widths]
         cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]
         for i, col in enumerate(cols):
-            with capture_output() as cap:
+            with capture_content() as cap:
                 for c in col['outputs']:
                     if isinstance(c,str):
                         parse(c, returns = False)
@@ -173,9 +172,11 @@ class Writer:
         return cols
     
     def update_display(self):
-        self._box.children = [ipw.Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
+        from ._base.widgets import Output # avoid circular import
+
+        self._box.children = [Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
         for c, out_w in zip(self._cols, self._box.children):
-            with out_w:
+            with out_w: 
                 for out in c['outputs']: # Don't worry as _slide won't be None if Proxy is present
                     if 'Proxy' in out.metadata:
                         display(*self._slide._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
@@ -187,7 +188,7 @@ class Writer:
         self.update_display()
         
     @property
-    def data(self): return getattr(self._box, '_repr_mimebundle_', lambda: {'application':'HBox'})() # Required for check in slide display of there are widgets
+    def data(self): return getattr(self._box, '_repr_mimebundle_', lambda: {'application':'HBox'})() # Required for check in slide display if there are widgets
     
     @property
     def metadata(self): return {} # Required for check in slide display of there are widgets
@@ -247,6 +248,6 @@ def write(*objs,widths = None):
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """
     wr = Writer(*objs,widths = widths)
-    if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
-        return wr.update_display() # Update in usual cell to have widgets working
+    if not any([(wr._slides and wr._slides.running), wr._in_proxy, len(objs) == 1]):
+        return wr.update_display() # Update in usual cell to have widgets working, but not single object which displays outside of box
 

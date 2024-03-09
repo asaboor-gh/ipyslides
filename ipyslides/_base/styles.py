@@ -485,7 +485,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '.highlight': {'border':'none !important',},
             'span.lang-name': {'display':'none !important',},
         },
-        '.custom-print': {
+        '.InlinePrint': {
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
         },
         'a.citelink' : {

@@ -20,8 +20,11 @@ This \`{var_name}\` is a code from above and will be substituted with the value 
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
-import string, inspect
-import textwrap, re, sys, json
+import inspect
+import textwrap, re, sys, json, string, builtins
+from contextlib import contextmanager
+from html import escape # Builtin library
+from io import StringIO
 
 from markdown import Markdown
 from IPython.core.display import display
@@ -109,6 +112,12 @@ def error(name, msg):
     "Add error without breaking execution."
     return XTML(f"<b style='color:crimson;'>{name}</b>: {msg}")
 
+def raw(text, className=None): # className is required here to make compatible with utils
+    "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
+    _class = className if className else ''
+    escaped_text = escape(textwrap.dedent(text).strip('\n')) # dedent and strip newlines on top and bottom
+    return XTML(f"<div class='raw-text {_class}'>{escaped_text}</div>")
+
 def _fmt_code(code, instance_name="slides"):
     "Format given code block to be runable under markdown. instance_name is the name of the slides instance as used in current code."
     return _code_.format(app=instance_name, block=textwrap.dedent(code).strip())
@@ -124,6 +133,29 @@ def get_unique_css_class():
     "Get slides unique css class if available."
     slides = get_slides_instance()
     return f".{slides.uid}" if slides else ""
+
+@contextmanager
+def capture_content(stdout: bool = True, stderr: bool = True, display: bool = True):
+    """Works like IPython's capture_output contextmanager but keep output of print in given order by converting it to rich output display.
+    """
+    def rprint(*args, **kwargs):
+        if "file" in kwargs and kwargs["file"] != sys.stdout:  # User should be able to redirect print to file
+            return bprint(*args, **kwargs)
+        
+        if stdout: 
+            kwargs['file'] = StringIO()
+            bprint(*args, **kwargs)
+            return raw(kwargs['file'].getvalue(), className="InlinePrint").display() # InlinePrint  is important for filterning in utils
+        else:
+            return bprint(*args, **kwargs)
+    
+    try:
+        bprint = builtins.print # should be here, not on global level
+        builtins.print = rprint # replace temporarily
+        with capture_output(stdout=stdout, stderr=stderr,display=display) as cap:
+            yield cap # pass capturedIO at top
+    finally: # only need finally, errors are automatically thrown
+        builtins.print = bprint
 
 
 def resolve_objs_on_slide(slide_instance, text_chunk):
@@ -241,7 +273,10 @@ class xtr(str):
         return self._ns
     
     def format(self, *args, **kwargs):
-        raise RuntimeError("xtr does not support explicit formatting!")
+        raise RuntimeError("xtr does not support explicit formatting, use .parse instaed!")
+    
+    def format_map(self, mapping):
+        raise RuntimeError("xtr does not support explicit formatting, use .parse instaed!")
     
     def __format__(self, spec):
         raise RuntimeError("xtr is not allowed inside a string formatting!")
@@ -451,20 +486,21 @@ class XMarkdown(Markdown):
                 f"Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name"
             )
         dedent_data = textwrap.dedent(data)
-        if (self._returns == True) or ("run" not in header):  # no run given
-            return [
-                highlight(dedent_data, language="python", className=_class),
-            ]
-        elif ("run" in header) and (not self._returns):
+
+        if "run" not in header:  # no run given
+            return [highlight(dedent_data, language="python", className=_class),]
+        
+        if "run" in header:
+            if self._returns:
+                raise RuntimeError("Cannot execute code in this context!")
+            
             source = header.split("run")[1].strip()  # Afte run it be source variable
             main_ns = self.main_ns() # get once
             if source:
-                main_ns[source] = _str2code(
-                    dedent_data, language="python", className=_class
-                )
+                main_ns[source] = _str2code(dedent_data, language="python", className=_class)
 
             # Run Code now
-            with capture_output() as captured:
+            with capture_content() as captured:
                 if current_shell := self._slides or self._shell:
                     try: # Need slides to be  accessible in namespace
                         main_ns['get_slides_instance'] = get_slides_instance

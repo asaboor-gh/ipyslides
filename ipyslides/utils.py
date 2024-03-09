@@ -8,21 +8,18 @@ __all__ = sorted(_attrs)
 import os, re
 import datetime
 import inspect
-import textwrap
 
 from pathlib import Path
-from html import escape # Builtin library
 from io import BytesIO # For PIL image
 from contextlib import contextmanager, suppress
 
 from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
-from IPython.utils.capture import capture_output
 import ipywidgets as ipw
 
 from .formatters import XTML, fix_ipy_image, htmlize
-from .xmd import get_unique_css_class, error
+from .xmd import get_unique_css_class, error, raw, capture_content # raw error for export from here
 from .writer import Writer, AltForWidget
 
 def is_jupyter_session():
@@ -184,19 +181,19 @@ Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-
 def _filter_prints(outputs):
     new_outputs, new_prints = [], []
     for out in outputs:
-        if 'text/html'in out.data and re.findall(r'class(.*)custom-print',out.data['text/html']):
+        if 'text/html'in out.data and re.findall(r'class(.*)InlinePrint',out.data['text/html'], flags=re.DOTALL):
             new_prints.append(out)
         else:
             new_outputs.append(out)
     return new_outputs, new_prints
 
 @contextmanager
-def suppress_output(keep_stdout = False):
-    "Suppress output of a block of code. If `keep_stdout` is True, only display data is suppressed."
-    with capture_output() as captured:
-        yield # Do not yield
+def suppress_output(stdout = True):
+    "Suppress output of a block of code. If `stdout` is False, only display data is suppressed."
+    with capture_content() as captured:
+        yield # Do not yield handle
     
-    if keep_stdout:
+    if not stdout:
         outputs = captured.outputs
         _, new_prints = _filter_prints(outputs)
         if new_prints:
@@ -208,7 +205,7 @@ def suppress_output(keep_stdout = False):
 @contextmanager
 def suppress_stdout():
     "Suppress stdout in a block of code, especially unwanted print from functions in other modules."
-    with capture_output() as captured:
+    with capture_content() as captured:
         yield # do not yield, we want to suppress under and outside slides
     
     outputs = captured.outputs
@@ -475,12 +472,6 @@ def keep_format(plaintext_or_html):
     if not isinstance(plaintext_or_html,str):
         return plaintext_or_html # if not string, return as is
     return XTML(plaintext_or_html) 
-
-def raw(text, className=None): # className is required here
-    "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
-    _class = className if className else ''
-    escaped_text = escape(textwrap.dedent(text).strip('\n')) # dedent and strip newlines on top and bottom
-    return XTML(f"<div class='raw-text {_class}'>{escaped_text}</div>")
 
 def rows(*objs):
     "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."

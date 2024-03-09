@@ -2,16 +2,17 @@
 
 import sys, time
 from contextlib import contextmanager
-from ipywidgets import Output, Layout, Button, HBox, VBox, Label
+from ipywidgets import Layout, Button, HBox, VBox, Label
 
 from IPython.display import display
-from IPython.utils.capture import capture_output
 from IPython.core.ultratb import FormattedTB
 
 
 from . import styles
 from ..utils import XTML, html, color, _format_css, _sub_doc, _css_docstring
 from ..writer import _fmt_html
+from ..xmd import capture_content
+from .widgets import Output # not from ipywidget
 
 class _EmptyCaptured: outputs = [] # Just for initialization
 
@@ -48,7 +49,7 @@ class DynamicRefresh:
         
         self._slide._app._in_dproxy = self
         try: # Initail error in cell to verify code is correct
-            with capture_output() as cap:
+            with capture_content() as cap:
                 self._func()
             if cap.stderr: raise Exception(cap.stderr)
         finally:
@@ -98,7 +99,7 @@ class DynamicRefresh:
 
         with self._slide._app._set_running(self._slide): # Set running slide to this slide
             try:
-                with capture_output() as captured:
+                with capture_content() as captured:
                     self._func()
 
                 self._last_outputs = _expand_objs(captured.outputs,self) # Expand columns is necessary
@@ -106,7 +107,7 @@ class DynamicRefresh:
             except:
                 if self._raise_error:
                     wdgts = self.error_handler() # should capture outside
-                    with capture_output() as err_captured:
+                    with capture_content() as err_captured:
                         display(*wdgts)
 
                     self._error_outputs = err_captured.outputs
@@ -134,7 +135,7 @@ class DynamicRefresh:
         
         out = Output()
         with out:
-            self._slide._app.builtin_print(ftb.stb2text(tb)) # Always use builtin print to show correct traceback
+            print(ftb.stb2text(tb)) 
         
         btn.on_click(remove_error_outputs)
         return btn, out
@@ -208,7 +209,7 @@ class Proxy:
         "Returns the outputs of the proxy, if it has been replaced."
         if self._outputs:
             return self._outputs 
-        with capture_output() as captured:
+        with capture_content() as captured:
             display(self._to_display, metadata= {'Proxy': self._key}) # This will update the slide refrence on each display to provide useful info
         return captured.outputs
     
@@ -228,7 +229,7 @@ class Proxy:
         self._exportables = {} # Reset exportables
         self._slide._app._in_proxy = self # Used to get print statements to work in order and coulm aware
         try:
-            with capture_output() as captured:
+            with capture_content() as captured:
                 yield
 
             if captured.stderr:
@@ -321,7 +322,7 @@ class Slide:
     def _on_load_private(self, func):
         with self._app._hold_running(): # slides will not be running during switch, so make it safe
             try: # check if code is correct
-                with capture_output():
+                with capture_content():
                     func()
             except Exception as e:
                 if 'constructor' in str(e):
@@ -367,7 +368,7 @@ class Slide:
         
         with self._app._set_running(self):
             self._app._remove_post_run_callback() # Remove before capturing
-            with capture_output() as captured:
+            with capture_content() as captured:
                 yield captured
 
             if captured.stderr:
