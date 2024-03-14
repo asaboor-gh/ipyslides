@@ -15,11 +15,7 @@ from ..utils import html
 
 
 class Output(ipw.Output):
-    __doc__ = """ipywidgets.Output subclassed to manage IPython's capture_output redirect back to widget.
-    Use this instead of ipywidgets.Output to be sure that display items will be captured in widget.
-    Replace `from ipywidgets import Output` with `from ipyslides import Output` and then rest of code is same.
-    ---------------------------------------------
-    """ + ipw.Output.__doc__
+    __doc__ = ipw.Output.__doc__ # same docs
 
     _ipyshell = get_ipython()
     _hooks = (sys.displayhook, _ipyshell.display_pub if _ipyshell else None) # store once in start
@@ -37,8 +33,13 @@ class Output(ipw.Output):
     def __exit__(self, etype, evalue, tb):
         if self._ipyshell:
             sys.displayhook, self._ipyshell.display_pub = self._chooks
+
         super().__exit__(etype, evalue, tb)
 
+# patching for correct order of outputs, loaded with ipywidgets import when ipyslides is present
+ipw.interaction.Output = Output
+ipw.Output = Output
+ipw.widget_output.Output = Output
 
 auto_layout =  Layout(width='auto')
 def describe(value): 

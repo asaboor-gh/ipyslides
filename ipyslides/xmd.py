@@ -373,7 +373,7 @@ class XMarkdown(Markdown):
                 "Cannot execute code in current context, use Slides.parse(..., returns = False) for complete parsing!"
             )
 
-        new_strs = xmd.split("\n```")  # This avoids nested blocks and it should be
+        new_strs = xmd.split("\n```")  # \n``` avoids nested blocks and it should be
         outputs = []
         for i, section in enumerate(new_strs):
             if i % 2 == 0:
@@ -644,7 +644,10 @@ def _get_ns(text, depth, **kwargs): # kwargs are preferred
         fr = fr.f_back
 
     ls, gs = fr.f_locals, fr.f_globals
-    matches = [match.strip() for match in re.findall(r"\`\{(.*?)[\.\[\:\!\s+].*?\}\`", text.replace('}`', ' }`'), flags=re.DOTALL) if not re.search("\{|\}", match)]
+    matches = [match.strip() for match in re.findall(
+        r"[^\\]\`\{(.*?)[\.\[\:\!\s+].*?\}\`", # should not start with \`
+        text.replace('}`', ' }`'), # needs a space if only variable
+        flags = re.DOTALL) if not re.search("\{|\}", match)]
     
     ns = {} 
     for m in matches:

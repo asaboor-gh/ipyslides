@@ -118,22 +118,6 @@ def demo_slides(slides):
 
     auto.from_markdown('section`Plotting and DataFrame` toc``')
 
-    with auto.slide():
-        write("## Use `ipyslides.Output` instead of `ipywidgets.Output`")
-        with slides.code.context():
-            import ipywidgets as ipw 
-
-            with ipw.Output():
-                write('''
-                I was not suppoed to be shown, but alert`ipywidgets.Output` could not 
-                capture me and I went to main capture stream!''')
-
-            with (out := slides.Output()): # can by ipyslides.Output too
-                print('I am safely captured here and will only be displayed if user wants to!')
-            
-            write(["**User wanted to write me below!**", 
-                slides.alt(out, lambda w: 'HTML export for Output widget is not supported!')])
-
     # Matplotlib
     with auto.slide() as sl:
         write('## Plotting with Matplotlib')
@@ -196,7 +180,7 @@ def demo_slides(slides):
     with auto.slide():
         with slides.code.context(returns = True) as src:
             import ipywidgets as ipw
-
+            
             write('''
                 ## Interactive Apps with Widgets section`Interactive Widgets`
                 Use `ipywidgets`, `bqplot`,`ipyvolume`, `plotly Figurewidget` etc. to show live apps like this!

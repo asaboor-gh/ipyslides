@@ -5,7 +5,6 @@ from collections import namedtuple
 from IPython import get_ipython
 from IPython.display import display
 
-import ipywidgets as ipw
 
 from .xmd import fmt, parse, capture_content, xtr, extender as _extender
 from .source import Code
@@ -15,8 +14,8 @@ from . import utils
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
+from ._base.widgets import ipw # patched one
 from ._base.base import BaseSlides
-from ._base.widgets import Output
 from ._base.intro import get_logo, key_combs
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
@@ -91,7 +90,6 @@ class Slides(BaseSlides):
         self.parse = parse  # Parse extended markdown
         self.fmt = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
-        self.Output = Output # have in one place
 
         self._remove_post_run_callback()  # Remove post_run_cell callback before this and at end
         self._post_run_enabled = True  # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
@@ -1104,10 +1102,6 @@ class Slides:
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
         - See `Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
-    
-    ::: note-warning
-        If you use alert`ipywidgets.Output` under slides, it may not capture anything during building of slides, 
-        use alert`from ipyslides import Output` instead and rest of the code is same.
     """
     )
     @classmethod

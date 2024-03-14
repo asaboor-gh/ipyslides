@@ -540,6 +540,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 },
             },
             ".jp-RenderedText": {
+                "*": {"font-size": "0.9em !important",},
                 "^, pre": {
                     "color": "var(--primary-fg) !important",
                 },

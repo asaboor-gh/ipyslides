@@ -163,10 +163,6 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
     In JupyterLab, right click on the slides and select `Create New View for Output` and follow next there to optimize display.
 
-::: note-warning
-    If you use alert`ipywidgets.Output` under slides, it may not capture anything during building of slides, 
-    use alert`from ipyslides import Output` instead and rest of the code is same.
-
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 
 Having slides in focus, you can use follwoing keys/combinations:
