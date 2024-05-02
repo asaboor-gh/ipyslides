@@ -62,6 +62,7 @@ const keyMessage = {
     'k': 'KSC', // keyboard shortcuts
     'l': 'TLSR', // L toggle laser
     'v': 'TVP', // V for toggle viewport, only in voila and LinkedOutputView
+    'e': 'EDIT', // Edit source cell
 }
 
 

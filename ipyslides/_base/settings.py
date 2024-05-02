@@ -50,7 +50,7 @@ class LayoutSettings:
 
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
         self.widgets.buttons.info.on_click(self._show_info)
-        self.widgets.buttons._inview.on_click(self.__block_post_run)
+        self.widgets.buttons._inview.on_click(self.__keep_new_output_only)
         self.widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self.theme_dd.observe(self._update_theme, names=["value"])
         self.fontsize_slider.observe(self._update_theme, names=["value"])
@@ -63,7 +63,6 @@ class LayoutSettings:
         self.reflow_check.observe(self._update_theme, names=["value"])
         self.btn_draw.observe(self._toggle_overlay, names=["value"])
         self.btn_menu.observe(self._toggle_menu, names = ["value"])
-        self.widgets.checks.postrun.observe(self._set_show_always, names=["value"])
         self.widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self.widgets.checks.proxy.observe(self._toggle_proxy_buttons, names=["value"])
         self._update_theme()  # Trigger Theme and Javascript in it
@@ -71,9 +70,7 @@ class LayoutSettings:
         self.set_layout(center=True)  # Trigger this as well
         self._update_size(change=None)  # Trigger this as well
 
-    def __block_post_run(self, btn):
-        self.widgets.checks.postrun.value = False  # Uncheck it
-        self.widgets.checks.postrun.disabled = True  # Disable it
+    def __keep_new_output_only(self, btn):
         self.widgets.navbox.children = [
             w for w in self.widgets.navbox.children if w is not btn
         ]
@@ -136,37 +133,38 @@ class LayoutSettings:
                 *v
             )  # Call function with arguments
 
-    def show_always(self, b: bool = True):
-        """If True (default), slides are shown after each cell execution where a slide constructor is present (other view will be closed).
-        Otherwise only when `slides.show()` is called or `slides` is the last line in a cell.
-        :::note
-            In JupyterLab, right click on the slides and select `Create New View for Output` and follow next step there to optimize display.
-        """
-        if not isinstance(b, bool):
-            raise TypeError(f"Expected bool, got {b!r}")
-        self._slides._post_run_enabled = (
-            True if b else False
-        )  # Do not rely on user if they really give bool or not
-
-    def _set_show_always(self, change):
-        if change["new"]:
-            self.show_always(True)
-            self._slides.notify("Post run cell enabled!")
-        else:
-            self.show_always(False)
-            self._slides.notify("Post run cell disabled!")
-
     def _toggle_nav_gui(self, change):
         if change["new"]:  # It's checked then hide
-            self.set_nav_gui(False)
+            self.show_nav_gui(True)
         else:
-            self.set_nav_gui(True)
+            self.show_nav_gui(False)
 
     def _toggle_proxy_buttons(self, change):
         if change["new"]:
             self.widgets.mainbox.remove_class("PresentMode")  # Show if checked
         else:
             self.widgets.mainbox.add_class("PresentMode")
+
+    
+    def set_toggles(self,
+        nav_gui = True,
+        reflow_content = False, 
+        notes = False, 
+        notifications = True, 
+        proxy_buttons = True,
+        auto_focus = True,
+        ):
+        for name, value in ({
+            'navgui': nav_gui,
+            'reflow': reflow_content,
+            'notes': notes,
+            'toast': notifications,
+            'proxy': proxy_buttons,
+            'scroll': scroll_buttons,
+            'focus': auto_focus,
+        }).items():
+            if (widget := getattr(self.widgets.checks,name, None)):
+                widget.value = value # if condition for future additions check
 
     def set_animation(self, main="slide_h", frame="appear"):
         "Set animation for slides and frames."
@@ -183,7 +181,7 @@ class LayoutSettings:
         Slides.settings.set_theme_colors({colors})
         ```
         """
-        styles._validate_colors(self._custom_colors)  # Validate colors before using
+        styles._validate_colors(colors)  # Validate colors before using and setting
         self._custom_colors = colors
         self.theme_dd.value = "Custom"  # Trigger theme update
         self._update_theme({'owner':self.theme_dd}) # This chnage is important to update layout theme as well
@@ -338,13 +336,15 @@ class LayoutSettings:
         self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center, 'aspect': aspect, 'ncol_refs': ncol_refs}
         self._update_size(change = None) # will reset theme and send RESCALE message
 
-    def set_nav_gui(self, visible = True):
+    def show_nav_gui(self, visible = True):
         """Show/Hide navigation GUI, keyboard or touch still work. Hover on left-bottom corner to acess settings."""
         self.widgets.controls.layout.visibility = "visible" if visible else "hidden"
+        self.widgets.checks.navgui.value = True if visible else False
         self.widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
 
         if not visible:
             self._slides.notify("Navigation controls hidden. But keyboard and touch gestures are working!")
+        
 
     def _update_size(self, change):
         self.widgets.mainbox.layout.height = "{}vw".format(

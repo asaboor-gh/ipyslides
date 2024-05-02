@@ -38,9 +38,6 @@ how_to_slide = """# Creating Slides
 ::: note-warning
     Python 3.8+, ipywidgets 8+, IPython 8.7+ are required. Previous version 2.x.x will still be supported for bug fixes.
 
-::: note-info
-    Slides are shown after each run of cell (where a slide is present) by default to make user experience better (get output where you run). You can disable this by calling `Slides.settings.show_always(False)`.
-
 **After you initialize `slides = ipyslides.Slides()`**
 
 - `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
@@ -139,6 +136,7 @@ key_maps = {
     "V": "Toggle fit to viewport [voila only]",
     "G": "Toggle settings panel",
     "L": "Toggle LASER pointer",
+    "E": "Edit Source Cell of Current Slide", 
     "K": "Show keyboard shortcuts",
 }
 
@@ -155,6 +153,7 @@ key_combs = f"""
 | {_key('Esc')}                               |                                                   | {key_maps["Esc"]}      |
 | {_key('V')}                                 | {_icons["win-maximize"]}, {_icons["win-restore"]} | {key_maps["V"]}        |
 | {_key('G')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["G"]}        |
+| {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 

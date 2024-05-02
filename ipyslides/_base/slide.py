@@ -1,7 +1,7 @@
 """Slide Object, should not be instantiated directly"""
 
 import sys, time
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from ipywidgets import Layout, Button, HBox, VBox, Label
 
 from IPython.display import display
@@ -353,6 +353,7 @@ class Slide:
     def _capture(self):
         "Capture output to this slide."
         self._app._next_number = int(self._number) + 1
+        self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
         self._section = None # Reset sec_key
@@ -365,9 +366,11 @@ class Slide:
             del self._on_load # Remove on_load function
         if hasattr(self,'_target_id'):
             del self._target_id # Remove target_id
+
+        with suppress(Exception): # register only in slides building, not other cells
+            self._app._register_postrun_cell()
         
         with self._app._set_running(self):
-            self._app._remove_post_run_callback() # Remove before capturing
             with capture_content() as captured:
                 yield captured
 
@@ -376,13 +379,12 @@ class Slide:
                     self._app._warnings.append(captured.stderr)
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
-                
-            # If no error, then add callback keeping the user preference
-            if self._app._post_run_enabled:
-                self._app.shell.events.register('post_run_cell', self._app._post_run_cell)
 
             self._contents = _expand_objs(captured.outputs, self) # Expand columns  
             self.set_dom_classes(remove = 'Out-Sync') # Now synced
+
+            if self._app.widgets.checks.focus.value: # User preference
+                self._app._box.focus()
         
         if self._app._warnings:
             print(*self._app._warnings, sep='\n\n')

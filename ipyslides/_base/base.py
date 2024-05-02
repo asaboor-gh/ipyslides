@@ -318,15 +318,18 @@ class BaseSlides:
             
         handles = self.create(*range(start, start + len(chunks))) # create slides faster or return older
 
-        with self.skip_post_run_cell():
-            for i,chunk in enumerate(chunks):
-                # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-                checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
-                if  any(checks):
-                    with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
-                        self._slide(f'{i + start} -m', chunk)
+        for i,chunk in enumerate(chunks):
+            # Must run under this function to create frames with two dashes (--) and update only if things/variables change
+            checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
+            if any(checks):
+                with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
+                    self._slide(f'{i + start} -m', chunk)
+            else: # when slide is not built, scroll buttons still need an update to point to correct button
+                self._slides_per_cell.append(handles[i])
+                for frame in handles[i].frames:
+                    self._slides_per_cell.append(frame)
 
-                handles[i]._mdff = str(chunk) # This is need for update while editing, chunk could be ns_str, avoid that
+            handles[i]._mdff = str(chunk) # This is need for update while editing, chunk could be ns_str, avoid that
         
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles

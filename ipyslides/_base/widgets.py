@@ -56,6 +56,7 @@ class _Buttons:
     setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh Dynamic Content').add_class('Menu-Item').add_class('Refresh-Btn')
+    source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
     home    =  Button(description= '⇤',layout= Layout(width='auto',height='auto'), tooltip='Go to Title Page').add_class('Menu-Item')
     end     =  Button(description= '⇥',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item')
     info    =  Button(description= 'ℹ️',layout= Layout(width='auto',height='auto'), tooltip='Information').add_class('Menu-Item')
@@ -112,9 +113,9 @@ class _Checks:
     reflow  = ipw.Checkbox(indent = False, value=False,description='Reflow Content',layout=auto_layout)
     notes   = ipw.Checkbox(indent = False, value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
     toast   = ipw.Checkbox(indent = False, value = True, description='Notifications',layout=auto_layout)
-    postrun = ipw.Checkbox(indent = False, value = True, description='Display Per Cell',layout=auto_layout)
+    focus   = ipw.Checkbox(indent = False, value = True, description='Auto Focus',layout=auto_layout)
     proxy   = ipw.Checkbox(indent = False, value = True, description='Proxy Buttons',layout=auto_layout)
-    navgui  = ipw.Checkbox(indent = False, value = False, description='Hide Nav. GUI',layout=auto_layout)
+    navgui  = ipw.Checkbox(indent = False, value = True, description='Show Nav. GUI',layout=auto_layout)
 
 @dataclass(frozen=True)
 class _Sliders:
@@ -178,7 +179,8 @@ class Widgets:
             HBox([
                 self.toggles.menu,
                 self.buttons.capture,
-                self.buttons.toc,
+                self.buttons.toc, 
+                self.buttons.source,  
             ]).add_class('Menu-Box'),
             HBox([self.htmls.footer]), # should be in Box to avoid overflow
         ],layout=Layout(height='28px')).add_class('NavBox')
@@ -197,15 +199,14 @@ class Widgets:
                 self.sliders.fontsize,
                 self.sliders.width,
                 self.ddowns.theme,
-                HTML('<hr/>'),
                 Box([GridBox([
-                    self.buttons.export, self.buttons.info, HTML(), # one empty button place
+                    self.buttons.export, self.buttons.info, HTML(), # empty space
                     self.checks.notes,self.checks.toast,self.checks.reflow,
-                    self.checks.proxy,self.checks.navgui,self.checks.postrun,
+                    self.checks.proxy,self.checks.navgui,self.checks.focus,
                     self.buttons.cap_all,self.buttons.pdf,self.buttons.png,
                 ],layout=Layout(width='auto',overflow_x='scroll',
                                 grid_template_columns='1fr 1fr 1fr',grid_gap='4px',
-                                padding='4px',margin='auto')
+                                padding='4px',margin='8px auto')
                 )],layout=Layout(min_height='120px')),# This ensures no collapse and scrollable Grid
                 self.ddowns.clear,
                 HTML('<span style="font-size:14px;">Set screenshot bounding box (if slides not fullscreen)</span>'),
@@ -252,7 +253,7 @@ class Widgets:
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.drawer, 
-            self.navbox, 
+            self.navbox,
             self._snum,
             self._progbar # progressbar should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto') # 9/16 is default, will change by setting

@@ -33,7 +33,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                     "display": "none !important"
                 },  # Hide in presentation mode
                 "^.FullWindow, ^.FullScreen": {
-                    ".Width-Slider": {"display": "none !important"},
+                    ".Width-Slider, .Source-Btn": {"display": "none !important"},
                 },
                 "^.FullScreen": {
                     ".FullWindow-Btn": {"display": "none !important"},
@@ -337,7 +337,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                     },
                     "^:hover, ^:focus, ^:active, ^.mod-active, ^.Active-Start" : {
                         ".Menu-Box" : {
-                            "width": "104px !important", # 3*28 + margin + paddings
+                            "width": "132px !important", # 4*28 + margin + paddings
                             "transition": "width 400ms ease-in-out", # transition on enter hover
                              "overflow": "hidden !important", # avoid jump on hover too
                         },
@@ -660,6 +660,20 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 ".fa.fa-minus": Icon(
                     "close", color=accent_color, size=_icons_size
                 ).css,
+            },
+            ".Source-Btn": {
+                ".fa.fa-plus": Icon(
+                    "code", color=accent_color, size=_icons_size
+                ).css,
+            },
+            "<.Scroll-Btn": { # top level
+                "color": "var(--jp-brand-color1,skyblue) !important",
+                "background": "transparent !important",
+                "^:hover": {"font-weight": "bold !important",},
+                "^:hover, ^:focus, ^:active, ^.mod-active" : {
+                    "box-shadow": "none !important",
+                    "outline": "none !important",
+                },
             },
             "@media print": { # Needs modification
                 ".SlidesWrapper": {

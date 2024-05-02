@@ -107,6 +107,17 @@ _icons = {
             <line x1="17" y1="17" x2="21" y2="21" stroke="{color}" stroke-width="4"/>
             <line x1="6" y1="9" x2="12" y2="9" stroke="{color}"/>
         </svg>''',
+    'search': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" transform="rotate({rotation})">
+            <circle cx="9" cy="9" r="8" fill="none" stroke="{color}"/>
+            <line x1="17" y1="17" x2="21" y2="21" stroke="{color}" stroke-width="4"/>
+        </svg>''',
+    'code': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="{color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="7 8 2 13 7 18"></polyline>
+            <polyline points="18 8 23 13 18 18"></polyline>
+            <line x1="15" y1="4" x2="11" y2="21"></line>
+        </svg>''',
     'win-maximize': '''
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="2 4,23 4,23 21,2 21,2 4" fill="none" stroke="{color}"></polygon>

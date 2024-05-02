@@ -91,8 +91,6 @@ class Slides(BaseSlides):
         self.fmt = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
 
-        self._remove_post_run_callback()  # Remove post_run_cell callback before this and at end
-        self._post_run_enabled = True  # Enable post_run_cell event than can be hold by skip_post_run_cell context manager
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(
                 self._slide, magic_kind="cell", magic_name="slide"
@@ -120,6 +118,7 @@ class Slides(BaseSlides):
             0  # Auto numbering of slides should be only in python scripts
         )
         self._citations = {}  # Initialize citations dictionary
+        self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
 
         with self.set_dir(self._assets_dir):  # Set assets directory
             self._set_citations_from_file(
@@ -130,13 +129,13 @@ class Slides(BaseSlides):
         self.progress_slider.label = "0"  # Set inital value, otherwise it does not capture screenshot if title only
         self.progress_slider.observe(self._update_content, names=["index"])
         self.widgets.buttons.refresh.on_click(self._update_dynamic_content)
+        self.widgets.buttons.source.on_click(self._jump_to_source_cell)
 
         # All Box of Slides
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
         self._display_box = None  # Initialize
-        self._remove_post_run_callback()  # Remove post_run_cell callback at end of init, otherwise it appears during import
-
+        
     @contextmanager
     def _set_running(self, slide):
         "Context manager to set running slide and turns back to previous."
@@ -158,33 +157,41 @@ class Slides(BaseSlides):
         with self._set_running(None):
             yield
 
-    @contextmanager
-    def skip_post_run_cell(self, force = False):
-        """Context manager to skip post_run_cell event."""
-        self._remove_post_run_callback()
-        old = self._post_run_enabled
-        self._post_run_enabled = False
-        try:
-            yield
-        finally:
-            self._post_run_enabled = old  # Restore user prefrence, will be registered in slides start
-
-    def _remove_post_run_callback(self):
-        with suppress(Exception):
-            self.shell.events.unregister("post_run_cell", self._post_run_cell)
-
     def run_cell(self, cell, **kwargs):
-        """Run cell and return result. This is used to run cell without post_run_cell event."""
-        with self.skip_post_run_cell():
-            return self.shell.run_cell(cell, **kwargs)
-
+        """Run cell and return result. Use this instead of IPython's run_cell for extra controls."""
+        self._unregister_postrun_cell() # important to avoid putting contnet on slides
+        output = self.shell.run_cell(cell, **kwargs)
+        if self.running: # there was post_run_cell under building slides
+            self._register_postrun_cell() # should be back
+        return output
+    
     def _post_run_cell(self, result):
+        self._unregister_postrun_cell() # it will be initialized from next building slides
         if result.error_before_exec or result.error_in_exec:
             return  # Do not display if there is an error
-        if self._post_run_enabled:
-            return (
-                self._ipython_display_()
-            )  # Display after cell is executed only when enabled, don call show here, make issues
+
+        scroll_btn = ipw.Button(description= 'Scroll to Slides', icon= 'scroll').add_class('Scroll-Btn')
+        
+        for slide in self._slides_per_cell:
+            slide._scroll_btn = scroll_btn
+        
+        self._slides_per_cell.clear() # empty it
+        scroll_btn.on_click(lambda btn: self._box.focus()) # only need to go there, no slide switching 
+        display(scroll_btn)
+    
+    def _unregister_postrun_cell(self):
+        with suppress(Exception): 
+            self.shell.events.unregister("post_run_cell", self._post_run_cell)
+    
+    def _register_postrun_cell(self):
+        with suppress(Exception): 
+            self.shell.events.register("post_run_cell", self._post_run_cell)
+        
+    def _jump_to_source_cell(self, btn):
+        if hasattr(self.current, '_scroll_btn'):
+            self.current._scroll_btn.focus()
+        else:
+            self.notify('No source cell found!')
 
     def _setup(self):
         # Only in Jupyter Notebook
@@ -296,9 +303,7 @@ class Slides(BaseSlides):
             )
 
     def _add_clean_title(self):
-        with suppress(
-            BaseException
-        ), self.skip_post_run_cell():  # Otherwise it will trigger cell events during __init__
+        with suppress(BaseException):  # need to avoid any errors
             with _build_slide(self, "0") as s:
                 self.parse(
                     f"""
@@ -317,6 +322,7 @@ class Slides(BaseSlides):
                     "Keyboard Shortcuts",
                 ).display()
 
+        self._unregister_postrun_cell() # no need in initialization functions 
         self.refresh()  # cleans up initialization setup and tocs/other things
 
     def clear(self):
@@ -530,7 +536,7 @@ class Slides(BaseSlides):
         if not self.is_jupyter_session():
             raise Exception("Python/IPython REPL cannot show slides. Use IPython notebook instead.")
 
-        self._remove_post_run_callback()  # Avoid duplicate display
+        self._unregister_postrun_cell() # no need to scroll button where showing itself
         self._update_toc()  # Update toc before displaying app to include all sections
         self._update_dynamic_content()  # Update dynamic content before displaying app
         self.close_view()  # Close previous views
@@ -551,7 +557,6 @@ class Slides(BaseSlides):
 
     def __reset_navbox(self):
         "Reset navbox to add inview button for Jupyter Lab"
-        self.widgets.checks.postrun.disabled = False  # Enable it
         others = [
             w
             for w in self.widgets.navbox.children
@@ -1112,7 +1117,7 @@ class Slides:
     def __new__(
         cls,
         extensions=[],
-        show_always=True,
+        auto_focus = True, 
         layout = dict(center=True, scroll=True, width=100, aspect=16/9, ncol_refs = 2),
         footer = dict(
             text='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
@@ -1129,15 +1134,15 @@ class Slides:
         instance = cls.instance()
         instance.__doc__ = cls.__doc__  # copy docstring
         instance.extender.extend(extensions)
-        instance.settings.show_always(show_always)
         instance.settings.set(
-            layout = layout, # Defaults are kept by set_layout
+            layout = layout,
             footer = footer,
             logo = logo,
             font_family = font_family,
             code_theme = code_theme,
             **kwargs
         )
+        instance.widgets.checks.focus.value = auto_focus # after other settings
 
         with suppress(BaseException):  # Avoid error if no slides exist
             instance.settings.set_animation(**animation)

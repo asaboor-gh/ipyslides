@@ -48,7 +48,7 @@ class _HhtmlExporter:
         
     def _htmlize(self, **kwargs):
         "page_size, slide_number are in kwargs"
-        navui_class = 'NavHidden' if self.main.widgets.checks.navgui.value else '' # it hides when True
+        navui_class = '' if self.main.widgets.checks.navgui.value else 'NavHidden' 
         content = ''
         for item in self.main:
             _html = '' 

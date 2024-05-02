@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 .ipynb_checkpoints/
 .ipyslides-assets/
-.ipyslides_assets/
 server_user_id.txt
 
 # C extensions
