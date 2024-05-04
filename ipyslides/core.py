@@ -170,8 +170,11 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not display if there is an error
 
-        scroll_btn = ipw.Button(description= 'View Slides', icon= 'scroll').add_class('Scroll-Btn')
+        scroll_btn = ipw.Button(description= 'Go to Slides', icon= 'scroll').add_class('Scroll-Btn')
         
+        if self._slides_per_cell:
+            self.navigate_to(self._slides_per_cell[0].index) # more logical to go in start slide rather end
+
         for slide in self._slides_per_cell:
             slide._scroll_btn = scroll_btn
         
@@ -1089,7 +1092,7 @@ class Slides:
     __doc__ = textwrap.dedent(
         """
     Interactive Slides in IPython Notebook. Only one instance can exist.
-    `auto_focus` can be reset from settings and enable jumping back to slides after a cell is excuted. 
+    `auto_focus` can be reset from settings and enable jumping back to slides after a cell is executed. 
     
     To suppress unwanted print from other libraries/functions, use:
     ```python
