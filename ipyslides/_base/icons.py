@@ -27,8 +27,11 @@ _icons = {
         </svg>''',
     'arrow': '''
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
-            <line x1="4" y1="13" x2="21" y2="13" />
-            <path fill="none" d="M13 4L21 13L13 21" />
+            <path fill="none" d="M13 4L21 13L13 21M4 13L21 13" />
+        </svg>''',
+    'arrow-bar': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
+            <path fill="none" d="M13 4L21 13L13 21M4 13L21 13M22 4L22 21"/>
         </svg>''',
     'close': '''
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
@@ -82,6 +85,12 @@ _icons = {
     'circle': '''
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
             <circle cx="13" cy="13" r="11" fill="none" stroke="{color}" stroke-width="2"/>
+        </svg>''',
+    'info': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="13" cy="13" r="11" fill="none" stroke="{color}" stroke-width="2"/>
+            <line x1="13" y1="21" x2="13" y2="12" stroke="{color}" stroke-width="5"/>
+            <circle cx="13" cy="7.5" r="3" fill="{color}" stroke="none"/>
         </svg>''',
     'refresh': '''
         <svg height="{size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">

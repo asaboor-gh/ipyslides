@@ -6,8 +6,6 @@ and then provided to other classes via composition, not inheritance.
 import os
 import math
 
-from inspect import signature
-
 from IPython.display import Image
 
 from ..formatters import fix_ipy_image, code_css
@@ -102,37 +100,6 @@ class LayoutSettings:
     def widgets(self):
         return self._widgets  # To avoid breaking code by user
 
-    def set(self, **kwargs):
-        """Add multiple settings at once. keys in kwargs should be name of a function after `Slides.settings.set_`
-        and values should be dictionary or tuple of arguments for that function. See examples below.
-        ```python
-        Slides.settings.set(
-            bg_image = dict(src='image_src'),
-            css = ({},), # note trailing comma to make it tuple
-            layout = dict(scroll=True),
-        )
-        ```
-        """
-        for k, v in kwargs.items():
-            if not isinstance(v, (dict, tuple)):
-                raise TypeError(f"values in kwargs should be dict or tuple, got {v!r}")
-            func = getattr(self, f"set_{k}", False)
-            if func is False:
-                funcs = ', '.join(k for k in self.__dir__() if k.startswith('set_'))
-                raise AttributeError(f"No such function '{k}' -> 'set_{k}' in settings. Available functions are: \n{funcs}")
-            
-            # Test parameters and give hints
-            sig = signature(func)
-            param_keys = tuple(sig.parameters.keys())
-            if isinstance(v,dict):
-                for key in v.keys():
-                    if key not in param_keys:
-                        raise ValueError(f"function '{k}' -> 'set_{k}' expects these parameters: {str(sig)}")
-                    
-            func(**v) if isinstance(v, dict) else func(
-                *v
-            )  # Call function with arguments
-
     def _toggle_nav_gui(self, change):
         if change["new"]:  # It's checked then hide
             self.show_nav_gui(True)
@@ -160,11 +127,11 @@ class LayoutSettings:
             'notes': notes,
             'toast': notifications,
             'proxy': proxy_buttons,
-            'scroll': scroll_buttons,
             'focus': auto_focus,
         }).items():
             if (widget := getattr(self.widgets.checks,name, None)):
                 widget.value = value # if condition for future additions check
+        return self # for chaining set_methods
 
     def set_animation(self, main="slide_h", frame="appear"):
         "Set animation for slides and frames."
@@ -172,6 +139,7 @@ class LayoutSettings:
             self._slides[0]._set_overall_animation(main=main, frame=frame)
         else:
             raise RuntimeError("No slides yet to set animation.")
+        return self # for chaining set_methods
 
     @_sub_doc(colors=styles.theme_colors["Light"])
     def set_theme_colors(self, colors={}):
@@ -185,6 +153,7 @@ class LayoutSettings:
         self._custom_colors = colors
         self.theme_dd.value = "Custom"  # Trigger theme update
         self._update_theme({'owner':self.theme_dd}) # This chnage is important to update layout theme as well
+        return self # for chaining set_methods
 
     @_sub_doc(css_docstring=_css_docstring)
     def set_css(self, css_dict={}):
@@ -196,9 +165,10 @@ class LayoutSettings:
             self._slides[0]._set_overall_css(css_dict=css_dict)
         else:
             raise RuntimeError("No slides yet to set CSS.")
+        return self # for chaining set_methods
 
 
-    def set_bg_image(self, src, opacity=0.25, blur_radius=None):
+    def set_bg_image(self, src=None, opacity=0.25, blur_radius=None):
         "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."
         if not src:
             self.widgets.htmls.glass.value = ""  # clear
@@ -215,6 +185,7 @@ class LayoutSettings:
             {self._slides.image(src,width='100%')}
             <div class="Front"></div>""" # opacity of layer would be opposite to supplied
         self.widgets.htmls.glass.value = self._bg_image
+        return self # for chaining set_methods
 
     def set_code_theme(
         self,
@@ -233,6 +204,7 @@ class LayoutSettings:
             lineno=lineno,
             hover_color=hover_color,
         )
+        return self # for chaining set_methods
 
     def set_font_family(self, text=None, code=None):
         "Set main fonts for text and code."
@@ -242,8 +214,9 @@ class LayoutSettings:
             self._font_family["code"] = code
 
         self._update_theme()  # Changes Finally
+        return self # for chaining set_methods
 
-    def set_font_size(self, value, update_range=False):
+    def set_font_size(self, value = 20, update_range=False):
         """Set font scale to increase or decrease text size. 1 is default. 
         You can update min/max if value is not in [8,64] interval by setting update_range = True"""
         if (not isinstance(value, int)) or (value < 1):
@@ -257,8 +230,9 @@ class LayoutSettings:
                 self.fontsize_slider.min = min(value, self.fontsize_slider.min)
         
         self.fontsize_slider.value = value
+        return self # for chaining set_methods
 
-    def set_logo(self, src, width=60, top=0, right=0):
+    def set_logo(self, src=None, width=60, top=0, right=0):
         "`src` should be PNG/JPEG file name or SVG string or None. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
         if not src: # give as None, '' etc
             self.widgets.htmls.logo.value = ''
@@ -278,6 +252,7 @@ class LayoutSettings:
                 ).value  
             self.widgets.htmls.logo.layout = dict(**kwargs, height='max-content')
             self.widgets.htmls.logo.value = image 
+        return self # for chaining set_methods
 
     def set_footer(self, text="", numbering=True, date="today"):
         "Set footer text. `text` should be string. `date` should be 'today' or string of date. To skip date, set it to None or ''"
@@ -293,6 +268,7 @@ class LayoutSettings:
             self.get_footer(
                 self._slides.current, update_widget=True
             )  # Update footer immediately if slide there
+        return self # for chaining set_methods
 
     def get_footer(self, slide, update_widget=False):
         "Get footer text. `slide` is a slide object."
@@ -335,6 +311,7 @@ class LayoutSettings:
             raise TypeError("aspect should be int/float of ratio width/height.")
         self._layout = {'cwidth':width, 'scroll': scroll, 'centered': center, 'aspect': aspect, 'ncol_refs': ncol_refs}
         self._update_size(change = None) # will reset theme and send RESCALE message
+        return self # for chaining set_methods
 
     def show_nav_gui(self, visible = True):
         """Show/Hide navigation GUI, keyboard or touch still work. Hover on left-bottom corner to acess settings."""

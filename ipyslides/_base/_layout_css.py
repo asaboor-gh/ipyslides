@@ -666,10 +666,26 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                     "code", color=accent_color, size=_icons_size
                 ).css,
             },
+            ".Home-Btn": {
+                ".fa.fa-plus": Icon(
+                    "arrow-bar", color=accent_color, size=_icons_size, rotation=180,
+                ).css,
+            },
+            ".End-Btn": {
+                ".fa.fa-plus": Icon(
+                    "arrow-bar", color=accent_color, size=_icons_size
+                ).css,
+            },
+            ".Info-Btn": {
+                ".fa.fa-plus": Icon(
+                    "info", color=accent_color, size=_icons_size,
+                ).css,
+            },
             "<.Scroll-Btn": { # top level
                 "color": "var(--jp-brand-color1,skyblue) !important",
                 "background": "transparent !important",
-                "^:hover": {"font-weight": "bold !important",},
+                "font-size": "0.8em !important",
+                "^:hover": {"font-weight": "bold !important","font-size": "0.9em !important",},
                 "^:hover, ^:focus, ^:active, ^.mod-active" : {
                     "box-shadow": "none !important",
                     "outline": "none !important",

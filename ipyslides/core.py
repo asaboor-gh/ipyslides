@@ -170,7 +170,7 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not display if there is an error
 
-        scroll_btn = ipw.Button(description= 'Scroll to Slides', icon= 'scroll').add_class('Scroll-Btn')
+        scroll_btn = ipw.Button(description= 'View Slides', icon= 'scroll').add_class('Scroll-Btn')
         
         for slide in self._slides_per_cell:
             slide._scroll_btn = scroll_btn
@@ -1088,9 +1088,8 @@ class Slides:
     )  # This is for initial use, and will be overwritten by property version
     __doc__ = textwrap.dedent(
         """
-    Interactive Slides in IPython Notebook. Only one instance can exist. 
-    
-    All arguments and kwargs are passed to corresponding methods in submodules, that you can tweak later as well.
+    Interactive Slides in IPython Notebook. Only one instance can exist.
+    `auto_focus` can be reset from settings and enable jumping back to slides after a cell is excuted. 
     
     To suppress unwanted print from other libraries/functions, use:
     ```python
@@ -1099,6 +1098,10 @@ class Slides:
         print('This will not be printed either')
         display('Something') # This will be printed
     ```
+    ::: note-info
+        The methods under settings starting with `Slides.settings.set_` returns settings back to enable chaining 
+        without extra typing, like `Slides.settings.set_animation().set_layout()...` .
+    
     ::: note-tip
         - Use `Slides.instance()` class method to keep older settings. `Slides()` apply default settings every time.
         - Run `slides.demo()` to see a demo of some features.
@@ -1117,35 +1120,13 @@ class Slides:
     def __new__(
         cls,
         extensions=[],
-        auto_focus = True, 
-        layout = dict(center=True, scroll=True, width=100, aspect=16/9, ncol_refs = 2),
-        footer = dict(
-            text='IPySlides | <a style="color:blue;" href="https://github.com/massgh/ipyslides">github-link</a>',
-            numbering = True, 
-            date="today",
-        ),
-        logo = dict(src=get_logo(), width=60),
-        font_family = dict(text = "Roboto", code = "var(--jp-code-font-family)"),
-        code_theme = dict(style="default",lineno=True),
-        animation = dict(main="slide_h", frame = "appear"),
-        **kwargs
-    ):
+        auto_focus = True,
+        ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         instance = cls.instance()
         instance.__doc__ = cls.__doc__  # copy docstring
-        instance.extender.extend(extensions)
-        instance.settings.set(
-            layout = layout,
-            footer = footer,
-            logo = logo,
-            font_family = font_family,
-            code_theme = code_theme,
-            **kwargs
-        )
-        instance.widgets.checks.focus.value = auto_focus # after other settings
-
-        with suppress(BaseException):  # Avoid error if no slides exist
-            instance.settings.set_animation(**animation)
+        instance.extender.extend(extensions) # globally once
+        instance.widgets.checks.focus.value = auto_focus # useful
         return instance
 
     # No need to define __init__, __new__ is enough to show signature and docs
