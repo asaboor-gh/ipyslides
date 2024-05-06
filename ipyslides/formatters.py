@@ -250,7 +250,9 @@ class Serializer:
             for item in serializer.available:
                 if type(obj_type) == item['obj']:
                     return item['func']
-        # Check instance for ipywidgets.HTML after user defined types
+        # Check instance for ipywidgets.HTML/Output after user defined types
+        elif isinstance(obj_type, ipw.Output):
+            return self._alt_output
         elif isinstance(obj_type, (ipw.HTML, ipw.HTMLMath, HtmlWidget)): # Instance here is fine to include subclasses as they will behave same
             return self._alt_html
         return None
@@ -275,6 +277,26 @@ class Serializer:
 
         className = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
         return f'<div class="{className}">{html_widget.value}</div>' 
+    
+    def _alt_output(self, output_widget):
+        "Convert objects in ipywidgets.Output to HTML string."
+        if not isinstance(output_widget, ipw.Output):
+            raise TypeError(f"Expects Output widget instnace, got {type(output_widget)}")
+        
+        from .xmd import raw # avoid circular import
+        
+        className = ' '.join(output_widget._dom_classes) # To keep style of Output widget, latest as well
+        content = ''
+        for d in output_widget.outputs:
+            if 'text' in d:
+                content += raw(d['text']).value
+            elif 'data' in d:
+                if 'text/html' in d['data']:
+                    content += d['data']['text/html']  
+                elif 'text/latex' in d['data']:
+                    content += d['data']['text/latex']
+        
+        return f'<div class="{className}">{content}</div>' 
     
 
     def unregister(self, obj_type):

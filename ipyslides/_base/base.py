@@ -252,6 +252,9 @@ class BaseSlides:
         ```
         ::: note-warning
             Do not use this to change global state of slides, because that will affect all slides.
+        
+        ::: note-info
+            Use `ipywidgets.interact/interactive` if you need extra control widgets beyond just a refresh.
         """
         return self._dynamic_private(func, tag = '_has_widgets', hide_refresher = False)
     

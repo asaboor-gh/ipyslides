@@ -83,7 +83,7 @@ class AltForWidget(CustomDisplay):
             display(context._exp4widget(self._widget, self._func))
         else:
             display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
-
+        
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
     if hasattr(output, 'fmt_html'): # Columns
@@ -251,3 +251,22 @@ def write(*objs,widths = None):
     if not any([(wr._slides and wr._slides.running), wr._in_proxy, len(objs) == 1]):
         return wr.update_display() # Update in usual cell to have widgets working, but not single object which displays outside of box
 
+# Patch for interact/interactive patching to show in output
+
+def _interact_ipython_display(self):
+    def fmt_output_html(w):
+        return serializer.get_func(w.out)(w.out)
+    
+    klass = type(self)
+    ip_disp = getattr(klass, '_ipython_display_',None)
+
+    if ip_disp:
+        delattr(klass, '_ipython_display_') # avoids looping of display
+    
+    AltForWidget(self, fmt_output_html).display() # display internally 
+    
+    if ip_disp:
+        klass._ipython_display_ = ip_disp # reset back
+
+
+ipw.interaction.interactive._ipython_display_ = _interact_ipython_display

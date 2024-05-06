@@ -347,7 +347,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
                 'font-family': f'{code_font!r}, "Cascadia Code","Ubuntu Mono", "SimSun-ExtB", "Courier New" !important', # Should be same in notebook cell
-                'background':'var(--secondary-bg) !important',
                 'color':'var(--primary-fg) !important',
                 'max-height':'400px',
                 'white-space':'pre !important',
@@ -475,6 +474,14 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             },
             '^::-webkit-scrollbar': {'background':'var(--secondary-bg) !important',},
             '^::-webkit-scrollbar-corner': {'display': 'none',},
+        },
+        '.highlight, pre, .raw-text': {
+            '^:hover::-webkit-scrollbar': {
+                    'background':'var(--secondary-bg) !important'
+                },
+                '^:hover::-webkit-scrollbar-thumb': {
+                    'background':'var(--hover-bg) !important'
+                },
         },
         'span.lang-name': {
             'color':'var(--accent-color)',

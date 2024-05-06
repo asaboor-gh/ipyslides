@@ -686,6 +686,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 "background": "transparent !important",
                 "font-size": "0.8em !important",
                 "opacity": "0 !important",
+                "height": "auto !important", # for show when slide shown
                 "transition": "all 400ms ease-in-out !important",
                 "^:hover": {"font-weight": "bold !important","font-size": "0.9em !important",},
                 "^:hover, ^:focus, ^:active, ^.mod-active" : {

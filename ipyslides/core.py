@@ -3,7 +3,7 @@ from contextlib import contextmanager, suppress
 from collections import namedtuple
 
 from IPython import get_ipython
-from IPython.display import display
+from IPython.display import display, clear_output
 
 
 from .xmd import fmt, parse, capture_content, xtr, extender as _extender
@@ -170,7 +170,7 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not display if there is an error
 
-        scroll_btn = ipw.Button(description= 'Go to Slides', icon= 'scroll').add_class('Scroll-Btn')
+        scroll_btn = ipw.Button(description= 'Go to Slides', icon= 'scroll', layout={'height':'0px'}).add_class('Scroll-Btn') # height later handled by hover
         
         if self._slides_per_cell:
             self.navigate_to(self._slides_per_cell[0].index) # more logical to go in start slide rather end
@@ -539,6 +539,7 @@ class Slides(BaseSlides):
         if not self.is_jupyter_session():
             raise Exception("Python/IPython REPL cannot show slides. Use IPython notebook instead.")
 
+        clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
         self._unregister_postrun_cell() # no need to scroll button where showing itself
         self._update_toc()  # Update toc before displaying app to include all sections
         self._update_dynamic_content()  # Update dynamic content before displaying app
