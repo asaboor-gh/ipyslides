@@ -263,7 +263,7 @@ class BaseSlides:
         self.verify_running('Dynamic content can only be used inside slide constructor!')
         return self.running._dynamic_private(func, tag = tag, hide_refresher = hide_refresher)
         
-    def update_tmp_output(self, *objs):
+    def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
         if self.is_jupyter_session():
             self.widgets._tmp_out.clear_output(wait=True)

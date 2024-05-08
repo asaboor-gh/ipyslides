@@ -406,7 +406,7 @@ class Slide:
             self._handle_refs()
         
         # Update corresponding CSS but avoid animation here for faster and clean update
-        self._app.update_tmp_output(self.css)
+        self._app._update_tmp_output(self.css)
         self.set_dom_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
 
     def _handle_refs(self):
@@ -526,7 +526,7 @@ class Slide:
             if self._app._slidelabel != self.label:
                 self._app._slidelabel = self.label # Go there to see effects
             else:
-                self._app.update_tmp_output(self.animation, self._css)
+                self._app._update_tmp_output(self.animation, self._css)
 
     def set_dom_classes(self, add=None, remove=None):
         "Sett CSS classes on this slide separated by space. classes are remove first and add after it."
@@ -575,7 +575,7 @@ class Slide:
         else:
             raise KeyError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
         
-        self._app.update_tmp_output(self.animation, self.css) # See effect
+        self._app._update_tmp_output(self.animation, self.css) # See effect
             
     def set_animation(self, name):
         "Set animation of this slide. Provide None if need to stop animation."
@@ -588,7 +588,7 @@ class Slide:
                 if self._app._slidelabel != self.label:
                     self._app._slidelabel = self.label # Go there to see effects
                 else:
-                    self._app.update_tmp_output(self._animation, self.css)
+                    self._app._update_tmp_output(self._animation, self.css)
         else:
             self._animation = None # It should be None, not '' or don't throw error here
        

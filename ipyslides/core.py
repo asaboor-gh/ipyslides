@@ -613,7 +613,7 @@ class Slides(BaseSlides):
         if self.screenshot.capturing == False:
             _objs.append(self._iterable[new_index].animation)
 
-        self.update_tmp_output(*_objs)
+        self._update_tmp_output(*_objs)
         self.widgets.update_progressbar()
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
