@@ -400,9 +400,9 @@ class LayoutSettings:
 
     def _toggle_tocbox(self, btn):
         if self.widgets.tocbox.layout.height == "0":
-            self.widgets.tocbox.layout.height = "calc(100% - 8px)"
+            self.widgets.tocbox.layout.height = f"min(calc(100% - 32px), {max(128, len(self.widgets.tocbox.children)*32)}px)"
             self.widgets.tocbox.layout.border = "1px solid var(--hover-bg)"
-            self.widgets.tocbox.layout.padding = "0.5em"
+            self.widgets.tocbox.layout.padding = "4px"
             self.widgets.buttons.toc.icon = "minus"
         else:
             self.widgets.tocbox.layout.height = "0"

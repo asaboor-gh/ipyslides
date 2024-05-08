@@ -395,62 +395,26 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
             ".TOC": {  # Table of contents panel
                 "position":"absolute",
                 "left": "0",
-                "bottom": "0",
+                "bottom": "24px", # just above navbar
                 "display": "table-column-group !important", # This to avoid collapsing divs
                 "background": "var(--secondary-bg)",
                 "backdrop-filter": " blur(50px)",
-                "margin": "4px 36px",
-                "position": " absolute",
-                "min-width": "60% !important",
+                "margin": "4px",
+                "min-width": "30% !important",
                 "box-sizing": "border-box !important",
                 "z-index": "8",
                 "border-radius": "4px",
                 "transition": "height 400ms ease-in-out",
-                "@container slides (max-width: 650px)": {"min-width": "calc(100% - 72px) !important"},
-                ".goto-box": {
-                    "justify-content": "space-between",
+                "@container slides (max-width: 650px)": {"min-width": "60% !important"},
+                ".custom-html": {
+                    "display": "flex",
+                    "flex-direction": "row",
+                    "flex-wrap": "nowrap",
+                    "justify-content": "space-between !important",
                     "height": "auto",
                     "width": "auto",
-                    "padding-right": "8px",
-                    "border-right": "4px solid var(--alternate-bg)",
+                    "font-size": "14px !important",
                     "box-sizing": "border-box !important",
-                    "^:hover": {
-                        "font-weight": "bold",
-                        "border-right": "4px solid var(--alternate-bg)",
-                        "background": "var(--alternate-bg)",
-                    },
-                },
-                ".goto-button": {
-                    "min-width": "max-content",
-                    "position": "absolute",
-                    "width": "100%",
-                    "height": "100%",
-                    "box-sizing": "border-box",
-                    "padding": 0,
-                    "margin": 0,
-                },
-                ".Menu-Item": {
-                    "font-size": "18px !important",
-                },
-                ".goto-html": {
-                    "width": "100%",
-                    "height": "max-content",
-                    "box-sizing": "border-box",
-                    ".custom-html": {
-                        "box-sizing": "border-box",
-                        "padding-left": "2em !important",
-                        "display": "flex",
-                        "flex-direction": "row",
-                        "flex-wrap": "nowrap",
-                        "justify-content": "space-between !important",
-                        "align-items": "top",
-                        "span:first-of-type": {
-                            "position": "absolute",
-                            "top": "0 !important",  # must have thing
-                            "height": "100%",
-                            "margin-left": "-2em !important",
-                        },
-                    },
                 },
             },
             ".CaptureHtml *": {

@@ -92,6 +92,9 @@ class InteractionWidget(anywidget.AnyWidget):
 
 
 class HtmlWidget(anywidget.AnyWidget):
+    """This introduces a trait 'click_state' which would be toggled between 0 and 1 on each click.
+    You can either have a function for click or mimic a double click as well.
+    """
     _esm = """
     export function render({ model, el }) {
     let div = document.createElement("div");
@@ -99,6 +102,11 @@ class HtmlWidget(anywidget.AnyWidget):
     function set_html() {
         div.innerHTML = model.get("value");
     }
+    el.tabIndex = -1; // need for clickable events
+    el.onclick = (event) => {
+        model.set("click_state", ((model.get("click_state") + 1) % 2)); // 0 or 1
+        model.save_changes();
+    };
     model.on("change:value", set_html);
     set_html();
     el.appendChild(div);  
@@ -108,12 +116,19 @@ class HtmlWidget(anywidget.AnyWidget):
     .jp-RenderedHTMLCommon.custom-html *:not(code,span, hr) {
        padding:0.1em;
        line-height:150%; /* make text clearly readable on presentation */
+    } 
+    .clickable-div > .custom-html { cursor: pointer; }
+    .clickable-div > .custom-html:hover, .clickable-div > .custom-html:focus {
+        background: var(--hover-bg, rgba(100, 100, 111, 0.2)) !important;
     }
     """
     value = traitlets.Unicode('').tag(sync=True)
+    click_state = traitlets.Int(0).tag(sync=True)
 
-    def __init__(self, value, *args, **kwargs):
+    def __init__(self, value, *args, click_pointer = False, **kwargs):
         kwargs['value'] = value # initial value set by kwargs
+        if click_pointer:
+            self.add_class('clickable-div')
         super().__init__(*args, **kwargs)
 
     def __format__(self, spec):
@@ -122,7 +137,7 @@ class HtmlWidget(anywidget.AnyWidget):
     
     def display(self):
         "Display this HTML object inline"
-        return display(self, metadata= {'text/html':self.value}) # metadat to direct display
+        return display(self, metadata= {'text/html':self.value}) # metadata to direct display
         
 
 class NotesWidget(anywidget.AnyWidget):

@@ -480,7 +480,7 @@ class Slides(BaseSlides):
 
 
     def _goto_button(
-        self, text, target_slide=None, _other_text=None, _extra_func=None, **kwargs
+        self, text, target_slide=None, **kwargs
     ):
         if target_slide and not isinstance(target_slide, Slide):
             raise TypeError(f"target_slide should be Slide, got {type(target_slide)}")
@@ -493,27 +493,14 @@ class Slides(BaseSlides):
             try:
                 self.progress_slider.index = (
                     btn._TargetSlide.index
-                )  # let it throw error if slide does not exist before calling _extra_func
-                if callable(
-                    _extra_func
-                ):  # Call extra function if given after chnaging slides, no need for user
-                    _extra_func()
-
+                )  # let it throw error if slide does not exist 
             except:
                 self.notify(
                     f"Failed to jump to slide {btn._TargetSlide.index!r}, you may have not used GotoButton.set_target() anywhere!"
                 )
 
         button.on_click(on_click)
-
-        if _other_text is not None:  # For TOC
-            html_before = HtmlWidget(htmlize(_other_text)).add_class("goto-html")
-            return ipw.HBox(
-                [html_before, button], layout=ipw.Layout(align_items="center")
-            ).add_class("goto-box")
-
-        else:  # For links in exported slides
-            return GotoButton(button, app=self)
+        return GotoButton(button, app=self)
 
     def goto_button(self, text, **kwargs):
         """
@@ -528,7 +515,7 @@ class Slides(BaseSlides):
             - `goto_button` is converted to a link in exported slides that can be clicked to jump to slide.
             - You can use `.set_target()` on a previous slides and `.display()` on a later slide to create a link that jumps backwards.
         """
-        return self._goto_button(text, target_slide=None, _other_text=None, **kwargs)
+        return self._goto_button(text, target_slide=None, **kwargs)
 
     def show(self):
         "Display Slides."
@@ -607,7 +594,7 @@ class Slides(BaseSlides):
             self._iterable[new_index].css,
             self.html(
                 "style",
-                f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;background:var(--primary-bg);}}",
+                f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
             )]
 
         if self.screenshot.capturing == False:
@@ -988,14 +975,10 @@ class Slides(BaseSlides):
 
     def _update_toc(self):
         tocs_dict = {s._section: s for s in self._iterable if s._section}
-        children = children = [
-            ipw.HBox(
-                [
-                    self.widgets.buttons.home,
-                    self.widgets.buttons.end,
-                    self.widgets.buttons.toc,
-                ], layout = dict(border_bottom="1px solid #8988",margin="0 0 8px 0") # neutral border
-            ),
+        children = [
+            ipw.HBox([
+                HtmlWidget('<b> Table of Contents</b>'), self.widgets.buttons.toc
+            ],layout=dict(border_bottom='1px solid #8988', margin='0 0 8px 0',justify_content='space-between'))
         ]
 
         if not tocs_dict:
@@ -1004,17 +987,18 @@ class Slides(BaseSlides):
             ).as_widget())
         else:
             for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):
-                _other_text = (
+                text = (
                     htmlize(f"color[var(--accent-color)]`{i}.` {sec}")
                     + f"<p>{slide._label}</p>"
                 )
-                _extra_func = lambda: self.widgets.buttons.toc.click()
-                p_btn = self._goto_button(
-                    "",
-                    target_slide=slide,
-                    _other_text=_other_text,
-                    _extra_func=_extra_func,
-                )
+                p_btn = HtmlWidget(text, click_pointer=True)
+                p_btn._index = int(slide.index) # int to remove attribute access
+                
+                def jump_to_slide(change):
+                    self.navigate_to(change.owner._index)
+                    self.widgets.buttons.toc.click()
+
+                p_btn.observe(jump_to_slide, names='click_state')
                 children.append(
                     p_btn.add_class("toc-item").add_class(f"s{slide._index}")
                 )  # class for dynamic CSS
