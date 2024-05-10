@@ -158,8 +158,23 @@ function handleMessage(model, msg, box, cursor) {
             clearInterval(model.syncIntervalID);
         }
 
+    } else if (msg === "CloseView") { // deletes node without closing comm to kernl
+        if (box) { // may be nothing there left already
+            box.remove();
+        }
     }
 };
+
+function keepThisViewOnly(box){
+    let klass = box.className.match(/Slides\-\d+/)[0]; 
+    let slides = document.getElementsByClassName(klass); // only this uid slides, not in other notebooks
+    
+    for (let slide of Array.from(slides)) {
+        if (slide !== box) { // onlt keep this view
+            slide.remove(); // deletes node, but keeps comm live
+        }
+    }
+}
 
 function handleChangeFS(box,model){
     if (box === document.fullscreenElement) {
@@ -232,27 +247,6 @@ function handleScale(box) {
     setScale(box); // First time set
 }
 
-function handleLinkedOutputView(box){
-    let outputViewNode = box.parentNode
-    while(outputViewNode && !outputViewNode.classList.contains('jp-LinkedOutputView')) {
-        outputViewNode = outputViewNode.parentNode;
-    }
-    if (outputViewNode.classList.contains('jp-LinkedOutputView')){ // could be document top, avoid it
-        box.classList.add("Linked-View"); // we will keep this and avoid others
-        let notebooks = document.getElementsByClassName("jp-NotebookPanel");
-        for (let nb of Array.from(notebooks)) {
-            if (!nb.classList.contains("lm-mod-hidden")) { // only current visible notebook
-                let slides = nb.getElementsByClassName("SlidesWrapper");
-                for (let slide of Array.from(slides)) {
-                    if (!slide.classList.contains("Linked-View")) {
-                        slide.parentNode.innerHTML = "<span style='color:crimson;'>Slides → LinkedOutputView</span>"; // DisplayBox is there
-                    }
-                }
-            }
-        }
-    }
-}
-
 
 export function render({ model, el }) {
     model.syncIntervalID = null; // Need for Markdown Sync
@@ -277,8 +271,8 @@ export function render({ model, el }) {
         // handle scale of slides size
         handleScale(box);
 
-        // handle New Output View in Jupyterlab
-        handleLinkedOutputView(box); 
+        // Remove other views without closing comm
+        keepThisViewOnly(box); 
 
         // Sends a message if fullscreen is changed by some other mechanism
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};

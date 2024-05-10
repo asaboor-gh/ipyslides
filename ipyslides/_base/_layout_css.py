@@ -731,27 +731,14 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 "background": "var(--theme-background,inherit) !important",
                 "margin": "8px 0px",
             },
-            ".InView-Btn": {
-                "display": "none !important",
-            },
             "<.jp-LinkedOutputView > .jp-OutputArea > .jp-OutputArea-child": {
                 "height": "100% !important", # This needs to in same selector order to not effect slide content
-                ".SlidesWrapper, .DisplayBox": {
+                ".SlidesWrapper": {
                     "min-width": "100% !important",
                     "width": "100% !important",
                     "min-height": "100% !important",
                     "height": "100% !important",
                     "box-sizing": "border-box !important",
-                    ".InView-Btn": {
-                        "display": "block !important",
-                        "position": "absolute",
-                        "top": "0",
-                        "left": "0",
-                        "z-index": "10",
-                        "color": "white !important",
-                        "background": "green !important",
-                        "font-size": "14px !important",  # Avoid this button font scaling
-                    },
                     ".Width-Slider": {
                         "display": "none !important",
                     },

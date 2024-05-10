@@ -134,7 +134,6 @@ class Slides(BaseSlides):
         # All Box of Slides
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
-        self._display_box = None  # Initialize
         
     @contextmanager
     def _set_running(self, slide):
@@ -530,19 +529,12 @@ class Slides(BaseSlides):
         self._unregister_postrun_cell() # no need to scroll button where showing itself
         self._update_toc()  # Update toc before displaying app to include all sections
         self._update_dynamic_content()  # Update dynamic content before displaying app
-        self.close_view()  # Close previous views
-        self._display_box = ipw.VBox(children=[self._box]).add_class(
-            "DisplayBox"
-        )  # Initialize display box again
-        h = display(self._display_box, display_id=True)  # Display slides
-        self._display_box._DH = (
-            h  # This is important for Jupyter Lab to optimize experience
-        )
+        display(self.widgets.mainbox)  # Display slides
+        
 
     def close_view(self):
         "Close slides/cell view, but keep slides in memory than can be shown again."
-        if hasattr(self, "_display_box") and self._display_box is not None:
-            self._display_box.close()  # Clear display that removes CSS things there
+        self.widgets.iw.msg_tojs = "CloseView"
 
     @property
     def _slideindex(self):
