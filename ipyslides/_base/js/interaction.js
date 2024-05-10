@@ -166,14 +166,13 @@ function handleMessage(model, msg, box, cursor) {
 };
 
 function keepThisViewOnly(box){
-    let klass = box.className.match(/Slides\-\d+/)[0]; 
-    let slides = document.getElementsByClassName(klass); // only this uid slides, not in other notebooks
-    
-    for (let slide of Array.from(slides)) {
-        if (slide !== box) { // onlt keep this view
+    let uid = box.getAttribute("uid");
+    let slides = document.querySelectorAll(`[uid='${uid}']`); // This avoids other notebooks Slides
+    slides.forEach((slide) => {
+        if (slide !== box) { // only keep this view
             slide.remove(); // deletes node, but keeps comm live
         }
-    }
+    })
 }
 
 function handleChangeFS(box,model){
@@ -255,6 +254,8 @@ export function render({ model, el }) {
     style.onload = () => { 
         let box = style.parentNode.parentNode;
         box.tabIndex = -1; // Need for event listeners, should be at top
+        box.setAttribute("uid", model.get("_uid"));
+        
         // Laser pointer
         let cursor = box.getElementsByClassName('LaserPointer')[0];
         cursor.style = "position:absolute;display:none;"; // initial

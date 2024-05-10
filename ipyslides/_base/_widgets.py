@@ -1,7 +1,9 @@
-from pathlib import Path
+import uuid
 import traitlets
 import sysconfig
 import anywidget
+
+from pathlib import Path
 from IPython.display import display
 
 
@@ -15,6 +17,8 @@ def _hot_reload_dev_only(file):
 
 class InteractionWidget(anywidget.AnyWidget):
     _esm =  _hot_reload_dev_only("interaction.js")
+    _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
+
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)
 
