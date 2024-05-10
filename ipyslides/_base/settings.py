@@ -48,7 +48,6 @@ class LayoutSettings:
 
         self.widgets.buttons.toc.on_click(self._toggle_tocbox)
         self.widgets.buttons.info.on_click(self._show_info)
-        self.widgets.buttons._inview.on_click(self.__keep_new_output_only)
         self.widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self.theme_dd.observe(self._update_theme, names=["value"])
         self.fontsize_slider.observe(self._update_theme, names=["value"])
@@ -67,15 +66,6 @@ class LayoutSettings:
         self.set_code_theme()  # Trigger CSS in it, must
         self.set_layout(center=True)  # Trigger this as well
         self._update_size(change=None)  # Trigger this as well
-
-    def __keep_new_output_only(self, btn):
-        self.widgets.navbox.children = [
-            w for w in self.widgets.navbox.children if w is not btn
-        ]
-        dh = getattr(self._slides._display_box, "_DH", None)  # Get display handler
-        self._slides._display_box = self._slides.alert("Slides → Linked Output View").as_widget()  # Swap display box by info, still widget to be closable
-        if dh is not None:
-            dh.update(self._slides._display_box) 
 
     def _close_quick_menu(self):
         "Need for actions on all buttons inside menu."
@@ -400,7 +390,7 @@ class LayoutSettings:
 
     def _toggle_tocbox(self, btn):
         if self.widgets.tocbox.layout.height == "0":
-            self.widgets.tocbox.layout.height = f"min(calc(100% - 32px), {max(128, len(self.widgets.tocbox.children)*32)}px)"
+            self.widgets.tocbox.layout.height = f"min(calc(100% - 32px), {max(150, len(self.widgets.tocbox.children)*36)}px)"
             self.widgets.tocbox.layout.border = "1px solid var(--hover-bg)"
             self.widgets.tocbox.layout.padding = "4px"
             self.widgets.buttons.toc.icon = "minus"

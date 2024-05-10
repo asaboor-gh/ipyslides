@@ -67,7 +67,6 @@ class _Buttons:
     png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
     cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
     export  = Button(description="Export to HTML",layout= Layout(width='auto',height='auto'))
-    _inview = Button(description='Click to Optimize Experience in JupyterLab',layout= Layout(width='auto',height='auto')).add_class('InView-Btn') # For testing if inside LinkedView
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -123,7 +122,7 @@ class _Sliders:
     Instantiate under `Widgets` class only.
     """
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
-    width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 55,continuous_update=False).add_class('Width-Slider') 
+    width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
     fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
 
 @dataclass(frozen=True)
@@ -186,7 +185,6 @@ class Widgets:
         ],layout=Layout(height='28px')).add_class('NavBox')
         
         self.navbox = VBox([
-            self.buttons._inview,
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
 

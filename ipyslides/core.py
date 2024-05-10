@@ -531,7 +531,6 @@ class Slides(BaseSlides):
         self._update_toc()  # Update toc before displaying app to include all sections
         self._update_dynamic_content()  # Update dynamic content before displaying app
         self.close_view()  # Close previous views
-        self.__reset_navbox()  # Important to add inview button for each new view
         self._display_box = ipw.VBox(children=[self._box]).add_class(
             "DisplayBox"
         )  # Initialize display box again
@@ -544,16 +543,6 @@ class Slides(BaseSlides):
         "Close slides/cell view, but keep slides in memory than can be shown again."
         if hasattr(self, "_display_box") and self._display_box is not None:
             self._display_box.close()  # Clear display that removes CSS things there
-            self.__reset_navbox()  # Important to add inview button for next view
-
-    def __reset_navbox(self):
-        "Reset navbox to add inview button for Jupyter Lab"
-        others = [
-            w
-            for w in self.widgets.navbox.children
-            if w is not self.widgets.buttons._inview
-        ]
-        self.widgets.navbox.children = [self.widgets.buttons._inview, *others]
 
     @property
     def _slideindex(self):

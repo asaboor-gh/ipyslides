@@ -118,6 +118,7 @@ section .SlideBox > .Footer {
     left:0;
     width: 100%;
     bottom: 0;
+    overflow: hidden !important;
 }
 section .SlideBox > .Footer.NavHidden {
     background: none; /* no important here */

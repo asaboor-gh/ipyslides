@@ -160,7 +160,7 @@ key_combs = f"""
 
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
-    In JupyterLab, right click on the slides and select `Create New View for Output` and follow next there to optimize display.
+    In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
 
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 

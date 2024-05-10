@@ -66,6 +66,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                     "right": "0 !important",
                     "bottom": "0 !important",
                     "backdrop-filter": "blur(8px)",
+                    "padding": "0 6px !important",
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
@@ -347,6 +348,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                         "width": "28px", # need this too
                     },  # Avoid overflow in small screens
                     ".Footer": {
+                        "overflow": "hidden !important",
                         ".widget-html-content": {
                             "display": "flex",
                             "align-items": "center",
@@ -360,13 +362,12 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
             },
             ".Controls": {
                 "position": "absolute",
-                "right": "16px !important",
-                "bottom": "0px !important",
+                "right": "8px !important",
+                "bottom": "12px !important",
                 "z-index": "4",  # below matplotlib fullsreen
                 "padding": "0 !important",
                 "justify-content": " flex-end !important",
                 "align-items": "center !important",
-                "margin-bottom": "16px !important",
                 "color": " var(--accent-color) !important",
                 ".widget-button > i": {
                     "color": "var(--accent-color) !important",
@@ -374,7 +375,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 ".Arrows": {
                     "opacity": "0.4",
                     "font-size": "36px",
-                    "padding": "4px",
+                    "padding": "2px",
                     "^:hover, ^:focus": {"opacity": 1},
                 },
                 ".ProgBox": {
@@ -400,12 +401,12 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 "background": "var(--secondary-bg)",
                 "backdrop-filter": " blur(50px)",
                 "margin": "4px",
-                "min-width": "30% !important",
+                "min-width": "50% !important",
                 "box-sizing": "border-box !important",
                 "z-index": "8",
                 "border-radius": "4px",
                 "transition": "height 400ms ease-in-out",
-                "@container slides (max-width: 650px)": {"min-width": "60% !important"},
+                "@container slides (max-width: 650px)": {"min-width": "80% !important"},
                 ".custom-html": {
                     "display": "flex",
                     "flex-direction": "row",
@@ -413,7 +414,7 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                     "justify-content": "space-between !important",
                     "height": "auto",
                     "width": "auto",
-                    "font-size": "14px !important",
+                    "font-size": "16px !important", # A liitle larger
                     "box-sizing": "border-box !important",
                 },
             },
@@ -550,16 +551,16 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
             },
             ".Arrows": {
                 ".fa.fa-chevron-left": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=180
+                    "chevron", color=accent_color, size="32px", rotation=180
                 ).css,
                 ".fa.fa-chevron-right": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=0
+                    "chevron", color=accent_color, size="32px", rotation=0
                 ).css,
                 ".fa.fa-chevron-up": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=-90
+                    "chevron", color=accent_color, size="32px", rotation=-90
                 ).css,  # Why SVG rotation is clockwise?
                 ".fa.fa-chevron-down": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=90
+                    "chevron", color=accent_color, size="32px", rotation=90
                 ).css,
             },
             ".Settings-Btn": {
