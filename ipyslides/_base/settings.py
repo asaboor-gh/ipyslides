@@ -5,6 +5,7 @@ and then provided to other classes via composition, not inheritance.
 
 import os, math
 
+from inspect import signature
 from IPython.display import Image
 
 from ..formatters import fix_ipy_image, code_css
@@ -518,5 +519,10 @@ class LayoutSettings:
                 
                 args = sorted([v for k,v in kwargs.items() if isinstance(k, int)]) # positional args should be in order
                 kwargs = {k:v for k,v in kwargs.items() if isinstance(k, str)} 
+                params = {k:v.annotation if 'empty' in str(v.default) else v.default for k,v in signature(func).parameters.items()}
+
+                if not set(kwargs).issubset(params):
+                    raise ValueError(f"{key!r} accepts only following parameters {params}")
+                
                 func(*args, **kwargs) # apply function
     
