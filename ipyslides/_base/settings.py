@@ -229,7 +229,7 @@ class LayoutSettings:
         self.fontsize_slider.value = value
         return self # for chaining set_methods
 
-    def set_logo(self, src=None, width=60, top=0, right=0):
+    def set_logo(self, src, width=60, top=0, right=0):
         "`src` should be PNG/JPEG file name or SVG string or None. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
         if not src: # give as None, '' etc
             self.widgets.htmls.logo.value = ''
@@ -519,7 +519,7 @@ class LayoutSettings:
                 
                 args = sorted([v for k,v in kwargs.items() if isinstance(k, int)]) # positional args should be in order
                 kwargs = {k:v for k,v in kwargs.items() if isinstance(k, str)} 
-                params = {k:v.annotation if 'empty' in str(v.default) else v.default for k,v in signature(func).parameters.items()}
+                params = {k:v.default for k,v in signature(func).parameters.items()} # has empty for no defualt
 
                 if not set(kwargs).issubset(params):
                     raise ValueError(f"{key!r} accepts only following parameters {params}")
