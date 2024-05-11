@@ -1059,6 +1059,7 @@ class Slides:
         """
     Interactive Slides in IPython Notebook. Only one instance can exist.
     `auto_focus` can be reset from settings and enable jumping back to slides after a cell is executed. 
+    `settings` are passed to `Slides.settings.apply` if you like to set during initialization.
     
     To suppress unwanted print from other libraries/functions, use:
     ```python
@@ -1090,11 +1091,13 @@ class Slides:
         cls,
         extensions=[],
         auto_focus = True,
+        **settings
         ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         instance = cls.instance()
         instance.__doc__ = cls.__doc__  # copy docstring
         instance.extender.extend(extensions) # globally once
+        instance.settings.apply(**settings)
         instance.widgets.checks.focus.value = auto_focus # useful
         return instance
 

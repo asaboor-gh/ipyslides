@@ -3,8 +3,7 @@ Author Notes: Classes in this module should only be instantiated in Slides class
 and then provided to other classes via composition, not inheritance.
 """
 
-import os
-import math
+import os, math
 
 from IPython.display import Image
 
@@ -130,13 +129,21 @@ class LayoutSettings:
         else:
             raise RuntimeError("No slides yet to set animation.")
         return self # for chaining set_methods
+    
+    def set_theme(self, name:str):
+        "Set prefered theme."
+        themes = self.theme_dd.options
+        if name not in themes:
+            raise ValueError(f"name expect on the followings: {themes!r}")
+        self.theme_dd.value = name 
+        return self # for chaining set_methods
 
     @_sub_doc(colors=styles.theme_colors["Light"])
-    def set_theme_colors(self, colors={}):
+    def set_theme_colors(self, colors : dict):
         """Set theme colors. Only take effect when using custom theme.
         colors must be a dictionary with exactly like this:
         ```python
-        Slides.settings.set_theme_colors({colors})
+        {colors}
         ```
         """
         styles._validate_colors(colors)  # Validate colors before using and setting
@@ -146,17 +153,16 @@ class LayoutSettings:
         return self # for chaining set_methods
 
     @_sub_doc(css_docstring=_css_docstring)
-    def set_css(self, css_dict={}):
+    def set_css(self, props: dict):
         """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well.
         Individual slide's CSS set by `slides[index].set_css` will override this.
         {css_docstring}
         """
         if len(self._slides[:]) >= 1:
-            self._slides[0]._set_overall_css(css_dict=css_dict)
+            self._slides[0]._set_overall_css(props)
         else:
             raise RuntimeError("No slides yet to set CSS.")
         return self # for chaining set_methods
-
 
     def set_bg_image(self, src=None, opacity=0.25, blur_radius=None):
         "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."
@@ -255,12 +261,12 @@ class LayoutSettings:
             raise TypeError(f"text should be string or None, not {type(text)}")
 
         if self._slides.current:
-            self.get_footer(
+            self._get_footer(
                 self._slides.current, update_widget=True
             )  # Update footer immediately if slide there
         return self # for chaining set_methods
 
-    def get_footer(self, slide, update_widget=False):
+    def _get_footer(self, slide, update_widget=False):
         "Get footer text. `slide` is a slide object."
         if (type(slide).__name__ != "Slide") and (
             type(slide).__module__.split(".")[0] != "ipyslides"
@@ -486,3 +492,31 @@ class LayoutSettings:
 
             if hasattr(self, '_hover_only') and self._hover_only:
                 self.btn_menu.add_class('Hover-Only')
+
+    def apply(self, **settings):
+        """Apply multiple settings at once. Top level keys should be function names without 'set_' and 
+        values should be dictionary of parameters to that function. For example:
+        ```python
+        Slides.settings.apply(
+            layout = {"aspect":1.6, "scroll":False},
+            footer = {0:"footer text", "numbering":True} # 0 key goes to first positional argument
+        )
+        ```
+        """
+        for key, kwargs in settings.items():
+            func = getattr(self, f"set_{key}", None)
+            if func is None:
+                attrs = [a[4:] for a in dir(self) if a.startswith("set_")]
+                raise AttributeError(f"Attribute {key!r} does not exists in settings!\nAllowed attributes are {attrs}.")
+            else:
+                if not isinstance(kwargs, dict):
+                    raise TypeError(f"value of {key!r} should be a dictionary of paraemetrs!")
+                
+                for kw in kwargs:
+                    if not isinstance(kw, (int, str)):
+                        raise TypeError(f"key in value of {key!r} should be int (for args) or str (for kwargs), got {type(kw)}")
+                
+                args = sorted([v for k,v in kwargs.items() if isinstance(k, int)]) # positional args should be in order
+                kwargs = {k:v for k,v in kwargs.items() if isinstance(k, str)} 
+                func(*args, **kwargs) # apply function
+    

@@ -90,7 +90,6 @@ animations = {'zoom':'''
 }) 
 }
   
-# This was 436 lines of code in CSS, css_dict is elegant + only 368 lines, clean CSS output is 462 lines
 def _validate_colors(colors):
     for key, value in colors.items():
         if not isinstance(value, str):

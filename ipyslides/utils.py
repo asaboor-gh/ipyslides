@@ -88,7 +88,7 @@ def _sub_doc(**kwargs):
         return func
     return _inner
 
-_css_docstring = """`css_dict` is a nested dict of css selectors and properties. There are few special rules in `css_dict`:
+_css_docstring = """`props` is a nested dict of css selectors and properties. There are few special rules in `props`:
 
 - All nested selectors are joined with space, so '.A': {'.B': ... } becomes '.A .B {...}' in CSS.
 - A '^' in start of a selector joins to parent selector without space, so '.A': {'^:hover': ...} becomes '.A:hover {...}' in CSS. You can also use '.A:hover' directly but it will restrict other nested keys to hover only.
@@ -284,28 +284,30 @@ def _build_css(selector, data):
         
     return content
 
-def _format_css(css_dict, allow_root_attrs = False):
+def _format_css(props : dict, allow_root_attrs = False):
+    if not isinstance(props, dict):
+        raise TypeError("props should be a dictionay of CSS selectors and properties.")
     uclass = get_unique_css_class()
     _all_css = '' # All css
-    root_attrs = {k:v for k,v in css_dict.items() if not isinstance(v,dict)}
+    root_attrs = {k:v for k,v in props.items() if not isinstance(v,dict)}
     allowed_attrs = {k:v for k,v in root_attrs.items() if "background" in k} # only allow background CSS to change at root
     if allow_root_attrs:
         if allowed_attrs: # Applies to background mostly
             _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .NavWrapper, {uclass} .BackLayer .Front',), allowed_attrs)
             if (root_attrs := {k:v for k,v in root_attrs.items() if k not in allowed_attrs}):
-                print(f'Skipping attributes: \n{root_attrs}\nat root level of css_dict!\nOnly background-related attributes are allowed at top!' )
+                print(f'Skipping attributes: \n{root_attrs}\nat root level of props!\nOnly background-related attributes are allowed at top!' )
 
     if root_attrs and not allow_root_attrs:
-        print(f'Skipping attributes: \n{root_attrs}\nat root level of css_dict!')
+        print(f'Skipping attributes: \n{root_attrs}\nat root level of props!')
     
-    css_dict = {k:v for k,v in css_dict.items() if isinstance(v,dict)} # Remove root attrs after they are set above for background, no more use
-    _all_css += _build_css((f'{uclass} .SlideArea',),css_dict) # Build css from dict
+    props = {k:v for k,v in props.items() if isinstance(v,dict)} # Remove root attrs after they are set above for background, no more use
+    _all_css += _build_css((f'{uclass} .SlideArea',),props) # Build css from dict
     return html('style', _all_css)
     
 @_sub_doc(css_docstring = _css_docstring)
-def format_css(css_dict):
+def format_css(props : dict):
     "{css_docstring}"
-    return _format_css(css_dict, allow_root_attrs = False)
+    return _format_css(props, allow_root_attrs = False)
 
 def alt(widget, func):
     """Display `widget` for slides and output of `func(widget)` will be and displayed only in exported formats as HTML.

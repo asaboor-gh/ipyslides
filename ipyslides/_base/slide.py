@@ -437,7 +437,7 @@ class Slide:
     
     def get_footer(self, update_widget = False): # Used here and export_html
         "Return footer of this slide. Optionally update footer widget."
-        return self._app.settings.get_footer(self, update_widget = update_widget)
+        return self._app.settings._get_footer(self, update_widget = update_widget)
         
     @property
     def frames(self):
@@ -507,19 +507,19 @@ class Slide:
         else:
             return self._app.code.cast('Source of a slide only exits if it is NOT created (most recently) using @Slides.frames decorator\n',language = 'markdown')
     
-    def _set_overall_css(self, css_dict={}):
+    def _set_overall_css(self, props: dict):
         self.__class__._overall_css = html('style','') # Reset overall CSS
         old_slide_css = self._css # Save old slide CSS without overall CSS
-        self.set_css(css_dict = css_dict) # Set this slide's CSS
+        self.set_css(props) # Set this slide's CSS
         self.__class__._overall_css = self.css # Set overall CSS from this slide's CSS, self.css takes both
         self._css = old_slide_css # Restore old slide CSS
     
     @_sub_doc(css_docstring = _css_docstring)
-    def set_css(self,css_dict = {}):
+    def set_css(self,props : dict):
         """Attributes at the root level of the dictionary will be applied to the slide. You can add CSS classes by `Slide.set_dom_classes`.
         use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
         {css_docstring}"""
-        self._css = _format_css(css_dict, allow_root_attrs = True)
+        self._css = _format_css(props, allow_root_attrs = True)
         
         # See effect of changes
         if not self._app.running: # Otherwise it has side effects
