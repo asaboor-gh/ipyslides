@@ -62,7 +62,7 @@ class LayoutSettings:
         self.btn_menu.observe(self._toggle_menu, names = ["value"])
         self.widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self.widgets.checks.proxy.observe(self._toggle_proxy_buttons, names=["value"])
-        self._update_theme()  # Trigger Theme and Javascript in it
+        self._update_theme(change = "aspect")  # Trigger Theme with aspect changed as well
         self.set_code_theme()  # Trigger CSS in it, must
         self.set_layout(center=True)  # Trigger this as well
         self._update_size(change=None)  # Trigger this as well
@@ -325,9 +325,7 @@ class LayoutSettings:
             int(self.width_slider.value / self._layout["aspect"])
         )
         self.widgets.mainbox.layout.width = "{}vw".format(self.width_slider.value)
-        self._update_theme(
-            change=None
-        )  # For updating size and zoom CSS
+        self._update_theme(change="aspect")  # change aspect for Linked Output view too
         self.widgets.iw.msg_tojs = 'RESCALE'
 
     @property
@@ -372,9 +370,9 @@ class LayoutSettings:
 
     def _update_theme(self, change=None):
         # Only update layout CSS if theme changes, not on each call
-        if change and (change['owner'] == self.theme_dd): # function called with owner without widget works too
+        if (change == "aspect") or (change and (change['owner'] == self.theme_dd)): # function called with owner without widget works too much
             self.widgets.htmls.main.value = html('style',
-                _layout_css.layout_css(self.colors['accent_color'])
+                _layout_css.layout_css(self.colors['accent_color'],self._layout['aspect'])
             ).value
         
         # Update Theme CSS
@@ -525,4 +523,3 @@ class LayoutSettings:
                     raise ValueError(f"{key!r} accepts only following parameters {params}")
                 
                 func(*args, **kwargs) # apply function
-    

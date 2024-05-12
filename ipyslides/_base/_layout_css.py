@@ -8,7 +8,7 @@ _zoom_ables = ".jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom
 _icons_size = "1em"  # For all except Chevrons
 
 
-def layout_css(accent_color):#TODO: should be updated in theme as well
+def layout_css(accent_color, aspect):
     uclass = get_unique_css_class()
     return _build_css(
         (uclass,),
@@ -731,16 +731,29 @@ def layout_css(accent_color):#TODO: should be updated in theme as well
                 "background": "var(--theme-background,inherit) !important",
                 "margin": "8px 0px",
             },
-            "<.jp-LinkedOutputView > .jp-OutputArea > .jp-OutputArea-child": {
-                "height": "100% !important", # This needs to in same selector order to not effect slide content
-                ".SlidesWrapper": {
-                    "min-width": "100% !important",
-                    "width": "100% !important",
-                    "min-height": "100% !important",
+            "<.jp-LinkedOutputView": {
+                "> .jp-OutputArea > .jp-OutputArea-child": { # avoid collapse
+                    "width":"100% !important",
                     "height": "100% !important",
-                    "box-sizing": "border-box !important",
-                    ".Width-Slider": {
-                        "display": "none !important",
+                    "overflow": "hidden !important",
+                },
+                ".SlidesContainer": {
+                    "container-type": "size !important",
+                    "container-name": "resize-box !important",
+                    "overflow": "hidden !important",
+                    "width": "100% !important",
+                    "height": "100% !important",
+                    "> .SlidesWrapper": {
+                        "width": "100% !important",
+                        "height": "auto !important",
+                        "aspect-ratio": f"{aspect} !important",
+                        "margin": "auto !important",
+                        "box-shadow": "var(--jp-border-color1,#D1D9E1) 0px 0px 1px 1px !important",
+                        f"@container resize-box (aspect-ratio > {aspect})": {
+                            "width": "auto !important",
+                            "height": "100% !important",
+                        },
+                        ".Width-Slider": {"display": "none !important",},
                     },
                 },
             },
@@ -761,6 +774,7 @@ def viewport_css():
         max-height: 100vh !important;
         box-sizing: border-box !important;
     }}
+    #rendered_cells {{overflow: hidden !important}} /* only when viewport full, otherwise let scroll */
     .jp-LinkedOutputView {uclass}.SlidesWrapper, /* It can handle sidecar as well, besides intended options */
     .jp-MainAreaWidget {uclass}.SlidesWrapper, /* Somehow notebook (and other panels) itself is treated as viewport in JupyterLab, override it */
     body[data-base-url] {uclass}.SlidesWrapper {{ /* for voila */

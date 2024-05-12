@@ -529,7 +529,7 @@ class Slides(BaseSlides):
         self._unregister_postrun_cell() # no need to scroll button where showing itself
         self._update_toc()  # Update toc before displaying app to include all sections
         self._update_dynamic_content()  # Update dynamic content before displaying app
-        display(self.widgets.mainbox)  # Display slides
+        display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
         
 
     def close_view(self):
