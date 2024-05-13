@@ -14,9 +14,11 @@ def layout_css(accent_color, aspect):
         (uclass,),
         {
             "a.jp-InternalAnchorLink": {"display": "none !important"},
+            "<.SlidesContainer": {"padding": "4px !important",}, # for box-shadow to appear all sides
             "^.SlidesWrapper": {
-                "container": "slides / inline-size",
+                "container": "slides / inline-size !important",
                 "z-index": "1 !important",
+                "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 3px 1px !important", # for screenshot clear boundaries
                 "^.SingleSlide .Controls": {
                     "display": "none !important",
                 },
@@ -748,7 +750,6 @@ def layout_css(accent_color, aspect):
                         "height": "auto !important",
                         "aspect-ratio": f"{aspect} !important",
                         "margin": "auto !important",
-                        "box-shadow": "var(--jp-border-color1,#D1D9E1) 0px 0px 1px 1px !important",
                         f"@container resize-box (aspect-ratio > {aspect})": {
                             "width": "auto !important",
                             "height": "100% !important",
