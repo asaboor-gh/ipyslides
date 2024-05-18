@@ -50,7 +50,7 @@ def layout_css(accent_color, aspect):
                         "opacity": "1",
                     },
                 },
-                "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn": {
+                "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number": {
                     "display": "none !important",
                 },  # still should be clickable
                 "^.InView-Title .Arrows.Next-Btn, ^.InView-Other .Arrows.Next-Btn": {

@@ -32,7 +32,7 @@ class ScreenShot:
         self.btn_capture.on_click(self.capture)
         self.btn_pdf.on_click(self.__save_pdf)
         self.btn_cap_all.on_click(self.__capture_all)
-        self.btn_crop.on_click(self.__toggle_crop_window)
+        self.btn_crop.on_click(self._toggle_crop_window)
         self.widgets.ddowns.clear.observe(self.__clear_images)
         self.widgets.sliders.crop_w.observe(self._crop_image, names="value")
         self.widgets.sliders.crop_h.observe(self._crop_image, names="value")
@@ -44,7 +44,7 @@ class ScreenShot:
             self.widgets.sliders.crop_h.max = im.height
             self.widgets.sliders.crop_h.value = (0, im.height)
 
-    def __toggle_crop_window(self, btn):
+    def _toggle_crop_window(self, btn):
         if self.widgets.cropbox.layout.height == '0':
             self.widgets.cropbox.layout.height = '100%'
             self.btn_crop.description = 'Close'
