@@ -38,7 +38,7 @@ def layout_css(accent_color, aspect):
                     ".Width-Slider, .Source-Btn": {"display": "none !important"},
                 },
                 "^.FullScreen": {
-                    ".FullWindow-Btn, .Bbox-Controls": {"display": "none !important"},
+                    ".FullWindow-Btn": {"display": "none !important"},
                 },
                 "@keyframes heart-beat": {
                     "from": {
@@ -252,6 +252,12 @@ def layout_css(accent_color, aspect):
                             "background": "var(--secondary-bg)",
                         },
                     },
+                    ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",},
+                    ":not(.TopBar) :is(button, .jupyter-button)": {
+                        "margin-left":"var(--jp-widgets-inline-label-width) !important",
+                        "width": "max-content !important",
+                        "min-height": "28px !important",
+                    },
                     ".Settings-Btn": {
                         "border": "none !important",
                         "outline": "none !important",
@@ -262,7 +268,7 @@ def layout_css(accent_color, aspect):
                         },
                     },
                 },
-                ":is(.SlideBox, .SidePanel) :is(button, .jupyter-button)": {
+                ".SlideBox :is(button, .jupyter-button)": {
                     "border": "1px solid var(--accent-color)",
                     "border-radius": "4px",
                     "min-height": "28px",
@@ -514,13 +520,14 @@ def layout_css(accent_color, aspect):
                     "color": "var(--primary-fg) !important",
                 },
             },
-            ".Draw-Wrapper": { # height is set dynamically
+            ".Draw-Wrapper, .CropBox": { # height is set dynamically
                 "position": "absolute !important",
                 "left": 0,
                 "top":0,
                 "z-index": "8 !important",
                 "overflow": "hidden !important",
                 "transition": "height 200ms",
+                "backdrop-filter": "blur(50px)",
                 "> .Draw-Btn" : {
                     "position": "absolute !important",
                     "left": 0,
@@ -530,6 +537,7 @@ def layout_css(accent_color, aspect):
                     "^:active, ^.mod-active": {"box-shadow": "none !important","opacity": "1 !important",},
                 },
             },
+            ".CropBox": {"z-index": "15 !important",}, # above others
             ".Draw-Widget": {
                 "backdrop-filter": "blur(50px)",
                 "margin": 0,

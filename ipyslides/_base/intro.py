@@ -13,19 +13,6 @@ def get_logo(height="60px", text = None):
     </svg>'''
 
 
-how_to_ppt = """### Powerpoint Presentation
-- Save all screenshots using `Save PNG` button and go to folder just created.
-- You know the aspect ratio while taking screenshots, if not, read details of any of picture to find it.
-- Open Powerpoint, got to `Design` tab and select `Slide Size`. If pictures here are of aspect ratio 4:3 or 16:9, select that,
-otherwise select `Custom Slide Size` and change size there according to found aspect ratio. 
-- You will see a slide of your prefered size now. Go to `Insert` tab and select `Photo Album > New Photo Album`.
-- Select `File/Disk` option to insert pictures and make sure `Picture Layout` option is `Fit to slide`.
-- Now click `Create` and you will see all pictures as slides.
-
-::: note-warning
-    Do not use PDF from Powerpoint as that will lower quality, generate PDF from slides instead. 
-"""
-
 how_to_slide = """# Creating Slides
 ::: align-center
     alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`     
@@ -158,6 +145,23 @@ key_combs = f"""
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 
 
+how_to_print = """
+- Capture screenshot of current state of slide by camera button in toolbar or by pressing `S` key. 
+    This will collect screenshots of current slide in order of capturing. 
+- Press `Capture Screenshots of all Slides` button in side panel to capture a single image of each slide. 
+    - Add images over it by manually capturing multiple states of a slide as shown in previous step.
+    - Delete screenshots with dropdown in settings panel.
+    - Set crop bounding box if not in fullscreen mode.
+- Press `Save as PDF File` button to save all screenshots as PDF.
+
+::: note-warning
+    Avoid scrolling during taking screenshot. You will set same bounding box for all screenshots
+    which can change position if scrolled.
+
+::: note-tip
+    You can also get PDF from exported HTML file, but can't have the freedom of capturing 
+    many views of single slide.
+"""
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
     In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
@@ -177,11 +181,7 @@ Having slides in focus, you can use follwoing keys/combinations:
     - Pressing `S` to save screenshot of current state of slide. Different slides' screenshots are kept in order.
 
 ### PDF Printing (by Screen Capture)
-- Capture screenshot of current state of slide by camera button in toolbar or by pressing `S` key. 
-    This will collect screenshots of current slide in order of capturing. 
-    This is a manual process but you can collect content as you want. You can hover top-right corner to use a slider to adjust height of visible content.
-- Press `Capture All` button in side panel to capture a single image of each slide. Then you can add images over it by manually capturing.
-- Press `Save PDF` button to save all screenshots as PDF.
+{how_to_print}
 
 {how_to_slide}
 
@@ -193,7 +193,6 @@ Having slides in focus, you can use follwoing keys/combinations:
 """
 
 instructions = f"""{more_instructions}
-{how_to_ppt}
 ### Custom Theme
 For custom themes, change below `Theme` dropdown to `Custom` and use `Slides.settings.set_theme_colors` to set colors.
           

@@ -200,11 +200,6 @@ class Slides(BaseSlides):
         if self.shell and self.shell.__class__.__name__ != "TerminalInteractiveShell":
             if self._max_index == 0:  # prevent overwrite
                 self._add_clean_title()
-
-            with suppress(BaseException):  # Does not work everywhere.
-                *_, w, h = self.screenshot.screen_bbox
-                self.widgets.sliders.crop_w.step = 100/w # precise step as given by screen pixels
-                self.widgets.sliders.crop_h.step = 100/h
         else:
             if self._max_index == 0:  # prevent overwrite
                 self._slides_dict["0"] = Slide(self, "0")  # just for completeness

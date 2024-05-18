@@ -5,14 +5,12 @@ and then provided to other classes via composition, not inheritance.
 
 import os 
 from time import sleep
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 
 from PIL import Image, ImageGrab
-import numpy as np
 
-from ..utils import image, alert, get_child_dir
+from ..utils import image, get_child_dir
 from ..writer import CustomDisplay
-from . import intro
 
 
 class ScreenShot:
@@ -21,39 +19,55 @@ class ScreenShot:
         self.widgets = _instanceWidgets
         self.btn_cap_all = self.widgets.buttons.cap_all
         self.btn_pdf = self.widgets.buttons.pdf
-        self.btn_png = self.widgets.buttons.png
+        self.btn_crop = self.widgets.buttons.crop
         self.btn_capture = self.widgets.buttons.capture
         self.btn_settings = self.widgets.buttons.setting
         
         self.__images = {} #Store screenshots
-        self.__capture_settings = {'load_time':0.8,'quality':95,'bbox':None}
-        self._screen_bbox = None # will be store on display
+        self._cimage = None # cureent image
+        self._crop_bbox = None
+        self.__capture_settings = {'load_time':0.8,'quality':95}
         self._capturing = False
         
         self.btn_capture.on_click(self.capture)
         self.btn_pdf.on_click(self.__save_pdf)
-        self.btn_png.on_click(self.__save_images)
         self.btn_cap_all.on_click(self.__capture_all)
+        self.btn_crop.on_click(self.__toggle_crop_window)
         self.widgets.ddowns.clear.observe(self.__clear_images)
-        self.widgets.sliders.crop_w.observe(self._set_bbox, names="value")
-        self.widgets.sliders.crop_h.observe(self._set_bbox, names="value")
+        self.widgets.sliders.crop_w.observe(self._crop_image, names="value")
+        self.widgets.sliders.crop_h.observe(self._crop_image, names="value")
 
-    def _set_bbox(self, change):
-        im = ImageGrab.grab() # full image initially
-        x1,x2 = [int(im.width*w/100) for w in self.widgets.sliders.crop_w.value]
-        y1,y2 = [int(im.height*h/100) for h in self.widgets.sliders.crop_h.value]
+        with suppress(BaseException): # only on supportive systems silently
+            im = ImageGrab.grab()
+            self.widgets.sliders.crop_w.max = im.width
+            self.widgets.sliders.crop_w.value = (0, im.width)
+            self.widgets.sliders.crop_h.max = im.height
+            self.widgets.sliders.crop_h.value = (0, im.height)
 
-        if (x2 <= x1) or (y2 <= y1):
-            return # No need at zero width
-        
-        arr = np.asarray(im.crop([x1,y1,x2,y2]))
-        new_arr = np.concatenate([arr[:100],np.zeros_like(arr[:5]), arr[-100:]])
-        new_arr = np.concatenate([new_arr[:,:160], np.zeros_like(new_arr[:, :5]), new_arr[:,-160:]],axis=1)
+    def __toggle_crop_window(self, btn):
+        if self.widgets.cropbox.layout.height == '0':
+            self.widgets.cropbox.layout.height = '100%'
+            self.btn_crop.description = 'Close'
+            if self.__images:
+                self._load_image(self.images[0]) # load from ordered images
+            else:
+                self.widgets.htmls.crop.value = 'Screenshot appears here for cropping!'
+        else:
+            self.widgets.cropbox.layout.height = '0'
+            self.btn_crop.description = 'Set Crop Bounding Box'
+    
+    def _load_image(self, im):
+        self._cimage = im
+        self.widgets.htmls.crop.value = image(im,width='100%').value
 
-        img = image(Image.fromarray(new_arr),width='100%') 
-        self.widgets._push_toast(img.value, timeout=20) # needs enough time to see result
-
-        self.capture_setup(**{**self.capture_settings, 'bbox':(x1,y1,x2,y2)})
+    def _crop_image(self, change):
+        if self._cimage is not None:
+            x1,x2 = self.widgets.sliders.crop_w.value
+            y2,y1 = [self.widgets.sliders.crop_h.max - v for v in self.widgets.sliders.crop_h.value]
+            self._crop_bbox = [x1,y1,x2,y2]
+            self.widgets.htmls.crop.value = image(self._cimage.crop([x1,y1,x2,y2]), width='100%').value
+        elif self.__images:
+            self._load_image(self.images[0]) 
 
     @contextmanager
     def capture_mode(self, *additional_widgets_to_hide):
@@ -77,29 +91,15 @@ class ScreenShot:
             for w in hide_widgets:
                 w.layout.visibility = 'visible' 
             self.widgets.htmls.toast.layout.visibility = old_pref 
-            
-    @property           
-    def screen_bbox(self):
-        "Return screen's bounding box in pixels."
-        if not self._screen_bbox:
-            img = ImageGrab.grab(bbox=None) # Just to get bounding box
-            self._screen_bbox = (0,0, *img.size)
-        return self._screen_bbox
 
-    def capture_setup(self,load_time=0.5,quality=95,bbox = None):
+    def capture_setup(self,load_time=0.5,quality=95):
         """Setting for screen capture. 
-        - load_time: 0.5; time in seconds for each slide to load before print, only applied to Capture All, not on manual screenshot. 
-        - quality: 95; In term of current screen. Will not chnage too much above 95. 
-        - bbox: None; None for full screen on any platform. Given screen position of slides in pixels as [left,top,right,bottom].
-        > Note: Auto detection of bbox in frontends where javascript runs is under progress. """
+        - load_time: 0.5; time in seconds for each slide to load before print. 
+        - quality: 95; In term of current screen. Will not chnage too much above 95."""
         if load_time < 0.1:
             return print("load_time must be greater than 0.1 to at least load the slide")
-        if bbox and len(bbox) != 4:
-            return print("bbox expects [left,top,right,bottom] in integers")
-        self.__capture_settings = {'load_time':load_time,'quality':quality,'bbox':bbox if bbox else self.screen_bbox} # get full if none given
-        # Display what user sets
-        if bbox:
-            return image(ImageGrab.grab(bbox=bbox),width='100%')
+        
+        self.__capture_settings = {'load_time':load_time,'quality':quality} 
 
     @property  
     def capture_settings(self):
@@ -123,18 +123,19 @@ class ScreenShot:
             if self.widgets.sliders.progress.label not in self.__images:
                 self.__images[self.widgets.sliders.progress.label] = [] # container to store images
             
-            # Keep full image if in fullscreen
-            bbox = None if "FullScreen" in self.widgets.mainbox._dom_classes else self.capture_settings['bbox']
-            self.__images[self.widgets.sliders.progress.label].append(ImageGrab.grab(bbox = bbox)) # Append to existing list
+            self._cimage = ImageGrab.grab(bbox = None) # keep for cropping
+            self.__images[self.widgets.sliders.progress.label].append(self._cimage) # Append to existing list
     
     def __sort_images(self):
         ims = [] #sorting
         for label, _ in self.widgets.sliders.progress.options:
             if label in self.__images:
                 ims = [*ims,*self.__images[label]]
+
+        ims = [im.crop(self._crop_bbox) if self._crop_bbox else im for im in ims] # crop here, not in property images
         return tuple(ims)
             
-    def save_pdf(self,filename='IPySlides.pdf'):
+    def save_pdf(self,filename='Slides.pdf'):
         "Converts saved screenshots to PDF!"
         ims = self.__sort_images()    
         if ims: # make sure not empty
@@ -156,38 +157,15 @@ class ScreenShot:
             with self.capture_mode():
                 self.widgets.sliders.progress.label = label # swicth to that slide
                 sleep(self.capture_settings['load_time']) #keep waiting here until it almost loads 
-                self.__images[label] = [ImageGrab.grab(bbox = self.capture_settings['bbox']),] # Save image in a list on which we can add others
+                self.__images[label] = [ImageGrab.grab(bbox = None),] # Save image in a list on which we can add others
         
-        self.widgets._push_toast("All slides captured. Use Save PDF/Save PNG buttons to save them.") 
+        self.widgets._push_toast("All slides captured. Use Save PDF button to save them.") 
          
     
     @property
     def images(self):
         "Get all captured screenshots in order."
         return self.__sort_images()
-    
-    def save_images(self):
-        "Save all screenshots as PNG in given `notebook_dir/.ipyslides-assets/images`. Names are auto ordered"
-        self.btn_png.description = 'Saving PNGs...'
-        directory = get_child_dir('.ipyslides-assets', 'images', create=True)
-        
-        ims = self.images
-        if ims:    
-            for i,im in enumerate(ims):
-                im.save(os.path.join(directory,f'Slide-{i:03}.png'),'PNG',quality= self.capture_settings['quality'],subsampling=0,optimize=True)  # Do not lose image quality at least here
-            md_file = os.path.join(directory,'Make-PPT.md')
-            with open(md_file,'w', encoding='utf-8') as f:
-                f.write(intro.how_to_ppt)
-            self.widgets._push_toast(f'''All captured images are saved in "{directory}"<br/> 
-                         <em>See file "{md_file}" as bonus option!</em>''',timeout=10)
-        else:
-            self.widgets._push_toast('No images found to save. Take screenshots of slides, then use this option.')
-        
-        self.btn_png.description = 'Save PNG'
-        
-    def __save_images(self,btn):
-        "With Button call"
-        self.save_images()
     
     def __clear_images(self,change):
         if 'Current' in self.widgets.ddowns.clear.value:

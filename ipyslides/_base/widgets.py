@@ -10,7 +10,7 @@ from IPython import get_ipython
 from tldraw import TldrawWidget
 from . import styles, _layout_css
 from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
-from .intro import get_logo
+from .intro import get_logo, how_to_print
 from ..utils import html
 
 
@@ -42,8 +42,8 @@ ipw.Output = Output
 ipw.widget_output.Output = Output
 
 auto_layout =  Layout(width='auto')
-def describe(value): 
-    return {'description': value, 'description_width': 'initial','layout':Layout(width='auto')}
+def describe(value,**kwargs): 
+    return {'description': value, 'description_width': 'initial','layout':Layout(width='auto',**kwargs)}
 
 
 @dataclass(frozen=True)
@@ -59,14 +59,14 @@ class _Buttons:
     source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
     home    =  Button(icon='plus',layout= Layout(width='auto',height='auto'), tooltip='Go to Title Page').add_class('Menu-Item').add_class('Home-Btn')
     end     =  Button(icon='plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
-    info    =  Button(icon='plus',layout= Layout(width='auto',height='auto'), tooltip='Information').add_class('Menu-Item').add_class('Info-Btn')
+    info    =  Button(icon='plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
     capture =  Button(icon='camera',layout= Layout(width='auto',height='auto'),
                 tooltip='Take Screen short in full screen. Order of multiple shots in a slide is preserved! [S]',
                 ).add_class('Screenshot-Btn').add_class('Menu-Item')
-    pdf     = Button(description='Save PDF',layout= Layout(width='auto',height='auto'))
-    png     = Button(description='Save PNG',layout= Layout(width='auto',height='auto'))
-    cap_all = Button(description='Capture All',layout= Layout(width='auto',height='auto'))
-    export  = Button(description="Export to HTML",layout= Layout(width='auto',height='auto'))
+    pdf     = Button(description='Save as PDF File',layout= Layout(width='auto',height='auto'))
+    cap_all = Button(description='Capture Screenshots of all Slides',layout= Layout(width='auto',height='auto'))
+    export  = Button(description="Export to HTML File",layout= Layout(width='auto',height='auto'))
+    crop    = Button(description='Set Crop Bounding Box',layout= Layout(width='auto',height='auto'), tooltip='Toggle Crop GUI').add_class('Menu-Item')
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -96,18 +96,19 @@ class _Htmls:
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
     glass   = HTML().add_class('BackLayer') # For glass effect
+    crop    = HTML('Screenshot appears here for cropping!', layout=Layout(margin='auto',padding='0')).add_class('CropHtml')
 
 @dataclass(frozen=True)
 class _Checks:
     """
     Instantiate under `Widgets` class only.
     """
-    reflow  = ipw.Checkbox(indent = False, value=False,description='Reflow Content',layout=auto_layout)
-    notes   = ipw.Checkbox(indent = False, value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
-    toast   = ipw.Checkbox(indent = False, value = True, description='Notifications',layout=auto_layout)
-    focus   = ipw.Checkbox(indent = False, value = True, description='Auto Focus',layout=auto_layout)
-    proxy   = ipw.Checkbox(indent = False, value = True, description='Proxy Buttons',layout=auto_layout)
-    navgui  = ipw.Checkbox(indent = False, value = True, description='Show Nav. GUI',layout=auto_layout)
+    reflow  = ipw.Checkbox(value=False,description='Reflow Content',layout=auto_layout)
+    notes   = ipw.Checkbox(value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
+    toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
+    focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
+    proxy   = ipw.Checkbox(value = True, description='Proxy Buttons',layout=auto_layout)
+    navgui  = ipw.Checkbox(value = True, description='Show Nav. GUI',layout=auto_layout)
 
 @dataclass(frozen=True)
 class _Sliders:
@@ -117,8 +118,8 @@ class _Sliders:
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
     fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
-    crop_w   = ipw.FloatRangeSlider(**describe('Width (%)'), min=0,max=100,value=[20,80],step=0.025, continuous_update=False) # step for upto 4k screen by default
-    crop_h   = ipw.FloatRangeSlider(**describe('Height (%)'), min=0,max=100,value=[25,75],step=0.025, continuous_update=False)
+    crop_w   = ipw.IntRangeSlider(**describe('w', margin='8px'), min=0,max=100,value=[20,80],step=1, continuous_update=False, readout=False) # step for upto 4k screen by default
+    crop_h   = ipw.IntRangeSlider(**describe('h',height='auto',margin='8px'), min=0,max=100,value=[25,75],step=1, continuous_update=False, readout=False,orientation='vertical')
 
 @dataclass(frozen=True)
 class _Dropdowns:
@@ -183,32 +184,30 @@ class Widgets:
         ]).add_class('NavWrapper')   #class is must
 
         _many_btns = [self.buttons.setting, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
+        _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
         
         self.panelbox = VBox([
             self.htmls.glass,
             HBox(_many_btns).add_class('TopBar').add_class('Inside'),
             VBox([
+                HTML('<b>Layout and Theme</b>',layout = _html_layout),
                 self.sliders.fontsize,
                 self.sliders.width,
                 self.ddowns.theme,
-                Box([GridBox([
-                    self.buttons.export, self.buttons.info, HTML(), # empty space
-                    self.checks.notes,self.checks.toast,self.checks.reflow,
-                    self.checks.proxy,self.checks.navgui,self.checks.focus,
-                    self.buttons.cap_all,self.buttons.pdf,self.buttons.png,
-                ],layout=Layout(width='auto',overflow_x='scroll',
-                                grid_template_columns='1fr 1fr 1fr',grid_gap='4px',
-                                padding='4px',margin='8px auto')
-                )],layout=Layout(min_height='120px')),# This ensures no collapse and scrollable Grid
+                HTML('<b>Additional Features</b>',layout = _html_layout),
+                self.checks.notes,self.checks.toast,self.checks.reflow,
+                self.checks.proxy,self.checks.navgui,self.checks.focus,
+                HTML('<b>HTML File Export</b>',layout = _html_layout),
+                self.buttons.export,
+                HTML('<b>Screenshot Export</b>',layout = _html_layout),
+                self.buttons.cap_all,
                 self.ddowns.clear,
-                VBox([
-                    HTML('<span style="font-size:14px;">Set screenshot bounding box (if slides not fullscreen)</span>'),
-                    self.sliders.crop_w,
-                    self.sliders.crop_h,
-                ], layout=Layout(min_height='90px')).add_class("Bbox-Controls"),
+                self.buttons.crop,
+                self.buttons.pdf,
+                HTML(html('details',[html('summary','How to Screenshot'), how_to_print]).value),
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
-            ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='12px',margin='0')),
+            ],layout=Layout(width='auto',height='max-content',overflow_y='scroll',padding='12px',margin='0')),
         ],layout = Layout(width='70%',min_width='50%',height='0',overflow='hidden')).add_class('SidePanel') 
         
         self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='0',overflow='auto')).add_class('TOC')
@@ -227,7 +226,20 @@ class Widgets:
                 btn.on_click(close_quick_menu)
             else:
                 btn.observe(close_quick_menu, names=["value"])
-
+        
+        self.cropbox = GridBox([
+            self.sliders.crop_w,
+            HBox([self.sliders.crop_h, self.htmls.crop]),
+            HBox([self.buttons.pdf, self.buttons.crop], layout = Layout(justify_content='flex-end')),
+            ], layout = Layout(
+                margin='0',
+                padding='0', 
+                width='100%', 
+                height='0',
+                grid_gap = '8px',
+                grid_template_rows='40px auto 40px',
+            )).add_class("CropBox")
+        
         self.mainbox = VBox([
             self.htmls.glass, # This is the glass pane, should be before everything, otherwise it will cover the slide area
             self.htmls.loading, 
@@ -248,6 +260,7 @@ class Widgets:
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
             self.drawer, 
+            self.cropbox,
             self.navbox,
             self._snum,
             self._progbar # progressbar should come last
