@@ -65,11 +65,14 @@ const keyMessage = {
     'e': 'EDIT', // Edit source cell
 }
 
-
 function keyboardEvents(box,model) {
     function keyOnSlides(e) {
-        e.preventDefault();
-        if (e.target !== box){return true;}; // Outside or inside componets should work properly
+        e.preventDefault(); // stop default actions
+        e.stopPropagation(); // stop propagation to jupyterlab events and other views 
+        if (e.target !== box){
+            return true; // inside componets should work properly, avoid going outside
+        }; 
+
         let key = e.key; // True unicode key
         let message = '';
         if ('123456789'.includes(key)) { // send to shift slides by numbers
@@ -94,9 +97,7 @@ function keyboardEvents(box,model) {
         } else if (key in keyMessage){
             message = keyMessage[key];
         }
-    
-        e.stopPropagation(); // stop propagation to jupyterlab events and other views 
-        e.preventDefault(); // stop default actions
+
         model.set("msg_topy", message);
         model.save_changes();
     }
