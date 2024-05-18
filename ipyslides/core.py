@@ -202,7 +202,9 @@ class Slides(BaseSlides):
                 self._add_clean_title()
 
             with suppress(BaseException):  # Does not work everywhere.
-                self.widgets.inputs.bbox.value = ", ".join(map(str,self.screenshot.screen_bbox))
+                *_, w, h = self.screenshot.screen_bbox
+                self.widgets.sliders.crop_w.step = 100/w # precise step as given by screen pixels
+                self.widgets.sliders.crop_h.step = 100/h
         else:
             if self._max_index == 0:  # prevent overwrite
                 self._slides_dict["0"] = Slide(self, "0")  # just for completeness
@@ -578,7 +580,7 @@ class Slides(BaseSlides):
                 f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
             )]
 
-        if self.screenshot.capturing == False:
+        if self.screenshot._capturing == False:
             _objs.append(self._iterable[new_index].animation)
 
         self._update_tmp_output(*_objs)

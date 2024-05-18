@@ -24,26 +24,29 @@ class ScreenShot:
         self.btn_png = self.widgets.buttons.png
         self.btn_capture = self.widgets.buttons.capture
         self.btn_settings = self.widgets.buttons.setting
-        self.bbox = self.widgets.inputs.bbox
         
         self.__images = {} #Store screenshots
         self.__capture_settings = {'load_time':0.8,'quality':95,'bbox':None}
-        self.capturing = False
+        self._screen_bbox = None # will be store on display
+        self._capturing = False
         
         self.btn_capture.on_click(self.capture)
         self.btn_pdf.on_click(self.__save_pdf)
         self.btn_png.on_click(self.__save_images)
         self.btn_cap_all.on_click(self.__capture_all)
         self.widgets.ddowns.clear.observe(self.__clear_images)
-        self.bbox.on_submit(self._set_bbox)
+        self.widgets.sliders.crop_w.observe(self._set_bbox, names="value")
+        self.widgets.sliders.crop_h.observe(self._set_bbox, names="value")
 
     def _set_bbox(self, change):
-        x1,y1,x2,y2 = tuple(map(int,self.bbox.value.split(',')[:4]))
+        im = ImageGrab.grab() # full image initially
+        x1,x2 = [int(im.width*w/100) for w in self.widgets.sliders.crop_w.value]
+        y1,y2 = [int(im.height*h/100) for h in self.widgets.sliders.crop_h.value]
 
-        if (x2 < x1) or (y2 < y1):
-            self.widgets._push_toast(alert('left < right and top < bottom should hold!').value, timeout=10)
+        if (x2 <= x1) or (y2 <= y1):
+            return # No need at zero width
         
-        arr = np.asarray(ImageGrab.grab(bbox=(x1,y1,x2,y2)))
+        arr = np.asarray(im.crop([x1,y1,x2,y2]))
         new_arr = np.concatenate([arr[:100],np.zeros_like(arr[:5]), arr[-100:]])
         new_arr = np.concatenate([new_arr[:,:160], np.zeros_like(new_arr[:, :5]), new_arr[:,-160:]],axis=1)
 
@@ -66,11 +69,11 @@ class ScreenShot:
             w.layout.visibility = 'hidden'
         try:  
             self.widgets.mainbox.add_class('CaptureMode') # Used to hide other things on slide  
-            self.capturing = True # Must be for main class to know
+            self._capturing = True # Must be for main class to know
             yield
         finally:
             self.widgets.mainbox.remove_class('CaptureMode')
-            self.capturing = False # Back to normal
+            self._capturing = False # Back to normal
             for w in hide_widgets:
                 w.layout.visibility = 'visible' 
             self.widgets.htmls.toast.layout.visibility = old_pref 
@@ -78,8 +81,10 @@ class ScreenShot:
     @property           
     def screen_bbox(self):
         "Return screen's bounding box in pixels."
-        img = ImageGrab.grab(bbox=None) # Just to get bounding box
-        return (0,0, *img.size)
+        if not self._screen_bbox:
+            img = ImageGrab.grab(bbox=None) # Just to get bounding box
+            self._screen_bbox = (0,0, *img.size)
+        return self._screen_bbox
 
     def capture_setup(self,load_time=0.5,quality=95,bbox = None):
         """Setting for screen capture. 

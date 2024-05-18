@@ -14,11 +14,11 @@ def layout_css(accent_color, aspect):
         (uclass,),
         {
             "a.jp-InternalAnchorLink": {"display": "none !important"},
-            "<.SlidesContainer": {"padding": "4px !important",}, # for box-shadow to appear all sides
+            "<.SlidesContainer": {"padding": "2px !important",}, # for box-shadow to appear all sides
             "^.SlidesWrapper": {
                 "container": "slides / inline-size !important",
                 "z-index": "1 !important",
-                "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 3px 1px !important", # for screenshot clear boundaries
+                "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important", # for screenshot clear boundaries
                 "^.SingleSlide .Controls": {
                     "display": "none !important",
                 },
@@ -38,7 +38,7 @@ def layout_css(accent_color, aspect):
                     ".Width-Slider, .Source-Btn": {"display": "none !important"},
                 },
                 "^.FullScreen": {
-                    ".FullWindow-Btn": {"display": "none !important"},
+                    ".FullWindow-Btn, .Bbox-Controls": {"display": "none !important"},
                 },
                 "@keyframes heart-beat": {
                     "from": {
@@ -217,6 +217,9 @@ def layout_css(accent_color, aspect):
                             "border-color": "var(--hover-bg) !important",
                         },
                     },
+                    ".noUi-connect.noUi-draggable": { # for ranger sliders
+                        "background": "var(--accent-color)",
+                    },
                 },
                 ".widget-html": {
                     "^:not(div.LaserPointer), .widget-html-content > div": {
@@ -239,7 +242,6 @@ def layout_css(accent_color, aspect):
                     "top": "0px !important",
                     "left": "0px !important",
                     "transition": "height 400ms ease-in-out",
-                    "border-right" : "2px inset var(--alternate-bg)",
                     "@container slides (max-width: 650px)": {"width": "100% !important"},
                     ".CaptureHtml": {
                         "border": "1px solid var(--secondary-fg)",

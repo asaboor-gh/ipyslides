@@ -6,7 +6,6 @@ import anywidget
 from pathlib import Path
 from IPython.display import display
 
-
 def _hot_reload_dev_only(file):
     path = Path(__file__).with_name('js') / file
     egg_path = Path(sysconfig.get_paths()["purelib"]) / 'ipyslides.egg-link'

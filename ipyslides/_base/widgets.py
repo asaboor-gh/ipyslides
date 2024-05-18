@@ -96,14 +96,7 @@ class _Htmls:
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
     glass   = HTML().add_class('BackLayer') # For glass effect
-    
-@dataclass(frozen=True)
-class _Inputs:
-    """
-    Instantiate under `Widgets` class only.
-    """
-    bbox = ipw.Text(description='L,T,R,B (px)',layout=auto_layout,value='Type left,top, right,bottom pixel values and press ↲').add_class('Bbox-Input')
-    
+
 @dataclass(frozen=True)
 class _Checks:
     """
@@ -124,6 +117,8 @@ class _Sliders:
     progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
     fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
+    crop_w   = ipw.FloatRangeSlider(**describe('Width (%)'), min=0,max=100,value=[20,80],step=0.025, continuous_update=False) # step for upto 4k screen by default
+    crop_h   = ipw.FloatRangeSlider(**describe('Height (%)'), min=0,max=100,value=[25,75],step=0.025, continuous_update=False)
 
 @dataclass(frozen=True)
 class _Dropdowns:
@@ -155,7 +150,6 @@ class Widgets:
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
-        self.inputs  = _Inputs()
         self.checks  = _Checks()
         self.htmls   = _Htmls()
         self.ddowns  = _Dropdowns()
@@ -207,8 +201,11 @@ class Widgets:
                                 padding='4px',margin='8px auto')
                 )],layout=Layout(min_height='120px')),# This ensures no collapse and scrollable Grid
                 self.ddowns.clear,
-                HTML('<span style="font-size:14px;">Set screenshot bounding box (if slides not fullscreen)</span>'),
-                self.inputs.bbox,
+                VBox([
+                    HTML('<span style="font-size:14px;">Set screenshot bounding box (if slides not fullscreen)</span>'),
+                    self.sliders.crop_w,
+                    self.sliders.crop_h,
+                ], layout=Layout(min_height='90px')).add_class("Bbox-Controls"),
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
             ],layout=Layout(width='auto',height='auto',overflow_y='scroll',padding='12px',margin='0')),

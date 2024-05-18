@@ -22,37 +22,37 @@ function hideLaser(box, cursor) {
 }
 
 function touchSwiper(box, model){
-            let startX = 0;
-            let endX = 0;
-            let startY = 0;
-            let endY = 0;
-            
-            box.addEventListener('touchstart', function (event) {
-                startX = event.changedTouches[0].screenX;
-                startY = event.changedTouches[0].screenY;
-            }, false);
-        
-            box.addEventListener('touchend', function (event) {
-                endX = event.changedTouches[0].screenX;
-                endY = event.changedTouches[0].screenY;
-                handleGesture();
-            }, false);
-        
-            function handleGesture() {
-                let bbox = box.getBoundingClientRect(); // Swipe only from edges
-                if (Math.abs(endY - startY) < 20) {
-                    // Y axis is not important but we should avoid X component of touch for a long y-scroll
-                    if ((endX - startX) < -40 && startX > (bbox.right - 50)) {
-                        model.set("msg_topy", "NEXT"); // align-left Swipe to Next
-                    };
-        
-                    if ((endX - startX) > 40 && startX < (bbox.left + 50)) {
-                        model.set("msg_topy", "PREV"); // Right Swipe to Prev
-                    };
-                    model.save_changes();
-                }; 
+    let startX = 0;
+    let endX = 0;
+    let startY = 0;
+    let endY = 0;
+    
+    box.addEventListener('touchstart', function (event) {
+        startX = event.changedTouches[0].screenX;
+        startY = event.changedTouches[0].screenY;
+    }, false);
+
+    box.addEventListener('touchend', function (event) {
+        endX = event.changedTouches[0].screenX;
+        endY = event.changedTouches[0].screenY;
+        handleGesture();
+    }, false);
+
+    function handleGesture() {
+        let bbox = box.getBoundingClientRect(); // Swipe only from edges
+        if (Math.abs(endY - startY) < 20) {
+            // Y axis is not important but we should avoid X component of touch for a long y-scroll
+            if ((endX - startX) < -40 && startX > (bbox.right - 50)) {
+                model.set("msg_topy", "NEXT"); // align-left Swipe to Next
             };
-        };
+
+            if ((endX - startX) > 40 && startX < (bbox.left + 50)) {
+                model.set("msg_topy", "PREV"); // Right Swipe to Prev
+            };
+            model.save_changes();
+        }; 
+    };
+};
 
 const keyMessage = {
     's': 'SCAP', // Screenshot
@@ -67,40 +67,40 @@ const keyMessage = {
 
 
 function keyboardEvents(box,model) {
-        function keyOnSlides(e) {
-            e.preventDefault();
-            let key = e.key; // True unicode key
-            let message = '';
-            if ('123456789'.includes(key)) { // send to shift slides by numbers
-                message = (e.ctrlKey? "SHIFT:-" + key: "SHIFT:" + key);
-            } else if (key === 'x' || key === 'd') {
-                alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
-                e.stopPropagation(); // stop propagation to jupyterlab events
-                return false;
-            } else if (key === 'm'){
-                alert("Pressing M could change cell to Markdown and vanish away slides!");
-                e.stopPropagation();   // M key
-                return false;
-            }  else if (key === 'Enter') { 
-                e.stopPropagation();   // Don't let it pass over slides though, still can't hold Shift + Enter
-                return true; // Enter key or Escape key should act properly
-            } else if (key === 'ArrowLeft' || (e.ctrlKey && key === ' ')) { // ^ + Space, <
-                message = 'PREV';
-            } else if (key === 'ArrowRight' || key === ' ') { // Space, >
-                message = 'NEXT';
-            } else if (key === '0') {
-                message = (e.ctrlKey? "HOME": "END"); // Numbers don't change with control
-            } else if (key in keyMessage){
-                message = keyMessage[key];
-            }
-        
-            e.stopPropagation(); // stop propagation to jupyterlab events and other views 
-            e.preventDefault(); // stop default actions
-            model.set("msg_topy", message);
-            model.save_changes();
+    function keyOnSlides(e) {
+        e.preventDefault();
+        let key = e.key; // True unicode key
+        let message = '';
+        if ('123456789'.includes(key)) { // send to shift slides by numbers
+            message = (e.ctrlKey? "SHIFT:-" + key: "SHIFT:" + key);
+        } else if (key === 'x' || key === 'd') {
+            alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
+            e.stopPropagation(); // stop propagation to jupyterlab events
+            return false;
+        } else if (key === 'm'){
+            alert("Pressing M could change cell to Markdown and vanish away slides!");
+            e.stopPropagation();   // M key
+            return false;
+        }  else if (key === 'Enter') { 
+            e.stopPropagation();   // Don't let it pass over slides though, still can't hold Shift + Enter
+            return true; // Enter key or Escape key should act properly
+        } else if (key === 'ArrowLeft' || (e.ctrlKey && key === ' ')) { // ^ + Space, <
+            message = 'PREV';
+        } else if (key === 'ArrowRight' || key === ' ') { // Space, >
+            message = 'NEXT';
+        } else if (key === '0') {
+            message = (e.ctrlKey? "HOME": "END"); // Numbers don't change with control
+        } else if (key in keyMessage){
+            message = keyMessage[key];
         }
-        
-        box.onkeydown = keyOnSlides;
+    
+        e.stopPropagation(); // stop propagation to jupyterlab events and other views 
+        e.preventDefault(); // stop default actions
+        model.set("msg_topy", message);
+        model.save_changes();
+    }
+    
+    box.onkeydown = keyOnSlides;
 };
 
 function handleMessage(model, msg, box, cursor) {
@@ -246,7 +246,6 @@ function handleScale(box) {
     setScale(box); // First time set
 }
 
-
 export function render({ model, el }) {
     model.syncIntervalID = null; // Need for Markdown Sync
     let style = document.createElement('style');
@@ -296,7 +295,6 @@ export function render({ model, el }) {
         })
 
         // Handle notifications
-
         let toast = box.getElementsByClassName('Toast')[0]; // Define once
         toast.style = "top:-120%;transition: top 200ms"; // other props in CSS
         toast.timerId = null; // Need to auto remove after some time
