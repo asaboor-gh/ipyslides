@@ -47,7 +47,10 @@ class ScreenShot:
     def _toggle_crop_window(self, btn):
         if self.widgets.cropbox.layout.height == '0':
             with suppress(BaseException): # not all of systems support screenshot
-                self._cimage = ImageGrab.grab() # full screen image
+                if self.__images:
+                    self._cimage = self.images[0] # sorted first image
+                else:
+                    self._cimage = ImageGrab.grab() # full screen image
                 self._crop_image(None) # do before opening panel for smooth experience
             
             self.widgets.cropbox.layout.height = '100%'

@@ -145,14 +145,16 @@ key_combs = f"""
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 
 
-how_to_print = """
-- Capture screenshot of current state of slide by camera button in toolbar or by pressing `S` key. 
-    This will collect screenshots of current slide in order of capturing. 
-- Press `Capture Screenshots of all Slides` button in side panel to capture a single image of each slide. 
-    - Add images over it by manually capturing multiple states of a slide as shown in previous step.
-    - Delete screenshots with dropdown in settings panel.
-    - Set crop bounding box if not in fullscreen mode.
-- Press `Save as PDF File` button to save all screenshots as PDF.
+how_to_print = f"""
+Screenshot of current state of slide can be taken by camera button in toolbar or by pressing {_key('S')}. 
+Order of screenshots is preserved. To capture all slides screenshots, follow process as below.
+
+- Press alert`Capture Screenshots of all Slides` button in side panel to capture a single image of each slide. 
+    - Add images over it by manually capturing multiple states of a slide as shown above.
+    - Delete screenshots with dropdown (all or current slide only and can retake).
+- After all screenshots are ready:
+    - Press alert`Set Crop Bounding Box` to crop an image which applies to all.
+    - Press alert`Save as PDF File` button to save all cropped screenshots as PDF.
 
 ::: note-warning
     Avoid scrolling during taking screenshot. You will set same bounding box for all screenshots

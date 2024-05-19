@@ -199,12 +199,11 @@ class Widgets:
                 self.checks.proxy,self.checks.navgui,self.checks.focus,
                 HTML('<b>HTML File Export</b>',layout = _html_layout),
                 self.buttons.export,
-                HTML('<b>Screenshot Export</b>',layout = _html_layout),
-                self.buttons.cap_all,
+                HTML(html('details',[html('summary','<b>Screenshot Export</b>'), how_to_print]).value,layout = _html_layout),
                 self.ddowns.clear,
+                self.buttons.cap_all,
                 self.buttons.crop,
                 self.buttons.pdf,
-                HTML(html('details',[html('summary','How to Screenshot'), how_to_print]).value),
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
             ],layout=Layout(width='auto',height='max-content',overflow_y='scroll',padding='12px',margin='0')),
@@ -229,7 +228,7 @@ class Widgets:
         
         self.cropbox = GridBox([
             self.sliders.crop_w,
-            HBox([self.sliders.crop_h, self.htmls.crop], layout = Layout(overflow='hidden',padding='0 16px 0 0')),
+            HBox([self.sliders.crop_h, self.htmls.crop], layout = Layout(overflow='hidden',padding='0 16px 0 0',margin='0')),
             HBox([self.buttons.pdf, self.buttons.crop], layout = Layout(justify_content='flex-end',padding='8px', border_top='1px solid #8988')),
             ], layout = Layout(
                 margin='0',
