@@ -19,7 +19,7 @@ from IPython.core.display import Image, display
 import ipywidgets as ipw
 
 from .formatters import XTML, fix_ipy_image, htmlize
-from .xmd import get_unique_css_class, error, raw, capture_content # raw error for export from here
+from .xmd import get_unique_css_class, capture_content # raw error for export from here
 from .writer import Writer, AltForWidget
 
 def is_jupyter_session():
@@ -340,7 +340,7 @@ def _check_pil_image(data):
 
 _fig_style_inline = "margin-block:0.5em;margin-inline:0.5em" # its 40px by defualt, ruins space, not working in CSS outside
 
-def image(data=None,width='95%',caption=None, **kwargs):
+def image(data=None,width='95%',caption=None, as_figure = True, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     You can provide following to `data` parameter:
         
@@ -349,6 +349,8 @@ def image(data=None,width='95%',caption=None, **kwargs):
     - A url to image file.
     - A str/bytes object containing image data.  
     - A str like "clip:image.png" will load an image saved using `Slides.clipboard_image('image.png')`. 
+
+    If `as_figure = False` caption is not used.
     """
     if isinstance(width,int):
         width = f'{width}px'
@@ -360,12 +362,24 @@ def image(data=None,width='95%',caption=None, **kwargs):
     
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
+
+    if not as_figure:
+        return img
+    
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     return html('figure', img.value + cap, className='zoom-child', style = _fig_style_inline)  
 
-def svg(data=None,width = '95%',caption=None,**kwargs):
-    "Display svg file or svg string/bytes with additional customizations. `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg."
+def svg(data=None,width = '95%',caption=None, as_figure=True, **kwargs):
+    """Display svg file or svg string/bytes with additional customizations. 
+    `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
+    
+    If `as_figure = False` caption is not used.
+    """
     svg = SVG(data=data, **kwargs)._repr_svg_()
+    
+    if not as_figure:
+        return XTML(svg)
+    
     cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     style = f'width:{width}px;' if isinstance(width,int) else f'width:{width};' + _fig_style_inline
     return html('figure', svg + cap, className='zoom-child', style=style) 

@@ -539,7 +539,11 @@ def layout_css(accent_color, aspect):
             },
             ".CropBox": {
                 "z-index": "15 !important", # above others
-                ".CropHtml img": {"border": "1px dashed red;"}
+                ".CropHtml img": {
+                    "border": "1px dashed red",
+                    "padding": "0 !important",
+                    "margin-bottom": "0 !important",
+                    "box-sizing":"border-box"},
             },
             ".Draw-Widget": {
                 "backdrop-filter": "blur(50px)",
