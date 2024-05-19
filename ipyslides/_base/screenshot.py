@@ -46,19 +46,15 @@ class ScreenShot:
 
     def _toggle_crop_window(self, btn):
         if self.widgets.cropbox.layout.height == '0':
+            with suppress(BaseException): # not all of systems support screenshot
+                self._cimage = ImageGrab.grab() # full screen image
+                self._crop_image(None) # do before opening panel for smooth experience
+            
             self.widgets.cropbox.layout.height = '100%'
             self.btn_crop.description = 'Close'
-            if self.__images:
-                self._load_image(self.images[0]) # load from ordered images
-            else:
-                self.widgets.htmls.crop.value = 'Screenshot appears here for cropping!'
         else:
             self.widgets.cropbox.layout.height = '0'
             self.btn_crop.description = 'Set Crop Bounding Box'
-    
-    def _load_image(self, im):
-        self._cimage = im
-        self.widgets.htmls.crop.value = image(im,width='100%').value
 
     def _crop_image(self, change):
         if self._cimage is not None:
@@ -66,8 +62,6 @@ class ScreenShot:
             y2,y1 = [self.widgets.sliders.crop_h.max - v for v in self.widgets.sliders.crop_h.value]
             self._crop_bbox = [x1,y1,x2,y2]
             self.widgets.htmls.crop.value = image(self._cimage.crop([x1,y1,x2,y2]), width='100%').value
-        elif self.__images:
-            self._load_image(self.images[0]) 
 
     @contextmanager
     def capture_mode(self, *additional_widgets_to_hide):
@@ -123,8 +117,7 @@ class ScreenShot:
             if self.widgets.sliders.progress.label not in self.__images:
                 self.__images[self.widgets.sliders.progress.label] = [] # container to store images
             
-            self._cimage = ImageGrab.grab(bbox = None) # keep for cropping
-            self.__images[self.widgets.sliders.progress.label].append(self._cimage) # Append to existing list
+            self.__images[self.widgets.sliders.progress.label].append(ImageGrab.grab(bbox = None)) # Append to existing list
     
     def __sort_images(self):
         ims = [] #sorting

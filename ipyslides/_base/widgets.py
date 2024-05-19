@@ -96,7 +96,7 @@ class _Htmls:
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
     glass   = HTML().add_class('BackLayer') # For glass effect
-    crop    = HTML('Screenshot appears here for cropping!', layout=Layout(margin='auto',padding='0')).add_class('CropHtml')
+    crop    = HTML('Screenshot appears here for cropping!', layout=Layout(margin='0',padding='0',height='100',overflow='auto')).add_class('CropHtml')
 
 @dataclass(frozen=True)
 class _Checks:
@@ -119,7 +119,7 @@ class _Sliders:
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
     fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
     crop_w   = ipw.IntRangeSlider(**describe('w', margin='8px'), min=0,max=100,value=[20,80],step=1, continuous_update=False, readout=False) # step for upto 4k screen by default
-    crop_h   = ipw.IntRangeSlider(**describe('h',height='auto',margin='8px'), min=0,max=100,value=[25,75],step=1, continuous_update=False, readout=False,orientation='vertical')
+    crop_h   = ipw.IntRangeSlider(**describe('h',height='calc(100% - 16px)',margin='8px'), min=0,max=100,value=[25,75],step=1, continuous_update=False, readout=False,orientation='vertical')
 
 @dataclass(frozen=True)
 class _Dropdowns:

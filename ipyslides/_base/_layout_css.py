@@ -537,7 +537,10 @@ def layout_css(accent_color, aspect):
                     "^:active, ^.mod-active": {"box-shadow": "none !important","opacity": "1 !important",},
                 },
             },
-            ".CropBox": {"z-index": "15 !important",}, # above others
+            ".CropBox": {
+                "z-index": "15 !important", # above others
+                ".CropHtml img": {"border": "1px dashed red;"}
+            },
             ".Draw-Widget": {
                 "backdrop-filter": "blur(50px)",
                 "margin": 0,
