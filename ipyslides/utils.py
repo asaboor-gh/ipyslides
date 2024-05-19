@@ -19,7 +19,7 @@ from IPython.core.display import Image, display
 import ipywidgets as ipw
 
 from .formatters import XTML, fix_ipy_image, htmlize
-from .xmd import get_unique_css_class, capture_content # raw error for export from here
+from .xmd import get_unique_css_class, capture_content, raw, error # raw error for export from here
 from .writer import Writer, AltForWidget
 
 def is_jupyter_session():

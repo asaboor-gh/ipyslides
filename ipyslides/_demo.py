@@ -30,14 +30,14 @@ def demo_slides(slides):
             sup`1`My University is somewhere in the middle of nowhere
             sup`2`Their University is somewhere in the middle of nowhere
                     
-    Read instructions by clicking ℹ️ button in quick menu.
+        vspace`2`Read instructions by clicking ℹ️ button in quick menu.
     """)
     #Demo for loading slides from a file or text block
-    s1, s2, *others = auto.from_markdown("""
+    s1, s2 = auto.from_markdown("""
     section`Introduction` toc`### Contents`
     ---
-    proxy`something will be here in start`
     # Introduction
+    proxy`something will be here in start`
     To see how commands work, use `Slides.docs()` to see the documentation.
     Here we will focus on using all that functionality to create slides.
     ```python run source
@@ -50,15 +50,6 @@ def demo_slides(slides):
     Version: `{version}` as executed from below code in markdown. 
     `{source}`
     proxy`something will be here in end`
-    ---
-    # IPySlides Online Running Sources 
-    ::: note
-        - [Edit on Kaggle](https://www.kaggle.com/massgh/ipyslides)
-        - Launch example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
-        - Watch a [Youtube Video](https://www.youtube.com/watch?v=ytfWIYbJteE)
-
-    [^1]: Add references like this per slide or cite\`key\` to add citations generally.
-    
     """, trusted=True)
 
     # slide s2 has proxies to be filled in later
@@ -70,8 +61,8 @@ def demo_slides(slides):
         slides.write(f'alert`I was added at end by a given proxy, see the how it was done at the end of the slides`')
 
 
-    *others, last = auto.from_markdown(f"""
-    section`Variety of Content Types to Display` 
+    auto.from_markdown(f"""
+    section`Adding informative TOC` 
     ```toc ### Contents
     vspace`2` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
                                        
@@ -86,41 +77,11 @@ def demo_slides(slides):
      Extra content for current section which is on right
      ```
     ``` 
-    ---
-    ## IPython Display Objects
-    #### Any object with following methods could be in`write` command:
-    {', '.join([f'`_repr_{rep}_`' for rep in supported_reprs])}
-    Such as color[fg=navy,bg=skyblue]`IPython.display.[HTML,SVG,Markdown,Code]` etc. or third party such as `plotly.graph_objects.Figure`.
-    {{.warning}}
-    ---
-    ## Plots and Other **Data**{{style='color:var(--accent-color);'}} Types
-    #### These objects are implemented to be writable in `write` command:
-    {', '.join([f"`{lib['name']}.{lib['obj']}`" for lib in libraries])}
-    Many will be extentended in future. If an object is not implemented, use `display(obj)` to show inline or use library's specific
-    command to show in Notebook outside color[fg=teal,bg=whitesmoke]`write`.
-    ---
-    ## Interactive Widgets
-    ### Any object in `ipywidgets` {slides.textbox('<a href="https://ipywidgets.readthedocs.io/en/latest/">Link to ipywidgtes right here using textbox command</a>')} 
-    or libraries based on ipywidgtes such as color[red]`bqplot`,color[green]`ipyvolume`,plotly's `FigureWidget` cite`pf`(reference at end)
-    can be included as well.
-    {{.warning}}
-    ---
-    ## Commands which do all Magic!
-    proxy`Add functions here`
     """, trusted=True)
-
-
-    with slides.code.context(returns = True) as s:
-        with last.proxies[0].capture():
-            write([slides.classed(slides.doc(write,'Slides'),'block-green'), slides.classed(slides.doc(slides.parse,'Slides'),'block-red')])
-            s.show_lines([0,1]).display()
-
-
-    auto.from_markdown('section`Plotting and DataFrame` toc``')
 
     # Matplotlib
     with auto.slide() as sl:
-        write('## Plotting with Matplotlib')
+        write('## Plotting with Matplotlib section`Plotting and DataFrame`')
         with slides.code.context(returns = True) as s:
             sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
 
@@ -198,23 +159,22 @@ def demo_slides(slides):
             button.on_click(update_plot)
             update_plot(None) #Initialize plot
 
-        slides.code.cast(race_plot).display()
-
     with auto.slide() as rslide:
         write('''
             ## Dynamic Content without Widgets
             Use refresh button below to update plot! Compare with previous slide!
+            See alert`race_plot` function at end of slides.
             ''')
-
+        
         def display_plot(): return race_plot().display()
 
         write(lambda: slides.on_refresh(display_plot), rslide.get_source()) # Only first columns will update
-        slides.code.cast(race_plot).display()
 
     auto.from_markdown('section`Simple Animations with Frames` toc`### Contents`')
 
     forward_skipper = slides.goto_button('Skip All Next Frames')
     backward_skipper = slides.goto_button('Skip Previous Frames', icon='minus')
+    
     # Animat plot in slides  
     @auto.frames(*range(14,19))
     def func(obj,idx):
@@ -260,20 +220,13 @@ def demo_slides(slides):
 
         s.display()
 
-    with auto.slide() as s:
-        backward_skipper.display()
-        forward_skipper.set_target()
-        slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
-        slides.write('## Displaying image from url from somewhere in Kashmir color[crimson]`(کشمیر)` section`Miscellaneous Content`')
-        try:
-            slides.image(r'https://assets.gqindia.com/photos/616d2712c93aeaf2a32d61fe/master/pass/top-image%20(1).jpg').display()
-        except:
-            slides.write('Could not retrieve image from url. Check internt connection!\n{.error}')
-        s.get_source().display()
-
     # Youtube
     from IPython.display import YouTubeVideo
     with auto.slide() as ys: # We will use this in next %%magic
+        backward_skipper.display()
+        forward_skipper.set_target()
+        slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
+    
         write(f"### Watching Youtube Video?")
         write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.draw_button)
 
@@ -285,7 +238,7 @@ def demo_slides(slides):
             t = time.localtime()
             slides.notify(f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}')
 
-        ys.get_source().display() 
+        ys.get_source().display(True) 
 
 
     with auto.slide() as s:
@@ -308,7 +261,7 @@ def demo_slides(slides):
                 'proxy`[Paste Checkbox Screenshot Here]`'
             ]
         )
-        s.get_source().display()
+        s.get_source().display(True)
 
     auto.from_markdown(slides.fmt('''
     %++
@@ -333,13 +286,8 @@ def demo_slides(slides):
     ```
     ''', var = "I was a variable" ), trusted=True)
 
-    with auto.slide(), slides.code.context():
-        slides.write(fmt('## Built-in CSS styles\n`{slides.css_styles}`'))
-
-    auto.from_markdown('section`Custom Objects Serilaization` toc`### Contents`')
-
     with auto.slide() as some_slide:
-        slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides')
+        slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')
         with slides.suppress_stdout(): # suppress stdout from register fuction below
             @slides.serializer.register(int)
             def colorize(obj):

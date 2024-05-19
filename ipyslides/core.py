@@ -16,7 +16,7 @@ _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
 from ._base.widgets import ipw # patched one
 from ._base.base import BaseSlides
-from ._base.intro import get_logo, key_combs
+from ._base.intro import key_combs
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__

@@ -13,29 +13,10 @@ def get_logo(height="60px", text = None):
     </svg>'''
 
 
-how_to_slide = """# Creating Slides
-::: align-center
-    alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`     
-    center`today```
-
-    ::: text-box
-        sup`1`My University is somewhere in the middle of nowhere
-        sup`2`Their University is somewhere in the middle of nowhere
-
-::: note-warning
-    Python 3.8+, ipywidgets 8+, IPython 8.7+ are required. Previous version 2.x.x will still be supported for bug fixes.
-
-**After you initialize `slides = ipyslides.Slides()`**
-
-- `%%slide integer` on cell top auto picks slide and `%%title` auto picks title page.
-- `%%slide integer -m` can be used to create slide from full markdown (extended one).
-- You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
-- Inside python script, you can use auto numbering with `slides.AutoSlides().[get_next_number|title|slide|frames|from_markdown]`.
-
+how_to_slide = """#### Creating Slides
 ```python
 import ipyslides as isd 
 slides = isd.Slides()
-slides.set_animation(main='flow') 
 ```
 ```python
 %%title
@@ -64,43 +45,16 @@ def func(obj):
 slides # This displays slides if on the last line of cell, or use `slides.show()`.
 ```
 
-Use `slides.from_markdown` to create multiple slides from markdown file/text.
-    - Slides are added in order of content.
-    - Slides should be separated by `---` (three dashes) in start of line.
-    
-```python .monokai
-slides.from_markdown(start, content)
-with slides.slide(2):
-    write(slides[2].markdown) # write content of slide 2 from file
-    plot_something() # Add other things to same file
-    write_something()
-```
+::: note-info
+    - You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
+    - Inside python script, you can use auto numbering with `slides.AutoSlides().[get_next_number|title|slide|frames|from_markdown]`.
 
 ::: note-tip
-    - Use `Slides.demo` to create example slides.
     - Use `Slides.docs` to see upto date documentation.
+    - Use `Slides.demo` to create example slides.
+    - Use  `Slides.sync_with_file` to live edit and update slides through a markdown file.
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-
-::: note-info
-    - You can access individual slides by indexing `s_i = slides[i]` where `i` is the slide index or by key as `s_3_1 = slides['3.1']` will give you slide which shows 3.1 at bottom.
-    - You can also access (preferred way) each slide by `slides.s8_1` that gives back slide with label 8.1 and so on.
-    - Basides indexing, you can access current displayed slide by `slides.current`.
-    - You can insert placeholders usign alert`proxy\`informative text to use later\`` and later can use `Slides.proxies[index].capture` to fill content such as plots.
-    - If a display is not complete, e.g. some widget missing on a slide, you can use `(slides.current, slides[index], slides[key]).update_display()` to update display.
-    - You can set overall animation by `slides.settings.set_animation` or per slide by `s_i.set_animation`
-    - You can set CSS for each slide by `s_i.set_css` or `slides.running.set_css` at current slide.
-    - Check out  alert`[Slides.settings, slide].set_bg_image` to add background effects overall and individual slides.
-    - Use alert`Slides.clipboard_image ` to add cliboard image to slide.
-    - Use `Slides.bullets` to add powerful bullet list from python objects.
-
-
-::: note
-    - You can add table of contents using using alert`toc\`Toc Title\``/alert`\`\`\`toc title \n summary of this section \n\`\`\`` and alert`section\`content\``.
-    - Citations are provided with ` Slides.set_citations ` function that accept json file or dictionary. On next run, these are loaded from disk, so it works in python scripts and voila as well.
-    - You can use `Slides.goto_button` to add a button to go to jump to a slide.
-    - Inside a alert`\`\`\`python run` block in markdown, you can access `slides = get_slides_instance()` to get current slides instance and use all its methods.
-    - In Custom Theme mode, you can set colors using `slides.settings.set_theme_colors`.
 """
 
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
@@ -170,35 +124,25 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 
-Having slides in focus, you can use follwoing keys/combinations:
-
 {key_combs}
+
 ::: note
     - You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
     - In exported slides, bottom-right includes few buttons to jump accross slides.
 
-::: note-tip
-    - Other keys are blocked so that you may not delete or do some random actions on notebook cells.
-    - Jupyter[Retro, Notebook, Lab]/Voila is optimized for keyboard. Other frontends like VSCode, may not work properly.
-    - Pressing `S` to save screenshot of current state of slide. Different slides' screenshots are kept in order.
-
-### PDF Printing (by Screen Capture)
+#### PDF Printing (by screen capture)
 {how_to_print}
 
 {how_to_slide}
-
-::: note-info
-    Slides should be only in top cell as it collects slides in local namespace, auto refresh is enabled.
 
 ::: note-warning
     Restart Kernel if you make mistake in slide numbers to avoid hidden state problem.
 """
 
 instructions = f"""{more_instructions}
-### Custom Theme
-For custom themes, change below `Theme` dropdown to `Custom` and use `Slides.settings.set_theme_colors` to set colors.
+#### Custom Theme
+For custom themes, use `Slides.settings.set_theme_colors` function.
           
---------
 For matching plots style with theme, run following code in a cell above slides.
 
 **Matplotlib**{{.success}}
@@ -225,21 +169,16 @@ alt.themes.enable('dark')
 #alt.themes #gives available themes
 ```
 
-### Customize Slides
+#### Inherit Slides
 You can customize slides by inheriting from `Slides` class. 
-For example if you want to have custom settings always enabled and
-bottom information only on title slide, you can do so:
+
 ```python
-class CustomSlides(isd.Slides):
+class WorkSlides(isd.Slides):
     def __init__(self):
         super().__init__()
-        self.settings.theme_dd.value = 'Custom' # Requires to set_theme_colors or will be Light theme
-        self.progress_slider.observe(self.set_visible, names=['index'])
-    
-    def set_visible(self, change):
-        if self.progress_slider.index == 0:
-            self.widgets.footerbox.layout.visibility = 'visible'
-        else:
-            self.widgets.footerbox.layout.visibility = 'hidden'
+        self.apply(
+            logo=dict(src='<My office logo source file>'),
+            layout=dict(aspect=4/3, center=False),
+        )
 ```
 """
