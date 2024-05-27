@@ -177,7 +177,7 @@ def demo_slides(slides):
     
     # Animat plot in slides  
     @auto.frames(*range(14,19))
-    def func(obj,idx):
+    def func(idx, obj):
         if idx == 0:
             forward_skipper.display()
             backward_skipper.set_target()
@@ -202,23 +202,20 @@ def demo_slides(slides):
     # Frames structure
     boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
     @auto.frames(*boxes, repeat=False)
-    def f(obj,idx):
+    def f(idx, obj):
         slides.write('# Frames with \n#### `repeat = False`')
         slides.write(obj)
 
     @auto.frames(*boxes, repeat=True)
-    def f(obj,idx):
+    def f(idx, obj):
         slides.running.set_animation(None) #Disable animation for showing bullets list
         slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
         slides.bullets(obj, marker='💘').display()
 
     @auto.frames(*boxes, repeat=[(0,1),(2,3)])
-    def f(obj,idx):
-        with slides.code.context(returns = True) as s:
-            slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
-            slides.write(*obj)
-
-        s.display()
+    def f(idx, obj):
+        slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
+        slides.write(*obj)
 
     # Youtube
     from IPython.display import YouTubeVideo

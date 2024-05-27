@@ -38,8 +38,8 @@ slides = isd.Slides()
 
 ```python
 @slides.frames(3,*objs)
-def func(obj):
-    write(obj) #This will create as many slides after the slide number 1 as length(objs)
+def func(frame_index, frame_content):
+    write(frame_content) #This will create as many slides after the slide number 1 as length(objs)
 ```
 ```python
 slides # This displays slides if on the last line of cell, or use `slides.show()`.

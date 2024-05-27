@@ -725,7 +725,7 @@ class Slides(BaseSlides):
             self._editing_index = None
             
             @self.frames(int(slide_number_str), *frames, repeat=False) # here repeat handled above
-            def make_slide(frm, idx):
+            def make_slide(idx, frm):
                 if (self.running.markdown != frm) or (idx == 0):
                     self._editing_index = self.running.index # Go to latest editing markdown frame, or start of frames
 
@@ -822,17 +822,17 @@ class Slides(BaseSlides):
                 
 
     def frames(self, slide_number, *objs, repeat=False):
-        """Decorator for inserting frames on slide, define a function with two arguments acting on each obj in objs and current frame index.
-        You can also call it as a function, e.g. `.frames(1,*objs)()` becuase it can write by defualt.
+        """Decorator for inserting frames on slide, define a function with two arguments (frame_index, frame_content).
+        You can also call it as a function, e.g. `.frames(1,*objs)(<optional function>)`.
 
         ```python
         @slides.frames(1,a,b,c) # slides 1.1, 1.2, 1.3 with content a,b,c
-        def f(obj, idx):
-            do_something(obj)
-            if idx == 0: # Main Slide
+        def f(frame_index, frame_content):
+            do_something(frame_content)
+            if frame_index == 0: # Main Slide
                 print('This is main slide')
             else:
-                print('This is frame', idx)
+                print('This is frame', frame_index)
 
         slides.frames(1,a,b,c)() # Auto writes the frames with same content as above
         slides.frames(1,a,b,c, repeat = True)() # content is [a], [a,b], [a,b,c] from top to bottom
@@ -848,12 +848,9 @@ class Slides(BaseSlides):
             If list or tuple, it will be used as the sequence of frames to generate and number of frames = len(repeat).
             [(0,1),(1,2)] will generate 2 frames with [a,b] and [b,c] to given in function and will be written top to bottom or the way you write in your function.
         
-        No return of defined function required, if any, only should be display/show etc.
-        CSS properties from `prop_dict` are applied to all slides from *objs."""
+        No return of defined function required, if any, only should be display/show etc."""
 
-        def _frames(
-            func=lambda obj, idx: self.write(obj)
-        ):  # default write if called without function
+        def _frames(func = lambda idx, obj: self.write(obj)):  # write if called without function
             if not isinstance(slide_number, int):
                 return print(f"slide_number expects integer, got {slide_number!r}")
 
@@ -882,7 +879,7 @@ class Slides(BaseSlides):
             with _build_slide(
                 self, f"{slide_number}", is_frameless=False
             ) as this_slide:
-                func(_new_objs[0], 0)  # Main slide content
+                func(0, _new_objs[0])  # Main slide content
 
             _new_objs = _new_objs[1:]  # Fisrt one is already written
 
@@ -899,7 +896,7 @@ class Slides(BaseSlides):
                 new_frames.append(new_slide)
 
                 with new_slide._capture() as captured:
-                    func(obj, i + 1)  # i+1 as main slide is 0
+                    func(i + 1, obj)  # i+1 as main slide is 0
 
             this_slide._frames = new_frames
 
