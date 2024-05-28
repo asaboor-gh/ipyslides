@@ -34,9 +34,9 @@ class Notes:
             --secondary-bg: {bg2};
         }}
         .columns {{columns: 2 auto;}}
-        .columns > div > * {{background: {bg2};padding:0.2em;font-size:120%;border-left: 2px inset {bg};}}
-        .columns > div:first-child::before {{content:'This Slide';}}
-        .columns > div:last-child::before {{content:'Next Slide';}}
+        .columns > div > * {{background: {bg2};padding:0.2em;font-size:110%;border-left: 2px inset {bg};}}
+        .columns > div:first-child::before {{content:'This Slide';font-size:80%;font-weight:bold;}}
+        .columns > div:last-child::before {{content:'Next Slide';font-size:80%;font-weight:bold;}}
         </style>{content}"""
 
         this_notes = self.main.current.notes 

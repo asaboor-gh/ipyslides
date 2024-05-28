@@ -1,6 +1,6 @@
 // This needs more thoughts to send data properly
 
-function setuNotesWindow(notes_win) {
+function setupNotesWindow(notes_win) {
     notes_win.resizeTo(screen.width/2,screen.height/2);
     notes_win.moveTo(0,0); // top left corner
     notes_win.document.title = 'Notes';
@@ -9,35 +9,44 @@ function setuNotesWindow(notes_win) {
     window.focus(); // Return focus to main window automatically
 };
 
-function setContent(notes_win, value){
+
+function setTime(notes_win){
     if (notes_win && !notes_win.closed) { // Close window by user is possible
         function pad(number) {return (number < 10) ? '0' + number : number}
         let date = new Date();
-        let out = value + "<hr/><b>⌛ " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + "</b> (at lastest slide switch)";
-        notes_win.document.body.innerHTML = out;
+        let timer = notes_win.document.getElementById("timer");
+        timer.innerText = "" + pad(date.getHours()) + ":" + pad(date.getMinutes())
     }
 }
 
+function setValue(notes_win, value) {
+    let out = "<span style='position:absolute;right:4px;bottom:2px;'>🕑<b id='timer'>Time</b></span>" + value;
+    notes_win.document.body.innerHTML = out
+    setTime(notes_win); // show time immediately
+}
+
+var timerId;
 
 export function render({model, el}) {
     let notes_win = null; 
-
+    clearInterval(timerId); // remove previous
     model.on("change:popup", () => {
         let popup = model.get("popup");
         if (popup) {
             notes_win = window.open("","__Notes_Window__","popup");
-            setuNotesWindow(notes_win)
-            setContent(notes_win, model.get("value"))
+            setupNotesWindow(notes_win)
+            setValue(notes_win, model.get("value"));
+            timerId = setInterval(setTime, 5000, notes_win); // 5 seconds lag at max
         } else {
             if (notes_win) {
                 notes_win.close();
                 notes_win = null;
+                clearInterval(timerId); // remove it
             };
         }
     })
 
     model.on("change:value", () => {
-        let value = model.get("value");
-        setContent(notes_win, value);
+        setValue(notes_win, model.get("value")); 
     })
 }
