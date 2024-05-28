@@ -418,7 +418,7 @@ def center(obj):
     
 def html(tag, children = None,className = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
-    `tag` can be any valid html tag name. A `tag` that ends with `/` will be self closing e.g. `hr/` will be `<hr/>`.     
+    `tag` can be any valid html tag name. A `tag` that ends with `/` will be self closing e.g. `hr/` will be `<hr/>`.  Empty tag gives unwrapped children.
     `children` expects:
     
     - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
@@ -433,7 +433,12 @@ def html(tag, children = None,className = None,**node_attrs):
     ::: note-tip 
         To keep an image persistently embeded, use `ipyslides.utils.imge` function instead of just an html tag.
     """
-    if tag in 'hr/':
+    if not isinstance(tag, str):
+        raise TypeError('tag should be a string of html tags or empty string!')
+    
+    tag = tag.strip() # clean up
+    
+    if tag in ['hr', 'hr/']: 
         return XTML(f'<hr/>') # Special case for hr
     
     if children and tag.endswith('/'):
@@ -459,6 +464,9 @@ def html(tag, children = None,className = None,**node_attrs):
         content = '\n'.join(htmlize(child) for child in children) # Convert to html nodes in sequence of rows
     else:
         raise TypeError(f'Children should be a list/tuple of objects or str, not {type(children)}')
+    
+    if not tag: # empty tag.
+        return XTML(content) # don't wrap in any node
         
     tag_in =  f'<{tag} {attrs}>' if attrs else f'<{tag}>' # space is must after tag, strip attrs spaces
     return XTML(f'{tag_in}{content}</{tag}>')

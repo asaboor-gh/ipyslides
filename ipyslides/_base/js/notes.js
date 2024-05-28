@@ -1,9 +1,9 @@
 // This needs more thoughts to send data properly
 
 function setupNotesWindow(notes_win) {
-    notes_win.resizeTo(screen.width/2,screen.height/2);
+    notes_win.resizeTo(screen.width/3,screen.height/3);
     notes_win.moveTo(0,0); // top left corner
-    notes_win.document.title = 'Notes';
+    notes_win.document.title = 'IPySlides Notes';
     notes_win.document.body.style.background = 'var(--primary-bg)';
     notes_win.document.body.style.color = 'var(--primary-fg)';
     window.focus(); // Return focus to main window automatically
@@ -20,7 +20,7 @@ function setTime(notes_win){
 }
 
 function setValue(notes_win, value) {
-    let out = "<span style='position:absolute;right:4px;bottom:2px;'>🕑<b id='timer'>Time</b></span>" + value;
+    let out = "<span style='position:fixed;right:4px;bottom:2px;'>🕑<b id='timer'>Time</b></span>" + value;
     notes_win.document.body.innerHTML = out
     setTime(notes_win); // show time immediately
 }

@@ -100,6 +100,7 @@ class HtmlWidget(anywidget.AnyWidget):
     """
     _esm = """
     export function render({ model, el }) {
+    el.classList.add("jupyter-widgets", "widget-html-content"); // for consistent view
     let div = document.createElement("div");
     div.classList.add("jp-RenderedHTMLCommon","custom-html","jp-mod-trusted");
     function set_html() {

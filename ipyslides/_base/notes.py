@@ -27,13 +27,14 @@ class Notes:
             bg = self.main.settings.colors.get('primary_bg','white')
             fg = self.main.settings.colors.get('primary_fg','black')
             bg2 = self.main.settings.colors.get('secondary_bg','#181818')
+            font = self.main.settings._font_family.get('text', 'Roboto')
             return f"""<style>
         :root {{
             --primary-bg : {bg};
             --primary-fg : {fg};
             --secondary-bg: {bg2};
         }}
-        .columns {{columns: 2 auto;}}
+        .columns {{columns: 2 auto;font-family: {font};}}
         .columns > div > * {{background: {bg2};padding:0.2em;font-size:110%;border-left: 2px inset {bg};}}
         .columns > div:first-child::before {{content:'This Slide';font-size:80%;font-weight:bold;}}
         .columns > div:last-child::before {{content:'Next Slide';font-size:80%;font-weight:bold;}}
