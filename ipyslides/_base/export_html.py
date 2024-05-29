@@ -132,7 +132,7 @@ class _HhtmlExporter:
             f.write(content) 
             
     
-    def to_html(self, path = 'slides.html', slide_number = True, overwrite = False):
+    def export_html(self, path = 'slides.html', slide_number = True, overwrite = False):
         """Build beutiful html slides that you can print. Widgets are supported via `Slides.alt(widget,func)`.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
@@ -152,7 +152,7 @@ class _HhtmlExporter:
         "Export to HTML slides on button click."
         _dir = get_child_dir('ipyslides-export', create = True)
         path = os.path.join(_dir, 'slides.html')
-        self.to_html(path, overwrite = True)  
+        self.export_html(path, overwrite = True)  
         self.main.notify(f'File saved: {path!r}',10)
         with suppress(BaseException):
             os.startfile(path) # Does not work on some systems, so safely continue.

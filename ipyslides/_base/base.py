@@ -24,7 +24,7 @@ class BaseSlides:
         self.clipboard_image = self.__screenshot.clipboard_image # For easy access
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
         self.__settings = LayoutSettings(self, self.__widgets)
-        self.export_html = _HhtmlExporter(self).to_html
+        self.export_html = _HhtmlExporter(self).export_html
         self.__notes = Notes(self, self.__widgets) # Needs main class for access to notes
         
         self.toast_html = self.widgets.htmls.toast
@@ -293,11 +293,11 @@ class BaseSlides:
         ::: note-tip
             Use `Slides.sync_with_file` to auto update slides as markdown content changes.
         
+        ::: note-info
+            Use this function with 'next_' prefix to enable auto numbeing of slides inside python file.
+        
         **Returns**: A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
         """
-        if not self.is_jupyter_session():
-            raise Exception('Python/IPython REPL cannot show slides. Use IPython notebook instead.')
-        
         if self.running:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
         
@@ -409,10 +409,8 @@ class BaseSlides:
 
         self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'footnote')
         self.settings.set_footer('IPySlides Documentation')
-        
-        auto = self.AutoSlides() # Does not work inside notebook (should not as well)
-        
-        with auto.title(): # Title
+
+        with self.title(): # Title
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center('''
                 alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
@@ -423,7 +421,7 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        auto.from_markdown(f'''
+        self.next_from_markdown(f'''
             section`Introduction` 
             ```toc ## Table of contents
             vspace`2`
@@ -436,41 +434,41 @@ class BaseSlides:
              ```
             ```''')
             
-        with auto.slide():
+        with self.next_slide():
             self.write(['# Main App',self.doc(Slides), '### Jump between slides'])
             self.doc(self.goto_button, 'Slides').display()
         
-        with auto.slide():
+        with self.next_slide():
             self.write('## Adding Slides section`Adding Slides and Content`')
             self.write('Besides functions below, you can add slides with `%%title`/`%%slide` magics as well.\n{.note .info}')
-            self.write([self.doc(self.title,'Slides'),self.doc(auto.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
+            self.write([self.doc(self.title,'Slides'),self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
-        with auto.slide(), self.code.context():
+        with self.next_slide(), self.code.context():
             self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`'))
             
-        with auto.slide():
+        with self.next_slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
             self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clipboard_image,'Slides')])
         
-        with auto.slide():
+        with self.next_slide():
             self.write('## Adding Speaker Notes')
             (skipper := self.goto_button('Skip to Dynamic Content')).display()
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
-        with auto.slide():
+        with self.next_slide():
             self.write('## Displaying Source Code')
             self.doc(self.code,'Slides.code', members = True, itself = False).display()
         
-        auto.from_markdown('section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
+        self.next_from_markdown('section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
         
-        with auto.slide(): 
+        with self.next_slide(): 
             self.write('## Layout and Theme Settings')
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
-        with auto.slide():
+        with self.next_slide():
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
             self.doc(self.clipboard_image,'Slides').display()
             self.run_doc(self.alt,'Slides')
@@ -482,7 +480,7 @@ class BaseSlides:
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
 
-        with auto.slide():
+        with self.next_slide():
             self.write('''
                 ## Citations and Sections
                 Use syntax alert`cite\`key\`` to add citations which should be already set by `Slides.set_citations(data, mode)` method.
@@ -494,7 +492,7 @@ class BaseSlides:
             ''')
             self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
-        with auto.slide() as s:
+        with self.next_slide() as s:
             skipper.set_target() # Set target for skip button
             self.write('## Dynamic Content')
             self.run_doc(self.on_refresh,'Slides')
@@ -502,7 +500,7 @@ class BaseSlides:
             s.get_source().display()
             
     
-        with auto.slide():
+        with self.next_slide():
             self.write('## Content Styling')
             with self.code.context(returns = True) as c:
                 self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
@@ -511,7 +509,7 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
-        s8, = auto.from_markdown('''
+        s8, = self.next_from_markdown('''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `highlight` function cite`B` or within markdown like this:
@@ -528,18 +526,14 @@ class BaseSlides:
         with s8.proxies[0].capture(): # Capture to proxy
             s8.get_source().display()
         
-        with auto.slide():
+        with self.next_slide():
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
             self.write('You can parse and view a markdown file. The output you can save by exporting notebook in other formats.\n{.note .info}')
-            self.write([self.doc(self.sync_with_file,'Slides'),
-                        self.doc(self.from_markdown,'Slides'),
-                        self.doc(self.demo,'Slides'), 
-                        self.doc(self.docs,'Slides'),
-                        self.doc(self.export_html,'Slides')])
+            self.write([self.doc(attr,'Slides') for attr in (self.sync_with_file,self.from_markdown,self.demo,self.docs,self.export_html)])
         
-        auto.from_markdown('section`Advanced Functionality` toc`### Contents`')
+        self.next_from_markdown('section`Advanced Functionality` toc`### Contents`')
         
-        with auto.slide() as s:
+        with self.next_slide() as s:
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write(
                 lambda: display(self.html('h3','I will be on main slides',className='warning'), 
@@ -551,13 +545,13 @@ class BaseSlides:
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
         
-        with auto.slide():
+        with self.next_slide():
             self.write('## Keys and Shortcuts\n'
                 '- You can use `Slides.current` to access a slide currently in view.\n'
                 '- You can use `Slides.running` to access the slide currently being built,'
                 ' so you can set CSS, aminations etc.', key_combs)
         
-        with auto.slide():
+        with self.next_slide():
             self.write('''
             ## Focus on what matters
             - There is a zoom button on top bar which enables zooming of certain elements. This can be toggled by `Z` key.
@@ -570,7 +564,7 @@ class BaseSlides:
                 - If zoom button is enabled, you can hover here to zoom in this part!
                 - You can also zoom in this part by pressing `Z` key while mouse is over this part.
             ''')
-        with auto.slide():
+        with self.next_slide():
             self.write('''
                 ## SVG Icons
                 Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well.
@@ -584,10 +578,13 @@ class BaseSlides:
                 self.format_css({'.MyIcon .fa.fa-plus': self.icon('chevron',color='crimson', size='1.5em',rotation=90).css}).display() # Overwrite icon with your own
 
             
-        with auto.slide():
-            self.write(['# Auto Slide Numbering in Python Scripts', self.doc(self.AutoSlides,'Slides')])
+        with self.next_slide():
+            self.write([
+                '# Auto Slide Numbering in Python Scripts', 
+                *[self.doc(attr,'Slides') for attr in (self.next_slide, self.next_frames, self.next_from_markdown, self.next_number)]
+            ])
         
-        with auto.slide():
+        with self.next_slide():
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
         self.navigate_to(0) # Go to title

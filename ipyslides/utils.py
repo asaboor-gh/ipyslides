@@ -31,7 +31,7 @@ def is_jupyter_session():
          return False
      
 def inside_jupyter_notebook(func):
-    "Returns True only if a func is called inside notebook, excluding imports."
+    "Returns True only if a func is called inside notebook."
     shell = get_ipython()
     current_code = getattr(shell,'get_parent', lambda: {})().get('content',{}).get('code','')
     if getattr(func,'__name__') in current_code:

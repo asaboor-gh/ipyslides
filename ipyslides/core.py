@@ -695,6 +695,7 @@ class Slides(BaseSlides):
             - Markdown before the first (--) separator is written on all frames. 
             - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
             - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
+            - Inside python file, use `Slides.next_number()` to automatically capture slide number in sequence when using this magic.
 
         """
         line = line.strip().split()  # VSCode bug to inclue \r in line
@@ -744,7 +745,11 @@ class Slides(BaseSlides):
 
     @contextmanager
     def slide(self, slide_number):
-        """Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic."""
+        """Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic.
+        
+        ::: note-info
+            Use this function with 'next_' prefix to enable auto numbeing of slides inside python file.
+        """
         if not isinstance(slide_number, int):
             raise ValueError(f"slide_number should be int >= 1, got {slide_number}")
 
@@ -848,7 +853,11 @@ class Slides(BaseSlides):
             If list or tuple, it will be used as the sequence of frames to generate and number of frames = len(repeat).
             [(0,1),(1,2)] will generate 2 frames with [a,b] and [b,c] to given in function and will be written top to bottom or the way you write in your function.
         
-        No return of defined function required, if any, only should be display/show etc."""
+        No return of defined function required, if any, only should be display/show etc.
+        
+        ::: note-info
+            Use this function with 'next_' prefix to enable auto numbeing of slides inside python file.
+        """
 
         def _frames(func = lambda idx, obj: self.write(obj)):  # write if called without function
             if not isinstance(slide_number, int):
@@ -999,47 +1008,36 @@ class Slides(BaseSlides):
         return tuple(
             [self._slides_dict[f"{slide_number}"] for slide_number in slide_numbers]
         )
+    
+    def _verify_inside_pyfile(self, func):
+        if self.inside_jupyter_notebook(func): 
+            raise Exception(f"{func.__name__!r} should be called inside a .py file only. Use without 'next_' prefix and provide explicit slide number in Jupyter Notebook!")
+        
+    def next_slide(self):
+        "See docs of `slide` excpet need of a slide number."
+        self._verify_inside_pyfile(self.next_slide)
+        return self.slide(self._next_number)
+    
+    def next_frames(self, *objs, repeat=False):
+        "See docs of `frames` excpet need of a slide number."
+        self._verify_inside_pyfile(self.next_frames)
+        return self.frames(self._next_number, *objs, repeat=repeat)
+    
+    def next_from_markdown(self, content, trusted=False):
+        "See docs of `from_markdown` excpet need of a slide number."
+        self._verify_inside_pyfile(self.next_from_markdown)
+        return self.from_markdown(self._next_number, content, trusted=trusted)
+    
+    def next_number(self):
+        "Get next slide number if need inside a .py file, e.g. in slide magic or explicit numbering."
+        if self.inside_jupyter_notebook(self.next_number): 
+            raise Exception("'next_number' should be used inside a .py file only!")
+        return self._next_number
 
     def AutoSlides(self):
-        """Returns a named tuple `AutoSlides(get_next_number, title,slide,frames, from_markdown)` if run from inside a
-        python script. Functions inside this tuple replace main functions while removing the 'slide_number' paramater.
-        Useful to handle auto numbering of slides inside a sequntially running script. Call at top of script before adding slides.
-        ::: note-warning
-            Returns None in Jupyter's context and it is not useful there due to lack of sequence.
-
-        ```python
-        import ipyslides as isd
-        slides = isd.Slides()
-        auto = slides.AutoSlides() # Call at top of script
-
-        with auto.slide() as s:
-            slides.write(f'This is slide {s.number}')
-        ```
-        Use `auto.title`, `auto.slide` contextmanagers, `auto.frames` decorator and `auto.from_markdown`
-        function without thinking about what should be slide number.
-        """
-        if self.inside_jupyter_notebook(self.AutoSlides): # File still should be imported in Jupyter
-            raise Exception("This function should be called inside a .py file that should be imported in Jupyter Notebook!")
-
-        auto = namedtuple(
-            "AutoSlides",
-            ["get_next_number", "title", "slide", "frames", "from_markdown"],
-        )
-
-        def slide():
-            return self.slide(self._next_number)
-
-        def frames(*objs, repeat=False):
-            return self.frames(self._next_number, *objs, repeat=repeat)
-
-        def from_markdown(content, trusted=False):
-            return self.from_markdown(self._next_number, content, trusted=trusted)
-
-        def get_next_number():
-            return self._next_number
-
-        return auto(get_next_number, self.title, slide, frames, from_markdown)
-
+        raise Exception("This function is deprecated. Use Slides."
+        "[next_number, next_slide, next_frames, next_from_markdown] in python file for automatic numbering")
+        
 # Make available as Singleton Slides
 _private_instance = Slides()  # Singleton in use namespace
 # This is overwritten below to just have a singleton
