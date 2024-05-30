@@ -570,16 +570,16 @@ def layout_css(accent_color, aspect):
             },
             ".Arrows": {
                 ".fa.fa-chevron-left": Icon(
-                    "chevron", color=accent_color, size="32px", rotation=180
+                    "chevron", color=accent_color, size="40px", rotation=180
                 ).css,
                 ".fa.fa-chevron-right": Icon(
-                    "chevron", color=accent_color, size="32px", rotation=0
+                    "chevron", color=accent_color, size="40px", rotation=0
                 ).css,
                 ".fa.fa-chevron-up": Icon(
-                    "chevron", color=accent_color, size="32px", rotation=-90
+                    "chevron", color=accent_color, size="40px", rotation=-90
                 ).css,  # Why SVG rotation is clockwise?
                 ".fa.fa-chevron-down": Icon(
-                    "chevron", color=accent_color, size="32px", rotation=90
+                    "chevron", color=accent_color, size="40px", rotation=90
                 ).css,
             },
             ".Settings-Btn": {

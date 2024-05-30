@@ -126,10 +126,6 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 
 {key_combs}
 
-::: note
-    - You can also swipe left/right from edges of screen ( within `±50px` edge range) on touch devices to change slides.
-    - In exported slides, bottom-right includes few buttons to jump accross slides.
-
 #### PDF Printing (by screen capture)
 {how_to_print}
 

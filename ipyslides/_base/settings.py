@@ -311,13 +311,13 @@ class LayoutSettings:
         return self # for chaining set_methods
 
     def show_nav_gui(self, visible = True):
-        """Show/Hide navigation GUI, keyboard or touch still work. Hover on left-bottom corner to acess settings."""
+        """Show/Hide navigation GUI, keyboard still work. Hover on left-bottom corner to acess settings."""
         self.widgets.controls.layout.visibility = "visible" if visible else "hidden"
         self.widgets.checks.navgui.value = True if visible else False
         self.widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
 
         if not visible:
-            self._slides.notify("Navigation controls hidden. But keyboard and touch gestures are working!")
+            self._slides.notify("Navigation controls hidden. But keyboard is still working!")
         
 
     def _update_size(self, change):

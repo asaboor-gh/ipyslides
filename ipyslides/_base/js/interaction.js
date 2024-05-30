@@ -21,39 +21,6 @@ function hideLaser(box, cursor) {
     box.onmousemove = null;
 }
 
-function touchSwiper(box, model){
-    let startX = 0;
-    let endX = 0;
-    let startY = 0;
-    let endY = 0;
-    
-    box.addEventListener('touchstart', function (event) {
-        startX = event.changedTouches[0].screenX;
-        startY = event.changedTouches[0].screenY;
-    }, false);
-
-    box.addEventListener('touchend', function (event) {
-        endX = event.changedTouches[0].screenX;
-        endY = event.changedTouches[0].screenY;
-        handleGesture();
-    }, false);
-
-    function handleGesture() {
-        let bbox = box.getBoundingClientRect(); // Swipe only from edges
-        if (Math.abs(endY - startY) < 20) {
-            // Y axis is not important but we should avoid X component of touch for a long y-scroll
-            if ((endX - startX) < -40 && startX > (bbox.right - 50)) {
-                model.set("msg_topy", "NEXT"); // align-left Swipe to Next
-            };
-
-            if ((endX - startX) > 40 && startX < (bbox.left + 50)) {
-                model.set("msg_topy", "PREV"); // Right Swipe to Prev
-            };
-            model.save_changes();
-        }; 
-    };
-};
-
 const keyMessage = {
     's': 'SCAP', // Screenshot
     'f': 'TFS', // Toggle Fullscreen with F but with click from button
@@ -266,9 +233,6 @@ export function render({ model, el }) {
         
         // Keyboard events
         keyboardEvents(box,model);
-        
-        // Touch Events are experimental
-        touchSwiper(box, model);
 
         // handle scale of slides size
         handleScale(box);
