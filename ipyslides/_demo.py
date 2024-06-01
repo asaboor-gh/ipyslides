@@ -184,7 +184,7 @@ def demo_slides(slides):
             ax.set_axis_off()
             slides.notes.insert(f'## This is under @frames decorator!')
 
-        slides.write([f'### This is Slide {slides.running.number}.{idx}\n and we are animating matplotlib',
+        slides.write([f'### This is Slide {slides.this.number}.{idx}\n and we are animating matplotlib',
                       s.show_lines([idx]),
                       'cite`This` refs`1`'
                       ],ax,widths=[40,60])
@@ -202,7 +202,7 @@ def demo_slides(slides):
 
     @slides.next_frames(*boxes, repeat=True)
     def f(idx, obj):
-        slides.running.set_animation(None) #Disable animation for showing bullets list
+        slides.this.set_animation(None) #Disable animation for showing bullets list
         slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
         slides.bullets(obj, marker='💘').display()
 
@@ -248,8 +248,8 @@ def demo_slides(slides):
                 '### Widgets',
                 slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'), # alt only works with widgets, but below display tricks works with any object
                 lambda: display(ipw.Button(description='Click to do nothing'),metadata = {'text/html': '<button>Click to do nothing</button>'}), # This is a hack to display button as html in exported slides
-                ipw.Checkbox(description='Select to do nothing',indent=False), # screenshot of this will be pasted in proxy below to export html
-                'proxy`[Paste Checkbox Screenshot Here]`'
+                ipw.Checkbox(description='Select to do nothing',indent=False), 
+                'proxy`Paste Checkbox Screenshot Here with Slides.clip_image function`'
             ]
         )
         s.get_source().display(True)

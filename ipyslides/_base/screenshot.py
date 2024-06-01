@@ -113,14 +113,19 @@ class ScreenShot:
         
         return res   # Return previous resolution
     
-    def capture(self,btn):
-        "Saves screenshot of current slide into self.__images dictionary when corresponding button clicked. Use in fullscreen mode or set bbox using `.capture_setup`."
+    def capture(self,btn = None):
+        "Saves screenshot of current slide when corresponding button clicked. Returns captured image if called in a cell directly!"
         with self.capture_mode():
             sleep(0.05) # Just for above clearance of widgets views
             if self.widgets.sliders.progress.label not in self.__images:
                 self.__images[self.widgets.sliders.progress.label] = [] # container to store images
             
-            self.__images[self.widgets.sliders.progress.label].append(ImageGrab.grab(bbox = None)) # Append to existing list
+            im = ImageGrab.grab(bbox = None)
+            if btn is None:
+                return im
+            else: # called by button
+                self.__images[self.widgets.sliders.progress.label].append(im) # Append to existing list
+
     
     def __sort_images(self):
         ims = [] #sorting
@@ -187,7 +192,7 @@ class ScreenShot:
         self.widgets.ddowns.clear.value = 'None' # important to get back after operation
     
     
-    def clipboard_image(self, filename, quality = 95, overwrite = False):
+    def clip_image(self, filename, quality = 95, overwrite = False):
         """Save image from clipboard to file with a given quality. 
         On next run, it loads from saved file under `notebook-dir/.ipyslides-assets/clips`. 
         Useful to add screenshots from system into IPython. You can use overwite to overwrite existing file.

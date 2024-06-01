@@ -222,8 +222,8 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
     # Footnotes at place user likes
     all_matches = re.findall(r"refs\`([\d+]?)\`", text_chunk) # match digit or empty
     for match in all_matches:
-        slide_instance.running._refs_consumed = True
-        _cits = ''.join(v.value for v in sorted(slide_instance.running._citations.values(), key=lambda x: x._id))
+        slide_instance.this._refs_consumed = True
+        _cits = ''.join(v.value for v in sorted(slide_instance.this._citations.values(), key=lambda x: x._id))
         out = f"<div class='Citations' style='column-count: {match} !important;'>{_cits}</div>"
         text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
 
@@ -361,7 +361,7 @@ class XMarkdown(Markdown):
             xmd
         )  # Resolve nested objects in form func`?text?` to func`html_repr`
 
-        if self._slides and self._slides.running:
+        if self._slides and self._slides.this: # under building slide
             xmd = resolve_objs_on_slide(
                 self._slides, xmd
             )  # Resolve objects in xmd related to current slide

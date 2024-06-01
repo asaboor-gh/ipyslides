@@ -61,7 +61,6 @@ class LayoutSettings:
         self.btn_draw.observe(self._toggle_overlay, names=["value"])
         self.btn_menu.observe(self._toggle_menu, names = ["value"])
         self.widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
-        self.widgets.checks.proxy.observe(self._toggle_proxy_buttons, names=["value"])
         self._update_theme(change = "aspect")  # Trigger Theme with aspect changed as well
         self.set_code_theme()  # Trigger CSS in it, must
         self.set_layout(center=True)  # Trigger this as well
@@ -95,13 +94,6 @@ class LayoutSettings:
             self.show_nav_gui(True)
         else:
             self.show_nav_gui(False)
-
-    def _toggle_proxy_buttons(self, change):
-        if change["new"]:
-            self.widgets.mainbox.remove_class("PresentMode")  # Show if checked
-        else:
-            self.widgets.mainbox.add_class("PresentMode")
-
     
     def set_toggles(self,
         nav_gui = True,
@@ -261,9 +253,9 @@ class LayoutSettings:
         else:
             raise TypeError(f"text should be string or None, not {type(text)}")
 
-        if self._slides.current:
+        if self._slides._current:
             self._get_footer(
-                self._slides.current, update_widget=True
+                self._slides._current, update_widget=True
             )  # Update footer immediately if slide there
         return self # for chaining set_methods
 

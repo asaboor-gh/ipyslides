@@ -2,14 +2,14 @@
 
 import sys, time
 from contextlib import contextmanager, suppress
-from ipywidgets import Layout, Button, HBox, VBox, Label
+from ipywidgets import Layout, Button, HBox
 
 from IPython.display import display
 from IPython.core.ultratb import FormattedTB
 
 
 from . import styles
-from ..utils import XTML, html, color, _format_css, _sub_doc, _css_docstring
+from ..utils import XTML, html, alert, _format_css, _sub_doc, _css_docstring
 from ..writer import _fmt_html
 from ..xmd import capture_content
 from .widgets import Output # not from ipywidget
@@ -153,35 +153,6 @@ class Proxy:
         self._slide = slide
         self._to_display = self
         self._text = text.strip() # Remove leading and trailing spaces
-        
-        if self._text.startswith('[') and self._text.endswith(']'):
-            self._text = self._text[1:-1]
-            btn1 = Button(description = 'Paste', layout = Layout(width='auto'))
-            btn2 = Button(description = 'Paste for Export Only', layout = Layout(width='auto'))
-            btns = VBox([Label(f'Paste Proxy: "{self._text}"'), HBox([btn1, btn2])], layout = Layout(width='auto',border='1px solid var(--accent-color)')).add_class('ProxyPasteBtns')
-            self._to_display = btns
-            
-            def on_click(btn):
-                try:
-                    im = self._slide._app.clipboard_image(f'attachment:{id(self)}.png', overwrite = True).to_html()
-                        
-                    with self.capture(): # capture if successful above, otherwise don't
-                        display(self._to_display) # keep buttons there to replace later, won't be displayed in export
-                        if btn is btn1: 
-                            im.display()
-                            btn1.description = 'Replace ?'
-                            btn2.description = 'Paste for Export Only'
-                        elif btn is btn2:
-                            html('div', [im], className='export-only',style = '').display()
-                            btn2.description =  'Pasted for Export Only: Replace ?'
-                            btn1.description = 'Paste'
-                            
-                except: 
-                    self._slide._app.notify('No supported image on clipboard to paste!')
-                    
-            btn1.on_click(on_click)
-            btn2.on_click(on_click)
-        
         self._outputs = []
         self._key = str(len(self._slide._proxies))
         self._slide._proxies[self._key] = self
@@ -199,10 +170,10 @@ class Proxy:
     def slide(self): return self._slide # Useful if user wants to test if proxy is in slide
     
     def __repr__(self):
-        return f'Proxy(text = {self._text!r}, slide = {self._slide!r})'
+        return f'Proxy(text = {self._text!r}, slide_number = {self._slide.number}, proxy_index = {self._key})'
     
     def _repr_html_(self): # This is called when displayed
-        return color(f'Proxy(text = {self._text!r}, slide = {self._slide!r})',fg='var(--accent-color)').value
+        return alert(repr(self)).value
     
     @property
     def outputs(self):
@@ -222,7 +193,7 @@ class Proxy:
     @contextmanager
     def capture(self):
         "Context manager to capture output to current prpxy. Use it like this: with proxy.capture(): ... after a slide is already created."
-        if self._slide._app.running:
+        if self._slide._app.this:
             raise RuntimeError("Can't use Proxy.capture() contextmanager inside a slide constructor.")
         
         self._columns = {} # Reset columns
@@ -522,7 +493,7 @@ class Slide:
         self._css = _format_css(props, allow_root_attrs = True)
         
         # See effect of changes
-        if not self._app.running: # Otherwise it has side effects
+        if not self._app.this: # Otherwise it has side effects
             if self._app._slidelabel != self.label:
                 self._app._slidelabel = self.label # Go there to see effects
             else:
@@ -584,7 +555,7 @@ class Slide:
         elif isinstance(name,str) and name in styles.animations:
             self._animation = html('style',self._instance_animation(name))
             # See effect of changes
-            if not self._app.running: # Otherwise it has side effects
+            if not self._app.this: # Otherwise it has side effects
                 if self._app._slidelabel != self.label:
                     self._app._slidelabel = self.label # Go there to see effects
                 else:

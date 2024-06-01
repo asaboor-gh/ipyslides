@@ -21,7 +21,7 @@ class BaseSlides:
         self._uid = f'{self.__class__.__name__}-{id(self)}' # Unique ID for this instance to have CSS, should be before settings
         self.__widgets = Widgets()
         self.__screenshot = ScreenShot(self.__widgets)
-        self.clipboard_image = self.__screenshot.clipboard_image # For easy access
+        self.clip_image = self.__screenshot.clip_image # For easy access
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
         self.__settings = LayoutSettings(self, self.__widgets)
         self.export_html = _HhtmlExporter(self).export_html
@@ -111,8 +111,7 @@ class BaseSlides:
         - With citations mode set as 'footnote', you can add alert`refs\`ncol\`` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
         - alert`section\`content\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
-        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.proxies[index].capture` contextmanager. Useful to keep placeholders for plots in markdwon.
-        - alert`peoxy\`[Button Text]\`` to add a proxy that can be replaced by pasting image from clipboard later.
+        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.get(slide_number).proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
         - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, content)` function.
         - Double dashes `--` is used to split markdown text in frames.
         
@@ -228,7 +227,7 @@ class BaseSlides:
             self._warnings.append(f'UserWarning: Changing settings under `on_load` may have side effects on all slides. I hope you know what you are doing!')
         
         self.verify_running('on_load decorator can only be used inside slide constructor!')
-        self.running._on_load_private(func) # This to make sure if code is correct before adding it to slide
+        self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
     
     def on_refresh(self,func):
         """
@@ -261,7 +260,7 @@ class BaseSlides:
     def _dynamic_private(self, func, tag = None, hide_refresher = False):
         "Not for user use, internal function for other dynamic content decorators with their own tags."
         self.verify_running('Dynamic content can only be used inside slide constructor!')
-        return self.running._dynamic_private(func, tag = tag, hide_refresher = hide_refresher)
+        return self.this._dynamic_private(func, tag = tag, hide_refresher = hide_refresher)
         
     def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
@@ -298,7 +297,7 @@ class BaseSlides:
         
         **Returns**: A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
         """
-        if self.running:
+        if self.this:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
         
         if not isinstance(content, str): #check path later or it will throw error
@@ -403,7 +402,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(*range(23)) # Create slides faster
+        self.create(*range(22)) # Create slides faster
         
         from ..core import Slides
 
@@ -449,7 +448,7 @@ class BaseSlides:
         with self.next_slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clipboard_image,'Slides')])
+            self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clip_image,'Slides')])
         
         with self.next_slide():
             self.write('## Adding Speaker Notes')
@@ -470,7 +469,7 @@ class BaseSlides:
                 
         with self.next_slide():
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
-            self.doc(self.clipboard_image,'Slides').display()
+            self.doc(self.clip_image,'Slides').display()
             self.run_doc(self.alt,'Slides')
             
             members = sorted((
@@ -492,13 +491,12 @@ class BaseSlides:
             ''')
             self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
-        with self.next_slide() as s:
+        with self.next_slide():
             skipper.set_target() # Set target for skip button
             self.write('## Dynamic Content')
             self.run_doc(self.on_refresh,'Slides')
             self.run_doc(self.on_load,'Slides')
-            s.get_source().display()
-            
+            self.this.get_source().display() # this refers to slide being built
     
         with self.next_slide():
             self.write('## Content Styling')
@@ -523,7 +521,7 @@ class BaseSlides:
         ''', trusted= True)
         
         # Update proxy with source code
-        with s8.proxies[0].capture(): # Capture to proxy
+        with s8.proxies[0].capture(): # or with self.capture_proxy(s8.number, 0):
             s8.get_source().display()
         
         with self.next_slide():
@@ -544,12 +542,6 @@ class BaseSlides:
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
-        
-        with self.next_slide():
-            self.write('## Keys and Shortcuts\n'
-                '- You can use `Slides.current` to access a slide currently in view.\n'
-                '- You can use `Slides.running` to access the slide currently being built,'
-                ' so you can set CSS, aminations etc.', key_combs)
         
         with self.next_slide():
             self.write('''

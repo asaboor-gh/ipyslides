@@ -85,7 +85,7 @@ class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    footer  = HTML('<p>Put Your Info Here using `slides.settings.set_footer` function</p>',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
+    footer  = HTML('Add short info here using `slides.settings.set_footer` function',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
     main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent_color'], 16/9)).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
@@ -107,7 +107,6 @@ class _Checks:
     notes   = ipw.Checkbox(value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
-    proxy   = ipw.Checkbox(value = True, description='Proxy Buttons',layout=auto_layout)
     navgui  = ipw.Checkbox(value = True, description='Show Nav. GUI',layout=auto_layout)
 
 @dataclass(frozen=True)
@@ -196,7 +195,7 @@ class Widgets:
                 self.ddowns.theme,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.notes,self.checks.toast,self.checks.reflow,
-                self.checks.proxy,self.checks.navgui,self.checks.focus,
+                self.checks.navgui,self.checks.focus,
                 HTML('<b>HTML File Export</b>',layout = _html_layout),
                 self.buttons.export,
                 HTML(html('details',[html('summary','<b>Screenshot Export</b>'), how_to_print]).value,layout = _html_layout),

@@ -15,11 +15,11 @@ class Notes:
         """Add notes to current slide. Content could be any object except javascript and interactive widgets.
         ::: note-tip     
             In markdown, you can use alert`notes\`notes content\``."""
-        if self.main.running is None:
+        if self.main.this is None:
             raise RuntimeError('Notes can only be added inside a slide constructor.')
         
         with suppress(BaseException): # Would work on next run, may not first
-            self.main.running._notes = self.main.format_html(content)._repr_html_()
+            self.main.this._notes = self.main.format_html(content)._repr_html_()
     __call__ = insert # Can be called as function
     
     def display(self):
@@ -40,8 +40,8 @@ class Notes:
         .columns > div:last-child::before {{content:'Next Slide';font-size:80%;font-weight:bold;}}
         </style>{content}"""
 
-        this_notes = self.main.current.notes 
-        next_slide_index = (self.main.current.index + 1) % len(self.main)
+        this_notes = self.main._current.notes 
+        next_slide_index = (self.main._current.index + 1) % len(self.main)
         if next_slide_index > 0: # Don't loop notes back
             next_notes = self.main[next_slide_index].notes
         else:

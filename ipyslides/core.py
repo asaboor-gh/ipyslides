@@ -107,7 +107,6 @@ class Slides(BaseSlides):
         self._slides_dict = (
             {}
         )  # Initialize slide dictionary, updated by user or by _setup.
-        self._reverse_mapping = {"0": "0"}  # display number -> input number of slide
         self._iterable = []  # self._collect_slides() # Collect internally
         self._nslides = 0  # Real number of slides
         self._max_index = 0  # Maximum index including frames
@@ -143,7 +142,7 @@ class Slides(BaseSlides):
         ):  # None is acceptable to hold running slide in other function
             raise TypeError(f"slide must be None or Slide, got {type(slide)}")
 
-        old = self.running
+        old = self.this
         self._running_slide = slide
         try:
             yield
@@ -160,7 +159,7 @@ class Slides(BaseSlides):
         """Run cell and return result. Use this instead of IPython's run_cell for extra controls."""
         self._unregister_postrun_cell() # important to avoid putting contnet on slides
         output = self.shell.run_cell(cell, **kwargs)
-        if self.running: # there was post_run_cell under building slides
+        if self.this: # there was post_run_cell under building slides
             self._register_postrun_cell() # should be back
         return output
     
@@ -190,8 +189,8 @@ class Slides(BaseSlides):
             self.shell.events.register("post_run_cell", self._post_run_cell)
         
     def _jump_to_source_cell(self, btn):
-        if hasattr(self.current, '_scroll_btn'):
-            self.current._scroll_btn.focus()
+        if hasattr(self._current, '_scroll_btn'):
+            self._current._scroll_btn.focus()
         else:
             self.notify('No source cell found!')
 
@@ -216,27 +215,29 @@ class Slides(BaseSlides):
         return len(self._iterable)
 
     def __getitem__(self, key):
-        "Get slide by index or key(written on slide's bottom)."
+        "Get slide by index or slice. Use Slides.get func to access slides by number they were created with."
         if isinstance(key, int):
             return self._iterable[key]
-        elif isinstance(key, str):
-            frame = None
-            if "." in key:
-                key, frame = key.split(".")
-
-            if key in self._reverse_mapping:
-                _slide = self._slides_dict[self._reverse_mapping[key]]
-                if frame:
-                    _slide = _slide.frames[int(frame) - 1]
-                return _slide
-            else:
-                raise KeyError(f"Key {key} not found.")
         elif isinstance(key, slice):
             return self._iterable[key.start : key.stop : key.step]
 
         raise KeyError(
-            "Slide could be accessed by index, slice or key, got {}".format(key)
+            f"A slide could be accessed by index or slice, got {type(key)},\n"
+            "Use `Slides.get` function to access slides by number they were created with."
         )
+    
+    def get(self, slide_number):
+        "Access a slide by given slide number. Use this instead of indexing if adding extra content to a slide such as CSS."
+        if isinstance(slide_number,int):
+            key = str(slide_number)
+            if key in self._slides_dict:
+                return self._slides_dict[key]
+            else:
+                raise KeyError(f"Slide with number {slide_number} was never created or may be deleted!")
+        else:
+            raise TypeError(f"slide_number should be interger by which slide was created, got {type(slide_number)}")
+    
+    __call__ = get  # like paranthesis indexing
 
     def __del__(self):
         for k, v in globals():
@@ -270,13 +271,12 @@ class Slides(BaseSlides):
         return self._cite_mode
 
     @property
-    def current(self):
-        "Access current visible slide and use operations like set_css etc."
+    def _current(self):
         return self._iterable[self._slideindex]
 
     @property
-    def running(self):
-        "Access slide currently being built. Useful inside frames decorator."
+    def this(self):
+        "Access slide currently being built. Useful for operations like set_css etc."
         return self._running_slide
 
     @property
@@ -296,7 +296,7 @@ class Slides(BaseSlides):
 
     def verify_running(self, error_msg=""):
         "Verify if slide is being built, otherwise raise error."
-        if self.running is None:
+        if self.this is None:
             raise RuntimeError(
                 error_msg or "This operation is only allowed under slide constructor."
             )
@@ -327,13 +327,8 @@ class Slides(BaseSlides):
     def clear(self):
         "Clear all slides. This will also clear resources including citations, sections."
         self._slides_dict = {}  # Clear slides
-        _ = [
-            self.__dict__.pop(s, None) for s in getattr(self, "_links_dict", {})
-        ]  # clear slides attributes
         self.set_citations({})  # Clears citations from disk too
-        self._next_number = (
-            0  # Reset slide number to 0, because user will overwrite title page.
-        )
+        self._next_number = 0  # Reset slide number to 0, because user will overwrite title page.
         self._add_clean_title()  # Add clean title page without messing with resources.
 
     def _cite(self, keys):
@@ -349,12 +344,12 @@ class Slides(BaseSlides):
         """Use markdown syntax cite`key` to add citations since output has to be inline. 
         Citations corresponding to keys used can be added by ` Slides.set_citations ` method.
         """
-        cited = _Citation(slide=self.running, key=key)
+        cited = _Citation(slide=self.this, key=key)
 
         if self.cite_mode == "inline":
             return cited.inline_value  # Just write here
         else: # Set _id for citation in footnote mode
-            cited._id = list(self.running._citations.keys()).index(key) + 1 # Get index of key from unsorted ones
+            cited._id = list(self.this._citations.keys()).index(key) + 1 # Get index of key from unsorted ones
 
         # Return string otherwise will be on different place, avoid newline here
         return f'<a href="#{key}" class="citelink"><sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>'
@@ -428,11 +423,11 @@ class Slides(BaseSlides):
         """
         self.verify_running("Sections can be added only inside a slide constructor!")
 
-        self.running._section = text  # assign before updating toc
+        self.this._section = text  # assign before updating toc
         
         for s in self[:]:
             if (
-                getattr(s, "_toced", False) and s != self.running
+                getattr(s, "_toced", False) and s != self.this
             ):  # self will be built of course at end
                 s.update_display(go_there=False)
  
@@ -446,16 +441,16 @@ class Slides(BaseSlides):
         def toc_handler():
             sections = []
             this_index = (
-                self[:].index(self.running)
-                if self.running in self[:]
-                else self.running.number
+                self[:].index(self.this)
+                if self.this in self[:]
+                else self.this.number
             )  # Monkey patching index, would work on next run
             for slide in self[:this_index]:
                 if slide._section:
                     sections.append(fmt_sec(slide,"prev"))
 
-            if self.running._section:
-                sections.append(fmt_sec(self.running,"this"))
+            if self.this._section:
+                sections.append(fmt_sec(self.this,"this"))
             elif sections:
                 sections[-1] = XTML(
                     sections[-1].value.replace("toc-item prev", "toc-item this")
@@ -558,11 +553,11 @@ class Slides(BaseSlides):
     @property
     def _sectionindex(self):
         "Get current section index"
-        if self.current._section:
-            return self.current.index
+        if self._current._section:
+            return self._current.index
         else:
             idxs = [
-                s.index for s in self[: self.current.index] if s._section
+                s.index for s in self[: self._current.index] if s._section
             ]  # Get all section indexes before current slide
             return idxs[-1] if idxs else 0  # Get last section index
 
@@ -611,7 +606,7 @@ class Slides(BaseSlides):
             self.notes.display()  # Display notes first
             self.notify('x') # clear notification
             self._switch_slide(old_index=change["old"], new_index=change["new"])
-            self.current.run_on_load()  # Run on_load setup after switching slide, it updates footer as well
+            self._current.run_on_load()  # Run on_load setup after switching slide, it updates footer as well
 
     def refresh(self):
         "Auto Refresh whenever you create new slide or you can force refresh it"
@@ -619,9 +614,6 @@ class Slides(BaseSlides):
         if not self._iterable:
             self.progress_slider.options = [("0", 0)]  # Clear options
             self.widgets.slidebox.children = []  # Clear older slides
-            _ = [
-                self.__dict__.pop(s, None) for s in getattr(self, "_links_dict", {})
-            ]  # clear slides attributes
             return None
 
         n_last = float(self._iterable[-1].label)
@@ -642,40 +634,24 @@ class Slides(BaseSlides):
         self._update_dynamic_content(None)  # Update dynamic content including widgets
         self._update_toc()  # Update table of content if any
 
-        # This is useful for readily available objects with slides instead of indexing.
-        old_links = getattr(self, "_links_dict", {})
-        _ = [self.__dict__.pop(s, None) for s in old_links]  # Remove old links
-        self._links_dict = {
-            f"s{item.label}".replace(".", "_"): item
-            for item in self._iterable
-            if item.label
-        }
-        self.__dict__.update(self._links_dict)  # Add new links
-
         if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
             self.widgets.slidebox.children[0].add_class('ShowSlide')
 
         self.widgets.iw.msg_tojs = 'SwitchView' # Trigger view
 
     def proxy(self, text):
-        """Place a proxy placeholder in your slide and returns it's `handle`. This is useful when you want to update the placeholder later.
-        Use `Slides.proxies[index].capture` or `handle.capture` contextmanager to update the placeholder.
-        ::: note-tip
-            - Use square brackets around text like `proxy('[Button Text]')` to create a button that can paste image from clipboard. This is useful to export screenshots of widgets in a given state.
-            - Show/hide the proxy buttons by a checkbox `Proxy Buttons` in settings panel once you are done with pasting and ready to export/present.
+        """Place a proxy placeholder in your slide and return it's `handle`. This is useful when you want to update the placeholder later.
+        Use `Slides.capture_proxy(slide_number, proxy_index)` or `handle.capture` contextmanager to update the placeholder.
+        Use this in markdown as well by proxy `text` syntax.
         """
         self.verify_running(
             "proxy placeholder can only be used in a slide constructor!"
         )
-        return self.running._proxy_private(text)
-
-    @property
-    def proxies(self):
-        "Returns all placeholder proxies accross all slides."
-        _phs = []
-        for s in self._iterable:
-            _phs.extend(s.proxies)
-        return tuple(_phs)
+        return self.this._proxy_private(text)
+    
+    def capture_proxy(self, slide_number, proxy_index):
+        "This is a shortcut for `Slides.get(slide_number).proxies[proxy_index].capture()`."
+        return self.get(slide_number).proxies[proxy_index].capture()
 
     # defining magics and context managers
     def _slide(self, line, cell):
@@ -727,10 +703,10 @@ class Slides(BaseSlides):
             
             @self.frames(int(slide_number_str), *frames, repeat=False) # here repeat handled above
             def make_slide(idx, frm):
-                if (self.running.markdown != frm) or (idx == 0):
-                    self._editing_index = self.running.index # Go to latest editing markdown frame, or start of frames
+                if (self.this.markdown != frm) or (idx == 0):
+                    self._editing_index = self.this.index # Go to latest editing markdown frame, or start of frames
 
-                self.running.set_source(frm, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
+                self.this.set_source(frm, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
                 parse(xtr.copy_ns(cell, frm), returns = False)
             
             if self._editing_index is not None:
@@ -849,7 +825,7 @@ class Slides(BaseSlides):
         - slide_number: (int) slide number to insert frames on.
         - objs: expanded by * (list, tuple) of objects to write on frames. If repeat is False, only one frame is generated for each obj.
         - repeat: (bool, list, tuple) If False, only one frame is generated for each obj.
-            If True, one frame are generated in sequence of ojects linke `[a,b,c]` will generate 3 frames with [a], [a,b], [a,b,c] to given in function and will be written top to bottom.
+            If True, one frame are generated in sequence of ojects like `[a,b,c]` will generate 3 frames with [a], [a,b], [a,b,c] to given in function and will be written top to bottom.
             If list or tuple, it will be used as the sequence of frames to generate and number of frames = len(repeat).
             [(0,1),(1,2)] will generate 2 frames with [a,b] and [b,c] to given in function and will be written top to bottom or the way you write in your function.
         
@@ -941,7 +917,6 @@ class Slides(BaseSlides):
                 nslide = nslide + 1  # should be added before slide
                 self._slides_dict[f"{i}"]._label = f"{nslide}"
                 slides_iterable.append(self._slides_dict[f"{i}"])
-                self._reverse_mapping[str(nslide)] = str(i)
 
                 # Read Frames
                 frames = self._slides_dict[f"{i}"].frames
@@ -1034,10 +1009,7 @@ class Slides(BaseSlides):
             raise Exception("'next_number' should be used inside a .py file only!")
         return self._next_number
 
-    def AutoSlides(self):
-        raise Exception("This function is deprecated. Use Slides."
-        "[next_number, next_slide, next_frames, next_from_markdown] in python file for automatic numbering")
-        
+
 # Make available as Singleton Slides
 _private_instance = Slides()  # Singleton in use namespace
 # This is overwritten below to just have a singleton

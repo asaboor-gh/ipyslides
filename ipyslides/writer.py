@@ -38,7 +38,8 @@ class GotoButton(CustomDisplay):
         display(alt_link) # Hidden from slides
         
     def set_target(self, force = False):
-        if not self._app.running:
+        "Set target slide of goto button. Returns itself."
+        if not self._app.this:
             raise RuntimeError("GotoButton's target can be set only inside a slide constructor!")
         if self._button._TargetSlide and not force:
             raise RuntimeError("GotoButton's target can be set only once! Use `force=True` to link here and remove previous link.")
@@ -46,8 +47,9 @@ class GotoButton(CustomDisplay):
         if force:
             self._button._TargetSlide._target_id = None # Remove previous link
         
-        self._button._TargetSlide = self._app.running
+        self._button._TargetSlide = self._app.this
         self._button._TargetSlide._target_id = self._target_id # Set new link
+        return self 
     
 class AltForWidget(CustomDisplay):
     def __init__(self, widget, func):
@@ -79,7 +81,7 @@ class AltForWidget(CustomDisplay):
         
     def display(self):
         slides = get_slides_instance()
-        if slides and (context := (slides.in_proxy or slides.running)):
+        if slides and (context := (slides.in_proxy or slides.this)):
             display(context._exp4widget(self._widget, self._func))
         else:
             display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
@@ -113,7 +115,7 @@ class Writer:
         finally:
             self.__class__._in_write = False
             
-        self._slide = self._slides.running if self._slides else None
+        self._slide = self._slides.this if self._slides else None
         self._in_proxy = getattr(self._slides, '_in_proxy', None) # slide itself can be Non, so get via getattr
         self._in_dproxy = getattr(self._slides, '_in_dproxy', None)
         self._context = (self._in_dproxy if self._in_dproxy else self._slide) or self._in_proxy # order strictly matters
@@ -154,7 +156,7 @@ class Writer:
                     elif callable(c) and c.__name__ == '<lambda>':
                         _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
-                        if self._slides and self._slides.running:
+                        if self._slides and self._slides.this:
                             if (func := serializer.get_func(c)):
                                 self._slides.alt(c, func).display() # Alternative representation will be available on export, specially for ipw.HTML
                             else:
@@ -248,7 +250,7 @@ def write(*objs,widths = None):
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """
     wr = Writer(*objs,widths = widths)
-    if not any([(wr._slides and wr._slides.running), wr._in_proxy, len(objs) == 1]):
+    if not any([(wr._slides and wr._slides.this), wr._in_proxy, len(objs) == 1]):
         return wr.update_display() # Update in usual cell to have widgets working, but not single object which displays outside of box
 
 # Patch for interact/interactive patching to show in output

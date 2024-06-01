@@ -348,7 +348,7 @@ def image(data=None,width='95%',caption=None, as_figure = True, **kwargs):
     - A file path to image file.
     - A url to image file.
     - A str/bytes object containing image data.  
-    - A str like "clip:image.png" will load an image saved using `Slides.clipboard_image('image.png')`. 
+    - A str like "clip:image.png" will load an image saved using `Slides.clip_image('image.png')`. 
 
     If `as_figure = False` caption is not used.
     """
@@ -525,7 +525,7 @@ def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} cl
         wr._box.layout.grid_gap = '1em 0px' # Remove extra gap in columns, but keep row gap
         wr._extra_style = 'style="display:grid;grid-gap:1em 0px;"' # Add extra style to box for export html to use
         
-    if not any([(wr._slides and wr._slides.running), wr._in_proxy]):
+    if not any([(wr._slides and wr._slides.this), wr._in_proxy]):
         return wr.update_display() # Update in usual cell to have widgets working
     
 def block(*objs, widths = None): 

@@ -96,12 +96,10 @@ def _str2code(text,language='python',name=None,**kwargs):
     return out
 
 class Code:
-    current = None
     def __init__(self,*args,**kwargs):
         raise Exception("""This class is not meant to be instantiated.
         Use cls.context() to get a context manager for source.
-        Use cls.current to get the current source object.
-        Use cls.create(obj) to get a source code from text, file or callable. Or explicitly:
+        Use cls.cast(obj) to get a source code from text, file or callable. Or explicitly:
             - cls.from_file(filename) to get a source object from a file.
             - cls.from_string(string) to get a source object from a string.
             - cls.from_callable(callable) to get a source object from a callable.
@@ -121,8 +119,7 @@ class Code:
     @classmethod
     def from_string(cls,text,language='python',name=None,**kwargs):
         "Creates source object from string. `name` is alternate used name for language. `kwargs` are passed to `ipyslides.formatter.highlight`."
-        cls.current = _str2code(text,language=language,name=name,**kwargs)
-        return cls.current
+        return _str2code(text,language=language,name=name,**kwargs)
     
     @classmethod
     def from_file(cls, filename,language = None,name = None,**kwargs):
@@ -142,8 +139,7 @@ class Code:
             if lexer is None:
                 raise Exception(f'Failed to detect language from file {filename!r}. Use language argument!')
             
-        cls.current = _file2code(filename,language = _lang,name = _title,**kwargs)
-        return cls.current
+        return _file2code(filename,language = _lang,name = _title,**kwargs)
     
     @classmethod       
     def from_callable(cls, callable,**kwargs):
@@ -151,8 +147,7 @@ class Code:
         for _type in ['class','function','module','method','builtin','generator']:
             if getattr(inspect,f'is{_type}')(callable):
                 source = inspect.getsource(callable)
-                cls.current = _str2code(source,language='python',name=None)
-                return cls.current
+                return _str2code(source,language='python',name=None)
             
         # If things above do not work, raise error
         raise TypeError(f"Object {callable} is not callable!")
@@ -166,7 +161,7 @@ class Code:
         
         **Usage**:
         ```python
-        with source.context(returns = True) as s: #if not used as `s`, still it is stored `source.current` attribute.`
+        with source.context(returns = True) as s: 
             do_something()
             write(s) # or s.display(), write(s)
             
@@ -200,7 +195,6 @@ class Code:
         source = textwrap.dedent(''.join(lines[n1:][:n2 - offset]))
         source_html = SourceCode(highlight(source,language = 'python', **kwargs).value)
         source_html.raw = source # raw source code
-        cls.current = source_html
         
         if not returns:
             source_html.display()

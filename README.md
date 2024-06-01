@@ -9,7 +9,6 @@
 Create interactive slides programatically in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
 
 - Launch Example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
-- See a [Demo Notebook](https://www.kaggle.com/massgh/ipyslides) at [Kaggle](https://www.kaggle.com/massgh)
 - Watch a [Youtube Video](https://www.youtube.com/watch?v=thgLGl14-tg)
 - See [PDF-Slides](Slides.pdf)
 ![Overview](slide.png)
@@ -76,7 +75,7 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 > Notes is an experimantal feature, so use at your own risk. Avoid if you can.
 
 ---
-# Known Limitations
+# Caveats!
 - Since Markdown is parsed using python (and we do not run notebook from outside e.g. with nbconvert), markdown cells are of no use. A better alternative is linking a markodwn file using `Slides.sync_with_file` and slides auto update when you save your edits. You can still write markdown in code cell with slide magic `%%slide number -m` to add to slides. 
 - Slide number is necessary to be tracked by user in notebook, because cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. Inside python scripts that run in linear fashion, you can use `Slides.[next_number,next_slide,next_frames,next_from_markdown]`.
 - Bounding box of slides for screenshots should be set by user (if not in fullscreen).
