@@ -541,6 +541,10 @@ def layout_css(accent_color, aspect):
                     "padding": "0 !important",
                     "margin-bottom": "0 !important",
                     "box-sizing":"border-box"},
+                ".CropHtml figure": { # override inline margin
+                    "margin-inline": "0 !important",
+                    "margin-block": "0 !important",
+                },
             },
             ".Draw-Widget": {
                 "backdrop-filter": "blur(50px)",

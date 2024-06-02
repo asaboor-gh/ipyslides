@@ -47,12 +47,13 @@ class XTML(HTML):
         return HtmlWidget(self.value, click_pointer=click_pointer)
         
 
-def plt2html(plt_fig = None,transparent=True,caption=None):
+def plt2html(plt_fig = None,transparent=True,width = '95%', caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
     **Parameters**
     
     - plt_fig    : Matplotlib's figure instance, auto picks as well.
     - transparent: True of False for fig background.
+    - width      : CSS style width.
     - caption    : Caption for figure.
     """
     # First line is to remove depedency on matplotlib if not used
@@ -62,12 +63,18 @@ def plt2html(plt_fig = None,transparent=True,caption=None):
     _fig.savefig(plot_bytes,format='svg',transparent = transparent)
     _fig.clf() # Clear image to avoid other display
     plt.close() #AVoids throwing text outside figure
-    svg = '<svg' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
-    cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
+    width = f'width:{width}px;' if isinstance(width,int) else f'width:{width};'
+    svg = f'<svg style="{width}"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
+    
+    cap = ''
+    if caption:
+        from .xmd import _fig_caption # avoid circular import and only on demenad
+        cap = _fig_caption(caption)
+
     return XTML(f"<figure class='zoom-child'>{svg + cap}</figure>")
 
-def _plt2htmlstr(plt_fig=None,transparent=True,caption=None):
-    return plt2html(plt_fig=plt_fig,transparent=transparent,caption=caption).value
+def _plt2htmlstr(plt_fig=None,transparent=True,width="95%", caption=None):
+    return plt2html(plt_fig=plt_fig,transparent=transparent,width=width, caption=caption).value
 
 
 def bokeh2html(bokeh_fig,title=""):

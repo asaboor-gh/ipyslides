@@ -64,7 +64,7 @@ class ScreenShot:
             x1,x2 = self.widgets.sliders.crop_w.value
             y2,y1 = [self.widgets.sliders.crop_h.max - v for v in self.widgets.sliders.crop_h.value]
             self._crop_bbox = [x1,y1,x2,y2]
-            self.widgets.htmls.crop.value = image(self._cimage.crop([x1,y1,x2,y2]), as_figure=False, width='100%').value
+            self.widgets.htmls.crop.value = image(self._cimage.crop([x1,y1,x2,y2]), width='100%').value
 
     @contextmanager
     def capture_mode(self, *additional_widgets_to_hide):

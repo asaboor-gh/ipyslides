@@ -68,7 +68,7 @@ class BaseSlides:
     
     @property
     def css_styles(self):
-        """CSS styles for markdown or `classed` command."""
+        """CSS styles for markdown or `styled` command."""
         # self.html will be added from Chid class
         return self.raw('''
         Use any or combinations of these styles in className argument of writing functions:
@@ -448,7 +448,7 @@ class BaseSlides:
         with self.next_slide():
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write([self.classed(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clip_image,'Slides')])
+            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clip_image,'Slides')])
         
         with self.next_slide():
             self.write('## Adding Speaker Notes')
@@ -464,7 +464,7 @@ class BaseSlides:
         self.next_from_markdown('section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
         
         with self.next_slide(): 
-            self.write('## Layout and Theme Settings')
+            self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
         with self.next_slide():
@@ -473,8 +473,8 @@ class BaseSlides:
             self.run_doc(self.alt,'Slides')
             
             members = sorted((
-                'alert block bokeh2html bullets classed format_html fmt color cols details doc sub sup '
-                'today error enable_zoom format_css highlight html iframe image keep_format notify plt2html '
+                'alert block bokeh2html bullets styled inline format_html fmt color cols details doc sub sup '
+                'today error zoomable format_css highlight html iframe image keep_format notify plt2html '
                 'raw rows set_dir sig textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
@@ -548,7 +548,7 @@ class BaseSlides:
             ## Focus on what matters
             - There is a zoom button on top bar which enables zooming of certain elements. This can be toggled by `Z` key.
             - Most of supported elements are zoomable by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.
-            - You can also enable zooming for an object/widget by wrapping it inside `Slide.enable_zoom` function conveniently.
+            - You can also enable zooming for an object/widget by wrapping it inside `Slide.zoomable` function conveniently.
             - You can also enable by manully adding `zoom-self`, `zoom-child` classes to an element. To prevent zooming under as `zoom-child` class, use `no-zoom` class.
             
             ::: zoom-self block-red
@@ -557,10 +557,9 @@ class BaseSlides:
                 - You can also zoom in this part by pressing `Z` key while mouse is over this part.
             ''')
         with self.next_slide():
-            self.write('''
-                ## SVG Icons
-                Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well.
-                ''')
+            self.inline('## SVG Icons',
+                'Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well'
+            ).display()
             self.write(' '.join([f'`{k}`: ' + self.icon(k,color='crimson').svg for k in self.icon.available]))
             
             with self.code.context():

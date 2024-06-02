@@ -1,6 +1,6 @@
-_attrs = ['alt','alert', 'block', 'bullets', 'classed', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'vspace', 'center',
-            'image','svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
-            'raw', 'rows', 'enable_zoom','html','sig','doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
+_attrs = ['alt','alert', 'block', 'bullets', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
+            'image','svg','iframe', 'inline', 'format_html','format_css','keep_format', 'run_doc',
+            'raw', 'rows', 'zoomable','html','sig','styled', 'doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
 __all__ = sorted(_attrs)
@@ -19,8 +19,9 @@ from IPython.core.display import Image, display
 import ipywidgets as ipw
 
 from .formatters import XTML, fix_ipy_image, htmlize
-from .xmd import get_unique_css_class, capture_content, raw, error # raw error for export from here
+from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, AltForWidget
+from ._base._widgets import HtmlWidget
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -338,9 +339,9 @@ def _check_pil_image(data):
         return im_bytes.getvalue()
     return data # if not return back data
 
-_fig_style_inline = "margin-block:0.5em;margin-inline:0.5em" # its 40px by defualt, ruins space, not working in CSS outside
+_fig_style_inline = "margin-block:0.25em;margin-inline:0.25em" # its 40px by defualt, ruins space, not working in CSS outside
 
-def image(data=None,width='95%',caption=None, as_figure = True, **kwargs):
+def image(data=None,width='95%',caption=None, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     You can provide following to `data` parameter:
         
@@ -349,8 +350,6 @@ def image(data=None,width='95%',caption=None, as_figure = True, **kwargs):
     - A url to image file.
     - A str/bytes object containing image data.  
     - A str like "clip:image.png" will load an image saved using `Slides.clip_image('image.png')`. 
-
-    If `as_figure = False` caption is not used.
     """
     if isinstance(width,int):
         width = f'{width}px'
@@ -362,52 +361,66 @@ def image(data=None,width='95%',caption=None, as_figure = True, **kwargs):
     
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
+    return html('figure', img.value + _fig_caption(caption), className='zoom-child', style = _fig_style_inline)  
 
-    if not as_figure:
-        return img
-    
-    cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
-    return html('figure', img.value + cap, className='zoom-child', style = _fig_style_inline)  
-
-def svg(data=None,width = '95%',caption=None, as_figure=True, **kwargs):
+def svg(data=None,width = '95%',caption=None, **kwargs):
     """Display svg file or svg string/bytes with additional customizations. 
     `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
-    
-    If `as_figure = False` caption is not used.
     """
     svg = SVG(data=data, **kwargs)._repr_svg_()
-    
-    if not as_figure:
-        return XTML(svg)
-    
-    cap = f'<figcaption class="no-zoom">{caption}</figcaption>' if caption else ''
     style = f'width:{width}px;' if isinstance(width,int) else f'width:{width};' + _fig_style_inline
-    return html('figure', svg + cap, className='zoom-child', style=style) 
+    return html('figure', svg + _fig_caption(caption), className='zoom-child', style=style) 
 
 
 def iframe(src, width='100%',height='auto',**kwargs):
     "Display `src` in an iframe. `kwrags` are passed to IPython.display.IFrame"
     f = IFrame(src,width,height, **kwargs)
     return XTML(f._repr_html_())
+    
+    
+def styled(obj, className=None, **css_inline_props):
+    """Add a class to a given object, whether a widget or html/IPYthon object.
+    CSS inline style properties should be given with names including '-' replaced with '_' but values should not.
+    Only a subset of inline properties take effect if obj is a widget.
 
-def enable_zoom(obj):
+    ::: note-tip
+        Objects other than widgets will be wrapped in a 'div' tag. Use `html` function if you need more flexibility.
+    """
+    kwargs = {k.replace('_','-'):v for k,v in css_inline_props.items()}
+    style = ''.join(f"{k}:{v};" for k,v in kwargs.items())
+    klass = className if isinstance(className, str) else ''
+
+    if isinstance(obj,ipw.DOMWidget):
+        if hasattr(obj, 'layout'):
+            for k,v in kwargs.items():
+                setattr(obj.layout, k, v)
+        return obj.add_class(klass)
+    elif isinstance(obj, (str, bytes)):
+        return XTML(f'<div class="{klass}" style="{style}">{parse(obj, True)}</div>')
+    else:
+        return XTML(f'<div class="{klass}" style="{style}">{htmlize(obj)}</div>')
+    
+def inline(*objs, **flex_box_props):
+    "Align objs in a horizontal flexbox. This is alternative to columns. Widgets are supported!"
+    children = [obj if isinstance(obj, ipw.DOMWidget) else parse(obj, True) if isinstance(obj, (str, bytes)) else htmlize(obj) for obj in objs]
+    kwargs = {'gap':'0.5em', **flex_box_props, 'display':'inline-flex', 'flex_direction': 'row'} # don't let change flex itslef
+    
+    if any(isinstance(child, ipw.DOMWidget) for child in children):
+        return alt(
+            styled(ipw.HBox([
+                child if isinstance(child, ipw.DOMWidget) else HtmlWidget(child) for child in children
+            ]), **kwargs), 
+        lambda w: '\n'.join(child.value if isinstance(child, (ipw.HTML, HtmlWidget)) else ''  for child in w.children)
+        )
+    
+    return styled('\n'.join(children), **kwargs)
+
+def zoomable(obj):
     "Wraps a given obj in a parent with 'zoom-child' class or add 'zoom-self' to widget, whether a widget or html/IPYthon object"
     if isinstance(obj,ipw.DOMWidget):
         return obj.add_class('zoom-self')
     else:
-        return classed(obj, 'zoom-child')
-    
-def classed(obj, className):
-    "Add a class to a given object, whether a widget or html/IPYthon object and pass to `write` command."
-    if not isinstance(className,str):
-        raise TypeError('className must be a string!')
-    if isinstance(obj,(str,bytes)):
-        raise TypeError('Cannnot add class to strings/bytes! Use `::: className [indented block on new line]` pattern in markdown instead.')
-    
-    if isinstance(obj,ipw.DOMWidget):
-        return obj.add_class(className)
-    else:
-        return XTML(f'<div class="{className}">{htmlize(obj)}</div>')
+        return styled(obj, 'zoom-child')
 
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
@@ -474,7 +487,11 @@ def html(tag, children = None,className = None,**node_attrs):
 def vspace(em = 1):
     "Returns html node with given height in `em`."
     return html('div',style=f'height:{em}em;')
- 
+
+def hspace(em = 1):
+    "Returns html node with given height in `em`."
+    return html('div',style=f'width:{em}em;')
+
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""

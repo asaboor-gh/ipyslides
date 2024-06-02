@@ -87,19 +87,23 @@ del PyMarkdown_Extender
 
 _special_funcs = {
     "vspace": "number in units of em",
+    "hspace": "number in units of em",
     "alert": "text",
     "color": "text",
-    "image": "path/src or clip:filename",
-    "raw": "text",
-    "svg": "path/src",
-    "iframe": "src",
     "sub": "text",
     "sup": "text",
     "today": "fmt like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
+    "image": "path/src or clip:filename",
+    "raw": "text",
+    "svg": "path/src",
+    "iframe": "src",
     "details": "text",
-    "center": "text or \`{variable}\`",
-}  # align-center should be at end of all
+    "inline": "keep objects inline",
+    "styled": "style objects with CSS classes and inline styles",
+    "zoomable": "zoom a block of html when hovered",
+    "center": "text or \`{variable}\`", # should be last
+}
 
 _code_ = """
 ```python run
@@ -158,7 +162,7 @@ def capture_content(stdout: bool = True, stderr: bool = True, display: bool = Tr
         builtins.print = bprint
 
 
-def resolve_objs_on_slide(slide_instance, text_chunk):
+def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
     # notes`This is a note for current slide`
     all_matches = re.findall(
@@ -172,7 +176,9 @@ def resolve_objs_on_slide(slide_instance, text_chunk):
     all_matches = re.findall(r"cite\`(.*?)\`", text_chunk, flags=re.DOTALL)
     for match in all_matches:
         key = match.strip()
-        text_chunk = text_chunk.replace(f"cite`{match}`", slide_instance._cite(key), 1)
+        xmd_key = f"PrivateXmdVar{len(xmd_instance._vars)}X"
+        xmd_instance._vars[xmd_key] = slide_instance._cite(key) # need to store to avoid conflict with img[]`` etc.
+        text_chunk = text_chunk.replace(f"cite`{match}`", xmd_key , 1)
     
     # section`This is section title`
     all_matches = re.findall(
@@ -363,7 +369,7 @@ class XMarkdown(Markdown):
 
         if self._slides and self._slides.this: # under building slide
             xmd = resolve_objs_on_slide(
-                self._slides, xmd
+                self, self._slides, xmd
             )  # Resolve objects in xmd related to current slide
 
 
@@ -550,7 +556,7 @@ class XMarkdown(Markdown):
         # Replace functions with arguments
         for func in _special_funcs.keys():
             all_matches = re.findall(
-                rf"{func}\[(.*?)\]\`(.*?)\`",
+                rf"{func}\[(.*?)\]\`(.*?)\`", # three or one backticks
                 html_output,
                 flags=re.DOTALL | re.MULTILINE,
             )
@@ -675,3 +681,6 @@ def fmt(text, **kwargs):
         return xtr(text).with_ns(_get_ns(text, 2, **kwargs)) # should return as string to be parsed
     else: # should not allow anything else because it will cause issues in Makrdown formatting
         return TypeError(f"fmt expects a str, got {type(text)}!")
+    
+def _fig_caption(text): # need here to use in many modules
+    return f'<figcaption class="no-zoom">{parse(text,True)}</figcaption>' if text else ''

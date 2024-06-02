@@ -243,7 +243,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'overflow':'hidden', # Firefox 
                 'mjx-c, .MathJax span': {"color":"var(--heading-color)",}, # MathJax span is for export
             },
-            'h1:first-of-type': {'margin-block-start':'0em !important',},
             'h1': {'font-size':'2.2em'},
             'h2': {'font-size':'1.7em'},
             'h3': {'font-size':'1.5em'},
@@ -407,7 +406,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'figcaption': {
                 'font-size':'0.8em !important',
                 'line-height':'1em !important',
-                'padding-top':'0.2em !important',
+                'padding':'0.5em 1.5em !important',
             },
             '.columns':{
                 'width':'100%',

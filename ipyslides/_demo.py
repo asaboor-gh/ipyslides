@@ -59,7 +59,7 @@ def demo_slides(slides):
     section`Adding informative TOC` 
     ```toc ### Contents
     vspace`2` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
-                                       
+                                    
     - Item 1
     - Item 2
 
