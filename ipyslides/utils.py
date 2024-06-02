@@ -9,6 +9,7 @@ import os, re
 import datetime
 import inspect
 
+from types import MethodType
 from pathlib import Path
 from io import BytesIO # For PIL image
 from contextlib import contextmanager, suppress
@@ -376,8 +377,9 @@ def iframe(src, width='100%',height='auto',**kwargs):
     "Display `src` in an iframe. `kwrags` are passed to IPython.display.IFrame"
     f = IFrame(src,width,height, **kwargs)
     return XTML(f._repr_html_())
-    
-    
+
+_patch_display = lambda obj: setattr(obj, 'display', MethodType(XTML.display, obj)) # to be consistent with output displayable
+
 def styled(obj, className=None, **css_inline_props):
     """Add a class to a given object, whether a widget or html/IPYthon object.
     CSS inline style properties should be given with names including '-' replaced with '_' but values should not.
@@ -394,6 +396,7 @@ def styled(obj, className=None, **css_inline_props):
         if hasattr(obj, 'layout'):
             for k,v in kwargs.items():
                 setattr(obj.layout, k, v)
+        _patch_display(obj)
         return obj.add_class(klass)
     elif isinstance(obj, (str, bytes)):
         return XTML(f'<div class="{klass}" style="{style}">{parse(obj, True)}</div>')
@@ -418,6 +421,7 @@ def inline(*objs, **flex_box_props):
 def zoomable(obj):
     "Wraps a given obj in a parent with 'zoom-child' class or add 'zoom-self' to widget, whether a widget or html/IPYthon object"
     if isinstance(obj,ipw.DOMWidget):
+        _patch_display(obj)
         return obj.add_class('zoom-self')
     else:
         return styled(obj, 'zoom-child')
@@ -425,7 +429,9 @@ def zoomable(obj):
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
     if isinstance(obj,ipw.DOMWidget):
-        return ipw.Box([obj]).add_class('align-center') # needs to wrap in another for cenering
+        out = ipw.Box([obj]).add_class('align-center') # needs to wrap in another for cenering
+        _patch_display(out)
+        return out
     else:
         return XTML(f'<div class="align-center">{htmlize(obj)}</div>')
     
