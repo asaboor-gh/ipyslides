@@ -473,7 +473,7 @@ class BaseSlides:
             self.run_doc(self.alt,'Slides')
             
             members = sorted((
-                'alert block bokeh2html bullets styled inline format_html fmt color cols details doc sub sup '
+                'alert block bokeh2html bullets styled format_html fmt color cols details doc sub sup '
                 'today error zoomable format_css highlight html iframe image keep_format notify plt2html '
                 'raw rows set_dir sig textbox suppress_output suppress_stdout svg vspace'
             ).split())
@@ -557,9 +557,10 @@ class BaseSlides:
                 - You can also zoom in this part by pressing `Z` key while mouse is over this part.
             ''')
         with self.next_slide():
-            self.inline('## SVG Icons',
-                'Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well'
-            ).display()
+            self.write('''
+                ## SVG Icons
+                Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
+            ''')
             self.write(' '.join([f'`{k}`: ' + self.icon(k,color='crimson').svg for k in self.icon.available]))
             
             with self.code.context():

@@ -99,7 +99,6 @@ _special_funcs = {
     "svg": "path/src",
     "iframe": "src",
     "details": "text",
-    "inline": "keep objects inline",
     "styled": "style objects with CSS classes and inline styles",
     "zoomable": "zoom a block of html when hovered",
     "center": "text or \`{variable}\`", # should be last
@@ -541,53 +540,39 @@ class XMarkdown(Markdown):
         # Replace variables first to have small data # ns let avoiding huge dictionary unpacking
         html_output = re.sub(r"\`\{(.*?)\}\`", lambda match: handle_var(hfmtr.format(match.group()[1:-1], ns = user_ns)), html_output, flags=re.DOTALL)
 
-        # Replace inline one argumnet functions
+        # Replace inline  functions
         from . import utils  # Inside function to avoid circular import
 
         for func in _special_funcs.keys():
             all_matches = re.findall(
-                rf"{func}\`(.*?)\`", html_output, flags=re.DOTALL | re.MULTILINE
-            )
-            for match in all_matches:
+                rf"{func}(\[.*?\])?\`(.*?)\`", html_output, flags=re.DOTALL | re.MULTILINE
+            ) # returns two matches always
+            for m1, m2 in all_matches:
                 _func = getattr(utils, func)
-                _out = (_func(match) if match else _func()).value # If no argument, use default
-                html_output = html_output.replace(f"{func}`{match}`", handle_var(_out), 1)
+                arg0 = m2.strip() # avoid spaces in this
 
-        # Replace functions with arguments
-        for func in _special_funcs.keys():
-            all_matches = re.findall(
-                rf"{func}\[(.*?)\]\`(.*?)\`", # three or one backticks
-                html_output,
-                flags=re.DOTALL | re.MULTILINE,
-            )
-            for match in all_matches:
-                arg0 = match[1].strip()
-                args = [
-                    v.replace("__COM__", ",")
-                    for v in match[0]
-                    .replace("\=", "__EQ__")
-                    .replace("\,", "__COM__")
-                    .split(",")
-                ]  # respect escaped = and ,
-                kws = {
-                    k.strip().replace("__EQ__", "="): v.strip().replace("__EQ__", "=")
-                    for k, v in [a.split("=") for a in args if "=" in a]
-                }
-                args = [a.strip().replace("__EQ__", "=") for a in args if "=" not in a]
-                _func = getattr(utils, func)
+                if not m1:
+                    _out = (_func(arg0) if arg0 else _func()).value # If no argument, use default
+                    html_output = html_output.replace(f"{func}`{m2}`", handle_var(_out), 1)
+                else: # func with arguments
+                    args = [
+                        v.replace("__COM__", ",")
+                        for v in m1.strip('[]') # [] will be there
+                        .replace("\=", "__EQ__")
+                        .replace("\,", "__COM__")
+                        .split(",")
+                    ]  # respect escaped = and ,
+                    kws = {
+                        k.strip().replace("__EQ__", "="): v.strip().replace("__EQ__", "=")
+                        for k, v in [a.split("=") for a in args if "=" in a]
+                    }
+                    args = [a.strip().replace("__EQ__", "=") for a in args if "=" not in a]
 
-                kws.pop('widths', None) # in markdown, its very complicated to handle widths for inline as we don't know how many items there would be, so drop it
-
-                try:
-                    _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)).value
-                     # If no argument, use default 
-                    html_output = html_output.replace(
-                        f"{func}[{match[0]}]`{match[1]}`", handle_var(_out), 1
-                    )
-                except Exception as e:
-                    raise Exception(
-                        f"Error in {func}[{match[0]}]`{match[1]}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside [{match[0]}]"
-                    )
+                    try:
+                        _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)).value # If no argument, use default 
+                        html_output = html_output.replace(f"{func}{m1}`{m2}`", handle_var(_out), 1)
+                    except Exception as e:
+                        raise Exception(f"Error in {func}{m1}`{m2}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside {m1}")
 
         # Replace columns at end because they will convert HTML
         all_cols = re.findall(

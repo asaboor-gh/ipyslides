@@ -402,6 +402,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                     'align-items':'center !important',
                     'justify-content':'center !important',
                 },
+                "img, svg" : {"margin": "auto",}, # keep in center if space available
             },
             'figcaption': {
                 'font-size':'0.8em !important',

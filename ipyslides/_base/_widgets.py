@@ -140,7 +140,7 @@ class HtmlWidget(anywidget.AnyWidget):
         return f'{self.value:{spec}}'
     
     def display(self):
-        "Display this HTML object inline"
+        "Display this HTML object."
         return display(self, metadata= {'text/html':self.value}) # metadata to direct display
         
 

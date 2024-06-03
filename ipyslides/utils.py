@@ -1,5 +1,5 @@
 _attrs = ['alt','alert', 'block', 'bullets', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
-            'image','svg','iframe', 'inline', 'format_html','format_css','keep_format', 'run_doc',
+            'image','svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
             'raw', 'rows', 'zoomable','html','sig','styled', 'doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
@@ -19,7 +19,7 @@ from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 import ipywidgets as ipw
 
-from .formatters import XTML, fix_ipy_image, htmlize, serializer
+from .formatters import XTML, fix_ipy_image, htmlize, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, AltForWidget
 from ._base._widgets import HtmlWidget
@@ -380,7 +380,7 @@ def iframe(src, width='100%',height='auto',**kwargs):
 
 _patch_display = lambda obj: setattr(obj, 'display', MethodType(XTML.display, obj)) # to be consistent with output displayable
 
-def styled(obj, className=None, **css_inline_props):
+def styled(obj, className=None, **css_props):
     """Add a class to a given object, whether a widget or html/IPYthon object.
     CSS inline style properties should be given with names including '-' replaced with '_' but values should not.
     Only a subset of inline properties take effect if obj is a widget.
@@ -388,52 +388,20 @@ def styled(obj, className=None, **css_inline_props):
     ::: note-tip
         Objects other than widgets will be wrapped in a 'div' tag. Use `html` function if you need more flexibility.
     """
-    kwargs = {k.replace('_','-'):v for k,v in css_inline_props.items()}
-    style = ''.join(f"{k}:{v};" for k,v in kwargs.items())
     klass = className if isinstance(className, str) else ''
 
     if isinstance(obj,ipw.DOMWidget):
         if hasattr(obj, 'layout'):
+            kwargs = {k.replace('_','-'):v for k,v in css_props.items()}
             for k,v in kwargs.items():
                 setattr(obj.layout, k, v)
         _patch_display(obj)
         return obj.add_class(klass)
     elif isinstance(obj, (str, bytes)):
-        return XTML(f'<div class="{klass}" style="{style}">{parse(obj, True)}</div>')
+        return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{parse(obj, True)}</div>')
     else:
-        return XTML(f'<div class="{klass}" style="{style}">{htmlize(obj)}</div>')
+        return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{htmlize(obj)}</div>')
     
-def inline(*objs, widths = None, **flex_box_props):
-    "Align objs in a horizontal flexbox. This is alternative to columns. Widgets are supported!"
-    children = [obj if isinstance(obj, ipw.DOMWidget) else parse(obj, True) if isinstance(obj, (str, bytes)) else htmlize(obj) for obj in objs]
-    kwargs = {'gap':'0.2em', 'width':'100%', **flex_box_props, 'display':'inline-flex', 'flex_flow': 'row nowrap'} # don't let change flex itslef, and avoid collapse in export by width
-    
-    if widths is not None:
-        if isinstance(widths, (list, tuple)) and (len(widths) == len(objs)):
-            for w in widths:
-                if not isinstance(w,(int, float)):
-                    raise TypeError(f'widths must be numbers, got {w}')
-            widths = [int(w/sum(widths)*100) for w in widths]
-        else:
-            raise Exception("widths should be list/tuple of same size as objs!")
-    
-        widths = [f'{w}%' for w in widths]
-    
-    if any(isinstance(child, ipw.DOMWidget) for child in children):
-        children = [child if isinstance(child, ipw.DOMWidget) else HtmlWidget(child) for child in children]
-        out = styled(ipw.HBox(children), **kwargs)
-            
-        if widths:
-            for c, w in zip(children, widths):
-                c.layout.width = w
-
-        return alt(out, serializer.get_func(out))
-    
-    if widths:
-        children = [f'<div style="width:{w};overflow-x:auto;height:auto;">{child}</div>' for child, w in zip(children, widths)]
-    
-    return styled('\n'.join(children), **kwargs)
-
 def zoomable(obj):
     "Wraps a given obj in a parent with 'zoom-child' class or add 'zoom-self' to widget, whether a widget or html/IPYthon object"
     if isinstance(obj,ipw.DOMWidget):
@@ -508,19 +476,17 @@ def html(tag, children = None,className = None,**node_attrs):
 
 def vspace(em = 1):
     "Returns html node with given height in `em`."
-    return html('div',style=f'height:{em}em;')
+    return html('span',style=f'height:{em}em;display:inline-block;') # span with inline display can be used inside <p>
 
 def hspace(em = 1):
     "Returns html node with given height in `em`."
-    return html('div',style=f'width:{em}em;display:inline-block;') # keep continue on same line
+    return html('span',style=f'width:{em}em;display:inline-block;') # span with inline display can be used inside <p>
 
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""
     css_props = {'display':'inline-block','white-space': 'pre', **css_props} # very important to apply text styles in order
-    # white-space:pre preserves whitspacing, text will be viewed as written. 
-    _style = ' '.join([f"{key.replace('_','-')}:{value};" for key,value in css_props.items()])
-    return XTML(f"<span class='text-box' style = {_style!r}>{text}</span>")  # markdown="span" will avoid inner parsing
+    return XTML(f'<span class="text-box" {_inline_style(css_props)}>{text}</span>')  # markdown="span" will avoid inner parsing
 
 def alert(text):
     "Alerts text!"
@@ -537,11 +503,11 @@ def keep_format(plaintext_or_html):
     return XTML(plaintext_or_html) 
 
 def rows(*objs):
-    "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column. Widgets are not supported in this, use `write` or `inline` methods for that."
+    "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."
     return format_html(objs) # Its already a tuple, so will show in a column with many rows
 
 def cols(*objs,widths=None):
-    "Returns HTML containing multiple columns of given widths. Widgets are not supported in this, use `write` or `inline` methods for that."
+    "Returns HTML containing multiple columns of given widths."
     return format_html(*objs,widths=widths)
 
 def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class
@@ -560,9 +526,8 @@ def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} cl
     wr = Writer(*objs,widths = widths) # Displayed
     wr._box.add_class('block' + (f'-{suffix}' if suffix else '')) # Add class to box
     if make_grid:
-        wr._box.layout.display = 'grid' # Make it grid
+        wr._box.layout.display = 'grid' # Make it grid, will be automatically exported to html with this style
         wr._box.layout.grid_gap = '1em 0px' # Remove extra gap in columns, but keep row gap
-        wr._extra_style = 'style="display:grid;grid-gap:1em 0px;"' # Add extra style to box for export html to use
         
     if not any([(wr._slides and wr._slides.this), wr._in_proxy]):
         return wr.update_display() # Update in usual cell to have widgets working

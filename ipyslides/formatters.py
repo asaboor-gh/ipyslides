@@ -34,7 +34,7 @@ class XTML(HTML):
         return str(self._repr_html_())
     
     def display(self):
-        "Display this HTML object inline"
+        "Display this HTML object."
         display(self)
     
     @property
@@ -176,6 +176,17 @@ def highlight(code, language='python', name = None, className = None, style='def
         {_style}\n{start}
         <pre>{code_}
         </pre>\n{end}</div>''')
+
+def _inline_style(kws_or_widget):
+    "CSS inline style from keyword arguments having _ inplace of -. Handles widgets layout keys automatically."
+    if isinstance(kws_or_widget, ipw.DOMWidget):
+        kws = {k:v for k,v in kws_or_widget.layout.get_state().items() if v and (k[0]!='_')}
+    elif isinstance(kws_or_widget, dict):
+        kws = kws_or_widget
+    else:
+        raise TypeError("expects dict or ipywidgets.Layout!")
+    out = ''.join(f"{k.replace('_','-')}:{v};" for k,v in kws.items())
+    return f'style="{out}"'
     
 class Serializer:
     def __init__(self):
@@ -291,9 +302,8 @@ class Serializer:
         
         kwargs.update({k:v for k,v in box_widget.layout.get_state().items() if v and k[0]!='_'}) # only those if not None
         className = ' '.join(box_widget._dom_classes) # To keep style of HTML widget, latest as well
-        style = ''.join(f"{k.replace('_','-')}:{v};" for k,v in kwargs.items())
         content = '\n'.join((self.get_func(child) or (lambda child: ''))(child) for child in box_widget.children)
-        return f'<div class="{className}" style="{style}">{content}</div>'
+        return f'<div class="{className}" {_inline_style(kwargs)}>{content}</div>'
     
     def _alt_html(self, html_widget):
         """Convert ipywidgets.HTML object to HTML string."""
@@ -301,8 +311,7 @@ class Serializer:
             raise TypeError(f"Expects ipywidgets.(HTML/HTMLMath) or ipyslides's HtmlWidget, got {type(html_widget)}")
 
         className = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
-        style = ''.join(f"{k.replace('_','-')}:{v};" for k,v in html_widget.layout.get_state().items() if v and k[0]!='_')
-        return f'<div class="{className}" style="{style}">{html_widget.value}</div>' 
+        return f'<div class="{className}" {_inline_style(html_widget)}>{html_widget.value}</div>' 
     
     def _alt_output(self, output_widget):
         "Convert objects in ipywidgets.Output to HTML string."
@@ -312,7 +321,6 @@ class Serializer:
         from .xmd import raw # avoid circular import
         
         className = ' '.join(output_widget._dom_classes) # To keep style of Output widget, latest as well
-        style = ''.join(f"{k.replace('_','-')}:{v};" for k,v in output_widget.layout.get_state().items() if v and k[0]!='_')
         content = ''
         for d in output_widget.outputs:
             if 'text' in d:
@@ -323,7 +331,7 @@ class Serializer:
                 elif 'text/latex' in d['data']:
                     content += d['data']['text/latex']
         
-        return f'<div class="{className}" style="{style}">{content}</div>' 
+        return f'<div class="{className}" {_inline_style(output_widget)}>{content}</div>' 
     
 
     def unregister(self, obj_type):
