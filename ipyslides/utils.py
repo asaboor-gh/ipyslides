@@ -19,7 +19,7 @@ from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 import ipywidgets as ipw
 
-from .formatters import XTML, fix_ipy_image, htmlize
+from .formatters import XTML, fix_ipy_image, htmlize, serializer
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, AltForWidget
 from ._base._widgets import HtmlWidget
@@ -403,18 +403,34 @@ def styled(obj, className=None, **css_inline_props):
     else:
         return XTML(f'<div class="{klass}" style="{style}">{htmlize(obj)}</div>')
     
-def inline(*objs, **flex_box_props):
+def inline(*objs, widths = None, **flex_box_props):
     "Align objs in a horizontal flexbox. This is alternative to columns. Widgets are supported!"
     children = [obj if isinstance(obj, ipw.DOMWidget) else parse(obj, True) if isinstance(obj, (str, bytes)) else htmlize(obj) for obj in objs]
-    kwargs = {'gap':'0.5em', **flex_box_props, 'display':'inline-flex', 'flex_direction': 'row'} # don't let change flex itslef
+    kwargs = {'gap':'0.2em', 'width':'100%', **flex_box_props, 'display':'inline-flex', 'flex_flow': 'row nowrap'} # don't let change flex itslef, and avoid collapse in export by width
+    
+    if widths is not None:
+        if isinstance(widths, (list, tuple)) and (len(widths) == len(objs)):
+            for w in widths:
+                if not isinstance(w,(int, float)):
+                    raise TypeError(f'widths must be numbers, got {w}')
+            widths = [int(w/sum(widths)*100) for w in widths]
+        else:
+            raise Exception("widths should be list/tuple of same size as objs!")
+    
+        widths = [f'{w}%' for w in widths]
     
     if any(isinstance(child, ipw.DOMWidget) for child in children):
-        return alt(
-            styled(ipw.HBox([
-                child if isinstance(child, ipw.DOMWidget) else HtmlWidget(child) for child in children
-            ]), **kwargs), 
-        lambda w: '\n'.join(child.value if isinstance(child, (ipw.HTML, HtmlWidget)) else ''  for child in w.children)
-        )
+        children = [child if isinstance(child, ipw.DOMWidget) else HtmlWidget(child) for child in children]
+        out = styled(ipw.HBox(children), **kwargs)
+            
+        if widths:
+            for c, w in zip(children, widths):
+                c.layout.width = w
+
+        return alt(out, serializer.get_func(out))
+    
+    if widths:
+        children = [f'<div style="width:{w};overflow-x:auto;height:auto;">{child}</div>' for child, w in zip(children, widths)]
     
     return styled('\n'.join(children), **kwargs)
 
@@ -496,7 +512,7 @@ def vspace(em = 1):
 
 def hspace(em = 1):
     "Returns html node with given height in `em`."
-    return html('div',style=f'width:{em}em;')
+    return html('div',style=f'width:{em}em;display:inline-block;') # keep continue on same line
 
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
@@ -521,11 +537,11 @@ def keep_format(plaintext_or_html):
     return XTML(plaintext_or_html) 
 
 def rows(*objs):
-    "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."
+    "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column. Widgets are not supported in this, use `write` or `inline` methods for that."
     return format_html(objs) # Its already a tuple, so will show in a column with many rows
 
 def cols(*objs,widths=None):
-    "Returns HTML containing multiple columns of given widths."
+    "Returns HTML containing multiple columns of given widths. Widgets are not supported in this, use `write` or `inline` methods for that."
     return format_html(*objs,widths=widths)
 
 def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class

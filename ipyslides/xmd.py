@@ -576,6 +576,8 @@ class XMarkdown(Markdown):
                 args = [a.strip().replace("__EQ__", "=") for a in args if "=" not in a]
                 _func = getattr(utils, func)
 
+                kws.pop('widths', None) # in markdown, its very complicated to handle widths for inline as we don't know how many items there would be, so drop it
+
                 try:
                     _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)).value
                      # If no argument, use default 
