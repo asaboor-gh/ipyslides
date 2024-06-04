@@ -64,7 +64,6 @@ def layout_css(accent_color, aspect):
                     "position": "absolute !important",
                     "right": "0 !important",
                     "bottom": "0 !important",
-                    "backdrop-filter": "blur(8px)",
                     "padding": "0 6px !important",
                 },
                 ".Progress-Box": {
@@ -311,8 +310,10 @@ def layout_css(accent_color, aspect):
                 "position": "absolute !important",
                 "left": "0 !important",
                 "bottom": "3px !important", # leave space for progressbar
-                "background": "var(--primary-bg)", # Do not use important, let user change it with set_css
                 "width": "100% !important",
+                "^.Show": {
+                    "background": "var(--primary-bg)", # Do not use important, let user change it with set_css
+                },
                 "^,^ > div": {
                     "padding": "0px",
                     "margin": "0px",
@@ -370,7 +371,7 @@ def layout_css(accent_color, aspect):
             ".Controls": {
                 "position": "absolute",
                 "right": "8px !important",
-                "bottom": "12px !important",
+                "bottom": "9px !important", # bring center at top of Navbox for symmetry
                 "z-index": "4",  # below matplotlib fullsreen
                 "padding": "0 !important",
                 "justify-content": " flex-end !important",

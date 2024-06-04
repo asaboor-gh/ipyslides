@@ -295,7 +295,7 @@ def _format_css(props : dict, allow_root_attrs = False):
     allowed_attrs = {k:v for k,v in root_attrs.items() if "background" in k} # only allow background CSS to change at root
     if allow_root_attrs:
         if allowed_attrs: # Applies to background mostly
-            _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .NavWrapper, {uclass} .BackLayer .Front',), allowed_attrs)
+            _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .NavWrapper.Show, {uclass} .BackLayer .Front',), allowed_attrs)
             if (root_attrs := {k:v for k,v in root_attrs.items() if k not in allowed_attrs}):
                 print(f'Skipping attributes: \n{root_attrs}\nat root level of props!\nOnly background-related attributes are allowed at top!' )
 

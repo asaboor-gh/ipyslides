@@ -271,6 +271,11 @@ class LayoutSettings:
         numbering = self._footer_kws["numbering"]
         date = self._footer_kws["date"]
 
+        if any([text, date]):
+            self._slides.widgets.navbox.add_class("Show")
+        else:
+            self._slides.widgets.navbox.remove_class("Show")
+
         if date:
             text += (
                 " | " if text else ""
