@@ -1,6 +1,6 @@
 import sys, os, json, re, textwrap, math
 from contextlib import contextmanager, suppress
-from collections import namedtuple
+from collections import Iterable
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
@@ -93,7 +93,7 @@ class Slides(BaseSlides):
 
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(
-                self._slide, magic_kind="line_cell", magic_name="slide"
+                self._slide, magic_kind="cell", magic_name="slide"
             )
             self.shell.register_magic_function(
                 self.__title, magic_kind="cell", magic_name="title"
@@ -650,9 +650,29 @@ class Slides(BaseSlides):
     def capture_proxy(self, slide_number, proxy_index):
         "This is a shortcut for `Slides.get(slide_number).proxies[proxy_index].capture()`."
         return self.get(slide_number).proxies[proxy_index].capture()
+    
+    def _fix_slide_number(self, number):
+        if str(number) != '-1': # handle %%slide -1 togther with others
+            return number
+        
+        code = self.shell.get_parent().get('content',{}).get('code','')
+        matches = re.findall("([^a-zA-Z]slide.*?-1)|(frames.*?-1)|(from_markdown.*?-1)|(sync_with_file.*?-1)", code,flags=re.DOTALL)
+        number = self._next_number
+        if matches:
+            if len(matches) > 1:
+                number -= (len(matches) - 1) # same cell multislides create a jump in numbering
+            
+            for ms in matches:
+                for m in ms:
+                    if m:
+                        code = code.replace(m, f"{m[:-2]}{number}",1)
+                        number += 1
+            self.shell.set_next_input(code, True) # for notebook
+    
+        return self._next_number # for python file as well as first run of cell in notebook
 
     # defining magics and context managers
-    def _slide(self, line, cell=None):
+    def _slide(self, line, cell):
         """Capture content of a cell as `slide`.
             ---------------- Cell ----------------
             %%slide 1
@@ -669,13 +689,12 @@ class Slides(BaseSlides):
             - Markdown before the first (--) separator is written on all frames. 
             - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
             - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
-            - Use `%slide [n,m,s,f]` to bring up code with next slide with numbering in Jupyter Notebook! Other cell code is preserved.
+            - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
 
         """
-        if cell is None:
-            return self._add_slide_with_number(line)
-        
         line = line.strip().split()  # VSCode bug to inclue \r in line
+        line[0] = str(self._fix_slide_number(line[0])) # fix inplace as string here
+
         if line and not line[0].isnumeric():
             raise TypeError(
                 f"You should use %%slide integer >= 1 -m(optional), got {line}"
@@ -702,7 +721,7 @@ class Slides(BaseSlides):
             
             self._editing_index = None
             
-            @self.frames(int(slide_number_str), *frames, repeat=False) # here repeat handled above
+            @self.frames(int(slide_number_str), frames, repeat=False) # here repeat handled above
             def make_slide(idx, frm):
                 if (self.this.markdown != frm) or (idx == 0):
                     self._editing_index = self.this.index # Go to latest editing markdown frame, or start of frames
@@ -720,38 +739,15 @@ class Slides(BaseSlides):
                 s.set_source(cell, "python")  # Update cell source beofore running
                 self.run_cell(cell)  #
 
-    def _add_slide_with_number(self, option):
-        "Adds slide functions with latest number in cell. Indentation is repected!"
-        opt = option.strip() # clean option is important, and option itself is needed for replace at end
-        
-        if opt not in ["n","m","s","f"]:
-            raise Exception("line magic slide expects any of n, m, s, f as option!")
-
-        mapping = {"n": "%%slide {number}", "m": "%%slide {number} -m", "s": "with {name}.slide({number}):", "f": "@{name}.frames({number}, "}
-        code = mapping.get(opt, '').format(name=self._var_name, number=self._next_number) 
-        current_code = self.shell.get_parent().get('content',{}).get('code','')
-        
-        if '%slide' in current_code: # should not change anything from notebook
-            new_code = current_code.replace(f"%slide {option}", code)
-        
-        self.shell.set_next_input(new_code, replace=True)
-
-    @property
-    def _var_name(self):
-        "User defined name in notebook for self."
-        names = [k for k, v in self.shell.user_ns.items() if v is self]
-        if names:
-            return names[0]
-        else:
-            raise RuntimeError("Slides object was not initialized in current session!")
-
     @contextmanager
     def slide(self, slide_number):
         """Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic.
         
         ::: note-info
-            Use this function with 'next_' prefix to enable auto numbeing of slides inside python file.
+            Use this function with '-1' to auto number current slide.
         """
+        slide_number = self._fix_slide_number(slide_number)
+
         if not isinstance(slide_number, int):
             raise ValueError(f"slide_number should be int >= 1, got {slide_number}")
 
@@ -828,12 +824,12 @@ class Slides(BaseSlides):
         self.notify('Dynamic content updated everywhere!')
                 
 
-    def frames(self, slide_number, *objs, repeat=False):
+    def frames(self, slide_number, iterable, repeat=False):
         """Decorator for inserting frames on slide, define a function with two arguments (frame_index, frame_content).
-        You can also call it as a function, e.g. `.frames(1,*objs)(<optional function>)`.
+        You can also call it as a function, e.g. `.frames(1,objs)(<optional function>)`.
 
         ```python
-        @slides.frames(1,a,b,c) # slides 1.1, 1.2, 1.3 with content a,b,c
+        @slides.frames(1,[a,b,c]) # slides 1.1, 1.2, 1.3 with content a,b,c
         def f(frame_index, frame_content):
             do_something(frame_content)
             if frame_index == 0: # Main Slide
@@ -841,9 +837,9 @@ class Slides(BaseSlides):
             else:
                 print('This is frame', frame_index)
 
-        slides.frames(1,a,b,c)() # Auto writes the frames with same content as above
-        slides.frames(1,a,b,c, repeat = True)() # content is [a], [a,b], [a,b,c] from top to bottom
-        slides.frames(1,a,b,c, repeat = [(0,1),(1,2)])() # two frames with content [a,b] and [b,c]
+        slides.frames(1,[a,b,c])() # Auto writes the frames with same content as above
+        slides.frames(1,[a,b,c], repeat = True)() # content is [a], [a,b], [a,b,c] from top to bottom
+        slides.frames(1,[a,b,c], repeat = [(0,1),(1,2)])() # two frames with content [a,b] and [b,c]
         ```
 
         **Parameters**
@@ -858,18 +854,23 @@ class Slides(BaseSlides):
         No return of defined function required, if any, only should be display/show etc.
         
         ::: note-info
-            Use this function with 'next_' prefix to enable auto numbeing of slides inside python file.
+            Use this function with '-1' to auto number current slide.
         """
+        slide_number = self._fix_slide_number(slide_number)
 
         def _frames(func = lambda idx, obj: self.write(obj)):  # write if called without function
+
             if not isinstance(slide_number, int):
                 return print(f"slide_number expects integer, got {slide_number!r}")
 
             if slide_number < 0:  # title slide is 0
                 raise ValueError(f"slide_number should be >= 1, got {slide_number!r}")
+            
+            if not isinstance(iterable, Iterable):
+                raise TypeError(f"iterable should be a sequence of objects, got {type(iterable)}")
 
             if repeat == True:
-                _new_objs = [objs[:i] for i in range(1, len(objs) + 1)]
+                _new_objs = [iterable[:i] for i in range(1, len(iterable) + 1)]
             elif isinstance(repeat, (list, tuple)):
                 _new_objs = []
                 for k, seq in enumerate(repeat):
@@ -877,9 +878,9 @@ class Slides(BaseSlides):
                         raise TypeError(
                             f"Expected list or tuple at index {k} of `repeat`, got {seq}"
                         )
-                    _new_objs.append([objs[s] for s in seq])
+                    _new_objs.append([iterable[s] for s in seq])
             else:
-                _new_objs = objs
+                _new_objs = iterable
 
             if len(_new_objs) > 100:  # 99 frames + 1 main slide
                 raise ValueError(
@@ -1010,32 +1011,6 @@ class Slides(BaseSlides):
             [self._slides_dict[f"{slide_number}"] for slide_number in slide_numbers]
         )
     
-    def _verify_inside_pyfile(self, func):
-        if self.inside_jupyter_notebook(func): 
-            raise Exception(f"{func.__name__!r} should be called inside a .py file only. Use without 'next_' prefix and provide explicit slide number in Jupyter Notebook!")
-        
-    def next_slide(self):
-        "See docs of `slide` excpet need of a slide number."
-        self._verify_inside_pyfile(self.next_slide)
-        return self.slide(self._next_number)
-    
-    def next_frames(self, *objs, repeat=False):
-        "See docs of `frames` excpet need of a slide number."
-        self._verify_inside_pyfile(self.next_frames)
-        return self.frames(self._next_number, *objs, repeat=repeat)
-    
-    def next_from_markdown(self, content, trusted=False):
-        "See docs of `from_markdown` excpet need of a slide number."
-        self._verify_inside_pyfile(self.next_from_markdown)
-        return self.from_markdown(self._next_number, content, trusted=trusted)
-    
-    def next_number(self):
-        "Get next slide number if need inside a .py file, e.g. in slide magic or explicit numbering."
-        if self.inside_jupyter_notebook(self.next_number): 
-            raise Exception("'next_number' should be used inside a .py file only!")
-        return self._next_number
-
-
 # Make available as Singleton Slides
 _private_instance = Slides()  # Singleton in use namespace
 # This is overwritten below to just have a singleton

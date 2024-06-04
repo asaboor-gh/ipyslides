@@ -5,7 +5,7 @@ def demo_slides(slides):
     slides.close_view() # Close any previous view to speed up loading 10x faster on average
     slides.clear() # Clear previous content
     raw_source = slides.code.cast(__file__).raw
-    N = raw_source.count('.next_') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
+    N = raw_source.count('.slide') + raw_source.count('.from_markdown') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
     slides.create(*range(N)) # Create slides first, this is faster
     
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
@@ -27,7 +27,7 @@ def demo_slides(slides):
         vspace`2`Read instructions by clicking ℹ️ button in quick menu.
     """)
     #Demo for loading slides from a file or text block
-    s1, s2 = slides.next_from_markdown("""
+    s1, s2 = slides.from_markdown(-1, """
     section`Introduction` toc`### Contents`
     ---
     # Introduction
@@ -55,7 +55,7 @@ def demo_slides(slides):
         slides.write(f'alert`I was added at end by a given proxy, see the how it was done at the end of the slides`')
 
 
-    slides.next_from_markdown(f"""
+    slides.from_markdown(-1, f"""
     section`Adding informative TOC` 
     ```toc ### Contents
     vspace`2` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
@@ -74,7 +74,7 @@ def demo_slides(slides):
     """, trusted=True)
 
     # Matplotlib
-    with slides.next_slide() as sl:
+    with slides.slide(-1) as sl:
         slides.write('## Plotting with Matplotlib section`Plotting and DataFrame`')
         with slides.code.context(returns = True) as s:
             sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
@@ -97,7 +97,7 @@ def demo_slides(slides):
         except:
             df = '### Install `pandas` to view output'
 
-    with slides.next_slide():
+    with slides.slide(-1):
         slides.write(['## Writing Pandas DataFrame', df, source])
     
     with slides.code.context(returns = True) as s:
@@ -108,7 +108,7 @@ def demo_slides(slides):
         except:
             fig = '### Install `plotly` to view output'
 
-    with slides.next_slide():
+    with slides.slide(-1):
         slides.write(('## Writing Plotly Figure',fig, s))
 
     def race_plot():
@@ -132,7 +132,7 @@ def demo_slides(slides):
 
 
     # Interactive widgets.   
-    with slides.next_slide():
+    with slides.slide(-1):
         with slides.code.context(returns = True) as src:
             import ipywidgets as ipw
             
@@ -153,7 +153,7 @@ def demo_slides(slides):
             button.on_click(update_plot)
             update_plot(None) #Initialize plot
 
-    with slides.next_slide() as rslide:
+    with slides.slide(-1) as rslide:
         slides.write('''
             ## Dynamic Content without Widgets
             Use refresh button below to update plot! Compare with previous slide!
@@ -164,13 +164,13 @@ def demo_slides(slides):
 
         slides.write(lambda: slides.on_refresh(display_plot), rslide.get_source()) # Only first columns will update
 
-    slides.next_from_markdown('section`Simple Animations with Frames` toc`### Contents`')
+    slides.from_markdown(-1,'section`Simple Animations with Frames` toc`### Contents`')
 
     forward_skipper = slides.goto_button('Skip All Next Frames')
     backward_skipper = slides.goto_button('Skip Previous Frames', icon='minus')
     
     # Animat plot in slides  
-    @slides.next_frames(*range(14,19))
+    @slides.frames(-1,range(14,19))
     def func(idx, obj):
         if idx == 0:
             forward_skipper.display()
@@ -191,29 +191,29 @@ def demo_slides(slides):
         if idx == 0: #Only show source code of first frame
             s.show_lines([5]).display()
 
-    slides.next_from_markdown('section`Controlling Content on Frames` toc`### Contents`')
+    slides.from_markdown(-1,'section`Controlling Content on Frames` toc`### Contents`')
 
     # Frames structure
     boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
-    @slides.next_frames(*boxes, repeat=False)
+    @slides.frames(-1, boxes, repeat=False)
     def f(idx, obj):
         slides.write('# Frames with \n#### `repeat = False`')
         slides.write(obj)
 
-    @slides.next_frames(*boxes, repeat=True)
+    @slides.frames(-1, boxes, repeat=True)
     def f(idx, obj):
         slides.this.set_animation(None) #Disable animation for showing bullets list
         slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
         slides.bullets(obj, marker='💘').display()
 
-    @slides.next_frames(*boxes, repeat=[(0,1),(2,3)])
+    @slides.frames(-1, boxes, repeat=[(0,1),(2,3)])
     def f(idx, obj):
         slides.write('# Frames with \n#### `repeat = [(0,1),(2,3)]`')
         slides.write(*obj)
 
     # Youtube
     from IPython.display import YouTubeVideo
-    with slides.next_slide() as ys: # We will use this in next %%magic
+    with slides.slide(-1) as ys: # We will use this in next %%magic
         backward_skipper.display()
         forward_skipper.set_target()
         slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
@@ -232,7 +232,7 @@ def demo_slides(slides):
         ys.get_source().display(True) 
 
 
-    with slides.next_slide() as s:
+    with slides.slide(-1) as s:
         slides.write('## Block API\nNew `block` API is as robust as `write` command. On top of it, it makes single unit of related content.')
         slides.block_red(
             [
@@ -254,7 +254,7 @@ def demo_slides(slides):
         )
         s.get_source().display(True)
 
-    slides.next_from_markdown(slides.fmt('''
+    slides.from_markdown(-1, slides.fmt('''
     %++
     ## $ \LaTeX $ in Slides
     --
@@ -277,7 +277,7 @@ def demo_slides(slides):
     ```
     ''', var = "I was a variable" ), trusted=True)
 
-    with slides.next_slide() as some_slide:
+    with slides.slide(-1) as some_slide:
         slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')
         with slides.suppress_stdout(): # suppress stdout from register fuction below
             @slides.serializer.register(int)
@@ -288,12 +288,12 @@ def demo_slides(slides):
 
         some_slide.get_source().display()
 
-    with slides.next_slide():
+    with slides.slide(-1):
         slides.write('## This is all code to generate slides section`Code to Generate Slides`')
         slides.code.cast(slides.demo).display()
         slides.code.cast(__file__).display()
 
-    with slides.next_slide():
+    with slides.slide(-1):
         slides.write('Slides keep their full code if they are not made by @frames decorator!\n{.note .info}')
         slides.get_source().display()
 

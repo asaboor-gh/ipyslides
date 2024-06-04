@@ -78,9 +78,7 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 # Caveats!
 - Since Markdown is parsed using python (and we do not run notebook from outside e.g. with nbconvert), markdown cells are of no use. A better alternative is linking a markodwn file using `Slides.sync_with_file` and slides auto update when you save your edits. You can still write markdown in code cell with slide magic `%%slide number -m` to add to slides. 
 - Slide number is necessary to be tracked by user in notebook, because cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. To minimize this difficulty:
-    - Inside python scripts that run in linear fashion, you can use 
-    `Slides.next_[number,slide,frames,from_markdown]`. 
-    - Use `%slide [n,m,s,f]` to bring up code with next slide with numbering in Jupyter Notebook! Other cell code is preserved.
+    - Use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
 - Bounding box of slides for screenshots should be set by user (if not in fullscreen).
 
 ---

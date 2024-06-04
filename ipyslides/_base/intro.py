@@ -37,7 +37,7 @@ slides = isd.Slides()
 ```
 
 ```python
-@slides.frames(3,*objs)
+@slides.frames(3,objs)
 def func(frame_index, frame_content):
     write(frame_content) #This will create as many slides after the slide number 1 as length(objs)
 ```
@@ -47,8 +47,7 @@ slides # This displays slides if on the last line of cell, or use `slides.show()
 
 ::: note-info
     - You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
-    - Inside python script, you can use auto numbering with `Slides.next_[number,slide,frames,from_markdown]`.
-    - Use `%slide [n,m,s,f]` to bring up code with next slide with numbering in Jupyter Notebook! Other cell code is preserved.
+    - Use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
 
 ::: note-tip
     - Use `Slides.docs` to see upto date documentation.
