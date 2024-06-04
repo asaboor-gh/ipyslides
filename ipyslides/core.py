@@ -93,7 +93,7 @@ class Slides(BaseSlides):
 
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(
-                self._slide, magic_kind="cell", magic_name="slide"
+                self._slide, magic_kind="line_cell", magic_name="slide"
             )
             self.shell.register_magic_function(
                 self.__title, magic_kind="cell", magic_name="title"
@@ -113,9 +113,7 @@ class Slides(BaseSlides):
         self._running_slide = (
             None  # For Notes, citations etc in markdown, controlled in Slide class
         )
-        self._next_number = (
-            0  # Auto numbering of slides should be only in python scripts
-        )
+        self._next_number = 0  # Auto numbering of slides should be only in python scripts
         self._citations = {}  # Initialize citations dictionary
         self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
 
@@ -654,7 +652,7 @@ class Slides(BaseSlides):
         return self.get(slide_number).proxies[proxy_index].capture()
 
     # defining magics and context managers
-    def _slide(self, line, cell):
+    def _slide(self, line, cell=None):
         """Capture content of a cell as `slide`.
             ---------------- Cell ----------------
             %%slide 1
@@ -671,9 +669,12 @@ class Slides(BaseSlides):
             - Markdown before the first (--) separator is written on all frames. 
             - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
             - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
-            - Inside python file, use `Slides.next_number()` to automatically capture slide number in sequence when using this magic.
+            - Use `%slide [n,m,s,f]` to bring up code with next slide with numbering in Jupyter Notebook! Other cell code is preserved.
 
         """
+        if cell is None:
+            return self._add_slide_with_number(line)
+        
         line = line.strip().split()  # VSCode bug to inclue \r in line
         if line and not line[0].isnumeric():
             raise TypeError(
@@ -718,6 +719,31 @@ class Slides(BaseSlides):
             with _build_slide(self, slide_number_str) as s:
                 s.set_source(cell, "python")  # Update cell source beofore running
                 self.run_cell(cell)  #
+
+    def _add_slide_with_number(self, option):
+        "Adds slide functions with latest number in cell. Indentation is repected!"
+        opt = option.strip() # clean option is important, and option itself is needed for replace at end
+        
+        if opt not in ["n","m","s","f"]:
+            raise Exception("line magic slide expects any of n, m, s, f as option!")
+
+        mapping = {"n": "%%slide {number}", "m": "%%slide {number} -m", "s": "with {name}.slide({number}):", "f": "@{name}.frames({number}, "}
+        code = mapping.get(opt, '').format(name=self._var_name, number=self._next_number) 
+        current_code = self.shell.get_parent().get('content',{}).get('code','')
+        
+        if '%slide' in current_code: # should not change anything from notebook
+            new_code = current_code.replace(f"%slide {option}", code)
+        
+        self.shell.set_next_input(new_code, replace=True)
+
+    @property
+    def _var_name(self):
+        "User defined name in notebook for self."
+        names = [k for k, v in self.shell.user_ns.items() if v is self]
+        if names:
+            return names[0]
+        else:
+            raise RuntimeError("Slides object was not initialized in current session!")
 
     @contextmanager
     def slide(self, slide_number):

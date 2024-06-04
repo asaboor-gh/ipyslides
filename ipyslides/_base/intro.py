@@ -47,7 +47,8 @@ slides # This displays slides if on the last line of cell, or use `slides.show()
 
 ::: note-info
     - You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
-    - Inside python script, you can use auto numbering with `Slides.[next_number|next_slide|next_frames|next_from_markdown]`.
+    - Inside python script, you can use auto numbering with `Slides.next_[number,slide,frames,from_markdown]`.
+    - Use `%slide [n,m,s,f]` to bring up code with next slide with numbering in Jupyter Notebook! Other cell code is preserved.
 
 ::: note-tip
     - Use `Slides.docs` to see upto date documentation.
