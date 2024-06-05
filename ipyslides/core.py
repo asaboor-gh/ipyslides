@@ -652,12 +652,14 @@ class Slides(BaseSlides):
         return self.get(slide_number).proxies[proxy_index].capture()
     
     def _fix_slide_number(self, number):
+        "For this, slide_number in function is set to be position-only argement."
         if str(number) != '-1': # handle %%slide -1 togther with others
             return number
         
         code = self.shell.get_parent().get('content',{}).get('code','')
-        matches = re.findall("([^a-zA-Z]slide.*?-1)|(frames.*?-1)|(from_markdown.*?-1)|(sync_with_file.*?-1)", code,flags=re.DOTALL)
-        number = self._next_number
+        p = "[\s+]?\([\s+]?-1" # call pattern in any way but on same line
+        matches = re.findall(rf"(\%\%slide\s+-1)|(slide{p})|(frames{p})|(from_markdown{p})|(sync_with_file{p})", code)
+        number = int(self._next_number) # don't use same attribute, that will be updated too
         if matches:
             if len(matches) > 1:
                 number -= (len(matches) - 1) # same cell multislides create a jump in numbering
@@ -740,7 +742,7 @@ class Slides(BaseSlides):
                 self.run_cell(cell)  #
 
     @contextmanager
-    def slide(self, slide_number):
+    def slide(self, slide_number, /): # don't allow keyword to have -1 robust
         """Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic.
         
         ::: note-info
@@ -824,7 +826,7 @@ class Slides(BaseSlides):
         self.notify('Dynamic content updated everywhere!')
                 
 
-    def frames(self, slide_number, iterable, repeat=False):
+    def frames(self, slide_number, /, iterable, repeat=False):
         """Decorator for inserting frames on slide, define a function with two arguments (frame_index, frame_content).
         You can also call it as a function, e.g. `.frames(1,objs)(<optional function>)`.
 

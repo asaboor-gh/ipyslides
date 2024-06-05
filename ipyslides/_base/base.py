@@ -269,7 +269,7 @@ class BaseSlides:
             with self.widgets._tmp_out:
                 display(*objs)
         
-    def from_markdown(self, start, content, trusted = False):
+    def from_markdown(self, start_slide_number, /, content, trusted = False):
         """You can create slides from a markdown tex block as well. It creates slides `start + (0,1,2,3...)` in order.
         You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
         
@@ -303,7 +303,7 @@ class BaseSlides:
         if not isinstance(content, str): #check path later or it will throw error
             raise TypeError(f"content expects a makrdown text block, got {content!r}")
         
-        start = self._fix_slide_number(start) 
+        start = self._fix_slide_number(start_slide_number) 
         
         if not trusted:
             lines = content.splitlines()
@@ -338,7 +338,7 @@ class BaseSlides:
         # Return refrence to slides for quick update, frames should be accessed by slide.frames
         return handles
     
-    def sync_with_file(self, start, path, trusted = False, interval=500):
+    def sync_with_file(self, start_slide_number, /, path, trusted = False, interval=500):
         """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
         interval is in milliseconds, 500 ms default. Read `Slides.from_markdown` docs about content of file.
         
@@ -355,7 +355,7 @@ class BaseSlides:
         if not isinstance(interval, int) or interval < 100:
             raise ValueError("interval should be integer greater than 100 millieconds.")
         
-        start = self._fix_slide_number(start)
+        start = self._fix_slide_number(start_slide_number)
         
         # NOTE: Background threads and other methods do not work. Do NOT change this way
         self.from_markdown(start, path.read_text(encoding="utf-8"), trusted) # First call itself before declaring other things, so errors can be captured safely

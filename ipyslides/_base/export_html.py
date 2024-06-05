@@ -46,8 +46,7 @@ class _HhtmlExporter:
         self.main = _instance_BaseSlides
         self.main.widgets.buttons.export.on_click(self._export) # Export button
         
-    def _htmlize(self, **kwargs):
-        "page_size, slide_number are in kwargs"
+    def _htmlize(self):
         navui_class = '' if self.main.widgets.checks.navgui.value else 'NavHidden' 
         content = ''
         for item in self.main:
@@ -132,7 +131,7 @@ class _HhtmlExporter:
             f.write(content) 
             
     
-    def export_html(self, path = 'slides.html', slide_number = True, overwrite = False):
+    def export_html(self, path = 'slides.html', overwrite = False):
         """Build beutiful html slides that you can print. Widgets are supported via `Slides.alt(widget,func)`.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
@@ -145,7 +144,7 @@ class _HhtmlExporter:
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF.
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
-        content = self._htmlize(slide_number = slide_number)
+        content = self._htmlize()
         self._writefile(_path, content, overwrite = overwrite)
         
     def _export(self,btn):
