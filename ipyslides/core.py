@@ -657,17 +657,17 @@ class Slides(BaseSlides):
             return number
         
         code = self.shell.get_parent().get('content',{}).get('code','')
-        p = "[\s+]?\([\s+]?-1" # call pattern in any way but on same line
+        p = "\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
         matches = re.findall(rf"(\%\%slide\s+-1)|(slide{p})|(frames{p})|(from_markdown{p})|(sync_with_file{p})", code)
         number = int(self._next_number) # don't use same attribute, that will be updated too
         if matches:
             if len(matches) > 1:
-                number -= (len(matches) - 1) # same cell multislides create a jump in numbering
+                number -= (len(matches) - 1) # same cell multislides create a jump in numbering, subtract that
             
             for ms in matches:
                 for m in ms:
                     if m:
-                        code = code.replace(m, f"{m[:-2]}{number}",1)
+                        code = code.replace(m, f"{m[:m.index('-')]}{number}",1) # replace before -, could be -<spaces>1
                         number += 1
             self.shell.set_next_input(code, True) # for notebook
     
