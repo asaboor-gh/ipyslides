@@ -178,6 +178,10 @@ class Code:
             frame = frame.f_back # keep going back until required depth is reached.
               
         lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
+        if kwargs.pop("start", False):
+            yield lines[0] if lines else ''
+            return # breaking it is must by return
+
         offset = 0 # going back to zero indent level
         
         while (len(lines) > n1 - offset >= 0) and re.match('^\t?^\s+', lines[n1 - offset]): 
@@ -193,8 +197,7 @@ class Code:
                 break
 
         n2 = with_node.body[-1].end_lineno if hasattr(with_node, 'body') else with_node.end_lineno #can include multiline expressions in python 3.8+, could be an expression
-        extra = kwargs.pop("extra", 0) # extra lines before block to get info about contextmanager, do at end
-        source = textwrap.dedent(''.join(lines[n1 - extra:][:n2 - offset + extra])) # n2 is not from source, but current block as if n1 was zero, so sliced after n1 slice
+        source = textwrap.dedent(''.join(lines[n1:][:n2 - offset])) # n2 is not from source, but current block as if n1 was zero, so sliced after n1 slice
         source_html = SourceCode(highlight(source,language = 'python', **kwargs).value)
         source_html.raw = source # raw source code
         

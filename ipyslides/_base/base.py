@@ -420,11 +420,12 @@ class BaseSlides:
             self._number = self._app._fix_slide_number(slide_number)
             self._content =  content
             self._repeat = repeat
+            self._app._register_postrun_cell() # somehow don't work if slides are called inside other function
 
             # Calling as function is the trickiest part
             if isinstance(content, str): # creates markdown slides immediately if possible
-                with self._app.code.context(returns = True, depth=3, extra=1, ) as code:
-                    if not any(code.raw.startswith(c) for c in ['with', '@']):
+                with self._app.code.context(returns = True, depth=3, start = True) as code:
+                    if not any(code.startswith(c) for c in ['with', '@']):
                         s1, *_ = self._app.from_markdown(self._number, self._content, trusted = trusted)
                         self._app.navigate_to(s1.index) # go there forcefully, sometimes it does not
 
@@ -439,8 +440,14 @@ class BaseSlides:
         def __exit__(self, *args):
             return self._context.__exit__(*args)
 
-        def __call__(self, func):
-            return self._app.frames(self._number, self._content, repeat = self._repeat)(func)
+        def __call__(self, func = None):
+            if isinstance(self._content, str):
+                raise RuntimeError("You are trying to use decorator on markdown content! For decorator case, content should be list-like!")
+            
+            frs = self._app.frames(self._number, self._content, repeat = self._repeat)
+            if func is not None:
+                return frs(func)
+            return frs() # with automatic function in frames
         
         def _ipython_display_(self):
             pass  # avoid confusing repr
