@@ -399,8 +399,8 @@ class BaseSlides:
     class build(ContextDecorator):
         """Build slides with a single unified command in three ways:
         
-        - `Slides.build(number, str)` is like `Slides.from_markdown(number, str)` with exception of different return value.
-        - `with Slides.build(number):` is same as `with Slides.slide(number):`.
+        - `Slides.build(number, str)` is `Slides.from_markdown(number, str)`.
+        - `with Slides.build(number):` is like `with Slides.slide(number):`.
         - `@Slides.build(number, iterable)` is same as `@Slides.frames(number, iterable)`.
 
         And in all cases, `number` could be used as `-1`.
@@ -416,20 +416,21 @@ class BaseSlides:
                 self._private_instance = _private_instance
             return self._private_instance
         
-        def __init__(self, slide_number, /, content = None, *, repeat = False, trusted = False):
+        def __new__(cls, slide_number, /, content = None, *, repeat = False, trusted = False):
+            self = super().__new__(cls) # instance
             self._number = self._app._fix_slide_number(slide_number)
             self._content =  content
             self._repeat = repeat
-            self._app._register_postrun_cell() # somehow don't work if slides are called inside other function
-
+            
             # Calling as function is the trickiest part
             if isinstance(content, str): # creates markdown slides immediately if possible
                 with self._app.code.context(returns = True, depth=3, start = True) as code:
                     if not any(code.startswith(c) for c in ['with', '@']):
-                        s1, *_ = self._app.from_markdown(self._number, self._content, trusted = trusted)
-                        self._app.navigate_to(s1.index) # go there forcefully, sometimes it does not
+                        return self._app.from_markdown(self._number, self._content, trusted = trusted)
+            return self # for decorator and context manager
 
         def __enter__(self):
+            "Use as contextmanager to create a slide."
             # code settings here is important due to different depth
             code = self._app.code.context(returns=True, depth = 3).__enter__()
             self._context = self._app.slide(self._number)
@@ -441,17 +442,14 @@ class BaseSlides:
             return self._context.__exit__(*args)
 
         def __call__(self, func = None):
-            if isinstance(self._content, str):
-                raise RuntimeError("You are trying to use decorator on markdown content! For decorator case, content should be list-like!")
-            
+            "Use as decorator for a function(index, content) to create frames."
             frs = self._app.frames(self._number, self._content, repeat = self._repeat)
             if func is not None:
                 return frs(func)
             return frs() # with automatic function in frames
         
-        def _ipython_display_(self):
-            pass  # avoid confusing repr
-
+        def __repr__(self):
+            return f"<ContextDecorator build at {hex(id(self))}>"
 
     def demo(self):
         "Demo slides with a variety of content."
