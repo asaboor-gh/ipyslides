@@ -2,6 +2,7 @@
 import os, re, textwrap
 import traceback
 from pathlib import Path
+from contextlib import ContextDecorator
 
 from IPython.display import display
 
@@ -11,9 +12,9 @@ from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
 from .export_html import _HhtmlExporter
-from .intro import key_combs
 from ..formatters import XTML
 from ..xmd import _special_funcs, error, xtr
+
 
 class BaseSlides:
     def __init__(self):
@@ -320,7 +321,7 @@ class BaseSlides:
         
         chunks = _parse_markdown_text(content)
             
-        handles = self.create(*range(start, start + len(chunks))) # create slides faster or return older
+        handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
@@ -395,6 +396,55 @@ class BaseSlides:
         else:
             print("There was no markdown file linked to sync!")
 
+    class build(ContextDecorator):
+        """Build slides with a single unified command in three ways:
+        
+        - `Slides.build(number, str)` is like `Slides.from_markdown(number, str)` with exception of different return value.
+        - `with Slides.build(number):` is same as `with Slides.slide(number):`.
+        - `@Slides.build(number, iterable)` is same as `@Slides.frames(number, iterable)`.
+
+        And in all cases, `number` could be used as `-1`.
+
+        ::: note
+            - Keyword arguments `repeat` and `trusted` are used mutually exclusive in different functions.
+            - Other equivalent commands are not going away! You can still used them explicitly.
+        """
+        @property
+        def _app(self):
+            if not hasattr(self,'_private_instance'):
+                from ..core import _private_instance # very bad way of doing it, but capsulation required for build class
+                self._private_instance = _private_instance
+            return self._private_instance
+        
+        def __init__(self, slide_number, /, content = None, *, repeat = False, trusted = False):
+            self._number = self._app._fix_slide_number(slide_number)
+            self._content =  content
+            self._repeat = repeat
+
+            # Calling as function is the trickiest part
+            if isinstance(content, str): # creates markdown slides immediately if possible
+                with self._app.code.context(returns = True, depth=3, extra=1, ) as code:
+                    if not any(code.raw.startswith(c) for c in ['with', '@']):
+                        s1, *_ = self._app.from_markdown(self._number, self._content, trusted = trusted)
+                        self._app.navigate_to(s1.index) # go there forcefully, sometimes it does not
+
+        def __enter__(self):
+            # code settings here is important due to different depth
+            code = self._app.code.context(returns=True, depth = 3).__enter__()
+            self._context = self._app.slide(self._number)
+            slide = self._context.__enter__()
+            slide.set_source(code.raw, "python")
+            return slide
+
+        def __exit__(self, *args):
+            return self._context.__exit__(*args)
+
+        def __call__(self, func):
+            return self._app.frames(self._number, self._content, repeat = self._repeat)(func)
+        
+        def _ipython_display_(self):
+            pass  # avoid confusing repr
+
 
     def demo(self):
         "Demo slides with a variety of content."
@@ -406,7 +456,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(*range(22)) # Create slides faster
+        self.create(range(22)) # Create slides faster
         
         from ..core import Slides
 
@@ -424,7 +474,7 @@ class BaseSlides:
                     sup`2`Their University is somewhere in the middle of nowhere
                 ''').display()
         
-        self.from_markdown(-1, f'''
+        self.build(-1, f'''
             section`Introduction` 
             ```toc ## Table of contents
             vspace`2`
@@ -437,14 +487,14 @@ class BaseSlides:
              ```
             ```''')
             
-        with self.slide(-1):
+        with self.build(-1):
             self.write(['# Main App',self.doc(Slides), '### Jump between slides'])
             self.doc(self.goto_button, 'Slides').display()
         
         with self.slide(-1):
             self.write('## Adding Slides section`Adding Slides and Content`')
             self.write('Besides functions below, you can add slides with `%%title`/`%%slide` magics as well.\n{.note .info}')
-            self.write([self.doc(self.title,'Slides'),self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
+            self.write([self.doc(self.title,'Slides'),self.doc(self.build,'Slides'), self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
         
         with self.slide(-1), self.code.context():
             self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`'))
@@ -511,6 +561,7 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
+        # need a return for slides, build won't in this case
         s8, = self.from_markdown(-1, '''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.

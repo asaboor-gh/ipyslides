@@ -6,7 +6,7 @@ def demo_slides(slides):
     slides.clear() # Clear previous content
     raw_source = slides.code.cast(__file__).raw
     N = raw_source.count('.slide') + raw_source.count('.from_markdown') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
-    slides.create(*range(N)) # Create slides first, this is faster
+    slides.create(range(N)) # Create slides first, this is faster
     
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
     slides.set_citations({

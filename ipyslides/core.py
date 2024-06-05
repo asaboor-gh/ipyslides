@@ -658,7 +658,7 @@ class Slides(BaseSlides):
         
         code = self.shell.get_parent().get('content',{}).get('code','')
         p = "\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
-        matches = re.findall(rf"(\%\%slide\s+-1)|(slide{p})|(frames{p})|(from_markdown{p})|(sync_with_file{p})", code)
+        matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(slide{p})|(frames{p})|(from_markdown{p})|(sync_with_file{p})", code)
         number = int(self._next_number) # don't use same attribute, that will be updated too
         if matches:
             if len(matches) > 1:
@@ -868,8 +868,8 @@ class Slides(BaseSlides):
             if slide_number < 0:  # title slide is 0
                 raise ValueError(f"slide_number should be >= 1, got {slide_number!r}")
             
-            if not isinstance(iterable, Iterable):
-                raise TypeError(f"iterable should be a sequence of objects, got {type(iterable)}")
+            if isinstance(iterable, (str, bytes)) or not isinstance(iterable, Iterable):
+                raise TypeError(f"iterable should be list-like, got {type(iterable)}")
 
             if repeat == True:
                 _new_objs = [iterable[:i] for i in range(1, len(iterable) + 1)]
@@ -993,8 +993,15 @@ class Slides(BaseSlides):
 
         self.widgets.tocbox.children = children
 
-    def create(self, *slide_numbers):
+    def create(self, slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is much faster than creating one slide each time."
+        if not isinstance(slide_numbers, Iterable):
+            raise TypeError("slide_numbers should be list-like!")
+        
+        for number in slide_numbers:
+            if not isinstance(number, int):
+                raise TypeError(f"items in slide_numbers should all be integeres! got {type(number)}")
+
         new_slides = False
         for slide_number in slide_numbers:
             if f"{slide_number}" not in self._slides_dict:

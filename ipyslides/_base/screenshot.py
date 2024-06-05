@@ -192,7 +192,7 @@ class ScreenShot:
         self.widgets.ddowns.clear.value = 'None' # important to get back after operation
     
     
-    def clip_image(self, filename, quality = 95, overwrite = False):
+    class clip_image(CustomDisplay): #encapsulation
         """Save image from clipboard to file with a given quality. 
         On next run, it loads from saved file under `notebook-dir/.ipyslides-assets/clips`. 
         Useful to add screenshots from system into IPython. You can use overwite to overwrite existing file.
@@ -203,46 +203,41 @@ class ScreenShot:
         - Convert to HTML representation using `.to_html()`.
         - Convert to Numpy array using `.to_numpy()` in RGB format that you can plot later.
         """
-        directory = get_child_dir('.ipyslides-assets', 'clips', create = True)
-        filepath = directory / filename
-        
-        class ClipboardImage(CustomDisplay):
-            def __init__(self, path, quality, overwrite):
-                self._path = path
+        def __init__(self, filename, quality = 95, overwrite = False):
+            directory = get_child_dir('.ipyslides-assets', 'clips', create = True)
+            self._path = directory / filename
+            
+            if overwrite or (not os.path.isfile(self.path)):
+                im = ImageGrab.grabclipboard()
+                if isinstance(im,Image.Image):
+                    im.save(self.path, format= im.format,quality = quality)
+                    im.close() # Close image to save mememory
+                else:
+                    raise ValueError('No image on clipboard/file or not supported format.')
                 
-                if overwrite or (not os.path.isfile(path)):
-                    im = ImageGrab.grabclipboard()
-                    if isinstance(im,Image.Image):
-                        im.save(path, format= im.format,quality = quality)
-                        im.close() # Close image to save mememory
-                    else:
-                        raise ValueError('No image on clipboard/file or not supported format.')
-                    
-            @property
-            def path(self):
-                "Return path of stored image."
-                return self._path
-            
-            @property
-            def value(self):
-                "Return HTML string of image."
-                return self.to_html().value # String
-            
-            def display(self):
-                return self.to_html().display() # Display HTML to have in export
-            
-            def to_pil(self):
-                "Return PIL image."
-                return Image.open(self.path)
-            
-            def to_html(self, **kwargs):
-                "Return HTML of image, with `**kwargs` passed to `ipyslides.utils.image`."
-                return image(self.path, **kwargs)
-            
-            def to_numpy(self):
-                "Return numpy array data of image. Useful for plotting."
-                import numpy # Do not import at top, as it is not a dependency
-                return numpy.asarray(self.to_pil())
-            
-        return ClipboardImage(filepath, quality, overwrite)
+        @property
+        def path(self):
+            "Return path of stored image."
+            return self._path
+        
+        @property
+        def value(self):
+            "Return HTML string of image."
+            return self.to_html().value # String
+        
+        def display(self):
+            return self.to_html().display() # Display HTML to have in export
+        
+        def to_pil(self):
+            "Return PIL image."
+            return Image.open(self.path)
+        
+        def to_html(self, **kwargs):
+            "Return HTML of image, with `**kwargs` passed to `ipyslides.utils.image`."
+            return image(self.path, **kwargs)
+        
+        def to_numpy(self):
+            "Return numpy array data of image. Useful for plotting."
+            import numpy # Do not import at top, as it is not a dependency
+            return numpy.asarray(self.to_pil())
         

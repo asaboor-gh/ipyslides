@@ -231,7 +231,7 @@ class Exp4Widget:
     @property
     def data(self): return getattr(self._widget, '_repr_mimebundle_', lambda: {'application':'Exp4Widget'})()
     
-    def fmt_html(self,**kwargs): # kwargs should be there to be similar to other fmt_html methods
+    def fmt_html(self):
         "Returns alternative html representation of the widget."
         return self._func(self._widget)
     

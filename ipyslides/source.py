@@ -179,11 +179,12 @@ class Code:
               
         lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
         offset = 0 # going back to zero indent level
-        while re.match('^\t?^\s+', lines[n1 - offset]): 
-             offset = offset + 1
+        
+        while (len(lines) > n1 - offset >= 0) and re.match('^\t?^\s+', lines[n1 - offset]): 
+            offset = offset + 1
              
         _source = ''.join(lines[n1 - offset:])
-        tree = ast.parse(_source)
+        tree = ast.parse(_source or lines[0]) # empty source if it is just one line like with func(): pass
         with_node = tree.body[0] # Could be itself at top level
         
         for node in ast.walk(tree):
@@ -191,8 +192,9 @@ class Code:
                 with_node = node
                 break
 
-        n2 = with_node.body[-1].end_lineno #can include multiline expressions in python 3.8+
-        source = textwrap.dedent(''.join(lines[n1:][:n2 - offset]))
+        n2 = with_node.body[-1].end_lineno if hasattr(with_node, 'body') else with_node.end_lineno #can include multiline expressions in python 3.8+, could be an expression
+        extra = kwargs.pop("extra", 0) # extra lines before block to get info about contextmanager, do at end
+        source = textwrap.dedent(''.join(lines[n1 - extra:][:n2 - offset + extra])) # n2 is not from source, but current block as if n1 was zero, so sliced after n1 slice
         source_html = SourceCode(highlight(source,language = 'python', **kwargs).value)
         source_html.raw = source # raw source code
         
