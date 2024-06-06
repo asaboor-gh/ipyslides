@@ -19,12 +19,13 @@ import ipyslides as isd
 slides = isd.Slides()
 ```
 ```python
-%%title
-# create a rich content title page
+%%slide 0
+# You can use `with slides.build(0):` contextmanager for it as well.
 ```
 ```python
 %%slide 1
 # slide 1 content
+# You can use `with slides.build(1):` contextmanager for it as well.
 ```
 ```python
 %%slide 2 -m 
@@ -37,16 +38,25 @@ slides = isd.Slides()
 ```
 
 ```python
-@slides.frames(3,objs)
+@slides.build(3,objs) 
 def func(frame_index, frame_content):
-    write(frame_content) #This will create as many slides after the slide number 1 as length(objs)
+    write(frame_content) #This will create as many as length(objs) frames for this slides
 ```
+
+```python
+with slides.build(-1):
+    print("-1 will pick latest slide number!")
+```
+
+```python
+slides.build(-1, "Markdown content can create many slides at once here!")
+```
+
 ```python
 slides # This displays slides if on the last line of cell, or use `slides.show()`.
 ```
 
 ::: note-info
-    - You can use context managers like `with slides.slide(): ...` and `with slides.title(): ...` in place of `%%slide` and `%%title` respectively.
     - Use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
 
 ::: note-tip

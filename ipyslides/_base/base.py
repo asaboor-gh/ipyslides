@@ -113,8 +113,8 @@ class BaseSlides:
         - alert`section\`content\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.get(slide_number).proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
-        - Triple dashes `---` is used to split markdown text in slides inside `from_markdown(start, content)` function.
-        - Double dashes `--` is used to split markdown text in frames.
+        - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
+        - Double dashes `--` is used to split text in frames.
         
         Block table of contents with extra content can be added as follows:
                                                
@@ -190,7 +190,7 @@ class BaseSlides:
         ))
    
     def get_source(self, title = 'Source Code'):
-        "Return source code of all slides created using `from_markdown` or `%%slide`."
+        "Return source code of all slides except created as frames with python code."
         sources = []
         for slide in self[:]:
             if slide._source['text']:
@@ -271,33 +271,7 @@ class BaseSlides:
                 display(*objs)
         
     def from_markdown(self, start_slide_number, /, content, trusted = False):
-        """You can create slides from a markdown tex block as well. It creates slides `start + (0,1,2,3...)` in order.
-        You should add more slides by higher number than the number of slides in the file/text, or it will overwrite.
-        
-        - Slides separator should be --- (three dashes) in start of line.
-        - Frames separator should be -- (two dashes) in start of line. All markdown before first `--` will be written on all frames.
-        - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
-        - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
-        
-
-        Markdown content of each slide is stored as `.markdown` attribute to slide. You can append content to it later like this:
-        ```python
-        with slides.slide(2):
-            slides.parse(slides[2].markdown) # Instead of write, parse take cares of code blocks
-            plot_something()
-        ```
-        
-        ::: note-tip
-            Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-        
-        ::: note-tip
-            Use `Slides.sync_with_file` to auto update slides as markdown content changes.
-        
-        ::: note-info
-            Use this function with '-1' to auto number current slide.
-        
-        **Returns**: A tuple of handles to slides created. These handles can be used to access slides and set properties on them.
-        """
+        "Sames as `Slides.build` used as a function."
         if self.this:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
         
@@ -341,7 +315,7 @@ class BaseSlides:
     
     def sync_with_file(self, start_slide_number, /, path, trusted = False, interval=500):
         """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
-        interval is in milliseconds, 500 ms default. Read `Slides.from_markdown` docs about content of file.
+        interval is in milliseconds, 500 ms default. Read `Slides.build` docs about content of file.
         
         The variables inserted in file content are used from top scope.
         """
@@ -399,15 +373,41 @@ class BaseSlides:
     class build(ContextDecorator):
         """Build slides with a single unified command in three ways:
         
-        - `Slides.build(number, str)` is `Slides.from_markdown(number, str)`.
-        - `with Slides.build(number):` is like `with Slides.slide(number):`.
-        - `@Slides.build(number, iterable)` is same as `@Slides.frames(number, iterable)`.
+        - `slides.build(number, str)` creates many slides with markdown content. 
+            - Equivalent to `%%slide number -m` magic in case of one slide.
+            - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to `Slides.sync_with_file` too.
+            - Markdown before the first `--` (frame separator) is written on all frames. 
+            - Use `%++` in frames to add frames incrementally.
+            - See `slides.xmd_syntax` for extended markdown usage.
+            - Keyword argument `trusted` is used here if there are `python run` blocks in markdown.
+        - `with slides.build(number):` creates single slide. Equivalent to `%%slide number` magic.
+        - `@slides.build(number, iterable)` creates a slide with multiple frames.
+            - `iterable` is a sequence other than a string.
+            - Automatic call as `slides.build(number, iterable)()` will write objects from top to bottom. 
+            - Use decorated `func(frame_index, frame_content)`  to write content flexibly.
+            - `repeat` can be False, True or an indexing sequence over `iterable`.
 
-        And in all cases, `number` could be used as `-1`.
+        ```python
+        slides.build(1,[a,b,c])() # content is a, b, c
+        slides.build(1,[a,b,c], repeat = True)() # content is [a], [a,b], [a,b,c]
+        slides.build(1,[a,b,c], repeat = [(0,1),(1,2)])() # content [a,b] and [b,c]
+        
+        @slides.build(1,[a,b,c], repeat=[(0,None,None),(0,1,None),(0,1,2)])
+        def f(idx, content):
+            slides.write(*content) # will make three frame with [a,'',''],[a,b,''] and [a,b,c] as incremental columns.
+        ```
+
+        Markdown content of each slide is stored as `.markdown` attribute to slide. You can append content to it later like this:
+        
+        ```python
+        with slides.build(2):
+            slides.parse(slides.this.markdown) # Instead of write, parse take cares of code blocks
+            plot_something() # In above slides.this under a slides take care of slide number itself
+        ```
 
         ::: note
+            - In all cases, `number` could be used as `-1`.
             - Keyword arguments `repeat` and `trusted` are used mutually exclusive in different functions.
-            - Other equivalent commands are not going away! You can still used them explicitly.
         """
         @property
         def _app(self):
@@ -468,7 +468,7 @@ class BaseSlides:
         self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'footnote')
         self.settings.set_footer('IPySlides Documentation')
 
-        with self.title(): # Title
+        with self.build(0): # Title page
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center('''
                 alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
@@ -496,37 +496,37 @@ class BaseSlides:
             self.write(['# Main App',self.doc(Slides), '### Jump between slides'])
             self.doc(self.goto_button, 'Slides').display()
         
-        with self.slide(-1):
+        with self.build(-1):
             self.write('## Adding Slides section`Adding Slides and Content`')
-            self.write('Besides functions below, you can add slides with `%%title`/`%%slide` magics as well.\n{.note .info}')
-            self.write([self.doc(self.title,'Slides'),self.doc(self.build,'Slides'), self.doc(self.slide,'Slides'),self.doc(self.frames,'Slides'),self.doc(self.from_markdown,'Slides')])
+            self.write('Besides function below, you can add slides with `%%slide number [-m]` magic as well.\n{.note .info}')
+            self.write([self.doc(self.build,'Slides'), self.doc(self.sync_with_file,'Slides')])
         
-        with self.slide(-1), self.code.context():
+        with self.build(-1), self.code.context():
             self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`'))
             
-        with self.slide(-1):
+        with self.build(-1):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
             self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clip_image,'Slides')])
         
-        with self.slide(-1):
+        with self.build(-1):
             self.write('## Adding Speaker Notes')
             (skipper := self.goto_button('Skip to Dynamic Content')).display()
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
-        with self.slide(-1):
+        with self.build(-1):
             self.write('## Displaying Source Code')
             self.doc(self.code,'Slides.code', members = True, itself = False).display()
         
-        self.from_markdown(-1, 'section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
+        self.build(-1, 'section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
         
-        with self.slide(-1): 
+        with self.build(-1): 
             self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 
-        with self.slide(-1):
+        with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
             self.doc(self.clip_image,'Slides').display()
             self.run_doc(self.alt,'Slides')
@@ -538,7 +538,7 @@ class BaseSlides:
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
 
-        with self.slide(-1):
+        with self.build(-1):
             self.write('''
                 ## Citations and Sections
                 Use syntax alert`cite\`key\`` to add citations which should be already set by `Slides.set_citations(data, mode)` method.
@@ -550,14 +550,14 @@ class BaseSlides:
             ''')
             self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
-        with self.slide(-1):
+        with self.build(-1):
             skipper.set_target() # Set target for skip button
             self.write('## Dynamic Content')
             self.run_doc(self.on_refresh,'Slides')
             self.run_doc(self.on_load,'Slides')
             self.this.get_source().display() # this refers to slide being built
     
-        with self.slide(-1):
+        with self.build(-1):
             self.write('## Content Styling')
             with self.code.context(returns = True) as c:
                 self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
@@ -566,8 +566,7 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
-        # need a return for slides, build won't in this case
-        s8, = self.from_markdown(-1, '''
+        s8, = self.build(-1, '''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `highlight` function cite`B` or within markdown like this:
@@ -584,14 +583,14 @@ class BaseSlides:
         with s8.proxies[0].capture(): # or with self.capture_proxy(s8.number, 0):
             s8.get_source().display()
         
-        with self.slide(-1):
+        with self.build(-1):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
             self.write('You can parse and view a markdown file. The output you can save by exporting notebook in other formats.\n{.note .info}')
-            self.write([self.doc(attr,'Slides') for attr in (self.sync_with_file,self.from_markdown,self.demo,self.docs,self.export_html)])
+            self.write([self.doc(attr,'Slides') for attr in (self.sync_with_file,self.demo,self.docs,self.export_html)])
         
-        self.from_markdown(-1, 'section`Advanced Functionality` toc`### Contents`')
+        self.build(-1, 'section`Advanced Functionality` toc`### Contents`')
         
-        with self.slide(-1) as s:
+        with self.build(-1) as s:
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write(
                 lambda: display(self.html('h3','I will be on main slides',className='warning'), 
@@ -603,7 +602,7 @@ class BaseSlides:
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
         
-        with self.slide(-1):
+        with self.build(-1):
             self.write('''
             ## Focus on what matters
             - There is a zoom button on top bar which enables zooming of certain elements. This can be toggled by `Z` key.
@@ -616,7 +615,7 @@ class BaseSlides:
                 - If zoom button is enabled, you can hover here to zoom in this part!
                 - You can also zoom in this part by pressing `Z` key while mouse is over this part.
             ''')
-        with self.slide(-1):
+        with self.build(-1):
             self.write('''
                 ## SVG Icons
                 Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
@@ -630,7 +629,7 @@ class BaseSlides:
                 self.format_css({'.MyIcon .fa.fa-plus': self.icon('chevron',color='crimson', size='1.5em',rotation=90).css}).display() # Overwrite icon with your own
 
             
-        with self.slide(-1):
+        with self.build(-1):
             self.write("""
                 # Auto Slide Numbering
                 Use alert`-1` as placeholder to update slide number automatically. 
@@ -640,7 +639,7 @@ class BaseSlides:
                 - You need to run cell twice if creating slides inside a for loop while using `-1`.
             """)
         
-        with self.slide(-1):
+        with self.build(-1):
             self.write(['## Presentation Code section`Presentation Code`',self.docs])
         
         self.navigate_to(0) # Go to title

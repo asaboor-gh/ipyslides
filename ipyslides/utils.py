@@ -60,7 +60,7 @@ def get_child_dir(name, *names, create = False):
 
 def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
-        widths = [f'{int(100/len(objs))}%' for _ in objs]
+        widths = [{int(100/len(objs))} for _ in objs]
     else:
         if len(objs) != len(widths):
             raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
@@ -70,10 +70,8 @@ def _fmt_cols(*objs,widths = None):
                 raise TypeError(f'widths must be numbers, got {w}')
         widths = [int(w/sum(widths)*100) for w in widths]
     
-    widths = [f'{w}%' for w in widths]
-    
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in objs] 
-    _cols = ' '.join([f"""<div style='width:{w};overflow-x:auto;height:auto'>
+    _cols = ' '.join([f"""<div style='width:{w}%;overflow-x:auto;height:auto'>
                      {' '.join([htmlize(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,widths)])
     

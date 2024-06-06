@@ -85,7 +85,7 @@ class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    footer  = HTML('Add short info here using `slides.settings.set_footer` function',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
+    footer  = HTML('Use `slides.settings.set_footer` to update this!',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
     main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent_color'], 16/9)).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options

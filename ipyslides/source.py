@@ -177,11 +177,11 @@ class Code:
         for _ in range(depth):
             frame = frame.f_back # keep going back until required depth is reached.
               
-        lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
         if kwargs.pop("start", False):
-            yield lines[0] if lines else ''
+            yield (''.join(inspect.getframeinfo(frame).code_context)).strip() # other one is full code, this is where function called
             return # breaking it is must by return
 
+        lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
         offset = 0 # going back to zero indent level
         
         while (len(lines) > n1 - offset >= 0) and re.match('^\t?^\s+', lines[n1 - offset]): 

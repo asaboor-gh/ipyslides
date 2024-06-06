@@ -16,7 +16,7 @@ _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
 from ._base.widgets import ipw # patched one
 from ._base.base import BaseSlides
-from ._base.intro import key_combs
+from ._base.intro import how_to_slide
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__
@@ -193,14 +193,8 @@ class Slides(BaseSlides):
             self.notify('No source cell found!')
 
     def _setup(self):
-        # Only in Jupyter Notebook
-        if self.shell and self.shell.__class__.__name__ != "TerminalInteractiveShell":
-            if self._max_index == 0:  # prevent overwrite
-                self._add_clean_title()
-        else:
-            if self._max_index == 0:  # prevent overwrite
-                self._slides_dict["0"] = Slide(self, "0")  # just for completeness
-                self.refresh()  # Refresh to update number of slides etc
+        if not self._slides_dict:  # prevent overwrite
+            self._add_clean_title()
 
     def __repr__(self):
         repr_all = ",\n    ".join(repr(s) for s in self._iterable)
@@ -300,24 +294,13 @@ class Slides(BaseSlides):
             )
 
     def _add_clean_title(self):
-        with suppress(BaseException):  # need to avoid any errors
-            with _build_slide(self, "0") as s:
-                self.parse(
-                    f"""
-                    # Title Page 
-                    ::: align-center
-                        color[teal]`Author: Abdul Saboor`
-
-                        **Read more instructions by clicking ℹ️ button in quick menu:**
-                    ::: note-tip
-                        In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
-                    """,
-                    returns = False,
-                )
-                self.details(
-                    self.parse(key_combs, returns = True),
-                    "Keyboard Shortcuts",
-                ).display()
+        with _build_slide(self, "0"):
+            self.cols(
+                self.styled("color[var(--accent-color)]`Replace this with creating a slide with number` alert`0`",
+                    height = "100%", padding = "8em 8px",
+                ), 
+                '', # empty column for space 🤣
+                how_to_slide,widths=[14,1, 85]).display()
 
         self._unregister_postrun_cell() # no need in initialization functions 
         self.refresh()  # cleans up initialization setup and tocs/other things
@@ -743,18 +726,14 @@ class Slides(BaseSlides):
 
     @contextmanager
     def slide(self, slide_number, /): # don't allow keyword to have -1 robust
-        """Use this context manager to generate any number of slides from a cell. It is equivalent to `%%slide` magic.
-        
-        ::: note-info
-            Use this function with '-1' to auto number current slide.
-        """
+        """Same as `Slides.build` used as contexmanager."""
         slide_number = self._fix_slide_number(slide_number)
 
         if not isinstance(slide_number, int):
-            raise ValueError(f"slide_number should be int >= 1, got {slide_number}")
+            raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
 
         if slide_number < 0:  # zero for title slide
-            raise ValueError(f"slide_number should be int >= 1, got {slide_number}")
+            raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
 
         with _build_slide(self, f"{slide_number}") as s, self.code.context(
             returns = True, depth=4
@@ -763,8 +742,8 @@ class Slides(BaseSlides):
             yield s  # Useful to use later
 
     def __title(self, line, cell):
-        "Turns to cell magic `title` to capture title"
-        return self._slide("0 -m" if "-m" in line else "0", cell)
+        # when DELETE this, remove magic register above too
+        raise RuntimeError("title magic is deprecated in favor of a single concise api to build slides. Use `%%slide 0 [-m]` for title page instead!")
 
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
@@ -779,12 +758,7 @@ class Slides(BaseSlides):
 
     @contextmanager
     def title(self):
-        """Use this context manager to write title. It is equivalent to `%%title` magic."""
-        with self.slide(0) as s, self.code.context(
-            returns = True, depth=4
-        ) as c:  # depth = 4 to source under context manager
-            s.set_source(c.raw, "python")  # Update cell source befor yielding to make available inside context manager
-            yield s  # Useful to use later
+        raise RuntimeError("title function is deprecated of a single concise api to build slides. Use `Slides.build(0)` for title page instead!")
 
     @contextmanager
     def _loading_private(self, btn):
@@ -827,37 +801,7 @@ class Slides(BaseSlides):
                 
 
     def frames(self, slide_number, /, iterable, repeat=False):
-        """Decorator for inserting frames on slide, define a function with two arguments (frame_index, frame_content).
-        You can also call it as a function, e.g. `.frames(1,objs)(<optional function>)`.
-
-        ```python
-        @slides.frames(1,[a,b,c]) # slides 1.1, 1.2, 1.3 with content a,b,c
-        def f(frame_index, frame_content):
-            do_something(frame_content)
-            if frame_index == 0: # Main Slide
-                print('This is main slide')
-            else:
-                print('This is frame', frame_index)
-
-        slides.frames(1,[a,b,c])() # Auto writes the frames with same content as above
-        slides.frames(1,[a,b,c], repeat = True)() # content is [a], [a,b], [a,b,c] from top to bottom
-        slides.frames(1,[a,b,c], repeat = [(0,1),(1,2)])() # two frames with content [a,b] and [b,c]
-        ```
-
-        **Parameters**
-
-        - slide_number: (int) slide number to insert frames on.
-        - objs: expanded by * (list, tuple) of objects to write on frames. If repeat is False, only one frame is generated for each obj.
-        - repeat: (bool, list, tuple) If False, only one frame is generated for each obj.
-            If True, one frame are generated in sequence of ojects like `[a,b,c]` will generate 3 frames with [a], [a,b], [a,b,c] to given in function and will be written top to bottom.
-            If list or tuple, it will be used as the sequence of frames to generate and number of frames = len(repeat).
-            [(0,1),(1,2)] will generate 2 frames with [a,b] and [b,c] to given in function and will be written top to bottom or the way you write in your function.
-        
-        No return of defined function required, if any, only should be display/show etc.
-        
-        ::: note-info
-            Use this function with '-1' to auto number current slide.
-        """
+        "Sames as `Slides.build` used as a decorator."
         slide_number = self._fix_slide_number(slide_number)
 
         def _frames(func = lambda idx, obj: self.write(obj)):  # write if called without function
@@ -866,7 +810,7 @@ class Slides(BaseSlides):
                 return print(f"slide_number expects integer, got {slide_number!r}")
 
             if slide_number < 0:  # title slide is 0
-                raise ValueError(f"slide_number should be >= 1, got {slide_number!r}")
+                raise ValueError(f"slide_number should be >= 0, got {slide_number!r}")
             
             if isinstance(iterable, (str, bytes)) or not isinstance(iterable, Iterable):
                 raise TypeError(f"iterable should be list-like, got {type(iterable)}")
@@ -877,10 +821,8 @@ class Slides(BaseSlides):
                 _new_objs = []
                 for k, seq in enumerate(repeat):
                     if not isinstance(seq, (list, tuple)):
-                        raise TypeError(
-                            f"Expected list or tuple at index {k} of `repeat`, got {seq}"
-                        )
-                    _new_objs.append([iterable[s] for s in seq])
+                        raise TypeError(f"Expected list or tuple at index {k} of `repeat`, got {seq}")
+                    _new_objs.append(['' if s is None else iterable[s] for s in seq])
             else:
                 _new_objs = iterable
 
