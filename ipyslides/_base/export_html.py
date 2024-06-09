@@ -47,7 +47,7 @@ class _HhtmlExporter:
         self.main.widgets.buttons.export.on_click(self._export) # Export button
         
     def _htmlize(self):
-        navui_class = '' if self.main.widgets.checks.navgui.value else 'NavHidden' 
+        navui_class = '' if 'Show' in self.main.widgets.navbox._dom_classes else 'NavHidden' 
         content = ''
         for item in self.main:
             _html = '' 
@@ -65,6 +65,7 @@ class _HhtmlExporter:
                 <section {sec_id}>
                     {self._get_css(item)}
                     <div class="SlideBox">
+                        {self._get_bg_image(item)}
                         {self._get_logo()}
                         <div {goto_id} class="SlideArea">
                             {_html}
@@ -107,6 +108,12 @@ class _HhtmlExporter:
         return f'''<div class="SlideLogo" style="position:absolute;right:4px;top:4px;"> 
             {self.main.widgets.htmls.logo.value} 
         </div>'''
+    
+    def _get_bg_image(self, slide):
+        sec_id = f"#{getattr(slide,'_sec_id','')}"
+        img_str = slide._bg_image or self.main.settings._bg_image
+        if not img_str: return ''
+        return '<div class="BackLayer">' + img_str.replace(f".{self.main.uid}", sec_id) + '</div>'
 
     def _get_clickables(self):
         if len(self.main) < 2:
@@ -132,11 +139,12 @@ class _HhtmlExporter:
             
     
     def export_html(self, path = 'slides.html', overwrite = False):
-        """Build beutiful html slides that you can print. Widgets are supported via `Slides.alt(widget,func)`.
+        """Build beautiful html slides that you can print. Widgets are supported via `Slides.alt(widget,func)`.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
-        - You can take screenshot (using system's tool) of a widget and add it back to slide using `Slides.image` to keep PNG view of a widget. 
+        - You can take screenshot (using system's tool) of a widget and add it back to slide using `Slides.image_clip` to keep PNG view of a widget. 
+        - You can paste a screenshot using `alt_clip` functionality as well.
         - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
         
         ::: note-info

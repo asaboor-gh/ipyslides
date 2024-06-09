@@ -29,7 +29,7 @@ _icons = {
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
             <path fill="none" d="M13 4L21 13L13 21M4 13L21 13" />
         </svg>''',
-    'arrow-bar': '''
+    'arrowb': '''
         <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="rotate({rotation})">
             <path fill="none" d="M13 4L21 13L13 21M4 13L21 13M22 4L22 21"/>
         </svg>''',
@@ -160,12 +160,19 @@ _icons = {
     </svg>'''
 }
 
+_icons["edit"] = _icons["pencil"].format(size="{size}", color="{color}", rotation=45)
+for c, r in zip('rlud',(0, 180,-90,90)): # their base svgs should stilll be able to rotate any direction
+    _icons[f"arrow{c}"] = _icons["arrow"].format(size="{size}", color="{color}", rotation=r)
+    _icons[f"arrowb{c}"] = _icons["arrowb"].format(size="{size}", color="{color}", rotation=r)
+    _icons[f"chevron{c}"] = _icons["chevron"].format(size="{size}", color="{color}", rotation=r)
+
+
 loading_svg = _icons['loading'].format(size='4em',color='var(--accent-color, gray)',rotation=0) # Required outside
 
 class Icon(XTML):
-    available = tuple(_icons.keys())
+    "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
+    available = tuple(sorted(_icons.keys()))
     def __init__(self, name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0) :
-        "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
         if name not in _icons:
             raise KeyError(f'Icon {name} not found. Available icons: {", ".join(_icons.keys())}')
         

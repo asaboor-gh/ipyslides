@@ -166,8 +166,8 @@ def demo_slides(slides):
 
     slides.build(-1,'section`Simple Animations with Frames` toc`### Contents`')
 
-    forward_skipper = slides.goto_button('Skip All Next Frames')
-    backward_skipper = slides.goto_button('Skip Previous Frames', icon='minus')
+    forward_skipper = slides.goto_button('Skip All Next Frames', icon='arrowr')
+    backward_skipper = slides.goto_button('Skip Previous Frames', icon='arrowl')
     
     # Animat plot in slides  
     @slides.build(-1,range(14,19))
@@ -206,9 +206,9 @@ def demo_slides(slides):
         slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
         slides.bullets(obj, marker='💘').display()
 
-    @slides.build(-1, boxes, repeat=[(0,None, None, None),(0,1,None,None),(0,1,2,None),(0,1,2,3)])
+    @slides.build(-1, boxes, repeat=[(range(4),[],[],[]),(0,[1, 2,3],[],[]),(0,1,[2,3],[]),range(4)])
     def f(idx, obj):
-        slides.write('# Frames with \n#### `repeat = [(0,None, None, None),(0,1,None,None),(0,1,2,None),(0,1,2,3)]`')
+        slides.write('# Frames with \n`repeat = [(range(4),[],[],[]),(0,[1, 2,3],[],[]),(0,1,[2,3],[]),range(4)]`')
         slides.write(*obj)
 
     # Youtube
@@ -216,8 +216,7 @@ def demo_slides(slides):
     with slides.build(-1) as ys: # We will use this in next %%magic
         backward_skipper.display()
         forward_skipper.set_target()
-        slides.format_css({'.goto-button .fa.fa-minus': slides.icon('arrow',color='crimson',rotation=180).css}).display()
-    
+        
         slides.write(f"### Watching Youtube Video?")
         slides.write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.draw_button)
 
@@ -249,7 +248,7 @@ def demo_slides(slides):
                 slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'), # alt only works with widgets, but below display tricks works with any object
                 lambda: display(ipw.Button(description='Click to do nothing'),metadata = {'text/html': '<button>Click to do nothing</button>'}), # This is a hack to display button as html in exported slides
                 ipw.Checkbox(description='Select to do nothing',indent=False), 
-                'proxy`Paste Checkbox Screenshot Here with Slides.clip_image function`'
+                'proxy`Paste Checkbox Screenshot Here with Slides.image_clip function`'
             ]
         )
         s.get_source().display(True)

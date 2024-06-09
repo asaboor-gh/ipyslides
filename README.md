@@ -56,15 +56,10 @@ You can embed anything that you can include in Jupyter notebook like ipywidgets,
 
 
 ---
-# PDF printing
-To include all type of objects you need to make PDF manually.
-Read instructions by clicking ℹ️ button in quick menu. See [PDF-Slides](IPySlides-Print.pdf)
-If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bokeh` charts etc. and not something like `ipywidgets`, see next section.
-
----
 # HTML/PDF Slides
 - Use `slides.export_html` to build static slides that you can print as well.
 - Content variety for export is limited. Widgets can not be exported unless an alternative representation is given by `Slides.alt(widget, func(widget))`.
+- Any object including widget can be replaced for export using `Slides.alt_clip` function which lets you paste a screenshot of that object or anything and paste directly on slides.
 - Paper width for printing is 10 inch (254mm) and height is determined by aspect ratio of slides.
 - Use `Save as PDF` in browser to make links work in ouput PDF.
 
@@ -77,9 +72,7 @@ If you just have HTML objects like `matplotolib plots`, `images`, `plotly`, `bok
 ---
 # Caveats!
 - Since Markdown is parsed using python (and we do not run notebook from outside e.g. with nbconvert), markdown cells are of no use. A better alternative is linking a markodwn file using `Slides.sync_with_file` and slides auto update when you save your edits. You can still write markdown in code cell with slide magic `%%slide number -m` to add to slides. 
-- Slide number is necessary to be tracked by user in notebook, because cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. To minimize this difficulty:
-    - Use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
-- Bounding box of slides for screenshots should be set by user (if not in fullscreen).
+- Slide number is necessary to be tracked by user in notebook, because cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. To minimize this difficulty, use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
 
 ---
 

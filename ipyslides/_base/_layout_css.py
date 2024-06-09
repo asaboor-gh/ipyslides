@@ -18,18 +18,12 @@ def layout_css(accent_color, aspect):
             "^.SlidesWrapper": {
                 "container": "slides / inline-size !important",
                 "z-index": "1 !important",
-                "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important", # for screenshot clear boundaries
+                "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important", 
                 "^.SingleSlide .Controls": {
                     "display": "none !important",
                 },
                 "^:focus": {
                     "outline" : "none !important",
-                },
-                "^.CaptureMode": {
-                    ".TopBar.Outside, .SlideArea .goto-button, .Sfresh-Btn": {
-                        "visibility": "hidden !important"
-                    },  # Hide in screenshot
-                    ".Menu-Box" : {"display": "none !important",},
                 },
                 "^.FullWindow, ^.FullScreen": {
                     ".Width-Slider, .Source-Btn": {"display": "none !important"},
@@ -59,6 +53,24 @@ def layout_css(accent_color, aspect):
                 },
                 "^.InView-Other .Arrows.Next-Btn": {
                     "animation-delay": "60s",  # Beet at 60 seconds if left on slide
+                },
+                "^.PasteMode" : {
+                    ".paste-box": {
+                        "background": "var(--secondary-bg)",
+                        "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important",
+                        "margin": "0.25em", # figure has padding 0.25em which is fit in margin as a hint for snipping image
+                        "padding":"8px",
+                        "border-radius": "8px",
+                    },
+                    ".clipboard-image, .paste-btn": {
+                        "display": "block !important", # repeatition due to paste-btn
+                        "^.export-only" : {"display": "block !important",},
+                        "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--hover-bg)",},
+                    },
+                },
+                ".paste-btn": {"display": "none !important"},
+                ".clipboard-image": {
+                    ".custom-html:hover, .custom-html:focus": {"background": "none !important",},
                 },
                 ".Slide-Number" : { # slide number
                     "position": "absolute !important",
@@ -90,7 +102,7 @@ def layout_css(accent_color, aspect):
                     "max-width":"55%",
                     "min-width":"300px",
                     "min-height":"100px",
-                    "max-height":"65%", # so that a screenshot can show full
+                    "max-height":"65%", 
                     "z-index":"10000",
                     "border-radius": "8px",
                     "padding":"8px",
@@ -109,7 +121,7 @@ def layout_css(accent_color, aspect):
                     },
                     ":is(h1, h2, h3, h4, h5, h6)" : {"text-align": "left !important"},
                 },
-                ".LogoHtml": {"position": "absolute !important",}, # other properties are set internally
+                ".LogoHtml": {"position": "absolute !important","margin-left":"auto !important",}, # other properties are set internally
                 ".Loading": {
                     "position": "absolute",
                     "left": "50%",
@@ -346,12 +358,12 @@ def layout_css(accent_color, aspect):
                     },
                     "^:hover, ^:focus, ^:active, ^.mod-active, ^.Active-Start" : {
                         ".Menu-Box" : {
-                            "width": "132px !important", # 4*28 + margin + paddings
+                            "width": "148px !important", # 4*32 + margin + paddings
                             "transition": "width 400ms ease-in-out", # transition on enter hover
                              "overflow": "hidden !important", # avoid jump on hover too
                         },
                     },
-                    ".Toc-Btn, .Menu-Btn, .Screenshot-Btn": {
+                    ".Toc-Btn, .Menu-Btn, .Draw-Btn, .Source-Btn": {
                         "min-width": "28px",
                         "width": "28px", # need this too
                     },  # Avoid overflow in small screens
@@ -518,7 +530,7 @@ def layout_css(accent_color, aspect):
                     "color": "var(--primary-fg) !important",
                 },
             },
-            ".Draw-Wrapper, .CropBox": { # height is set dynamically
+            ".Draw-Wrapper": { # height is set dynamically
                 "position": "absolute !important",
                 "left": 0,
                 "top":0,
@@ -533,18 +545,6 @@ def layout_css(accent_color, aspect):
                     "z-index": "9 !important",
                     "width": "36px !important",
                     "^:active, ^.mod-active": {"box-shadow": "none !important","opacity": "1 !important",},
-                },
-            },
-            ".CropBox": {
-                "z-index": "15 !important", # above others
-                ".CropHtml img": {
-                    "border": "1px dashed red",
-                    "padding": "0 !important",
-                    "margin-bottom": "0 !important",
-                    "box-sizing":"border-box"},
-                ".CropHtml figure": { # override inline margin
-                    "margin-inline": "0 !important",
-                    "margin-block": "0 !important",
                 },
             },
             ".Draw-Widget": {
@@ -570,18 +570,19 @@ def layout_css(accent_color, aspect):
                     'stroke':'var(--secondary-bg)',
                 },
             },
+            **{f".fa.fa-{k}": Icon(k, color=accent_color).css for k in Icon.available},
             ".Arrows": {
                 ".fa.fa-chevron-left": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=180
+                    "chevronl", color=accent_color, size="36px"
                 ).css,
                 ".fa.fa-chevron-right": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=0
+                    "chevronr", color=accent_color, size="36px"
                 ).css,
                 ".fa.fa-chevron-up": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=-90
+                    "chevronu", color=accent_color, size="36px"
                 ).css,  # Why SVG rotation is clockwise?
                 ".fa.fa-chevron-down": Icon(
-                    "chevron", color=accent_color, size="36px", rotation=90
+                    "chevrond", color=accent_color, size="36px"
                 ).css,
             },
             ".Settings-Btn": {
@@ -597,7 +598,7 @@ def layout_css(accent_color, aspect):
                     "pencil", color=accent_color, size=_icons_size, rotation=45
                 ).css,
                 ".fa.fa-minus": Icon(
-                    "arrow", color=accent_color, size=_icons_size, rotation=180
+                    "arrowl", color=accent_color, size=_icons_size
                 ).css,
             },
             ".FullScreen-Btn": {
@@ -614,9 +615,6 @@ def layout_css(accent_color, aspect):
                     "loading", color=accent_color, size=_icons_size
                 ).css,
             },
-            ".Screenshot-Btn .fa.fa-camera": Icon(
-                "camera", color=accent_color, size=_icons_size
-            ).css,
             ".Laser-Btn": {
                 ".fa.fa-plus": Icon("laser", color=accent_color, size=_icons_size).css,
                 ".fa.fa-minus": Icon(
@@ -654,12 +652,12 @@ def layout_css(accent_color, aspect):
             },
             ".Home-Btn": {
                 ".fa.fa-plus": Icon(
-                    "arrow-bar", color=accent_color, size=_icons_size, rotation=180,
+                    "arrowbl", color=accent_color, size=_icons_size
                 ).css,
             },
             ".End-Btn": {
                 ".fa.fa-plus": Icon(
-                    "arrow-bar", color=accent_color, size=_icons_size
+                    "arrowbr", color=accent_color, size=_icons_size
                 ).css,
             },
             ".Info-Btn": {
@@ -862,7 +860,10 @@ def zoom_hover_css():
     )
 
 
-def glass_css(opacity=0.75, blur_radius=50):
+def glass_css(opacity=0.75, filter='blur(2px)', contain=False):
+    if filter and not '(' in str(filter):
+        raise ValueError(f"blur expects a CSS filter function like 'blur(2px)', 'invert()' etc. or None, got {filter}")
+    
     uclass = get_unique_css_class()
     return f"""{uclass} .BackLayer, {uclass} .BackLayer .Front {{
         position: absolute !important;
@@ -880,8 +881,8 @@ def glass_css(opacity=0.75, blur_radius=50):
         top:0;
         width: 100%;
         height: 100%;
-        object-fit:cover;
-        filter: blur({blur_radius}px);
+        object-fit:{('contain' if contain else 'cover')} !important;
+        filter: {filter};
     }}
     {uclass} .BackLayer .Front {{
         background: var(--primary-bg);

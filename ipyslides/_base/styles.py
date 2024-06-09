@@ -191,7 +191,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .SlideArea': {
-            ':is(p,div,em,b,i,table,img,svg)': {
+            ':is(p,div,em,b,table,img,svg, i:not(.fa))': { # icons issue with i, but italic i should have fonts
                 'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
             },
             'code > span, .jp-RenderedHTMLCommon :is(pre, code)': {

@@ -325,13 +325,6 @@ class Slide:
         "Capture output to this slide."
         self._app._next_number = int(self._number) + 1
         self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
-        self._notes = '' # Reset notes
-        self._citations = {} # Reset citations
-        self._section = None # Reset sec_key
-        self._proxies = {} # Reset placeholders
-        self._dproxies = {} # Reset dynamic placeholders
-        self._columns = {} # Reset columns
-        self._exportables = {} # Reset exportables
     
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
@@ -342,6 +335,7 @@ class Slide:
             self._app._register_postrun_cell()
         
         with self._app._set_running(self):
+            self.clear() # rest of cleanup here to avoid blinks in buidling slides
             with capture_content() as captured:
                 yield captured
 
@@ -360,7 +354,21 @@ class Slide:
         if self._app._warnings:
             print(*self._app._warnings, sep='\n\n')
             self._app._warnings = [] # Reset warnings
-        
+
+    def clear(self):
+        """Use with caution. This will required running cell again. 
+        All content will be wiped out excpet css, animation, background image etc.
+        You may want to use self.clear_display instead."""
+        self._notes = '' # Reset notes
+        self._citations = {} # Reset citations
+        self._section = None # Reset sec_key
+        self._proxies = {} # Reset placeholders
+        self._dproxies = {} # Reset dynamic placeholders
+        self._columns = {} # Reset columns
+        self._exportables = {} # Reset exportables
+        self._contents = [] # reset content to not be exportable
+        wait = True if self._app.this is self else False # avoid blinking in building slides, otherwise no
+        self.clear_display(wait = wait) 
         
     def update_display(self, go_there = True):
         "Update display of this slide."
@@ -373,6 +381,9 @@ class Slide:
             display(*self.contents)
             for dp in self._dproxies.values(): 
                 dp.update_display() # Update display to show new output as well
+            
+            for c in self._columns.values():
+                c.update_display()
 
             self._handle_refs()
         
@@ -460,7 +471,9 @@ class Slide:
     def contents(self):
         outputs = []
         for out in self._contents:
-            if 'Exp4Widget' in out.metadata:
+            if "COLUMNS" in out.metadata:
+                outputs.append(self._columns[out.metadata['COLUMNS']])
+            elif 'Exp4Widget' in out.metadata:
                 outputs.append(self._exportables[out.metadata['Exp4Widget']]) # This will get displayed as a widget
             elif 'DYNAMIC' in out.metadata:
                 outputs.append(self._dproxies[out.metadata['DYNAMIC']]) # This will get displayed as a widget
@@ -518,12 +531,16 @@ class Slide:
         "Readonly dom_classes on this slide sepaarated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
-    def set_bg_image(self, src, opacity=0.25, blur_radius=None):
-        "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."
+    def set_bg_image(self, src, opacity=0.25, filter='blur(2px)', contain=False):
+        """Adds glassmorphic effect to the background with image. `src` can be a url or a local image path.
+        
+        ::: note-tip
+            This function alongwith `self.clear` enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
+        """
         overall = getattr(self._app.settings, '_bg_image','')
-        self._app.settings.set_bg_image(src, opacity=opacity, blur_radius=blur_radius)
+        self._app.settings.set_bg_image(src, opacity=opacity, filter=filter, contain=contain)
         self._bg_image = self._app.widgets.htmls.glass.value # Update for this slide
-        self._app.settings._bg_image = overall # Reset back 
+        self._app.settings._bg_image = overall # Reset that back for other slides 
         self._app.navigate_to(self.index) # Go there to see effects while changing on_load
     
     def _instance_animation(self,name):

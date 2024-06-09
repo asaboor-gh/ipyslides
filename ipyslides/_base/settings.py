@@ -3,8 +3,9 @@ Author Notes: Classes in this module should only be instantiated in Slides class
 and then provided to other classes via composition, not inheritance.
 """
 
-import os, math
+import math
 
+from pathlib import Path
 from inspect import signature
 from IPython.display import Image
 
@@ -32,11 +33,13 @@ class LayoutSettings:
         
         self._layout = {'cwidth':100, 'scroll': True, 'centered': True, 'aspect': 16/9,'ncol_refs': 2}
         self._code_lineno = True
+        self._bg_image = ""
 
         self.width_slider = self.widgets.sliders.width
         self.fontsize_slider = self.widgets.sliders.fontsize
         self.theme_dd = self.widgets.ddowns.theme
         self.reflow_check = self.widgets.checks.reflow
+        self.paste_check = self.widgets.checks.paste
 
         self.btn_window = self.widgets.toggles.window
         self.btn_fscreen = self.widgets.toggles.fscreen
@@ -58,6 +61,7 @@ class LayoutSettings:
         self.btn_zoom.observe(self._push_zoom, names=["value"])
         self.btn_laser.observe(self._toggle_laser, names=["value"])
         self.reflow_check.observe(self._update_theme, names=["value"])
+        self.paste_check.observe(self._toggle_paste_mode, names=["value"])
         self.btn_draw.observe(self._toggle_overlay, names=["value"])
         self.btn_menu.observe(self._toggle_menu, names = ["value"])
         self.widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
@@ -65,6 +69,13 @@ class LayoutSettings:
         self.set_code_theme()  # Trigger CSS in it, must
         self.set_layout(center=True)  # Trigger this as well
         self._update_size(change=None)  # Trigger this as well
+        self._toggle_paste_mode(change=None) # This should be enabled by default
+
+    def _toggle_paste_mode(self, change):
+        if self.paste_check.value:
+            self._widgets.mainbox.add_class("PasteMode")
+        else:
+            self._widgets.mainbox.remove_class("PasteMode")
 
     def _close_quick_menu(self):
         "Need for actions on all buttons inside menu."
@@ -157,19 +168,16 @@ class LayoutSettings:
             raise RuntimeError("No slides yet to set CSS.")
         return self # for chaining set_methods
 
-    def set_bg_image(self, src=None, opacity=0.25, blur_radius=None):
+    def set_bg_image(self, src=None, opacity=0.25, filter='blur(2px)', contain = False):
         "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."
-        if not src:
+        if not src: 
             self.widgets.htmls.glass.value = ""  # clear
             self._bg_image = ""
             return
 
-        if not os.path.isfile(src):
-            raise FileNotFoundError(f"Image not found at {src!r}")
-
         self._bg_image = f"""
             <style>
-                {_layout_css.glass_css(opacity= 1 - opacity, blur_radius=blur_radius)}
+                {_layout_css.glass_css(opacity= 1 - opacity, filter=filter, contain=contain)}
             </style>
             {self._slides.image(src,width='100%')}
             <div class="Front"></div>""" # opacity of layer would be opposite to supplied
@@ -231,16 +239,21 @@ class LayoutSettings:
         for k,v in kwargs.items():
             if isinstance(v, (int,float)):
                 kwargs[k] = f"{v}px"
-
+        
+        if isinstance(src, Path):
+            src = str(src)  # important for svg checking below
+        
         if isinstance(src, str):
             if "<svg" in src and "</svg>" in src:
                 image = src
             else:
-                image = fix_ipy_image(
+                if src.startswith("clip:"):
+                    src = self._slides.clips_dir / src[5:] # don't strip it
+                image = fix_ipy_image( # Do not use big figure image syntax here, simple image only
                     Image(src, width=width), width=width
                 ).value  
-            self.widgets.htmls.logo.layout = dict(**kwargs, height='max-content')
             self.widgets.htmls.logo.value = image 
+            self.widgets.htmls.logo.layout = dict(**kwargs, height='max-content', margin='0 0 0 auto')
         return self # for chaining set_methods
 
     def set_footer(self, text="", numbering=True, date="today"):

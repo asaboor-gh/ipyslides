@@ -42,9 +42,9 @@ class XTML(HTML):
         "Returns HTML string."
         return self._repr_html_()
     
-    def as_widget(self, click_pointer=False):
+    def as_widget(self, click_handler=None):
         "Returns HtmlWidget with same data."
-        return HtmlWidget(self.value, click_pointer=click_pointer)
+        return HtmlWidget(self.value, click_handler=click_handler)
         
 
 def plt2html(plt_fig = None,transparent=True,width = '95%', caption=None):

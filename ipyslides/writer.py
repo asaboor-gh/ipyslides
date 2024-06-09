@@ -74,23 +74,22 @@ class AltForWidget(CustomDisplay):
                     raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')   
         
     def __repr__(self):
-        return 'AltForWidget(widget, func)'
-        
-    def _ipython_display_(self):
-        return self.display()
+        return f'AltForWidget({self._widget}, {self._func})'
         
     def display(self):
         slides = get_slides_instance()
         if slides and (context := (slides.in_proxy or slides.this)):
             display(context._exp4widget(self._widget, self._func))
         else:
-            display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere
-        
+            display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere   
+
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
     if hasattr(output, 'fmt_html'): # Columns
         return output.fmt_html()
     # Metadat text.html Should take precedence over data if given
+    if "skip-export" in output.metadata:
+        return ''
     elif hasattr(output, 'metadata') and isinstance(output.metadata, dict) and 'text/html' in output.metadata: 
         return output.metadata['text/html']
     elif 'text/html' in output.data:
@@ -98,6 +97,7 @@ def _fmt_html(output):
     elif 'text/latex' in output.data:
         return output.data['text/latex']
     return ''
+
 
 class Writer:
     _in_write = False # To prevent write from being called inside write
@@ -180,7 +180,9 @@ class Writer:
         for c, out_w in zip(self._cols, self._box.children):
             with out_w: 
                 for out in c['outputs']: # Don't worry as _slide won't be None if Proxy is present
-                    if 'Proxy' in out.metadata:
+                    if 'Exp4Widget' in out.metadata:
+                        display(self._context._exportables[out.metadata['Exp4Widget']])
+                    elif 'Proxy' in out.metadata:   
                         display(*self._slide._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
                     else: # No need to check for DYNAMIC as it is not allowed in cloumns
                         display(out)
@@ -201,7 +203,9 @@ class Writer:
         for col in self._cols:
             content = ''
             for out in col['outputs']:
-                if 'Exp4Widget' in out.metadata:
+                if "skip-export" in out.metadata:
+                    continue
+                elif 'Exp4Widget' in out.metadata:
                     epx = self._context._exportables[out.metadata['Exp4Widget']]
                     content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
                 elif 'DYNAMIC' in out.metadata: # Buried in column

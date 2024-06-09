@@ -1,4 +1,4 @@
-from .icons import Icon as _Icon, _icons
+from .icons import Icon as _Icon
 
 # ONLY INSTRUCTIONS BELOW
 
@@ -67,10 +67,7 @@ slides # This displays slides if on the last line of cell, or use `slides.show()
     - Use `Slides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
 """
 
-_icons = {key: _Icon(key, color="var(--accent-color)") for key in _icons}
-for k, r in zip("RLUD", [0, 180, -90, 90]):  # clockwise rotation sucks!
-    _icons[k] = _Icon("chevron", color="var(--accent-color)", rotation=r)
-
+_icons = {key: _Icon(key, color="var(--accent-color)") for key in _Icon.available}
 
 def _key(k): # other properties in CSS
     return f'<kbd style="min-width:2em;text-align:center;display:inline-block;">{k}</kbd>'
@@ -80,12 +77,11 @@ key_maps = {
     "▸, Space": "Next slide",
     "◂, Ctrl + Space": "Previous slide",
     "Z": "Toggle objects zoom mode",
-    "S": "Take screenshot",
     "P": "Print PDF of current slide",
     "F": "Toggle fullscreen",
     "Esc": "Exit fullscreen",
     "V": "Toggle fit to viewport [voila only]",
-    "G": "Toggle settings panel",
+    "S": "Toggle settings panel",
     "L": "Toggle LASER pointer",
     "E": "Edit Source Cell of Current Slide", 
     "K": "Show keyboard shortcuts",
@@ -94,39 +90,28 @@ key_maps = {
 key_combs = f"""
 | Shortcut                                    | Button                                            | Action                 | 
 |---------------------------------------------|---------------------------------------------------|------------------------|
-| {_key('&#9141;')}/{_key('▸')}               | {_icons["R"]}, {_icons["D"]}                      | Move to next slide     |
-| {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["L"]}, {_icons["U"]}                   | Move to previous slide |
-| {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_key('⇤')}/{_key('⇥')}                      | Jump to Star/End of slides |
+| {_key('&#9141;')}/{_key('▸')}               | {_icons["chevronr"]}, {_icons["chevrond"]}      | Move to next slide     |
+| {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["chevronl"]}, {_icons["chevronu"]}   | Move to previous slide |
+| {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_icons['arrowbl']}/{_icons['arrowbr']}       | Jump to Star/End of slides |
 | {_key('Ctrl')} + {_key('[1-9]')}/{_key('[1-9]')} |                                       | Shift [1-9] slides left/right |
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
-| {_key('S')}                                 | {_icons["camera"]}                                | {key_maps["S"]}        |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
 | {_key('Esc')}                               |                                                   | {key_maps["Esc"]}      |
 | {_key('V')}                                 | {_icons["win-maximize"]}, {_icons["win-restore"]} | {key_maps["V"]}        |
-| {_key('G')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["G"]}        |
+| {_key('S')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["S"]}        |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 
 
 how_to_print = f"""
-Screenshot of current state of slide can be taken by camera button in toolbar or by pressing {_key('S')}. 
-Order of screenshots is preserved. To capture all slides screenshots, follow process as below.
+You can also get PDF from exported HTML file. Use `Save as PDF` when printing to keep links working.
 
-- Press alert`Capture Screenshots of all Slides` button in side panel to capture a single image of each slide. 
-    - Add images over it by manually capturing multiple states of a slide as shown above.
-    - Delete screenshots with dropdown (all or current slide only and can retake).
-- After all screenshots are ready:
-    - Press alert`Set Crop Bounding Box` to crop an image which applies to all.
-    - Press alert`Save as PDF File` button to save all cropped screenshots as PDF.
-
-::: note-warning
-    Avoid scrolling during taking screenshot. You will set same bounding box for all screenshots
-    which can change position if scrolled.
-
-::: note-tip
-    You can also get PDF from exported HTML file, but can't have the freedom of capturing 
-    many views of single slide.
+For widgets and other objects's snapshots to be available in exported
+slides, use alert`Slides.alt`, alert`Slides.alt_clip` functions, which can pick images automatically
+from alert`Slides.clips_dir` with just a filename or clipboard (and save for next run). You can paste
+screenshots from system tool into alert`Slides.alt_clip` area on slides if you enable 
+alert`Show Image Paste GUI` toggle in settings panel. On Linux, you need alert`xclip` or alert`wl-paste` installed.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip

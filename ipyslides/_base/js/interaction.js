@@ -22,10 +22,9 @@ function hideLaser(box, cursor) {
 }
 
 const keyMessage = {
-    's': 'SCAP', // Screenshot
     'f': 'TFS', // Toggle Fullscreen with F but with click from button
     'z': 'ZOOM', // Enable zooming items
-    'g': 'TPAN', // Setting panel
+    's': 'TPAN', // Setting panel
     'k': 'KSC', // keyboard shortcuts
     'l': 'TLSR', // L toggle laser
     'v': 'TVP', // V for toggle viewport, only in voila and LinkedOutputView

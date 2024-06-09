@@ -92,15 +92,8 @@ class Slides(BaseSlides):
         self.serializer = serializer  # Serialize IPython objects to HTML
 
         with suppress(Exception):  # Avoid error when using setuptools to install
-            self.shell.register_magic_function(
-                self._slide, magic_kind="cell", magic_name="slide"
-            )
-            self.shell.register_magic_function(
-                self.__title, magic_kind="cell", magic_name="title"
-            )
-            self.shell.register_magic_function(
-                self.__xmd, magic_kind="line_cell", magic_name="xmd"
-            )
+            self.shell.register_magic_function(self._slide, magic_kind="cell", magic_name="slide")
+            self.shell.register_magic_function(self.__xmd, magic_kind="line_cell", magic_name="xmd")
 
         self._cite_mode = 'footnote'
 
@@ -123,7 +116,7 @@ class Slides(BaseSlides):
             )  # Load citations from file if exists
 
         self.progress_slider = self.widgets.sliders.progress
-        self.progress_slider.label = "0"  # Set inital value, otherwise it does not capture screenshot if title only
+        self.progress_slider.label = "0"  # Set inital value as title always there
         self.progress_slider.observe(self._update_content, names=["index"])
         self.widgets.buttons.refresh.on_click(self._update_dynamic_content)
         self.widgets.buttons.source.on_click(self._jump_to_source_cell)
@@ -259,6 +252,11 @@ class Slides(BaseSlides):
         return utils.get_child_dir('.ipyslides-assets', create = True)
     
     @property
+    def clips_dir(self):
+        "Get path to directory where clips are saved. If not exists, created!"
+        return utils.get_clips_dir()
+    
+    @property
     def cite_mode(self):
         return self._cite_mode
 
@@ -297,7 +295,7 @@ class Slides(BaseSlides):
         with _build_slide(self, "0"):
             self.cols(
                 self.styled("color[var(--accent-color)]`Replace this with creating a slide with number` alert`0`",
-                    height = "100%", padding = "8em 8px",
+                    padding = "8em 8px",
                 ), 
                 '', # empty column for space 🤣
                 how_to_slide,widths=[14,1, 85]).display()
@@ -551,9 +549,7 @@ class Slides(BaseSlides):
                 f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
             )]
 
-        if self.screenshot._capturing == False:
-            _objs.append(self._iterable[new_index].animation)
-
+        _objs.append(self._iterable[new_index].animation)
         self._update_tmp_output(*_objs)
         self.widgets.update_progressbar()
 
@@ -741,10 +737,6 @@ class Slides(BaseSlides):
             s.set_source(c.raw, "python")  # Update cell source befor yielding
             yield s  # Useful to use later
 
-    def __title(self, line, cell):
-        # when DELETE this, remove magic register above too
-        raise RuntimeError("title magic is deprecated in favor of a single concise api to build slides. Use `%%slide 0 [-m]` for title page instead!")
-
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
         Can use in place of `write` commnad for strings.
@@ -755,10 +747,6 @@ class Slides(BaseSlides):
             return parse(line, returns = False)
         else:
             return parse(cell, returns = False)
-
-    @contextmanager
-    def title(self):
-        raise RuntimeError("title function is deprecated of a single concise api to build slides. Use `Slides.build(0)` for title page instead!")
 
     @contextmanager
     def _loading_private(self, btn):
@@ -817,12 +805,22 @@ class Slides(BaseSlides):
 
             if repeat == True:
                 _new_objs = [iterable[:i] for i in range(1, len(iterable) + 1)]
-            elif isinstance(repeat, (list, tuple)):
+            elif isinstance(repeat, Iterable):
                 _new_objs = []
                 for k, seq in enumerate(repeat):
-                    if not isinstance(seq, (list, tuple)):
-                        raise TypeError(f"Expected list or tuple at index {k} of `repeat`, got {seq}")
-                    _new_objs.append(['' if s is None else iterable[s] for s in seq])
+                    if not isinstance(seq, Iterable):
+                        raise TypeError(f"Expected list-like object at index {k} of `repeat`, got {seq}")
+                    _current = []
+                    for s in seq:
+                        if isinstance(s, Iterable): # rows in columns or empty
+                            if not s: # empty list-like
+                                _current.append('')
+                            else:
+                                _current.append([iterable[t] for t in s]) # rows in columns
+                        else: # should be int, no need to check
+                            _current.append(iterable[s])
+
+                    _new_objs.append(_current)
             else:
                 _new_objs = iterable
 
@@ -835,6 +833,8 @@ class Slides(BaseSlides):
             with _build_slide(
                 self, f"{slide_number}", is_frameless=False
             ) as this_slide:
+                if (doc := getattr(func, '__doc__')):
+                    self.parse(doc)
                 func(0, _new_objs[0])  # Main slide content
 
             _new_objs = _new_objs[1:]  # Fisrt one is already written
@@ -852,6 +852,8 @@ class Slides(BaseSlides):
                 new_frames.append(new_slide)
 
                 with new_slide._capture() as captured:
+                    if (doc := getattr(func, '__doc__')):
+                        self.parse(doc)
                     func(i + 1, obj)  # i+1 as main slide is 0
 
             this_slide._frames = new_frames
@@ -921,14 +923,13 @@ class Slides(BaseSlides):
                     htmlize(f"color[var(--accent-color)]`{i}.` {sec}")
                     + f"<p>{slide._label}</p>"
                 )
-                p_btn = HtmlWidget(text, click_pointer=True)
-                p_btn._index = int(slide.index) # int to remove attribute access
-                
                 def jump_to_slide(change):
                     self.navigate_to(change.owner._index)
                     self.widgets.buttons.toc.click()
 
-                p_btn.observe(jump_to_slide, names='click_state')
+                p_btn = HtmlWidget(text, click_handler=jump_to_slide)
+                p_btn._index = int(slide.index) # int to remove attribute access
+
                 children.append(
                     p_btn.add_class("toc-item").add_class(f"s{slide._index}")
                 )  # class for dynamic CSS

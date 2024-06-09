@@ -7,7 +7,6 @@ from contextlib import ContextDecorator
 from IPython.display import display
 
 from .widgets import Widgets
-from .screenshot import ScreenShot
 from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
@@ -21,8 +20,6 @@ class BaseSlides:
         self._warnings = [] # Will be printed at end of building slides
         self._uid = f'{self.__class__.__name__}-{id(self)}' # Unique ID for this instance to have CSS, should be before settings
         self.__widgets = Widgets()
-        self.__screenshot = ScreenShot(self.__widgets)
-        self.clip_image = self.__screenshot.clip_image # For easy access
         self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
         self.__settings = LayoutSettings(self, self.__widgets)
         self.export_html = _HhtmlExporter(self).export_html
@@ -41,16 +38,11 @@ class BaseSlides:
         return self.__widgets
     
     @property
-    def screenshot(self):
-        return self.__screenshot
-    
-    @property
     def settings(self):
         return self.__settings
     
     def notify(self,content,timeout=5):
         """Send inside notifications for user to know whats happened on some button click. 
-        Remain invisible in screenshot.
         Send 'x' in content to clear previous notification immediately."""
         return self.widgets._push_toast(content,timeout=timeout)
     
@@ -350,7 +342,7 @@ class BaseSlides:
                         self.from_markdown(start, path.read_text(encoding="utf-8"), trusted)
                         self.notify('x') # need to remove any notification from previous error
                     except:
-                        e, text = traceback.format_exc(limit=0).split(':',1) # onlly get last error for notification
+                        e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
                         self.notify(f"{error('SyncError','something went wrong')}<br/><br/>{error(e,text)}",20)
             else:
                 self.notify(error("SyncError", f"file {path!r} no longer exists!").value, 20)
@@ -385,16 +377,20 @@ class BaseSlides:
             - `iterable` is a sequence other than a string.
             - Automatic call as `slides.build(number, iterable)()` will write objects from top to bottom. 
             - Use decorated `func(frame_index, frame_content)`  to write content flexibly.
-            - `repeat` can be False, True or an indexing sequence over `iterable`.
+            - `repeat` can be False, True or an indexing sequence over `iterable`. Top list-like creates frames, 
+            inner list-like items can be nested to two more levels for arranging items. [] can be used to have empty column/row.
+            Note that indexing depends on `iterable`, for list it should be int, for dict it is key, and so on.
+            - If function has a docstring, it will be parsed and added on top of all frames.
 
         ```python
         slides.build(1,[a,b,c])() # content is a, b, c
         slides.build(1,[a,b,c], repeat = True)() # content is [a], [a,b], [a,b,c]
         slides.build(1,[a,b,c], repeat = [(0,1),(1,2)])() # content [a,b] and [b,c]
         
-        @slides.build(1,[a,b,c], repeat=[(0,None,None),(0,1,None),(0,1,2)])
+        @slides.build(1,[a,b,c], repeat=[(0,[],[1,2]),(0,1,[]),(0,1,2)])
         def f(idx, content):
-            slides.write(*content) # will make three frame with [a,'',''],[a,b,''] and [a,b,c] as incremental columns.
+            "# Title on each frame"
+            slides.write(*content) # will make three frame with [a,'',(b,c)],[a,b,''] and [a,b,c] as incremental columns.
         ```
 
         Markdown content of each slide is stored as `.markdown` attribute to slide. You can append content to it later like this:
@@ -507,7 +503,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clip_image,'Slides')])
+            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.image_clip,'Slides')])
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
@@ -528,8 +524,9 @@ class BaseSlides:
                 
         with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
-            self.doc(self.clip_image,'Slides').display()
             self.run_doc(self.alt,'Slides')
+            self.doc(self.alt_clip,'Slides').display()
+            self.doc(self.image_clip,'Slides').display()
             
             members = sorted((
                 'alert block bokeh2html bullets styled format_html fmt color cols details doc sub sup '
@@ -619,15 +616,15 @@ class BaseSlides:
             self.write('''
                 ## SVG Icons
                 Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
+                besides standard ipywidgets icons.
             ''')
             self.write(' '.join([f'`{k}`: ' + self.icon(k,color='crimson').svg for k in self.icon.available]))
             
             with self.code.context():
                 import ipywidgets as ipw
-                btn = ipw.Button(description='Chevron-Down',icon='plus').add_class('MyIcon') # Any free font awesome icon, but class is important to overwrite icon     
+                btn = ipw.Button(description='Chevron-Down Icon',icon='chevrond')    
                 self.write(btn)
-                self.format_css({'.MyIcon .fa.fa-plus': self.icon('chevron',color='crimson', size='1.5em',rotation=90).css}).display() # Overwrite icon with your own
-
+                
             
         with self.build(-1):
             self.write("""

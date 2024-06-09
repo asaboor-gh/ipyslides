@@ -1,3 +1,4 @@
+from typing import Callable, Iterable
 import uuid
 import traitlets
 import sysconfig
@@ -5,6 +6,8 @@ import anywidget
 
 from pathlib import Path
 from IPython.display import display
+from traitlets.traitlets import All
+from traitlets.utils.sentinel import Sentinel
 
 def _hot_reload_dev_only(file):
     path = Path(__file__).with_name('js') / file
@@ -55,8 +58,6 @@ class InteractionWidget(anywidget.AnyWidget):
             self._toggles.zoom.value = not self._toggles.zoom.value
         elif msg == 'TPAN':
             self._buttons.setting.click()
-        elif msg == 'SCAP':
-            self._buttons.capture.click()
         elif msg == 'EDIT':
             self._buttons.source.click()
         elif msg == 'TVP' and not self._toggles.window.disabled:
@@ -96,7 +97,6 @@ class InteractionWidget(anywidget.AnyWidget):
 
 class HtmlWidget(anywidget.AnyWidget):
     """This introduces a trait 'click_state' which would be toggled between 0 and 1 on each click.
-    You can either have a function for click or mimic a double click as well.
     """
     _esm = """
     export function render({ model, el }) {
@@ -108,8 +108,11 @@ class HtmlWidget(anywidget.AnyWidget):
     }
     el.tabIndex = -1; // need for clickable events
     el.onclick = (event) => {
-        model.set("click_state", ((model.get("click_state") + 1) % 2)); // 0 or 1
-        model.save_changes();
+        event.stopPropagation();
+        if (el.classList.contains("clickable-div")) { // only if there, but register onclick anyhow, it does not work otherwise
+            model.set("click_state", ((model.get("click_state") + 1) % 2)); // 0 or 1
+            model.save_changes();
+        };
     };
     model.on("change:value", set_html);
     set_html();
@@ -129,15 +132,25 @@ class HtmlWidget(anywidget.AnyWidget):
     value = traitlets.Unicode('').tag(sync=True)
     click_state = traitlets.Int(0).tag(sync=True)
 
-    def __init__(self, value, *args, click_pointer = False, **kwargs):
+    def __init__(self, value, *args, click_handler=None, **kwargs):
         kwargs['value'] = value # initial value set by kwargs
-        if click_pointer:
-            self.add_class('clickable-div')
+        if click_handler is not None:
+            if not callable(click_handler):
+                raise TypeError("click_handler should be a function that accepts a change of widget's `click_state` trait.")
+            
+            self.observe(click_handler, names='click_state')
         super().__init__(*args, **kwargs)
 
     def __format__(self, spec):
         "This is needed to merge content of this widget into another one properly when used in formatting."
         return f'{self.value:{spec}}'
+    
+    def observe(self, handler, names = traitlets.All, type="change"):
+        "observe traits. `click_state` traits should be observed explicity!"
+        if "click_state" in str(names): # only observe clicks explicity
+            self.add_class('clickable-div') # only on demand
+            
+        return super().observe(handler, names=names, type = type)
     
     def display(self):
         "Display this HTML object."
