@@ -2,6 +2,7 @@
 # CSS for ipyslides
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
+from .icons import Icon
 
 _flow_selector = ":is(.jp-OutputArea-child, .columns > div, li)" #":is(.highlight code, li, tr)"
 
@@ -270,6 +271,9 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'color':'var(--secondary-fg)',
             },
         },
+        
+        '.fa::before':  {'margin': '0 4px 0 0', 'vertical-align': 'middle',}, # for exported font-awsome icons
+        **{f".fa.fa-{k}::before": Icon(k, color=colors["accent_color"]).css for k in Icon.available}, # needed in export too
         '.raw-text': { # Should be same in notebook cell 
             'font-family': f'{code_font!r}, "Cascadia Code","Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
             'font-size':'90% !important',

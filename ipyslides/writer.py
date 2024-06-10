@@ -31,20 +31,18 @@ class GotoButton(CustomDisplay):
     def display(self):
         alt_link = self._app.html('a',self._button.description, href=f'#{self._target_id}', 
             style='color:var(--accent-color);text-decoration:none;', 
-            className='goto-button export-only'
+            css_class=f'goto-button export-only {self._app.icon.get_css_class(self._button.icon)}'
         )
     
         display(self._button, metadata = {'DOMWidget': '---'})
         display(alt_link) # Hidden from slides
         
-    def set_target(self, force = False):
+    def set_target(self):
         "Set target slide of goto button. Returns itself."
         if not self._app.this:
             raise RuntimeError("GotoButton's target can be set only inside a slide constructor!")
-        if self._button._TargetSlide and not force:
-            raise RuntimeError("GotoButton's target can be set only once! Use `force=True` to link here and remove previous link.")
         
-        if force:
+        if getattr(self._button, '_TargetSlide', None):
             self._button._TargetSlide._target_id = None # Remove previous link
         
         self._button._TargetSlide = self._app.this
@@ -219,8 +217,8 @@ class Writer:
                 
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
         
-        className = ' '.join(self._box._dom_classes) # handle custom classes in blocks as well
-        return f'<div class="{className}" {_inline_style(self._box)}>{"".join(cols)}</div>'
+        css_class = ' '.join(self._box._dom_classes) # handle custom classes in blocks as well
+        return f'<div class="{css_class}" {_inline_style(self._box)}>{"".join(cols)}</div>'
     
     
 def write(*objs,widths = None):
@@ -236,6 +234,8 @@ def write(*objs,widths = None):
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
     - Use `Slides.alt(widget, func)` function to display widget on slides and alternative content in exported slides, function should return possible HTML representation of widget.
+    - Use `Slides.alt_clip` function to display anything (without parsing) on slides and paste its screenshot for export. Screenshots are persistent and taken on slides.
+    - Use `Slides.image_clip` to add screenshots from clipboard while running the cell.
     - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, html_converter_func)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.

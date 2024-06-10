@@ -112,13 +112,6 @@ class _Sliders:
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
     fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
 
-@dataclass(frozen=True)
-class _Dropdowns:
-    """
-    Instantiate under `Widgets` class only.
-    """
-    theme  = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit')
-
 class Widgets:
     """
     Instantiate under `Sides` class only and provide to other classes after built-up.
@@ -138,12 +131,12 @@ class Widgets:
         self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self._snum   = Button(description='',layout= Layout(width='auto',height='auto')).add_class("Slide-Number").add_class('Menu-Item')
+        self.theme   = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit').add_class("ThemeSelect")
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
         self.checks  = _Checks()
         self.htmls   = _Htmls()
-        self.ddowns  = _Dropdowns()
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
         self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget'), self.toggles.draw]).add_class('Draw-Wrapper')
@@ -158,7 +151,6 @@ class Widgets:
             self.buttons.next
         ]).add_class('Controls') 
 
-        
         self.footerbox = HBox([
             HBox([
                 self.toggles.menu,
@@ -166,7 +158,8 @@ class Widgets:
                 self.buttons.toc, 
                 self.buttons.source,  
             ]).add_class('Menu-Box'),
-            HBox([self.htmls.footer]), # should be in Box to avoid overflow
+            self.htmls.footer,
+            #HBox([self.htmls.footer]), # should be in Box to avoid overflow
         ],layout=Layout(height='28px')).add_class('NavBox')
         
         self.navbox = VBox([
@@ -182,7 +175,7 @@ class Widgets:
                 HTML('<b>Layout and Theme</b>',layout = _html_layout),
                 self.sliders.fontsize,
                 self.sliders.width,
-                self.ddowns.theme,
+                self.theme,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.notes,self.checks.toast,self.checks.reflow,
                 self.checks.navgui,self.checks.focus,

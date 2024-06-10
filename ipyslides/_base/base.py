@@ -64,9 +64,9 @@ class BaseSlides:
         """CSS styles for markdown or `styled` command."""
         # self.html will be added from Chid class
         return self.raw('''
-        Use any or combinations of these styles in className argument of writing functions:
+        Use any or combinations of these styles in css_class argument of writing functions:
         ------------------------------------------------------------------------------------
-         className          | Formatting Style                                              
+         css_class          | Formatting Style                                              
         ====================================================================================
          'text-[value]'     | [value] should be one of tiny, small, big, large, huge.
          'align-[value]'    | [value] should be one of center, left, right.
@@ -191,7 +191,7 @@ class BaseSlides:
         if sources:
             return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
         else:
-            self.html('p', 'No source code found.', className='info')
+            self.html('p', 'No source code found.', css_class='info')
 
     def on_load(self, func):
         """
@@ -507,7 +507,7 @@ class BaseSlides:
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
-            (skipper := self.goto_button('Skip to Dynamic Content')).display()
+            (skipper := self.goto_button('Skip to Dynamic Content', icon='arrowr')).display()
             self.write([f'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
@@ -590,7 +590,7 @@ class BaseSlides:
         with self.build(-1) as s:
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write(
-                lambda: display(self.html('h3','I will be on main slides',className='warning'), 
+                lambda: display(self.html('h3','I will be on main slides',css_class='warning'), 
                 metadata = {'text/html': '<h3 class="warning">I will be on exported slides</h3>'}), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
                 s.get_source(), widths = [1,3]
             )

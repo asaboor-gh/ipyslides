@@ -401,7 +401,7 @@ class Slide:
             elif self._citations:
                 self._refs = html('div', # need to store attribute for export
                     sorted(self._citations.values(), key=lambda x: x._id), 
-                    className='Citations', style = '')
+                    css_class='Citations', style = '')
                 self._refs.display()
 
     

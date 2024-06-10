@@ -100,10 +100,10 @@ def _ipy_imagestr(image,width='100%'): # Zoom for auto output
     return f'<div class="zoom-child">{fix_ipy_image(image,width=width).value}</div>'
 
 
-def code_css(style='default',color = None, background = None, hover_color = 'var(--hover-bg)', className = None, lineno = True):
+def code_css(style='default',color = None, background = None, hover_color = 'var(--hover-bg)', css_class = None, lineno = True):
     """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
     """
-    _class = '.highlight' if className is None else f'.highlight.{className}'
+    _class = '.highlight' if css_class is None else f'.highlight.{css_class}'
     
     from .xmd import get_unique_css_class # Avoid circular import
     _class = get_unique_css_class() + ' ' + _class # Add unique class to avoid conflict with other slides in Jupyter lab
@@ -147,17 +147,17 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, className = None, style='default', color = None, background = None, hover_color = 'var(--hover-bg)', lineno = True):
-    """Highlight code with given language and style. style only works if className is given.
-    If className is given and matches any of `pygments.styles.get_all_styles()`, then style will be applied immediately.
+def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--hover-bg)', lineno = True):
+    """Highlight code with given language and style. style only works if css_class is given.
+    If css_class is given and matches any of `pygments.styles.get_all_styles()`, then style will be applied immediately.
     color is used for text color as some themes dont provide text color."""
     if style not in pygments.styles.get_all_styles():
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
-    if className in pygments.styles.get_all_styles():
-        style = className
+    if css_class in pygments.styles.get_all_styles():
+        style = css_class
         
     formatter = pygments.formatters.HtmlFormatter(style = style)
-    _style = code_css(style=style, color = color, background = background, hover_color = hover_color,className=className, lineno = lineno) if className else ''
+    _style = code_css(style=style, color = color, background = background, hover_color = hover_color,css_class=css_class, lineno = lineno) if css_class else ''
     _code = pygments.highlight(textwrap.dedent(code).strip('\n'), # dedent make sure code blocks at any level are picked as well
                                pygments.lexers.get_lexer_by_name(language),
                                formatter)
@@ -168,8 +168,8 @@ def highlight(code, language='python', name = None, className = None, style='def
     code_ = '\n' + '\n'.join([f'<code>{line}</code>' for line in lines]) # start with newline is important
     _title = name if name else language.title()
     
-    if isinstance(className, str):
-        start = start.replace('class="highlight"',f'class="highlight {className}"')
+    if isinstance(css_class, str):
+        start = start.replace('class="highlight"',f'class="highlight {css_class}"')
     
     return XTML(f'''<div>
         <span class='lang-name'>{_title}</span>
@@ -301,17 +301,17 @@ class Serializer:
             kwargs.update(dict(display="flex",flex_flow="column nowrap"))
         
         kwargs.update({k:v for k,v in box_widget.layout.get_state().items() if v and k[0]!='_'}) # only those if not None
-        className = ' '.join(box_widget._dom_classes) # To keep style of HTML widget, latest as well
+        css_class = ' '.join(box_widget._dom_classes) # To keep style of HTML widget, latest as well
         content = '\n'.join((self.get_func(child) or (lambda child: ''))(child) for child in box_widget.children)
-        return f'<div class="{className}" {_inline_style(kwargs)}>{content}</div>'
+        return f'<div class="{css_class}" {_inline_style(kwargs)}>{content}</div>'
     
     def _alt_html(self, html_widget):
         """Convert ipywidgets.HTML object to HTML string."""
         if not isinstance(html_widget,(ipw.HTML,ipw.HTMLMath,HtmlWidget)):
             raise TypeError(f"Expects ipywidgets.(HTML/HTMLMath) or ipyslides's HtmlWidget, got {type(html_widget)}")
 
-        className = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
-        return f'<div class="{className}" {_inline_style(html_widget)}>{html_widget.value}</div>' 
+        css_class = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
+        return f'<div class="{css_class}" {_inline_style(html_widget)}>{html_widget.value}</div>' 
     
     def _alt_output(self, output_widget):
         "Convert objects in ipywidgets.Output to HTML string."
@@ -320,7 +320,7 @@ class Serializer:
         
         from .xmd import raw # avoid circular import
         
-        className = ' '.join(output_widget._dom_classes) # To keep style of Output widget, latest as well
+        css_class = ' '.join(output_widget._dom_classes) # To keep style of Output widget, latest as well
         content = ''
         for d in output_widget.outputs:
             if 'text' in d:
@@ -331,7 +331,7 @@ class Serializer:
                 elif 'text/latex' in d['data']:
                     content += d['data']['text/latex']
         
-        return f'<div class="{className}" {_inline_style(output_widget)}>{content}</div>' 
+        return f'<div class="{css_class}" {_inline_style(output_widget)}>{content}</div>' 
     
 
     def unregister(self, obj_type):
@@ -386,7 +386,7 @@ def format_object(obj):
             try:
                 source = textwrap.dedent(inspect.getsource(obj)).strip('\n') # dedent is must
                 source = re.sub(r'^#\s+','#',source) # Avoid Headings in source
-                source = highlight(source,language='python',style='default',className=None).value
+                source = highlight(source,language='python',style='default',css_class=None).value
             except:
                 source = f'Can not get source code of:\n{obj}'
             

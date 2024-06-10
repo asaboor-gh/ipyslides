@@ -37,7 +37,7 @@ class LayoutSettings:
 
         self.width_slider = self.widgets.sliders.width
         self.fontsize_slider = self.widgets.sliders.fontsize
-        self.theme_dd = self.widgets.ddowns.theme
+        self.theme_dd = self.widgets.theme
         self.reflow_check = self.widgets.checks.reflow
         self.paste_check = self.widgets.checks.paste
 

@@ -439,8 +439,8 @@ class Slides(BaseSlides):
                 if slide._section:
                     sections.append(fmt_sec(slide,"next"))
 
-            className = 'toc-list toc-extra' if extra else 'toc-list'
-            items = self.html('ol', sections, style='', className=className)
+            css_class = 'toc-list toc-extra' if extra else 'toc-list'
+            items = self.html('ol', sections, style='', css_class=css_class)
             if extra:
                 self.write([title, items], extra)
             else:
@@ -456,6 +456,7 @@ class Slides(BaseSlides):
             raise TypeError(f"target_slide should be Slide, got {type(target_slide)}")
 
         kwargs["description"] = text  # override description with text
+        kwargs["layout"] = kwargs.get("layout", {"width": "max-content"})
         button = ipw.Button(**kwargs).add_class("goto-button")
         setattr(button, "_TargetSlide", target_slide)  # Monkey patching target slide
 
@@ -817,12 +818,15 @@ class Slides(BaseSlides):
                                 _current.append('')
                             else:
                                 _current.append([iterable[t] for t in s]) # rows in columns
-                        else: # should be int, no need to check
+                        else: # iterable access key/index will handle it
                             _current.append(iterable[s])
 
                     _new_objs.append(_current)
             else:
                 _new_objs = iterable
+            
+            if not _new_objs:
+                raise ValueError("iterable is empty or repeate did not create frames!")
 
             if len(_new_objs) > 100:  # 99 frames + 1 main slide
                 raise ValueError(

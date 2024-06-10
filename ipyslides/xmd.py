@@ -115,9 +115,9 @@ def error(name, msg):
     "Add error without breaking execution."
     return XTML(f"<b style='color:crimson;'>{name}</b>: {msg}")
 
-def raw(text, className=None): # className is required here to make compatible with utils
+def raw(text, css_class=None): # css_class is required here to make compatible with utils
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
-    _class = className if className else ''
+    _class = css_class if css_class else ''
     escaped_text = escape(textwrap.dedent(text).strip('\n')) # dedent and strip newlines on top and bottom
     return XTML(f"<div class='raw-text {_class}'>{escaped_text}</div>")
 
@@ -148,7 +148,7 @@ def capture_content(stdout: bool = True, stderr: bool = True, display: bool = Tr
         if stdout: 
             kwargs['file'] = StringIO()
             bprint(*args, **kwargs)
-            return raw(kwargs['file'].getvalue(), className="InlinePrint").display() # InlinePrint  is important for filterning in utils
+            return raw(kwargs['file'].getvalue(), css_class="InlinePrint").display() # InlinePrint  is important for filterning in utils
         else:
             return bprint(*args, **kwargs)
     
@@ -446,7 +446,7 @@ class XMarkdown(Markdown):
             out = XTML() # empty placeholder
             try:
                 name = " " if line.strip().lower() == "text" else None
-                out.data = highlight(data, language=line.strip(), name=name, className=_class).value # intercept code highlight
+                out.data = highlight(data, language=line.strip(), name=name, css_class=_class).value # intercept code highlight
             except:
                 out.data = self.convert(f'```{data}\n```') # Let other extensions parse block
             
@@ -493,7 +493,7 @@ class XMarkdown(Markdown):
         dedent_data = textwrap.dedent(data)
 
         if "run" not in header:  # no run given
-            return [highlight(dedent_data, language="python", className=_class),]
+            return [highlight(dedent_data, language="python", css_class=_class),]
         
         if "run" in header:
             if self._returns:
@@ -502,7 +502,7 @@ class XMarkdown(Markdown):
             source = header.split("run")[1].strip()  # Afte run it be source variable
             main_ns = self.main_ns() # get once
             if source:
-                main_ns[source] = _str2code(dedent_data, language="python", className=_class)
+                main_ns[source] = _str2code(dedent_data, language="python", css_class=_class)
 
             # Run Code now
             with capture_content() as captured:

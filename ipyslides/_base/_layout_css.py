@@ -107,7 +107,7 @@ def layout_css(accent_color, aspect):
                     "border-radius": "8px",
                     "padding":"8px",
                     "overflow":"auto",
-                    "backdrop-filter": "blur(20px)",
+                    **{f"{k}backdrop-filter": "blur(20px)" for k in ('', '-webkit-')},
                     "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
                     "border-image": "linear-gradient(to bottom,rgba(0,0,0,0) 0, rgba(0,0,0,0) 10%, var(--accent-color) 10% , var(--accent-color) 90%, rgba(0,0,0,0) 90%, rgba(0,0,0,0) 100%) 1/ 0 0 0 3px",
                     "> button": {
@@ -333,7 +333,7 @@ def layout_css(accent_color, aspect):
                     "max-width": "100%",
                 },
                 ".NavBox": {
-                    "z-index": "2",
+                    "position": "relative !important", # for menubox
                     "overflow": "hidden",
                     "align-items": "center",
                     "height": "max-content",
@@ -352,6 +352,9 @@ def layout_css(accent_color, aspect):
                         },
                     },
                     ".Menu-Box": {
+                        "position": "absolute !important",
+                        "z-index": "3 !important",
+                        **{f"{k}backdrop-filter": "blur(10px)" for k in ('', '-webkit-')},
                         "width": "0 !important",
                         "transition": "width 400ms ease-in-out", # transition on exit
                         "overflow": "hidden !important", # needs to not jump on chnage of width
@@ -419,7 +422,7 @@ def layout_css(accent_color, aspect):
                 "bottom": "24px", # just above navbar
                 "display": "table-column-group !important", # This to avoid collapsing divs
                 "background": "var(--secondary-bg)",
-                "backdrop-filter": " blur(50px)",
+                **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
                 "margin": "4px",
                 "min-width": "50% !important",
                 "box-sizing": "border-box !important",
@@ -449,6 +452,7 @@ def layout_css(accent_color, aspect):
                 "overflow-y": "hidden", # hides useless scrollbars
                 "min-height": "36px !important",
                 "align-items": "center !important",
+                "justify-content": "space-around !important",
                 "padding-top": "4px !important",
                 "box-sizing": "border-box !important",
                 "^.Inside": {"padding-left": "12px","padding-right": "12px"},
@@ -537,7 +541,7 @@ def layout_css(accent_color, aspect):
                 "z-index": "8 !important",
                 "overflow": "hidden !important",
                 "transition": "height 200ms",
-                "backdrop-filter": "blur(50px)",
+                **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
                 "> .Draw-Btn" : {
                     "position": "absolute !important",
                     "left": 0,
@@ -548,7 +552,7 @@ def layout_css(accent_color, aspect):
                 },
             },
             ".Draw-Widget": {
-                "backdrop-filter": "blur(50px)",
+                **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
                 "margin": 0,
                 "z-index": 6,
                 "overflow": "hidden !important",
@@ -570,7 +574,6 @@ def layout_css(accent_color, aspect):
                     'stroke':'var(--secondary-bg)',
                 },
             },
-            **{f".fa.fa-{k}": Icon(k, color=accent_color).css for k in Icon.available},
             ".Arrows": {
                 ".fa.fa-chevron-left": Icon(
                     "chevronl", color=accent_color, size="36px"
@@ -777,8 +780,7 @@ def layout_css(accent_color, aspect):
             },
             "<#ipython-main-app .SlidesWrapper .output_scroll": {  # For classic Notebook output
                 "height": "unset !important",
-                "-webkit-box-shadow": "none !important",
-                "box-shadow": "none !important",
+                **{f"{k}box-shadow": "none !important" for k in ('', '-webkit-')},
             },
         },
     )
@@ -820,7 +822,7 @@ def zoom_hover_css():
                 "^:hover, ^:focus": {
                     "cursor": "auto",  # Ovverride zoom-in cursor form main layout
                     "position": "fixed",
-                    "backdrop-filter": "blur(50px)",
+                    **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
                     "left": "50px",
                     "top": "50px",
                     "z-index": 8,

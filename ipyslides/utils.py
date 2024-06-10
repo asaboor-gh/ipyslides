@@ -431,7 +431,7 @@ def image(data=None,width='95%',caption=None, **kwargs):
     
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
-    return html('figure', img.value + _fig_caption(caption), className='zoom-child', style = _fig_style_inline)  
+    return html('figure', img.value + _fig_caption(caption), css_class='zoom-child', style = _fig_style_inline)  
 
 def svg(data=None,width = '95%',caption=None, **kwargs):
     """Display svg file or svg string/bytes with additional customizations. 
@@ -439,7 +439,7 @@ def svg(data=None,width = '95%',caption=None, **kwargs):
     """
     svg = SVG(data=data, **kwargs)._repr_svg_()
     style = f'width:{width}px;' if isinstance(width,int) else f'width:{width};' + _fig_style_inline
-    return html('figure', svg + _fig_caption(caption), className='zoom-child', style=style) 
+    return html('figure', svg + _fig_caption(caption), css_class='zoom-child', style=style) 
 
 
 def iframe(src, width='100%',height='auto',**kwargs):
@@ -449,7 +449,7 @@ def iframe(src, width='100%',height='auto',**kwargs):
 
 _patch_display = lambda obj: setattr(obj, 'display', MethodType(XTML.display, obj)) # to be consistent with output displayable
 
-def styled(obj, className=None, **css_props):
+def styled(obj, css_class=None, **css_props):
     """Add a class to a given object, whether a widget or html/IPYthon object.
     CSS inline style properties should be given with names including '-' replaced with '_' but values should not.
     Only a subset of inline properties take effect if obj is a widget.
@@ -457,7 +457,7 @@ def styled(obj, className=None, **css_props):
     ::: note-tip
         Objects other than widgets will be wrapped in a 'div' tag. Use `html` function if you need more flexibility.
     """
-    klass = className if isinstance(className, str) else ''
+    klass = css_class if isinstance(css_class, str) else ''
 
     if isinstance(obj,ipw.DOMWidget):
         if hasattr(obj, 'layout'):
@@ -488,7 +488,7 @@ def center(obj):
     else:
         return XTML(f'<div class="align-center">{htmlize(obj)}</div>')
     
-def html(tag, children = None,className = None,**node_attrs):
+def html(tag, children = None,css_class = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
     `tag` can be any valid html tag name. A `tag` that ends with `/` will be self closing e.g. `hr/` will be `<hr/>`.  Empty tag gives unwrapped children.
     `children` expects:
@@ -522,8 +522,8 @@ def html(tag, children = None,className = None,**node_attrs):
         node_attrs = {'style':"background:inherit;color:inherit;",**{k.replace('_','-'):v for k,v in node_attrs.items()}} # replace _ with - in keys, and add default style
     
     attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
-    if className:
-        attrs = f'class="{className}" {attrs}'
+    if css_class:
+        attrs = f'class="{css_class}" {attrs}'
     
     if tag.endswith('/'): # Self closing tag
         return XTML(f'<{tag[:-1]} {attrs} />' if attrs else f'<{tag[:-1]}/>')
@@ -713,7 +713,7 @@ def sub(text):
 def sup(text):
     return html('sup',text,style="font-size:85%;color:inherit;")
 
-def bullets(iterable, ordered = False,marker = None, className = None):
+def bullets(iterable, ordered = False,marker = None, css_class = None):
     """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command.    
     `marker` could be a unicode charcter or string, only effects unordered list.
     """
@@ -721,7 +721,7 @@ def bullets(iterable, ordered = False,marker = None, className = None):
     for it in iterable:
         start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
         _bullets.append(f'{start}{_fmt_cols(it)}</li>')
-    return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],className = className) # Don't use style, it will remove effect of className
+    return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],css_class = css_class) # Don't use style, it will remove effect of css_class
 
 
 class image_clip(CustomDisplay):

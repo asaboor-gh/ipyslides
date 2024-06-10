@@ -198,3 +198,10 @@ class Icon(XTML):
     def css(self):
         "Get the CSS code of the icon as dictionary of {'content': url(svg)}."
         return {'content': f"url('data:image/svg+xml;utf8,{self._svg_inline}')"}   
+    
+    @classmethod
+    def get_css_class(cls, name):
+        """Get CSS class to add for this an icon name. You need font awsome CSS in exported HTML 
+        if you are using ipywidgets Button icons besides defined in this module. check `.available` class attribute for info on names."""
+        klass = ' '.join(f"fa-{n}" for n in name.split()) # can be many icons
+        return f"fa {klass}" if klass else ""
