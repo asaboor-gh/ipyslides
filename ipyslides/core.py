@@ -299,6 +299,8 @@ class Slides(BaseSlides):
                 ), 
                 '', # empty column for space 🤣
                 how_to_slide,widths=[14,1, 85]).display()
+            
+            self.this._number = "0" # need for access without even building title slides
 
         self._unregister_postrun_cell() # no need in initialization functions 
         self.refresh()  # cleans up initialization setup and tocs/other things
@@ -802,6 +804,11 @@ class Slides(BaseSlides):
                 raise ValueError(f"slide_number should be >= 0, got {slide_number!r}")
             
             if isinstance(iterable, (str, bytes)) or not isinstance(iterable, Iterable):
+                raise TypeError(f"iterable should be list-like, got {type(iterable)}")
+            
+            try:
+                iterable[:1] # dictionary can have key 0, only list-like would accept slice
+            except:
                 raise TypeError(f"iterable should be list-like, got {type(iterable)}")
 
             if repeat == True:

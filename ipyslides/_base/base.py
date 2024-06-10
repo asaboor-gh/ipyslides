@@ -374,7 +374,7 @@ class BaseSlides:
             - Keyword argument `trusted` is used here if there are `python run` blocks in markdown.
         - `with slides.build(number):` creates single slide. Equivalent to `%%slide number` magic.
         - `@slides.build(number, iterable)` creates a slide with multiple frames.
-            - `iterable` is a sequence other than a string.
+            - `iterable` should be list-like object. Any level of nesting should be handled by `func`.
             - Automatic call as `slides.build(number, iterable)()` will write objects from top to bottom. 
             - Use decorated `func(frame_index, frame_content)`  to write content flexibly.
             - `repeat` can be False, True or an indexing sequence over `iterable`. Top list-like creates frames, 
