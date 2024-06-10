@@ -112,10 +112,14 @@ slides, use alert`Slides.alt`, alert`Slides.alt_clip` functions, which can pick 
 from alert`Slides.clips_dir` with just a filename or clipboard (and save for next run). You can paste
 screenshots from system tool into alert`Slides.alt_clip` area on slides if you enable 
 alert`Show Image Paste GUI` toggle in settings panel. On Linux, you need alert`xclip` or alert`wl-paste` installed.
+
+::: note-tip
+    You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
-    In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
+    - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
+    - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
 
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}
 

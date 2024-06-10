@@ -18,6 +18,7 @@ def layout_css(accent_color, aspect):
             "^.SlidesWrapper": {
                 "container": "slides / inline-size !important",
                 "z-index": "1 !important",
+                "aspect-ratio": f"{aspect} !important", # important in notebook context, where width collpases to cell
                 "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important", 
                 "^.SingleSlide .Controls": {
                     "display": "none !important",
@@ -62,13 +63,18 @@ def layout_css(accent_color, aspect):
                         "padding":"8px",
                         "border-radius": "8px",
                     },
-                    ".clipboard-image, .paste-btn": {
-                        "display": "block !important", # repeatition due to paste-btn
-                        "^.export-only" : {"display": "block !important",},
+                    ".clipboard-image": {
+                        "^, ^.export-only" : {"display": "block !important",},
                         "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--hover-bg)",},
                     },
+                    ".paste-btns": {
+                        "display": "flex !important", 
+                        "width": "max-content",
+                        "margin": "auto", # display in middle along figure
+                        "gap": "4px",
+                    },
                 },
-                ".paste-btn": {"display": "none !important"},
+                ".paste-btns": {"display": "none !important"},
                 ".clipboard-image": {
                     ".custom-html:hover, .custom-html:focus": {"background": "none !important",},
                 },

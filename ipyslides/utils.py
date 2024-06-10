@@ -363,8 +363,10 @@ class alt_clip(CustomDisplay):
         self._fname = filename
         self._quality = quality
         self._kws = {"width": "100%", **kwargs} # fit full by default
-        self._btn = ipw.Button(icon="paste", description="Paste clipboard image", layout={"width":"max-content"}).add_class("paste-btn")
-        self._btn.on_click(self._paste_clip)
+        self._paste = ipw.Button(icon="paste", description="Paste clipboard image", layout={"width":"max-content"})
+        self._upload = ipw.Button(icon="upload", description="Upload image from file", layout={"width":"max-content"})
+        self._paste.on_click(self._paste_clip)
+        self._upload.on_click(self._paste_clip)
         self._rep = html("div", 
             alert(f"{filename!r} in `Slides.clips_dir` will receive a clipboard image. Image's visual width on screen equal to width of this box would fit best.").value, 
         ).as_widget().add_class("clipboard-image").add_class("export-only" if self._obj is not None else "")
@@ -377,24 +379,21 @@ class alt_clip(CustomDisplay):
             display(self._obj, metadata = {"skip-export":"This was abondoned by alt_clip function to export!"})
         
         alt(
-            ipw.VBox([self._btn, self._rep]).add_class("paste-box"), 
+            ipw.VBox([ipw.HBox([self._paste, self._upload]).add_class('paste-btns'), self._rep]).add_class("paste-box"), 
             lambda w: serializer.get_func(self._rep)(w.children[-1])
         ).display() # must be in alt to be able to export
 
     def _paste_clip(self, btn):
         # overwrite always as it is from clipboard
         try:
-            if self._btn.icon == "upload":
-                self._btn.icon = "paste"
-                self._btn.description = "Paste clipboard image"
+            if btn is self._upload:
                 self._rep.value = image(f"clip:{self._fname}", **self._kws).value
             else:
                 self._rep.value = image_clip(self._fname, quality=self._quality, overwrite=True,**self._kws).value
         except:
-            self._btn.icon = "upload"
-            self._btn.description = "Upload image from file?"
+            ename = 'ClipboardPasteError' if btn is self._paste else 'FileUploadError'
             e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
-            self._rep.value = f"{error('ClipboardPasteError','something went wrong')}<br/><br/>{error(e,text)}"
+            self._rep.value = f"{error(ename,'something went wrong')}<br/><br/>{error(e,text)}"
 
         
 def details(str_html,summary='Click to show content'):
