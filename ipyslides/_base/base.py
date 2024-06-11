@@ -377,20 +377,15 @@ class BaseSlides:
             - `iterable` should be list-like object. Any level of nesting should be handled by `func`.
             - Automatic call as `slides.build(number, iterable)()` will write objects from top to bottom. 
             - Use decorated `func(frame_index, frame_content)`  to write content flexibly.
-            - `repeat` can be False, True or an indexing sequence over `iterable`. Top list-like creates frames, 
-            inner list-like items can be nested to two more levels for arranging items. [] can be used to have empty column/row.
-            Note that indexing depends on `iterable`, for list it should be int, for dict it is key, and so on.
+            - `repeat` can be False or True to enable enable making `iterable` a grid. Top list-like creates frames, 
+            inner list-like items can be used to create columns and automatically written if called as `Slides.build(...)()`.
+            In case of `repeate = True`, you can loop over rows yourself as well to write columns with given widths in `write` command.
             - If function has a docstring, it will be parsed and added on top of all frames.
 
         ```python
-        slides.build(1,[a,b,c])() # content is a, b, c
-        slides.build(1,[a,b,c], repeat = True)() # content is [a], [a,b], [a,b,c]
-        slides.build(1,[a,b,c], repeat = [(0,1),(1,2)])() # content [a,b] and [b,c]
-        
-        @slides.build(1,[a,b,c], repeat=[(0,[],[1,2]),(0,1,[]),(0,1,2)])
-        def f(idx, content):
-            "# Title on each frame"
-            slides.write(*content) # will make three frame with [a,'',(b,c)],[a,b,''] and [a,b,c] as incremental columns.
+        slides.build(1,[1,2,3])() # func gets 1, 2, 3 for each frame.
+        slides.build(1,[1,2,3], repeat = True)() # func gets [(1,)], [(1,), (2,)], [(1,), (2,), (3,)] for each of 3 frames
+        slides.build(1,[1,(2,3),4], repeat = True)() # func gets [(1,)], [(1,), (2, '')], [(1,), (2, 3)], [(1,), (2, 3)] for each of 4 frames
         ```
 
         Markdown content of each slide is stored as `.markdown` attribute to slide. You can append content to it later like this:
@@ -457,7 +452,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(range(22)) # Create slides faster
+        self.create(range(23)) # Create slides faster
         
         from ..core import Slides
 
@@ -586,6 +581,16 @@ class BaseSlides:
             self.write([self.doc(attr,'Slides') for attr in (self.sync_with_file,self.demo,self.docs,self.export_html)])
         
         self.build(-1, 'section`Advanced Functionality` toc`### Contents`')
+
+        with self.code.context(True) as code:
+            @self.build(-1, [(0,1), (2,3),(4,5,6,7)], repeat=True)
+            def make_frames(idx, obj):
+                "# Adding content on frames incrementally"
+                code.focus_lines([o for ob in obj for o in ob if o != '']).display() # flatten array and skip ''
+                for ws, cols in zip([None, (2,3),None],obj):
+                    cols = [self.html('h1', f"{c}",
+                        style="background:var(--alternate-bg);margin-block:4px !important;") for c in cols]
+                    self.write(*cols, widths=ws)
         
         with self.build(-1) as s:
             self.write('## Adding User defined Objects/Markdown Extensions')

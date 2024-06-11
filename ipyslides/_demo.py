@@ -206,10 +206,11 @@ def demo_slides(slides):
         slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
         slides.bullets(obj, marker='💘').display()
 
-    @slides.build(-1, boxes, repeat=[(range(4),[],[],[]),(0,[1, 2,3],[],[]),(0,1,[2,3],[]),range(4)])
+    @slides.build(-1, [boxes[:2],boxes[2:]], repeat=True)
     def f(idx, obj):
-        slides.write('# Frames with \n`repeat = [(range(4),[],[],[]),(0,[1, 2,3],[],[]),(0,1,[2,3],[]),range(4)]`')
-        slides.write(*obj)
+        slides.write('# Frames with \n`repeat = True and 2x2 grid of boxes')
+        for ws, cols in zip([(1,3),(3,2)],obj):
+            slides.write(*cols, widths=ws)
 
     # Youtube
     from IPython.display import YouTubeVideo

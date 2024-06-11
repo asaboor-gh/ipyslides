@@ -300,8 +300,7 @@ class Slides(BaseSlides):
                 '', # empty column for space 🤣
                 how_to_slide,widths=[14,1, 85]).display()
             
-            self.this._number = "0" # need for access without even building title slides
-
+        self._slides_dict["0"]._number = "0" # need for access without even building title slides
         self._unregister_postrun_cell() # no need in initialization functions 
         self.refresh()  # cleans up initialization setup and tocs/other things
 
@@ -697,16 +696,20 @@ class Slides(BaseSlides):
                 r"^--$|^--\s+$", cell, flags=re.DOTALL | re.MULTILINE
             )  # Split on -- or --\s+
 
-            if len(frames) > 1 and not repeat:
-                frames = [frames[0] + "\n" + obj for obj in frames[1:]]
-            
-            if len(frames) > 1 and repeat:
-                frames = ["\n".join([frames[0], *frames[1:i]]) for i in range(2, len(frames) + 1)]
+            text_all = ''
+            if len(frames) > 1:
+                text_all = frames[0]
+                frames = frames[1:] # frames start from first -- sepearator
             
             self._editing_index = None
             
-            @self.frames(int(slide_number_str), frames, repeat=False) # here repeat handled above
+            @self.frames(int(slide_number_str), frames, repeat=repeat) 
             def make_slide(idx, frm):
+                if repeat:
+                    frm = '\n'.join('\n'.join(f) for f in frm) # nested in case of repeat
+                
+                frm = '\n'.join([text_all, frm]) # text before first frame on all of theme
+
                 if (self.this.markdown != frm) or (idx == 0):
                     self._editing_index = self.this.index # Go to latest editing markdown frame, or start of frames
 
@@ -789,18 +792,53 @@ class Slides(BaseSlides):
                         slide._slide_tocbox.remove_class("FirstTOC")
         
         self.notify('Dynamic content updated everywhere!')
-                
+
+    def _repeat(self, iterable):
+        "This is toughest ever function I made!"
+        class REP:
+            def __init__(self, *objs):
+                self.objs = objs
+
+        _new_objs = []
+        for item in iterable:
+            if not isinstance(item, (list,tuple)):
+                _new_objs.append(item)
+            else:
+                objs = [REP(*item[:i],*['<PH>' for _ in range(len(item) - i)]) for i in range(1, len(item) + 1)]
+                _new_objs.extend(objs)
+
+        _new_objs = [_new_objs[:i] for i in range(1, len(_new_objs) + 1)]
+
+        for i, rows in enumerate(_new_objs):
+            _cols = []
+            for col in rows:
+                if isinstance(col, REP):
+                    _cols.append([c.replace('<PH>','') if c == '<PH>' else c for c in col.objs]) 
+                    if '<PH>' in col.objs:
+                        col.objs = [] # don't let repeat this in next row
+                else:
+                    _cols.append([col]) # should be writeble as colum too
+            _new_objs[i] = tuple(tuple(c) for c in _cols if c != []) # match with empty list, not general bool
+        return type(iterable)(_new_objs) # return as same type
+    
 
     def frames(self, slide_number, /, iterable, repeat=False):
         "Sames as `Slides.build` used as a decorator."
         slide_number = self._fix_slide_number(slide_number)
 
-        def _frames(func = lambda idx, obj: self.write(obj)):  # write if called without function
+        def auto_frame_writer(idx, obj):
+            if repeat:
+                for cols in obj:
+                    self.write(*cols)
+            else:
+                self.write(obj)
+
+        def _frames(func = auto_frame_writer):  # write if called without function
 
             if not isinstance(slide_number, int):
                 return print(f"slide_number expects integer, got {slide_number!r}")
 
-            if slide_number < 0:  # title slide is 0
+            if slide_number < 0:  
                 raise ValueError(f"slide_number should be >= 0, got {slide_number!r}")
             
             if isinstance(iterable, (str, bytes)) or not isinstance(iterable, Iterable):
@@ -810,25 +848,12 @@ class Slides(BaseSlides):
                 iterable[:1] # dictionary can have key 0, only list-like would accept slice
             except:
                 raise TypeError(f"iterable should be list-like, got {type(iterable)}")
+            
+            if (slide_number == 0) and (len(iterable) > 1):
+                raise ValueError(f"slide 0 does not support more than one frames!")
 
-            if repeat == True:
-                _new_objs = [iterable[:i] for i in range(1, len(iterable) + 1)]
-            elif isinstance(repeat, Iterable):
-                _new_objs = []
-                for k, seq in enumerate(repeat):
-                    if not isinstance(seq, Iterable):
-                        raise TypeError(f"Expected list-like object at index {k} of `repeat`, got {seq}")
-                    _current = []
-                    for s in seq:
-                        if isinstance(s, Iterable): # rows in columns or empty
-                            if not s: # empty list-like
-                                _current.append('')
-                            else:
-                                _current.append([iterable[t] for t in s]) # rows in columns
-                        else: # iterable access key/index will handle it
-                            _current.append(iterable[s])
-
-                    _new_objs.append(_current)
+            if repeat:
+                _new_objs = self._repeat(iterable)
             else:
                 _new_objs = iterable
             
@@ -842,13 +867,17 @@ class Slides(BaseSlides):
 
             # build_slide returns old slide with updated display if exists.
             with _build_slide(
-                self, f"{slide_number}", is_frameless=False
+                self, f"{slide_number}", is_frameless=(True if len(_new_objs) == 1 else False)
             ) as this_slide:
                 if (doc := getattr(func, '__doc__')):
                     self.parse(doc)
                 func(0, _new_objs[0])  # Main slide content
+                if len(_new_objs) > 1:
+                    this_slide._widget.add_class("Frame") # it was cleared in capture if not frame
 
             _new_objs = _new_objs[1:]  # Fisrt one is already written
+            if not _new_objs:
+                return # nofurther action to take
 
             NFRAMES_OLD = len(this_slide._frames)  # old frames
 
@@ -866,6 +895,7 @@ class Slides(BaseSlides):
                     if (doc := getattr(func, '__doc__')):
                         self.parse(doc)
                     func(i + 1, obj)  # i+1 as main slide is 0
+                    new_slide._widget.add_class("Frame") # will be cleared in capture if not frames
 
             this_slide._frames = new_frames
 

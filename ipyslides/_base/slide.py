@@ -325,6 +325,7 @@ class Slide:
         "Capture output to this slide."
         self._app._next_number = int(self._number) + 1
         self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
+        self._widget.add_class(f"n{self._number}").remove_class("Frame") # Frame will be added in frame function
     
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
@@ -601,7 +602,7 @@ def _build_slide(app, slide_number_str, is_frameless = True):
         _slide = Slide(app, slide_number_str)
         app._slides_dict[slide_number_str] = _slide 
             
-    with _slide._capture() as captured:  
+    with _slide._capture() as captured: 
         yield _slide
     
     def get_keys(data):
