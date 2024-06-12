@@ -18,7 +18,6 @@ class Navigation:
         self.btn_settings.on_click(self._toggle_panel)
         self.widgets.buttons.home.on_click(self._goto_home)
         self.widgets.buttons.end.on_click(self._goto_end)
-        self.progress_slider.observe(self._change_icons,names=['index'])
         
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
@@ -32,19 +31,6 @@ class Navigation:
             self.widgets.slidebox.add_class('Prev') # Backwards Animation
             if self.progress_slider.index > 0:
                 self.progress_slider.index = self.progress_slider.index - 1 # Backwards
-    
-    def _change_icons(self, change):
-        self.widgets.mainbox.remove_class('InView-Other') # A heart beat animation should stop, and will be re-registed by content update
-        if '.' in self.progress_slider.options[self.progress_slider.index - 1][0]:
-            self.btn_prev.icon = 'chevron-up'
-        else:
-            self.btn_prev.icon = 'chevron-left'
-        
-        next_idx = (self.progress_slider.index + 1) % len(self.progress_slider.options)
-        if '.' in self.progress_slider.options[next_idx][0]:
-            self.btn_next.icon = 'chevron-down'
-        else:
-            self.btn_next.icon = 'chevron-right'
     
     def _toggle_panel(self,change):
         if self.btn_settings.icon == 'plus':

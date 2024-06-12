@@ -82,7 +82,7 @@ def layout_css(accent_color, aspect):
                     "position": "absolute !important",
                     "right": "0 !important",
                     "bottom": "0 !important",
-                    "padding": "0 6px !important",
+                    "padding": "0 2px !important",
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
@@ -586,12 +586,6 @@ def layout_css(accent_color, aspect):
                 ).css,
                 ".fa.fa-chevron-right": Icon(
                     "chevronr", color=accent_color, size="36px"
-                ).css,
-                ".fa.fa-chevron-up": Icon(
-                    "chevronu", color=accent_color, size="36px"
-                ).css,  # Why SVG rotation is clockwise?
-                ".fa.fa-chevron-down": Icon(
-                    "chevrond", color=accent_color, size="36px"
                 ).css,
             },
             ".Settings-Btn": {

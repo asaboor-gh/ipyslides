@@ -41,7 +41,7 @@ class Notes:
         </style>{content}"""
 
         this_notes = self.main._current.notes 
-        next_slide_index = (self.main._current.index + 1) % len(self.main) # may be None till then
+        next_slide_index = (self.main.progress_slider.index + 1) % len(self.main) 
         if next_slide_index > 0: # Don't loop notes back
             next_notes = self.main[next_slide_index].notes
         else:

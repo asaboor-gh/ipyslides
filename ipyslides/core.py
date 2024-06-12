@@ -860,20 +860,19 @@ class Slides(BaseSlides):
             if not _new_objs:
                 raise ValueError("iterable is empty or repeate did not create frames!")
 
-            if len(_new_objs) > 100:  # 99 frames + 1 main slide
+            if len(_new_objs) > 10:  # 9 frames + 1 main slide
                 raise ValueError(
-                    f"Maximum 99 frames are supported, found {len(_new_objs)} frames!"
+                    f"Maximum 10 frames are supported per slide, found {len(_new_objs)} frames!"
                 )
 
             # build_slide returns old slide with updated display if exists.
             with _build_slide(
                 self, f"{slide_number}", is_frameless=(True if len(_new_objs) == 1 else False)
             ) as this_slide:
+                this_slide._is_frame = True # before content to make availabe
                 if (doc := getattr(func, '__doc__')):
                     self.parse(doc)
                 func(0, _new_objs[0])  # Main slide content
-                if len(_new_objs) > 1:
-                    this_slide._widget.add_class("Frame") # it was cleared in capture if not frame
 
             _new_objs = _new_objs[1:]  # Fisrt one is already written
             if not _new_objs:
@@ -892,10 +891,10 @@ class Slides(BaseSlides):
                 new_frames.append(new_slide)
 
                 with new_slide._capture() as captured:
+                    new_slide._is_frame = True # before content to make available
                     if (doc := getattr(func, '__doc__')):
                         self.parse(doc)
                     func(i + 1, obj)  # i+1 as main slide is 0
-                    new_slide._widget.add_class("Frame") # will be cleared in capture if not frames
 
             this_slide._frames = new_frames
 

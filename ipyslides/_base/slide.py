@@ -324,8 +324,9 @@ class Slide:
     def _capture(self):
         "Capture output to this slide."
         self._app._next_number = int(self._number) + 1
+        self._is_frame = False # set by frame
         self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
-        self._widget.add_class(f"n{self._number}").remove_class("Frame") # Frame will be added in frame function
+        self._widget.add_class(f"n{self._number}")
     
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
@@ -433,8 +434,22 @@ class Slide:
 
     @property
     def parent(self):
-        if '.' in self._label:
+        if self._is_frame:
             return self._app._slides_dict[self._number] # Return parent slide, _number is string
+        
+    def yoffset(self, value):
+        "Set yoffset (in px) for frames to have equal height in incremental content."
+        self._app.verify_running("yoffset can only be used inside slide constructor!")
+        if not self._is_frame:
+            raise RuntimeError("yoffset can only be used with frames!")
+        if (not isinstance(value, int)): 
+            raise ValueError("yoffset value should be integer in units of px!")
+        
+        self._app.html('style', 
+            f'.SlideArea.n{self.number} > .jp-OutputArea {{margin-top: {value}px !important;}}' # each frames get own yoffset
+        ).display()
+        
+
         
     @property
     def notes(self):

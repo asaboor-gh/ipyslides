@@ -90,8 +90,8 @@ key_maps = {
 key_combs = f"""
 | Shortcut                                    | Button                                            | Action                 | 
 |---------------------------------------------|---------------------------------------------------|------------------------|
-| {_key('&#9141;')}/{_key('▸')}               | {_icons["chevronr"]}, {_icons["chevrond"]}      | Move to next slide     |
-| {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["chevronl"]}, {_icons["chevronu"]}   | Move to previous slide |
+| {_key('&#9141;')}/{_key('▸')}               | {_icons["chevronr"]}                              | Move to next slide     |
+| {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["chevronl"]}                           | Move to previous slide |
 | {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_icons['arrowbl']}/{_icons['arrowbr']}       | Jump to Star/End of slides |
 | {_key('Ctrl')} + {_key('[1-9]')}/{_key('[1-9]')} |                                       | Shift [1-9] slides left/right |
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |

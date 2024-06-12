@@ -112,7 +112,7 @@ theme_colors = {
         'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
         'hover_bg':'var(--jp-border-color1,#D1D9E1)',
         'accent_color':'var(--jp-brand-color1,gray)', # May be a neutral color is good for all themes for buttons
-        'pointer_color':'var(--md-pink-A400,red)',
+        'pointer_color':'var(--jp-error-color1,red)',
     },
     'Light': {
         'heading_color':'navy',
@@ -314,7 +314,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'overflow': 'auto !important' if scroll else 'hidden !important',
             '> .jp-OutputArea': {
                 'position': 'relative !important', # absolute content should not go outside
-                'margin': f'{margin} !important',
+                'margin': f'{margin} !important', # for frames margin-top will be defined, don't use here
                 'padding': '0 !important',
                 'padding-bottom': 'var(--paddingBottom, 0px) !important', # Set by JS dynamically
                 'width': f'{cwidth}% !important',

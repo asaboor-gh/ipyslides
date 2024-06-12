@@ -203,12 +203,12 @@ def demo_slides(slides):
     @slides.build(-1, boxes, repeat=True)
     def f(idx, obj):
         slides.this.set_animation(None) #Disable animation for showing bullets list
-        slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List')
+        slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List yoffset`100`')
         slides.bullets(obj, marker='💘').display()
 
     @slides.build(-1, [boxes[:2],boxes[2:]], repeat=True)
     def f(idx, obj):
-        slides.write('# Frames with \n`repeat = True and 2x2 grid of boxes')
+        slides.write('# Frames with \n`repeat = True and 2x2 grid of boxes yoffset`200`')
         for ws, cols in zip([(1,3),(3,2)],obj):
             slides.write(*cols, widths=ws)
 

@@ -67,7 +67,7 @@ class _HhtmlExporter:
                     <div class="SlideBox">
                         {self._get_bg_image(item)}
                         {self._get_logo()}
-                        <div {goto_id} class="SlideArea">
+                        <div {goto_id} class="SlideArea n{item.number}">
                             {_html}
                         </div>
                         {footer}
@@ -75,6 +75,15 @@ class _HhtmlExporter:
                 </section>''')
             
         theme_kws = self.main.settings.theme_kws
+        
+        if self.main.widgets.theme.value == "Inherit":  # jupyterlab Inherit themes colors to export
+            if self.main.widgets.iw._colors:
+                theme_kws["colors"] = self.main.widgets.iw._colors
+                self.main.widgets.iw._colors = {} # reset as user can change jupyter theme again
+            else:
+                self.main.widgets.iw.msg_tojs = "SetColors" # only send from here as this only matters in export
+                return None
+
         theme_css = styles.style_css(**theme_kws, _root=True)
         _style_css = slides_css.replace('__theme_css__', theme_css) # They have style tag in them.
         _code_css = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}','') # remove id from code here
@@ -120,14 +129,16 @@ class _HhtmlExporter:
             return '' # no clicks for only title
         
         items = [getattr(item,'_sec_id','') for item in self.main if '.' not in item.label] # only main slides
-        names = ['⇤', *['●' for _ in items[1:-1]],'⇥']
+        names = ['', *['●' for _ in items[1:-1]],'']
         
         if len(items) > 5: # we need only 0,25,50,75,100 % clickers
             imax = len(items) - 1
             items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
-            names = '⇤◔◑◕⇥'
+            names = ' ◔◑◕ ' # spaces around for icons
+        
+        klasses = [f"clicker fa {c}" for c in ['fa-arrowbl','','','','fa-arrowbr']]
 
-        return "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(names,items))
+        return "".join(f'<a href="#{key}" class="{klass}">{label}</a>' for (klass, label,key) in zip(klasses, names,items))
                 
     def _writefile(self, path, content, overwrite = False):
         if os.path.isfile(path) and not overwrite:
@@ -151,15 +162,27 @@ class _HhtmlExporter:
             - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF.
         """
+        return self._export_html(path=path, overwrite=overwrite, called_by_button=False)
+    
+    def _export_html(self, path = 'slides.html', overwrite = False, called_by_button=False):
         _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
         content = self._htmlize()
+        if content is None:
+            if called_by_button:
+                return 'RECLICK'
+            else:
+                return print("Inherit theme selected: Run export_html function again to export with jupyter theme colors!")
+
         self._writefile(_path, content, overwrite = overwrite)
         
     def _export(self,btn):
         "Export to HTML slides on button click."
         _dir = get_child_dir('ipyslides-export', create = True)
         path = os.path.join(_dir, 'slides.html')
-        self.export_html(path, overwrite = True)  
-        self.main.notify(f'File saved: {path!r}',10)
-        with suppress(BaseException):
-            os.startfile(path) # Does not work on some systems, so safely continue.
+        out = self._export_html(path, overwrite = True, called_by_button=True)
+        if out == 'RECLICK':
+            self.main.notify("Inherit theme selected: Click 'Export to HTML File' button again to export with jupyter theme colors!")
+        else:
+            self.main.notify(f'File saved: {path!r}',10)
+            with suppress(BaseException):
+                os.startfile(path) # Does not work on some systems, so safely continue.

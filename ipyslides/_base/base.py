@@ -381,6 +381,7 @@ class BaseSlides:
             inner list-like items can be used to create columns and automatically written if called as `Slides.build(...)()`.
             In case of `repeate = True`, you can loop over rows yourself as well to write columns with given widths in `write` command.
             - If function has a docstring, it will be parsed and added on top of all frames.
+            - Use yoffet`integer in px` in markdown/docstring or `Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
 
         ```python
         slides.build(1,[1,2,3])() # func gets 1, 2, 3 for each frame.
@@ -585,13 +586,13 @@ class BaseSlides:
         with self.code.context(True) as code:
             @self.build(-1, [(0,1), (2,3),(4,5,6,7)], repeat=True)
             def make_frames(idx, obj):
-                "# Adding content on frames incrementally"
+                "# Adding content on frames incrementally yoffset`20`"
                 code.focus_lines([o for ob in obj for o in ob if o != '']).display() # flatten array and skip ''
                 for ws, cols in zip([None, (2,3),None],obj):
                     cols = [self.html('h1', f"{c}",
                         style="background:var(--alternate-bg);margin-block:4px !important;") for c in cols]
                     self.write(*cols, widths=ws)
-        
+                    
         with self.build(-1) as s:
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write(

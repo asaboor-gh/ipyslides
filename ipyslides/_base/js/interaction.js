@@ -130,6 +130,8 @@ function handleMessage(model, msg, box, cursor) {
         if (box) { // may be nothing there left already
             box.remove();
         }
+    } else if (msg === "SetColors") { // sent by export_html function only
+        setColors(model, box);
     }
 };
 
@@ -212,6 +214,23 @@ function handleScale(box) {
 
     resizeObs.observe(box);
     setScale(box); // First time set
+}
+
+function setColors(model, box) {
+    let style = window.getComputedStyle(box);
+    const colors = {
+        'accent_color' : style.getPropertyValue('--accent-color'),
+        'primary_fg' : style.getPropertyValue('--primary-fg'),
+        'primary_bg' : style.getPropertyValue('--primary-bg'),
+        'secondary_bg': style.getPropertyValue('--secondary-bg'),
+        'secondary_fg': style.getPropertyValue('--secondary-fg'),
+        'alternate_bg': style.getPropertyValue('--alternate-bg'),
+        'hover_bg': style.getPropertyValue('--hover-bg'),
+        'pointer_color': style.getPropertyValue('--pointer-color'),
+        'heading_color': style.getPropertyValue('--heading-color')
+    }
+    model.set("_colors", colors);
+    model.save_changes();
 }
 
 export function render({ model, el }) {

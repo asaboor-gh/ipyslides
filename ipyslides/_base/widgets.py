@@ -130,7 +130,7 @@ class Widgets:
         # print(f'Inside: {self.__class__.__name__}')
         self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
-        self._snum   = Button(description='',layout= Layout(width='auto',height='auto')).add_class("Slide-Number").add_class('Menu-Item')
+        self._snum   = Button(description='',layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
         self.theme   = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit').add_class("ThemeSelect")
         self.buttons = _Buttons()
         self.toggles = _Toggles()

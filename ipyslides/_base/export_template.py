@@ -99,10 +99,10 @@ section .SlideBox {
     box-sizing: border-box !important;
 }
 section .SlideBox > .Footer > .Progress { 
-        display: block !important; 
-        box-sizing: border-box;
-        height: 3px !important;
-        width: 100% !important;
+    display: block !important; 
+    box-sizing: border-box;
+    height: 3px !important;
+    width: 100% !important;
 }
 section:first-of-type .SlideBox > .Footer > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
 section .SlideArea {
