@@ -109,8 +109,8 @@ theme_colors = {
         'primary_bg':'var(--jp-layout-color0,white)',
         'secondary_bg':'var(--jp-cell-editor-background,whitesmoke)',
         'secondary_fg':'var(--jp-content-font-color3,#454545)',
-        'alternate_bg':'var(--jp-layout-color3,whitesmoke)',
-        'hover_bg':'var(--jp-layout-color1,#D1D9E1)',
+        'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
+        'hover_bg':'var(--jp-brand-color3,#D1D9E1)',
         'accent_color':'var(--jp-brand-color1,#8988)', # May be a neutral color is good for all themes for buttons
         'pointer_color':'var(--jp-error-color1,red)',
     },
