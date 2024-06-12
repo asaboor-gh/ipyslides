@@ -104,14 +104,14 @@ def _validate_colors(colors):
         
 theme_colors = {
     'Inherit': {
-        'heading_color':'var(--jp-inverse-layout-color1,black)',
-        'primary_fg':'var(--jp-inverse-layout-color0,black)',
+        'heading_color':'var(--jp-content-font-color2,black)',
+        'primary_fg':'var(--jp-content-font-color0,black)',
         'primary_bg':'var(--jp-layout-color0,white)',
-        'secondary_bg':'var(--jp-layout-color2,whitesmoke)',
-        'secondary_fg':'var(--jp-inverse-layout-color4,#454545)',
-        'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
-        'hover_bg':'var(--jp-border-color1,#D1D9E1)',
-        'accent_color':'var(--jp-brand-color1,gray)', # May be a neutral color is good for all themes for buttons
+        'secondary_bg':'var(--jp-cell-editor-background,whitesmoke)',
+        'secondary_fg':'var(--jp-content-font-color3,#454545)',
+        'alternate_bg':'var(--jp-layout-color3,whitesmoke)',
+        'hover_bg':'var(--jp-layout-color1,#D1D9E1)',
+        'accent_color':'var(--jp-brand-color1,#8988)', # May be a neutral color is good for all themes for buttons
         'pointer_color':'var(--jp-error-color1,red)',
     },
     'Light': {
@@ -193,7 +193,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .SlideArea': {
             ':is(p,div,em,b,table,img,svg, i:not(.fa))': { # icons issue with i, but italic i should have fonts
-                'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+                'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
             },
             'code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': f'{code_font!r}, "Cascadia Code", "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
@@ -235,7 +235,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             },
             '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
             ':is(h1, h2, h3, h4, h5, h6)': {
-                'font-family':f'{text_font!r}, "Noto Sans Nastaleeq",-apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+                'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
                 'font-weight':'normal',
                 'color':'var(--heading-color)',
                 'text-align':'center' if centered else 'left',

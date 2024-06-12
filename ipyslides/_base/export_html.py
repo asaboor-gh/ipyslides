@@ -79,7 +79,7 @@ class _HhtmlExporter:
         if self.main.widgets.theme.value == "Inherit":  # jupyterlab Inherit themes colors to export
             if self.main.widgets.iw._colors:
                 theme_kws["colors"] = self.main.widgets.iw._colors
-                self.main.widgets.iw._colors = {} # reset as user can change jupyter theme again
+                self.main.widgets.iw._colors = {} # reset as user can change jupyter theme again          
             else:
                 self.main.widgets.iw.msg_tojs = "SetColors" # only send from here as this only matters in export
                 return None

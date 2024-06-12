@@ -20,8 +20,8 @@ def _hot_reload_dev_only(file):
 class InteractionWidget(anywidget.AnyWidget):
     _esm =  _hot_reload_dev_only("interaction.js")
     _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
-    _colors = traitlets.Dict().tag(sync=True) # update on theme
-
+    _colors = traitlets.Dict().tag(sync=True) # for export
+    
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)
 
