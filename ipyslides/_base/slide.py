@@ -554,7 +554,8 @@ class Slide:
         """Adds glassmorphic effect to the background with image. `src` can be a url or a local image path.
         
         ::: note-tip
-            This function alongwith `self.clear` enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
+            - This function alongwith `self.clear` enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
+            - This will be exported to HTML file.
         """
         overall = getattr(self._app.settings, '_bg_image','')
         self._app.settings.set_bg_image(src, opacity=opacity, filter=filter, contain=contain)

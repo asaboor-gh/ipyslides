@@ -169,7 +169,9 @@ class LayoutSettings:
         return self # for chaining set_methods
 
     def set_bg_image(self, src=None, opacity=0.25, filter='blur(2px)', contain = False):
-        "Adds glassmorphic effect to the background with image. `src` can be a url or a local image path."
+        """Adds glassmorphic effect to the background with image. `src` can be a url or a local image path.
+        Overall background will not be exported, but on each slides will be. This is to keep exported file size minimal.
+        """
         if not src: 
             self.widgets.htmls.glass.value = ""  # clear
             self._bg_image = ""
@@ -293,11 +295,8 @@ class LayoutSettings:
             text += (
                 " | " if text else ""
             ) + f'{today(fg = "var(--secondary-fg)") if date == "today" else date}'
-        if numbering:
-            if update_widget:
-                self._slides.widgets._snum.layout.display = ""
-            else:
-                text += f'<span style="color:var(--accent-color);position:absolute;right:8px;">{number}</span>'
+        if numbering and update_widget:
+            self._slides.widgets._snum.layout.display = ""
         else:
             self._slides.widgets._snum.layout.display = "none" # hide slide number
 

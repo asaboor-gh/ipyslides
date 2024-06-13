@@ -61,6 +61,12 @@ class _HhtmlExporter:
             sec_id = self._get_sec_id(item)
             goto_id = self._get_target_id(item)
             footer = f'<div class="Footer {navui_class}">{item.get_footer()}{self._get_progress(item)}</div>'
+            
+            number = ""
+            if self.main.settings._footer_kws["numbering"]:
+                lab = item.label if item.label != "0" else ""
+                number = f'<span class="Number">{lab}</span>'
+            
             content += textwrap.dedent(f'''
                 <section {sec_id}>
                     {self._get_css(item)}
@@ -70,6 +76,7 @@ class _HhtmlExporter:
                         <div {goto_id} class="SlideArea n{item.number}">
                             {_html}
                         </div>
+                        {number}
                         {footer}
                     </div>
                 </section>''')
@@ -119,10 +126,10 @@ class _HhtmlExporter:
         </div>'''
     
     def _get_bg_image(self, slide):
+        if not slide._bg_image:
+            return ''
         sec_id = f"#{getattr(slide,'_sec_id','')}"
-        img_str = slide._bg_image or self.main.settings._bg_image
-        if not img_str: return ''
-        return '<div class="BackLayer">' + img_str.replace(f".{self.main.uid}", sec_id) + '</div>'
+        return '<div class="BackLayer">' + slide._bg_image.replace(f".{self.main.uid}", sec_id) + '</div>'
 
     def _get_clickables(self):
         if len(self.main) < 2:

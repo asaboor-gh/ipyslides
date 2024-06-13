@@ -153,8 +153,18 @@ a.goto-button:active {
 }
 
 .SlidesWrapper.Scrolling .Footer,
+.SlidesWrapper.Scrolling .Number,
 .SlidesWrapper.Scrolling .SlideLogo {
-    display:none !important;
+    visibility: hidden !important;
+    transition: visbility 200ms ease-in;
+}
+.SlidesWrapper .Number {
+    color:var(--accent-color);
+    position:absolute;
+    right:8px;
+    bottom:6px;
+    font-size:16px;
+    z-index:5;
 }
 
 @media print {
