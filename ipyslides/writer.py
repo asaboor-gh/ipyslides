@@ -50,7 +50,7 @@ class GotoButton(CustomDisplay):
         return self 
     
 class AltForWidget(CustomDisplay):
-    def __init__(self, widget, func):
+    def __init__(self, func, widget):
         if not isinstance(widget, ipw.DOMWidget):
             raise TypeError(f'widget should be a widget, got {widget!r}')
         if not callable(func):
@@ -72,7 +72,7 @@ class AltForWidget(CustomDisplay):
                     raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')   
         
     def __repr__(self):
-        return f'AltForWidget({self._widget}, {self._func})'
+        return f'AltForWidget({self._func}, {self._widget})'
         
     def display(self):
         slides = get_slides_instance()
@@ -85,12 +85,16 @@ def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
     if hasattr(output, 'fmt_html'): # Columns
         return output.fmt_html()
-    # Metadat text.html Should take precedence over data if given
-    if "skip-export" in output.metadata:
-        return ''
-    elif hasattr(output, 'metadata') and isinstance(output.metadata, dict) and 'text/html' in output.metadata: 
-        return output.metadata['text/html']
-    elif 'text/html' in output.data:
+    
+    # Metadata text/html Should take precedence over data if given
+    if hasattr(output, 'metadata') and isinstance(output.metadata, dict):
+        if "text/html" in output.metadata: # wants to export text/html even skip there for main obj
+            return output.metadata['text/html']
+        elif "skip-export" in output.metadata: # only skip
+            return ''
+    
+    # Next data itself
+    if 'text/html' in output.data:
         return output.data['text/html']  
     elif 'text/latex' in output.data:
         return output.data['text/latex']
@@ -156,7 +160,7 @@ class Writer:
                     elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
                         if self._slides and self._slides.this:
                             if (func := serializer.get_func(c)):
-                                self._slides.alt(c, func).display() # Alternative representation will be available on export, specially for ipw.HTML
+                                self._slides.alt(func, c).display() # Alternative representation will be available on export, specially for ipw.HTML
                             else:
                                 display(c, metadata = {'DOMWidget': '---'}) # Display only widget
                         else:
@@ -201,9 +205,7 @@ class Writer:
         for col in self._cols:
             content = ''
             for out in col['outputs']:
-                if "skip-export" in out.metadata:
-                    continue
-                elif 'Exp4Widget' in out.metadata:
+                if 'Exp4Widget' in out.metadata:
                     epx = self._context._exportables[out.metadata['Exp4Widget']]
                     content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
                 elif 'DYNAMIC' in out.metadata: # Buried in column
@@ -233,10 +235,10 @@ def write(*objs,widths = None):
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
-    - Use `Slides.alt(widget, func)` function to display widget on slides and alternative content in exported slides, function should return possible HTML representation of widget.
+    - Use `Slides.alt` function to display obj/widget on slides and alternative content in exported slides.
     - Use `Slides.alt_clip` function to display anything (without parsing) on slides and paste its screenshot for export. Screenshots are persistent and taken on slides.
     - Use `Slides.image_clip` to add screenshots from clipboard while running the cell.
-    - `ipywidgets.HTML` and its subclasses will be displayed as `Slides.alt(widget, html_converter_func)`. The value of exported HTML will be most recent.
+    - `ipywidgets.[HTML, Output, Box]` and their subclasses will be displayed as `Slides.alt(html_converter_func, widget)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.
@@ -268,7 +270,7 @@ def _interact_ipython_display(self):
     if ip_disp:
         delattr(klass, '_ipython_display_') # avoids looping of display
     
-    AltForWidget(self, fmt_output_html).display() # display internally 
+    AltForWidget(fmt_output_html, self).display() # display internally 
     
     if ip_disp:
         klass._ipython_display_ = ip_disp # reset back

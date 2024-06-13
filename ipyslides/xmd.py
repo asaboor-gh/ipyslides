@@ -173,9 +173,11 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
 
     # yoffset`interger in pixels`
     all_matches = re.findall(r"yoffset\`(\d+)\`", text_chunk, flags= re.MULTILINE)
-    for match in all_matches:
-        slide_instance.this.yoffset(int(match))
+    for i, match in enumerate(all_matches, start=1):
         text_chunk = text_chunk.replace(f"yoffset`{match}`", "", 1)
+        
+        if i == len(all_matches): # only last one to take effect
+            slide_instance.this.yoffset(int(match))
 
     # cite`key` should be after citations`key`, so that available for writing there if any
     all_matches = re.findall(r"cite\`(.*?)\`", text_chunk, flags=re.DOTALL)

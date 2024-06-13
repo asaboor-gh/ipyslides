@@ -136,7 +136,7 @@ class _HhtmlExporter:
             items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
             names = ' ◔◑◕ ' # spaces around for icons
         
-        klasses = [f"clicker fa {c}" for c in ['fa-arrowbl','','','','fa-arrowbr']]
+        klasses = [f"clicker fa {c}" for c in ['fa-arrowbl',*['' for _ in names[1:-1]],'fa-arrowbr']]
 
         return "".join(f'<a href="#{key}" class="{klass}">{label}</a>' for (klass, label,key) in zip(klasses, names,items))
                 
@@ -150,7 +150,7 @@ class _HhtmlExporter:
             
     
     def export_html(self, path = 'slides.html', overwrite = False):
-        """Build beautiful html slides that you can print. Widgets are supported via `Slides.alt(widget,func)`.
+        """Build beautiful html slides that you can print.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
@@ -181,7 +181,7 @@ class _HhtmlExporter:
         path = os.path.join(_dir, 'slides.html')
         out = self._export_html(path, overwrite = True, called_by_button=True)
         if out == 'RECLICK':
-            self.main.notify("Inherit theme selected: Click 'Export to HTML File' button again to export with jupyter theme colors!")
+            self.main.notify(f"{self.main.alert('Inherit theme selected:')} Click 'Export to HTML File' button again to export with jupyter theme colors!")
         else:
             self.main.notify(f'File saved: {path!r}',10)
             with suppress(BaseException):

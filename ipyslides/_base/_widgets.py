@@ -127,20 +127,20 @@ class HtmlWidget(anywidget.AnyWidget):
     } 
     .clickable-div > .custom-html { cursor: pointer; }
     .clickable-div > .custom-html:hover, .clickable-div > .custom-html:focus {
-        background: var(--hover-bg, rgba(100, 100, 111, 0.2)) !important;
+        background: var(--alternate-bg, rgba(100, 100, 111, 0.2)) !important;
     }
     """
     value = traitlets.Unicode('').tag(sync=True)
     click_state = traitlets.Int(0).tag(sync=True)
 
-    def __init__(self, value, *args, click_handler=None, **kwargs):
-        kwargs['value'] = value # initial value set by kwargs
+    def __init__(self, value = '', click_handler=None, **kwargs):
+        kwargs['value'] = value # value set by kwargs
         if click_handler is not None:
             if not callable(click_handler):
                 raise TypeError("click_handler should be a function that accepts a change of widget's `click_state` trait.")
             
             self.observe(click_handler, names='click_state')
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def __format__(self, spec):
         "This is needed to merge content of this widget into another one properly when used in formatting."

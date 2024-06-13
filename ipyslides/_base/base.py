@@ -586,7 +586,7 @@ class BaseSlides:
         with self.code.context(True) as code:
             @self.build(-1, [(0,1), (2,3),(4,5,6,7)], repeat=True)
             def make_frames(idx, obj):
-                "# Adding content on frames incrementally yoffset`20`"
+                "# Adding content on frames incrementally yoffset`5`"
                 code.focus_lines([o for ob in obj for o in ob if o != '']).display() # flatten array and skip ''
                 for ws, cols in zip([None, (2,3),None],obj):
                     cols = [self.html('h1', f"{c}",

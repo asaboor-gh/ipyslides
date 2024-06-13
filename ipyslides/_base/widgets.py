@@ -84,9 +84,9 @@ class _Htmls:
     main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent_color'], 16/9)).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
-    logo    = HTML('').add_class('LogoHtml') # somehow my defined class is not behaving well in this case
-    toast   = HtmlWidget('').add_class('Toast') # For notifications
-    cursor  = HtmlWidget('').add_class('LaserPointer') # For beautiful cursor
+    logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
+    toast   = HtmlWidget().add_class('Toast') # For notifications
+    cursor  = HtmlWidget().add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
     glass   = HTML().add_class('BackLayer') # For glass effect
@@ -130,7 +130,7 @@ class Widgets:
         # print(f'Inside: {self.__class__.__name__}')
         self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
-        self._snum   = Button(description='',layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
+        self._snum   = Button(disabled=True, layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
         self.theme   = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit').add_class("ThemeSelect")
         self.buttons = _Buttons()
         self.toggles = _Toggles()

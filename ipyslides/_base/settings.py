@@ -22,7 +22,7 @@ class LayoutSettings:
         self._widgets = _instanceWidgets
         self._custom_colors = {}
         self._font_family = {
-            "code": "var(--jp-code-font-family)",
+            "code": "Cascadia Code",
             "text": "Roboto",
         }
         self._footer_kws = {
@@ -189,7 +189,7 @@ class LayoutSettings:
         style="default",
         color=None,
         background=None,
-        hover_color="var(--hover-bg)",
+        hover_color="var(--alternate-bg)",
         lineno=True,
     ):
         "Set code style CSS. Use background for better view of your choice. This is overwritten by theme change."
@@ -406,7 +406,7 @@ class LayoutSettings:
     def _toggle_tocbox(self, btn):
         if self.widgets.tocbox.layout.height == "0":
             self.widgets.tocbox.layout.height = f"min(calc(100% - 32px), {max(150, len(self.widgets.tocbox.children)*36)}px)"
-            self.widgets.tocbox.layout.border = "1px solid var(--hover-bg)"
+            self.widgets.tocbox.layout.border = "1px solid var(--alternate-bg)"
             self.widgets.tocbox.layout.padding = "4px"
             self.widgets.buttons.toc.icon = "minus"
         else:
@@ -493,7 +493,7 @@ class LayoutSettings:
             self._hover_only = 'Hover-Only' in self.btn_menu._dom_classes
             self.btn_menu.remove_class('Hover-Only') # If navigation menu hidden by user
             self.widgets.quick_menu.layout.height = 'min(225px, calc(100% - 30px))'
-            self.widgets.quick_menu.layout.border = "1px solid var(--hover-bg)"
+            self.widgets.quick_menu.layout.border = "1px solid var(--alternate-bg)"
         else:
             self.btn_menu.icon = 'plus'
             self.widgets.quick_menu.layout.height = '0'

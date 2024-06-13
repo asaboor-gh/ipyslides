@@ -100,7 +100,7 @@ def _ipy_imagestr(image,width='100%'): # Zoom for auto output
     return f'<div class="zoom-child">{fix_ipy_image(image,width=width).value}</div>'
 
 
-def code_css(style='default',color = None, background = None, hover_color = 'var(--hover-bg)', css_class = None, lineno = True):
+def code_css(style='default',color = None, background = None, hover_color = 'var(--alternate-bg)', css_class = None, lineno = True):
     """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
     """
     _class = '.highlight' if css_class is None else f'.highlight.{css_class}'
@@ -147,7 +147,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--hover-bg)', lineno = True):
+def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--alternate-bg)', lineno = True):
     """Highlight code with given language and style. style only works if css_class is given.
     If css_class is given and matches any of `pygments.styles.get_all_styles()`, then style will be applied immediately.
     color is used for text color as some themes dont provide text color."""
@@ -227,8 +227,8 @@ class Serializer:
         ::: note
             - Serializer function should return html string. It is not validated for correct code on registration time.       
             - Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
-            - Serialzers for widgets are equivalent to `Slides.alt(widget, func)` inside `write` command for export purpose. Other commands such as `Slides.format_html` will pick oldest value only.
-            - Use `Slides.serializer.get_metadata(obj)` to get metadata of a registerd type and then use `display(obj, metadata = metadata)` to display as it is and export html from metadata. metadata is a dict with ` {'text/html': 'html string'} `.
+            - Serialzers for widgets are equivalent to `Slides.alt(func, widget)` inside `write` command for export purpose. Other commands such as `Slides.format_html` will pick oldest value only.
+            - Use `Slides.display(obj)` to display as it is and export html from metadata instead of IPython's display.
         """
         def _register(func):
             if obj_type is str:
@@ -278,10 +278,10 @@ class Serializer:
         return None
     
     def get_metadata(self, obj_type):
-        "Get metadata for a type to use in `display(obj, metadata)` for export purpose. This take precedence over object's own html representation. Returns None if not found."
+        "Get metadata for a type to use in `display(obj, metadata)` for export purpose. This take precedence over object's own html representation. Returns {} if not found."
         if (func := self.get_func(obj_type)):
             return {'text/html': func(obj_type)}
-        return None
+        return {}
     
     def display(self, obj):
         "Display an object with metadata if a serializer available. Same as display(obj, metadata = serializer.get_metadata(obj)))"

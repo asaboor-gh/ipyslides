@@ -124,6 +124,15 @@ class Slides(BaseSlides):
         # All Box of Slides
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
+
+    def display(self, *objs, **kwargs):
+        "Display objs with metadata from serializer if exists. kwargs are only used if not under slides constructor!"
+        if any([self.this, self.in_dproxy]):
+            for obj in objs:
+                self.serializer.display(obj)
+        else:
+            return display(*objs, **kwargs)
+
         
     @contextmanager
     def _set_running(self, slide):
@@ -819,7 +828,7 @@ class Slides(BaseSlides):
                 else:
                     _cols.append([col]) # should be writeble as colum too
             _new_objs[i] = tuple(tuple(c) for c in _cols if c != []) # match with empty list, not general bool
-        return type(iterable)(_new_objs) # return as same type
+        return tuple(_new_objs) # edit safe
     
 
     def frames(self, slide_number, /, iterable, repeat=False):
@@ -1030,6 +1039,7 @@ class Slides:
         without extra typing, like `Slides.settings.set_animation().set_layout()...` .
     
     ::: note-tip
+        - Use `Slides.display` whenever possible instead of IPython's display, it automatically adds serializer metadat.
         - Use `Slides.instance()` class method to keep older settings. `Slides()` apply default settings every time.
         - Run `slides.demo()` to see a demo of some features.
         - Run `slides.docs()` to see documentation.

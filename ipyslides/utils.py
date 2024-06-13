@@ -1,5 +1,5 @@
 _attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
-            'image','image_clip', 'svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
+             'image','image_clip', 'svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
             'raw', 'rows', 'zoomable','html','sig','styled', 'doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
@@ -314,14 +314,32 @@ def format_css(props : dict):
     "{css_docstring}"
     return _format_css(props, allow_root_attrs = False)
 
-def alt(widget, func):
-    """Display `widget` for slides and output of `func(widget)` will be and displayed only in exported formats as HTML.
-    `func` should return possible HTML representation (provided by user) of widget as string.
+class DelayedDisplay(CustomDisplay):
+    def __init__(self, obj, text_html):
+        self._obj = obj
+        if not any([isinstance(text_html, str), hasattr(text_html,'_repr_html_')]):
+            raise TypeError(f"text_html should be an html str or an object with `_repr_html_` method, got {type(text_html)}")
+        self._text_html = text_html # str supposed to be
+        if hasattr(text_html, '_repr_html_'):
+            self._text_html = text_html._repr_html_()
+
+    def display(self):
+        return display(self._obj, metadata = {"skip-export":"","text/html": self._text_html}) # only text/html will be exported
+    
+
+def alt(func_or_html, obj, /):
+    """Display `obj` for slides and output of `func_or_html` will be and displayed only in exported formats as HTML.
+    
+    - `func_or_html` should be a `str`, an obj with `_repr_html_` method or a callable to receive `obj` as its only argument.
+    - In case `obj` is an instance of `ipywidgets.DOMWidget`:
+        - A callable `func_or_html` will give the latest representation of widget in exported slides.
+        - In other cases, it will export the runtime representation of widget.
+    - For any other `obj`, representation is always computed at runtime.
     
     ```python run source
     import ipywidgets as ipw
     slides = get_slides_instance()
-    slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">').display()
+    slides.alt(lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">', ipw.IntSlider()).display()
     ```
     `{source}`
     
@@ -330,7 +348,19 @@ def alt(widget, func):
         - `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give html representation if used inside `write` command.
         - Use `alt_clip` to paste images of widgets and other objects directly on slides.
     """
-    return AltForWidget(widget, func)
+    if not any([callable(func_or_html), isinstance(func_or_html, str), hasattr(func_or_html,'_repr_html_')]):
+        raise TypeError(f"first arguemnt of alt should be a func (func(obj) -> html str) or html str or an object with `_repr_html_` method, got {type(func_or_html)}")
+    
+    if isinstance(obj, ipw.DOMWidget) and callable(func_or_html):
+        return AltForWidget(func_or_html, obj)
+    
+    text_html = func_or_html # default
+    if callable(func_or_html):
+        text_html = func_or_html(obj)
+        if not isinstance(text_html, str):
+            raise TypeError(f'First argument, if a function, should return a str, got {type(text_html)}')
+        
+    return DelayedDisplay(obj, text_html)
 
 class alt_clip(CustomDisplay):
     """Save image from clipboard to file with a given quality when you paste in given area on slides.
@@ -344,7 +374,7 @@ class alt_clip(CustomDisplay):
     in other places with `Slides.image("clip:filename")` as well.
 
     ::: not-info
-        If you have an HTML serialization function for a widget, pass it directly to `write` or use `alt(widgte, func)` instead. 
+        If you have an HTML serialization function for a widget, pass it directly to `write` or use `alt(func, widget)` instead. 
         That will save you the hassel of copy pasting screenshots. `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give
         html representation if used inside `write` command.
     
@@ -378,9 +408,8 @@ class alt_clip(CustomDisplay):
         if self._obj is not None:
             display(self._obj, metadata = {"skip-export":"This was abondoned by alt_clip function to export!"})
         
-        alt(
+        alt(lambda w: serializer.get_func(self._rep)(w.children[-1]),
             ipw.VBox([ipw.HBox([self._paste, self._upload]).add_class('paste-btns'), self._rep]).add_class("paste-box"), 
-            lambda w: serializer.get_func(self._rep)(w.children[-1])
         ).display() # must be in alt to be able to export
 
     def _paste_clip(self, btn):

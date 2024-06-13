@@ -65,7 +65,7 @@ def layout_css(accent_color, aspect):
                     },
                     ".clipboard-image": {
                         "^, ^.export-only" : {"display": "block !important",},
-                        "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--hover-bg)",},
+                        "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--alternate-bg)",},
                     },
                     ".paste-btns": {
                         "display": "flex !important", 
@@ -202,7 +202,7 @@ def layout_css(accent_color, aspect):
                 "kbd" : {
                     "color":"var(--secondary-fg)",
                     "background": "var(--secondary-bg)",
-                    "border": "1px solid var(--hover-bg)",
+                    "border": "1px solid var(--alternate-bg)",
                     "border-radius": "0.2em",
                 },
                 ".export-only": {"display": "none !important"},
@@ -227,8 +227,8 @@ def layout_css(accent_color, aspect):
                         "background": "var(--accent-color)",
                         "border-color": "var(--accent-color)",
                         "^:hover, ^:focus": {
-                            "background": "var(--hover-bg) !important",
-                            "border-color": "var(--hover-bg) !important",
+                            "background": "var(--alternate-bg) !important",
+                            "border-color": "var(--alternate-bg) !important",
                         },
                     },
                     ".noUi-connect.noUi-draggable": { # for ranger sliders
@@ -306,7 +306,7 @@ def layout_css(accent_color, aspect):
                     "outline": "none !important",
                     "opacity": "1 !important",
                     "box-shadow": "none !important",
-                    "background": "var(--hover-bg)",
+                    "background": "var(--alternate-bg)",
                     "text-shadow": "0 0 2px var(--primary-bg), 0 0 4px var(--accent-color)",
                 },
                 ".widget-play .jupyter-button": {
@@ -725,7 +725,7 @@ def layout_css(accent_color, aspect):
                 "::-webkit-scrollbar-thumb": {
                     "background": "transparent !important",
                     "^:hover": {
-                        "background": "var(--hover-bg) !important",
+                        "background": "var(--alternate-bg) !important",
                     },
                 },
                 "::-webkit-scrollbar-corner": {

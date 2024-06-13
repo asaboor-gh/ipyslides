@@ -225,7 +225,6 @@ function setColors(model, box) {
         'secondary_bg': style.getPropertyValue('--secondary-bg'),
         'secondary_fg': style.getPropertyValue('--secondary-fg'),
         'alternate_bg': style.getPropertyValue('--alternate-bg'),
-        'hover_bg': style.getPropertyValue('--hover-bg'),
         'pointer_color': style.getPropertyValue('--pointer-color'),
         'heading_color': style.getPropertyValue('--heading-color')
     }

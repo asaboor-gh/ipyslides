@@ -110,7 +110,6 @@ theme_colors = {
         'secondary_bg':'var(--jp-cell-editor-background,whitesmoke)',
         'secondary_fg':'var(--jp-content-font-color3,#454545)',
         'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
-        'hover_bg':'var(--jp-brand-color3,#D1D9E1)',
         'accent_color':'var(--jp-brand-color1,#8988)', # May be a neutral color is good for all themes for buttons
         'pointer_color':'var(--jp-error-color1,red)',
     },
@@ -121,7 +120,6 @@ theme_colors = {
         'secondary_bg':'whitesmoke',
         'secondary_fg':'#454545',
         'alternate_bg':'whitesmoke',
-        'hover_bg':'#D1D9E1',
         'accent_color':'navy',
         'pointer_color':'red',
     },
@@ -132,7 +130,6 @@ theme_colors = {
         'secondary_bg' : '#353535',
         'secondary_fg' : 'powderblue',
         'alternate_bg' : '#282828',
-        'hover_bg' : '#264348',
         'accent_color' : '#f5e8b7',
         'pointer_color' : '#ff1744',
     },
@@ -143,7 +140,6 @@ theme_colors = {
 	    'secondary_bg': '#d9d8df',
 	    'secondary_fg': '#89E',
 	    'alternate_bg': '#deddde',
-	    'hover_bg': '#D1D9E1',
 	    'accent_color': '#955200',
         'pointer_color': '#FF7722',
     },
@@ -154,7 +150,6 @@ theme_colors = {
 	    'secondary_bg': '#e9eef2',
 	    'secondary_fg': '#3b5e3b',
 	    'alternate_bg': '#e9eef2',
-	    'hover_bg': '#dae3ec',
 	    'accent_color': '#4d7f43',
         'pointer_color': '#f50057',
     },
@@ -165,7 +160,6 @@ theme_colors = {
 	    'secondary_bg': '#383838',
 	    'secondary_fg': '#fefefe',
 	    'alternate_bg': '#383838',
-	    'hover_bg': '#484848',
 	    'accent_color': 'teal',
         'pointer_color': '#e91e63',
     }   
@@ -184,7 +178,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         '--secondary-bg':f'{colors["secondary_bg"]}',
         '--secondary-fg':f'{colors["secondary_fg"]}',
         '--alternate-bg':f'{colors["alternate_bg"]}',
-        '--hover-bg':f'{colors["hover_bg"]}',
         '--accent-color':f'{colors["accent_color"]}',
         '--pointer-color':f'{colors["pointer_color"]}',
         '--text-size':f'{text_size}'
@@ -192,11 +185,11 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .SlideArea': {
-            ':is(p,div,em,b,table,img,svg, i:not(.fa))': { # icons issue with i, but italic i should have fonts
+            ':is(p,div,em,b,table,img,svg, i:not(.fa)):not(.raw-text)': { # icons issue with i, but italic i should have fonts
                 'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
             },
-            'code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
-                'font-family': f'{code_font!r}, "Cascadia Code", "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
+            'code > span, .raw-text, .jp-RenderedHTMLCommon :is(pre, code)': {
+                'font-family': f'{code_font!r}, "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
                 'font-size':'90% !important',
             }, # Define color below at low specificity, otherwise it can overwrite code
             '*:not(mjx-c)': {'color':'var(--primary-fg)',}, 
@@ -218,7 +211,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             },
             '::-webkit-scrollbar-thumb': {
                 'background':'transparent !important',
-                '^:hover': {'background':'var(--hover-bg) !important',},
+                '^:hover': {'background':'var(--alternate-bg) !important',},
             },
             '::-webkit-scrollbar-corner': {'display':'none',},
             '.widget-text input': {
@@ -260,9 +253,9 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'border':'1px solid var(--alternate-bg) !important', # Makes it pleasant to view
                 'tbody': {
                     'tr': {
-                        '^:nth-child(odd)': {'background':'var(--alternate-bg)!important',},
+                        '^:nth-child(odd)': {'background':'var(--secondary-bg)!important',},
                         '^:nth-child(even)': {'background':'var(--primary-bg)!important',},
-                        '^:hover': {'background':'var(--hover-bg)!important',},
+                        '^:hover': {'background':'var(--alternate-bg)!important',},
                     },
                 },
             },
@@ -275,7 +268,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         '.fa::before':  {'margin': '0 4px 0 0', 'vertical-align': 'middle',}, # for exported font-awsome icons
         **{f".fa.fa-{k}::before": Icon(k, color=colors["accent_color"]).css for k in Icon.available}, # needed in export too
         '.raw-text': { # Should be same in notebook cell 
-            'font-family': f'{code_font!r}, "Cascadia Code","Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
+            'font-family': f'{code_font!r}, "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
             'font-size':'90% !important',
             'display':'block !important',
             'margin':'4px !important',
@@ -348,7 +341,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '.FirstTOC .toc-item.next' : {'opacity':'1',}, # In start, see full as same opacity
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
-                'font-family': f'{code_font!r}, "Cascadia Code","Ubuntu Mono", "SimSun-ExtB", "Courier New" !important', # Should be same in notebook cell
+                'font-family': f'{code_font!r},"Ubuntu Mono", "SimSun-ExtB", "Courier New" !important', # Should be same in notebook cell
                 'color':'var(--primary-fg) !important',
                 'max-height':'400px',
                 'white-space':'pre !important',
@@ -483,7 +476,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                     'background':'var(--secondary-bg) !important'
                 },
                 '^:hover::-webkit-scrollbar-thumb': {
-                    'background':'var(--hover-bg) !important'
+                    'background':'var(--alternate-bg) !important'
                 },
         },
         'span.lang-name': {
@@ -546,7 +539,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'content': '"📝 Note"',
                 'display':'block',
                 'color': 'var(--accent-color)',
-                'border-bottom': '1px solid var(--hover-bg)',
+                'border-bottom': '1px solid var(--alternate-bg)',
                 'box-sizing': 'border-box',
             },
             '^-info::before': {'content': '"❇️ Info" !important'},

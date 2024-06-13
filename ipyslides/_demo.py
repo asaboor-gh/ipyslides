@@ -194,7 +194,7 @@ def demo_slides(slides):
     slides.build(-1,'section`Controlling Content on Frames` toc`### Contents`')
 
     # Frames structure
-    boxes = [f'<div style="background:var(--hover-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
+    boxes = [f'<div style="background:var(--alternate-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
     @slides.build(-1, boxes, repeat=False)
     def f(idx, obj):
         slides.write('# Frames with \n#### `repeat = False`')
@@ -203,12 +203,12 @@ def demo_slides(slides):
     @slides.build(-1, boxes, repeat=True)
     def f(idx, obj):
         slides.this.set_animation(None) #Disable animation for showing bullets list
-        slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List yoffset`100`')
+        slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List yoffset`10`')
         slides.bullets(obj, marker='💘').display()
 
     @slides.build(-1, [boxes[:2],boxes[2:]], repeat=True)
     def f(idx, obj):
-        slides.write('# Frames with \n`repeat = True and 2x2 grid of boxes yoffset`200`')
+        slides.write('# Frames with \n`repeat = True and 2x2 grid of boxes yoffset`25`')
         for ws, cols in zip([(1,3),(3,2)],obj):
             slides.write(*cols, widths=ws)
 
@@ -246,8 +246,8 @@ def demo_slides(slides):
             ], 
             [
                 '### Widgets',
-                slides.alt(ipw.IntSlider(),lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">'), # alt only works with widgets, but below display tricks works with any object
-                lambda: display(ipw.Button(description='Click to do nothing'),metadata = {'text/html': '<button>Click to do nothing</button>'}), # This is a hack to display button as html in exported slides
+                slides.alt(lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">', ipw.IntSlider()), 
+                slides.alt('<button>Click to do nothing</button>', ipw.Button(description='Click to do nothing')), 
                 ipw.Checkbox(description='Select to do nothing',indent=False), 
                 'proxy`Paste Checkbox Screenshot Here with Slides.image_clip function`'
             ]

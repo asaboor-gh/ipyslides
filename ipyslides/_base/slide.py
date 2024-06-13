@@ -438,15 +438,18 @@ class Slide:
             return self._app._slides_dict[self._number] # Return parent slide, _number is string
         
     def yoffset(self, value):
-        "Set yoffset (in px) for frames to have equal height in incremental content."
+        "Set yoffset (in perect) for frames to have equal height in incremental content."
         self._app.verify_running("yoffset can only be used inside slide constructor!")
         if not self._is_frame:
             raise RuntimeError("yoffset can only be used with frames!")
-        if (not isinstance(value, int)): 
-            raise ValueError("yoffset value should be integer in units of px!")
+        if (not isinstance(value, int)) or (value not in range(101)): 
+            raise ValueError("yoffset value should be integer in units of percent betweem [0,100]!")
         
         self._app.html('style', 
-            f'.SlideArea.n{self.number} > .jp-OutputArea {{margin-top: {value}px !important;}}' # each frames get own yoffset
+            f'''.SlideArea.n{self.number} > .jp-OutputArea {{
+                top: {value}% !important;
+                margin-top: 0 !important;
+            }}''' # each frames get own yoffset, margin-top 0 is important to force top to take effect
         ).display()
         
 
