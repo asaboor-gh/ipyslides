@@ -281,7 +281,6 @@ class LayoutSettings:
         ):
             raise TypeError(f"slide should be Slide object, not {type(slide)}")
 
-        number = slide.label if slide.label != "0" else ""
         text = self._footer_kws["text"]
         numbering = self._footer_kws["numbering"]
         date = self._footer_kws["date"]

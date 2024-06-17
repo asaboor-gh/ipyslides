@@ -20,7 +20,7 @@ class BaseSlides:
         self._warnings = [] # Will be printed at end of building slides
         self._uid = f'{self.__class__.__name__}-{id(self)}' # Unique ID for this instance to have CSS, should be before settings
         self.__widgets = Widgets()
-        self.__navigation = Navigation(self.__widgets) # Not accessed later, just for actions
+        self.__navigation = Navigation(self) # should be after widgets
         self.__settings = LayoutSettings(self, self.__widgets)
         self.export_html = _HhtmlExporter(self).export_html
         self.__notes = Notes(self, self.__widgets) # Needs main class for access to notes
@@ -104,7 +104,7 @@ class BaseSlides:
         - With citations mode set as 'footnote', you can add alert`refs\`ncol\`` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
         - alert`section\`content\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
-        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides.get(slide_number).proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
+        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides[slide_number,].proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
         - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
         - Double dashes `--` is used to split text in frames.
         
@@ -186,7 +186,7 @@ class BaseSlides:
         sources = []
         for slide in self[:]:
             if slide._source['text']:
-                sources.append(slide.get_source(name=f'{slide._source["language"].title()}: Slide {slide.label}'))
+                sources.append(slide.get_source(name=f'{slide._source["language"].title()}: Slide {slide.index}'))
             
         if sources:
             return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
@@ -297,12 +297,10 @@ class BaseSlides:
                     self._slide(f'{i + start} -m', chunk)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(handles[i])
-                for frame in handles[i].frames:
-                    self._slides_per_cell.append(frame)
 
             handles[i]._mdff = str(chunk) # This is need for update while editing, chunk could be ns_str, avoid that
         
-        # Return refrence to slides for quick update, frames should be accessed by slide.frames
+        # Return refrence to slides for quick update
         return handles
     
     def sync_with_file(self, start_slide_number, /, path, trusted = False, interval=500):
@@ -410,7 +408,7 @@ class BaseSlides:
         
         def __new__(cls, slide_number, /, content = None, *, repeat = False, trusted = False):
             self = super().__new__(cls) # instance
-            self._number = self._app._fix_slide_number(slide_number)
+            self._snumber = self._app._fix_slide_number(slide_number)
             self._content =  content
             self._repeat = repeat
             
@@ -418,14 +416,14 @@ class BaseSlides:
             if isinstance(content, str): # creates markdown slides immediately if possible
                 with self._app.code.context(returns = True, depth=3, start = True) as code:
                     if not any(code.startswith(c) for c in ['with', '@']):
-                        return self._app.from_markdown(self._number, self._content, trusted = trusted)
+                        return self._app.from_markdown(self._snumber, self._content, trusted = trusted)
             return self # for decorator and context manager
 
         def __enter__(self):
             "Use as contextmanager to create a slide."
             # code settings here is important due to different depth
             code = self._app.code.context(returns=True, depth = 3).__enter__()
-            self._context = self._app.slide(self._number)
+            self._context = self._app.slide(self._snumber)
             slide = self._context.__enter__()
             slide.set_source(code.raw, "python")
             return slide
@@ -435,7 +433,7 @@ class BaseSlides:
 
         def __call__(self, func = None):
             "Use as decorator for a function(index, content) to create frames."
-            frs = self._app.frames(self._number, self._content, repeat = self._repeat)
+            frs = self._app.frames(self._snumber, self._content, repeat = self._repeat)
             if func is not None:
                 return frs(func)
             return frs() # with automatic function in frames

@@ -4,11 +4,12 @@ and then provided to other classes via composition, not inheritance.
 """
 
 class Navigation:
-    def __init__(self, _instanceWidgets):
+    def __init__(self, _instanceSlides):
         "Instnace should be inside `Slides` class."
         # print(f'Inside: {self.__class__.__name__}')
-        self.widgets = _instanceWidgets
-        self.progress_slider = self.widgets.sliders.progress
+        self.slides = _instanceSlides
+        self.widgets = self.slides.widgets
+        self.wprogress = self.widgets.sliders.progress
         self.btn_next = self.widgets.buttons.next
         self.btn_prev = self.widgets.buttons.prev
         self.btn_settings = self.widgets.buttons.setting
@@ -21,16 +22,16 @@ class Navigation:
         
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
-        if change:
-            if self.progress_slider.index < (len(self.progress_slider.options) - 1):
-                self.progress_slider.index = self.progress_slider.index + 1 # Forwards
+        if change and not self.slides._current.next_frame():
+            if self.wprogress.value < self.wprogress.max:
+                self.wprogress.value = self.wprogress.value + 1 # Forwards
             
     def _shift_left(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
-        if change:
+        if change and not self.slides._current.prev_frame():
             self.widgets.slidebox.add_class('Prev') # Backwards Animation
-            if self.progress_slider.index > 0:
-                self.progress_slider.index = self.progress_slider.index - 1 # Backwards
+            if self.wprogress.value > 0:
+                self.wprogress.value = self.wprogress.value - 1 # Backwards
     
     def _toggle_panel(self,change):
         if self.btn_settings.icon == 'plus':
@@ -44,7 +45,7 @@ class Navigation:
             
     def _goto_home(self,btn):
         try:
-            self.progress_slider.index = 0
+            self.wprogress.value = 0
             if self.widgets.buttons.toc.icon == 'minus':
                 self.widgets.buttons.toc.click() # Close TOC but only if it was open, let other things work
         except:
@@ -52,7 +53,7 @@ class Navigation:
             
     def _goto_end(self,btn):
         try:
-            self.progress_slider.index = len(self.progress_slider.options) - 1
+            self.wprogress.value = self.wprogress.max
             if self.widgets.buttons.toc.icon == 'minus':
                 self.widgets.buttons.toc.click() # Close TOC but only if it was open, let other things work
         except:

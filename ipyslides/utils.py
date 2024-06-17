@@ -295,7 +295,7 @@ def _format_css(props : dict, allow_root_attrs = False):
     uclass = get_unique_css_class()
     _all_css = '' # All css
     root_attrs = {k:v for k,v in props.items() if not isinstance(v,dict)}
-    allowed_attrs = {k:v for k,v in root_attrs.items() if "background" in k} # only allow background CSS to change at root
+    allowed_attrs = {k:v for k,v in root_attrs.items() if k.startswith("back")} # only allow background CSS to change at root, include backdrop-filter too
     if allow_root_attrs:
         if allowed_attrs: # Applies to background mostly
             _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .NavWrapper.Show, {uclass} .BackLayer .Front',), allowed_attrs)

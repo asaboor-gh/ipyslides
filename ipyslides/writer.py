@@ -103,7 +103,7 @@ def _fmt_html(output):
 
 class Writer:
     _in_write = False # To prevent write from being called inside write
-    def __init__(self,*objs,widths = None):
+    def __init__(self, *objs, widths = None):
         if self.__class__._in_write and len(objs) > 1:
             # This will only be intercepted if lambda function contains write with multiple columns, becuase they can't be nested
             raise RuntimeError('write(*objs) for len(objs) > 1 inside a previous call of write is not allowed!')
@@ -121,7 +121,8 @@ class Writer:
         self._in_proxy = getattr(self._slides, '_in_proxy', None) # slide itself can be Non, so get via getattr
         self._in_dproxy = getattr(self._slides, '_in_dproxy', None)
         self._context = (self._in_dproxy if self._in_dproxy else self._slide) or self._in_proxy # order strictly matters
-        
+        self._metadata = {} # need for repeated display
+
         if len(objs) == 1:
             display(*self._cols[0]['outputs']) # If only one column, display it directly
         else:
@@ -129,7 +130,8 @@ class Writer:
             if context:
                 idx = f'{len(context._columns)}' 
                 context._columns[idx] = self
-                display(self._box, metadata={'COLUMNS': idx}) # Just placeholder to update in main display
+                self._metadata = {'COLUMNS': idx}
+                self._ipython_display_()
             else:
                 display(self._box) # Just display it
                 
@@ -190,14 +192,14 @@ class Writer:
                         display(out)
     
     def _ipython_display_(self): # Called when displayed automtically, this is important
-        display(self._box)
+        display(self._box, metadata=self.metadata)
         self.update_display()
         
     @property
     def data(self): return getattr(self._box, '_repr_mimebundle_', lambda: {'application':'HBox'})() # Required for check in slide display if there are widgets
     
     @property
-    def metadata(self): return {} # Required for check in slide display of there are widgets
+    def metadata(self): return self._metadata # Required 
     
     def fmt_html(self):
         "Make HTML representation of columns that is required for exporting slides to other formats."

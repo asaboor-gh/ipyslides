@@ -48,7 +48,7 @@ class SourceCode(XTML):
         start, *middle = self.value.split('<code>')
         middle[-1], end = middle[-1].split('</code>')
         middle[-1] += '</code>'
-        _max_index = len(middle) - 1
+        max_index = len(middle) - 1
         
         new_lines = [start]
         picks = [-1,*sorted(lines)]
@@ -57,8 +57,8 @@ class SourceCode(XTML):
                 new_lines.append(f'<code class="code-no-focus"> + {b - a - 1} more lines ... </code>')
             new_lines.append('<code>' + middle[b])
         
-        if lines and lines[-1] < _max_index:
-            new_lines.append(f'<code class="code-no-focus"> + {_max_index - lines[-1]} more lines ... </code>')
+        if lines and lines[-1] < max_index:
+            new_lines.append(f'<code class="code-no-focus"> + {max_index - lines[-1]} more lines ... </code>')
         
         return self.__class__(''.join([*new_lines, end]))     
     

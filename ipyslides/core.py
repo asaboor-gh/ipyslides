@@ -38,7 +38,7 @@ class _Citation:
         self._slide._citations[key] = self  # Add to slide's citations
 
     def __repr__(self):
-        return f"Citation(key = {self._key!r}, id = {self._id}, slide_label = {self._slide.label!r})"
+        return f"Citation(key = {self._key!r}, id = {self._id}, slide_number = {self._slide.number})"
 
     def __format__(self, spec):
         return f"{self.value:{spec}}"
@@ -97,12 +97,8 @@ class Slides(BaseSlides):
 
         self._cite_mode = 'footnote'
 
-        self._slides_dict = (
-            {}
-        )  # Initialize slide dictionary, updated by user or by _setup.
+        self._slides_dict =  {} # Initialize slide dictionary, updated by user or by _setup.
         self._iterable = []  # self._collect_slides() # Collect internally
-        self._nslides = 0  # Real number of slides
-        self._max_index = 0  # Maximum index including frames
         self._running_slide = (
             None  # For Notes, citations etc in markdown, controlled in Slide class
         )
@@ -115,9 +111,8 @@ class Slides(BaseSlides):
                 "citations.json"
             )  # Load citations from file if exists
 
-        self.progress_slider = self.widgets.sliders.progress
-        self.progress_slider.label = "0"  # Set inital value as title always there
-        self.progress_slider.observe(self._update_content, names=["index"])
+        self.wprogress = self.widgets.sliders.progress
+        self.wprogress.observe(self._update_content, names=["value"])
         self.widgets.buttons.refresh.on_click(self._update_dynamic_content)
         self.widgets.buttons.source.on_click(self._jump_to_source_cell)
 
@@ -209,29 +204,32 @@ class Slides(BaseSlides):
         return len(self._iterable)
 
     def __getitem__(self, key):
-        "Get slide by index or slice. Use Slides.get func to access slides by number they were created with."
+        "Get slide by index or slice of computed index. Use [number,] or [[n1,n2,..]] to access slides by number they were created with."
         if isinstance(key, int):
             return self._iterable[key]
         elif isinstance(key, slice):
             return self._iterable[key.start : key.stop : key.step]
+        elif isinstance(key, tuple): # as [1,] or [(1,)]
+            if len(key) != 1:
+                raise ValueError(f"Wrong indexing {key} found, use [number,] to access single slide by given number, or [[n1,n2,...]] for many slides!")
+            return self._slides_dict[key[0]]
+        elif isinstance(key, list):
+            if not all([isinstance(k,int) for k in key]):
+                raise TypeError(f"All indexers in {key} should be integers!")
+            
+            items = []
+            for k in key:
+                if k in self._slides_dict:
+                    items.append(self._slides_dict[k])
+                else:
+                    raise KeyError(f"Slide with number {k} was never created or may be deleted!")
+            
+            return tuple(items)
 
         raise KeyError(
             f"A slide could be accessed by index or slice, got {type(key)},\n"
-            "Use `Slides.get` function to access slides by number they were created with."
+            "Use `Slides[number,] -> Slide` or `Slides[[n1, n2,..]] -> tuple[Slide]` to access slides by number they were created with."
         )
-    
-    def get(self, slide_number):
-        "Access a slide by given slide number. Use this instead of indexing if adding extra content to a slide such as CSS."
-        if isinstance(slide_number,int):
-            key = str(slide_number)
-            if key in self._slides_dict:
-                return self._slides_dict[key]
-            else:
-                raise KeyError(f"Slide with number {slide_number} was never created or may be deleted!")
-        else:
-            raise TypeError(f"slide_number should be interger by which slide was created, got {type(slide_number)}")
-    
-    __call__ = get  # like paranthesis indexing
 
     def __del__(self):
         for k, v in globals():
@@ -243,8 +241,8 @@ class Slides(BaseSlides):
                 del locals()[k]
 
     def navigate_to(self, index):
-        "Programatically Navigate to slide by index."
-        self._slideindex = index
+        "Programatically Navigate to slide by index, if possible."
+        self.wprogress.value = index if isinstance(index, int) else 0 # handle None
 
     @property
     def version(self):
@@ -271,7 +269,7 @@ class Slides(BaseSlides):
 
     @property
     def _current(self):
-        return self._iterable[self._slideindex]
+        return self._iterable[self.wprogress.value]
 
     @property
     def this(self):
@@ -301,7 +299,7 @@ class Slides(BaseSlides):
             )
 
     def _add_clean_title(self):
-        with _build_slide(self, "0"):
+        with _build_slide(self, 0):
             self.cols(
                 self.styled("color[var(--accent-color)]`Replace this with creating a slide with number` alert`0`",
                     padding = "8em 8px",
@@ -309,7 +307,6 @@ class Slides(BaseSlides):
                 '', # empty column for space 🤣
                 how_to_slide,widths=[14,1, 85]).display()
             
-        self._slides_dict["0"]._number = "0" # need for access without even building title slides
         self._unregister_postrun_cell() # no need in initialization functions 
         self.refresh()  # cleans up initialization setup and tocs/other things
 
@@ -353,9 +350,6 @@ class Slides(BaseSlides):
     def _set_unsynced(self):
         for slide in self.cited_slides:
             slide.set_dom_classes(add = 'Out-Sync') # will go synced after rerun
-        
-        if self._max_index > 0:
-            self[-1].update_display(go_there=False) # auto update last slide in all cases
 
     def set_citations(self, data, mode='footnote'):
         """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
@@ -472,7 +466,7 @@ class Slides(BaseSlides):
 
         def on_click(btn):
             try:
-                self.progress_slider.index = (
+                self.wprogress.value = (
                     btn._TargetSlide.index
                 )  # let it throw error if slide does not exist 
             except:
@@ -519,28 +513,6 @@ class Slides(BaseSlides):
         self.widgets.iw.msg_tojs = "CloseView"
 
     @property
-    def _slideindex(self):
-        "Get current slide index"
-        return self.progress_slider.index
-
-    @_slideindex.setter
-    def _slideindex(self, value):
-        "Set current slide index"
-        with suppress(BaseException):  # May not be ready yet
-            self.progress_slider.index = value
-
-    @property
-    def _slidelabel(self):
-        "Get current slide label"
-        return self.progress_slider.label
-
-    @_slidelabel.setter
-    def _slidelabel(self, value):
-        "Set current slide label"
-        with suppress(BaseException):  # May not be ready yet
-            self.progress_slider.label = value
-
-    @property
     def _sectionindex(self):
         "Get current section index"
         if self._current._section:
@@ -560,9 +532,9 @@ class Slides(BaseSlides):
                 f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
             )]
 
+        self.widgets.update_progressbar(self._iterable[new_index], 0 if new_index > old_index else -1)
         _objs.append(self._iterable[new_index].animation)
         self._update_tmp_output(*_objs)
-        self.widgets.update_progressbar()
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index  # Just safe
@@ -575,20 +547,12 @@ class Slides(BaseSlides):
         self.widgets.iw.msg_tojs = 'SwitchView'
 
     def _update_content(self, change):
-        if self.progress_slider.index == 0:  # First slide
-            self._box.add_class("InView-Title").remove_class(
-                "InView-Last"
-            ).remove_class("InView-Other")
-        elif self.progress_slider.index == (
-            len(self.progress_slider.options) - 1
-        ):  # Last slide
-            self._box.add_class("InView-Last").remove_class(
-                "InView-Title"
-            ).remove_class("InView-Other")
+        if self.wprogress.value == 0:  # First slide
+            self._box.add_class("InView-Title").remove_class("InView-Last")
+        elif self.wprogress.value == self.wprogress.max:  # Last slide
+            self._box.add_class("InView-Last").remove_class("InView-Title")
         else:
-            self._box.remove_class("InView-Title").remove_class(
-                "InView-Last"
-            ).add_class("InView-Other")
+            self._box.remove_class("InView-Title").remove_class("InView-Last")
 
         if self._iterable and change:
             self.notes.display()  # Display notes first
@@ -600,20 +564,12 @@ class Slides(BaseSlides):
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self._iterable = self._collect_slides()  # would be at least one title slide
         if not self._iterable:
-            self.progress_slider.options = [("0", 0)]  # Clear options
+            self.wprogress.max = 0
             self.widgets.slidebox.children = []  # Clear older slides
             return None
 
-        n_last = float(self._iterable[-1].label)
-        self._nslides = int(n_last)  # Avoid frames number
-        self._max_index = len(self._iterable) - 1  # This includes all frames
+        self.wprogress.max = len(self._iterable) - 1  # Progressbar limit
 
-        # Now update progress bar
-        opts = [
-            (s.label, round(100 * float(s.label) / (n_last or 1), 2))
-            for s in self._iterable
-        ]
-        self.progress_slider.options = opts  # update options
         # Update Slides
         self.widgets.slidebox.children = [it._widget for it in self._iterable]
         for i, s in enumerate(self._iterable):
@@ -638,7 +594,7 @@ class Slides(BaseSlides):
         return self.this._proxy_private(text)
     
     def capture_proxy(self, slide_number, proxy_index):
-        "This is a shortcut for `Slides.get(slide_number).proxies[proxy_index].capture()`."
+        "This is a shortcut for `Slides[slide_number,].proxies[proxy_index].capture()`."
         return self.get(slide_number).proxies[proxy_index].capture()
     
     def _fix_slide_number(self, number):
@@ -692,7 +648,7 @@ class Slides(BaseSlides):
                 f"You should use %%slide integer >= 1 -m(optional), got {line}"
             )
 
-        slide_number_str = line[0]  # First argument is slide number
+        slide_number = int(line[0])  # First argument is slide number
 
         if "-m" in line[1:]:
             # user may used fmt
@@ -712,7 +668,7 @@ class Slides(BaseSlides):
             
             self._editing_index = None
             
-            @self.frames(int(slide_number_str), frames, repeat=repeat) 
+            @self.frames(int(slide_number), frames, repeat=repeat) 
             def make_slide(idx, frm):
                 if repeat:
                     frm = '\n'.join('\n'.join(f) for f in frm) # nested in case of repeat
@@ -729,9 +685,10 @@ class Slides(BaseSlides):
                 self.navigate_to(self._editing_index)
             
             delattr(self, '_editing_index')
+            self._register_postrun_cell() # it does not go otherwise 
 
         else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            with _build_slide(self, slide_number_str) as s:
+            with _build_slide(self, slide_number) as s:
                 s.set_source(cell, "python")  # Update cell source beofore running
                 self.run_cell(cell)  #
 
@@ -740,13 +697,7 @@ class Slides(BaseSlides):
         """Same as `Slides.build` used as contexmanager."""
         slide_number = self._fix_slide_number(slide_number)
 
-        if not isinstance(slide_number, int):
-            raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
-
-        if slide_number < 0:  # zero for title slide
-            raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
-
-        with _build_slide(self, f"{slide_number}") as s, self.code.context(
+        with _build_slide(self, slide_number) as s, self.code.context(
             returns = True, depth=4
         ) as c:  # depth = 4 to source under context manager
             s.set_source(c.raw, "python")  # Update cell source befor yielding
@@ -843,13 +794,6 @@ class Slides(BaseSlides):
                 self.write(obj)
 
         def _frames(func = auto_frame_writer):  # write if called without function
-
-            if not isinstance(slide_number, int):
-                return print(f"slide_number expects integer, got {slide_number!r}")
-
-            if slide_number < 0:  
-                raise ValueError(f"slide_number should be >= 0, got {slide_number!r}")
-            
             if isinstance(iterable, (str, bytes)) or not isinstance(iterable, Iterable):
                 raise TypeError(f"iterable should be list-like, got {type(iterable)}")
             
@@ -870,89 +814,32 @@ class Slides(BaseSlides):
                 raise ValueError("iterable is empty or repeate did not create frames!")
 
             if len(_new_objs) > 10:  # 9 frames + 1 main slide
-                raise ValueError(
-                    f"Maximum 10 frames are supported per slide, found {len(_new_objs)} frames!"
-                )
+                raise ValueError(f"Maximum 10 frames are supported per slide, found {len(_new_objs)} frames!")
 
-            # build_slide returns old slide with updated display if exists.
-            with _build_slide(
-                self, f"{slide_number}", is_frameless=(True if len(_new_objs) == 1 else False)
-            ) as this_slide:
-                this_slide._is_frame = True # before content to make availabe
-                if (doc := getattr(func, '__doc__')):
-                    self.parse(doc)
-                func(0, _new_objs[0])  # Main slide content
+            with _build_slide(self, slide_number) as this:
+                this._is_frame = (True if len(_new_objs) > 1 else False)
+                this._fsep = self.format_css({}).as_widget()
 
-            _new_objs = _new_objs[1:]  # Fisrt one is already written
-            if not _new_objs:
-                return # nofurther action to take
-
-            NFRAMES_OLD = len(this_slide._frames)  # old frames
-
-            new_frames = []
-            for i, obj in enumerate(_new_objs):  # New frames
-                if i >= NFRAMES_OLD:  # Add new frames
-                    new_slide = Slide(self, slide_number)
-                else:  # Update old frames
-                    new_slide = this_slide._frames[i]  # Take same frame back
-                    new_slide.reset_source() # Reset old source but keep markdown for observing edits
-
-                new_frames.append(new_slide)
-
-                with new_slide._capture() as captured:
-                    new_slide._is_frame = True # before content to make available
-                    if (doc := getattr(func, '__doc__')):
+                for i, obj in enumerate(_new_objs):
+                    if (doc := getattr(func, '__doc__')): # for all
                         self.parse(doc)
-                    func(i + 1, obj)  # i+1 as main slide is 0
+                    
+                    func(i, obj)
 
-            this_slide._frames = new_frames
-
-            if len(this_slide._frames) != NFRAMES_OLD:
-                this_slide._rebuild_all()  # Rebuild all slides as frames changed
-
-            # Update All displays
-            for s in this_slide._frames:
-                s.update_display()  # This call is much important, otherwise content of many slides do not show
-                # Remove duplicate sections/notes if any
-                if s._section == this_slide._section:
-                    s._section = None
-                if s._notes == this_slide._notes:
-                    s._notes = ""
-
+                    if len(_new_objs) > 1: # otherwsie normal one
+                        display(this._fsep, metadata={"FSEP": str(i+1)})
+            
         return _frames
 
     def _collect_slides(self):
-        """Collect cells for an instance of Slides."""
-        slides_iterable = []
-        if "0" in self._slides_dict:
-            self._slides_dict["0"]._label = "0"
-            slides_iterable = [self._slides_dict["0"]]
-
-        val_keys = sorted(
-            [int(k) if k.isnumeric() else float(k) for k in self._slides_dict.keys()]
-        )
-        _max_range = int(val_keys[-1]) + 1 if val_keys else 1
-
-        nslide = 0  # start of slides - 1
-        for i in range(1, _max_range):
-            if i in val_keys:
-                nslide = nslide + 1  # should be added before slide
-                self._slides_dict[f"{i}"]._label = f"{nslide}"
-                slides_iterable.append(self._slides_dict[f"{i}"])
-
-                # Read Frames
-                frames = self._slides_dict[f"{i}"].frames
-                for j, frame in enumerate(frames, start=1):
-                    jj = f"{j}" if len(frames) < 10 else f"{j:02}"  # 99 frames max
-                    frame._label = f"{nslide}.{jj}"  # Label for frames
-                    slides_iterable.append(frame)
-
+        slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
+        
         if len(slides_iterable) <= 1:
             self._box.add_class("SingleSlide")
         else:
             self._box.remove_class("SingleSlide")
 
-        return tuple(slides_iterable)
+        return slides_iterable
 
     def _update_toc(self):
         tocs_dict = {s._section: s for s in self._iterable if s._section}
@@ -970,7 +857,7 @@ class Slides(BaseSlides):
             for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):
                 text = (
                     htmlize(f"color[var(--accent-color)]`{i}.` {sec}")
-                    + f"<p>{slide._label}</p>"
+                    + f"<p>{slide.index}</p>"
                 )
                 def jump_to_slide(change):
                     self.navigate_to(change.owner._index)
@@ -996,11 +883,11 @@ class Slides(BaseSlides):
 
         new_slides = False
         for slide_number in slide_numbers:
-            if f"{slide_number}" not in self._slides_dict:
+            if slide_number not in self._slides_dict:
                 with capture_content() as captured:
                     self.write(f"### Slide-{slide_number}")
 
-                self._slides_dict[f"{slide_number}"] = Slide(
+                self._slides_dict[slide_number] = Slide(
                     self, slide_number, captured_output=captured
                 )
                 new_slides = True
@@ -1008,9 +895,7 @@ class Slides(BaseSlides):
         if new_slides:
             self.refresh()  # Refresh all slides
 
-        return tuple(
-            [self._slides_dict[f"{slide_number}"] for slide_number in slide_numbers]
-        )
+        return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values()))
     
 # Make available as Singleton Slides
 _private_instance = Slides()  # Singleton in use namespace
@@ -1048,6 +933,10 @@ class Slides:
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
         - See `Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
+    
+    ::: note-info
+        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as `Slides[number,] -> Slide` 
+        or access many via list as `Slides[[n1,n2,..]] -> tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
     """
     )
     @classmethod

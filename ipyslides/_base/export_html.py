@@ -50,36 +50,37 @@ class _HhtmlExporter:
         navui_class = '' if 'Show' in self.main.widgets.navbox._dom_classes else 'NavHidden' 
         content = ''
         for item in self.main:
-            _html = '' 
-            for out in item.contents:
-                _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
-            
-            if hasattr(item,'_refs'):
-                _html += item._refs.value # in case of footnote citations
-            
-            _html = f'<div class="jp-OutputArea">{_html}</div>'
-            sec_id = self._get_sec_id(item)
-            goto_id = self._get_target_id(item)
-            footer = f'<div class="Footer {navui_class}">{item.get_footer()}{self._get_progress(item)}</div>'
-            
-            number = ""
-            if self.main.settings._footer_kws["numbering"]:
-                lab = item.label if item.label != "0" else ""
-                number = f'<span class="Number">{lab}</span>'
-            
-            content += textwrap.dedent(f'''
-                <section {sec_id}>
-                    {self._get_css(item)}
-                    <div class="SlideBox">
-                        {self._get_bg_image(item)}
-                        {self._get_logo()}
-                        <div {goto_id} class="SlideArea n{item.number}">
-                            {_html}
+            frames = [[item.contents[i] for i in idxs] for idxs in item.frame_idxs] or [item.contents]
+            for k, objs in enumerate(frames):
+                _html = '' 
+                for out in objs:
+                    _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
+
+                if hasattr(item,'_refs'):
+                    _html += item._refs.value # in case of footnote citations
+
+                _html = f'<div class="jp-OutputArea">{_html}</div>'
+                sec_id = self._get_sec_id(item)
+                goto_id = self._get_target_id(item,k)
+                footer = f'<div class="Footer {navui_class}">{item.get_footer()}{self._get_progress(item,k)}</div>'
+
+                number = ""
+                if self.main.settings._footer_kws["numbering"]:
+                    number = f'<span class="Number">{item.index or ""}</span>' # 0 handled
+
+                content += textwrap.dedent(f'''
+                    <section {sec_id}>
+                        {self._get_css(item)}
+                        <div class="SlideBox">
+                            {self._get_bg_image(item)}
+                            {self._get_logo()}
+                            <div {goto_id} class="SlideArea n{item.number}">
+                                {_html}
+                            </div>
+                            {number}
+                            {footer}
                         </div>
-                        {number}
-                        {footer}
-                    </div>
-                </section>''')
+                    </section>''')
             
         theme_kws = self.main.settings.theme_kws
         
@@ -103,12 +104,13 @@ class _HhtmlExporter:
         sec_id = getattr(slide,'_sec_id','')
         return f'id="{sec_id}"' if sec_id else ''
     
-    def _get_target_id(self, slide): # For goto buttons
+    def _get_target_id(self, slide,fidx=0): # For goto buttons
+        if fidx != 0: return '' # only first frame
         target = getattr(slide, '_target_id', '')
         return f'id="{target}"' if target else ''
     
-    def _get_progress(self, slide):
-        prog = int(float(slide.label)/(float(self.main[-1].label) or 1)*100) # Avoid ZeroDivisionError if only one slide
+    def _get_progress(self, slide, fidx=0):
+        prog = slide._get_pvfv(fidx)
         gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {prog}%, var(--secondary-bg) {prog}%, var(--secondary-bg) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'
     
@@ -135,7 +137,7 @@ class _HhtmlExporter:
         if len(self.main) < 2:
             return '' # no clicks for only title
         
-        items = [getattr(item,'_sec_id','') for item in self.main if '.' not in item.label] # only main slides
+        items = [getattr(item,'_sec_id','') for item in self.main]
         names = ['', *['●' for _ in items[1:-1]],'']
         
         if len(items) > 5: # we need only 0,25,50,75,100 % clickers

@@ -403,12 +403,11 @@ class XMarkdown(Markdown):
         if returns:
             content = ""
             for out in outputs:
-                try:
-                    content += out.value  # XTML, SourceCode
-                except:
-                    content += out.data[
-                        "text/html"
-                    ]  # Rich content from python execution
+                if isinstance(out, XTML):
+                    content += out.value 
+                else:
+                    from .writer import _fmt_html
+                    content += _fmt_html(out) # Rich content from python execution and Writer 
             return content
         else:
             return display(*outputs)
@@ -445,7 +444,8 @@ class XMarkdown(Markdown):
         header, data = block.split("\n", 1)
         line, _class = self._extract_class(header)
         if "multicol" in line:
-            return [XTML(self._parse_multicol(data, line, _class)),]
+            out = self._parse_multicol(data, line, _class)
+            return [XTML(out)] if isinstance(out, str) else out # Writer under frames
         elif "python" in line:
             return self._parse_python(data, line, _class)  # itself list
         elif "toc" in line:
@@ -466,7 +466,7 @@ class XMarkdown(Markdown):
         cols = [self.convert(col) for col in cols]
 
         if header.strip() == "multicol":
-            widths = [f"{int(100/len(cols))}%" for _ in cols]
+            widths = [int(100/len(cols)) for _ in cols]
         else:
             widths = header.split("multicol")[1].split()
             if len(widths) > len(cols): # This allows merging column notation with frames
@@ -481,13 +481,22 @@ class XMarkdown(Markdown):
                 if not w.strip().isdigit():
                     raise TypeError(f"{w} is not an integer")
 
-            widths = [f"{w}%" for w in widths]
+            widths = [int(w) for w in widths]
+        
+        # In frames multicol should behave as Writer for correct output show
+        if self._slides and self._slides.this and self._slides.this._is_frame:
+            from ._base.slide import _expand_objs
+            
+            with capture_content() as cap:
+                self._slides.write(*cols, widths=widths)
+            
+            return _expand_objs(cap.outputs, self._slides.this)
         
         if len(cols) == 1: # do not return before checking widths and adding extra cols if needed
             return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]
 
         cols = "".join(
-            [f"""<div style='width:{w};overflow-x:auto;height:auto'>{col}</div>"""
+            [f"""<div style='width:{w}%;overflow-x:auto;height:auto'>{col}</div>"""
                 for col, w in zip(cols, widths)])
 
         return f'<div class="columns {_class}">{cols}\n</div>'

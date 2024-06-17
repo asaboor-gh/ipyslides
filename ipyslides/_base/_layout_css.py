@@ -32,29 +32,9 @@ def layout_css(accent_color, aspect):
                 "^.FullScreen": {
                     ".FullWindow-Btn": {"display": "none !important"},
                 },
-                "@keyframes heart-beat": {
-                    "from": {
-                        "transform": "translateX(-16px)",
-                        "opacity": "0.5",
-                    },
-                    "to": {
-                        "transform": "translateX(0)",
-                        "opacity": "1",
-                    },
-                },
-                "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number": {
+                "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
                 },  # still should be clickable
-                "^.InView-Title .Arrows.Next-Btn, ^.InView-Other .Arrows.Next-Btn": {
-                    "animation-name": "heart-beat",
-                    "animation-duration": "2s",
-                    "animation-iteration-count": "10", # 10 times to catch attention of speaker
-                    "animation-timing-function": "steps(8, end)",
-                    "animation-delay": "20s",
-                },
-                "^.InView-Other .Arrows.Next-Btn": {
-                    "animation-delay": "60s",  # Beet at 60 seconds if left on slide
-                },
                 "^.PasteMode" : {
                     ".paste-box": {
                         "background": "var(--secondary-bg)",
@@ -96,7 +76,7 @@ def layout_css(accent_color, aspect):
                         "padding": "0 !important",
                         "transition": "width 250ms ease-in-out !important",
                         "background": "var(--accent-color) !important",
-                    }
+                    },
                 },
                 ".Toast, .TOC, .SidePanel": {
                     "--text-size": "20px", # Don't need these to be zoomed in

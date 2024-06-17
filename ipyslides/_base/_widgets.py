@@ -1,4 +1,3 @@
-from typing import Callable, Iterable
 import uuid
 import traitlets
 import sysconfig
@@ -6,8 +5,6 @@ import anywidget
 
 from pathlib import Path
 from IPython.display import display
-from traitlets.traitlets import All
-from traitlets.utils.sentinel import Sentinel
 
 def _hot_reload_dev_only(file):
     path = Path(__file__).with_name('js') / file

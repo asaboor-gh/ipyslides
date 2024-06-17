@@ -108,7 +108,7 @@ class _Sliders:
     """
     Instantiate under `Widgets` class only.
     """
-    progress = ipw.SelectionSlider(options=[('0',0)], value=0, continuous_update=False,readout=True)
+    progress = ipw.IntSlider(min=0, max=0, continuous_update=False,readout=True)
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
     fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
 
@@ -122,14 +122,14 @@ class Widgets:
         
         self.__dict__[name] = value
     
-    def update_progressbar(self):
-        self._progbar.children[0].layout.width = f"{self.sliders.progress.value}%"
-        self._snum.description = self.sliders.progress.label
+    def update_progressbar(self, slide, fidx):
+        self._progbar.children[0].layout.width = f"{slide._get_pvfv(fidx)}%"
+        self._snum.description = f"{self.sliders.progress.value or ''}" # empty for zero
         
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
         self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
-        self._progbar = ipw.Box([ipw.Box().add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
+        self._progbar = ipw.Box([ipw.Box(layout={"width":"0"}).add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self._snum   = Button(disabled=True, layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
         self.theme   = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit').add_class("ThemeSelect")
         self.buttons = _Buttons()
