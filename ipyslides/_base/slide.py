@@ -6,15 +6,14 @@ from ipywidgets import Layout, Button, HBox
 
 from IPython.display import display
 from IPython.core.ultratb import FormattedTB
+from IPython.utils.capture import RichOutput
 
 
 from . import styles
+from .widgets import Output # not from ipywidget
 from ..utils import XTML, html, alert, _format_css, _sub_doc, _css_docstring
 from ..writer import _fmt_html
 from ..xmd import capture_content
-from .widgets import Output # not from ipywidget
-
-class _EmptyCaptured: outputs = [] # Just for initialization
 
 def _expand_objs(outputs, context):
     "Put columns and exportable widgets inline with rich outputs in a given context."
@@ -240,16 +239,16 @@ class Slide:
     "Slide object, should not be instantiated directly by user."
     _animations = {'main':'slide_h','frame':'appear'}
     _overall_css = html('style','')
-    def __init__(self, app, number, captured_output = _EmptyCaptured):
+    def __init__(self, app, number):
         self._widget = Output(layout = Layout(margin='auto',padding='1em', visibility='hidden')).add_class("SlideArea")
         self._app = app
-        self._contents = captured_output.outputs
             
         self._css = html('style','')
         self._bg_image = ''
         self._number = number
         self._index = None # This should be set in the Slides
         
+        self._contents = [RichOutput(data = {'text/plain': f'{self!r}','text/html': f'<pre class="align-center">{self}</pre>'})]
         self._notes = '' # Should be update by Notes and Slides calss
         self._animation = None
         self._source = {'text': '', 'language': ''} # Should be update by Slides
@@ -263,6 +262,7 @@ class Slide:
         self._dproxies = {} # Dynamic placeholders added to this slide
         self._exportables = {} # Exportable widgets added to this slide
         self._columns = {} # Columns added to this slide
+        self.update_display() # For initial repr content to take effect
         
     def _exp4widget(self, widget, func):
         return Exp4Widget(widget, func, self)
@@ -440,16 +440,14 @@ class Slide:
             return False
     
     def next_frame(self):
-        if not self._is_frame:
-            return False 
+        "Jump to next frame and return True. If no next frame, returns False"
         return self._show_frame('next')
         
     def prev_frame(self):
-        if not self._is_frame:
-            return False 
+        "Jump to previous frame and return True. If no previous frame, returns False"
         return self._show_frame('prev')
     
-    def _get_pvfv(self, fidx):
+    def _get_pv(self, fidx):
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
         value = round(unit * (self.index or 0), 4)
         if not self.frame_idxs:

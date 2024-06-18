@@ -16,7 +16,7 @@ _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
 from ._base.widgets import ipw # patched one
 from ._base.base import BaseSlides
-from ._base.intro import how_to_slide
+from ._base.intro import how_to_slide, get_logo
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__
@@ -80,15 +80,16 @@ class Slides(BaseSlides):
 
         self.get_child_dir('.ipyslides-assets', create = True) # It should be present/created to load resources
         
-        self.extender = _extender
-        self.plt2html = plt2html
+        self.extender   = _extender
+        self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
-        self.highlight = highlight
-        self.code = Code  # Code source
-        self.icon = _Icon  # Icon is useful to add many places
-        self.write = write
-        self.parse = parse  # Parse extended markdown
-        self.fmt = fmt # So important for flexibility
+        self.highlight  = highlight
+        self.get_logo   = get_logo
+        self.code       = Code  # Code source
+        self.icon       = _Icon  # Icon is useful to add many places
+        self.write      = write
+        self.parse      = parse  # Parse extended markdown
+        self.fmt        = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
 
         with suppress(Exception):  # Avoid error when using setuptools to install
@@ -827,7 +828,7 @@ class Slides(BaseSlides):
                     func(i, obj)
 
                     if len(_new_objs) > 1: # otherwsie normal one
-                        display(this._fsep, metadata={"FSEP": str(i+1)})
+                        display(this._fsep, metadata={"FSEP": str(i+1),"skip-export":"no need in export"})
             
         return _frames
 
@@ -884,12 +885,7 @@ class Slides(BaseSlides):
         new_slides = False
         for slide_number in slide_numbers:
             if slide_number not in self._slides_dict:
-                with capture_content() as captured:
-                    self.write(f"### Slide-{slide_number}")
-
-                self._slides_dict[slide_number] = Slide(
-                    self, slide_number, captured_output=captured
-                )
+                self._slides_dict[slide_number] = Slide(self, slide_number)
                 new_slides = True
 
         if new_slides:

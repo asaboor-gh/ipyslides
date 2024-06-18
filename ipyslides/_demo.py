@@ -27,7 +27,7 @@ def demo_slides(slides):
         vspace`2`Read instructions by clicking ℹ️ button in quick menu.
     """)
     #Demo for loading slides from a file or text block
-    s1, s2 = slides.build(-1, """
+    s1, s2 = slides.build_("""
     section`Introduction` toc`### Contents`
     ---
     # Introduction
@@ -74,7 +74,7 @@ def demo_slides(slides):
     """, trusted=True)
 
     # Matplotlib
-    with slides.build(-1) as sl:
+    with slides.build_() as sl:
         slides.write('## Plotting with Matplotlib section`Plotting and DataFrame`')
         with slides.code.context(returns = True) as s:
             sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
@@ -208,7 +208,7 @@ def demo_slides(slides):
 
     @slides.build(-1, [boxes[:2],boxes[2:]], repeat=True)
     def f(idx, obj):
-        slides.write('# Frames with \n`repeat = True and 2x2 grid of boxes yoffset`25`')
+        slides.write('# Frames with \n`repeat = True` and 2x2 grid of boxes yoffset`25`')
         for ws, cols in zip([(1,3),(3,2)],obj):
             slides.write(*cols, widths=ws)
 

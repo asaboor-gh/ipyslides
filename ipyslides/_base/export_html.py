@@ -110,8 +110,8 @@ class _HhtmlExporter:
         return f'id="{target}"' if target else ''
     
     def _get_progress(self, slide, fidx=0):
-        prog = slide._get_pvfv(fidx)
-        gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {prog}%, var(--secondary-bg) {prog}%, var(--secondary-bg) 100%)'
+        pv = slide._get_pv(fidx)
+        gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--secondary-bg) {pv}%, var(--secondary-bg) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'
     
     def _get_css(self, slide):

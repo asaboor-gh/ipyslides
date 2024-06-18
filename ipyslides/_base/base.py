@@ -359,6 +359,12 @@ class BaseSlides:
             delattr(self.widgets.iw,'_sync_args')
         else:
             print("There was no markdown file linked to sync!")
+    
+    def build_(self, content = None, *, repeat = False, trusted = False):
+        "Same as `build` but no slide number required inside Python file!"
+        if self.inside_jupyter_notebook(self.build_):
+            raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
+        return self.build(self._next_number, content=content, repeat=repeat, trusted=trusted)
 
     class build(ContextDecorator):
         """Build slides with a single unified command in three ways:
@@ -397,6 +403,7 @@ class BaseSlides:
 
         ::: note
             - In all cases, `number` could be used as `-1`.
+            - You can use `build_(...)` (with underscore at end) in python file instead of `build(-1,...)`.
             - Keyword arguments `repeat` and `trusted` are used mutually exclusive in different functions.
         """
         @property
@@ -456,18 +463,22 @@ class BaseSlides:
         from ..core import Slides
 
         self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'footnote')
-        self.settings.set_footer('IPySlides Documentation')
+        self.settings.set_footer('IPySlides Documentation', date=False)
 
         with self.build(0): # Title page
+            self.this.set_bg_image(Path(__file__).parent.parent.parent / 'slide.png',1, filter='blur(10px)', contain=True)
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
-            self.center('''
-                alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
-                center`today```
-                
+            self.center(self.fmt('''
+                alert`Abdul Saboor`sup`1`
+                                 
+                today``
+                {.text-small}
+                                 
+                `{logo}`
+                                 
                 ::: text-box
                     sup`1`My University is somewhere in the middle of nowhere
-                    sup`2`Their University is somewhere in the middle of nowhere
-                ''').display()
+                ''', logo = self.get_logo("4em"))).display()
         
         self.build(-1, f'''
             section`Introduction` 
@@ -630,7 +641,7 @@ class BaseSlides:
                 self.write(btn)
                 
             
-        with self.build(-1):
+        with self.build_():
             self.write("""
                 # Auto Slide Numbering
                 Use alert`-1` as placeholder to update slide number automatically. 
@@ -638,6 +649,7 @@ class BaseSlides:
                 - In Jupyter notebook, this will be updated to current slide number. 
                 - In python file, it stays same.
                 - You need to run cell twice if creating slides inside a for loop while using `-1`.
+                - Additionally, in python file, you can use `Slides.build_` instead of using `-1`.
             """)
         
         with self.build(-1):

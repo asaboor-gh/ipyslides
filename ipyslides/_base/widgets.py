@@ -123,7 +123,7 @@ class Widgets:
         self.__dict__[name] = value
     
     def update_progressbar(self, slide, fidx):
-        self._progbar.children[0].layout.width = f"{slide._get_pvfv(fidx)}%"
+        self._progbar.children[0].layout.width = f"{slide._get_pv(fidx)}%"
         self._snum.description = f"{self.sliders.progress.value or ''}" # empty for zero
         
     def __init__(self):
