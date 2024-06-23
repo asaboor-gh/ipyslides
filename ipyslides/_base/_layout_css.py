@@ -29,7 +29,7 @@ def layout_css(accent_color, aspect):
                 "^.FullWindow, ^.FullScreen": {
                     ".Width-Slider, .Source-Btn": {"display": "none !important"},
                 },
-                "^.FullScreen": {
+                "^.FullScreen, <:not(#rendered_cells)": { # only under voila
                     ".FullWindow-Btn": {"display": "none !important"},
                 },
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
@@ -228,6 +228,7 @@ def layout_css(accent_color, aspect):
                 },
                 ".SidePanel": {
                     "background": "var(--alternate-bg)",
+                    "backdrop-filter": "blur(10px)",
                     "position": "absolute",
                     "border": "none",
                     "padding": "0 !important",
@@ -774,7 +775,8 @@ def viewport_css():
         max-height: 100vh !important;
         box-sizing: border-box !important;
     }}
-    #rendered_cells {{overflow: hidden !important}} /* only when viewport full, otherwise let scroll */
+    #rendered_cells {{overflow: hidden !important;}} /* only when viewport full, otherwise let scroll */
+    #rendered_cells .SlidesWrapper.FullScreen .FullWindow-Btn {{display: none !important;}}
     .jp-LinkedOutputView {uclass}.SlidesWrapper, /* It can handle sidecar as well, besides intended options */
     .jp-MainAreaWidget {uclass}.SlidesWrapper, /* Somehow notebook (and other panels) itself is treated as viewport in JupyterLab, override it */
     body[data-base-url] {uclass}.SlidesWrapper {{ /* for voila */

@@ -6,7 +6,6 @@ from ipywidgets import Layout, Button, HBox
 
 from IPython.display import display
 from IPython.core.ultratb import FormattedTB
-from IPython.utils.capture import RichOutput
 
 
 from . import styles
@@ -14,6 +13,7 @@ from .widgets import Output # not from ipywidget
 from ..utils import XTML, html, alert, _format_css, _sub_doc, _css_docstring
 from ..writer import _fmt_html
 from ..xmd import capture_content
+from ..source import Code as code
 
 def _expand_objs(outputs, context):
     "Put columns and exportable widgets inline with rich outputs in a given context."
@@ -246,15 +246,14 @@ class Slide:
         self._css = html('style','')
         self._bg_image = ''
         self._number = number
-        self._index = None # This should be set in the Slides
+        self._index = number if number == 0 else None # First slide should have index ready
         
-        self._contents = [RichOutput(data = {'text/plain': f'{self!r}','text/html': f'<pre class="align-center">{self}</pre>'})]
+        self._contents = []
         self._notes = '' # Should be update by Notes and Slides calss
         self._animation = None
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
-        self._is_frame = False
         self._cframe = -1 # first call to next_frame will fix it
         self._section = None # Added from Slides
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
@@ -262,7 +261,17 @@ class Slide:
         self._dproxies = {} # Dynamic placeholders added to this slide
         self._exportables = {} # Exportable widgets added to this slide
         self._columns = {} # Columns added to this slide
-        self.update_display() # For initial repr content to take effect
+        self._split_frames = True
+        self._has_top_frame = True
+
+        if not self._contents: # show slide number hint there
+            self.set_css({
+                f' > .jp-OutputArea:empty:after': {
+                    'content': f'"{self!r}"',
+                    'color': 'var(--accent-color)',
+                    'font-size': '2em',
+                }
+            })
         
     def _exp4widget(self, widget, func):
         return Exp4Widget(widget, func, self)
@@ -292,13 +301,13 @@ class Slide:
         
     def _on_load_private(self, func):
         with self._app._hold_running(): # slides will not be running during switch, so make it safe
-            try: # check if code is correct
-                with capture_content():
-                    func()
-            except Exception as e:
-                if 'constructor' in str(e):
-                    raise RuntimeError(f'{e}\nYou may be trying to put dynamic content inside on_load which is restricted!')
-                raise e
+            with capture_content() as cap: # check if code is correct
+                func(self)
+            
+            if cap.outputs or cap.stdout:
+                raise Exception('func in on_load(func) should not print or display anything!')
+            elif cap.stderr:
+                raise RuntimeError(f'func in on_load(func) raised an error. See above traceback!')
         
         # This should be outside the try/except block even after finally, if successful, only then assign it.
         self._on_load = func # This will be called in main app
@@ -311,7 +320,7 @@ class Slide:
 
         try: # Try is to handle errors in on_load, not for attribute errors, and also finally to reset height
             if hasattr(self,'_on_load') and callable(self._on_load):
-                self._on_load() # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
+                self._on_load(self) # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
         finally:
             if (t := time.time() - start) < 0.05: # Could not have enought time to resend another event
                 time.sleep(0.05 - t) # Wait at least 50ms, (it does not effect anything else) for the height to change from previous trigger
@@ -324,10 +333,11 @@ class Slide:
     def _capture(self):
         "Capture output to this slide."
         self._app._next_number = self.number + 1
-        self._is_frame = False # set by frame
         self._cframe = -1 # first will be set by frame
         self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
-        self._widget.add_class(f"n{self.number}")
+        self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
+        self._split_frames = True # Defult
+        self._has_top_frame = True # Default
     
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
@@ -341,22 +351,24 @@ class Slide:
             self.clear() # rest of cleanup here to avoid blinks in buidling slides
             with capture_content() as captured:
                 yield captured
+            
+            if (self.number == 0) and self._fidxs:
+                self._frame_idxs = () # to be clear on next run
+                raise ValueError(f"Title slide does not support frames!")
 
             if captured.stderr:
                 if 'warning' in captured.stderr.lower():
-                    self._app._warnings.append(captured.stderr)
+                    print(captured.stderr) # Don't throw error on soft warnings
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
 
             self._contents = _expand_objs(captured.outputs, self) # Expand columns  
-            self.set_dom_classes(remove = 'Out-Sync') # Now synced
+            self.set_css_classes(remove = 'Out-Sync') # Now synced
+            self.update_display(go_there=True)    
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
-        
-        if self._app._warnings:
-            print(*self._app._warnings, sep='\n\n')
-            self._app._warnings = [] # Reset warnings
+
 
     def clear(self):
         """Use with caution. This will required running cell again. 
@@ -394,45 +406,119 @@ class Slide:
         
         # Update corresponding CSS but avoid animation here for faster and clean update
         self._app._update_tmp_output(self.css)
-        self.set_dom_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
+        self.set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
     
     def _reset_frames(self):
-        if self._is_frame:
-            self._frame_idxs = [0]
-            for i, obj in enumerate(self.contents):
-                if "FSEP" in obj.metadata:
-                    self._frame_idxs.append(i + 1) # upto
+        nc_frames, contents = [], self.contents  # get once
+        for i, c in enumerate(contents):
+            if "FSEP" in c.metadata:
+                if i > 0: # ignore first separator without content before
+                    if "COLUMNS" in contents[i-1].metadata: # last before frame separator, keep poistive index
+                        nc_frames.append((i, len(contents[i-1]._cols)))
+                    else: 
+                        nc_frames.append(i+1)
+                elif self._split_frames: # User may not want to add content on each frame
+                    nc_frames.append(0) # avoids creating a frame with no content
+                    self._has_top_frame = False # reset by each run
             
-            self._frame_idxs = tuple([range(i,j) for i,j in zip(self._frame_idxs[:-1], self._frame_idxs[1:])])
-            self.next_frame() # Bring up first frame
+        else: # Handle content after last frame
+            if nc_frames: # Do not add if no frames already
+                if "COLUMNS" in contents[-1].metadata:
+                    nc_frames.append((len(contents), len(contents[-1]._cols)))
+                
+                if isinstance(nc_frames[-1],int): # safely add full
+                    nc_frames[-1] = len(contents)
+        
+        new_frames = []
+        for f in nc_frames:
+            if isinstance(f,tuple):
+                for k in range(f[1]): 
+                    new_frames.append((f[0], k+1)) #upto again
+            elif not f in new_frames: # avoid duplicates at end
+                new_frames.append(f)
+        
+        if self._split_frames:
+            new_frames = [0, *[f[0] + 1 if isinstance(f, tuple) else f for f in new_frames]] # column was at index, get upto for range
+            new_frames = [range(i,j) for i,j in zip(new_frames[:-1], new_frames[1:]) if range(i,j)] # as range, non-empty only
+       
+        self._frame_idxs = tuple(new_frames)
+
+        if self._frame_idxs:
+            self.first_frame() # Bring up first frame to activate CSS
         else:
-            if hasattr(self, '_frame_idxs'):
+            if hasattr(self, '_frame_idxs'): # from previous run may be
                 del self._frame_idxs
     
     @property
-    def frame_idxs(self):
-        return getattr(self, '_frame_idxs', ())
+    def _fidxs(self): return getattr(self, '_frame_idxs', ())
+    
+    @property
+    def nf(self):
+        "Number of total frames."
+        return len(self._fidxs) or 1 # each slide is single frame
+    
+    def _update_view(self, which):
+        # avoids animation by updating CSS without first animation object and Prev class in all case
+        self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[])[1:]) 
+        self._app.widgets.slidebox.remove_class('Prev') 
+
+        if self._split_frames: # only if not incremental
+            if which == 'prev':
+                self._app.widgets.slidebox.add_class('Prev')
+            self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[]))
+
+        self._app.widgets.update_progressbar(self, self._cframe)
+        if self.index == self._app.wprogress.max: # This is last slide
+            if self._cframe + 1 == self.nf:
+                self._app._box.add_class("InView-Last")
+            else:
+                self._app._box.remove_class("InView-Last")
+        
+        if hasattr(self,'_on_load') and callable(self._on_load):
+            if any(
+                [ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
+                    self._cframe == 0 and which == 'prev',
+                    self._cframe + 1 == self.nf and which == 'next',
+                    0 < self._cframe < (self.nf - 1)
+                ]
+            ): self._on_load(self)
+                
     
     def _show_frame(self, which):
-        if self._is_frame:
-            if (which == 'next') and ((self._cframe + 1) < len(self.frame_idxs)):
+        if self._fidxs:
+            if (which == 'next') and ((self._cframe + 1) < self.nf):
                 self._cframe += 1
             elif (which == 'prev') and ((self._cframe - 1) >= 0):
                 self._cframe -= 1
             else:
                 return False
-
-            nths = ', '.join(f':nth-child({v+1})' for v in self.frame_idxs[self._cframe])
-            if getattr(self, '_refs', None):
-                nths += ', :last-of-type'
             
+            start, nrows, ncols, first = 1, self._fidxs[self._cframe], 0, 0
+            if isinstance(nrows, tuple):
+                nrows, ncols = nrows
+            elif isinstance(nrows, range): # not joined
+                start, nrows = nrows.start, nrows.stop
+                if self._has_top_frame:
+                    first = self._fidxs[0].stop
+
             self._fsep.value = _format_css({
-                f'^.n{self.number} > .jp-OutputArea > .jp-OutputArea-child:not({nths})': {
-                    'height': '0 !important'
+                f'^.n{self.number} > .jp-OutputArea > .jp-OutputArea-child': {
+                    f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': { # start through nrows
+                        'height': '0 !important',
+                    },
+                    f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': { # initial objs on each, increase spacificity 
+                        'height': 'unset !important',
+                    },
+                    f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child({len(self.contents) + 1})': { # for references, shown after contents
+                        'height': 'unset !important'
+                    },
+                    **({f'^:nth-child({nrows}) .columns.writer:first-of-type > div:nth-child(n + {ncols+1})': { # avoid nested columms
+                        'visibility': 'hidden !important', # enforce this instead of jumps in height
+                    }} if isinstance(self._fidxs[self._cframe], tuple) else {}), 
                 },
             }).value
-            # Do NOT add animation here. Its only good in start of end of frames
-            self._app.widgets.update_progressbar(self, self._cframe)
+
+            self._update_view(which)
             return True # indicators required
         else:
             if hasattr(self, '_fsep'):
@@ -447,16 +533,24 @@ class Slide:
         "Jump to previous frame and return True. If no previous frame, returns False"
         return self._show_frame('prev')
     
+    def first_frame(self):
+        "Jump to first frame."
+        self._cframe = -1
+        return self.next_frame()
+    
+    def last_frame(self):
+        "Jump to last frame"
+        self._cframe = self.nf # go right and swicth back
+        return self.prev_frame()
+    
     def _get_pv(self, fidx):
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
         value = round(unit * (self.index or 0), 4)
-        if not self.frame_idxs:
+        if not self._fidxs:
             return value
         
-        nf = len(self.frame_idxs)
-        fidx = self.frame_idxs.index(self.frame_idxs[fidx]) # handles negative index automatically
-        return round(value - unit*(nf - fidx - 1)/nf, 4)
-
+        fidx = self._fidxs.index(self._fidxs[fidx]) # handles negative index automatically
+        return round(value - unit*(self.nf - fidx - 1)/self.nf, 4)
 
 
     def _handle_refs(self):
@@ -497,8 +591,6 @@ class Slide:
     def yoffset(self, value):
         "Set yoffset (in perect) for frames to have equal height in incremental content."
         self._app.verify_running("yoffset can only be used inside slide constructor!")
-        if not self._is_frame:
-            raise RuntimeError("yoffset can only be used with frames!")
         if (not isinstance(value, int)) or (value not in range(101)): 
             raise ValueError("yoffset value should be integer in units of percent betweem [0,100]!")
         
@@ -523,6 +615,11 @@ class Slide:
     
     @property
     def index(self): return self._index
+
+    @property
+    def indexf(self):
+        "Returns index of current displayed frame."
+        return max(self._cframe, 0) # _cframe is negative in start on purpose
     
     @property
     def markdown(self):
@@ -531,7 +628,7 @@ class Slide:
     @property
     def animation(self):
         return self._animation or html('style', 
-            (self._animations['frame'] if self._is_frame else self._animations['main'])
+            (self._animations['frame'] if self._fidxs else self._animations['main'])
             )
     
     @property
@@ -567,7 +664,7 @@ class Slide:
     
     @_sub_doc(css_docstring = _css_docstring)
     def set_css(self,props : dict):
-        """Attributes at the root level of the dictionary will be applied to the slide. You can add CSS classes by `Slide.set_dom_classes`.
+        """Attributes at the root level of the dictionary will be applied to the slide. You can add CSS classes by `Slide.set_css_classes`.
         use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
         {css_docstring}"""
         self._css = _format_css(props, allow_root_attrs = True)
@@ -579,7 +676,7 @@ class Slide:
             else:
                 self._app.navigate_to(self.index) # Go there to see effects automatically
 
-    def set_dom_classes(self, add=None, remove=None):
+    def set_css_classes(self, add=None, remove=None):
         "Sett CSS classes on this slide separated by space. classes are remove first and add after it."
         if remove is not None: # remove first to enable toggle
             if not isinstance(remove, str):
@@ -594,8 +691,8 @@ class Slide:
                 self._widget.add_class(c)
 
     @property
-    def dom_classes(self):
-        "Readonly dom_classes on this slide sepaarated by space."
+    def css_class(self):
+        "Readonly dom classes on this slide sepaarated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
     def set_bg_image(self, src, opacity=0.25, filter='blur(2px)', contain=False):
@@ -656,18 +753,17 @@ def _build_slide(app, slide_number):
 
     if slide_number < 0:  # zero for title slide
         raise ValueError(f"slide_number should be int >= 0, got {slide_number}")
-    
-    is_new_slide = False   
+     
     if slide_number in app._slides_dict:
-        _slide = app._slides_dict[slide_number] # Use existing slide is better as display is already there
-        _slide.reset_source() # Reset old source but keep markdown for observing edits
+        this = app._slides_dict[slide_number] # Use existing slide is better as display is already there
+        this.reset_source() # Reset old source but keep markdown for observing edits
     else:
-        is_new_slide = True
-        _slide = Slide(app, slide_number)
-        app._slides_dict[slide_number] = _slide 
+        this = Slide(app, slide_number)
+        app._slides_dict[slide_number] = this
+        app.refresh() # rebuild slides to have index ready
             
-    with _slide._capture() as captured: 
-        yield _slide
+    with this._capture(): 
+        yield this
     
     def get_keys(data):
         keys = [k for k in data.keys()] if isinstance(data, dict) else [] # Most _reprs_
@@ -676,16 +772,10 @@ def _build_slide(app, slide_number):
                 keys.extend(d.keys())
         return keys
     
-    for k in [p for ps in _slide.contents for p in get_keys(ps.data)]:
+    for k in [p for ps in this.contents for p in get_keys(ps.data)]:
         if k.startswith('application'): # Widgets in this slide
-            _slide._has_widgets = True
+            this._has_widgets = True
             break # No need to check other widgets if one exists
-    
-    _slide.update_display(go_there = True) # Update Slide, it will not come to this point if has same code
-    
-    if is_new_slide: 
-        app.refresh()
-        app.navigate_to(_slide.index) # got there
 
         
 

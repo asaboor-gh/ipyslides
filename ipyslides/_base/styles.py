@@ -185,8 +185,10 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .SlideArea': {
-            ':is(p,div,em,b,table,img,svg, i:not(.fa)):not(.raw-text)': { # icons issue with i, but italic i should have fonts
-                'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+            ':not(.MathJax)': { # MathJax avoid font overwrite
+                ':is(p,div:not(.raw-text),em,b,table,img,svg,i:not(.fa),:not(.raw-text,mjx-c))': { 
+                    'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+                },
             },
             'code > span, .raw-text, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': f'{code_font!r}, "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
@@ -314,6 +316,11 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'max-width': f'{cwidth}% !important',
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
+            },
+            '^.Frames': {
+                ':is(ul,ol)': {
+                    'margin-block': '0 !important' # incremental lists should behave as single list
+                }
             },
             '.Citations' : {
                 'column-count' :f'{ncol_refs} !important',

@@ -49,9 +49,10 @@ class SourceCode(XTML):
         middle[-1], end = middle[-1].split('</code>')
         middle[-1] += '</code>'
         max_index = len(middle) - 1
+        lines = sorted([idx for idx in lines if idx <= max_index]) # don't throw error, just skip out of bound indices
         
         new_lines = [start]
-        picks = [-1,*sorted(lines)]
+        picks = [-1,*lines]
         for a, b in zip(picks[:-1],picks[1:]):
             if b - a > 1: # Not consecutive lines
                 new_lines.append(f'<code class="code-no-focus"> + {b - a - 1} more lines ... </code>')

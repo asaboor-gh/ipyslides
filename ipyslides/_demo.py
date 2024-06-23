@@ -170,46 +170,45 @@ def demo_slides(slides):
     backward_skipper = slides.goto_button('Skip Previous Frames', icon='arrowl')
     
     # Animat plot in slides  
-    @slides.build(-1,range(14,19))
-    def func(idx, obj):
-        if idx == 0:
-            forward_skipper.display()
-            backward_skipper.set_target()
+    with slides.build_():
+        forward_skipper.display()
+        backward_skipper.set_target()
+        slides.write("## Animating Matplotlib!")
 
         with slides.code.context(returns = True) as s:
-            fig, ax = plt.subplots()
-            x = np.linspace(0,obj+1,50+10*(idx+1))
-            ax.plot(x,np.sin(x));
-            ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {idx+1}')
-            ax.set_axis_off()
-            slides.notes.insert(f'## This is under @frames decorator!')
-
-        slides.write([f'### This is Slide {slides.this.number}.{idx}\n and we are animating matplotlib',
-                      s.show_lines([idx]),
-                      'cite`This` refs`1`'
-                      ],ax,widths=[40,60])
-        if idx == 0: #Only show source code of first frame
-            s.show_lines([5]).display()
+            for idx in slides.fsep.loop(range(10,19)):
+                fig, ax = plt.subplots()
+                x = np.linspace(0,idx,50)
+                ax.plot(x,np.sin(x))
+                ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {idx+1}')
+                ax.set_xlim([0,18])
+                ax.set_axis_off()
+                slides.write(s.focus_lines([idx - 10]),ax,widths=[60,40])
 
     slides.build(-1,'section`Controlling Content on Frames` toc`### Contents`')
 
     # Frames structure
-    boxes = [f'<div style="background:var(--alternate-bg);width:auto;height:2em;padding:8px;margin:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
-    @slides.build(-1, boxes, repeat=False)
-    def f(idx, obj):
-        slides.write('# Frames with \n#### `repeat = False`')
-        slides.write(obj)
+    boxes = [f'<div style="background:var(--alternate-bg);width:auto;height:2em;padding:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
+    with slides.build(-1) as s:
+        slides.write('# Default Frames')
+        s.get_source().focus_lines([2,3]).display()
+        for item in slides.fsep.loop(boxes):
+            slides.write(item)
 
-    @slides.build(-1, boxes, repeat=True)
-    def f(idx, obj):
-        slides.this.set_animation(None) #Disable animation for showing bullets list
-        slides.write('# Frames with \n#### `repeat = True` and Fancy Bullet List yoffset`10`')
-        slides.bullets(obj, marker='💘').display()
+    with slides.build(-1) as s:
+        slides.write('# Frames with \n#### `fsep.join()` and Fancy Bullet List yoffset`0`')
+        s.get_source().focus_lines([2,3,4]).display()
+        slides.fsep.join()
+        for item in slides.fsep.loop(boxes):
+            slides.bullets([item], marker='💘').display()
 
-    @slides.build(-1, [boxes[:2],boxes[2:]], repeat=True)
-    def f(idx, obj):
-        slides.write('# Frames with \n`repeat = True` and 2x2 grid of boxes yoffset`25`')
-        for ws, cols in zip([(1,3),(3,2)],obj):
+    with slides.build(-1) as s:
+        slides.write('# Frames with \n#### `fsep.join()` and 2x2 grid of boxes yoffset`0`')
+        s.get_source().focus_lines(range(2,7)).display()
+        slides.fsep.join()
+        objs = [boxes[:2],boxes[2:]]
+        widths = [(1,3),(3,2)]
+        for ws, cols in slides.fsep.loop(zip(widths,objs)):
             slides.write(*cols, widths=ws)
 
     # Youtube
@@ -224,10 +223,10 @@ def demo_slides(slides):
         slides.write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
 
         @slides.on_load
-        def push():
+        def push(slide):
             import time
             t = time.localtime()
-            slides.notify(f'You are watching Youtube at Time-{t.tm_hour:02}:{t.tm_min:02}')
+            slides.notify(f'You are watching Youtube on slide {slide.index} at Time-{t.tm_hour:02}:{t.tm_min:02}')
 
         ys.get_source().display(True) 
 
@@ -257,11 +256,11 @@ def demo_slides(slides):
     slides.build(-1, slides.fmt('''
     %++
     ## $ \LaTeX $ in Slides
-    --
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
     $ \LaTeX $ needs time to load, so keeping it in view until it loads would help.
     {.info}
-    
+                                
+    --                           
     ::: note-tip
         Varibale formatting alongwith $ \LaTeX $ alert` \`{var}\` → `{var}`` is seamless.
     
@@ -270,7 +269,6 @@ def demo_slides(slides):
     $$ \int_0^1\\frac{1}{1-x^2}dx $$
     {.align-left .text-big .info}
     +++
-    --
     ::: success
         $$ ax^2 + bx + c = 0 $$
         {.text-huge}
@@ -294,7 +292,6 @@ def demo_slides(slides):
         slides.code.cast(__file__).display()
 
     with slides.build(-1):
-        slides.write('Slides keep their full code if they are not made by @frames decorator!\n{.note .info}')
         slides.get_source().display()
 
 

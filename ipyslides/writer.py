@@ -83,6 +83,9 @@ class AltForWidget(CustomDisplay):
 
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
+    if isinstance(output, str):
+        return output
+    
     if hasattr(output, 'fmt_html'): # Columns
         return output.fmt_html()
     
@@ -108,7 +111,7 @@ class Writer:
             # This will only be intercepted if lambda function contains write with multiple columns, becuase they can't be nested
             raise RuntimeError('write(*objs) for len(objs) > 1 inside a previous call of write is not allowed!')
         
-        self._box = ipw.HBox().add_class('columns') # Box to hold columns
+        self._box = ipw.HBox().add_class('columns').add_class('writer') # writer to differentiate from other columns
         self._slides = get_slides_instance()
         
         try:
@@ -201,23 +204,24 @@ class Writer:
     @property
     def metadata(self): return self._metadata # Required 
     
-    def fmt_html(self):
+    def fmt_html(self, _pad_from=None):
         "Make HTML representation of columns that is required for exporting slides to other formats."
         cols = []
-        for col in self._cols:
+        for i, col in enumerate(self._cols):
             content = ''
-            for out in col['outputs']:
-                if 'Exp4Widget' in out.metadata:
-                    epx = self._context._exportables[out.metadata['Exp4Widget']]
-                    content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
-                elif 'DYNAMIC' in out.metadata: # Buried in column
-                    dpx = self._context._dproxies[out.metadata['DYNAMIC']] 
-                    content += ('\n' + dpx.fmt_html())
-                elif 'Proxy' in out.metadata:
-                    px = self._context._proxies[out.metadata['Proxy']]
-                    content += ('\n' + px.fmt_html())
-                else:
-                    content += ('\n' + _fmt_html(out))
+            if (_pad_from is None) or (isinstance(_pad_from, int) and (i < _pad_from)): # to make frames
+                for out in col['outputs']:
+                    if 'Exp4Widget' in out.metadata:
+                        epx = self._context._exportables[out.metadata['Exp4Widget']]
+                        content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
+                    elif 'DYNAMIC' in out.metadata: # Buried in column
+                        dpx = self._context._dproxies[out.metadata['DYNAMIC']] 
+                        content += ('\n' + dpx.fmt_html())
+                    elif 'Proxy' in out.metadata:
+                        px = self._context._proxies[out.metadata['Proxy']]
+                        content += ('\n' + px.fmt_html())
+                    else:
+                        content += ('\n' + _fmt_html(out))
                 
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
         

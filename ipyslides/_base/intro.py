@@ -37,15 +37,15 @@ slides = isd.Slides()
  ```
 ```
 
-```python
-@slides.build(3,objs) 
-def func(frame_index, frame_content):
-    write(frame_content) #This will create as many as length(objs) frames for this slides
-```
 
 ```python
 with slides.build(-1):
+    print("I will be on all frames in any case")
+    slides.fsep()
     print("-1 will pick latest slide number!")
+    slides.fsep()
+    print("I will be incremented to previous content if `fsep.join` is called somewhere!")
+    slides.fsep.join()
 ```
 
 ```python

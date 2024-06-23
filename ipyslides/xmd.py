@@ -363,6 +363,9 @@ class XMarkdown(Markdown):
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
 
+        if len(re.findall('^```', xmd, flags = re.MULTILINE)) % 2:
+            raise ValueError("Some blocks started with ```, but never closed!")
+
         # included file before other parsing
         xmd = self._resolve_files(xmd)
 
@@ -388,14 +391,12 @@ class XMarkdown(Markdown):
 
         new_strs = xmd.split("\n```")  # \n``` avoids nested blocks and it should be
         outputs = []
-        for i, section in enumerate(new_strs):
+        for i, section in enumerate(new_strs, start=1):
             if i % 2 == 0:
-                outputs.append(XTML(self.convert(section)))
-            else:
                 section = textwrap.dedent(section)  # Remove indentation in code block, useuful to write examples inside markdown block
-                outputs.extend(
-                    self._parse_block(section)
-                )  # vars are substituted already inside
+                outputs.extend(self._parse_block(section))  # vars are substituted already inside
+            elif section.strip(): # Don't add empty object, they don't let increment columns
+                outputs.append(XTML(self.convert(section)))
 
         self._vars = {} # reset at end to release references
         self._ns = {} # reset back at end
@@ -483,8 +484,8 @@ class XMarkdown(Markdown):
 
             widths = [int(w) for w in widths]
         
-        # In frames multicol should behave as Writer for correct output show
-        if self._slides and self._slides.this and self._slides.this._is_frame:
+        # Under slides, multicol should return Writer for frames CSS to take effect
+        if self._slides and self._slides.this:
             from ._base.slide import _expand_objs
             
             with capture_content() as cap:

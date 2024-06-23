@@ -11,13 +11,13 @@ from .navigation import Navigation
 from .settings import LayoutSettings
 from .notes import Notes
 from .export_html import _HhtmlExporter
+from .slide import _build_slide
 from ..formatters import XTML
-from ..xmd import _special_funcs, error, xtr
+from ..xmd import _special_funcs, error, xtr, get_slides_instance
 
 
 class BaseSlides:
     def __init__(self):
-        self._warnings = [] # Will be printed at end of building slides
         self._uid = f'{self.__class__.__name__}-{id(self)}' # Unique ID for this instance to have CSS, should be before settings
         self.__widgets = Widgets()
         self.__navigation = Navigation(self) # should be after widgets
@@ -106,7 +106,7 @@ class BaseSlides:
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
         - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides[slide_number,].proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
         - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-        - Double dashes `--` is used to split text in frames.
+        - Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
         Block table of contents with extra content can be added as follows:
                                                
@@ -196,29 +196,26 @@ class BaseSlides:
     def on_load(self, func):
         """
         Decorator for running a function when slide is loaded into view. No return value is required.
-        Use this to e.g. notify during running presentation.
+        Use this to e.g. notify during running presentation. func accepts single arguemnet, slide.
         
         ```python run source
         import datetime
         slides = get_slides_instance() # Get slides instance, this is to make doctring runnable
         source.display() # Display source code of the block
         @slides.on_load
-        def push_toast():
+        def push_toast(slide):
             t = datetime.datetime.now()
             time = t.strftime('%H:%M:%S')
-            slides.notify(f'Notification at {time}', timeout=5)
+            slides.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
         ```
         ::: note-warning
             - Do not use this to change global state of slides, because that will affect all slides.
             - This can be used single time per slide, overwriting previous function.
+        
+        ::: note-tip
+            If you are changing some `widget` state on slide using this function, `Slides.display(widget)` will show the
+            oldest represntation while `Slides.write(widget)` will display from the latest selected frame in exported HTML.
         """
-        for name in ['write','print','display','alt']:
-            if name in func.__code__.co_names:
-                self._warnings.append(f'UserWarning: Output of `{name}` function under `on_load` may be lost while presenting. I hope you know what you are doing!')
-        
-        if 'settings' in func.__code__.co_names:
-            self._warnings.append(f'UserWarning: Changing settings under `on_load` may have side effects on all slides. I hope you know what you are doing!')
-        
         self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
     
@@ -270,6 +267,13 @@ class BaseSlides:
         if not isinstance(content, str): #check path later or it will throw error
             raise TypeError(f"content expects a makrdown text block, got {content!r}")
         
+        content = xtr.copy_ns(content, re.split('^\s*EOF\s*$',content, flags = re.MULTILINE)[0])
+
+        if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt
+            (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
+            )):
+            raise ValueError("slides separator --- cannot be used inside multicol!")
+        
         start = self._fix_slide_number(start_slide_number) 
         
         if not trusted:
@@ -291,7 +295,7 @@ class BaseSlides:
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].dom_classes,)
+            checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].css_class,)
             if any(checks):
                 with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                     self._slide(f'{i + start} -m', chunk)
@@ -308,6 +312,9 @@ class BaseSlides:
         interval is in milliseconds, 500 ms default. Read `Slides.build` docs about content of file.
         
         The variables inserted in file content are used from top scope.
+        
+        ::: note-tip
+            To debug a linked file, use EOF on its own line to keep editing and clearing errors.
         """
         if not self.inside_jupyter_notebook(self.sync_with_file):
             raise Exception("Notebook-only function executed in another context!")
@@ -333,7 +340,7 @@ class BaseSlides:
         def update(widget, content, buffer):
             if path.is_file():
                 mtime = os.stat(path).st_mtime
-                out_sync = any(['Out-Sync' in s.dom_classes for s in self.cited_slides]) or False
+                out_sync = any(['Out-Sync' in s.css_class for s in self.cited_slides]) or False
                 if out_sync or (mtime > self._mtime):  # set by interaction widget
                     self._mtime = mtime
                     try: 
@@ -360,90 +367,70 @@ class BaseSlides:
         else:
             print("There was no markdown file linked to sync!")
     
-    def build_(self, content = None, *, repeat = False, trusted = False):
+    def build_(self, content = None, trusted = False):
         "Same as `build` but no slide number required inside Python file!"
         if self.inside_jupyter_notebook(self.build_):
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
-        return self.build(self._next_number, content=content, repeat=repeat, trusted=trusted)
+        return self.build(self._next_number, content=content, trusted=trusted)
 
     class build(ContextDecorator):
-        """Build slides with a single unified command in three ways:
+        """Build slides with a single unified command in two ways:
         
-        - `slides.build(number, str)` creates many slides with markdown content. 
-            - Equivalent to `%%slide number -m` magic in case of one slide.
+        1. `slides.build(number, str)` creates many slides with markdown content. Equivalent to `%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to `Slides.sync_with_file` too.
-            - Markdown before the first `--` (frame separator) is written on all frames. 
-            - Use `%++` in frames to add frames incrementally.
+            - Use `%++` to join content of frames incrementally.
+            - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd_syntax` for extended markdown usage.
             - Keyword argument `trusted` is used here if there are `python run` blocks in markdown.
-        - `with slides.build(number):` creates single slide. Equivalent to `%%slide number` magic.
-        - `@slides.build(number, iterable)` creates a slide with multiple frames.
-            - `iterable` should be list-like object. Any level of nesting should be handled by `func`.
-            - Automatic call as `slides.build(number, iterable)()` will write objects from top to bottom. 
-            - Use decorated `func(frame_index, frame_content)`  to write content flexibly.
-            - `repeat` can be False or True to enable enable making `iterable` a grid. Top list-like creates frames, 
-            inner list-like items can be used to create columns and automatically written if called as `Slides.build(...)()`.
-            In case of `repeate = True`, you can loop over rows yourself as well to write columns with given widths in `write` command.
-            - If function has a docstring, it will be parsed and added on top of all frames.
-            - Use yoffet`integer in px` in markdown/docstring or `Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
+            - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
+        2. `with slides.build(number):` creates single slide. Equivalent to `%%slide number` magic.
+            - Use `fsep()` from top import or `Slides.fsep()` to split content into frames.
+            - Use `for item in fsep.loop(iterable):` block to automatically add frame separator.
+            - Use `fsep.join` to join content of frames incrementally.
 
-        ```python
-        slides.build(1,[1,2,3])() # func gets 1, 2, 3 for each frame.
-        slides.build(1,[1,2,3], repeat = True)() # func gets [(1,)], [(1,), (2,)], [(1,), (2,), (3,)] for each of 3 frames
-        slides.build(1,[1,(2,3),4], repeat = True)() # func gets [(1,)], [(1,), (2, '')], [(1,), (2, 3)], [(1,), (2, 3)] for each of 4 frames
-        ```
+        ::: note-tip
+            - In all cases, `number` could be used as `-1`.
+            - Use yoffet`integer in px` in markdown or `Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
+            - You can use `build_(...)` (with underscore at end) in python file instead of `build(-1,...)`.
+
 
         Markdown content of each slide is stored as `.markdown` attribute to slide. You can append content to it later like this:
         
         ```python
         with slides.build(2):
             slides.parse(slides.this.markdown) # Instead of write, parse take cares of code blocks
-            plot_something() # In above slides.this under a slides take care of slide number itself
+            plot_something() # In above line, slides.this under a slides take care of slide number itself
         ```
-
-        ::: note
-            - In all cases, `number` could be used as `-1`.
-            - You can use `build_(...)` (with underscore at end) in python file instead of `build(-1,...)`.
-            - Keyword arguments `repeat` and `trusted` are used mutually exclusive in different functions.
         """
         @property
         def _app(self):
-            if not hasattr(self,'_private_instance'):
-                from ..core import _private_instance # very bad way of doing it, but capsulation required for build class
-                self._private_instance = _private_instance
-            return self._private_instance
+            kls = type(self)
+            if getattr(kls, '_slides', None) is None:
+                kls._slides = get_slides_instance()
+            return kls._slides
+                
         
-        def __new__(cls, slide_number, /, content = None, *, repeat = False, trusted = False):
+        def __new__(cls, slide_number, /, content = None, trusted = False):
             self = super().__new__(cls) # instance
             self._snumber = self._app._fix_slide_number(slide_number)
-            self._content =  content
-            self._repeat = repeat
             
             # Calling as function is the trickiest part
             if isinstance(content, str): # creates markdown slides immediately if possible
                 with self._app.code.context(returns = True, depth=3, start = True) as code:
-                    if not any(code.startswith(c) for c in ['with', '@']):
-                        return self._app.from_markdown(self._snumber, self._content, trusted = trusted)
+                    if not code.startswith('with'):
+                        return self._app.from_markdown(self._snumber, content, trusted = trusted)
             return self # for decorator and context manager
 
         def __enter__(self):
             "Use as contextmanager to create a slide."
-            # code settings here is important due to different depth
             code = self._app.code.context(returns=True, depth = 3).__enter__()
-            self._context = self._app.slide(self._snumber)
+            self._context = _build_slide(self._app, self._snumber)
             slide = self._context.__enter__()
             slide.set_source(code.raw, "python")
             return slide
 
         def __exit__(self, *args):
             return self._context.__exit__(*args)
-
-        def __call__(self, func = None):
-            "Use as decorator for a function(index, content) to create frames."
-            frs = self._app.frames(self._snumber, self._content, repeat = self._repeat)
-            if func is not None:
-                return frs(func)
-            return frs() # with automatic function in frames
         
         def __repr__(self):
             return f"<ContextDecorator build at {hex(id(self))}>"
@@ -592,15 +579,17 @@ class BaseSlides:
         
         self.build(-1, 'section`Advanced Functionality` toc`### Contents`')
 
-        with self.code.context(True) as code:
-            @self.build(-1, [(0,1), (2,3),(4,5,6,7)], repeat=True)
-            def make_frames(idx, obj):
-                "# Adding content on frames incrementally yoffset`5`"
-                code.focus_lines([o for ob in obj for o in ob if o != '']).display() # flatten array and skip ''
-                for ws, cols in zip([None, (2,3),None],obj):
-                    cols = [self.html('h1', f"{c}",
-                        style="background:var(--alternate-bg);margin-block:4px !important;") for c in cols]
-                    self.write(*cols, widths=ws)
+        with self.build_() as s:
+            self.write("## Adding content on frames incrementally yoffset`0`")
+            self.display(widget := (code := s.get_source()).as_widget()) 
+            @self.on_load
+            def highlight_line(slide): # only oldest state in export with self.display above, latest with write
+                widget.value = code.focus_lines(range(slide.indexf + 1)).value
+        
+            for ws, cols in self.fsep.loop(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
+                cols = [self.html('h1', f"{c}",style="background:var(--alternate-bg);margin-block:0.05em !important;") for c in cols]
+                self.fsep.join() # incremental
+                self.write(*cols, widths=ws)
                     
         with self.build(-1) as s:
             self.write('## Adding User defined Objects/Markdown Extensions')
@@ -664,8 +653,9 @@ def _parse_markdown_text(text_block):
     lines = textwrap.dedent(text_block).splitlines() # Remove overall indentation
     breaks = [-1] # start, will add +1 next
     for i,line in enumerate(lines):
-        if line and line.strip() =='---':
+        if line and re.search('^---$|^---\s+$', line): # for hr, can add space in start
             breaks.append(i)
+
     breaks.append(len(lines)) # Last one
     
     ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]

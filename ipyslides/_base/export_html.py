@@ -50,7 +50,21 @@ class _HhtmlExporter:
         navui_class = '' if 'Show' in self.main.widgets.navbox._dom_classes else 'NavHidden' 
         content = ''
         for item in self.main:
-            frames = [[item.contents[i] for i in idxs] for idxs in item.frame_idxs] or [item.contents]
+            objs = item.contents # get conce
+            frames, fidxs = [], item._fidxs or [len(objs)]
+            for n, idx in enumerate(fidxs):
+                if isinstance(idx, int):
+                    frames.append(objs[:idx]) #upto
+                elif isinstance(idx, tuple):
+                    idx, jdx = idx[0] - 1, idx[1] # Must be Writer at idx
+                    frames.append([*objs[:idx], objs[idx].fmt_html(_pad_from = jdx)]) 
+                elif isinstance(idx, range):
+                    first = []
+                    if n and item._has_top_frame: # only if content before first frame and not duplicate on first
+                        first = objs[:item._fidxs[0].stop] # add top to all in case of no join
+                    frames.append([*first, *objs[idx.start:idx.stop]]) # frames not incremental
+            
+            
             for k, objs in enumerate(frames):
                 _html = '' 
                 for out in objs:
@@ -74,7 +88,7 @@ class _HhtmlExporter:
                         <div class="SlideBox">
                             {self._get_bg_image(item)}
                             {self._get_logo()}
-                            <div {goto_id} class="SlideArea n{item.number}">
+                            <div {goto_id} class="{item.css_class}">
                                 {_html}
                             </div>
                             {number}
@@ -110,7 +124,8 @@ class _HhtmlExporter:
         return f'id="{target}"' if target else ''
     
     def _get_progress(self, slide, fidx=0):
-        pv = slide._get_pv(fidx)
+        unit = 100/(self.main._iterable[-1].index or 1) # avoid zero division error or None
+        pv = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
         gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--secondary-bg) {pv}%, var(--secondary-bg) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'
     

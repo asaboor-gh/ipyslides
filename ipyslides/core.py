@@ -1,12 +1,13 @@
 import sys, os, json, re, textwrap, math
 from contextlib import contextmanager, suppress
 from collections import Iterable
+from itertools import zip_longest
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
 
-from .xmd import fmt, parse, capture_content, xtr, extender as _extender
+from .xmd import fmt, parse, xtr, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
 from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
@@ -177,6 +178,7 @@ class Slides(BaseSlides):
         display(scroll_btn)
     
     def _unregister_postrun_cell(self):
+        self._slides_per_cell.clear() # Must to let user jump on first slide run to be in correct place
         with suppress(Exception): 
             self.shell.events.unregister("post_run_cell", self._post_run_cell)
     
@@ -243,7 +245,8 @@ class Slides(BaseSlides):
 
     def navigate_to(self, index):
         "Programatically Navigate to slide by index, if possible."
-        self.wprogress.value = index if isinstance(index, int) else 0 # handle None
+        if isinstance(index, int):
+            self.wprogress.value = index
 
     @property
     def version(self):
@@ -270,6 +273,8 @@ class Slides(BaseSlides):
 
     @property
     def _current(self):
+        if not self._iterable: # not collected yet
+            return self._slides_dict.get(0, None)
         return self._iterable[self.wprogress.value]
 
     @property
@@ -307,14 +312,12 @@ class Slides(BaseSlides):
                 ), 
                 '', # empty column for space 🤣
                 how_to_slide,widths=[14,1, 85]).display()
-            
-        self._unregister_postrun_cell() # no need in initialization functions 
-        self.refresh()  # cleans up initialization setup and tocs/other things
+        
+        self._unregister_postrun_cell() # This also clears slides per cell
 
     def clear(self):
-        "Clear all slides. This will also clear resources including citations, sections."
+        "Clear all slides."
         self._slides_dict = {}  # Clear slides
-        self.set_citations({})  # Clears citations from disk too
         self._next_number = 0  # Reset slide number to 0, because user will overwrite title page.
         self._add_clean_title()  # Add clean title page without messing with resources.
 
@@ -350,7 +353,7 @@ class Slides(BaseSlides):
     
     def _set_unsynced(self):
         for slide in self.cited_slides:
-            slide.set_dom_classes(add = 'Out-Sync') # will go synced after rerun
+            slide.set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='footnote'):
         """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
@@ -379,9 +382,8 @@ class Slides(BaseSlides):
             self._set_unsynced() # will go synced after rerun
 
         # Make some possible updates
-        for slide in self[:]:
-            if hasattr(slide, '_refs') or (self.cite_mode == "footnote"): 
-                slide.update_display(go_there=False) # will reset slides refrences
+        for slide in self.cited_slides:
+            slide.update_display(go_there=False) # will reset slides refrences
             
         
         # Finally write resources to file in assets
@@ -470,6 +472,7 @@ class Slides(BaseSlides):
                 self.wprogress.value = (
                     btn._TargetSlide.index
                 )  # let it throw error if slide does not exist 
+                btn._TargetSlide.first_frame()
             except:
                 self.notify(
                     f"Failed to jump to slide {btn._TargetSlide.index!r}, you may have not used GotoButton.set_target() anywhere!"
@@ -506,6 +509,7 @@ class Slides(BaseSlides):
         self._unregister_postrun_cell() # no need to scroll button where showing itself
         self._update_toc()  # Update toc before displaying app to include all sections
         self._update_dynamic_content()  # Update dynamic content before displaying app
+        self.settings._update_theme() # force it, sometimes Inherit theme don't update
         display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
         
 
@@ -526,16 +530,16 @@ class Slides(BaseSlides):
 
     def _switch_slide(self, old_index, new_index):  
         uclass = f".{self.uid} .TOC"
-        _objs = [
+        self._renew_objs = (
+            self._iterable[new_index].animation, # keep animation first, needs in _show_frames
             self._iterable[new_index].css,
             self.html(
                 "style",
                 f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
-            )]
+            ))
 
         self.widgets.update_progressbar(self._iterable[new_index], 0 if new_index > old_index else -1)
-        _objs.append(self._iterable[new_index].animation)
-        self._update_tmp_output(*_objs)
+        self._update_tmp_output(*self._renew_objs)
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index  # Just safe
@@ -568,16 +572,18 @@ class Slides(BaseSlides):
             self.wprogress.max = 0
             self.widgets.slidebox.children = []  # Clear older slides
             return None
-
+        
+        old = self.wprogress.value
         self.wprogress.max = len(self._iterable) - 1  # Progressbar limit
+        self.wprogress.value = min(old, self.wprogress.max) # avoid jumping back to title each time
 
         # Update Slides
         self.widgets.slidebox.children = [it._widget for it in self._iterable]
         for i, s in enumerate(self._iterable):
             s._index = i  # Update index
 
-        self._update_dynamic_content(None)  # Update dynamic content including widgets
         self._update_toc()  # Update table of content if any
+        self._update_dynamic_content() # refresh causes loose widgets sometimes
 
         if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
             self.widgets.slidebox.children[0].add_class('ShowSlide')
@@ -634,10 +640,9 @@ class Slides(BaseSlides):
             ::: note-info
                 Find special syntax to be used in markdown by `Slides.xmd_syntax`.
         ::: note
-            - If Markdown is separated by two dashes (--) on it's own line, multiple frames are created.
-            - Markdown before the first (--) separator is written on all frames. 
+            - If Markdown is separated by two dashes (--) on it's own line, multiple frames are created and shown incrementally.
             - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
-            - You can use frames separator (--) inside `multicol` to make columns span multiple frames with %++.
+            - Frames separator (--) just after `multicol` creates incremental columns.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
 
         """
@@ -652,41 +657,38 @@ class Slides(BaseSlides):
         slide_number = int(line[0])  # First argument is slide number
 
         if "-m" in line[1:]:
-            # user may used fmt
-            repeat = False
+            if any(map(lambda v: '\n--' in v, # I gave up on single regex after so much attempt
+                (re.findall(r'```multicol(.*?)\n```', cell, flags=re.DOTALL | re.MULTILINE) or [''])
+                )):
+                raise ValueError("frame separator -- cannot be used inside multicol!")
+            join = False
             if '%++' in cell:
-                cell = xtr.copy_ns(cell, cell.replace('%++','',1).strip()) # remove leading empty line !important
-                repeat = True
-
-            frames = re.split(
-                r"^--$|^--\s+$", cell, flags=re.DOTALL | re.MULTILINE
-            )  # Split on -- or --\s+
-
-            text_all = ''
-            if len(frames) > 1:
-                text_all = frames[0]
-                frames = frames[1:] # frames start from first -- sepearator
+                cell = xtr.copy_ns(cell, cell.replace('%++','').strip()) # remove leading empty line !important
+                join = True
             
-            self._editing_index = None
-            
-            @self.frames(int(slide_number), frames, repeat=repeat) 
-            def make_slide(idx, frm):
-                if repeat:
-                    frm = '\n'.join('\n'.join(f) for f in frm) # nested in case of repeat
-                
-                frm = '\n'.join([text_all, frm]) # text before first frame on all of theme
+            frames = re.split(r"^--$|^--\s+$", cell, flags=re.DOTALL | re.MULTILINE)  # Split on -- or --\s+
+            edit_idx = 0
 
-                if (self.this.markdown != frm) or (idx == 0):
-                    self._editing_index = self.this.index # Go to latest editing markdown frame, or start of frames
+            with _build_slide(self, slide_number) as s:
+                prames = re.split(r"^--$|^--\s+$", s.markdown, flags=re.DOTALL | re.MULTILINE)
+                s.set_source(cell, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
+                if join:
+                    self.fsep.join()
 
-                self.this.set_source(frm, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
-                parse(xtr.copy_ns(cell, frm), returns = False)
+                for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
+                    parse(xtr.copy_ns(cell, frm), returns = False) # user may have used fmt
+                    
+                    if len(frames) > 1:
+                        self.fsep() # should not be before, needs at least one thing there
+                    
+                    if prm != frm: 
+                        edit_idx = idx
+                        if (not self.this._split_frames) and ('```multicol' in frm): # show all columns if edit is inside multicol
+                            edit_idx += len(re.findall('^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE))
             
-            if self._editing_index is not None:
-                self.navigate_to(self._editing_index)
-            
-            delattr(self, '_editing_index')
-            self._register_postrun_cell() # it does not go otherwise 
+            s.first_frame() # be at start first
+            for _ in range(edit_idx): 
+                s.next_frame() # go at latest edit
 
         else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number) as s:
@@ -754,83 +756,8 @@ class Slides(BaseSlides):
         
         self.notify('Dynamic content updated everywhere!')
 
-    def _repeat(self, iterable):
-        "This is toughest ever function I made!"
-        class REP:
-            def __init__(self, *objs):
-                self.objs = objs
-
-        _new_objs = []
-        for item in iterable:
-            if not isinstance(item, (list,tuple)):
-                _new_objs.append(item)
-            else:
-                objs = [REP(*item[:i],*['<PH>' for _ in range(len(item) - i)]) for i in range(1, len(item) + 1)]
-                _new_objs.extend(objs)
-
-        _new_objs = [_new_objs[:i] for i in range(1, len(_new_objs) + 1)]
-
-        for i, rows in enumerate(_new_objs):
-            _cols = []
-            for col in rows:
-                if isinstance(col, REP):
-                    _cols.append([c.replace('<PH>','') if c == '<PH>' else c for c in col.objs]) 
-                    if '<PH>' in col.objs:
-                        col.objs = [] # don't let repeat this in next row
-                else:
-                    _cols.append([col]) # should be writeble as colum too
-            _new_objs[i] = tuple(tuple(c) for c in _cols if c != []) # match with empty list, not general bool
-        return tuple(_new_objs) # edit safe
-    
-
     def frames(self, slide_number, /, iterable, repeat=False):
-        "Sames as `Slides.build` used as a decorator."
-        slide_number = self._fix_slide_number(slide_number)
-
-        def auto_frame_writer(idx, obj):
-            if repeat:
-                for cols in obj:
-                    self.write(*cols)
-            else:
-                self.write(obj)
-
-        def _frames(func = auto_frame_writer):  # write if called without function
-            if isinstance(iterable, (str, bytes)) or not isinstance(iterable, Iterable):
-                raise TypeError(f"iterable should be list-like, got {type(iterable)}")
-            
-            try:
-                iterable[:1] # dictionary can have key 0, only list-like would accept slice
-            except:
-                raise TypeError(f"iterable should be list-like, got {type(iterable)}")
-            
-            if (slide_number == 0) and (len(iterable) > 1):
-                raise ValueError(f"slide 0 does not support more than one frames!")
-
-            if repeat:
-                _new_objs = self._repeat(iterable)
-            else:
-                _new_objs = iterable
-            
-            if not _new_objs:
-                raise ValueError("iterable is empty or repeate did not create frames!")
-
-            if len(_new_objs) > 10:  # 9 frames + 1 main slide
-                raise ValueError(f"Maximum 10 frames are supported per slide, found {len(_new_objs)} frames!")
-
-            with _build_slide(self, slide_number) as this:
-                this._is_frame = (True if len(_new_objs) > 1 else False)
-                this._fsep = self.format_css({}).as_widget()
-
-                for i, obj in enumerate(_new_objs):
-                    if (doc := getattr(func, '__doc__')): # for all
-                        self.parse(doc)
-                    
-                    func(i, obj)
-
-                    if len(_new_objs) > 1: # otherwsie normal one
-                        display(this._fsep, metadata={"FSEP": str(i+1),"skip-export":"no need in export"})
-            
-        return _frames
+        raise DeprecationWarning("frames is deprecated, use `Slides.fsep` under all slides to make flexible frame!")
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
@@ -897,6 +824,51 @@ class Slides(BaseSlides):
 _private_instance = Slides()  # Singleton in use namespace
 # This is overwritten below to just have a singleton
 
+class fsep:
+    """Frame separator! If it is just after `write` command, columns are incremented too.
+    You can import it on top level or use as `Slides.fsep`.
+
+    - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
+    - Use `fsep.loop(iterable)`/`fsep.enum(iterable)` to split after each item in iterable automatically.
+    - Use `fsep.join()` once under a slide to show frames incrementally. In markdown slides, use %++.
+    """
+    _app = _private_instance
+    
+    def __init__(self):
+        self._app.verify_running()
+        if self._app.in_dproxy or self._app.in_proxy:
+            raise RuntimeError("Cant use fsep in a proxy capture or dynamic content!")
+        
+        self._app.this._widget.add_class("Frames")
+        self._app.this._fsep = getattr(self._app.this, '_fsep', self._app.format_css({}).as_widget()) # create once
+        display(self._app.this._fsep, metadata={"FSEP": "","skip-export":"no need in export"})
+
+    @classmethod
+    def loop(cls, iterable):
+        "Loop over iterable. Frame separator is add before each item and at end of the loop."
+        cls._app.verify_running()
+        if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
+            raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
+        
+        for item in iterable:
+            cls() # put separator before
+            yield item
+        else:
+            cls() # put one last to separate this block
+    
+    @classmethod
+    def enum(cls, iterable, start=0):
+        "Enumerate iterable with automatically adding frame separators."
+        return enumerate(cls.loop(iterable), start=start)
+    
+    @classmethod
+    def join(cls):
+        """Join frames incrementally. This enables `write` and `multicol` followed by a frame separator to increment as well.
+        Use %++ in makdown in place of this.
+        """
+        cls._app.verify_running()
+        cls._app.this._split_frames = False
+
 
 class Slides:
     _version = (
@@ -948,6 +920,7 @@ class Slides:
         ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         instance = cls.instance()
+        instance.fsep = fsep # attach for use under slides
         instance.__doc__ = cls.__doc__  # copy docstring
         instance.extender.extend(extensions) # globally once
         instance.settings.apply(**settings)
