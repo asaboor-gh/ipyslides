@@ -254,7 +254,7 @@ class Slide:
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
-        self._cframe = -1 # first call to next_frame will fix it
+        self._cframe = 0 # current frame
         self._section = None # Added from Slides
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
         self._proxies = {} # Placeholders added to this slide
@@ -334,7 +334,7 @@ class Slide:
     def _capture(self):
         "Capture output to this slide."
         self._app._next_number = self.number + 1
-        self._cframe = -1 # first will be set by frame
+        self._cframe = 0 
         self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
         self._split_frames = True # Defult
@@ -404,11 +404,11 @@ class Slide:
 
             self._handle_refs()
 
-        self._reset_frames() # after references to include that as well
         
         # Update corresponding CSS but avoid animation here for faster and clean update
         self._app._update_tmp_output(self.css)
         self.set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
+        self._reset_frames() # after others to take everything into account
     
     def _reset_frames(self):
         nc_frames, contents = [], self.contents  # get once

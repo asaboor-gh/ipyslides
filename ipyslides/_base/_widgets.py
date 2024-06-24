@@ -38,8 +38,7 @@ class InteractionWidget(anywidget.AnyWidget):
         if not msg:
             return # Message set empty, do not waste time
         if 'SHIFT:' in msg:
-            new_index = int(msg.lstrip('SHIFT:')) + self._prog.index
-            self._prog.index = max(0, new_index) if new_index < self._prog.index else min(new_index,len(self._prog.options) - 1)
+            self._prog.value = int(msg.lstrip('SHIFT:')) + self._prog.value
         elif msg == 'TFS': 
             self._toggles.fscreen.value = not self._toggles.fscreen.value
         elif msg == 'NEXT':

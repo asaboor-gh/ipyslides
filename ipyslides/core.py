@@ -540,6 +540,10 @@ class Slides(BaseSlides):
 
         self.widgets.update_progressbar(self._iterable[new_index], 0 if new_index > old_index else -1)
         self._update_tmp_output(*self._renew_objs)
+        if new_index > old_index:
+            self._iterable[new_index].first_frame() # going right
+        else:
+            self._iterable[new_index].last_frame() # going left
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index  # Just safe
