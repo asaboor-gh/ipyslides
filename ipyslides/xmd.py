@@ -235,7 +235,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     # Footnotes at place user likes
     all_matches = re.findall(r"refs\`([\d+]?)\`", text_chunk) # match digit or empty
     for match in all_matches:
-        slide_instance.this._refs_consumed = True
+        slide_instance.this._set_refs = False # already added here
         _cits = ''.join(v.value for v in sorted(slide_instance.this._citations.values(), key=lambda x: x._id))
         out = f"<div class='Citations' style='column-count: {match} !important;'>{_cits}</div>"
         text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
@@ -594,14 +594,18 @@ class XMarkdown(Markdown):
 
         # Replace columns at end because they will convert HTML
         all_cols = re.findall(
-            r"\|\|(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
+            r"\|\|(\s*\d*\s*)(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
         )  # Matches new line as well, useful for inline plots and big objects
-        for cols in all_cols:
-            _cols = "".join(
-                f'<div style="width:50%;">{self.convert(c)}</div>' for c in cols
+        for width, *cols in all_cols:
+            digit = int(width.strip()) if width.strip() else 50 # could be tabs, new lines etc
+            if not (digit in range(1,100)): # 1-99, why zero width
+                raise ValueError(f'column width after first || should be 0-99, got {digit}')
+            
+            _cols = "\n".join(
+                f'<div style="width:{w}%;">{self.convert(c.strip())}</div>' for w, c in zip([digit, 100 - digit], cols)
             )
             _out = f'<div class="columns">{_cols}</div>'  # Replace new line with 4 spaces to keep indentation if block ::: is used
-            html_output = html_output.replace(f"||{cols[0]}||{cols[1]}||", handle_var(_out), 1)
+            html_output = html_output.replace(f"||{width}{cols[0]}||{cols[1]}||", handle_var(_out), 1)
 
         return html_output  # return in main scope
 

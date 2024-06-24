@@ -317,10 +317,8 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
             },
-            '^.Frames': {
-                ':is(ul,ol)': {
-                    'margin-block': '0 !important' # incremental lists should behave as single list
-                }
+            ':is(ul,ol)': {
+                'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap
             },
             '.Citations' : {
                 'column-count' :f'{ncol_refs} !important',

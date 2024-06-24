@@ -684,7 +684,7 @@ class Slides(BaseSlides):
                     if prm != frm: 
                         edit_idx = idx
                         if (not self.this._split_frames) and ('```multicol' in frm): # show all columns if edit is inside multicol
-                            edit_idx += len(re.findall('^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE))
+                            edit_idx += (len(re.findall('^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE)) + 1)
             
             s.first_frame() # be at start first
             for _ in range(edit_idx): 

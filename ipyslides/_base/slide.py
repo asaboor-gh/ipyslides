@@ -263,6 +263,7 @@ class Slide:
         self._columns = {} # Columns added to this slide
         self._split_frames = True
         self._has_top_frame = True
+        self._set_refs = True
 
         if not self._contents: # show slide number hint there
             self.set_css({
@@ -338,6 +339,7 @@ class Slide:
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
         self._split_frames = True # Defult
         self._has_top_frame = True # Default
+        self._set_refs = True
     
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
@@ -557,14 +559,11 @@ class Slide:
         if hasattr(self, '_refs'): # from some previous settings and change
             delattr(self, '_refs') # added later  only if need
         
-        if self._app.cite_mode == 'footnote': # don't do in inline mode
-            if hasattr(self, '_refs_consumed'):
-                delattr(self, '_refs_consumed') # for next time
-            elif self._citations:
-                self._refs = html('div', # need to store attribute for export
-                    sorted(self._citations.values(), key=lambda x: x._id), 
-                    css_class='Citations', style = '')
-                self._refs.display()
+        if all([self._citations, self._set_refs, self._app.cite_mode == 'footnote']): # don't do in inline mode
+            self._refs = html('div', # need to store attribute for export
+                sorted(self._citations.values(), key=lambda x: x._id), 
+                css_class='Citations', style = '')
+            self._refs.display()
 
     
     def clear_display(self, wait = False):

@@ -130,7 +130,7 @@ class BaseSlides:
         - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - You can escape backtick with backslash: alert`\\\` → \``.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Two side by side columns can be added inline using alert`|&#124; Column A |&#124; Column B |&#124;` sytnax.
+        - Two side by side columns can be added inline using alert`|&#124;[width optionally here in 1-99] Column A |&#124; Column B |&#124;` sytnax.
         - Block multicolumns are made using follwong syntax, column separator is tiple plus `+++`:
         
         ```markdown     
