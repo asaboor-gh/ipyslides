@@ -254,7 +254,7 @@ class Slide:
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._has_widgets = False # Update in _build_slide function
         self._citations = {} # Added from Slides
-        self._cframe = 0 # current frame
+        self._indexf = 0 # current frame index
         self._section = None # Added from Slides
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
         self._proxies = {} # Placeholders added to this slide
@@ -334,7 +334,7 @@ class Slide:
     def _capture(self):
         "Capture output to this slide."
         self._app._next_number = self.number + 1
-        self._cframe = 0 
+        self._indexf = 0 
         self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
         self._split_frames = True # Defult
@@ -461,6 +461,7 @@ class Slide:
     
     def _update_view(self, which):
         # avoids animation by updating CSS without first animation object and Prev class in all case
+        self._set_progress()
         self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[])[1:]) 
         self._app.widgets.slidebox.remove_class('Prev') 
 
@@ -469,9 +470,8 @@ class Slide:
                 self._app.widgets.slidebox.add_class('Prev')
             self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[]))
 
-        self._app.widgets.update_progressbar(self, self._cframe)
         if self.index == self._app.wprogress.max: # This is last slide
-            if self._cframe + 1 == self.nf:
+            if self.indexf + 1 == self.nf:
                 self._app._box.add_class("InView-Last")
             else:
                 self._app._box.remove_class("InView-Last")
@@ -479,23 +479,23 @@ class Slide:
         if hasattr(self,'_on_load') and callable(self._on_load):
             if any(
                 [ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
-                    self._cframe == 0 and which == 'prev',
-                    self._cframe + 1 == self.nf and which == 'next',
-                    0 < self._cframe < (self.nf - 1)
+                    self.indexf == 0 and which == 'prev',
+                    self.indexf + 1 == self.nf and which == 'next',
+                    0 < self.indexf < (self.nf - 1)
                 ]
             ): self._on_load(self)
                 
     
     def _show_frame(self, which):
         if self._fidxs:
-            if (which == 'next') and ((self._cframe + 1) < self.nf):
-                self._cframe += 1
-            elif (which == 'prev') and ((self._cframe - 1) >= 0):
-                self._cframe -= 1
+            if (which == 'next') and ((self.indexf + 1) < self.nf):
+                self._indexf += 1
+            elif (which == 'prev') and ((self.indexf - 1) >= 0):
+                self._indexf -= 1
             else:
                 return False
             
-            start, nrows, ncols, first = 1, self._fidxs[self._cframe], 0, 0
+            start, nrows, ncols, first = 1, self._fidxs[self.indexf], 0, 0
             if isinstance(nrows, tuple):
                 nrows, ncols = nrows
             elif isinstance(nrows, range): # not joined
@@ -516,7 +516,7 @@ class Slide:
                     },
                     **({f'^:nth-child({nrows}) .columns.writer:first-of-type > div:nth-child(n + {ncols+1})': { # avoid nested columms
                         'visibility': 'hidden !important', # enforce this instead of jumps in height
-                    }} if isinstance(self._fidxs[self._cframe], tuple) else {}), 
+                    }} if isinstance(self._fidxs[self.indexf], tuple) else {}), 
                 },
             }).value
 
@@ -535,25 +535,32 @@ class Slide:
         "Jump to previous frame and return True. If no previous frame, returns False"
         return self._show_frame('prev')
     
+
+    def _reset_indexf(self, new_index, func): 
+        old = int(self.indexf) # avoid pointing to property
+        self._indexf = new_index
+
+        try:
+            condition = func()
+        finally:
+            if not condition:
+                self._indexf = old
+            return condition
+    
     def first_frame(self):
         "Jump to first frame."
-        self._cframe = -1
-        return self.next_frame()
+        return self._reset_indexf(-1, self.next_frame)  # go left and switch forward
+
     
     def last_frame(self):
         "Jump to last frame"
-        self._cframe = self.nf # go right and swicth back
-        return self.prev_frame()
+        return self._reset_indexf(self.nf, self.prev_frame) # go right and swicth back
     
-    def _get_pv(self, fidx):
+    def _set_progress(self):
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
-        value = round(unit * (self.index or 0), 4)
-        if not self._fidxs:
-            return value
-        
-        fidx = self._fidxs.index(self._fidxs[fidx]) # handles negative index automatically
-        return round(value - unit*(self.nf - fidx - 1)/self.nf, 4)
-
+        value = round(unit * ((self.index or 0) - (self.nf - self.indexf - 1)/self.nf), 4)
+        self._app.widgets._progbar.children[0].layout.width = f"{value}%"
+        self._app.widgets._snum.description = f"{self._app.wprogress.value or ''}" # empty for zero
 
     def _handle_refs(self):
         if hasattr(self, '_refs'): # from some previous settings and change
@@ -618,7 +625,7 @@ class Slide:
     @property
     def indexf(self):
         "Returns index of current displayed frame."
-        return max(self._cframe, 0) # _cframe is negative in start on purpose
+        return self._indexf if self._fidxs else 0
     
     @property
     def _markdown(self): # No need to reset after v4.3.1 by user

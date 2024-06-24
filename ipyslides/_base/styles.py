@@ -180,21 +180,19 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         '--alternate-bg':f'{colors["alternate_bg"]}',
         '--accent-color':f'{colors["accent_color"]}',
         '--pointer-color':f'{colors["pointer_color"]}',
-        '--text-size':f'{text_size}'
+        '--text-size':f'{text_size}',
+        '--jp-content-font-family': f'{text_font}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16"',
+        '--jp-code-font-family': f'{code_font}, "Ubuntu Mono", "SimSun-ExtB", "Courier New"',
     }
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
-        '^.SlidesWrapper, .SlideArea': {
-            ':is(p,div:not(.raw-text),em,b,table,img,svg,i:not(.fa))': { 
-                'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
-                '.MathJax, .MJX-TEX': { # under these, Maths should not pick fonts
-                    'font-family': 'unset !important',
-                },
-            },
-            ':is(code > span, .raw-text), .jp-RenderedHTMLCommon :is(pre, code)': {
-                'font-family': f'{code_font!r}, "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
-                'font-size':'90% !important',
+        '^.SlidesWrapper, .jupyter-widgets': { # widgets have their own fonts, but make is same
+            'font-family': 'var(--jp-content-font-family) !important',
+            '.raw-text, code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
+                'font-family': 'var(--jp-code-font-family) !important',
+                'font-size':'90% !important',   
             }, # Define color below at low specificity, otherwise it can overwrite code
+            '.jp-RenderedHTMLCommon :is(pre, code)': {'background': 'none !important'}, # Avoid a white background set by jupyter
             '*:not(.MJX-TEX)': {'color':'var(--primary-fg)',}, 
             '.MJX-TEX, .MathJax span': {"color":"inherit",}, # important to avoid heading color, MathJax span is for export
             '.tl-container, .tlui-icon, .tlui-button': {'color':'unset',},
@@ -231,7 +229,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             },
             '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
             ':is(h1, h2, h3, h4, h5, h6)': {
-                'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+                'font-family':'var(--jp-content-font-family) !important',
                 'font-weight':'normal',
                 'color':'var(--heading-color)',
                 'text-align':'center' if centered else 'left',
@@ -271,7 +269,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         '.fa::before':  {'margin': '0 4px 0 0', 'vertical-align': 'middle',}, # for exported font-awsome icons
         **{f".fa.fa-{k}::before": Icon(k, color=colors["accent_color"]).css for k in Icon.available}, # needed in export too
         '.raw-text': { # Should be same in notebook cell 
-            'font-family': f'{code_font!r}, "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
+            'font-family': 'var(--jp-code-font-family) !important',
             'font-size':'90% !important',
             'display':'block !important',
             'margin':'4px !important',
@@ -347,7 +345,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '.FirstTOC .toc-item.next' : {'opacity':'1',}, # In start, see full as same opacity
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
-                'font-family': f'{code_font!r},"Ubuntu Mono", "SimSun-ExtB", "Courier New" !important', # Should be same in notebook cell
                 'color':'var(--primary-fg) !important',
                 'max-height':'400px',
                 'white-space':'pre !important',

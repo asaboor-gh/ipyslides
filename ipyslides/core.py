@@ -530,22 +530,22 @@ class Slides(BaseSlides):
 
     def _switch_slide(self, old_index, new_index):  
         uclass = f".{self.uid} .TOC"
+        slide = self._iterable[new_index]
         self._renew_objs = (
-            self._iterable[new_index].animation, # keep animation first, needs in _show_frames
-            self._iterable[new_index].css,
+            slide.animation, # keep animation first, needs in _show_frames
+            slide.css,
             self.html(
                 "style",
                 f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
             ))
 
-        self.widgets.update_progressbar(self._iterable[new_index], 0 if new_index > old_index else -1)
         self._update_tmp_output(*self._renew_objs)
         
         # Do this here, not in navigation module, as slider can jump to any value
-        if new_index > old_index:
-            self._iterable[new_index].first_frame() # going right
+        if not slide._fidxs:
+            slide._set_progress()
         else:
-            self._iterable[new_index].last_frame() # going left
+            slide.first_frame() if new_index > old_index else slide.last_frame()
 
         if (old_index + 1) > len(self.widgets.slidebox.children):
             old_index = new_index  # Just safe
@@ -758,6 +758,7 @@ class Slides(BaseSlides):
                     else:
                         slide._slide_tocbox.remove_class("FirstTOC")
         
+        self._current._set_progress() # update display can take it over to other sldies
         self.notify('Dynamic content updated everywhere!')
 
     def frames(self, slide_number, /, iterable, repeat=False):

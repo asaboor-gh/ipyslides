@@ -71,7 +71,7 @@ class _Toggles:
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enable Zooming Items [Z]').add_class('Zoom-Btn')
     laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [L]').add_class('Laser-Btn') 
-    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Open Drawing Panel').add_class('Draw-Btn') 
+    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Open Drawing Panel').add_class('Draw-Btn').add_class('Menu-Item')  
     menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')        
 
 @dataclass(frozen=True)
@@ -121,10 +121,6 @@ class Widgets:
             raise AttributeError(f'{name} is a read-only attribute')
         
         self.__dict__[name] = value
-    
-    def update_progressbar(self, slide, fidx):
-        self._progbar.children[0].layout.width = f"{slide._get_pv(fidx)}%"
-        self._snum.description = f"{self.sliders.progress.value or ''}" # empty for zero
         
     def __init__(self):
         # print(f'Inside: {self.__class__.__name__}')
@@ -160,7 +156,7 @@ class Widgets:
             ]).add_class('Menu-Box'),
             self.htmls.footer,
             #HBox([self.htmls.footer]), # should be in Box to avoid overflow
-        ],layout=Layout(height='28px')).add_class('NavBox')
+        ],layout=Layout(height='20px')).add_class('NavBox')
         
         self.navbox = VBox([
             self.footerbox,

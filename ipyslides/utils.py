@@ -547,7 +547,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     if tag == 'style':
         node_attrs = {} # Ignore node_attrs for style tag
     else:
-        node_attrs = {'style':"background:inherit;color:inherit;",**{k.replace('_','-'):v for k,v in node_attrs.items()}} # replace _ with - in keys, and add default style
+        node_attrs = {k.replace('_','-'):v for k,v in node_attrs.items()}
     
     attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
     if css_class:

@@ -100,7 +100,8 @@ section .SlideBox {
 }
 section .SlideBox > .Footer > .Progress { 
     display: block !important; 
-    box-sizing: border-box;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
     height: 3px !important;
     width: 100% !important;
 }
@@ -114,10 +115,10 @@ section .SlideArea {
 section .SlideBox > .Footer { 
     background: var(--primary-bg); /* no important here */
     padding: 0 !important; margin: 0 !important; 
-    position:absolute;
+    position:absolute !important;
     left:0;
     width: 100%;
-    bottom: 0;
+    bottom: 0 !important;
     overflow: hidden !important;
 }
 section .SlideBox > .Footer.NavHidden {
@@ -126,7 +127,7 @@ section .SlideBox > .Footer.NavHidden {
 section .SlideBox > .Footer > p {
     font-size: 14px !important;
     padding: 4px !important;
-    padding-left: 0.7em !important; 
+    padding-left: 8px !important; 
     display:block !important;
     margin:0 !important;
 }
@@ -204,6 +205,8 @@ a.goto-button:active {
         page-break-after: avoid !important;
     }
     section .SlideBox {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
         page-break-inside: avoid !important;
     }
     section .SlideArea {

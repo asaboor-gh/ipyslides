@@ -63,6 +63,7 @@ def layout_css(accent_color, aspect):
                     "right": "0 !important",
                     "bottom": "0 !important",
                     "padding": "0 2px !important",
+                    "font-size": "12px", 
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
@@ -297,6 +298,7 @@ def layout_css(accent_color, aspect):
                 ".widget-dropdown": {
                     "> select, > select > option": {
                         "color": "var(--primary-fg)!important",
+                        "font-family": "var(--jp-content-font-family) !important", # why system fonts here?
                         "background": "var(--primary-bg)!important",
                     },
                 },
@@ -373,7 +375,7 @@ def layout_css(accent_color, aspect):
             ".Controls": {
                 "position": "absolute",
                 "right": "8px !important",
-                "bottom": "9px !important", # bring center at top of Navbox for symmetry
+                "bottom": "1px !important", # bring center at top of Navbox for symmetry
                 "z-index": "4",  # below matplotlib fullsreen
                 "padding": "0 !important",
                 "justify-content": " flex-end !important",

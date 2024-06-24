@@ -204,7 +204,7 @@ function setScale(box) {
     }
     
     box.style.setProperty('--contentScale',scale);
-    box.style.setProperty('--paddingBottom',Number(28/scale) + "px");
+    box.style.setProperty('--paddingBottom',Number(20/scale) + "px");
 }
 
 function handleScale(box) {

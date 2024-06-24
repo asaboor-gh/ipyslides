@@ -206,11 +206,11 @@ class LayoutSettings:
         return self # for chaining set_methods
 
     def set_font_family(self, text=None, code=None):
-        "Set main fonts for text and code."
-        if text:
-            self._font_family["text"] = text
-        if code:
-            self._font_family["code"] = code
+        "Set main fonts for text and code, like 'Arial', 'Arial, \"Times New Roman\"' etc."
+        if isinstance(text,str):
+            self._font_family["text"] = ", ".join(repr(t.strip().strip('\"').strip("\'")) for t in text.split(','))
+        if isinstance(code,str):
+            self._font_family["code"] = ", ".join(repr(c.strip().strip('\"').strip("\'")) for c in code.split(','))
 
         self._update_theme()  # Changes Finally
         return self # for chaining set_methods
@@ -299,7 +299,7 @@ class LayoutSettings:
         else:
             self._slides.widgets._snum.layout.display = "none" # hide slide number
 
-        text = f'<p style="white-space:nowrap;display:inline;margin-block:0;padding-left:0.7em;"> {text} </p>'  # To avoid line break in footer
+        text = f'<p style="white-space:nowrap;display:inline;margin-block:0;padding-left:8px;"> {text} </p>'  # To avoid line break in footer
 
         if update_widget:
             self.widgets.htmls.footer.value = text
