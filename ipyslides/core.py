@@ -540,6 +540,8 @@ class Slides(BaseSlides):
 
         self.widgets.update_progressbar(self._iterable[new_index], 0 if new_index > old_index else -1)
         self._update_tmp_output(*self._renew_objs)
+        
+        # Do this here, not in navigation module, as slider can jump to any value
         if new_index > old_index:
             self._iterable[new_index].first_frame() # going right
         else:
@@ -665,21 +667,19 @@ class Slides(BaseSlides):
                 (re.findall(r'```multicol(.*?)\n```', cell, flags=re.DOTALL | re.MULTILINE) or [''])
                 )):
                 raise ValueError("frame separator -- cannot be used inside multicol!")
-            join = False
-            if '%++' in cell:
-                cell = xtr.copy_ns(cell, cell.replace('%++','').strip()) # remove leading empty line !important
-                join = True
             
             frames = re.split(r"^--$|^--\s+$", cell, flags=re.DOTALL | re.MULTILINE)  # Split on -- or --\s+
             edit_idx = 0
 
             with _build_slide(self, slide_number) as s:
-                prames = re.split(r"^--$|^--\s+$", s.markdown, flags=re.DOTALL | re.MULTILINE)
+                prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)
                 s.set_source(cell, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
-                if join:
-                    self.fsep.join()
 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
+                    if '%++' in frm: # remove %++ from here, but stays in source above for user reference
+                        frm = frm.replace('%++','').strip() # remove that empty line too
+                        self.fsep.join()
+
                     parse(xtr.copy_ns(cell, frm), returns = False) # user may have used fmt
                     
                     if len(frames) > 1:

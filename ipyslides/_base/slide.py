@@ -283,7 +283,7 @@ class Slide:
     
     def reset_source(self):
         "Reset old source but leave markdown source for observing chnages"
-        if not self.markdown:
+        if not self._markdown:
             self.set_source("","")
     
     def _dynamic_private(self, func, tag = None, hide_refresher = False):  
@@ -621,7 +621,7 @@ class Slide:
         return max(self._cframe, 0) # _cframe is negative in start on purpose
     
     @property
-    def markdown(self):
+    def _markdown(self): # No need to reset after v4.3.1 by user
         return self._source['text'] if self._source['language'] == 'markdown' else '' # Not All Slides have markdown
     
     @property
@@ -652,7 +652,7 @@ class Slide:
         if self._source['text']:
             return self._app.code.from_string(**self._source, name = name)
         else:
-            return self._app.code.cast('Source of a slide only exits if it is NOT created (most recently) using @Slides.frames decorator\n',language = 'markdown')
+            return self._app.code.cast('No source found!\n',language = 'markdown')
     
     def _set_overall_css(self, props: dict):
         self.__class__._overall_css = html('style','') # Reset overall CSS

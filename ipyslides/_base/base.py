@@ -392,15 +392,6 @@ class BaseSlides:
             - In all cases, `number` could be used as `-1`.
             - Use yoffet`integer in px` in markdown or `Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
             - You can use `build_(...)` (with underscore at end) in python file instead of `build(-1,...)`.
-
-
-        Markdown content of each slide is stored as `.markdown` attribute to slide. You can append content to it later like this:
-        
-        ```python
-        with slides.build(2):
-            slides.parse(slides.this.markdown) # Instead of write, parse take cares of code blocks
-            plot_something() # In above line, slides.this under a slides take care of slide number itself
-        ```
         """
         @property
         def _app(self):
