@@ -125,7 +125,7 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 
 {key_combs}
 
-#### PDF Printing (by screen capture)
+#### PDF Printing
 {how_to_print}
 
 {how_to_slide}

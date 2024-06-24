@@ -185,17 +185,18 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .SlideArea': {
-            ':not(.MathJax)': { # MathJax avoid font overwrite
-                ':is(p,div:not(.raw-text),em,b,table,img,svg,i:not(.fa),:not(.raw-text,mjx-c))': { 
-                    'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+            ':is(p,div:not(.raw-text),em,b,table,img,svg,i:not(.fa))': { 
+                'font-family':f'{text_font!r}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16" !important',
+                '.MathJax, .MJX-TEX': { # under these, Maths should not pick fonts
+                    'font-family': 'unset !important',
                 },
             },
-            'code > span, .raw-text, .jp-RenderedHTMLCommon :is(pre, code)': {
+            ':is(code > span, .raw-text), .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': f'{code_font!r}, "Ubuntu Mono", "SimSun-ExtB", "Courier New" !important',
                 'font-size':'90% !important',
             }, # Define color below at low specificity, otherwise it can overwrite code
-            '*:not(mjx-c)': {'color':'var(--primary-fg)',}, 
-            'mjx-c, .MathJax span': {"color":"inherit",}, # important to avoid heading color, MathJax span is for export
+            '*:not(.MJX-TEX)': {'color':'var(--primary-fg)',}, 
+            '.MJX-TEX, .MathJax span': {"color":"inherit",}, # important to avoid heading color, MathJax span is for export
             '.tl-container, .tlui-icon, .tlui-button': {'color':'unset',},
         },
         '^.SlidesWrapper':{
@@ -237,7 +238,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
                 'line-height':'1.5em',
                 'overflow':'hidden', # Firefox 
-                'mjx-c, .MathJax span': {"color":"var(--heading-color)",}, # MathJax span is for export
+                '.MJX-TEX, .MathJax span': {"color":"var(--heading-color)",}, # MathJax span is for export
             },
             'h1': {'font-size':'2.2em'},
             'h2': {'font-size':'1.7em'},
