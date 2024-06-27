@@ -130,33 +130,10 @@ def demo_slides(slides):
         ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
         return slides.plt2html(fig, transparent=False, caption='A Silly Plot')
 
-
-    # Interactive widgets.   
-    with slides.build(-1):
-        with slides.code.context(returns = True) as src:
-            import ipywidgets as ipw
-            
-            slides.write('''
-                ## Interactive Apps with Widgets section`Interactive Widgets`
-                Use `ipywidgets`, `bqplot`,`ipyvolume`, `plotly Figurewidget` etc. to show live apps like this!
-                ::: note-tip
-                    Export to Slides to see what happens to this slide and next slide!
-                ''')
-            plot_html = ipw.HTML('Plot will be here')
-            button = ipw.Button(description='Click me to update race plot',layout=ipw.Layout(width='max-content'))
-
-            slides.write([plot_html,button], src)
-
-            def update_plot(btn):
-                plot_html.value = race_plot().value #Convert to html string
-
-            button.on_click(update_plot)
-            update_plot(None) #Initialize plot
-
     with slides.build(-1) as rslide:
         slides.write('''
-            ## Dynamic Content without Widgets
-            Use refresh button below to update plot! Compare with previous slide!
+            ## Refreshable Content
+            Use refresh button below to update plot!
             See alert`race_plot` function at end of slides.
             ''')
         
@@ -232,6 +209,7 @@ def demo_slides(slides):
 
 
     with slides.build(-1) as s:
+        import ipywidgets as ipw
         slides.write('## Block API\nNew `block` API is as robust as `write` command. On top of it, it makes single unit of related content.')
         slides.block_red(
             [

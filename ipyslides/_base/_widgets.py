@@ -150,7 +150,7 @@ class HtmlWidget(anywidget.AnyWidget):
         return super().observe(handler, names=names, type = type)
     
     def display(self):
-        "Display this HTML object."
+        "Display this HTML object with oldest metadata."
         return display(self, metadata= {'text/html':self.value}) # metadata to direct display
         
 

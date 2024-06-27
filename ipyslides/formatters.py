@@ -5,6 +5,7 @@ import sys
 import textwrap
 import inspect, re, json
 from io import BytesIO
+from contextlib import contextmanager
 import pygments
 import ipywidgets as ipw
 
@@ -63,8 +64,8 @@ def plt2html(plt_fig = None,transparent=True,width = '95%', caption=None):
     _fig.savefig(plot_bytes,format='svg',transparent = transparent)
     _fig.clf() # Clear image to avoid other display
     plt.close() #AVoids throwing text outside figure
-    width = f'width:{width}px;' if isinstance(width,int) else f'width:{width};'
-    svg = f'<svg style="{width}"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
+    width = f'width:{width}px' if isinstance(width,int) else f'width:{width}'
+    svg = f'<svg style="{width};height:auto;"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     
     cap = ''
     if caption:
@@ -228,12 +229,15 @@ class Serializer:
             - Serializer function should return html string. It is not validated for correct code on registration time.       
             - Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
             - Serialzers for widgets are equivalent to `Slides.alt(func, widget)` inside `write` command for export purpose. Other commands such as `Slides.format_html` will pick oldest value only.
-            - Use `Slides.display(obj)` to display as it is and export html from metadata instead of IPython's display.
+            - IPython's `display` function automatically take care of serialized objects.
         """
         def _register(func):
             if obj_type is str:
                 raise TypeError("Cannot register serializer for string type! Use custom class to encapsulate string the way you want.")
             
+            if getattr(func, '__name__','').startswith('_alt_'):
+                raise ValueError(f"func names starting with _alt_ are reserved!")
+
             item = {'obj': obj_type, 'func': func}
             already = False
             for i, _lib in enumerate(self._libs):
@@ -262,6 +266,16 @@ class Serializer:
         "Tuple of all registered types."
         return tuple(item['obj'] for item in self._libs)
     
+    def _get_func(self, obj_type):
+        "For private use only!"
+        if isinstance(obj_type, Frozen):
+            return None
+        
+        if isinstance(obj_type, ipw.DOMWidget):
+            if '_FrozenWidget_' in obj_type._dom_classes:
+                return None
+        return self.get_func(obj_type)
+
     def get_func(self, obj_type):
         "Get serializer function for a type. Returns None if not found."
         if type(obj_type) in serializer.types: # Do not check instance here, need specific information
@@ -278,17 +292,11 @@ class Serializer:
         return None
     
     def get_metadata(self, obj_type):
-        "Get metadata for a type to use in `display(obj, metadata)` for export purpose. This take precedence over object's own html representation. Returns {} if not found."
+        """Get metadata for a type to use in `display(obj, metadata)` for export purpose. This take precedence over object's own html representation. Returns {} if not found.
+        """
         if (func := self.get_func(obj_type)):
             return {'text/html': func(obj_type)}
         return {}
-    
-    def display(self, obj):
-        "Display an object with metadata if a serializer available. Same as display(obj, metadata = serializer.get_metadata(obj)))"
-        if (metadata := self.get_metadata(obj)):
-            display(obj, metadata = metadata)
-        else:
-            display(obj)
     
     def _alt_box(self, box_widget):
         if not isinstance(box_widget, ipw.Box):
@@ -349,6 +357,76 @@ class Serializer:
 
 serializer = Serializer()
 del Serializer # Make sure this is not used by user
+
+
+class Frozen:
+    def __init__(self, obj, metadata=None) -> None:
+        self._obj = obj
+        self._metadata = metadata
+        if isinstance(obj, ipw.DOMWidget):
+            self._obj.add_class('_FrozenWidget_') # internal fix further
+    
+    def _ipython_display_(self):
+        with altformatter.reset(): # need this extra layer for write command
+            display(self._obj, metadata=(
+                serializer.get_metadata(self._obj) if self._metadata is None else self._metadata
+            ))
+
+    def display(self): # for completeness
+        self._ipython_display_()
+    
+
+def get_slides_instance():
+    "Get the slides instance from the current namespace."
+    if (isd:= sys.modules.get('ipyslides',None)):
+        if (slides := getattr(isd, "Slides",None)): # Avoid partial initialization
+            return slides.instance()
+
+
+class AltDispalyFormatter:
+    _ip = get_ipython()
+    _ipy_format = _ip.display_formatter.format if _ip else None
+
+    def __init__(self):
+        self._ip.display_formatter.format = self.format
+
+    def _intercept(self, obj, metadata={}):
+        display(obj, metadata=metadata)
+        return {}, {} # Need empty there
+        
+    def format(self, obj, *args, **kwargs):
+        "Handles Slides.serializer objects inside display command."
+        with self.reset():
+            if hasattr(obj, '_ipython_display_'):
+                return self._intercept(obj) # Handles Frozen as well
+            
+            # Handle interact as it is auto displayed
+            if isinstance(obj, ipw.DOMWidget) and 'widget-interact' in obj._dom_classes:
+                from .writer import AltForWidget
+                return self._intercept(AltForWidget(serializer.get_func(obj), obj))
+        
+            if (func := serializer._get_func(obj)): # only use private one here
+                if isinstance(obj, ipw.DOMWidget):
+                    from .writer import AltForWidget
+                    return self._intercept(AltForWidget(func, obj))
+                elif (slides := get_slides_instance()) and any([
+                    slides.this, slides.in_proxy, slides.in_output]):
+                    return self._intercept(XTML(htmlize(obj)))
+                
+            # Display should only handle above, it is counter intuitive otherwise for user
+            return self._ipy_format(obj, *args, **kwargs)
+
+    @contextmanager
+    def reset(self):
+        try:
+            self._ip.display_formatter.format = self._ipy_format
+            yield
+        finally:
+            self._ip.display_formatter.format = self.format
+        
+
+altformatter = AltDispalyFormatter() # keep reference for being live
+del AltDispalyFormatter # Only one
 
     
 # ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
@@ -418,6 +496,9 @@ def format_object(obj):
 
 def htmlize(obj):
     "Returns string of HTML representation for given object."
+    if isinstance(obj, Frozen):
+        raise TypeError("Frozen objects not serializable. Use display or write directly!")
+    
     if isinstance(obj,str):
         from .xmd import parse # Avoid circular import
         return parse(obj, returns = True)

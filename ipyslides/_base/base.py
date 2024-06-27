@@ -1,10 +1,13 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
-import os, re, textwrap
+import os, re, textwrap, math
 import traceback
 from pathlib import Path
 from contextlib import ContextDecorator
 
 from IPython.display import display
+
+from inspect import signature
+from ipywidgets import interact_manual
 
 from .widgets import Widgets
 from .navigation import Navigation
@@ -189,7 +192,7 @@ class BaseSlides:
                 sources.append(slide.get_source(name=f'{slide._source["language"].title()}: Slide {slide.index}'))
             
         if sources:
-            return self.keep_format(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
+            return self.frozen(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
         else:
             self.html('p', 'No source code found.', css_class='info')
 
@@ -211,23 +214,18 @@ class BaseSlides:
         ::: note-warning
             - Do not use this to change global state of slides, because that will affect all slides.
             - This can be used single time per slide, overwriting previous function.
-        
-        ::: note-tip
-            If you are changing some `widget` state on slide using this function, `Slides.display(widget)` will show the
-            oldest represntation while `Slides.write(widget)` will display from the latest selected frame in exported HTML.
         """
         self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
     
     def on_refresh(self,func):
         """
-        Decorator for inserting dynamic content on slide, define a function with no arguments.
+        Decorator for inserting dynamic content on slide, define a function with keyword argumnets for ipywidgets.interact.
         Content updates when `slide.update_display` is called or when `Slides.refresh` is called.
         ::: note-tip
             You can use it to dynamically fetch a value from a database or API while presenting, without having to run the cell again.
         ::: note
             - No return value is required. If any, should be like `display('some value')`, otherwise it will be ignored.
-            - A slide with dynamic content enables a refresh button in bottom bar.
             - All slides with dynamic content are updated when refresh button in top bar is clicked.
             
         ```python run source
@@ -235,22 +233,36 @@ class BaseSlides:
         slides = get_slides_instance() # Get slides instance, this is to make doctring runnable
         source.display() # Display source code of the block
         @slides.on_refresh
-        def update_time():
+        def update_time(): # Can have kwargs for extra widgets to control function
             print('Local Time: {3}:{4}:{5}'.format(*time.localtime())) # Print time in HH:MM:SS format
-        # Updates on update_display or refresh button click
         ```
         ::: note-warning
             Do not use this to change global state of slides, because that will affect all slides.
         
         ::: note-info
-            Use `ipywidgets.interact/interactive` if you need extra control widgets beyond just a refresh.
+            Use `ipywidgets.interact/interactive` if you need to change state on each widget change without extra click every time.
         """
-        return self._dynamic_private(func, tag = '_has_widgets', hide_refresher = False)
-    
-    def _dynamic_private(self, func, tag = None, hide_refresher = False):
-        "Not for user use, internal function for other dynamic content decorators with their own tags."
-        self.verify_running('Dynamic content can only be used inside slide constructor!')
-        return self.this._dynamic_private(func, tag = tag, hide_refresher = hide_refresher)
+        def new_func(**kwargs):
+            with self._hold_running():
+                btn.icon = 'minus'
+                try:
+                    func(**kwargs)
+                    btn.remove_class('Rerun')
+                finally:
+                    btn.icon = 'plus'
+
+        kwargs = {k:v.default for k, v in signature(func).parameters.items()}   
+        *controls, btn, _ = interact_manual(new_func, **kwargs).widget.add_class('on-refresh').children
+
+        for w in controls:
+            w.observe(lambda change: btn.add_class('Rerun'))
+
+        btn.add_class('Refresh-Btn').add_class('Menu-Item')
+        btn.layout = {'width': 'auto', 'height':'28px'}
+        btn.description = ''
+        btn.tooltip = 'Click to refresh output'
+        btn.icon = 'plus'
+        btn.click() # first run to ensure no dynamic inside
         
     def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
@@ -513,7 +525,7 @@ class BaseSlides:
             
             members = sorted((
                 'alert block bokeh2html bullets styled format_html fmt color cols details doc sub sup '
-                'today error zoomable format_css highlight html iframe image keep_format notify plt2html '
+                'today error zoomable format_css highlight html iframe image frozen notify plt2html '
                 'raw rows set_dir sig textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
@@ -572,9 +584,9 @@ class BaseSlides:
 
         with self.build_() as s:
             self.write("## Adding content on frames incrementally yoffset`0`")
-            self.display(widget := (code := s.get_source()).as_widget()) 
-            @self.on_load
-            def highlight_line(slide): # only oldest state in export with self.display above, latest with write
+            display(self.frozen(widget := (code := s.get_source()).as_widget(), self.serializer.get_metadata(widget))) 
+            @self.on_load   # If you don't use frozen and metadata on above line, you will get latest HTML value in export
+            def highlight_line(slide): 
                 widget.value = code.focus_lines(range(slide.indexf + 1)).value
         
             for ws, cols in self.fsep.loop(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):

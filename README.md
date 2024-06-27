@@ -9,7 +9,6 @@
 Create interactive slides programatically in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
 
 - Launch Example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
-- Watch a [Youtube Video](https://www.youtube.com/watch?v=thgLGl14-tg)
 - See [PDF-Slides](Slides.pdf)
 ![Overview](slide.png)
 

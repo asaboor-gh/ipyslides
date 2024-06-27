@@ -7,7 +7,7 @@ __all__ = ['write']
 import ipywidgets as ipw
 from IPython.display import display as display
 
-from .formatters import XTML, htmlize, serializer, _inline_style
+from .formatters import XTML, Frozen, htmlize, serializer, _inline_style
 from .xmd import parse, get_slides_instance, capture_content
 
 class CustomDisplay:
@@ -55,7 +55,8 @@ class AltForWidget(CustomDisplay):
             raise TypeError(f'widget should be a widget, got {widget!r}')
         if not callable(func):
             raise TypeError(f'func should be a callable, got {func!r}')
-        self._widget = widget
+        
+        self._widget = widget.add_class('_FrozenWidget_')
         self._func = func
         
         slides = get_slides_instance()
@@ -111,7 +112,7 @@ class Writer:
             # This will only be intercepted if lambda function contains write with multiple columns, becuase they can't be nested
             raise RuntimeError('write(*objs) for len(objs) > 1 inside a previous call of write is not allowed!')
         
-        self._box = ipw.HBox().add_class('columns').add_class('writer') # writer to differentiate from other columns
+        self._box = ipw.HBox().add_class('columns').add_class('writer').add_class('_FrozenWidget_') # to differentiate from other columns
         self._slides = get_slides_instance()
         
         try:
@@ -119,22 +120,23 @@ class Writer:
             self._cols = self._capture_objs(*objs, widths = widths) # run after getting slides instance
         finally:
             self.__class__._in_write = False
-            
-        self._slide = self._slides.this if self._slides else None
-        self._in_proxy = getattr(self._slides, '_in_proxy', None) # slide itself can be Non, so get via getattr
-        self._in_dproxy = getattr(self._slides, '_in_dproxy', None)
-        self._context = (self._in_dproxy if self._in_dproxy else self._slide) or self._in_proxy # order strictly matters
+        
+        self._context = getattr(self._slides, 'this', None)
+        if self._slides and getattr(self._slides, 'in_proxy', None):
+            self._context = self._slides.in_proxy
+
         self._metadata = {} # need for repeated display
 
         if len(objs) == 1:
             display(*self._cols[0]['outputs']) # If only one column, display it directly
         else:
-            context = (self._in_dproxy if self._in_dproxy else self._slide) or self._in_proxy # order strictly matters
-            if context:
-                idx = f'{len(context._columns)}' 
-                context._columns[idx] = self
+            if self._context:
+                idx = f'{len(self._context._columns)}' 
+                self._context._columns[idx] = self
                 self._metadata = {'COLUMNS': idx}
                 self._ipython_display_()
+            elif self._slides and self._slides.in_output:
+                display(self._box, metadata=serializer.get_metadata(self._box))
             else:
                 display(self._box) # Just display it
                 
@@ -156,7 +158,9 @@ class Writer:
         for i, col in enumerate(cols):
             with capture_content() as cap:
                 for c in col['outputs']:
-                    if isinstance(c,str):
+                    if isinstance(c,Frozen):
+                        c.display()
+                    elif isinstance(c,str):
                         parse(c, returns = False)
                     elif isinstance(c, CustomDisplay):
                         c.display() # Handles all custom display classes like alt, goto_button etc.
@@ -181,17 +185,17 @@ class Writer:
         return cols
     
     def update_display(self):
-        from ._base.widgets import Output # avoid circular import
+        from ._base.widgets import _Output # avoid circular import and public one
 
-        self._box.children = [Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
+        self._box.children = [_Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
         for c, out_w in zip(self._cols, self._box.children):
             with out_w: 
                 for out in c['outputs']: # Don't worry as _slide won't be None if Proxy is present
                     if 'Exp4Widget' in out.metadata:
                         display(self._context._exportables[out.metadata['Exp4Widget']])
                     elif 'Proxy' in out.metadata:   
-                        display(*self._slide._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
-                    else: # No need to check for DYNAMIC as it is not allowed in cloumns
+                        display(*self._context._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
+                    else: 
                         display(out)
     
     def _ipython_display_(self): # Called when displayed automtically, this is important
@@ -214,9 +218,6 @@ class Writer:
                     if 'Exp4Widget' in out.metadata:
                         epx = self._context._exportables[out.metadata['Exp4Widget']]
                         content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
-                    elif 'DYNAMIC' in out.metadata: # Buried in column
-                        dpx = self._context._dproxies[out.metadata['DYNAMIC']] 
-                        content += ('\n' + dpx.fmt_html())
                     elif 'Proxy' in out.metadata:
                         px = self._context._proxies[out.metadata['Proxy']]
                         content += ('\n' + px.fmt_html())
@@ -250,10 +251,11 @@ def write(*objs,widths = None):
         - PIL images, SVGs etc.
         - IPython display objects such as Image, SVG, HTML, Audio, Video, YouTubeVideo, IFrame, Latex, Markdown, JSON, Javascript, etc.
         - Any object that has a `_repr_html_` method, you can create one for your own objects/third party objects by:
-            - `Slides.serializer` API. Use its `.get_metadata` or `.display` method to display object as it is and export its HTML representation from metadata when used as `display(obj, metadata = {'text/html': 'html repr by user or by serializer.get_metadata(obj)'})` or `serializer.display(obj)`.
+            - `Slides.serializer` API. IPython's `display` automatically takes care of such objects on export to html.
             - `IPython.core.formatters` API for third party libraries.
             
     ::: note
+        - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
         - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`.
         - You can use `display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
@@ -261,25 +263,5 @@ def write(*objs,widths = None):
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """
     wr = Writer(*objs,widths = widths)
-    if not any([(wr._slides and wr._slides.this), wr._in_proxy, len(objs) == 1]):
+    if not any([wr._context, len(objs) == 1]):
         return wr.update_display() # Update in usual cell to have widgets working, but not single object which displays outside of box
-
-# Patch for interact/interactive patching to show in output
-
-def _interact_ipython_display(self):
-    def fmt_output_html(w):
-        return serializer.get_func(w.out)(w.out)
-    
-    klass = type(self)
-    ip_disp = getattr(klass, '_ipython_display_',None)
-
-    if ip_disp:
-        delattr(klass, '_ipython_display_') # avoids looping of display
-    
-    AltForWidget(fmt_output_html, self).display() # display internally 
-    
-    if ip_disp:
-        klass._ipython_display_ = ip_disp # reset back
-
-
-ipw.interaction.interactive._ipython_display_ = _interact_ipython_display

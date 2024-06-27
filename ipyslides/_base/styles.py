@@ -188,14 +188,17 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .jupyter-widgets': { # widgets have their own fonts, but make is same
             'font-family': 'var(--jp-content-font-family) !important',
+            # Reset these vars under slides
+            '--jp-content-font-color0': 'var(--primary-fg)',
+            '--jp-content-font-color1': 'var(--primary-fg)', # same as primary
+            '--jp-content-font-color2': 'var(--heading-color)',
+            '--jp-content-font-color3': 'var(--secondary-fg)',
+            'color': 'var(--primary-fg)', # important to put here for correct export
             '.raw-text, code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': 'var(--jp-code-font-family) !important',
                 'font-size':'90% !important',   
             }, # Define color below at low specificity, otherwise it can overwrite code
             '.jp-RenderedHTMLCommon :is(pre, code)': {'background': 'none !important'}, # Avoid a white background set by jupyter
-            '*:not(.MJX-TEX)': {'color':'var(--primary-fg)',}, 
-            '.MJX-TEX, .MathJax span': {"color":"inherit",}, # important to avoid heading color, MathJax span is for export
-            '.tl-container, .tlui-icon, .tlui-button': {'color':'unset',},
         },
         '^.SlidesWrapper':{
             'container': 'slides / inline-size',
@@ -227,7 +230,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'height':'2px',
                 'background':'linear-gradient(to right, var(--primary-bg),  var(--secondary-bg),var(--accent-color), var(--secondary-bg),var(--primary-bg))',
             },
-            '> :not(div)': {'color':'var(--primary-fg)'}, # Do not change jupyterlab nav items
             ':is(h1, h2, h3, h4, h5, h6)': {
                 'font-family':'var(--jp-content-font-family) !important',
                 'font-weight':'normal',
@@ -319,6 +321,18 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             ':is(ul,ol)': {
                 'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap
             },
+            'a': {
+                'color': 'var(--accent-color) !important',
+                '^:not(.citelink):visited': {
+                    'color': 'var(--secondary-fg) !important',
+                    'opacity': '0.75 !important',
+                },
+                '^:not(.citelink)': {
+                    'text-decoration': 'underline !important', 
+                },
+                '^.citelink': {'color': 'var(--primary-fg) !important',},
+                '^.citelink > sup': {'font-weight':'bold',},
+            },
             '.Citations' : {
                 'column-count' :f'{ncol_refs} !important',
                 'column-gap':'1em',
@@ -342,7 +356,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 }, 
                 '^.next': {'opacity':'0.5',},
             },
-            '.FirstTOC .toc-item.next' : {'opacity':'1',}, # In start, see full as same opacity
+            '^.FirstTOC .toc-item.next' : {'opacity':'1',}, # In start, see full as same opacity
             'ul li::marker, ol li::marker': {'color':'var(--accent-color)',},
             '.raw-text': { # Should follow theme under slides 
                 'color':'var(--primary-fg) !important',
@@ -493,10 +507,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         },
         '.InlinePrint': {
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
-        },
-        'a.citelink' : {
-            'color': 'var(--accent-color)',
-            '> sup': {'font-weight':'bold',},
         },
         '.align-center:not(.columns), .align-center > *:not(.columns)': {
             'display':'table !important',

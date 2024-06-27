@@ -1,5 +1,5 @@
 _attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
-             'image','image_clip', 'svg','iframe', 'format_html','format_css','keep_format', 'run_doc',
+             'image','image_clip', 'svg','iframe', 'format_html','format_css','frozen', 'run_doc',
             'raw', 'rows', 'zoomable','html','sig','styled', 'doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
@@ -21,7 +21,7 @@ from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 import ipywidgets as ipw
 
-from .formatters import XTML, fix_ipy_image, htmlize, serializer, _inline_style
+from .formatters import XTML, Frozen, fix_ipy_image, htmlize, serializer, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, CustomDisplay, AltForWidget
 
@@ -65,7 +65,7 @@ def get_clips_dir():
 
 def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
-        widths = [{int(100/len(objs))} for _ in objs]
+        widths = [int(100/len(objs)) for _ in objs]
     else:
         if len(objs) != len(widths):
             raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
@@ -314,18 +314,6 @@ def format_css(props : dict):
     "{css_docstring}"
     return _format_css(props, allow_root_attrs = False)
 
-class DelayedDisplay(CustomDisplay):
-    def __init__(self, obj, text_html):
-        self._obj = obj
-        if not any([isinstance(text_html, str), hasattr(text_html,'_repr_html_')]):
-            raise TypeError(f"text_html should be an html str or an object with `_repr_html_` method, got {type(text_html)}")
-        self._text_html = text_html # str supposed to be
-        if hasattr(text_html, '_repr_html_'):
-            self._text_html = text_html._repr_html_()
-
-    def display(self):
-        return display(self._obj, metadata = {"skip-export":"","text/html": self._text_html}) # only text/html will be exported
-    
 
 def alt(func_or_html, obj, /):
     """Display `obj` for slides and output of `func_or_html` will be and displayed only in exported formats as HTML.
@@ -359,8 +347,12 @@ def alt(func_or_html, obj, /):
         text_html = func_or_html(obj)
         if not isinstance(text_html, str):
             raise TypeError(f'First argument, if a function, should return a str, got {type(text_html)}')
-        
-    return DelayedDisplay(obj, text_html)
+    
+    if not any([isinstance(text_html, str), hasattr(text_html,'_repr_html_')]):
+        raise TypeError(f"First argument, if not a function, should be an html str or an object with `_repr_html_` method, got {type(text_html)}")
+    
+    return Frozen(obj, metadata={'skip-export':'', 'text/html': getattr(text_html, '_repr_html_', lambda: text_html)()}) # skip original obj
+
 
 class alt_clip(CustomDisplay):
     """Save image from clipboard to file with a given quality when you paste in given area on slides.
@@ -466,7 +458,7 @@ def svg(data=None,width = '95%',caption=None, **kwargs):
     `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
     """
     svg = SVG(data=data, **kwargs)._repr_svg_()
-    style = f'width:{width}px;' if isinstance(width,int) else f'width:{width};' + _fig_style_inline
+    style = f'width:{width}px;height:auto;' if isinstance(width,int) else f'width:{width};height:auto;' + _fig_style_inline
     return html('figure', svg + _fig_caption(caption), css_class='zoom-child', style=style) 
 
 
@@ -593,11 +585,13 @@ def color(text,fg='blue',bg=None):
     "Colors text, `fg` and `bg` should be valid CSS colors"
     return XTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
 
-def keep_format(plaintext_or_html):
-    "Bypasses from being parsed by markdown parser. Useful for some graphs, e.g. keep_format(obj.to_html()) preserves its actual form."
-    if not isinstance(plaintext_or_html,str):
-        return plaintext_or_html # if not string, return as is
-    return XTML(plaintext_or_html) 
+def frozen(obj, metadata = None):
+    """Display object as it it and export metadata. If str, it is encapsulated in XTML to avoid markdown parsing! 
+    A safely displayed object may not appear in exported html if metadata is not given."""
+    if isinstance(obj,str):
+        return XTML(obj)
+    
+    return Frozen(obj, metadata=metadata)
 
 def rows(*objs):
     "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."
@@ -626,7 +620,7 @@ def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} cl
         wr._box.layout.display = 'grid' # Make it grid, will be automatically exported to html with this style
         wr._box.layout.grid_gap = '1em 0px' # Remove extra gap in columns, but keep row gap
         
-    if not any([(wr._slides and wr._slides.this), wr._in_proxy]):
+    if not any([wr._context, len(objs) == 1]):
         return wr.update_display() # Update in usual cell to have widgets working
     
 def block(*objs, widths = None): 

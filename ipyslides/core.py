@@ -122,14 +122,6 @@ class Slides(BaseSlides):
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
 
-    def display(self, *objs, **kwargs):
-        "Display objs with metadata from serializer if exists. kwargs are only used if not under slides constructor!"
-        if any([self.this, self.in_dproxy]):
-            for obj in objs:
-                self.serializer.display(obj)
-        else:
-            return display(*objs, **kwargs)
-
         
     @contextmanager
     def _set_running(self, slide):
@@ -286,11 +278,11 @@ class Slides(BaseSlides):
     def in_proxy(self):
         "Check if proxy is capturing output."
         return getattr(self, "_in_proxy", None)
-
+    
     @property
-    def in_dproxy(self):
-        "Check if dynamic proxy is capturing output."
-        return getattr(self, "_in_dproxy", None)
+    def in_output(self):
+        "Check if Output widgets is capturing output."
+        return getattr(self, "_in_output", False)
 
     @property
     def draw_button(self):
@@ -412,48 +404,46 @@ class Slides(BaseSlides):
         self.this._section = text  # assign before updating toc
         
         for s in self[:]:
-            if (
-                getattr(s, "_toced", False) and s != self.this
-            ):  # self will be built of course at end
+            if getattr(s, "_toced", False) and s != self.this: 
                 s.update_display(go_there=False)
  
     def toc(self, title='## Contents {.align-left}', extra = None):
         "You can also use markdown syntax to add it like toc`title` or ```toc title\n extra\n```. Extra is passed to write command in right column."
-        def fmt_sec(s, _class):
-            return XTML(f'''<li class="toc-item {_class}">
-                <a href="#{s._sec_id}" class="export-only">{s._section}</a>
-                <span class="jupyter-only">{s._section}</span></li>''')
+        self.verify_running("toc can only be added under slides constructor!")
+        self.this._toced = True
+        tocwidget = ipw.Output() # Maths does not render in HTML widget
+        
+        @tocwidget.capture(clear_output=True, wait=True)
+        def toc_handler(slide):
+            items = []
+            for s in self[:slide.index]:
+                if s._section:
+                    items.append({"c":"prev", "s":s})
 
-        def toc_handler():
-            sections = []
-            this_index = (
-                self[:].index(self.this)
-                if self.this in self[:]
-                else self.this.number
-            )  # Monkey patching index, would work on next run
-            for slide in self[:this_index]:
-                if slide._section:
-                    sections.append(fmt_sec(slide,"prev"))
+            if slide._section:
+                items.append({"c":"this", "s":slide})
+            elif items:
+                items[-1].update({"c":"this"})
 
-            if self.this._section:
-                sections.append(fmt_sec(self.this,"this"))
-            elif sections:
-                sections[-1] = XTML(
-                    sections[-1].value.replace("toc-item prev", "toc-item this")
-                )
+            for s in self[slide.index + 1:]:
+                if s._section:
+                    items.append({"c":"next", "s":s})
 
-            for slide in self[this_index + 1 :]:
-                if slide._section:
-                    sections.append(fmt_sec(slide,"next"))
+            items = [XTML(textwrap.dedent('''
+                <li class="toc-item {c}">
+                    <a href="#{s._sec_id}" class="export-only citelink">{s._section}</a>
+                    <span class="jupyter-only">{s._section}</span>
+                </li>''').format(**sec)) 
+                for sec in items]
 
             css_class = 'toc-list toc-extra' if extra else 'toc-list'
-            items = self.html('ol', sections, style='', css_class=css_class)
-            if extra:
-                self.write([title, items], extra)
-            else:
-                self.write([title, items])
-
-        return self._dynamic_private(toc_handler, tag="_toced", hide_refresher=True)
+            items = self.html('ol', items, style='', css_class=css_class)
+            items = [[title, items], extra] if extra else [[title, items]]
+            self.format_html(*items).display() # write is not exporting here
+            del items
+        
+        self.this._handle_toc = toc_handler # for update display
+        return self.alt(self.serializer.get_func(tocwidget), tocwidget).display()
 
 
     def _goto_button(
@@ -608,7 +598,7 @@ class Slides(BaseSlides):
     
     def capture_proxy(self, slide_number, proxy_index):
         "This is a shortcut for `Slides[slide_number,].proxies[proxy_index].capture()`."
-        return self.get(slide_number).proxies[proxy_index].capture()
+        return self[slide_number,].proxies[proxy_index].capture()
     
     def _fix_slide_number(self, number):
         "For this, slide_number in function is set to be position-only argement."
@@ -746,23 +736,17 @@ class Slides(BaseSlides):
                     ]
                 ):
                     slide.update_display(go_there=False)
-                # Update dynamic content in slide
-                for dp in slide._dproxies.values():
-                    dp.update_display()
                 
                 # Take care of first TOC on slides
-                if hasattr(slide, '_slide_tocbox'):
+                if hasattr(slide, '_toced'):
                     if first_toc:
-                        slide._slide_tocbox.add_class("FirstTOC")
+                        slide._widget.add_class("FirstTOC")
                         first_toc = False
                     else:
-                        slide._slide_tocbox.remove_class("FirstTOC")
+                        slide._widget.remove_class("FirstTOC")
         
         self._current._set_progress() # update display can take it over to other sldies
         self.notify('Dynamic content updated everywhere!')
-
-    def frames(self, slide_number, /, iterable, repeat=False):
-        raise DeprecationWarning("frames is deprecated, use `Slides.fsep` under all slides to make flexible frame!")
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
@@ -841,11 +825,11 @@ class fsep:
     
     def __init__(self):
         self._app.verify_running()
-        if self._app.in_dproxy or self._app.in_proxy:
-            raise RuntimeError("Cant use fsep in a proxy capture or dynamic content!")
+        if self._app.in_output or self._app.in_proxy:
+            raise RuntimeError("Cant use fsep in a capture context other than slides!")
         
         self._app.this._widget.add_class("Frames")
-        self._app.this._fsep = getattr(self._app.this, '_fsep', self._app.format_css({}).as_widget()) # create once
+        self._app.this._fsep = getattr(self._app.this, '_fsep',self._app.format_css({}).as_widget().add_class('_FrozenWidget_')) # create once
         display(self._app.this._fsep, metadata={"FSEP": "","skip-export":"no need in export"})
 
     @classmethod
@@ -897,7 +881,6 @@ class Slides:
         without extra typing, like `Slides.settings.set_animation().set_layout()...` .
     
     ::: note-tip
-        - Use `Slides.display` whenever possible instead of IPython's display, it automatically adds serializer metadat.
         - Use `Slides.instance()` class method to keep older settings. `Slides()` apply default settings every time.
         - Run `slides.demo()` to see a demo of some features.
         - Run `slides.docs()` to see documentation.

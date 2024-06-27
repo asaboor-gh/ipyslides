@@ -179,6 +179,23 @@ def layout_css(accent_color, aspect):
                             "transform": "scale(1.2)",
                         },
                     },
+                    '.widget-vbox.widget-interact.on-refresh' : {
+                        'display': 'grid !important',
+                        'grid-template-columns': '1fr 1fr 1fr !important',
+                        'grid-gap': '4px',
+                        '> .Refresh-Btn.Menu-Item.Rerun:after': {
+                            'content': '"Output got unsynced, click to refresh"',
+                            'padding-left': '8px',
+                            'color': 'red !important',
+                        },
+                        '> .widget-output': {
+                            'padding': '4px 8px',
+                            'border-left': '2px solid var(--alternate-bg)',
+                            'display': 'grid',
+                            'grid-column-start':1,
+                            'grid-column-end': 4,
+                        }
+                    }
                 },
                 "kbd" : {
                     "color":"var(--secondary-fg)",
@@ -217,8 +234,7 @@ def layout_css(accent_color, aspect):
                     },
                 },
                 ".widget-html": {
-                    "^:not(div.LaserPointer), .widget-html-content > div": {
-                        "display": "grid !important",
+                    ".widget-html-content > div": {
                         "font-size": "var(--text-size) !important",
                     },
                     ".widget-html-content": {

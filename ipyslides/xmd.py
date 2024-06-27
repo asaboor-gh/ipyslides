@@ -31,7 +31,7 @@ from IPython.core.display import display
 from IPython import get_ipython
 from IPython.utils.capture import capture_output
 
-from .formatters import XTML, highlight, htmlize
+from .formatters import XTML, highlight, htmlize, get_slides_instance
 from .source import _str2code
 
 _md_extensions = [
@@ -124,12 +124,6 @@ def raw(text, css_class=None): # css_class is required here to make compatible w
 def _fmt_code(code, instance_name="slides"):
     "Format given code block to be runable under markdown. instance_name is the name of the slides instance as used in current code."
     return _code_.format(app=instance_name, block=textwrap.dedent(code).strip())
-
-def get_slides_instance():
-    "Get the slides instance from the current namespace."
-    if (isd:= sys.modules.get('ipyslides',None)):
-        if (slides := getattr(isd, "Slides",None)): # Avoid partial initialization
-            return slides.instance()
 
 
 def get_unique_css_class():

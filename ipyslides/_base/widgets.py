@@ -3,20 +3,20 @@ Author Notes: Classes in this module should only be instantiated in Slides class
 and then provided to other classes via composition, not inheritance.
 """
 import sys
-from dataclasses import dataclass
 import ipywidgets as ipw
-from ipywidgets import HTML, VBox, HBox, Box, GridBox, Layout, Button
+from dataclasses import dataclass
+from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from IPython import get_ipython
 from tldraw import TldrawWidget
 from . import styles, _layout_css
 from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
 from .intro import get_logo, how_to_print
 from ..utils import html
+from ..formatters import get_slides_instance
 
 
-class Output(ipw.Output):
-    __doc__ = ipw.Output.__doc__ # same docs
-
+class _Output(ipw.Output):
+    "Should only be used internally"
     _ipyshell = get_ipython()
     _hooks = (sys.displayhook, _ipyshell.display_pub if _ipyshell else None) # store once in start
 
@@ -34,6 +34,28 @@ class Output(ipw.Output):
         if self._ipyshell:
             sys.displayhook, self._ipyshell.display_pub = self._chooks
 
+        super().__exit__(etype, evalue, tb)
+
+
+class Output(_Output):
+    __doc__ = ipw.Output.__doc__ # same docs as main
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def __enter__(self):
+        if (slides := get_slides_instance()):
+            self._slides = slides
+            self._other = self._slides._hold_running()
+            self._slides._in_output = True
+            self._other.__enter__()
+        super().__enter__()
+    
+    def __exit__(self, etype, evalue, tb):
+        if getattr(self, '_slides', None):
+            self._slides._in_output = False
+            self._other.__exit__(etype, evalue, tb)
+            del self._slides, self._other
         super().__exit__(etype, evalue, tb)
 
 # patching for correct order of outputs, loaded with ipywidgets import when ipyslides is present
@@ -55,7 +77,7 @@ class _Buttons:
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
-    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'),tooltip='Refresh Dynamic Content').add_class('Menu-Item').add_class('Refresh-Btn')
+    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Refresh Dynamic Content').add_class('Menu-Item').add_class('Refresh-Btn')
     source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
     home    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go to Title Page').add_class('Menu-Item').add_class('Home-Btn')
     end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
