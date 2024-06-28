@@ -11,6 +11,7 @@ import ipywidgets as ipw
 
 from IPython.display import display, HTML 
 from IPython.core.display import __all__ as _all
+from IPython.utils.capture import RichOutput, capture_output
 from IPython import get_ipython
 
 from ._base._widgets import HtmlWidget
@@ -235,6 +236,9 @@ class Serializer:
             if obj_type is str:
                 raise TypeError("Cannot register serializer for string type! Use custom class to encapsulate string the way you want.")
             
+            if isinstance(obj_type, RichOutput):
+                raise TypeError("Cannot serialize a RichOutput instance!")
+            
             if getattr(func, '__name__','').startswith('_alt_'):
                 raise ValueError(f"func names starting with _alt_ are reserved!")
 
@@ -265,19 +269,12 @@ class Serializer:
     def types(self):
         "Tuple of all registered types."
         return tuple(item['obj'] for item in self._libs)
-    
-    def _get_func(self, obj_type):
-        "For private use only!"
-        if isinstance(obj_type, Frozen):
-            return None
-        
-        if isinstance(obj_type, ipw.DOMWidget):
-            if '_FrozenWidget_' in obj_type._dom_classes:
-                return None
-        return self.get_func(obj_type)
 
     def get_func(self, obj_type):
         "Get serializer function for a type. Returns None if not found."
+        if isinstance(obj_type, RichOutput): # like frozen and already computed
+            return None
+        
         if type(obj_type) in serializer.types: # Do not check instance here, need specific information
             for item in serializer.available:
                 if type(obj_type) == item['obj']:
@@ -358,22 +355,24 @@ class Serializer:
 serializer = Serializer()
 del Serializer # Make sure this is not used by user
 
-
-class Frozen:
-    def __init__(self, obj, metadata=None) -> None:
-        self._obj = obj
-        self._metadata = metadata
-        if isinstance(obj, ipw.DOMWidget):
-            self._obj.add_class('_FrozenWidget_') # internal fix further
+def frozen(obj, metadata=None):
+    """Display object as it it and export metadata if not str. 
+    A frozen object may not appear in exported html if metadata is not given.
     
-    def _ipython_display_(self):
-        with altformatter.reset(): # need this extra layer for write command
-            display(self._obj, metadata=(
-                serializer.get_metadata(self._obj) if self._metadata is None else self._metadata
-            ))
+    Returned object has a display method, or can be directly passed to display/write commands.
+    """
+    if isinstance(obj, str):
+        return RichOutput(data={'text/plain':'', 'text/html': obj}) # no metadta required
 
-    def display(self): # for completeness
-        self._ipython_display_()
+    with altformatter.reset(), capture_output() as cap:
+        display(obj, metadata= serializer.get_metadata(obj) if metadata is None else metadata)
+    
+    if len(cap.outputs) == 1:
+        return cap.outputs[0] # single object
+    
+    cap.display = cap.show # for completenes with other returns
+    cap._ipython_display_ = cap.show # This is important to not being caught by altformatter
+    return cap
     
 
 def get_slides_instance():
@@ -398,14 +397,14 @@ class AltDispalyFormatter:
         "Handles Slides.serializer objects inside display command."
         with self.reset():
             if hasattr(obj, '_ipython_display_'):
-                return self._intercept(obj) # Handles Frozen as well
+                return self._intercept(obj) # Handles Richoutput as well
             
             # Handle interact as it is auto displayed
             if isinstance(obj, ipw.DOMWidget) and 'widget-interact' in obj._dom_classes:
                 from .writer import AltForWidget
                 return self._intercept(AltForWidget(serializer.get_func(obj), obj))
         
-            if (func := serializer._get_func(obj)): # only use private one here
+            if (func := serializer.get_func(obj)): 
                 if isinstance(obj, ipw.DOMWidget):
                     from .writer import AltForWidget
                     return self._intercept(AltForWidget(func, obj))
@@ -496,8 +495,8 @@ def format_object(obj):
 
 def htmlize(obj):
     "Returns string of HTML representation for given object."
-    if isinstance(obj, Frozen):
-        raise TypeError("Frozen objects not serializable. Use display or write directly!")
+    if isinstance(obj, RichOutput):
+        raise TypeError("Received a non-serializable object. Use display or write directly!")
     
     if isinstance(obj,str):
         from .xmd import parse # Avoid circular import

@@ -59,9 +59,7 @@ class _HhtmlExporter:
                     idx, jdx = idx[0] - 1, idx[1] # Must be Writer at idx
                     frames.append([*objs[:idx], objs[idx].fmt_html(_pad_from = jdx)]) 
                 elif isinstance(idx, range):
-                    first = []
-                    if n and item._has_top_frame: # only if content before first frame and not duplicate on first
-                        first = objs[:item._fidxs[0].stop] # add top to all in case of no join
+                    first = objs[:getattr(item, '_frame_top',0)] # add top to all in case of no join
                     frames.append([*first, *objs[idx.start:idx.stop]]) # frames not incremental
             
             

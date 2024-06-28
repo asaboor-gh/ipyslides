@@ -6,7 +6,6 @@ from itertools import zip_longest
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-
 from .xmd import fmt, parse, xtr, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
@@ -115,7 +114,7 @@ class Slides(BaseSlides):
 
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
-        self.widgets.buttons.refresh.on_click(self._update_dynamic_content)
+        self.widgets.buttons.refresh.on_click(self._update_widgets)
         self.widgets.buttons.source.on_click(self._jump_to_source_cell)
 
         # All Box of Slides
@@ -404,47 +403,14 @@ class Slides(BaseSlides):
         self.this._section = text  # assign before updating toc
         
         for s in self[:]:
-            if getattr(s, "_toced", False) and s != self.this: 
+            if s._toc_args and s != self.this: 
                 s.update_display(go_there=False)
  
-    def toc(self, title='## Contents {.align-left}', extra = None):
-        "You can also use markdown syntax to add it like toc`title` or ```toc title\n extra\n```. Extra is passed to write command in right column."
+    def toc(self, title='## Contents {.align-left}', summary = None):
+        "You can also use markdown syntax to add it like toc`title` or ```toc title\n summary\n```. `summary` is written in right column."
         self.verify_running("toc can only be added under slides constructor!")
-        self.this._toced = True
-        tocwidget = ipw.Output() # Maths does not render in HTML widget
-        
-        @tocwidget.capture(clear_output=True, wait=True)
-        def toc_handler(slide):
-            items = []
-            for s in self[:slide.index]:
-                if s._section:
-                    items.append({"c":"prev", "s":s})
-
-            if slide._section:
-                items.append({"c":"this", "s":slide})
-            elif items:
-                items[-1].update({"c":"this"})
-
-            for s in self[slide.index + 1:]:
-                if s._section:
-                    items.append({"c":"next", "s":s})
-
-            items = [XTML(textwrap.dedent('''
-                <li class="toc-item {c}">
-                    <a href="#{s._sec_id}" class="export-only citelink">{s._section}</a>
-                    <span class="jupyter-only">{s._section}</span>
-                </li>''').format(**sec)) 
-                for sec in items]
-
-            css_class = 'toc-list toc-extra' if extra else 'toc-list'
-            items = self.html('ol', items, style='', css_class=css_class)
-            items = [[title, items], extra] if extra else [[title, items]]
-            self.format_html(*items).display() # write is not exporting here
-            del items
-        
-        self.this._handle_toc = toc_handler # for update display
-        return self.alt(self.serializer.get_func(tocwidget), tocwidget).display()
-
+        self.this._toc_args = (title, summary)
+        display(self.this._reset_toc()) # Must to have metadata there
 
     def _goto_button(
         self, text, target_slide=None, **kwargs
@@ -498,9 +464,9 @@ class Slides(BaseSlides):
         clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
         self._unregister_postrun_cell() # no need to scroll button where showing itself
         self._update_toc()  # Update toc before displaying app to include all sections
-        self._update_dynamic_content()  # Update dynamic content before displaying app
+        self._update_widgets()  # Update before displaying app
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
-        display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
+        self.frozen(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer")).display()  # Display slides within another box
         
 
     def close_view(self):
@@ -579,7 +545,7 @@ class Slides(BaseSlides):
             s._index = i  # Update index
 
         self._update_toc()  # Update table of content if any
-        self._update_dynamic_content() # refresh causes loose widgets sometimes
+        self._update_widgets() # refresh causes loose widgets sometimes
 
         if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
             self.widgets.slidebox.children[0].add_class('ShowSlide')
@@ -607,7 +573,7 @@ class Slides(BaseSlides):
         
         code = self.shell.get_parent().get('content',{}).get('code','')
         p = "\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
-        matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(slide{p})|(frames{p})|(from_markdown{p})|(sync_with_file{p})", code)
+        matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(slide{p})|(from_markdown{p})|(sync_with_file{p})", code)
         number = int(self._next_number) # don't use same attribute, that will be updated too
         if matches:
             if len(matches) > 1:
@@ -725,28 +691,15 @@ class Slides(BaseSlides):
             self.widgets.htmls.loading.value = ""
             self.widgets.htmls.loading.style.display = "none"
 
-    def _update_dynamic_content(self, btn=None):
+    def _update_widgets(self, btn=None):
         with self._loading_private(self.widgets.buttons.refresh):
-            first_toc = True
             for slide in self[:]:
-                if any(
-                    [
-                        getattr(slide, attr, False)
-                        for attr in ("_has_widgets", "_toced","_refs") # _refs will be removed from inner slides for global
-                    ]
-                ):
+                if slide._has_widgets:
                     slide.update_display(go_there=False)
-                
-                # Take care of first TOC on slides
-                if hasattr(slide, '_toced'):
-                    if first_toc:
-                        slide._widget.add_class("FirstTOC")
-                        first_toc = False
-                    else:
-                        slide._widget.remove_class("FirstTOC")
         
+        if btn:
+            self.notify('Widgets on slides updated!')
         self._current._set_progress() # update display can take it over to other sldies
-        self.notify('Dynamic content updated everywhere!')
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
@@ -785,7 +738,7 @@ class Slides(BaseSlides):
 
                 children.append(
                     p_btn.add_class("toc-item").add_class(f"s{slide._index}")
-                )  # class for dynamic CSS
+                )  # class for CSS
 
         self.widgets.tocbox.children = children
 
@@ -820,6 +773,7 @@ class fsep:
     - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
     - Use `fsep.loop(iterable)`/`fsep.enum(iterable)` to split after each item in iterable automatically.
     - Use `fsep.join()` once under a slide to show frames incrementally. In markdown slides, use %++.
+    - Content before first frame separator is added on all frames. This helps adding same title once.
     """
     _app = _private_instance
     
@@ -829,8 +783,8 @@ class fsep:
             raise RuntimeError("Cant use fsep in a capture context other than slides!")
         
         self._app.this._widget.add_class("Frames")
-        self._app.this._fsep = getattr(self._app.this, '_fsep',self._app.format_css({}).as_widget().add_class('_FrozenWidget_')) # create once
-        display(self._app.this._fsep, metadata={"FSEP": "","skip-export":"no need in export"})
+        self._app.this._fsep = getattr(self._app.this, '_fsep',self._app.format_css({}).as_widget()) # create once
+        self._app.frozen(self._app.this._fsep, metadata={"FSEP": "","skip-export":"no need in export"}).display()
 
     @classmethod
     def loop(cls, iterable):

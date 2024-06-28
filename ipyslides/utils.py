@@ -21,7 +21,7 @@ from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 import ipywidgets as ipw
 
-from .formatters import XTML, Frozen, fix_ipy_image, htmlize, serializer, _inline_style
+from .formatters import XTML, frozen, fix_ipy_image, htmlize, serializer, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, CustomDisplay, AltForWidget
 
@@ -351,7 +351,7 @@ def alt(func_or_html, obj, /):
     if not any([isinstance(text_html, str), hasattr(text_html,'_repr_html_')]):
         raise TypeError(f"First argument, if not a function, should be an html str or an object with `_repr_html_` method, got {type(text_html)}")
     
-    return Frozen(obj, metadata={'skip-export':'', 'text/html': getattr(text_html, '_repr_html_', lambda: text_html)()}) # skip original obj
+    return frozen(obj, metadata={'skip-export':'', 'text/html': getattr(text_html, '_repr_html_', lambda: text_html)()}) # skip original obj
 
 
 class alt_clip(CustomDisplay):
@@ -584,14 +584,6 @@ def alert(text):
 def color(text,fg='blue',bg=None):
     "Colors text, `fg` and `bg` should be valid CSS colors"
     return XTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
-
-def frozen(obj, metadata = None):
-    """Display object as it it and export metadata. If str, it is encapsulated in XTML to avoid markdown parsing! 
-    A safely displayed object may not appear in exported html if metadata is not given."""
-    if isinstance(obj,str):
-        return XTML(obj)
-    
-    return Frozen(obj, metadata=metadata)
 
 def rows(*objs):
     "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."

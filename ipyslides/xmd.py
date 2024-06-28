@@ -193,8 +193,8 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     # ```toc title\n text\n``` as block start with new line 
     all_matches = re.findall(r"\n\`\`\`toc(.*?)\n\`\`\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for match in all_matches:
-        title, extra = [v.strip() for v in (match + '\n').split('\n', 1)] # Make sure a new line is there and then strip
-        jstr = json.dumps({"title": title, "extra" : extra.strip()}) # qoutes fail otherwise
+        title, summary = [v.strip() for v in (match + '\n').split('\n', 1)] # Make sure a new line is there and then strip
+        jstr = json.dumps({"title": title, "summary" : summary.strip()}) # qoutes fail otherwise
         block = _fmt_code(
             f"""
             import json

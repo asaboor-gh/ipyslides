@@ -226,7 +226,6 @@ class BaseSlides:
             You can use it to dynamically fetch a value from a database or API while presenting, without having to run the cell again.
         ::: note
             - No return value is required. If any, should be like `display('some value')`, otherwise it will be ignored.
-            - All slides with dynamic content are updated when refresh button in top bar is clicked.
             
         ```python run source
         import time
@@ -251,7 +250,7 @@ class BaseSlides:
                 finally:
                     btn.icon = 'plus'
 
-        kwargs = {k:v.default for k, v in signature(func).parameters.items()}   
+        kwargs = {k:v.default for k, v in signature(func).parameters.items()}  
         *controls, btn, _ = interact_manual(new_func, **kwargs).widget.add_class('on-refresh').children
 
         for w in controls:
@@ -584,10 +583,10 @@ class BaseSlides:
 
         with self.build_() as s:
             self.write("## Adding content on frames incrementally yoffset`0`")
-            display(self.frozen(widget := (code := s.get_source()).as_widget(), self.serializer.get_metadata(widget))) 
-            @self.on_load   # If you don't use frozen and metadata on above line, you will get latest HTML value in export
-            def highlight_line(slide): 
-                widget.value = code.focus_lines(range(slide.indexf + 1)).value
+            self.frozen(widget := (code := s.get_source()).as_widget()).display()
+            self.fsep() # frozen in above line get oldest metadata for export
+            def highlight_code(slide): widget.value = code.focus_lines(range(slide.indexf + 1)).value
+            self.on_load(highlight_code)
         
             for ws, cols in self.fsep.loop(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
                 cols = [self.html('h1', f"{c}",style="background:var(--alternate-bg);margin-block:0.05em !important;") for c in cols]

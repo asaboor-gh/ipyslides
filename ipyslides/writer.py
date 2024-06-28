@@ -7,7 +7,7 @@ __all__ = ['write']
 import ipywidgets as ipw
 from IPython.display import display as display
 
-from .formatters import XTML, Frozen, htmlize, serializer, _inline_style
+from .formatters import XTML, RichOutput, frozen, htmlize, serializer, _inline_style
 from .xmd import parse, get_slides_instance, capture_content
 
 class CustomDisplay:
@@ -56,7 +56,7 @@ class AltForWidget(CustomDisplay):
         if not callable(func):
             raise TypeError(f'func should be a callable, got {func!r}')
         
-        self._widget = widget.add_class('_FrozenWidget_')
+        self._widget = widget
         self._func = func
         
         slides = get_slides_instance()
@@ -112,7 +112,7 @@ class Writer:
             # This will only be intercepted if lambda function contains write with multiple columns, becuase they can't be nested
             raise RuntimeError('write(*objs) for len(objs) > 1 inside a previous call of write is not allowed!')
         
-        self._box = ipw.HBox().add_class('columns').add_class('writer').add_class('_FrozenWidget_') # to differentiate from other columns
+        self._box = ipw.HBox().add_class('columns').add_class('writer') # to differentiate from other columns
         self._slides = get_slides_instance()
         
         try:
@@ -136,7 +136,7 @@ class Writer:
                 self._metadata = {'COLUMNS': idx}
                 self._ipython_display_()
             elif self._slides and self._slides.in_output:
-                display(self._box, metadata=serializer.get_metadata(self._box))
+                frozen(self._box).display()
             else:
                 display(self._box) # Just display it
                 
@@ -158,7 +158,7 @@ class Writer:
         for i, col in enumerate(cols):
             with capture_content() as cap:
                 for c in col['outputs']:
-                    if isinstance(c,Frozen):
+                    if isinstance(c,RichOutput):
                         c.display()
                     elif isinstance(c,str):
                         parse(c, returns = False)
@@ -199,7 +199,7 @@ class Writer:
                         display(out)
     
     def _ipython_display_(self): # Called when displayed automtically, this is important
-        display(self._box, metadata=self.metadata)
+        frozen(self._box, metadata=self.metadata).display()
         self.update_display()
         
     @property

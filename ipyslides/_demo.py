@@ -165,16 +165,18 @@ def demo_slides(slides):
     slides.build(-1,'section`Controlling Content on Frames` toc`### Contents`')
 
     # Frames structure
-    boxes = [f'<div style="background:var(--alternate-bg);width:auto;height:2em;padding:8px;border-radius:4px;"><b class="align-center">{i}</b></div>' for i in range(1,5)]
+    boxes = [slides.html('h1', f"{c}",style="background:var(--alternate-bg);margin-block:0.05em !important;") for c in range(1,5)]
     with slides.build(-1) as s:
         slides.write('# Default Frames')
         s.get_source().focus_lines([2,3]).display()
+        slides.fsep()
         for item in slides.fsep.loop(boxes):
             slides.write(item)
 
     with slides.build(-1) as s:
         slides.write('# Frames with \n#### `fsep.join()` and Fancy Bullet List yoffset`0`')
         s.get_source().focus_lines([2,3,4]).display()
+        slides.fsep()
         slides.fsep.join()
         for item in slides.fsep.loop(boxes):
             slides.bullets([item], marker='💘').display()
@@ -182,6 +184,7 @@ def demo_slides(slides):
     with slides.build(-1) as s:
         slides.write('# Frames with \n#### `fsep.join()` and 2x2 grid of boxes yoffset`0`')
         s.get_source().focus_lines(range(2,7)).display()
+        slides.fsep()
         slides.fsep.join()
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]

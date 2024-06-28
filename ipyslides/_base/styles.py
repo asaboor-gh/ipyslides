@@ -323,11 +323,11 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             },
             'a': {
                 'color': 'var(--accent-color) !important',
-                '^:not(.citelink):visited': {
+                '^:not(.citelink,.goto-button):visited': {
                     'color': 'var(--secondary-fg) !important',
                     'opacity': '0.75 !important',
                 },
-                '^:not(.citelink)': {
+                '^:not(.citelink,.goto-button)': {
                     'text-decoration': 'underline !important', 
                 },
                 '^.citelink': {'color': 'var(--primary-fg) !important',},

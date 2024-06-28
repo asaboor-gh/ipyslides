@@ -1,17 +1,16 @@
 """Slide Object, should not be instantiated directly"""
 
-import time
+import time, textwrap
 from contextlib import contextmanager, suppress
 from IPython.display import display
-import ipywidgets as ipw
-
+from IPython.utils.capture import RichOutput
 
 from . import styles
 from .widgets import _Output # not from ipywidget
 from ..utils import XTML, html, alert, _format_css, _sub_doc, _css_docstring
 from ..writer import _fmt_html
 from ..xmd import capture_content
-from ..formatters import serializer
+from ..formatters import frozen
 
 
 def _expand_objs(outputs, context):
@@ -98,14 +97,14 @@ class Exp4Widget:
         if not isinstance(context, (Slide, Proxy)):
             raise TypeError("context should be a Slide or Proxy object.")
         
-        self._widget = widget.add_class('_FrozenWidget_')
+        self._widget = widget
         self._func = func 
         self._context = context # Should be slide or proxy
         self._key = str(len(self._context._exportables))
         self._context._exportables[self._key] = self # Add to exportables
     
     def _ipython_display_(self):
-        display(self._widget, metadata= self.metadata)
+        frozen(self._widget, metadata= self.metadata).display()
 
     
     @property
@@ -131,22 +130,9 @@ class Slide:
         self._bg_image = ''
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
-        
-        self._contents = []
-        self._notes = '' # Should be update by Notes and Slides calss
         self._animation = None
-        self._source = {'text': '', 'language': ''} # Should be update by Slides
-        self._has_widgets = False # Update in _build_slide function
-        self._citations = {} # Added from Slides
-        self._indexf = 0 # current frame index
-        self._section = None # Added from Slides
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
-        self._proxies = {} # Placeholders added to this slide
-        self._exportables = {} # Exportable widgets added to this slide
-        self._columns = {} # Columns added to this slide
-        self._split_frames = True
-        self._has_top_frame = True
-        self._set_refs = True
+        self._set_defaults()
 
         if not self._contents: # show slide number hint there
             self.set_css({
@@ -156,6 +142,28 @@ class Slide:
                     'font-size': '2em',
                 }
             })
+    
+    def _set_defaults(self):
+        if hasattr(self,'_on_load'):
+            del self._on_load # Remove on_load function
+        if hasattr(self,'_target_id'):
+            del self._target_id # Remove target_id
+        self._notes = '' # Reset notes
+        self._citations = {} # Reset citations
+        self._section = None # Reset sec_key
+        self._proxies = {} # Reset placeholders
+        self._columns = {} # Reset columns
+        self._indexf = 0 # current frame index
+        self._exportables = {} # Reset exportables
+        self._contents = [] # reset content to not be exportable 
+        self._has_widgets = False # Update in _build_slide function
+        self._source = {'text': '', 'language': ''} # Should be update by Slides
+        self._split_frames = True
+        self._has_top_frame = True
+        self._set_refs = True
+        self._toc_args = () # empty by default
+        self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
+
         
     def _exp4widget(self, widget, func):
         return Exp4Widget(widget, func, self)
@@ -206,23 +214,13 @@ class Slide:
     def _capture(self):
         "Capture output to this slide."
         self._app._next_number = self.number + 1
-        self._indexf = 0 
         self._app._slides_per_cell.append(self) # will be flushed at end of cell by post_run_cell event
-        self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
-        self._split_frames = True # Defult
-        self._has_top_frame = True # Default
-        self._set_refs = True
-    
-        if hasattr(self,'_on_load'):
-            del self._on_load # Remove on_load function
-        if hasattr(self,'_target_id'):
-            del self._target_id # Remove target_id
+        self._set_defaults() 
 
         with suppress(Exception): # register only in slides building, not other cells
             self._app._register_postrun_cell()
         
         with self._app._set_running(self):
-            self.clear() # rest of cleanup here to avoid blinks in buidling slides
             with capture_content() as captured:
                 yield captured
             
@@ -242,21 +240,6 @@ class Slide:
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
-
-
-    def clear(self):
-        """Use with caution. This will required running cell again. 
-        All content will be wiped out excpet css, animation, background image etc.
-        You may want to use self.clear_display instead."""
-        self._notes = '' # Reset notes
-        self._citations = {} # Reset citations
-        self._section = None # Reset sec_key
-        self._proxies = {} # Reset placeholders
-        self._columns = {} # Reset columns
-        self._exportables = {} # Reset exportables
-        self._contents = [] # reset content to not be exportable
-        wait = True if self._app.this is self else False # avoid blinking in building slides, otherwise no
-        self.clear_display(wait = wait) 
         
     def update_display(self, go_there = True):
         "Update display of this slide."
@@ -267,9 +250,6 @@ class Slide:
     
         with self._widget:
             display(*self.contents)
-
-            if hasattr(self, '_handle_toc'):
-                self._handle_toc(self) #  update tocs
             
             for c in self._columns.values():
                 c.update_display()
@@ -281,6 +261,45 @@ class Slide:
         self._app._update_tmp_output(self.css)
         self.set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
         self._reset_frames() # after others to take everything into account
+
+    def _reset_toc(self):
+        items = []
+        for s in self._app[:self.index]:
+            if s._section:
+                items.append({"c":"prev", "s":s})
+
+        if self._section:
+            items.append({"c":"this", "s":self})
+        elif items:
+            items[-1].update({"c":"this"})
+
+        for s in self._app[self.index + 1:]:
+            if s._section:
+                items.append({"c":"next", "s":s})
+        
+        first_toc = True
+        for s in self._app[:]:
+            if s._toc_args and first_toc:
+                s._widget.add_class('FirstTOC')
+                first_toc = False
+            else:
+                s._widget.remove_class('FirstTOC')
+
+        items = [XTML(textwrap.dedent('''
+            <li class="toc-item {c}">
+                <a href="#{s._sec_id}" class="export-only citelink">{s._section}</a>
+                <span class="jupyter-only">{s._section}</span>
+            </li>''').format(**sec))
+            for sec in items]
+        
+        title, summary = getattr(self, '_toc_args', ['## Contents {.align-left}', None])
+        css_class = 'toc-list toc-extra' if summary else 'toc-list'
+        items = self._app.html('ol', items, style='', css_class=css_class)
+        items = [[title, items], summary] if summary else [[title, items]]
+        
+        return RichOutput(
+            data = {'text/plain': title,'text/html': self._app.format_html(*items).value},
+            metadata = {"DataTOC": ""})
     
     def _reset_frames(self):
         nc_frames, contents = [], self.contents  # get once
@@ -311,17 +330,26 @@ class Slide:
             elif not f in new_frames: # avoid duplicates at end
                 new_frames.append(f)
         
+        
         if self._split_frames:
             new_frames = [0, *[f[0] + 1 if isinstance(f, tuple) else f for f in new_frames]] # column was at index, get upto for range
             new_frames = [range(i,j) for i,j in zip(new_frames[:-1], new_frames[1:]) if range(i,j)] # as range, non-empty only
-       
-        self._frame_idxs = tuple(new_frames)
+            
+            if len(new_frames) > 1:
+                self._frame_idxs = tuple(new_frames[1:]) # first join on all
+                self._frame_top = new_frames[0].stop
+            else:
+                self._frame_idxs = ()
+        else:
+            self._frame_idxs = tuple(new_frames[1:]) # join first content here as well to make same number of fames
 
         if self._frame_idxs:
             self.first_frame() # Bring up first frame to activate CSS
         else:
             if hasattr(self, '_frame_idxs'): # from previous run may be
                 del self._frame_idxs
+            if hasattr(self, '_frame_add'):
+                del self._frame_top
     
     @property
     def _fidxs(self): return getattr(self, '_frame_idxs', ())
@@ -367,13 +395,11 @@ class Slide:
             else:
                 return False
             
-            start, nrows, ncols, first = 1, self._fidxs[self.indexf], 0, 0
+            start, nrows, ncols, first = 1, self._fidxs[self.indexf], 0, getattr(self, '_frame_top',0)
             if isinstance(nrows, tuple):
                 nrows, ncols = nrows
             elif isinstance(nrows, range): # not joined
                 start, nrows = nrows.start, nrows.stop
-                if self._has_top_frame:
-                    first = self._fidxs[0].stop
 
             self._fsep.value = _format_css({
                 f'^.n{self.number} > .jp-OutputArea > .jp-OutputArea-child': {
@@ -519,6 +545,8 @@ class Slide:
                 outputs.append(self._exportables[out.metadata['Exp4Widget']]) # This will get displayed as a widget
             elif 'Proxy' in out.metadata:
                 outputs.extend(self._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
+            elif 'DataTOC' in out.metadata:
+                outputs.append(self._reset_toc())
             else:
                 outputs.append(out)
                 
