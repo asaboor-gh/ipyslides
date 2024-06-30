@@ -6,117 +6,52 @@ from IPython.display import display
 from IPython.utils.capture import RichOutput
 
 from . import styles
-from .widgets import _Output # not from ipywidget
+from .widgets import Output # Fixed one
 from ..utils import XTML, html, alert, _format_css, _sub_doc, _css_docstring
-from ..writer import _fmt_html
 from ..xmd import capture_content
-from ..formatters import frozen
-
-
-def _expand_objs(outputs, context):
-    "Put columns and exportable widgets inline with rich outputs in a given context."
-    new_outputs = []
-    for out in outputs:
-        if hasattr(out, 'metadata') and ('COLUMNS' in out.metadata): # may be Writer object there without metadata
-            new_outputs.append(context._columns[out.metadata['COLUMNS']])
-        elif hasattr(out, 'metadata') and 'Exp4Widget' in out.metadata:
-            other_context = context if hasattr(context, '_exportables') else context._slide # Proxy also has exportables
-            new_outputs.append(other_context._exportables[out.metadata['Exp4Widget']])
-        else:
-            new_outputs.append(out)
-    return new_outputs  
+from ..formatters import _Output, serializer, widget_from_data
     
-class Proxy:
-    "Proxy object, should not be instantiated directly by user."
+
+class Proxy(Output): # Not from _Output, need to avoid slide-only content here
+    "Proxy object, should not be instantiated directly by user., use Slides.proxy or proxy`text` in Makdown."
     def __init__(self, text, slide):
-        if slide._app.in_proxy or slide._app.in_output:
-            raise RuntimeError("Can't place proxy inside a context other than slides!.")
+        slide._app.verify_running("Can't place proxy inside a context other than slides!.")
+        
+        super().__init__(clear_output=True, wait=True)
         
         self._slide = slide
         self._text = text.strip() # Remove leading and trailing spaces
         self._outputs = []
         self._key = str(len(self._slide._proxies))
         self._slide._proxies[self._key] = self
-        self._columns = {} 
-        self._exportables = {}
-        display(self, metadata= {'Proxy': self._key}) 
-        
-    def _exp4widget(self, widget, func):
-        return Exp4Widget(widget, func, self)
-    
-    @property
-    def text(self): return self._text # Useful if user wants to filter proxies
-    
-    @property
-    def slide(self): return self._slide # Useful if user wants to test if proxy is in slide
+        self.outputs = ({'output_type': 'display_data', 'data': {
+            'text/plain': self._text, 'text/html': alert(repr(self)).value}
+        },)
     
     def __repr__(self):
         return f'Proxy(text = {self._text!r}, slide_number = {self._slide.number}, proxy_index = {self._key})'
     
-    def _repr_html_(self): # This is called when displayed
-        return alert(repr(self)).value
-    
-    @property
-    def outputs(self):
-        "Returns the outputs of the proxy, if it has been replaced."
-        if self._outputs:
-            return self._outputs 
-        with capture_content() as captured:
-            display(self, metadata= {'Proxy': self._key}) # This will update the slide refrence on each display to provide useful info
-        return captured.outputs
-    
-    def fmt_html(self): 
-        content = ''
-        for out in self.outputs:
-            content += _fmt_html(out)
-        return content
-    
-    @contextmanager
-    def capture(self):
-        "Context manager to capture output to current prpxy. Use it like this: with proxy.capture(): ... after a slide is already created."
-        if self._slide._app.this:
-            raise RuntimeError("Can't use Proxy.capture() contextmanager inside a slide constructor.")
-        
-        self._columns = {} # Reset columns
-        self._exportables = {} # Reset exportables
-        self._slide._app._in_proxy = self # Used to get print statements to work in order and coulm aware
-        try:
-            with capture_content() as captured:
-                yield
-
-            if captured.stderr:
-                raise RuntimeError(captured.stderr)
-
-            self._outputs = _expand_objs(captured.outputs, self) # Expand columns
-            self._slide.update_display() # Update display to show new output
-        finally:
-            self._slide._app._in_proxy = None
-            
-class Exp4Widget:
-    def __init__(self, widget, func, context):
-        if not isinstance(context, (Slide, Proxy)):
-            raise TypeError("context should be a Slide or Proxy object.")
-        
-        self._widget = widget
-        self._func = func 
-        self._context = context # Should be slide or proxy
-        self._key = str(len(self._context._exportables))
-        self._context._exportables[self._key] = self # Add to exportables
-    
-    def _ipython_display_(self):
-        frozen(self._widget, metadata= self.metadata).display()
-
-    
-    @property
-    def metadata(self): return {'Exp4Widget': self._key} # Important
-    
-    @property
-    def data(self): return getattr(self._widget, '_repr_mimebundle_', lambda: {'application':'Exp4Widget'})()
-    
     def fmt_html(self):
-        "Returns alternative html representation of the widget."
-        return self._func(self._widget)
+        return serializer._alt_output(self) 
     
+    def __enter__(self):
+        if self._slide._app.this:
+            raise RuntimeError("Can't use Proxy contextmanager inside a slide constructor.")
+        
+        self.outputs = () # Reset for new outputs, clear_output is looping indefinitely
+        super().__enter__()
+        
+    def __exit__(self, etype, evalue, tb):
+        super().__exit__(etype, evalue, tb)
+
+    def display(self): display(self) # For completeness
+
+    def update_display(self):
+        super().update_display()
+        for out in self.outputs: # One level write columns should be update hardly
+            meta = out.get('metadata',{})
+            if 'UPDATE' in meta and (col := widget_from_data(meta['UPDATE'])):
+                col.update_display()
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -152,9 +87,7 @@ class Slide:
         self._citations = {} # Reset citations
         self._section = None # Reset sec_key
         self._proxies = {} # Reset placeholders
-        self._columns = {} # Reset columns
         self._indexf = 0 # current frame index
-        self._exportables = {} # Reset exportables
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
         self._source = {'text': '', 'language': ''} # Should be update by Slides
@@ -163,10 +96,6 @@ class Slide:
         self._set_refs = True
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
-
-        
-    def _exp4widget(self, widget, func):
-        return Exp4Widget(widget, func, self)
   
     def set_source(self, text, language):
         "Set source code for this slide."
@@ -176,9 +105,6 @@ class Slide:
         "Reset old source but leave markdown source for observing chnages"
         if not self._markdown:
             self.set_source("","")
-            
-    def _proxy_private(self, text):
-        return Proxy(text, self) # get auto displayed
         
     def _on_load_private(self, func):
         with self._app._hold_running(): # slides will not be running during switch, so make it safe
@@ -234,7 +160,7 @@ class Slide:
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
 
-            self._contents = _expand_objs(captured.outputs, self) # Expand columns  
+            self._contents = captured.outputs # Expand columns  
             self.set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display(go_there=True)    
 
@@ -249,10 +175,13 @@ class Slide:
             self._widget.clear_output(wait = True) # Clear, but don't go there
     
         with self._widget:
-            display(*self.contents)
+            for obj in self.contents:
+                display(obj)
+                if hasattr(obj, 'update_display'):
+                    obj.update_display()
             
-            for c in self._columns.values():
-                c.update_display()
+            for p in self._proxies.values():
+                p.update_display()
 
             self._handle_refs()
 
@@ -539,12 +468,8 @@ class Slide:
     def contents(self):
         outputs = []
         for out in self._contents:
-            if "COLUMNS" in out.metadata:
-                outputs.append(self._columns[out.metadata['COLUMNS']])
-            elif 'Exp4Widget' in out.metadata:
-                outputs.append(self._exportables[out.metadata['Exp4Widget']]) # This will get displayed as a widget
-            elif 'Proxy' in out.metadata:
-                outputs.extend(self._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
+            if "UPDATE" in out.metadata: # need this for export
+                outputs.append(widget_from_data(out.metadata["UPDATE"]))
             elif 'DataTOC' in out.metadata:
                 outputs.append(self._reset_toc())
             else:
@@ -668,19 +593,11 @@ def _build_slide(app, slide_number):
             
     with this._capture(): 
         yield this
-    
-    def get_keys(data):
-        keys = [k for k in data.keys()] if isinstance(data, dict) else [] # Most _reprs_
-        if isinstance(data, tuple): # _repr_mimebublde_ of widgets
-            for d in data:
-                keys.extend(d.keys())
-        return keys
-    
-    for k in [p for ps in this.contents for p in get_keys(ps.data)]:
-        if k.startswith('application'): # Widgets in this slide
+
+    for content in this._contents:
+        if content.data.get('application/vnd.jupyter.widget-view+json',{}):
             this._has_widgets = True
             break # No need to check other widgets if one exists
-
         
 
     

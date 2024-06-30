@@ -16,10 +16,50 @@ from IPython import get_ipython
 
 from ._base._widgets import HtmlWidget
 
-
 __reprs = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 
 supported_reprs = tuple(__reprs) # don't let user change it
+
+def widget_from_data(obj):
+    "_model_id or dict of widget data."
+    if isinstance(obj, str):
+        out = ipw.widget_serialization['from_json']('IPY_MODEL_' + obj, None)
+        if isinstance(out, ipw.DOMWidget): # It returns anything, make sure widget
+            return out
+    
+    if isinstance(obj, dict):
+        model_id = obj.get('application/vnd.jupyter.widget-view+json',{}).get('model_id','')
+        return widget_from_data(model_id)
+
+
+class _Output(ipw.Output):
+    "Should only be used internally"
+    _ipyshell = get_ipython()
+    _hooks = (sys.displayhook, _ipyshell.display_pub if _ipyshell else None) # store once in start
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def __enter__(self):
+        if self._ipyshell:
+            self._chooks = (sys.displayhook, self._ipyshell.display_pub) # current hooks in top capture
+            sys.displayhook, self._ipyshell.display_pub = self._hooks
+        
+        super().__enter__()
+
+    def __exit__(self, etype, evalue, tb):
+        if self._ipyshell:
+            sys.displayhook, self._ipyshell.display_pub = self._chooks
+
+        super().__exit__(etype, evalue, tb)
+
+    def update_display(self):
+        "Widgets output sometimes disappear on when Output is removed and displayed again. Fix that with this function."
+        old_outputs = self.outputs 
+        self.outputs = () # Reset
+        self.outputs = old_outputs
+        del old_outputs
+
 
 class XTML(HTML):
     def __init__(self, *args,**kwargs):
@@ -59,7 +99,9 @@ def plt2html(plt_fig = None,transparent=True,width = '95%', caption=None):
     - caption    : Caption for figure.
     """
     # First line is to remove depedency on matplotlib if not used
-    plt = sys.modules.get('matplotlib.pyplot', __import__('matplotlib.pyplot'))
+    if not (plt := sys.modules.get('matplotlib.pyplot', None)):
+        return None
+    
     _fig = plt_fig or plt.gcf()
     plot_bytes = BytesIO()
     _fig.savefig(plot_bytes,format='svg',transparent = transparent)
@@ -86,9 +128,10 @@ def bokeh2html(bokeh_fig,title=""):
     - bokeh_fig : Bokeh figure instance.
     - title     : Title for figure.
     """
-    from bokeh.resources import CDN
-    from bokeh.embed import file_html
-    return XTML(f'<div class="zoom-child">{file_html(bokeh_fig, CDN, title)}</div>')
+    if (bokeh := sys.modules.get('bokeh', None)):
+        return XTML(f'''<div class="zoom-child">
+            {bokeh.embed.file_html(bokeh_fig, bokeh.resources.CDN, title)}
+        </div>''')
 
 def _bokeh2htmlstr(bokeh_fig,title=""):
     return bokeh2html(bokeh_fig,title).value
@@ -280,9 +323,9 @@ class Serializer:
                 if type(obj_type) == item['obj']:
                     return item['func']
         # Check instance for ipywidgets.HTML/Output after user defined types
-        elif isinstance(obj_type, ipw.Box):
+        if isinstance(obj_type, ipw.Box):
             return self._alt_box
-        elif isinstance(obj_type, ipw.Output):
+        elif isinstance(obj_type, _Output):
             return self._alt_output
         elif isinstance(obj_type, (ipw.HTML, ipw.HTMLMath, HtmlWidget)): # Instance here is fine to include subclasses as they will behave same
             return self._alt_html
@@ -294,6 +337,12 @@ class Serializer:
         if (func := self.get_func(obj_type)):
             return {'text/html': func(obj_type)}
         return {}
+    
+    def get_html(self, obj_type):
+        "Get html str of a registerd obj_type."
+        if (func := self.get_func(obj_type)):
+            return func(obj_type)
+        return ''
     
     def _alt_box(self, box_widget):
         if not isinstance(box_widget, ipw.Box):
@@ -307,7 +356,7 @@ class Serializer:
         
         kwargs.update({k:v for k,v in box_widget.layout.get_state().items() if v and k[0]!='_'}) # only those if not None
         css_class = ' '.join(box_widget._dom_classes) # To keep style of HTML widget, latest as well
-        content = '\n'.join((self.get_func(child) or (lambda child: ''))(child) for child in box_widget.children)
+        content = '\n'.join(self.get_html(child) for child in box_widget.children)
         return f'<div class="{css_class}" {_inline_style(kwargs)}>{content}</div>'
     
     def _alt_html(self, html_widget):
@@ -320,7 +369,7 @@ class Serializer:
     
     def _alt_output(self, output_widget):
         "Convert objects in ipywidgets.Output to HTML string."
-        if not isinstance(output_widget, ipw.Output):
+        if not isinstance(output_widget, _Output):
             raise TypeError(f"Expects Output widget instnace, got {type(output_widget)}")
         
         from .xmd import raw # avoid circular import
@@ -328,13 +377,20 @@ class Serializer:
         css_class = ' '.join(output_widget._dom_classes) # To keep style of Output widget, latest as well
         content = ''
         for d in output_widget.outputs:
-            if 'text' in d:
+            if 'text' in d: # streams takes prefersnces
                 content += raw(d['text']).value
-            elif 'data' in d:
-                if 'text/html' in d['data']:
-                    content += d['data']['text/html']  
-                elif 'text/latex' in d['data']:
-                    content += d['data']['text/latex']
+            else:
+                data, metadata = d.get('data',{}), d.get('metadata',{})
+                if 'text/html' in metadata:
+                    content += metadata['text/html'] # user given metadata prefrence
+                elif (widget := widget_from_data(data)):
+                    if hasattr(widget, 'fmt_html'):
+                        content += widget.fmt_html() # alt, columns etc.
+                    else:
+                        content += self.get_html(widget)
+                else:
+                    if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
+                        content += data[f'text/{reps[0]}'] # first that works
         
         return f'<div class="{css_class}" {_inline_style(output_widget)}>{content}</div>' 
     
@@ -365,7 +421,8 @@ def frozen(obj, metadata=None):
         return RichOutput(data={'text/plain':'', 'text/html': obj}) # no metadta required
 
     with altformatter.reset(), capture_output() as cap:
-        display(obj, metadata= serializer.get_metadata(obj) if metadata is None else metadata)
+        metadata= serializer.get_metadata(obj) if metadata is None else metadata
+        display(obj, metadata=metadata)
     
     if len(cap.outputs) == 1:
         return cap.outputs[0] # single object
@@ -388,32 +445,18 @@ class AltDispalyFormatter:
 
     def __init__(self):
         self._ip.display_formatter.format = self.format
-
-    def _intercept(self, obj, metadata={}):
-        display(obj, metadata=metadata)
-        return {}, {} # Need empty there
         
     def format(self, obj, *args, **kwargs):
         "Handles Slides.serializer objects inside display command."
         with self.reset():
-            if hasattr(obj, '_ipython_display_'):
-                return self._intercept(obj) # Handles Richoutput as well
-            
-            # Handle interact as it is auto displayed
-            if isinstance(obj, ipw.DOMWidget) and 'widget-interact' in obj._dom_classes:
-                from .writer import AltForWidget
-                return self._intercept(AltForWidget(serializer.get_func(obj), obj))
-        
-            if (func := serializer.get_func(obj)): 
-                if isinstance(obj, ipw.DOMWidget):
-                    from .writer import AltForWidget
-                    return self._intercept(AltForWidget(func, obj))
-                elif (slides := get_slides_instance()) and any([
-                    slides.this, slides.in_proxy, slides.in_output]):
-                    return self._intercept(XTML(htmlize(obj)))
+            if not isinstance(obj, ipw.DOMWidget) and (html := serializer.get_html(obj)):
+                slides = get_slides_instance()
+                if slides.this or slides.in_output:
+                    display(XTML(html)) # User defined serializers in display as well
+                    return {}, {} # Need empty there
                 
-            # Display should only handle above, it is counter intuitive otherwise for user
-            return self._ipy_format(obj, *args, **kwargs)
+        # Display should only handle above, it is counter intuitive otherwise for user
+        return self._ipy_format(obj, *args, **kwargs)
 
     @contextmanager
     def reset(self):
@@ -471,23 +514,16 @@ def format_object(obj):
     
     # Other Libraries   
     module_name = obj.__module__ if hasattr(obj,'__module__') else '' #str, int etc don't have __module__
-    
-    for lib in libraries:
-        if lib['name'].split('.')[0] in module_name: #MATCH NAMES
-            _module = sys.modules.get(lib['name'],None) # Already imported
-            
-            if not _module:
-                get_ipython().run_cell(f"import {lib['name']} as _module") # Need import to compare
-                
-            _obj = getattr(_module,lib['obj'],None)
-            if isinstance(obj, _obj):
-                if not isinstance(lib['func'],str): # Handle Matplotlib, bokeh, df etc here by making handling functions, they are zoom enabled
-                    return True, lib['func'](obj, *lib['args'],**lib['kwargs'])
-                else:
-                    _func = getattr(obj, lib['func'],None)
-                    if _func:
-                        _output = _func(*lib['args'],**lib['kwargs'])
-                        return True, f'<div class="zoom-self">{_output}</div>' # enbable zoom-self here, not child
+    if (libs := [lib for lib in libraries if module_name.startswith(lib['name'])]):
+        name, obj, func, args, kwargs = [libs[0][v] for v in 'name obj func args kwargs'.split()]
+        _module = sys.modules.get(name, None)
+        _type = getattr(_module,obj,None)
+
+        if isinstance(obj, _type):
+            if not isinstance(func,str): # Handle Matplotlib, bokeh, df etc here by making handling functions, they are zoom enabled
+                return True, func(obj, *args, **kwargs)
+            elif (func := getattr(obj, func,None)): # from str
+                return True, f'<div class="zoom-self">{func(*args, **kwargs)}</div>' # enbable zoom-self here, not child
 
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       

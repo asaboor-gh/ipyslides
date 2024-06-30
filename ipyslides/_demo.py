@@ -48,10 +48,10 @@ def demo_slides(slides):
 
     # slide s2 has proxies to be filled in later
     p1, p2 = s2.proxies   
-    with p1.capture():
+    with p1:
         s2.get_source().display(collapsed = True)
 
-    with p2.capture():
+    with p2:
         slides.write(f'alert`I was added at end by a given proxy, see the how it was done at the end of the slides`')
 
 
@@ -139,7 +139,7 @@ def demo_slides(slides):
         
         def display_plot(): return race_plot().display()
 
-        slides.write(lambda: slides.on_refresh(display_plot), rslide.get_source()) # Only first columns will update
+        slides.write(lambda: slides.interact(display_plot), rslide.get_source()) # Only first columns will update
 
     slides.build(-1,'section`Simple Animations with Frames` toc`### Contents`')
 

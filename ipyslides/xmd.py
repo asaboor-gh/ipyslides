@@ -222,8 +222,8 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     )
     for match in all_matches:
         block = _fmt_code(
-            f"pr = slide_instance.proxy({match!r})", instance_name="slide_instance"
-        )  # assign to avoid __repr__ output in markdown
+            f"pr = slide_instance.proxy({match!r}).display()", instance_name="slide_instance"
+        )  # assign to avoid None output in markdown
         text_chunk = text_chunk.replace(f"proxy`{match}`", block, 1)
     
     # Footnotes at place user likes
@@ -480,12 +480,10 @@ class XMarkdown(Markdown):
         
         # Under slides, multicol should return Writer for frames CSS to take effect
         if self._slides and self._slides.this:
-            from ._base.slide import _expand_objs
-            
             with capture_content() as cap:
                 self._slides.write(*cols, widths=widths)
             
-            return _expand_objs(cap.outputs, self._slides.this)
+            return cap.outputs
         
         if len(cols) == 1: # do not return before checking widths and adding extra cols if needed
             return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]

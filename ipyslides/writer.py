@@ -4,11 +4,10 @@ Main write functions to add content to slides
 
 __all__ = ['write']
 
-import ipywidgets as ipw
 from IPython.display import display as display
 
-from .formatters import XTML, RichOutput, frozen, htmlize, serializer, _inline_style
-from .xmd import parse, get_slides_instance, capture_content
+from .formatters import ipw, XTML, RichOutput, _Output, serializer, frozen, htmlize, _inline_style, supported_reprs, widget_from_data
+from .xmd import parse, get_slides_instance, capture_content, raw
 
 class CustomDisplay:
     def _ipython_display_(self):
@@ -39,8 +38,7 @@ class GotoButton(CustomDisplay):
         
     def set_target(self):
         "Set target slide of goto button. Returns itself."
-        if not self._app.this:
-            raise RuntimeError("GotoButton's target can be set only inside a slide constructor!")
+        self._app.verify_running("GotoButton's target can be set only inside a slide constructor!")
         
         if getattr(self._button, '_TargetSlide', None):
             self._button._TargetSlide._target_id = None # Remove previous link
@@ -49,13 +47,15 @@ class GotoButton(CustomDisplay):
         self._button._TargetSlide._target_id = self._target_id # Set new link
         return self 
     
-class AltForWidget(CustomDisplay):
+
+class AltForWidget(ipw.Box):
     def __init__(self, func, widget):
         if not isinstance(widget, ipw.DOMWidget):
             raise TypeError(f'widget should be a widget, got {widget!r}')
         if not callable(func):
             raise TypeError(f'func should be a callable, got {func!r}')
-        
+
+        super().__init__([widget])
         self._widget = widget
         self._func = func
         
@@ -66,21 +66,19 @@ class AltForWidget(CustomDisplay):
                     out = self._func(self._widget)
                     if not isinstance(out, str):
                         raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
+                
                 if cap.stderr:
                     raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
 
                 if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
                     raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')   
         
-    def __repr__(self):
-        return f'AltForWidget({self._func}, {self._widget})'
-        
-    def display(self):
-        slides = get_slides_instance()
-        if slides and (context := (slides.in_proxy or slides.this)):
-            display(context._exp4widget(self._widget, self._func))
-        else:
-            display(self._widget, metadata = {'DOMWidget': '---'}) # Display widget under slides/notebook anywhere   
+    def fmt_html(self):
+        return self._func(self._widget)
+    
+    def display(self): # For completeness
+        return display(self)
+    
 
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
@@ -91,55 +89,59 @@ def _fmt_html(output):
         return output.fmt_html()
     
     # Metadata text/html Should take precedence over data if given
-    if hasattr(output, 'metadata') and isinstance(output.metadata, dict):
-        if "text/html" in output.metadata: # wants to export text/html even skip there for main obj
-            return output.metadata['text/html']
-        elif "skip-export" in output.metadata: # only skip
+    data, metadata = getattr(output, 'data',{}),  getattr(output, 'metadata',{})
+    if metadata and isinstance(metadata, dict):
+        if "text/html" in metadata: # wants to export text/html even skip there for main obj
+            return metadata['text/html']
+        elif "skip-export" in metadata: # only skip
             return ''
     
-    # Next data itself
-    if 'text/html' in output.data:
-        return output.data['text/html']  
-    elif 'text/latex' in output.data:
-        return output.data['text/latex']
+    # Widgets after metadata
+    if (widget := widget_from_data(data)):
+        if hasattr(widget, 'fmt_html'):
+            return widget.fmt_html() # alt, columns proxy.
+        else:
+            return serializer.get_html(widget)
+    
+    # Next data itself NEED TO INCLUDE ALL REPRS LIKE OUTPUT
+    if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
+        return data[f'text/{reps[0]}'] # first that works
+    
     return ''
 
 
-class Writer:
-    _in_write = False # To prevent write from being called inside write
+class Writer(ipw.HBox):
+    _in_write = False
     def __init__(self, *objs, widths = None):
-        if self.__class__._in_write and len(objs) > 1:
-            # This will only be intercepted if lambda function contains write with multiple columns, becuase they can't be nested
-            raise RuntimeError('write(*objs) for len(objs) > 1 inside a previous call of write is not allowed!')
+        if self.__class__._in_write: # Like from delayed lambda function
+            raise RuntimeError("Trying to write inside a writer!")
         
-        self._box = ipw.HBox().add_class('columns').add_class('writer') # to differentiate from other columns
-        self._slides = get_slides_instance()
-        
+        super().__init__() 
+        self.add_class('columns').add_class('writer') # to differentiate from other columns
+
         try:
-            self.__class__._in_write = True # To prevent write from being called inside write, specially by lambda function
+            self.__class__._in_write = True
             self._cols = self._capture_objs(*objs, widths = widths) # run after getting slides instance
         finally:
             self.__class__._in_write = False
-        
-        self._context = getattr(self._slides, 'this', None)
-        if self._slides and getattr(self._slides, 'in_proxy', None):
-            self._context = self._slides.in_proxy
-
-        self._metadata = {} # need for repeated display
 
         if len(objs) == 1:
-            display(*self._cols[0]['outputs']) # If only one column, display it directly
-        else:
-            if self._context:
-                idx = f'{len(self._context._columns)}' 
-                self._context._columns[idx] = self
-                self._metadata = {'COLUMNS': idx}
-                self._ipython_display_()
-            elif self._slides and self._slides.in_output:
-                frozen(self._box).display()
-            else:
-                display(self._box) # Just display it
-                
+            display(*self._cols[0]['outputs']) # If only one column, display it directly without Box
+        elif len(objs) > 1:
+            self.children = [_Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
+            display(self, metadata=self.metadata) # Just display it with ID
+            self.update_display() # show content on widgets
+
+    
+    @property
+    def data(self): return self._repr_mimebundle_() # Required to mimic RichOutput
+    
+    @property
+    def metadata(self): return {'UPDATE': self._model_id,"COLUMNS": ""} # Required to update both display and frames
+
+    def __repr__(self):
+        return f'<{self.__module__}.Writer at {hex(id(self))}>'
+
     def _capture_objs(self, *objs, widths = None):
         if widths is None: # len(objs) check is done in write
             widths = [int(100/len(objs)) for _ in objs]
@@ -158,22 +160,12 @@ class Writer:
         for i, col in enumerate(cols):
             with capture_content() as cap:
                 for c in col['outputs']:
-                    if isinstance(c,RichOutput):
-                        c.display()
+                    if isinstance(c,(RichOutput, CustomDisplay, ipw.DOMWidget)):
+                        display(c)
                     elif isinstance(c,str):
                         parse(c, returns = False)
-                    elif isinstance(c, CustomDisplay):
-                        c.display() # Handles all custom display classes like alt, goto_button etc.
                     elif callable(c) and c.__name__ == '<lambda>':
                         _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
-                    elif isinstance(c, ipw.DOMWidget): # Should be a displayable widget, not just Widget
-                        if self._slides and self._slides.this:
-                            if (func := serializer.get_func(c)):
-                                self._slides.alt(func, c).display() # Alternative representation will be available on export, specially for ipw.HTML
-                            else:
-                                display(c, metadata = {'DOMWidget': '---'}) # Display only widget
-                        else:
-                            display(c, metadata = {'DOMWidget': '---'}) # Display only widget outside slide buuilder
                     else:
                         display(XTML(htmlize(c)))
             
@@ -185,28 +177,13 @@ class Writer:
         return cols
     
     def update_display(self):
-        from ._base.widgets import _Output # avoid circular import and public one
-
-        self._box.children = [_Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
-        for c, out_w in zip(self._cols, self._box.children):
-            with out_w: 
-                for out in c['outputs']: # Don't worry as _slide won't be None if Proxy is present
-                    if 'Exp4Widget' in out.metadata:
-                        display(self._context._exportables[out.metadata['Exp4Widget']])
-                    elif 'Proxy' in out.metadata:   
-                        display(*self._context._proxies[out.metadata['Proxy']].outputs) # replace Proxy with its outputs/or new updated slide information
-                    else: 
-                        display(out)
-    
-    def _ipython_display_(self): # Called when displayed automtically, this is important
-        frozen(self._box, metadata=self.metadata).display()
-        self.update_display()
-        
-    @property
-    def data(self): return getattr(self._box, '_repr_mimebundle_', lambda: {'application':'HBox'})() # Required for check in slide display if there are widgets
-    
-    @property
-    def metadata(self): return self._metadata # Required 
+        for col, out in zip(self._cols, self.children):
+            if not out.outputs:
+                out.clear_output(wait=True)
+                with out:
+                    display(*col['outputs'])
+            else:
+                out.update_display()
     
     def fmt_html(self, _pad_from=None):
         "Make HTML representation of columns that is required for exporting slides to other formats."
@@ -214,20 +191,12 @@ class Writer:
         for i, col in enumerate(self._cols):
             content = ''
             if (_pad_from is None) or (isinstance(_pad_from, int) and (i < _pad_from)): # to make frames
-                for out in col['outputs']:
-                    if 'Exp4Widget' in out.metadata:
-                        epx = self._context._exportables[out.metadata['Exp4Widget']]
-                        content += ('\n' + epx.fmt_html() + '\n') # rows should be on their own line
-                    elif 'Proxy' in out.metadata:
-                        px = self._context._proxies[out.metadata['Proxy']]
-                        content += ('\n' + px.fmt_html())
-                    else:
-                        content += ('\n' + _fmt_html(out))
+                content += '\n'.join(map(_fmt_html, col['outputs']))
                 
             cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
         
-        css_class = ' '.join(self._box._dom_classes) # handle custom classes in blocks as well
-        return f'<div class="{css_class}" {_inline_style(self._box)}>{"".join(cols)}</div>'
+        css_class = ' '.join(self._dom_classes) # handle custom classes in blocks as well
+        return f'<div class="{css_class}" {_inline_style(self)}>{"".join(cols)}</div>'
     
     
 def write(*objs,widths = None):
@@ -262,6 +231,4 @@ def write(*objs,widths = None):
         - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """
-    wr = Writer(*objs,widths = widths)
-    if not any([wr._context, len(objs) == 1]):
-        return wr.update_display() # Update in usual cell to have widgets working, but not single object which displays outside of box
+    Writer(*objs,widths = widths) # Display itself

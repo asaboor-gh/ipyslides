@@ -193,6 +193,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '--jp-content-font-color1': 'var(--primary-fg)', # same as primary
             '--jp-content-font-color2': 'var(--heading-color)',
             '--jp-content-font-color3': 'var(--secondary-fg)',
+            '--jp-widgets-label-color': 'var(--primary-fg)', # That's also needed
             'color': 'var(--primary-fg)', # important to put here for correct export
             '.raw-text, code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': 'var(--jp-code-font-family) !important',
@@ -430,6 +431,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'flex-direction':'row',
                 'column-gap':'0.2em',
                 'height':'auto',
+                'box-sizing':'border-box !important',
                 '> *': {'box-sizing':'border-box !important',}
             },
         },

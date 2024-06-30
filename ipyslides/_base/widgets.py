@@ -8,43 +8,21 @@ from dataclasses import dataclass
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from IPython import get_ipython
 from tldraw import TldrawWidget
+
 from . import styles, _layout_css
 from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
 from .intro import get_logo, how_to_print
 from ..utils import html
-from ..formatters import get_slides_instance
+from .. import formatters as fmtrs
 
-
-class _Output(ipw.Output):
-    "Should only be used internally"
-    _ipyshell = get_ipython()
-    _hooks = (sys.displayhook, _ipyshell.display_pub if _ipyshell else None) # store once in start
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,**kwargs)
-
-    def __enter__(self):
-        if self._ipyshell:
-            self._chooks = (sys.displayhook, self._ipyshell.display_pub) # current hooks in top capture
-            sys.displayhook, self._ipyshell.display_pub = self._hooks
-        
-        super().__enter__()
-
-    def __exit__(self, etype, evalue, tb):
-        if self._ipyshell:
-            sys.displayhook, self._ipyshell.display_pub = self._chooks
-
-        super().__exit__(etype, evalue, tb)
-
-
-class Output(_Output):
+class Output(fmtrs._Output):
     __doc__ = ipw.Output.__doc__ # same docs as main
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
 
     def __enter__(self):
-        if (slides := get_slides_instance()):
+        if (slides := fmtrs.get_slides_instance()):
             self._slides = slides
             self._other = self._slides._hold_running()
             self._slides._in_output = True

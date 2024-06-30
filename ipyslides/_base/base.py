@@ -1,5 +1,5 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
-import os, re, textwrap, math
+import os, re, textwrap
 import traceback
 from pathlib import Path
 from contextlib import ContextDecorator
@@ -7,7 +7,7 @@ from contextlib import ContextDecorator
 from IPython.display import display
 
 from inspect import signature
-from ipywidgets import interact_manual
+from ipywidgets import interact as ipyinteract
 
 from .widgets import Widgets
 from .navigation import Navigation
@@ -192,7 +192,7 @@ class BaseSlides:
                 sources.append(slide.get_source(name=f'{slide._source["language"].title()}: Slide {slide.index}'))
             
         if sources:
-            return self.frozen(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources))
+            return self.frozen(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources),{})
         else:
             self.html('p', 'No source code found.', css_class='info')
 
@@ -218,50 +218,64 @@ class BaseSlides:
         self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
     
-    def on_refresh(self,func):
+    def interact(self, __func = None, __options={'manual': True, 'height':''}, **kwargs):
         """
-        Decorator for inserting dynamic content on slide, define a function with keyword argumnets for ipywidgets.interact.
-        Content updates when `slide.update_display` is called or when `Slides.refresh` is called.
-        ::: note-tip
-            You can use it to dynamically fetch a value from a database or API while presenting, without having to run the cell again.
-        ::: note
-            - No return value is required. If any, should be like `display('some value')`, otherwise it will be ignored.
-            
+        ipywidgets's interact functionality tailored for ipyslides's needs. It adds 'height' as additional
+        parameter in options. Set height to avoid flickering output.
+
         ```python run source
         import time
         slides = get_slides_instance() # Get slides instance, this is to make doctring runnable
         source.display() # Display source code of the block
-        @slides.on_refresh
-        def update_time(): # Can have kwargs for extra widgets to control function
-            print('Local Time: {3}:{4}:{5}'.format(*time.localtime())) # Print time in HH:MM:SS format
+        @slides.interact({'height':'2em'}, date = False)
+        def update_time(date): 
+            local_time = time.localtime()
+            objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
+            if date:
+                objs.append('Date: {0}/{1}/{2}'.format(*local_time))
+            slides.write(*objs)
         ```
+
         ::: note-warning
             Do not use this to change global state of slides, because that will affect all slides.
-        
-        ::: note-info
-            Use `ipywidgets.interact/interactive` if you need to change state on each widget change without extra click every time.
         """
-        def new_func(**kwargs):
-            with self._hold_running():
-                btn.icon = 'minus'
-                try:
-                    func(**kwargs)
-                    btn.remove_class('Rerun')
-                finally:
-                    btn.icon = 'plus'
+        if not isinstance(__options, dict):
+            raise TypeError('__options should be a dictionary with keys "manual" and "height"')
 
-        kwargs = {k:v.default for k, v in signature(func).parameters.items()}  
-        *controls, btn, _ = interact_manual(new_func, **kwargs).widget.add_class('on-refresh').children
+        def inner(func, options={}):
+            def new_func(**kws):
+                with self._hold_running():
+                    if (btn := getattr(new_func, 'btn', None)):
+                        btn.icon = 'minus'
+                        try:
+                            func(**kws)
+                            btn.remove_class('Rerun')
+                        finally:
+                            btn.icon = 'plus'
+                    else:
+                        func(**kws)
 
-        for w in controls:
-            w.observe(lambda change: btn.add_class('Rerun'))
+            _interact = ipyinteract.options(manual = options.get('manual', True), manual_name='', auto_display=True)
+            widget = _interact(new_func, **kwargs).widget.add_class('on-refresh')
+            widget.out.layout.height = options.get('height','')
 
-        btn.add_class('Refresh-Btn').add_class('Menu-Item')
-        btn.layout = {'width': 'auto', 'height':'28px'}
-        btn.description = ''
-        btn.tooltip = 'Click to refresh output'
-        btn.icon = 'plus'
-        btn.click() # first run to ensure no dynamic inside
+            if (btn := getattr(widget, 'manual_button', None)):
+                new_func.btn = widget.manual_button
+                for w in widget.kwargs_widgets:
+                    w.observe(lambda change: btn.add_class('Rerun'))
+
+                btn.add_class('Refresh-Btn').add_class('Menu-Item')
+                btn.layout = {'width': 'auto', 'height':'28px'}
+                btn.tooltip = 'Click to refresh output'
+                btn.icon = 'plus'
+                btn.click() # first run to ensure no dynamic inside
+        
+        if __func is None:
+            return inner
+        elif isinstance(__func, dict): # Only options passed 
+            return lambda func: inner(func, __func)
+        else:
+            inner(__func, __options)
         
     def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
@@ -544,7 +558,7 @@ class BaseSlides:
         with self.build(-1):
             skipper.set_target() # Set target for skip button
             self.write('## Dynamic Content')
-            self.run_doc(self.on_refresh,'Slides')
+            self.run_doc(self.interact,'Slides')
             self.run_doc(self.on_load,'Slides')
             self.this.get_source().display() # this refers to slide being built
     
@@ -571,7 +585,7 @@ class BaseSlides:
         ''', trusted= True)
         
         # Update proxy with source code
-        with s8.proxies[0].capture(): # or with self.capture_proxy(s8.number, 0):
+        with s8.proxies[0]: # or with self.capture_proxy(s8.number, 0):
             s8.get_source().display()
         
         with self.build(-1):

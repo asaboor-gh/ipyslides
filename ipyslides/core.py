@@ -1,6 +1,6 @@
 import sys, os, json, re, textwrap, math
 from contextlib import contextmanager, suppress
-from collections import Iterable
+from collections.abc import Iterable
 from itertools import zip_longest
 
 from IPython import get_ipython
@@ -17,7 +17,7 @@ _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 from ._base.widgets import ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
-from ._base.slide import Slide, _build_slide
+from ._base.slide import Proxy, Slide, _build_slide
 from ._base.icons import Icon as _Icon, loading_svg
 from .__version__ import __version__
 
@@ -272,11 +272,6 @@ class Slides(BaseSlides):
     def this(self):
         "Access slide currently being built. Useful for operations like set_css etc."
         return self._running_slide
-
-    @property
-    def in_proxy(self):
-        "Check if proxy is capturing output."
-        return getattr(self, "_in_proxy", None)
     
     @property
     def in_output(self):
@@ -466,7 +461,7 @@ class Slides(BaseSlides):
         self._update_toc()  # Update toc before displaying app to include all sections
         self._update_widgets()  # Update before displaying app
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
-        self.frozen(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer")).display()  # Display slides within another box
+        self.frozen(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"),{}).display()  # Display slides within another box
         
 
     def close_view(self):
@@ -560,11 +555,11 @@ class Slides(BaseSlides):
         self.verify_running(
             "proxy placeholder can only be used in a slide constructor!"
         )
-        return self.this._proxy_private(text)
+        return Proxy(text, self.this)
     
     def capture_proxy(self, slide_number, proxy_index):
-        "This is a shortcut for `Slides[slide_number,].proxies[proxy_index].capture()`."
-        return self[slide_number,].proxies[proxy_index].capture()
+        "This is a shortcut for `Slides[slide_number,].proxies[proxy_index]`."
+        return self[slide_number,].proxies[proxy_index]
     
     def _fix_slide_number(self, number):
         "For this, slide_number in function is set to be position-only argement."
@@ -778,13 +773,10 @@ class fsep:
     _app = _private_instance
     
     def __init__(self):
-        self._app.verify_running()
-        if self._app.in_output or self._app.in_proxy:
-            raise RuntimeError("Cant use fsep in a capture context other than slides!")
-        
+        self._app.verify_running("Cant use fsep in a capture context other than slides!")
         self._app.this._widget.add_class("Frames")
         self._app.this._fsep = getattr(self._app.this, '_fsep',self._app.format_css({}).as_widget()) # create once
-        self._app.frozen(self._app.this._fsep, metadata={"FSEP": "","skip-export":"no need in export"}).display()
+        self._app.frozen(self._app.this._fsep, {"FSEP": "","skip-export":"no need in export"}).display()
 
     @classmethod
     def loop(cls, iterable):

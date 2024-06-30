@@ -19,11 +19,10 @@ from PIL import Image as pilImage, ImageGrab
 from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
-import ipywidgets as ipw
 
-from .formatters import XTML, frozen, fix_ipy_image, htmlize, serializer, _inline_style
+from .formatters import ipw, XTML, frozen, fix_ipy_image, htmlize, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
-from .writer import Writer, CustomDisplay, AltForWidget
+from .writer import Writer, CustomDisplay, AltForWidget, _Output
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -399,10 +398,7 @@ class alt_clip(CustomDisplay):
     def display(self):
         if self._obj is not None:
             display(self._obj, metadata = {"skip-export":"This was abondoned by alt_clip function to export!"})
-        
-        alt(lambda w: serializer.get_func(self._rep)(w.children[-1]),
-            ipw.VBox([ipw.HBox([self._paste, self._upload]).add_class('paste-btns'), self._rep]).add_class("paste-box"), 
-        ).display() # must be in alt to be able to export
+        display(ipw.VBox([ipw.HBox([self._paste, self._upload]).add_class('paste-btns'), self._rep]).add_class("paste-box"))
 
     def _paste_clip(self, btn):
         # overwrite always as it is from clipboard
@@ -600,20 +596,14 @@ def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} cl
     if suffix and suffix not in 'red green blue yellow cyan magenta gray'.split():
         raise ValueError(f'Invalid suffix {suffix!r}, should be one of [red, green, blue, yellow, cyan, magenta, gray]')
     
-    make_grid = False # If only one object, make it grid to remove extra gap
     if len(objs) == 1:
-        make_grid = True
-        objs = ['',objs[0],''] # Add empty strings to make it three columns and center it, otherwise it will not work as block
-        widths = [1,98,1] # 1% width for empty strings and make content central
-    
-    wr = Writer(*objs,widths = widths) # Displayed
-    wr._box.add_class('block' + (f'-{suffix}' if suffix else '')) # Add class to box
-    if make_grid:
-        wr._box.layout.display = 'grid' # Make it grid, will be automatically exported to html with this style
-        wr._box.layout.grid_gap = '1em 0px' # Remove extra gap in columns, but keep row gap
-        
-    if not any([wr._context, len(objs) == 1]):
-        return wr.update_display() # Update in usual cell to have widgets working
+        out = _Output().add_class('block' + (f'-{suffix}' if suffix else '')) # _Output for adding cite etc.
+        with out:
+            Writer(*objs)
+        display(out, metadata = {'UPDATE', out._model_id}) # For auto refresh
+    else:
+        Writer(*objs,widths = widths).add_class('block' + (f'-{suffix}' if suffix else '')) # Displayed
+
     
 def block(*objs, widths = None): 
     """
