@@ -342,7 +342,7 @@ class Slides(BaseSlides):
             slide.set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='footnote'):
-        """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
+        """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite`;key`;.
         `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.set_layout(..., ncol_refs=N)`.
 
         ::: note
@@ -566,7 +566,7 @@ class Slides(BaseSlides):
             return number
         
         code = self.shell.get_parent().get('content',{}).get('code','')
-        p = "\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
+        p = r"\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
         matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(slide{p})|(from_markdown{p})|(sync_with_file{p})", code)
         number = int(self._next_number) # don't use same attribute, that will be updated too
         if matches:
@@ -638,7 +638,7 @@ class Slides(BaseSlides):
                     if prm != frm: 
                         edit_idx = idx
                         if (not self.this._split_frames) and ('```multicol' in frm): # show all columns if edit is inside multicol
-                            edit_idx += (len(re.findall('^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE)) + 1)
+                            edit_idx += (len(re.findall(r'^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE)) + 1)
             
             s.first_frame() # be at start first
             for _ in range(edit_idx): 
@@ -715,7 +715,7 @@ class Slides(BaseSlides):
 
         if not tocs_dict:
             children.append(self.format_html(
-                "No sections found!, create sections with markdown syntax alert`section\`content\``"
+                r"No sections found!, create sections with markdown syntax alert`section`;content`;`"
             ).as_widget())
         else:
             for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):

@@ -283,7 +283,7 @@ def _build_css(selector, data):
     
     content = re.sub(r'\$', ',', content) # Replace $ with ,
     content = re.sub(r'\n\s+\n|\n\n','\n', content) # Remove empty lines after tab is replaced above
-    content = re.sub('\t', '    ', content) # 4 space instead of tab is bettter option
+    content = re.sub(r'\t', '    ', content) # 4 space instead of tab is bettter option
     content = re.sub(r'\^',' ', content) # Remove left over ^ from start of main selector
         
     return content
@@ -689,7 +689,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     return XTML(_full_doc)
 
 def run_doc(obj,prepend_str = None):
-    "Execute python code block inside docstring of an object. Block should start with '\`\`\`python run'."
+    "Execute python code block inside docstring of an object. Block should start with '```python run'."
     sig(obj,prepend_str = prepend_str).display()
     from .xmd import parse # Import here to avoid circular import
     parse(inspect.getdoc(obj), returns = False)

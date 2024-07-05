@@ -10,7 +10,7 @@ import numpy as np
 ```multicol
 A
 +++
-This \`{var_name}\` is a code from above and will be substituted with the value of var_name as:
+This `;{var_name}`; is a code from above and will be substituted with the value of var_name as:
 `{var_name}`
 ```
 ::: note-warning
@@ -101,7 +101,7 @@ _special_funcs = {
     "details": "text",
     "styled": "style objects with CSS classes and inline styles",
     "zoomable": "zoom a block of html when hovered",
-    "center": "text or \`{variable}\`", # should be last
+    "center": "text or `;{variable}`;", # should be last
 }
 
 _code_ = """
@@ -191,7 +191,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
 
     
     # ```toc title\n text\n``` as block start with new line 
-    all_matches = re.findall(r"\n\`\`\`toc(.*?)\n\`\`\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
+    all_matches = re.findall(r"\n```toc(.*?)\n```", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for match in all_matches:
         title, summary = [v.strip() for v in (match + '\n').split('\n', 1)] # Make sure a new line is there and then strip
         jstr = json.dumps({"title": title, "summary" : summary.strip()}) # qoutes fail otherwise
@@ -357,8 +357,10 @@ class XMarkdown(Markdown):
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
 
-        if len(re.findall('^```', xmd, flags = re.MULTILINE)) % 2:
+        if len(re.findall(r'^```', xmd, flags = re.MULTILINE)) % 2:
             raise ValueError("Some blocks started with ```, but never closed!")
+        
+        xmd = xmd.replace("`;", "&#96;")  # Escape backticks suffixed by ;
 
         # included file before other parsing
         xmd = self._resolve_files(xmd)
@@ -366,7 +368,6 @@ class XMarkdown(Markdown):
         xmd = textwrap.dedent(
             xmd 
         )  # Remove leading spaces from each line, better for writing under indented blocks
-        xmd = re.sub("\\\`", "&#96;", xmd)  # Escape backticks
         xmd = self._resolve_nested(
             xmd
         )  # Resolve nested objects in form func`?text?` to func`html_repr`
@@ -412,7 +413,7 @@ class XMarkdown(Markdown):
         all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags=re.DOTALL)
         for match in all_matches:
             with open(match, "r", encoding="utf-8") as f:
-                text = "\n" + f.read() + "\n"
+                text = "\n" + f.read().replace('`;','&#96;') + "\n" # Escape backticks in file as well
                 text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
         return text_chunk
 
@@ -456,7 +457,7 @@ class XMarkdown(Markdown):
             return [out,] # list 
 
     def _parse_multicol(self, data, header, _class):
-        "Returns parsed block or columns or code, input is without \`\`\` but includes langauge name."
+        "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = data.split("+++")  # Split by columns
         cols = [self.convert(col) for col in cols]
 
@@ -568,8 +569,8 @@ class XMarkdown(Markdown):
                     args = [
                         v.replace("__COM__", ",")
                         for v in m1.strip('[]') # [] will be there
-                        .replace("\=", "__EQ__")
-                        .replace("\,", "__COM__")
+                        .replace(r"\=", "__EQ__")
+                        .replace(r"\,", "__COM__")
                         .split(",")
                     ]  # respect escaped = and ,
                     kws = {
@@ -582,7 +583,7 @@ class XMarkdown(Markdown):
                         _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)).value # If no argument, use default 
                         html_output = html_output.replace(f"{func}{m1}`{m2}`", handle_var(_out), 1)
                     except Exception as e:
-                        raise Exception(f"Error in {func}{m1}`{m2}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside {m1}")
+                        raise Exception(rf"Error in {func}{m1}`{m2}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside {m1}")
 
         # Replace columns at end because they will convert HTML
         all_cols = re.findall(
@@ -619,7 +620,7 @@ def parse(xmd, returns = False):
      {.info}
      +++
      # Second column is 60% wide
-     This \`{var_name}\` is code from above and will be substituted with the value of var_name
+     This `;{var_name}`; is code from above and will be substituted with the value of var_name
      ```
 
      ```python
@@ -652,9 +653,9 @@ def _get_ns(text, depth, **kwargs): # kwargs are preferred
 
     ls, gs = fr.f_locals, fr.f_globals
     matches = [match.strip() for match in re.findall(
-        r"[^\\]\`\{(.*?)[\.\[\:\!\s+].*?\}\`", # should not start with \`
+        r"\`\{(.*?)[\.\[\:\!\s+].*?\}\`",
         text.replace('}`', ' }`'), # needs a space if only variable
-        flags = re.DOTALL) if not re.search("\{|\}", match)]
+        flags = re.DOTALL) if not re.search(r"\{|\}", match)]
     
     ns = {} 
     for m in matches:

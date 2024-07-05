@@ -185,7 +185,7 @@ class Code:
         lines, n1 = linecache.getlines(frame.f_code.co_filename), frame.f_lineno
         offset = 0 # going back to zero indent level
         
-        while (len(lines) > n1 - offset >= 0) and re.match('^\t?^\s+', lines[n1 - offset]): 
+        while (len(lines) > n1 - offset >= 0) and re.match(r'^\t?^\s+', lines[n1 - offset]): 
             offset = offset + 1
              
         _source = ''.join(lines[n1 - offset:])

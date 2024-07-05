@@ -160,7 +160,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         _bg_fg = {'background': 'var(--secondary-bg)', 'color': 'var(--primary-fg)'} # Should match inherit theme
     else: # Override color and background if provided by theme
         _bg_fg = {} 
-        items = [b.strip().split() for b in ''.join(re.findall(f'{_class}\s+?{{(.*?)}}',_style)).replace(':',' ').rstrip(';').split(';')]
+        items = [b.strip().split() for b in ''.join(re.findall(rf'{_class}\s+?{{(.*?)}}',_style)).replace(':',' ').rstrip(';').split(';')]
         for item in items:
             if len(item) == 2 and item[0] in ('background','color'):
                 _bg_fg[item[0]] = item[1]      

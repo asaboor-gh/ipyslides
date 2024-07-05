@@ -10,7 +10,7 @@ def demo_slides(slides):
     
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
     slides.set_citations({
-            'pf': 'This is refernce to FigureWidget using alert`cite\`pf\`` syntax',
+            'pf': 'This is refernce to FigureWidget using alert`cite`;pf`;` syntax',
             'This': 'I was cited for no reason',
         }, mode = 'footnote')
 
@@ -157,7 +157,7 @@ def demo_slides(slides):
                 fig, ax = plt.subplots()
                 x = np.linspace(0,idx,50)
                 ax.plot(x,np.sin(x))
-                ax.set_title(f'$f(x)=\sin(x)$, 0 < x < {idx+1}')
+                ax.set_title(rf'$f(x)=\sin(x)$, 0 < x < {idx+1}')
                 ax.set_xlim([0,18])
                 ax.set_axis_off()
                 slides.write(s.focus_lines([idx - 10]),ax,widths=[60,40])
@@ -234,7 +234,7 @@ def demo_slides(slides):
         )
         s.get_source().display(True)
 
-    slides.build(-1, slides.fmt('''
+    slides.build(-1, slides.fmt(r'''
     %++
     ## $ \LaTeX $ in Slides
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
@@ -243,7 +243,7 @@ def demo_slides(slides):
                                 
     --                           
     ::: note-tip
-        Varibale formatting alongwith $ \LaTeX $ alert` \`{var}\` → `{var}`` is seamless.
+        Varibale formatting alongwith $ \LaTeX $ alert` `;{var}`; → `{var}`` is seamless.
     
     --
     ```multicol 50 50
