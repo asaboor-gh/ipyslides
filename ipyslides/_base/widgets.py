@@ -237,6 +237,11 @@ class Widgets:
             btn.layout.min_width = 'max-content' #very important parameter
 
         self._active_start(self.footerbox)
+    
+    def sync_jupyter_colors(self):
+        "Pick correct jupyter theme colors if Inherit theme selected, before exporting to HTML."
+        if self.theme.value == "Inherit":
+            self.iw.msg_tojs = "SetColors"
 
     def _deactivate(self):
         for w in getattr(self, '_aws',[]):

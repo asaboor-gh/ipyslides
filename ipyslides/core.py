@@ -342,7 +342,7 @@ class Slides(BaseSlides):
             slide.set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='footnote'):
-        """Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite`;key`;.
+        r"""Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
         `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.set_layout(..., ncol_refs=N)`.
 
         ::: note
@@ -715,7 +715,7 @@ class Slides(BaseSlides):
 
         if not tocs_dict:
             children.append(self.format_html(
-                r"No sections found!, create sections with markdown syntax alert`section`;content`;`"
+                r"No sections found!, create sections with markdown syntax alert`section\`content\``"
             ).as_widget())
         else:
             for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):

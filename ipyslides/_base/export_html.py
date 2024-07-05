@@ -5,10 +5,10 @@ not by end user.
 import os
 import textwrap
 from contextlib import suppress
+
 from .export_template import doc_html, slides_css
 from . import styles
 from ..writer import _fmt_html
-from ..utils import get_child_dir
 
 _script = '''<script>
     let box = document.getElementsByClassName('SlideBox')[0];
@@ -100,10 +100,6 @@ class _HhtmlExporter:
         if self.main.widgets.theme.value == "Inherit":  # jupyterlab Inherit themes colors to export
             if self.main.widgets.iw._colors:
                 theme_kws["colors"] = self.main.widgets.iw._colors
-                self.main.widgets.iw._colors = {} # reset as user can change jupyter theme again          
-            else:
-                self.main.widgets.iw.msg_tojs = "SetColors" # only send from here as this only matters in export
-                return None
 
         theme_css = styles.style_css(**theme_kws, _root=True)
         _style_css = slides_css.replace('__theme_css__', theme_css) # They have style tag in them.
@@ -171,8 +167,8 @@ class _HhtmlExporter:
             f.write(content) 
             
     
-    def export_html(self, path = 'slides.html', overwrite = False):
-        """Build beautiful html slides that you can print.
+    def export_html(self, path = 'Slides.html', overwrite = False):
+        """Build html slides that you can print.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
@@ -184,31 +180,18 @@ class _HhtmlExporter:
             - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF.
         """
-        return self._export_html(path=path, overwrite=overwrite, called_by_button=False)
-    
-    def _export_html(self, path = 'slides.html', overwrite = False, called_by_button=False):
-        _path = os.path.splitext(path)[0] + '.html' if path != 'slides.html' else path
-        content = self._htmlize()
-        if content is None:
-            if called_by_button:
-                return 'RECLICK'
-            else:
-                return print("Inherit theme selected: Run export_html function again to export with jupyter theme colors!")
-
-        self._writefile(_path, content, overwrite = overwrite)
+        self.main.widgets.sync_jupyter_colors() # Would be fixed on rerun if not already
+        _path = os.path.splitext(path)[0] + '.html' if path != 'Slides.html' else path
+        self._writefile(_path, self._htmlize(), overwrite)
         
     def _export(self,btn):
         "Export to HTML slides on button click."
-        _dir = get_child_dir('ipyslides-export', create = True)
-        path = os.path.join(_dir, 'slides.html')
-
+        path = 'Slides.html'
         if os.path.isfile(path) and not self.main.widgets.checks.confirm.value:
+            self.main.widgets.sync_jupyter_colors() # Meanwhile can ensure Inherit colors
             return self.main.notify(f'File {path!r} already exists. Select overwrite checkbox if you want to replace it.')
         
-        out = self._export_html(path, overwrite = self.main.widgets.checks.confirm.value, called_by_button=True)
-        if out == 'RECLICK':
-            self.main.notify(f"{self.main.alert('Inherit theme selected:')} Click 'Export to HTML File' button again to export with jupyter theme colors!")
-        else:
-            self.main.notify(f'File saved: {path!r}',10)
-            with suppress(BaseException):
-                os.startfile(path) # Does not work on some systems, so safely continue.
+        self.export_html(path, overwrite = self.main.widgets.checks.confirm.value)
+        self.main.notify(f'File saved: {path!r}',10)
+        with suppress(BaseException): # Does not work on some systems, so safely continue.
+            os.startfile(path) 

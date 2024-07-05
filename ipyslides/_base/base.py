@@ -102,12 +102,12 @@ class BaseSlides:
         
         **Following syntax works only under currently building slide:**
         
-        - alert`notes`;This is slide notes`;`  to add notes to current slide
-        - alert`cite`;key`;` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
-        - With citations mode set as 'footnote', you can add alert`refs`;ncol`;` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
-        - alert`section`;content`;` to add a section that will appear in the table of contents.
-        - alert`toc`;Table of content header text`;` to add a table of contents. For block type toc, see below.
-        - alert`proxy`;placeholder text`;` to add a proxy that can be updated later with `Slides[slide_number,].proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
+        - alert`notes\`This is slide notes\``  to add notes to current slide
+        - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
+        - With citations mode set as 'footnote', you can add alert`refs\`ncol\`` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
+        - alert`section\`content\`` to add a section that will appear in the table of contents.
+        - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
+        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides[slide_number,].proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
         - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
         - Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
@@ -122,19 +122,19 @@ class BaseSlides:
         
         **Other syntax can be used everywhere in markdown:**
         
-        - Variables can be replaced with their HTML value (if no other formatting given) using alert``;{variable}`;` 
+        - Variables can be replaced with their HTML value (if no other formatting given) using alert`\`{variable}\`` 
             (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
-            alert``;{variable:format_spec}`;` or alert``;{variable!conversion}`;`, that will take preference.
+            alert`\`{variable:format_spec}\`` or alert`\`{variable!conversion}\``, that will take preference.
         
             ::: note-info
                 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
                 - Variables are substituted from top level scope (Notebook's `locals()`/`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
                                                
-        - A syntax alert`func`;&#63;Markdown&#63;`;` will be converted to alert`func`;Parsed HTML`;` in markdown. Useful to nest special syntax.
-        - Escaping a backtick is a mess in Markdown and Python >= 3.12, we convert it to html entity if followed by semicolon, i.e. alert``;; → `;`.
-        - alert`include`;markdown_file.md`;` to include a file in markdown format.
+        - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
+        - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+        - alert`include\`markdown_file.md\`` to include a file in markdown format.
         - Two side by side columns can be added inline using alert`|&#124;[width optionally here in 1-99] Column A |&#124; Column B |&#124;` sytnax.
-        - Block multicolumns are made using follwong syntax, column separator is tiple plus `+++`:
+        - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
         ```markdown     
          ```multicol widthA widthB
@@ -151,7 +151,7 @@ class BaseSlides:
          slides.write('Hello, I was written from python code block using slides instance.')
          ```
         ```
-        and source then can be emded with `;{source}`; syntax.
+        and source then can be emded with \`{source}\` syntax.
         
         - A whole block of markdown can be CSS-classed using syntax
         ```markdown
@@ -175,11 +175,11 @@ class BaseSlides:
                 [markdown extensions](https://python-markdown.github.io/extensions/) and 
                 [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-                `__format__` method in your class enables to use {obj} syntax in python formatting and `;{obj}`; in extended Markdown.
+                `__format__` method in your class enables to use {obj} syntax in python formatting and \`{obj}\` in extended Markdown.
         
-        - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]`;arg0`;`) include:
+        - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         
-        color[blue]`color[blue]`;text`;`, color[yellow,skyblue]`color[yellow,skyblue]`;text`;`, ''') + '\n' + ', '.join(f'alert`{k}`;{v}`;`' for k,v in _special_funcs.items()),
+        color[blue]`color[blue]\`text\``, color[yellow,skyblue]`color[yellow,skyblue]\`text\``, ''') + '\n' + ', '.join(rf'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
         returns = True
         ))
    
@@ -515,7 +515,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Adding Speaker Notes')
             (skipper := self.goto_button('Skip to Dynamic Content', icon='arrowr')).display()
-            self.write([f'You can use alert`notes`;notes content`;` in markdown.\n{{.note .success}}\n',
+            self.write([rf'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
@@ -545,12 +545,12 @@ class BaseSlides:
         with self.build(-1):
             self.write(r'''
                 ## Citations and Sections
-                Use syntax alert`cite`;key`;` to add citations which should be already set by `Slides.set_citations(data, mode)` method.
+                Use syntax alert`cite\`key\`` to add citations which should be already set by `Slides.set_citations(data, mode)` method.
                 Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
                 `Slides.settings.set_layout(..., ncol_refs = int)`. cite`A`
                        
-                Add sections in slides to separate content by alert`section`;text`;`. Corresponding table of contents
-                can be added with alert`toc`;title`;`/alert``;`;`;toc title\\n summary of current section \\n`;`;`;`.
+                Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
+                can be added with alert`toc\`title\``/alert`\`\`\`toc title\\n summary of current section \\n\`\`\``.
             ''')
             self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
@@ -619,11 +619,11 @@ class BaseSlides:
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
         
         with self.build(-1):
-            self.write('''
+            self.write(r'''
             ## Focus on what matters
             - There is a zoom button on top bar which enables zooming of certain elements. This can be toggled by `Z` key.
             - Most of supported elements are zoomable by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.
-            - You can also enable zooming for an object/widget by wrapping it inside `;Slide.zoomable`; function conveniently.
+            - You can also enable zooming for an object/widget by wrapping it inside \`Slide.zoomable\` function conveniently.
             - You can also enable by manully adding `zoom-self`, `zoom-child` classes to an element. To prevent zooming under as `zoom-child` class, use `no-zoom` class.
             
             ::: zoom-self block-red

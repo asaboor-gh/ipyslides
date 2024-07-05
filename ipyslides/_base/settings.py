@@ -400,11 +400,14 @@ class LayoutSettings:
         if self.widgets.checks.notes.value:
             self._slides.notes.display() # Update notes window if open
         
+        self.widgets.sync_jupyter_colors() # Inherit theme only
+        
         if self.theme_dd.value == "Inherit":
             msg = "THEME:jupyterlab"
         else:
             msg = 'THEME:dark' if "Dark" in self.theme_dd.value else 'THEME:light'
         self.widgets.iw.msg_tojs = msg # changes theme of board
+
 
     def _toggle_tocbox(self, btn):
         if self.widgets.tocbox.layout.height == "0":

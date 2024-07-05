@@ -1,4 +1,4 @@
-"""
+r"""
 Extended Markdown
 
 You can use the following syntax:
@@ -10,7 +10,7 @@ import numpy as np
 ```multicol
 A
 +++
-This `;{var_name}`; is a code from above and will be substituted with the value of var_name as:
+This \`{var_name}\` is a code from above and will be substituted with the value of var_name as:
 `{var_name}`
 ```
 ::: note-warning
@@ -101,7 +101,7 @@ _special_funcs = {
     "details": "text",
     "styled": "style objects with CSS classes and inline styles",
     "zoomable": "zoom a block of html when hovered",
-    "center": "text or `;{variable}`;", # should be last
+    "center": r"text or \`{variable}\`", # should be last
 }
 
 _code_ = """
@@ -360,10 +360,10 @@ class XMarkdown(Markdown):
         if len(re.findall(r'^```', xmd, flags = re.MULTILINE)) % 2:
             raise ValueError("Some blocks started with ```, but never closed!")
         
-        xmd = xmd.replace("`;", "&#96;")  # Escape backticks suffixed by ;
 
         # included file before other parsing
         xmd = self._resolve_files(xmd)
+        xmd = re.sub(r"\\\`", "&#96;", xmd)  # Escape backticks after files added
 
         xmd = textwrap.dedent(
             xmd 
@@ -413,7 +413,7 @@ class XMarkdown(Markdown):
         all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags=re.DOTALL)
         for match in all_matches:
             with open(match, "r", encoding="utf-8") as f:
-                text = "\n" + f.read().replace('`;','&#96;') + "\n" # Escape backticks in file as well
+                text = "\n" + f.read() + "\n" 
                 text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
         return text_chunk
 
@@ -604,7 +604,7 @@ class XMarkdown(Markdown):
 
 
 def parse(xmd, returns = False):
-    """Parse extended markdown and display immediately.
+    r"""Parse extended markdown and display immediately.
     If you need output html, use `returns = True` but that won't execute python code blocks.
 
     **Example**
@@ -620,7 +620,7 @@ def parse(xmd, returns = False):
      {.info}
      +++
      # Second column is 60% wide
-     This `;{var_name}`; is code from above and will be substituted with the value of var_name
+     This \`{var_name}\` is code from above and will be substituted with the value of var_name
      ```
 
      ```python
@@ -653,7 +653,7 @@ def _get_ns(text, depth, **kwargs): # kwargs are preferred
 
     ls, gs = fr.f_locals, fr.f_globals
     matches = [match.strip() for match in re.findall(
-        r"\`\{(.*?)[\.\[\:\!\s+].*?\}\`",
+        r"[^\\]\`\{(.*?)[\.\[\:\!\s+].*?\}\`", # should not start with \`
         text.replace('}`', ' }`'), # needs a space if only variable
         flags = re.DOTALL) if not re.search(r"\{|\}", match)]
     

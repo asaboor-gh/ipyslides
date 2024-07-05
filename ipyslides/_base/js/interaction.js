@@ -171,7 +171,7 @@ function handleToastMessage(toast, msg) {
         div.style = "padding:8px;font-size:16px;" // inline fonts are better
         div.innerHTML = msg.content;
         let btn = document.createElement('button');
-        btn.innerHTML = "✕";
+        btn.innerHTML = "<i class='fa fa-close'></i>";
         btn.onclick = onClick;
         toast.appendChild(btn);
         toast.appendChild(div);
@@ -240,6 +240,7 @@ export function render({ model, el }) {
         let box = style.parentNode.parentNode;
         box.tabIndex = -1; // Need for event listeners, should be at top
         box.setAttribute("uid", model.get("_uid"));
+        setColors(model, box); // For Inherit theme, it is important
         
         // Laser pointer
         let cursor = box.getElementsByClassName('LaserPointer')[0];

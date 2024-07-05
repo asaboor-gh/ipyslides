@@ -10,7 +10,7 @@ def demo_slides(slides):
     
     slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
     slides.set_citations({
-            'pf': 'This is refernce to FigureWidget using alert`cite`;pf`;` syntax',
+            'pf': r'This is refernce to FigureWidget using alert`cite\`pf\`` syntax',
             'This': 'I was cited for no reason',
         }, mode = 'footnote')
 
@@ -243,7 +243,7 @@ def demo_slides(slides):
                                 
     --                           
     ::: note-tip
-        Varibale formatting alongwith $ \LaTeX $ alert` `;{var}`; → `{var}`` is seamless.
+        Varibale formatting alongwith $ \LaTeX $ alert` \`{var}\` → `{var}`` is seamless.
     
     --
     ```multicol 50 50

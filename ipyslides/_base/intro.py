@@ -114,7 +114,8 @@ screenshots from system tool into alert`Slides.alt_clip` area on slides if you e
 alert`Show Image Paste GUI` toggle in settings panel. On Linux, you need alert`xclip` or alert`wl-paste` installed.
 
 ::: note-tip
-    You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
+    - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
+    - In case of Inherit theme selected, you can ensure Jupyterlab colors in exported HTML by rerunning `export_html` or reclicking export button.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
