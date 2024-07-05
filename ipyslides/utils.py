@@ -288,30 +288,24 @@ def _build_css(selector, data):
         
     return content
 
-def _format_css(props : dict, allow_root_attrs = False):
+def _format_css(props : dict):
     if not isinstance(props, dict):
         raise TypeError("props should be a dictionay of CSS selectors and properties.")
     uclass = get_unique_css_class()
     _all_css = '' # All css
     root_attrs = {k:v for k,v in props.items() if not isinstance(v,dict)}
-    allowed_attrs = {k:v for k,v in root_attrs.items() if k.startswith("back")} # only allow background CSS to change at root, include backdrop-filter too
-    if allow_root_attrs:
-        if allowed_attrs: # Applies to background mostly
-            _all_css += _build_css((f'{uclass}.SlidesWrapper, {uclass} .NavWrapper.Show, {uclass} .BackLayer .Front',), allowed_attrs)
-            if (root_attrs := {k:v for k,v in root_attrs.items() if k not in allowed_attrs}):
-                print(f'Skipping attributes: \n{root_attrs}\nat root level of props!\nOnly background-related attributes are allowed at top!' )
-
-    if root_attrs and not allow_root_attrs:
-        print(f'Skipping attributes: \n{root_attrs}\nat root level of props!')
     
-    props = {k:v for k,v in props.items() if isinstance(v,dict)} # Remove root attrs after they are set above for background, no more use
+    if root_attrs:
+        raise ValueError(f'CSS selectors should be at top level, found properties instead! \n{root_attrs}')
+    
+    props = {k:v for k,v in props.items() if (isinstance(v,dict) or k.lstrip(' ^<'))} # Remove root attrs and top level access
     _all_css += _build_css((f'{uclass} .SlideArea',),props) # Build css from dict
     return html('style', _all_css)
     
 @_sub_doc(css_docstring = _css_docstring)
 def format_css(props : dict):
     "{css_docstring}"
-    return _format_css(props, allow_root_attrs = False)
+    return _format_css(props)
 
 
 def alt(func_or_html, obj, /):

@@ -25,6 +25,7 @@ _script = '''<script>
         let scale = scaleH > scaleW ? scaleW : scaleH;
         if (scale) { // Only add if not null or somethings
             document.documentElement.style.setProperty('--contentScale',scale);
+            document.documentElement.style.setProperty('--paddingBottom',Number(23/scale) + "px");
         };
     };
     window.dispatchEvent(new window.Event('resize')); // First time programatically
@@ -47,7 +48,7 @@ class _HhtmlExporter:
         self.main.widgets.buttons.export.on_click(self._export) # Export button
         
     def _htmlize(self):
-        navui_class = '' if 'Show' in self.main.widgets.navbox._dom_classes else 'NavHidden' 
+        navui_class = '' if 'ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
         content = ''
         for item in self.main:
             objs = item.contents # get conce
@@ -107,8 +108,8 @@ class _HhtmlExporter:
         theme_css = styles.style_css(**theme_kws, _root=True)
         _style_css = slides_css.replace('__theme_css__', theme_css) # They have style tag in them.
         _code_css = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}','') # remove id from code here
-        
-        return doc_html(_code_css,_style_css, content, _script).replace(
+        extra_class = 'ShowFooter' if 'ShowFooter' in self.main._box._dom_classes else ''
+        return doc_html(_code_css,_style_css, content, _script, extra_class).replace(
             '__FOOTER__', self._get_clickables()).replace(
             '__HEIGHT__', f'{int(254/theme_kws["aspect"])}mm') # Slides height is determined by aspect ratio.
     
@@ -164,8 +165,7 @@ class _HhtmlExporter:
                 
     def _writefile(self, path, content, overwrite = False):
         if os.path.isfile(path) and not overwrite:
-            print(f'File {path!r} already exists. Use overwrite=True to overwrite.')
-            return
+            return print(f'File {path!r} already exists. Use overwrite=True to overwrite.')
         
         with open(path,'w', encoding="utf-8") as f: # encode to utf-8 to handle emojis
             f.write(content) 
@@ -201,7 +201,11 @@ class _HhtmlExporter:
         "Export to HTML slides on button click."
         _dir = get_child_dir('ipyslides-export', create = True)
         path = os.path.join(_dir, 'slides.html')
-        out = self._export_html(path, overwrite = True, called_by_button=True)
+
+        if os.path.isfile(path) and not self.main.widgets.checks.confirm.value:
+            return self.main.notify(f'File {path!r} already exists. Select overwrite checkbox if you want to replace it.')
+        
+        out = self._export_html(path, overwrite = self.main.widgets.checks.confirm.value, called_by_button=True)
         if out == 'RECLICK':
             self.main.notify(f"{self.main.alert('Inherit theme selected:')} Click 'Export to HTML File' button again to export with jupyter theme colors!")
         else:

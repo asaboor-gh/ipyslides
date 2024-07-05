@@ -168,22 +168,22 @@ class LayoutSettings:
             raise RuntimeError("No slides yet to set CSS.")
         return self # for chaining set_methods
 
-    def set_bg_image(self, src=None, opacity=0.25, filter='blur(2px)', contain = False):
-        """Adds glassmorphic effect to the background with image. `src` can be a url or a local image path.
+    def set_bg_image(self, src=None, opacity=0.5, filter='blur(2px)', contain = False):
+        """Adds background image. `src` can be a url or a local image path or an svg.
         Overall background will not be exported, but on each slides will be. This is to keep exported file size minimal.
         """
         if not src: 
             self.widgets.htmls.glass.value = ""  # clear
             self._bg_image = ""
             return
-
-        self._bg_image = f"""
+        
+        if (image := self._resolve_img(src, '100%')):
+            self._bg_image = f"""
             <style>
-                {_layout_css.glass_css(opacity= 1 - opacity, filter=filter, contain=contain)}
+                {_layout_css.glass_css(opacity= opacity, filter=filter, contain=contain)}
             </style>
-            {self._slides.image(src,width='100%')}
-            <div class="Front"></div>""" # opacity of layer would be opposite to supplied
-        self.widgets.htmls.glass.value = self._bg_image
+            {image}"""
+            self.widgets.htmls.glass.value = self._bg_image
         return self # for chaining set_methods
 
     def set_code_theme(
@@ -242,21 +242,25 @@ class LayoutSettings:
             if isinstance(v, (int,float)):
                 kwargs[k] = f"{v}px"
         
+        if (image := self._resolve_img(src, width)):
+            self.widgets.htmls.logo.value = image 
+            self.widgets.htmls.logo.layout = dict(**kwargs, height='max-content', margin='0 0 0 auto')
+        return self # for chaining set_methods
+    
+    def _resolve_img(self, src, width):
         if isinstance(src, Path):
             src = str(src)  # important for svg checking below
         
         if isinstance(src, str):
             if "<svg" in src and "</svg>" in src:
-                image = src
+                return src
             else:
                 if src.startswith("clip:"):
                     src = self._slides.clips_dir / src[5:] # don't strip it
-                image = fix_ipy_image( # Do not use big figure image syntax here, simple image only
+                return fix_ipy_image( # Do not use big figure image syntax here, simple image only
                     Image(src, width=width), width=width
-                ).value  
-            self.widgets.htmls.logo.value = image 
-            self.widgets.htmls.logo.layout = dict(**kwargs, height='max-content', margin='0 0 0 auto')
-        return self # for chaining set_methods
+                ).value
+        return ''
 
     def set_footer(self, text="", numbering=True, date="today"):
         "Set footer text. `text` should be string. `date` should be 'today' or string of date. To skip date, set it to None or ''"
@@ -286,14 +290,15 @@ class LayoutSettings:
         date = self._footer_kws["date"]
 
         if any([text, date]):
-            self._slides.widgets.navbox.add_class("Show")
+            self._slides._box.add_class("ShowFooter")
         else:
-            self._slides.widgets.navbox.remove_class("Show")
+            self._slides._box.remove_class("ShowFooter")
 
         if date:
             text += (
                 " | " if text else ""
             ) + f'{today(fg = "var(--secondary-fg)") if date == "today" else date}'
+        
         if numbering and update_widget:
             self._slides.widgets._snum.layout.display = ""
         else:

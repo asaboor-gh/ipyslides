@@ -108,7 +108,7 @@ theme_colors = {
         'primary_fg':'var(--jp-content-font-color0,black)',
         'primary_bg':'var(--jp-layout-color0,white)',
         'secondary_bg':'var(--jp-cell-editor-background,whitesmoke)',
-        'secondary_fg':'var(--jp-content-font-color3,#454545)',
+        'secondary_fg':'var(--jp-content-font-color3, #454545)', 
         'alternate_bg':'var(--jp-layout-color2,whitesmoke)',
         'accent_color':'var(--jp-brand-color1,#8988)', # May be a neutral color is good for all themes for buttons
         'pointer_color':'var(--jp-error-color1,red)',
@@ -188,13 +188,15 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
         **(_root_dict if not _root else {':root': _root_dict}),
         '^.SlidesWrapper, .jupyter-widgets': { # widgets have their own fonts, but make is same
             'font-family': 'var(--jp-content-font-family) !important',
-            # Reset these vars under slides
-            '--jp-content-font-color0': 'var(--primary-fg)',
-            '--jp-content-font-color1': 'var(--primary-fg)', # same as primary
-            '--jp-content-font-color2': 'var(--heading-color)',
-            '--jp-content-font-color3': 'var(--secondary-fg)',
-            '--jp-widgets-label-color': 'var(--primary-fg)', # That's also needed
             'color': 'var(--primary-fg)', # important to put here for correct export
+            # Reset these vars under slides if not Inherit theme, otherwise it won't work
+            **({} if '--jp-content-font-color0' in colors['primary_fg'] else {
+                '--jp-content-font-color0': 'var(--primary-fg)',
+                '--jp-content-font-color1': 'var(--primary-fg)', # same as primary
+                '--jp-content-font-color2': 'var(--heading-color)',
+                '--jp-content-font-color3': 'var(--secondary-fg)',
+                '--jp-widgets-label-color': 'var(--primary-fg)', # That's also needed
+            }),
             '.raw-text, code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': 'var(--jp-code-font-family) !important',
                 'font-size':'90% !important',   
@@ -296,6 +298,9 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             }),
 
         },
+        '^.ShowFooter .SlideArea' : {
+            'padding-bottom': 'var(--paddingBottom, 23px) !important', # 20px navbar + 3px progressbar
+        },
         '.SlideArea': {
             'position': 'absolute !important',
             'width':'254mm !important',
@@ -313,7 +318,6 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'position': 'relative !important', # absolute content should not go outside
                 'margin': f'{margin} !important', # for frames margin-top will be defined, don't use here
                 'padding': '0 !important',
-                'padding-bottom': 'var(--paddingBottom, 0px) !important', # Set by JS dynamically
                 'width': f'{cwidth}% !important',
                 'max-width': f'{cwidth}% !important',
                 'box-sizing': 'border-box !important',

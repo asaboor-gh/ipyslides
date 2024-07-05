@@ -479,7 +479,7 @@ class Slides(BaseSlides):
             ]  # Get all section indexes before current slide
             return idxs[-1] if idxs else 0  # Get last section index
 
-    def _switch_slide(self, old_index, new_index):  
+    def _switch_slide(self, old_index, new_index):
         uclass = f".{self.uid} .TOC"
         slide = self._iterable[new_index]
         self._renew_objs = (
@@ -489,7 +489,6 @@ class Slides(BaseSlides):
                 "style",
                 f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
             ))
-
         self._update_tmp_output(*self._renew_objs)
         
         # Do this here, not in navigation module, as slider can jump to any value

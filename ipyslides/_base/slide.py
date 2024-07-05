@@ -7,7 +7,7 @@ from IPython.utils.capture import RichOutput
 
 from . import styles
 from .widgets import Output # Fixed one
-from ..utils import XTML, html, alert, _format_css, _sub_doc, _css_docstring
+from ..utils import XTML, html, alert, _format_css, _build_css, _sub_doc, _css_docstring
 from ..xmd import capture_content
 from ..formatters import _Output, serializer, widget_from_data
     
@@ -58,7 +58,7 @@ class Slide:
     _animations = {'main':'slide_h','frame':'appear'}
     _overall_css = html('style','')
     def __init__(self, app, number):
-        self._widget = _Output(layout = dict(margin='auto',padding='1em', visibility='hidden')).add_class("SlideArea")
+        self._widget = _Output(layout = dict(margin='auto',padding='16px', visibility='hidden')).add_class("SlideArea")
         self._app = app
             
         self._css = html('style','')
@@ -492,11 +492,25 @@ class Slide:
         self._css = old_slide_css # Restore old slide CSS
     
     @_sub_doc(css_docstring = _css_docstring)
-    def set_css(self,props : dict):
+    def set_css(self, props : dict):
         """Attributes at the root level of the dictionary will be applied to the slide. You can add CSS classes by `Slide.set_css_classes`.
         use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
         {css_docstring}"""
-        self._css = _format_css(props, allow_root_attrs = True)
+        props = {k:v for k,v in props.items() if k.lstrip(' ^<')} # Don't let user access top level to modify layout
+        
+        back_props = {}
+        for k,v in props.copy().items():
+            if not isinstance(v, dict):
+                value = props.pop(k) # Remove all top level
+                if k.startswith('back'):
+                    back_props[k] = value # All background related things should go to Top
+        
+        _css = ''
+        if back_props:
+            _css += self._app.html('style', _build_css((f".{self._app.uid}.SlidesWrapper",), back_props)).value
+
+        _css += _format_css(props).value # don't add unique numbered class, applies to all
+        self._css = XTML(_css)
         
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
@@ -524,8 +538,8 @@ class Slide:
         "Readonly dom classes on this slide sepaarated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
-    def set_bg_image(self, src, opacity=0.25, filter='blur(2px)', contain=False):
-        """Adds glassmorphic effect to the background with image. `src` can be a url or a local image path.
+    def set_bg_image(self, src, opacity=0.5, filter='blur(2px)', contain=False):
+        """Adds background image. `src` can be a url or a local image path or an svg.
         
         ::: note-tip
             - This function alongwith `self.clear` enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.

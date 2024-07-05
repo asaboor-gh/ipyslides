@@ -328,9 +328,6 @@ def layout_css(accent_color, aspect):
                 "left": "0 !important",
                 "bottom": "3px !important", # leave space for progressbar
                 "width": "100% !important",
-                "^.Show": {
-                    "background": "var(--primary-bg)", # Do not use important, let user change it with set_css
-                },
                 "^,^ > div": {
                     "padding": "0px",
                     "margin": "0px",
@@ -867,7 +864,7 @@ def glass_css(opacity=0.75, filter='blur(2px)', contain=False):
         raise ValueError(f"blur expects a CSS filter function like 'blur(2px)', 'invert()' etc. or None, got {filter}")
     
     uclass = get_unique_css_class()
-    return f"""{uclass} .BackLayer, {uclass} .BackLayer .Front {{
+    return f"""{uclass} .BackLayer {{
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -877,7 +874,7 @@ def glass_css(opacity=0.75, filter='blur(2px)', contain=False):
         overflow:hidden;
         margin:0;
     }}
-    {uclass} .BackLayer img{{
+    {uclass} .BackLayer :is(img, svg) {{
         position: absolute;
         left:0;
         top:0;
@@ -885,9 +882,6 @@ def glass_css(opacity=0.75, filter='blur(2px)', contain=False):
         height: 100%;
         object-fit:{('contain' if contain else 'cover')} !important;
         filter: {filter};
-    }}
-    {uclass} .BackLayer .Front {{
-        background: var(--primary-bg);
         opacity:{opacity};
     }}
     {uclass} .BackLayer.jupyter-widgets-disconnected {{

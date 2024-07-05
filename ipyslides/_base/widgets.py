@@ -96,12 +96,13 @@ class _Checks:
     """
     Instantiate under `Widgets` class only.
     """
-    reflow  = ipw.Checkbox(value=False,description='Reflow Content',layout=auto_layout)
-    notes   = ipw.Checkbox(value=False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
+    reflow  = ipw.Checkbox(value = False,description='Reflow Content',layout=auto_layout)
+    notes   = ipw.Checkbox(value = False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
     navgui  = ipw.Checkbox(value = True, description='Show Nav. GUI',layout=auto_layout)
     paste   = ipw.Checkbox(value = True, description='Show Image Paste GUI',layout=auto_layout)
+    confirm = ipw.Checkbox(value = False, description='Overwrite Existing File',layout=auto_layout)
 
 @dataclass(frozen=True)
 class _Sliders:
@@ -178,6 +179,7 @@ class Widgets:
                 HTML(html('details',[html('summary','<b>HTML File Export</b>'), how_to_print]).value,layout = _html_layout),
                 self.checks.paste,
                 self.buttons.export,
+                self.checks.confirm,
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
             ],layout=Layout(width='auto',height='max-content',overflow_y='scroll',padding='12px',margin='0')),

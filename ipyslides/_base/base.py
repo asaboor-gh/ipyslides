@@ -469,7 +469,7 @@ class BaseSlides:
         self.settings.set_footer('IPySlides Documentation', date=False)
 
         with self.build(0): # Title page
-            self.this.set_bg_image(Path(__file__).parent.parent.parent / 'slide.png',1, filter='blur(10px)', contain=True)
+            self.this.set_bg_image(self.get_logo(),0.25, filter='blur(10px)', contain=True)
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center(self.fmt('''
                 alert`Abdul Saboor`sup`1`

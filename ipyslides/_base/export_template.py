@@ -1,12 +1,12 @@
 # Template for building HTML from slides 
 
-def doc_html(code_css, style_css, content, script):
+def doc_html(code_css, style_css, content, script, extra_class=""):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>IPySlides</title>
+    <title>Slides</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
@@ -44,7 +44,7 @@ def doc_html(code_css, style_css, content, script):
 <div>
     <div class="click-wrapper"> __FOOTER__ </div>
     <!-- Classes below work for both scenerios -->
-    <div class="SlidesWrapper">
+    <div class="SlidesWrapper {extra_class}">
     {content}
     </div>
 </div>
@@ -113,7 +113,6 @@ section .SlideArea {
     box-sizing: border-box !important;
 }
 section .SlideBox > .Footer { 
-    background: var(--primary-bg); /* no important here */
     padding: 0 !important; margin: 0 !important; 
     position:absolute !important;
     left:0;
@@ -170,7 +169,7 @@ a.goto-button:active {
 
 @media print {
     * {
-        --contentScale : 1 !important; /* Deafult for printing at same value */
+        --contentScale : 1 !important; /* Defualt for printing at same value */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -213,6 +212,9 @@ a.goto-button:active {
         position: static !important; /*override from document as printing absolute is issue */
         overflow: hidden !important;
         page-break-inside: avoid !important;
+    }
+    .ShowFooter .SlideArea {
+        --paddingBottom: 23px; /* Default at sacle 1*/
     }
 }
 </style>
