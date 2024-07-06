@@ -61,6 +61,7 @@ class _Buttons:
     end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
     info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
     export  = Button(description="Export to HTML File",layout= Layout(width='auto',height='auto'))
+    syncjlc = Button(description="Sync Jupyterlab Colors",layout= Layout(width='auto',height='auto'))
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -138,6 +139,7 @@ class Widgets:
         self.notes   = NotesWidget(value = 'Notes Preview')
         self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget'), self.toggles.draw]).add_class('Draw-Wrapper')
         self.drawer.layout = dict(width='100%',height='0',overflow='hidden') # height will be chnaged by button
+        self.buttons.syncjlc.on_click(self.sync_jupyter_colors)
         
         # Layouts build on these widgets
         self.controls = HBox([
@@ -178,6 +180,7 @@ class Widgets:
                 self.checks.navgui, self.checks.reflow,
                 HTML(html('details',[html('summary','<b>HTML File Export</b>'), how_to_print]).value,layout = _html_layout),
                 self.checks.paste,
+                self.buttons.syncjlc,
                 self.buttons.export,
                 self.checks.confirm,
                 self._tmp_out,
@@ -238,11 +241,16 @@ class Widgets:
 
         self._active_start(self.footerbox)
     
-    def sync_jupyter_colors(self):
+    def sync_jupyter_colors(self,btn=None):
         "Pick correct jupyter theme colors if Inherit theme selected, before exporting to HTML."
         if self.theme.value == "Inherit":
             self.iw.msg_tojs = "SetColors"
-
+            self.buttons.syncjlc.layout.display = ''
+            if btn:
+                self._push_toast(f'Inherit theme colors synced successfully.')
+        else:
+            self.buttons.syncjlc.layout.display = 'none'
+            
     def _deactivate(self):
         for w in getattr(self, '_aws',[]):
             w.remove_class("Active-Start")  

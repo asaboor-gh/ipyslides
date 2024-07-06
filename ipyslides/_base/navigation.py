@@ -38,7 +38,6 @@ class Navigation:
             self.btn_settings.icon  = 'minus'
             self.btn_settings.tooltip = "Close Settings [G]"
             self.widgets.panelbox.layout.height = "100%"
-            self.widgets.sync_jupyter_colors() # enable latest colors if user exports file
         else:
             self.btn_settings.icon = 'plus' #'ellipsis-v'
             self.btn_settings.tooltip = "Open Settings [G]"

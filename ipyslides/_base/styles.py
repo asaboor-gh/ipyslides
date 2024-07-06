@@ -218,7 +218,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             },
             '::-webkit-scrollbar-thumb': {
                 'background':'transparent !important',
-                '^:hover': {'background':'var(--alternate-bg) !important',},
+                '^:hover': {'background':'#8988 !important',},
             },
             '::-webkit-scrollbar-corner': {'display':'none',},
             '.widget-text input': {
@@ -491,16 +491,11 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 '^.code-no-focus': {'opacity':'0.3 !important'},
                 '^.code-focus':{'text-shadow':'0 0 1px var(--primary-bg)'},
             },
-            '^::-webkit-scrollbar': {'background':'var(--secondary-bg) !important',},
-            '^::-webkit-scrollbar-corner': {'display': 'none',},
         },
         '.highlight, pre, .raw-text': {
-            '^:hover::-webkit-scrollbar': {
-                    'background':'var(--secondary-bg) !important'
-                },
-                '^:hover::-webkit-scrollbar-thumb': {
-                    'background':'var(--alternate-bg) !important'
-                },
+            '^:hover::-webkit-scrollbar-thumb': {
+                'background':'#8988 !important'
+            },
         },
         'span.lang-name': {
             'color':'var(--accent-color)',

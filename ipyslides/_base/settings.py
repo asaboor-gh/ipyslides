@@ -400,7 +400,7 @@ class LayoutSettings:
         if self.widgets.checks.notes.value:
             self._slides.notes.display() # Update notes window if open
         
-        self.widgets.sync_jupyter_colors() # Inherit theme only
+        self.widgets.sync_jupyter_colors() # Will enable/disable a button
         
         if self.theme_dd.value == "Inherit":
             msg = "THEME:jupyterlab"

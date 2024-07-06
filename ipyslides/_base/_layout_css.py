@@ -721,7 +721,7 @@ def layout_css(accent_color, aspect):
                 "::-webkit-scrollbar-thumb": {
                     "background": "transparent !important",
                     "^:hover": {
-                        "background": "var(--alternate-bg) !important",
+                        "background": "#8988 !important",
                     },
                 },
                 "::-webkit-scrollbar-corner": {

@@ -1,6 +1,6 @@
 _attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
              'image','image_clip', 'svg','iframe', 'format_html','format_css','frozen', 'run_doc',
-            'raw', 'rows', 'zoomable','html','sig','styled', 'doc','code','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
+            'raw', 'rows', 'zoomable','html','sig','styled', 'doc','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
 __all__ = sorted(_attrs)
@@ -693,13 +693,6 @@ def run_doc(obj,prepend_str = None):
     sig(obj,prepend_str = prepend_str).display()
     from .xmd import parse # Import here to avoid circular import
     parse(inspect.getdoc(obj), returns = False)
-    
-def code(callable):
-    "Returns full code of a callable, you can just pass callable into `write` command or use `ipyslides.Slides.code.cast`."
-    try:
-        return XTML(htmlize(callable))
-    except:
-        raise TypeError(f'Object {callable} is not a callable')
 
 def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markdown flow
     "Returns today's date in given format."
