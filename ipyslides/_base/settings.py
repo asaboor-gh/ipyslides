@@ -7,7 +7,7 @@ import math
 
 from pathlib import Path
 from inspect import signature
-from IPython.display import Image
+from IPython.display import Image, SVG
 
 from ..formatters import fix_ipy_image, code_css
 from ..xmd import parse
@@ -169,7 +169,7 @@ class LayoutSettings:
         return self # for chaining set_methods
 
     def set_bg_image(self, src=None, opacity=0.5, filter='blur(2px)', contain = False):
-        """Adds background image. `src` can be a url or a local image path or an svg.
+        """Adds background image. `src` can be a url or a local image path or an svg str.
         Overall background will not be exported, but on each slides will be. This is to keep exported file size minimal.
         """
         if not src: 
@@ -231,8 +231,8 @@ class LayoutSettings:
         self.fontsize_slider.value = value
         return self # for chaining set_methods
 
-    def set_logo(self, src, width=60, top=0, right=0):
-        "`src` should be PNG/JPEG file name or SVG string or None. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
+    def set_logo(self, src, width=60, top=4, right=4):
+        "`src` can be a url or a local image path or an svg str. width, top, right can be given as int or in valid CSS units, e.g. '16px'."
         if not src: # give as None, '' etc
             self.widgets.htmls.logo.value = ''
             return None
@@ -253,13 +253,14 @@ class LayoutSettings:
         
         if isinstance(src, str):
             if "<svg" in src and "</svg>" in src:
-                return src
+                return src.replace('<svg', f'<svg style="width:{width};height:auto" ') # extra space at end
             else:
                 if src.startswith("clip:"):
                     src = self._slides.clips_dir / src[5:] # don't strip it
-                return fix_ipy_image( # Do not use big figure image syntax here, simple image only
-                    Image(src, width=width), width=width
-                ).value
+                try:
+                    return fix_ipy_image(Image(src, width=width), width=width).value
+                except:
+                    return self._resolve_img(SVG(src)._repr_svg_(), width=width)
         return ''
 
     def set_footer(self, text="", numbering=True, date="today"):

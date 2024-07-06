@@ -539,7 +539,7 @@ class Slide:
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
     def set_bg_image(self, src, opacity=0.5, filter='blur(2px)', contain=False):
-        """Adds background image. `src` can be a url or a local image path or an svg.
+        """Adds background image. `src` can be a url or a local image path or an svg str.
         
         ::: note-tip
             - This function alongwith `self.clear` enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
