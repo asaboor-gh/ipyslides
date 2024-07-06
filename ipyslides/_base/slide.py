@@ -10,6 +10,7 @@ from .widgets import Output # Fixed one
 from ..utils import XTML, html, alert, _format_css, _build_css, _sub_doc, _css_docstring
 from ..xmd import capture_content
 from ..formatters import _Output, serializer, widget_from_data
+from ._layout_css import background_css
     
 
 class Proxy(Output): # Not from _Output, need to avoid slide-only content here
@@ -123,7 +124,7 @@ class Slide:
         "Called when a slide is loaded into view. Use it to register notifications etc."
         self._widget.layout.height = '100%' # Trigger a height change to reset scroll position
         start = time.time()
-        self._app.widgets.htmls.glass.value = self._bg_image or getattr(self._app.settings,'_bg_image','') # slide first
+        self._app.widgets.htmls.bglayer.value = self._bg_image
 
         try: # Try is to handle errors in on_load, not for attribute errors, and also finally to reset height
             if hasattr(self,'_on_load') and callable(self._on_load):
@@ -493,7 +494,7 @@ class Slide:
     
     @_sub_doc(css_docstring = _css_docstring)
     def set_css(self, props : dict):
-        """Attributes at the root level of the dictionary will be applied to the slide. You can add CSS classes by `Slide.set_css_classes`.
+        """Attributes at the root level of the dictionary are only picked if they are related to background. You can add CSS classes by `Slide.set_css_classes`.
         use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
         {css_docstring}"""
         props = {k:v for k,v in props.items() if k.lstrip(' ^<')} # Don't let user access top level to modify layout
@@ -502,15 +503,19 @@ class Slide:
         for k,v in props.copy().items():
             if not isinstance(v, dict):
                 value = props.pop(k) # Remove all top level
-                if k.startswith('back'):
+                if 'background' in k:
                     back_props[k] = value # All background related things should go to Top
+                else:
+                    print(f"Ignored property {k!r}. At top level, only background properties are applied!")
+                    if 'backdrop-filter' in k:
+                        print("'backdrop-filter' is only useful in context of background image. Use `Slide.set_bg_image(src, filter)`.")
         
         _css = ''
         if back_props:
-            _css += self._app.html('style', _build_css((f".{self._app.uid}.SlidesWrapper",), back_props)).value
-
-        _css += _format_css(props).value # don't add unique numbered class, applies to all
-        self._css = XTML(_css)
+            _css += _build_css((f".{self._app.uid}.SlidesWrapper",), back_props)
+        
+        _css += ('\n' + _build_css((f".{self._app.uid} .SlideArea",), props))
+        self._css = self._app.html('style', _css)
         
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
@@ -538,18 +543,28 @@ class Slide:
         "Readonly dom classes on this slide sepaarated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
-    def set_bg_image(self, src, opacity=0.5, filter='blur(2px)', contain=False):
-        """Adds background image. `src` can be a url or a local image path or an svg str.
+    def set_bg_image(self, src=None, opacity=0.5, filter='blur(2px)', contain=False):
+        """Adds background image to this slide. `src` can be a url or a local image path or an svg str.
         
         ::: note-tip
-            - This function alongwith `self.clear` enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
+            - This function enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
             - This will be exported to HTML file.
         """
-        overall = getattr(self._app.settings, '_bg_image','')
-        self._app.settings.set_bg_image(src, opacity=opacity, filter=filter, contain=contain)
-        self._bg_image = self._app.widgets.htmls.glass.value # Update for this slide
-        self._app.settings._bg_image = overall # Reset that back for other slides 
-        self._app.navigate_to(self.index) # Go there to see effects while changing on_load
+        if not src: 
+            self._app.widgets.htmls.bglayer.value = ""  # clear
+            self._bg_image = ""
+            return
+        
+        if (image := self._app.settings._resolve_img(src, '100%')):
+            self._bg_image = f"""
+            <style>
+                {background_css(opacity= opacity, filter=filter, contain=contain)}
+            </style>
+            {image}"""
+            self._app.widgets.htmls.bglayer.value = self._bg_image
+            if not self._contents:
+                self.set_css({}) # Remove empty CSS
+            self._app.navigate_to(self.index) # Go there to see effects
     
     def _instance_animation(self,name):
         "Create unique animation for this slide instance on fly"

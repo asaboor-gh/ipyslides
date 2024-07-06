@@ -33,7 +33,6 @@ class LayoutSettings:
         
         self._layout = {'cwidth':100, 'scroll': True, 'centered': True, 'aspect': 16/9,'ncol_refs': 2}
         self._code_lineno = True
-        self._bg_image = ""
 
         self.width_slider = self.widgets.sliders.width
         self.fontsize_slider = self.widgets.sliders.fontsize
@@ -159,31 +158,14 @@ class LayoutSettings:
     @_sub_doc(css_docstring=_css_docstring)
     def set_css(self, props: dict):
         """Set CSS for all slides. This loads on slides navigation, so you can include keyframes animations as well.
-        Individual slide's CSS set by `slides[index].set_css` will override this.
+        Individual slide's CSS set by `slides[number,].set_css` will override this. 
+        Attributes at the root level of the dictionary are only picked if they are related to background.
         {css_docstring}
         """
         if len(self._slides[:]) >= 1:
             self._slides[0]._set_overall_css(props)
         else:
             raise RuntimeError("No slides yet to set CSS.")
-        return self # for chaining set_methods
-
-    def set_bg_image(self, src=None, opacity=0.5, filter='blur(2px)', contain = False):
-        """Adds background image. `src` can be a url or a local image path or an svg str.
-        Overall background will not be exported, but on each slides will be. This is to keep exported file size minimal.
-        """
-        if not src: 
-            self.widgets.htmls.glass.value = ""  # clear
-            self._bg_image = ""
-            return
-        
-        if (image := self._resolve_img(src, '100%')):
-            self._bg_image = f"""
-            <style>
-                {_layout_css.glass_css(opacity= opacity, filter=filter, contain=contain)}
-            </style>
-            {image}"""
-            self.widgets.htmls.glass.value = self._bg_image
         return self # for chaining set_methods
 
     def set_code_theme(

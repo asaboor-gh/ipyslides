@@ -90,7 +90,7 @@ class _Htmls:
     cursor  = HtmlWidget().add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
-    glass   = HTML().add_class('BackLayer') # For glass effect
+    bglayer = HTML().add_class('BackLayer') # For glass effect
 
 @dataclass(frozen=True)
 class _Checks:
@@ -206,7 +206,7 @@ class Widgets:
                 btn.observe(close_quick_menu, names=["value"])
         
         self.mainbox = VBox([
-            self.htmls.glass, # This is the glass pane, should be before everything, otherwise it will cover the slide area
+            self.htmls.bglayer, # should be before everything, otherwise it will cover the slide area
             self.htmls.loading, 
             self.htmls.toast,
             self.htmls.main,

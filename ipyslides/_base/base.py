@@ -525,7 +525,11 @@ class BaseSlides:
         
         self.build(-1, 'section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
         
-        with self.build(-1): 
+        with self.build(-1) as s:
+            s.set_css({
+                'background': 'linear-gradient(45deg, var(--alternate-bg), var(--accent-color), var(--alternate-bg))',
+                '.highlight': {'background':'#8984'}
+            }) 
             self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
             self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
                 

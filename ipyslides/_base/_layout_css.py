@@ -859,7 +859,7 @@ def zoom_hover_css():
     )
 
 
-def glass_css(opacity=0.75, filter='blur(2px)', contain=False):
+def background_css(opacity=0.75, filter='blur(2px)', contain=False):
     if filter and not '(' in str(filter):
         raise ValueError(f"blur expects a CSS filter function like 'blur(2px)', 'invert()' etc. or None, got {filter}")
     
@@ -876,13 +876,21 @@ def glass_css(opacity=0.75, filter='blur(2px)', contain=False):
     }}
     {uclass} .BackLayer :is(img, svg) {{
         position: absolute;
-        left:0;
-        top:0;
+        left:50% !important;
+        top:50% !important;
+        transform: translate(-50%,-50%) !important; /* Make at center */
         width: 100%;
         height: 100%;
         object-fit:{('contain' if contain else 'cover')} !important;
         filter: {filter};
         opacity:{opacity};
+    }}
+    {uclass} .BackLayer svg {{
+        max-width: {('100%' if contain else '')} !important;
+        max-height: {('100%' if contain else '')} !important;
+        width: {('' if contain else 'auto')} !important;
+        min-width: {('' if contain else '100%')} !important;
+        min-height: {('' if contain else '100%')} !important;
     }}
     {uclass} .BackLayer.jupyter-widgets-disconnected {{
         display:none;
