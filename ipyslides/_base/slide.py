@@ -541,8 +541,9 @@ class Slide:
         "Readonly dom classes on this slide sepaarated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
-    def set_bg_image(self, src=None, opacity=0.5, filter='blur(2px)', contain=False):
+    def set_bg_image(self, src=None, opacity=1, filter=None, contain=False):
         """Adds background image to this slide. `src` can be a url or a local image path or an svg str.
+        filter is a CSS filter like blur(5px), grayscale() etc.
         
         ::: note-tip
             - This function enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
