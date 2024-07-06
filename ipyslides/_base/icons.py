@@ -166,9 +166,6 @@ for c, r in zip('rlud',(0, 180,-90,90)): # their base svgs should stilll be able
     _icons[f"arrowb{c}"] = _icons["arrowb"].format(size="{size}", color="{color}", rotation=r)
     _icons[f"chevron{c}"] = _icons["chevron"].format(size="{size}", color="{color}", rotation=r)
 
-
-loading_svg = _icons['loading'].format(size='4em',color='var(--accent-color, gray)',rotation=0) # Required outside
-
 class Icon(XTML):
     "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
     available = tuple(sorted(_icons.keys()))

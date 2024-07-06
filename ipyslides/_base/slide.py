@@ -172,6 +172,8 @@ class Slide:
         "Update display of this slide."
         if go_there:
             self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
+            self._app._update_tmp_output(self.css) # Update corresponding CSS but avoid animation here
+            self.set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
         else:
             self._widget.clear_output(wait = True) # Clear, but don't go there
     
@@ -180,17 +182,13 @@ class Slide:
                 display(obj)
                 if hasattr(obj, 'update_display'):
                     obj.update_display()
+            else: # On successful for loop, handle refs at end
+                self._handle_refs()
             
             for p in self._proxies.values():
                 p.update_display()
-
-            self._handle_refs()
-
-        
-        # Update corresponding CSS but avoid animation here for faster and clean update
-        self._app._update_tmp_output(self.css)
-        self.set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
-        self._reset_frames() # after others to take everything into account
+        # after others to take everything into account
+        self._reset_frames()
 
     def _reset_toc(self):
         items = []

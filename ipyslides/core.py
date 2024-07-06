@@ -18,7 +18,7 @@ from ._base.widgets import ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
 from ._base.slide import Proxy, Slide, _build_slide
-from ._base.icons import Icon as _Icon, loading_svg
+from ._base.icons import Icon as _Icon
 from .__version__ import __version__
 
 try:  # Handle python IDLE etc.
@@ -675,15 +675,15 @@ class Slides(BaseSlides):
     def _loading_private(self, btn):
         btn.icon = "minus"
         btn.disabled = True  # Avoid multiple clicks
-        self.widgets.htmls.loading.style.display = "block"
-        self.widgets.htmls.loading.value = loading_svg
+        self.widgets.htmls.loading.layout.display = "block"
+        self.widgets.htmls.loading.value = self.icon('loading', color='var(--accent-color, skyblue)',size='6em').value
         try:
             yield
         finally:
             btn.icon = "plus"
             btn.disabled = False
             self.widgets.htmls.loading.value = ""
-            self.widgets.htmls.loading.style.display = "none"
+            self.widgets.htmls.loading.layout.display = "none"
 
     def _update_widgets(self, btn=None):
         with self._loading_private(self.widgets.buttons.refresh):
