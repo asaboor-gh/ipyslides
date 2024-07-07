@@ -224,7 +224,7 @@ class BaseSlides:
 
         ```python run source
         import time
-        slides = get_slides_instance() # Get slides instance, this is to make doctring runnable
+        slides = get_slides_instance() # Get slides instance, this is to make docstring runnable
         source.display() # Display source code of the block
         @slides.interact({'height':'2em'}, date = False)
         def update_time(date): 
@@ -234,6 +234,9 @@ class BaseSlides:
                 objs.append('Date: {0}/{1}/{2}'.format(*local_time))
             slides.write(*objs)
         ```
+
+        ::: note-tip
+            You can use this inside columns using delayed display trick, like `write('First column', lambda: interact(f, x = 5))`.
 
         ::: note-warning
             Do not use this to change global state of slides, because that will affect all slides.

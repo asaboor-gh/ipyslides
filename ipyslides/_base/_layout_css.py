@@ -184,7 +184,7 @@ def layout_css(accent_color, aspect):
                         'grid-template-columns': '1fr 1fr 1fr !important',
                         'grid-gap': '4px',
                         '> .Refresh-Btn.Menu-Item.Rerun:after': {
-                            'content': '"Output got unsynced, click to refresh"',
+                            'content': '"Sync Output"',
                             'padding-left': '8px',
                             'color': 'red !important',
                         },
@@ -193,9 +193,13 @@ def layout_css(accent_color, aspect):
                             'border-left': '2px solid var(--alternate-bg)',
                             'display': 'grid',
                             'grid-column-start':1,
-                            'grid-column-end': 4,
-                        }
-                    }
+                            'grid-column-end': -1,
+                        },
+                    },
+                    '.columns.writer .widget-vbox.widget-interact.on-refresh' : {'grid-template-columns': '1fr !important',},
+                    '.columns.writer:has(> :last-child:nth-child(2)) .widget-vbox.widget-interact.on-refresh' : {
+                        'grid-template-columns': '1fr 1fr !important', # If two columns, 2 in grid, otherwise 1 only as above
+                    },
                 },
                 "kbd" : {
                     "color":"var(--secondary-fg)",

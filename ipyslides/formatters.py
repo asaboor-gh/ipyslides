@@ -451,7 +451,7 @@ class AltDispalyFormatter:
         with self.reset():
             if not isinstance(obj, ipw.DOMWidget) and (html := serializer.get_html(obj)):
                 slides = get_slides_instance()
-                if slides.this or slides.in_output:
+                if getattr(slides, 'this', None) or getattr(slides, 'in_output', False):
                     display(XTML(html)) # User defined serializers in display as well
                     return {}, {} # Need empty there
                 

@@ -226,7 +226,7 @@ def write(*objs,widths = None):
     ::: note
         - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
-        - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`.
+        - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`. This can also be used to delay display until it is captured in a column.
         - You can use `display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.

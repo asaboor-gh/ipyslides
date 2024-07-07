@@ -232,7 +232,7 @@ function setColors(model, box) {
     model.save_changes();
 }
 
-export function render({ model, el }) {
+function render({ model, el }) {
     model.syncIntervalID = null; // Need for Markdown Sync
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
@@ -314,3 +314,5 @@ export function render({ model, el }) {
 		clearInterval(model.syncIntervalID); // remove it to avoid conflict
 	};
 }
+
+export default { render }

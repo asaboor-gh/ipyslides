@@ -1,21 +1,13 @@
 import uuid
 import traitlets
-import sysconfig
 import anywidget
 
 from pathlib import Path
 from IPython.display import display
 
-def _hot_reload_dev_only(file):
-    path = Path(__file__).with_name('js') / file
-    egg_path = Path(sysconfig.get_paths()["purelib"]) / 'ipyslides.egg-link'
-    if egg_path.exists(): # Package installed as editable
-        return path # Developers
-    return path.read_text() # Normal users 
-
 
 class InteractionWidget(anywidget.AnyWidget):
-    _esm =  _hot_reload_dev_only("interaction.js")
+    _esm =  Path(__file__).with_name('js') / 'interaction.js'
     _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
     _colors = traitlets.Dict().tag(sync=True) # for export
     
@@ -96,7 +88,7 @@ class HtmlWidget(anywidget.AnyWidget):
     """This introduces a trait 'click_state' which would be toggled between 0 and 1 on each click.
     """
     _esm = """
-    export function render({ model, el }) {
+    function render({ model, el }) {
     el.classList.add("jupyter-widgets", "widget-html-content"); // for consistent view
     let div = document.createElement("div");
     div.classList.add("jp-RenderedHTMLCommon","custom-html","jp-mod-trusted");
@@ -115,6 +107,7 @@ class HtmlWidget(anywidget.AnyWidget):
     set_html();
     el.appendChild(div);  
     }
+    export default { render }
     """
     _css = """
     .jp-RenderedHTMLCommon.custom-html *:not(code,span, hr) {
@@ -155,7 +148,7 @@ class HtmlWidget(anywidget.AnyWidget):
         
 
 class NotesWidget(anywidget.AnyWidget):
-    _esm = _hot_reload_dev_only('notes.js')
+    _esm = Path(__file__).with_name('js') / 'notes.js'
     value = traitlets.Unicode('').tag(sync=True)
     popup = traitlets.Bool(False).tag(sync=True)
 

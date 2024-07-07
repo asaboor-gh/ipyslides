@@ -34,6 +34,7 @@ _script = '''<script>
 
     slides.addEventListener("scroll", (event) => {
         slides.classList.add("Scrolling");
+        setTimeout(() => { slides.classList.remove("Scrolling");}, 300); // ensure scrollend if link clicked
     })
     slides.addEventListener("scrollend", (event) => {
         slides.classList.remove("Scrolling");

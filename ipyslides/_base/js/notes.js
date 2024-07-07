@@ -27,7 +27,7 @@ function setValue(notes_win, value) {
 
 var timerId;
 
-export function render({model, el}) {
+function render({model, el}) {
     let notes_win = null; 
     clearInterval(timerId); // remove previous
     model.on("change:popup", () => {
@@ -50,3 +50,5 @@ export function render({model, el}) {
         setValue(notes_win, model.get("value")); 
     })
 }
+
+export default { render }
