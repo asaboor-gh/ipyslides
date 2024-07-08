@@ -2,11 +2,9 @@
 Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
-import sys
 import ipywidgets as ipw
 from dataclasses import dataclass
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
-from IPython import get_ipython
 from tldraw import TldrawWidget
 
 from . import styles, _layout_css
@@ -73,7 +71,10 @@ class _Toggles:
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enable Zooming Items [Z]').add_class('Zoom-Btn')
     laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [L]').add_class('Laser-Btn') 
     draw    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Open Drawing Panel').add_class('Draw-Btn').add_class('Menu-Item')  
-    menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')        
+    menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')   
+
+    setattr(draw, 'fmt_html', lambda: html('a', '', href=f'https://www.tldraw.com', target="_blank", rel="noopener noreferrer", 
+        style='color:var(--accent-color);text-decoration:none;', css_class='fa fa-edit goto-button').value) # send to website on exported slides 
 
 @dataclass(frozen=True)
 class _Htmls:

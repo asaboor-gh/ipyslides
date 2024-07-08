@@ -6,7 +6,6 @@ from contextlib import ContextDecorator
 
 from IPython.display import display
 
-from inspect import signature
 from ipywidgets import interact as ipyinteract
 
 from .widgets import Widgets
@@ -587,11 +586,12 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
-        proxy`source code of slide will be updated here later using slide_handle.proxies[0].capture contextmanager`
+        proxy`source code of slide will be updated here later using slide_handle.proxies[0] contextmanager`
         ''', trusted= True)
         
         # Update proxy with source code
         with s8.proxies[0]: # or with self.capture_proxy(s8.number, 0):
+            display(self.draw_button)
             s8.get_source().display()
         
         with self.build(-1):

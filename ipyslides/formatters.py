@@ -235,7 +235,9 @@ def _inline_style(kws_or_widget):
     
 class Serializer:
     def __init__(self):
-        """HTML serializer for an object to use inside Slides.write."""
+        """HTML serializer for an object to use inside `Slides.write` or `display`.
+        ipywidgets's `HTML`, `Box`, `Output` and their subclasses are already serialized.
+        """
         self._libs = []
     
     def register(self, obj_type, verbose = True):
@@ -318,6 +320,9 @@ class Serializer:
         if isinstance(obj_type, RichOutput): # like frozen and already computed
             return None
         
+        if isinstance(obj_type, ipw.DOMWidget) and hasattr(obj_type, 'fmt_html'):
+            return lambda obj: obj.fmt_html() # From alt, fmt_html is method, so need one arguemnt be there
+        
         if type(obj_type) in serializer.types: # Do not check instance here, need specific information
             for item in serializer.available:
                 if type(obj_type) == item['obj']:
@@ -384,10 +389,7 @@ class Serializer:
                 if 'text/html' in metadata:
                     content += metadata['text/html'] # user given metadata prefrence
                 elif (widget := widget_from_data(data)):
-                    if hasattr(widget, 'fmt_html'):
-                        content += widget.fmt_html() # alt, columns etc.
-                    else:
-                        content += self.get_html(widget)
+                    content += self.get_html(widget) # handles fmt_html
                 else:
                     if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
                         content += data[f'text/{reps[0]}'] # first that works

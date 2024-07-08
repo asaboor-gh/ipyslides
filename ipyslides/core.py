@@ -9,7 +9,7 @@ from IPython.display import display, clear_output
 from .xmd import fmt, parse, xtr, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
-from .formatters import XTML, HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
+from .formatters import HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
@@ -407,31 +407,6 @@ class Slides(BaseSlides):
         self.this._toc_args = (title, summary)
         display(self.this._reset_toc()) # Must to have metadata there
 
-    def _goto_button(
-        self, text, target_slide=None, **kwargs
-    ):
-        if target_slide and not isinstance(target_slide, Slide):
-            raise TypeError(f"target_slide should be Slide, got {type(target_slide)}")
-
-        kwargs["description"] = text  # override description with text
-        kwargs["layout"] = kwargs.get("layout", {"width": "max-content"})
-        button = ipw.Button(**kwargs).add_class("goto-button")
-        setattr(button, "_TargetSlide", target_slide)  # Monkey patching target slide
-
-        def on_click(btn):
-            try:
-                self.wprogress.value = (
-                    btn._TargetSlide.index
-                )  # let it throw error if slide does not exist 
-                btn._TargetSlide.first_frame()
-            except:
-                self.notify(
-                    f"Failed to jump to slide {btn._TargetSlide.index!r}, you may have not used GotoButton.set_target() anywhere!"
-                )
-
-        button.on_click(on_click)
-        return GotoButton(button, app=self)
-
     def goto_button(self, text, **kwargs):
         """
         Initialize a button to jump to given target slide when clicked.
@@ -445,7 +420,17 @@ class Slides(BaseSlides):
             - `goto_button` is converted to a link in exported slides that can be clicked to jump to slide.
             - You can use `.set_target()` on a previous slides and `.display()` on a later slide to create a link that jumps backwards.
         """
-        return self._goto_button(text, target_slide=None, **kwargs)
+        kwargs["description"] = text  # override description with text
+        kwargs["layout"] = kwargs.get("layout", {"width": "max-content"})
+
+        def on_click(btn):
+            if btn._TargetSlide:
+                self.navigate_to(btn._TargetSlide.index)
+                btn._TargetSlide.first_frame()
+            else:
+                self.notify(f"Failed to jump to slide {btn._TargetSlide!r}, you may have not used `GotoButton.set_target()` anywhere!")
+        
+        return GotoButton(app=self, on_click=on_click,**kwargs)
 
     def show(self):
         "Display Slides."

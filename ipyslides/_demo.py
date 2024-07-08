@@ -148,9 +148,8 @@ def demo_slides(slides):
     
     # Animat plot in slides  
     with slides.build_():
-        forward_skipper.display()
         backward_skipper.set_target()
-        slides.write("## Animating Matplotlib!")
+        slides.write("## Animating Matplotlib!", forward_skipper)
 
         with slides.code.context(returns = True) as s:
             for idx in slides.fsep.loop(range(10,19)):
@@ -198,7 +197,7 @@ def demo_slides(slides):
         forward_skipper.set_target()
         
         slides.write(f"### Watching Youtube Video?")
-        slides.write('**Want to do some drawing instead?**\nClick on pencil icon and draw something on [tldraw](https://tldraw.com)!', slides.draw_button)
+        slides.write('**Want to do some drawing instead?** Click on button on the right!', slides.draw_button, widths=[3,1])
 
         slides.write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
 

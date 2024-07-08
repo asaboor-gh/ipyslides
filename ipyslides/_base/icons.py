@@ -1,5 +1,5 @@
 import re
-from textwrap import dedent as _dedent
+import textwrap
 
 from ..formatters import XTML
 
@@ -174,7 +174,7 @@ class Icon(XTML):
             raise KeyError(f'Icon {name} not found. Available icons: {", ".join(_icons.keys())}')
         
         _value = _icons[name].format(color=color, size=size, rotation = rotation).replace('#', '%23')  # replace # with %23 for svg
-        super().__init__(_dedent(_value).strip()) # remove leading and trailing whitespace/newlines
+        super().__init__(textwrap.dedent(_value).strip()) # remove leading and trailing whitespace/newlines
         
     def __repr__(self):
         return f'Icon(css = {self.css}, svg = {self.value!r})'

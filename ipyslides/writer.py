@@ -6,86 +6,53 @@ __all__ = ['write']
 
 from IPython.display import display as display
 
-from .formatters import ipw, XTML, RichOutput, _Output, serializer, frozen, htmlize, _inline_style, supported_reprs, widget_from_data
-from .xmd import parse, get_slides_instance, capture_content, raw
+from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, supported_reprs, widget_from_data
+from .xmd import parse, capture_content
 
 class CustomDisplay:
+    "Use this to create custom display types for object."
     def _ipython_display_(self):
         return self.display()
     
     def display(self):
         raise NotImplementedError("display method must be implemented in subclass")
     
-class GotoButton(CustomDisplay):
-    "Should not be used directly, use `Slides.goto_button` instead."
-    def __init__(self, button, app):
-        self._button = button
-        self._app = app
-        self._button._TargetSlide = None # Will be set by set_target
-        self._target_id = f't-{id(button)}'
+
+class GotoButton(ipw.Button):
+    "Use `Slides.goto_button` function which returns this class."
+    def __init__(self, app, on_click, *args, **kwargs):
+        self._app = app 
+        self._TargetSlide = None # Will be set by set_target
+        self._target_id = f't-{id(self)}'
+        super().__init__(*args,**kwargs)
+        self.add_class("goto-button")
+        self.on_click(on_click)
     
-    def __repr__(self) -> str:
-        return '<GotoButton>'
-    
-    def display(self):
-        alt_link = self._app.html('a',self._button.description, href=f'#{self._target_id}', 
+    def fmt_html(self):
+        return self._app.html('a',self.description, href=f'#{self._target_id}', 
             style='color:var(--accent-color);text-decoration:none;', 
-            css_class=f'goto-button export-only {self._app.icon.get_css_class(self._button.icon)}'
-        )
+            css_class=f'goto-button export-only {self._app.icon.get_css_class(self.icon)}'
+        ).value
     
-        display(self._button, metadata = {'DOMWidget': '---'})
-        display(alt_link) # Hidden from slides
-        
+    def display(self): display(self) # completeness
+
     def set_target(self):
         "Set target slide of goto button. Returns itself."
         self._app.verify_running("GotoButton's target can be set only inside a slide constructor!")
         
-        if getattr(self._button, '_TargetSlide', None):
-            self._button._TargetSlide._target_id = None # Remove previous link
+        if getattr(self, '_TargetSlide', None):
+            self._TargetSlide._target_id = None # Remove previous link
         
-        self._button._TargetSlide = self._app.this
-        self._button._TargetSlide._target_id = self._target_id # Set new link
+        self._TargetSlide = self._app.this
+        self._TargetSlide._target_id = self._target_id # Set new link
         return self 
-    
-
-class AltForWidget(ipw.Box):
-    def __init__(self, func, widget):
-        if not isinstance(widget, ipw.DOMWidget):
-            raise TypeError(f'widget should be a widget, got {widget!r}')
-        if not callable(func):
-            raise TypeError(f'func should be a callable, got {func!r}')
-
-        super().__init__([widget])
-        self._widget = widget
-        self._func = func
-        
-        slides = get_slides_instance()
-        if slides: 
-            with slides._hold_running(): # To prevent dynamic content from being added to alt
-                with capture_content() as cap:
-                    out = self._func(self._widget)
-                    if not isinstance(out, str):
-                        raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
-                
-                if cap.stderr:
-                    raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
-
-                if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
-                    raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.')   
-        
-    def fmt_html(self):
-        return self._func(self._widget)
-    
-    def display(self): # For completeness
-        return display(self)
-    
 
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
     if isinstance(output, str):
         return output
     
-    if hasattr(output, 'fmt_html'): # Columns
+    if hasattr(output, 'fmt_html'): # direct return
         return output.fmt_html()
     
     # Metadata text/html Should take precedence over data if given
@@ -98,10 +65,7 @@ def _fmt_html(output):
     
     # Widgets after metadata
     if (widget := widget_from_data(data)):
-        if hasattr(widget, 'fmt_html'):
-            return widget.fmt_html() # alt, columns proxy.
-        else:
-            return serializer.get_html(widget)
+        return serializer.get_html(widget) # handles fmt_html
     
     # Next data itself NEED TO INCLUDE ALL REPRS LIKE OUTPUT
     if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):

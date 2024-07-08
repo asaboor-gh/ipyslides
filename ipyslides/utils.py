@@ -20,9 +20,9 @@ from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 
-from .formatters import ipw, XTML, frozen, fix_ipy_image, htmlize, _inline_style
+from .formatters import ipw, XTML, frozen, get_slides_instance, fix_ipy_image, htmlize, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
-from .writer import Writer, CustomDisplay, AltForWidget, _Output
+from .writer import Writer, CustomDisplay, _Output
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -307,6 +307,29 @@ def format_css(props : dict):
     "{css_docstring}"
     return _format_css(props)
 
+def _alt_for_widget(func, widget):
+    if not isinstance(widget, ipw.DOMWidget):
+        raise TypeError(f'widget should be a widget, got {widget!r}')
+    if not callable(func):
+        raise TypeError(f'func should be a callable, got {func!r}')
+    
+    if (slides := get_slides_instance()):
+        with slides._hold_running(): # To prevent dynamic content from being added to alt
+            with capture_content() as cap:
+                if not isinstance((out := func(widget)), str):
+                    raise TypeError(f'Function {func.__name__!r} should return a string, got {type(out)}')
+            
+            if cap.stderr:
+                raise RuntimeError(f'Function {func.__name__!r} raised an error: {cap.stderr}')
+
+            if cap.outputs: # This also makes sure no dynamic content is inside alt, as nested contnet cannot be refreshed
+                raise RuntimeError(f'Function {func.__name__!r} should not display or print anything in its body, it should return a string.') 
+        
+        _patch_display(widget)  # for completeness of display method
+        setattr(widget, 'fmt_html', MethodType(func, widget)) # for export
+    
+    return widget 
+
 
 def alt(func_or_html, obj, /):
     """Display `obj` for slides and output of `func_or_html` will be and displayed only in exported formats as HTML.
@@ -325,7 +348,7 @@ def alt(func_or_html, obj, /):
     `{source}`
     
     ::: note-info
-        - If you happen to be using `alt` many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without alt.
+        - If you happen to be using `alt` many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without `alt`.
         - `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give html representation if used inside `write` command.
         - Use `alt_clip` to paste images of widgets and other objects directly on slides.
     """
@@ -333,7 +356,7 @@ def alt(func_or_html, obj, /):
         raise TypeError(f"first arguemnt of alt should be a func (func(obj) -> html str) or html str or an object with `_repr_html_` method, got {type(func_or_html)}")
     
     if isinstance(obj, ipw.DOMWidget) and callable(func_or_html):
-        return AltForWidget(func_or_html, obj)
+        return _alt_for_widget(func_or_html, obj)
     
     text_html = func_or_html # default
     if callable(func_or_html):

@@ -58,6 +58,7 @@ __theme_css__
 .jupyter-only { display:none !important;}
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
+p {margin-block: 0.5em !important;}
 .click-wrapper {
     position: fixed !important;
     left:calc(100% - 150px) !important; /* extra space for slide number */
