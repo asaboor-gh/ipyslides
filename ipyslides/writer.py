@@ -6,8 +6,8 @@ __all__ = ['write']
 
 from IPython.display import display as display
 
-from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, supported_reprs, widget_from_data
-from .xmd import parse, capture_content
+from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, supported_reprs, widget_from_data, toc_from_meta
+from .xmd import parse, capture_content, get_slides_instance
 
 class CustomDisplay:
     "Use this to create custom display types for object."
@@ -62,6 +62,9 @@ def _fmt_html(output):
             return metadata['text/html']
         elif "skip-export" in metadata: # only skip
             return ''
+        elif (toc := toc_from_meta(metadata)): # TOC in columns
+            return toc.data["text/html"] # get latest title
+
     
     # Widgets after metadata
     if (widget := widget_from_data(data)):
@@ -145,7 +148,7 @@ class Writer(ipw.HBox):
             if not out.outputs:
                 out.clear_output(wait=True)
                 with out:
-                    display(*col['outputs'])
+                    display(*[toc_from_meta(o.metadata) or o for o in col['outputs']])
             else:
                 out.update_display()
     

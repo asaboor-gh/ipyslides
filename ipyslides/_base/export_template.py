@@ -59,6 +59,8 @@ __theme_css__
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
 p {margin-block: 0.5em !important;}
+pre {white-space: break-spaces;} /* General rule unless specified in elements */
+.toc-item, .goto-button {margin-block: 0.25em}
 .click-wrapper {
     position: fixed !important;
     left:calc(100% - 150px) !important; /* extra space for slide number */

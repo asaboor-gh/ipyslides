@@ -110,26 +110,34 @@ class BaseSlides:
         - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
         - Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
-        Block table of contents with extra content can be added as follows:
+        Block table of contents with extra content as summary of current section can be added as follows:
                                                
         ```markdown
-         ```toc Table of contents
+         ```multicol 
+         toc[True]`Table of contents`
+         +++
          Extra content for current section appears on right
-         Can use small column notation here || A || B || but not `multicol`
          ```
         ```
         
         **Other syntax can be used everywhere in markdown:**
         
-        - Variables can be replaced with their HTML value (if no other formatting given) using alert`\`{variable}\`` 
+        - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\`{variable}\`` 
             (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
             alert`\`{variable:format_spec}\`` or alert`\`{variable!conversion}\``, that will take preference.
+        - A special formatting alert`\`{variable:nb}\`` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
+            Custom objects serialized with `Slides.serializer` or serialized by `ipyslides` should be displayed without `:nb` whenever possible to appear in correct place in all contexts. e.g.
+            a matplotlib's figure `fig` as shown in \`{fig:nb}\` will only capture text representation inplace and actual figure will be shown at end, while \`{fig}\` will be shown exactly in place.
+
+        ::: note-warning
+            alert`\`{variable:nb}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
         
-            ::: note-info
-                - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
-                - Variables are substituted from top level scope (Notebook's `locals()`/`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
+        ::: note-info
+            - Widgets behave same with or without `:nb` format spec. 
+            - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
+            - Variables are substituted from top level scope (Notebook's `locals()`/`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
                                                
-        - A syntax alert`func\`&#63;Markdown&#63;\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
+        - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
         - Two side by side columns can be added inline using alert`|&#124;[width optionally here in 1-99] Column A |&#124; Column B |&#124;` sytnax.
@@ -484,18 +492,22 @@ class BaseSlides:
                     sup`1`My University is somewhere in the middle of nowhere
                 ''', logo = self.get_logo("4em"))).display()
         
-        self.build(-1, f'''
+        self.build(-1, self.fmt('''
             section`Introduction` 
-            ```toc ## Table of contents
-            vspace`2`
+            ```multicol
+            toc[True]`## Table of contents`
+            +++
             ### This is summary of current section
             Oh we can use inline columns || Column A || Column B || here and what not!
+            `{btn}`
             ```
             ```markdown
-             ```toc Table of contents
+             ```multicol
+             toc[True]`## Table of contents`
+             +++
              Extra content for current section which is on right
              ```
-            ```''')
+            ```''', btn = self.draw_button))
             
         with self.build(-1):
             self.write(['# Main App',self.doc(Slides), '### Jump between slides'])
@@ -507,7 +519,7 @@ class BaseSlides:
             self.write([self.doc(self.build,'Slides'), self.doc(self.sync_with_file,'Slides')])
         
         with self.build(-1), self.code.context():
-            self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`'))
+            self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`', self=self))
             
         with self.build(-1):
             self.write('## Adding Content')

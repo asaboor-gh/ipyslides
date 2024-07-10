@@ -24,7 +24,7 @@ def demo_slides(slides):
             sup`1`My University is somewhere in the middle of nowhere
             sup`2`Their University is somewhere in the middle of nowhere
                     
-        vspace`2`Read instructions by clicking ℹ️ button in quick menu.
+        vspace`2`Read instructions by clicking ℹ️ button in quick menu
     """)
     #Demo for loading slides from a file or text block
     s1, s2 = slides.build_("""
@@ -55,23 +55,28 @@ def demo_slides(slides):
         slides.write(f'alert`I was added at end by a given proxy, see the how it was done at the end of the slides`')
 
 
-    slides.build(-1, f"""
+    slides.build(-1, slides.fmt("""
     section`Adding informative TOC` 
-    ```toc ### Contents
-    vspace`2` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
+    ```multicol 
+    toc[True]`### Contents`
+    +++
+    vspace`1` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
                                     
     - Item 1
     - Item 2
 
-    $$ E = mc^2 $$                        
+    $$ E = mc^2 $$ 
+    `{btn}`                       
     ```
                                        
     ```markdown
-     ```toc Table of contents
+     ```multicol
+     toc[True]`### Contents`
+     +++
      Extra content for current section which is on right
      ```
     ``` 
-    """, trusted=True)
+    """,btn=slides.draw_button), trusted=True)
 
     # Matplotlib
     with slides.build_() as sl:

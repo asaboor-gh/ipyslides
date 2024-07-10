@@ -30,6 +30,13 @@ def widget_from_data(obj):
     if isinstance(obj, dict):
         model_id = obj.get('application/vnd.jupyter.widget-view+json',{}).get('model_id','')
         return widget_from_data(model_id)
+    
+def toc_from_meta(metadata):
+    if not isinstance(metadata, dict):
+        return 
+    number = metadata.get("DataTOC", None)
+    if isinstance(number, int) and (slides := get_slides_instance()):
+        return slides[number,]._reset_toc()
 
 
 class _Output(ipw.Output):
@@ -55,8 +62,13 @@ class _Output(ipw.Output):
 
     def update_display(self):
         "Widgets output sometimes disappear on when Output is removed and displayed again. Fix that with this function."
-        old_outputs = self.outputs 
+        old_outputs = self.outputs
         self.outputs = () # Reset
+
+        for i, out in enumerate(old_outputs): # Update TOC if in column
+            if (toc := toc_from_meta(out.get("metadata",{}))):
+                old_outputs[i]['data'] = toc.data
+
         self.outputs = old_outputs
         del old_outputs
 

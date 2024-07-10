@@ -189,6 +189,7 @@ class Slide:
                 p.update_display()
         # after others to take everything into account
         self._reset_frames()
+        self._app._update_toc()
 
     def _reset_toc(self):
         items = []
@@ -220,14 +221,13 @@ class Slide:
             </li>''').format(**sec))
             for sec in items]
         
-        title, summary = getattr(self, '_toc_args', ['## Contents {.align-left}', None])
-        css_class = 'toc-list toc-extra' if summary else 'toc-list'
-        items = self._app.html('ol', items, style='', css_class=css_class)
-        items = [[title, items], summary] if summary else [[title, items]]
+        title, highlight = getattr(self, '_toc_args', ['## Contents {.align-left}', False])
+        css_class = 'toc-list toc-extra' if highlight else 'toc-list'
+        ol = self._app.html('ol', items, style='', css_class=css_class)
         
         return RichOutput(
-            data = {'text/plain': title,'text/html': self._app.format_html(*items).value},
-            metadata = {"DataTOC": ""})
+            data = {'text/plain': title,'text/html': self._app.format_html([title, ol]).value},
+            metadata = {"DataTOC": self.number}) # to access later
     
     def _reset_frames(self):
         nc_frames, contents = [], self.contents  # get once

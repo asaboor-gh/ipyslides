@@ -401,10 +401,10 @@ class Slides(BaseSlides):
             if s._toc_args and s != self.this: 
                 s.update_display(go_there=False)
  
-    def toc(self, title='## Contents {.align-left}', summary = None):
-        "You can also use markdown syntax to add it like toc`title` or ```toc title\n summary\n```. `summary` is written in right column."
+    def toc(self, title='## Contents {.align-left}', highlight = False):
+        "You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` or toc[True]`title`"
         self.verify_running("toc can only be added under slides constructor!")
-        self.this._toc_args = (title, summary)
+        self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there
 
     def goto_button(self, text, **kwargs):
@@ -443,7 +443,6 @@ class Slides(BaseSlides):
 
         clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
         self._unregister_postrun_cell() # no need to scroll button where showing itself
-        self._update_toc()  # Update toc before displaying app to include all sections
         self._update_widgets()  # Update before displaying app
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
         self.frozen(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"),{}).display()  # Display slides within another box
