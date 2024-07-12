@@ -6,7 +6,7 @@ import os
 import textwrap
 from contextlib import suppress
 
-from .export_template import doc_html, slides_css
+from .export_template import doc_html
 from . import styles
 from ..writer import _fmt_html
 
@@ -79,7 +79,7 @@ class _HhtmlExporter:
                 footer = f'<div class="Footer {navui_class}">{item.get_footer()}{self._get_progress(item,k)}</div>'
 
                 number = ""
-                if self.main.settings._footer_kws["numbering"]:
+                if self.main.settings.footer.numbering:
                     number = f'<span class="Number">{item.index or ""}</span>' # 0 handled
 
                 content += textwrap.dedent(f'''
@@ -96,19 +96,21 @@ class _HhtmlExporter:
                         </div>
                     </section>''')
             
-        theme_kws = self.main.settings.theme_kws
+        theme_kws = self.main.settings._theme_kws
         
         if self.main.widgets.theme.value == "Inherit":  # jupyterlab Inherit themes colors to export
             if self.main.widgets.iw._colors:
                 theme_kws["colors"] = self.main.widgets.iw._colors
 
-        theme_css = styles.style_css(**theme_kws, _root=True)
-        _style_css = slides_css.replace('__theme_css__', theme_css) # They have style tag in them.
-        _code_css = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}','') # remove id from code here
-        extra_class = 'ShowFooter' if 'ShowFooter' in self.main._box._dom_classes else ''
-        return doc_html(_code_css,_style_css, content, _script, extra_class).replace(
-            '__FOOTER__', self._get_clickables()).replace(
-            '__HEIGHT__', f'{int(254/theme_kws["aspect"])}mm') # Slides height is determined by aspect ratio.
+        return doc_html(
+            code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}',''), # remove id from code here
+            style_css   = styles.style_css(**theme_kws, _root=True), 
+            content     = content, 
+            script      = _script, 
+            click_btns  = self._get_clickables(), 
+            height      = f'{int(254/theme_kws["aspect"])}mm', 
+            extra_class = 'ShowFooter' if 'ShowFooter' in self.main._box._dom_classes else '',
+            )
     
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')

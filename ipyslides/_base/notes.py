@@ -24,10 +24,10 @@ class Notes:
     
     def display(self):
         def set_value(content):
-            bg = self.main.settings.colors.get('primary_bg','white')
-            fg = self.main.settings.colors.get('primary_fg','black')
-            bg2 = self.main.settings.colors.get('secondary_bg','#181818')
-            font = self.main.settings._font_family.get('text', 'Roboto')
+            bg = self.main.settings._colors.get('primary_bg','white')
+            fg = self.main.settings._colors.get('primary_fg','black')
+            bg2 = self.main.settings._colors.get('secondary_bg','#181818')
+            font = self.main.settings.fonts.props.get('text', 'Roboto')
             return f"""<style>
         :root {{
             --primary-bg : {bg};

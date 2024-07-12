@@ -121,6 +121,10 @@ class Slides(BaseSlides):
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
 
+    def __setattr__(self, name: str, value):
+        if not name.startswith('_') and hasattr(self, name):
+            raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
+        self.__dict__[name] = value
         
     @contextmanager
     def _set_running(self, slide):
@@ -343,7 +347,7 @@ class Slides(BaseSlides):
 
     def set_citations(self, data, mode='footnote'):
         r"""Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
-        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.set_layout(..., ncol_refs=N)`.
+        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.layout(..., ncol_refs=N)`.
 
         ::: note
             - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
@@ -795,8 +799,7 @@ class Slides:
     __doc__ = textwrap.dedent(
         """
     Interactive Slides in IPython Notebook. Only one instance can exist.
-    `auto_focus` can be reset from settings and enable jumping back to slides after a cell is executed. 
-    `settings` are passed to `Slides.settings.apply` if you like to set during initialization.
+    `settings` are passed to `Slides.settings()` if you like to set during initialization.
     
     To suppress unwanted print from other libraries/functions, use:
     ```python
@@ -806,8 +809,8 @@ class Slides:
         display('Something') # This will be printed
     ```
     ::: note-info
-        The methods under settings starting with `Slides.settings.set_` returns settings back to enable chaining 
-        without extra typing, like `Slides.settings.set_animation().set_layout()...` .
+        The traitlets callables under settings returns settings back to enable chaining 
+        without extra typing, like `Slides.settings.logo().layout()...` .
     
     ::: note-tip
         - Use `Slides.instance()` class method to keep older settings. `Slides()` apply default settings every time.
@@ -832,7 +835,6 @@ class Slides:
     def __new__(
         cls,
         extensions=[],
-        auto_focus = True,
         **settings
         ):
         "Returns Same instance each time after applying given settings. Encapsulation."
@@ -840,8 +842,7 @@ class Slides:
         instance.fsep = fsep # attach for use under slides
         instance.__doc__ = cls.__doc__  # copy docstring
         instance.extender.extend(extensions) # globally once
-        instance.settings.apply(**settings)
-        instance.widgets.checks.focus.value = auto_focus # useful
+        instance.settings(**settings)
         return instance
 
     # No need to define __init__, __new__ is enough to show signature and docs

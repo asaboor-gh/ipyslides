@@ -81,8 +81,8 @@ class XTML(HTML):
     def __format__(self, spec):
         return f'{self._repr_html_():{spec}}'
     
-    def __repr__(self):
-        return repr(self._repr_html_())
+    def __repr__(self): # format handles string interpolation, need this short
+        return f'<{self.__module__}.XTML at {hex(id(self))}>'
     
     def __str__(self):
         return str(self._repr_html_())

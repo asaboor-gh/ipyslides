@@ -18,6 +18,9 @@ class Output(fmtrs._Output):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
+    
+    def __repr__(self):
+        return f'<{self.__module__}.Output at {hex(id(self))}>'
 
     def __enter__(self):
         if (slides := fmtrs.get_slides_instance()):
@@ -51,7 +54,7 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows').add_class('Prev-Btn')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
-    setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Settings [G]').add_class('Menu-Item').add_class('Settings-Btn')
+    setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Settings [S]').add_class('Menu-Item').add_class('Settings-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Refresh Widget Content').add_class('Menu-Item').add_class('Refresh-Btn')
     source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
@@ -81,7 +84,7 @@ class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    footer  = HTML('Use `slides.settings.set_footer` to update this!',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
+    footer  = HTML('Use `slides.settings.footer` to update this!',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
     main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent_color'], 16/9)).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
@@ -113,7 +116,7 @@ class _Sliders:
     """
     progress = ipw.IntSlider(min=0, max=0, continuous_update=False,readout=True)
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
-    fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.set_font_size`")
+    fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.fonts.size`")
 
 class Widgets:
     """

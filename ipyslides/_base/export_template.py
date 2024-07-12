@@ -1,6 +1,6 @@
 # Template for building HTML from slides 
 
-def doc_html(code_css, style_css, content, script, extra_class=""):
+def doc_html(code_css, style_css, content, script, click_btns, height, extra_class=""):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,7 +12,8 @@ def doc_html(code_css, style_css, content, script, extra_class=""):
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
     
     {code_css}
-    {style_css}
+    <style>{style_css}</style>
+    {slides_css.replace('__HEIGHT__', height)}
 
     <!-- Custom stylesheet, it must be in the same directory as the html file -->
     <link rel="stylesheet" href="overrides.css">
@@ -42,7 +43,7 @@ def doc_html(code_css, style_css, content, script, extra_class=""):
 </head>
 <body>
 <div>
-    <div class="click-wrapper"> __FOOTER__ </div>
+    <div class="click-wrapper"> {click_btns} </div>
     <!-- Classes below work for both scenerios -->
     <div class="SlidesWrapper {extra_class}">
     {content}
@@ -54,7 +55,6 @@ def doc_html(code_css, style_css, content, script, extra_class=""):
 '''
 
 slides_css = """<style>
-__theme_css__
 .jupyter-only { display:none !important;}
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}

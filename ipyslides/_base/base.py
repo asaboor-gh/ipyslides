@@ -1,6 +1,7 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
 import traceback
+from pprint import PrettyPrinter
 from pathlib import Path
 from contextlib import ContextDecorator
 
@@ -10,7 +11,7 @@ from ipywidgets import interact as ipyinteract
 
 from .widgets import Widgets
 from .navigation import Navigation
-from .settings import LayoutSettings
+from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
@@ -21,27 +22,20 @@ from ..xmd import _special_funcs, error, xtr, get_slides_instance
 class BaseSlides:
     def __init__(self):
         self._uid = f'{self.__class__.__name__}-{id(self)}' # Unique ID for this instance to have CSS, should be before settings
-        self.__widgets = Widgets()
-        self.__navigation = Navigation(self) # should be after widgets
-        self.__settings = LayoutSettings(self, self.__widgets)
+        self.widgets = Widgets()
+        self._navigation = Navigation(self) # should be after widgets
+        self.settings = Settings(self, self.widgets)
         self.export_html = _HhtmlExporter(self).export_html
-        self.__notes = Notes(self, self.__widgets) # Needs main class for access to notes
+        self.notes = Notes(self, self.widgets) # Needs main class for access to notes
         
         self.toast_html = self.widgets.htmls.toast
         
         self.widgets.checks.toast.observe(self._toggle_notify,names=['value'])
     
-    @property
-    def notes(self):
-        return self.__notes
-    
-    @property
-    def widgets(self):
-        return self.__widgets
-    
-    @property
-    def settings(self):
-        return self.__settings
+    def __setattr__(self, name: str, value):
+        if not name.startswith('_') and hasattr(self, name):
+            raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
+        self.__dict__[name] = value
     
     def notify(self,content,timeout=5):
         """Send inside notifications for user to know whats happened on some button click. 
@@ -401,23 +395,25 @@ class BaseSlides:
         else:
             print("There was no markdown file linked to sync!")
     
-    def build_(self, content = None, trusted = False):
+    def build_(self, content = None, *, trusted = False, widths=None):
         "Same as `build` but no slide number required inside Python file!"
         if self.inside_jupyter_notebook(self.build_):
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
-        return self.build(self._next_number, content=content, trusted=trusted)
+        return self.build(self._next_number, content=content, trusted=trusted, widths=widths)
 
     class build(ContextDecorator):
-        """Build slides with a single unified command in two ways:
+        """Build slides with a single unified command in three ways:
         
-        1. `slides.build(number, str)` creates many slides with markdown content. Equivalent to `%%slide number -m` magic in case of one slide.
+        1. `slides.build(number, str, trusted)` creates many slides with markdown content. Equivalent to `%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to `Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd_syntax` for extended markdown usage.
             - Keyword argument `trusted` is used here if there are `python run` blocks in markdown.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
-        2. `with slides.build(number):` creates single slide. Equivalent to `%%slide number` magic.
+        2. `slides.build(number, list/tuple, widths)` to create a slide from list-like contents immediately.
+            - We use `write(*contents, widths)` to make slide. This is a shortcut way of step 3 if you want to create slides fast with few objects.
+        3. `with slides.build(number):` creates single slide. Equivalent to `%%slide number` magic.
             - Use `fsep()` from top import or `Slides.fsep()` to split content into frames.
             - Use `for item in fsep.loop(iterable):` block to automatically add frame separator.
             - Use `fsep.join` to join content of frames incrementally.
@@ -433,18 +429,26 @@ class BaseSlides:
             if getattr(kls, '_slides', None) is None:
                 kls._slides = get_slides_instance()
             return kls._slides
-                
         
-        def __new__(cls, slide_number, /, content = None, trusted = False):
+        def __new__(cls, slide_number, /, content = None, *, trusted = False, widths=None):
             self = super().__new__(cls) # instance
             self._snumber = self._app._fix_slide_number(slide_number)
             
-            # Calling as function is the trickiest part
-            if isinstance(content, str): # creates markdown slides immediately if possible
-                with self._app.code.context(returns = True, depth=3, start = True) as code:
-                    if not code.startswith('with'):
-                        return self._app.from_markdown(self._snumber, content, trusted = trusted)
-            return self # for decorator and context manager
+            with self._app.code.context(returns = True, depth=3, start = True) as code:
+                if isinstance(content, str) and not code.startswith('with'): 
+                    return self._app.from_markdown(self._snumber, content, trusted = trusted)
+            
+                if isinstance(content, (list, tuple)) and not code.startswith('with'):
+                    with _build_slide(self._app, self._snumber) as s: 
+                        self._app.write(*content, widths=widths)
+                    fmtc = PrettyPrinter(depth=5, compact=True).pformat(content)
+                    s.set_source(f'content = {fmtc}\nwrite(*content, widths={widths})', "python")
+                    return s
+            
+            if content is not None:
+                raise ValueError(f"content should be None, str, list or tuple. got {type(content)}")
+
+            return self # context manager
 
         def __enter__(self):
             "Use as contextmanager to create a slide."
@@ -475,7 +479,7 @@ class BaseSlides:
         from ..core import Slides
 
         self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'footnote')
-        self.settings.set_footer('IPySlides Documentation', date=False)
+        self.settings.footer(text='IPySlides Documentation', date=None)
 
         with self.build(0): # Title page
             self.this.set_bg_image(self.get_logo(),0.25, filter='blur(10px)', contain=True)
@@ -545,7 +549,7 @@ class BaseSlides:
                 '.highlight': {'background':'#8984'}
             }) 
             self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
-            self.doc(self.settings,'Slides.settings', members=True,itself = False).display()
+            self.doc(self.settings,'Slides', members=True,itself = True).display()
                 
         with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
@@ -565,7 +569,7 @@ class BaseSlides:
                 ## Citations and Sections
                 Use syntax alert`cite\`key\`` to add citations which should be already set by `Slides.set_citations(data, mode)` method.
                 Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
-                `Slides.settings.set_layout(..., ncol_refs = int)`. cite`A`
+                `Slides.settings.layout(..., ncol_refs = int)`. cite`A`
                        
                 Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
                 can be added with alert`toc\`title\``/alert`\`\`\`toc title\\n summary of current section \\n\`\`\``.
@@ -675,9 +679,7 @@ class BaseSlides:
                 - Additionally, in python file, you can use `Slides.build_` instead of using `-1`.
             """)
         
-        with self.build(-1):
-            self.write(['## Presentation Code section`Presentation Code`',self.docs])
-        
+        self.build(-1, [('## Presentation Code section`Presentation Code`',self.docs)])
         self.navigate_to(0) # Go to title
         return self
 

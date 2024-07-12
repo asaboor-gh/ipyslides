@@ -79,6 +79,11 @@ class Slide:
                 }
             })
     
+    def __setattr__(self, name: str, value):
+        if not name.startswith('_') and hasattr(self, name):
+            raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
+        self.__dict__[name] = value
+    
     def _set_defaults(self):
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
@@ -288,15 +293,15 @@ class Slide:
         return len(self._fidxs) or 1 # each slide is single frame
     
     def _update_view(self, which):
-        # avoids animation by updating CSS without first animation object and Prev class in all case
         self._set_progress()
-        self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[])[1:]) 
-        self._app.widgets.slidebox.remove_class('Prev') 
-
-        if self._split_frames: # only if not incremental
+        if self._split_frames: # In case of incremental frames, only edge slides are animated automatically
             if which == 'prev':
                 self._app.widgets.slidebox.add_class('Prev')
+            else:
+                self._app.widgets.slidebox.remove_class('Prev')
             self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[]))
+        elif not self.indexf in (self.nf-1, 0):
+             self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[])[1:]) # avoid animations
 
         if self.index == self._app.wprogress.max: # This is last slide
             if self.indexf + 1 == self.nf:
@@ -304,14 +309,12 @@ class Slide:
             else:
                 self._app._box.remove_class("InView-Last")
         
-        if hasattr(self,'_on_load') and callable(self._on_load):
-            if any(
-                [ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
-                    self.indexf == 0 and which == 'prev',
-                    self.indexf + 1 == self.nf and which == 'next',
-                    0 < self.indexf < (self.nf - 1)
-                ]
-            ): self._on_load(self)
+        if any([ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
+            self.indexf == 0 and which == 'prev',
+            self.indexf + 1 == self.nf and which == 'next',
+            0 < self.indexf < (self.nf - 1)
+        ]) and hasattr(self,'_on_load') and callable(self._on_load):
+            self._on_load(self)
                 
     
     def _show_frame(self, which):
@@ -483,17 +486,10 @@ class Slide:
         else:
             return self._app.code.cast('No source found!\n',language = 'markdown')
     
-    def _set_overall_css(self, props: dict):
-        self.__class__._overall_css = html('style','') # Reset overall CSS
-        old_slide_css = self._css # Save old slide CSS without overall CSS
-        self.set_css(props) # Set this slide's CSS
-        self.__class__._overall_css = self.css # Set overall CSS from this slide's CSS, self.css takes both
-        self._css = old_slide_css # Restore old slide CSS
-    
     @_sub_doc(css_docstring = _css_docstring)
-    def set_css(self, props : dict):
+    def set_css(self, props : dict, apply2all=False):
         """Attributes at the root level of the dictionary are only picked if they are related to background. You can add CSS classes by `Slide.set_css_classes`.
-        use `ipyslides.Slides.settings.set_css` to set CSS for all slides at once.
+        use `apply2all=True` to set CSS for all slides at once.
         {css_docstring}"""
         props = {k:v for k,v in props.items() if k.lstrip(' ^<')} # Don't let user access top level to modify layout
         
@@ -514,6 +510,7 @@ class Slide:
         
         _css += ('\n' + _build_css((f".{self._app.uid} .SlideArea",), props))
         self._css = self._app.html('style', _css)
+        self.__class__._overall_css = self._css if apply2all else XTML('')
         
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
@@ -566,41 +563,21 @@ class Slide:
             self._app.navigate_to(self.index) # Go there to see effects
     
     def _instance_animation(self,name):
-        "Create unique animation for this slide instance on fly"
+        if not (name in styles.animations):
+            KeyError(f'animation {name!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
         return styles.animations[name].replace('.SlideBox',f'.{self._app.uid} .SlideBox')
-        
-    def _set_overall_animation(self, main = 'slide_h',frame = 'appear'):
-        "Set animation for all slides."
-        if main is None:
-            self.__class__._animations['main'] = ''
-        elif main in styles.animations:
-            self.__class__._animations['main'] = self._instance_animation(main)
-        else:
-            raise KeyError(f'Animation {main!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
             
-        if frame is None:
-            self.__class__._animations['frame'] = ''
-        elif frame in styles.animations:
-            self.__class__._animations['frame'] = self._instance_animation(frame)
-        else:
-            raise KeyError(f'Animation {frame!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
-        
-        self._app._update_tmp_output(self.animation, self.css) # See effect
-            
-    def set_animation(self, name):
-        "Set animation of this slide. Provide None if need to stop animation."
-        if name is None:
-            self._animation = html('style', '')
-        elif isinstance(name,str) and name in styles.animations:
-            self._animation = html('style',self._instance_animation(name))
-            # See effect of changes
-            if not self._app.this: # Otherwise it has side effects
-                if self._app._current is self:
-                    self._app._update_tmp_output(self._animation, self.css) # force refresh
-                else:
-                    self._app.navigate_to(self.index) # Go there to see effects
-        else:
-            self._animation = None # It should be None, not '' or don't throw error here
+    def set_animation(self, this=None, main = None,frame = None):
+        "Set animation of this slide. Provide None if need to stop animation. Use main_all and frame to set animation to all slides."
+        self.__class__._animations['main'] = '' if main is None else self._instance_animation(main)
+        self.__class__._animations['frame'] = '' if frame is None else self._instance_animation(frame)
+        self._animation = XTML('') if this is None else html('style',self._instance_animation(this))
+        # See effect of changes
+        if not self._app.this: # Otherwise it has side effects
+            if self._app._current is self:
+                self._app._update_tmp_output(self.animation, self.css) # force refresh
+            else:
+                self._app.navigate_to(self.index) # Go there to see effects
 
 @contextmanager
 def _build_slide(app, slide_number):

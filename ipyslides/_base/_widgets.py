@@ -135,6 +135,9 @@ class HtmlWidget(anywidget.AnyWidget):
         "This is needed to merge content of this widget into another one properly when used in formatting."
         return f'{self.value:{spec}}'
     
+    def __repr__(self):
+        return f'<{self.__module__}.HtmlWidget at {hex(id(self))}>'
+    
     def observe(self, handler, names = traitlets.All, type="change"):
         "observe traits. `click_state` traits should be observed explicity!"
         if "click_state" in str(names): # only observe clicks explicity

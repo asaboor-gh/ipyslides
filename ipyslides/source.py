@@ -20,6 +20,9 @@ class SourceCode(XTML):
         super().__init__(*args, **kwargs)
         self._raw = ''
     
+    def __repr__(self): # short for view
+        return f'<{self.__module__}.SourceCode at {hex(id(self))}>'
+    
     @property
     def raw(self):
         "Return raw source code."

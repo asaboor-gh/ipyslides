@@ -137,7 +137,7 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 
 instructions = f"""{more_instructions}
 #### Custom Theme
-For custom themes, use `Slides.settings.set_theme_colors` function.
+For custom themes, use `Slides.settings.theme.colors`.
           
 For matching plots style with theme, run following code in a cell above slides.
 

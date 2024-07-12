@@ -8,7 +8,7 @@ def demo_slides(slides):
     N = raw_source.count('.build') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
     slides.create(range(N)) # Create slides first, this is faster
     
-    slides.settings.set_footer('Author: Abdul Saboor عبدالصبور')
+    slides.settings.footer.text = 'Author: Abdul Saboor عبدالصبور'
     slides.set_citations({
             'pf': r'This is refernce to FigureWidget using alert`cite\`pf\`` syntax',
             'This': 'I was cited for no reason',
@@ -102,8 +102,7 @@ def demo_slides(slides):
         except:
             df = '### Install `pandas` to view output'
 
-    with slides.build(-1):
-        slides.write(['## Writing Pandas DataFrame', df, source])
+    slides.build(-1, [('## Writing Pandas DataFrame', df, source)])
     
     with slides.code.context(returns = True) as s:
         try:
@@ -113,8 +112,7 @@ def demo_slides(slides):
         except:
             fig = '### Install `plotly` to view output'
 
-    with slides.build(-1):
-        slides.write(('## Writing Plotly Figure',fig, s))
+    slides.build(-1,[('## Writing Plotly Figure',fig, s)])
 
     def race_plot():
         import numpy as np
@@ -124,7 +122,7 @@ def demo_slides(slides):
         y = np.random.random((10,))
         _sort = np.argsort(y)
 
-        plot_theme = 'dark_background' if 'Dark' in slides.settings.theme_dd.value else 'default'
+        plot_theme = 'dark_background' if 'Dark' in slides.settings.theme.value else 'default'
         with plt.style.context(plot_theme):        
             fig,ax = plt.subplots(figsize=(3.4,2.6))
             ax.barh(x,y[_sort],height=0.07,color = plt.colormaps['plasma'](x[_sort]))
@@ -271,14 +269,13 @@ def demo_slides(slides):
 
         some_slide.get_source().display()
 
-    with slides.build(-1):
-        slides.write('## This is all code to generate slides section`Code to Generate Slides`')
-        slides.code.cast(slides.demo).display()
-        slides.code.cast(__file__).display()
+    slides.build(-1, [(
+        '## This is all code to generate slides section`Code to Generate Slides`',
+        slides.code.cast(slides.demo),
+        slides.code.cast(__file__),
+    )])
 
-    with slides.build(-1):
-        slides.get_source().display()
-
+    slides.build(-1, [slides.get_source()])
 
     slides.navigate_to(0) # Go to title slide
 

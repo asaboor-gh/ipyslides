@@ -91,17 +91,7 @@ animations = {'zoom':'''
 }) 
 }
   
-def _validate_colors(colors):
-    for key, value in colors.items():
-        if not isinstance(value, str):
-            raise TypeError(f'Color value for {key!r} must be a string')
-        if not key in theme_colors['Light']:
-            raise KeyError(f'Invalid color key {key!r}! Use one of {list(theme_colors["Light"].keys())}')
-    
-    for k1, k2 in zip(sorted(colors.keys()),sorted(theme_colors['Light'].keys())):
-        if k1 != k2:
-            raise ValueError(f'Invalid number of colors! Provide all colors like \n{theme_colors["Light"]}\n')
-        
+
 theme_colors = {
     'Inherit': {
         'heading_color':'var(--jp-content-font-color2,black)',
@@ -133,16 +123,6 @@ theme_colors = {
         'accent_color' : '#f5e8b7',
         'pointer_color' : '#ff1744',
     },
-    'Fancy': {
-        'heading_color': '#105599',
-	    'primary_fg': '#755',
-	    'primary_bg': '#efefef',
-	    'secondary_bg': '#d9d8df',
-	    'secondary_fg': '#89E',
-	    'alternate_bg': '#deddde',
-	    'accent_color': '#955200',
-        'pointer_color': '#FF7722',
-    },
     'Material Light': {
         'heading_color': '#4984c4',
 	    'primary_fg': '#3b3b3b',
@@ -165,10 +145,10 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, cwidth=100, ncol_refs = 2, _root = False):
+def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, width=100, ncol_refs = 2, _root = False):
     uclass = get_unique_css_class()
     margin = 'auto' if centered else 'unset'
-    if (cwidth < 100) and (centered is False):
+    if (width < 100) and (centered is False):
         margin = '0 auto' # if not 100%, horizontally still in center, vertically top
 
     _root_dict = {
@@ -319,8 +299,8 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 'position': 'relative !important', # absolute content should not go outside
                 'margin': f'{margin} !important', # for frames margin-top will be defined, don't use here
                 'padding': '0 !important',
-                'width': f'{cwidth}% !important',
-                'max-width': f'{cwidth}% !important',
+                'width': f'{width}% !important',
+                'max-width': f'{width}% !important',
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
             },

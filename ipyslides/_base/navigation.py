@@ -36,11 +36,11 @@ class Navigation:
     def _toggle_panel(self,change):
         if self.btn_settings.icon == 'plus':
             self.btn_settings.icon  = 'minus'
-            self.btn_settings.tooltip = "Close Settings [G]"
+            self.btn_settings.tooltip = "Close Settings [S]"
             self.widgets.panelbox.layout.height = "100%"
         else:
             self.btn_settings.icon = 'plus' #'ellipsis-v'
-            self.btn_settings.tooltip = "Open Settings [G]"
+            self.btn_settings.tooltip = "Open Settings [S]"
             self.widgets.panelbox.layout.height = "0"
             
     def _goto_home(self,btn):
