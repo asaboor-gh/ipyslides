@@ -121,7 +121,7 @@ class Slides(BaseSlides):
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
 
-    def __setattr__(self, name: str, value):
+    def __setattr__(self, name: str, value): # Don't raise error
         if not name.startswith('_') and hasattr(self, name):
             raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
         self.__dict__[name] = value
@@ -791,6 +791,8 @@ class fsep:
         cls._app.verify_running()
         cls._app.this._split_frames = False
 
+_private_instance.fsep = fsep # Set once, otherwise throws error on next runs
+
 
 class Slides:
     _version = (
@@ -839,7 +841,6 @@ class Slides:
         ):
         "Returns Same instance each time after applying given settings. Encapsulation."
         instance = cls.instance()
-        instance.fsep = fsep # attach for use under slides
         instance.__doc__ = cls.__doc__  # copy docstring
         instance.extender.extend(extensions) # globally once
         instance.settings(**settings)
