@@ -177,7 +177,6 @@ class _HhtmlExporter:
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
         - You can take screenshot (using system's tool) of a widget and add it back to slide using `Slides.image_clip` to keep PNG view of a widget. 
         - You can paste a screenshot using `alt_clip` functionality as well.
-        - To keep an empty slide, use at least an empty html tag inside an HTML like `IPython.display.HTML('<div></div>')`.
         
         ::: note-info
             - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.

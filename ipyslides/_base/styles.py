@@ -145,7 +145,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, width=100, ncol_refs = 2, _root = False):
+def style_css(colors, *, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, width=100, ncol_refs = 2, _root = False):
     uclass = get_unique_css_class()
     margin = 'auto' if centered else 'unset'
     if (width < 100) and (centered is False):
@@ -468,6 +468,7 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
                 '> span': {
                     'white-space':'pre', #normal  for breaking words 
                     'word-break':'break-word', # for breaking words 
+                    '^.err' : {'background': 'none !important',}, 
                 },
                 '^.code-no-focus': {'opacity':'0.3 !important'},
                 '^.code-focus':{'text-shadow':'0 0 1px var(--primary-bg)'},
@@ -528,13 +529,13 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             'border-left': '2px inset var(--accent-color)',
             'margin-top': '0.5em',
             'margin-bottom': '0.7em !important',
-            'background': ('var(--alternate-bg)',f'rgba({light-16},{light-10},{light-10},0.75)'), # Fallback  for Inherit and Custom theme
+            'background': 'hsl(from var(--alternate-bg) h s l / 0.9)',
             '^.admonition > .admonition-title': {'display':'none !important'}, # Remove admonition title
             '^::before': {
                 'content': '"📝 Note"',
                 'display':'block',
                 'color': 'var(--accent-color)',
-                'border-bottom': '1px solid var(--alternate-bg)',
+                'border-bottom': '1px solid #8988',
                 'box-sizing': 'border-box',
             },
             '^-info::before': {'content': '"❇️ Info" !important'},
@@ -544,40 +545,25 @@ def style_css(colors, *, light = 250, text_size = '22px', text_font = None, code
             '^-tip::before': {'content': '"💡 Tip" !important'},
         },
         '.block' : {
-            'border-top': '3px solid var(--accent-color)',
-            '^, ^-red,^-green,^-blue, ^-yellow, ^-magenta, ^-gray, ^-cyan': {
+            '^, ^-red,^-green,^-blue, ^-yellow, ^-magenta, ^-cyan': {
+                '--bg-color': 'var(--secondary-bg)',
                 'padding': '8px',
+                'border-radius': '4px',
                 'margin-bottom': '0.9em',
-                'background': 'var(--secondary-bg)', # Fallback  for Inherit and Custom theme
+                'border-top': '4px solid hsl(from var(--bg-color) h s 40% / 0.98)',
+                'background': 'hsl(from var(--bg-color) h s l / 0.9)', 
             },
-            '^-red' : {
-                'border-top': ('3px solid red',f'3px solid rgb({light}, 0, 0)'), # Fallback  for Inherit and Custom theme
-                'background':f'rgba({light},{light - 20},{light - 20},0.75)',
-            },
-            '^-green' : {
-                'border-top': ('3px solid green',f'3px solid rgb(0, {light}, 0)'), # Fallback  for Inherit and Custom theme
-                'background':f'rgba({light - 20},{light},{light - 20},0.75)',
-            },
-            '^-blue' : {
-                'border-top': ('3px solid blue',f'3px solid rgb(0,0,{light})'), # Fallback  for Inherit and Custom theme
-                'background':f'rgba({light -20},{light - 20},{light},0.75)',
-            },
-            '^-yellow' : {
-                'border-top': ('3px solid yellow',f'3px solid rgb({light}, {light}, 0)'), # Fallback  for Inherit and Custom theme
-                'background': f'rgba({light},{light},{light - 20},0.75)',
-            },
-            '^-magenta' : {
-                'border-top': ('3px solid magenta',f'3px solid rgb({light}, 0, {light})'), # Fallback  for Inherit and Custom theme
-                'background':f'rgba({light},{light - 20},{light},0.75)',
-            },
-            '^-cyan' : {
-                'border-top': ('3px solid cyan',f'3px solid rgb(0, {light}, {light})'), # Fallback  for Inherit and Custom theme
-                'background':f'rgba({light -20},{light},{light},0.75)',
-            },
-            '^-gray' : {
-                'border-top': ('3px solid gray', f'3px solid rgb({light - 10}, {light - 10}, {light - 10})'),# Fallback  for Inherit and Custom theme
-                'background':f'rgba({light -20},{light - 20},{light - 20},0.75)',
-            },
+            **({f'^-{c}': {
+                '--bg-color': f'hsl(from var(--secondary-bg) {h} {s} l)'} 
+                for c,h, s in [
+                    ('red', 10, '100%'), 
+                    ('yellow', 60, '85%'), 
+                    ('green', 120, '70%'), 
+                    ('cyan', 180, '85%'), 
+                    ('blue', 210, '100%'), 
+                    ('magenta',310, '100%'),
+                ]
+            }),
         },
         'details': {
             'padding': '0.2em',

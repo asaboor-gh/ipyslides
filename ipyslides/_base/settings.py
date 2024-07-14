@@ -2,8 +2,6 @@
 Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
-
-import math
 import traitlets
 
 from traitlets import HasTraits, Int, Unicode, Bool, Float, TraitError
@@ -12,18 +10,18 @@ from inspect import Signature, Parameter
 from IPython.display import Image, SVG
 from ipywidgets.widgets.trait_types import InstanceDict
 
-from ..formatters import fix_ipy_image, code_css
+from ..formatters import pygments, fix_ipy_image, code_css
 from ..xmd import parse
 from ..utils import html, today, format_html
 from . import intro, styles, _layout_css
 
 
 class ConfigTraits(HasTraits):
-    def _apply_changes(self): raise NotImplementedError
+    def _apply_change(self, change=None): raise NotImplementedError
         
     @traitlets.observe(traitlets.All)
     def _observe(self, change):
-        self._apply_changes()
+        self._apply_change(change)
 
     @property
     def props(self): return self.trait_values()
@@ -42,7 +40,7 @@ class ConfigTraits(HasTraits):
                 if not self.has_trait(key):
                     raise TraitError(f"trait {key!r} does not exits!")
                 self.set_trait(key, value)
-            self._apply_changes()
+            self._apply_change(None)
         finally:
             self.observe(self._observe, names=traitlets.All)
         return self.main # For method chaining
@@ -67,24 +65,49 @@ class Colors(ConfigTraits):
     accent_color   = Unicode('navy')
     pointer_color  = Unicode('red')
 
-    def _apply_changes(self): 
-        self.main._widgets.theme.value = "Custom"  # Trigger theme update
-        self.main._update_theme({'owner':self.main._widgets.theme}) # This chnage is important to update layout theme as well
+    def _apply_change(self, change): 
+        if change: # Don't at None
+            self.main._widgets.theme.value = "Custom"  # Trigger theme update
+            self.main._update_theme({'owner':self.main._widgets.theme}) # This chnage is important to update layout theme as well
+
+@fix_sig
+class StylePerTheme(ConfigTraits):
+    "Pygment code block style for each theme. You mostly need to change for custom and inherit theme."
+    inherit = Unicode('default')
+    custom  = Unicode('default')
+    light   = Unicode('friendly')
+    dark    = Unicode('native')
+    material_light = Unicode('perldoc')
+    material_dark = Unicode('one-dark')
+
+    def _apply_change(self, change): 
+        if change and change.new in pygments.styles.get_all_styles(): # go there safely
+            self.main._widgets.theme.value = change.name.replace('_',' ').title()
+        self.main.code._apply_change(None) # works as validator too, run anyway
+    
+    def reset(self):
+        "Reset all user set code block styles."
+        with self.hold_trait_notifications():
+            for key, value in zip(
+                'inherit custom light dark material_light material_dark'.split(),
+                'default default friendly native perldoc one-dark'.split()
+                ):
+                self.set_trait(key, value)
+            self._apply_change(None)
 
 @fix_sig
 class Code(ConfigTraits):
-    "Set code block styles. A theme change can override previously set styles."
-    style       = Unicode("default",help="A pygment style")
+    "Set code block styles. background and color may be needed for some styles."
+    style_per_theme = InstanceDict(StylePerTheme, help="A pygment style for each theme.")
     color       = Unicode(allow_none=True)
-    background  = Unicode(allow_none=True)
+    background  = Unicode('var(--secondary-bg)', allow_none=True) # Some themes don't have it
     hover_color = Unicode("var(--alternate-bg)")
     lineno      = Bool(True)
 
-    def _apply_changes(self,**kwargs): # need to set somewhere
-        with self.hold_trait_notifications():
-            for key, value in kwargs.items():
-                self.set_trait(key, value) # Theme change can reset code style for convernience, accept that
-        self.main._widgets.htmls.hilite.value = code_css(**(kwargs or self.props))
+    def _apply_change(self, change): # need to set somewhere
+        kwargs = {k:v for k,v in self.props.items() if k != 'style_per_theme'}
+        kwargs['style'] = getattr(self.style_per_theme, self.main._widgets.theme.value.lower().replace(' ','_'))
+        self.main._widgets.htmls.hilite.value = code_css(**kwargs)
 
 @fix_sig
 class Theme(ConfigTraits):
@@ -92,7 +115,7 @@ class Theme(ConfigTraits):
     value  = Unicode('Inherit')
     colors = InstanceDict(Colors)
 
-    def _apply_changes(self):
+    def _apply_change(self, change):
         self.main._update_theme() # otherwise colors don't apply
 
     @traitlets.validate('value')
@@ -110,7 +133,7 @@ class Fonts(ConfigTraits):
     code = Unicode("Cascadia Code", allow_none=True)
     size = Int(20, help="Can use any large/small value that CSS supports!")
 
-    def _apply_changes(self):
+    def _apply_change(self, change):
         self.main._update_theme()
 
     @traitlets.validate('text','code')
@@ -132,7 +155,7 @@ class Footer(ConfigTraits):
     numbering = Bool(True)
     date = Unicode("today", allow_none=True)
 
-    def _apply_changes(self):
+    def _apply_change(self,change):
         if self.main._slides._current:
             self.main._get_footer(self.main._slides._current, update_widget=True)
 
@@ -151,7 +174,7 @@ class Layout(ConfigTraits):
             raise ValueError("width should in range [0,100]")
         return proposal["value"]
   
-    def _apply_changes(self):
+    def _apply_change(self, change):
         self.main._update_size(change = None) # will reset theme and send RESCALE message
 
 @fix_sig
@@ -164,10 +187,9 @@ class Toggle(ConfigTraits):
     proxy  = Bool(True)
     focus  = Bool(True)
 
-    def _apply_changes(self):
-        for key, value in self.props.items():
-            if (widget := getattr(self.main._widgets.checks,key, None)):
-                widget.value = value 
+    def _apply_change(self, change):
+        if change and (widget := getattr(self.main._widgets.checks, change.name, None)):
+            widget.value = change.new
 
 @fix_sig
 class Logo(ConfigTraits):
@@ -189,7 +211,7 @@ class Logo(ConfigTraits):
             return f'{proposal["value"]}px'
         return proposal["value"]
     
-    def _apply_changes(self):
+    def _apply_change(self,change):
         if not self.src: # give as None, '' etc
             self.main._widgets.htmls.logo.value = ''
         elif (image := self.main._resolve_img(self.src, self.width)):
@@ -361,23 +383,9 @@ class Settings:
         return styles.theme_colors[self._widgets.theme.value]
 
     @property
-    def _light(self):
-        self.code._apply_changes(style="default", lineno=self.code.lineno) # in any case
-        if self._widgets.theme.value in ["Inherit", "Custom"]:
-            return (
-                math.nan
-            )  # Use Fallback colors, can't have idea which themes colors would be there
-        elif "Dark" in self._widgets.theme.value:
-            self.code._apply_changes(style="monokai", color="#f8f8f2", lineno=self.code.lineno)
-            return 120
-        else:
-            return 250
-
-    @property
     def _theme_kws(self):
         return dict(
             colors=self._colors,
-            light=self._light,
             text_size= f"{self.fonts.size}px",
             text_font=self.fonts.text,
             code_font=self.fonts.code,
@@ -409,6 +417,7 @@ class Settings:
         else:
             msg = 'THEME:dark' if "Dark" in self._widgets.theme.value else 'THEME:light'
         self._widgets.iw.msg_tojs = msg # changes theme of board
+        self.code._apply_change(None) # Update code theme
 
 
     def _toggle_tocbox(self, btn):

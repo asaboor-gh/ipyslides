@@ -2,7 +2,7 @@ _attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'color', 'cols', 'erro
              'image','image_clip', 'svg','iframe', 'format_html','format_css','frozen', 'run_doc',
             'raw', 'rows', 'zoomable','html','sig','styled', 'doc','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
-_attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow gray'.split()])
+_attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
 __all__ = sorted(_attrs)
 
 import os, re
@@ -639,7 +639,6 @@ def block_green(*objs, widths = None): return _block(*objs, widths = widths, suf
 def block_yellow(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'yellow')
 def block_cyan(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'cyan')
 def block_magenta(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'magenta')
-def block_gray(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'gray')
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
@@ -660,7 +659,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     _doc, _sig, _full_doc = '', '', ''
     if itself == True:
         with suppress(BaseException): # if not __doc__, go forwards
-            _doc += htmlize((inspect.getdoc(obj) or '').replace('{','\u2774').replace('}','\u2775'))
+            _doc += htmlize(inspect.getdoc(obj) or '')
 
         with suppress(BaseException): # This allows to get docs of module without signature
             _sig = sig(obj,prepend_str)

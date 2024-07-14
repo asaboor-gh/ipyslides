@@ -183,7 +183,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
      
     return f"""<style>\n{_style}
     {_class} {{ 
-        background: {bg}; 
+        background: hsl(from {bg} h s l / 0.9); 
         color: {fg}; 
         border-left: 0.2em solid {hover_color};
         border-radius: 0.2em;
