@@ -468,7 +468,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 '> span': {
                     'white-space':'pre', #normal  for breaking words 
                     'word-break':'break-word', # for breaking words 
-                    '^.err' : {'background': 'none !important',}, 
+                    '^.err, ^.nn' : {'background': 'none !important', 'text-decoration': 'none !important',}, 
                 },
                 '^.code-no-focus': {'opacity':'0.3 !important'},
                 '^.code-focus':{'text-shadow':'0 0 1px var(--primary-bg)'},
