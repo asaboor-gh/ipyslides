@@ -550,7 +550,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'padding': '8px',
                 'border-radius': '4px',
                 'margin-bottom': '0.9em',
-                'border-top': '4px solid hsl(from var(--bg-color) h s 40% / 0.98)',
+                'box-shadow': '0px 0px 1px 0.5px hsl(from var(--bg-color) h s 40% / 0.9) inset !important',
                 'background': 'hsl(from var(--bg-color) h s l / 0.9)', 
             },
             **({f'^-{c}': {
