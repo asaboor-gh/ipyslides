@@ -100,7 +100,7 @@ class BaseSlides:
         - With citations mode set as 'footnote', you can add alert`refs\`ncol\`` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
         - alert`section\`content\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
-        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later with `Slides[slide_number,].proxies[index].capture` contextmanager or a shortcut `Slides.capture_proxy(slides_number, proxy_index)`. Useful to keep placeholders for plots/widgets in markdwon.
+        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later using `with Slides[slide_number,].proxies[index]:` or a shortcut `with Slides.capture_proxy(slides_number, proxy_index):`. Useful to keep placeholders for plots/widgets in markdwon.
         - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
         - Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
@@ -179,8 +179,7 @@ class BaseSlides:
                 `__format__` method in your class enables to use {obj} syntax in python formatting and \`{obj}\` in extended Markdown.
         
         - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
-        
-        color[blue]`color[blue]\`text\``, color[yellow,skyblue]`color[yellow,skyblue]\`text\``, ''') + '\n' + ', '.join(rf'alert`{k}\`{v}\``' for k,v in _special_funcs.items()),
+        ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\`{v}\`' for k,v in _special_funcs.items()),
         returns = True
         ))
    
@@ -553,6 +552,7 @@ class BaseSlides:
                 
         with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
+            self.write("clip[caption=clip\`test.png\`]`test.png`", self.doc(self.clip,'Slides'))
             self.run_doc(self.alt,'Slides')
             self.doc(self.alt_clip,'Slides').display()
             self.doc(self.image_clip,'Slides').display()

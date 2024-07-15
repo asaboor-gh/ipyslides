@@ -1,4 +1,4 @@
-_attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
+_attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
              'image','image_clip', 'svg','iframe', 'format_html','format_css','frozen', 'run_doc',
             'raw', 'rows', 'zoomable','html','sig','styled', 'doc','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
@@ -369,6 +369,13 @@ def alt(func_or_html, obj, /):
     
     return frozen(obj, metadata={'skip-export':'', 'text/html': getattr(text_html, '_repr_html_', lambda: text_html)()}) # skip original obj
 
+def _test_ext_and_parent(filename):
+    p = Path(filename)
+    if str(p.parent) != '.':
+        raise ValueError('filename should not have parents. It will be stored in `Slides.clips_dir`.')
+    if not p.suffix:
+        raise ValueError('filename should have an image extension, usually "png".')
+
 
 class alt_clip(CustomDisplay):
     """Save image from clipboard to file with a given quality when you paste in given area on slides.
@@ -387,16 +394,17 @@ class alt_clip(CustomDisplay):
         html representation if used inside `write` command.
     
     ::: note-tip
-        `Slides.image_clip` is another similar function but that needs screenshot on runtime.
+        ` Slides.image_clip ` is another similar function but that needs screenshot on runtime.
     
     **kwargs are passed to ` Slides.image ` function.
 
     On Linux, you need alert`xclip` or alert`wl-paste` installed.
     """
     def __init__(self, filename, obj = None, quality =95, **kwargs):
-        if not isinstance(filename, str) or not filename.endswith(".png"):
-            raise ValueError(f"filename should be a valid image filename with extention 'png'") 
-        
+        if isinstance(filename, Path):
+            filename = str(filename)
+
+        _test_ext_and_parent(filename)
         self._obj = obj
         self._fname = filename
         self._quality = quality
@@ -429,6 +437,9 @@ class alt_clip(CustomDisplay):
             e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
             self._rep.value = f"{error(ename,'something went wrong')}<br/><br/>{error(e,text)}"
 
+def clip(filename, quality =95, **kwargs):
+    "Shortcut for `alt_clip(file, obj=None)` to be useful in markdown as alert`clip[options]\`filename\``."
+    return alt_clip(filename, obj=None, quality=quality, **kwargs)
         
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
@@ -738,7 +749,8 @@ def bullets(iterable, ordered = False,marker = None, css_class = None):
 
 
 class image_clip(CustomDisplay):
-    """Save image from clipboard to file with a given quality. 
+    """
+    Save image from clipboard to file with a given quality. 
     On next run, it loads from saved file under `Slides.clips_dir`. 
     Useful to add screenshots from system into IPython. You can use overwite to overwrite existing file.
     You can add saved clips using a "clip:" prefix in path in `Slides.image("clip:filename.png")` function and also in markdown.
@@ -756,9 +768,7 @@ class image_clip(CustomDisplay):
     On Linux, you need alert`xclip` or alert`wl-paste` installed.
     """
     def __init__(self, filename, quality = 95, overwrite = False, **kwargs):
-        if not isinstance(filename, str) or not filename.endswith(".png"):
-            raise ValueError(f"filename should be a valid image filename with extention 'png'") 
-        
+        _test_ext_and_parent(filename)
         self._path = get_clips_dir() / filename
         self._kws = kwargs
         

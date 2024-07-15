@@ -96,6 +96,7 @@ _special_funcs = {
     "sup": "text",
     "today": "fmt like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
+    "clip": "filename. Paste clipboard image",
     "image": "path/src or clip:filename",
     "raw": "text",
     "svg": "path/src",
@@ -105,7 +106,6 @@ _special_funcs = {
     "zoomable": "zoom a block of html when hovered",
     "center": r"text or \`{variable}\`", # should be last
 }
-
 
 def error(name, msg):
     "Add error without breaking execution."
@@ -532,7 +532,7 @@ class XMarkdown(Markdown):
                 self, self._slides, text
             )  # Resolve objects in xmd related to current slide
         output = super().convert(self._sub_vars(text)) # sub vars before conversion
-        return self._resolve_vars(output)
+        return self._resolve_vars(re.sub("&#96;", "`", output))  # Reverse backticks
     
     def convert2str(self, text):
         "Ensures that output will be a str."
@@ -571,9 +571,9 @@ class XMarkdown(Markdown):
         return re.sub(r"PrivateXmdVar(\d+)X", lambda m: self._vars.get(m.group(), m.group()), text)
     
     def _handle_var(self, value): # Put a temporary variable that will be replaced at end of other conversions.
-        if isinstance(value, str): 
+        if isinstance(value, (str, XTML)): 
             key = f"PrivateXmdVar{len(self._vars)}X" # end X to make sure separate it 
-            self._vars[key] = self._resolve_vars(value) # Handle nested like center`alert`text`` things before saving next varibale
+            self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value) # Handle nested like center`alert`text`` things before saving next varibale
         else: # Handles TOC, DOMWidget and Others rich displays
             key = f"DISPLAYVAR{len(self._vars)}DISPLAYVAR"
             self._vars[key] = value # Direct value stored
@@ -604,7 +604,7 @@ class XMarkdown(Markdown):
                 arg0 = m2.strip() # avoid spaces in this
 
                 if not m1:
-                    _out = (_func(arg0) if arg0 else _func()).value # If no argument, use default
+                    _out = (_func(arg0) if arg0 else _func()) # If no argument, use default
                     html_output = html_output.replace(f"{func}`{m2}`", self._handle_var(_out), 1)
                 else: # func with arguments
                     args = [
@@ -621,7 +621,7 @@ class XMarkdown(Markdown):
                     args = [a.strip().replace("__EQ__", "=") for a in args if "=" not in a]
 
                     try:
-                        _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)).value # If no argument, use default 
+                        _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)) # If no argument, use default 
                         html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
                     except Exception as e:
                         raise Exception(rf"Error in {func}{m1}`{m2}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside {m1}")

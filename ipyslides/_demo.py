@@ -231,7 +231,7 @@ def demo_slides(slides):
                 slides.alt(lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">', ipw.IntSlider()), 
                 slides.alt('<button>Click to do nothing</button>', ipw.Button(description='Click to do nothing')), 
                 ipw.Checkbox(description='Select to do nothing',indent=False), 
-                'proxy`Paste Checkbox Screenshot Here with Slides.image_clip function`'
+                slides.clip('test.png')
             ]
         )
         s.get_source().display(True)

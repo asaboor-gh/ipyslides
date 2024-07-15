@@ -184,7 +184,6 @@ class Toggle(ConfigTraits):
     reflow = Bool(False)
     notes  = Bool(False)
     toast  = Bool(True)
-    proxy  = Bool(True)
     focus  = Bool(True)
 
     def _apply_change(self, change):

@@ -536,7 +536,7 @@ class Slides(BaseSlides):
 
     def proxy(self, text):
         """Place a proxy placeholder in your slide and return it's `handle`. This is useful when you want to update the placeholder later.
-        Use `Slides.capture_proxy(slide_number, proxy_index)` or `handle.capture` contextmanager to update the placeholder.
+        Use `with Slides.capture_proxy(slide_number, proxy_index):` or `with handle:` contextmanager to update the placeholder.
         Use this in markdown as well by proxy `text` syntax.
         """
         self.verify_running(
