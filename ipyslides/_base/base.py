@@ -17,7 +17,7 @@ from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML
 from ..xmd import _special_funcs, error, xtr, get_slides_instance
-
+from ..utils import _css_docstring
 
 class BaseSlides:
     def __init__(self):
@@ -83,7 +83,7 @@ class BaseSlides:
          'zoom-child'       | Zooms child object on hover, when Zoom is enabled.
          'no-zoom'          | Disables zoom on object when it is child of 'zoom-child'.
         ------------------------------------------------------------------------------------
-        Besides these CSS classes, you always have `Slide.format_css` function at your disposal.
+        Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...) functions at your disposal.
         ''')
 
     @property
@@ -182,6 +182,11 @@ class BaseSlides:
         ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\`{v}\`' for k,v in _special_funcs.items()),
         returns = True
         ))
+    
+    @property
+    def css_syntax(self):
+        "CSS syntax for use in Slide.set_css, Slides.html('style', ...) etc."
+        return XTML(_css_docstring)
    
     def get_source(self, title = 'Source Code'):
         "Return source code of all slides except created as frames with python code."
@@ -473,7 +478,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(range(23)) # Create slides faster
+        self.create(range(24)) # Create slides faster
         
         from ..core import Slides
 
@@ -521,6 +526,15 @@ class BaseSlides:
             self.write('Besides function below, you can add slides with `%%slide number [-m]` magic as well.\n{.note .info}')
             self.write([self.doc(self.build,'Slides'), self.doc(self.sync_with_file,'Slides')])
         
+        with self.build_():
+            self.write('''
+                ## Important Methods on Slide
+                ::: note-warning
+                    Use slide handle or `Slides[number,]` to apply these methods becuase index can change on new builds.
+            ''')
+            self.doc(self[0], members='yoffset set_animation set_bg_image update_display get_source show set_css'.split(), itself = False).display()
+            self.css_syntax.display()
+        
         with self.build(-1), self.code.context():
             self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`', self=self))
             
@@ -558,8 +572,8 @@ class BaseSlides:
             self.doc(self.image_clip,'Slides').display()
             
             members = sorted((
-                'alert block bokeh2html bullets styled format_html fmt color cols details doc sub sup '
-                'today error zoomable format_css highlight html iframe image frozen notify plt2html '
+                'alert block bokeh2html bullets styled fmt color cols details doc sub sup '
+                'today error zoomable highlight html iframe image frozen notify plt2html '
                 'raw rows set_dir sig textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
@@ -587,8 +601,8 @@ class BaseSlides:
             self.write('## Content Styling')
             with self.code.context(returns = True) as c:
                 self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
-                       'Provide **CSS**{.info} for that using `.format_css` or use some of the available styles. '
-                       'See these **styles**{.success} with `.css_styles` property as below:'))
+                       'Provide **CSS**{.info} for that using `Slides.html("style",...)` or use some of the available styles. '
+                       'See these **styles**{.success} with `Slides.css_styles` property as below:'))
                 self.css_styles.display()
                 c.display()
         

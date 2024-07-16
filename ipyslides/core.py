@@ -702,7 +702,7 @@ class Slides(BaseSlides):
         ]
 
         if not tocs_dict:
-            children.append(self.format_html(
+            children.append(self.html('',
                 r"No sections found!, create sections with markdown syntax alert`section\`content\``"
             ).as_widget())
         else:
@@ -762,7 +762,7 @@ class fsep:
     def __init__(self):
         self._app.verify_running("Cant use fsep in a capture context other than slides!")
         self._app.this._widget.add_class("Frames")
-        self._app.this._fsep = getattr(self._app.this, '_fsep',self._app.format_css({}).as_widget()) # create once
+        self._app.this._fsep = getattr(self._app.this, '_fsep',self._app.html('style','').as_widget()) # create once
         self._app.frozen(self._app.this._fsep, {"FSEP": "","skip-export":"no need in export"}).display()
 
     @classmethod

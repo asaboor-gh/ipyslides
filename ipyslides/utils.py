@@ -1,11 +1,11 @@
 _attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
-             'image','image_clip', 'svg','iframe', 'format_html','format_css','frozen', 'run_doc',
-            'raw', 'rows', 'zoomable','html','sig','styled', 'doc','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
+             'image','image_clip', 'svg','iframe','frozen', 'run_doc',
+            'raw', 'rows', 'zoomable','html', 'sig','styled', 'doc','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
 __all__ = sorted(_attrs)
 
-import os, re
+import os, re, json
 import datetime
 import inspect
 import traceback
@@ -20,7 +20,7 @@ from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 
-from .formatters import ipw, XTML, frozen, get_slides_instance, fix_ipy_image, htmlize, _inline_style
+from .formatters import ipw, XTML, frozen, get_slides_instance, fix_ipy_image, htmlize, highlight, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, CustomDisplay, _Output
 
@@ -83,27 +83,8 @@ def _fmt_cols(*objs,widths = None):
         return _cols
     
     return f'''<div class="columns">{_cols}</div>'''
-        
 
-def _sub_doc(**kwargs):
-    "Substitute docstring with given kwargs."
-    def _inner(func):
-        func.__doc__ = func.__doc__.format(**kwargs)
-        return func
-    return _inner
-
-_css_docstring = """`props` is a nested dict of css selectors and properties. There are few special rules in `props`:
-
-- All nested selectors are joined with space, so '.A': {'.B': ... } becomes '.A .B {...}' in CSS.
-- A '^' in start of a selector joins to parent selector without space, so '.A': {'^:hover': ...} becomes '.A:hover {...}' in CSS. You can also use '.A:hover' directly but it will restrict other nested keys to hover only.
-- A '<' in start of a nested selector makes it root selector, so '.A': {'<.B': ...} becomes '.A {}\n.B {...}' in CSS.
-- A list/tuple of values for a key in dict generates CSS fallback, so '.A': {'font-size': ('20px','2em')} becomes '.A {font-size: 20px; font-size: 2em;}' in CSS.
-
-Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
-
-**Python** 
-```python
-{
+_example_props = {
     '.A': { # .A is repeated nowhere! But in CSS it is a lot
         'z-index': '2',
         '.B': {
@@ -132,55 +113,6 @@ Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-
         },  
     },
 }
-```
-**CSS** (output of `...format_css`,`...set_css` functions)
-```css
-<style>
-.SlideArea .A {
-    z-index : 2;
-}
-.SlideArea .A .B {
-    font-size : 24px;
-    font-size : 2em; /* This was second item in tuple in source dictionary*/
-}
-.SlideArea .A .B:hover {
-    opacity : 1;
-}
-.SlideArea .A > div {
-    padding : 0;
-}
-@media screen and (min-width: 650px) {
-    .SlideArea .A > div {
-        padding : 2em;
-    }
-}
-.SlideArea .A .C p {
-    font-size : 14px;
-}
-.SlideArea .D {
-    transform : translate(-2px,1px);
-}
-.SlideArea .D,
-.SlideArea .D  h1 {
-    background : red;
-}
-.SlideArea .D span,
-.SlideArea .D  i,
-.SlideArea .D h1 span,
-.SlideArea .D h1  i {
-    color : whitemoke;
-}
-@keyframes animation-name {
-    from {
-        opacity : 0;
-    }
-    to {
-        opacity : 1;
-    }
-}
-</style>
-```
-"""
 
 def _filter_prints(outputs):
     new_outputs, new_prints = [], []
@@ -226,10 +158,6 @@ def set_dir(path):
         yield
     finally:
         os.chdir(current)
-
-def format_html(*objs,widths=None):
-    'Format objects in columns, same was as write does, but with limited content types, provide in write function'
-    return XTML(_fmt_cols(*objs,widths=widths))
 
 def _validate_key(key):
     "Validate key for CSS,allow only string or tuple of strings. commas are allowed only in :is(.A,#B),:has(.A,#B) etc."
@@ -288,24 +216,36 @@ def _build_css(selector, data):
         
     return content
 
-def _format_css(props : dict):
+def _styled_css(props : dict):
     if not isinstance(props, dict):
         raise TypeError("props should be a dictionay of CSS selectors and properties.")
-    uclass = get_unique_css_class()
-    _all_css = '' # All css
-    root_attrs = {k:v for k,v in props.items() if not isinstance(v,dict)}
     
-    if root_attrs:
+    if (root_attrs:={k:v for k,v in props.items() if not isinstance(v,dict)}):
         raise ValueError(f'CSS selectors should be at top level, found properties instead! \n{root_attrs}')
     
-    props = {k:v for k,v in props.items() if (isinstance(v,dict) or k.lstrip(' ^<'))} # Remove root attrs and top level access
-    _all_css += _build_css((f'{uclass} .SlideArea',),props) # Build css from dict
-    return html('style', _all_css)
+    klass = f'{get_unique_css_class()} .SlideArea'
+    if (slide := getattr(get_slides_instance(), 'this', None)):
+        klass += f'.n{slide.number}' # Under slide, avoids overall CSS
     
-@_sub_doc(css_docstring = _css_docstring)
-def format_css(props : dict):
-    "{css_docstring}"
-    return _format_css(props)
+    props = {k:v for k,v in props.items() if (isinstance(v,dict) or k.lstrip(' ^<'))} # Remove root attrs and top level access
+    return XTML(f"<style>{_build_css((f'{klass}',),props)}</style>")
+
+_css_docstring = parse("""
+CSS is formatted using a `props` nested dictionary to simplify the process. 
+There are few special rules in `props`:
+
+- All nested selectors are joined with space, so `'.A': {'.B': ... }` becomes `'.A .B {...}'` in CSS.
+- A '^' in start of a selector joins to parent selector without space, so `'.A': {'^:hover': ...}` becomes `'.A:hover {...}'` in CSS. You can also use `'.A:hover'` directly but it will restrict other nested keys to hover only.
+- A list/tuple of values for a key in dict generates CSS fallback, so `'.A': {'font-size': ('20px','2em')}` becomes `'.A {font-size: 20px; font-size: 2em;}'` in CSS.
+
+Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
+""" + f"""                      
+```python
+props = {json.dumps(_example_props, indent=2)}
+```
+Output of `html('style',props)`,`set_css(props)` etc. functions. Top selector would be different based on where it is called.
+{highlight(_styled_css(_example_props).value, "css","CSS")}
+""", returns=True)
 
 def _alt_for_widget(func, widget):
     if not isinstance(widget, ipw.DOMWidget):
@@ -540,6 +480,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
+    - str/dict if tag is 'style'. See `Slides.css_syntax` to learn about requirements of styles in dict.
     
     Example:
     ```python
@@ -562,6 +503,8 @@ def html(tag, children = None,css_class = None,**node_attrs):
     
     if tag == 'style':
         node_attrs = {} # Ignore node_attrs for style tag
+        if isinstance(children, dict):
+            return _styled_css(children)
     else:
         node_attrs = {k.replace('_','-'):v for k,v in node_attrs.items()}
     
@@ -579,7 +522,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     elif isinstance(children,(list,tuple)):
         content = '\n'.join(htmlize(child) for child in children) # Convert to html nodes in sequence of rows
     else:
-        raise TypeError(f'Children should be a list/tuple of objects or str, not {type(children)}')
+        raise TypeError(f'Children should be a list/tuple (or str/dict for style tag) of objects or str, not {type(children)}')
     
     if not tag: # empty tag.
         return XTML(content) # don't wrap in any node
@@ -610,12 +553,12 @@ def color(text,fg='blue',bg=None):
     return XTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
 
 def rows(*objs):
-    "Returns tuple of objects. Use in `write` for better readiability of writing rows in a column."
-    return format_html(objs) # Its already a tuple, so will show in a column with many rows
+    "Creates single compact object instead of publishing multiple display data. Create grid using `cols` as children."
+    return XTML(_fmt_cols(objs))
 
 def cols(*objs,widths=None):
-    "Returns HTML containing multiple columns of given widths."
-    return format_html(*objs,widths=widths)
+    "Returns HTML containing multiple columns of given widths. This alongwith `rows` can create grid."
+    return XTML(_fmt_cols(*objs,widths=widths))
 
 def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class
     if len(objs) == 0:

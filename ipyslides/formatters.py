@@ -286,7 +286,7 @@ class Serializer:
         ::: note
             - Serializer function should return html string. It is not validated for correct code on registration time.       
             - Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
-            - Serialzers for widgets are equivalent to `Slides.alt(func, widget)` inside `write` command for export purpose. Other commands such as `Slides.format_html` will pick oldest value only.
+            - Serialzers for widgets are equivalent to `Slides.alt(func, widget)` inside `write` command for export purpose. Other commands such as `Slides.[cols,rows,...]` will pick oldest value only.
             - IPython's `display` function automatically take care of serialized objects.
         """
         def _register(func):

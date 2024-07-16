@@ -12,7 +12,7 @@ from ipywidgets.widgets.trait_types import InstanceDict
 
 from ..formatters import pygments, fix_ipy_image, code_css
 from ..xmd import parse
-from ..utils import html, today, format_html
+from ..utils import html, today
 from . import intro, styles, _layout_css
 
 
@@ -308,7 +308,7 @@ class Settings:
     
     def _show_info(self, btn):
         self._widgets.iw.send({
-            "content": format_html(intro.instructions).value,
+            "content": html('',intro.instructions).value,
             "timeout": 120000 # 2 minutes
         })
 

@@ -7,7 +7,7 @@ from IPython.utils.capture import RichOutput
 
 from . import styles
 from .widgets import Output # Fixed one
-from ..utils import XTML, html, alert, _format_css, _build_css, _sub_doc, _css_docstring
+from ..utils import XTML, html, alert, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, serializer, widget_from_data
 from ._layout_css import background_css
@@ -231,7 +231,7 @@ class Slide:
         ol = self._app.html('ol', items, style='', css_class=css_class)
         
         return RichOutput(
-            data = {'text/plain': title,'text/html': self._app.format_html([title, ol]).value},
+            data = {'text/plain': title,'text/html': self._app.cols([title, ol]).value},
             metadata = {"DataTOC": self.number}) # to access later
     
     def _reset_frames(self):
@@ -332,7 +332,7 @@ class Slide:
             elif isinstance(nrows, range): # not joined
                 start, nrows = nrows.start, nrows.stop
 
-            self._fsep.value = _format_css({
+            self._fsep.value = _styled_css({
                 f'^.n{self.number} > .jp-OutputArea > .jp-OutputArea-child': {
                     f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': { # start through nrows
                         'height': '0 !important',
@@ -486,11 +486,13 @@ class Slide:
         else:
             return self._app.code.cast('No source found!\n',language = 'markdown')
     
-    @_sub_doc(css_docstring = _css_docstring)
-    def set_css(self, props : dict, apply2all=False):
-        """Attributes at the root level of the dictionary are only picked if they are related to background. You can add CSS classes by `Slide.set_css_classes`.
-        use `apply2all=True` to set CSS for all slides at once.
-        {css_docstring}"""
+    def _fix_css(self,props:dict, this_slide=False):
+        if not isinstance(props,dict):
+            raise TypeError(f"expects dict, got {type(props)}")
+        
+        if not props:
+            return XTML('')
+        
         props = {k:v for k,v in props.items() if k.lstrip(' ^<')} # Don't let user access top level to modify layout
         
         back_props = {}
@@ -508,14 +510,28 @@ class Slide:
         if back_props:
             _css += _build_css((f".{self._app.uid}.SlidesWrapper",), back_props)
         
-        _css += ('\n' + _build_css((f".{self._app.uid} .SlideArea",), props))
-        self._css = self._app.html('style', _css)
-        self.__class__._overall_css = self._css if apply2all else XTML('')
+        klass = f".{self._app.uid} .SlideArea"
+        if this_slide:
+            klass += f"^.n{self.number}"
+        
+        _css += ('\n' + _build_css((klass,), props))
+        return self._app.html('style', _css)
+    
+    def set_css(self, this: dict={}, overall:dict={}):
+        """
+        Attributes at the root level of the dictionary are only picked if they are related to background. 
+        You can add CSS classes by `Slide.set_css_classes`.  
+
+        ::: note-tip
+            See `Slides.css_syntax` for information on how to write CSS dictionary.
+        """
+        self._css = self._fix_css(this, this_slide=True)
+        self.__class__._overall_css = self._fix_css(overall, this_slide=False)
         
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
             if self._app._current is self:
-                self._app._update_tmp_output(self.animation, self._css) # force refresh CSS
+                self._app._update_tmp_output(self.animation, self.css) # force refresh CSS
             else:
                 self._app.navigate_to(self.index) # Go there to see effects automatically
 
