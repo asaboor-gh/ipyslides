@@ -499,13 +499,11 @@ class Slide:
         for k,v in props.copy().items():
             if not isinstance(v, dict):
                 value = props.pop(k) # Remove all top level
-                if 'background' in k:
-                    back_props[k] = value # All background related things should go to Top
+                if isinstance(k, str) and k.startswith('--'): # don't check others type here
+                    back_props[k] = value # Allow CSS variables at top
                 else:
-                    print(f"Ignored property {k!r}. At top level, only background properties are applied!")
-                    if 'backdrop-filter' in k:
-                        print("'backdrop-filter' is only useful in context of background image. Use `Slide.set_bg_image(src, filter)`.")
-        
+                    print(f"Ignored property {k!r}. At top level, only CSS variables are allowed, such as '--primary-bg'!")
+                    
         _css = ''
         if back_props:
             _css += _build_css((f".{self._app.uid}.SlidesWrapper",), back_props)
@@ -523,7 +521,9 @@ class Slide:
         You can add CSS classes by `Slide.set_css_classes`. Each call will reset previous call if props given explicitly, otherwise not.
 
         ::: note-tip
-            See `Slides.css_syntax` for information on how to write CSS dictionary.
+            - See `Slides.css_syntax` for information on how to write CSS dictionary.
+            - Unlike `slides.html('style',props)`, you can set CSS variables at top level here such as `--primary-fg`,`--primary-bg` etc. 
+            to tweek appearance of individual or all slides. Use `slides.settings.theme.colors` for a full theme change.
         """
         if this is not None:
             self._css = self._fix_css(this, this_slide=True)
