@@ -480,7 +480,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
-    - str/dict if tag is 'style'. See `Slides.css_syntax` to learn about requirements of styles in dict.
+    - str/dict if tag is 'style', this will only be exported to HTML if called under slide builder, use `slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
     
     Example:
     ```python

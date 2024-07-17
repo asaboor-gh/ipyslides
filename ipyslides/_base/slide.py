@@ -57,12 +57,12 @@ class Proxy(Output): # Not from _Output, need to avoid slide-only content here
 class Slide:
     "Slide object, should not be instantiated directly by user."
     _animations = {'main':'slide_h','frame':'appear'}
-    _overall_css = html('style','')
+    _overall_css = ''
     def __init__(self, app, number):
         self._widget = _Output(layout = dict(margin='auto',padding='16px', visibility='hidden')).add_class("SlideArea")
         self._app = app
             
-        self._css = html('style','')
+        self._css = ''
         self._bg_image = ''
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
@@ -486,12 +486,12 @@ class Slide:
         else:
             return self._app.code.cast('No source found!\n',language = 'markdown')
     
-    def _fix_css(self,props:dict, this_slide=False):
+    def _fix_css(self,props, this_slide=False):
         if not isinstance(props,dict):
             raise TypeError(f"expects dict, got {type(props)}")
         
         if not props:
-            return XTML('')
+            return ''
         
         props = {k:v for k,v in props.items() if k.lstrip(' ^<')} # Don't let user access top level to modify layout
         
@@ -517,16 +517,18 @@ class Slide:
         _css += ('\n' + _build_css((klass,), props))
         return self._app.html('style', _css)
     
-    def set_css(self, this: dict={}, overall:dict={}):
+    def set_css(self, this: dict=None, overall:dict=None):
         """
         Attributes at the root level of the dictionary are only picked if they are related to background. 
-        You can add CSS classes by `Slide.set_css_classes`.  
+        You can add CSS classes by `Slide.set_css_classes`. Each call will reset previous call if props given explicitly, otherwise not.
 
         ::: note-tip
             See `Slides.css_syntax` for information on how to write CSS dictionary.
         """
-        self._css = self._fix_css(this, this_slide=True)
-        self.__class__._overall_css = self._fix_css(overall, this_slide=False)
+        if this is not None:
+            self._css = self._fix_css(this, this_slide=True)
+        if overall is not None: # Avoid accidental re-write of overall CSS
+            self.__class__._overall_css = self._fix_css(overall, this_slide=False)
         
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
@@ -559,8 +561,7 @@ class Slide:
         filter is a CSS filter like blur(5px), grayscale() etc.
         
         ::: note-tip
-            - This function enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
-            - This will be exported to HTML file.
+            This function enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
         """
         if not src: 
             self._app.widgets.htmls.bglayer.value = ""  # clear
