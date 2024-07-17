@@ -166,7 +166,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
     }
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
-        '^.SlidesWrapper, .jupyter-widgets': { # widgets have their own fonts, but make is same
+        '^.SlidesWrapper, .jupyter-widgets, .jp-RenderedHTMLCommon': { # widgets have their own fonts, but make same
             'font-family': 'var(--jp-content-font-family) !important',
             'color': 'var(--primary-fg)', # important to put here for correct export
             # Reset these vars under slides if not Inherit theme, otherwise it won't work
