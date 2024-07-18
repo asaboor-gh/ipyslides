@@ -290,7 +290,7 @@ def alt(func_or_html, obj, /):
     ::: note-info
         - If you happen to be using `alt` many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without `alt`.
         - `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give html representation if used inside `write` command.
-        - Use `alt_clip` to paste images of widgets and other objects directly on slides.
+        - Use ` alt_clip ` to paste images of widgets and other objects directly on slides.
     """
     if not any([callable(func_or_html), isinstance(func_or_html, str), hasattr(func_or_html,'_repr_html_')]):
         raise TypeError(f"first arguemnt of alt should be a func (func(obj) -> html str) or html str or an object with `_repr_html_` method, got {type(func_or_html)}")
@@ -338,7 +338,7 @@ class alt_clip(CustomDisplay):
     
     **kwargs are passed to ` Slides.image ` function.
 
-    On Linux, you need alert`xclip` or alert`wl-paste` installed.
+    On Linux, you need alert` xclip ` or alert`wl-paste` installed.
     """
     def __init__(self, filename, obj = None, quality =95, **kwargs):
         if isinstance(filename, Path):
@@ -706,9 +706,9 @@ class image_clip(CustomDisplay):
     - Convert to Numpy array using `.to_numpy()` in RGB format that you can plot later.
 
     ::: note-tip
-        `Slides.alt_clip` is another similar function which captures screenshot on slides.
+        ` Slides.alt_clip ` is another similar function which captures screenshot on slides.
 
-    On Linux, you need alert`xclip` or alert`wl-paste` installed.
+    On Linux, you need alert` xclip ` or alert`wl-paste` installed.
     """
     def __init__(self, filename, quality = 95, overwrite = False, **kwargs):
         _test_ext_and_parent(filename)

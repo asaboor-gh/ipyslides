@@ -1,6 +1,4 @@
 
-from contextlib import suppress
-
 class Notes:
     "Notes are stored in `Slides` class for consistensy."
     def __init__(self,_insatanceSlides, _instanceWidgets):
@@ -15,18 +13,19 @@ class Notes:
         r"""Add notes to current slide. Content could be any object except javascript and interactive widgets.
         ::: note-tip     
             In markdown, you can use alert`notes\`notes content\``."""
-        if self.main.this is None:
-            raise RuntimeError('Notes can only be added inside a slide constructor.')
-        
-        with suppress(BaseException): # Would work on next run, may not first
-            self.main.this._notes = self.main.html('',[content]).value
+        self.main.verify_running('Notes can only be added inside a slide constructor.')
+        self.main.this._notes = self.main.html('',[content]).value
+
     __call__ = insert # Can be called as function
     
     def display(self):
         def set_value(content):
-            bg = self.main.settings._colors.get('bg1','white')
-            fg = self.main.settings._colors.get('fg1','black')
-            bg2 = self.main.settings._colors.get('bg2','#181818')
+            colors, _colors = self.main.settings._colors, {}
+            if self.widgets.theme.value == 'Inherit': # Try to match inherit theme
+                _colors = self.widgets.iw._colors
+            bg  = _colors.get('bg1',colors.get('bg1','white'))
+            fg  = _colors.get('fg1',colors.get('fg1','black'))
+            bg2 = _colors.get('bg2',colors.get('bg2','#181818'))
             font = self.main.settings.fonts.props.get('text', 'Roboto')
             return f"""<style>
         :root {{
@@ -35,7 +34,7 @@ class Notes:
             --bg2-color: {bg2};
         }}
         .columns {{columns: 2 auto;font-family: {font};}}
-        .columns > div > * {{background: {bg2};padding:0.2em;font-size:110%;border-left: 2px inset {bg};}}
+        .columns > div > * {{background: {bg2};padding:4px;border-left: 2px inset {bg};margin-block:0 !important;}}
         .columns > div:first-child::before {{content:'This Slide';font-size:80%;font-weight:bold;}}
         .columns > div:last-child::before {{content:'Next Slide';font-size:80%;font-weight:bold;}}
         </style>{content}"""
@@ -52,6 +51,7 @@ class Notes:
     
     def __open_close_notes(self,change):
         if change['new'] == True:
+            self.widgets.sync_jupyter_colors()
             self.widgets.notes.popup = True
             self.display()
         else:

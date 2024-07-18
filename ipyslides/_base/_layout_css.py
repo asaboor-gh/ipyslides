@@ -752,6 +752,7 @@ def layout_css(accent_color, aspect):
             "<.cell-output-ipywidget-background": {  # VSCode issue */
                 "background": "var(--theme-background,inherit) !important",
                 "margin": "8px 0px",
+                ".FullWindow-Btn": {"display": "none !important"},
             },
             "<.jp-LinkedOutputView": {
                 "> .jp-OutputArea > .jp-OutputArea-child": { # avoid collapse

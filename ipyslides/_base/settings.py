@@ -185,6 +185,7 @@ class Toggle(ConfigTraits):
     notes  = Bool(False)
     toast  = Bool(True)
     focus  = Bool(True)
+    paste  = Bool(True)
 
     def _apply_change(self, change):
         if change and (widget := getattr(self.main._widgets.checks, change.name, None)):
@@ -308,7 +309,7 @@ class Settings:
     
     def _show_info(self, btn):
         self._widgets.iw.send({
-            "content": html('',intro.instructions).value,
+            "content": html('',[intro.instructions]).value,
             "timeout": 120000 # 2 minutes
         })
 

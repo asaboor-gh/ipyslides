@@ -175,8 +175,8 @@ class _HhtmlExporter:
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
-        - You can take screenshot (using system's tool) of a widget and add it back to slide using `Slides.image_clip` to keep PNG view of a widget. 
-        - You can paste a screenshot using `alt_clip` functionality as well.
+        - You can take screenshot (using system's tool) of a widget and add it back to slide using ` Slides.image_clip ` to keep PNG view of a widget. 
+        - You can paste a screenshot using ` alt_clip ` functionality as well.
         
         ::: note-info
             - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
