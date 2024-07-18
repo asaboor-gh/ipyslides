@@ -58,11 +58,11 @@ class Colors(ConfigTraits):
     "Set theme colors. This changes theme to Custom. Each name will be changed to a CSS vairiable as --[name]-color"
     fg1 = Unicode('black')
     fg2 = Unicode('#454545')
-    fg3 = Unicode('navy')
+    fg3 = Unicode('#00004d')
     bg1 = Unicode('white')
     bg2 = Unicode('whitesmoke')
-    bg3 = Unicode('whitesmoke')
-    accent  = Unicode('navy')
+    bg3 = Unicode('#e8e8e8')
+    accent  = Unicode('#005090')
     pointer = Unicode('red')
 
     def _apply_change(self, change): 
