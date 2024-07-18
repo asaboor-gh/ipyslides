@@ -72,7 +72,7 @@ pre {white-space: break-spaces;} /* General rule unless specified in elements */
     justify-content: space-evenly !important;
 }
 .click-wrapper .clicker {display:block;flex-grow:1;color:var(--accent-color);text-align:center;font-size:14px;height:21px;text-decoration:none !important;opacity:0.4;}
-.click-wrapper .clicker:hover {color:var(--primary-fg);opacity:1;}
+.click-wrapper .clicker:hover {color:var(--fg1-color);opacity:1;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;
     display: flex !important;
@@ -148,8 +148,8 @@ a.goto-button {
     font-size: 16px;
 }
 a.goto-button:hover, a.goto-button:focus {
-    box-shadow: 2px 2px 4px var(--secondary-bg);
-    background: var(--secondary-bg);
+    box-shadow: 2px 2px 4px var(--bg2-color);
+    background: var(--bg2-color);
 }
 a.goto-button:active {
     color: var(--pointer-color);

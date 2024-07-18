@@ -76,7 +76,7 @@ class _HhtmlExporter:
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
                 sec_id = self._get_sec_id(item)
                 goto_id = self._get_target_id(item,k)
-                footer = f'<div class="Footer {navui_class}">{item.get_footer()}{self._get_progress(item,k)}</div>'
+                footer = f'<div class="Footer {navui_class}">{self.main.settings._get_footer(item, False)}{self._get_progress(item,k)}</div>'
 
                 number = ""
                 if self.main.settings.footer.numbering:
@@ -88,7 +88,7 @@ class _HhtmlExporter:
                         <div class="SlideBox">
                             {self._get_bg_image(item)}
                             {self._get_logo()}
-                            <div {goto_id} class="{item.css_class}">
+                            <div {goto_id} class="{item._css_class}">
                                 {_html}
                             </div>
                             {number}
@@ -124,7 +124,7 @@ class _HhtmlExporter:
     def _get_progress(self, slide, fidx=0):
         unit = 100/(self.main._iterable[-1].index or 1) # avoid zero division error or None
         pv = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
-        gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--secondary-bg) {pv}%, var(--secondary-bg) 100%)'
+        gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'
     
     def _get_css(self, slide):

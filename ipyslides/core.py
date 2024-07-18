@@ -343,7 +343,7 @@ class Slides(BaseSlides):
     
     def _set_unsynced(self):
         for slide in self.cited_slides:
-            slide.set_css_classes(add = 'Out-Sync') # will go synced after rerun
+            slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='footnote'):
         r"""Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
@@ -507,7 +507,7 @@ class Slides(BaseSlides):
             self.notes.display()  # Display notes first
             self.notify('x') # clear notification
             self._switch_slide(old_index=change["old"], new_index=change["new"])
-            self._current.run_on_load()  # Run on_load setup after switching slide, it updates footer as well
+            self._current._run_on_load()  # Run on_load setup after switching slide, it updates footer as well
 
     def refresh(self):
         "Auto Refresh whenever you create new slide or you can force refresh it"
@@ -611,7 +611,7 @@ class Slides(BaseSlides):
 
             with _build_slide(self, slide_number) as s:
                 prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)
-                s.set_source(cell, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
+                s._set_source(cell, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
@@ -634,7 +634,7 @@ class Slides(BaseSlides):
 
         else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number) as s:
-                s.set_source(cell, "python")  # Update cell source beofore running
+                s._set_source(cell, "python")  # Update cell source beofore running
                 self.run_cell(cell)  #
 
     @contextmanager
@@ -645,7 +645,7 @@ class Slides(BaseSlides):
         with _build_slide(self, slide_number) as s, self.code.context(
             returns = True, depth=4
         ) as c:  # depth = 4 to source under context manager
-            s.set_source(c.raw, "python")  # Update cell source befor yielding
+            s._set_source(c.raw, "python")  # Update cell source befor yielding
             yield s  # Useful to use later
 
     def __xmd(self, line, cell=None):

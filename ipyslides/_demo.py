@@ -82,7 +82,7 @@ def demo_slides(slides):
     with slides.build_() as sl:
         slides.write('## Plotting with Matplotlib section`Plotting and DataFrame`')
         with slides.code.context(returns = True) as s:
-            sl.set_css({'background':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
+            sl.set_css({'--bg1-color':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
 
             import numpy as np, matplotlib.pyplot as plt
             plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation
@@ -167,7 +167,7 @@ def demo_slides(slides):
     slides.build(-1,'section`Controlling Content on Frames` toc`### Contents`')
 
     # Frames structure
-    boxes = [slides.html('h1', f"{c}",style="background:var(--alternate-bg);margin-block:0.05em !important;") for c in range(1,5)]
+    boxes = [slides.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in range(1,5)]
     with slides.build(-1) as s:
         slides.write('# Default Frames')
         s.get_source().focus_lines([2,3]).display()

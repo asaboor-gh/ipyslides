@@ -103,14 +103,14 @@ class Slide:
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
   
-    def set_source(self, text, language):
+    def _set_source(self, text, language):
         "Set source code for this slide."
         self._source = {'text': text, 'language': language}
     
-    def reset_source(self):
+    def _reset_source(self):
         "Reset old source but leave markdown source for observing chnages"
         if not self._markdown:
-            self.set_source("","")
+            self._set_source("","")
         
     def _on_load_private(self, func):
         with self._app._hold_running(): # slides will not be running during switch, so make it safe
@@ -125,7 +125,7 @@ class Slide:
         # This should be outside the try/except block even after finally, if successful, only then assign it.
         self._on_load = func # This will be called in main app
     
-    def run_on_load(self):
+    def _run_on_load(self):
         "Called when a slide is loaded into view. Use it to register notifications etc."
         self._widget.layout.height = '100%' # Trigger a height change to reset scroll position
         start = time.time()
@@ -167,7 +167,7 @@ class Slide:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
 
             self._contents = captured.outputs # Expand columns  
-            self.set_css_classes(remove = 'Out-Sync') # Now synced
+            self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display(go_there=True)    
 
             if self._app.widgets.checks.focus.value: # User preference
@@ -176,9 +176,10 @@ class Slide:
     def update_display(self, go_there = True):
         "Update display of this slide."
         if go_there:
-            self.clear_display(wait = True) # Clear and go there, wait to avoid blinking
+            self._app.navigate_to(self.index) # Go there to see effects
+            self._widget.clear_output(wait = True) # Avoid flickering
             self._app._update_tmp_output(self.css) # Update corresponding CSS but avoid animation here
-            self.set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
+            self._set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
         else:
             self._widget.clear_output(wait = True) # Clear, but don't go there
     
@@ -400,12 +401,6 @@ class Slide:
                 sorted(self._citations.values(), key=lambda x: x._id), 
                 css_class='Citations', style = '')
             self._refs.display()
-
-    
-    def clear_display(self, wait = False):
-        "Clear display of this slide."
-        self._app.navigate_to(self.index) # Go there to see effects
-        self._widget.clear_output(wait = wait)
     
     def show(self):
         "Show this slide in cell."
@@ -413,10 +408,6 @@ class Slide:
         with out:
             display(*self.contents)
         return display(out)
-    
-    def get_footer(self, update_widget = False): # Used here and export_html
-        "Return footer of this slide. Optionally update footer widget."
-        return self._app.settings._get_footer(self, update_widget = update_widget)
     
     @property
     def proxies(self):
@@ -502,7 +493,7 @@ class Slide:
                 if isinstance(k, str) and k.startswith('--'): # don't check others type here
                     back_props[k] = value # Allow CSS variables at top
                 else:
-                    print(f"Ignored property {k!r}. At top level, only CSS variables are allowed, such as '--primary-bg'!")
+                    print(f"Ignored property {k!r}. At top level, only CSS variables are allowed, such as '--bg1-color'!")
                     
         _css = ''
         if back_props:
@@ -518,12 +509,12 @@ class Slide:
     def set_css(self, this: dict=None, overall:dict=None):
         """
         Attributes at the root level of the dictionary are only picked if they are related to background. 
-        You can add CSS classes by `Slide.set_css_classes`. Each call will reset previous call if props given explicitly, otherwise not.
+        Each call will reset previous call if props given explicitly, otherwise not.
 
         ::: note-tip
             - See `Slides.css_syntax` for information on how to write CSS dictionary.
-            - Unlike `slides.html('style',props)`, you can set CSS variables at top level here such as `--primary-fg`,`--primary-bg` etc. 
-            to tweek appearance of individual or all slides. Use `slides.settings.theme.colors` for a full theme change.
+            - Unlike `slides.html('style',props)`, you can set CSS variables at top level here including theme variables
+            ` --fg[1,2,3]-color `,` --bg[1,2,3]-color ` and ` --[accent, pointer]-color ` to tweek appearance of individual or all slides.
         """
         if this is not None:
             self._css = self._fix_css(this, this_slide=True)
@@ -537,7 +528,7 @@ class Slide:
             else:
                 self._app.navigate_to(self.index) # Go there to see effects automatically
 
-    def set_css_classes(self, add=None, remove=None):
+    def _set_css_classes(self, add=None, remove=None):
         "Sett CSS classes on this slide separated by space. classes are remove first and add after it."
         if remove is not None: # remove first to enable toggle
             if not isinstance(remove, str):
@@ -552,7 +543,7 @@ class Slide:
                 self._widget.add_class(c)
 
     @property
-    def css_class(self):
+    def _css_class(self):
         "Readonly dom classes on this slide sepaarated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
@@ -607,7 +598,7 @@ def _build_slide(app, slide_number):
      
     if slide_number in app._slides_dict:
         this = app._slides_dict[slide_number] # Use existing slide is better as display is already there
-        this.reset_source() # Reset old source but keep markdown for observing edits
+        this._reset_source() # Reset old source but keep markdown for observing edits
     else:
         this = Slide(app, slide_number)
         app._slides_dict[slide_number] = this

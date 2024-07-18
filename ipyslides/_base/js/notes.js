@@ -4,8 +4,8 @@ function setupNotesWindow(notes_win) {
     notes_win.resizeTo(screen.width/3,screen.height/3);
     notes_win.moveTo(0,0); // top left corner
     notes_win.document.title = 'IPySlides Notes';
-    notes_win.document.body.style.background = 'var(--primary-bg)';
-    notes_win.document.body.style.color = 'var(--primary-fg)';
+    notes_win.document.body.style.background = 'var(--bg1-color)';
+    notes_win.document.body.style.color = 'var(--fg1-color)';
     window.focus(); // Return focus to main window automatically
 };
 

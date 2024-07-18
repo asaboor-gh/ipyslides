@@ -86,7 +86,7 @@ class _Htmls:
     """
     footer  = HTML('Use `slides.settings.footer` to update this!',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
-    main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent_color'], 16/9)).value) # Will be update in theme as well
+    main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent'], 16/9)).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case

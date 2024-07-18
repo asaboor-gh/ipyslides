@@ -157,8 +157,8 @@ def _ipy_imagestr(image,width='100%'): # Zoom for auto output
     return f'<div class="zoom-child">{fix_ipy_image(image,width=width).value}</div>'
 
 
-def code_css(style='default',color = None, background = None, hover_color = 'var(--alternate-bg)', css_class = None, lineno = True):
-    """Style code block with given style from pygments module. `color` and `background` are optional and will be overriden if pygments style provides them.
+def code_css(style='default',color = None, background = None, hover_color = 'var(--bg3-color)', css_class = None, lineno = True):
+    """Style code block with given style from pygments module. ` color ` and ` background ` are optional and will be overriden if pygments style provides them.
     """
     _class = '.highlight' if css_class is None else f'.highlight.{css_class}'
     
@@ -169,7 +169,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
     if style == 'default':
-        _bg_fg = {'background': 'var(--secondary-bg)', 'color': 'var(--primary-fg)'} # Should match inherit theme
+        _bg_fg = {'background': 'var(--bg2-color)', 'color': 'var(--fg1-color)'} # Should match inherit theme
     else: # Override color and background if provided by theme
         _bg_fg = {} 
         items = [b.strip().split() for b in ''.join(re.findall(rf'{_class}\s+?{{(.*?)}}',_style)).replace(':',' ').rstrip(';').split(';')]
@@ -178,8 +178,8 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
                 _bg_fg[item[0]] = item[1]      
     
     # keep user preferences               
-    bg = background if background else _bg_fg.get('background','var(--secondary-bg)')
-    fg = color if color else _bg_fg.get('color','var(--primary-fg)')
+    bg = background if background else _bg_fg.get('background','var(--bg2-color)')
+    fg = color if color else _bg_fg.get('color','var(--fg1-color)')
      
     return f"""<style>\n{_style}
     {_class} {{ 
@@ -204,7 +204,7 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--alternate-bg)', lineno = True):
+def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True):
     """Highlight code with given language and style. style only works if css_class is given.
     If css_class is given and matches any of `pygments.styles.get_all_styles()`, then style will be applied immediately.
     color is used for text color as some themes dont provide text color."""

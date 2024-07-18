@@ -24,15 +24,15 @@ class Notes:
     
     def display(self):
         def set_value(content):
-            bg = self.main.settings._colors.get('primary_bg','white')
-            fg = self.main.settings._colors.get('primary_fg','black')
-            bg2 = self.main.settings._colors.get('secondary_bg','#181818')
+            bg = self.main.settings._colors.get('bg1','white')
+            fg = self.main.settings._colors.get('fg1','black')
+            bg2 = self.main.settings._colors.get('bg2','#181818')
             font = self.main.settings.fonts.props.get('text', 'Roboto')
             return f"""<style>
         :root {{
-            --primary-bg : {bg};
-            --primary-fg : {fg};
-            --secondary-bg: {bg2};
+            --bg1-color : {bg};
+            --fg1-color : {fg};
+            --bg2-color: {bg2};
         }}
         .columns {{columns: 2 auto;font-family: {font};}}
         .columns > div > * {{background: {bg2};padding:0.2em;font-size:110%;border-left: 2px inset {bg};}}

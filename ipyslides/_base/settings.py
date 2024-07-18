@@ -55,15 +55,15 @@ def fix_sig(cls):
 
 @fix_sig
 class Colors(ConfigTraits):
-    "Set theme colors. This changes theme to Custom."
-    heading_color  = Unicode('navy')
-    primary_fg     = Unicode('black')
-    primary_bg     = Unicode('white')
-    secondary_bg   = Unicode('whitesmoke')
-    secondary_fg   = Unicode('#454545')
-    alternate_bg   = Unicode('whitesmoke')
-    accent_color   = Unicode('navy')
-    pointer_color  = Unicode('red')
+    "Set theme colors. This changes theme to Custom. Each name will be changed to a CSS vairiable as --[name]-color"
+    fg1 = Unicode('black')
+    fg2 = Unicode('#454545')
+    fg3 = Unicode('navy')
+    bg1 = Unicode('white')
+    bg2 = Unicode('whitesmoke')
+    bg3 = Unicode('whitesmoke')
+    accent  = Unicode('navy')
+    pointer = Unicode('red')
 
     def _apply_change(self, change): 
         if change: # Don't at None
@@ -100,8 +100,8 @@ class Code(ConfigTraits):
     "Set code block styles. background and color may be needed for some styles."
     style_per_theme = InstanceDict(StylePerTheme, help="A pygment style for each theme.")
     color       = Unicode(allow_none=True)
-    background  = Unicode('var(--secondary-bg)', allow_none=True) # Some themes don't have it
-    hover_color = Unicode("var(--alternate-bg)")
+    background  = Unicode('var(--bg2-color)', allow_none=True) # Some themes don't have it
+    hover_color = Unicode("var(--bg3-color)")
     lineno      = Bool(True)
 
     def _apply_change(self, change): # need to set somewhere
@@ -353,7 +353,7 @@ class Settings:
         if date:
             text += (
                 " | " if text else ""
-            ) + f'{today(fg = "var(--secondary-fg)") if date == "today" else date}'
+            ) + f'{today(fg = "var(--fg2-color)") if date == "today" else date}'
         
         if numbering and update_widget:
             self._slides.widgets._snum.layout.display = ""
@@ -395,7 +395,7 @@ class Settings:
         # Only update layout CSS if theme changes, not on each call
         if change and change['owner'] in ('layout',self._widgets.theme): # function called with owner without widget works too much
             self._widgets.htmls.main.value = html('style',
-                _layout_css.layout_css(self._colors['accent_color'],self.layout.aspect)
+                _layout_css.layout_css(self._colors['accent'],self.layout.aspect)
             ).value
         
         theme_css = styles.style_css(**self._theme_kws)
@@ -422,7 +422,7 @@ class Settings:
     def _toggle_tocbox(self, btn):
         if self._widgets.tocbox.layout.height == "0":
             self._widgets.tocbox.layout.height = f"min(calc(100% - 32px), {max(150, len(self._widgets.tocbox.children)*36)}px)"
-            self._widgets.tocbox.layout.border = "1px solid var(--alternate-bg)"
+            self._widgets.tocbox.layout.border = "1px solid var(--bg3-color)"
             self._widgets.tocbox.layout.padding = "4px"
             self._widgets.buttons.toc.icon = "minus"
         else:
@@ -513,7 +513,7 @@ class Settings:
             self._hover_only = 'Hover-Only' in self._tgl_menu._dom_classes
             self._tgl_menu.remove_class('Hover-Only') # If navigation menu hidden by user
             self._widgets.quick_menu.layout.height = 'min(225px, calc(100% - 30px))'
-            self._widgets.quick_menu.layout.border = "1px solid var(--alternate-bg)"
+            self._widgets.quick_menu.layout.border = "1px solid var(--bg3-color)"
         else:
             self._tgl_menu.icon = 'plus'
             self._widgets.quick_menu.layout.height = '0'

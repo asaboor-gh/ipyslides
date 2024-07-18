@@ -1,7 +1,6 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
 import traceback
-from pprint import PrettyPrinter
 from pathlib import Path
 from contextlib import ContextDecorator
 
@@ -327,7 +326,7 @@ class BaseSlides:
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i].css_class,)
+            checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i]._css_class,)
             if any(checks):
                 with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                     self._slide(f'{i + start} -m', chunk)
@@ -372,7 +371,7 @@ class BaseSlides:
         def update(widget, content, buffer):
             if path.is_file():
                 mtime = os.stat(path).st_mtime
-                out_sync = any(['Out-Sync' in s.css_class for s in self.cited_slides]) or False
+                out_sync = any(['Out-Sync' in s._css_class for s in self.cited_slides]) or False
                 if out_sync or (mtime > self._mtime):  # set by interaction widget
                     self._mtime = mtime
                     try: 
@@ -445,8 +444,10 @@ class BaseSlides:
                 if isinstance(content, (list, tuple)) and not code.startswith('with'):
                     with _build_slide(self._app, self._snumber) as s: 
                         self._app.write(*content, widths=widths)
-                    fmtc = PrettyPrinter(depth=5, compact=True).pformat(content)
-                    s.set_source(f'content = {fmtc}\nwrite(*content, widths={widths})', "python")
+                    
+                    if code.count('(') != code.count(')'):
+                        code = code.strip() + ' ...' 
+                    s._set_source(code,'python') # Just hinted one-liner code
                     return s
             
             if content is not None:
@@ -459,7 +460,7 @@ class BaseSlides:
             code = self._app.code.context(returns=True, depth = 3).__enter__()
             self._context = _build_slide(self._app, self._snumber)
             slide = self._context.__enter__()
-            slide.set_source(code.raw, "python")
+            slide._set_source(code.raw, "python")
             return slide
 
         def __exit__(self, *args):
@@ -558,7 +559,7 @@ class BaseSlides:
         
         with self.build(-1) as s:
             s.set_css({
-                'background': 'linear-gradient(45deg, var(--alternate-bg), var(--primary-bg), var(--alternate-bg))',
+                '--bg1-color': 'linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color))',
                 '.highlight': {'background':'#8984'}
             }) 
             self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
@@ -639,7 +640,7 @@ class BaseSlides:
             self.on_load(highlight_code)
         
             for ws, cols in self.fsep.loop(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
-                cols = [self.html('h1', f"{c}",style="background:var(--alternate-bg);margin-block:0.05em !important;") for c in cols]
+                cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
                 self.fsep.join() # incremental
                 self.write(*cols, widths=ws)
                     

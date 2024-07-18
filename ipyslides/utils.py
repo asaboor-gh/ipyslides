@@ -597,7 +597,7 @@ def block_magenta(*objs, widths = None): return _block(*objs, widths = widths, s
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
     try:
-        _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--secondary-fg);">{str(inspect.signature(callable))}</span>'
+        _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--fg2-color);">{str(inspect.signature(callable))}</span>'
         if prepend_str: 
             _sig = f'{color(prepend_str,"var(--accent-color)")}.{_sig}' # must be inside format string
         return XTML(_sig)

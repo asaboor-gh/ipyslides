@@ -218,15 +218,9 @@ function handleScale(box) {
 
 function setColors(model, box) {
     let style = window.getComputedStyle(box);
-    const colors = {
-        'accent_color' : style.getPropertyValue('--accent-color'),
-        'primary_fg' : style.getPropertyValue('--primary-fg'),
-        'primary_bg' : style.getPropertyValue('--primary-bg'),
-        'secondary_bg': style.getPropertyValue('--secondary-bg'),
-        'secondary_fg': style.getPropertyValue('--secondary-fg'),
-        'alternate_bg': style.getPropertyValue('--alternate-bg'),
-        'pointer_color': style.getPropertyValue('--pointer-color'),
-        'heading_color': style.getPropertyValue('--heading-color')
+    const colors = {}
+    for (let prop of ['accent', 'pointer', 'bg1', 'bg2', 'bg3', 'fg1', 'fg2', 'fg3']) {
+        colors[prop] = style.getPropertyValue('--' + prop + '-color');
     }
     model.set("_colors", colors);
     model.save_changes();

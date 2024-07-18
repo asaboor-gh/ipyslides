@@ -116,7 +116,7 @@ class HtmlWidget(anywidget.AnyWidget):
     } 
     .clickable-div > .custom-html { cursor: pointer; }
     .clickable-div > .custom-html:hover, .clickable-div > .custom-html:focus {
-        background: var(--alternate-bg, rgba(100, 100, 111, 0.2)) !important;
+        background: var(--bg3-color, rgba(100, 100, 111, 0.2)) !important;
     }
     """
     value = traitlets.Unicode('').tag(sync=True)

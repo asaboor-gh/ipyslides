@@ -37,7 +37,7 @@ def layout_css(accent_color, aspect):
                 },  # still should be clickable
                 "^.PasteMode" : {
                     ".paste-box": {
-                        "background": "var(--secondary-bg)",
+                        "background": "var(--bg2-color)",
                         "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important",
                         "margin": "0.25em", # figure has padding 0.25em which is fit in margin as a hint for snipping image
                         "padding":"8px",
@@ -45,7 +45,7 @@ def layout_css(accent_color, aspect):
                     },
                     ".clipboard-image": {
                         "^, ^.export-only" : {"display": "block !important",},
-                        "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--alternate-bg)",},
+                        "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--bg3-color)",},
                     },
                     ".paste-btns": {
                         "display": "flex !important", 
@@ -71,7 +71,7 @@ def layout_css(accent_color, aspect):
                     "position": "absolute !important",
                     "left":"0 !important",
                     "bottom": "0 !important",
-                    "background": "var(--secondary-bg) !important",
+                    "background": "var(--bg2-color) !important",
                     ".Progress" : {
                         "margin": "0 !important",
                         "padding": "0 !important",
@@ -115,7 +115,7 @@ def layout_css(accent_color, aspect):
                     "top": "50%",
                     "transform": "translate(-50%,-50%)",
                     "z-index": "11",  # Above all
-                    "text-shadow": "0 0 4px white, 0 0 8px var(--secondary-bg)",
+                    "text-shadow": "0 0 4px white, 0 0 8px var(--bg2-color)",
                     "border-radius": "50%",
                 },
                 "div.LaserPointer": {  # For laser pointer
@@ -190,7 +190,7 @@ def layout_css(accent_color, aspect):
                         },
                         '> .widget-output': {
                             'padding': '4px 8px',
-                            'border-left': '2px solid var(--alternate-bg)',
+                            'border-left': '2px solid var(--bg3-color)',
                             'display': 'grid',
                             'grid-column-start':1,
                             'grid-column-end': -1,
@@ -202,16 +202,16 @@ def layout_css(accent_color, aspect):
                     },
                 },
                 "kbd" : {
-                    "color":"var(--secondary-fg)",
-                    "background": "var(--secondary-bg)",
-                    "border": "1px solid var(--alternate-bg)",
+                    "color":"var(--fg2-color)",
+                    "background": "var(--bg2-color)",
+                    "border": "1px solid var(--bg3-color)",
                     "border-radius": "0.2em",
                 },
                 ".export-only": {"display": "none !important"},
                 ".widget-inline-hbox": {
-                    ".widget-label": {"color": "var(--primary-fg)"},
+                    ".widget-label": {"color": "var(--fg1-color)"},
                     ".widget-readout": {
-                        "color": "var(--primary-fg) !important",
+                        "color": "var(--fg1-color) !important",
                         "box-shadow": "none",
                         "min-width": "auto !important",
                     },
@@ -229,8 +229,8 @@ def layout_css(accent_color, aspect):
                         "background": "var(--accent-color)",
                         "border-color": "var(--accent-color)",
                         "^:hover, ^:focus": {
-                            "background": "var(--alternate-bg) !important",
-                            "border-color": "var(--alternate-bg) !important",
+                            "background": "var(--bg3-color) !important",
+                            "border-color": "var(--bg3-color) !important",
                         },
                     },
                     ".noUi-connect.noUi-draggable": { # for ranger sliders
@@ -248,7 +248,7 @@ def layout_css(accent_color, aspect):
                     },
                 },
                 ".SidePanel": {
-                    "background": "var(--alternate-bg)",
+                    "background": "var(--bg3-color)",
                     "backdrop-filter": "blur(10px)",
                     "position": "absolute",
                     "border": "none",
@@ -260,12 +260,12 @@ def layout_css(accent_color, aspect):
                     "transition": "height 400ms ease-in-out",
                     "@container slides (max-width: 650px)": {"width": "100% !important"},
                     ".CaptureHtml": {
-                        "border": "1px solid var(--secondary-fg)",
+                        "border": "1px solid var(--fg2-color)",
                         "figure": {
                             "width": "100% !important",
                             "margin": "0",
                             "padding": "0",
-                            "background": "var(--secondary-bg)",
+                            "background": "var(--bg2-color)",
                         },
                     },
                     ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",},
@@ -294,7 +294,7 @@ def layout_css(accent_color, aspect):
                     "box-sizing": "border-box",
                 },
                 "button:not(.tlui-button)": {
-                    "color": "var(--accent-color)!important",
+                    "color": "var(--accent-color) !important",
                     "border-radius": "0px",
                     "background": "transparent !important",
                     "display": "flex",
@@ -308,22 +308,22 @@ def layout_css(accent_color, aspect):
                     "outline": "none !important",
                     "opacity": "1 !important",
                     "box-shadow": "none !important",
-                    "background": "var(--alternate-bg)",
-                    "text-shadow": "0 0 2px var(--primary-bg), 0 0 4px var(--accent-color)",
+                    "background": "var(--bg3-color)",
+                    "text-shadow": "0 0 2px var(--bg1-color), 0 0 4px var(--accent-color)",
                 },
                 ".widget-play .jupyter-button": {
-                    "background": "var(--secondary-bg)",
-                    "color": "var(--accent-color)!important",
+                    "background": "var(--bg2-color)",
+                    "color": "var(--accent-color) !important",
                 },
                 ".widget-dropdown": {
                     "> select, > select > option": {
-                        "color": "var(--primary-fg)!important",
+                        "color": "var(--fg1-color) !important",
                         "font-family": "var(--jp-content-font-family) !important", # why system fonts here?
-                        "background": "var(--primary-bg)!important",
+                        "background": "var(--bg1-color) !important",
                     },
                 },
                 ".jupyter-widgets:not(button)": {
-                    "color": "var(--primary-fg) !important"
+                    "color": "var(--fg1-color) !important"
                 },  # All widgets text color
             },
             ".NavWrapper": {
@@ -427,7 +427,7 @@ def layout_css(accent_color, aspect):
                 "left": "0",
                 "bottom": "24px", # just above navbar
                 "display": "table-column-group !important", # This to avoid collapsing divs
-                "background": "var(--secondary-bg)",
+                "background": "var(--bg2-color)",
                 **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
                 "margin": "4px",
                 "min-width": "50% !important",
@@ -488,7 +488,7 @@ def layout_css(accent_color, aspect):
                 "max-height": "calc(100% - 30px) !important",
                 "overflow-y": "auto !important",
                 "overflow": "hidden", # hides scrollbars with single button
-                "background": "var(--secondary-bg) !important",
+                "background": "var(--bg2-color) !important",
                 "box-sizing": "border-box !important",
                 "border-radius": "4px",
                 "transition": "height 400ms ease-in-out",
@@ -505,7 +505,7 @@ def layout_css(accent_color, aspect):
                 "> button::after":{
                     "content": "attr(title)",
                     "font-size": "14px !important",
-                    "color": "var(--primary-fg) !important",
+                    "color": "var(--fg1-color) !important",
                 },    
             },
             "<.jp-OutputArea-child": {
@@ -520,8 +520,8 @@ def layout_css(accent_color, aspect):
                 "padding-right": "0 !important",  # important for central layout
                 "font-size": "var(--text-size)",
                 ":not(pre) > code": {
-                    "background": "var(--secondary-bg) !important",
-                    "color": "var(--secondary-fg)",
+                    "background": "var(--bg2-color) !important",
+                    "color": "var(--fg2-color)",
                 },
                 ":not(pre) > code, :not(pre) > span": {  # To avoid overflow due to large words
                     "word-break": "normal !important",
@@ -531,13 +531,13 @@ def layout_css(accent_color, aspect):
                     "margin-bottom": "0.2em !important",
                 },
                 "pre, code": {
-                    "color": "var(--primary-fg)",
+                    "color": "var(--fg1-color)",
                 },
             },
             ".jp-RenderedText": {
                 "*": {"font-size": "0.9em !important",},
                 "^, pre": {
-                    "color": "var(--primary-fg) !important",
+                    "color": "var(--fg1-color) !important",
                 },
             },
             ".Draw-Wrapper": { # height is set dynamically
@@ -576,8 +576,8 @@ def layout_css(accent_color, aspect):
                     "height": "100% !important",
                 },  
                 'rect.tl-frame__body': { # Due to lack of dark mode in widget
-                    'fill':'var(--primary-bg)',
-                    'stroke':'var(--secondary-bg)',
+                    'fill':'var(--bg1-color)',
+                    'stroke':'var(--bg2-color)',
                 },
             },
             ".Arrows": {
@@ -710,16 +710,16 @@ def layout_css(accent_color, aspect):
                 "left": "0 !important",
                 "right": "0 !important",
                 "bottom": "0 !important",
-                "background": "var(--alternate-bg)",
+                "background": "var(--bg3-color)",
                 "^, *": {
-                    "color": "var(--primary-fg)",
+                    "color": "var(--fg1-color)",
                 },
                 "::-webkit-scrollbar": {
                     "height": "4px",
                     "width": "4px",
                     "background": "transparent !important",
                     "^:hover": {
-                        "background": "var(--secondary-bg) !important",
+                        "background": "var(--bg2-color) !important",
                     },
                 },
                 "::-webkit-scrollbar-thumb": {
@@ -732,14 +732,14 @@ def layout_css(accent_color, aspect):
                     "display": "none !important",
                 },
                 ".widget-text input": {
-                    "background": "var(--primary-bg)",
-                    "color": "var(--primary-fg)",
+                    "background": "var(--bg1-color)",
+                    "color": "var(--fg1-color)",
                 },
                 "#rendered_cells": {
                     "height": "100% !important",
                     "overflow": "auto !important",
                     ".raw-text": {
-                        "color": "var(--primary-fg)",
+                        "color": "var(--fg1-color)",
                     },
                 },
             },
@@ -855,7 +855,7 @@ def zoom_hover_css():
                         "width": "100% !important",
                         "height": "100% !important",
                         "box-sizing": "border-box !important",
-                        "background": "var(--primary-bg) !important",  # Avoids overlapping with other elements
+                        "background": "var(--bg1-color) !important",  # Avoids overlapping with other elements
                     },
                 },
             },
