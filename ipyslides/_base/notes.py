@@ -19,7 +19,7 @@ class Notes:
             raise RuntimeError('Notes can only be added inside a slide constructor.')
         
         with suppress(BaseException): # Would work on next run, may not first
-            self.main.this._notes = self.main.html('',content)._repr_html_()
+            self.main.this._notes = self.main.html('',[content]).value
     __call__ = insert # Can be called as function
     
     def display(self):

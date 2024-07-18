@@ -703,7 +703,7 @@ class Slides(BaseSlides):
 
         if not tocs_dict:
             children.append(self.html('',
-                r"No sections found!, create sections with markdown syntax alert`section\`content\``"
+                [r"No sections found!, create sections with markdown syntax alert`section\`content\``"]
             ).as_widget())
         else:
             for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):
