@@ -53,7 +53,7 @@ slides.build(-1, "Markdown content can create many slides at once here!")
 ```
 
 ```python
-slides # This displays slides if on the last line of cell, or use `slides.show()`.
+slides # This displays slides if on the last line of cell, or use hl`slides.show()`.
 ```
 
 ::: note-info

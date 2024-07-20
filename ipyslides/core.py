@@ -347,7 +347,7 @@ class Slides(BaseSlides):
 
     def set_citations(self, data, mode='footnote'):
         r"""Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
-        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by `Slides.settings.layout(..., ncol_refs=N)`.
+        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by hl`Slides.settings.layout(..., ncol_refs=N)`.
 
         ::: note
             - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
@@ -417,12 +417,12 @@ class Slides(BaseSlides):
         `text` is the text to be displayed on button.
         `kwargs` are passed to `ipywidgets.Button` function.
 
-        - Pass to write command or use `.display()` method to display button in a slide.
-        - Use `.set_target()` method under target slide.
+        - Pass to write command or use hl`.display()` method to display button in a slide.
+        - Use hl`.set_target()` method under target slide.
 
         ::: note-tip
             - `goto_button` is converted to a link in exported slides that can be clicked to jump to slide.
-            - You can use `.set_target()` on a previous slides and `.display()` on a later slide to create a link that jumps backwards.
+            - You can use hl`.set_target()` on a previous slides and hl`.display()` on a later slide to create a link that jumps backwards.
         """
         kwargs["description"] = text  # override description with text
         kwargs["layout"] = kwargs.get("layout", {"width": "max-content"})
@@ -801,7 +801,7 @@ class Slides:
     __doc__ = textwrap.dedent(
         """
     Interactive Slides in IPython Notebook. Only one instance can exist.
-    `settings` are passed to `Slides.settings()` if you like to set during initialization.
+    `settings` are passed to hl`Slides.settings()` if you like to set during initialization.
     
     To suppress unwanted print from other libraries/functions, use:
     ```python
@@ -812,21 +812,21 @@ class Slides:
     ```
     ::: note-info
         The traitlets callables under settings returns settings back to enable chaining 
-        without extra typing, like `Slides.settings.logo().layout()...` .
+        without extra typing, like hl`Slides.settings.logo().layout()...` .
     
     ::: note-tip
-        - Use `Slides.instance()` class method to keep older settings. `Slides()` apply default settings every time.
-        - Run `slides.demo()` to see a demo of some features.
-        - Run `slides.docs()` to see documentation.
+        - Use hl`Slides.instance()` class method to keep older settings. hl`Slides()` apply default settings every time.
+        - Run hl`slides.demo()` to see a demo of some features.
+        - Run hl`slides.docs()` to see documentation.
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
-        - See `Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
+        - See hl`Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
     
     ::: note-info
-        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as `Slides[number,] -> Slide` 
-        or access many via list as `Slides[[n1,n2,..]] -> tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
+        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as hl`Slides[number,] -> Slide` 
+        or access many via list as hl`Slides[[n1,n2,..]] -> tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
     """
     )
     @classmethod

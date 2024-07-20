@@ -149,7 +149,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'font-family': 'var(--jp-code-font-family) !important',
                 'font-size':'90% !important',   
             }, # Define color below at low specificity, otherwise it can overwrite code
-            '.jp-RenderedHTMLCommon :is(pre, code)': {'background': 'none !important'}, # Avoid a white background set by jupyter
+            '.jp-RenderedHTMLCommon :is(pre, code)': {'line-height': '1.5 !important','background': 'none !important'}, # Avoid a white background set by jupyter
         },
         '^.SlidesWrapper':{
             'container': 'slides / inline-size',
@@ -187,7 +187,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'color':'var(--fg3-color)',
                 'text-align':'center' if centered else 'left',
                 'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
-                'line-height':'1.5em',
+                'line-height':'1.5',
                 'overflow':'hidden', # Firefox 
                 '.MJX-TEX, .MathJax span': {"color":"var(--fg3-color)",}, # MathJax span is for export
             },
@@ -319,7 +319,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             },
             '.text-box': { # general text box for writing inline refrences etc. 
                 'font-size':'0.85em !important', 
-                'line-height':'0.99em !important',
+                'line-height':'1.2 !important',
                 'position':'relative', 
                 'left':'initial',
                 'top':'initial',
@@ -354,7 +354,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             },
             '.footnote *, .footnote li::marker': {
                 'font-size':'0.9em',
-                'line-height':'0.9em',
+                'line-height':'1',
             },
             '.footnote ol': {'margin-top':'0.5em !important',},
             'pre': {
@@ -374,7 +374,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             },
             'figcaption': {
                 'font-size':'0.8em !important',
-                'line-height':'1em !important',
+                'line-height':'1 !important',
                 'padding':'0.5em 1.5em !important',
             },
             '.columns':{
@@ -388,7 +388,20 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 '> *': {'box-sizing':'border-box !important',}
             },
         },
-        '.highlight': {
+        'span.sig': {
+            'color': 'var(--accent-color) !important',
+            'font-family': 'var(--jp-code-font-family) !important',
+            'text-shadow': '1px 1px var(--bg1-color)',
+            '> b': {'color': 'var(--fg1-color) !important',},
+            '+ code.inline': {'padding': '1px !important',},
+        },
+        'code.highlight.inline': {
+            'border': 'none !important',
+            'text-shadow': '1px 1px var(--bg1-color)',
+            'background': 'none !important', # Export fix
+            'span.n': {'color': 'var(--fg1-color) !important',},
+        },
+        '.highlight:not(.inline)': {
             'min-width':'100% !important',
             'width':'100% !important',
             'max-width':'100vw !important',
@@ -401,7 +414,6 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             # colors are set via settigs.set_code_theme
             'pre': {  # works for both case, do not use > 
                 'display':'grid !important',
-                'padding':'8px 4px 8px 4px !important', 
                 'overflow':'auto !important',
                 'width':'auto !important',
                 'box-sizing':'border-box !important',
@@ -414,7 +426,6 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'counter-increment':'line',
                 'display':'inline-block !important', # should be on new line 
                 'width':'auto',
-                'min-width':'calc(90% - 2.2em)',
                 'background':'transparent !important',
                 'white-space':'pre !important',
                 'overflow-wrap':'normal !important',
@@ -423,23 +434,22 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'content':'counter(line,decimal)',
                     'position':'sticky',
                     'top':'initial',
-                    'left':'-4px',
+                    'left':'-1px',
                     'padding':'0 8px',
                     'display':'inline-block', # should be inline 
                     'text-align':'right',
                     '-webkit-user-select':'none',
-                    'margin-left':'-3em',
                     'margin-right':'8px',
                     'font-size':'80% !important',
-                    'opacity':'0.8 !important',
+                    'text-shadow': '1px 1px var(--bg1-color)',
                 },
                 '> span': {
+                    'text-shadow': '1px 1px var(--bg1-color)',
                     'white-space':'pre', #normal  for breaking words 
                     'word-break':'break-word', # for breaking words 
-                    '^.err, ^.nn' : {'background': 'none !important', 'text-decoration': 'none !important',}, 
+                    '^.err, ^.nn, ^.nc' : {'background': 'none !important', 'text-decoration': 'none !important',}, 
                 },
                 '^.code-no-focus': {'opacity':'0.3 !important'},
-                '^.code-focus':{'text-shadow':'0 0 1px var(--bg1-color)'},
             },
         },
         '.highlight, pre, .raw-text': {

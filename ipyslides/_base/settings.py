@@ -76,9 +76,9 @@ class StylePerTheme(ConfigTraits):
     inherit = Unicode('default')
     custom  = Unicode('default')
     light   = Unicode('friendly')
-    dark    = Unicode('native')
-    material_light = Unicode('perldoc')
-    material_dark = Unicode('one-dark')
+    dark    = Unicode('stata-dark')
+    material_light = Unicode('manni')
+    material_dark = Unicode('github-dark')
 
     def _apply_change(self, change): 
         if change and change.new in pygments.styles.get_all_styles(): # go there safely
@@ -100,7 +100,7 @@ class Code(ConfigTraits):
     "Set code block styles. background and color may be needed for some styles."
     style_per_theme = InstanceDict(StylePerTheme, help="A pygment style for each theme.")
     color       = Unicode(allow_none=True)
-    background  = Unicode('var(--bg2-color)', allow_none=True) # Some themes don't have it
+    background  = Unicode(allow_none=True) 
     hover_color = Unicode("var(--bg3-color)")
     lineno      = Bool(True)
 
@@ -230,7 +230,7 @@ class Settings:
     Slides.settings.layout.aspect = 16/10  # Attribute
     ```
     All settings calls including top level returns settings instance to apply method chaining.
-    e.g. `Slides.settings.layout(aspect = 16/10).footer(text="ABC").logo(...)`.
+    e.g. hl`Slides.settings.layout(aspect = 16/10).footer(text="ABC").logo(...)`.
     """
     _instance = None
     def __init__(self, _instanceSlides, _instanceWidgets):

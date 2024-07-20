@@ -32,7 +32,7 @@ def demo_slides(slides):
     ---
     # Introduction
     proxy`something will be here in start`
-    To see how commands work, use `Slides.docs()` to see the documentation.
+    To see how commands work, use hl`Slides.docs()` to see the documentation.
     Here we will focus on using all that functionality to create slides.
     ```python run source
     # get the slides instance under a python block in Markdown file, we will use it later to run a cell magic.
@@ -176,7 +176,7 @@ def demo_slides(slides):
             slides.write(item)
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### `fsep.join()` and Fancy Bullet List yoffset`0`')
+        slides.write('# Frames with \n#### hl`fsep.join()` and Fancy Bullet List yoffset`0`')
         s.get_source().focus_lines([2,3,4]).display()
         slides.fsep()
         slides.fsep.join()
@@ -184,7 +184,7 @@ def demo_slides(slides):
             slides.bullets([item], marker='💘').display()
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### `fsep.join()` and 2x2 grid of boxes yoffset`0`')
+        slides.write('# Frames with \n#### hl`fsep.join()` and 2x2 grid of boxes yoffset`0`')
         s.get_source().focus_lines(range(2,7)).display()
         slides.fsep()
         slides.fsep.join()

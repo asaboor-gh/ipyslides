@@ -259,15 +259,6 @@ def layout_css(accent_color, aspect):
                     "left": "0px !important",
                     "transition": "height 400ms ease-in-out",
                     "@container slides (max-width: 650px)": {"width": "100% !important"},
-                    ".CaptureHtml": {
-                        "border": "1px solid var(--fg2-color)",
-                        "figure": {
-                            "width": "100% !important",
-                            "margin": "0",
-                            "padding": "0",
-                            "background": "var(--bg2-color)",
-                        },
-                    },
                     ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",},
                     ":not(.TopBar) :is(button, .jupyter-button)": {
                         "margin-left":"var(--jp-widgets-inline-label-width) !important",
@@ -446,10 +437,6 @@ def layout_css(accent_color, aspect):
                     "font-size": "16px !important", # A liitle larger
                     "box-sizing": "border-box !important",
                 },
-            },
-            ".CaptureHtml *": {
-                "font-size": "0.9em",
-                "line-height": "0.9em  !important",
             },
             ".TopBar": {
                 "margin-top": "8px !important",  # Avoid overlap with topbar outside

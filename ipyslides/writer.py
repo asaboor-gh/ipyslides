@@ -174,14 +174,14 @@ def write(*objs,widths = None):
     Write any object that can be displayed in a cell with some additional features:
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
-    - Display another function in order by passing it to a lambda function like `lambda: func()`. Only body of the function will be displayed/printed. Return value will be ignored.
+    - Display another function in order by passing it to a lambda function like hl`lambda: func()`. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
     - Use `Slides.alt` function to display obj/widget on slides and alternative content in exported slides.
     - Use ` Slides.alt_clip ` function to display anything (without parsing) on slides and paste its screenshot for export. Screenshots are persistent and taken on slides.
     - Use ` Slides.image_clip ` to add screenshots from clipboard while running the cell.
-    - `ipywidgets.[HTML, Output, Box]` and their subclasses will be displayed as `Slides.alt(html_converter_func, widget)`. The value of exported HTML will be most recent.
+    - hl`ipywidgets.[HTML, Output, Box]` and their subclasses will be displayed as hl`Slides.alt(html_converter_func, widget)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.
@@ -192,9 +192,9 @@ def write(*objs,widths = None):
             
     ::: note
         - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.
-        - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
-        - You can avoid `repr(obj)` by `lambda: func()` e.g. `lambda: plt.show()`. This can also be used to delay display until it is captured in a column.
-        - You can use `display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
+        - `write` is a robust command that can handle most of the cases. If nothing works, hl`repr(obj)` will be displayed.
+        - You can avoid hl`repr(obj)` by hl`lambda: func()` e.g. hl`lambda: plt.show()`. This can also be used to delay display until it is captured in a column.
+        - You can use hl`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """

@@ -25,7 +25,7 @@ _script = '''<script>
         let scale = scaleH > scaleW ? scaleW : scaleH;
         if (scale) { // Only add if not null or somethings
             document.documentElement.style.setProperty('--contentScale',scale);
-            document.documentElement.style.setProperty('--paddingBottom',Number(23/scale) + "px");
+            document.documentElement.style.setProperty('--paddingBottom',Number(26/scale) + "px");
         };
     };
     window.dispatchEvent(new window.Event('resize')); // First time programatically

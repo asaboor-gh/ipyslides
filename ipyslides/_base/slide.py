@@ -512,9 +512,9 @@ class Slide:
         Each call will reset previous call if props given explicitly, otherwise not.
 
         ::: note-tip
-            - See `Slides.css_syntax` for information on how to write CSS dictionary.
-            - Unlike `slides.html('style',props)`, you can set CSS variables at top level here including theme variables
-            ` --fg[1,2,3]-color `,` --bg[1,2,3]-color ` and ` --[accent, pointer]-color ` to tweek appearance of individual or all slides.
+            - See hl`Slides.css_syntax` for information on how to write CSS dictionary.
+            - Unlike hl`slides.html('style',props)`, you can set CSS variables at top level here including theme variables
+            hl[css]` --fg[1,2,3]-color `,hl[css]` --bg[1,2,3]-color ` and hl[css]` --[accent, pointer]-color ` to tweek appearance of individual or all slides.
         """
         if this is not None:
             self._css = self._fix_css(this, this_slide=True)

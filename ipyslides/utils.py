@@ -84,6 +84,14 @@ def _fmt_cols(*objs,widths = None):
     
     return f'''<div class="columns">{_cols}</div>'''
 
+def hl(code, language="python"): # No need to have in __all__, just for markdown
+    try: 
+        return '<code class="highlight inline"' + re.findall(
+            r'\<\s*code(.*?\<\s*\/\s*code\s*\>)', highlight(code, language).value
+            )[0] # Avoid multilines, just first match in code
+    except:
+        return f'<code>{code}</code>' # Fallback , no need to raise errors
+
 _example_props = {
     '.A': { # .A is repeated nowhere! But in CSS it is a lot
         'z-index': '2',
@@ -234,16 +242,16 @@ _css_docstring = parse("""
 CSS is formatted using a `props` nested dictionary to simplify the process. 
 There are few special rules in `props`:
 
-- All nested selectors are joined with space, so `'.A': {'.B': ... }` becomes `'.A .B {...}'` in CSS.
-- A '^' in start of a selector joins to parent selector without space, so `'.A': {'^:hover': ...}` becomes `'.A:hover {...}'` in CSS. You can also use `'.A:hover'` directly but it will restrict other nested keys to hover only.
-- A list/tuple of values for a key in dict generates CSS fallback, so `'.A': {'font-size': ('20px','2em')}` becomes `'.A {font-size: 20px; font-size: 2em;}'` in CSS.
+- All nested selectors are joined with space, so hl`'.A': {'.B': ... }` becomes hl[css]`.A .B {...}` in CSS.
+- A '^' in start of a selector joins to parent selector without space, so hl`'.A': {'^:hover': ...}` becomes hl[css]`.A:hover {...}` in CSS. You can also use hl`'.A:hover'` directly but it will restrict other nested keys to hover only.
+- A list/tuple of values for a key in dict generates CSS fallback, so hl`'.A': {'font-size': ('20px','2em')}` becomes hl[css]`.A {font-size: 20px; font-size: 2em;}` in CSS.
 
 Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
 """ + f"""                      
 ```python
 props = {json.dumps(_example_props, indent=2)}
 ```
-Output of `html('style',props)`,`set_css(props)` etc. functions. Top selector would be different based on where it is called.
+Output of hl`html('style',props)`, hl`set_css(props)` etc. functions. Top selector would be different based on where it is called.
 {highlight(_styled_css(_example_props).value, "css","CSS")}
 """, returns=True)
 
@@ -326,10 +334,10 @@ class alt_clip(CustomDisplay):
     If no `obj` is passed, both slides and exported HTML shares same image view.
 
     On each paste, existing image is overwritten and stays persistent for later use. You can use these clips
-    in other places with `Slides.image("clip:filename")` as well.
+    in other places with hl`Slides.image("clip:filename")` as well.
 
     ::: not-info
-        If you have an HTML serialization function for a widget, pass it directly to `write` or use `alt(func, widget)` instead. 
+        If you have an HTML serialization function for a widget, pass it directly to `write` or use hl`alt(func, widget)` instead. 
         That will save you the hassel of copy pasting screenshots. `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give
         html representation if used inside `write` command.
     
@@ -378,7 +386,7 @@ class alt_clip(CustomDisplay):
             self._rep.value = f"{error(ename,'something went wrong')}<br/><br/>{error(e,text)}"
 
 def clip(filename, quality =95, **kwargs):
-    "Shortcut for `alt_clip(file, obj=None)` to be useful in markdown as alert`clip[options]\`filename\``."
+    "Shortcut for hl`alt_clip(file, obj=None)` to be useful in markdown as alert`clip[options]\`filename\``."
     return alt_clip(filename, obj=None, quality=quality, **kwargs)
         
 def details(str_html,summary='Click to show content'):
@@ -480,7 +488,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
-    - str/dict if tag is 'style', this will only be exported to HTML if called under slide builder, use `slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
+    - str/dict if tag is 'style', this will only be exported to HTML if called under slide builder, use hl`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
     
     Example:
     ```python
@@ -597,9 +605,10 @@ def block_magenta(*objs, widths = None): return _block(*objs, widths = widths, s
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."
     try:
-        _sig = f'<b>{callable.__name__}</b><span style="font-size:85%;color:var(--fg2-color);">{str(inspect.signature(callable))}</span>'
+        _sig = f'<b>{callable.__name__}</b>'
         if prepend_str: 
-            _sig = f'{color(prepend_str,"var(--accent-color)")}.{_sig}' # must be inside format string
+            _sig = f'{prepend_str}.{_sig}' 
+        _sig = f'<span class="sig">{_sig}</span>' + hl(str(inspect.signature(callable)))
         return XTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')
@@ -623,12 +632,13 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     if _name == 'property':
         _name = obj.fget.__name__
         
-    _pstr = f'{str(prepend_str) + "." if prepend_str else ""}{_name}'
     
     if _name.startswith('_'): # Remove private attributes
         return XTML('') # Must be XTML to work on memebers
-    
-    _sig = _sig or color(_pstr,"var(--accent-color)") # Picks previous signature if exists
+        
+    _pstr = f'{str(prepend_str) + "." if prepend_str else ""}{_name}'
+    _name = ".".join([f"<b>{n}</b>" if i == 0 else n for i, n in enumerate(_pstr.split(".")[::-1])][::-1])
+    _sig = _sig or f'<span class="sig">{_name}</span>' # Picks previous signature if exists
     _full_doc = f"<div class='docs'>{_sig}<br>{_doc}\n</div>" if itself == True else ''
     _pstr = (prepend_str or _pstr) if itself == False else _pstr # Prefer given string if itself is not to doc
     
@@ -696,14 +706,14 @@ class image_clip(CustomDisplay):
     Save image from clipboard to file with a given quality. 
     On next run, it loads from saved file under `Slides.clips_dir`. 
     Useful to add screenshots from system into IPython. You can use overwite to overwrite existing file.
-    You can add saved clips using a "clip:" prefix in path in `Slides.image("clip:filename.png")` function and also in markdown.
+    You can add saved clips using a "clip:" prefix in path in hl`Slides.image("clip:filename.png")` function and also in markdown.
 
     **kwargs are passed to ` Slides.image ` function.
     
     - Output can be directly used in `write` command.
-    - Access HTML representation using `.image` attribute.
-    - Converts to PIL image using `.to_pil()`.
-    - Convert to Numpy array using `.to_numpy()` in RGB format that you can plot later.
+    - Access HTML representation using ` .image ` attribute.
+    - Converts to PIL image using hl`.to_pil()`.
+    - Convert to Numpy array using hl`.to_numpy()` in RGB format that you can plot later.
 
     ::: note-tip
         ` Slides.alt_clip ` is another similar function which captures screenshot on slides.

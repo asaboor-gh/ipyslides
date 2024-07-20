@@ -11,9 +11,9 @@ def doc_html(code_css, style_css, content, script, click_btns, height, extra_cla
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
     
-    {code_css}
     <style>{style_css}</style>
     {slides_css.replace('__HEIGHT__', height)}
+    {code_css}
 
     <!-- Custom stylesheet, it must be in the same directory as the html file -->
     <link rel="stylesheet" href="overrides.css">
@@ -217,7 +217,7 @@ a.goto-button:active {
         page-break-inside: avoid !important;
     }
     .ShowFooter .SlideArea {
-        --paddingBottom: 23px; /* Default at sacle 1*/
+        --paddingBottom: 26px; /* Default at sacle 1 its at bottom, unlike slides in Notebook, so 3px more*/
     }
 }
 </style>

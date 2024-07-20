@@ -183,30 +183,29 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
      
     return f"""<style>\n{_style}
     {_class} {{ 
-        background: hsl(from {bg} h s l / 0.9); 
+        background: {bg}; 
         color: {fg}; 
         border-left: 0.2em solid {hover_color};
         border-radius: 0.2em;
     }}
     span.err {{border: none !important;}}
-    
-    {_class} code {{
-        padding-left: {'2.2em' if lineno else '0.5em'};
-    }}
-    {_class} code:hover {{
+    {_class} code:hover, {_class} code:hover::before {{
         background: {hover_color} !important; /* Important to override default hover */
     }}
-    {_class} code:before {{
-        opacity: 0.8 !important;
+    {_class} pre {{
+        padding :4px 8px 4px {0 if lineno else 8}px !important; 
+    }}
+    {_class} code::before {{
         width: {'1.2em' if lineno else '0'};
         color: {fg};
         font-size: 80% !important;
+        background: {bg} !important;
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
 def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True):
     """Highlight code with given language and style. style only works if css_class is given.
-    If css_class is given and matches any of `pygments.styles.get_all_styles()`, then style will be applied immediately.
+    If css_class is given and matches any of hl`pygments.styles.get_all_styles()`, then style will be applied immediately.
     color is used for text color as some themes dont provide text color."""
     if style not in pygments.styles.get_all_styles():
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")

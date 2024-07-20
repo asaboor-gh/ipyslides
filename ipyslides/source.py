@@ -78,7 +78,7 @@ class SourceCode(XTML):
             elif i not in lines:
                 _lines.append('<code class="code-no-focus">' + line)
             else:
-                _lines.append('<code class="code-focus">' + line)
+                _lines.append('<code>' + line)
         
         return self.__class__(''.join(_lines))
 

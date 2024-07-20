@@ -112,7 +112,7 @@ class HtmlWidget(anywidget.AnyWidget):
     _css = """
     .jp-RenderedHTMLCommon.custom-html *:not(code,span, hr) {
        padding:0.1em;
-       line-height:150%; /* make text clearly readable on presentation */
+       line-height:1.5; /* make text clearly readable on presentation */
     } 
     .clickable-div > .custom-html { cursor: pointer; }
     .clickable-div > .custom-html:hover, .clickable-div > .custom-html:focus {

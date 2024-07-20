@@ -99,7 +99,7 @@ class BaseSlides:
         - With citations mode set as 'footnote', you can add alert`refs\`ncol\`` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
         - alert`section\`content\`` to add a section that will appear in the table of contents.
         - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
-        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later using `with Slides[slide_number,].proxies[index]:` or a shortcut `with Slides.capture_proxy(slides_number, proxy_index):`. Useful to keep placeholders for plots/widgets in markdwon.
+        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later using hl`with Slides[slide_number,].proxies[index]:` or a shortcut hl`with Slides.capture_proxy(slides_number, proxy_index):`. Useful to keep placeholders for plots/widgets in markdwon.
         - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
         - Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
@@ -128,7 +128,7 @@ class BaseSlides:
         ::: note-info
             - Widgets behave same with or without `:nb` format spec. 
             - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
-            - Variables are substituted from top level scope (Notebook's `locals()`/`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
+            - Variables are substituted from top level scope (Notebook's hl`locals()`/hl`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
                                                
         - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
@@ -240,7 +240,7 @@ class BaseSlides:
         ```
 
         ::: note-tip
-            You can use this inside columns using delayed display trick, like `write('First column', lambda: interact(f, x = 5))`.
+            You can use this inside columns using delayed display trick, like hl`write('First column', lambda: interact(f, x = 5))`.
 
         ::: note-warning
             Do not use this to change global state of slides, because that will affect all slides.
@@ -407,24 +407,24 @@ class BaseSlides:
     class build(ContextDecorator):
         """Build slides with a single unified command in three ways:
         
-        1. `slides.build(number, str, trusted)` creates many slides with markdown content. Equivalent to `%%slide number -m` magic in case of one slide.
-            - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to `Slides.sync_with_file` too.
+        1. hl`slides.build(number, str, trusted)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
+            - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd_syntax` for extended markdown usage.
             - Keyword argument `trusted` is used here if there are `python run` blocks in markdown.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
-        2. `slides.build(number, list/tuple, widths)` to create a slide from list-like contents immediately.
-            - We use `write(*contents, widths)` to make slide. This is a shortcut way of step 3 if you want to create slides fast with few objects.
-        3. `with slides.build(number):` creates single slide. Equivalent to `%%slide number` magic.
-            - Use `fsep()` from top import or `Slides.fsep()` to split content into frames.
-            - Use `for item in fsep.loop(iterable):` block to automatically add frame separator.
-            - Use `fsep.join` to join content of frames incrementally.
+        2. hl`slides.build(number, list/tuple, widths)` to create a slide from list-like contents immediately.
+            - We use hl`write(*contents, widths)` to make slide. This is a shortcut way of step 3 if you want to create slides fast with few objects.
+        3. hl`with slides.build(number):` creates single slide. Equivalent to hl`%%slide number` magic.
+            - Use hl`fsep()` from top import or hl`Slides.fsep()` to split content into frames.
+            - Use hl`for item in fsep.loop(iterable):` block to automatically add frame separator.
+            - Use hl`fsep.join` to join content of frames incrementally.
 
         ::: note-tip
             - In all cases, `number` could be used as `-1`.
-            - Use yoffet`integer in px` in markdown or `Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
-            - You can use `build_(...)` (with underscore at end) in python file instead of `build(-1,...)`.
+            - Use yoffet`integer in px` in markdown or hl`Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
+            - You can use hl`build_(...)` (with underscore at end) in python file instead of hl`build(-1,...)`.
         """
         @property
         def _app(self):
@@ -582,9 +582,9 @@ class BaseSlides:
         with self.build(-1):
             self.write(r'''
                 ## Citations and Sections
-                Use syntax alert`cite\`key\`` to add citations which should be already set by `Slides.set_citations(data, mode)` method.
+                Use syntax alert`cite\`key\`` to add citations which should be already set by hl`Slides.set_citations(data, mode)` method.
                 Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
-                `Slides.settings.layout(..., ncol_refs = int)`. cite`A`
+                hl`Slides.settings.layout(..., ncol_refs = int)`. cite`A`
                        
                 Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
                 can be added with alert`toc\`title\``/alert`\`\`\`toc title\\n summary of current section \\n\`\`\``.
@@ -602,7 +602,7 @@ class BaseSlides:
             self.write('## Content Styling')
             with self.code.context(returns = True) as c:
                 self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
-                       'Provide **CSS**{.info} for that using `Slides.html("style",...)` or use some of the available styles. '
+                       'Provide **CSS**{.info} for that using hl`Slides.html("style",...)` or use some of the available styles. '
                        'See these **styles**{.success} with `Slides.css_styles` property as below:'))
                 self.css_styles.display()
                 c.display()

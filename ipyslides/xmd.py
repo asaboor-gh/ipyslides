@@ -94,6 +94,7 @@ _special_funcs = {
     "color": "text",
     "sub": "text",
     "sup": "text",
+    "hl": "inline code highlight. Accepts langauge as keywoard.",
     "today": "fmt like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "clip": "filename. Paste clipboard image",
@@ -714,7 +715,7 @@ def _get_ns(text, depth, **kwargs): # kwargs are preferred
 def fmt(text, **kwargs):
     """Stores refrences to variables used in syntax `{var}` from current namespace until markdown parsed by function it is passed to. 
     You need this if not in top level scope of Notebook. kwargs can be used to add extra vairables without clutering user namespace.
-    If you do some str operations on output of this function, use `output.copy_ns(target)` to attch namespace to new string.
+    If you do some str operations on output of this function, use hl`output.copy_ns(target)` to attch namespace to new string.
 
     Output is not intended to do string operations, just to hold namespace for extended markdown.
 
