@@ -275,6 +275,14 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             ':is(ul,ol)': {
                 'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap
             },
+            'dl': {'display': 'grid'}, # Jupyterlab fix
+            'dl > dt': {
+                'color': 'var(--fg3-color)',
+                'font-weight': 'bold', 
+                'width':'max-content',  # override 20% width
+                'text-shadow': '0 1px var(--bg2-color)',
+                'margin-block-start': '0.5em'},
+            'dl > dd': {'margin-inline-start': '16px', 'display': 'block'},
             'a': {
                 'color': 'var(--accent-color) !important',
                 '^:not(.citelink,.goto-button):visited': {
@@ -391,13 +399,13 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
         'span.sig': {
             'color': 'var(--accent-color) !important',
             'font-family': 'var(--jp-code-font-family) !important',
-            'text-shadow': '1px 1px var(--bg1-color)',
+            'text-shadow': '0 1px var(--bg1-color)',
             '> b': {'color': 'var(--fg1-color) !important',},
             '+ code.inline': {'padding': '1px !important',},
         },
         'code.highlight.inline': {
             'border': 'none !important',
-            'text-shadow': '1px 1px var(--bg1-color)',
+            'text-shadow': '0 1px var(--bg1-color)',
             'background': 'none !important', # Export fix
             'span.n': {'color': 'var(--fg1-color) !important',},
         },
@@ -441,10 +449,10 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     '-webkit-user-select':'none',
                     'margin-right':'8px',
                     'font-size':'80% !important',
-                    'text-shadow': '1px 1px var(--bg1-color)',
+                    'text-shadow': '0 1px var(--bg1-color)',
                 },
                 '> span': {
-                    'text-shadow': '1px 1px var(--bg1-color)',
+                    'text-shadow': '0 1px var(--bg1-color)',
                     'white-space':'pre', #normal  for breaking words 
                     'word-break':'break-word', # for breaking words 
                     '^.err, ^.nn, ^.nc' : {'background': 'none !important', 'text-decoration': 'none !important',}, 

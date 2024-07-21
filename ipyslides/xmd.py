@@ -42,6 +42,7 @@ _md_extensions = [
     "attr_list",
     "md_in_html",
     "customblocks",
+    "def_list",
 ]  # For Markdown Parser
 _md_extension_configs = {}
 

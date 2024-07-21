@@ -304,6 +304,7 @@ class Slides(BaseSlides):
                 how_to_slide,widths=[14,1, 85]).display()
         
         self._unregister_postrun_cell() # This also clears slides per cell
+        self.settings.footer._apply_change(None) # Reset
 
     def clear(self):
         "Clear all slides."

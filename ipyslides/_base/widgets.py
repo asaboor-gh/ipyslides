@@ -84,7 +84,7 @@ class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    footer  = HTML('Use `slides.settings.footer` to update this!',layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
+    footer  = HTML(layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
     main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent'], 16/9)).value) # Will be update in theme as well
     window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
@@ -190,7 +190,7 @@ class Widgets:
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
             ],layout=Layout(width='auto',height='max-content',overflow_y='scroll',padding='12px',margin='0')),
-        ],layout = Layout(width='70%',min_width='50%',height='0',overflow='hidden')).add_class('SidePanel') 
+        ],layout = Layout(height='0',overflow='hidden')).add_class('SidePanel') 
         
         self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='0',overflow='auto')).add_class('TOC')
         

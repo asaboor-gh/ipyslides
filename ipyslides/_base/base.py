@@ -15,7 +15,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML
-from ..xmd import _special_funcs, error, xtr, get_slides_instance
+from ..xmd import _special_funcs, _md_extensions, error, xtr, get_slides_instance
 from ..utils import _css_docstring
 
 class BaseSlides:
@@ -88,7 +88,7 @@ class BaseSlides:
     @property
     def xmd_syntax(self):
         "Special syntax for markdown."
-        return XTML(self.parse(textwrap.dedent(r'''
+        return XTML(self.parse(textwrap.dedent(rf'''
         ## Extended Markdown
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
@@ -115,15 +115,15 @@ class BaseSlides:
         
         **Other syntax can be used everywhere in markdown:**
         
-        - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\`{variable}\`` 
+        - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\`{{variable}}\`` 
             (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
-            alert`\`{variable:format_spec}\`` or alert`\`{variable!conversion}\``, that will take preference.
-        - A special formatting alert`\`{variable:nb}\`` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
+            alert`\`{{variable:format_spec}}\`` or alert`\`{{variable!conversion}}\``, that will take preference.
+        - A special formatting alert`\`{{variable:nb}}\`` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
             Custom objects serialized with `Slides.serializer` or serialized by `ipyslides` should be displayed without `:nb` whenever possible to appear in correct place in all contexts. e.g.
-            a matplotlib's figure `fig` as shown in \`{fig:nb}\` will only capture text representation inplace and actual figure will be shown at end, while \`{fig}\` will be shown exactly in place.
+            a matplotlib's figure `fig` as shown in \`{{fig:nb}}\` will only capture text representation inplace and actual figure will be shown at end, while \`{{fig}}\` will be shown exactly in place.
 
         ::: note-warning
-            alert`\`{variable:nb}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
+            alert`\`{{variable:nb}}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
         
         ::: note-info
             - Widgets behave same with or without `:nb` format spec. 
@@ -146,12 +146,12 @@ class BaseSlides:
         
         - Python code blocks can be exectude by syntax 
         ```markdown
-         ```python run source {.CSS_className} 
+         ```python run source {{.CSS_className}} 
          slides = get_slides_instance() 
          slides.write('Hello, I was written from python code block using slides instance.')
          ```
         ```
-        and source then can be emded with \`{source}\` syntax.
+        and source then can be emded with \`{{source}}\` syntax.
         
         - A whole block of markdown can be CSS-classed using syntax
         ```markdown
@@ -173,9 +173,10 @@ class BaseSlides:
         ::: block-red 
             - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
                 [markdown extensions](https://python-markdown.github.io/extensions/) and 
-                [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/)
+                [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
+            - These markdown extensions are inluded by default hl`{_md_extensions}`.
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-                `__format__` method in your class enables to use {obj} syntax in python formatting and \`{obj}\` in extended Markdown.
+                `__format__` method in your class enables to use {{obj}} syntax in python formatting and \`{{obj}}\` in extended Markdown.
         
         - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\`{v}\`' for k,v in _special_funcs.items()),

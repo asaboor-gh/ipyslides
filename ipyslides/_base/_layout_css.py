@@ -253,12 +253,12 @@ def layout_css(accent_color, aspect):
                     "position": "absolute",
                     "border": "none",
                     "padding": "0 !important",
-                    "width": "60% !important",
+                    "width": "min(400px, 100%) !important",
                     "z-index": "10",
                     "top": "0px !important",
                     "left": "0px !important",
                     "transition": "height 400ms ease-in-out",
-                    "@container slides (max-width: 650px)": {"width": "100% !important"},
+                    "@container slides (max-width: 400px)": {"width": "100% !important"}, # reinforce width
                     ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",},
                     ":not(.TopBar) :is(button, .jupyter-button)": {
                         "margin-left":"var(--jp-widgets-inline-label-width) !important",
@@ -453,6 +453,10 @@ def layout_css(accent_color, aspect):
                     "font-size": "18px !important",
                     "padding-top": "2px !important",
                     "min-width": "max-content !important",
+                    "width": "unset !important", # To make equal widths
+                    "flex-grow": "1 !important",
+                    "flex-shrink": "1 !important",
+                    "height": "28px !important",
                     "outline": "none !important",
                     "border": "none !important",
                     "box-shadow": "none !important",

@@ -151,7 +151,7 @@ class Fonts(ConfigTraits):
 @fix_sig    
 class Footer(ConfigTraits):
     "Set footer attributes of slides."
-    text = Unicode('IPySlides | <a style="color:skyblue;" href="https://github.com/massgh/ipyslides">github-link</a>')
+    text = Unicode('IPySlides')
     numbering = Bool(True)
     date = Unicode("today", allow_none=True)
 
