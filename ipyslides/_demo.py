@@ -57,7 +57,7 @@ def demo_slides(slides):
 
     slides.build(-1, slides.fmt("""
     section`Adding informative TOC` 
-    ```multicol 
+    ```multicol .block-blue
     toc[True]`### Contents`
     +++
     vspace`1` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
@@ -70,7 +70,7 @@ def demo_slides(slides):
     ```
                                        
     ```markdown
-     ```multicol
+     ```multicol .block-blue
      toc[True]`### Contents`
      +++
      Extra content for current section which is on right

@@ -472,7 +472,7 @@ class XMarkdown(Markdown):
         # Under slides and any display context, multicol should return Writer 
         if self._slides and not self._returns:
             with capture_content() as cap:
-                self._slides.write(*[self.convert(col) for col in cols], widths=widths)
+                self._slides.write(*[self.convert(col) for col in cols], widths=widths, css_class=_class)
             
             return cap.outputs
         

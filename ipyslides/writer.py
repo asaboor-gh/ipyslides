@@ -166,10 +166,11 @@ class Writer(ipw.HBox):
         return f'<div class="{css_class}" {_inline_style(self)}>{"".join(cols)}</div>'
     
     
-def write(*objs,widths = None):
+def write(*objs,widths = None, css_class=None):
     """
     Write `objs` to slides in columns. To create rows in a column, wrap objects in a list or tuple.      
     You can optionally specify `widths` as a list of percentages for each column. 
+    `css_class` can have multiple classes separated by space, works only for multiple columns.
          
     Write any object that can be displayed in a cell with some additional features:
     
@@ -198,4 +199,6 @@ def write(*objs,widths = None):
         - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
     """
-    Writer(*objs,widths = widths) # Display itself
+    w = Writer(*objs,widths = widths) # Display itself
+    if isinstance(css_class, str):
+        [w.add_class(c) for c in css_class.split()]

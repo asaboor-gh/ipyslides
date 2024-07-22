@@ -52,6 +52,10 @@ def layout_css(accent_color, aspect):
                         "width": "max-content",
                         "margin": "auto", # display in middle along figure
                         "gap": "4px",
+                        ".danger": {
+                            "background": "red !important",
+                            "^, > i": {"color": "white !important",},
+                        },
                     },
                 },
                 ".paste-btns": {"display": "none !important"},
@@ -300,7 +304,7 @@ def layout_css(accent_color, aspect):
                     "opacity": "1 !important",
                     "box-shadow": "none !important",
                     "background": "var(--bg3-color)",
-                    "text-shadow": "0 0 2px var(--bg1-color), 0 0 4px var(--accent-color)",
+                    "text-shadow": "0 0 1px var(--bg1-color), 0 0 2px var(--accent-color)",
                 },
                 ".widget-play .jupyter-button": {
                     "background": "var(--bg2-color)",

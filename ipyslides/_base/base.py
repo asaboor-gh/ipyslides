@@ -129,7 +129,7 @@ class BaseSlides:
             - Widgets behave same with or without `:nb` format spec. 
             - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
             - Variables are substituted from top level scope (Notebook's hl`locals()`/hl`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
-                                               
+
         - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
@@ -137,11 +137,28 @@ class BaseSlides:
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
         ```markdown     
-         ```multicol widthA widthB
+         ```multicol widthA widthB .class1.class2
          Column A
          +++
          Column B
          ```
+        ```
+        
+        - Definition list syntax:
+        ```multicol 30 10 30 30 .block-red
+            Item 1 Header
+            : Item 1 details
+        
+            Item 1 Header
+            : Item 1 details
+        +++
+        vspace`4`👉
+        +++
+        Item 1 Header
+        : Item 1 details
+
+        Item 1 Header
+        : Item 1 details
         ```
         
         - Python code blocks can be exectude by syntax 
@@ -504,7 +521,7 @@ class BaseSlides:
         
         self.build(-1, self.fmt('''
             section`Introduction` 
-            ```multicol
+            ```multicol .block-green
             toc[True]`## Table of contents`
             +++
             ### This is summary of current section
@@ -512,7 +529,7 @@ class BaseSlides:
             `{btn}`
             ```
             ```markdown
-             ```multicol
+             ```multicol .block-green
              toc[True]`## Table of contents`
              +++
              Extra content for current section which is on right

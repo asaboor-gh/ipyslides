@@ -358,9 +358,12 @@ class alt_clip(CustomDisplay):
         self._quality = quality
         self._kws = {"width": "100%", **kwargs} # fit full by default
         self._paste = ipw.Button(icon="paste", description="Paste clipboard image", layout={"width":"max-content"})
-        self._upload = ipw.Button(icon="upload", description="Upload image from file", layout={"width":"max-content"})
-        self._paste.on_click(self._paste_clip)
-        self._upload.on_click(self._paste_clip)
+        self._owp = ipw.Button(icon="download", description="Overwrite", layout={"width":"max-content"}).add_class("danger")
+        self._upload = ipw.Button(icon="upload", description="Upload existing image", layout={"width":"max-content"})
+        
+        for btn in [self._paste, self._owp, self._upload]:
+            btn.on_click(self._paste_clip)
+        
         self._rep = html("div", 
             alert(f"{filename!r} in `Slides.clips_dir` will receive a clipboard image. Image's visual width on screen equal to width of this box would fit best.").value, 
         ).as_widget().add_class("clipboard-image").add_class("export-only" if self._obj is not None else "")
@@ -371,17 +374,22 @@ class alt_clip(CustomDisplay):
     def display(self):
         if self._obj is not None:
             display(self._obj, metadata = {"skip-export":"This was abondoned by alt_clip function to export!"})
-        display(ipw.VBox([ipw.HBox([self._paste, self._upload]).add_class('paste-btns'), self._rep]).add_class("paste-box"))
+        display(ipw.VBox([ipw.HBox([self._paste, self._owp, self._upload]).add_class('paste-btns'), self._rep]).add_class("paste-box"))
 
     def _paste_clip(self, btn):
         # overwrite always as it is from clipboard
         try:
             if btn is self._upload:
                 self._rep.value = image(f"clip:{self._fname}", **self._kws).value
+            elif btn is self._paste:
+                if (get_clips_dir() / self._fname).is_file():
+                    raise FileExistsError(f"File {self._fname!r} already exists! Click Overwrite button to update image file, can't be undone!")
+                else:
+                    self._rep.value = image_clip(self._fname, quality=self._quality, overwrite=False,**self._kws).value
             else:
                 self._rep.value = image_clip(self._fname, quality=self._quality, overwrite=True,**self._kws).value
         except:
-            ename = 'ClipboardPasteError' if btn is self._paste else 'FileUploadError'
+            ename = 'FileUploadError' if btn is self._upload else 'ClipboardPasteError'
             e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
             self._rep.value = f"{error(ename,'something went wrong')}<br/><br/>{error(e,text)}"
 
