@@ -149,28 +149,31 @@ class Slides(BaseSlides):
 
     def run_cell(self, cell, **kwargs):
         """Run cell and return result. Use this instead of IPython's run_cell for extra controls."""
+        spc = list(self._slides_per_cell) # make copy
         self._unregister_postrun_cell() # important to avoid putting contnet on slides
         output = self.shell.run_cell(cell, **kwargs)
         if self.this: # there was post_run_cell under building slides
+            self._slides_per_cell.extend(spc) # was cleared above in unregister
             self._register_postrun_cell() # should be back
         return output
     
     def _post_run_cell(self, result):
-        self._unregister_postrun_cell() # it will be initialized from next building slides
+        with suppress(Exception):
+            self.shell.events.unregister("post_run_cell", self._post_run_cell) # it will be initialized from next building slides
         if result.error_before_exec or result.error_in_exec:
             return  # Do not display if there is an error
 
-        scroll_btn = ipw.Button(description= 'Go to Slides', icon= 'scroll', layout={'height':'0px'}).add_class('Scroll-Btn') # height later handled by hover
-        
         if self._slides_per_cell:
             self.navigate_to(self._slides_per_cell[0].index) # more logical to go in start slide rather end
 
-        for slide in self._slides_per_cell:
-            slide._scroll_btn = scroll_btn
+            scroll_btn = ipw.Button(description= 'Go to Slides', icon= 'scroll', layout={'height':'0px'}).add_class('Scroll-Btn') # height later handled by hover
+            scroll_btn.on_click(lambda btn: self._box.focus()) # only need to go there, no slide switching 
+            
+            for slide in self._slides_per_cell:
+                slide._scroll_btn = scroll_btn
         
-        self._slides_per_cell.clear() # empty it
-        scroll_btn.on_click(lambda btn: self._box.focus()) # only need to go there, no slide switching 
-        display(scroll_btn)
+            self._slides_per_cell.clear() # empty it
+            return display(scroll_btn)
     
     def _unregister_postrun_cell(self):
         self._slides_per_cell.clear() # Must to let user jump on first slide run to be in correct place

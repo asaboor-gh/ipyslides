@@ -397,6 +397,7 @@ class BaseSlides:
                     try: 
                         self.from_markdown(start, path.read_text(encoding="utf-8"), trusted)
                         self.notify('x') # need to remove any notification from previous error
+                        self._unregister_postrun_cell() # No cells buttons from inside file code run
                     except:
                         e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
                         self.notify(f"{error('SyncError','something went wrong')}<br/><br/>{error(e,text)}",20)
