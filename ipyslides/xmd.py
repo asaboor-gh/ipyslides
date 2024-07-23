@@ -231,37 +231,33 @@ class TagFixer(HTMLParser):
         self._objs.append(f'{tag}')
 
     def handle_endtag(self, tag):
-        if len(self._objs) > 1 and self._objs[-2] == tag:
-            self._objs =  self._objs[:-2] # Data and Tag removed
-        elif self._objs[-1:] and self._objs[-1] == tag:
-            self._objs.pop() # Tag removed
+        if self._objs and self._objs[-1] == tag:
+            self._objs.pop() # tag properly closed
         else:
             self._objs.append(f'/{tag}')
-
-    def handle_data(self, data): 
-        if self._objs and isinstance(self._objs[-1], bool):
-            self._objs.pop() # Remove previous data Tag if at end
-        self._objs.append((data.strip() or False) and True)
 
     def _fix_tags(self, content):
         tags = [v for v in self._objs if not isinstance(v, bool)][::-1]  # Reverse order is important
         end_tags = [f"</{tag}>" for tag in tags if not tag.startswith('/')]
         start_tags = [f"<{tag.lstrip('/')}>" for tag in tags if tag.startswith('/')]
         return ''.join(start_tags) + content + ''.join(end_tags)
+    
+    def _remove_empty_tags(self, content):
+        empty_tags = re.compile(r'\<(.*?)\>\s*\<\/(\1)\>')
+        i = 0
+        while empty_tags.findall(content) and i <= 5: # As deep as 5 nested empty tags
+            content = empty_tags.sub('', content).strip() # empty tags removed after fix
+            i += 1
+        return content
 
     def fix_html(self, content):
         self._objs = []
         self.feed(content)
         self.close()
 
-        if self._objs == [False]: # empty data attempt at start/end
-            self._objs = []
-
         if not self._objs:
-            return content # Already correct
-        if not (True in self._objs):
-            return '' # any number of tags with no data
-        return self._fix_tags(content)
+            return self._remove_empty_tags(content) # Already correct
+        return self._remove_empty_tags(self._fix_tags(content))
 
 tagfixer = TagFixer()
 del TagFixer
