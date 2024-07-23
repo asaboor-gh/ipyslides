@@ -29,6 +29,7 @@ const keyMessage = {
     'l': 'TLSR', // L toggle laser
     'v': 'TVP', // V for toggle viewport, only in voila and LinkedOutputView
     'e': 'EDIT', // Edit source cell
+    'u': 'UVW', // Update variables and widgets
 }
 
 function keyboardEvents(box,model) {

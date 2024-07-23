@@ -105,6 +105,8 @@ class Slide:
   
     def _set_source(self, text, language):
         "Set source code for this slide."
+        if hasattr(self, '_mdff') and language == "python":
+            delattr(self, '_mdff') # Reset markdown source
         self._source = {'text': text, 'language': language}
     
     def _reset_source(self):

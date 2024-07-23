@@ -121,6 +121,9 @@ class BaseSlides:
         - A special formatting alert`\`{{variable:nb}}\`` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
             Custom objects serialized with `Slides.serializer` or serialized by `ipyslides` should be displayed without `:nb` whenever possible to appear in correct place in all contexts. e.g.
             a matplotlib's figure `fig` as shown in \`{{fig:nb}}\` will only capture text representation inplace and actual figure will be shown at end, while \`{{fig}}\` will be shown exactly in place.
+        - Variables are not automatically updated in markdown being a costly operation, press `U` or use `Update Variables & Widgets` button in quick menu after you update a variable in notebook used in markdown.
+            This has additional benefit of having everything refreshed at end without rebuidling markdown slides. Note that this only updates variables used in markdown file and in `Slides.build` command.
+            Also, each newly added slide enables variables sync across all slides automatically. 
 
         ::: note-warning
             alert`\`{{variable:nb}}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
@@ -344,14 +347,13 @@ class BaseSlides:
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            checks = (str(chunk) != getattr(handles[i],'_mdff',''), re.findall(r"\`\{(.*?)\}\`", chunk, flags=re.DOTALL), 'Out-Sync' in handles[i]._css_class,)
-            if any(checks):
+            if any(['Out-Sync' in handles[i]._css_class, chunk != getattr(handles[i],'_mdff','')]):
                 with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                     self._slide(f'{i + start} -m', chunk)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(handles[i])
 
-            handles[i]._mdff = str(chunk) # This is need for update while editing, chunk could be ns_str, avoid that
+            handles[i]._mdff = chunk # This is need for update while editing and refreshing variables
         
         # Return refrence to slides for quick update
         return handles

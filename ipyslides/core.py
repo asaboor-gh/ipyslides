@@ -114,7 +114,7 @@ class Slides(BaseSlides):
 
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
-        self.widgets.buttons.refresh.on_click(self._update_widgets)
+        self.widgets.buttons.refresh.on_click(self._force_update)
         self.widgets.buttons.source.on_click(self._jump_to_source_cell)
 
         # All Box of Slides
@@ -448,7 +448,7 @@ class Slides(BaseSlides):
 
         clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
         self._unregister_postrun_cell() # no need to scroll button where showing itself
-        self._update_widgets()  # Update before displaying app
+        self._force_update()  # Update before displaying app, some contents get lost
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
         self.frozen(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"),{}).display()  # Display slides within another box
         
@@ -528,7 +528,7 @@ class Slides(BaseSlides):
             s._index = i  # Update index
 
         self._update_toc()  # Update table of content if any
-        self._update_widgets() # refresh causes loose widgets sometimes
+        self._force_update() # refresh causes lose widgets sometimes
 
         if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
             self.widgets.slidebox.children[0].add_class('ShowSlide')
@@ -674,14 +674,17 @@ class Slides(BaseSlides):
             self.widgets.htmls.loading.value = ""
             self.widgets.htmls.loading.layout.display = "none"
 
-    def _update_widgets(self, btn=None):
+    def _force_update(self, btn=None):
         with self._loading_private(self.widgets.buttons.refresh):
             for slide in self[:]:
-                if slide._has_widgets:
+                if hasattr(slide, '_mdff') and re.findall(r"\`\{(.*?)\}\`", slide._mdff, flags=re.DOTALL):
+                    self._slide(f'{slide.number} -m',slide._mdff) # Variables updates
+                    self._unregister_postrun_cell() # Avoid other cells having postrun after this
+                elif slide._has_widgets:
                     slide.update_display(go_there=False)
         
         if btn:
-            self.notify('Widgets on slides updated!')
+            self.notify('Widgets and variables in markdown slides synced!')
         self._current._set_progress() # update display can take it over to other sldies
 
     def _collect_slides(self):
