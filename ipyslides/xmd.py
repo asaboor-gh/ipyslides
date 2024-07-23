@@ -237,13 +237,13 @@ class TagFixer(HTMLParser):
             self._objs.append(f'/{tag}')
 
     def _fix_tags(self, content):
-        tags = [v for v in self._objs if not isinstance(v, bool)][::-1]  # Reverse order is important
+        tags = self._objs[::-1]  # Reverse order is important
         end_tags = [f"</{tag}>" for tag in tags if not tag.startswith('/')]
         start_tags = [f"<{tag.lstrip('/')}>" for tag in tags if tag.startswith('/')]
         return ''.join(start_tags) + content + ''.join(end_tags)
     
     def _remove_empty_tags(self, content):
-        empty_tags = re.compile(r'\<(.*?)\>\s*\<\/(\1)\>')
+        empty_tags = re.compile(r'\<\s*(.*?)\s*\>\s*\<\s*\/\s*(\1)\s*\>') # keeps tags with attributes
         i = 0
         while empty_tags.findall(content) and i <= 5: # As deep as 5 nested empty tags
             content = empty_tags.sub('', content).strip() # empty tags removed after fix
