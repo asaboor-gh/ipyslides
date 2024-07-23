@@ -676,15 +676,17 @@ class Slides(BaseSlides):
 
     def _force_update(self, btn=None):
         with self._loading_private(self.widgets.buttons.refresh):
+            old_index = int(self.wprogress.value)
             for slide in self[:]:
                 if hasattr(slide, '_mdff') and re.findall(r"\`\{(.*?)\}\`", slide._mdff, flags=re.DOTALL):
                     self._slide(f'{slide.number} -m',slide._mdff) # Variables updates
                     self._unregister_postrun_cell() # Avoid other cells having postrun after this
                 elif slide._has_widgets:
-                    slide.update_display(go_there=False)
+                    slide.update_display(go_there=False) 
         
         if btn:
             self.notify('Widgets and variables in markdown slides synced!')
+        self.navigate_to(old_index) # variables fixing can lead to other slides. get back
         self._current._set_progress() # update display can take it over to other sldies
 
     def _collect_slides(self):

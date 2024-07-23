@@ -123,7 +123,7 @@ class BaseSlides:
             a matplotlib's figure `fig` as shown in \`{{fig:nb}}\` will only capture text representation inplace and actual figure will be shown at end, while \`{{fig}}\` will be shown exactly in place.
         - Variables are not automatically updated in markdown being a costly operation, press `U` or use `Update Variables & Widgets` button in quick menu after you update a variable in notebook used in markdown.
             This has additional benefit of having everything refreshed at end without rebuidling markdown slides. Note that this only updates variables used in markdown file and in `Slides.build` command.
-            Also, each newly added slide enables variables sync across all slides automatically. 
+            Also, each newly added slide and new display of slides enables variables sync across all slides automatically. 
 
         ::: note-warning
             alert`\`{{variable:nb}}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
