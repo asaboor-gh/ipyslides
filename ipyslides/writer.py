@@ -74,6 +74,11 @@ def _fmt_html(output):
     if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
         return data[f'text/{reps[0]}'] # first that works
     
+    # Image data, handles plt.show as well
+    if (keys := [key for key in data if key.startswith('image')]):
+        key, value, alt = keys[0], data[keys[0]], data['text/plain']
+        return value if 'svg' in key else f'<img src="data:{key};base64, {value}" alt="{alt}" />' # first that works
+
     return ''
 
 

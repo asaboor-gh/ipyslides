@@ -404,6 +404,9 @@ class Serializer:
                 else:
                     if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
                         content += data[f'text/{reps[0]}'] # first that works
+                    elif (keys := [key for key in data if key.startswith('image')]): # Image data, handles plt.show as well
+                        key, value, alt = keys[0], data[keys[0]], data['text/plain']
+                        content += (value if 'svg' in key else f'<img src="data:{key};base64, {value}" alt="{alt}" />') # first that works
         
         return f'<div class="{css_class}" {_inline_style(output_widget)}>{content}</div>' 
     
