@@ -242,22 +242,24 @@ class TagFixer(HTMLParser):
         start_tags = [f"<{tag.lstrip('/')}>" for tag in tags if tag.startswith('/')]
         return ''.join(start_tags) + content + ''.join(end_tags)
     
-    def _remove_empty_tags(self, content):
+    def _remove_empty_tags(self, content, depth=5):
         empty_tags = re.compile(r'\<\s*(.*?)\s*\>\s*\<\s*\/\s*(\1)\s*\>') # keeps tags with attributes
         i = 0
-        while empty_tags.findall(content) and i <= 5: # As deep as 5 nested empty tags
-            content = empty_tags.sub('', content).strip() # empty tags removed after fix
+        while empty_tags.findall(content) and i <= depth: 
+            content = empty_tags.sub('', content).strip() 
             i += 1
         return content
 
-    def fix_html(self, content):
+    def fix_html(self, content, clean_depth=5):
+        "Fixes unopened/unclosed tags and clear empty tags upto `clean_depth` nesting levels."
         self._objs = []
         self.feed(content)
         self.close()
 
-        if not self._objs:
-            return self._remove_empty_tags(content) # Already correct
-        return self._remove_empty_tags(self._fix_tags(content))
+        if self._objs: # Otherwise its already correct
+            content = self._fix_tags(content)
+        return self._remove_empty_tags(content, clean_depth) 
+        
 
 tagfixer = TagFixer()
 del TagFixer
