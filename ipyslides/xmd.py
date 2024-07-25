@@ -26,6 +26,7 @@ from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
 from html.parser import HTMLParser
+from ast import literal_eval
 
 from markdown import Markdown
 from IPython.core.display import display
@@ -108,6 +109,11 @@ _special_funcs = {
     "zoomable": "zoom a block of html when hovered",
     "center": r"text or \`{variable}\`", # should be last
 }
+def _try_eval(str_value):
+    try:
+        return literal_eval(str_value)
+    except:
+        return str_value
 
 def error(name, msg):
     "Add error without breaking execution."
@@ -615,11 +621,11 @@ class XMarkdown(Markdown):
                         .split(",")
                     ]  # respect escaped = and ,
                     kws = {
-                        k.strip().replace("__EQ__", "="): v.strip().replace("__EQ__", "=")
+                        k.strip().replace("__EQ__", "="): _try_eval(v.strip().replace("__EQ__", "="))
                         for k, v in [a.split("=") for a in args if "=" in a]
                     }
-                    args = [a.strip().replace("__EQ__", "=") for a in args if "=" not in a]
-
+                    args = [_try_eval(a.strip().replace("__EQ__", "=")) for a in args if "=" not in a]
+        
                     try:
                         _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)) # If no argument, use default 
                         html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)

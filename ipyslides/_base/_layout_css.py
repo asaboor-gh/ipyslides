@@ -38,25 +38,34 @@ def layout_css(accent_color, aspect):
                 "^.PasteMode" : {
                     ".paste-box": {
                         "background": "var(--bg2-color)",
-                        "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important",
-                        "margin": "0.25em", # figure has padding 0.25em which is fit in margin as a hint for snipping image
-                        "padding":"8px",
+                        "border": "0.5px solid var(--jp-border-color1,#8988)!important",
+                        "padding":"0",
                         "border-radius": "8px",
                     },
                     ".clipboard-image": {
+                        "^.export-only::before": {
+                            "content": "'Export-only content: Only visible when paste mode is ON!'",
+                            "font-size":"60%", 
+                            "font-style":"italic",
+                            "color": "var(--fg2-color)",
+                            "position": "absolute", "top": "-0.5em", "right": "0.5em",
+                        },
                         "^, ^.export-only" : {"display": "block !important",},
                         "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--bg3-color)",},
                     },
                     ".paste-btns": {
-                        "display": "flex !important", 
-                        "width": "max-content",
-                        "margin": "auto", # display in middle along figure
-                        "gap": "4px",
+                        "display": "grid !important",
+                        "grid-template-columns": "auto auto auto", 
+                        "padding": "8px",
+                        "grid-gap": "4px",
+                        "margin-right": "auto", # Force left align
+                        "> button": {"background": "var(--bg1-color) !important",}, # align center
                         ".danger": {
                             "background": "red !important",
                             "^, > i": {"color": "white !important",},
                         },
                     },
+                    ".columns .paste-btns": {"grid-template-columns": "auto",},
                 },
                 ".paste-btns": {"display": "none !important"},
                 ".clipboard-image": {

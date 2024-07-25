@@ -58,7 +58,7 @@ You can embed anything that you can include in Jupyter notebook like ipywidgets,
 # HTML/PDF Slides
 - Use `slides.export_html` to build static slides that you can print as well.
 - Content variety for export is limited. Widgets can not be exported unless an alternative representation is given by `Slides.alt` which also works to provide alternative export representation of any object.
-- Any object including widget can be replaced for export using ` Slides.alt_clip ` function which lets you paste a screenshot of that object or anything and paste directly on slides.
+- Any object including widget can be replaced for export using ` Slides.alt ` function which lets you paste a screenshot of that object or it's alternative html representation at runtime or export time.
 - Paper width for printing is 10 inch (254mm) and height is determined by aspect ratio of slides.
 - Use `Save as PDF` in browser to make links work in ouput PDF.
 

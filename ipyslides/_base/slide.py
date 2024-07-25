@@ -168,7 +168,7 @@ class Slide:
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
 
-            self._contents = captured.outputs # Expand columns  
+            self._contents = captured.outputs
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display(go_there=True)    
 

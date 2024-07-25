@@ -46,7 +46,7 @@ def demo_slides(slides):
     proxy`something will be here in end`
     """, trusted=True)
 
-    # slide s2 has proxies to be filled in later
+    # slide s2 has proxies to be filled in later, may not capture inside file
     p1, p2 = s2.proxies   
     with p1:
         s2.get_source().display(collapsed = True)

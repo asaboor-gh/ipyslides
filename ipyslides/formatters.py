@@ -3,9 +3,10 @@
 """
 import sys
 import textwrap
-import inspect, re, json
+import inspect, re, json, base64
 from io import BytesIO
 from contextlib import contextmanager
+from PIL import Image as PImage
 import pygments
 import ipywidgets as ipw
 
@@ -147,6 +148,27 @@ def bokeh2html(bokeh_fig,title=""):
 
 def _bokeh2htmlstr(bokeh_fig,title=""):
     return bokeh2html(bokeh_fig,title).value
+
+class IMG(XTML):
+    "IMG object with embeded data from any possible source. Use `self.to_pil` and `self.to_numpy` to export to other formats."
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _get_data(self):
+        if (match := re.findall(r'\<img.*\;base64\,\s*(.*?)[\'\"]', self.value)):
+            return match[0]
+
+    def to_pil(self):
+        "Return PIL image or None."
+        if (data := self._get_data()):
+            buf = BytesIO(base64.b64decode(data))
+            return PImage.open(buf)
+    
+    def to_numpy(self):
+        "Return numpy array data of image or None. Useful for plotting."
+        from numpy import asarray # Do not import at top, as it is not a dependency
+        return asarray(self.to_pil())
+    
 
 def fix_ipy_image(image,width='100%'): # Do not add zoom class here, it's done in util as well as below
     img = image._repr_mimebundle_() # Picks PNG/JPEG/etc

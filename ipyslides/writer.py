@@ -7,12 +7,12 @@ __all__ = ['write']
 from IPython.display import display as display
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, supported_reprs, widget_from_data, toc_from_meta
-from .xmd import parse, capture_content, get_slides_instance
+from .xmd import parse, capture_content
 
 class CustomDisplay:
     "Use this to create custom display types for object."
     def _ipython_display_(self):
-        return self.display()
+        self.display()
     
     def display(self):
         raise NotImplementedError("display method must be implemented in subclass")
@@ -184,9 +184,8 @@ def write(*objs,widths = None, css_class=None):
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
-    - Use `Slides.alt` function to display obj/widget on slides and alternative content in exported slides.
-    - Use ` Slides.alt_clip ` function to display anything (without parsing) on slides and paste its screenshot for export. Screenshots are persistent and taken on slides.
-    - Use ` Slides.image_clip ` to add screenshots from clipboard while running the cell.
+    - Use `Slides.alt` function to display obj/widget on slides and alternative content/screenshot in exported slides.
+    - Use ` Slides.clip ` to add screenshots from clipboard.
     - hl`ipywidgets.[HTML, Output, Box]` and their subclasses will be displayed as hl`Slides.alt(html_converter_func, widget)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.

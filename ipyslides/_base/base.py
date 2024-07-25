@@ -563,7 +563,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.image_clip,'Slides')])
+            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clip,'Slides')])
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
@@ -588,10 +588,9 @@ class BaseSlides:
                 
         with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
-            self.write("clip[caption=clip\`test.png\`]`test.png`", self.doc(self.clip,'Slides'))
+            self.write("clip[caption=clipboard image]`test.png`", self.code.cast("clip[caption=clipboard image]`test.png`","markdown"))
             self.run_doc(self.alt,'Slides')
-            self.doc(self.alt_clip,'Slides').display()
-            self.doc(self.image_clip,'Slides').display()
+            self.doc(self.clip,'Slides').display()
             
             members = sorted((
                 'alert block bokeh2html bullets styled fmt color cols details doc sub sup '
@@ -608,7 +607,7 @@ class BaseSlides:
                 hl`Slides.settings.layout(..., ncol_refs = int)`. cite`A`
                        
                 Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
-                can be added with alert`toc\`title\``/alert`\`\`\`toc title\\n summary of current section \\n\`\`\``.
+                can be added with alert`toc\`title\``.
             ''')
             self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
