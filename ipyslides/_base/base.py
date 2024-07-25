@@ -92,28 +92,24 @@ class BaseSlides:
         ## Extended Markdown
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
-        **Following syntax works only under currently building slide:**
+        ### Slides-specific syntax
         
-        - alert`notes\`This is slide notes\``  to add notes to current slide
-        - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
-        - With citations mode set as 'footnote', you can add alert`refs\`ncol\`` to add citations anywhere on slide. If ncol is not given, it will be picked from layout settings.
-        - alert`section\`content\`` to add a section that will appear in the table of contents.
-        - alert`toc\`Table of content header text\`` to add a table of contents. For block type toc, see below.
-        - alert`proxy\`placeholder text\`` to add a proxy that can be updated later using hl`with Slides[slide_number,].proxies[index]:` or a shortcut hl`with Slides.capture_proxy(slides_number, proxy_index):`. Useful to keep placeholders for plots/widgets in markdwon.
-        - Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-        - Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
+        Notes
+        : alert`notes\`This is slide notes\``  to add notes to current slide
         
-        Block table of contents with extra content as summary of current section can be added as follows:
-                                               
-        ```markdown
-         ```multicol 
-         toc[True]`Table of contents`
-         +++
-         Extra content for current section appears on right
-         ```
-        ```
+        Slides & Frames Separators
+        : Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
+        Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
-        **Other syntax can be used everywhere in markdown:**
+        Citations
+        : alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
+        With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If ncol_refs is not given, it will be picked from layout settings.
+        
+        Sections & TOC
+        : alert`section\`content\`` to add a section that will appear in the table of contents.
+        alert`toc\`Table of content header text\`` to add a table of contents. See `Slides.docs()` for creating a `TOC` accompanied by section summary.
+        
+        ### General syntax
         
         - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\`{{variable}}\`` 
             (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
@@ -347,13 +343,11 @@ class BaseSlides:
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            if any(['Out-Sync' in handles[i]._css_class, chunk != getattr(handles[i],'_mdff','')]):
+            if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown]):
                 with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                     self._slide(f'{i + start} -m', chunk)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(handles[i])
-
-            handles[i]._mdff = chunk # This is need for update while editing and refreshing variables
         
         # Return refrence to slides for quick update
         return handles
@@ -627,7 +621,7 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
-        s8, = self.build(-1, '''
+        self.build(-1, '''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `highlight` function cite`B` or within markdown like this:
@@ -637,13 +631,10 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
-        proxy`source code of slide will be updated here later using slide_handle.proxies[0] contextmanager`
+        ```python run
+        get_slides_instance().this.get_source().display()
+        ```
         ''', trusted= True)
-        
-        # Update proxy with source code
-        with s8.proxies[0]: # or with self.capture_proxy(s8.number, 0):
-            display(self.draw_button)
-            s8.get_source().display()
         
         with self.build(-1):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')

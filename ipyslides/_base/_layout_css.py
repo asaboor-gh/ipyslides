@@ -371,7 +371,7 @@ def layout_css(accent_color, aspect):
                     },
                     "^:hover, ^:focus, ^:active, ^.mod-active, ^.Active-Start" : {
                         ".Menu-Box" : {
-                            "width": "148px !important", # 4*32 + margin + paddings
+                            "width": "180px !important", # 5*32 + margin + paddings
                             "transition": "width 400ms ease-in-out", # transition on enter hover
                              "overflow": "hidden !important", # avoid jump on hover too
                         },

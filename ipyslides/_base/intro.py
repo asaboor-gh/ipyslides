@@ -84,7 +84,6 @@ key_maps = {
     "S": "Toggle settings panel",
     "L": "Toggle LASER pointer",
     "E": "Edit Source Cell of Current Slide", 
-    "U": "Update Variables & Widgets",
     "K": "Show keyboard shortcuts",
 }
 
@@ -101,7 +100,6 @@ key_combs = f"""
 | {_key('V')}                                 | {_icons["win-maximize"]}, {_icons["win-restore"]} | {key_maps["V"]}        |
 | {_key('S')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["S"]}        |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
-| {_key('U')}                                 | {_icons["refresh"]}                               | {key_maps["U"]}        |
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
 | {_key('K')}                                 |                                                   | {key_maps["K"]}        |
 """ 

@@ -27,11 +27,12 @@ def demo_slides(slides):
         vspace`2`Read instructions by clicking ℹ️ button in quick menu
     """)
     #Demo for loading slides from a file or text block
-    s1, s2 = slides.build_("""
+    slides.build_("""
     section`Introduction` toc`### Contents`
     ---
     # Introduction
-    proxy`something will be here in start`
+    Create a variable `x` in notebook and press button with refresh icon to update this `{x}`!
+                  
     To see how commands work, use hl`Slides.docs()` to see the documentation.
     Here we will focus on using all that functionality to create slides.
     ```python run source
@@ -43,17 +44,7 @@ def demo_slides(slides):
     ```
     Version: `{version}` as executed from below code in markdown. 
     `{source}`
-    proxy`something will be here in end`
     """, trusted=True)
-
-    # slide s2 has proxies to be filled in later, may not capture inside file
-    p1, p2 = s2.proxies   
-    with p1:
-        s2.get_source().display(collapsed = True)
-
-    with p2:
-        slides.write(f'alert`I was added at end by a given proxy, see the how it was done at the end of the slides`')
-
 
     slides.build(-1, slides.fmt("""
     section`Adding informative TOC` 

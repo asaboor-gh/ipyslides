@@ -193,8 +193,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
         slide_instance.this._toc_args = (title, True if hl.strip('[]').strip() else False) # should be fully clear
         text_chunk = text_chunk.replace(f"toc{hl}`{title}`", xmd_instance._handle_var(slide_instance.this._reset_toc()), 1)
 
-    # proxy`This is prxoy's placeholder text`
-    all_matches = re.findall(
+    all_matches = re.findall( # will be removed in future
         r"proxy\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
     )
     for match in all_matches:
@@ -454,7 +453,6 @@ class XMarkdown(Markdown):
     def _parse_multicol(self, data, header, _class):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = data.split("+++")  # Split by columns
-
         if header.strip() == "multicol":
             widths = [int(100/len(cols)) for _ in cols]
         else:

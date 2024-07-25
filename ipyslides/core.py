@@ -17,7 +17,7 @@ _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 from ._base.widgets import ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
-from ._base.slide import Proxy, Slide, _build_slide
+from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon
 from .__version__ import __version__
 
@@ -115,6 +115,7 @@ class Slides(BaseSlides):
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
         self.widgets.buttons.refresh.on_click(self._force_update)
+        self.widgets.buttons.sfresh.on_click(self._force_update)
         self.widgets.buttons.source.on_click(self._jump_to_source_cell)
 
         # All Box of Slides
@@ -538,18 +539,11 @@ class Slides(BaseSlides):
 
         self.widgets.iw.msg_tojs = 'SwitchView' # Trigger view
 
-    def proxy(self, text):
-        """Place a proxy placeholder in your slide and return it's `handle`. This is useful when you want to update the placeholder later.
-        Use `with Slides.capture_proxy(slide_number, proxy_index):` or `with handle:` contextmanager to update the placeholder.
-        Use this in markdown as well by proxy `text` syntax.
-        """
-        self.verify_running(
-            "proxy placeholder can only be used in a slide constructor!"
-        )
-        return Proxy(text, self.this)
+    def proxy(self, text): # Remove all things reltaed to it
+        raise DeprecationWarning("proxy is depreacated! Same effects can be acheived now using" 
+            "variables syntax `{var}`/`{var:nb}` which can be refreshed with a button press!")
     
     def capture_proxy(self, slide_number, proxy_index):
-        "This is a shortcut for `Slides[slide_number,].proxies[proxy_index]`."
         return self[slide_number,].proxies[proxy_index]
     
     def _fix_slide_number(self, number):
@@ -615,7 +609,7 @@ class Slides(BaseSlides):
 
             with _build_slide(self, slide_number) as s:
                 prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)
-                s._set_source(cell, "markdown")  # Update source beofore parsing content to make it available to user inside markdown too
+                s._set_source(cell, "markdown")  # Update source beofore parsing content to make it available for variable testing
 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
@@ -676,21 +670,24 @@ class Slides(BaseSlides):
             btn.disabled = False
             self.widgets.htmls.loading.value = ""
             self.widgets.htmls.loading.layout.display = "none"
+    
+    def _sync_if_need(self, *slides):
+        for slide in slides:
+            if slide._has_vars or slide._has_widgets:
+                slide.update_display(go_there=False)
 
     def _force_update(self, btn=None):
-        with self._loading_private(self.widgets.buttons.refresh):
-            old_index = int(self.wprogress.value)
-            for slide in self[:]:
-                if hasattr(slide, '_mdff') and re.findall(r"\`\{(.*?)\}\`", slide._mdff, flags=re.DOTALL):
-                    self._slide(f'{slide.number} -m',slide._mdff) # Variables updates
-                    self._unregister_postrun_cell() # Avoid other cells having postrun after this
-                elif slide._has_widgets:
-                    slide.update_display(go_there=False) 
-        
-        if btn:
-            self.notify('Widgets and variables in markdown slides synced!')
-        self.navigate_to(old_index) # variables fixing can lead to other slides. get back
-        self._current._set_progress() # update display can take it over to other sldies
+        with self._loading_private(btn or self.widgets.buttons.refresh):
+            msg = 'Widgets and variables synced on <br/>'
+            if btn is self.widgets.buttons.sfresh:
+                self._sync_if_need(self._current) # User clicks from bottom bar, only this
+                self.notify(msg + self.alert('THIS SLIDE!').value)
+            else:
+                self._sync_if_need(*self[:])
+                if btn is self.widgets.buttons.refresh:
+                    self.notify(msg + self.alert('ALL SLIDES!').value)
+            
+            self._current._set_progress() # update display can take it over to other sldies
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))

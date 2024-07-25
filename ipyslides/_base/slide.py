@@ -1,58 +1,16 @@
 """Slide Object, should not be instantiated directly"""
 
-import time, textwrap
+import time, textwrap, re
 from contextlib import contextmanager, suppress
 from IPython.display import display
 from IPython.utils.capture import RichOutput
 
 from . import styles
-from .widgets import Output # Fixed one
-from ..utils import XTML, html, alert, _styled_css, _build_css
+from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
-from ..formatters import _Output, serializer, widget_from_data
+from ..formatters import _Output, widget_from_data
 from ._layout_css import background_css
     
-
-class Proxy(Output): # Not from _Output, need to avoid slide-only content here
-    "Proxy object, should not be instantiated directly by user., use Slides.proxy or proxy`text` in Makdown."
-    def __init__(self, text, slide):
-        slide._app.verify_running("Can't place proxy inside a context other than slides!.")
-        
-        super().__init__(clear_output=True, wait=True)
-        
-        self._slide = slide
-        self._text = text.strip() # Remove leading and trailing spaces
-        self._outputs = []
-        self._key = str(len(self._slide._proxies))
-        self._slide._proxies[self._key] = self
-        self.outputs = ({'output_type': 'display_data', 'data': {
-            'text/plain': self._text, 'text/html': alert(repr(self)).value}
-        },)
-    
-    def __repr__(self):
-        return f'Proxy(text = {self._text!r}, slide_number = {self._slide.number}, proxy_index = {self._key})'
-    
-    def fmt_html(self):
-        return serializer._alt_output(self) 
-    
-    def __enter__(self):
-        if self._slide._app.this:
-            raise RuntimeError("Can't use Proxy contextmanager inside a slide constructor.")
-        
-        self.outputs = () # Reset for new outputs, clear_output is looping indefinitely
-        super().__enter__()
-        
-    def __exit__(self, etype, evalue, tb):
-        super().__exit__(etype, evalue, tb)
-
-    def display(self): display(self) # For completeness
-
-    def update_display(self):
-        super().update_display()
-        for out in self.outputs: # One level write columns should be update hardly
-            meta = out.get('metadata',{})
-            if 'UPDATE' in meta and (col := widget_from_data(meta['UPDATE'])):
-                col.update_display()
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -92,10 +50,10 @@ class Slide:
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
         self._section = None # Reset sec_key
-        self._proxies = {} # Reset placeholders
         self._indexf = 0 # current frame index
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
+        self._has_vars = False # Update in _build_slide function
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._split_frames = True
         self._has_top_frame = True
@@ -105,8 +63,6 @@ class Slide:
   
     def _set_source(self, text, language):
         "Set source code for this slide."
-        if hasattr(self, '_mdff') and language == "python":
-            delattr(self, '_mdff') # Reset markdown source
         self._source = {'text': text, 'language': language}
     
     def _reset_source(self):
@@ -170,13 +126,12 @@ class Slide:
 
             self._contents = captured.outputs
             self._set_css_classes(remove = 'Out-Sync') # Now synced
-            self.update_display(go_there=True)    
+            self._update_display(go_there=True)    
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
         
-    def update_display(self, go_there = True):
-        "Update display of this slide."
+    def _update_display(self, go_there = True):
         if go_there:
             self._app.navigate_to(self.index) # Go there to see effects
             self._widget.clear_output(wait = True) # Avoid flickering
@@ -193,11 +148,19 @@ class Slide:
             else: # On successful for loop, handle refs at end
                 self._handle_refs()
             
-            for p in self._proxies.values():
-                p.update_display()
         # after others to take everything into account
         self._reset_frames()
         self._app._update_toc()
+
+    def update_display(self, go_there=False):
+        "Update display of this slides including reloading variables used in markdown."
+        if self._has_vars and not self._app.this: # don't rerun under slides builder
+            index = self.index if go_there else int(self._app.wprogress.value) # avoid pointing to value
+            self._app._slide(f'{self.number} -m', self._markdown)
+            self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
+            self._app.navigate_to(index)
+        else:
+            self._update_display(go_there=go_there)
 
     def _reset_toc(self):
         items = []
@@ -412,9 +375,7 @@ class Slide:
         return display(out)
     
     @property
-    def proxies(self):
-        "Return placeholder proxies in this slide."
-        return tuple(self._proxies.values())
+    def proxies(self): return [] # proxy to be remove later
         
     def yoffset(self, value):
         "Set yoffset (in perect) for frames to have equal height in incremental content."
@@ -613,6 +574,9 @@ def _build_slide(app, slide_number):
         if content.data.get('application/vnd.jupyter.widget-view+json',{}):
             this._has_widgets = True
             break # No need to check other widgets if one exists
+
+    if this._markdown and  re.findall(r"\`\{(.*?)\}\`", this._markdown, flags=re.DOTALL):
+        this._has_vars = True
         
 
     
