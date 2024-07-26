@@ -223,7 +223,8 @@ class HtmlFormatter(string.Formatter):
         if isinstance(key, int):
             return error('RuntimeError','Positional arguments are not supported in custom formatting!').value
         elif isinstance(key, str) and key not in kwargs:
-            return error('KeyError', f'{key!r} not found in given namespace. You may need to enclose input text in Slides.fmt function!').value
+            msg = 'You may need to enclose markdown text in Slides.fmt function or create this variable in notebook and refresh slide!'
+            return error('KeyError', f'{key!r} not found in given namespace.<br/>{msg}').value
         return super().get_value(key, args, kwargs)
     
 

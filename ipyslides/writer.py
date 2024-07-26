@@ -6,7 +6,7 @@ __all__ = ['write']
 
 from IPython.display import display as display
 
-from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, supported_reprs, widget_from_data, toc_from_meta
+from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta
 from .xmd import parse, capture_content
 
 class CustomDisplay:
@@ -52,34 +52,10 @@ def _fmt_html(output):
     if isinstance(output, str):
         return output
     
-    if hasattr(output, 'fmt_html'): # direct return
+    if hasattr(output, 'fmt_html'): # direct return, may be column
         return output.fmt_html()
     
-    # Metadata text/html Should take precedence over data if given
-    data, metadata = getattr(output, 'data',{}),  getattr(output, 'metadata',{})
-    if metadata and isinstance(metadata, dict):
-        if "text/html" in metadata: # wants to export text/html even skip there for main obj
-            return metadata['text/html']
-        elif "skip-export" in metadata: # only skip
-            return ''
-        elif (toc := toc_from_meta(metadata)): # TOC in columns
-            return toc.data["text/html"] # get latest title
-
-    
-    # Widgets after metadata
-    if (widget := widget_from_data(data)):
-        return serializer.get_html(widget) # handles fmt_html
-    
-    # Next data itself NEED TO INCLUDE ALL REPRS LIKE OUTPUT
-    if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
-        return data[f'text/{reps[0]}'] # first that works
-    
-    # Image data, handles plt.show as well
-    if (keys := [key for key in data if key.startswith('image')]):
-        key, value, alt = keys[0], data[keys[0]], data['text/plain']
-        return value if 'svg' in key else f'<img src="data:{key};base64, {value}" alt="{alt}" />' # first that works
-
-    return ''
+    return serializer._export_other_reprs(output)
 
 
 class Writer(ipw.HBox):

@@ -678,14 +678,15 @@ class Slides(BaseSlides):
 
     def _force_update(self, btn=None):
         with self._loading_private(btn or self.widgets.buttons.refresh):
-            msg = 'Widgets and variables synced on <br/>'
+            msg = ('Widgets and variables synced on <br/>{}<br/><br/><b>Warning</b>: Variables can only be updated in slides built purely from markdown, '
+            'even markdown enclosed in <b><code>fmt</code></b> cannot pick latest variables from notebook! Those can be updated on rerun of cell if required.')
             if btn is self.widgets.buttons.sfresh:
                 self._sync_if_need(self._current) # User clicks from bottom bar, only this
-                self.notify(msg + self.alert('THIS SLIDE!').value)
+                self.notify(msg.format(self.alert('THIS SLIDE!')), 20)
             else:
                 self._sync_if_need(*self[:])
                 if btn is self.widgets.buttons.refresh:
-                    self.notify(msg + self.alert('ALL SLIDES!').value)
+                    self.notify(msg.format(self.alert('ALL SLIDES!')),20)
             
             self._current._set_progress() # update display can take it over to other sldies
 

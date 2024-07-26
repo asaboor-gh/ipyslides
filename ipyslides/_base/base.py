@@ -89,10 +89,11 @@ class BaseSlides:
     def xmd_syntax(self):
         "Special syntax for markdown."
         return XTML(self.parse(textwrap.dedent(rf'''
-        ## Extended Markdown
+        **Extended Markdown**{{.text-large}}
+                                               
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
         
-        ### Slides-specific syntax
+        **Slides-specific syntax**{{.text-big}}
         
         Notes
         : alert`notes\`This is slide notes\``  to add notes to current slide
@@ -109,7 +110,7 @@ class BaseSlides:
         : alert`section\`content\`` to add a section that will appear in the table of contents.
         alert`toc\`Table of content header text\`` to add a table of contents. See `Slides.docs()` for creating a `TOC` accompanied by section summary.
         
-        ### General syntax
+        **General syntax**{{.text-big}}
         
         - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\`{{variable}}\`` 
             (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
@@ -117,9 +118,9 @@ class BaseSlides:
         - A special formatting alert`\`{{variable:nb}}\`` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
             Custom objects serialized with `Slides.serializer` or serialized by `ipyslides` should be displayed without `:nb` whenever possible to appear in correct place in all contexts. e.g.
             a matplotlib's figure `fig` as shown in \`{{fig:nb}}\` will only capture text representation inplace and actual figure will be shown at end, while \`{{fig}}\` will be shown exactly in place.
-        - Variables are not automatically updated in markdown being a costly operation, press `U` or use `Update Variables & Widgets` button in quick menu after you update a variable in notebook used in markdown.
+        - Variables are not automatically updated in markdown being a costly operation, press refresh button in bottom bar (for this slide) or quick menu (for all slides) after you update a variable in notebook used in markdown.
             This has additional benefit of having everything refreshed at end without rebuidling markdown slides. Note that this only updates variables used in markdown file and in `Slides.build` command.
-            Also, each newly added slide and new display of slides enables variables sync across all slides automatically. 
+            Also, each newly added slide and new display of slides sync variables (if exist) across all slides automatically
 
         ::: note-warning
             alert`\`{{variable:nb}}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
@@ -170,21 +171,19 @@ class BaseSlides:
         and source then can be emded with \`{{source}}\` syntax.
         
         - A whole block of markdown can be CSS-classed using syntax
-        ```markdown
+        ```multicol 30 10 30 30 .block-blue
+            ::: block-yellow
+                Some **bold text**
+        +++
+        vspace`2`👉
+        +++
         ::: block-yellow
-            ### This is Header 3
-            <hr/>
             Some **bold text**
         ```
-        gives 
-        ::: block-yellow
-            ### This is Header 3
-            <hr/>
-            Some **bold text**
             
         ::: note 
-            You can also look at [customblocks](https://github.com/vokimon/markdown-customblocks) 
-            extension to make nested blocks with classes. It is added as dependency and can be used to build nested html blocks.
+            Above block syntax is enabled using [customblocks](https://github.com/vokimon/markdown-customblocks) 
+            which is added by default and can be used to build nested html blocks.
             
         ::: block-red 
             - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
@@ -194,7 +193,7 @@ class BaseSlides:
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
                 `__format__` method in your class enables to use {{obj}} syntax in python formatting and \`{{obj}}\` in extended Markdown.
         
-        - Other options (that can also take extra args as alert`func[arg1,x=2,y=A]\`arg0\``) include:
+        - Other options (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\`{v}\`' for k,v in _special_funcs.items()),
         returns = True
         ))

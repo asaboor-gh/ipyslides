@@ -143,8 +143,10 @@ class Slide:
         with self._widget:
             for obj in self.contents:
                 display(obj)
-                if hasattr(obj, 'update_display'):
-                    obj.update_display()
+                if hasattr(obj, 'update_display'): 
+                    obj.update_display() # UPDATE metadata objects like columns
+                elif (w := widget_from_data(obj.data)): # Output on top or in children
+                    [c.update_display() for c in getattr(w, 'children',[w]) if isinstance(c, _Output)]
             else: # On successful for loop, handle refs at end
                 self._handle_refs()
             
@@ -575,11 +577,5 @@ def _build_slide(app, slide_number):
             this._has_widgets = True
             break # No need to check other widgets if one exists
 
-    if this._markdown and  re.findall(r"\`\{(.*?)\}\`", this._markdown, flags=re.DOTALL):
+    if this._markdown and re.findall(r"\`\{(.*?)\}\`", this._markdown, flags=re.DOTALL):
         this._has_vars = True
-        
-
-    
-        
-    
-    

@@ -418,20 +418,35 @@ class Serializer:
             if 'text' in d: # streams takes prefersnces
                 content += raw(d['text']).value
             else:
-                data, metadata = d.get('data',{}), d.get('metadata',{})
-                if 'text/html' in metadata:
-                    content += metadata['text/html'] # user given metadata prefrence
-                elif (widget := widget_from_data(data)):
-                    content += self.get_html(widget) # handles fmt_html
-                else:
-                    if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
-                        content += data[f'text/{reps[0]}'] # first that works
-                    elif (keys := [key for key in data if key.startswith('image')]): # Image data, handles plt.show as well
-                        key, value, alt = keys[0], data[keys[0]], data['text/plain']
-                        content += (value if 'svg' in key else f'<img src="data:{key};base64, {value}" alt="{alt}" />') # first that works
-        
+                content += self._export_other_reprs(d)
         return f'<div class="{css_class}" {_inline_style(output_widget)}>{content}</div>' 
     
+    def _export_other_reprs(self, output):
+        "Everything future can be added at end of this"
+        data, metadata = getattr(output, 'data',{}),  getattr(output, 'metadata',{})
+        # Metadata text/html Should take precedence over data if given
+        if metadata and isinstance(metadata, dict):
+            if "text/html" in metadata: # wants to export text/html even skip there for main obj
+                return metadata['text/html']
+            elif "skip-export" in metadata: # only skip
+                return ''
+            elif (toc := toc_from_meta(metadata)): # TOC in columns
+                return toc.data["text/html"] # get latest title
+        
+        # Widgets after metadata
+        if (widget := widget_from_data(data)):
+            return self.get_html(widget) # handles fmt_html as well
+        
+        # Next data itself NEED TO INCLUDE ALL REPRS LIKE OUTPUT
+        if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):
+            return data[f'text/{reps[0]}'] # first that works
+
+        # Image data, handles plt.show as well
+        if (keys := [key for key in data if key.startswith('image')]):
+            key, value, alt = keys[0], data[keys[0]], data['text/plain']
+            return value if 'svg' in key else f'<img src="data:{key};base64, {value}" alt="{alt}" />' # first that works
+        
+        return ''  
 
     def unregister(self, obj_type):
         "Unregister all serializer handlers for a type."
