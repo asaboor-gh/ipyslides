@@ -31,7 +31,7 @@ def demo_slides(slides):
     section`Introduction` toc`### Contents`
     ---
     # Introduction
-    Create a variable `x` in notebook and press button with refresh icon to update this `{x}`!
+    Create a variable `x` in notebook to update this `{x}`!
                   
     To see how commands work, use hl`Slides.docs()` to see the documentation.
     Here we will focus on using all that functionality to create slides.

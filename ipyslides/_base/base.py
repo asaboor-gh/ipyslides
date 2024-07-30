@@ -118,9 +118,11 @@ class BaseSlides:
         - A special formatting alert`\`{{variable:nb}}\`` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
             Custom objects serialized with `Slides.serializer` or serialized by `ipyslides` should be displayed without `:nb` whenever possible to appear in correct place in all contexts. e.g.
             a matplotlib's figure `fig` as shown in \`{{fig:nb}}\` will only capture text representation inplace and actual figure will be shown at end, while \`{{fig}}\` will be shown exactly in place.
-        - Variables are not automatically updated in markdown being a costly operation, press refresh button in bottom bar (for this slide) or quick menu (for all slides) after you update a variable in notebook used in markdown.
-            This has additional benefit of having everything refreshed at end without rebuidling markdown slides. Note that this only updates variables used in markdown file and in `Slides.build` command.
-            Also, each newly added slide and new display of slides sync variables (if exist) across all slides automatically
+        
+        ::: note-tip
+            - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown(NOT enclosed in `fmt`).
+            - Use unique variable names on each slide to avoid accidental overwriting during update.
+            - A variable used from `python run` block in markdown (after block itself) cannot be updated from notebook.
 
         ::: note-warning
             alert`\`{{variable:nb}}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
@@ -128,8 +130,8 @@ class BaseSlides:
         ::: note-info
             - Widgets behave same with or without `:nb` format spec. 
             - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
-            - Variables are substituted from top level scope (Notebook's hl`locals()`/hl`globals()`). To use varirables from a nested scope, use `Slides.fmt` which you can import on top level as well to just make it fmt.
-
+            - Variables are substituted from top level scope (Notebook's hl`locals()`/hl`globals()`). To use variables from a nested scope, use `Slides.fmt`.
+            
         - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
@@ -169,6 +171,9 @@ class BaseSlides:
          ```
         ```
         and source then can be emded with \`{{source}}\` syntax.
+        
+        ::: note-warning
+            Code blocks are run in same scope as notebook, so they can overwrite objects in notebook!
         
         - A whole block of markdown can be CSS-classed using syntax
         ```multicol 30 10 30 30 .block-blue
@@ -306,7 +311,7 @@ class BaseSlides:
             with self.widgets._tmp_out:
                 display(*objs)
         
-    def from_markdown(self, start_slide_number, /, content, trusted = False):
+    def _from_markdown(self, start, /, content, trusted = False, refresh_vars=True):
         "Sames as `Slides.build` used as a function."
         if self.this:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
@@ -320,8 +325,6 @@ class BaseSlides:
             (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
             )):
             raise ValueError("slides separator --- cannot be used inside multicol!")
-        
-        start = self._fix_slide_number(start_slide_number) 
         
         if not trusted:
             lines = content.splitlines()
@@ -342,7 +345,7 @@ class BaseSlides:
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown]):
+            if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown, refresh_vars]):
                 with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                     self._slide(f'{i + start} -m', chunk)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
@@ -374,7 +377,7 @@ class BaseSlides:
         start = self._fix_slide_number(start_slide_number)
         
         # NOTE: Background threads and other methods do not work. Do NOT change this way
-        self.from_markdown(start, path.read_text(encoding="utf-8"), trusted) # First call itself before declaring other things, so errors can be captured safely
+        self._from_markdown(start, path.read_text(encoding="utf-8"), trusted) # First call itself before declaring other things, so errors can be captured safely
         
         if hasattr(self.widgets.iw,'_sync_args'): # remove previous updates
             self.unsync()
@@ -388,7 +391,7 @@ class BaseSlides:
                 if out_sync or (mtime > self._mtime):  # set by interaction widget
                     self._mtime = mtime
                     try: 
-                        self.from_markdown(start, path.read_text(encoding="utf-8"), trusted)
+                        self._from_markdown(start, path.read_text(encoding="utf-8"), trusted, refresh_vars=False) # Costly inside file, no refresh vars
                         self.notify('x') # need to remove any notification from previous error
                         self._unregister_postrun_cell() # No cells buttons from inside file code run
                     except:
@@ -453,7 +456,7 @@ class BaseSlides:
             
             with self._app.code.context(returns = True, depth=3, start = True) as code:
                 if isinstance(content, str) and not code.startswith('with'): 
-                    return self._app.from_markdown(self._snumber, content, trusted = trusted)
+                    return self._app._from_markdown(self._snumber, content, trusted = trusted)
             
                 if isinstance(content, (list, tuple)) and not code.startswith('with'):
                     with _build_slide(self._app, self._snumber) as s: 

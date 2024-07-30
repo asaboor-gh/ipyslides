@@ -1,13 +1,13 @@
 """Slide Object, should not be instantiated directly"""
 
-import time, textwrap, re
+import time, textwrap
 from contextlib import contextmanager, suppress
 from IPython.display import display
 from IPython.utils.capture import RichOutput
 
 from . import styles
 from ..utils import XTML, html, _styled_css, _build_css
-from ..xmd import capture_content
+from ..xmd import capture_content, _filtered_ns
 from ..formatters import _Output, widget_from_data
 from ._layout_css import background_css
     
@@ -53,7 +53,7 @@ class Slide:
         self._indexf = 0 # current frame index
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
-        self._has_vars = False # Update in _build_slide function
+        self._has_vars = () # Update in _build_slide function
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._split_frames = True
         self._has_top_frame = True
@@ -126,12 +126,13 @@ class Slide:
 
             self._contents = captured.outputs
             self._set_css_classes(remove = 'Out-Sync') # Now synced
-            self._update_display(go_there=True)    
+            self.update_display(go_there=True)    
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
         
-    def _update_display(self, go_there = True):
+    def update_display(self, go_there = True):
+        "Update display of this slides including reloading citations, widgets etc."
         if go_there:
             self._app.navigate_to(self.index) # Go there to see effects
             self._widget.clear_output(wait = True) # Avoid flickering
@@ -153,16 +154,14 @@ class Slide:
         # after others to take everything into account
         self._reset_frames()
         self._app._update_toc()
-
-    def update_display(self, go_there=False):
-        "Update display of this slides including reloading variables used in markdown."
-        if self._has_vars and not self._app.this: # don't rerun under slides builder
-            index = self.index if go_there else int(self._app.wprogress.value) # avoid pointing to value
+    
+    def _rebuild(self, go_there=False):
+        if not self._markdown:
+            raise RuntimeError("can only rebuild slides created purely from markdown!")
+        
+        with self._app.navigate_back(self.index if go_there else None):
             self._app._slide(f'{self.number} -m', self._markdown)
             self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
-            self._app.navigate_to(index)
-        else:
-            self._update_display(go_there=go_there)
 
     def _reset_toc(self):
         items = []
@@ -375,9 +374,6 @@ class Slide:
         with out:
             display(*self.contents)
         return display(out)
-    
-    @property
-    def proxies(self): return [] # proxy to be remove later
         
     def yoffset(self, value):
         "Set yoffset (in perect) for frames to have equal height in incremental content."
@@ -577,5 +573,5 @@ def _build_slide(app, slide_number):
             this._has_widgets = True
             break # No need to check other widgets if one exists
 
-    if this._markdown and re.findall(r"\`\{(.*?)\}\`", this._markdown, flags=re.DOTALL):
-        this._has_vars = True
+    if this._markdown and type(this._markdown) == str: # xtr carries internal vars, don't test that
+        this._has_vars = _filtered_ns(this._markdown, {}, True)

@@ -1,5 +1,5 @@
-_attrs = ['alt', 'alt_clip', 'alert', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
-             'image','image_clip', 'svg','iframe','frozen', 'run_doc',
+_attrs = ['alt', 'alert', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
+             'image', 'svg','iframe','frozen', 'run_doc',
             'raw', 'rows', 'zoomable','html', 'sig','styled', 'doc','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
@@ -328,7 +328,6 @@ def _test_ext_and_parent(filename):
     if not p.suffix.lower() in ('.png','.jpeg','.jpg'):
         raise ValueError(f'filename should have an image extension .png, .jpg or .jpeg, got {p.suffix!r}')
 
-def alt_clip(*args, **kwargs): raise DeprecationWarning("alt_clip is depreacted, use alt('filename.png', obj) instead!")
 
 class clip(CustomDisplay):
     """Save image from clipboard to file with a given quality when you paste in given area on slides.
@@ -715,9 +714,6 @@ def bullets(iterable, ordered = False,marker = None, css_class = None):
         start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
         _bullets.append(f'{start}{_fmt_cols(it)}</li>')
     return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],css_class = css_class) # Don't use style, it will remove effect of css_class
-
-
-def image_clip(*args, **kwargs): raise DeprecationWarning("This function is deprecated, use `clip` for pasting with felxibility!")
 
 def _save_clipboard_image(filename, quality = 95, overwrite = False):
     _test_ext_and_parent(filename)

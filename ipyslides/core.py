@@ -95,6 +95,10 @@ class Slides(BaseSlides):
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(self._slide, magic_kind="cell", magic_name="slide")
             self.shell.register_magic_function(self.__xmd, magic_kind="line_cell", magic_name="xmd")
+        
+        with suppress(Exception): # Remove previous on each if exits
+            self.shell.events.unregister("post_run_cell", self._md_post_run_cell)
+        self.shell.events.register("post_run_cell", self._md_post_run_cell)
 
         self._cite_mode = 'footnote'
 
@@ -106,6 +110,7 @@ class Slides(BaseSlides):
         self._next_number = 0  # Auto numbering of slides should be only in python scripts
         self._citations = {}  # Initialize citations dictionary
         self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
+        self._md_vars = {} # will be handled by a post run cell
 
         with self.set_dir(self._assets_dir):  # Set assets directory
             self._set_citations_from_file(
@@ -115,7 +120,6 @@ class Slides(BaseSlides):
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
         self.widgets.buttons.refresh.on_click(self._force_update)
-        self.widgets.buttons.sfresh.on_click(self._force_update)
         self.widgets.buttons.source.on_click(self._jump_to_source_cell)
 
         # All Box of Slides
@@ -157,6 +161,27 @@ class Slides(BaseSlides):
             self._slides_per_cell.extend(spc) # was cleared above in unregister
             self._register_postrun_cell() # should be back
         return output
+    
+    def _md_post_run_cell(self, result):
+        if result.error_before_exec or result.error_in_exec:
+            return  # Do not proceed for side effects
+        
+        if '#XMD_PY_RUN_CELL' in result.info.raw_cell:
+            return # Don't trigger update from a markdown python block execultion
+        
+        for slide in self[:]:
+            if slide.get_source().raw.rstrip('. ') in result.info.raw_cell:
+                return # Do not update from a cell which is building slides
+        
+        keys = [k for s in self[:] for k in s._has_vars] # All slides vars names
+        new_vars = {key: self.shell.user_ns.get(key) for key in keys if key in self.shell.user_ns}
+        diff = dict(new_vars.items() ^ self._md_vars.items()) 
+        self._md_vars.update({key: new_vars[key] for key in diff.keys() if key in new_vars}) # sync from latest
+        
+        with self.navigate_back():
+            for slide in self[:]:
+                if diff.keys() & slide._has_vars: # Intersection of keys
+                    slide._rebuild(True)
     
     def _post_run_cell(self, result):
         with suppress(Exception):
@@ -246,6 +271,14 @@ class Slides(BaseSlides):
         "Programatically Navigate to slide by index, if possible."
         if isinstance(index, int):
             self.wprogress.value = index
+    @contextmanager
+    def navigate_back(self, index=None):
+        "Bring slides position back to where it was (or optionally at index) after performing operations."
+        old_index = index or int(self.wprogress.value)
+        try:
+            yield
+        finally:
+            self.navigate_to(old_index)
 
     @property
     def version(self):
@@ -348,7 +381,10 @@ class Slides(BaseSlides):
     
     def _set_unsynced(self):
         for slide in self.cited_slides:
-            slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
+            if slide._markdown:
+                slide._rebuild(go_there=False)
+            else:
+                slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='footnote'):
         r"""Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
@@ -374,12 +410,7 @@ class Slides(BaseSlides):
         
         if self._cite_mode != mode:
             self._cite_mode = mode # Update first as they need in display update
-            self._set_unsynced() # will go synced after rerun
-
-        # Make some possible updates
-        for slide in self.cited_slides:
-            slide.update_display(go_there=False) # will reset slides refrences
-            
+            self._set_unsynced() # will go synced after rerun 
         
         # Finally write resources to file in assets
         with self.set_dir(self._assets_dir):
@@ -538,13 +569,6 @@ class Slides(BaseSlides):
             self.widgets.slidebox.children[0].add_class('ShowSlide')
 
         self.widgets.iw.msg_tojs = 'SwitchView' # Trigger view
-
-    def proxy(self, text): # Remove all things reltaed to it
-        raise DeprecationWarning("proxy is depreacated! Same effects can be acheived now using" 
-            "variables syntax `{var}`/`{var:nb}` which can be refreshed with a button press!")
-    
-    def capture_proxy(self, slide_number, proxy_index):
-        return self[slide_number,].proxies[proxy_index]
     
     def _fix_slide_number(self, number):
         "For this, slide_number in function is set to be position-only argement."
@@ -553,7 +577,7 @@ class Slides(BaseSlides):
         
         code = self.shell.get_parent().get('content',{}).get('code','')
         p = r"\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
-        matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(slide{p})|(from_markdown{p})|(sync_with_file{p})", code)
+        matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(sync_with_file{p})", code)
         number = int(self._next_number) # don't use same attribute, that will be updated too
         if matches:
             if len(matches) > 1:
@@ -637,14 +661,9 @@ class Slides(BaseSlides):
 
     @contextmanager
     def slide(self, slide_number, /): # don't allow keyword to have -1 robust
-        """Same as `Slides.build` used as contexmanager."""
-        slide_number = self._fix_slide_number(slide_number)
-
-        with _build_slide(self, slide_number) as s, self.code.context(
-            returns = True, depth=4
-        ) as c:  # depth = 4 to source under context manager
-            s._set_source(c.raw, "python")  # Update cell source befor yielding
-            yield s  # Useful to use later
+        raise DeprecationWarning("Use Slides.build instead!")
+    
+    def from_markdown(self, *args, **kwargs): raise DeprecationWarning("Use Slides.build instead!")
 
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
@@ -670,23 +689,15 @@ class Slides(BaseSlides):
             btn.disabled = False
             self.widgets.htmls.loading.value = ""
             self.widgets.htmls.loading.layout.display = "none"
-    
-    def _sync_if_need(self, *slides):
-        for slide in slides:
-            if slide._has_vars or slide._has_widgets:
-                slide.update_display(go_there=False)
 
     def _force_update(self, btn=None):
         with self._loading_private(btn or self.widgets.buttons.refresh):
-            msg = ('Widgets and variables synced on <br/>{}<br/><br/><b>Warning</b>: Variables can only be updated in slides built purely from markdown, '
-            'even markdown enclosed in <b><code>fmt</code></b> cannot pick latest variables from notebook! Those can be updated on rerun of cell if required.')
-            if btn is self.widgets.buttons.sfresh:
-                self._sync_if_need(self._current) # User clicks from bottom bar, only this
-                self.notify(msg.format(self.alert('THIS SLIDE!')), 20)
-            else:
-                self._sync_if_need(*self[:])
-                if btn is self.widgets.buttons.refresh:
-                    self.notify(msg.format(self.alert('ALL SLIDES!')),20)
+            for slide in self[:]:
+                if slide._has_widgets:
+                    slide.update_display(go_there=False)
+            
+            if btn:
+                self.notify('Widgets updated everywhere!')
             
             self._current._set_progress() # update display can take it over to other sldies
 

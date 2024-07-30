@@ -20,7 +20,6 @@ This \`{var_name}\` is a code from above and will be substituted with the value 
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
-import inspect
 import textwrap, re, sys, string, builtins
 from contextlib import contextmanager
 from html import escape # Builtin library
@@ -117,7 +116,7 @@ def _try_eval(str_value):
 
 def error(name, msg):
     "Add error without breaking execution."
-    return XTML(f"<pre><b style='color:crimson;'>{name}</b><span>: {msg}</span></pre>")
+    return XTML(f"<pre class='Error'><b style='color:crimson;'>{name}</b><span>: {msg}</span></pre>")
 
 def raw(text, css_class=None): # css_class is required here to make compatible with utils
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
@@ -193,12 +192,6 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
         slide_instance.this._toc_args = (title, True if hl.strip('[]').strip() else False) # should be fully clear
         text_chunk = text_chunk.replace(f"toc{hl}`{title}`", xmd_instance._handle_var(slide_instance.this._reset_toc()), 1)
 
-    all_matches = re.findall( # will be removed in future
-        r"proxy\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
-    )
-    for match in all_matches:
-        text_chunk = text_chunk.replace(f"proxy`{match}`", xmd_instance._handle_var(slide_instance.proxy(match)), 1) 
-    
     # Footnotes at place user likes
     all_matches = re.findall(r"refs\`([\d+]?)\`", text_chunk) # match digit or empty
     for match in all_matches:
@@ -223,8 +216,8 @@ class HtmlFormatter(string.Formatter):
         if isinstance(key, int):
             return error('RuntimeError','Positional arguments are not supported in custom formatting!').value
         elif isinstance(key, str) and key not in kwargs:
-            msg = 'You may need to enclose markdown text in Slides.fmt function or create this variable in notebook and refresh slide!'
-            return error('KeyError', f'{key!r} not found in given namespace.<br/>{msg}').value
+            msg = 'You can create this variable in a notebook cell(other than slide builder) to update!'
+            return error('KeyError', f'{key!r} not found in given namespace. {msg}').value
         return super().get_value(key, args, kwargs)
     
 
@@ -514,7 +507,7 @@ class XMarkdown(Markdown):
                 if current_shell := self._slides or self._shell:
                     try: # Need slides to be  accessible in namespace
                         main_ns['get_slides_instance'] = get_slides_instance
-                        current_shell.run_cell(dedent_data)
+                        current_shell.run_cell('#XMD_PY_RUN_CELL\n' + dedent_data) # need this comment
                     finally:
                         main_ns.pop('get_slides_instance') # don't keep
 
@@ -692,33 +685,19 @@ def parse(xmd, returns = False):
     """
     return XMarkdown()._parse(xmd, returns = returns)
 
-def _get_ns(text, depth, **kwargs): # kwargs are preferred
-    fr = inspect.currentframe()
-    for _ in range(depth):
-        fr = fr.f_back
-
-    ls, gs = fr.f_locals, fr.f_globals
-    matches = [match.strip() for match in re.findall(
-        r"[^\\]\`\{(.*?)[\.\[\:\!\s+].*?\}\`", # should not start with \`
-        text.replace('}`', ' }`'), # needs a space if only variable
+def _filtered_ns(text, kwargs, return_keys=False):
+    matches = [match for match in re.findall(
+        r"\`\{\s*(.*?)\s*[\.\[\:\!\s+].*?\}\`",
+        re.sub(r"\\\`", "&#96;", text).replace('}`', ' }`'), # avoid \`{
         flags = re.DOTALL) if not re.search(r"\{|\}", match)]
-    
-    ns = {} 
-    for m in matches:
-        if m in kwargs: # prefers user given, but only keep matching
-            ns[m] = kwargs[m]
-        elif m in ls: # then prefers locals
-            ns[m] = ls[m]
-        elif m in gs:
-            ns[m] = gs[m]
-        # Will be a soft error on formatting time, no need to add it here
- 
-    del fr, ls, gs, kwargs
-    return ns
+    if return_keys:
+        return tuple(matches) # This is not for fmt, but free markdown strings
+    # Do not carry full dict, only matching, user can dump locals()/globals() etc
+    return {m: kwargs.get(m, error('KeyError', f'keyword {m!r} was not provided in fmt').value) for m in matches}
+
 
 def fmt(text, **kwargs):
-    """Stores refrences to variables used in syntax `{var}` from current namespace until markdown parsed by function it is passed to. 
-    You need this if not in top level scope of Notebook. kwargs can be used to add extra vairables without clutering user namespace.
+    """Stores refrences to variables used in syntax `{var}` from given keyword arguments. You need this if not in top level scope of Notebook.
     If you do some str operations on output of this function, use hl`output.copy_ns(target)` to attch namespace to new string.
 
     Output is not intended to do string operations, just to hold namespace for extended markdown.
@@ -726,7 +705,7 @@ def fmt(text, **kwargs):
     Returns an xtr object which delays formatting until it is intercepted by markdown parser.
     """
     if isinstance(text, str): # depth belowshoul be 2 to go where fmt will run
-        return xtr(text).with_ns(_get_ns(text, 2, **kwargs)) # should return as string to be parsed
+        return xtr(text).with_ns(_filtered_ns(text, kwargs)) # should return as string to be parsed
     else: # should not allow anything else because it will cause issues in Makrdown formatting
         return TypeError(f"fmt expects a str, got {type(text)}!")
     

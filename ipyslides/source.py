@@ -31,7 +31,7 @@ class SourceCode(XTML):
     @raw.setter
     def raw(self, value):
         "Set raw source code."
-        self._raw = value
+        self._raw = value.strip() # avoid new lines
     
     def display(self,collapsed = False):
         "Display source object in IPython notebook."

@@ -149,7 +149,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'font-family': 'var(--jp-code-font-family) !important',
                 'font-size':'90% !important',   
             }, # Define color below at low specificity, otherwise it can overwrite code
-            '.jp-RenderedHTMLCommon :is(pre, code)': {'line-height': '1.5 !important','background': 'none !important'}, # Avoid a white background set by jupyter
+            '.jp-RenderedHTMLCommon :is(pre:not(.Error), code)': {'line-height': '1.5 !important','background': 'none !important'}, # Avoid a white background set by jupyter
         },
         '^.SlidesWrapper':{
             'container': 'slides / inline-size',
@@ -282,7 +282,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'width':'max-content',  # override 20% width
                 'text-shadow': '0 1px var(--bg2-color)',
                 'margin-block-start': '0.5em'},
-            'dl > dd': {'margin-inline-start': '16px', 'display': 'block'},
+            'dl > dd': {'margin-inline-start': '16px', 'display': 'block', 'width':'100%'},
             'a': {
                 'color': 'var(--accent-color) !important',
                 '^:not(.citelink,.goto-button):visited': {
@@ -368,6 +368,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             'pre': {
                 'background':'none !important',
                 'color':'var(--fg1-color) !important',
+                '^.Error': {'background': 'hsl(from var(--bg2-color) 10 100% l) !important','padding': '4px !important',},
             },
             'figure': {
                 'margin':'8px !important', # override default margin
