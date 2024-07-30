@@ -169,19 +169,20 @@ class Slides(BaseSlides):
         if '#XMD_PY_RUN_CELL' in result.info.raw_cell:
             return # Don't trigger update from a markdown python block execultion
         
-        for slide in self[:]:
-            if slide.get_source().raw.rstrip('. ') in result.info.raw_cell:
-                return # Do not update from a cell which is building slides
+        if list(True for slide in self[:] if slide._source['text'].rstrip('. ') in result.info.raw_cell):
+            return # Do not update from a cell which is building slides, generator to speed up
         
-        keys = [k for s in self[:] for k in s._has_vars] # All slides vars names
-        new_vars = {key: self.shell.user_ns.get(key) for key in keys if key in self.shell.user_ns}
-        diff = dict(new_vars.items() ^ self._md_vars.items()) 
-        self._md_vars.update({key: new_vars[key] for key in diff.keys() if key in new_vars}) # sync from latest
+        keys = (k for s in self[:] for k in s._has_vars) # All slides vars names
+        user_ns = getattr(sys.modules.get('__main__',None),'__dict__',{}) # works both in top running module and notebook
+        new_vars = dict((key, user_ns.get(key)) for key in keys if key in user_ns)
         
-        with self.navigate_back():
-            for slide in self[:]:
-                if diff.keys() & slide._has_vars: # Intersection of keys
-                    slide._rebuild(True)
+        if (diff := dict(new_vars.items() ^ self._md_vars.items())):
+            self._md_vars.update({key: new_vars[key] for key in diff.keys() if key in new_vars}) # sync from latest
+        
+            with self.navigate_back():
+                for slide in self[:]: 
+                    if diff.keys() & slide._has_vars: # Intersection of keys
+                        slide._rebuild(True)
     
     def _post_run_cell(self, result):
         with suppress(Exception):

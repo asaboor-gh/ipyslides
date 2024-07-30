@@ -63,7 +63,7 @@ class Slide:
   
     def _set_source(self, text, language):
         "Set source code for this slide."
-        self._source = {'text': text, 'language': language}
+        self._source = {'text': text.strip(), 'language': language} # avoild new lines here
     
     def _reset_source(self):
         "Reset old source but leave markdown source for observing chnages"

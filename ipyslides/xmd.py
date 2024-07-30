@@ -346,8 +346,7 @@ class XMarkdown(Markdown):
         return self.main_ns() 
 
     def main_ns(self): # This is required to set variables
-        main = sys.modules.get('__main__',None) # __main__ is current top module
-        return main.__dict__ if main else {}
+        return getattr(sys.modules.get('__main__',None),'__dict__',{})
 
     def _parse(self, xmd, returns = True): # not intended to be used directly
         """Return a string after fixing markdown and code/multicol blocks returns = True
