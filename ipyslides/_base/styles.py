@@ -149,8 +149,8 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'font-family': 'var(--jp-code-font-family) !important',
                 'font-size':'90% !important',   
             }, # Define color below at low specificity, otherwise it can overwrite code
-            '.jp-RenderedHTMLCommon :is(pre:not(.Error), code)': {'line-height': '1.5 !important','background': 'none !important'}, # Avoid a white background set by jupyter
         },
+        '.jp-RenderedHTMLCommon :is(pre:not(.Error), code)': {'line-height': '1.5 !important','background': 'none !important'}, # Avoid a white background set by jupyter
         '^.SlidesWrapper':{
             'container': 'slides / inline-size',
             'margin':'auto',

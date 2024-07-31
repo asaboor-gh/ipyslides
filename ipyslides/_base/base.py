@@ -122,7 +122,7 @@ class BaseSlides:
         ::: note-tip
             - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown(NOT enclosed in `fmt`).
             - Use unique variable names on each slide to avoid accidental overwriting during update.
-            - A variable used from `python run` block in markdown (after block itself) cannot be updated from notebook.
+            - Varibales used as attributes like \`{{var.attr}}\` and indexing like \`{{var[0]}}\`/\`{{var["key"]}}\` will be update only if `var` itself is changed.
 
         ::: note-warning
             alert`\`{{variable:nb}}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
@@ -163,18 +163,12 @@ class BaseSlides:
         : Item 1 details
         ```
         
-        - Python code blocks can be exectude by syntax 
-        ```markdown
-         ```python run source {{.CSS_className}} 
-         slides = get_slides_instance() 
-         slides.write('Hello, I was written from python code block using slides instance.')
-         ```
-        ```
-        and source then can be emded with \`{{source}}\` syntax.
+        - Code blocks syntax highlighting. (there is an inline highlight syntax as well alert`hl\`code\``)
         
-        ::: note-warning
-            Code blocks are run in same scope as notebook, so they can overwrite objects in notebook!
-        
+        ```python
+        print('Hello, I was highlighted from a code block!')
+        ```     
+                                                                              
         - A whole block of markdown can be CSS-classed using syntax
         ```multicol 30 10 30 30 .block-blue
             ::: block-yellow
@@ -225,16 +219,8 @@ class BaseSlides:
         Decorator for running a function when slide is loaded into view. No return value is required.
         Use this to e.g. notify during running presentation. func accepts single arguemnet, slide.
         
-        ```python run source
-        import datetime
-        slides = get_slides_instance() # Get slides instance, this is to make doctring runnable
-        source.display() # Display source code of the block
-        @slides.on_load
-        def push_toast(slide):
-            t = datetime.datetime.now()
-            time = t.strftime('%H:%M:%S')
-            slides.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
-        ```
+        See `Slides.docs()` for few examples.
+
         ::: note-warning
             - Do not use this to change global state of slides, because that will affect all slides.
             - This can be used single time per slide, overwriting previous function.
@@ -247,18 +233,7 @@ class BaseSlides:
         ipywidgets's interact functionality tailored for ipyslides's needs. It adds 'height' as additional
         parameter in options. Set height to avoid flickering output.
 
-        ```python run source
-        import time
-        slides = get_slides_instance() # Get slides instance, this is to make docstring runnable
-        source.display() # Display source code of the block
-        @slides.interact({'height':'2em'}, date = False)
-        def update_time(date): 
-            local_time = time.localtime()
-            objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
-            if date:
-                objs.append('Date: {0}/{1}/{2}'.format(*local_time))
-            slides.write(*objs)
-        ```
+        See a usage example in hl`Slides.docs()` or check documentation of `ipywidgets.interact`.
 
         ::: note-tip
             You can use this inside columns using delayed display trick, like hl`write('First column', lambda: interact(f, x = 5))`.
@@ -311,7 +286,7 @@ class BaseSlides:
             with self.widgets._tmp_out:
                 display(*objs)
         
-    def _from_markdown(self, start, /, content, trusted = False, refresh_vars=True):
+    def _from_markdown(self, start, /, content, refresh_vars=True):
         "Sames as `Slides.build` used as a function."
         if self.this:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
@@ -325,19 +300,6 @@ class BaseSlides:
             (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
             )):
             raise ValueError("slides separator --- cannot be used inside multicol!")
-        
-        if not trusted:
-            lines = content.splitlines()
-                    
-            untrusted_lines = []
-            for i, line in enumerate(lines, start = 1):
-                if re.match(r'```python\s+run', line):
-                    untrusted_lines.append(i)
-            
-            if untrusted_lines:
-                raise Exception(f'Given text may contain unsafe code to be executed at lines: {untrusted_lines}'
-                    ' Verify code is safe and try again with argument `trusted = True`.'
-                    ' Never run files that you did not create yourself or not verified by you.')
         
         chunks = _parse_markdown_text(content)
             
@@ -354,7 +316,7 @@ class BaseSlides:
         # Return refrence to slides for quick update
         return handles
     
-    def sync_with_file(self, start_slide_number, /, path, trusted = False, interval=500):
+    def sync_with_file(self, start_slide_number, /, path, interval=500):
         """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
         interval is in milliseconds, 500 ms default. Read `Slides.build` docs about content of file.
         
@@ -377,7 +339,7 @@ class BaseSlides:
         start = self._fix_slide_number(start_slide_number)
         
         # NOTE: Background threads and other methods do not work. Do NOT change this way
-        self._from_markdown(start, path.read_text(encoding="utf-8"), trusted) # First call itself before declaring other things, so errors can be captured safely
+        self._from_markdown(start, path.read_text(encoding="utf-8")) # First call itself before declaring other things, so errors can be captured safely
         
         if hasattr(self.widgets.iw,'_sync_args'): # remove previous updates
             self.unsync()
@@ -391,7 +353,7 @@ class BaseSlides:
                 if out_sync or (mtime > self._mtime):  # set by interaction widget
                     self._mtime = mtime
                     try: 
-                        self._from_markdown(start, path.read_text(encoding="utf-8"), trusted, refresh_vars=False) # Costly inside file, no refresh vars
+                        self._from_markdown(start, path.read_text(encoding="utf-8"), refresh_vars=False) # Costly inside file, no refresh vars
                         self.notify('x') # need to remove any notification from previous error
                         self._unregister_postrun_cell() # No cells buttons from inside file code run
                     except:
@@ -415,21 +377,20 @@ class BaseSlides:
         else:
             print("There was no markdown file linked to sync!")
     
-    def build_(self, content = None, *, trusted = False, widths=None):
+    def build_(self, content = None, *, widths=None):
         "Same as `build` but no slide number required inside Python file!"
         if self.inside_jupyter_notebook(self.build_):
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
-        return self.build(self._next_number, content=content, trusted=trusted, widths=widths)
+        return self.build(self._next_number, content=content, widths=widths)
 
     class build(ContextDecorator):
         """Build slides with a single unified command in three ways:
         
-        1. hl`slides.build(number, str, trusted)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
+        1. hl`slides.build(number, str)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd_syntax` for extended markdown usage.
-            - Keyword argument `trusted` is used here if there are `python run` blocks in markdown.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
         2. hl`slides.build(number, list/tuple, widths)` to create a slide from list-like contents immediately.
             - We use hl`write(*contents, widths)` to make slide. This is a shortcut way of step 3 if you want to create slides fast with few objects.
@@ -450,13 +411,13 @@ class BaseSlides:
                 kls._slides = get_slides_instance()
             return kls._slides
         
-        def __new__(cls, slide_number, /, content = None, *, trusted = False, widths=None):
+        def __new__(cls, slide_number, /, content = None, *, widths=None):
             self = super().__new__(cls) # instance
             self._snumber = self._app._fix_slide_number(slide_number)
             
             with self._app.code.context(returns = True, depth=3, start = True) as code:
                 if isinstance(content, str) and not code.startswith('with'): 
-                    return self._app._from_markdown(self._snumber, content, trusted = trusted)
+                    return self._app._from_markdown(self._snumber, content)
             
                 if isinstance(content, (list, tuple)) and not code.startswith('with'):
                     with _build_slide(self._app, self._snumber) as s: 
@@ -585,11 +546,11 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
             self.write("clip[caption=clipboard image]`test.png`", self.code.cast("clip[caption=clipboard image]`test.png`","markdown"))
-            self.run_doc(self.alt,'Slides')
+            self.doc(self.alt,'Slides')
             self.doc(self.clip,'Slides').display()
             
             members = sorted((
-                'alert block bokeh2html bullets styled fmt color cols details doc sub sup '
+                'alert block bokeh2html bullets styled fmt color cols details doc '
                 'today error zoomable highlight html iframe image frozen notify plt2html '
                 'raw rows set_dir sig textbox suppress_output suppress_stdout svg vspace'
             ).split())
@@ -610,9 +571,29 @@ class BaseSlides:
         with self.build(-1):
             skipper.set_target() # Set target for skip button
             self.write('## Dynamic Content')
-            self.run_doc(self.interact,'Slides')
-            self.run_doc(self.on_load,'Slides')
-            self.this.get_source().display() # this refers to slide being built
+            
+            with self.capture_content() as cap, self.code.context():
+                import time
+
+                @self.interact({'height':'2em'}, date = False)  # self is Slides here
+                def update_time(date): 
+                    local_time = time.localtime()
+                    objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
+                    if date:
+                        objs.append('Date: {0}/{1}/{2}'.format(*local_time))
+                    self.cols(*objs).display()
+
+            with self.code.context(returns=True) as c:
+                import datetime
+                
+                @self.on_load  # self is Slides here
+                def push_toast(slide):
+                    t = datetime.datetime.now()
+                    time = t.strftime('%H:%M:%S')
+                    self.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
+            
+            self.write(self.doc(self.interact,'Slides'), [*cap.outputs, c])
+            self.doc(self.on_load,'Slides').display()
     
         with self.build(-1):
             self.write('## Content Styling')
@@ -626,17 +607,14 @@ class BaseSlides:
         self.build(-1, '''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
-        You can **highlight**{.error} code using `highlight` function cite`B` or within markdown like this:
+        You can **highlight**{.error} code using `highlight` function cite`B` or within markdown using code blocks enclosed with three backticks:
         ```python
         import ipyslides as isd
         ```
         ```javascript
         import React, { Component } from "react";
         ```
-        ```python run
-        get_slides_instance().this.get_source().display()
-        ```
-        ''', trusted= True)
+        ''')
         
         with self.build(-1):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')

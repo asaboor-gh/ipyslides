@@ -27,24 +27,17 @@ def demo_slides(slides):
         vspace`2`Read instructions by clicking ℹ️ button in quick menu
     """)
     #Demo for loading slides from a file or text block
-    slides.build_("""
+    slides.build_(f"""
     section`Introduction` toc`### Contents`
     ---
     # Introduction
-    Create a variable `x` in notebook to update this `{x}`!
+    Create a variable `x` in notebook to update this `{{x}}`
                   
     To see how commands work, use hl`Slides.docs()` to see the documentation.
-    Here we will focus on using all that functionality to create slides.
-    ```python run source
-    # get the slides instance under a python block in Markdown file, we will use it later to run a cell magic.
-    myslides = get_slides_instance() 
-    import ipyslides as isd
-    version = myslides.version
-    %xmd #### This is inline markdown parsed by magic {.note .warning}
-    ```
-    Version: `{version}` as executed from below code in markdown. 
-    `{source}`
-    """, trusted=True)
+    Here we will focus on using some of that functionality to create slides.
+                  
+    Version: `{slides.version}`
+    """)
 
     slides.build(-1, slides.fmt("""
     section`Adding informative TOC` 
@@ -67,7 +60,7 @@ def demo_slides(slides):
      Extra content for current section which is on right
      ```
     ``` 
-    """,btn=slides.draw_button), trusted=True)
+    """,btn=slides.draw_button))
 
     # Matplotlib
     with slides.build_() as sl:
@@ -247,7 +240,7 @@ def demo_slides(slides):
         $$ ax^2 + bx + c = 0 $$
         {.text-huge}
     ```
-    ''', var = "I was a variable" ), trusted=True)
+    ''', var = "I was a variable" ))
 
     with slides.build(-1) as some_slide:
         slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')

@@ -1,6 +1,6 @@
-_attrs = ['alt', 'alert', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center',
-             'image', 'svg','iframe','frozen', 'run_doc',
-            'raw', 'rows', 'zoomable','html', 'sig','styled', 'doc','today','sub','sup','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
+_attrs = ['alt', 'alert', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','capture_content',
+    'details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
+    'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
 __all__ = sorted(_attrs)
@@ -288,12 +288,10 @@ def alt(exportable_data, obj, /, **kwargs):
         - An html str, it will export the runtime representation of obj.
         - A 'clip:filename.png', will allow to take screenshot on slides for export, this may be most flexible use case.
     
-    ```python run source
+    ```python
     import ipywidgets as ipw
-    slides = get_slides_instance()
     slides.alt(lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">', ipw.IntSlider()).display()
     ```
-    `{source}`
 
     ::: note-tip
         - hl`Slides.alt('clip:test.png', None)` is same as hl`Slides.clip('test.png', export_only=True)`.
@@ -688,12 +686,6 @@ def doc(obj,prepend_str = None, members = None, itself = True):
             _full_doc += doc(attr, prepend_str = _pstr, members = _class_members, itself = True).value
     
     return XTML(_full_doc)
-
-def run_doc(obj,prepend_str = None):
-    "Execute python code block inside docstring of an object. Block should start with '```python run'."
-    sig(obj,prepend_str = prepend_str).display()
-    from .xmd import parse # Import here to avoid circular import
-    parse(inspect.getdoc(obj), returns = False)
 
 def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markdown flow
     "Returns today's date in given format."

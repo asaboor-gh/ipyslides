@@ -421,10 +421,16 @@ class Serializer:
                 content += self._export_other_reprs(d)
         return f'<div class="{css_class}" {_inline_style(output_widget)}>{content}</div>' 
     
-    def _export_other_reprs(self, output):
-        "Everything future can be added at end of this"
-        data, metadata = getattr(output, 'data',{}),  getattr(output, 'metadata',{})
+    def _export_other_reprs(self, d):
+        "Everything future can be added at end of this. d should be dict or RichOutput"
         # Metadata text/html Should take precedence over data if given
+        if isinstance(d, RichOutput):
+            data, metadata = d.data or {}, d.metadata or {}
+        elif isinstance(d, dict):
+            data, metadata = d.get('data',{}), d.get('metadata',{})
+        else:
+            raise TypeError(f"expect dict or RichOutput, got {type(d)}")
+        
         if metadata and isinstance(metadata, dict):
             if "text/html" in metadata: # wants to export text/html even skip there for main obj
                 return metadata['text/html']
@@ -435,7 +441,9 @@ class Serializer:
         
         # Widgets after metadata
         if (widget := widget_from_data(data)):
-            return self.get_html(widget) # handles fmt_html as well
+            if hasattr(widget, 'fmt_html'):
+                return widget.fmt_html() # May be some deep nested columns, alt etc
+            return self.get_html(widget)
         
         # Next data itself NEED TO INCLUDE ALL REPRS LIKE OUTPUT
         if (reps := [rep for rep in supported_reprs if data.get(f'text/{rep}','')]):

@@ -6,7 +6,7 @@ from itertools import zip_longest
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import fmt, parse, xtr, extender as _extender
+from .xmd import fmt, parse, xtr, get_main_ns, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
 from .formatters import HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
@@ -166,14 +166,11 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not proceed for side effects
         
-        if '#XMD_PY_RUN_CELL' in result.info.raw_cell:
-            return # Don't trigger update from a markdown python block execultion
-        
         if list(True for slide in self[:] if slide._source['text'].rstrip('. ') in result.info.raw_cell):
             return # Do not update from a cell which is building slides, generator to speed up
         
         keys = (k for s in self[:] for k in s._has_vars) # All slides vars names
-        user_ns = getattr(sys.modules.get('__main__',None),'__dict__',{}) # works both in top running module and notebook
+        user_ns = get_main_ns() # works both in top running module and notebook
         new_vars = dict((key, user_ns.get(key)) for key in keys if key in user_ns)
         
         if (diff := dict(new_vars.items() ^ self._md_vars.items())):
@@ -393,7 +390,7 @@ class Slides(BaseSlides):
 
         ::: note
             - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
-            - Citations are replaced with new ones, so latest use of this function reprsents avilable citations.
+            - Citations are replaced with new ones, so latest use of this function reprsents available citations.
         """
         if isinstance(data, dict):
             self._set_ctns(data)

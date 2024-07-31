@@ -3,15 +3,11 @@ Extended Markdown
 
 You can use the following syntax:
 
-```python run var_name
-import numpy as np
-```
 # Normal Markdown
 ```multicol
 A
 +++
-This \`{var_name}\` is a code from above and will be substituted with the value of var_name as:
-`{var_name}`
+This \`{var_name}\` can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
 ```
 ::: note-warning
     Nested blocks are not supported.
@@ -29,12 +25,10 @@ from ast import literal_eval
 
 from markdown import Markdown
 from IPython.core.display import display
-from IPython import get_ipython
 from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 
 from .formatters import XTML, highlight, htmlize, get_slides_instance
-from .source import _str2code
 
 _md_extensions = [
     "tables",
@@ -128,6 +122,10 @@ def get_unique_css_class():
     "Get slides unique css class if available."
     slides = get_slides_instance()
     return f".{slides.uid}" if slides else ""
+
+def get_main_ns():
+    "Top level namespace"
+    return getattr(sys.modules.get('__main__',None),'__dict__',{})
 
 @contextmanager
 def capture_content(stdout: bool = True, stderr: bool = True, display: bool = True):
@@ -329,7 +327,6 @@ class XMarkdown(Markdown):
         self._vars = {}
         self._ns = {} # provided by fmt and xtr
         self._returns = True
-        self._shell = get_ipython()
         self._slides = get_slides_instance()
 
     def _extract_class(self, header):
@@ -343,14 +340,11 @@ class XMarkdown(Markdown):
         if self._ns:
             return self._ns
         # Otherwise get top level namespace only
-        return self.main_ns() 
-
-    def main_ns(self): # This is required to set variables
-        return getattr(sys.modules.get('__main__',None),'__dict__',{})
+        return get_main_ns() 
 
     def _parse(self, xmd, returns = True): # not intended to be used directly
         """Return a string after fixing markdown and code/multicol blocks returns = True
-        otherwise displays objects and execute python code from '```python run source_var_name' block.
+        otherwise displays objects given as vraibales may not give their proper representation.
         """
         self._returns = returns  # Must change here
         if isinstance(xmd, xtr):
@@ -361,12 +355,6 @@ class XMarkdown(Markdown):
 
         if len(re.findall(r'^```', xmd, flags = re.MULTILINE)) % 2:
             raise ValueError("Some blocks started with ```, but never closed!")
-
-        # xmd can have code blocks which may not be passed from suitable context
-        if (r"\n```python run" in xmd) and self._returns: # Do not match nested blocks, r"" is important
-            raise RuntimeError(
-                "Cannot execute code in current context, use Slides.parse(..., returns = False) for complete parsing!"
-            )
 
         new_strs = textwrap.dedent(xmd).split("\n```")  # \n``` avoids nested blocks and it should be, dedent is important
         outputs = []
@@ -431,8 +419,6 @@ class XMarkdown(Markdown):
         if "multicol" in line:
             out = self._parse_multicol(data, line, _class)
             return [XTML(out)] if isinstance(out, str) else out # Writer under frames
-        elif "python" in line:
-            return self._parse_python(data, line, _class)  # itself list
         else:
             out = XTML() # empty placeholder
             try:
@@ -480,41 +466,6 @@ class XMarkdown(Markdown):
                 for col, w in zip(cols, widths)])
 
         return f'<div class="columns {_class}">{cols}\n</div>'
-
-    def _parse_python(self, data, header, _class):
-        # if inside some writing command, do not run code at all
-        if len(header.split()) > 3:
-            raise ValueError(
-                f"Too many arguments in {header!r}, expects 3 or less as ```python run source_var_name"
-            )
-        dedent_data = textwrap.dedent(data)
-
-        if "run" not in header:  # no run given
-            return [highlight(dedent_data, language="python", css_class=_class),]
-        
-        if "run" in header:
-            if self._returns:
-                raise RuntimeError("Cannot execute code in this context!")
-            
-            source = header.split("run")[1].strip()  # Afte run it be source variable
-            main_ns = self.main_ns() # get once
-            if source:
-                main_ns[source] = _str2code(dedent_data, language="python", css_class=_class)
-
-            # Run Code now
-            with capture_content() as captured:
-                if current_shell := self._slides or self._shell:
-                    try: # Need slides to be  accessible in namespace
-                        main_ns['get_slides_instance'] = get_slides_instance
-                        current_shell.run_cell('#XMD_PY_RUN_CELL\n' + dedent_data) # need this comment
-                    finally:
-                        main_ns.pop('get_slides_instance') # don't keep
-
-                else:
-                    raise RuntimeError("Cannot execute this outside IPython!")
-
-            outputs = captured.outputs
-            return outputs
     
     def convert(self, text):
         """Replaces variables with placeholder after conversion to respect all other extensions.
@@ -643,14 +594,10 @@ class XMarkdown(Markdown):
 
 def parse(xmd, returns = False):
     r"""Parse extended markdown and display immediately.
-    If you need output html, use `returns = True` but that won't execute python code blocks.
+    If you need output html, use `returns = True` but that won't display variables.
 
     **Example**
     ```markdown
-     ```python run var_name
-     #If no var_name, code will be executed without assigning it to any variable
-     import numpy as np
-     ```
      # Normal Markdown
      ```multicol 40 60
      # First column is 40% width
@@ -658,7 +605,7 @@ def parse(xmd, returns = False):
      {.info}
      +++
      # Second column is 60% wide
-     This \`{var_name}\` is code from above and will be substituted with the value of var_name
+     This \`{var_name}\` can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
      ```
 
      ```python
