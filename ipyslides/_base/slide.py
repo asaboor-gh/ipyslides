@@ -155,6 +155,10 @@ class Slide:
         self._reset_frames()
         self._app._update_toc()
     
+    def rebuild(self):
+        "Forec rebuild a makrdown slide to update varaiables."
+        return self._rebuild(True)
+    
     def _rebuild(self, go_there=False):
         if not self._markdown:
             raise RuntimeError("can only rebuild slides created purely from markdown!")

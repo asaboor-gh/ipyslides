@@ -121,6 +121,7 @@ class BaseSlides:
         
         ::: note-tip
             - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown(NOT enclosed in `fmt`).
+                You can also use `Slide[number,].rebuild()` to force update variables if some error happens.
             - Use unique variable names on each slide to avoid accidental overwriting during update.
             - Varibales used as attributes like \`{{var.attr}}\` and indexing like \`{{var[0]}}\`/\`{{var["key"]}}\` will be update only if `var` itself is changed.
 

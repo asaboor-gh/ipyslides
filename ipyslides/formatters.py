@@ -593,7 +593,8 @@ def format_object(obj):
 def htmlize(obj):
     "Returns string of HTML representation for given object."
     if isinstance(obj, RichOutput):
-        raise TypeError("Received a non-serializable object. Use display or write directly!")
+        from .xmd import error
+        return error("TypeError","Received a non-serializable object. Use display or write directly or use `{obj:nb}` syntax in markdown!").value
     
     if isinstance(obj,str):
         from .xmd import parse # Avoid circular import
