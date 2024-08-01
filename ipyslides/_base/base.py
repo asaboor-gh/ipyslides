@@ -605,7 +605,7 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
-        self.build(-1, '''
+        self.build(-1, self.fmt('''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `highlight` function cite`B` or within markdown using code blocks enclosed with three backticks:
@@ -615,7 +615,8 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
-        ''')
+        `{self.this.source}`
+        ''', self=self))
         
         with self.build(-1):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')

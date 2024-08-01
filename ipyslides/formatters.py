@@ -3,7 +3,9 @@
 """
 import sys
 import textwrap
-import inspect, re, json, base64
+import inspect, re, base64
+
+from pprint import PrettyPrinter
 from io import BytesIO
 from contextlib import contextmanager
 from PIL import Image as PImage
@@ -544,6 +546,8 @@ libraries = [
     {'name':'IPython.display','obj':'Image','func':_ipy_imagestr,'args':(),'kwargs':{'width':'100%'}}  
 ]
 
+pprinter = PrettyPrinter(indent=2,depth=5,compact=True)
+
 def format_object(obj):
     "Returns string of HTML for given object."
     if (func := serializer.get_func(obj)):
@@ -553,13 +557,11 @@ def format_object(obj):
     if hasattr(obj,'get_figure'): 
         return True,_plt2htmlstr(obj.get_figure())
     
-    # Some builtin types
-    if isinstance(obj,dict):
-        return  True, f"<div class='raw-text'>{json.dumps(obj,indent=4)}</div>"  
-    elif isinstance(obj,(int,float, bool)):
-        return True, str(obj)  
-    elif isinstance(obj,(set,list,tuple)): # Then prefer other builtins
-        return True, f"<div class='raw-text'>{obj}</div>"
+    # just prettry format builtin types, this is for speed to track in start
+    if obj.__class__.__module__ == 'builtins':
+        if isinstance(obj, (int, float, bool)):
+            return True, str(obj) # should have same fonts as text
+        return True, f"<code style='color:var(--fg1-color) !important;'>{pprinter.pformat(obj)}</code>"
     
     # If Code object given
     for _type in ['class','function','module','method','builtin','generator']:
@@ -614,5 +616,5 @@ def htmlize(obj):
             if _out_: # If there is object in _repr_<>_, don't return None
                 return _out_
         
-        # Return __repr__ if nothing above
-        return f"<div class='raw-text'>{obj.__repr__()}</div>"
+        # Return __repr__
+        return f"<code style='color:var(--fg1-color) !important;'>{obj.__repr__()}</code>"

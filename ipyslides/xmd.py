@@ -532,7 +532,12 @@ class XMarkdown(Markdown):
         user_ns = self.user_ns() # get once, will be called multiple time
         # Replace variables first to have small data
         def handle_match(match):
-            key, *fmt_spec = match.group()[2:-2].strip().split('!')[0].split(':')
+            cmatch = match.group()[2:-2].strip().split('!')[0] # conversion split
+            key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
+            if ('[' in key) and (not ']' in key): # There was no spec, just a slicing splitted, but don't need to throw error here based on that
+                key = ''.join([key,':',*fmt_spec])
+                fmt_spec = ()
+
             value, _ = hfmtr.get_field(key, (), user_ns)
             if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
                 return self._handle_var(value) 

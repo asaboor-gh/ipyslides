@@ -110,6 +110,8 @@ class Slide:
         with suppress(Exception): # register only in slides building, not other cells
             self._app._register_postrun_cell()
         
+        self._app._update_vars_postrun(False) # avoid while building slides to trigger other updates
+        
         with self._app._set_running(self):
             with capture_content() as captured:
                 yield captured
@@ -166,6 +168,7 @@ class Slide:
         with self._app.navigate_back(self.index if go_there else None):
             self._app._slide(f'{self.number} -m', self._markdown)
             self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
+            self._app._update_vars_postrun(True) # Keep updating after this
 
     def _reset_toc(self):
         items = []
@@ -413,8 +416,13 @@ class Slide:
         return self._indexf if self._fidxs else 0
     
     @property
-    def _markdown(self): # No need to reset after v4.3.1 by user
+    def _markdown(self): 
         return self._source['text'] if self._source['language'] == 'markdown' else '' # Not All Slides have markdown
+    
+    @property
+    def source(self):
+        "Use get_source if you want to have a different name in top of block."
+        return self.get_source(None)
     
     @property
     def animation(self):

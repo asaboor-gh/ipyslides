@@ -95,10 +95,6 @@ class Slides(BaseSlides):
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(self._slide, magic_kind="cell", magic_name="slide")
             self.shell.register_magic_function(self.__xmd, magic_kind="line_cell", magic_name="xmd")
-        
-        with suppress(Exception): # Remove previous on each if exits
-            self.shell.events.unregister("post_run_cell", self._md_post_run_cell)
-        self.shell.events.register("post_run_cell", self._md_post_run_cell)
 
         self._cite_mode = 'footnote'
 
@@ -125,6 +121,7 @@ class Slides(BaseSlides):
         # All Box of Slides
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
+        self._update_vars_postrun(True)
 
     def __setattr__(self, name: str, value): # Don't raise error
         if not name.startswith('_') and hasattr(self, name):
@@ -162,26 +159,31 @@ class Slides(BaseSlides):
             self._register_postrun_cell() # should be back
         return output
     
+    def _update_vars_postrun(self, b = False):
+        with suppress(Exception): # Remove previous on each if exits
+            self.shell.events.unregister("post_run_cell", self._md_post_run_cell)
+        if b:
+            self.shell.events.register("post_run_cell", self._md_post_run_cell)
+    
     def _md_post_run_cell(self, result):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not proceed for side effects
         
-        if list(True for slide in self[:] if slide._source['text'].rstrip('. ') in result.info.raw_cell):
-            return # Do not update from a cell which is building slides, generator to speed up
-        
         keys = (k for s in self[:] for k in s._has_vars) # All slides vars names
         user_ns = get_main_ns() # works both in top running module and notebook
         new_vars = dict((key, user_ns.get(key)) for key in keys if key in user_ns)
+        diff = {key:value for key, value in new_vars.items() if not (key in self._md_vars)} # diff operator ^ can only work for hashable types
+        diff.update({key:value for key, value in new_vars.items() if value != self._md_vars.get(key,None)}) 
         
-        if (diff := dict(new_vars.items() ^ self._md_vars.items())):
-            self._md_vars.update({key: new_vars[key] for key in diff.keys() if key in new_vars}) # sync from latest
-        
+        if diff:
+            self._md_vars.update(new_vars) # sync from latest
             with self.navigate_back():
                 for slide in self[:]: 
                     if diff.keys() & slide._has_vars: # Intersection of keys
                         slide._rebuild(True)
     
     def _post_run_cell(self, result):
+        self._update_vars_postrun(True) # This allows avoiding update from building slides
         with suppress(Exception):
             self.shell.events.unregister("post_run_cell", self._post_run_cell) # it will be initialized from next building slides
         if result.error_before_exec or result.error_in_exec:
@@ -426,6 +428,11 @@ class Slides(BaseSlides):
     def cited_slides(self):
         "Return slides which have citations."
         return tuple([s for s in self[:] if s._citations])
+    
+    @property
+    def markdown_slides(self):
+        "Return all slides built from markdown."
+        return tuple([s for s in self[:] if s._markdown])
 
     def section(self, text):
         """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
