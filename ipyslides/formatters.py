@@ -557,10 +557,11 @@ def format_object(obj):
     if hasattr(obj,'get_figure'): 
         return True,_plt2htmlstr(obj.get_figure())
     
-    # just prettry format builtin types, this is for speed to track in start
-    if obj.__class__.__module__ == 'builtins':
-        if isinstance(obj, (int, float, bool)):
-            return True, str(obj) # should have same fonts as text
+    # just prettry format some builtin types, others can be handled at end of htmlize
+    if isinstance(obj, (int, float, complex, bool)):
+        return True, str(obj) # should have same fonts as text
+
+    if isinstance(obj, (set,list,tuple,dict,range)):
         return True, f"<code style='color:var(--fg1-color) !important;'>{pprinter.pformat(obj)}</code>"
     
     # If Code object given
