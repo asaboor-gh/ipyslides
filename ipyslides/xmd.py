@@ -214,8 +214,9 @@ class HtmlFormatter(string.Formatter):
         if isinstance(key, int):
             return error('RuntimeError','Positional arguments are not supported in custom formatting!').value
         elif isinstance(key, str) and key not in kwargs:
-            msg = 'You can create this variable in a notebook cell(other than slide builder) to update!'
-            return error('KeyError', f'{key!r} not found in given namespace. {msg}').value
+            if kwargs.get('fmt:scoped', False):
+                return error('KeyError', f'{key!r} was not given in fmt').value
+            return error('NameError', f'name {key!r} is not defined').value
         return super().get_value(key, args, kwargs)
     
 
@@ -337,8 +338,15 @@ class XMarkdown(Markdown):
     
     def user_ns(self):
         "Top level namespace or set by user inside `Slides.fmt`."
-        if self._ns:
-            return self._ns
+        if self._slides and self._slides.this:
+            return {
+                **self._slides._md_vars, # by Notebook variable update, last
+                **self._slides.this._md_vars, # by Slide.rebuild after fmt
+                **self._ns # by fmt, first prefrence
+            }
+        
+        if self._ns: # only return what fmt given in general cases
+            return {'fmt:scoped': True, **self._ns}
         # Otherwise get top level namespace only
         return get_main_ns() 
 
@@ -642,9 +650,9 @@ def _filtered_ns(text, kwargs, return_keys=False):
         re.sub(r"\\\`", "&#96;", text).replace('}`', ' }`'), # avoid \`{
         flags = re.DOTALL) if not re.search(r"\{|\}", match)]
     if return_keys:
-        return tuple(matches) # This is not for fmt, but free markdown strings
+        return tuple(matches) # This is not for fmt, but for top level slides built by markdown
     # Do not carry full dict, only matching, user can dump locals()/globals() etc
-    return {m: kwargs.get(m, error('KeyError', f'keyword {m!r} was not provided in fmt').value) for m in matches}
+    return {m: kwargs[m] for m in matches if m in kwargs}
 
 
 def fmt(text, **kwargs):

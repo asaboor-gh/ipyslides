@@ -120,8 +120,10 @@ class BaseSlides:
             a matplotlib's figure `fig` as shown in \`{{fig:nb}}\` will only capture text representation inplace and actual figure will be shown at end, while \`{{fig}}\` will be shown exactly in place.
         
         ::: note-tip
-            - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown(NOT enclosed in `fmt`).
-                You can also use `Slide[number,].rebuild()` to force update variables if some error happens.
+            - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown.
+                - You can also use hl`Slide[number,].rebuild(**kwargs)` to force update variables if some error happens. This is useful for setting unique values of a variable on each slide.
+                - Markdown enclosed in hl`fmt(content, **vars)` will not expose initialized(encapsulated) `vars` for update, others can be updated later.
+                - In summary, variables are resolved by scope in the prefrence `fmt > rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
             - Use unique variable names on each slide to avoid accidental overwriting during update.
             - Varibales used as attributes like \`{{var.attr}}\` and indexing like \`{{var[0]}}\`/\`{{var["key"]}}\` will be update only if `var` itself is changed.
 
@@ -605,7 +607,7 @@ class BaseSlides:
                 self.css_styles.display()
                 c.display()
         
-        self.build(-1, self.fmt('''
+        s, *_ = self.build(-1, self.fmt('''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `highlight` function cite`B` or within markdown using code blocks enclosed with three backticks:
@@ -615,8 +617,10 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
-        `{self.this.source}`
+        Needs slide.rebuild: `{source}`, already resolved: `{self.this}`
         ''', self=self))
+
+        s.rebuild(source=s.source.show_lines(range(3,10)))
         
         with self.build(-1):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')

@@ -26,6 +26,7 @@ class Slide:
         self._index = number if number == 0 else None # First slide should have index ready
         self._animation = None
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
+        self._md_vars = {}
         self._set_defaults()
 
         if not self._contents: # show slide number hint there
@@ -63,7 +64,7 @@ class Slide:
   
     def _set_source(self, text, language):
         "Set source code for this slide."
-        self._source = {'text': text.strip(), 'language': language} # avoild new lines here
+        self._source = {'text': text, 'language': language}
     
     def _reset_source(self):
         "Reset old source but leave markdown source for observing chnages"
@@ -157,8 +158,13 @@ class Slide:
         self._reset_frames()
         self._app._update_toc()
     
-    def rebuild(self):
-        "Forec rebuild a makrdown slide to update varaiables."
+    def rebuild(self,**kwargs):
+        """Rebuild a makrdown slide to update varaiables form kwargs and notebook scope! 
+        Variables on slide will be substituted from notebook if not in kwargs.
+        """
+        if (extras := [k for k in kwargs if not k in self._has_vars]):
+            print(f"Variables {extras} not in required variables {self.vars}")
+        self._md_vars = {k:v for k,v in kwargs.items() if k in self._has_vars} # Rest on each run, don't pile up
         return self._rebuild(True)
     
     def _rebuild(self, go_there=False):
@@ -169,6 +175,20 @@ class Slide:
             self._app._slide(f'{self.number} -m', self._markdown)
             self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
             self._app._update_vars_postrun(True) # Keep updating after this
+    
+    @property
+    def _req_vars(self):
+        "Only vars not set by rebuild shoul be taken from top namespace."
+        return tuple([v for v in self._has_vars if not v in self._md_vars])
+    
+    @property
+    def vars(self):
+        "Get variables names info by their enclosing scope on this slide."
+        return {
+            'by:__main__': self._req_vars, 
+            'by:rebuild': tuple(self._md_vars.keys()), 
+            'by:fmt': tuple(getattr(self._markdown, '_ns',{}))
+        }
 
     def _reset_toc(self):
         items = []
@@ -585,5 +605,7 @@ def _build_slide(app, slide_number):
             this._has_widgets = True
             break # No need to check other widgets if one exists
 
-    if this._markdown and type(this._markdown) == str: # xtr carries internal vars, don't test that
+    if this._markdown:
         this._has_vars = _filtered_ns(this._markdown, {}, True)
+        if (ns := getattr(this._markdown, '_ns',{})): # embeded vars by fmt should be excluded
+            this._has_vars = tuple(k for k in this._has_vars if k not in ns)

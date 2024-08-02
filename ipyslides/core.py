@@ -169,7 +169,7 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not proceed for side effects
         
-        keys = (k for s in self[:] for k in s._has_vars) # All slides vars names
+        keys = (k for s in self[:] for k in s._req_vars) # All slides vars names
         user_ns = get_main_ns() # works both in top running module and notebook
         new_vars = dict((key, user_ns.get(key)) for key in keys if key in user_ns)
         diff = {key:value for key, value in new_vars.items() if not (key in self._md_vars)} # diff operator ^ can only work for hashable types
@@ -179,7 +179,7 @@ class Slides(BaseSlides):
             self._md_vars.update(new_vars) # sync from latest
             with self.navigate_back():
                 for slide in self[:]: 
-                    if diff.keys() & slide._has_vars: # Intersection of keys
+                    if diff.keys() & slide._req_vars: # Intersection of keys
                         slide._rebuild(True)
     
     def _post_run_cell(self, result):
