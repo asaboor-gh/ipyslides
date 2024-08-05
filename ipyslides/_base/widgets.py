@@ -69,7 +69,6 @@ class _Toggles:
     """
     Instantiate under `Widgets` class only.
     """
-    window  = ipw.ToggleButton(icon='plus',value = False, tooltip ='Fill Viewport [V]').add_class('FullWindow-Btn').add_class('Menu-Item')
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
     zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enable Zooming Items [Z]').add_class('Zoom-Btn')
     laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [L]').add_class('Laser-Btn') 
@@ -87,7 +86,6 @@ class _Htmls:
     footer  = HTML(layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
     main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent'], 16/9)).value) # Will be update in theme as well
-    window  = HTML(html('style','').value) # Should be separate CSS, need class to handle disconnect options
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
     toast   = HtmlWidget().add_class('Toast') # For notifications
@@ -169,7 +167,7 @@ class Widgets:
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
 
-        _many_btns = [self.buttons.setting, self.toggles.window, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
+        _many_btns = [self.buttons.setting, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
         _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
         
         self.panelbox = VBox([
@@ -218,7 +216,6 @@ class Widgets:
             self.htmls.logo,
             self.iw,
             self.quick_menu,
-            self.htmls.window,
             self.panelbox,
             self.htmls.cursor,
             self.htmls.hilite,

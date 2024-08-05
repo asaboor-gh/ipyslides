@@ -257,7 +257,6 @@ class Settings:
         self._widgets.buttons.info.on_click(self._show_info)
         self._widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self._wslider.observe(self._update_size, names=["value"])
-        self._widgets.toggles.window.observe(self._toggle_viewport, names=["value"])
         self._tgl_fscreen.observe(self._toggle_fullscreen, names=["value"])
         self._tgl_fscreen.observe(self._on_icon_change, names=["icon"])
         self._widgets.toggles.zoom.observe(self._push_zoom, names=["value"])
@@ -431,24 +430,6 @@ class Settings:
             self._widgets.tocbox.layout.border = "none"
             self._widgets.tocbox.layout.padding = "0"
             self._widgets.buttons.toc.icon = "plus"
-
-    def _toggle_viewport(self, change):
-        self._push_zoom(change=None)  # Adjust zoom CSS for expected layout
-        tgl = self._widgets.toggles.window
-        if tgl.value:
-            tgl.icon = "minus"
-            tgl.tooltip = "Restore Viewport [V]"
-            self._widgets.mainbox.add_class("FullWindow")  # to Full Window
-            self._widgets.htmls.window.value = html(
-                "style", _layout_css.viewport_css()
-            ).value
-        else:
-            tgl.icon = "plus"
-            tgl.tooltip = "Fill Viewport [V]"
-            self._widgets.mainbox.remove_class("FullWindow")  # back to inline
-            self._widgets.htmls.window.value = ""
-
-        self._update_theme(change=None)  # For updating size zoom etc
 
     def _toggle_fullscreen(self, change):
         self._widgets.iw.msg_tojs = 'TFS' # goes to js, toggle fullscreen and chnage icon of button

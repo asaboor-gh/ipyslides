@@ -80,7 +80,6 @@ key_maps = {
     "P": "Print PDF of current slide",
     "F": "Toggle fullscreen",
     "Esc": "Exit fullscreen",
-    "V": "Toggle fit to viewport [voila only]",
     "S": "Toggle settings panel",
     "L": "Toggle LASER pointer",
     "E": "Edit Source Cell of Current Slide", 
@@ -97,7 +96,6 @@ key_combs = f"""
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
 | {_key('Esc')}                               |                                                   | {key_maps["Esc"]}      |
-| {_key('V')}                                 | {_icons["win-maximize"]}, {_icons["win-restore"]} | {key_maps["V"]}        |
 | {_key('S')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["S"]}        |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |

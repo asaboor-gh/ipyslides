@@ -27,7 +27,6 @@ const keyMessage = {
     's': 'TPAN', // Setting panel
     'k': 'KSC', // keyboard shortcuts
     'l': 'TLSR', // L toggle laser
-    'v': 'TVP', // V for toggle viewport, only in voila and LinkedOutputView
     'e': 'EDIT', // Edit source cell
 }
 
@@ -255,13 +254,10 @@ function render({ model, el }) {
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};
 
         // If voila, turn on full viewport
-        let loc = window.location.toString()
-        if (loc.includes("voila")) {
-            model.set("msg_topy", "TVP");
-            model.save_changes();
-        } else {
-            model.set("msg_topy", "NOVP");
-            model.save_changes();
+        let base_url = box.ownerDocument.body.getAttribute('data-base-url');
+        if (base_url && base_url.includes("voila")) {
+            box.classList.add("Voila-Child");
+            box.ownerDocument.body.classList.add("Voila-App");
         };
         
         // Handle changes from Python side  

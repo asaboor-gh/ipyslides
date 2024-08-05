@@ -49,11 +49,6 @@ class InteractionWidget(anywidget.AnyWidget):
             self._buttons.setting.click()
         elif msg == 'EDIT':
             self._buttons.source.click()
-        elif msg == 'TVP' and not self._toggles.window.disabled:
-            self._toggles.window.value = not self._toggles.window.value
-        elif msg == 'NOVP': # Other than voila, no viewport button
-            self._toggles.window.disabled = True
-            self._toggles.window.layout.display = 'none'
         elif msg == 'LOADED':
             if self._checks.notes.value: # Notes window already there
                self._checks.notes.value = False # closes unlinked window

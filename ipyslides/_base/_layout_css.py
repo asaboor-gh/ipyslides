@@ -26,11 +26,8 @@ def layout_css(accent_color, aspect):
                 "^:focus": {
                     "outline" : "none !important",
                 },
-                "^.FullWindow, ^.FullScreen": {
+                "^.Voila-Child, ^.FullScreen": {
                     ".Width-Slider, .Source-Btn": {"display": "none !important"},
-                },
-                "^.FullScreen, <:not(#rendered_cells)": { # only under voila
-                    ".FullWindow-Btn": {"display": "none !important"},
                 },
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
@@ -636,14 +633,6 @@ def layout_css(accent_color, aspect):
                     "zoom-out", color=accent_color, size=_icons_size
                 ).css,
             },
-            ".FullWindow-Btn": {
-                ".fa.fa-plus": Icon(
-                    "win-maximize", color=accent_color, size=_icons_size
-                ).css,
-                ".fa.fa-minus": Icon(
-                    "win-restore", color=accent_color, size=_icons_size
-                ).css,
-            },
             ".Menu-Btn": {
                 ".fa.fa-plus": Icon(
                     "dots", color=accent_color, size=_icons_size
@@ -688,7 +677,7 @@ def layout_css(accent_color, aspect):
             },
             "@media print": { # Needs modification
                 ".SlidesWrapper": {
-                    "^, ^.FullWindow": {
+                    "^, ^.Voila-Child": {
                         "height": "auto !important",
                     },
                 },
@@ -708,13 +697,16 @@ def layout_css(accent_color, aspect):
                     "width": "100% !important",
                 },
             },  # @media print
-            "<body[data-base-url]": {  # Voila
-                "position": "fixed !important",
-                "top": "0 !important",
-                "left": "0 !important",
-                "right": "0 !important",
-                "bottom": "0 !important",
+            "<body.Voila-App": {  # Voila
                 "background": "var(--bg3-color)",
+                "box-sizing": "border-box !important",
+                "^, .SlidesWrapper.Voila-Child": {
+                    "position": "fixed !important",
+                    "top": "0 !important",
+                    "left": "0 !important",
+                    "right": "0 !important",
+                    "bottom": "0 !important",
+                },
                 "^, *": {
                     "color": "var(--fg1-color)",
                 },
@@ -735,17 +727,11 @@ def layout_css(accent_color, aspect):
                 "::-webkit-scrollbar-corner": {
                     "display": "none !important",
                 },
-                ".widget-text input": {
-                    "background": "var(--bg1-color)",
-                    "color": "var(--fg1-color)",
+                '#rendered_cells, .SlidesWrapper.Voila-Child': {
+                    "width": "100vw !important",
+                    "height": "100vh !important",
                 },
-                "#rendered_cells": {
-                    "height": "100% !important",
-                    "overflow": "auto !important",
-                    ".raw-text": {
-                        "color": "var(--fg1-color)",
-                    },
-                },
+                '.Slides.Wrapper.Voila-Child': {"z-index": "100 !important",},
             },
             # Other issues
             "<#jp-top-panel, #jp-bottom-panel, #jp-menu-panel": {"color": "inherit"},
@@ -756,7 +742,6 @@ def layout_css(accent_color, aspect):
             "<.cell-output-ipywidget-background": {  # VSCode issue */
                 "background": "var(--theme-background,inherit) !important",
                 "margin": "8px 0px",
-                ".FullWindow-Btn": {"display": "none !important"},
             },
             "<.jp-LinkedOutputView": {
                 "> .jp-OutputArea > .jp-OutputArea-child": { # avoid collapse
@@ -789,35 +774,6 @@ def layout_css(accent_color, aspect):
             },
         },
     )
-
-
-def viewport_css(): 
-    uclass = get_unique_css_class()
-    return f"""
-    html, body {{ /* Voila is handled separately */
-        height: 100vh !important;
-        max-height: 100vh !important;
-        box-sizing: border-box !important;
-    }}
-    #rendered_cells {{overflow: hidden !important;}} /* only when viewport full, otherwise let scroll */
-    #rendered_cells .SlidesWrapper.FullScreen .FullWindow-Btn {{display: none !important;}}
-    .jp-LinkedOutputView {uclass}.SlidesWrapper, /* It can handle sidecar as well, besides intended options */
-    .jp-MainAreaWidget {uclass}.SlidesWrapper, /* Somehow notebook (and other panels) itself is treated as viewport in JupyterLab, override it */
-    body[data-base-url] {uclass}.SlidesWrapper {{ /* for voila */
-        position: fixed !important;
-        left: 0 !important;
-        top:0 !important;
-        width:100vw !important;
-        height:100vh !important;
-        z-index: 100 !important; /* Show on top of everything */
-    }}
-    #menubar-container {{ display: none !important; }} /* For classic Notebook */
-    body[data-kaggle-source-type] .jp-Notebook {{ /* For Kaggle */
-        min-width: 0 !important;
-        padding-right: 100vw !important;
-    }}
-    """
-
 
 def zoom_hover_css():
     return _build_css(

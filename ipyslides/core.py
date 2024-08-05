@@ -488,6 +488,7 @@ class Slides(BaseSlides):
 
         clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
         self._unregister_postrun_cell() # no need to scroll button where showing itself
+        self._update_vars_postrun(True)
         self._force_update()  # Update before displaying app, some contents get lost
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
         self.frozen(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"),{}).display()  # Display slides within another box
