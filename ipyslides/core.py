@@ -51,7 +51,7 @@ class _Citation:
     def value(self):
         if _value := self._slide._app._citations.get(self._key, None):
             return f"""<div class = "citation" id="{self._key}">
-                <a href="#{self._key}-back"> 
+                <a href="#{self._key}-back" class="citelink"> 
                     <span style="color:var(--accent-color);">{self._id}. </span>
                 </a>{_value}</div>"""
         else:

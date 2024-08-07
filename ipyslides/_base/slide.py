@@ -384,6 +384,7 @@ class Slide:
         value = round(unit * ((self.index or 0) - (self.nf - self.indexf - 1)/self.nf), 4)
         self._app.widgets._progbar.children[0].layout.width = f"{value}%"
         self._app.widgets._snum.description = f"{self._app.wprogress.value or ''}" # empty for zero
+        self._app.widgets._snum.tooltip = f"{self._app._current}" # hint for current slide number
 
     def _handle_refs(self):
         if hasattr(self, '_refs'): # from some previous settings and change
