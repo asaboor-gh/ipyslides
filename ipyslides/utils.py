@@ -411,7 +411,7 @@ def _check_pil_image(data):
 
 _fig_style_inline = "margin-block:0.25em;margin-inline:0.25em" # its 40px by defualt, ruins space, not working in CSS outside
 
-def image(data=None,width='95%',caption=None, **kwargs):
+def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     You can provide following to `data` parameter:
         
@@ -436,15 +436,21 @@ def image(data=None,width='95%',caption=None, **kwargs):
     
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
-    return IMG(html('figure', img.value + _fig_caption(caption), css_class='zoom-child', style = _fig_style_inline).value)
+    inner_html = img.value + _fig_caption(caption)
+    if css_props and isinstance(css_props, dict):
+        inner_html += html('style',_build_css((),{f'.fig-{id(img)} img': css_props})).value
+    return IMG(html('figure', inner_html, css_class=f'zoom-child fig-{id(img)}', style = _fig_style_inline).value)
 
-def svg(data=None,width = '95%',caption=None, **kwargs):
-    """Display svg file or svg string/bytes with additional customizations. 
+def svg(data=None,width = '95%',caption=None, css_props={}, **kwargs):
+    """Display svg file or svg string/bytes with additional customizations.
     `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
     """
-    svg = SVG(data=data, **kwargs)._repr_svg_()
+    svg = SVG(data=data, **kwargs)
     style = f'width:{width}px;height:auto;' if isinstance(width,int) else f'width:{width};height:auto;' + _fig_style_inline
-    return html('figure', svg + _fig_caption(caption), css_class='zoom-child', style=style) 
+    inner_html = svg._repr_svg_() + _fig_caption(caption)
+    if css_props and isinstance(css_props, dict):
+        inner_html += html('style',_build_css((),{f'.fig-{id(svg)} svg': css_props})).value
+    return html('figure', inner_html, css_class=f'zoom-child fig-{id(svg)}', style=style) 
 
 
 def iframe(src, width='100%',height='auto',**kwargs):

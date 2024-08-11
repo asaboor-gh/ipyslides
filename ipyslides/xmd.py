@@ -169,7 +169,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
         if i == len(all_matches): # only last one to take effect
             slide_instance.this.yoffset(int(match))
 
-    # cite`key` should be after citations`key`, so that available for writing there if any
+    # cite`key`
     all_matches = re.findall(r"cite\`(.*?)\`", text_chunk, flags=re.DOTALL)
     for match in all_matches:
         xmd_key = xmd_instance._handle_var(slide_instance._cite(match.strip()))
