@@ -413,6 +413,7 @@ _fig_style_inline = "margin-block:0.25em;margin-inline:0.25em" # its 40px by def
 
 def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
+    `css_props` are applied to `figure` element, so you can control top layout and nested img tag.
     You can provide following to `data` parameter:
         
     - An opened PIL image. Useful for image operations and then direct writing to slides. 
@@ -438,18 +439,18 @@ def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
     inner_html = img.value + _fig_caption(caption)
     if css_props and isinstance(css_props, dict):
-        inner_html += html('style',_build_css((),{f'.fig-{id(img)} img': css_props})).value
+        inner_html += _styled_css({f'.fig-{id(img)}': css_props}).value
     return IMG(html('figure', inner_html, css_class=f'zoom-child fig-{id(img)}', style = _fig_style_inline).value)
 
 def svg(data=None,width = '95%',caption=None, css_props={}, **kwargs):
-    """Display svg file or svg string/bytes with additional customizations.
+    """Display svg file or svg string/bytes with additional customizations. `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
     `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
     """
     svg = SVG(data=data, **kwargs)
     style = f'width:{width}px;height:auto;' if isinstance(width,int) else f'width:{width};height:auto;' + _fig_style_inline
     inner_html = svg._repr_svg_() + _fig_caption(caption)
     if css_props and isinstance(css_props, dict):
-        inner_html += html('style',_build_css((),{f'.fig-{id(svg)} svg': css_props})).value
+        inner_html += _styled_css({f'.fig-{id(svg)}': css_props}).value
     return html('figure', inner_html, css_class=f'zoom-child fig-{id(svg)}', style=style) 
 
 

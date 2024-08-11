@@ -665,12 +665,6 @@ class Slides(BaseSlides):
                 s._set_source(cell, "python")  # Update cell source beofore running
                 self.run_cell(cell)  #
 
-    @contextmanager
-    def slide(self, slide_number, /): # don't allow keyword to have -1 robust
-        raise DeprecationWarning("Use Slides.build instead!")
-    
-    def from_markdown(self, *args, **kwargs): raise DeprecationWarning("Use Slides.build instead!")
-
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
         Can use in place of `write` commnad for strings.

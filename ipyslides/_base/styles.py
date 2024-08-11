@@ -373,12 +373,10 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             'figure': {
                 'margin':'8px !important', # override default margin
                 'object-fit':'scale-down !important',
-                '^, > *':{
-                    'display':'flex !important', # To align in center 
-                    'flex-direction':'column !important', # To have caption at bottom 
-                    'align-items':'center !important',
-                    'justify-content':'center !important',
-                },
+                'display':'flex', # To align in center 
+                'flex-direction':'column', # To have caption at bottom 
+                'align-items':'center',
+                'justify-content':'center',
                 "img, svg" : {"margin": "auto",}, # keep in center if space available
             },
             'figcaption': {
