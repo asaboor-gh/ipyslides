@@ -437,10 +437,10 @@ def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
     
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
-    inner_html = img.value + _fig_caption(caption)
+    fig = html('figure', img.value + _fig_caption(caption), css_class=f'zoom-child fig-{id(img)}', style = _fig_style_inline).value
     if css_props and isinstance(css_props, dict):
-        inner_html += _styled_css({f'.fig-{id(img)}': css_props}).value
-    return IMG(html('figure', inner_html, css_class=f'zoom-child fig-{id(img)}', style = _fig_style_inline).value)
+        fig += _styled_css({f'.fig-{id(img)}': css_props}).value
+    return IMG(fig)
 
 def svg(data=None,width = '95%',caption=None, css_props={}, **kwargs):
     """Display svg file or svg string/bytes with additional customizations. `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
@@ -448,10 +448,10 @@ def svg(data=None,width = '95%',caption=None, css_props={}, **kwargs):
     """
     svg = SVG(data=data, **kwargs)
     style = f'width:{width}px;height:auto;' if isinstance(width,int) else f'width:{width};height:auto;' + _fig_style_inline
-    inner_html = svg._repr_svg_() + _fig_caption(caption)
+    fig = html('figure', svg._repr_svg_() + _fig_caption(caption), css_class=f'zoom-child fig-{id(svg)}', style=style).value
     if css_props and isinstance(css_props, dict):
-        inner_html += _styled_css({f'.fig-{id(svg)}': css_props}).value
-    return html('figure', inner_html, css_class=f'zoom-child fig-{id(svg)}', style=style) 
+        fig += _styled_css({f'.fig-{id(svg)}': css_props}).value
+    return html(fig) 
 
 
 def iframe(src, width='100%',height='auto',**kwargs):

@@ -1,6 +1,6 @@
 # Template for building HTML from slides 
 
-def doc_html(code_css, style_css, content, script, click_btns, height, extra_class=""):
+def doc_html(code_css, style_css, content, script, click_btns, height, css_class):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,7 +45,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, extra_cla
 <div>
     <div class="click-wrapper"> {click_btns} </div>
     <!-- Classes below work for both scenerios -->
-    <div class="SlidesWrapper {extra_class}">
+    <div class="{css_class}">
     {content}
     </div>
 </div>
@@ -216,7 +216,7 @@ a.goto-button:active {
         overflow: hidden !important;
         page-break-inside: avoid !important;
     }
-    .ShowFooter .SlideArea {
+    .Slides-ShowFooter .SlideArea {
         --paddingBottom: 26px; /* Default at sacle 1 its at bottom, unlike slides in Notebook, so 3px more*/
     }
 }

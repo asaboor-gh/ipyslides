@@ -247,7 +247,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             }),
 
         },
-        '^.ShowFooter .SlideArea' : {
+        '^.Slides-ShowFooter .SlideArea' : {
             'padding-bottom': 'var(--paddingBottom, 23px) !important', # 20px navbar + 3px progressbar
         },
         '.SlideArea': {
@@ -371,8 +371,8 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 '^.Error': {'background': 'hsl(from var(--bg2-color) 10 100% l) !important','padding': '4px !important',},
             },
             'figure': {
-                'margin':'8px !important', # override default margin
-                'object-fit':'scale-down !important',
+                'margin':'8px', # override default margin
+                'object-fit':'scale-down',
                 'display':'flex', # To align in center 
                 'flex-direction':'column', # To have caption at bottom 
                 'align-items':'center',
@@ -380,9 +380,9 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 "img, svg" : {"margin": "auto",}, # keep in center if space available
             },
             'figcaption': {
-                'font-size':'0.8em !important',
-                'line-height':'1 !important',
-                'padding':'0.5em 1.5em !important',
+                'font-size':'0.8em',
+                'line-height':'1',
+                'padding':'0.25em',
             },
             '.columns':{
                 'width':'100%',

@@ -49,7 +49,7 @@ class _HhtmlExporter:
         self.main.widgets.buttons.export.on_click(self._export) # Export button
         
     def _htmlize(self):
-        navui_class = '' if 'ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
+        navui_class = '' if 'Slides-ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
         content = ''
         for item in self.main:
             objs = item.contents # get conce
@@ -109,7 +109,7 @@ class _HhtmlExporter:
             script      = _script, 
             click_btns  = self._get_clickables(), 
             height      = f'{int(254/theme_kws["aspect"])}mm', 
-            extra_class = 'ShowFooter' if 'ShowFooter' in self.main._box._dom_classes else '',
+            css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
             )
     
     def _get_sec_id(self, slide):

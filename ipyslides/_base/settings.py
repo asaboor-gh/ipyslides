@@ -346,9 +346,9 @@ class Settings:
         text, numbering, date = self.footer.text, self.footer.numbering, self.footer.date
 
         if any([text, date]):
-            self._slides._box.add_class("ShowFooter")
+            self._slides._box.add_class("Slides-ShowFooter")
         else:
-            self._slides._box.remove_class("ShowFooter")
+            self._slides._box.remove_class("Slides-ShowFooter")
 
         if date:
             text += (
