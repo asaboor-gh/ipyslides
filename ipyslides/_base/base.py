@@ -380,27 +380,28 @@ class BaseSlides:
         else:
             print("There was no markdown file linked to sync!")
     
-    def build_(self, content = None, *, widths=None):
+    def build_(self, content = None):
         "Same as `build` but no slide number required inside Python file!"
         if self.inside_jupyter_notebook(self.build_):
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
-        return self.build(self._next_number, content=content, widths=widths)
+        return self.build(self._next_number, content=content)
 
     class build(ContextDecorator):
         """Build slides with a single unified command in three ways:
         
-        1. hl`slides.build(number, str)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
+        1. hl`slides.build(number, callable)` to create a slide from a `callable(slide)` immediately, e.g. hl`lambda s: slides.write(1,2,3)` or as a decorator.
+            - Docstring of callable (if any) is parsed as markdown before calling function.
+        2. hl`with slides.build(number):` creates single slide. Equivalent to hl`%%slide number` magic.
+            - Use hl`fsep()` from top import or hl`Slides.fsep()` to split content into frames.
+            - Use hl`for item in fsep.loop(iterable):` block to automatically add frame separator.
+            - Use hl`fsep.join` to join content of frames incrementally.
+        3. hl`slides.build(number, str)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd_syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
-        2. hl`slides.build(number, list/tuple, widths)` to create a slide from list-like contents immediately.
-            - We use hl`write(*contents, widths)` to make slide. This is a shortcut way of step 3 if you want to create slides fast with few objects.
-        3. hl`with slides.build(number):` creates single slide. Equivalent to hl`%%slide number` magic.
-            - Use hl`fsep()` from top import or hl`Slides.fsep()` to split content into frames.
-            - Use hl`for item in fsep.loop(iterable):` block to automatically add frame separator.
-            - Use hl`fsep.join` to join content of frames incrementally.
+        
 
         ::: note-tip
             - In all cases, `number` could be used as `-1`.
@@ -414,25 +415,28 @@ class BaseSlides:
                 kls._slides = get_slides_instance()
             return kls._slides
         
-        def __new__(cls, slide_number, /, content = None, *, widths=None):
+        def __new__(cls, slide_number, /, content = None):
             self = super().__new__(cls) # instance
             self._snumber = self._app._fix_slide_number(slide_number)
             
             with self._app.code.context(returns = True, depth=3, start = True) as code:
+                if (content is not None) and any([code.startswith(c) for c in ('@', 'with')]):
+                    raise ValueError("content should be None while using as decorator or contextmanager!")
+                
                 if isinstance(content, str) and not code.startswith('with'): 
                     return self._app._from_markdown(self._snumber, content)
-            
-                if isinstance(content, (list, tuple)) and not code.startswith('with'):
+
+                if callable(content) and not code.startswith('with'):
                     with _build_slide(self._app, self._snumber) as s: 
-                        self._app.write(*content, widths=widths)
-                    
-                    if code.count('(') != code.count(')'):
-                        code = code.strip() + ' ...' 
-                    s._set_source(code,'python') # Just hinted one-liner code
+                        s._set_source(self._app.code.from_callable(content).raw,'python') 
+                        if (doc := getattr(content, '__doc__', None)):
+                            self._app.parse(doc, returns=False)
+                        content(s) # call directly, set code before to make avaiable in function
+                
                     return s
             
             if content is not None:
-                raise ValueError(f"content should be None, str, list or tuple. got {type(content)}")
+                raise ValueError(f"content should be None, str, or callable. got {type(content)}")
 
             return self # context manager
 
@@ -449,6 +453,11 @@ class BaseSlides:
         
         def __repr__(self):
             return f"<ContextDecorator build at {hex(id(self))}>"
+        
+        def __call__(self, func):
+            "Use @build decorator. func accepts slide as arguemnt."
+            type(self)(self._snumber, func)
+            
 
     def demo(self):
         "Demo slides with a variety of content."
@@ -691,7 +700,7 @@ class BaseSlides:
                 - Additionally, in python file, you can use `Slides.build_` instead of using `-1`.
             """)
         
-        self.build(-1, [('## Presentation Code section`Presentation Code`',self.docs)])
+        self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self.docs]))
         self.navigate_to(0) # Go to title
         return self
 

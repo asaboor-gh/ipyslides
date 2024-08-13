@@ -86,7 +86,7 @@ def demo_slides(slides):
         except:
             df = '### Install `pandas` to view output'
 
-    slides.build(-1, [('## Writing Pandas DataFrame', df, source)])
+    slides.build(-1, lambda s: slides.write(['## Writing Pandas DataFrame', df, source]))
     
     with slides.code.context(returns = True) as s:
         try:
@@ -96,7 +96,7 @@ def demo_slides(slides):
         except:
             fig = '### Install `plotly` to view output'
 
-    slides.build(-1,[('## Writing Plotly Figure',fig, s)])
+    slides.build(-1,lambda s:(['## Writing Plotly Figure',fig, s]))
 
     def race_plot():
         import numpy as np
@@ -253,13 +253,13 @@ def demo_slides(slides):
 
         some_slide.get_source().display()
 
-    slides.build(-1, [(
-        '## This is all code to generate slides section`Code to Generate Slides`',
-        slides.code.cast(slides.demo),
-        slides.code.cast(__file__),
-    )])
+    @slides.build(-1)
+    def _(slide):
+        '## This is all code to generate slides section`Code to Generate Slides`'
+        slides.code.cast(slides.demo).display()
+        slides.code.cast(__file__).display()
 
-    slides.build(-1, [slides.get_source()])
+    slides.build(-1, lambda s: slides.get_source().display())
 
     slides.navigate_to(0) # Go to title slide
 

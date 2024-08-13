@@ -151,7 +151,7 @@ class Code:
         for _type in ['class','function','module','method','builtin','generator']:
             if getattr(inspect,f'is{_type}')(callable):
                 source = inspect.getsource(callable)
-                return _str2code(source,language='python',name=None)
+                return _str2code(source,**{**kwargs,'language':'python','name':None}) # avoid chnagings name here
             
         # If things above do not work, raise error
         raise TypeError(f"Object {callable} is not callable!")
