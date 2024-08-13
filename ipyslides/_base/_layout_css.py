@@ -447,6 +447,10 @@ def layout_css(accent_color, aspect):
                     "font-size": "16px !important", # A liitle larger
                     "box-sizing": "border-box !important",
                 },
+                ".toc-item.this": {
+                    "font-weight": "bold !important",
+                    ".custom-html": {"color": "var(--accent-color) !important",},
+                },
             },
             ".TopBar": {
                 "margin-top": "8px !important",  # Avoid overlap with topbar outside

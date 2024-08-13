@@ -510,16 +510,14 @@ class Slides(BaseSlides):
             return idxs[-1] if idxs else 0  # Get last section index
 
     def _switch_slide(self, old_index, new_index):
-        uclass = f".{self.uid} .TOC"
         slide = self._iterable[new_index]
-        self._renew_objs = (
-            slide.animation, # keep animation first, needs in _show_frames
-            slide.css,
-            self.html(
-                "style",
-                f"{uclass} .toc-item.s{self._sectionindex} {{font-weight:bold;}}",
-            ))
-        self._update_tmp_output(*self._renew_objs)
+
+        for toc in self.widgets.tocbox.children[1:]:
+            toc.remove_class('this') # remove from all
+            if getattr(toc, '_index', self.wprogress.max + 1) == self._sectionindex:
+                toc.add_class('this')
+
+        self._update_tmp_output(slide.animation, slide.css)
         
         # Do this here, not in navigation module, as slider can jump to any value
         if not slide._fidxs:
@@ -736,9 +734,7 @@ class Slides(BaseSlides):
                 p_btn = HtmlWidget(text, click_handler=jump_to_slide)
                 p_btn._index = int(slide.index) # int to remove attribute access
 
-                children.append(
-                    p_btn.add_class("toc-item").add_class(f"s{slide._index}")
-                )  # class for CSS
+                children.append(p_btn.add_class("toc-item"))
 
         self.widgets.tocbox.children = children
 

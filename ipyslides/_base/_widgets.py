@@ -100,6 +100,23 @@ class HtmlWidget(anywidget.AnyWidget):
     };
     model.on("change:value", set_html);
     set_html();
+
+    let old_classes = model.get("_dom_classes"); // Anywidget removed previous function, need to store
+    model.on("change:_dom_classes", () => { // Anywidget does not work here
+        const nc = model.get("_dom_classes");
+        for (let c of old_classes) {
+            if (el.classList.contains(c) && nc.indexOf(c) === -1) {
+                el.classList.remove(c);
+            };
+        };
+        old_classes = nc; // for next change
+        for (let k of nc) {
+            if (!el.classList.contains(k)) {
+                el.classList.add(k);
+            };
+        };
+    });
+
     el.appendChild(div);  
     }
     export default { render }

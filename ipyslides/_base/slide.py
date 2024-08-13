@@ -293,9 +293,9 @@ class Slide:
                 self._app.widgets.slidebox.add_class('Prev')
             else:
                 self._app.widgets.slidebox.remove_class('Prev')
-            self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[]))
+            self._app._update_tmp_output(self.animation, self.css)
         elif not self.indexf in (self.nf-1, 0):
-             self._app._update_tmp_output(*getattr(self._app, '_renew_objs',[])[1:]) # avoid animations
+             self._app._update_tmp_output(self.css) # avoid animations between frames
 
         if self.index == self._app.wprogress.max: # This is last slide
             if self.indexf + 1 == self.nf:
@@ -447,9 +447,8 @@ class Slide:
     
     @property
     def animation(self):
-        return self._animation or html('style', 
-            (self._animations['frame'] if self._fidxs else self._animations['main'])
-            )
+        key = 'frame' if self._fidxs else 'main'
+        return html('style', self._animation or self._animations[key])
     
     @property
     def contents(self):
@@ -573,7 +572,7 @@ class Slide:
         "Set animation of this slide. Provide None if need to stop animation. Use main_all and frame to set animation to all slides."
         self.__class__._animations['main'] = '' if main is None else self._instance_animation(main)
         self.__class__._animations['frame'] = '' if frame is None else self._instance_animation(frame)
-        self._animation = XTML('') if this is None else html('style',self._instance_animation(this))
+        self._animation = '' if this is None else self._instance_animation(this)
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
             if self._app._current is self:
