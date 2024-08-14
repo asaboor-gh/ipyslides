@@ -12,7 +12,7 @@ from PIL import Image as PImage
 import pygments
 import ipywidgets as ipw
 
-from IPython.display import display, HTML 
+from IPython.display import display, HTML, Audio, Video, IFrame, Image as IPyImage
 from IPython.core.display import __all__ as _all
 from IPython.utils.capture import RichOutput, capture_output
 from IPython import get_ipython
@@ -104,13 +104,13 @@ class XTML(HTML):
         return HtmlWidget(self.value, click_handler=click_handler)
         
 
-def plt2html(plt_fig = None,transparent=True,width = '95%', caption=None):
+def plt2html(plt_fig = None,transparent=True,width = None, caption=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
     **Parameters**
     
     - plt_fig    : Matplotlib's figure instance, auto picks as well.
     - transparent: True of False for fig background.
-    - width      : CSS style width.
+    - width      : CSS style width. Default is figsize.
     - caption    : Caption for figure.
     """
     # First line is to remove depedency on matplotlib if not used
@@ -122,6 +122,8 @@ def plt2html(plt_fig = None,transparent=True,width = '95%', caption=None):
     _fig.savefig(plot_bytes,format='svg',transparent = transparent)
     _fig.clf() # Clear image to avoid other display
     plt.close() #AVoids throwing text outside figure
+    if width is None:
+        width = f'{_fig.get_size_inches()[0]}in'
     width = f'width:{width}px' if isinstance(width,int) else f'width:{width}'
     svg = f'<svg style="{width};height:auto;"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
     
@@ -131,9 +133,6 @@ def plt2html(plt_fig = None,transparent=True,width = '95%', caption=None):
         cap = _fig_caption(caption)
 
     return XTML(f"<figure class='zoom-child'>{svg + cap}</figure>")
-
-def _plt2htmlstr(plt_fig=None,transparent=True,width="95%", caption=None):
-    return plt2html(plt_fig=plt_fig,transparent=transparent,width=width, caption=caption).value
 
 
 def bokeh2html(bokeh_fig,title=""):
@@ -148,33 +147,38 @@ def bokeh2html(bokeh_fig,title=""):
             {bokeh.embed.file_html(bokeh_fig, bokeh.resources.CDN, title)}
         </div>''')
 
-def _bokeh2htmlstr(bokeh_fig,title=""):
-    return bokeh2html(bokeh_fig,title).value
+def _plt2htmlstr(plt_fig=None):return plt2html(plt_fig).value
+def _bokeh2htmlstr(bokeh_fig,title=""): return bokeh2html(bokeh_fig,title).value
+def _altair2htmlstr(chart): return chart._repr_mimebundle_().get('text/html','')
 
 class IMG(XTML):
     "IMG object with embeded data from any possible source. Use `self.to_pil` and `self.to_numpy` to export to other formats."
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _get_data(self):
-        if (match := re.findall(r'\<img.*\;base64\,\s*(.*?)[\'\"]', self.value)):
-            return match[0]
+    def __init__(self, data, metadata):
+        self._data = (data, metadata)
+        super().__init__(self._make_fig())
+    
+    def _make_fig(self):
+        data, metadata = self._data
+        src, *_ = [f'data:{k};base64, {v}' for k,v in data.items()]
+        width = metadata['width']
+        im = f"<img src='{src}' width='{width}' height='auto'/>"
+        return f"<figure {metadata['attrs']}>{im}{metadata['caption']}</figure>" + metadata.get('style', '') # optional style
 
     def to_pil(self):
         "Return PIL image or None."
-        if (data := self._get_data()):
-            buf = BytesIO(base64.b64decode(data))
+        for value in self._data[0].values():
+            buf = BytesIO(base64.b64decode(value))
             return PImage.open(buf)
     
     def to_numpy(self):
         "Return numpy array data of image or None. Useful for plotting."
         from numpy import asarray # Do not import at top, as it is not a dependency
-        return asarray(self.to_pil())
+        return asarray(self.to_pil() or [])
     
 
 def fix_ipy_image(image,width='100%'): # Do not add zoom class here, it's done in util as well as below
     img = image._repr_mimebundle_() # Picks PNG/JPEG/etc
-    _src,=[f'data:{k};base64, {v}' for k,v in img[0].items()]
+    _src, *_ = [f'data:{k};base64, {v}' for k,v in img[0].items()]
     return XTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
 
 def _ipy_imagestr(image,width='100%'): # Zoom for auto output
@@ -369,7 +373,9 @@ class Serializer:
             return self._alt_output
         elif isinstance(obj_type, (ipw.HTML, ipw.HTMLMath, HtmlWidget)): # Instance here is fine to include subclasses as they will behave same
             return self._alt_html
-        return None
+        elif isinstance(obj_type, (ipw.Audio, ipw.Video, ipw.Image)):
+            return self._alt_media
+        return _exportable_func(obj_type)
     
     def get_metadata(self, obj_type):
         """Get metadata for a type to use in `display(obj, metadata)` for export purpose. This take precedence over object's own html representation. Returns {} if not found.
@@ -406,6 +412,15 @@ class Serializer:
 
         css_class = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
         return f'<div class="{css_class}" {_inline_style(html_widget)}>{html_widget.value}</div>' 
+    
+    def _alt_media(self, media_widget):
+        if isinstance(media_widget, ipw.Image):
+            return fix_ipy_image(IPyImage(media_widget.value)).value
+        elif isinstance(media_widget, ipw.Audio):
+            return Audio(media_widget.value.tobytes(),embed=True)._repr_html_()
+        elif isinstance(media_widget, ipw.Video):
+            return Video(media_widget.value.tobytes(),embed=True, mimetype=f'video/{media_widget.format}')._repr_html_()
+        raise TypeError(f"Expects ipywidgets.(Audio/Video/Image), got {type(media_widget)}")
     
     def _alt_output(self, output_widget):
         "Convert objects in ipywidgets.Output to HTML string."
@@ -538,7 +553,7 @@ del AltDispalyFormatter # Only one
 
 libraries = [
     {'name':'matplotlib.pyplot','obj':'Figure','func':_plt2htmlstr,'args':(),'kwargs': {}},
-    {'name':'altair','obj':'Chart','func': 'to_html','args':(),'kwargs': {}},
+    {'name':'altair','obj':'Chart','func': _altair2htmlstr,'args':(),'kwargs': {}},
     {'name':'pygal','obj':'Graph','func':'render','args':{},'kwargs':{'is_unicode':True}},
     {'name':'pydeck','obj':'Deck','func':'to_html','args':(),'kwargs': {'as_string':True}},
     {'name':'pandas','obj':'DataFrame','func':'to_html','args':(),'kwargs': {}},
@@ -619,3 +634,18 @@ def htmlize(obj):
         
         # Return __repr__
         return f"<code style='color:var(--fg1-color) !important;'>{obj.__repr__()}</code>"
+    
+
+def _exportable_func(obj):
+    "Extra objects with different representations on export!"
+    module = getattr(obj, '__module__','').split('.')[0]
+    name = getattr(obj.__class__, '__name__')
+    match = (module, name)
+    if match == ('altair','JupyterChart'):
+        return lambda obj: _altair2htmlstr(obj.chart)
+    elif match == ('plotly', 'FigureWidget'):
+        return lambda obj: obj._repr_html_()
+    elif match == ('ipympl','Canvas'):
+        return lambda obj: _plt2htmlstr(obj.figure)
+    
+    return None

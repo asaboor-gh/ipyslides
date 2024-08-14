@@ -1,4 +1,4 @@
-_attrs = ['alt', 'alert', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['alt', 'alert', 'as_html', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
     'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
@@ -20,7 +20,7 @@ from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 
-from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, fix_ipy_image, htmlize, highlight, _inline_style
+from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, highlight, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, CustomDisplay, _Output
 
@@ -393,8 +393,8 @@ class clip(CustomDisplay):
             e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
             self._rep.value = f"{error(ename,'something went wrong')}<br/><br/>{error(e,text)}"
     
-    def to_pil(self): return IMG(self._rep.value).to_pil()
-    def to_numpy(self): return IMG(self._rep.value).to_numpy()
+    def to_pil(self): return pilImage.open(get_clips_dir() / self._fname)
+    def to_numpy(self): return IMG.to_numpy(self)
 
         
 def details(str_html,summary='Click to show content'):
@@ -436,11 +436,14 @@ def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
             raise FileNotFoundError(f"File: {data!r} does not exist!")
     
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
-    img = fix_ipy_image(Image(data = _data,**kwargs),width=width) # gievs XTML object
-    fig = html('figure', img.value + _fig_caption(caption), css_class=f'zoom-child fig-{id(img)}', style = _fig_style_inline).value
+    data, metadata = Image(data = _data,**kwargs)._repr_mimebundle_()
+    metadata['width'] = width
+    metadata['caption'] = _fig_caption(caption)
+    metadata['attrs'] = f'class="zoom-child fig-{id(data)}" style="{_fig_style_inline}"'
+
     if css_props and isinstance(css_props, dict):
-        fig += _styled_css({f'.fig-{id(img)}': css_props}).value
-    return IMG(fig)
+        metadata["style"] = _styled_css({f'.fig-{id(data)}': css_props}).value
+    return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
 
 def svg(data=None,width = '95%',caption=None, css_props={}, **kwargs):
     """Display svg file or svg string/bytes with additional customizations. `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
@@ -557,6 +560,10 @@ def html(tag, children = None,css_class = None,**node_attrs):
         
     tag_in =  f'<{tag} {attrs}>' if attrs else f'<{tag}>' # space is must after tag, strip attrs spaces
     return XTML(f'{tag_in}{content}</{tag}>')
+
+def as_html(obj):
+    "Convert supported (almost any) obj to html format."
+    return XTML(htmlize(obj))
 
 def vspace(em = 1):
     "Returns html node with given height in `em`."

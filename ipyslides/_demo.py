@@ -88,7 +88,7 @@ def demo_slides(slides):
 
     slides.build(-1, lambda s: slides.write(['## Writing Pandas DataFrame', df, source]))
     
-    with slides.code.context(returns = True) as s:
+    with slides.code.context(returns = True) as source:
         try:
             import plotly.graph_objects as go
             fig = go.Figure()
@@ -96,7 +96,7 @@ def demo_slides(slides):
         except:
             fig = '### Install `plotly` to view output'
 
-    slides.build(-1,lambda s:(['## Writing Plotly Figure',fig, s]))
+    slides.build(-1,lambda s: slides.write(['## Writing Plotly Figure',fig, source]))
 
     def race_plot():
         import numpy as np
