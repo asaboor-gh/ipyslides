@@ -62,7 +62,6 @@ class _Buttons:
     end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
     info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
     export  =  Button(description="Export to HTML File",layout= Layout(width='auto',height='auto'))
-    syncjlc =  Button(description="Sync Jupyterlab Colors",layout= Layout(width='auto',height='auto'), tooltip='You need this for Notes and exported HTML')
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -131,7 +130,7 @@ class Widgets:
         self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box(layout={"width":"0"}).add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self._snum   = Button(disabled=True, layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
-        self.theme   = ipw.Dropdown(**describe('Theme'),options=[*styles.theme_colors.keys(),'Custom'],value='Inherit').add_class("ThemeSelect")
+        self.theme   = ipw.Dropdown(**describe('Theme'),options=[*[k for k in styles.theme_colors.keys() if k != 'Inherit'],'Custom']).add_class("ThemeSelect")
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -141,7 +140,6 @@ class Widgets:
         self.notes   = NotesWidget(value = 'Notes Preview')
         self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget'), self.toggles.draw]).add_class('Draw-Wrapper')
         self.drawer.layout = dict(width='100%',height='0',overflow='hidden') # height will be chnaged by button
-        self.buttons.syncjlc.on_click(self.sync_jupyter_colors)
         
         # Layouts build on these widgets
         self.controls = HBox([
@@ -177,7 +175,6 @@ class Widgets:
                 self.sliders.fontsize,
                 self.sliders.width,
                 self.theme,
-                self.buttons.syncjlc,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.focus, self.checks.notes,self.checks.toast,
                 self.checks.navgui, self.checks.reflow,
@@ -241,16 +238,6 @@ class Widgets:
             btn.layout.min_width = 'max-content' #very important parameter
 
         self._active_start(self.footerbox)
-    
-    def sync_jupyter_colors(self,btn=None):
-        "Pick correct jupyter theme colors if Inherit theme selected, before exporting to HTML."
-        if self.theme.value == "Inherit":
-            self.iw.msg_tojs = "SetColors"
-            self.buttons.syncjlc.layout.display = ''
-            if btn:
-                self._push_toast(f'Inherit theme colors synced successfully.')
-        else:
-            self.buttons.syncjlc.layout.display = 'none'
             
     def _deactivate(self):
         for w in getattr(self, '_aws',[]):
@@ -271,4 +258,12 @@ class Widgets:
                 raise ValueError(f"timout should be int/float in seconds or None, got {timeout}")
             
             self.iw.send(to_send) # Send notification
+    
+    def _try_exec_with_fallback(self, func):
+        if self.theme.value == "Inherit":
+            self.iw._colors = {} # Reset for getting latest colors
+            self.iw.msg_tojs = "SetColors"
+            self.iw._run_func = func # called when javascript sets colros
+        else:
+            func() # Direct call
         

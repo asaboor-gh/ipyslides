@@ -12,7 +12,7 @@ from PIL import Image as PImage
 import pygments
 import ipywidgets as ipw
 
-from IPython.display import display, HTML, Audio, Video, IFrame, Image as IPyImage
+from IPython.display import display, HTML, Audio, Video, Image as IPyImage
 from IPython.core.display import __all__ as _all
 from IPython.utils.capture import RichOutput, capture_output
 from IPython import get_ipython
@@ -132,7 +132,7 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None):
         from .xmd import _fig_caption # avoid circular import and only on demenad
         cap = _fig_caption(caption)
 
-    return XTML(f"<figure class='zoom-child'>{svg + cap}</figure>")
+    return XTML(f"<figure class='zoom-child mpl'>{svg + cap}</figure>")
 
 
 def bokeh2html(bokeh_fig,title=""):
@@ -147,9 +147,7 @@ def bokeh2html(bokeh_fig,title=""):
             {bokeh.embed.file_html(bokeh_fig, bokeh.resources.CDN, title)}
         </div>''')
 
-def _plt2htmlstr(plt_fig=None):return plt2html(plt_fig).value
-def _bokeh2htmlstr(bokeh_fig,title=""): return bokeh2html(bokeh_fig,title).value
-def _altair2htmlstr(chart): return chart._repr_mimebundle_().get('text/html','')
+def _altair2htmlstr(chart): return _zoom_self(chart._repr_mimebundle_().get('text/html',''))
 
 class IMG(XTML):
     "IMG object with embeded data from any possible source. Use `self.to_pil` and `self.to_numpy` to export to other formats."
@@ -181,8 +179,9 @@ def fix_ipy_image(image,width='100%'): # Do not add zoom class here, it's done i
     _src, *_ = [f'data:{k};base64, {v}' for k,v in img[0].items()]
     return XTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
 
-def _ipy_imagestr(image,width='100%'): # Zoom for auto output
-    return f'<div class="zoom-child">{fix_ipy_image(image,width=width).value}</div>'
+def _zoom_self(html_str, self=True): # Zoom for auto output, self or child
+    klass = 'self' if self else 'child'
+    return f'<div class="zoom-{klass}">{html_str}</div>'
 
 
 def code_css(style='default',color = None, background = None, hover_color = 'var(--bg3-color)', css_class = None, lineno = True):
@@ -548,18 +547,6 @@ class AltDispalyFormatter:
 altformatter = AltDispalyFormatter() # keep reference for being live
 del AltDispalyFormatter # Only one
 
-    
-# ONLY ADD LIBRARIEs who's required objects either do not have a _repr_html_ method or need ovverride
-
-libraries = [
-    {'name':'matplotlib.pyplot','obj':'Figure','func':_plt2htmlstr,'args':(),'kwargs': {}},
-    {'name':'altair','obj':'Chart','func': _altair2htmlstr,'args':(),'kwargs': {}},
-    {'name':'pygal','obj':'Graph','func':'render','args':{},'kwargs':{'is_unicode':True}},
-    {'name':'pydeck','obj':'Deck','func':'to_html','args':(),'kwargs': {'as_string':True}},
-    {'name':'pandas','obj':'DataFrame','func':'to_html','args':(),'kwargs': {}},
-    {'name':'bokeh.plotting','obj':'Figure','func':_bokeh2htmlstr,'args':(),'kwargs':{'title':''}},
-    {'name':'IPython.display','obj':'Image','func':_ipy_imagestr,'args':(),'kwargs':{'width':'100%'}}  
-]
 
 pprinter = PrettyPrinter(indent=2,depth=5,compact=True)
 
@@ -567,10 +554,6 @@ def format_object(obj):
     "Returns string of HTML for given object."
     if (func := serializer.get_func(obj)):
         return True, func(obj)
-    
-    # If matplotlib axes given, handle it separately
-    if hasattr(obj,'get_figure'): 
-        return True,_plt2htmlstr(obj.get_figure())
     
     # just prettry format some builtin types, others can be handled at end of htmlize
     if isinstance(obj, (int, float, complex, bool)):
@@ -591,19 +574,6 @@ def format_object(obj):
             
             return (True, source)
     
-    # Other Libraries   
-    module_name = obj.__module__ if hasattr(obj,'__module__') else '' #str, int etc don't have __module__
-    if (libs := [lib for lib in libraries if module_name.startswith(lib['name'])]):
-        name, obj, func, args, kwargs = [libs[0][v] for v in 'name obj func args kwargs'.split()]
-        _module = sys.modules.get(name, None)
-        _type = getattr(_module,obj,None)
-
-        if isinstance(obj, _type):
-            if not isinstance(func,str): # Handle Matplotlib, bokeh, df etc here by making handling functions, they are zoom enabled
-                return True, func(obj, *args, **kwargs)
-            elif (func := getattr(obj, func,None)): # from str
-                return True, f'<div class="zoom-self">{func(*args, **kwargs)}</div>' # enbable zoom-self here, not child
-
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")       
 
@@ -637,15 +607,35 @@ def htmlize(obj):
     
 
 def _exportable_func(obj):
-    "Extra objects with different representations on export!"
-    module = getattr(obj, '__module__','').split('.')[0]
-    name = getattr(obj.__class__, '__name__')
-    match = (module, name)
-    if match == ('altair','JupyterChart'):
-        return lambda obj: _altair2htmlstr(obj.chart)
-    elif match == ('plotly', 'FigureWidget'):
-        return lambda obj: obj._repr_html_()
-    elif match == ('ipympl','Canvas'):
-        return lambda obj: _plt2htmlstr(obj.figure)
+    module = getattr(obj, '__module__','')
+    mro_str = str(obj.__class__.__mro__)  
+    # Instead of instance check, we can get mro, same effect without importing modules
+
+    if module.startswith('matplotlib') and hasattr(obj,'get_figure'): # any axes
+        return lambda obj: plt2html(obj.get_figure()).value
     
-    return None
+    if re.search('matplotlib.*Figure', mro_str):return lambda obj: plt2html(obj).value
+    
+    if re.search('altair.*JupyterChart', mro_str): return lambda obj: _altair2htmlstr(obj.chart)
+    
+    if re.search('altair.*Chart', mro_str): return lambda obj: _altair2htmlstr(obj)
+    
+    if re.search('plotly.*FigureWidget', mro_str): return lambda obj: _zoom_self(obj._repr_html_())
+    
+    if re.search('ipympl.*Canvas',mro_str): return lambda obj: plt2html(obj.figure).value
+    
+    if re.search('pygal.*Graph', mro_str): return lambda obj: _zoom_self(obj.render(is_unicode=True))
+    
+    if re.search('pydeck.*Deck', mro_str): return lambda obj: _zoom_self(obj.to_html(as_string=True))
+    
+    if re.search('pandas.*DataFrame', mro_str): return lambda obj: _zoom_self(obj.to_html())# full instead of repr
+    
+    if re.search('pandas.*Series', mro_str):
+        return lambda obj: f"<code style='color:var(--fg1-color) !important;'>{pprinter.pformat(list(obj))}</code>"# full instead of repr
+    
+    if re.search('polars.*DataFrame', mro_str):
+        return lambda obj: _zoom_self(obj.to_pandas().to_html())# full instead of repr
+    
+    if re.search('bokeh.*Figure', mro_str): return lambda obj: bokeh2html(obj,title='').value
+    
+    if re.search('IPython.*Image', mro_str): return lambda obj: _zoom_self(fix_ipy_image(obj,width='100%'),False) 

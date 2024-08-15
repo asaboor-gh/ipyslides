@@ -164,7 +164,10 @@ def layout_css(accent_color, aspect):
                         "box-sizing": "border-box !important",
                     },  # Otherwise it shrinks small columns
                     _zoom_ables: {
-                        "cursor": "zoom-in",
+                        "^:hover": {
+                           "box-shadow": "0px 0px 1px 0.5px #8988 !important",
+                           "border-radius": "8px !important",
+                        },
                     },
                     ".Sfresh-Box": {
                         "column-gap": "0.2em",
@@ -786,7 +789,6 @@ def zoom_hover_css():
             # Matplotlib by plt.show, self zoom, child zoom, plotly
             _zoom_ables: {
                 "^:hover, ^:focus": {
-                    "cursor": "auto",  # Ovverride zoom-in cursor form main layout
                     "position": "fixed",
                     **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
                     "left": "50px",
@@ -795,8 +797,8 @@ def zoom_hover_css():
                     "width": "calc(100% - 100px)",
                     "height": "calc(100% - 100px)",
                     "object-fit": "scale-down !important",
-                    "box-shadow": "-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5)",
-                    "border-radius": "4px",
+                    "box-shadow": "-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5) !important",
+                    "border-radius": "8px",
                     "overflow": "scroll !important",  # Specially for dataframes
                     ".vega-embed canvas, > .svg-container": {  # Vega embed canvas and plotly svg-container inside hoverabe
                         "position": "fixed !important",  # Will be extra CSS but who cares
@@ -807,6 +809,11 @@ def zoom_hover_css():
                         "box-sizing": "border-box !important",
                     },
                 },
+            },
+            '.zoom-child.mpl > svg:hover,.zoom-child.mpl > svg:focus': { # matplot size inches need special treatment
+                "width": "calc(100% - 100px) !important",
+                "height": "calc(100% - 100px) !important",
+                "object-fit": "scale-down !important",
             },
             # Nested zoom classes should occupy full space because parent is zoomed too
             ".zoom-self, .zoom-child": {

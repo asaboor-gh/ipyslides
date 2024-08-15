@@ -22,6 +22,7 @@ class InteractionWidget(anywidget.AnyWidget):
         self._toast_html = _widgets.htmls.toast
         self._prog = _widgets.sliders.progress
         self._deactivate = _widgets._deactivate
+        self._theme = _widgets.theme
 
     @traitlets.observe("msg_topy")
     def _see_changes(self, change):
@@ -49,6 +50,9 @@ class InteractionWidget(anywidget.AnyWidget):
             self._buttons.setting.click()
         elif msg == 'EDIT':
             self._buttons.source.click()
+        elif msg == 'JUPYTER' and not ('Inherit' in self._theme.options):
+            self._theme.options = ['Inherit', *self._theme.options] 
+            self._theme.value = 'Inherit' # enable it
         elif msg == 'LOADED':
             if self._checks.notes.value: # Notes window already there
                self._checks.notes.value = False # closes unlinked window
@@ -77,7 +81,12 @@ class InteractionWidget(anywidget.AnyWidget):
     @traitlets.observe("msg_tojs")
     def _reset(self, change):
         self.msg_tojs = "" # Reset for successive simliar changes
-
+    
+    @traitlets.observe("_colors")
+    def _save_file(self, change):
+        if change.new and hasattr(self, '_run_func'):
+            self._run_func()
+            delattr(self, '_run_func')
 
 class HtmlWidget(anywidget.AnyWidget):
     """This introduces a trait 'click_state' which would be toggled between 0 and 1 on each click.

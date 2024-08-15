@@ -221,8 +221,10 @@ function setColors(model, box) {
     for (let prop of ['accent', 'pointer', 'bg1', 'bg2', 'bg3', 'fg1', 'fg2', 'fg3']) {
         colors[prop] = style.getPropertyValue('--' + prop + '-color');
     }
-    model.set("_colors", colors);
-    model.save_changes();
+    if (colors['accent']) { // Avoid sending empty data due to other closed displays
+        model.set("_colors", colors);
+        model.save_changes();
+    };
 }
 
 function render({ model, el }) {
@@ -258,6 +260,12 @@ function render({ model, el }) {
         if (base_url && base_url.includes("voila")) {
             box.classList.add("Voila-Child");
             box.ownerDocument.body.classList.add("Voila-App");
+        };
+
+        // Only for jupyter, voila, notebook
+        if (window.hasOwnProperty('_JUPYTERLAB')) {
+            model.set("msg_topy","JUPYTER");
+            model.save_changes();
         };
         
         // Handle changes from Python side  

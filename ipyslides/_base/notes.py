@@ -49,10 +49,12 @@ class Notes:
         notes = self.main.cols(this_notes,next_notes)
         self.widgets.notes.value = set_value(notes) 
     
+    def _popup_display(self):
+        self.widgets.notes.popup = True
+        self.display()
+    
     def __open_close_notes(self,change):
         if change['new'] == True:
-            self.widgets.sync_jupyter_colors()
-            self.widgets.notes.popup = True
-            self.display()
+            self.main.widgets._try_exec_with_fallback(self._popup_display)
         else:
             self.widgets.notes.popup = False

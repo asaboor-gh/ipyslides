@@ -158,7 +158,7 @@ def write(*objs,widths = None, css_class=None):
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
     - Display another function in order by passing it to a lambda function like hl`lambda: func()`. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
-    - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh`, `ipyvolume` ect. by passing them directly.
+    - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh` etc. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
     - Use `Slides.alt` function to display obj/widget on slides and alternative content/screenshot in exported slides.
     - Use ` Slides.clip ` to add screenshots from clipboard.

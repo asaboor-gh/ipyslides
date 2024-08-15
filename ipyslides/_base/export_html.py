@@ -162,12 +162,12 @@ class _HhtmlExporter:
 
         return "".join(f'<a href="#{key}" class="{klass}">{label}</a>' for (klass, label,key) in zip(klasses, names,items))
                 
-    def _writefile(self, path, content, overwrite = False):
+    def _writefile(self, path, overwrite = False):
         if os.path.isfile(path) and not overwrite:
             return print(f'File {path!r} already exists. Use overwrite=True to overwrite.')
         
         with open(path,'w', encoding="utf-8") as f: # encode to utf-8 to handle emojis
-            f.write(content) 
+            f.write(self._htmlize()) 
             
     
     def export_html(self, path = 'Slides.html', overwrite = False):
@@ -182,15 +182,14 @@ class _HhtmlExporter:
             - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF.
         """
-        self.main.widgets.sync_jupyter_colors() # Would be fixed on rerun if not already
         _path = os.path.splitext(path)[0] + '.html' if path != 'Slides.html' else path
-        self._writefile(_path, self._htmlize(), overwrite)
+        export_func = lambda: self._writefile(_path, overwrite)
+        self.main.widgets._try_exec_with_fallback(export_func)
         
     def _export(self,btn):
         "Export to HTML slides on button click."
         path = 'Slides.html'
         if os.path.isfile(path) and not self.main.widgets.checks.confirm.value:
-            self.main.widgets.sync_jupyter_colors() # Meanwhile can ensure Inherit colors
             return self.main.notify(f'File {path!r} already exists. Select overwrite checkbox if you want to replace it.')
         
         self.export_html(path, overwrite = self.main.widgets.checks.confirm.value)
