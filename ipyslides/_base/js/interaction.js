@@ -235,6 +235,12 @@ function render({ model, el }) {
         let box = style.parentNode.parentNode;
         box.tabIndex = -1; // Need for event listeners, should be at top
         box.setAttribute("uid", model.get("_uid"));
+
+        // Only for jupyter, voila, notebook, do as early as possible
+        if (window.hasOwnProperty('_JUPYTERLAB')) {
+            model.set("msg_topy","JUPYTER");
+            model.save_changes();
+        };
         
         // Laser pointer
         let cursor = box.getElementsByClassName('LaserPointer')[0];
@@ -260,12 +266,6 @@ function render({ model, el }) {
         if (base_url && base_url.includes("voila")) {
             box.classList.add("Voila-Child");
             box.ownerDocument.body.classList.add("Voila-App");
-        };
-
-        // Only for jupyter, voila, notebook
-        if (window.hasOwnProperty('_JUPYTERLAB')) {
-            model.set("msg_topy","JUPYTER");
-            model.save_changes();
         };
         
         // Handle changes from Python side  
@@ -293,11 +293,6 @@ function render({ model, el }) {
             c.style.width = '100%';
             c.style.height = '100%';
         }
-        // Remove menu active class for initial user intros, but with python
-        setTimeout(() => {
-            model.set("msg_topy", "RACTIVE"); 
-            model.save_changes();
-        }, 10000); // Remove after 10 seconds
     }  
     el.appendChild(style);
     model.set("msg_topy", "LOADED"); // to run onload functionality

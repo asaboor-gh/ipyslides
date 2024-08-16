@@ -21,7 +21,7 @@ class Notes:
     def display(self):
         def set_value(content):
             colors, _colors = self.main.settings._colors, {}
-            if self.widgets.theme.value == 'Inherit': # Try to match inherit theme
+            if self.widgets.theme.value == 'Jupyter': # Try to match inherit theme
                 _colors = self.widgets.iw._colors
             bg  = _colors.get('bg1',colors.get('bg1','white'))
             fg  = _colors.get('fg1',colors.get('fg1','black'))
@@ -55,6 +55,6 @@ class Notes:
     
     def __open_close_notes(self,change):
         if change['new'] == True:
-            self.main.widgets._try_exec_with_fallback(self._popup_display)
+            self.main.widgets.iw._try_exec_with_fallback(self._popup_display)
         else:
             self.widgets.notes.popup = False

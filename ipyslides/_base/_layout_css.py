@@ -121,12 +121,20 @@ def layout_css(accent_color, aspect):
                 ".LogoHtml": {"position": "absolute !important","margin-left":"auto !important",}, # other properties are set internally
                 ".Loading": {
                     "position": "absolute",
-                    "left": "50%",
-                    "top": "50%",
-                    "transform": "translate(-50%,-50%)",
+                    "left": "0 !important",
+                    "top": "0 !imporatnt",
+                    "width": "100% !important",
+                    "height": "100% !important",
                     "z-index": "11",  # Above all
-                    "text-shadow": "0 0 4px white, 0 0 8px var(--bg2-color)",
-                    "border-radius": "50%",
+                    "text-shadow": "0 0 2px white, 0 0 4px var(--bg2-color, black)",
+                    "background": "var(--jp-layout-color0,white)", # colors are not yet there in start
+                    ".widget-html-content": {
+                        "width": "100% !important",
+                        "height": "100% !important",
+                        "display": "flex !important",
+                        "align-items": "center !important",
+                        "justify-content": "center !important",
+                    },
                 },
                 "div.LaserPointer": {  # For laser pointer
                     "position": "absolute !important",
@@ -369,7 +377,7 @@ def layout_css(accent_color, aspect):
                         "transition": "width 400ms ease-in-out", # transition on exit
                         "overflow": "hidden !important", # needs to not jump on chnage of width
                     },
-                    "^:hover, ^:focus, ^:active, ^.mod-active, ^.Active-Start" : {
+                    "^:hover, ^:focus, ^:active, ^.mod-active" : {
                         ".Menu-Box" : {
                             "width": "148px !important", # 4*32 + margin + paddings
                             "transition": "width 400ms ease-in-out", # transition on enter hover

@@ -83,8 +83,8 @@ class _Htmls:
     Instantiate under `Widgets` class only.
     """
     footer  = HTML(layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
-    theme   = HTML(html('style',styles.style_css(styles.theme_colors['Inherit'])).value)
-    main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Inherit']['accent'], 16/9)).value) # Will be update in theme as well
+    theme   = HTML(html('style',styles.style_css(styles.theme_colors['Jupyter'])).value)
+    main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Jupyter']['accent'], 16/9)).value) # Will be update in theme as well
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
     toast   = HtmlWidget().add_class('Toast') # For notifications
@@ -130,7 +130,7 @@ class Widgets:
         self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box(layout={"width":"0"}).add_class("Progress")],layout=dict(width="100%",height="3px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self._snum   = Button(disabled=True, layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
-        self.theme   = ipw.Dropdown(**describe('Theme'),options=[*[k for k in styles.theme_colors.keys() if k != 'Inherit'],'Custom']).add_class("ThemeSelect")
+        self.theme   = ipw.Dropdown(**describe('Theme'),options=[*[k for k in styles.theme_colors.keys() if k != 'Jupyter'],'Custom']).add_class("ThemeSelect") # Jupyter will be added on demand
         self.buttons = _Buttons()
         self.toggles = _Toggles()
         self.sliders = _Sliders()
@@ -236,17 +236,6 @@ class Widgets:
         for btn in [self.buttons.next, self.buttons.prev, self.buttons.setting]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
-
-        self._active_start(self.footerbox)
-            
-    def _deactivate(self):
-        for w in getattr(self, '_aws',[]):
-            w.remove_class("Active-Start")  
-    
-    def _active_start(self, *ws):
-        self._aws = ws 
-        for w in ws:
-            w.add_class("Active-Start")
     
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click."
@@ -258,12 +247,4 @@ class Widgets:
                 raise ValueError(f"timout should be int/float in seconds or None, got {timeout}")
             
             self.iw.send(to_send) # Send notification
-    
-    def _try_exec_with_fallback(self, func):
-        if self.theme.value == "Inherit":
-            self.iw._colors = {} # Reset for getting latest colors
-            self.iw.msg_tojs = "SetColors"
-            self.iw._run_func = func # called when javascript sets colros
-        else:
-            func() # Direct call
         

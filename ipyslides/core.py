@@ -2,6 +2,7 @@ import sys, os, json, re, textwrap, math
 from contextlib import contextmanager, suppress
 from collections.abc import Iterable
 from itertools import zip_longest
+from threading import Timer
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
@@ -491,8 +492,8 @@ class Slides(BaseSlides):
         self._update_vars_postrun(True)
         self._force_update()  # Update before displaying app, some contents get lost
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
-        self.frozen(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"),{}).display()  # Display slides within another box
-        
+        with self._loading_splash(None, self.get_logo('48px', 'IPySlides'),1): # need this to avoid color flicker in start
+            display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
 
     def close_view(self):
         "Close slides/cell view, but keep slides in memory than can be shown again."
@@ -675,21 +676,27 @@ class Slides(BaseSlides):
             return parse(cell, returns = False)
 
     @contextmanager
-    def _loading_private(self, btn):
-        btn.icon = "minus"
-        btn.disabled = True  # Avoid multiple clicks
+    def _loading_splash(self, btn, extra = None, timeout=None):
+        if btn:
+            btn.icon = "minus"
+            btn.disabled = True  # Avoid multiple clicks
         self.widgets.htmls.loading.layout.display = "block"
-        self.widgets.htmls.loading.value = self.icon('loading', color='var(--accent-color, skyblue)',size='6em').value
+        self.widgets.htmls.loading.value = (extra or '') + self.icon('loading', color='var(--accent-color, skyblue)',size='48px').value
         try:
             yield
         finally:
-            btn.icon = "plus"
-            btn.disabled = False
-            self.widgets.htmls.loading.value = ""
-            self.widgets.htmls.loading.layout.display = "none"
+            if btn:
+                btn.icon = "plus"
+                btn.disabled = False
+
+            def reset():
+                self.widgets.htmls.loading.value = ""
+                self.widgets.htmls.loading.layout.display = "none"
+            
+            Timer(timeout, reset).start() if timeout else reset()
 
     def _force_update(self, btn=None):
-        with self._loading_private(btn or self.widgets.buttons.refresh):
+        with self._loading_splash(btn or self.widgets.buttons.refresh):
             for slide in self[:]:
                 if slide._has_widgets:
                     slide.update_display(go_there=False)

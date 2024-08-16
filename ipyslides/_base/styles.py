@@ -93,7 +93,7 @@ animations = {'zoom':'''
   
 
 theme_colors = {
-    'Inherit': {
+    'Jupyter': {
         'fg1':'var(--jp-content-font-color0,black)',
         'fg2':'var(--jp-content-font-color3, #454545)', 
         'fg3':'var(--jp-content-font-color2,#00004d)',

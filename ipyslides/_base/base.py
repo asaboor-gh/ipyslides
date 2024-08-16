@@ -311,7 +311,7 @@ class BaseSlides:
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
             if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown, refresh_vars]):
-                with self._loading_private(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
+                with self._loading_splash(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
                     self._slide(f'{i + start} -m', chunk)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(handles[i])

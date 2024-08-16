@@ -21,7 +21,6 @@ class InteractionWidget(anywidget.AnyWidget):
         self._checks = _widgets.checks
         self._toast_html = _widgets.htmls.toast
         self._prog = _widgets.sliders.progress
-        self._deactivate = _widgets._deactivate
         self._theme = _widgets.theme
 
     @traitlets.observe("msg_topy")
@@ -50,9 +49,9 @@ class InteractionWidget(anywidget.AnyWidget):
             self._buttons.setting.click()
         elif msg == 'EDIT':
             self._buttons.source.click()
-        elif msg == 'JUPYTER' and not ('Inherit' in self._theme.options):
-            self._theme.options = ['Inherit', *self._theme.options] 
-            self._theme.value = 'Inherit' # enable it
+        elif msg == 'JUPYTER' and not ('Jupyter' in self._theme.options):
+            self._theme.options = ['Jupyter', *self._theme.options] 
+            self._theme.value = 'Jupyter' # enable it
         elif msg == 'LOADED':
             if self._checks.notes.value: # Notes window already there
                self._checks.notes.value = False # closes unlinked window
@@ -70,8 +69,6 @@ class InteractionWidget(anywidget.AnyWidget):
                 self._toggles.fscreen.icon = 'plus'
         elif msg == 'KSC':
             self._toast_html.value = 'KSC'
-        elif msg == 'RACTIVE': # Remove active states for intro
-            self._deactivate()
         
         if quick_menu_was_open: 
             self._toggles.menu.value = True # it might get closed by using some buttons. reset it
@@ -83,10 +80,19 @@ class InteractionWidget(anywidget.AnyWidget):
         self.msg_tojs = "" # Reset for successive simliar changes
     
     @traitlets.observe("_colors")
-    def _save_file(self, change):
+    def _run_on_change(self, change):
         if change.new and hasattr(self, '_run_func'):
             self._run_func()
             delattr(self, '_run_func')
+
+    def _try_exec_with_fallback(self, func):
+        if self._theme.value == "Jupyter":
+            self._colors = {} # Reset for getting latest colors
+            self.msg_tojs = "SetColors"
+            self._run_func = func # called when javascript sets colros
+        else:
+            func() # Direct call
+
 
 class HtmlWidget(anywidget.AnyWidget):
     """This introduces a trait 'click_state' which would be toggled between 0 and 1 on each click.

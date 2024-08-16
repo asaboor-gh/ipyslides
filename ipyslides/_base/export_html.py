@@ -98,7 +98,7 @@ class _HhtmlExporter:
             
         theme_kws = self.main.settings._theme_kws
         
-        if self.main.widgets.theme.value == "Inherit":  # jupyterlab Inherit themes colors to export
+        if self.main.widgets.theme.value == "Jupyter":  # jupyterlab themes colors to export
             if self.main.widgets.iw._colors:
                 theme_kws["colors"] = self.main.widgets.iw._colors
 
@@ -184,7 +184,7 @@ class _HhtmlExporter:
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'Slides.html' else path
         export_func = lambda: self._writefile(_path, overwrite)
-        self.main.widgets._try_exec_with_fallback(export_func)
+        self.main.widgets.iw._try_exec_with_fallback(export_func)
         
     def _export(self,btn):
         "Export to HTML slides on button click."

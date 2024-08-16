@@ -73,7 +73,7 @@ class Colors(ConfigTraits):
 @fix_sig
 class StylePerTheme(ConfigTraits):
     "Pygment code block style for each theme. You mostly need to change for custom and inherit theme."
-    inherit = Unicode('default')
+    jupyter = Unicode('default')
     custom  = Unicode('default')
     light   = Unicode('friendly')
     dark    = Unicode('stata-dark')
@@ -112,7 +112,7 @@ class Code(ConfigTraits):
 @fix_sig
 class Theme(ConfigTraits):
     "Set theme value. colors and code have their own nested traits."
-    value  = Unicode('Inherit')
+    value  = Unicode('Jupyter')
     colors = InstanceDict(Colors)
 
     def _apply_change(self, change):
@@ -409,7 +409,7 @@ class Settings:
         if self._widgets.checks.notes.value:
             self._slides.notes.display() # Update notes window if open
         
-        if self._widgets.theme.value == "Inherit":
+        if self._widgets.theme.value == "Jupyter":
             msg = "THEME:jupyterlab"
         else:
             msg = 'THEME:dark' if "Dark" in self._widgets.theme.value else 'THEME:light'
@@ -475,7 +475,7 @@ class Settings:
     def _toggle_overlay(self, change):
         tgl = self._widgets.toggles.draw
         if tgl.value:
-            if self._widgets.theme.value == "Inherit":
+            if self._widgets.theme.value == "Jupyter":
                 self._widgets.iw.msg_tojs = "THEME:jupyterlab" # make like that
 
             tgl.icon = "minus"
