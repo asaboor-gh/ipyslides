@@ -494,7 +494,7 @@ class Slide:
         
         klass = f".{self._app.uid} .SlideArea"
         if this_slide:
-            klass += f"^.n{self.number}"
+            klass += f".n{self.number}"
         
         _css += ('\n' + _build_css((klass,), props))
         return self._app.html('style', _css)

@@ -511,7 +511,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
-    - str/dict if tag is 'style', this will only be exported to HTML if called under slide builder, use hl`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
+    - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use hl`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
     
     Example:
     ```python
@@ -533,13 +533,15 @@ def html(tag, children = None,css_class = None,**node_attrs):
         raise RuntimeError(f'Parametr `children` should be None for self closing tag {tag!r}')
     
     if tag == 'style':
-        node_attrs = {} # Ignore node_attrs for style tag
         if isinstance(children, dict):
             return _styled_css(children)
-    else:
-        node_attrs = {k.replace('_','-'):v for k,v in node_attrs.items()}
+        elif isinstance(children, str): # This is need internally, no need to tell in docs/error
+            return XTML(f"<style>{children}</style>")
+        else:
+            raise TypeError(f"'style' tag requires dict with CSS, got {type(children)}")
     
-    attrs = ' '.join(f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
+    node_attrs = {k.replace('_','-'):v for k,v in node_attrs.items()}
+    attrs = ' '.join(_inline_style(v) if ('style' in k and isinstance(v, dict)) else f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
     if css_class:
         attrs = f'class="{css_class}" {attrs}'
     
@@ -553,7 +555,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     elif isinstance(children,(list,tuple)):
         content = '\n'.join(htmlize(child) for child in children) # Convert to html nodes in sequence of rows
     else:
-        raise TypeError(f'Children should be a list/tuple (or str/dict for style tag) of objects or str, not {type(children)}')
+        raise TypeError(f'Children should be a list/tuple (or dict for style tag) of objects or str, not {type(children)}')
     
     if not tag: # empty tag.
         return XTML(content) # don't wrap in any node

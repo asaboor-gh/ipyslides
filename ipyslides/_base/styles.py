@@ -35,36 +35,36 @@ animations = {'zoom':'''
 }),
 'slide_h': '''
 .SlideBox {
-    animation-name: slide; animation-duration: 400ms;
+    animation-name: slideH; animation-duration: 400ms;
     animation-timing-function: ease-in-out;
 }
 .SlideBox.Prev { /* .Prev acts when moving slides backward */
-    animation-name: slidePrev; animation-duration: 400ms;
+    animation-name: slideHPrev; animation-duration: 400ms;
     animation-timing-function: ease-in-out;
 }
-@keyframes slide {
+@keyframes slideH {
      from { transform: translateX(100%);}
      to { transform: translateX(0); }
 }
-@keyframes slidePrev {
+@keyframes slideHPrev {
      from { transform: translateX(-100%);}
      to { transform: translateX(0); }
 }
 ''',
 'slide_v': '''
 .SlideBox {
-    animation-name: slide; animation-duration: 400ms;
+    animation-name: slideV; animation-duration: 400ms;
     animation-timing-function: ease-in-out;
 }
 .SlideBox.Prev { /* .Prev acts when moving slides backward */
-    animation-name: slidePrev; animation-duration: 400ms;
+    animation-name: slideVPrev; animation-duration: 400ms;
     animation-timing-function: ease-in-out;
 }
-@keyframes slide {
+@keyframes slideV {
      from { transform: translateY(100%);}
      to { transform: translateY(0); }
 }
-@keyframes slidePrev {
+@keyframes slideVPrev {
      from { transform: translateY(-100%);}
      to { transform: translateY(0); }
 }
