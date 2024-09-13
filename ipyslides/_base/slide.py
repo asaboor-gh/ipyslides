@@ -522,7 +522,7 @@ class Slide:
                 self._app.navigate_to(self.index) # Go there to see effects automatically
 
     def _set_css_classes(self, add=None, remove=None):
-        "Sett CSS classes on this slide separated by space. classes are remove first and add after it."
+        "Set CSS classes on this slide separated by space. classes are remove first and add after it."
         if remove is not None: # remove first to enable toggle
             if not isinstance(remove, str):
                 raise TypeError("CSS classes should be a string with each class separated by space")
@@ -565,7 +565,7 @@ class Slide:
     
     def _instance_animation(self,name):
         if not (name in styles.animations):
-            KeyError(f'animation {name!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
+            raise KeyError(f'animation {name!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
         return styles.animations[name].replace('.SlideBox',f'.{self._app.uid} .SlideBox')
             
     def set_animation(self, this=None, main = None,frame = None):
