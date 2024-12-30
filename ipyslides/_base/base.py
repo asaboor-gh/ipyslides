@@ -545,7 +545,7 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.code,'Slides.code', members = True, itself = False).display()
         
-        self.build(-1, 'section`?Layout and color[yellow,black]`Theme` Settings?` toc`### Contents`')
+        self.build(-1, 'section`?Layout and color["yellow","black"]`Theme` Settings?` toc`### Contents`')
         
         with self.build(-1) as s:
             s.set_css({
@@ -557,7 +557,7 @@ class BaseSlides:
                 
         with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
-            self.write("clip[caption=clipboard image]`test.png`", self.code.cast("clip[caption=clipboard image]`test.png`","markdown"))
+            self.write("clip[caption='clipboard image']`test.png`", self.code.cast("clip[caption='clipboard image']`test.png`","markdown"))
             self.doc(self.alt,'Slides')
             self.doc(self.clip,'Slides').display()
             
@@ -610,7 +610,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Content Styling')
             with self.code.context(returns = True) as c:
-                self.write(('You can **style**{.error} or **color[teal]`colorize`** your *content*{: style="color:hotpink;"} and *color[hotpink,yellow]`text`*. ' 
+                self.write(('You can **style**{.error} or **color["teal"]`colorize`** your *content*{: style="color:hotpink;"} and *color["hotpink","yellow"]`text`*. ' 
                        'Provide **CSS**{.info} for that using hl`Slides.html("style",...)` or use some of the available styles. '
                        'See these **styles**{.success} with `Slides.css_styles` property as below:'))
                 self.css_styles.display()

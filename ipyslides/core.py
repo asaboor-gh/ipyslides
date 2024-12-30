@@ -335,7 +335,7 @@ class Slides(BaseSlides):
     def _add_clean_title(self):
         with _build_slide(self, 0):
             self.cols(
-                self.styled("color[var(--accent-color)]`Replace this with creating a slide with number` alert`0`",
+                self.styled("color['var(--accent-color)']`Replace this with creating a slide with number` alert`0`",
                     padding = "8em 8px",
                 ), 
                 '', # empty column for space 🤣
@@ -731,7 +731,7 @@ class Slides(BaseSlides):
         else:
             for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):
                 text = (
-                    htmlize(f"color[var(--accent-color)]`{i}.` {sec}")
+                    htmlize(f"color['var(--accent-color)']`{i}.` {sec}")
                     + f"<p>{slide.index}</p>"
                 )
                 def jump_to_slide(change):

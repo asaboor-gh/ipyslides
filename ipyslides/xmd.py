@@ -21,7 +21,6 @@ from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
 from html.parser import HTMLParser
-from ast import literal_eval
 
 from markdown import Markdown
 from IPython.core.display import display
@@ -102,11 +101,6 @@ _special_funcs = {
     "zoomable": "zoom a block of html when hovered",
     "center": r"text or \`{variable}\`", # should be last
 }
-def _try_eval(str_value):
-    try:
-        return literal_eval(str_value)
-    except:
-        return str_value
 
 def error(name, msg):
     "Add error without breaking execution."
@@ -568,24 +562,12 @@ class XMarkdown(Markdown):
                     _out = (_func(arg0) if arg0 else _func()) # If no argument, use default
                     html_output = html_output.replace(f"{func}`{m2}`", self._handle_var(_out), 1)
                 else: # func with arguments
-                    args = [
-                        v.replace("__COM__", ",")
-                        for v in m1.strip('[]') # [] will be there
-                        .replace(r"\=", "__EQ__")
-                        .replace(r"\,", "__COM__")
-                        .split(",")
-                    ]  # respect escaped = and ,
-                    kws = {
-                        k.strip().replace("__EQ__", "="): _try_eval(v.strip().replace("__EQ__", "="))
-                        for k, v in [a.split("=") for a in args if "=" in a]
-                    }
-                    args = [_try_eval(a.strip().replace("__EQ__", "=")) for a in args if "=" not in a]
-        
                     try:
-                        _out = (_func(arg0, *args, **kws) if arg0 else _func(*args, **kws)) # If no argument, use default 
+                        _out = eval(f"utils.{func}({arg0!r},{m1[1:-1]})" if arg0 else f"utils.{func}({m1[1:-1]})") # evaluate
                         html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
                     except Exception as e:
-                        raise Exception(rf"Error in {func}{m1}`{m2}`: {e}.\nYou may need to escape , and = with \, and \= if you need to keep them inside {m1}")
+                        raise Exception(rf"Error in {func}{m1}`{m2}`: {e}.\nYou may need to format arguments properly as Python code.")
+                    
 
         # Replace columns at end because they will convert HTML
         all_cols = re.findall(

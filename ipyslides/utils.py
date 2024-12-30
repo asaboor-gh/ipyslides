@@ -242,9 +242,9 @@ _css_docstring = parse("""
 CSS is formatted using a `props` nested dictionary to simplify the process. 
 There are few special rules in `props`:
 
-- All nested selectors are joined with space, so hl`'.A': {'.B': ... }` becomes hl[css]`.A .B {...}` in CSS.
-- A '^' in start of a selector joins to parent selector without space, so hl`'.A': {'^:hover': ...}` becomes hl[css]`.A:hover {...}` in CSS. You can also use hl`'.A:hover'` directly but it will restrict other nested keys to hover only.
-- A list/tuple of values for a key in dict generates CSS fallback, so hl`'.A': {'font-size': ('20px','2em')}` becomes hl[css]`.A {font-size: 20px; font-size: 2em;}` in CSS.
+- All nested selectors are joined with space, so hl`'.A': {'.B': ... }` becomes hl['css']`.A .B {...}` in CSS.
+- A '^' in start of a selector joins to parent selector without space, so hl`'.A': {'^:hover': ...}` becomes hl['css']`.A:hover {...}` in CSS. You can also use hl`'.A:hover'` directly but it will restrict other nested keys to hover only.
+- A list/tuple of values for a key in dict generates CSS fallback, so hl`'.A': {'font-size': ('20px','2em')}` becomes hl['css']`.A {font-size: 20px; font-size: 2em;}` in CSS.
 
 Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
 """ + f"""                      
@@ -411,9 +411,23 @@ def _check_pil_image(data):
 
 _fig_style_inline = "margin-block:0.25em;margin-inline:0.25em" # its 40px by defualt, ruins space, not working in CSS outside
 
-def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
+def _verify_crop_props(crop, css_props):
+    if not isinstance(css_props, dict):
+        raise TypeError(f'css_props should be a dictionary of CSS properties, got {type(css_props)}')
+    if crop:
+        if isinstance(crop, (tuple, list)):
+            if len(crop) != 4:
+                raise ValueError(f'crop should be a tuple of 4 float (left, top, right, bottom), got {crop!r}')
+            for c in crop:
+                if (not isinstance(c, (int, float))) or (c < 0 or c > 1):
+                    raise TypeError(f'crop should be a tuple of 4 float (left, top, right, bottom) in range [0,1], got {crop!r}')
+        else:
+            raise TypeError(f'crop should be a tuple of 4 float (left, top, right, bottom), got {crop!r}')
+
+def image(data=None,width='95%',caption=None, crop=None, css_props={}, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     `css_props` are applied to `figure` element, so you can control top layout and nested img tag.
+    `crop` is a tuple of 4 float (left, top, right, bottom) to crop image in percentage. You can also crop image using PIL.
     You can provide following to `data` parameter:
         
     - An opened PIL image. Useful for image operations and then direct writing to slides. 
@@ -441,20 +455,38 @@ def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
     metadata['caption'] = _fig_caption(caption)
     metadata['attrs'] = f'class="zoom-child fig-{id(data)}" style="{_fig_style_inline}"'
 
+    _verify_crop_props(crop, css_props)
+    if crop:
+        css_props['overflow'] = 'hidden !important' # avoid scrolling in crop scenerio
+        css_props['img'] = {**css_props.get('img',{}),
+                'margin': '{1}% {2}% {3}% {0}% !important'.format(*[int(-c*100) for c in crop]),
+                'clip-path': 'margin-box !important'} # hide that part completely
+       
     if css_props and isinstance(css_props, dict):
         metadata["style"] = _styled_css({f'.fig-{id(data)}': css_props}).value
     return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
 
-def svg(data=None,width = '95%',caption=None, css_props={}, **kwargs):
-    """Display svg file or svg string/bytes with additional customizations. `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
+def svg(data=None,width = '95%',caption=None, crop=None, css_props={}, **kwargs):
+    """Display svg file or svg string/bytes with additional customizations. 
+    `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
+    `crop` is a tuple of 4 float (left, top, right, bottom) to crop svg in percentage.
     `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
     """
     svg = SVG(data=data, **kwargs)
-    style = f'width:{width}px;height:auto;' if isinstance(width,int) else f'width:{width};height:auto;' + _fig_style_inline
-    fig = html('figure', svg._repr_svg_() + _fig_caption(caption), css_class=f'zoom-child fig-{id(svg)}', style=style).value
+
+    _verify_crop_props(crop, css_props)
+    css_props['svg'] = {**css_props.get('svg',{}), 'width': f'{width}px' if isinstance(width,int) else width, 'height': 'auto'}
+    fig = html('figure', svg._repr_svg_() + _fig_caption(caption), css_class=f'zoom-child fig-{id(svg)}', style=_fig_style_inline).value
+    
+    if crop:
+        css_props['overflow'] = 'hidden !important' # avoid scrolling in crop scenerio
+        css_props['svg'] = {**css_props.get('svg',{}),
+                'margin': '{1}% {2}% {3}% {0}% !important'.format(*[int(-c*100) for c in crop]),
+                'clip-path': 'margin-box !important'} # hide that part completely
+        
     if css_props and isinstance(css_props, dict):
         fig += _styled_css({f'.fig-{id(svg)}': css_props}).value
-    return html(fig) 
+    return XTML(fig) 
 
 
 def iframe(src, width='100%',height='auto',**kwargs):
