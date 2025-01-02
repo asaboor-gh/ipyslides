@@ -64,7 +64,7 @@ def get_clips_dir():
 
 def _fmt_cols(*objs,widths = None):
     if not widths and len(objs) >= 1:
-        widths = [int(100/len(objs)) for _ in objs]
+        widths = [100/len(objs) for _ in objs]
     else:
         if len(objs) != len(widths):
             raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
@@ -72,10 +72,10 @@ def _fmt_cols(*objs,widths = None):
         for w in widths:
             if not isinstance(w,(int, float)):
                 raise TypeError(f'widths must be numbers, got {w}')
-        widths = [int(w/sum(widths)*100) for w in widths]
+        widths = [w/sum(widths)*100 for w in widths]
     
     _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in objs] 
-    _cols = ' '.join([f"""<div style='width:{w}%;overflow-x:auto;height:auto'>
+    _cols = ' '.join([f"""<div style='width:{w:.3f}%;overflow-x:auto;height:auto'>
                      {' '.join([htmlize(row) for row in _col])}
                      </div>""" for _col,w in zip(_cols,widths)])
     
@@ -414,9 +414,26 @@ _fig_style_inline = "margin-block:0.25em;margin-inline:0.25em" # its 40px by def
 def _verify_css_props(css_props):
     if not isinstance(css_props, dict):
         raise TypeError(f'css_props should be a dictionary of CSS properties, got {type(css_props)}')
+
+def _verify_bbox(bbox):
+    if not isinstance(bbox, (tuple, list)):
+        raise TypeError(f"Bounding box should be a tuple or list, got {type(bbox)}")
+    if len(bbox) != 4:
+        raise ValueError(f"Bounding box should have 4 values [left, top, right, bottom], got {len(bbox)}")
+    for b in bbox:
+        if not isinstance(b,(int,float)) or b < 0 or b > 1:
+            raise ValueError(f"Bounding box values should be between 0 and 1, got {b}")
+
+def _crop_image(image, bbox):
+    _verify_bbox(bbox)
+    w,h = image.size
+    bbox = [int(round(b*x,0)) for b,x in zip(bbox, [w,h,w,h])] # Convert to pixel values to nearest integer
+    return image.crop(bbox)
+
     
-def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
+def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
+    `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
     `css_props` are applied to `figure` element, so you can control top layout and nested img tag.
     You can provide following to `data` parameter:
         
@@ -431,6 +448,13 @@ def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
     - hl`IMG.to_pil()` returns hl` PIL.Image ` or None.
     - hl`IMG.to_numpy()` returns image data as numpy array for use in plotting libraries or None.
     """
+    if crop:
+        try:
+            im = _crop_image(image(data).to_pil(), crop) # Don't use Image.open here, this works for embeded data too
+            return image(im, width=width, caption=caption,crop=None, css_props=css_props, **kwargs)
+        except Exception as e:
+            raise ValueError(f"Error in cropping image: {e}")
+
     if isinstance(width,int):
         width = f'{width}px'
     
@@ -450,16 +474,52 @@ def image(data=None,width='95%',caption=None, css_props={}, **kwargs):
         metadata["style"] = _styled_css({f'.fig-{id(data)}': css_props}).value
     return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
 
-def svg(data=None,width = '95%',caption=None, css_props={}, **kwargs):
+def _crop_svg(node, bbox):
+    _verify_bbox(bbox) # left, top, right, bottom in 0-1 range
+
+    def crop_viewbox(m):
+        vb, *_ = m.groups() # viewbox value
+        x,y,w,h = [float(v) for v in vb.split()]
+
+        X, Y = bbox[0]*w + x, bbox[1]*h + y # offset by original viewbox
+        W, H = (bbox[2] - bbox[0])*w, (bbox[3] - bbox[1])*h
+        return m.group().replace(vb, f'{X} {Y} {W} {H}') # Replace viewbox with new values
+    
+    return re.sub(r'viewBox\=[\"\'](.*?)[\"\']', crop_viewbox, node ,1, flags=re.DOTALL)
+    
+
+def svg(data=None,width = None,caption=None, crop=None, css_props={}, **kwargs):
     """Display svg file or svg string/bytes with additional customizations. 
+    `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
     `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
     `kwrags` are passed to IPython.display.SVG. You can provide url/string/bytes/filepath for svg.
     """
-    svg = SVG(data=data, **kwargs)
+    svg = SVG(data=data, **kwargs)._repr_svg_()
+    node = rnode = re.search(r'\<svg.*?\>', svg, flags=re.DOTALL).group() #  rnode will be overwritten
+    
+    if width is None: # Infer width from svg or use default width
+        width, *_ = re.findall(r'\s+width\=[\"\'](.*?)[\"\']', node, flags=re.DOTALL) or ['95%'] 
+
+    w = f'{width}px' if isinstance(width,(int,float)) else width
+    
+    if node:
+        _height = ' height="auto"' if re.search(r'\s+width\=[\"\'].*?[\"\']', node) else f' height="auto" width="{w}"' # if no width given add that too
+        rnode = re.sub(r'\s+height\=[\"\'](.*?)[\"\']', _height, node,1,flags=re.DOTALL) 
+        _width = f' width="{w}"' if re.search(r'\s+height\=[\"\'].*?[\"\']', node) else f' width="{w}" height="auto"' # if no height given add that too
+        rnode = re.sub(r'\s+width\=[\"\'](.*?)[\"\']', _width, rnode,1,flags=re.DOTALL) # Replace width with given width
+
+    if crop and node:
+        try:
+            rnode = _crop_svg(rnode, crop)
+        except Exception as e:
+            raise ValueError(f"Error in cropping svg: {e}")
 
     _verify_css_props(css_props)
-    css_props['svg'] = {**css_props.get('svg',{}), 'width': f'{width}px' if isinstance(width,int) else width, 'height': 'auto'}
-    fig = html('figure', svg._repr_svg_() + _fig_caption(caption), css_class=f'zoom-child fig-{id(svg)}', style=_fig_style_inline).value
+    if re.search(r'\s+width\=[\"\'].*?[\"\']|\s+height\=[\"\'].*?[\"\']', node): # Add height and width to svg tag if none present inline
+        css_props['svg'] = {**css_props.get('svg',{}), 'height':'auto', 'width':w} 
+    
+    svg = svg.replace(node, rnode) # Replace node with rnode
+    fig = html('figure', svg + _fig_caption(caption), css_class=f'zoom-child fig-{id(svg)}', style=_fig_style_inline).value
     
     if css_props:
         fig += _styled_css({f'.fig-{id(svg)}': css_props}).value

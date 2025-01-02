@@ -104,7 +104,7 @@ class XTML(HTML):
         return HtmlWidget(self.value, click_handler=click_handler)
         
 
-def plt2html(plt_fig = None,transparent=True,width = None, caption=None):
+def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
     **Parameters**
     
@@ -112,6 +112,7 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None):
     - transparent: True of False for fig background.
     - width      : CSS style width. Default is figsize.
     - caption    : Caption for figure.
+    - crop       : Crop SVG to given box in fraction 0-1 as tuple of (left, top, right, bottom).
     """
     # First line is to remove depedency on matplotlib if not used
     if not (plt := sys.modules.get('matplotlib.pyplot', None)):
@@ -126,6 +127,10 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None):
         width = f'{_fig.get_size_inches()[0]}in'
     width = f'width:{width}px' if isinstance(width,int) else f'width:{width}'
     svg = f'<svg style="{width};height:auto;"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
+
+    if crop:
+        from .utils import svg as USVG # Avoid circular import
+        return XTML(re.sub(r'fig\-\d+', 'mpl', USVG(svg, width=width,crop=crop,caption=caption).value))
     
     cap = ''
     if caption:

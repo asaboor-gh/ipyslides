@@ -92,7 +92,7 @@ class Writer(ipw.HBox):
 
     def _capture_objs(self, *objs, widths = None):
         if widths is None: # len(objs) check is done in write
-            widths = [int(100/len(objs)) for _ in objs]
+            widths = [100/len(objs) for _ in objs]
         else:
             if len(objs) != len(widths):
                 raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
@@ -100,10 +100,10 @@ class Writer(ipw.HBox):
             for w in widths:
                 if not isinstance(w,(int, float)):
                     raise TypeError(f'widths must be numbers, got {w}')
-            widths = [int(w/sum(widths)*100) for w in widths]
+            widths = [w/sum(widths)*100 for w in widths]
         
         
-        widths = [f'{int(w)}%' for w in widths]
+        widths = [f'{w:.3f}%' for w in widths]
         cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]
         for i, col in enumerate(cols):
             with capture_content() as cap:

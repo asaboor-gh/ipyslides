@@ -325,10 +325,12 @@ class XMarkdown(Markdown):
         self._slides = get_slides_instance()
 
     def _extract_class(self, header):
+        header = re.sub(r"\.(\d)",r"~dot~\1", header) # Avoid .1 like things for cols
         out = header.split(".", 1)  # Can have many classes there
+        cols = out[0].strip().replace("~dot~",".") # replace back
         if len(out) == 1:
-            return out[0].strip(), ""
-        return out[0].strip(), out[1].replace(".", " ").strip()
+            return cols, ""
+        return cols, out[1].replace(".", " ").strip()
     
     def user_ns(self):
         "Top level namespace or set by user inside `Slides.fmt`."
@@ -435,7 +437,7 @@ class XMarkdown(Markdown):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = data.split("+++")  # Split by columns
         if header.strip() == "multicol":
-            widths = [int(100/len(cols)) for _ in cols]
+            widths = [100/len(cols) for _ in cols]
         else:
             widths = header.split("multicol")[1].split()
             if len(widths) > len(cols): # This allows merging column notation with frames
@@ -447,10 +449,10 @@ class XMarkdown(Markdown):
                     f"Number of columns {len(cols)} should be <= given widths in {header!r}"
                 )
             for w in widths:
-                if not w.strip().isdigit():
-                    raise TypeError(f"{w} is not an integer")
+                if not w.strip().replace('.','').isdigit(): # hold float values
+                    raise TypeError(f"{w} is not a positive integer or float value")
 
-            widths = [int(w) for w in widths]
+            widths = [float(w) for w in widths]
         
         # Under slides and any display context, multicol should return Writer 
         if self._slides and not self._returns:
@@ -566,20 +568,20 @@ class XMarkdown(Markdown):
                         _out = eval(f"utils.{func}({arg0!r},{m1[1:-1]})" if arg0 else f"utils.{func}({m1[1:-1]})") # evaluate
                         html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
                     except Exception as e:
-                        raise Exception(rf"Error in {func}{m1}`{m2}`: {e}.\nYou may need to format arguments properly as Python code.")
+                        raise Exception(rf"Error in {func}{m1}`{m2}`: {e}. Arguments in [] should be proper Python code that does not rely on a scope.")
                     
 
         # Replace columns at end because they will convert HTML
         all_cols = re.findall(
-            r"\|\|(\s*\d*\s*)(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
+            r"\|\|(\s*\d*\.?\d*\s*)(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
         )  # Matches new line as well, useful for inline plots and big objects
         for width, *cols in all_cols:
-            digit = int(width.strip()) if width.strip() else 50 # could be tabs, new lines etc
-            if not (digit in range(1,100)): # 1-99, why zero width
-                raise ValueError(f'column width after first || should be 0-99, got {digit}')
+            digit = float(width.strip()) if width.strip() else 50 # could be tabs, new lines etc
+            if digit < 0 or digit > 100: 
+                raise ValueError(f'column width after first || should be 0-100, got {digit}')
             
             _cols = "\n".join(
-                f'<div style="width:{w}%;">{self.convert2str(c.strip())}</div>' for w, c in zip([digit, 100 - digit], cols)
+                f'<div style="width:{w:.3f}%;">{self.convert2str(c.strip())}</div>' for w, c in zip([digit, 100 - digit], cols)
             )
             _out = f'<div class="columns">{_cols}</div>'  # Replace new line with 4 spaces to keep indentation if block ::: is used
             html_output = html_output.replace(f"||{width}{cols[0]}||{cols[1]}||", self._handle_var(_out), 1)
