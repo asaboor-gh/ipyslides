@@ -3,6 +3,7 @@ from contextlib import contextmanager, suppress
 from collections.abc import Iterable
 from itertools import zip_longest
 from threading import Timer
+from typing import Tuple, Union
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
@@ -21,6 +22,7 @@ from ._base.intro import how_to_slide, get_logo
 from ._base.slide import Slide, _build_slide
 from ._base.icons import Icon as _Icon
 from .__version__ import __version__
+
 
 try:  # Handle python IDLE etc.
     SHELL = get_ipython()
@@ -230,8 +232,11 @@ class Slides(BaseSlides):
 
     def __len__(self):
         return len(self._iterable)
-
-    def __getitem__(self, key):
+    
+    def __contains__(self, key): 
+        return key in self._slides_dict
+    
+    def __getitem__(self, key) -> Union[Slide, Tuple[Slide]]:
         "Get slide by index or slice of computed index. Use [number,] or [[n1,n2,..]] to access slides by number they were created with."
         if isinstance(key, int):
             return self._iterable[key]
@@ -258,7 +263,7 @@ class Slides(BaseSlides):
             f"A slide could be accessed by index or slice, got {type(key)},\n"
             "Use `Slides[number,] -> Slide` or `Slides[[n1, n2,..]] -> tuple[Slide]` to access slides by number they were created with."
         )
-
+    
     def __del__(self):
         for k, v in globals():
             if isinstance(v, Slides):

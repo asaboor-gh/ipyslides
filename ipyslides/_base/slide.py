@@ -99,7 +99,7 @@ class Slide:
             self._widget.layout.height = '' # Reset height to auto
         
     def __repr__(self):
-        return f'Slide(number = {self.number}, index = {self.index})'
+        return f'Slide(number = {self.number}, index = {self.index}, nf = {self.nf}, vars = {self._has_vars})'
     
     @contextmanager
     def _capture(self):
