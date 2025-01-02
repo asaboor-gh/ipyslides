@@ -208,7 +208,7 @@ class BaseSlides:
     def get_source(self, title = 'Source Code'):
         "Return source code of all slides except created as frames with python code."
         sources = []
-        for slide in self[:]:
+        for slide in self.all_slides:
             if slide._source['text']:
                 sources.append(slide.get_source(name=f'{slide._source["language"].title()}: Slide {slide.index}'))
             

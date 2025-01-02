@@ -172,7 +172,7 @@ class Slides(BaseSlides):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not proceed for side effects
         
-        keys = (k for s in self[:] for k in s._req_vars) # All slides vars names
+        keys = (k for s in self.all_slides for k in s._req_vars) # All slides vars names
         user_ns = get_main_ns() # works both in top running module and notebook
         new_vars = dict((key, user_ns.get(key)) for key in keys if key in user_ns)
         diff = {key:value for key, value in new_vars.items() if not (key in self._md_vars)} # diff operator ^ can only work for hashable types
@@ -181,7 +181,7 @@ class Slides(BaseSlides):
         if diff:
             self._md_vars.update(new_vars) # sync from latest
             with self.navigate_back():
-                for slide in self[:]: 
+                for slide in self.all_slides: 
                     if diff.keys() & slide._req_vars: # Intersection of keys
                         slide._rebuild(True)
     
@@ -432,13 +432,18 @@ class Slides(BaseSlides):
     
     @property
     def cited_slides(self):
-        "Return slides which have citations."
-        return tuple([s for s in self[:] if s._citations])
+        "Return slides which have citations. See also `all_slides`, `markdown_slides`."
+        return tuple([s for s in self._iterable if s._citations])
     
     @property
     def markdown_slides(self):
-        "Return all slides built from markdown."
-        return tuple([s for s in self[:] if s._markdown])
+        "Return all slides built from markdown. See also `all_slides`, `cited_slides`."
+        return tuple([s for s in self._iterable if s._markdown])
+    
+    @property
+    def all_slides(self):
+        "Return all slides. Another way is using `Slides[:]` but that loses auto completion on each slide. See also `cited_slides`, `markdown_slides`."
+        return self._iterable
 
     def section(self, text):
         """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
@@ -448,7 +453,7 @@ class Slides(BaseSlides):
 
         self.this._section = text  # assign before updating toc
         
-        for s in self[:]:
+        for s in self.all_slides:
             if s._toc_args and s != self.this: 
                 s.update_display(go_there=False)
  
@@ -511,7 +516,7 @@ class Slides(BaseSlides):
             return self._current.index
         else:
             idxs = [
-                s.index for s in self[: self._current.index] if s._section
+                s.index for s in self[:self._current.index] if s._section
             ]  # Get all section indexes before current slide
             return idxs[-1] if idxs else 0  # Get last section index
 
@@ -702,7 +707,7 @@ class Slides(BaseSlides):
 
     def _force_update(self, btn=None):
         with self._loading_splash(btn or self.widgets.buttons.refresh):
-            for slide in self[:]:
+            for slide in self.all_slides:
                 if slide._has_widgets:
                     slide.update_display(go_there=False)
             
