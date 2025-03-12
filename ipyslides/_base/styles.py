@@ -293,7 +293,10 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'text-decoration': 'underline !important', 
                 },
                 '^.citelink': {'color': 'var(--fg1-color) !important',},
-                '^.citelink > sup': {'font-weight':'bold',},
+                '^.citelink': {
+                    '> sup': {'font-weight':'bold',},
+                    'text-shadow': '0 1px var(--bg2-color)',
+                },
             },
             '.Citations' : {
                 'column-count' :f'{ncol_refs} !important',

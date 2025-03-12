@@ -104,7 +104,7 @@ class BaseSlides:
         
         Citations
         : alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
-        With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If ncol_refs is not given, it will be picked from layout settings.
+        With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
         
         Sections & TOC
         : alert`section\`content\`` to add a section that will appear in the table of contents.
