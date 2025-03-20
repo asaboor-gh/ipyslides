@@ -785,7 +785,7 @@ class fsep:
 
     - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
     - Use `fsep.loop(iterable)`/`fsep.enum(iterable)` to split after each item in iterable automatically.
-    - Use `fsep.join()` once under a slide to show frames incrementally. In markdown slides, use %++.
+    - Use `fsep.accumulate()/fsep.join()` once under a slide to show frames incrementally. In markdown slides, use %++.
     - Content before first frame separator is added on all frames. This helps adding same title once.
     """
     _app = _private_instance
@@ -797,12 +797,15 @@ class fsep:
         self._app.frozen(self._app.this._fsep, {"FSEP": "","skip-export":"no need in export"}).display()
 
     @classmethod
-    def loop(cls, iterable):
+    def loop(cls, iterable, accumulate=False):
         "Loop over iterable. Frame separator is add before each item and at end of the loop."
         cls._app.verify_running()
         if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
             raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
         
+        if accumulate:
+            cls.accumulate()
+
         for item in iterable:
             cls() # put separator before
             yield item
@@ -810,17 +813,19 @@ class fsep:
             cls() # put one last to separate this block
     
     @classmethod
-    def enum(cls, iterable, start=0):
+    def enum(cls, iterable, start=0, accumulate=False):
         "Enumerate iterable with automatically adding frame separators."
-        return enumerate(cls.loop(iterable), start=start)
+        return enumerate(cls.loop(iterable,accumulate=accumulate), start=start)
     
     @classmethod
-    def join(cls):
+    def accumulate(cls):
         """Join frames incrementally. This enables `write` and `multicol` followed by a frame separator to increment as well.
         Use %++ in makdown in place of this.
         """
         cls._app.verify_running()
         cls._app.this._split_frames = False
+
+    join = accumulate # short alias
 
 _private_instance.fsep = fsep # Set once, otherwise throws error on next runs
 
