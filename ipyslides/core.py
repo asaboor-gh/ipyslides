@@ -319,11 +319,6 @@ class Slides(BaseSlides):
     def this(self):
         "Access slide currently being built. Useful for operations like set_css etc."
         return self._running_slide
-    
-    @property
-    def in_output(self):
-        "Check if Output widgets is capturing output."
-        return getattr(self, "_in_output", False)
 
     @property
     def draw_button(self):

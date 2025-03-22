@@ -6,7 +6,7 @@ from contextlib import ContextDecorator
 
 from IPython.display import display
 
-from ipywidgets import interact as ipyinteract
+from ipywidgets import interact as ipyinteract, link, Play, IntSlider
 
 from .widgets import Widgets
 from .navigation import Navigation
@@ -281,6 +281,22 @@ class BaseSlides:
             return lambda func: inner(func, __func)
         else:
             inner(__func, __options)
+
+    def animate(self, func, nframes, interval,height=None):
+        """
+        Animate a function that accept a single argument, the frame number. Use default animation of a library whenever possible for better performance/smoothness.
+        
+        `nfames` is umber of frames to animate over, `interval` is interval in milliseconds between frames.
+        `height` is height of the output widget to avoid flickering for large outputs. Default is None.
+
+        ::: note-warning
+            Only a single snapshot of frames (current) will be exported to HTML slides. Use `Slides.fsep` to split content into exportable frames.
+        """
+        s = IntSlider(description='n',min=1,max=nframes,step=1)
+        p = Play(max=nframes,min=1, interval=interval, step=1).add_class('ips-animated')
+        link((p,'value'),(s,'value'))
+        return self.interact(lambda x,t:func(x), {'manual':False,'height':height}, x=s,t=p)
+
         
     def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
