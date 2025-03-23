@@ -238,6 +238,8 @@ class BaseSlides:
 
         See a usage example in hl`Slides.docs()` or check documentation of `ipywidgets.interact`.
 
+        Additionally, you can pass `Slides.AnimationSlider` as a keyword argument to animate a function under interact, or even external objects like `plotly.graph_objects.FigureWidget` etc.
+
         ::: note-tip
             You can use this inside columns using delayed display trick, like hl`write('First column', lambda: interact(f, x = 5))`.
 
@@ -283,20 +285,7 @@ class BaseSlides:
             inner(__func, __options)
 
     def animate(self, func, nframes, interval,height=None):
-        """
-        Animate a function that accept a single argument, the frame number. Use default animation of a library whenever possible for better performance/smoothness.
-        
-        `nfames` is umber of frames to animate over, `interval` is interval in milliseconds between frames.
-        `height` is height of the output widget to avoid flickering for large outputs. Default is None.
-
-        ::: note-warning
-            Only a single snapshot of frames (current) will be exported to HTML slides. Use `Slides.fsep` to split content into exportable frames.
-        """
-        s = IntSlider(description='n',min=1,max=nframes,step=1)
-        p = Play(max=nframes,min=1, interval=interval, step=1).add_class('ips-animated')
-        link((p,'value'),(s,'value'))
-        return self.interact(lambda x,t:func(x), {'manual':False,'height':height}, x=s,t=p)
-
+        raise DeprecationWarning("Use `Slides.AnimationSlider` widget instead of `Slides.animate` alongwith `Slides.interact` for full flexibility.")
         
     def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
@@ -578,7 +567,7 @@ class BaseSlides:
             self.doc(self.clip,'Slides').display()
             
             members = sorted((
-                'alert block bokeh2html bullets styled fmt color cols details doc '
+                'AnimationSlider alert block bokeh2html bullets styled fmt color cols details doc '
                 'today error zoomable highlight html iframe image frozen notify plt2html '
                 'raw rows set_dir sig textbox suppress_output suppress_stdout svg vspace'
             ).split())

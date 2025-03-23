@@ -220,7 +220,6 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
         },
         
         '.fa::before':  {'margin': '0 4px 0 2px', 'vertical-align': 'middle',}, # for exported font-awsome icons
-        '.fa:empty::before': {'padding': '0 10px',},
         **{f".fa.fa-{k}::before": Icon(k, color=colors['accent']).css for k in Icon.available}, # needed in export too
         '.raw-text': { # Should be same in notebook cell 
             'font-family': 'var(--jp-code-font-family) !important',

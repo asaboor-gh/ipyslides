@@ -4,6 +4,7 @@ import anywidget
 
 from pathlib import Path
 from IPython.display import display
+from ipywidgets import ValueWidget
 
 
 class InteractionWidget(anywidget.AnyWidget):
@@ -182,4 +183,45 @@ class NotesWidget(anywidget.AnyWidget):
     value = traitlets.Unicode('').tag(sync=True)
     popup = traitlets.Bool(False).tag(sync=True)
 
+
+class AnimationSlider(anywidget.AnyWidget, ValueWidget):
+    """This is a simple slider widget that can be used to control the animation with an observer function.
+
+    You need to provide parameters like `nframes` and `interval` (milliseconds) to control the animation. 
+    The `value` trait can be observed to get the current frame index.
+
+    ```python
+    from plotly.graph_objects import FigureWidget
+
+    fig = FigureWidget()
+    fig.add_scatter(y=[1, 2, 3, 4, 5])
+    widget = slides.AnimationSlider() # assuming slides is the instance of Slides app
+
+    def on_change(change):
+        value = change['new']
+        fig.data[0].color = f'rgb({int(value/widget.nframes*100)}, 100, 100)' # change color based on frame index
+
+    widget.observe(on_change, names='value')
+    display(widget, fig) # display it in the notebook
+    ```
+
+    This widget can be passed to `ipywidgets.interactive` as keyword argument to create a dynamic control for the animation.
+
+    ```python
+    from ipywidgets import interact
+
+    @interact(frame=widget)
+    def show_frame(frame):
+        print(frame)
+    ```
+    """
+    _esm = _esm = Path(__file__).with_name('js') / 'animator.js'
+    
+    value = traitlets.Int(0).tag(sync=True)          
+    description = traitlets.Unicode("n").tag(sync=True) 
+    loop = traitlets.Bool(False).tag(sync=True)     
+    nframes = traitlets.Int(100).tag(sync=True)     
+    interval = traitlets.Float(50.0).tag(sync=True) 
+    playing = traitlets.Bool(False).tag(sync=True) 
+    continuous_update = traitlets.Bool(True).tag(sync=True)
     

@@ -11,7 +11,7 @@ from IPython.display import display, clear_output
 from .xmd import fmt, parse, xtr, get_main_ns, extender as _extender
 from .source import Code
 from .writer import GotoButton, write
-from .formatters import HtmlWidget, RichOutput, bokeh2html, plt2html, highlight, htmlize, serializer
+from .formatters import HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}

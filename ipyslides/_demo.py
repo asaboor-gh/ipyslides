@@ -125,8 +125,18 @@ def demo_slides(slides):
             ''')
         
         def display_plot(): return race_plot().display()
-
+        
         slides.write(lambda: slides.interact(display_plot), rslide.get_source()) # Only first columns will update
+
+    with slides.build(-1) as s:
+        slides.write('## Animations with Widgets')
+        anim = slides.AnimationSlider(nframes=20, interval=5, continuous_update=False)
+        source = s.get_source()
+
+        @slides.interact({'manual':False,'height':'400px'},anim=anim)
+        def _(anim):
+            slides.write(race_plot(), source)
+
 
     slides.build(-1,'section`Simple Animations with Frames` toc`### Contents`')
 
