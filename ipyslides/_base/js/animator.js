@@ -171,4 +171,9 @@ export function render({ model, el }) {
             animate();
         }
     });
+    return () => { // clean up at removal time
+		clearTimeout(animationFrame); // remove it to avoid multiplied signals
+	};
 }
+
+export default { render };
