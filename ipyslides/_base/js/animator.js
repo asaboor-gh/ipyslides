@@ -1,4 +1,4 @@
-export function render({ model, el }) {
+function render({ model, el }) {
     const container = document.createElement("div");
     container.style.display = "flex";
     //container.style.flexWrap = "wrap";  // Allow wrapping for responsiveness

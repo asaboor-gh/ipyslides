@@ -231,10 +231,10 @@ class BaseSlides:
         self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
     
-    def interact(self, __func = None, __options={'manual': True, 'height':''}, **kwargs):
+    def interact(self, __func = None, __options={'manual': False, 'height':''}, **kwargs):
         """
-        ipywidgets's interact functionality tailored for ipyslides's needs. It adds 'height' as additional
-        parameter in options. Set height to avoid flickering output.
+        ipywidgets's interact functionality tailored for ipyslides's needs. It adds 'height_' as additional
+        parameter besides `manual_`. Set height to avoid flickering output. `manual` is set to True if no kwargs are passed, so it will refresh output by clicking on button.
 
         See a usage example in hl`Slides.docs()` or check documentation of `ipywidgets.interact`.
 
@@ -248,6 +248,9 @@ class BaseSlides:
         """
         if not isinstance(__options, dict):
             raise TypeError('__options should be a dictionary with keys "manual" and "height"')
+        
+        if not kwargs:
+            __options['manual'] = True # default to True if no kwargs are passed
 
         def inner(func, options={}):
             def new_func(**kws):
@@ -262,7 +265,7 @@ class BaseSlides:
                     else:
                         func(**kws)
 
-            _interact = ipyinteract.options(manual = options.get('manual', True), manual_name='', auto_display=True)
+            _interact = ipyinteract.options(manual = options.get('manual', False), manual_name='', auto_display=True)
             widget = _interact(new_func, **kwargs).widget.add_class('on-refresh')
             widget.out.layout.height = options.get('height','')
 
@@ -592,7 +595,7 @@ class BaseSlides:
             with self.capture_content() as cap, self.code.context():
                 import time
 
-                @self.interact({'height':'2em'}, date = False)  # self is Slides here
+                @self.interact({'manual': True, 'height': '2em'}, date = False)  # self is Slides here
                 def update_time(date): 
                     local_time = time.localtime()
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format

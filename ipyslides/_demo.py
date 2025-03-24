@@ -133,7 +133,7 @@ def demo_slides(slides):
         anim = slides.AnimationSlider(nframes=20, interval=5, continuous_update=False)
         source = s.get_source()
 
-        @slides.interact({'manual':False,'height':'400px'},anim=anim)
+        @slides.interact({'height': '400px'},anim=anim)
         def _(anim):
             slides.write(race_plot(), source)
 
