@@ -217,13 +217,15 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     """
     _esm = _esm = Path(__file__).with_name('js') / 'animator.js'
     _css = """
+    .animation-slider button {background: transparent !important;}
     .animation-slider button:hover > i,
     .animation-slider button:focus > i,
     .animation-slider button:active {
-        scale: 1.5;
+        scale: 1.25;
         transition: scale 200ms ease;
     }
     .animation-slider button:active {scale: 1.25;}
+    .animation-slider button .fa.fa-rotate-left.inactive {opacity: 0.25 !important;}
     """
     
     value = traitlets.Int(0).tag(sync=True)          

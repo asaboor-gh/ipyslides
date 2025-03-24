@@ -35,24 +35,11 @@ function render({ model, el }) {
         model.save_changes();
     };
 
-    // Go to First Frame Button
-    const firstFrameButton = document.createElement("button");
-    firstFrameButton.innerHTML = '<i class="fa fa-stop-circle"></i>';  // Icon for first frame
-    firstFrameButton.title = "Go to First Frame";
-    firstFrameButton.style.padding = "4px";
-    firstFrameButton.style.border = "none";
-
-    firstFrameButton.onclick = () => {
-        slider.value = slider.min;  // Reset to first frame
-        model.set("value", parseInt(slider.value, 10));
-        model.save_changes();
-    };
-
     // Loop Button
     const loopButton = document.createElement("button");
     loopButton.innerHTML = model.get("loop")
-        ? '<i class="fa fa-toggle-on"></i>'  // Active loop state
-        : '<i class="fa fa-toggle-off"></i>';  // Inactive loop state
+        ? '<i class="fa fa-rotate-left"></i>'  // Active loop state
+        : '<i class="fa fa-rotate-left inactive"></i>';  // Inactive loop state
     loopButton.title = "Toggle Looping";
     loopButton.style.padding = "4px";
     loopButton.style.border = "none";
@@ -62,13 +49,12 @@ function render({ model, el }) {
         model.set("loop", !currentLoop);
         model.save_changes();
         loopButton.innerHTML = model.get("loop")
-            ? '<i class="fa fa-toggle-on"></i>'  // Active
-            : '<i class="fa fa-toggle-off"></i>';  // Inactive
+            ? '<i class="fa fa-rotate-left"></i>'  // Active
+            : '<i class="fa fa-rotate-left inactive"></i>';  // Inactive
     };
 
     valueButtonsContainer.appendChild(valueLabel);
     valueButtonsContainer.appendChild(playPauseButton);
-    valueButtonsContainer.appendChild(firstFrameButton);
     valueButtonsContainer.appendChild(loopButton);
 
     // Slider and Value Container
@@ -165,6 +151,11 @@ function render({ model, el }) {
         const isPlaying = model.get("playing");
         playPauseButton.innerHTML = isPlaying ? '<i class="fa fa-pause-circle"></i>' : '<i class="fa fa-play-circle"></i>';
         if (isPlaying) {
+            if (slider.value === slider.max) { // Restart if at the end, without need of extra button
+                slider.value = slider.min;
+                model.set("value", parseInt(slider.value, 10));
+                model.save_changes();
+            }
             animate();
         } else {
             clearTimeout(animationFrame);
@@ -173,8 +164,8 @@ function render({ model, el }) {
 
     model.on("change:loop", () => {
         loopButton.innerHTML = model.get("loop")
-            ? '<i class="fa fa-toggle-on"></i>'  // Active loop
-            : '<i class="fa fa-toggle-off"></i>';  // Inactive loop
+            ? '<i class="fa fa-rotate-left"></i>'  // Active loop
+            : '<i class="fa fa-rotate-left inactive"></i>';  // Inactive loop
     });
 
     model.on("change:value", () => {
