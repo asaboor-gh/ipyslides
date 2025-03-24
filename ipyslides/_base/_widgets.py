@@ -216,6 +216,15 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     ```
     """
     _esm = _esm = Path(__file__).with_name('js') / 'animator.js'
+    _css = """
+    .animation-slider button:hover > i,
+    .animation-slider button:focus > i,
+    .animation-slider button:active {
+        scale: 1.5;
+        transition: scale 200ms ease;
+    }
+    .animation-slider button:active {scale: 1.25;}
+    """
     
     value = traitlets.Int(0).tag(sync=True)          
     description = traitlets.Unicode("n").tag(sync=True) 

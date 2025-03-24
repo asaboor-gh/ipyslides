@@ -2,6 +2,7 @@ let timeouts = new Set();
 
 function render({ model, el }) {
     const container = document.createElement("div");
+    container.classList.add("animation-slider");
     container.style.display = "flex";
     //container.style.flexWrap = "wrap";  // Allow wrapping for responsiveness
     container.style.alignItems = "flex-start";  // Align items to the top
@@ -149,7 +150,7 @@ function render({ model, el }) {
                 clearTimeout(timeout); // remove all prevous to avoid multiplied signals
                 timeouts.delete(timeout);
             };
-            
+
             model.set("value", parseInt(slider.value, 10));
             sliderValue.textContent = slider.value;
             model.save_changes();
