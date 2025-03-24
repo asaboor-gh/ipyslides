@@ -1,3 +1,5 @@
+let timeouts = new Set();
+
 function render({ model, el }) {
     const container = document.createElement("div");
     container.style.display = "flex";
@@ -98,6 +100,21 @@ function render({ model, el }) {
         }
     };
 
+    // Attach keydown listener directly to the slider
+    slider.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+            // Move slider left
+            slider.value = Math.max(slider.min, parseInt(slider.value, 10) - 1);
+            model.set("value", parseInt(slider.value, 10));
+            model.save_changes();
+        } else if (event.key === "ArrowRight") {
+            // Move slider right
+            slider.value = Math.min(slider.max, parseInt(slider.value, 10) + 1);
+            model.set("value", parseInt(slider.value, 10));
+            model.save_changes();
+        }
+    });
+
     // Slider Value
     const sliderValue = document.createElement("span");
     sliderValue.textContent = slider.value;  // Display slider value inline
@@ -127,10 +144,18 @@ function render({ model, el }) {
                 model.save_changes();
                 return;
             }
+
+            for (let timeout of timeouts) {
+                clearTimeout(timeout); // remove all prevous to avoid multiplied signals
+                timeouts.delete(timeout);
+            };
+            
             model.set("value", parseInt(slider.value, 10));
             sliderValue.textContent = slider.value;
             model.save_changes();
+
             animationFrame = setTimeout(animate, model.get("interval"));
+            timeouts.add(animationFrame); // add new timeout to the set
         }
     }
 
