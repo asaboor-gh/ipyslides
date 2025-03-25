@@ -1,7 +1,7 @@
 function setLabel(model, el) {
     let lab = model.get("description");
     el.textContent = lab;  // Display "Value" label
-    el.style.display = lab ? "none" : "unset";  // Hide label if no description is provided
+    el.style.display = lab ? "" : "none";  // Hide label if no description is provided
 }
 
 let timeouts = new Set();
