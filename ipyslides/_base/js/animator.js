@@ -110,18 +110,31 @@ function render({ model, el }) {
 
     // Animation logic
     let animationFrame;
+    let direction = 1; // 1 for forward, -1 for backward
 
     function animate() {
         if (model.get("playing")) {
             const currentValue = parseInt(slider.value, 10);
-            if (currentValue < slider.max) {
-                slider.value = currentValue + 1;
-            } else if (model.get("loop")) {
-                slider.value = slider.min;  // Restart if looping is enabled
+            
+            if (model.get("cyclic") && model.get("loop")) { // Cyclic mode only with loop
+                // Reverse direction at endpoints
+                if (currentValue >= slider.max) {
+                    direction = -1;
+                } else if (currentValue <= slider.min) {
+                    direction = 1;
+                }
+                slider.value = currentValue + direction;
             } else {
-                model.set("playing", false);  // Stop if not looping
-                model.save_changes();
-                return;
+                // Original behavior
+                if (currentValue < slider.max) {
+                    slider.value = currentValue + 1;
+                } else if (model.get("loop")) {
+                    slider.value = slider.min;  // Restart if looping is enabled
+                } else {
+                    model.set("playing", false);  // Stop if not looping
+                    model.save_changes();
+                    return;
+                }
             }
 
             for (let timeout of timeouts) {
@@ -139,6 +152,11 @@ function render({ model, el }) {
     }
 
     // Listeners for model changes
+
+    model.on("change:cyclic", () => {
+        direction = 1; // Reset direction when cyclic mode changes, will fix in animate itself
+    });
+
     model.on("change:playing", () => {
         const isPlaying = model.get("playing");
         playPauseButton.innerHTML = isPlaying ? '<i class="fa fa-pause-circle"></i>' : '<i class="fa fa-play-circle"></i>';
@@ -148,7 +166,8 @@ function render({ model, el }) {
                 model.set("value", parseInt(slider.value, 10));
                 model.save_changes();
             }
-            animate();
+            animationFrame = setTimeout(animate, model.get("interval"));
+            timeouts.add(animationFrame); // add new timeout to the set
         } else {
             clearTimeout(animationFrame);
         }

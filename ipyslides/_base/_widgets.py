@@ -189,6 +189,7 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
 
     You need to provide parameters like `nframes` and `interval` (milliseconds) to control the animation. 
     The `value` trait can be observed to get the current frame index.
+    The `cyclic` trait can be set to `True` to make the animation cyclic and only works when loop mode is ON.
 
     ```python
     from plotly.graph_objects import FigureWidget
@@ -236,4 +237,5 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     interval = traitlets.Float(50.0).tag(sync=True) 
     playing = traitlets.Bool(False).tag(sync=True) 
     continuous_update = traitlets.Bool(True).tag(sync=True)
+    cyclic = traitlets.Bool(False).tag(sync=True) 
     
