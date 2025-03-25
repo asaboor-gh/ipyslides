@@ -205,12 +205,13 @@ class BaseSlides:
         "CSS syntax for use in Slide.set_css, Slides.html('style', ...) etc."
         return XTML(_css_docstring)
    
-    def get_source(self, title = 'Source Code'):
-        "Return source code of all slides except created as frames with python code."
+    def get_source(self, title = 'Source Code', **kwargs):
+        "Return source code of all slides except created as frames with python code. kwargs are passed to `ipyslides.formatters.highlight`."
         sources = []
         for slide in self.all_slides:
             if slide._source['text']:
-                sources.append(slide.get_source(name=f'{slide._source["language"].title()}: Slide {slide.index}'))
+                kwargs['name'] = f'{slide._source["language"].title()}: Slide {slide.index}' #override name
+                sources.append(slide.get_source(**kwargs))
             
         if sources:
             return self.frozen(f'<h2>{title}</h2>' + '\n'.join(s.value for s in sources),{})

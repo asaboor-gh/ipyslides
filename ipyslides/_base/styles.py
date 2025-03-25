@@ -418,8 +418,8 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             'overflow':'auto !important',
             'padding':'0 !important',
             'margin':'4px 0px !important', # Opposite to padding to balance it 
-            'max-height':'400px', # Try avoiding important here 
-            'height':'auto !important',
+            'max-height':'100%', # Try avoiding important here, approach contaier
+            'height': 'auto',
             # colors are set via settigs.set_code_theme
             'pre': {  # works for both case, do not use > 
                 'display':'grid !important',
@@ -466,14 +466,17 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'background':'#8988 !important'
             },
         },
-        'span.lang-name': {
+        '.lang-name': {
             'color':'var(--accent-color)',
-            'font-size':'0.8em',
+            'font-size':'0.6em',
+            'padding':'4px',
+            'text-shadow':'0 1px var(--bg1-color)',
+            
         },
         '.docs': { # docs have Python code only, so no need to have fancy things there
             'margin-bottom':'1em !important',
             '.highlight': {'border':'none !important',},
-            'span.lang-name': {'display':'none !important',},
+            '.lang-name': {'display':'none !important',},
         },
         '.InlinePrint': {
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 

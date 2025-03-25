@@ -463,10 +463,10 @@ class Slide:
                 
         return tuple(outputs) 
     
-    def get_source(self, name = None):
-        "Return source code of this slide, markdwon or python or None if no source exists."
+    def get_source(self, name = None, height='400px', **kwargs):
+        "Return source code of this slide, markdwon or python or None if no source exists. kwargs are passed to `Slides.code.from_string`."
         if self._source['text']:
-            return self._app.code.from_string(**self._source, name = name)
+            return self._app.code.from_string(**self._source, name = name, height=height, **kwargs)
         else:
             return self._app.code.cast('No source found!\n',language = 'markdown')
     

@@ -235,10 +235,10 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True):
+def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True, height='400px'):
     """Highlight code with given language and style. style only works if css_class is given.
     If css_class is given and matches any of hl`pygments.styles.get_all_styles()`, then style will be applied immediately.
-    color is used for text color as some themes dont provide text color."""
+    color is used for text color as some themes dont provide text color. `height` is max-height of code block, it does not expand more than code itself."""
     if style not in pygments.styles.get_all_styles():
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     if css_class in pygments.styles.get_all_styles():
@@ -259,8 +259,8 @@ def highlight(code, language='python', name = None, css_class = None, style='def
     if isinstance(css_class, str):
         start = start.replace('class="highlight"',f'class="highlight {css_class}"')
     
-    return XTML(f'''<div>
-        <span class='lang-name'>{_title}</span>
+    return XTML(f'''<div class="lang-name">{_title}</div>
+        <div class="highlight-wrapper" style="height:auto;max-height:{height};overflow:auto;position:relative;">
         {_style}\n{start}
         <pre>{code_}
         </pre>\n{end}</div>''')
