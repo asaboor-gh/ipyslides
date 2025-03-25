@@ -1,26 +1,27 @@
+function setLabel(model, el) {
+    let lab = model.get("description");
+    el.textContent = lab;  // Display "Value" label
+    el.style.display = lab ? "none" : "unset";  // Hide label if no description is provided
+}
+
 let timeouts = new Set();
 
 function render({ model, el }) {
     const container = document.createElement("div");
-    container.classList.add("animation-slider");
-    container.style.display = "flex";
-    //container.style.flexWrap = "wrap";  // Allow wrapping for responsiveness
-    container.style.alignItems = "flex-start";  // Align items to the top
-    container.style.gap = "8px";  // Gap between the two main divs
-    container.style.padding = "4px";  // Compact padding
-    container.style.maxWidth = "200px";  // Limit container width for a clean layout
-    container.style.flexDirection = "row";  // Align divs horizontally
-
-    // Value and Buttons Container
-    const valueButtonsContainer = document.createElement("div");
-    valueButtonsContainer.style.display = "flex";
-    valueButtonsContainer.style.alignItems = "center";
-    valueButtonsContainer.style.gap = "4px";  // Small gap between elements
+    container.classList.add("animation-slider", "jupyter-widgets", "widget-inline-hbox", "widget-slider","widget-hslider");  // Use the same style as other widgets
+    container.style.alignItems = "center";  // Center elements vertically
+    container.style.gap = "4px";  // Small gap between elements
+    container.style.width = "auto";  // Allow container to grow dynamically
+    container.style.maxWidth = "var(--jp-widgets-inline-width)";
+    container.style.overflowX = "auto";  // Allow horizontal scrolling if needed
+    container.style.overflowY = "hidden";  // Hide vertical scrolling when scaling buttons
 
     // Value Element
-    const valueLabel = document.createElement("span");
-    valueLabel.textContent = model.get("description") + ":";  // Display "Value" label
-    valueLabel.style.marginRight = "8px";  // Space between label and buttons
+    const valueLabel = document.createElement("label");
+    valueLabel.textContent = '';
+    valueLabel.classList.add("widget-label");  // Use the same style as other labels
+    valueLabel.title = null;  // Remove tooltip
+    setLabel(model, valueLabel);  // Display "Value" label first time
 
     // Play/Pause Button
     const playPauseButton = document.createElement("button");
@@ -53,16 +54,9 @@ function render({ model, el }) {
             : '<i class="fa fa-rotate-left inactive"></i>';  // Inactive
     };
 
-    valueButtonsContainer.appendChild(valueLabel);
-    valueButtonsContainer.appendChild(playPauseButton);
-    valueButtonsContainer.appendChild(loopButton);
-
-    // Slider and Value Container
-    const sliderContainer = document.createElement("div");
-    sliderContainer.style.display = "flex";
-    sliderContainer.style.alignItems = "center";
-    sliderContainer.style.gap = "8px";  // Compact spacing
-    sliderContainer.style.flexGrow = "1";  // Take up remaining space
+    container.appendChild(valueLabel);
+    container.appendChild(playPauseButton);
+    container.appendChild(loopButton);
 
     const slider = document.createElement("input");
     slider.type = "range";
@@ -103,17 +97,15 @@ function render({ model, el }) {
     });
 
     // Slider Value
-    const sliderValue = document.createElement("span");
+    const sliderValue = document.createElement("div");
+    sliderValue.classList.add("widget-readout");  // Use the same style as other readouts
     sliderValue.textContent = slider.value;  // Display slider value inline
-    sliderValue.style.marginLeft = "8px";  // Space from slider for readability
+    sliderValue.style.width = `${model.get("nframes").toString().length + 1}ch`;  // Adjust width based on number of frames
+    sliderValue.style.minWidth = `${model.get("nframes").toString().length}ch`;  // Minimum width based on number of frames
+    sliderValue.style.maxWidth = "unset";  // ovveride large space in jupyter
 
-    sliderContainer.appendChild(slider);
-    sliderContainer.appendChild(sliderValue);
-
-    // Append both containers to the main container
-    container.appendChild(valueButtonsContainer);
-    container.appendChild(sliderContainer);
-
+    container.appendChild(slider);
+    container.appendChild(sliderValue);
     el.appendChild(container);
 
     // Animation logic
@@ -174,7 +166,7 @@ function render({ model, el }) {
     });
 
     model.on("change:description", () => {
-        valueLabel.textContent = model.get("description")+":";
+        setLabel(model, valueLabel);  // Display "Value" label
     });
 
     model.on("change:nframes", () => {

@@ -218,6 +218,7 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     _esm = _esm = Path(__file__).with_name('js') / 'animator.js'
     _css = """
     .animation-slider button {background: transparent !important;}
+    .animation-slider input[type="range"] {outline: none;}
     .animation-slider button:hover > i,
     .animation-slider button:focus > i,
     .animation-slider button:active {
@@ -229,7 +230,7 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     """
     
     value = traitlets.Int(0).tag(sync=True)          
-    description = traitlets.Unicode("n").tag(sync=True) 
+    description = traitlets.Unicode(None, allow_none=True).tag(sync=True) 
     loop = traitlets.Bool(False).tag(sync=True)     
     nframes = traitlets.Int(100).tag(sync=True)     
     interval = traitlets.Float(50.0).tag(sync=True) 
