@@ -11,6 +11,8 @@ Create interactive slides programatically in [Jupyter](https://jupyter.org/)/[Vo
 - Launch Example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
 - See [PDF-Slides](Slides.pdf)
 ![Overview](slide.png)
+- Create cool animations like this one
+![Animate](animate.gif)
 
 ---
 # Changelog
