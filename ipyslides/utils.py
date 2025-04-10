@@ -645,6 +645,10 @@ def hspace(em = 1):
     "Returns html node with given height in `em`."
     return html('span',style=f'width:{em}em;display:inline-block;') # span with inline display can be used inside <p>
 
+def line(length=5, color='var(--fg2-color)',width=1,style='solid'):
+    """Returns a horizontal line with given length in em and color. `width` is the thickness of line."""
+    return f"<span style='display:inline-block;border:{width}px {style} {color};width:{length}em;max-width:100%;'></span>"
+
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""

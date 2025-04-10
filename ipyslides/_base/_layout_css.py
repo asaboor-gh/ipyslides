@@ -32,7 +32,16 @@ def layout_css(accent_color, aspect):
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
                 },  # still should be clickable
-                "^.PasteMode" : {
+                ".md-var": {"display": "none"}, # Hide all by default
+                "^.EditMode" : {
+                    ".md-var": {
+                        "display":"unset",
+                        "padding": "0 0.2em",
+                        "color": "var(--accent-color)",
+                        "background": "var(--bg2-color)",
+                        "border-radius": "0.2em",
+                        "font-family": "var(--jp-code-font-family)"
+                    }, # Show only in paste mode
                     ".paste-box": {
                         "background": "var(--bg2-color)",
                         "border": "0.5px solid var(--jp-border-color1,#8988)!important",

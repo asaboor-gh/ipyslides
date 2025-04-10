@@ -103,7 +103,7 @@ class _Checks:
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
     navgui  = ipw.Checkbox(value = True, description='Show Nav. GUI',layout=auto_layout)
-    paste   = ipw.Checkbox(value = True, description='Show Image Paste GUI',layout=auto_layout)
+    paste   = ipw.Checkbox(value = True, description='Edit Mode',layout=auto_layout)
     confirm = ipw.Checkbox(value = False, description='Overwrite Existing File',layout=auto_layout)
 
 @dataclass(frozen=True)
@@ -176,9 +176,8 @@ class Widgets:
                 self.sliders.width,
                 self.theme,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
-                self.checks.focus, self.checks.notes,self.checks.toast,
+                self.checks.paste, self.checks.focus, self.checks.notes,self.checks.toast,
                 self.checks.navgui, self.checks.reflow,
-                self.checks.paste,
                 HTML(html('details',[html('summary','<b>HTML File Export</b>'), how_to_print]).value,layout = _html_layout),
                 self.buttons.export,
                 self.checks.confirm,

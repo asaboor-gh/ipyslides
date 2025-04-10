@@ -130,7 +130,7 @@ def demo_slides(slides):
 
     with slides.build(-1) as s:
         slides.write('## Animations with Widgets')
-        anim = slides.AnimationSlider(nframes=20, interval=5, continuous_update=False)
+        anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
         source = s.get_source()
 
         @slides.interact({'height': '400px'},anim=anim)
@@ -218,6 +218,8 @@ def demo_slides(slides):
                 |---|---|---|
                 |d1 |d2 |d3 |
                 |r1 |r2 |r3 |
+                
+                line`200`
                 ''',
             ], 
             [

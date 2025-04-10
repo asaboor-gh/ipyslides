@@ -109,7 +109,7 @@ For widgets and other objects's snapshots to be available in exported
 slides, use alert`Slides.alt`, alert` Slides.clip ` functions, which can pick images automatically
 from alert`Slides.clips_dir` with just a filename or clipboard (and save for next run). You can paste
 screenshots from system tool into alert` Slides.clip ` or `Slides.alt('filename.png', obj)` area on slides if you enable 
-alert`Show Image Paste GUI` toggle in settings panel. On Linux, you need alert` xclip ` or alert`wl-paste` installed.
+alert`Edit Mode` toggle in settings panel. On Linux, you need alert` xclip ` or alert`wl-paste` installed.
 
 ::: note-tip
     - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.

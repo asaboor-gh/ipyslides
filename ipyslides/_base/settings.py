@@ -290,9 +290,11 @@ class Settings:
 
     def _toggle_paste_mode(self, change):
         if self._widgets.checks.paste.value:
-            self._widgets.mainbox.add_class("PasteMode")
+            self._widgets.mainbox.add_class("EditMode")
+            self._slides.notify("Enabled features such as varaibale names view and image paste")
         else:
-            self._widgets.mainbox.remove_class("PasteMode")
+            self._widgets.mainbox.remove_class("EditMode")
+            self._slides.notify("Disabled features such as varaibale names view and image paste")
 
     def _close_quick_menu(self):
         if self._tgl_menu.value:
