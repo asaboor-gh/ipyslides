@@ -186,8 +186,8 @@ class Slide:
         "Get variables names info by their enclosing scope on this slide."
         return {
             'by:__main__': self._req_vars, 
-            'by:rebuild': tuple(self._md_vars.keys()), 
-            'by:fmt': tuple(getattr(self._markdown, '_ns',{}))
+            'by:Slide.rebuild': tuple(self._md_vars.keys()), 
+            'by:Slides.fmt': tuple(getattr(self._markdown, '_ns',{}))
         }
 
     def _reset_toc(self):

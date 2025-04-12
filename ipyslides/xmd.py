@@ -532,10 +532,6 @@ class XMarkdown(Markdown):
             self._vars[key] = value # Direct value stored
         return key
     
-    def _show_match(self, match):
-        "Display variable name on slide for quick reference."
-        return f"<span class='md-var jupyter-only' title='This can be hidden by unchecking Edit Mode toggle'>{match.group().replace('`','&#96;')}</span>" if match else ""
-    
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as `{var}` and two inline columns as ||C1||C2||"   
         user_ns = self.user_ns() # get once, will be called multiple time
@@ -549,8 +545,8 @@ class XMarkdown(Markdown):
 
             value, _ = hfmtr.get_field(key, (), user_ns)
             if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
-                return self._show_match(match) + self._handle_var(value) 
-            return self._show_match(match) + self._handle_var(hfmtr.vformat(match.group()[1:-1], (), user_ns))
+                return self._handle_var(value) 
+            return self._handle_var(hfmtr.vformat(match.group()[1:-1], (), user_ns))
         
         html_output = re.sub(r"\`\{(.*?)\}\`", handle_match, html_output, flags=re.DOTALL)
 

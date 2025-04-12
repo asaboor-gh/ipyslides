@@ -215,9 +215,18 @@ class Slides(BaseSlides):
         
     def _jump_to_source_cell(self, btn):
         if hasattr(self._current, '_scroll_btn'):
+            toast = ""
             self._current._scroll_btn.focus()
         else:
-            self.notify('No source cell found!')
+            toast = 'No source cell found!'
+        
+        vars_info = [(v ,scope.split(':')[1]) for scope, value in self._current.vars.items() for v in value]
+
+        if vars_info:
+            vars_info = '<table style="width:100%;"><tr><th>Variable</th><th>Scope</th></tr>' + ''.join(
+                [f'<tr><td>{utils.hl(v)}</td><td>{utils.hl(s)}</td></tr>' for v, s in vars_info]) + '</table>'
+        
+        self.notify(toast + (vars_info or ""), 10 if vars_info else 2) #  seconds to show message
 
     def _setup(self):
         if not self._slides_dict:  # prevent overwrite

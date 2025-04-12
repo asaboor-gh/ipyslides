@@ -82,7 +82,7 @@ key_maps = {
     "Esc": "Exit fullscreen",
     "S": "Toggle settings panel",
     "L": "Toggle LASER pointer",
-    "E": "Edit Source Cell of Current Slide", 
+    "E": "Edit Source Cell/View Variables", 
     "K": "Show keyboard shortcuts",
 }
 
@@ -168,9 +168,9 @@ You can customize slides by inheriting from `Slides` class.
 
 ```python
 class WorkSlides(isd.Slides):
-    def __init__(self):
-        super().__init__()
-        self.apply(
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.settings(
             logo=dict(src='<My office logo source file>'),
             layout=dict(aspect=4/3, center=False),
         )

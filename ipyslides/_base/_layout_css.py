@@ -32,16 +32,7 @@ def layout_css(accent_color, aspect):
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
                 },  # still should be clickable
-                ".md-var": {"display": "none"}, # Hide all by default
                 "^.EditMode" : {
-                    ".md-var": {
-                        "display":"unset",
-                        "padding": "0 0.2em",
-                        "color": "var(--accent-color)",
-                        "background": "var(--bg2-color)",
-                        "border-radius": "0.2em",
-                        "font-family": "var(--jp-code-font-family)"
-                    }, # Show only in paste mode
                     ".paste-box": {
                         "background": "var(--bg2-color)",
                         "border": "0.5px solid var(--jp-border-color1,#8988)!important",
@@ -105,7 +96,7 @@ def layout_css(accent_color, aspect):
                     "position":"absolute",
                     "right":"4px", # top is made for animation via javascript
                     "top": "-120px", # Hides on load
-                    "max-width":"55%",
+                    "max-width":"65%",
                     "min-width":"300px",
                     "min-height":"100px",
                     "max-height":"65%", 
@@ -125,7 +116,8 @@ def layout_css(accent_color, aspect):
                         "border-radius":"50%",
                         "font-size":"20px",
                     },
-                    ":is(h1, h2, h3, h4, h5, h6)" : {"text-align": "left !important"},
+                    "table": {"width": "100% !important",}, # override width
+                    ":is(h1, h2, h3, h4, h5, h6, th)" : {"text-align": "left !important"},
                 },
                 ".LogoHtml": {"position": "absolute !important","margin-left":"auto !important",}, # other properties are set internally
                 ".Loading": {
