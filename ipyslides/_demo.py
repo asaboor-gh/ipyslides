@@ -126,7 +126,7 @@ def demo_slides(slides):
         
         def display_plot(): return race_plot().display()
         
-        slides.write(lambda: slides.interact(display_plot), rslide.get_source()) # Only first columns will update
+        slides.write(slides.interactive(display_plot), rslide.get_source()) # Only first columns will update
 
     with slides.build(-1) as s:
         slides.write('## Animations with Widgets')
@@ -157,6 +157,9 @@ def demo_slides(slides):
                 ax.set_xlim([0,18])
                 ax.set_axis_off()
                 slides.write(s.focus_lines([idx - 10]),ax,widths=[60,40])
+
+                if idx == 10:
+                    slides.write('Unlike `interact/interactive`, this animation is based on slide frames, all of which are exported to HTML.',css_class='note-tip')
 
     slides.build(-1,'section`Controlling Content on Frames` toc`### Contents`')
 

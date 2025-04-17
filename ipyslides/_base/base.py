@@ -14,7 +14,7 @@ from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
-from ..formatters import XTML
+from ..formatters import XTML, widget_from_data
 from ..xmd import _special_funcs, _md_extensions, error, xtr, get_slides_instance
 from ..utils import _css_docstring
 
@@ -234,15 +234,15 @@ class BaseSlides:
     
     def interact(self, __func = None, __options={'manual': False, 'height':''}, **kwargs):
         """
-        ipywidgets's interact functionality tailored for ipyslides's needs. It adds 'height_' as additional
-        parameter besides `manual_`. Set height to avoid flickering output. `manual` is set to True if no kwargs are passed, so it will refresh output by clicking on button.
+        ipywidgets's interact functionality tailored for ipyslides's needs. It adds 'height' as additional
+        parameter besides `manual`. Set height to avoid flickering output. `manual` is set to True if no kwargs are passed, so it will refresh output by clicking on button.
 
         See a usage example in hl`Slides.docs()` or check documentation of `ipywidgets.interact`.
 
         Additionally, you can pass `Slides.AnimationSlider` as a keyword argument to animate a function under interact, or even external objects like `plotly.graph_objects.FigureWidget` etc.
 
         ::: note-tip
-            You can use this inside columns using delayed display trick, like hl`write('First column', lambda: interact(f, x = 5))`.
+            You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
 
         ::: note-warning
             Do not use this to change global state of slides, because that will affect all slides.
@@ -280,7 +280,7 @@ class BaseSlides:
                 btn.tooltip = 'Click to refresh output'
                 btn.icon = 'plus'
                 btn.click() # first run to ensure no dynamic inside
-        
+            
         if __func is None:
             return inner
         elif isinstance(__func, dict): # Only options passed 
@@ -288,9 +288,12 @@ class BaseSlides:
         else:
             inner(__func, __options)
 
-    def animate(self, func, nframes, interval,height=None):
-        raise DeprecationWarning("Use `Slides.AnimationSlider` widget instead of `Slides.animate` alongwith `Slides.interact` for full flexibility.")
-        
+    def interactive(self, __func = None, __options={'manual': False, 'height':''}, **kwargs):
+        "Same as `Slides.interact` but interact widget is captured and returned."
+        with self.capture_content() as c: # this display stays on python side, so not too expensive
+            self.interact(__func, __options, **kwargs)
+        return widget_from_data(c.outputs[0].data) # very rude way to get widget, but works
+
     def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
         if self.is_jupyter_session():
@@ -662,8 +665,9 @@ class BaseSlides:
         with self.build(-1) as s:
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write(
-                lambda: display(self.html('h3','I will be on main slides',css_class='warning'), 
-                metadata = {'text/html': '<h3 class="warning">I will be on exported slides</h3>'}), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
+                self.hold(display, self.html('h3','I will be on main slides',css_class='warning'),
+                    metadata = {'text/html': '<h3 class="warning">I will be on exported slides</h3>'}
+                ), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
                 s.get_source(), widths = [1,3]
             )
             self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `@Slides.serializer.register` to serialize them to html.\n{.note .info}')

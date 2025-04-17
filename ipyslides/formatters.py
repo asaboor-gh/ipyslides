@@ -90,6 +90,10 @@ class XTML(HTML):
     def __str__(self):
         return str(self._repr_html_())
     
+    def __call__(self):
+        "Display this HTML object."
+        return self.display()
+    
     def display(self):
         "Display this HTML object."
         display(self)

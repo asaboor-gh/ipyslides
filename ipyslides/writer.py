@@ -9,6 +9,21 @@ from IPython.display import display as display
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta
 from .xmd import parse, capture_content
 
+
+class hold:
+    "Hold the display of a callable (return value is discarded) until the instance is called. Use this to delay display of a function until it is captured in a column of `Slides.write`"
+    def __init__(self, f, *args, **kwargs):
+        self._callable = f
+        self._args = args
+        self._kwargs = kwargs
+
+    def __call__(self):
+        "Call the held callable with stored arguments. Returns None. `Slides.write` will auto call it."
+        self._callable(*self._args, **self._kwargs)
+
+    def display(self):
+        self.__call__()
+
 class CustomDisplay:
     "Use this to create custom display types for object."
     def _ipython_display_(self):
@@ -112,8 +127,8 @@ class Writer(ipw.HBox):
                         display(c)
                     elif isinstance(c,str):
                         parse(c, returns = False)
-                    elif callable(c) and c.__name__ == '<lambda>':
-                        _ = c() # If c is a lambda function, call it and it will dispatch whatever is inside, ignore output
+                    elif isinstance(c, hold):
+                        _ = c() # If c is hold, call it and it will dispatch whatever is inside, ignore return value
                     else:
                         display(XTML(htmlize(c)))
             
@@ -156,7 +171,7 @@ def write(*objs,widths = None, css_class=None):
     Write any object that can be displayed in a cell with some additional features:
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
-    - Display another function in order by passing it to a lambda function like hl`lambda: func()`. Only body of the function will be displayed/printed. Return value will be ignored.
+    - Display another function to capture its output in order using hl`Slides.hold(func,...)`. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh` etc. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
@@ -174,7 +189,7 @@ def write(*objs,widths = None, css_class=None):
     ::: note
         - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.
         - `write` is a robust command that can handle most of the cases. If nothing works, hl`repr(obj)` will be displayed.
-        - You can avoid hl`repr(obj)` by hl`lambda: func()` e.g. hl`lambda: plt.show()`. This can also be used to delay display until it is captured in a column.
+        - You can avoid hl`repr(obj)` by hl`Slides.hold(func, ...)` e.g. hl`Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
         - You can use hl`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.

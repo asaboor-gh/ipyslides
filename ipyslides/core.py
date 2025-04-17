@@ -10,7 +10,7 @@ from IPython.display import display, clear_output
 
 from .xmd import fmt, parse, xtr, get_main_ns, extender as _extender
 from .source import Code
-from .writer import GotoButton, write
+from .writer import hold, GotoButton, write
 from .formatters import HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
 
@@ -91,6 +91,7 @@ class Slides(BaseSlides):
         self.code       = Code  # Code source
         self.icon       = _Icon  # Icon is useful to add many places
         self.write      = write
+        self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.parse      = parse  # Parse extended markdown
         self.fmt        = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
