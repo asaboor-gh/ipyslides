@@ -1,4 +1,4 @@
-_attrs = ['AnimationSlider', 'alt', 'alert', 'as_html', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'alt', 'alert', 'as_html', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
     'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
@@ -670,6 +670,10 @@ def rows(*objs):
 def cols(*objs,widths=None):
     "Returns HTML containing multiple columns of given widths. This alongwith `rows` can create grid."
     return XTML(_fmt_cols(*objs,widths=widths))
+
+def table(data, widths=None):
+    "Creates a table of given data like DataFrame, but with rich elements. `data` should be a list of lists or tuples."
+    return html('div', [cols(*d, widths=widths) for d in data],css_class='grid-table')
 
 def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class
     if len(objs) == 0:

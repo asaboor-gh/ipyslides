@@ -196,7 +196,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             'h3': {'font-size':'1.5em'},
             'h4': {'font-size':'1.2em'},
             'h5': {'font-size':'1em'},
-            'table': {
+            'table, .grid-table': {
                 'border-collapse':'collapse !important',
                 'font-size':'0.85em',
                 'word-break':'break-all',
@@ -205,14 +205,21 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'color':'var(--fg1-color) !important',
                 'background':'var(--bg1-color) !important',
                 'border':'1px solid var(--bg3-color) !important', # Makes it pleasant to view
-                'tbody': {
-                    'tr': {
-                        '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
-                        '^:nth-child(even)': {'background':'var(--bg1-color) !important',},
-                        '^:hover': {'background':'var(--bg3-color) !important',},
-                    },
+                'tr, .columns': {
+                    '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
+                    '^:nth-child(even)': {'background':'var(--bg1-color) !important',},
+                    '^:hover': {'background':'var(--bg3-color) !important',},
                 },
             },
+            '.grid-table': { 
+                'font-size':'unset',
+                '.columns': {
+                    'padding':'0 0.2em',
+                    'display': 'flex !important',
+                    'flex-direction': 'row !important',
+                    'column-gap':'0.2em',
+                },
+            }, # For grid tables
             'blockquote, blockquote > p': {
                 'background':'var(--bg2-color)',
                 'color':'var(--fg2-color)',

@@ -13,6 +13,9 @@ from .xmd import parse, capture_content
 class hold:
     "Hold the display of a callable (return value is discarded) until the instance is called. Use this to delay display of a function until it is captured in a column of `Slides.write`"
     def __init__(self, f, *args, **kwargs):
+        if not callable(f):
+            raise TypeError(f'Expected first argument a callable, got {type(f)}')
+        
         self._callable = f
         self._args = args
         self._kwargs = kwargs
