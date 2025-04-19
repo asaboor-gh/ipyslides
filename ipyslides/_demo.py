@@ -150,7 +150,7 @@ def demo_slides(slides):
 
         with slides.code.context(returns = True) as s:
             for idx in slides.fsep.loop(range(10,19)):
-                fig, ax = plt.subplots()
+                fig, ax = plt.subplots(figsize=(3.4,2.6))
                 x = np.linspace(0,idx,50)
                 ax.plot(x,np.sin(x))
                 ax.set_title(rf'$f(x)=\sin(x)$, 0 < x < {idx+1}')
@@ -223,7 +223,9 @@ def demo_slides(slides):
                 |r1 |r2 |r3 |
                 
                 line`200`
+                ### A rich content table
                 ''',
+                slides.table([[slides.icon('loading'), 2,3],[3,'hl`import numpy as np`', 5]],headers=['h1','h2','h3'],widths=[3,5,1]),
             ], 
             [
                 '### Widgets',

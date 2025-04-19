@@ -10,6 +10,7 @@ import datetime
 import inspect
 import traceback
 
+from collections.abc import Iterable
 from types import MethodType
 from pathlib import Path
 from io import BytesIO # For PIL image
@@ -100,7 +101,7 @@ _example_props = {
             'font-size': ('24px','2em'), # fallbacks given as tuple
             '^:hover': {'opacity': '1'}, # Attach pseudo class to parent by prepending ^, or .B:hover works too
         },
-        '> div': { # Direct nesting by >
+        '> h1': { # Direct nesting by >
             'padding': '0',
             '@media screen and (min-width: 650px)' : { # This will take above selectors inside and move itself out
                 'padding': '2em',
@@ -253,8 +254,7 @@ Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-
 props = {json.dumps(_example_props, indent=2)}
 ```
 Output of hl`html('style',props)`, hl`set_css(props)` etc. functions. Top selector would be different based on where it is called.
-{highlight(_styled_css(_example_props).value, "css","CSS")}
-""", returns=True)
+""", returns=True) + highlight(_styled_css(_example_props).value, "css","CSS").value
 
 def _alt_for_widget(func, widget):
     if not isinstance(widget, ipw.DOMWidget):
@@ -671,9 +671,34 @@ def cols(*objs,widths=None):
     "Returns HTML containing multiple columns of given widths. This alongwith `rows` can create grid."
     return XTML(_fmt_cols(*objs,widths=widths))
 
-def table(data, widths=None):
-    "Creates a table of given data like DataFrame, but with rich elements. `data` should be a list of lists or tuples."
-    return html('div', [cols(*d, widths=widths) for d in data],css_class='grid-table')
+def table(data, headers = None, widths=None):
+    """Creates a table of given data like DataFrame, but with rich elements. 
+    `data` should be a 2D matrix-like. `headers` is a list of column names. `widths` is a list of widths for each column.
+    
+    Example:
+    ```python
+    import pandas as pd
+    df = pd.DataFrame({'A': [1,2,3], 'B': [4,5,6]})
+    slides.table(df.values, headers=df.columns, widths=[1,2])
+
+    slides.table([[1,2,3],[4,5,6]], headers=['A','B','C'], widths=[1,2,3])
+    ```
+    """
+    klass = 'grid-table' if headers is None else 'grid-table header'
+
+    try:
+        [col for row in data for col in row] # Check if data is iterable and 2D
+
+        if headers is not None:
+            if not isinstance(headers, Iterable):
+                raise TypeError(f'headers should be an iterable of colum headers or None, got {type(headers)}')
+            
+            data = [headers, *data] # Add headers to data
+
+    except TypeError:
+        raise TypeError("data should be 2D matrix-like")
+    
+    return html('div', [cols(*d, widths=widths) for d in data],css_class=klass + ' zoom-self')
 
 def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class
     if len(objs) == 0:

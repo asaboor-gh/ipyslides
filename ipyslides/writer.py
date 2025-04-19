@@ -5,6 +5,7 @@ Main write functions to add content to slides
 __all__ = ['write']
 
 from IPython.display import display as display
+from IPython.utils.capture import CapturedIO
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta
 from .xmd import parse, capture_content
@@ -128,6 +129,8 @@ class Writer(ipw.HBox):
                 for c in col['outputs']:
                     if isinstance(c,(RichOutput, CustomDisplay, ipw.DOMWidget)):
                         display(c)
+                    elif isinstance(c, CapturedIO):
+                        c.show() # Display captured outputs, all of them
                     elif isinstance(c,str):
                         parse(c, returns = False)
                     elif isinstance(c, hold):

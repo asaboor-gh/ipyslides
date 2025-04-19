@@ -123,7 +123,7 @@ def layout_css(accent_color, aspect):
                 ".Loading": {
                     "position": "absolute",
                     "left": "0 !important",
-                    "top": "0 !imporatnt",
+                    "top": "0 !important",
                     "width": "100% !important",
                     "height": "100% !important",
                     "z-index": "11",  # Above all

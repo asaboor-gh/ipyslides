@@ -205,20 +205,37 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'color':'var(--fg1-color) !important',
                 'background':'var(--bg1-color) !important',
                 'border':'1px solid var(--bg3-color) !important', # Makes it pleasant to view
-                'tr, .columns': {
+                'tr': {
                     '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
                     '^:nth-child(even)': {'background':'var(--bg1-color) !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},
                 },
+                '^.dataframe': {
+                    'th, tr, td': {'border': 'none'},
+                    'thead': {'border': 'inherit'},
+                },
             },
             '.grid-table': { 
-                'font-size':'unset',
-                '.columns': {
+                '> div': {
                     'padding':'0 0.2em',
                     'display': 'flex !important',
                     'flex-direction': 'row !important',
                     'column-gap':'0.2em',
+                    '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
+                    '^:nth-child(even)': {'background':'var(--bg1-color) !important',},
+                    '^:hover': {'background':'var(--bg3-color) !important',},
                 },
+                '^.header > div': {
+                    '^:first-child:first-child:first-child': { # emphasize first column CSS
+                        'font-weight':'bold !important',
+                        'background':'var(--bg2-color) !important',
+                        'border-bottom':'1px solid #8988 !important',
+                        '^:hover': {'background':'var(--bg3-color) !important',},
+                    },
+                    '^:nth-child(odd)': {'background':'var(--bg1-color) !important',}, # flip color for header case
+                    '^:nth-child(even)': {'background':'var(--bg2-color) !important',},
+                    '^:hover': {'background':'var(--bg3-color) !important',},
+                }, # For header of grid table
             }, # For grid tables
             'blockquote, blockquote > p': {
                 'background':'var(--bg2-color)',

@@ -576,7 +576,7 @@ class BaseSlides:
             members = sorted((
                 'AnimationSlider alert block bokeh2html bullets styled fmt color cols details doc '
                 'today error zoomable highlight html iframe image frozen notify plt2html '
-                'raw rows set_dir sig textbox suppress_output suppress_stdout svg vspace'
+                'raw rows set_dir sig table textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
 
@@ -688,18 +688,21 @@ class BaseSlides:
                 - If zoom button is enabled, you can hover here to zoom in this part!
                 - You can also zoom in this part by pressing `Z` key while mouse is over this part.
             ''')
+
         with self.build(-1):
-            self.write('''
+            with self.capture_content() as c:
+                with self.code.context():
+                    import ipywidgets as ipw
+                    btn = ipw.Button(description='Chevron-Down Icon',icon='chevrond')    
+                    self.write(btn)
+
+            self.write(['''
                 ## SVG Icons
                 Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
                 besides standard ipywidgets icons.
-            ''')
-            self.write(' '.join([f'`{k}`: ' + self.icon(k,color='crimson').svg for k in self.icon.available]))
-            
-            with self.code.context():
-                import ipywidgets as ipw
-                btn = ipw.Button(description='Chevron-Down Icon',icon='chevrond')    
-                self.write(btn)
+                ''', *c.outputs, 'line`200`**Source code of this slide**',self.this.get_source()], 
+                self.table([(f'`{k}`', self.icon(k,color='crimson').svg) for k in self.icon.available],headers=['Name','Icon']),
+            widths=[2,1])
                 
             
         with self.build_():
