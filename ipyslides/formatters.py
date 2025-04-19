@@ -129,7 +129,7 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=No
     plt.close() #AVoids throwing text outside figure
     if width is None:
         width = f'{_fig.get_size_inches()[0]}in'
-    width = f'width:{width}px' if isinstance(width,int) else f'width:{width}'
+    width = (f'width:{width}px' if isinstance(width,int) else f'width:{width}') + ';max-width:100%;' # important to avoid overflow
     svg = f'<svg style="{width};height:auto;"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
 
     if crop:
