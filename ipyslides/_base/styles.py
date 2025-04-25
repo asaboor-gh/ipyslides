@@ -212,15 +212,14 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 },
                 '^.dataframe': {
                     'th, tr, td': {'border': 'none'},
-                    'thead': {'border': 'inherit'},
+                    'thead': {'border': 'inherit','border-bottom':'1px solid #8988 !important',},
                 },
             },
             '.grid-table': { 
                 '> div': {
-                    'padding':'0 0.2em',
+                    'padding':'0.25em 0.5em',
                     'display': 'flex !important',
                     'flex-direction': 'row !important',
-                    'column-gap':'0.2em',
                     '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
                     '^:nth-child(even)': {'background':'var(--bg1-color) !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},

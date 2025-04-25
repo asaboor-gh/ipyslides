@@ -131,11 +131,12 @@ def demo_slides(slides):
     with slides.build(-1) as s:
         slides.write('## Animations with Widgets')
         anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
-        source = s.get_source()
+        source = s.get_source().as_widget()
 
-        @slides.interact({'height': '400px'},anim=anim)
-        def _(anim):
-            slides.write(race_plot(), source)
+        @slides.interact(slides.html('','updateable').as_widget(), source, _height = '2em', _grid_columns = '1fr 2fr', anim=anim)
+        def _(html, source, anim):
+            html.value = race_plot().value
+            print(f'Animation Frame: {anim}') # goes to output area
 
 
     slides.build(-1,'section`Simple Animations with Frames` toc`### Contents`')

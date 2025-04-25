@@ -616,7 +616,7 @@ def htmlize(obj):
     
 
 def _exportable_func(obj):
-    module = getattr(obj, '__module__','')
+    module = getattr(obj, '__module__','') or '' # can have None set as __modeule__, fix it
     mro_str = str(obj.__class__.__mro__)  
     # Instead of instance check, we can get mro, same effect without importing modules
 

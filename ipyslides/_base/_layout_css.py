@@ -203,7 +203,7 @@ def layout_css(accent_color, aspect):
                     },
                     '.widget-vbox.widget-interact.on-refresh' : {
                         'display': 'grid !important',
-                        'grid-template-columns': '1fr 1fr 1fr !important',
+                        'grid-template-columns': '1fr 1fr 1fr',
                         'grid-gap': '4px',
                         '> .Refresh-Btn.Menu-Item.Rerun:after': {
                             'content': '"Sync Output"',
@@ -217,10 +217,11 @@ def layout_css(accent_color, aspect):
                             'grid-column-start':1,
                             'grid-column-end': -1,
                         },
+                        '> *' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
                     },
-                    '.columns.writer .widget-vbox.widget-interact.on-refresh' : {'grid-template-columns': '1fr !important',},
+                    '.columns.writer .widget-vbox.widget-interact.on-refresh' : {'grid-template-columns': '1fr',},
                     '.columns.writer:has(> :last-child:nth-child(2)) .widget-vbox.widget-interact.on-refresh' : {
-                        'grid-template-columns': '1fr 1fr !important', # If two columns, 2 in grid, otherwise 1 only as above
+                        'grid-template-columns': '1fr 1fr', # If two columns, 2 in grid, otherwise 1 only as above
                     },
                 },
                 "kbd" : {

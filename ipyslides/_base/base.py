@@ -6,7 +6,7 @@ from contextlib import ContextDecorator
 
 from IPython.display import display
 
-from ipywidgets import interact as ipyinteract, link, Play, IntSlider
+from ipywidgets import interactive as Interactive, DOMWidget, ValueWidget
 
 from .widgets import Widgets
 from .navigation import Navigation
@@ -14,7 +14,7 @@ from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
-from ..formatters import XTML, widget_from_data
+from ..formatters import XTML
 from ..xmd import _special_funcs, _md_extensions, error, xtr, get_slides_instance
 from ..utils import _css_docstring
 
@@ -231,68 +231,95 @@ class BaseSlides:
         """
         self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
-    
-    def interact(self, __func = None, __options={'manual': False, 'height':''}, **kwargs):
+
+    def interactive(self, _f, *args, _grid_areas={}, _grid_columns=None, _manual=False, _height=None, **kwargs):
         """
-        ipywidgets's interact functionality tailored for ipyslides's needs. It adds 'height' as additional
-        parameter besides `manual`. Set height to avoid flickering output. `manual` is set to True if no kwargs are passed, so it will refresh output by clicking on button.
+        Creates an interactive widget layout using ipywidgets, tailored for ipyslides.
 
-        See a usage example in hl`Slides.docs()` or check documentation of `ipywidgets.interact`.
+        **Parameters**:
+        - `args`: Positional widgets displayed below the output widget, passed to calling function as widgets unlike values from kwargs.
+        - `_grid_areas`: Maps widget indices to CSS `grid-area` properties for custom layout.
+            - Keys correspond to widget indices: `args` widgets first, followed by `kwargs` widgets and at last output widget.
+            - Values are strings specifying grid positioning: `"row-start / column-start / row-end / column-end"`.
+            - Example: `{0: '1 / 1 / 2 / 2', 1: '1 / 2 / 2 / 3'}` places the first `args` widget at the top-left, the second to its right, and others in the next available grid areas.
+        - `_grid_columns`: Defines CSS `grid-template-columns` to control column widths, e.g. `"1fr 2fr"` for two columns with different widths.
+        - `_manual`: Defaults to True if no kwargs are provided, requiring manual refresh.
+        - `_height`: Sets output widget height to prevent flickering.
+        - `kwargs`: Additional interactive widgets.
 
-        Additionally, you can pass `Slides.AnimationSlider` as a keyword argument to animate a function under interact, or even external objects like `plotly.graph_objects.FigureWidget` etc.
+        **Usage Example**:
+        ```python
+        import plotly.graph_objects as go
+
+        @Slides.interact(go.FigureWidget(), x=5, _grid_areas={0: '1 / 1 / 3 / 3'})
+        def plot(fig, x):
+            fig.data = []
+            fig.add_trace(go.Scatter(x=[1,2,3], y=[x, x+1, x+2], mode='lines+markers'))
+            print(f'Plotting {x}')
+        ```
+
+        **Note**:
+        - Avoid modifying the global slide state, as changes will affect all slides.
+        - Supports `Slides.AnimationSlider` for animations when `_manual=False`.
+        """
+        def inner(**kwargs):
+            with self._hold_running():
+                if (btn := getattr(inner, 'btn', None)):
+                    btn.icon = 'minus'
+                    try:
+                        _f(*args, **kwargs)
+                        btn.remove_class('Rerun')
+                    finally:
+                        btn.icon = 'plus'
+                else:
+                    _f(*args, **kwargs)
+
+        for arg in args:
+            if not isinstance(arg, DOMWidget):
+                raise TypeError('Only displayable widgets can be passed as args, which can be controlled by kwargs widgets inside through function!')
+
+        if not kwargs: # need to interact anyhow
+            _manual = True
+
+        box = Interactive(inner,{'manual':_manual,'manual_name':''}, **kwargs)
+        box.out.layout.height = str(_height) or ''
+        box.children += args
+        box.add_class('on-refresh').add_class('widget-gridbox').remove_class('widget-vbox')
+        box.layout.grid_template_columns = _grid_columns or ''
+        box.args_widgets = args
+
+        for key, value in _grid_areas.items():
+            if not isinstance(key,int):
+                raise TypeError(f"key should be integer to args and other widgets, got {type(key)}")
+
+            if (ws := args[key:]): # silently goes with slice
+                ws[0].layout.grid_area = value
+            else: # raises index error for information
+                box.children[key].layout.grid_area = value
+
+        if (btn := getattr(box, 'manual_button', None)):
+            inner.btn = box.manual_button
+            
+            for w in (w for w in box.children if isinstance(w, ValueWidget)): # includes args widgets too
+                w.observe(lambda change: btn.add_class('Rerun'),names=['value'])
+            
+            btn.add_class('Refresh-Btn').add_class('Menu-Item')
+            btn.layout = {'width': 'auto', 'height':'28px'}
+            btn.tooltip = 'Click to refresh output'
+            btn.icon = 'plus'
+            btn.click() # first run to ensure no dynamic inside
+
+        return box
+
+    def interact(self, *args, _grid_areas={}, _grid_columns=None, _manual=False, _height=None, **kwargs):
+        """
 
         ::: note-tip
             You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
-
-        ::: note-warning
-            Do not use this to change global state of slides, because that will affect all slides.
         """
-        if not isinstance(__options, dict):
-            raise TypeError('__options should be a dictionary with keys "manual" and "height"')
-        
-        if not kwargs:
-            __options['manual'] = True # default to True if no kwargs are passed
-
-        def inner(func, options={}):
-            def new_func(**kws):
-                with self._hold_running():
-                    if (btn := getattr(new_func, 'btn', None)):
-                        btn.icon = 'minus'
-                        try:
-                            func(**kws)
-                            btn.remove_class('Rerun')
-                        finally:
-                            btn.icon = 'plus'
-                    else:
-                        func(**kws)
-
-            _interact = ipyinteract.options(manual = options.get('manual', False), manual_name='', auto_display=True)
-            widget = _interact(new_func, **kwargs).widget.add_class('on-refresh')
-            widget.out.layout.height = options.get('height','')
-
-            if (btn := getattr(widget, 'manual_button', None)):
-                new_func.btn = widget.manual_button
-                for w in widget.kwargs_widgets:
-                    w.observe(lambda change: btn.add_class('Rerun'))
-
-                btn.add_class('Refresh-Btn').add_class('Menu-Item')
-                btn.layout = {'width': 'auto', 'height':'28px'}
-                btn.tooltip = 'Click to refresh output'
-                btn.icon = 'plus'
-                btn.click() # first run to ensure no dynamic inside
-            
-        if __func is None:
-            return inner
-        elif isinstance(__func, dict): # Only options passed 
-            return lambda func: inner(func, __func)
-        else:
-            inner(__func, __options)
-
-    def interactive(self, __func = None, __options={'manual': False, 'height':''}, **kwargs):
-        "Same as `Slides.interact` but interact widget is captured and returned."
-        with self.capture_content() as c: # this display stays on python side, so not too expensive
-            self.interact(__func, __options, **kwargs)
-        return widget_from_data(c.outputs[0].data) # very rude way to get widget, but works
+        def inner(func):
+            return display(self.interactive(func, *args, _grid_areas = _grid_areas, _grid_columns = _grid_columns, _manual = _manual, _height = _height, **kwargs))
+        return inner
 
     def _update_tmp_output(self, *objs):
         "Used for CSS/animations etc. HTML widget does not work properly."
@@ -599,7 +626,7 @@ class BaseSlides:
             with self.capture_content() as cap, self.code.context():
                 import time
 
-                @self.interact({'manual': True, 'height': '2em'}, date = False)  # self is Slides here
+                @self.interact(_manual= True, _height= '2em', date = False)  # self is Slides here
                 def update_time(date): 
                     local_time = time.localtime()
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
@@ -719,6 +746,8 @@ class BaseSlides:
         self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self.docs]))
         self.navigate_to(0) # Go to title
         return self
+    
+BaseSlides.interact.__doc__ = BaseSlides.interactive.__doc__ + BaseSlides.interact.__doc__ # additional docstring
 
 def _parse_markdown_text(text_block):
     "Parses a Markdown text block and returns text for title and each slide."
@@ -733,4 +762,3 @@ def _parse_markdown_text(text_block):
     
     ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
     return [xtr.copy_ns(text_block, '\n'.join(lines[x.start:x.stop])) for x in ranges]
-        
