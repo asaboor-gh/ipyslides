@@ -396,6 +396,10 @@ class Serializer:
         "Get html str of a registerd obj_type."
         if (func := self.get_func(obj_type)):
             return func(obj_type)
+        elif isinstance(obj_type, ipw.DOMWidget): # Empty div for widgets, needed to keep layout in export
+            css_class = ' '.join(obj_type._dom_classes)
+            kwargs = {k:v for k,v in obj_type.layout.get_state().items() if v and k[0]!='_'}
+            return f'<div class="{css_class}" {_inline_style(kwargs)}></div>' 
         return ''
     
     def _alt_box(self, box_widget):
@@ -406,7 +410,10 @@ class Serializer:
         if isinstance(box_widget,ipw.HBox):
             kwargs.update(dict(display="flex",flex_flow="row nowrap"))
         elif isinstance(box_widget,ipw.VBox):
-            kwargs.update(dict(display="flex",flex_flow="column nowrap"))
+            if 'on-refresh' in box_widget._dom_classes:
+                kwargs.update(dict(display='grid'))
+            else:
+                kwargs.update(dict(display="flex",flex_flow="column nowrap"))
         
         kwargs.update({k:v for k,v in box_widget.layout.get_state().items() if v and k[0]!='_'}) # only those if not None
         css_class = ' '.join(box_widget._dom_classes) # To keep style of HTML widget, latest as well

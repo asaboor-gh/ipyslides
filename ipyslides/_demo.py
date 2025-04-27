@@ -133,7 +133,7 @@ def demo_slides(slides):
         anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
         source = s.get_source().as_widget()
 
-        @slides.interact(slides.html('','updateable').as_widget(), source, _height = '2em', _grid_columns = '1fr 2fr', anim=anim)
+        @slides.interact(slides.html('','updateable').as_widget(), source, output_height = '2em', grid_columns = '1fr 2fr', anim=anim)
         def _(html, source, anim):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area

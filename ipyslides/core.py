@@ -710,6 +710,17 @@ class Slides(BaseSlides):
             
             Timer(timeout, reset).start() if timeout else reset()
 
+    @contextmanager
+    def disabled(self, widget):
+        "Disable widget and enable it after code block runs under it. Useful to avoid multiple clicks on a button that triggers heavy operations."
+        widget.disabled = True
+        widget.add_class("Context-Disabled")
+        try:
+            yield
+        finally:
+            widget.disabled = False
+            widget.remove_class("Context-Disabled")
+
     def _force_update(self, btn=None):
         with self._loading_splash(btn or self.widgets.buttons.refresh):
             for slide in self.all_slides:

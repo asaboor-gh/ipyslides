@@ -419,6 +419,27 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'box-sizing':'border-box !important',
                 '> *': {'box-sizing':'border-box !important',}
             },
+            '.widget-interact.on-refresh' : {
+                'display': 'grid !important',
+                'grid-template-columns': '1fr 1fr 1fr',
+                'grid-gap': '4px',
+                '> .Refresh-Btn.Rerun:before': {
+                    'content': '"Sync Outputs"',
+                    'padding': '0 8px',
+                    'color': 'red !important',
+                },
+                '> .widget-output': {
+                    'padding': '4px 8px',
+                    'display': 'grid',
+                    'grid-column-start':1,
+                    'grid-column-end': -1,
+                },
+                '> *' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
+            },
+            '.columns.writer .widget-interact.on-refresh' : {'grid-template-columns': '1fr',},
+            '.columns.writer:has(> :last-child:nth-child(2)) .widget-interact.on-refresh' : {
+                'grid-template-columns': '1fr 1fr', # If two columns, 2 in grid, otherwise 1 only as above
+            },
         },
         'span.sig': {
             'color': 'var(--accent-color) !important',

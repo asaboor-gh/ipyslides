@@ -178,50 +178,11 @@ def layout_css(accent_color, aspect):
                            "border-radius": "8px !important",
                         },
                     },
-                    ".Sfresh-Box": {
-                        "column-gap": "0.2em",
-                    },
-                    ".Sfresh-Out": {
-                        "width": "100%",
-                        "box-sizing": "border-box",
-                    },  # Otherwise it is too close to border
-                    ".Sfresh-Btn": {
-                        "display": "flex",
-                        "align-items": "center",
-                        "font-size": "14px !important",  # it is bit larger than other buttons, so decrease font size
-                        "min-height": "24px",
-                        "z-index": "5",  # Above controls if collide
-                        "width": "24px !important",  # Make it round
-                        "min-width": "24px !important",
-                        "border-radius": "50% !important",
-                        "border": "none !important",
-                        "transition": "transform 0.2s ease-in-out",
-                        "^.Hidden": {"display": "none !important"},
-                        "^:hover": {
-                            "transform": "scale(1.2)",
-                        },
-                    },
-                    '.widget-vbox.widget-interact.on-refresh' : {
-                        'display': 'grid !important',
-                        'grid-template-columns': '1fr 1fr 1fr',
-                        'grid-gap': '4px',
-                        '> .Refresh-Btn.Menu-Item.Rerun:after': {
-                            'content': '"Sync Output"',
-                            'padding-left': '8px',
-                            'color': 'red !important',
-                        },
-                        '> .widget-output': {
-                            'padding': '4px 8px',
-                            'border-left': '2px solid var(--bg3-color)',
-                            'display': 'grid',
-                            'grid-column-start':1,
-                            'grid-column-end': -1,
-                        },
-                        '> *' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
-                    },
-                    '.columns.writer .widget-vbox.widget-interact.on-refresh' : {'grid-template-columns': '1fr',},
-                    '.columns.writer:has(> :last-child:nth-child(2)) .widget-vbox.widget-interact.on-refresh' : {
-                        'grid-template-columns': '1fr 1fr', # If two columns, 2 in grid, otherwise 1 only as above
+                    '.Context-Disabled:after': { 
+                        **Icon('loading',color='red').css,
+                        'background': 'hsl(from var(--bg2-color) 10 100% l)',
+                        'padding': '0 0.5em',
+                        'padding-top': '4px', # button offset sucks
                     },
                 },
                 "kbd" : {
@@ -628,7 +589,7 @@ def layout_css(accent_color, aspect):
                     "compress", color=accent_color, size=_icons_size
                 ).css,
             },
-            ".Refresh-Btn, .Sfresh-Btn": {
+            ".Refresh-Btn": {
                 ".fa.fa-plus": Icon(
                     "refresh", color=accent_color, size=_icons_size
                 ).css,
