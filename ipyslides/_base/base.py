@@ -238,6 +238,7 @@ class BaseSlides:
         - `args`: Positional widgets displayed below the output widget, passed to calling function as widgets unlike values from kwargs.
             - These widgets may include some controls like sliders, dropdowns, etc. which will add an extra button to refresh the output 
               when `auto_update = True`, otherwise there will be already a button to refresh the output.
+            - You can embed `interactive` itself inside `args` to create a nested interactive layout, hence interacting with multiple functions like a highly flexible application.
         - `auto_update`: Defaults to False if no kwargs are provided, requiring click to update in absence of any other control widgets.
         - `grid_areas`: A mapping from indices of args widgets to CSS `grid-area` properties for custom layout.
             - Values are strings specifying grid positioning: `"row-start / column-start / row-end / column-end"`.
@@ -282,6 +283,8 @@ class BaseSlides:
         for arg in args:
             if not isinstance(arg, ipw.DOMWidget):
                 raise TypeError('Only displayable widgets can be passed as args, which can be controlled by kwargs widgets inside through function!')
+            if isinstance(arg,ipw.interactive):
+                arg.layout.grid_area = 'auto / 1 / auto / -1' # embeded interactive should be full length, unless user sets it otherwise
 
         if not kwargs: # need to interact anyhow
             auto_update = False
@@ -317,14 +320,14 @@ class BaseSlides:
                 w.observe(lambda change: hint_update(btn),names=['value'])
             
             btn.add_class('Refresh-Btn')
-            btn.layout = {'width': 'auto', 'height':'28px'}
+            btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px',}
             btn.tooltip = 'Update Outputs'
             btn.icon = 'refresh'
             btn.click() # first run to ensure no dynamic inside
         
         elif args_value_widgets: 
             btn = ipw.Button(description='', tooltip='Update Outputs', icon='refresh',
-                layout={'width': 'auto', 'height':'28px'}).add_class('Refresh-Btn')
+                layout={'width': 'max-content', 'padding':'0 24px', 'height':'28px'}).add_class('Refresh-Btn')
             
             for w in args_value_widgets: # only args widgets are left unsynced in this case
                 w.observe(lambda change: hint_update(btn),names=['value'])
