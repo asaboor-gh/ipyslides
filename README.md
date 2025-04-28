@@ -147,7 +147,7 @@ slides.set_css({ # on all slides or slide[index,].set_css() per slide
 ## Development
 
 ```bash
-git clone https://github.com/massgh/ipyslides.git
+git clone https://github.com/asaboor-gh/ipyslides.git
 cd ipyslides
 pip install -e .
 ```
@@ -162,7 +162,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - Full documentation: `slides.docs()`
 - Examples: `slides.demo()`
-- [GitHub Repository](https://github.com/massgh/ipyslides)
+- [GitHub Repository](https://github.com/asaboor-gh/ipyslides)
 
 
 ## Acknowledgements

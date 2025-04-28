@@ -10,8 +10,8 @@ if sys.version_info[:2] < (3, 8):
 # Package meta-data.
 NAME = 'ipyslides'
 DESCRIPTION = 'Live rich content slides in jupyter notebook'
-URL = 'https://github.com/massgh/ipyslides'
-EMAIL = 'mass_qau@outlook.com'
+URL = 'https://github.com/asaboor-gh/ipyslides'
+EMAIL = 'asaboor.my@outlook.com'
 AUTHOR = 'Abdul Saboor'
 REQUIRES_PYTHON = '>=3.8'
 
@@ -27,7 +27,7 @@ EXTRAS = {
 
 KEYWORDS = ['Jupyter', 'Widgets', 'IPython']
 PROJECT_URLS = {
-    "Bug Tracker": "https://github.com/massgh/ipyslides/issues",
+    "Bug Tracker": "https://github.com/asaboor-gh/ipyslides/issues",
 }
 
 here = os.path.abspath(os.path.dirname(__file__))
