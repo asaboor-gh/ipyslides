@@ -103,7 +103,7 @@ key_combs = f"""
 """ 
 
 how_to_print = f"""
-You can also get PDF from exported HTML file. Use `Save as PDF` when printing to keep links working.
+You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
 
 For widgets and other objects's snapshots to be available in exported
 slides, use alert`Slides.alt`, alert` Slides.clip ` functions, which can pick images automatically

@@ -1,83 +1,184 @@
-<svg width="60px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
+# IPySlides
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
+[![PyPI version](https://badge.fury.io/py/ipyslides.svg)](https://badge.fury.io/py/ipyslides)
+[![Downloads](https://pepy.tech/badge/ipyslides)](https://pepy.tech/project/ipyslides)
+
+<svg width="1.25em" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
    <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
    <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
    <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
-</svg>
+</svg>  IPySlides is a Python library for creating interactive presentations in Jupyter notebooks. It combines the power of Markdown, LaTeX, interactive widgets, and live variable updates in a single presentation framework.
 
-# IPySlides
-
-Create interactive slides programatically in [Jupyter](https://jupyter.org/)/[Voila](https://voila.readthedocs.io/en/stable/) with all kind of rich content. 
-
-- Launch Example Notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
-- See [PDF-Slides](Slides.pdf)
-![Overview](slide.png)
-- Create cool animations like this one
-![Animate](animate.gif)
+**[See PDF Slides](Slides.pdf)**
 
 ---
-# Changelog
-You can see upto date documentation via `ipyslides.Slides().docs()`, so no additional changelog is created.
+
+<p float="left"> 
+  <img src="slide.png" width="240" />
+  <img src="animate.gif" width="300" />
+</p>
 
 ---
-# Install
-```shell
-> pip install ipyslides
-> pip install ipyslides[extra]
+
+## Features
+
+- 📊 Support for plots, widgets, and rich media
+- 🎨 Customizable themes and layouts
+- 📱 Responsive design for various screen sizes
+- 📤 Export to HTML/PDF (limited content type)
+- 🎯 Frame-by-frame animations
+- 📝 Speaker notes support
+- 🔄 Markdown file synchronization
+- ✏️ Drawing support during presentations
+
+--- 
+
+## Quick Start
+
+1. **Install:**
+```bash
+pip install ipyslides        # Basic installation
+pip install ipyslides[extra] # Full features
 ```
-For development install, clone this repository and then
-```shell
-> cd ipyslides
-> pip install -e .
-```
 
----
-# How to Use
-In Jupyter Notebook:
+2. **Create Slides:**
 ```python
 import ipyslides as isd
 slides = isd.Slides()
+
+# Add content programmatically
+slides.build(-1, """
+# My First Slide
+- Point 1
+- Point 2
+$E = mc^2$
+""")
+
+# Or use cell magic
+%%slide 0
+# Title Slide
+Welcome to IPySlides!
 ```
+
+3. **Run Examples:**
+```python
+slides.docs()  # View documentation
+slides.demo()  # See demo presentation
+```
+
 ---
 
-# Creating Slides
-Please look at two presentations provided with `Slides.docs()`, `Slides.demo()` to see how slides are created. Moreover instruction in settings panel are at your finger tips.
+## Content Types
 
+Support for various content types including:
+- 📜 Extended Markdown, see `slides.xmd_syntax`
+- 📊 Plots (Matplotlib, Plotly, Altair)
+- 🔧 Interactive Widgets
+- 📷 Images and Media
+- ➗ LaTeX Equations
+- ©️ Citations and References
+- 💻 Auto update variables in markdown
+- 🎥 Videos (YouTube, local)
+- 🎮 Enhanced interactive content
+    ```python
+    from ipywidgets import HTML
+
+    @slides.interact(HTML(), amplitude= (0, 2), frequency=(0, 5))
+    def plot(html, amplitude, frequency):
+        x = np.linspace(0, 2*np.pi, 100)
+        y = amplitude * np.sin(frequency    * x)
+        plt.plot(x, y)
+        html.value = slides.plt2html(). value
+    ```
+- And much more!
 
 ---
-# Content Types to Embed
-You can embed anything that you can include in Jupyter notebook like ipywidgets, HTML, PDF, Videos etc.,including jupyter notebook itself! 
 
-- IPython Display Objects, see `IPython` module.
-- Plots and Other Data Types (matplotlib, plotly etc.)
-- Jupyter Interactive Widgets (ipywidgets, bqplot ect.)
-- Custom and Third Party Objects( which are not implemented in this library)
-    - You can display with `display` command or library's specific display method.
+## Export Options
+
+- **HTML Export**<br/>
+Use `slides.export_html` to build static slides that you can print as well. Read export details in settings panel, where you can also export with a single click.
+
+- **PDF Export**
+1. Export to HTML first
+2. Open in Chrome/Edge browser
+3. Use Print → Save as PDF and enable background graphics
+
+---
+
+## Advanced Features
+- **Custom Objects Serialization:**
     - You can serialize custom objects to HTML using `Slides.serializer` API.
-- You can extend markdown syntax using `Slides.extender` API. See some good extensions to add from [PyMdown](https://facelessuser.github.io/pymdown-extensions/).
+    - You can extend markdown syntax using `Slides.extender` API. See some good extensions to add from [PyMdown](https://facelessuser.github.io/pymdown-extensions/).
 
+- **Speaker Notes:**
+    Enable via Settings Panel → Show Notes
+    and add notes via `slides.notes`.
 
----
-# HTML/PDF Slides
-- Use `slides.export_html` to build static slides that you can print as well.
-- Content variety for export is limited. Widgets can not be exported unless an alternative representation is given by `Slides.alt` which also works to provide alternative export representation of any object.
-- Any object including widget can be replaced for export using ` Slides.alt ` function which lets you paste a screenshot of that object or it's alternative html representation at runtime or export time.
-- Paper width for printing is 10 inch (254mm) and height is determined by aspect ratio of slides.
-- Use `Save as PDF` in browser to make links work in ouput PDF.
+- **Custom Styling:**
+  ```python
+  slides.set_css({ # on all slides or slides[index,].set_css() per slide
+      '--bg1-color': '#f0f0f0',
+      '--text-color': '#333'
+  })
+  ```
 
----
-# Speaker Notes
-- You can turn on speaker notes with a `Show Notes` check in setting panel. See module `Slides.notes` for details or see examples in `Slides.demo()`. 
-
-> Notes is an experimantal feature, so use at your own risk. Avoid if you can.
-
----
-# Caveats!
-- Since Markdown is parsed using python (and we do not run notebook from outside e.g. with nbconvert), markdown cells are of no use. A better alternative is linking a markodwn file using `Slides.sync_with_file` and slides auto update when you save your edits. You can still write markdown in code cell with slide magic `%%slide number -m` to add to slides. 
-- Slide number is necessary to be tracked by user in notebook, because cells are not linked to each other and multiple runs of a cell can lead to adding many slides with same content. To minimize this difficulty, use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
+- **File Sync:**
+    Live edit a linked markdown file that updates slides in real-time using `slides.sync_with_file`.
 
 ---
 
-# Acknowledgements
-- Slides application is based on [ipywidgets](https://github.com/jupyter-widgets/ipywidgets).
-- Rich display mechanism, and collection of cell output to slides heavily rely on [IPython](https://github.com/ipython/ipython).
-- [Python-Markdown](https://python-markdown.github.io/) is extensily used for content and extended where needed.
+## Caveats
+
+1. **Markdown Cells:** 
+   - Jupyter markdown cells are not processed by IPySlides
+   - Instead, use either:
+     ```python
+     %%slide number -m
+     # Your markdown content
+     ```
+     or link an external markdown file:
+     ```python
+     slides.sync_with_file('slides.md')
+     ```
+
+2. **Slide Numbering:**
+   - Use `-1` for automatic slide numbering
+   - Manual numbering requires careful tracking to avoid overwriting slides
+
+3. **Speaker Notes:**
+   - Experimental feature - use with caution
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/massgh/ipyslides.git
+cd ipyslides
+pip install -e .
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+## Documentation
+
+- Full documentation: `slides.docs()`
+- Examples: `slides.demo()`
+- [GitHub Repository](https://github.com/massgh/ipyslides)
+
+
+## Acknowledgements
+
+- [ipywidgets](https://github.com/jupyter-widgets/ipywidgets) & [anywidget](https://github.com/manzt/anywidget)
+- [IPython](https://github.com/ipython/ipython)
+- [Python-Markdown](https://python-markdown.github.io/)
+
+---
+
+Made with ❤️ by Abdul Saboor

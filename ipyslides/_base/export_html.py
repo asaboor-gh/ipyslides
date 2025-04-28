@@ -180,7 +180,7 @@ class _HhtmlExporter:
         
         ::: note-info
             - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
-            - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF.
+            - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Alsp enable background graphics in print dialog.
         """
         _path = os.path.splitext(path)[0] + '.html' if path != 'Slides.html' else path
         export_func = lambda: self._writefile(_path, overwrite)
