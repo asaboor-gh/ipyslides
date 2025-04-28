@@ -133,15 +133,7 @@ slides.set_css({ # on all slides or slide[index,].set_css() per slide
 
 1. **Markdown Cells:** 
    - Jupyter markdown cells are not processed by IPySlides
-   - Instead, use either:
-     ```python
-     %%slide number -m
-     # Your markdown content
-     ```
-     or link an external markdown file:
-     ```python
-     slides.sync_with_file('slides.md')
-     ```
+   - Instead, you can use `%%slide number -m` cell magic and link an external markdown file using `slides.sync_with_file`
 
 2. **Slide Numbering:**
    - Use `-1` for automatic slide numbering
