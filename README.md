@@ -72,6 +72,7 @@ slides.demo()  # See demo presentation
 ## Content Types
 
 Support for various content types including:
+
 - 📜 Extended Markdown, see `slides.xmd_syntax`
 - 📊 Plots (Matplotlib, Plotly, Altair)
 - 🔧 Interactive Widgets
@@ -81,16 +82,15 @@ Support for various content types including:
 - 💻 Auto update variables in markdown
 - 🎥 Videos (YouTube, local)
 - 🎮 Enhanced interactive content
-    ```python
-    from ipywidgets import HTML
-
-    @slides.interact(HTML(), amplitude= (0, 2), frequency=(0, 5))
-    def plot(html, amplitude, frequency):
-        x = np.linspace(0, 2*np.pi, 100)
-        y = amplitude * np.sin(frequency    * x)
-        plt.plot(x, y)
-        html.value = slides.plt2html(). value
-    ```
+```python
+from ipywidgets import HTML
+@slides.interact(HTML(), amplitude= (0, 2),frequency=(0, 5))
+def plot(html, amplitude, frequency):
+    x = np.linspace(0, 2*np.pi, 100)
+    y = amplitude * np.sin(frequency    * x)
+    plt.plot(x, y)
+    html.value = slides.plt2html(). value
+```
 - And much more!
 
 ---
@@ -117,12 +117,12 @@ Use `slides.export_html` to build static slides that you can print as well. Read
     and add notes via `slides.notes`.
 
 - **Custom Styling:**
-  ```python
-  slides.set_css({ # on all slides or slides[index,].set_css() per slide
-      '--bg1-color': '#f0f0f0',
-      '--text-color': '#333'
-  })
-  ```
+```python
+slides.set_css({ # on all slides or slide[index,].set_css() per slide
+    '--bg1-color': '#f0f0f0',
+    '--text-color': '#333'
+})
+```
 
 - **File Sync:**
     Live edit a linked markdown file that updates slides in real-time using `slides.sync_with_file`.
