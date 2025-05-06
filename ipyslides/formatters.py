@@ -17,8 +17,6 @@ from IPython.core.display import __all__ as _all
 from IPython.utils.capture import RichOutput, capture_output
 from IPython import get_ipython
 
-from ._base._widgets import HtmlWidget
-
 __reprs = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 
 supported_reprs = tuple(__reprs) # don't let user change it
@@ -103,9 +101,9 @@ class XTML(HTML):
         "Returns HTML string."
         return self._repr_html_()
     
-    def as_widget(self, click_handler=None):
-        "Returns HtmlWidget with same data."
-        return HtmlWidget(self.value, click_handler=click_handler)
+    def as_widget(self):
+        "Returns ipywidgets.HTML with same data."
+        return ipw.HTML(self.value)
         
 
 def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=None):
@@ -263,11 +261,11 @@ def highlight(code, language='python', name = None, css_class = None, style='def
     if isinstance(css_class, str):
         start = start.replace('class="highlight"',f'class="highlight {css_class}"')
     
-    return XTML(f'''<div class="lang-name">{_title}</div>
+    return XTML(f'''<div><span class="lang-name">{_title}</span>
         <div class="highlight-wrapper" style="height:auto;max-height:{height};overflow:auto;position:relative;">
         {_style}\n{start}
         <pre>{code_}
-        </pre>\n{end}</div>''')
+        </pre>\n{end}</div></div>''')
 
 def _inline_style(kws_or_widget):
     "CSS inline style from keyword arguments having _ inplace of -. Handles widgets layout keys automatically."
@@ -379,7 +377,7 @@ class Serializer:
             return self._alt_box
         elif isinstance(obj_type, _Output):
             return self._alt_output
-        elif isinstance(obj_type, (ipw.HTML, ipw.HTMLMath, HtmlWidget)): # Instance here is fine to include subclasses as they will behave same
+        elif isinstance(obj_type, (ipw.HTML, ipw.HTMLMath)): # Instance here is fine to include subclasses as they will behave same
             return self._alt_html
         elif isinstance(obj_type, (ipw.Audio, ipw.Video, ipw.Image)):
             return self._alt_media
@@ -422,8 +420,8 @@ class Serializer:
     
     def _alt_html(self, html_widget):
         """Convert ipywidgets.HTML object to HTML string."""
-        if not isinstance(html_widget,(ipw.HTML,ipw.HTMLMath,HtmlWidget)):
-            raise TypeError(f"Expects ipywidgets.(HTML/HTMLMath) or ipyslides's HtmlWidget, got {type(html_widget)}")
+        if not isinstance(html_widget,(ipw.HTML,ipw.HTMLMath)):
+            raise TypeError(f"Expects instance of ipywidgets.(HTML/HTMLMath), got {type(html_widget)}")
 
         css_class = ' '.join(html_widget._dom_classes) # To keep style of HTML widget, latest as well
         return f'<div class="{css_class}" {_inline_style(html_widget)}>{html_widget.value}</div>' 
@@ -636,7 +634,7 @@ def _exportable_func(obj):
     
     if re.search('altair.*Chart', mro_str): return lambda obj: _altair2htmlstr(obj)
     
-    if re.search('plotly.*FigureWidget', mro_str): return lambda obj: _zoom_self(obj._repr_html_())
+    if re.search('plotly.*FigureWidget', mro_str): return lambda obj: _zoom_self(obj.to_html(full_html=False))
     
     if re.search('ipympl.*Canvas',mro_str): return lambda obj: plt2html(obj.figure).value
     

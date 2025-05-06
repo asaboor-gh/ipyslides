@@ -433,8 +433,8 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'display': 'grid',
                     'grid-column-start':1,
                     'grid-column-end': -1,
-                },
-                '> *' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
+                }, # below widget-html-content creates issue even in nested divs
+                '> *, .widget-html-content' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
             },
             '.columns.writer .widget-interact.on-refresh' : {'grid-template-columns': '1fr',},
             '.columns.writer:has(> :last-child:nth-child(2)) .widget-interact.on-refresh' : {

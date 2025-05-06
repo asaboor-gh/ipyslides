@@ -1,5 +1,5 @@
-_attrs = ['AnimationSlider', 'alt', 'alert', 'as_html', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
+_attrs = ['AnimationSlider', 'ListWidget', 'alt', 'alert', 'as_html', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+    'details', 'set_dir', 'textbox', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
     'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
@@ -21,7 +21,7 @@ from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 
-from ._base._widgets import AnimationSlider # For export
+from ._base._widgets import AnimationSlider, ListWidget # For export
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, highlight, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, CustomDisplay, _Output
@@ -87,12 +87,13 @@ def _fmt_cols(*objs,widths = None):
     return f'''<div class="columns">{_cols}</div>'''
 
 def hl(code, language="python"): # No need to have in __all__, just for markdown
+    "Highlight (first line of all code only to make it inline only) code in a given language. `language` is the language name, default is python."
     try: 
-        return '<code class="highlight inline"' + re.findall(
+        return XTML('<code class="highlight inline"' + re.findall(
             r'\<\s*code(.*?\<\s*\/\s*code\s*\>)', highlight(code, language).value
-            )[0] # Avoid multilines, just first match in code
+            )[0]) # Avoid multilines, just first match in code
     except:
-        return f'<code>{code}</code>' # Fallback , no need to raise errors
+        return html('code',code) # Fallback , no need to raise errors
 
 _example_props = {
     '.A': { # .A is repeated nowhere! But in CSS it is a lot

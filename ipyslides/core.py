@@ -11,12 +11,12 @@ from IPython.display import display, clear_output
 from .xmd import fmt, parse, xtr, get_main_ns, extender as _extender
 from .source import Code
 from .writer import hold, GotoButton, write
-from .formatters import HtmlWidget, bokeh2html, plt2html, highlight, htmlize, serializer
+from .formatters import bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
-from ._base.widgets import ipw # patched one
+from ._base.widgets import TOCWidget, ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
 from ._base.slide import Slide, _build_slide
@@ -126,6 +126,10 @@ class Slides(BaseSlides):
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
         self._update_vars_postrun(True)
+
+        # setup toc widget after all attributes are set
+        self._toc_widget = TOCWidget(self)
+        
 
     def __setattr__(self, name: str, value): # Don't raise error
         if not name.startswith('_') and hasattr(self, name):
@@ -334,6 +338,11 @@ class Slides(BaseSlides):
     def draw_button(self):
         "Get a button to reveal drawing board easily from slide. Like it lets you remeber to draw now."
         return self.widgets.toggles.draw
+    
+    @property
+    def toc_widget(self):
+        "Get table of contents widget. It can be exported to HTML as well. Normally use Slides.toc()."
+        return self._toc_widget
 
     def verify_running(self, error_msg=""):
         "Verify if slide is being built, otherwise raise error."
@@ -463,7 +472,7 @@ class Slides(BaseSlides):
                 s.update_display(go_there=False)
  
     def toc(self, title='## Contents {.align-left}', highlight = False):
-        "You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` or toc[True]`title`"
+        "You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` or toc[True]`title`, and `Slides.toc_widget as well."
         self.verify_running("toc can only be added under slides constructor!")
         self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there
@@ -526,13 +535,9 @@ class Slides(BaseSlides):
             return idxs[-1] if idxs else 0  # Get last section index
 
     def _switch_slide(self, old_index, new_index):
+        self.notify(self._sectionindex)
+        self._toc_widget._active = self._sectionindex # Update toc widget focus without changing value
         slide = self._iterable[new_index]
-
-        for toc in self.widgets.tocbox.children[1:]:
-            toc.remove_class('this') # remove from all
-            if getattr(toc, '_index', self.wprogress.max + 1) == self._sectionindex:
-                toc.add_class('this')
-
         self._update_tmp_output(slide.animation, slide.css)
         
         # Do this here, not in navigation module, as slider can jump to any value
@@ -724,11 +729,14 @@ class Slides(BaseSlides):
     def _force_update(self, btn=None):
         with self._loading_splash(btn or self.widgets.buttons.refresh):
             for slide in self.all_slides:
-                if slide._has_widgets:
+                if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotlty etc
                     slide.update_display(go_there=False)
             
             if btn:
                 self.notify('Widgets updated everywhere!')
+            
+            if self._current:
+                self.settings._get_footer(self._current, update_widget=True) # sometimes it is not updated due to message lost, so force it too
             
             self._current._set_progress() # update display can take it over to other sldies
 
@@ -746,7 +754,7 @@ class Slides(BaseSlides):
         tocs_dict = {s._section: s for s in self._iterable if s._section}
         children = [
             ipw.HBox([
-                HtmlWidget('<b> Table of Contents</b>'), self.widgets.buttons.toc
+                ipw.HTML('<b> Table of Contents</b>'), self.widgets.buttons.toc
             ],layout=dict(border_bottom='1px solid #8988', margin='0 0 8px 0',justify_content='space-between'))
         ]
 
@@ -755,19 +763,12 @@ class Slides(BaseSlides):
                 [r"No sections found!, create sections with markdown syntax alert`section\`content\``"]
             ).as_widget())
         else:
-            for i, (sec, slide) in enumerate(tocs_dict.items(), start=1):
-                text = (
-                    htmlize(f"color['var(--accent-color)']`{i}.` {sec}")
-                    + f"<p>{slide.index}</p>"
-                )
-                def jump_to_slide(change):
-                    self.navigate_to(change.owner._index)
-                    self.widgets.buttons.toc.click()
-
-                p_btn = HtmlWidget(text, click_handler=jump_to_slide)
-                p_btn._index = int(slide.index) # int to remove attribute access
-
-                children.append(p_btn.add_class("toc-item"))
+            self._toc_widget.options = [
+                (slide.index, htmlize(f"color['var(--accent-color)']`{i}.` {sec}") + f"<p>{slide.index}</p>")
+                for i, (sec, slide) in enumerate(tocs_dict.items(), start=1)
+            ]
+            
+            children.append(self._toc_widget)
 
         self.widgets.tocbox.children = children
 

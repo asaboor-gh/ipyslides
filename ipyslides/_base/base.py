@@ -231,18 +231,19 @@ class BaseSlides:
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
 
     def interactive(self, _f, *args, auto_update=True, grid_areas={}, grid_columns=None, grid_height=None, output_height=None, **kwargs):
-        """
-        Creates an interactive widget layout using ipywidgets, tailored for ipyslides. Add type hints to function for auto-completion inside function.
+        """Creates an interactive widget layout using ipywidgets, tailored for ipyslides. Add type hints to function for auto-completion inside function.
 
         **Parameters**:
+
         - `args`: Positional widgets displayed below the output widget, passed to calling function as widgets unlike values from kwargs.
             - These widgets may include some controls like sliders, dropdowns, etc. which will add an extra button to refresh the output 
               when `auto_update = True`, otherwise there will be already a button to refresh the output.
             - You can embed `interactive` itself inside `args` to create a nested interactive layout, hence interacting with multiple functions like a highly flexible application.
+            - You can also include functions that take a subset of parameters from the main function and return output widgets. These will be updated when their corresponding variables change.
         - `auto_update`: Defaults to False if no kwargs are provided, requiring click to update in absence of any other control widgets.
         - `grid_areas`: A mapping from indices of args widgets to CSS `grid-area` properties for custom layout.
             - Values are strings specifying grid positioning: `"row-start / column-start / row-end / column-end"`.
-            - Example: `{0: 'auto / 1 /span 2 / 2', 1: '1 / 3 / 2 / 4'}` places the first `args` widget at the left in its automatic row in 
+            - Example: ` {0: 'auto / 1 /span 2 / 2', 1: '1 / 3 / 2 / 4'} ` places the first `args` widget at the left in its automatic row in 
               two columns span, the second in first row, third column, and others in the next available grid areas.
             - You can set grid area to any widget with attributes, e.g. `interactive().children[index].layout.grid_area = '1 / 1 / 2 / 2'`.
         - `grid_columns`: Defines CSS `grid-template-columns` to control column widths, e.g. `"1fr 2fr"` for two columns with different widths.
@@ -262,6 +263,7 @@ class BaseSlides:
         ```
 
         **Note**:
+
         - Avoid modifying the global slide state, as changes will affect all slides.
         - Supports `Slides.AnimationSlider` for animations when `auto_update=True`.
         - If you need a widget in kwargs with same name as other keyword araguments, 
@@ -272,17 +274,17 @@ class BaseSlides:
             btn.button_style = '' if remove else 'warning' # for notebook outside slides, CSS not applied
 
         def inner(**kwargs):
-            with self._hold_running(): # should be testable under slide builder for correct output
+            with self._hold_running():
                 if (btn := getattr(inner, 'btn', None)):
                     with self.disabled(btn):
                         _f(*args, **kwargs)
-                        hint_update(btn, remove=True) 
+                        hint_update(btn, remove=True)
                 else:
                     _f(*args, **kwargs)
 
         for arg in args:
-            if not isinstance(arg, ipw.DOMWidget):
-                raise TypeError('Only displayable widgets can be passed as args, which can be controlled by kwargs widgets inside through function!')
+            if not isinstance(arg, ipw.DOMWidget) and not callable(arg):
+                raise TypeError('Only displayable widgets or functions can be passed as args, which can be controlled by kwargs widgets inside through function!')
             if isinstance(arg,ipw.interactive):
                 arg.layout.grid_area = 'auto / 1 / auto / -1' # embeded interactive should be full length, unless user sets it otherwise
 
@@ -296,6 +298,7 @@ class BaseSlides:
         box.layout.flex_flow = 'row wrap' # for exporting to HTML correctly
         box.layout.height = str(grid_height or '') 
         box.children += args
+        # Add function output widgets to box children
         box.args_widgets = args
 
         box.out.add_class('widget-output') # need this for exporting to HTML correctly
@@ -348,7 +351,8 @@ class BaseSlides:
         """
 
         ::: note-tip
-            You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
+            - You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
+            - You can also use this under `Slides.capture_content` to display later in a specific place.
         """
         def inner(func):
             return display(self.interactive(func, *args, auto_update = auto_update, grid_areas = grid_areas, grid_columns = grid_columns, 
@@ -660,7 +664,7 @@ class BaseSlides:
             with self.capture_content() as cap, self.code.context():
                 import time
 
-                @self.interact(auto_update= True, output_height= '2em', date = False)  # self is Slides here
+                @self.interact(auto_update=False, output_height= '2em', date = False)  # self is Slides here
                 def update_time(date): 
                     local_time = time.localtime()
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
@@ -677,8 +681,7 @@ class BaseSlides:
                     time = t.strftime('%H:%M:%S')
                     self.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
             
-            self.write(self.doc(self.interact,'Slides'), [*cap.outputs, c])
-            self.doc(self.on_load,'Slides').display()
+            self.write(self.doc(self.interact,'Slides'), [*cap.outputs, c, self.doc(self.on_load,'Slides')])
     
         with self.build(-1):
             self.write('## Content Styling')

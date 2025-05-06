@@ -91,7 +91,7 @@ def demo_slides(slides):
     with slides.code.context(returns = True) as source:
         try:
             import plotly.graph_objects as go
-            fig = go.Figure()
+            fig = go.FigureWidget() # prefere Widget for interactivity and correct display
             fig.add_trace(go.Bar(y=[1,5,8,9]))
         except:
             fig = '### Install `plotly` to view output'
@@ -137,6 +137,24 @@ def demo_slides(slides):
         def _(html, source, anim):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area
+
+    with slides.build(-1) as s:
+        codes = [
+            'print(np.random.random((10,2)))',
+            'plt.plot(np.random.random((10,2)))\nplt.show()',
+            'plt.plot(np.sin(np.linspace(0,10,100)))\nplt.show()',
+        ]
+
+        def run(c):
+            imports = 'import numpy as np\nimport matplotlib.pyplot as plt\n'
+            slides.run_cell(imports + codes[c or 0]) # avoid None value when not selected
+            # run_cell executes code in top level scope, so varaibles are available in notebook
+
+        lw = slides.ListWidget(description='Execute a code block',options= [slides.hl(c).value for c in codes])
+        lw.layout.grid_area = 'auto / 1 / 1 / -1' # span all columns 
+
+        it = slides.interactive(run,output_height='300px', c = lw)
+        slides.write(['### Rich Content hl`ListWidget`', it],s.get_source())
 
 
     slides.build(-1,'section`Simple Animations with Frames` toc`### Contents`')

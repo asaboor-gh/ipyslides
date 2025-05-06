@@ -99,7 +99,7 @@ class Slide:
             self._widget.layout.height = '' # Reset height to auto
         
     def __repr__(self):
-        return f'Slide(number = {self.number}, index = {self.index}, nf = {self.nf}, vars = {self._has_vars})'
+        return f'Slide(number = {self.number}, index = {self.index}, nf = {self.nf})'
     
     @contextmanager
     def _capture(self):
@@ -220,7 +220,7 @@ class Slide:
             </li>''').format(**sec))
             for sec in items]
         
-        title, highlight = getattr(self, '_toc_args', ['## Contents {.align-left}', False])
+        title, highlight = self._toc_args or ('## Contents {.align-left}', False)
         css_class = 'toc-list toc-extra' if highlight else 'toc-list'
         ol = self._app.html('ol', items, style='', css_class=css_class)
         

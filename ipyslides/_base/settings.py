@@ -420,13 +420,13 @@ class Settings:
 
 
     def _toggle_tocbox(self, btn):
-        if self._widgets.tocbox.layout.height == "0":
-            self._widgets.tocbox.layout.height = f"min(calc(100% - 32px), {max(150, len(self._widgets.tocbox.children)*36)}px)"
+        if self._widgets.tocbox.layout.max_height == "0":
+            self._widgets.tocbox.layout.max_height = f"calc(100% - 32px)"
             self._widgets.tocbox.layout.border = "1px solid var(--bg3-color)"
             self._widgets.tocbox.layout.padding = "4px"
             self._widgets.buttons.toc.icon = "minus"
         else:
-            self._widgets.tocbox.layout.height = "0"
+            self._widgets.tocbox.layout.max_height = "0"
             self._widgets.tocbox.layout.border = "none"
             self._widgets.tocbox.layout.padding = "0"
             self._widgets.buttons.toc.icon = "plus"

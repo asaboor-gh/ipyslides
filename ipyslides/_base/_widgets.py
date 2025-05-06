@@ -95,88 +95,184 @@ class InteractionWidget(anywidget.AnyWidget):
             func() # Direct call
 
 
-class HtmlWidget(anywidget.AnyWidget):
-    """This introduces a trait 'click_state' which would be toggled between 0 and 1 on each click.
+class ListWidget(anywidget.AnyWidget,ValueWidget):
+    """List widget that displays clickable items with integer values and rich html content.
+    You can observe the `value` trait to run a function on selection.
+    The `options` trait is a list of items to be displayed. Each item can be an htlm string or a tuple of (value, html).
+    The `description` trait is a string that will be displayed as a label above the list.
+
+    The `value` trait is the currently selected value. If list elements are strings, the value is the index of the selected item.
+    You can set `ListWidget.layout.max_height` to limit the maximum height (default 400px) of the list. The list will scroll if it exceeds this height.
     """
+    _active = traitlets.Int(None, allow_none=True).tag(sync=True)
+    value = traitlets.Int(None, allow_none=True).tag(sync=True)
+    options = traitlets.List().tag(sync=True)
+    description = traitlets.Unicode('Select an option', allow_none=True).tag(sync=True)
+    
     _esm = """
-    function render({ model, el }) {
-    el.classList.add("jupyter-widgets", "widget-html-content"); // for consistent view
-    let div = document.createElement("div");
-    div.classList.add("jp-RenderedHTMLCommon","custom-html","jp-mod-trusted");
-    function set_html() {
-        div.innerHTML = model.get("value");
-    }
-    el.tabIndex = -1; // need for clickable events
-    el.onclick = (event) => {
-        event.stopPropagation();
-        if (el.classList.contains("clickable-div")) { // only if there, but register onclick anyhow, it does not work otherwise
-            model.set("click_state", ((model.get("click_state") + 1) % 2)); // 0 or 1
-            model.save_changes();
-        };
-    };
-    model.on("change:value", set_html);
-    set_html();
+    function render({model, el}) {
+        el.classList.add('list-widget'); // want top level for layout settings by python
+        
+        function updateDescription() {
+            const desc = model.get('description');
+            el.dataset.description = desc || '';
+            el.classList.toggle('has-description', Boolean(desc));
+        }
+        
+        function createItem(opt, index) {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            
+            const [value, html] = Array.isArray(opt) ? opt : [index, opt];
+            item.innerHTML = html;
+            item.dataset.value = value;
+            
+            if (parseInt(value) === model.get('value')) {
+                item.classList.add('selected');
+            }
+            
+            item.addEventListener('click', () => {
+                const newValue = parseInt(item.dataset.value);
+                if (newValue !== model.get('value')) {
+                    model.set('value', newValue);
+                    model.save_changes();
+                }
+            });
+            
+            return item;
+        }
+        
+        function updateList() {
+            el.innerHTML = '';
+            model.get('options').forEach((opt, index) => {
+                el.appendChild(createItem(opt, index));
+            });
+        }
+        
+        updateDescription();
+        updateList();
+        
+        model.on('change:value', () => {
+            const value = model.get('value');
+            model.set('_active', value); // this will show which item is selected in the list
+            model.save_changes(); 
+        });
 
-    let old_classes = model.get("_dom_classes"); // Anywidget removed previous function, need to store
-    model.on("change:_dom_classes", () => { // Anywidget does not work here
-        const nc = model.get("_dom_classes");
-        for (let c of old_classes) {
-            if (el.classList.contains(c) && nc.indexOf(c) === -1) {
-                el.classList.remove(c);
-            };
-        };
-        old_classes = nc; // for next change
-        for (let k of nc) {
-            if (!el.classList.contains(k)) {
-                el.classList.add(k);
-            };
-        };
-    });
-
-    el.appendChild(div);  
+        model.on('change:_active', () => { // This is apparent internal change, without setting value, not intended to be used by user
+            const active = model.get('_active');
+            el.childNodes.forEach(item => {
+                item.classList.remove('selected');
+                if (parseInt(item.dataset.value) === active) {
+                    item.classList.add('selected');
+                }
+            });
+        });
+        
+        model.on('change:description', updateDescription);
+        model.on('change:options', updateList);
     }
+
     export default { render }
     """
+
     _css = """
-    .jp-RenderedHTMLCommon.custom-html *:not(code,span, hr) {
-       padding:0.1em;
-       line-height:1.5; /* make text clearly readable on presentation */
-    } 
-    .clickable-div > .custom-html { cursor: pointer; }
-    .clickable-div > .custom-html:hover, .clickable-div > .custom-html:focus {
-        background: var(--bg3-color, rgba(100, 100, 111, 0.2)) !important;
+    .list-widget {
+        display: flex;
+        flex-direction: column;
+        border-radius: 4px;
+        overflow-y: auto; /* user can set max height, so allow this */
+        margin-block: 0.5em 0.5em;
     }
-    """
-    value = traitlets.Unicode('').tag(sync=True)
-    click_state = traitlets.Int(0).tag(sync=True)
+    .list-widget:hover .list-item {
+        border: 1px solid var(--bg3-color, #ccc);
+        margin: 0.5px; /* feels like buttons */
+        border-radius: 4px;
+    }
+    .list-widget:hover .list-item.selected {
+        border-left: 2px solid var(--accent-color, #007bff); /* show selected item */
+    }
+    .list-widget.has-description {
+        padding-top: 1em; /* space for description font + padding */
+        position: relative;
+    }
+    .list-widget.has-description::before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        content: attr(data-description);
+        align-items: center;
+        font-size: 0.7em;
+        padding: 0.25em 0.5em;
+        color: var(--fg2-color, #333);
+        display: block;
+    }
+    .list-item {
+        align-items: center;
+        padding: 0.25em 0.5em;
+        cursor: pointer;
+    }
+    .list-item > * {
+        margin-block: 0 0;
+    }
+    .list-item:hover {
+        background: var(--bg3-color, #f5f5f5);
+        font-weight: bold;
+        transition: all 0.2s ease;
+    }
+    .list-item.selected {
+        background: var(--bg3-color, #eee);
+        font-weight: bold;
+        border-left: 2px solid var(--accent-color, #007bff);
+    }
+    .list-item:active {
+        transform: scale(0.99);
+    }
+    """  
 
-    def __init__(self, value = '', click_handler=None, **kwargs):
-        kwargs['value'] = value # value set by kwargs
-        if click_handler is not None:
-            if not callable(click_handler):
-                raise TypeError("click_handler should be a function that accepts a change of widget's `click_state` trait.")
-            
-            self.observe(click_handler, names='click_state')
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.layout.max_height = '400px' # default max height
 
-    def __format__(self, spec):
-        "This is needed to merge content of this widget into another one properly when used in formatting."
-        return f'{self.value:{spec}}'
-    
-    def __repr__(self):
-        return f'<{self.__module__}.HtmlWidget at {hex(id(self))}>'
-    
-    def observe(self, handler, names = traitlets.All, type="change"):
-        "observe traits. `click_state` traits should be observed explicity!"
-        if "click_state" in str(names): # only observe clicks explicity
-            self.add_class('clickable-div') # only on demand
+    @property
+    def value_html(self):
+        "Returns the HTML of the currently selected item. This is not a traitlet, just an accessor of html representation for convenience."
+        if self.value is None:
+            return None
+        if isinstance(self.options[self.value], str):
+            return self.options[self.value]
+        else:
+            return self.options[self.value][1]
+
+    @traitlets.validate('options')
+    def _validate_options(self, proposal):
+        options = proposal['value']
+        if not isinstance(options, (list,tuple)):
+            raise traitlets.TraitError("Options must be a list/tuple.")
+        for opt in options:
+            if not isinstance(opt, (str, tuple)):
+                raise traitlets.TraitError("Each option must be a string or a tuple.")
+            if isinstance(opt, tuple):
+                if len(opt) != 2:
+                    raise traitlets.TraitError("Each tuple option must have exactly two elements.")
+                if not isinstance(opt[0], int):
+                    raise traitlets.TraitError("The first element of each tuple option must be an integer value.")
+                if not isinstance(opt[1], str):
+                    raise traitlets.TraitError("The second element of each tuple option must be a string (HTML).")
             
-        return super().observe(handler, names=names, type = type)
-    
-    def display(self):
-        "Display this HTML object with oldest metadata."
-        return display(self, metadata= {'text/html':self.value}) # metadata to direct display
-        
+        return options    
+
+    def fmt_html(self):
+        from ..formatters import _inline_style
+        klass = 'list-widget has-description' if self.description else 'list-widget'
+        html = ''
+        for i, opt in enumerate(self.options):
+            if isinstance(opt, str):
+                html += '<div class="list-item {}">{}</div>'.format("selected" if i == self.value else "", opt)
+            elif isinstance(opt, tuple):
+                html += '<div class="list-item {}">{}</div>'.format("selected" if opt[0] == self.value else "", opt[1])
+        return f'''<style>{self._css}</style>
+            <div class="{klass}" {_inline_style(self)} data-description="{self.description}">{html}</div>'''
+            
 
 class NotesWidget(anywidget.AnyWidget):
     _esm = Path(__file__).with_name('js') / 'notes.js'
@@ -230,10 +326,10 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     .animation-slider button .fa.fa-rotate-left.inactive {opacity: 0.25 !important;}
     """
     
-    value = traitlets.Int(0).tag(sync=True)          
+    value = traitlets.CInt(0).tag(sync=True)          
     description = traitlets.Unicode(None, allow_none=True).tag(sync=True) 
     loop = traitlets.Bool(False).tag(sync=True)     
-    nframes = traitlets.Int(100).tag(sync=True)     
+    nframes = traitlets.CInt(100).tag(sync=True)     
     interval = traitlets.Float(50.0).tag(sync=True) 
     playing = traitlets.Bool(False).tag(sync=True) 
     continuous_update = traitlets.Bool(True).tag(sync=True)

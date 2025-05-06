@@ -4,14 +4,35 @@ and then provided to other classes via composition, not inheritance.
 """
 import ipywidgets as ipw
 from dataclasses import dataclass
+from traitlets import observe
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
 
 from . import styles, _layout_css
-from ._widgets import InteractionWidget, HtmlWidget, NotesWidget
+from ._widgets import InteractionWidget, NotesWidget, ListWidget
 from .intro import get_logo, how_to_print
 from ..utils import html
 from .. import formatters as fmtrs
+
+
+class TOCWidget(ListWidget):
+    def __init__(self, app, *args, **kwargs):
+        self._app = app
+        super().__init__(*args, **kwargs)
+        self.description = '' # no description for this widget
+        self.layout.max_height = '' # unset here
+    
+    def fmt_html(self): # for export
+        for slide in self._app[:1]: # just pick one slide to get the toc work
+            return slide._reset_toc().data.get('text/html','')
+        return ''
+    
+    @observe('value')
+    def _jump_to_section(self, change):
+        self._app.navigate_to(change["new"])
+        if self._app.widgets.tocbox.layout.max_height != "0": # only if panel was open, otherwise don't open by clicking on another view
+            self._app.widgets.buttons.toc.click()
+
 
 class Output(fmtrs._Output):
     __doc__ = ipw.Output.__doc__ # same docs as main
@@ -87,8 +108,8 @@ class _Htmls:
     main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Jupyter']['accent'], 16/9)).value) # Will be update in theme as well
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
-    toast   = HtmlWidget().add_class('Toast') # For notifications
-    cursor  = HtmlWidget().add_class('LaserPointer') # For beautiful cursor
+    toast   = HTML().add_class('Toast') # For notifications
+    cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
     hilite  = HTML() # Updated in settings on creation. For code blocks.
     zoom    = HTML() # zoom CSS, do not add here!
     bglayer = HTML().add_class('BackLayer') # For glass effect
@@ -186,7 +207,7 @@ class Widgets:
             ],layout=Layout(width='auto',height='max-content',overflow_y='scroll',padding='12px',margin='0')),
         ],layout = Layout(height='0',overflow='hidden')).add_class('SidePanel') 
         
-        self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',height='0',overflow='auto')).add_class('TOC')
+        self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',max_height='0',overflow='auto')).add_class('TOC')
         
         self.slidebox = Box([
             # Slides are added here dynamically
@@ -229,7 +250,7 @@ class Widgets:
         ).add_class('SlidesWrapper')  #Very Important to add this class
 
         for child in self.mainbox.children:
-            if isinstance(child, (HTML, HtmlWidget)):
+            if isinstance(child, HTML):
                 child.layout.margin = "0" # Important to reclaim useless space
 
         for btn in [self.buttons.next, self.buttons.prev, self.buttons.setting]:

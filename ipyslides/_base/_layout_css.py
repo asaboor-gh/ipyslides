@@ -65,9 +65,6 @@ def layout_css(accent_color, aspect):
                     ".columns .paste-btns": {"grid-template-columns": "auto",},
                 },
                 ".paste-btns": {"display": "none !important"},
-                ".clipboard-image": {
-                    ".custom-html:hover, .custom-html:focus": {"background": "none !important",},
-                },
                 ".Slide-Number" : { # slide number
                     "position": "absolute !important",
                     "right": "0 !important",
@@ -411,19 +408,14 @@ def layout_css(accent_color, aspect):
                 "border-radius": "4px",
                 "transition": "height 400ms ease-in-out",
                 "@container slides (max-width: 650px)": {"min-width": "80% !important"},
-                ".custom-html": {
+                ".list-item": {
                     "display": "flex",
                     "flex-direction": "row",
                     "flex-wrap": "nowrap",
                     "justify-content": "space-between !important",
                     "height": "auto",
                     "width": "auto",
-                    "font-size": "16px !important", # A liitle larger
-                    "box-sizing": "border-box !important",
-                },
-                ".toc-item.this": {
-                    "font-weight": "bold !important",
-                    ".custom-html": {"color": "var(--accent-color) !important",},
+                    "font-size": "16px !important", # A litle larger
                 },
             },
             ".TopBar": {
