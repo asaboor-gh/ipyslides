@@ -9,6 +9,7 @@ from IPython import get_ipython
 from IPython.display import display, clear_output
 
 from .xmd import fmt, parse, xtr, get_main_ns, extender as _extender
+from .interaction import interactive, interact, disabled
 from .source import Code
 from .writer import hold, GotoButton, write
 from .formatters import bokeh2html, plt2html, highlight, htmlize, serializer
@@ -95,6 +96,9 @@ class Slides(BaseSlides):
         self.parse      = parse  # Parse extended markdown
         self.fmt        = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
+        self.interact    = interact  # Interactive widgets
+        self.interactive = interactive  # Interactive widgets
+        self.disabled    = disabled  # Disable widgets context manager
 
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(self._slide, magic_kind="cell", magic_name="slide")
@@ -715,16 +719,6 @@ class Slides(BaseSlides):
             
             Timer(timeout, reset).start() if timeout else reset()
 
-    @contextmanager
-    def disabled(self, widget):
-        "Disable widget and enable it after code block runs under it. Useful to avoid multiple clicks on a button that triggers heavy operations."
-        widget.disabled = True
-        widget.add_class("Context-Disabled")
-        try:
-            yield
-        finally:
-            widget.disabled = False
-            widget.remove_class("Context-Disabled")
 
     def _force_update(self, btn=None):
         with self._loading_splash(btn or self.widgets.buttons.refresh):
