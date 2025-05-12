@@ -2,6 +2,7 @@
 Enhanced version of ipywidgets's interact/interactive functionality.
 """
 import inspect 
+import traitlets
 
 from contextlib import contextmanager
 from IPython.display import display
@@ -28,8 +29,12 @@ def _hold_running_slide_builder():
     else:
         yield
 
-def _func2widget(func):
+def _func2widget(func, mutuals):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
+    for p1, p2 in mutuals:
+        if p1 in func_params and p2 in func_params:
+            raise ValueError(f"Function {func} cannot have paramters that depend on each other, {p1!r} depends on {p2!r} ")
+
 
     out = ipw.Output()
     out._old_kws = {} # store old kwargs to avoid re-running the function if not changed
@@ -44,6 +49,7 @@ def _func2widget(func):
                 k not in out._old_kws or filtered_kwargs[k] != out._old_kws[k]
                 for k in filtered_kwargs
             )
+            
             if values_changed:
                 func(**filtered_kwargs) # Call the function with filtered parameters only if changed
             
@@ -52,35 +58,106 @@ def _func2widget(func):
     out._call_func = call_func # set the function to be called when the widget is updated
     return out
 
+def _hint_update(btn, remove = False):
+    (btn.remove_class if remove else btn.add_class)('Rerun')
+    btn.button_style = '' if remove else 'warning' # for notebook outside slides, CSS not applied
 
-def interactive(_f, *args, auto_update=True, grid_areas={}, grid_columns=None, grid_height=None, output_height=None, **kwargs):
-    """Creates an interactive widget layout using ipywidgets, tailored for ipyslides. Add type hints to function for auto-completion inside function.
+def _run_callbacks(outputs, kwargs, box, rerun=True):
+    for out in outputs:
+        if hasattr(out, '_call_func'):
+            out._call_func(kwargs)
+    
+    # This only changes the outputs where functions have made internal changes to other widgets, and is necessary
+    if box and rerun: # Pick new kwargs update from box
+        _run_callbacks(outputs, box.kwargs, box, rerun=False)
+
+
+class AnyTrait(ipw.fixed):
+    def __init__(self, key,  name, trait, kwargs):
+        self._key = key # its own name
+        self._name = name 
+        self._trait = trait
+        if not name in kwargs:
+            raise ValueError(f"Given key {name} is not in other keyword arguments.")
+        
+        widget = kwargs[name]
+        if isinstance(widget, ipw.fixed):
+            widget = widget.value 
+
+        if not isinstance(widget, ipw.DOMWidget):
+            raise TypeError(f"Given key {name!r} is not a widget in keyword arguments.")
+        
+        if trait not in widget.trait_names():
+            raise traitlets.TraitError(f"Parameter {name!r} does not have trait {trait!r}")
+        
+        # Initialize with current value first, then link
+        super().__init__(value=None)
+        traitlets.dlink((widget, trait),(self, 'value'))
+
+
+def _grid_areas_css(grid_areas, klass):
+    css = '\n' # we are doing this because some widgets like plotly have different meaning for layout
+    for key, value in grid_areas.items():
+        if not isinstance(key,(int, str)):
+            raise TypeError(f"key should be integer or string to index children of interactive, got {type(key)}")
+        
+        if isinstance(key,int):
+            css += (f'.{klass} > nth-child({key}) {{ grid-area : {value}; }}' + '\n')
+        else:
+            css += (f'.{klass} > .{key} {{ grid-area : {value}; }}' + '\n')
+    return ipw.HTML(f'<style>{css}</style>')
+        
+
+
+def interactive(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid_height=None, output_heights={}, **kwargs):
+    """An enhanced interactive widget based on `ipywidgets.interactive`, tailored for ipyslides. 
     
     **Parameters**:
 
-    - `args`: Positional widgets displayed below the output widget, passed to calling function as widgets unlike values from kwargs.
-        - These widgets may include some controls like sliders, dropdowns, etc. which will add an extra button to refresh the output 
-          when `auto_update = True`, otherwise there will be already a button to refresh the output.
-        - You can embed `interactive` itself inside `args` to create a nested interactive layout, hence interacting with multiple functions like a highly flexible application.
-        - You can also include functions that take a subset of parameters from the main function and return output widgets. These will be updated when their corresponding variables change.
+    - `*funcs`: callable
+        Provide one or more function that can accept a subset of `**kwargs`. These are converted to output widgets which you can access through `outputs` attribute
+        and main output widget through `out` attribute. You can change traits of `**kwargs` widgets from these functions on demand, like setting dynmaic options to a dropdown.
+        Add type hints to parameters for auto-completion inside function.
     - `auto_update`: Defaults to False if no kwargs are provided, requiring click to update in absence of any other control widgets.
-    - `grid_areas`: A mapping from indices of args widgets to CSS `grid-area` properties for custom layout.
+    - `grid_areas`: A mapping from indices/keyword of children of interactive to CSS `grid-area` properties for custom layout.
         - Values are strings specifying grid positioning: `"row-start / column-start / row-end / column-end"`.
-        - Example: ` {0: 'auto / 1 /span 2 / 2', 1: '1 / 3 / 2 / 4'} ` places the first `args` widget at the left in its automatic row in 
-          two columns span, the second in first row, third column, and others in the next available grid areas.
-        - You can set grid area to any widget with attributes, e.g. `interactive().children[index].layout.grid_area = '1 / 1 / 2 / 2'`.
+        - Example: ` {0: 'auto / 1 /span 2 / 2', 'out_1': '1 / 3 / 2 / 4'} ` places the first widget at the left in its automatic row in 
+          two columns span, the 'out_1' (output widget created by first function) in first row, third column, and others in the next available grid areas.
+        - You can set grid area to any widget with attributes, e.g. `interactive().children[index].layout.grid_area = '1 / 1 / 2 / 2'` later.
     - `grid_columns`: Defines CSS `grid-template-columns` to control column widths, e.g. `"1fr 2fr"` for two columns with different widths.
     - `grid_height`: Sets the height of the grid layout, e.g. `"300px"` to limit visible area of the grid.
-    - `output_height`: Sets output widget height to prevent flickering.
-    - `kwargs`: Additional interactive widgets/ abbreviations for controls, passed to the function as values.
+    - `output_heights`: Sets output widgets height to prevent flickering, provide a dictionary for indexing main output and outputs created by each function (in that order) with integer keys and string values.
+    
+    **`kwargs`**: 
+        Additional interactive widgets/ abbreviations for controls, passed to the function as values or widgets.
+        See [ipywidgets.interact](https://ipywidgets.readthedocs.io/en/latest/examples/Using%20Interact.html#using-interact) docs.
+
+        Additional controls, widgets, and their traits other than just `value` are allowed.
+
+        - Pass any widget like plotly's `FigureWidget` and observe selections using a function.
+        - Pass subclasses of `ValueWidget` using `ipywidgets.fixed` if you are observing a trait other than `value`.
+        - A dictionary with single item `{'keyword':'trait'}` can be used to observe a trait from a widget you passed into `kwargs` directly of  by `fixed`.
+            Example: `interactive(..., x = fixed(IntSlider()), y = {'x': 'min'}` lets you observe minimum value of slider assigned to `x`.
+
+
     **Usage Example**:
     ```python
+    import ipywidgets as ipw
     import plotly.graph_objects as go
-    @Slides.interact(go.FigureWidget(), x=5, grid_areas={0: 'auto / 1 / span 3 / 3'})
-    def plot(fig:go.FigureWidget, x): # adding type hint allows auto-completion inside function
+
+    @slides.interact(
+        lambda y: print(y), # prints x.min as y picks that attribute
+        fig = go.FigureWidget(), 
+        x= ipw.fixed(ipw.IntSlider()), 
+        y = {'x':'min'}, 
+        z = 10,  
+        grid_areas={'fig': '5 / 1 / auto / -1'}, 
+        grid_columns='1fr 2fr')
+    def plot(fig:go.FigureWidget, x, z): # adding type hint allows auto-completion inside function
+        x.min = z # change value widgets traits conditionally if they were passed as fixed
+        x.max = z + 50
         fig.data = []
-        fig.add_trace(go.Scatter(x=[1,2,3], y=[x, x+1, x+2], mode='lines+markers'))
-        print(f'Plotting {x}')
+        fig.add_trace(go.Scatter(x=[1,2,3], y=[0, z, 1 - z**2], mode='lines+markers'))
     ```
 
     **Note**:
@@ -90,77 +167,90 @@ def interactive(_f, *args, auto_update=True, grid_areas={}, grid_columns=None, g
     - If you need a widget in kwargs with same name as other keyword araguments, 
       use description to set it to avoid name clash, e.g. `Slides.interact(f, x=5, y= ipywidgets.IntSlider(description='grid_height'))`.
     """
-    def hint_update(btn, remove = False):
-        (btn.remove_class if remove else btn.add_class)('Rerun')
-        btn.button_style = '' if remove else 'warning' # for notebook outside slides, CSS not applied
-
-    f_kws = {k:v for k,v in inspect.signature(_f).parameters.items()} # store once for all cases
+    if not funcs:
+        raise ValueError("at least one interactive function required!")
     
-    def run_args_callbacks(args, kwargs):
-        for new, (key, old) in zip(args, f_kws.items()):
-            f_kws[key] = new # update with new values from args, args may be changed by user, no example though
-        f_kws.update(kwargs) # update with latest values from kwargs
-
-        for arg in args:
-            if hasattr(arg, '_call_func'):
-                arg._call_func(f_kws)
-
-    
+    box, btn, outputs, klass = None, None, [], 'i'+str(id([])) # just general but unique
     def inner(**kwargs):
+        display(_grid_areas_css(grid_areas, klass))
         with _hold_running_slide_builder():
-            if (btn := getattr(inner, 'btn', None)):
+            if btn:
                 with disabled(btn):
-                    _f(*args, **kwargs)
-                    hint_update(btn, remove=True)
-                    run_args_callbacks(args, kwargs) # run args callback if any      
+                    _hint_update(btn, remove=True)
+                    _run_callbacks(outputs, kwargs, box) 
             else:
-                _f(*args, **kwargs)
-                run_args_callbacks(args, kwargs) # run args callback if any
-
-    new_args = []      
-    for arg in args:
-        if not isinstance(arg, ipw.DOMWidget) and not callable(arg):
-            raise TypeError('Only displayable widgets or functions can be passed as args, which can be controlled by kwargs widgets inside through function!')
-        if isinstance(arg,ipw.interactive):
-            arg.layout.grid_area = 'auto / 1 / auto / -1' # embeded interactive should be full length, unless user sets it otherwise
-
-        if callable(arg):
-            new_args.append(_func2widget(arg)) # convert to output widget
-        else:
-            new_args.append(arg)
-    
-    args = tuple(new_args) # avoid accidental modification when setting args_widgets
-
+                _run_callbacks(outputs, kwargs, box) 
+            
     if not kwargs: # need to interact anyhow
         auto_update = False
 
+    extras = {}
+    for key, value in kwargs.copy().items():
+        if isinstance(value, ipw.fixed) and isinstance(value.value, ipw.DOMWidget):
+            extras[key] = value.value # we need to show that widget
+        elif isinstance(value,ipw.interactive):
+            value.layout.grid_area = 'auto / 1 / auto / -1' # embeded interactive should be full length, unless user sets it otherwise
+        elif isinstance(value, (ipw.HTML, ipw.Label, ipw.HTMLMath)):
+            kwargs[key] = ipw.fixed(value) # convert to fixed widget, these can't have user interaction available
+            extras[key] = value
+        elif isinstance(value, ipw.DOMWidget) and not isinstance(value,ipw.ValueWidget): # value widgets are automatically handled
+            kwargs[key] = ipw.fixed(value) # convert to fixed widget, to be passed as value
+            extras[key] = value # we need to show that widget
+    
+    # fix description in extras, like if user pass IntSlider etc.
+    for key, value in extras.items():
+        if 'description' in value.traits() and not value.description:
+            value.description = key # only if not given
+
+    # Now fix object that observe traits of others
+    mutuals = []
+    for key, value in kwargs.copy().items():
+        if isinstance(value, dict) and len(value) == 1:
+            for name, trait in value.items():
+                kwargs[key] = AnyTrait(key, name, trait, kwargs)
+                mutuals.append((key, *value.keys()))
+        
+    outputs = ()      
+    for f in funcs:
+        if not callable(f):
+            raise TypeError('Only functions accepting a subset of kwargs can be passed as args!')
+        
+        outputs += (_func2widget(f, mutuals),) # convert to output widget
+
     box = ipw.interactive(inner,{'manual':not auto_update,'manual_name':''}, **kwargs)
-    box.add_class('on-refresh').add_class('widget-gridbox').remove_class('widget-vbox')
+    btn = getattr(box, 'manual_button', None) # need it above later
+    box.add_class('on-refresh').add_class('widget-gridbox').remove_class('widget-vbox').add_class(klass)
     box.layout.grid_template_columns = grid_columns or ''
     box.layout.display = 'grid' # for exporting to HTML correctly
-    box.layout.flex_flow = 'row wrap' # for exporting to HTML correctly
-    box.layout.height = str(grid_height or '') 
-    box.children += args
-    # Add function output widgets to box children
-    box.args_widgets = args
-    box.out.add_class('widget-output') # need this for exporting to HTML correctly
-    box.out.layout.height = str(output_height or '') #avoid flickering, handle None case
-    box.out.layout.grid_area = 'auto / 1 / auto / -1' # should be full width even outside slides
+    box.layout.flex_flow = 'row wrap' # for exporting to HTML correctly 
+    box.layout.height = grid_height or ''
+
+    box.children += tuple(extras.values()) # add extra widgets to box children
+    box.children += outputs # add outputs after extra widgets by kwargs
+    box.outputs = outputs # store outputs for later use
+
+    box.out.add_class('widget-output').add_class('main').add_class('out_0') # need this for exporting to HTML correctly
+    box.out.layout.grid_area = 'auto / 1 / auto / -1' # should be full width even outside slides 
+
+    for i, out in enumerate(outputs):
+        out.add_class(f'out_{i+1}') # 0 for main
+
+    for w in box.kwargs_widgets:
+        if isinstance(w, ipw.fixed):
+            w, c = w.value, getattr(w, '_kwarg','')
+        getattr(w, 'add_class', lambda v: None)(c) # for grid area
     
-    for key, value in grid_areas.items():
-        if not isinstance(key,int):
-            raise TypeError(f"key should be integer to index args, got {type(key)}")
-        
-        if args: # let it raise index error below
-            args[key].layout.grid_area = value # set grid area for args widgets
-    
-    args_value_widgets = [w for w in args 
-        if (isinstance(w, ipw.ValueWidget) and not isinstance(w, ipw.widget_string._String)) # HTML, Label etc. excluded, Text, Textarea are special cases
-        or isinstance(w, (ipw.Text,ipw.Textarea))] # only if controls are there but not HTML widgets
-    if (btn := getattr(box, 'manual_button', None)):
-        inner.btn = box.manual_button
-        for w in [*box.kwargs_widgets, *args_value_widgets]: # both kwargs and args widgets should tell the button to update
-            w.observe(lambda change: hint_update(btn),names=['value'])
+    for key, value in output_heights.items():
+        if not isinstance(key, int):
+            raise TypeError(f"key should be integer to index main output and other outputs created by funcs, got {type(key)}")
+        if key == 0:
+            box.out.layout.height = value 
+        else:
+            outputs[key + 1].layout.height = value
+
+    if btn:
+        for w in box.kwargs_widgets: # should tell the button to update
+            w.observe(lambda change: _hint_update(btn),names=['value'])
         
         btn.add_class('Refresh-Btn')
         btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px',}
@@ -168,35 +258,18 @@ def interactive(_f, *args, auto_update=True, grid_areas={}, grid_columns=None, g
         btn.icon = 'refresh'
         btn.click() # first run to ensure no dynamic inside
     
-    elif args_value_widgets: 
-        btn = ipw.Button(description='', tooltip='Update Outputs', icon='refresh',
-            layout={'width': 'max-content', 'padding':'0 24px', 'height':'28px'}).add_class('Refresh-Btn')
-        
-        for w in args_value_widgets: # only args widgets are left unsynced in this case
-            w.observe(lambda change: hint_update(btn),names=['value'])
-        
-        @box.out.capture(clear_output=True,wait=True)
-        def on_click(b):
-            with disabled(btn): # here we don't need to hold the slide builder, as we will not be inside it
-                inner(**box.kwargs) # pick latest values from kwargs
-                hint_update(btn, remove=True) 
-                run_args_callbacks(box.args_widgets, box.kwargs)
-
-        btn.on_click(on_click)
-        box.children += (btn,) # add at last for any args widgets to work
-        btn.click() # first run to ensure no dynamic inside
     return box
 
 
-def interact(*args, auto_update=True, grid_areas={}, grid_columns=None, grid_height=None, output_height=None, **kwargs):
+def interact(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid_height=None, output_heights={}, **kwargs):
     """
     ::: note-tip
         - You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
         - You can also use this under `Slides.capture_content` to display later in a specific place.
     """
     def inner(func):
-        return display(interactive(func, *args, auto_update = auto_update, grid_areas = grid_areas, grid_columns = grid_columns, 
-            grid_height=grid_height, output_height = output_height, **kwargs))
+        return display(interactive(func, *funcs, auto_update = auto_update, grid_areas = grid_areas, grid_columns = grid_columns, 
+            grid_height=grid_height, output_heights = output_heights, **kwargs))
     return inner
 
 interact.__doc__ = interactive.__doc__ + interact.__doc__ # additional docstring

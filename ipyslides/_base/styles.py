@@ -428,7 +428,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'padding': '0 8px',
                     'color': 'red !important',
                 },
-                '> .widget-output': {
+                '> .widget-output.main': {
                     'padding': '4px 8px',
                     'display': 'grid',
                     'grid-column-start':1,
