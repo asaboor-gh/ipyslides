@@ -84,7 +84,7 @@ Support for various content types including:
 - 🎮 Enhanced interactive content
 ```python
 from ipywidgets import HTML
-@slides.interact(HTML(), amplitude= (0, 2),frequency=(0, 5))
+@slides.interact(html = HTML(), amplitude= (0, 2),frequency=(0, 5))
 def plot(html, amplitude, frequency):
     x = np.linspace(0, 2*np.pi, 100)
     y = amplitude * np.sin(frequency    * x)

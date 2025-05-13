@@ -1,4 +1,4 @@
-_attrs = ['AnimationSlider', 'ListWidget', 'alt', 'alert', 'as_html', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
     'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
@@ -241,7 +241,7 @@ def _styled_css(props : dict):
     props = {k:v for k,v in props.items() if (isinstance(v,dict) or k.lstrip(' ^<'))} # Remove root attrs and top level access
     return XTML(f"<style>{_build_css((f'{klass}',),props)}</style>")
 
-_css_docstring = parse("""
+_dict2css = """
 CSS is formatted using a `props` nested dictionary to simplify the process. 
 There are few special rules in `props`:
 
@@ -250,7 +250,9 @@ There are few special rules in `props`:
 - A list/tuple of values for a key in dict generates CSS fallback, so hl`'.A': {'font-size': ('20px','2em')}` becomes hl['css']`.A {font-size: 20px; font-size: 2em;}` in CSS.
 
 Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
-""" + f"""                      
+"""
+
+_css_docstring = parse(_dict2css + f"""                      
 ```python
 props = {json.dumps(_example_props, indent=2)}
 ```
@@ -637,6 +639,10 @@ def html(tag, children = None,css_class = None,**node_attrs):
 def as_html(obj):
     "Convert supported (almost any) obj to html format."
     return XTML(htmlize(obj))
+
+def as_html_widget(obj=''): # should be useable empty
+    "Convert supported (almost any) obj to html format and return widget."
+    return XTML(htmlize(obj)).as_widget()
 
 def vspace(em = 1):
     "Returns html node with given height in `em`."

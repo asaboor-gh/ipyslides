@@ -421,7 +421,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             },
             '.widget-interact.on-refresh' : {
                 'display': 'grid !important',
-                'grid-template-columns': '1fr 1fr 1fr',
+                'grid-template-columns': '1fr 1fr 1fr', # full length 3 columns
                 'grid-gap': '4px',
                 '> .Refresh-Btn.Rerun:before': {
                     'content': '"Sync Outputs"',
@@ -436,10 +436,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 }, # below widget-html-content creates issue even in nested divs
                 '> *, .widget-html-content' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
             },
-            '.columns.writer .widget-interact.on-refresh' : {'grid-template-columns': '1fr',},
-            '.columns.writer:has(> :last-child:nth-child(2)) .widget-interact.on-refresh' : {
-                'grid-template-columns': '1fr 1fr', # If two columns, 2 in grid, otherwise 1 only as above
-            },
+            '.columns.writer .widget-interact.on-refresh' : {'grid-template-columns': '1fr',}, # only one inside columns
         },
         'span.sig': {
             'color': 'var(--accent-color) !important',

@@ -1,12 +1,17 @@
 """
 Enhanced version of ipywidgets's interact/interactive functionality.
 """
+
+__all__ = ['interactive','interact','patched_plotly','disabled']
+
+import textwrap
 import inspect 
 import traitlets
 
 from contextlib import contextmanager
 from IPython.display import display
 from .formatters import get_slides_instance
+from .utils import _build_css, _dict2css
 from ._base.widgets import ipw # patch ones required here
 
 @contextmanager
@@ -38,11 +43,12 @@ def _func2widget(func, mutuals):
 
     out = ipw.Output()
     out._old_kws = {} # store old kwargs to avoid re-running the function if not changed
+    out._fparams = func_params
     
     def call_func(kwargs):
         out.clear_output(wait=True) # clear previous output
         with out:
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k in func_params}
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k in out._fparams}
 
             # Compare values properly by checking each parameter
             values_changed = any(
@@ -50,8 +56,8 @@ def _func2widget(func, mutuals):
                 for k in filtered_kwargs
             )
             
-            if values_changed:
-                func(**filtered_kwargs) # Call the function with filtered parameters only if changed
+            if values_changed or not out._fparams: # function may not have arguments but can be run via click
+                func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
             
             out._old_kws.update(filtered_kwargs) # update old kwargs to latest values
             
@@ -62,14 +68,10 @@ def _hint_update(btn, remove = False):
     (btn.remove_class if remove else btn.add_class)('Rerun')
     btn.button_style = '' if remove else 'warning' # for notebook outside slides, CSS not applied
 
-def _run_callbacks(outputs, kwargs, box, rerun=True):
+def _run_callbacks(outputs, kwargs, box):
     for out in outputs:
         if hasattr(out, '_call_func'):
-            out._call_func(kwargs)
-    
-    # This only changes the outputs where functions have made internal changes to other widgets, and is necessary
-    if box and rerun: # Pick new kwargs update from box
-        _run_callbacks(outputs, box.kwargs, box, rerun=False)
+            out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
 
 
 class AnyTrait(ipw.fixed):
@@ -91,56 +93,50 @@ class AnyTrait(ipw.fixed):
             raise traitlets.TraitError(f"Parameter {name!r} does not have trait {trait!r}")
         
         # Initialize with current value first, then link
-        super().__init__(value=None)
+        super().__init__(value=getattr(widget,trait,None))
         traitlets.dlink((widget, trait),(self, 'value'))
 
 
-def _grid_areas_css(grid_areas, klass):
-    css = '\n' # we are doing this because some widgets like plotly have different meaning for layout
-    for key, value in grid_areas.items():
-        if not isinstance(key,(int, str)):
-            raise TypeError(f"key should be integer or string to index children of interactive, got {type(key)}")
-        
-        if isinstance(key,int):
-            css += (f'.{klass} > nth-child({key}) {{ grid-area : {value}; }}' + '\n')
-        else:
-            css += (f'.{klass} > .{key} {{ grid-area : {value}; }}' + '\n')
-    return ipw.HTML(f'<style>{css}</style>')
-        
+def _grid_area_css(grid_css, sel):
+    if not isinstance(grid_css, dict):
+        raise TypeError('grid_css should be a nesetd dictionary of CSS properties.')
+    return ipw.HTML(f'<style>{_build_css((sel,), grid_css)}</style>')
 
 
-def interactive(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid_height=None, output_heights={}, **kwargs):
-    """An enhanced interactive widget based on `ipywidgets.interactive`, tailored for ipyslides. 
+def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
+    """
+    An enhanced interactive widget based on `ipywidgets.interactive`, tailored for ipyslides. 
     
-    **Parameters**:
+    **Parameters**
 
     - `*funcs`: callable
         Provide one or more function that can accept a subset of `**kwargs`. These are converted to output widgets which you can access through `outputs` attribute
         and main output widget through `out` attribute. You can change traits of `**kwargs` widgets from these functions on demand, like setting dynmaic options to a dropdown.
-        Add type hints to parameters for auto-completion inside function.
+        Add type hints to parameters for auto-completion inside function. Functions that change widgets traits should be listed first, so other functions can pick the latest trait values. 
     - `auto_update`: Defaults to False if no kwargs are provided, requiring click to update in absence of any other control widgets.
-    - `grid_areas`: A mapping from indices/keyword of children of interactive to CSS `grid-area` properties for custom layout.
-        - Values are strings specifying grid positioning: `"row-start / column-start / row-end / column-end"`.
-        - Example: ` {0: 'auto / 1 /span 2 / 2', 'out_1': '1 / 3 / 2 / 4'} ` places the first widget at the left in its automatic row in 
-          two columns span, the 'out_1' (output widget created by first function) in first row, third column, and others in the next available grid areas.
-        - You can set grid area to any widget with attributes, e.g. `interactive().children[index].layout.grid_area = '1 / 1 / 2 / 2'` later.
-    - `grid_columns`: Defines CSS `grid-template-columns` to control column widths, e.g. `"1fr 2fr"` for two columns with different widths.
-    - `grid_height`: Sets the height of the grid layout, e.g. `"300px"` to limit visible area of the grid.
-    - `output_heights`: Sets output widgets height to prevent flickering, provide a dictionary for indexing main output and outputs created by each function (in that order) with integer keys and string values.
-    
-    **`kwargs`**: 
-        Additional interactive widgets/ abbreviations for controls, passed to the function as values or widgets.
+    - `grid_css`: A nested dictionary to apply CSS properties to grid and its children. See below for structure of dictionary.
+        - Top level properties are applied to grid itself, like ` grid_css = {'grid': 'auto-flow / 1fr 2fr'} ` makes two columns of 33% and 67% width.
+        - Children of grid are given classes with same names as their keyword argument, and outputs created by `funcs` have classes `out-0, out-1,...`.
+            So if a keyword argument is `fig` and you also wants to style first output, provide 
+            ` grid_css = {'grid-template-columns': '1fr 2fr', 'out-0': {'height': '200px',...}, '.fig': {'grid-area': '1 / 2 / span 5 / -1'}} `
+            which will put `fig` in write column and 5 other widgets in left and rest below.
+        - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
+
+    **kwargs**
+
+    - Additional interactive widgets/ abbreviations for controls, passed to the function as values or widgets.
         See [ipywidgets.interact](https://ipywidgets.readthedocs.io/en/latest/examples/Using%20Interact.html#using-interact) docs.
 
-        Additional controls, widgets, and their traits other than just `value` are allowed.
-
+    - Additional controls, widgets, and their traits other than just `value` are allowed.
         - Pass any widget like plotly's `FigureWidget` and observe selections using a function.
         - Pass subclasses of `ValueWidget` using `ipywidgets.fixed` if you are observing a trait other than `value`.
-        - A dictionary with single item `{'keyword':'trait'}` can be used to observe a trait from a widget you passed into `kwargs` directly of  by `fixed`.
+        - A dictionary with single item ` {'keyword':'trait'} ` can be used to observe a trait from a widget you passed into `kwargs` directly of  by `fixed`.
             Example: `interactive(..., x = fixed(IntSlider()), y = {'x': 'min'}` lets you observe minimum value of slider assigned to `x`.
+        - Use `patched_plotly` from this module to observe `selected` and `clicked` traits automatically.
 
 
-    **Usage Example**:
+    **Usage Example**
+
     ```python
     import ipywidgets as ipw
     import plotly.graph_objects as go
@@ -151,8 +147,8 @@ def interactive(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid
         x= ipw.fixed(ipw.IntSlider()), 
         y = {'x':'min'}, 
         z = 10,  
-        grid_areas={'fig': '5 / 1 / auto / -1'}, 
-        grid_columns='1fr 2fr')
+        grid_css={'grid': auto-flow / 1fr 2fr', '.fig': {'grid-area': '5 / 1 / auto / -1'}}, 
+        )
     def plot(fig:go.FigureWidget, x, z): # adding type hint allows auto-completion inside function
         x.min = z # change value widgets traits conditionally if they were passed as fixed
         x.max = z + 50
@@ -160,19 +156,19 @@ def interactive(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid
         fig.add_trace(go.Scatter(x=[1,2,3], y=[0, z, 1 - z**2], mode='lines+markers'))
     ```
 
-    **Note**:
+    **Note**
 
     - Avoid modifying the global slide state, as changes will affect all slides.
     - Supports `Slides.AnimationSlider` for animations when `auto_update=True`.
     - If you need a widget in kwargs with same name as other keyword araguments, 
-      use description to set it to avoid name clash, e.g. `Slides.interact(f, x=5, y= ipywidgets.IntSlider(description='grid_height'))`.
+      use description to set it to avoid name clash, e.g. `Slides.interact(f, x=5, y= ipywidgets.IntSlider(description='auto_update'))`.
     """
     if not funcs:
         raise ValueError("at least one interactive function required!")
     
-    box, btn, outputs, klass = None, None, [], 'i'+str(id([])) # just general but unique
+    box, btn, outputs, klass = None, None, [], 'i-'+str(id([])) # just general but unique
+
     def inner(**kwargs):
-        display(_grid_areas_css(grid_areas, klass))
         with _hold_running_slide_builder():
             if btn:
                 with disabled(btn):
@@ -199,7 +195,8 @@ def interactive(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid
     
     # fix description in extras, like if user pass IntSlider etc.
     for key, value in extras.items():
-        if 'description' in value.traits() and not value.description:
+        if 'description' in value.traits() and not value.description \
+            and not isinstance(value,(ipw.HTML, ipw.HTMLMath, ipw.Label)): # HTML widgets and Labels should not pick extra
             value.description = key # only if not given
 
     # Now fix object that observe traits of others
@@ -220,33 +217,24 @@ def interactive(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid
     box = ipw.interactive(inner,{'manual':not auto_update,'manual_name':''}, **kwargs)
     btn = getattr(box, 'manual_button', None) # need it above later
     box.add_class('on-refresh').add_class('widget-gridbox').remove_class('widget-vbox').add_class(klass)
-    box.layout.grid_template_columns = grid_columns or ''
     box.layout.display = 'grid' # for exporting to HTML correctly
     box.layout.flex_flow = 'row wrap' # for exporting to HTML correctly 
-    box.layout.height = grid_height or ''
 
     box.children += tuple(extras.values()) # add extra widgets to box children
     box.children += outputs # add outputs after extra widgets by kwargs
+    box.children += (_grid_area_css(grid_css, f".{klass}"),) # Add html at end
     box.outputs = outputs # store outputs for later use
 
-    box.out.add_class('widget-output').add_class('main').add_class('out_0') # need this for exporting to HTML correctly
-    box.out.layout.grid_area = 'auto / 1 / auto / -1' # should be full width even outside slides 
+    box.out.add_class('widget-output').add_class('main').add_class('out-0') # need this for exporting to HTML correctly
 
     for i, out in enumerate(outputs):
-        out.add_class(f'out_{i+1}') # 0 for main
+        out.add_class(f'out-{i+1}') # 0 for main
 
     for w in box.kwargs_widgets:
+        c = getattr(w, '_kwarg','')
         if isinstance(w, ipw.fixed):
-            w, c = w.value, getattr(w, '_kwarg','')
+            w = w.value
         getattr(w, 'add_class', lambda v: None)(c) # for grid area
-    
-    for key, value in output_heights.items():
-        if not isinstance(key, int):
-            raise TypeError(f"key should be integer to index main output and other outputs created by funcs, got {type(key)}")
-        if key == 0:
-            box.out.layout.height = value 
-        else:
-            outputs[key + 1].layout.height = value
 
     if btn:
         for w in box.kwargs_widgets: # should tell the button to update
@@ -261,16 +249,36 @@ def interactive(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid
     return box
 
 
-def interact(*funcs, auto_update=True, grid_areas={}, grid_columns=None, grid_height=None, output_heights={}, **kwargs):
+def interact(*funcs, auto_update=True, grid_css={}, **kwargs):
     """
-    ::: note-tip
-        - You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
-        - You can also use this under `Slides.capture_content` to display later in a specific place.
+
+    - You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
+    - You can also use this under `Slides.capture_content` to display later in a specific place.
     """
     def inner(func):
-        return display(interactive(func, *funcs, auto_update = auto_update, grid_areas = grid_areas, grid_columns = grid_columns, 
-            grid_height=grid_height, output_heights = output_heights, **kwargs))
+        return display(interactive(func, *funcs, auto_update = auto_update, grid_css = grid_css, **kwargs))
     return inner
 
-interact.__doc__ = interactive.__doc__ + interact.__doc__ # additional docstring
+_css_info = textwrap.indent('\n**Python dictionary to CSS**\n' + _dict2css, '    ')
+interact.__doc__ = interactive.__doc__ + interact.__doc__ + _css_info # additional docstring
+interactive.__doc__ = interactive.__doc__ + _css_info
+
+
+def patched_plotly(fig):
+    "Plotly's FigureWidget with two additional traits `selected` and `clicked` to observe."
+    if getattr(fig.__class__,'__name__','') != 'FigureWidget':
+        raise TypeError("provide plotly's FigureWidget")
+    fig.add_traits(selected = traitlets.Dict(), clicked=traitlets.Dict())
+
+    def _attach_data(change):
+        data = change['new']
+        if data:
+            if data['event_type'] == 'plotly_selected':
+                fig.selected = data['points']
+            if data['event_type'] == 'plotly_click':
+                fig.clicked = data['points']
+            
+    fig.observe(_attach_data, names = '_js2py_pointsCallback')
+    return fig
+
 

@@ -9,13 +9,14 @@ from IPython import get_ipython
 from IPython.display import display, clear_output
 
 from .xmd import fmt, parse, xtr, get_main_ns, extender as _extender
-from .interaction import interactive, interact, disabled
 from .source import Code
 from .writer import hold, GotoButton, write
 from .formatters import bokeh2html, plt2html, highlight, htmlize, serializer
 from . import utils
+from . import interaction as _interac
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
+_under_slides.update({k: getattr(_interac, k, None) for k in _interac.__all__})
 
 from ._base.widgets import TOCWidget, ipw # patched one
 from ._base.base import BaseSlides
@@ -96,9 +97,6 @@ class Slides(BaseSlides):
         self.parse      = parse  # Parse extended markdown
         self.fmt        = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
-        self.interact    = interact  # Interactive widgets
-        self.interactive = interactive  # Interactive widgets
-        self.disabled    = disabled  # Disable widgets context manager
 
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(self._slide, magic_kind="cell", magic_name="slide")

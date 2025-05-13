@@ -131,9 +131,9 @@ def demo_slides(slides):
     with slides.build(-1) as s:
         slides.write('## Animations with Widgets')
         anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
-        source = s.get_source().as_widget()
+        css = {'grid-template-columns': '1fr 2fr', '.out-1': {'height': '2em'}}
 
-        @slides.interact(slides.html('','updateable').as_widget(), source, output_height = '2em', grid_columns = '1fr 2fr', anim=anim)
+        @slides.interact(grid_css = css, html = slides.as_html_widget(''), source=s.get_source().as_widget(), anim=anim)
         def _(html, source, anim):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area
@@ -151,9 +151,9 @@ def demo_slides(slides):
             # run_cell executes code in top level scope, so varaibles are available in notebook
 
         lw = slides.ListWidget(description='Execute a code block',options= [slides.hl(c).value for c in codes])
-        lw.layout.grid_area = 'auto / 1 / 1 / -1' # span all columns 
+        css = {'.out-1': {'height':'300px'}, 'grid':'auto-flow / 1fr'} # just single column
 
-        it = slides.interactive(run,output_height='300px', c = lw)
+        it = slides.interactive(run, c = lw, grid_css=css)
         slides.write(['### Rich Content hl`ListWidget`', it],s.get_source())
 
 

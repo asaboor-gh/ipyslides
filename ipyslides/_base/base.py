@@ -535,7 +535,7 @@ class BaseSlides:
             with self.capture_content() as cap, self.code.context():
                 import time
 
-                @self.interact(auto_update=False, output_height= '2em', date = False)  # self is Slides here
+                @self.interact(auto_update=False, grid_css = dict({'.out-1': dict(height='2em')},background='var(--bg2-color)'), date = False)  # self is Slides here
                 def update_time(date): 
                     local_time = time.localtime()
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
