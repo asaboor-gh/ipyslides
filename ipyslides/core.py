@@ -1,9 +1,10 @@
-import sys, os, json, re, textwrap, math
+import sys, os, json, re, math
 from contextlib import contextmanager, suppress
 from collections.abc import Iterable
 from itertools import zip_longest
 from threading import Timer
 from typing import Tuple, Union
+from functools import wraps
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
@@ -71,20 +72,69 @@ class _Citation:
             ).value
         else:
             return self.value
+        
+class Singleton(type):
+    # Before Slides calss was made singleton by creating a global instance. 
+    # Got idea from PyCon2025 talk on Metaclasses Demystified by Jason C. McDonalad.
+    # Now module can be imported in terminal as well, before it had to throw error
+    _instance = None
+
+    def __call__(cls, extensions=[], **settings): # I don't know what's magic is here!
+        if cls._instance is None:
+            cls._instance = super().__call__(extensions=extensions, **settings)
+            cls._instance.fsep = fsep # frame separator is needed to be attached
+        else: # reset these settings on previous instance on every call
+            cls._instance.extender.extend(extensions) 
+            cls._instance.settings(**settings)
+        return cls._instance
 
 
-class Slides(BaseSlides):
-    # This will be overwritten after creating a single object below!
+class Slides(BaseSlides,metaclass=Singleton):
+    """Interactive Slides in IPython Notebook. Only one instance can exist. `settings` 
+    are passed to hl`Slides.settings()` if you like to set during initialization.
+    
+    To suppress unwanted print from other libraries/functions, use:
+    ```python
+    with slides.suppress_stdout():
+        some_function_that_prints() # This will not be printed
+        print('This will not be printed either')
+        display('Something') # This will be printed
+    ```
+    ::: note-info
+        The traitlets callables under settings returns settings back to enable chaining 
+        without extra typing, like hl`Slides.settings.logo().layout()...` .
+    
+    ::: note-tip
+        - Use hl`Slides.instance()` class method to keep older settings. hl`Slides()` apply default settings every time.
+        - Run hl`slides.demo()` to see a demo of some features.
+        - Run hl`slides.docs()` to see documentation.
+        - Instructions in left settings panel are always on your fingertips.
+        - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
+        - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
+        - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
+        - See hl`Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
+    
+    ::: note-info
+        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as hl`Slides[number,] -> Slide` 
+        or access many via list as hl`Slides[[n1,n2,..]] -> tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
+    """
 
-    def __init__(self):
+    @classmethod
+    def instance(cls):
+        "Access current instnace without changing the settings."
+        return cls._instance
+
+    def __init__(self, extensions=[],**settings):
         super().__init__()  # start Base class in start
         self.shell = SHELL
 
         for k, v in _under_slides.items():  # Make All methods available in slides
             setattr(self, k, v)
 
-        self.get_child_dir('.ipyslides-assets', create = True) # It should be present/created to load resources
-        
+        self.get_child_dir('.ipyslides-assets', create = True) # It should be present/created to load resources     
+        self.settings(**settings)
+        _extender.extend(extensions) # globally once
+
         self.extender   = _extender
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
@@ -782,11 +832,16 @@ class Slides(BaseSlides):
         if new_slides:
             self.refresh()  # Refresh all slides
 
-        return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values()))
+        return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
     
-# Make available as Singleton Slides
-_private_instance = Slides()  # Singleton in use namespace
-# This is overwritten below to just have a singleton
+def _ensure_slides_init(func):
+    @wraps(func)
+    def inner(*args,**kwargs):
+        if Slides.instance() is None:
+            raise RuntimeWarning("Slides was never initialized!")
+        return func(*args, **kwargs)
+    return inner
+
 
 class fsep:
     """Frame separator! If it is just after `write` command, columns are incremented too.
@@ -797,18 +852,21 @@ class fsep:
     - Use `fsep.accumulate()/fsep.join()` once under a slide to show frames incrementally. In markdown slides, use %++.
     - Content before first frame separator is added on all frames. This helps adding same title once.
     """
-    _app = _private_instance
+    _app_ins = Slides.instance # need to be called as it would not be defined initially
     
+    @_ensure_slides_init
     def __init__(self):
-        self._app.verify_running("Cant use fsep in a capture context other than slides!")
-        self._app.this._widget.add_class("Frames")
-        self._app.this._fsep = getattr(self._app.this, '_fsep',self._app.html('style','').as_widget()) # create once
-        self._app.frozen(self._app.this._fsep, {"FSEP": "","skip-export":"no need in export"}).display()
+        app = self._app_ins()
+        app.verify_running("Cant use fsep in a capture context other than slides!")
+        app.this._widget.add_class("Frames")
+        app.this._fsep = getattr(app.this, '_fsep',app.html('style','').as_widget()) # create once
+        app.frozen(app.this._fsep, {"FSEP": "","skip-export":"no need in export"}).display()
 
     @classmethod
+    @_ensure_slides_init
     def loop(cls, iterable, accumulate=False):
         "Loop over iterable. Frame separator is add before each item and at end of the loop."
-        cls._app.verify_running()
+        cls._app_ins().verify_running()
         if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
             raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
         
@@ -827,68 +885,13 @@ class fsep:
         return enumerate(cls.loop(iterable,accumulate=accumulate), start=start)
     
     @classmethod
+    @_ensure_slides_init
     def accumulate(cls):
         """Join frames incrementally. This enables `write` and `multicol` followed by a frame separator to increment as well.
         Use %++ in makdown in place of this.
         """
-        cls._app.verify_running()
-        cls._app.this._split_frames = False
+        app = cls._app_ins()
+        app.verify_running()
+        app.this._split_frames = False
 
     join = accumulate # short alias
-
-_private_instance.fsep = fsep # Set once, otherwise throws error on next runs
-
-
-class Slides:
-    _version = (
-        _private_instance.version
-    )  # This is for initial use, and will be overwritten by property version
-    __doc__ = textwrap.dedent(
-        """
-    Interactive Slides in IPython Notebook. Only one instance can exist.
-    `settings` are passed to hl`Slides.settings()` if you like to set during initialization.
-    
-    To suppress unwanted print from other libraries/functions, use:
-    ```python
-    with slides.suppress_stdout():
-        some_function_that_prints() # This will not be printed
-        print('This will not be printed either')
-        display('Something') # This will be printed
-    ```
-    ::: note-info
-        The traitlets callables under settings returns settings back to enable chaining 
-        without extra typing, like hl`Slides.settings.logo().layout()...` .
-    
-    ::: note-tip
-        - Use hl`Slides.instance()` class method to keep older settings. hl`Slides()` apply default settings every time.
-        - Run hl`slides.demo()` to see a demo of some features.
-        - Run hl`slides.docs()` to see documentation.
-        - Instructions in left settings panel are always on your fingertips.
-        - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
-        - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
-        - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
-        - See hl`Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
-    
-    ::: note-info
-        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as hl`Slides[number,] -> Slide` 
-        or access many via list as hl`Slides[[n1,n2,..]] -> tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
-    """
-    )
-    @classmethod
-    def instance(cls):
-        "Access current instnace without changing the settings."
-        return _private_instance
-
-    def __new__(
-        cls,
-        extensions=[],
-        **settings
-        ):
-        "Returns Same instance each time after applying given settings. Encapsulation."
-        instance = cls.instance()
-        instance.__doc__ = cls.__doc__  # copy docstring
-        instance.extender.extend(extensions) # globally once
-        instance.settings(**settings)
-        return instance
-
-    # No need to define __init__, __new__ is enough to show signature and docs

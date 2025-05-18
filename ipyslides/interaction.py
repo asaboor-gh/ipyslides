@@ -113,6 +113,7 @@ def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
         Provide one or more function that can accept a subset of `**kwargs`. These are converted to output widgets which you can access through `outputs` attribute
         and main output widget through `out` attribute. You can change traits of `**kwargs` widgets from these functions on demand, like setting dynmaic options to a dropdown.
         Add type hints to parameters for auto-completion inside function. Functions that change widgets traits should be listed first, so other functions can pick the latest trait values. 
+        Each function only runs when any of its parameters values are changed, thus only required part of GUI is updated. A function with no parameters runs with any other interaction.
     - `auto_update`: Defaults to False if no kwargs are provided, requiring click to update in absence of any other control widgets.
     - `grid_css`: A nested dictionary to apply CSS properties to grid and its children. See below for structure of dictionary.
         - Top level properties are applied to grid itself, like ` grid_css = {'grid': 'auto-flow / 1fr 2fr'} ` makes two columns of 33% and 67% width.
@@ -222,10 +223,10 @@ def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
 
     box.children += tuple(extras.values()) # add extra widgets to box children
     box.children += outputs # add outputs after extra widgets by kwargs
-    box.children += (_grid_area_css(grid_css, f".{klass}"),) # Add html at end
+    box.children += (_grid_area_css(grid_css, f".{klass}.widget-interact.on-refresh"),) # Add html at end
     box.outputs = outputs # store outputs for later use
 
-    box.out.add_class('widget-output').add_class('main').add_class('out-0') # need this for exporting to HTML correctly
+    box.out.add_class('widget-output').add_class('out-0') # need this for exporting to HTML correctly
 
     for i, out in enumerate(outputs):
         out.add_class(f'out-{i+1}') # 0 for main

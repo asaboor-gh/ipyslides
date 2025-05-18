@@ -419,7 +419,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'box-sizing':'border-box !important',
                 '> *': {'box-sizing':'border-box !important',}
             },
-            '.widget-interact.on-refresh' : {
+            '.on-refresh' : {
                 'display': 'grid !important',
                 'grid-template-columns': '1fr 1fr 1fr', # full length 3 columns
                 'grid-gap': '4px',
@@ -428,15 +428,17 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'padding': '0 8px',
                     'color': 'red !important',
                 },
-                '> .widget-output.main': {
+                '> .out-*': {
                     'padding': '4px 8px',
-                    'display': 'grid',
+                    'display': 'grid', # outputs are not displaying correctly otherwise
+                },
+                '> .out-0': { # main output full cover to separate it
                     'grid-column-start':1,
                     'grid-column-end': -1,
                 }, # below widget-html-content creates issue even in nested divs
                 '> *, .widget-html-content' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
             },
-            '.columns.writer .widget-interact.on-refresh' : {'grid-template-columns': '1fr',}, # only one inside columns
+            '.columns.writer .on-refresh' : {'grid-template-columns': '1fr',}, # only one inside columns
         },
         'span.sig': {
             'color': 'var(--accent-color) !important',

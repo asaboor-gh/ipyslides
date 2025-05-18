@@ -199,6 +199,16 @@ function render({ model, el }) {
             animate();
         }
     });
+
+    model.on("msg:custom", (msg) => {
+        if (msg && 'do' in msg) {
+            if (msg.do === 'focus') { // focus slider to be controlled by keyboard
+                slider.focus();
+            } else if (msg.do === 'blur') {
+                slider.blur();
+            }
+        }
+    });
     return () => { // clean up at removal time
 		clearTimeout(animationFrame); // remove it to avoid multiplied signals
 	};

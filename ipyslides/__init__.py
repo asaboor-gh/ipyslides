@@ -5,12 +5,8 @@ You can import Slides, fsep, write, parse and fmt directly from top level.
 
 
 from .core import Slides, fsep, write, parse, fmt
+from .__version__ import __version__
 
-
-# Add version to the namespace here too
-version = (
-    Slides._version
-)  # private class attribute, instance attribute is version property
-__version__ = version
+version = __version__ # add a public attribute
 
 __all__ = ["Slides", "fsep", "fmt", "write", "parse"]
