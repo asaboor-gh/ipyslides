@@ -103,6 +103,154 @@ def _grid_area_css(grid_css, sel):
     return ipw.HTML(f'<style>{_build_css((sel,), grid_css)}</style>')
 
 
+class InteractBase(ipw.interactive):
+    def __init__(self, auto_update=True, grid_css={}):
+        self._auto_update = auto_update
+        self._grid_css = grid_css
+        self._mutuals = [] # dependent parameters
+        self._iparams = {} # this enables using @params multiple time, convenient
+        self._css_class = 'i-'+str(id(self))
+        self._style_html = _grid_area_css(grid_css, f".{self._css_class}.widget-interact.on-refresh") 
+        self._style_html.layout.position = 'absolute' # avoid being grid part
+        
+        self._iparams.update(self._collect_params())
+        if not self._iparams: # need to interact anyhow
+            auto_update = False
+        
+        self._icallbacks = self._collect_callbacks() # callbacks after collecting params
+        if not self._icallbacks:
+            raise ValueError("at least one interactive function required!")
+    
+        extras = self._fix_kwargs() # params are internally fixed
+        outputs = self._func2widgets() # build stuff
+
+        super().__init__(self._run_updates, {'manual':not auto_update,'manual_name':''}, **self._iparams)
+        
+        btn = getattr(self, 'manual_button', None) # need it above later
+        self.add_class('on-refresh').add_class('widget-gridbox').remove_class('widget-vbox').add_class(self._css_class)
+        self.layout.display = 'grid' # for exporting to HTML correctly
+        self.layout.flex_flow = 'row wrap' # for exporting to HTML correctly 
+        self.layout.position = 'relative' # contain absolute items inside
+        self.children += (*extras, *outputs, self._style_html) # add extra widgets to box children
+        
+        self.out.add_class('widget-output').add_class('out-0') # need this for exporting to HTML correctly
+        for i, out in enumerate(outputs):
+            out.add_class(f'out-{i+1}') # 0 for main
+
+        for w in self.kwargs_widgets:
+            c = getattr(w, '_kwarg','')
+            if isinstance(w, ipw.fixed):
+                w = w.value
+            getattr(w, 'add_class', lambda v: None)(c) # for grid area
+
+        if btn:
+            for w in self.kwargs_widgets: # should tell the button to update
+                w.observe(lambda change: _hint_update(btn),names=['value'])
+        
+            btn.add_class('Refresh-Btn')
+            btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px',}
+            btn.tooltip = 'Update Outputs'
+            btn.icon = 'refresh'
+            try:
+                btn.click() # first run to ensure no dynamic inside
+            except Exception as e:
+                print(f"Warning: Initial button click faild: {e}")
+    
+    def set_grid_css(self, grid_css):
+        self._style_html.value = _grid_area_css(grid_css, f".{self._css_class}.widget-interact.on-refresh").value
+    
+    def _collect_callbacks(self):
+        """Collect all methods marked as callbacks. If overridden by subclass, should return a tuple of functions."""
+        funcs = []
+        for name, attr in self.__class__.__dict__.items():
+            if callable(attr) and hasattr(attr, '_is_interact_func'):
+                # Bind method to instance, we can't get self.method due to traits cuaing issues
+                bound_method = attr.__get__(self, self.__class__)
+                funcs.append(bound_method)
+        return tuple(funcs)
+    
+    def _collect_params(self):
+        "Collect all params set by functions. If overridden by subclass, should return a dictionary."
+        params = {}
+        for name, attr in self.__class__.__dict__.items():
+            if callable(attr) and hasattr(attr, '_is_params_func'):
+                subparams = attr(self) # Get params from method
+                
+                if not isinstance(subparams, dict):
+                    raise TypeError(f"{name} decorated with @params should return dict")
+                
+                for key in subparams:
+                    if not isinstance(key, str) or not key.isidentifier():
+                        raise ValueError(f"{key!r} is not a valid name for python variable!")
+                
+                params.update(subparams)
+        return params
+    
+    def _fix_kwargs(self):
+        extras = {}
+        for key, value in self._iparams.copy().items():
+            if isinstance(value, ipw.fixed) and isinstance(value.value, ipw.DOMWidget):
+                extras[key] = value.value # we need to show that widget
+            elif isinstance(value,ipw.interactive):
+                value.layout.grid_area = 'auto / 1 / auto / -1' # embeded interactive should be full length, unless user sets it otherwise
+            elif isinstance(value, (ipw.HTML, ipw.Label, ipw.HTMLMath)):
+                self._iparams[key] = ipw.fixed(value) # convert to fixed widget, these can't have user interaction available
+                extras[key] = value
+            elif isinstance(value, ipw.DOMWidget) and not isinstance(value,ipw.ValueWidget): # value widgets are automatically handled
+                self._iparams[key] = ipw.fixed(value) # convert to fixed widget, to be passed as value
+                extras[key] = value # we need to show that widget
+
+        # All params should be fixed above before doing below
+        for key, value in self._iparams.copy().items():    
+            if isinstance(value, dict) and len(value) == 1:
+                name, trait = next(iter(value.items()))
+                self._iparams[key] = AnyTrait(key, name, trait, self._iparams)
+                self._mutuals.append((key, *value.keys()))
+
+        # fix description in extras, like if user pass IntSlider etc.
+        for key, value in extras.items():
+            if 'description' in value.traits() and not value.description \
+                and not isinstance(value,(ipw.HTML, ipw.HTMLMath, ipw.Label)): # HTML widgets and Labels should not pick extra
+                value.description = key # only if not given
+        return tuple(extras.values())
+    
+    def _func2widgets(self):
+        self._outputs = ()   # reference for later use   
+        for f in self._icallbacks:
+            if not callable(f):
+                raise TypeError(f'Expected callable, got {type(f).__name__}. '
+                    'Only functions accepting a subset of kwargs allowed!')
+        
+            self._outputs += (_func2widget(f, self._mutuals),) # convert to output widget
+        return self._outputs # explicit
+
+    @property
+    def outputs(self): return getattr(self, '_outputs',())
+    
+    def _run_updates(self, **kwargs):
+        btn = getattr(self, 'manual_button', None)
+        with _hold_running_slide_builder():
+            if btn:
+                with disabled(btn):
+                    _hint_update(btn, remove=True)
+                    _run_callbacks(self.outputs, kwargs, self) 
+            else:
+                _run_callbacks(self.outputs, kwargs, self) 
+
+def params(func):
+    # Restrict use only inside class, single dot avoids nested functions too
+    if getattr(func, '__qualname__', '').count('.') != 1:
+        raise RuntimeError("parms decorator called outside of class definition!")
+    func._is_params_func = True
+    return func
+
+def callback(func):
+    # Restrict use only inside class, single dot avoids nested functions too
+    if getattr(func, '__qualname__', '').count('.') != 1:
+        raise RuntimeError("callback decorator called outside of class definition!")
+    func._is_interact_func = True
+    return func
+
 def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
     """
     An enhanced interactive widget based on `ipywidgets.interactive`, tailored for ipyslides. 
@@ -142,7 +290,7 @@ def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
     import ipywidgets as ipw
     import plotly.graph_objects as go
 
-    @slides.interact(
+    @slides.interact( # or interactive function
         lambda y: print(y), # prints x.min as y picks that attribute
         fig = go.FigureWidget(), 
         x= ipw.fixed(ipw.IntSlider()), 
@@ -164,91 +312,11 @@ def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
     - If you need a widget in kwargs with same name as other keyword araguments, 
       use description to set it to avoid name clash, e.g. `Slides.interact(f, x=5, y= ipywidgets.IntSlider(description='auto_update'))`.
     """
-    if not funcs:
-        raise ValueError("at least one interactive function required!")
+    class Interactive(InteractBase): # Encapsulating
+        def _collect_callbacks(self): return funcs # overriding methods instead of decorators
+        def _collect_params(self): return kwargs
+    return Interactive(auto_update=auto_update,grid_css=grid_css)
     
-    box, btn, outputs, klass = None, None, [], 'i-'+str(id([])) # just general but unique
-
-    def inner(**kwargs):
-        with _hold_running_slide_builder():
-            if btn:
-                with disabled(btn):
-                    _hint_update(btn, remove=True)
-                    _run_callbacks(outputs, kwargs, box) 
-            else:
-                _run_callbacks(outputs, kwargs, box) 
-            
-    if not kwargs: # need to interact anyhow
-        auto_update = False
-
-    extras = {}
-    for key, value in kwargs.copy().items():
-        if isinstance(value, ipw.fixed) and isinstance(value.value, ipw.DOMWidget):
-            extras[key] = value.value # we need to show that widget
-        elif isinstance(value,ipw.interactive):
-            value.layout.grid_area = 'auto / 1 / auto / -1' # embeded interactive should be full length, unless user sets it otherwise
-        elif isinstance(value, (ipw.HTML, ipw.Label, ipw.HTMLMath)):
-            kwargs[key] = ipw.fixed(value) # convert to fixed widget, these can't have user interaction available
-            extras[key] = value
-        elif isinstance(value, ipw.DOMWidget) and not isinstance(value,ipw.ValueWidget): # value widgets are automatically handled
-            kwargs[key] = ipw.fixed(value) # convert to fixed widget, to be passed as value
-            extras[key] = value # we need to show that widget
-    
-    # fix description in extras, like if user pass IntSlider etc.
-    for key, value in extras.items():
-        if 'description' in value.traits() and not value.description \
-            and not isinstance(value,(ipw.HTML, ipw.HTMLMath, ipw.Label)): # HTML widgets and Labels should not pick extra
-            value.description = key # only if not given
-
-    # Now fix object that observe traits of others
-    mutuals = []
-    for key, value in kwargs.copy().items():
-        if isinstance(value, dict) and len(value) == 1:
-            for name, trait in value.items():
-                kwargs[key] = AnyTrait(key, name, trait, kwargs)
-                mutuals.append((key, *value.keys()))
-        
-    outputs = ()      
-    for f in funcs:
-        if not callable(f):
-            raise TypeError('Only functions accepting a subset of kwargs can be passed as args!')
-        
-        outputs += (_func2widget(f, mutuals),) # convert to output widget
-
-    box = ipw.interactive(inner,{'manual':not auto_update,'manual_name':''}, **kwargs)
-    btn = getattr(box, 'manual_button', None) # need it above later
-    box.add_class('on-refresh').add_class('widget-gridbox').remove_class('widget-vbox').add_class(klass)
-    box.layout.display = 'grid' # for exporting to HTML correctly
-    box.layout.flex_flow = 'row wrap' # for exporting to HTML correctly 
-
-    box.children += tuple(extras.values()) # add extra widgets to box children
-    box.children += outputs # add outputs after extra widgets by kwargs
-    box.children += (_grid_area_css(grid_css, f".{klass}.widget-interact.on-refresh"),) # Add html at end
-    box.outputs = outputs # store outputs for later use
-
-    box.out.add_class('widget-output').add_class('out-0') # need this for exporting to HTML correctly
-
-    for i, out in enumerate(outputs):
-        out.add_class(f'out-{i+1}') # 0 for main
-
-    for w in box.kwargs_widgets:
-        c = getattr(w, '_kwarg','')
-        if isinstance(w, ipw.fixed):
-            w = w.value
-        getattr(w, 'add_class', lambda v: None)(c) # for grid area
-
-    if btn:
-        for w in box.kwargs_widgets: # should tell the button to update
-            w.observe(lambda change: _hint_update(btn),names=['value'])
-        
-        btn.add_class('Refresh-Btn')
-        btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px',}
-        btn.tooltip = 'Update Outputs'
-        btn.icon = 'refresh'
-        btn.click() # first run to ensure no dynamic inside
-    
-    return box
-
 
 def interact(*funcs, auto_update=True, grid_css={}, **kwargs):
     """
