@@ -280,15 +280,18 @@ class InteractBase(ipw.interactive):
                 funcs.append(bound_method)
         return tuple(funcs)
     
-    def _fix_kwargs(self):
-        params = self._interactive_params() # subclass defines it
+    def _validate_params(self, params):
         if not isinstance(params, dict):
             raise TypeError(f"method `_interactive_params(self)` should return a dict of interaction parameters")
                 
         for key in params:
             if not isinstance(key, str) or not key.isidentifier():
                 raise ValueError(f"{key!r} is not a valid name for python variable!")
-                    
+           
+    def _fix_kwargs(self):
+        params = self._interactive_params() # subclass defines it
+        self._validate_params(params)   
+
         extras = {}
         for key, value in params.copy().items():
             if isinstance(value, ipw.fixed) and isinstance(value.value, ipw.DOMWidget):
@@ -311,13 +314,15 @@ class InteractBase(ipw.interactive):
         
         # Set _iparams after clear widgets
         self._iparams = params
-
+        self._reset_descp(extras)
+        return tuple(extras.values())
+    
+    def _reset_descp(self, extras):
         # fix description in extras, like if user pass IntSlider etc.
         for key, value in extras.items():
             if 'description' in value.traits() and not value.description \
                 and not isinstance(value,(ipw.HTML, ipw.HTMLMath, ipw.Label)): # HTML widgets and Labels should not pick extra
                 value.description = key # only if not given
-        return tuple(extras.values())
     
     def _func2widgets(self):
         self._outputs = ()   # reference for later use   
