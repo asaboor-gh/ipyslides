@@ -1,5 +1,6 @@
 # IPySlides
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15482350.svg)](https://doi.org/10.5281/zenodo.15482350)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
 [![PyPI version](https://badge.fury.io/py/ipyslides.svg)](https://badge.fury.io/py/ipyslides)
 [![Downloads](https://pepy.tech/badge/ipyslides)](https://pepy.tech/project/ipyslides)
