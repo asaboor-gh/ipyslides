@@ -1,10 +1,23 @@
 import uuid
 import traitlets
+import inspect
 import anywidget
 
 from pathlib import Path
-from IPython.display import display
 from ipywidgets import ValueWidget
+
+
+def _fix_init_sig(cls):
+    # widgets ruin signature of subclass, let's fix it
+    cls.__signature__ = inspect.signature(cls.__init__)
+    return cls
+
+def _fix_trait_sig(cls):
+    params = [inspect.Parameter(key, inspect.Parameter.KEYWORD_ONLY, default=value) 
+        for key,value in cls.class_own_traits().items() if not key.startswith('_')] # avoid private
+    params.append(inspect.Parameter('kwargs', inspect.Parameter.VAR_KEYWORD)) # Inherited widgets traits
+    cls.__signature__ = inspect.Signature(params)
+    return cls
 
 
 class InteractionWidget(anywidget.AnyWidget):
@@ -94,7 +107,7 @@ class InteractionWidget(anywidget.AnyWidget):
         else:
             func() # Direct call
 
-
+@_fix_trait_sig
 class ListWidget(anywidget.AnyWidget,ValueWidget):
     """List widget that displays clickable items with integer values and rich html content.
     You can observe the `value` trait to run a function on selection.
@@ -274,12 +287,14 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
             <div class="{klass}" {_inline_style(self)} data-description="{self.description}">{html}</div>'''
             
 
+@_fix_trait_sig
 class NotesWidget(anywidget.AnyWidget):
     _esm = Path(__file__).with_name('js') / 'notes.js'
     value = traitlets.Unicode('').tag(sync=True)
     popup = traitlets.Bool(False).tag(sync=True)
 
 
+@_fix_trait_sig
 class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     """This is a simple slider widget that can be used to control the animation with an observer function.
 
