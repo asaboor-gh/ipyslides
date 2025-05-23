@@ -1,2 +1,4 @@
 ipyslides
-plotly
+numpy
+pandas
+matplotlib
