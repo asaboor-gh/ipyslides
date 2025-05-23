@@ -408,7 +408,7 @@ class Serializer:
         if isinstance(box_widget,ipw.HBox):
             kwargs.update(dict(display="flex",flex_flow="row nowrap"))
         elif isinstance(box_widget,ipw.VBox):
-            if 'on-refresh' in box_widget._dom_classes:
+            if 'ips-interact' in box_widget._dom_classes:
                 kwargs.update(dict(display='grid'))
             else:
                 kwargs.update(dict(display="flex",flex_flow="column nowrap"))

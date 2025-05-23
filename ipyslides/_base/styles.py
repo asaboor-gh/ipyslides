@@ -419,10 +419,10 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'box-sizing':'border-box !important',
                 '> *': {'box-sizing':'border-box !important',}
             },
-            '.on-refresh' : {
-                'display': 'grid !important',
-                'grid-template-columns': '1fr 1fr 1fr', # full length 3 columns
+            '.ips-interact > .interact-app' : {
+                'display': 'grid',
                 'grid-gap': '4px',
+                'box-sizing': 'border-box',
                 '> .Refresh-Btn.Rerun:before': {
                     'content': '"Sync Outputs"',
                     'padding': '0 8px',
@@ -432,13 +432,12 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'padding': '4px 8px',
                     'display': 'grid', # outputs are not displaying correctly otherwise
                 },
-                '> .out-0': { # main output full cover to separate it
-                    'grid-column-start':1,
-                    'grid-column-end': -1,
-                }, # below widget-html-content creates issue even in nested divs
-                '> *, .widget-html-content' : {'min-width': '0',}, # Preventing a Grid Blowout by css-tricks.com
+                # below widget-html-content creates issue even in nested divs
+                '> *, > .center > *, .widget-html-content' : { # .center is GridBox
+                    'min-width': '0', # Preventing a Grid Blowout by css-tricks.com
+                    'box-sizing': 'border-box',
+                }, 
             },
-            '.columns.writer .on-refresh' : {'grid-template-columns': '1fr',}, # only one inside columns
         },
         'span.sig': {
             'color': 'var(--accent-color) !important',

@@ -9,6 +9,7 @@ import inspect
 import traitlets
 
 from contextlib import contextmanager
+
 from IPython.display import display
 from .formatters import get_slides_instance
 from .utils import _build_css, _dict2css
@@ -73,7 +74,7 @@ def _run_callbacks(outputs, kwargs, box):
     for out in outputs:
         if hasattr(out, '_call_func'):
             out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
-
+            
 
 class AnyTrait(ipw.fixed):
     def __init__(self, key,  name, trait, kwargs):
@@ -97,19 +98,11 @@ class AnyTrait(ipw.fixed):
         super().__init__(value=getattr(widget,trait,None))
         traitlets.dlink((widget, trait),(self, 'value'))
 
-
-def _grid_area_css(grid_css, sel):
-    if not isinstance(grid_css, dict):
-        raise TypeError('grid_css should be a nesetd dictionary of CSS properties.')
-    return ipw.HTML(f'<style>{_build_css((sel,), grid_css)}</style>')
-
 def _format_docs(**variables):
     def decorator(obj):
         if obj.__doc__:
             try:
                 obj.__doc__ = obj.__doc__.format(**variables)
-            except KeyError as e:
-                raise ValueError(f"Documentation for {obj.__name__} contains unknown variable {e}") from e
             except Exception as e:
                 raise ValueError(f"Failed to format docs for {obj.__name__}: {str(e)}") from e
         return obj
@@ -165,6 +158,10 @@ class InteractBase(ipw.interactive):
 
     - If True, updates outputs automatically when any widget value changes.
     - If False, adds a refresh button that must be clicked to update.
+
+    app_layout: dict
+
+    - See `.relayout` method for more info on what keys and values can be passed. 
     
     grid_css : dict, default {{}}
 
@@ -172,17 +169,18 @@ class InteractBase(ipw.interactive):
     - CSS Grid layout properties, see [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/). Example:
     
     ```python
-    grid_css = {{
+    mi.set_css(center = {{
         'grid': 'auto-flow / 1fr 2fr',  # Two columns
         '.fig': {{'grid-area': '1 / 2 / span 2 / 3'}},  # Widget layout
         '.out-0': {{'height': '300px'}}  # Output styling
-    }}
+    }})
     ```
     
     **Methods:**
     
-    set_grid_css(grid_css)
-        Update grid layout CSS after initialization
+    set_css(main, center)
+        Update grid layout CSS after initialization to main and center grid.
+        center grid can be included in main by class selector `.center` as well.
     
     **Tip:** For a quick dashboard without subclassing, use `interactive` and `@interact` which wrap same functionality.
     
@@ -199,13 +197,16 @@ class InteractBase(ipw.interactive):
     {css_info}
     """
 
-    def __init__(self, auto_update=True, grid_css={}):
+    def __init__(self, auto_update=True, app_layout= None, grid_css={}):
         self._auto_update = auto_update
         self._grid_css = grid_css
         self._mutuals = [] # dependent parameters 
         self._css_class = 'i-'+str(id(self))
-        self._style_html = _grid_area_css(grid_css, f".{self._css_class}.widget-interact.on-refresh") 
+        self._style_html = ipw.HTML()
         self._style_html.layout.position = 'absolute' # avoid being grid part
+        self.set_css(main=grid_css) # after assigning above
+        self._app = ipw.AppLayout().add_class('interact-app') # base one
+        self._app.layout.position = 'relative' # contain absolute items inside
         
         self._iparams = {} # just empty reference
         extras = self._fix_kwargs() # params are internally fixed
@@ -223,15 +224,17 @@ class InteractBase(ipw.interactive):
         super().__init__(self._run_updates, {'manual':not auto_update,'manual_name':''}, **self._iparams)
         
         btn = getattr(self, 'manual_button', None) # need it above later
-        self.add_class('on-refresh').add_class('widget-gridbox').remove_class('widget-vbox').add_class(self._css_class)
-        self.layout.display = 'grid' # for exporting to HTML correctly
-        self.layout.flex_flow = 'row wrap' # for exporting to HTML correctly 
+        self.add_class('ips-interact').add_class(self._css_class)
         self.layout.position = 'relative' # contain absolute items inside
+        self.layout.height = 'max-content' # adopt to inner height
+
         self.children += (*extras, *outputs, self._style_html) # add extra widgets to box children
+        self.out.layout.height = '0' # We do not print stuff there, so reclaim space when error thrown
         
         self.out.add_class('widget-output').add_class('out-0') # need this for exporting to HTML correctly
         for i, out in enumerate(outputs):
-            out.add_class(f'out-{i+1}') # 0 for main
+            out.add_class(f'out-{i}')
+            out._kwarg = f'out-{i}'
 
         for w in self.kwargs_widgets:
             c = getattr(w, '_kwarg','')
@@ -246,16 +249,42 @@ class InteractBase(ipw.interactive):
 
         if btn:
             for w in self.kwargs_widgets: # should tell the button to update
-                w.observe(lambda change: _hint_update(btn),names=['value'])
-        
-            btn.add_class('Refresh-Btn')
-            btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px',}
+                # ipywidgets' Play, Text and added Animation Sliders bypass run button, no need to trigger it
+                if not isinstance(w, (ipw.Text, ipw.Play, AnimationSlider)): 
+                    w.observe(lambda change: _hint_update(btn),names=['value'])
+            
+            btn._kwarg = 'run-button'
+            btn.add_class('Refresh-Btn').add_class('run-button') # run-button for user
+            btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px'}
             btn.tooltip = 'Update Outputs'
             btn.icon = 'refresh'
             try:
                 btn.click() # first run to ensure no dynamic inside
             except Exception as e:
                 print(f"Warning: Initial button click faild: {e}")
+
+        self._all_widgets = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')} # save it once for sending to app layout
+        if app_layout is not None:
+            self._validate_layout(app_layout) # validate arguemnts first
+            self.relayout(**app_layout)
+        else:
+            self.relayout(center=list(self._all_widgets.keys())) # add all to GridBox which is single column
+    
+    def _validate_layout(self, app_layout):
+        if not isinstance(app_layout, dict):
+            raise TypeError("app_layout should be a dictionary to relayout widgets!")
+        
+        allowed_keys = inspect.signature(self.relayout).parameters.keys()
+        for key, value in app_layout.items():
+            if not key in allowed_keys:
+                raise KeyError(f"keys in app_layout should be one of {allowed_keys}, got {key!r}")
+            
+            if value is not None:
+                if key in ["header","footer", "center", "left_sidebar","right_sidebar"]: # special cases
+                    if self._auto_update and isinstance(value, (list, tuple)):
+                        value = [v for v in value if v != 'run-button'] # avoid throwing error over button, which changes by other paramaters
+                    if not isinstance(value, (list,tuple)) or not all([v in self._all_widgets for v in value]):
+                        raise TypeError(f"{key!r} in app_layout should be a tuple of names of widgets from {self._all_widgets.keys()!r}, got {value!r}")
     
     def __init_subclass__(cls):
         if (not '_interactive_params' in cls.__dict__) or (not callable(cls._interactive_params)):
@@ -263,12 +292,60 @@ class InteractBase(ipw.interactive):
                 "which should returns a dictionary of interaction parameters.")
         return super().__init_subclass__()
     
+    def relayout(self, 
+        header=None, center=None, left_sidebar=None,right_sidebar=None,footer=None,
+        pane_widths=None,pane_heights=None,merge=True, 
+        grid_gap=None, width=None,height=None, justify_content=None,align_items=None,
+        ):
+        "These parameters are set on ipywidgets.AppLayout class. The first 5 paramters should be tuple of names of kwargs widgets."
+        app_layout = {key:value for key,value in locals().items() if key != 'self'}
+        self._validate_layout(app_layout)
+        other = ipw.VBox([self._style_html, self.out]) # out still be there
+        areas = ["header","footer", "center", "left_sidebar","right_sidebar"]
+        
+        collected = []
+        for key, value in app_layout.items():
+            if value and key in areas:
+                collected.extend(list(value))
+                box = ipw.GridBox if key == 'center' else ipw.VBox
+                setattr(self._app, key, box(
+                    [self._all_widgets[key] for key in value if key in self._all_widgets],
+                    _dom_classes = (key.replace('_','-'),) # for user CSS
+                ))
+            elif value: # class own traits and Layout properties
+                setattr(self._app, key, value)
+        
+        other.children += tuple([v for k,v in self._all_widgets.items() if k not in collected])
+        self.children = (self._app, other)
+    
     @_format_docs(css_info = _css_info)
-    def set_grid_css(self, grid_css):
-        """CSS selectors are classes from names in return of _interactive_params and .out-0, .out-1... from callbacks widgets.
+    def set_css(self, main=None, center=None):
+        """Set CSS to main and center grid. `center` grid can be targeted in main CSS by class `.center` but it's added here for convenience.
+        
+        Grid is set by `app_layout` at initialization or later by `relayout` method.
+        
+        Grid looks like this:
+            header       header        header
+            left-sidebar center right-sidebar
+            footer       footer        footer
+
+        CSS selectors in nesetd dictionaries are classes from names in return of _interactive_params .run-button and .out-0, .out-1... from callbacks widgets.
         {css_info}
         """
-        self._style_html.value = _grid_area_css(grid_css, f".{self._css_class}.widget-interact.on-refresh").value
+        if main and not isinstance(main,dict):
+            raise TypeError('main should be a nesetd dictionary of CSS properties to apply to main app!')
+        if center and not isinstance(center,dict):
+            raise TypeError('center should be a nesetd dictionary of CSS properties to apply to central grid!')
+        
+        
+        main_sl = f".{self._css_class}.widget-interact.ips-interact > .interact-app" # directly inside
+        cent_sl = f"{main_sl} > .center"
+        user_css = ''
+        if main:
+            user_css += _build_css((main_sl,), main)
+        if center:
+            user_css += ("\n" + _build_css((cent_sl,), center))
+        self._style_html.value = f'<style>{user_css}</style>'
     
     def _interactive_callbacks(self):
         """Collect all methods marked as callbacks. If overridden by subclass, should return a tuple of functions."""
@@ -315,6 +392,8 @@ class InteractBase(ipw.interactive):
         # Set _iparams after clear widgets
         self._iparams = params
         self._reset_descp(extras)
+        for key, value in extras.items():
+            value._kwarg = key # required for later use
         return tuple(extras.values())
     
     def _reset_descp(self, extras):
@@ -340,12 +419,15 @@ class InteractBase(ipw.interactive):
     def _run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
         with _hold_running_slide_builder():
-            if btn:
-                with disabled(btn):
-                    _hint_update(btn, remove=True)
+            try:
+                if btn:
+                    with disabled(btn):
+                        _hint_update(btn, remove=True)
+                        _run_callbacks(self.outputs, kwargs, self) 
+                else:
                     _run_callbacks(self.outputs, kwargs, self) 
-            else:
-                _run_callbacks(self.outputs, kwargs, self) 
+            except: # clean duplicate errors, each output has already captured their own
+                self.out.outputs = ()
 
 def callback(func):
     """Decorator to mark methods as interactive callbacks in InteractBase subclasses.
@@ -381,7 +463,7 @@ def callback(func):
     return func
 
 @_format_docs(css_info = _css_info)
-def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
+def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs):
     """
     An enhanced interactive widget based on `ipywidgets.interactive`, tailored for ipyslides. 
     
@@ -394,11 +476,11 @@ def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
         Each function only runs when any of its parameters values are changed, thus only required part of GUI is updated. A function with no parameters runs with any other interaction.
     - `auto_update`: Defaults to False if no kwargs are provided, requiring click to update in absence of any other control widgets.
     - `grid_css`: A nested dictionary to apply CSS properties to grid and its children. See below for structure of dictionary.
-        - Top level properties are applied to grid itself, like ` grid_css = {{'grid': 'auto-flow / 1fr 2fr'}} ` makes two columns of 33% and 67% width.
         - Children of grid are given classes with same names as their keyword argument, and outputs created by `funcs` have classes `out-0, out-1,...`.
             So if a keyword argument is `fig` and you also wants to style first output, provide 
             ` grid_css = {{'grid-template-columns': '1fr 2fr', 'out-0': {{'height': '200px',...}}, '.fig': {{'grid-area': '1 / 2 / span 5 / -1'}}}} `
             which will put `fig` in write column and 5 other widgets in left and rest below.
+        - You can target center grid in grid_css by selector `> .center` or externally useing `set_css` explicitly.
         - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
 
     **kwargs**
@@ -447,10 +529,10 @@ def interactive(*funcs, auto_update=True, grid_css={}, **kwargs):
     class Interactive(InteractBase): # Encapsulating
         def _interactive_params(self): return kwargs # Must be overriden in subclass
         def _interactive_callbacks(self): return funcs # funcs can be provided by @callback decorated methods or optionally ovveriding it
-    return Interactive(auto_update=auto_update,grid_css=grid_css)
+    return Interactive(auto_update=auto_update,app_layout=app_layout, grid_css=grid_css)
     
 @_format_docs(other=interactive.__doc__)
-def interact(*funcs, auto_update=True, grid_css={}, **kwargs):
+def interact(*funcs, auto_update=True,app_layout=None, grid_css={}, **kwargs):
     """{other}
 
     **Tips:**
@@ -459,7 +541,7 @@ def interact(*funcs, auto_update=True, grid_css={}, **kwargs):
     - You can also use this under `Slides.capture_content` to display later in a specific place.
     """
     def inner(func):
-        return display(interactive(func, *funcs, auto_update = auto_update, grid_css = grid_css, **kwargs))
+        return display(interactive(func, *funcs, auto_update = auto_update, app_layout=app_layout, grid_css = grid_css, **kwargs))
     return inner
 
 
