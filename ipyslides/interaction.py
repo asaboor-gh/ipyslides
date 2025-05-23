@@ -39,7 +39,9 @@ def _hold_running_slide_builder():
         yield
 
 class FullscreenButton(AnyWidget):
-    """A button widget that toggles fullscreen mode for its parent element."""
+    """A button widget that toggles fullscreen mode for its parent element.
+    You may need to set `position: relative` on parent element to contain it inside.
+    """
     
     _css = """
     .fs-btn.ips-fs {
@@ -64,9 +66,9 @@ class FullscreenButton(AnyWidget):
         el.className = 'fs-btn ips-fs';
         btn.innerHTML = '<i class="fa fa-expand"></i>';
         btn.title = 'Toggle Fullscreen';
-        
+
         btn.onclick = () => {
-            const parent = el.parentElement;
+            const parent = el.parentElement; // need define inside, not avaialbe until load
             if (!document.fullscreenElement || document.fullscreenElement !== parent) {
                 parent.requestFullscreen();
                 parent.style.background = 'var(--bg1-color, var(--jp-widgets-input-background-color, inherit))'; // available everywhere
@@ -80,7 +82,8 @@ class FullscreenButton(AnyWidget):
 
         // Update icon if user exits fullscreen via Esc key
         document.addEventListener('fullscreenchange', () => {
-            const isFullscreen = document.fullscreenElement !== null;
+            const parent = el.parentElement; // redefine
+            const isFullscreen = parent === document.fullscreenElement;
             btn.querySelector('i').className = `fa fa-${isFullscreen ? 'compress' : 'expand'}`;
             parent.style.background = isFullscreen ? 'var(--bg1-color, var(--jp-widgets-input-background-color, inherit))' : 'unset';
         });
