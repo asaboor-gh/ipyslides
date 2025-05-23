@@ -4,13 +4,15 @@ Enhanced version of ipywidgets's interact/interactive functionality.
 
 __all__ = ['interactive','interact','patched_plotly','disabled'] # other need to be explicity imported
 
-import textwrap
+import re, textwrap
 import inspect 
 import traitlets
 
 from contextlib import contextmanager
 
 from IPython.display import display
+from anywidget import AnyWidget
+
 from .formatters import get_slides_instance
 from .utils import _build_css, _dict2css
 from ._base.widgets import ipw # patch ones required here
@@ -35,6 +37,62 @@ def _hold_running_slide_builder():
             yield
     else:
         yield
+
+class FullscreenButton(AnyWidget):
+    """A button widget that toggles fullscreen mode for its parent element."""
+    
+    _css = """
+    .fs-btn.ips-fs {
+        position: absolute; top: 2px; right: 2px;
+    }
+    .fs-btn.ips-fs button {
+        border: none !important;
+        padding: 4px;
+        border-radius: 4px;
+        opacity: 0.4;
+        transition: opacity 0.2s;
+        background: transparent;
+        font-size: 16px;
+        color: var(--accent-color, inherit);
+    }
+    .fs-btn.ips-fs button:hover {opacity:1;text-shadow:0 1px var(--bg2-color,#8988)}
+    """
+
+    _esm = """
+    function render({ el }) {
+        const btn = document.createElement('button');
+        el.className = 'fs-btn ips-fs';
+        btn.innerHTML = '<i class="fa fa-expand"></i>';
+        btn.title = 'Toggle Fullscreen';
+        
+        btn.onclick = () => {
+            const parent = el.parentElement;
+            if (!document.fullscreenElement || document.fullscreenElement !== parent) {
+                parent.requestFullscreen();
+                parent.style.background = 'var(--bg1-color, var(--jp-widgets-input-background-color, inherit))'; // available everywhere
+                btn.querySelector('i').className = 'fa fa-compress';
+            } else if (document.fullscreenElement === parent) {
+                document.exitFullscreen();
+                parent.style.background = 'unset';
+                btn.querySelector('i').className = 'fa fa-expand';
+            }
+        };
+
+        // Update icon if user exits fullscreen via Esc key
+        document.addEventListener('fullscreenchange', () => {
+            const isFullscreen = document.fullscreenElement !== null;
+            btn.querySelector('i').className = `fa fa-${isFullscreen ? 'compress' : 'expand'}`;
+            parent.style.background = isFullscreen ? 'var(--bg1-color, var(--jp-widgets-input-background-color, inherit))' : 'unset';
+        });
+
+        el.appendChild(btn);
+    }
+    export default { render }
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.layout.width = 'min-content'
 
 def _func2widget(func, mutuals):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
@@ -107,6 +165,17 @@ def _format_docs(**variables):
                 raise ValueError(f"Failed to format docs for {obj.__name__}: {str(e)}") from e
         return obj
     return decorator
+
+# ipywidgets AppLayout restricts units to px,fr,% or int, need to add rem, em
+def _size_to_css(size):
+    if re.match(r'\d+\.?\d*(px|fr|%|em|rem|pt)$', size):
+        return size
+    if re.match(r'\d+\.?\d*$', size):
+        return size + 'fr'
+    raise TypeError("the pane sizes must be in one of the following formats: "
+        "'10px', '10fr', '10em','10rem', '10pt', 10 (will be converted to '10fr')."
+        "Conversions: 1px = 1/96in, 1pt = 1/72in 1em = current font size"
+        "Got '{}'".format(size))
 
 _css_info = textwrap.indent('\n**Python dictionary to CSS**\n' + _dict2css, '    ')
 
@@ -182,6 +251,8 @@ class InteractBase(ipw.interactive):
         Update grid layout CSS after initialization to main and center grid.
         center grid can be included in main by class selector `.center` as well.
     
+    You can use `.css_classes` proprty to fetch info that is useful in `app_layout`.
+    
     **Tip:** For a quick dashboard without subclassing, use `interactive` and `@interact` which wrap same functionality.
     
     **Notes:**
@@ -207,6 +278,7 @@ class InteractBase(ipw.interactive):
         self.set_css(main=grid_css) # after assigning above
         self._app = ipw.AppLayout().add_class('interact-app') # base one
         self._app.layout.position = 'relative' # contain absolute items inside
+        self._app._size_to_css = _size_to_css # enables em, rem
         
         self._iparams = {} # just empty reference
         extras = self._fix_kwargs() # params are internally fixed
@@ -316,7 +388,7 @@ class InteractBase(ipw.interactive):
                 setattr(self._app, key, value)
         
         other.children += tuple([v for k,v in self._all_widgets.items() if k not in collected])
-        self.children = (self._app, other)
+        self.children = (self._app, other, FullscreenButton()) # button be on top to click
     
     @_format_docs(css_info = _css_info)
     def set_css(self, main=None, center=None):
@@ -415,6 +487,9 @@ class InteractBase(ipw.interactive):
 
     @property
     def outputs(self): return getattr(self, '_outputs',())
+
+    @property
+    def css_classes(self): return self._all_widgets.copy()
     
     def _run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
