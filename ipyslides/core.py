@@ -343,6 +343,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         "Programatically Navigate to slide by index, if possible."
         if isinstance(index, int):
             self.wprogress.value = index
+
     @contextmanager
     def navigate_back(self, index=None):
         "Bring slides position back to where it was (or optionally at index) after performing operations."
