@@ -82,9 +82,12 @@ Support for various content types including:
 - ©️ Citations and References
 - 💻 Auto update variables in markdown
 - 🎥 Videos (YouTube, local)
-- 🎮 Enhanced interactive content
+- 🎮 Enhanced interactive widgets (with fullscreen support)
+
 ```python
+import numpy as np
 from ipywidgets import HTML
+
 @slides.interact(html = HTML(), amplitude= (0, 2),frequency=(0, 5))
 def plot(html, amplitude, frequency):
     x = np.linspace(0, 2*np.pi, 100)
@@ -92,6 +95,56 @@ def plot(html, amplitude, frequency):
     plt.plot(x, y)
     html.value = slides.plt2html(). value
 ```
+
+- For comprehensive dashbords, subclass InteractBase
+
+```python
+import numpy as np
+from ipywidgets import HTML
+from ipyslides.interaction import InteractBase, callback 
+
+class MyDashboard(InteractBase):
+    def _interactive_params(self): # Define interactive parameters
+        return {
+            'html': HTML(),
+            'amplitude': (0, 2),
+            'frequency': (0, 5)
+        }
+
+    @callback
+    def plot(self, html, amplitude, frequency):
+        x = np.linspace(0, 2*np.pi, 100)
+        y = amplitude * np.sin(frequency * x)
+        plt.plot(x, y)
+        html.value = slides.plt2html().value
+    
+    @callback('out-text')
+    def text(self, amplitude, frequency):
+        print(f"Amplitude: {amplitude}\n Frequency: {frequency}")
+
+dash = MyDashboard(auto_update=False)
+dash.relayout( # can be set via app_layout parameter
+    left_sidebar = dash.groups.controls, 
+    center = ['html','out-text'], # out-plot, out-text collected in center
+    pane_widths = [3,5,0]
+)
+dash.set_css(
+    main = { # can be set via grid_css parameter
+        'grid-gap': '4px', 'margin': '8px',
+        '.left-sidebar': {'background': '#eee','border-radius': '8px'},
+    },
+    center = { # can be set via grid_css parameter targetting '> .center'
+        'grid-template-columns': '1fr 1fr', # two columns for center pane
+        'grid-gap': '4px',
+        '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
+    }
+    'grid-template-columns': '5fr 3fr', # side-by-side layout for outputs
+    'grid-gap': '4px', # central grid gap
+    '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
+})
+display(dash)
+```
+![Dashboard Example](interact.png)
 - And much more!
 
 ---

@@ -189,7 +189,9 @@ _css_info = textwrap.indent('\n**Python dictionary to CSS**\n' + _dict2css, '   
 @_fix_init_sig
 @_format_docs(css_info = _css_info)
 class InteractBase(ipw.interactive):
-    """Enhanced interactive widgets with multiple callbacks and grid layout support.
+    """Enhanced interactive widgets with multiple callbacks and fullscreen support.
+    
+    Use `interctive` function or `@interact` decorator for simpler use cases. For comprehensive dashboards, subclass this class.
 
     **Features**:    
 
@@ -694,7 +696,9 @@ def classed(func, css_class):
 
 @_format_docs(css_info = _css_info)
 def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs):
-    """Enhanced interactive widget with multiple callbacks and grid layout support.
+    """Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.
+
+    This function is used for quick dashboards. Subclass `InteractBase` for complex applications.
     
     **Features**:    
 
