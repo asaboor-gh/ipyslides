@@ -9,6 +9,7 @@ import inspect
 import traitlets
 
 from contextlib import contextmanager
+from collections import namedtuple
 
 from IPython.display import display
 from anywidget import AnyWidget
@@ -101,8 +102,9 @@ def _func2widget(func, mutuals):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
     for p1, p2 in mutuals:
         if p1 in func_params and p2 in func_params:
-            raise ValueError(f"Function {func} cannot have paramters that depend on each other, {p1!r} depends on {p2!r} ")
-
+            raise ValueError(
+                f"Function {func} cannot have paramters that depend on each other, {p1!r} depends on {p2!r} "
+                f"Use independent parameter inside callbacks as self.params.{p2} instead of passing it directly.")
 
     out = ipw.Output()
     if klass := func.__dict__.get('_css_class', None):
@@ -275,6 +277,8 @@ class InteractBase(ipw.interactive):
 
     - groups: NamedTuple(controls, outputs, others) - Widget names by type
     - outputs: Tuple[Output] - Output widgets from callbacks
+    - params: NamedTuple of all parameters used in this interact, including fixed widgets. 
+      Can be accessed inside callbacks with self.params.<name> and change their traits other than passed to the callback.
 
     **Methods**:      
 
@@ -591,7 +595,6 @@ class InteractBase(ipw.interactive):
         return self._outputs # explicit
     
     def _create_groups(self, widgets_dict):
-        from collections import namedtuple
         groups = namedtuple('WidgetGropus', ['controls', 'outputs', 'others'])
         controls, outputs, others = [], [], []
         for key, widget in widgets_dict.items():
@@ -615,6 +618,17 @@ class InteractBase(ipw.interactive):
         if not hasattr(self, '_groups'):
             self._groups = self._create_groups(self._all_widgets)
         return self._groups
+    
+    @property
+    def params(self):
+        "NamedTuple of all parameters used in this interact, including fixed widgets. Can be access inside callbacks with self.params."
+        if not hasattr(self, '_params_tuple'):
+            wparams = self._iparams.copy() # copy to avoid changes
+            for k, v in self._iparams.items():
+                if isinstance(v, ipw.fixed) and isinstance(v.value, ipw.DOMWidget):
+                    wparams[k] = v.value # only widget to expose for use, not other fixed values
+            self._params_tuple = namedtuple('InteractiveParams', wparams.keys())(**wparams)
+        return self._params_tuple
     
     def _run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
