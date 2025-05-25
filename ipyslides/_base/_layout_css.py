@@ -175,12 +175,6 @@ def layout_css(accent_color, aspect):
                            "border-radius": "8px !important",
                         },
                     },
-                    '.Context-Disabled:after': { 
-                        **Icon('loading',color='red').css,
-                        'background': 'hsl(from var(--bg2-color) 10 100% l)',
-                        'padding': '0 0.5em',
-                        'padding-top': '4px', # button offset sucks
-                    },
                 },
                 "kbd" : {
                     "color":"var(--fg2-color)",

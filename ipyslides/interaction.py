@@ -16,19 +16,24 @@ from anywidget import AnyWidget
 
 from .formatters import get_slides_instance
 from .utils import _build_css, _dict2css
+from ._base.icons import Icon
 from ._base.widgets import ipw # patch ones required here
 from ._base._widgets import _fix_init_sig, AnimationSlider
 
 @contextmanager
-def disabled(widget):
+def disabled(*widgets):
     "Disable widget and enable it after code block runs under it. Useful to avoid multiple clicks on a button that triggers heavy operations."
-    widget.disabled = True
-    widget.add_class("Context-Disabled")
+    for widget in widgets:
+        if not isinstance(widget, ipw.DOMWidget):
+            raise TypeError(f"Expected ipywidgets.DOMWidget, got {type(widget).__name__}")
+        widget.disabled = True
+        widget.add_class("Context-Disabled")
     try:
         yield
     finally:
-        widget.disabled = False
-        widget.remove_class("Context-Disabled")
+        for widget in widgets:
+            widget.disabled = False
+            widget.remove_class("Context-Disabled")
 
 @contextmanager
 def _hold_running_slide_builder():
@@ -119,13 +124,34 @@ def _func2widget(func, mutuals):
         with out:
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in out._fparams}
 
-            # Compare values properly by checking each parameter
+            # Check if any parameter is a Button
+            button_params = {k: v for k, v in filtered_kwargs.items() if isinstance(v, ipw.Button)}
+            other_params  = {k: v for k, v in filtered_kwargs.items() if not k in button_params}
+            
+            if button_params:
+                if not any(btn._click_triggered for btn in button_params.values()):
+                    return # Only update if a button was clicked and skip other parameter changes
+                
+                with disabled(*list(button_params.values())): # disable buttons during function call
+                    try:
+                        func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
+                    finally:
+                        out._old_kws.update(filtered_kwargs) # update old kwargs to latest values
+                        # Reset button trigger flags
+                        for btn in button_params.values():
+                            btn._click_triggered = False # reset click trigger
+                            _hint_update(btn, remove=True)
+                
+                return # exit after button click handling
+                
+            # Compare values properly by checking each parameter that is not a Button
             values_changed = any(
-                k not in out._old_kws or filtered_kwargs[k] != out._old_kws[k]
-                for k in filtered_kwargs
+                k not in out._old_kws or other_params[k] != out._old_kws[k]
+                for k in other_params
             )
             
-            if values_changed or not out._fparams: # function may not have arguments but can be run via click
+            # Run function if new values, or does not have parameters or on button click
+            if values_changed or not out._fparams: # function may not have arguments but can be run via others
                 func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
             
             out._old_kws.update(filtered_kwargs) # update old kwargs to latest values
@@ -133,9 +159,34 @@ def _func2widget(func, mutuals):
     out._call_func = call_func # set the function to be called when the widget is updated
     return out
 
+_general_css = {
+    'display': 'grid',
+    'grid-gap': '4px',
+    'box-sizing': 'border-box',
+    '.Refresh-Btn.Rerun:before': {
+        'content': 'attr(title)',
+        'padding': '0 8px',
+        'color': 'red !important',
+    },
+    '.out-*': {
+        'padding': '4px 8px',
+        'display': 'grid', # outputs are not displaying correctly otherwise
+    },
+    # below widget-html-content creates issue even in nested divs
+    '> *, > .center > *, .widget-html-content' : { # .center is GridBox
+        'min-width': '0', # Preventing a Grid Blowout by css-tricks.com
+        'box-sizing': 'border-box',
+    },
+    '.Context-Disabled:after': { 
+        **Icon('loading',color='red').css,
+        'background': 'hsl(from var(--bg2-color, whitesmoke) 230 100% l)',
+        'padding': '0 0.5em',
+        'padding-top': '4px', # button offset sucks
+    },
+}
+
 def _hint_update(btn, remove = False):
     (btn.remove_class if remove else btn.add_class)('Rerun')
-    btn.button_style = '' if remove else 'warning' # for notebook outside slides, CSS not applied
 
 def _run_callbacks(outputs, kwargs, box):
     for out in outputs:
@@ -216,11 +267,12 @@ class InteractBase(ipw.interactive):
             return {{
                 'x': ipw.IntSlider(0, 0, 100),
                 'y': {{'x': 'value'}},  # observe x's value
-                'fig': ipw.fixed(go.FigureWidget())
+                'fig': ipw.fixed(go.FigureWidget()),
+                'btn': ipw.Button(icon='refresh', tooltip='Update Plot'),
             }}
             
-        @callback
-        def update_plot(self, x, fig): # gets out-0 class
+        @callback # gets out-0 class
+        def update_plot(self, x, fig, btn): # will need btn click to run
             fig.data = []
             fig.add_scatter(x=[0, x], y=[0, x**2])
             
@@ -232,7 +284,7 @@ class InteractBase(ipw.interactive):
     dash = MyDashboard(auto_update=True)
     dash.relayout(
         left_sidebar=dash.groups.controls,  # controls on left
-        center=['fig', 'out-stats']  # plot and stats in center
+        center=[ipw.VBox(), ('fig', 'out-stats')]  # plot and stats in a VBox explicitly
     )
     
     # Style with CSS Grid
@@ -246,12 +298,12 @@ class InteractBase(ipw.interactive):
     **Parameters**:      
 
     - auto_update (bool): Update outputs automatically on widget changes
-    - app_layout (dict): Initial layout configuration
-        - header: List[str] - Top widgets
-        - left_sidebar: List[str] - Left side widgets 
-        - center: List[str] - Main content area
-        - right_sidebar: List[str] - Right side widgets
-        - footer: List[str] - Bottom widgets
+    - app_layout (dict): Initial layout configuration, see `relayout` method for details.
+        - header: List[str | (Box, List[str])] - Top widgets
+        - left_sidebar: List[str | (Box, List[str])] - Left side widgets 
+        - center: List[str | (Box, List[str])] - Main content area
+        - right_sidebar: List[str | (Box, List[str])] - Right side widgets
+        - footer: List[str | (Box, List[str])] - Bottom widgets
     - grid_css (dict): CSS Grid properties for layout customization
         - See set_css() method for details
         - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
@@ -259,9 +311,10 @@ class InteractBase(ipw.interactive):
     **Widget Parameters** (`_interactive_params`'s returned dict):
 
     - Regular ipywidgets with value trait
-    - Fixed widgets using ipw.fixed()
+    - Fixed widgets using ipw.fixed(widget)
     - Dict {{'widget': 'trait'}} for observing specific traits, 'widget' must be in kwargs
     - Any DOM widget that needs display
+    - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
     - Plotly FigureWidgets (use patched_plotly for selection support)
 
     **Callbacks**:   
@@ -311,7 +364,7 @@ class InteractBase(ipw.interactive):
         self._iparams = {} # just empty reference
         extras = self._fix_kwargs() # params are internally fixed
         if not self._iparams: # need to interact anyhow
-            auto_update = False
+            self._auto_update = False
         
         self._icallbacks = self._interactive_callbacks() # callbacks after collecting params
         if not isinstance(self._icallbacks, (list, tuple)):
@@ -355,7 +408,7 @@ class InteractBase(ipw.interactive):
             btn._kwarg = 'run-button'
             btn.add_class('Refresh-Btn').add_class('run-button') # run-button for user
             btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px'}
-            btn.tooltip = 'Update Outputs'
+            btn.tooltip = 'Sync Outputs'
             btn.icon = 'refresh'
             try:
                 btn.click() # first run to ensure no dynamic inside
@@ -364,6 +417,9 @@ class InteractBase(ipw.interactive):
 
         self._all_widgets = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')} # save it once for sending to app layout
         self._groups = self._create_groups(self._all_widgets) # create groups of widgets for later use
+        
+        for func in self._icallbacks:
+            self._hint_btns_update(func) # external buttons update hint
         
         if app_layout is not None:
             self._validate_layout(app_layout) # validate arguemnts first
@@ -380,12 +436,56 @@ class InteractBase(ipw.interactive):
             if not key in allowed_keys:
                 raise KeyError(f"keys in app_layout should be one of {allowed_keys}, got {key!r}")
             
-            if value is not None:
-                if key in ["header","footer", "center", "left_sidebar","right_sidebar"]: # special cases
-                    if self._auto_update and isinstance(value, (list, tuple)):
-                        value = [v for v in value if v != 'run-button'] # avoid throwing error over button, which changes by other paramaters
-                    if not isinstance(value, (list,tuple)) or not all([v in self._all_widgets for v in value]):
-                        raise TypeError(f"{key!r} in app_layout should be a tuple of names of widgets from {self._all_widgets.keys()!r}, got {value!r}")
+            if value is None or key not in ["header", "footer", "center", "left_sidebar", "right_sidebar"]:
+                continue  # only validate content areas, but go for all, don't retrun
+
+            if not isinstance(value, (list, tuple)):
+                raise TypeError(
+                    f"{key!r} in app_layout should be a list/tuple of widget names or "
+                    f"(Box_instance, [names]) tuples, got {type(value).__name__}"
+                )
+            
+            if self._auto_update:
+                value = [v for v in value if v != 'run-button'] # avoid throwing error over button, which changes by other paramaters
+            
+            for i, name in enumerate(value,start=1):
+                if isinstance(name,str):
+                    if not name in self._all_widgets:
+                        raise ValueError(
+                            f"Invalid widget name {name!r} in {key!r} at position {i}. "
+                            f"Valid names are: {list(self._all_widgets.keys())}")
+                    continue # valid widget name, no need to check further
+
+                if not isinstance(name, (list,tuple)):
+                    raise TypeError(
+                        f"Item at position {i} in {key!r} must be a widget name or "
+                        f"(Box_instance, [names]) tuple, got {type(name).__name__}")
+                
+                if len(name) != 2:
+                    raise ValueError(
+                        f"Tuple at position {i} in {key!r} must have exactly 2 items: "
+                        f"(Box_instance, [names]), got {len(name)} items")
+                    
+                box, children = name
+
+                if not isinstance(box, ipw.Box):
+                    raise TypeError(f"First item of tuple at position {i} in {key!r} must be a Box widget instance, got {type(box).__name__}")
+    
+                if not isinstance(children, (list,tuple)):
+                    raise TypeError(
+                        f"Second item of tuple at position {i} in {key!r} must be a list/tuple "
+                        f"of widget names, got {type(children).__name__}")
+                
+                for child in children:
+                    if not isinstance(child, str):
+                        raise TypeError(
+                            f"Widget names in tuple at position {i} in {key!r} must be strings, "
+                            f"got {type(child).__name__}")
+                    
+                    if child not in self._all_widgets:
+                        raise ValueError(
+                            f"Invalid widget name {child!r} in tuple at position {i} in {key!r}. "
+                            f"Valid names are: {list(self._all_widgets.keys())}")
     
     def __init_subclass__(cls):
         if (not '_interactive_params' in cls.__dict__) or (not callable(cls._interactive_params)):
@@ -408,6 +508,7 @@ class InteractBase(ipw.interactive):
             - left_sidebar: Left side widgets
             - right_sidebar: Right side widgets  
             - footer: Bottom widgets
+            - Each of above must be a List[str | (Box, List[str])] of widget params names if given. Box is instance of ipywidgets.Box initialized without children.
         - Grid Properties:
             - pane_widths: List[str] - Widths for [left, center, right]
             - pane_heights: List[str] - Heights for [header, center, footer]
@@ -447,10 +548,17 @@ class InteractBase(ipw.interactive):
             if value and key in areas:
                 collected.extend(list(value))
                 box = ipw.GridBox if key == 'center' else ipw.VBox
-                setattr(self._app, key, box(
-                    [self._all_widgets[key] for key in value if key in self._all_widgets],
-                    _dom_classes = (key.replace('_','-'),) # for user CSS
-                ))
+                children = []
+                for name in value:
+                    if isinstance(name,str) and name in self._all_widgets:
+                        children.append(self._all_widgets[name])
+                    elif isinstance(name, (list,tuple)) and len(name) == 2: # already checked, but just in case
+                        nested_box, childs = name
+                        nested_box.children = tuple([self._all_widgets[n] for n in childs if n in self._all_widgets])
+                        collected.extend(list(childs)) # avoid showing nested ones again.
+                        children.append(nested_box) # add box to  main children
+                    
+                setattr(self._app, key, box(children, _dom_classes = (key.replace('_','-'),))) # for user CSS
             elif value: # class own traits and Layout properties
                 setattr(self._app, key, value)
         
@@ -505,12 +613,13 @@ class InteractBase(ipw.interactive):
         
         main_sl = f".{self._css_class}.widget-interact.ips-interact > .interact-app" # directly inside
         cent_sl = f"{main_sl} > .center"
-        user_css = ''
+        _css = _build_css(('.ips-interact > .interact-app',),_general_css)
+        
         if main:
-            user_css += _build_css((main_sl,), main)
+            _css += ("\n" + _build_css((main_sl,), main))
         if center:
-            user_css += ("\n" + _build_css((cent_sl,), center))
-        self._style_html.value = f'<style>{user_css}</style>'
+            _css += ("\n" + _build_css((cent_sl,), center))
+        self._style_html.value = f'<style>{_css}</style>'
     
     def _interactive_callbacks(self):
         """Collect all methods marked as callbacks. If overridden by subclass, should return a tuple of functions."""
@@ -562,6 +671,15 @@ class InteractBase(ipw.interactive):
         self._reset_descp(extras)
         for key, value in extras.items():
             value._kwarg = key # required for later use
+            if isinstance(value, ipw.Button): # Button can only be in extras, by fixed or itself
+                # Add click trigger flag and handler, callbacks using this can only be triggered by click
+                value._click_triggered = False
+                value.add_class('Refresh-Btn') # add class for styling
+                if not value.tooltip: # will show when not synced
+                    value.tooltip = 'Run Callback'
+                value.on_click(lambda btn: setattr(btn, '_click_triggered', True))
+                value.on_click(self.update) # after setting click trigger, update outputs
+                
         return tuple(extras.values())
     
     def _reset_descp(self, extras):
@@ -603,12 +721,24 @@ class InteractBase(ipw.interactive):
             elif (isinstance(widget, ipw.ValueWidget) and 
               not isinstance(widget, (ipw.HTML, ipw.Label, ipw.HTMLMath))):
                 controls.append(key)
-            elif key == 'run-button':
-                controls.append(key) # run button is always a control
+            elif key == 'run-button' or isinstance(widget, ipw.Button):
+                controls.append(key) # run buttons always in controls
             else:
                 others.append(key)
         return groups(controls=tuple(controls), outputs=tuple(outputs), others=tuple(others))
-
+    
+    def _hint_btns_update(self, func):
+        func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
+        # Let's observe buttons by shared value widgets in func_params
+        controls = {c: self._all_widgets[c] for c in self.groups.controls if c in func_params} # filter controls by func_params
+        btns = [controls[k] for k in func_params if isinstance(controls.get(k,None), ipw.Button)]
+        ctrls = {k: v for k, v in controls.items() if isinstance(v, ipw.ValueWidget)} # other controls
+        
+        for btn in btns:
+            for k,w in ctrls.items():
+                def update_hint(change, button=btn): _hint_update(button) # closure
+                w.observe(update_hint, names='value') # update button hint on value change
+                    
     @property
     def outputs(self): return getattr(self, '_outputs',())
 
@@ -765,6 +895,8 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - Fixed widgets via ipw.fixed()
     - Dict {{'widget': 'trait'}} for trait observation, 'widget' must be in kwargs
     - Plotly FigureWidgets (use patched_plotly)
+    - `ipywidgets.Button` for manual updates on callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
+    
 
     **Widget Updates**:     
 

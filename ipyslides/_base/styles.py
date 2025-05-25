@@ -419,25 +419,6 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'box-sizing':'border-box !important',
                 '> *': {'box-sizing':'border-box !important',}
             },
-            '.ips-interact > .interact-app' : {
-                'display': 'grid',
-                'grid-gap': '4px',
-                'box-sizing': 'border-box',
-                '> .Refresh-Btn.Rerun:before': {
-                    'content': '"Sync Outputs"',
-                    'padding': '0 8px',
-                    'color': 'red !important',
-                },
-                '> .out-*': {
-                    'padding': '4px 8px',
-                    'display': 'grid', # outputs are not displaying correctly otherwise
-                },
-                # below widget-html-content creates issue even in nested divs
-                '> *, > .center > *, .widget-html-content' : { # .center is GridBox
-                    'min-width': '0', # Preventing a Grid Blowout by css-tricks.com
-                    'box-sizing': 'border-box',
-                }, 
-            },
         },
         'span.sig': {
             'color': 'var(--accent-color) !important',
