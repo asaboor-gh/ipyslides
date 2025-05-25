@@ -134,13 +134,10 @@ dash.set_css(
         '.left-sidebar': {'background': '#eee','border-radius': '8px'},
     },
     center = { # can be set via grid_css parameter targetting '> .center'
-        'grid-template-columns': '1fr 1fr', # two columns for center pane
-        'grid-gap': '4px',
         '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
-    }
-    'grid-template-columns': '5fr 3fr', # side-by-side layout for outputs
-    'grid-gap': '4px', # central grid gap
-    '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
+        'grid-template-columns': '5fr 3fr', # side-by-side layout for outputs
+        'grid-gap': '4px', # central grid gap
+        '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
 })
 display(dash)
 ```

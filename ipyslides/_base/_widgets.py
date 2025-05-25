@@ -115,12 +115,14 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
     The `description` trait is a string that will be displayed as a label above the list.
 
     The `value` trait is the currently selected value. If list elements are strings, the value is the index of the selected item.
+    The `html` trait is a convenience accessor that returns the HTML representation of the currently selected item.
     You can set `ListWidget.layout.max_height` to limit the maximum height (default 400px) of the list. The list will scroll if it exceeds this height.
     """
     _active = traitlets.Int(None, allow_none=True).tag(sync=True)
-    value = traitlets.Int(None, allow_none=True).tag(sync=True)
-    options = traitlets.List().tag(sync=True)
     description = traitlets.Unicode('Select an option', allow_none=True).tag(sync=True)
+    options = traitlets.List().tag(sync=True)
+    value = traitlets.Int(None, allow_none=True).tag(sync=True)
+    html = traitlets.Unicode(None, allow_none=True)  # This is only python side
     
     _esm = """
     function render({model, el}) {
@@ -246,27 +248,33 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
         super().__init__(*args, **kwargs)
         self.layout.max_height = '400px' # default max height
 
-    @property
-    def value_html(self):
+    @traitlets.observe('value')
+    def _value_html(self,change):
         "Returns the HTML of the currently selected item. This is not a traitlet, just an accessor of html representation for convenience."
-        if self.value is None:
-            return None
-        if isinstance(self.options[self.value], str):
-            return self.options[self.value]
-        else:
-            return self.options[self.value][1]
+        indexer = change['new']
+        if indexer is None:
+            self.html = None
+        elif self.options:
+            opts = enumerate(self.options) if isinstance(self.options[0], str) else self.options
+            for i, opt in opts:
+                if i == indexer:
+                    self.html = opt
+                    break
 
     @traitlets.validate('options')
     def _validate_options(self, proposal):
         options = proposal['value']
         if not isinstance(options, (list,tuple)):
             raise traitlets.TraitError("Options must be a list/tuple.")
+        if not options: return options  # allow empty list
+
+        _type = str if isinstance(options[0], str) else tuple
         for opt in options:
-            if not isinstance(opt, (str, tuple)):
-                raise traitlets.TraitError("Each option must be a string or a tuple.")
-            if isinstance(opt, tuple):
+            if not isinstance(opt, _type):
+                raise traitlets.TraitError("Each option must be a string or a tuple (int, str).")
+            if _type is tuple:
                 if len(opt) != 2:
-                    raise traitlets.TraitError("Each tuple option must have exactly two elements.")
+                    raise traitlets.TraitError("Each tuple option must have exactly two elements (int, str).")
                 if not isinstance(opt[0], int):
                     raise traitlets.TraitError("The first element of each tuple option must be an integer value.")
                 if not isinstance(opt[1], str):

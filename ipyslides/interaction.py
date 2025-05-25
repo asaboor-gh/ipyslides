@@ -359,7 +359,7 @@ class InteractBase(ipw.interactive):
                 print(f"Warning: Initial button click faild: {e}")
 
         self._all_widgets = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')} # save it once for sending to app layout
-        self.groups = self._create_groups(self._all_widgets) # create groups of widgets for later use
+        self._groups = self._create_groups(self._all_widgets) # create groups of widgets for later use
         
         if app_layout is not None:
             self._validate_layout(app_layout) # validate arguemnts first
@@ -608,6 +608,13 @@ class InteractBase(ipw.interactive):
 
     @property
     def outputs(self): return getattr(self, '_outputs',())
+
+    @property
+    def groups(self): 
+        """NamedTuple of widget groups: controls, outputs, others."""
+        if not hasattr(self, '_groups'):
+            self._groups = self._create_groups(self._all_widgets)
+        return self._groups
     
     def _run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
