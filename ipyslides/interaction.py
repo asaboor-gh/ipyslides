@@ -450,6 +450,9 @@ class InteractBase(ipw.interactive):
         else:
             self.relayout(center=list(self._all_widgets.keys())) # add all to GridBox which is single column
     
+    def __repr__(self): # it throws very big repr, so just show class name and id
+        return f"<{self.__module__}.{type(self).__name__} at {hex(id(self))}>"
+    
     def _validate_layout(self, app_layout):
         if not isinstance(app_layout, dict):
             raise TypeError("app_layout should be a dictionary to relayout widgets!")
@@ -615,7 +618,7 @@ class InteractBase(ipw.interactive):
         ```python
         dash.set_css(
             main={{
-                ':fullscreen': {'min-height':'100vh'}, # fullscreen mode full height by min-height
+                ':fullscreen': {{'min-height':'100vh'}}, # fullscreen mode full height by min-height
                 'grid-template-rows': 'auto 1fr auto',
                 'grid-template-columns': '200px 1fr',
                 '> .center': {{'padding': '1rem'}} # can be done with center parameter too
