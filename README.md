@@ -82,7 +82,7 @@ Support for various content types including:
 - ©️ Citations and References
 - 💻 Auto update variables in markdown
 - 🎥 Videos (YouTube, local)
-- 🎮 Enhanced interactive widgets (with fullscreen support)
+- 🎮 Enhanced interactive widgets (with fullscreen support, thanks to `anywidget`)
 
 ```python
 import numpy as np
@@ -96,7 +96,7 @@ def plot(html, amplitude, frequency):
     html.value = slides.plt2html(). value
 ```
 
-- For comprehensive dashbords, subclass InteractBase
+- For comprehensive dashbords, subclass `InteractBase`
 
 ```python
 import numpy as np
@@ -108,7 +108,7 @@ class MyDashboard(InteractBase):
         return {
             'html': HTML(),
             'amplitude': (0, 2),
-            'frequency': (0, 5)
+            'frequency': (0, 5),
         }
 
     @callback
@@ -142,6 +142,8 @@ dash.set_css(
 display(dash)
 ```
 ![Dashboard Example](interact.png)
+See more examples in [einteract repository](https://github.com/asaboor-gh/einteract) and on [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb).
+
 - And much more!
 
 ---

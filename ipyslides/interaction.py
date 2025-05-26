@@ -284,7 +284,7 @@ class InteractBase(ipw.interactive):
     dash = MyDashboard(auto_update=True)
     dash.relayout(
         left_sidebar=dash.groups.controls,  # controls on left
-        center=[ipw.VBox(), ('fig', 'out-stats')]  # plot and stats in a VBox explicitly
+        center=[(ipw.VBox(), ('fig', 'out-stats')),]  # plot and stats in a VBox explicitly
     )
     
     # Style with CSS Grid
