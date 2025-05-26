@@ -104,6 +104,21 @@ class FullscreenButton(AnyWidget):
         super().__init__()
         self.layout.width = 'min-content'
 
+# We will capture error at user defined callbacks level
+_autoTB = AutoFormattedTB(color_scheme='Linux')
+
+@contextmanager
+def _print_error(out):
+    out.remove_class('out-err')
+    try:
+        yield
+    except Exception as e:
+        out.add_class('out-err').clear_output(wait=True) # clear output on error
+        with out: # We don't want to raise it to let other callbacks run
+            print('\n'.join(
+                _autoTB.structured_traceback(*sys.exc_info(),tb_offset=2, number_of_lines_of_context=5)
+            ))
+
 def _func2widget(func, mutuals):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
     for p1, p2 in mutuals:
@@ -126,20 +141,19 @@ def _func2widget(func, mutuals):
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in out._fparams}
 
             # Check if any parameter is a Button
-            button_params = {k: v for k, v in filtered_kwargs.items() if isinstance(v, ipw.Button)}
-            other_params  = {k: v for k, v in filtered_kwargs.items() if not k in button_params}
+            buttons = [v for v in filtered_kwargs.values() if isinstance(v, ipw.Button)]
+            other_params  = {k: v for k, v in filtered_kwargs.items() if not isinstance(v, ipw.Button)}
             
-            if button_params:
-                if not any(btn._click_triggered for btn in button_params.values()):
+            if buttons:
+                if not any(btn._click_triggered for btn in buttons):
                     return # Only update if a button was clicked and skip other parameter changes
                 
-                with disabled(*list(button_params.values())): # disable buttons during function call
-                    try:
+                with _print_error(out), disabled(*buttons): # disable buttons during function call
+                    try: # error still be raised, but will be caught by _print_error, so finally is important
                         func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
                     finally:
                         out._old_kws.update(filtered_kwargs) # update old kwargs to latest values
-                        # Reset button trigger flags
-                        for btn in button_params.values():
+                        for btn in buttons:
                             btn._click_triggered = False # reset click trigger
                             _hint_update(btn, remove=True)
                 
@@ -153,7 +167,8 @@ def _func2widget(func, mutuals):
             
             # Run function if new values, or does not have parameters or on button click
             if values_changed or not out._fparams: # function may not have arguments but can be run via others
-                func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
+                with _print_error(out):
+                    func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
             
             out._old_kws.update(filtered_kwargs) # update old kwargs to latest values
             
@@ -173,6 +188,10 @@ _general_css = {
         'padding': '4px 8px',
         'display': 'grid', # outputs are not displaying correctly otherwise
     },
+    '< .ips-interact .widget-output.out-err': { # same error view as in JupyterLab, covers from main VBox
+        'background': 'var(--jp-rendermime-error-background)',
+        'margin-block': 'var(--jp-code-padding)', # have some space around to distinguish
+    },
     # below widget-html-content creates issue even in nested divs
     '> *, > .center > *, .widget-html-content' : { # .center is GridBox
         'min-width': '0', # Preventing a Grid Blowout by css-tricks.com
@@ -184,24 +203,19 @@ _general_css = {
         'padding': '0 0.5em',
         'padding-top': '4px', # button offset sucks
     },
+    '< .ips-interact > .other-area:not(:empty)': { # to distinguish other area when not empty
+        'border-top': '1px inset var(--jp-border-color2, #8988)',
+    }
 }
 
 def _hint_update(btn, remove = False):
     (btn.remove_class if remove else btn.add_class)('Rerun')
 
-_autoTB = AutoFormattedTB(color_scheme='Linux')
-
 def _run_callbacks(outputs, kwargs, box):
+    # Each callback is executed, Error in any of them don't stop other callbacks, handled in _print_error context manager
     for out in outputs:
         if hasattr(out, '_call_func'):
-            try:
-                out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
-            except Exception as e:
-                out.clear_output(wait=True) # clear output on error
-                with out: # We don't want to raise it to let other callbacks run
-                    print('\n'.join(
-                        _autoTB.structured_traceback(*sys.exc_info(),tb_offset=2, number_of_lines_of_context=5)
-                    ))
+            out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
 
 class AnyTrait(ipw.fixed):
     def __init__(self, key,  name, trait, kwargs):
@@ -549,7 +563,7 @@ class InteractBase(ipw.interactive):
         """
         app_layout = {key:value for key,value in locals().items() if key != 'self'}
         self._validate_layout(app_layout)
-        other = ipw.VBox([self._style_html, self.out]) # out still be there
+        other = ipw.VBox().add_class('other-area') # this should be empty to enable CSS perfectly, unless filled below
         areas = ["header","footer", "center", "left_sidebar","right_sidebar"]
 
         collected = []
@@ -572,7 +586,7 @@ class InteractBase(ipw.interactive):
                 setattr(self._app, key, value)
         
         other.children += tuple([v for k,v in self._all_widgets.items() if k not in collected])
-        self.children = (self._app, other, FullscreenButton()) # button be on top to click
+        self.children = (self._app, other, self._style_html, self.out, FullscreenButton()) # button be on top to click
     
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
@@ -949,7 +963,14 @@ def interact(*funcs, auto_update=True,app_layout=None, grid_css={}, **kwargs):
 
 
 def patched_plotly(fig):
-    "Plotly's FigureWidget with two additional traits `selected` and `clicked` to observe."
+    """Plotly's FigureWidget with two additional traits `selected` and `clicked` to observe.
+    
+    - selected: Dict - Points selected by box/lasso selection
+    - clicked: Dict - Last clicked point (only updates when clicking different point, it should not be considered a button click)
+
+    **Note**: You may need to set `fig.layout.autoszie = True` to ensure fig adopts parent container size. 
+    (whenever size changes, it may need to be set again in many cases due to some internal issues with plotly)
+    """
     if getattr(fig.__class__,'__name__','') != 'FigureWidget':
         raise TypeError("provide plotly's FigureWidget")
     fig.add_traits(selected = traitlets.Dict(), clicked=traitlets.Dict())
@@ -959,8 +980,11 @@ def patched_plotly(fig):
         if data:
             if data['event_type'] == 'plotly_selected':
                 fig.selected = data['points']
-            if data['event_type'] == 'plotly_click':
-                fig.clicked = data['points']
+            elif data['event_type'] == 'plotly_click': # this runs so much times
+                new_points = data['points']
+                # Only update if points data is different
+                if new_points != fig.clicked:
+                    fig.clicked = new_points
             
     fig.observe(_attach_data, names = '_js2py_pointsCallback')
     return fig
