@@ -4,7 +4,7 @@ Enhanced version of ipywidgets's interact/interactive functionality.
 
 __all__ = ['interactive','interact', 'classed', 'patched_plotly','disabled'] # other need to be explicity imported
 
-import re, textwrap
+import sys, re, textwrap
 import inspect 
 import traitlets
 
@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from collections import namedtuple
 
 from IPython.display import display
+from IPython.core.ultratb import AutoFormattedTB
 from anywidget import AnyWidget
 
 from .formatters import get_slides_instance
@@ -188,11 +189,19 @@ _general_css = {
 def _hint_update(btn, remove = False):
     (btn.remove_class if remove else btn.add_class)('Rerun')
 
+_autoTB = AutoFormattedTB(color_scheme='Linux')
+
 def _run_callbacks(outputs, kwargs, box):
     for out in outputs:
         if hasattr(out, '_call_func'):
-            out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
-            
+            try:
+                out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
+            except Exception as e:
+                out.clear_output(wait=True) # clear output on error
+                with out: # We don't want to raise it to let other callbacks run
+                    print('\n'.join(
+                        _autoTB.structured_traceback(*sys.exc_info(),tb_offset=2, number_of_lines_of_context=5)
+                    ))
 
 class AnyTrait(ipw.fixed):
     def __init__(self, key,  name, trait, kwargs):
