@@ -597,6 +597,7 @@ class InteractBase(ipw.interactive):
         - main (dict): CSS properties for main app layout
             - Target center grid with ` > .center ` selector
             - Target widgets by their parameter names as classes
+            - Use `:fullscreen` at root level of dict to apply styles in fullscreen mode
         - center (dict): CSS properties for center grid section
             - Direct access to center grid (same as main's ` > .center `)
             - Useful for grid layout of widgets inside center area
@@ -614,6 +615,7 @@ class InteractBase(ipw.interactive):
         ```python
         dash.set_css(
             main={{
+                ':fullscreen': {'min-height':'100vh'}, # fullscreen mode full height by min-height
                 'grid-template-rows': 'auto 1fr auto',
                 'grid-template-columns': '200px 1fr',
                 '> .center': {{'padding': '1rem'}} # can be done with center parameter too
@@ -637,6 +639,10 @@ class InteractBase(ipw.interactive):
         main_sl = f".{self._css_class}.widget-interact.ips-interact > .interact-app" # directly inside
         cent_sl = f"{main_sl} > .center"
         _css = _build_css(('.ips-interact > .interact-app',),_general_css)
+
+        fs_css = main.pop(':fullscreen',{}) or main.pop('^:fullscreen',{}) # both valid
+        if fs_css: # fullscreen css given by user, full screen is top interact, not inside one as button is there
+            _css += ('\n' + _build_css((f".{self._css_class}.widget-interact.ips-interact:fullscreen > .interact-app",), fs_css))
         
         if main:
             _css += ("\n" + _build_css((main_sl,), main))
