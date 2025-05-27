@@ -188,9 +188,12 @@ _general_css = {
         'padding': '4px 8px',
         'display': 'grid', # outputs are not displaying correctly otherwise
     },
-    '< .ips-interact .widget-output.out-err': { # same error view as in JupyterLab, covers from main VBox
-        'background': 'var(--jp-rendermime-error-background)',
-        'margin-block': 'var(--jp-code-padding)', # have some space around to distinguish
+    '< .ips-interact': {
+        '^:fullscreen > *, > *': {'margin' : 0}, # this is import for fullscreen mode to be margin-less directly
+        '.widget-output.out-err': { # same error view as in JupyterLab, covers from main VBox
+            'background': 'var(--jp-rendermime-error-background)',
+            'margin-block': 'var(--jp-code-padding)', # have some space around to distinguish
+        },
     },
     # below widget-html-content creates issue even in nested divs
     '> *, > .center > *, .widget-html-content' : { # .center is GridBox
