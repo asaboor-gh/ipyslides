@@ -31,6 +31,7 @@ pip install -e .
     - Included custom built widgets for enhanced interaction. 
     - Pass any DOMWidget as a parameter to `interact/interactive` functions unlike default `ipywidgets.interactive` behavior.
     - Observe any trait of the widget by `{'widget_name': 'trait_name'}` where `'widget_name'` is assigned to a `widget`/`fixed(widget)` in control parameters.
+    - Add `ipywidgets.Button` to hold callbacks which use it as paramter for a click
 - **Plotly Integration**: Modified plotly support with additional traits like `selected` and `clicked`
 - **Matplotlib Support**: Convert matplotlib plots to HTML format using `plt2html`
 - **Event Callbacks**: Easy widget event handling with the `@callback` decorator inside the subclass of `InteractBase` or multiple functions in `interact/interactive` functions.
@@ -42,10 +43,10 @@ pip install -e .
 import numpy as np
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from einteract import interact, classed
+import einteract import as ei
 
-@interact(
-    classed(lambda smax: print(f"Maximum amplitude: {smax}"), 'out-smax'),
+@ei.interact(
+    ei.classed(lambda smax: print(f"Maximum amplitude: {smax}"), 'out-smax'),
     slider = ipw.fixed(ipw.IntSlider(min=1,max=10)), 
     frequency = (0.1, 20.0,5), 
     smax = {'slider': 'max'},
