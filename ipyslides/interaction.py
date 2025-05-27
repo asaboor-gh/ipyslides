@@ -985,18 +985,19 @@ def patched_plotly(fig):
     """
     if getattr(fig.__class__,'__name__','') != 'FigureWidget':
         raise TypeError("provide plotly's FigureWidget")
+    
+    if fig.has_trait('selected') and fig.has_trait('clicked'):
+        return fig # Already patched, no need to do it again
+    
     fig.add_traits(selected = traitlets.Dict(), clicked=traitlets.Dict())
 
     def _attach_data(change):
         data = change['new']
         if data:
-            if data['event_type'] == 'plotly_selected':
+            if data['event_type'] == 'plotly_click': # this runs so much times
+                fig.clicked = data['points']
+            elif data['event_type'] == 'plotly_selected':
                 fig.selected = data['points']
-            elif data['event_type'] == 'plotly_click': # this runs so much times
-                new_points = data['points']
-                # Only update if points data is different
-                if new_points != fig.clicked:
-                    fig.clicked = new_points
             
     fig.observe(_attach_data, names = '_js2py_pointsCallback')
     return fig
