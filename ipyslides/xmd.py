@@ -7,7 +7,7 @@ You can use the following syntax:
 ```multicol
 A
 +++
-This \`{var_name}\` can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
+This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
 ```
 ::: note-warning
     Nested blocks are not supported.
@@ -100,7 +100,7 @@ _special_funcs = {
     "details": "text",
     "styled": "style objects with CSS classes and inline styles",
     "zoomable": "zoom a block of html when hovered",
-    "center": r"text or \`{variable}\`", # should be last
+    "center": r"text or \%{variable}", # should be last
 }
 
 def error(name, msg):
@@ -211,6 +211,8 @@ class HtmlFormatter(string.Formatter):
         elif isinstance(key, str) and key not in kwargs:
             if kwargs.get('fmt:scoped', False):
                 return error('KeyError', f'{key!r} was not given in fmt').value
+            if not key.isidentifier():
+                return error('NameError', f'name {key!r} is not a valid variable name').value
             return error('NameError', f'name {key!r} is not defined').value
         return super().get_value(key, args, kwargs)
     
@@ -326,9 +328,9 @@ class XMarkdown(Markdown):
         self._slides = get_slides_instance()
 
     def _extract_class(self, header):
-        header = re.sub(r"\.(\d)",r"~dot~\1", header) # Avoid .1 like things for cols
+        header = re.sub(r"\.(\d)",r"~%&!~\1", header) # Avoid .1 like things for cols
         out = header.split(".", 1)  # Can have many classes there
-        cols = out[0].strip().replace("~dot~",".") # replace back
+        cols = out[0].strip().replace("~%&!~",".") # replace back
         if len(out) == 1:
             return cols, ""
         return cols, out[1].replace(".", " ").strip()
@@ -478,14 +480,22 @@ class XMarkdown(Markdown):
         """
         text = self._resolve_files(text)
         text = re.sub(r"\\\`", "&#96;", text)  # Escape backticks after files added
+        text = re.sub(r"\\%\{", r"&#37;{", text) # Escap \%{, before below latest addition of variables %{var}
+
+        # Now let's convert old `{var}` to new  %{var} for backward compatibility
+        text = re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL | re.UNICODE) # Python unicode vars
 
         text = self._resolve_nested(text)  # Resolve nested objects in form func`?text?` to func`html_repr`
         if self._slides and self._slides.this: # under building slide
             text = resolve_objs_on_slide(
                 self, self._slides, text
             )  # Resolve objects in xmd related to current slide
-        output = super().convert(self._sub_vars(text)) # sub vars before conversion
-        return self._resolve_vars(re.sub("&#96;", "`", output))  # Reverse backticks
+        
+        # _resolve_vars internally replace escaped \` and `%{ back to ` and %{ 
+        return self._resolve_vars( # reolve vars after conversion
+            super().convert(
+                self._sub_vars(text) # sub vars before conversion
+            ))
     
     def convert2str(self, text):
         "Ensures that output will be a str."
@@ -521,7 +531,9 @@ class XMarkdown(Markdown):
                         objs.append(XTML(self._resolve_vars(content)))
                 return objs
 
-        return re.sub(r"PrivateXmdVar(\d+)X", lambda m: self._vars.get(m.group(), m.group()), text)
+        out = re.sub(r"PrivateXmdVar(\d+)X", lambda m: self._vars.get(m.group(), m.group()), text)
+        # replacing backtick and %{, sometimes it leads to &amp;, need to cover it
+        return re.sub(r"&(?:amp;)?#(?:96;|37;\{)", lambda m: "`" if "96" in m.group() else "%{", out)
     
     def _handle_var(self, value): # Put a temporary variable that will be replaced at end of other conversions.
         if isinstance(value, (str, XTML)): 
@@ -533,11 +545,11 @@ class XMarkdown(Markdown):
         return key
     
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as `{var}` and two inline columns as ||C1||C2||"   
+        "Substitute variables in html_output given as %{var} and two inline columns as ||C1||C2||"   
         user_ns = self.user_ns() # get once, will be called multiple time
         # Replace variables first to have small data
         def handle_match(match):
-            cmatch = match.group()[2:-2].strip().split('!')[0] # conversion split
+            cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
             key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
             if ('[' in key) and (not ']' in key): # There was no spec, just a slicing splitted, but don't need to throw error here based on that
                 key = ''.join([key,':',*fmt_spec])
@@ -546,9 +558,9 @@ class XMarkdown(Markdown):
             value, _ = hfmtr.get_field(key, (), user_ns)
             if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
                 return self._handle_var(value) 
-            return self._handle_var(hfmtr.vformat(match.group()[1:-1], (), user_ns))
+            return self._handle_var(hfmtr.vformat(match.group()[1:], (), user_ns))
         
-        html_output = re.sub(r"\`\{(.*?)\}\`", handle_match, html_output, flags=re.DOTALL)
+        html_output = re.sub(r"%\{([^{]*?)\}", handle_match, html_output, flags=re.DOTALL | re.UNICODE) # unicode varibales match
 
         # Replace inline  functions
         from . import utils  # Inside function to avoid circular import
@@ -603,7 +615,7 @@ def parse(xmd, returns = False):
      {.info}
      +++
      # Second column is 60% wide
-     This \`{var_name}\` can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
+     This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
      ```
 
      ```python
@@ -630,10 +642,13 @@ def parse(xmd, returns = False):
     return XMarkdown()._parse(xmd, returns = returns)
 
 def _filtered_ns(text, kwargs, return_keys=False):
-    matches = [match for match in re.findall(
-        r"\`\{\s*(.*?)\s*[\.\[\:\!\s+].*?\}\`",
-        re.sub(r"\\\`", "&#96;", text).replace('}`', ' }`'), # avoid \`{
-        flags = re.DOTALL) if not re.search(r"\{|\}", match)]
+    matches = [var 
+        for slash, var, _ in re.findall(
+            r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]+)(.*?)\s*\}", # avoid \%{ escape
+            re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL | re.UNICODE), # backward `{var}` compatibility
+            flags = re.DOTALL | re.UNICODE, # unicode varaiable names support
+        ) if not slash
+    ]
     if return_keys:
         return tuple(matches) # This is not for fmt, but for top level slides built by markdown
     # Do not carry full dict, only matching, user can dump locals()/globals() etc
@@ -641,7 +656,7 @@ def _filtered_ns(text, kwargs, return_keys=False):
 
 
 def fmt(text, **kwargs):
-    """Stores refrences to variables used in syntax `{var}` from given keyword arguments. You need this if not in top level scope of Notebook.
+    """Stores refrences to variables used in syntax \%{var} (slash is for escap here, not part of syntax) from given keyword arguments. You need this if not in top level scope of Notebook.
     If you do some str operations on output of this function, use hl`output.copy_ns(target)` to attch namespace to new string.
 
     Output is not intended to do string operations, just to hold namespace for extended markdown.

@@ -110,12 +110,12 @@ class BaseSlides:
         
         **General syntax**{{.text-big}}
         
-        - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\`{{variable}}\`` 
+        - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\%{{variable}}` (or legacy alert`\`{{variable}}\``) 
             (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
-            alert`\`{{variable:format_spec}}\`` or alert`\`{{variable!conversion}}\``, that will take preference.
-        - A special formatting alert`\`{{variable:nb}}\`` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
+            alert`\%{{variable:format_spec}}` or alert`\%{{variable!conversion}}`, that will take preference.
+        - A special formatting alert`\%{{variable:nb}}` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
             Custom objects serialized with `Slides.serializer` or serialized by `ipyslides` should be displayed without `:nb` whenever possible to appear in correct place in all contexts. e.g.
-            a matplotlib's figure `fig` as shown in \`{{fig:nb}}\` will only capture text representation inplace and actual figure will be shown at end, while \`{{fig}}\` will be shown exactly in place.
+            a matplotlib's figure `fig` as shown in `\%{{fig:nb}}` will only capture text representation inplace and actual figure will be shown at end, while `\%{{fig}}` will be shown exactly in place.
         
         ::: note-tip
             - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown.
@@ -123,10 +123,10 @@ class BaseSlides:
                 - Markdown enclosed in hl`fmt(content, **vars)` will not expose initialized(encapsulated) `vars` for update, others can be updated later.
                 - In summary, variables are resolved by scope in the prefrence `fmt > rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
             - Use unique variable names on each slide to avoid accidental overwriting during update.
-            - Varibales used as attributes like \`{{var.attr}}\` and indexing like \`{{var[0]}}\`/\`{{var["key"]}}\` will be update only if `var` itself is changed.
+            - Varibales used as attributes like `\%{{var.attr}}` and indexing like `\%{{var[0]}}`/`\%{{var["key"]}}` will be update only if `var` itself is changed.
 
         ::: note-warning
-            alert`\`{{variable:nb}}\`` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
+            alert`\%{{variable:nb}}` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
         
         ::: note-info
             - Widgets behave same with or without `:nb` format spec. 
@@ -191,7 +191,7 @@ class BaseSlides:
                 [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
             - These markdown extensions are inluded by default hl`{_md_extensions}`.
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-                `__format__` method in your class enables to use {{obj}} syntax in python formatting and \`{{obj}}\` in extended Markdown.
+                `__format__` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
         
         - Other options (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\`{v}\`' for k,v in _special_funcs.items()),
@@ -341,8 +341,8 @@ class BaseSlides:
             - Docstring of callable (if any) is parsed as markdown before calling function.
         2. hl`with slides.build(number):` creates single slide. Equivalent to hl`%%slide number` magic.
             - Use hl`fsep()` from top import or hl`Slides.fsep()` to split content into frames.
-            - Use hl`for item in fsep.loop(iterable):` block to automatically add frame separator.
-            - Use hl`fsep.join` to join content of frames incrementally.
+            - Use hl`for item in fsep.iter(iterable):` block to automatically add frame separator.
+            - Use hl`fsep(True)`/hl`fsep.iter(...,stack=True)` to join content of frames incrementally.
         3. hl`slides.build(number, str)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
@@ -433,7 +433,7 @@ class BaseSlides:
                 today``
                 {.text-small}
                                  
-                `{logo}`
+                %{logo}
                                  
                 ::: text-box
                     sup`1`My University is somewhere in the middle of nowhere
@@ -446,7 +446,7 @@ class BaseSlides:
             +++
             ### This is summary of current section
             Oh we can use inline columns || Column A || Column B || here and what not!
-            `{btn}`
+            %{btn}
             ```
             ```markdown
              ```multicol .block-green
@@ -475,7 +475,7 @@ class BaseSlides:
             self.css_syntax.display()
         
         with self.build(-1), self.code.context():
-            self.write(self.fmt('`{self.version!r}` `{self.xmd_syntax}`', self=self))
+            self.write(self.fmt('%{self.version!r} %{self.xmd_syntax}', self=self))
             
         with self.build(-1):
             self.write('## Adding Content')
@@ -573,7 +573,7 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
-        Needs slide.rebuild: `{source}`, already resolved: `{self.this}`
+        Needs slide.rebuild: %{source}, already resolved: %{self.this}
         ''', self=self))
 
         s.rebuild(source=s.source.show_lines(range(3,10)))
@@ -588,13 +588,12 @@ class BaseSlides:
         with self.build_() as s:
             self.write("## Adding content on frames incrementally yoffset`0`")
             self.frozen(widget := (code := s.get_source()).as_widget()).display()
-            self.fsep() # frozen in above line get oldest metadata for export
+            self.fsep(stack=True) # frozen in above line get oldest metadata for export
             def highlight_code(slide): widget.value = code.focus_lines(range(slide.indexf + 1)).value
             self.on_load(highlight_code)
         
-            for ws, cols in self.fsep.loop(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
+            for ws, cols in self.fsep.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
                 cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
-                self.fsep.join() # incremental
                 self.write(*cols, widths=ws)
                     
         with self.build(-1) as s:

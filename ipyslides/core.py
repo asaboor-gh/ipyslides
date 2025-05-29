@@ -716,7 +716,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
-                        self.fsep.join()
+                        s.stack_frames(True)
 
                     parse(xtr.copy_ns(cell, frm), returns = False) # user may have used fmt
                     
@@ -725,7 +725,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                     
                     if prm != frm: 
                         edit_idx = idx
-                        if (not self.this._split_frames) and ('```multicol' in frm): # show all columns if edit is inside multicol
+                        if self.this.stacked and ('```multicol' in frm): # show all columns if edit is inside multicol
                             edit_idx += (len(re.findall(r'^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE)) + 1)
             
             s.first_frame() # be at start first
@@ -740,7 +740,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
         Can use in place of `write` commnad for strings.
-        When using `%xmd`, you can pass variables as `{var}` which will substitute HTML representation
+        When using `%xmd`, you can pass variables as \%{var} (slash for escap here) which will substitute HTML representation
         if no other formatting specified.
         Inline columns are supported with ||C1||C2|| syntax."""
         if cell is None:
@@ -849,50 +849,49 @@ class fsep:
     You can import it on top level or use as `Slides.fsep`.
 
     - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
-    - Use `fsep.loop(iterable)`/`fsep.enum(iterable)` to split after each item in iterable automatically.
-    - Use `fsep.accumulate()/fsep.join()` once under a slide to show frames incrementally. In markdown slides, use %++.
+    - Use `fsep.iter(iterable)` to split after each item in iterable automatically.
+    - Setting `stack=True` in `fsep` or `fsep.iter` once under a slide to show frames incrementally. 
+        In markdown slides, use %++. The last called value of `stack` overrides any previous value.
     - Content before first frame separator is added on all frames. This helps adding same title once.
     """
     _app_ins = Slides.instance # need to be called as it would not be defined initially
     
     @_ensure_slides_init
-    def __init__(self):
+    def __init__(self, stack=None):
         app = self._app_ins()
         app.verify_running("Cant use fsep in a capture context other than slides!")
         app.this._widget.add_class("Frames")
         app.this._fsep = getattr(app.this, '_fsep',app.html('style','').as_widget()) # create once
         app.frozen(app.this._fsep, {"FSEP": "","skip-export":"no need in export"}).display()
+        
+        if stack in (True, False):
+            app.this.stack_frames(stack)
+        elif stack is not None:
+            raise ValueError(f"stack should be set True or False or left as None for default behavior, got {type(stack)}")
 
     @classmethod
     @_ensure_slides_init
-    def loop(cls, iterable, accumulate=False):
+    def iter(cls, iterable, stack=None):
         "Loop over iterable. Frame separator is add before each item and at end of the loop."
         cls._app_ins().verify_running()
         if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
             raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
         
-        if accumulate:
-            cls.accumulate()
-
         for item in iterable:
-            cls() # put separator before
+            cls(stack) # put one separator before
             yield item
-        else:
-            cls() # put one last to separate this block
-    
-    @classmethod
-    def enum(cls, iterable, start=0, accumulate=False):
-        "Enumerate iterable with automatically adding frame separators."
-        return enumerate(cls.loop(iterable,accumulate=accumulate), start=start)
-    
-    @classmethod
-    @_ensure_slides_init
-    def accumulate(cls):
-        """Join frames incrementally. This enables `write` and `multicol` followed by a frame separator to increment as well.
-        Use %++ in makdown in place of this.
-        """
-        app = cls._app_ins()
-        app.verify_running()
-        app.this._split_frames = False
 
-    join = accumulate # short alias
+        cls(stack) # put after all done to keep block separated
+    
+    loop = iter # backward compatiable check
+
+    @classmethod
+    def enum(cls, *args, **kwargs):
+        raise DeprecationWarning("Use enumerate(fsep.iter(...)) instead!")
+    
+    @classmethod
+    def accumulate(cls):
+        raise DeprecationWarning("Use fsep(stack=True) or fsep.iter(..., stack=True). Need to set one time only!")
+    
+    join = accumulate # backward compatiable check
+    

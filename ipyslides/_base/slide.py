@@ -237,7 +237,7 @@ class Slide:
                         nc_frames.append((i, len(contents[i-1]._cols)))
                     else: 
                         nc_frames.append(i+1)
-                elif self._split_frames: # User may not want to add content on each frame
+                elif not self.stacked: # User may not want to add content on each frame
                     nc_frames.append(0) # avoids creating a frame with no content
                     self._has_top_frame = False # reset by each run
             
@@ -258,7 +258,7 @@ class Slide:
                 new_frames.append(f)
         
         
-        if self._split_frames:
+        if not self.stacked:
             new_frames = [0, *[f[0] + 1 if isinstance(f, tuple) else f for f in new_frames]] # column was at index, get upto for range
             new_frames = [range(i,j) for i,j in zip(new_frames[:-1], new_frames[1:]) if range(i,j)] # as range, non-empty only
             
@@ -288,7 +288,7 @@ class Slide:
     
     def _update_view(self, which):
         self._set_progress()
-        if self._split_frames: # In case of incremental frames, only edge slides are animated automatically
+        if not self.stacked: # In case of incremental frames, only edge slides are animated automatically
             if which == 'prev':
                 self._app.widgets.slidebox.add_class('Prev')
             else:
@@ -416,7 +416,14 @@ class Slide:
             }}''' # each frames get own yoffset, margin-top 0 is important to force top to take effect
         ).display()
         
-
+    def stack_frames(self, b):
+        "If provided argument is True, frames are stacked in one slide top to bottom incrementally, otherwise shown individually."
+        self._split_frames = bool(not b)
+    
+    @property
+    def stacked(self):
+        "Returns True if frames in slide are stacked incrementally, otherwise False."
+        return not self._split_frames
         
     @property
     def notes(self): return self._notes

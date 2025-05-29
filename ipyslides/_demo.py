@@ -31,7 +31,7 @@ def demo_slides(slides):
     section`Introduction` toc`### Contents`
     ---
     # Introduction
-    Create a variable `x` in notebook to update this `{{x}}`
+    Create a variable `x` in notebook to update this %{{x}}
                   
     To see how commands work, use hl`Slides.docs()` to see the documentation.
     Here we will focus on using some of that functionality to create slides.
@@ -50,7 +50,7 @@ def demo_slides(slides):
     - Item 2
 
     $$ E = mc^2 $$ 
-    `{btn}`                       
+    %{btn}                       
     ```
                                        
     ```markdown
@@ -90,13 +90,25 @@ def demo_slides(slides):
     
     with slides.code.context(returns = True) as source:
         try:
+            import ipywidgets as ipw
             import plotly.graph_objects as go
-            fig = go.FigureWidget() # prefere Widget for interactivity and correct display
-            fig.add_trace(go.Bar(y=[1,5,8,9]))
-        except:
-            fig = '### Install `plotly` to view output'
 
-    slides.build(-1,lambda s: slides.write(['## Writing Plotly Figure',fig, source]))
+            fig = slides.patched_plotly(go.FigureWidget()) # prefere Widget for interactivity and correct display
+            fig.add_trace(go.Bar(y=[1,5,8,9], customdata=["A","B"]))
+            
+            # We have clicked and selected traits on patched plotly
+            html = ipw.HTML()
+
+            def observe_click(change):
+                html.value = "<br/>".join(f"  {k} = {v}" for k, v in change['new'].items())
+
+            fig.observe(observe_click, names='clicked')
+            box = ipw.HBox([fig, html])
+
+        except:
+            box = '### Install `plotly` to view output'
+
+    slides.build(-1,lambda s: slides.write(['## Writing Plotly Figure',box, source]))
 
     def race_plot():
         import numpy as np
@@ -168,7 +180,7 @@ def demo_slides(slides):
         slides.write("## Animating Matplotlib!", forward_skipper)
 
         with slides.code.context(returns = True) as s:
-            for idx in slides.fsep.loop(range(10,19)):
+            for idx in slides.fsep.iter(range(10,19)):
                 fig, ax = plt.subplots(figsize=(3.4,2.6))
                 x = np.linspace(0,idx,50)
                 ax.plot(x,np.sin(x))
@@ -188,25 +200,24 @@ def demo_slides(slides):
         slides.write('# Default Frames')
         s.get_source().focus_lines([2,3]).display()
         slides.fsep()
-        for item in slides.fsep.loop(boxes):
+        for item in slides.fsep.iter(boxes):
             slides.write(item)
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### hl`fsep.join()` and Fancy Bullet List yoffset`0`')
+        slides.write('# Frames with \n#### hl`fsep(stack=True)` and Fancy Bullet List yoffset`0`')
         s.get_source().focus_lines([2,3,4]).display()
-        slides.fsep()
-        slides.fsep.join()
-        for item in slides.fsep.loop(boxes):
+        slides.fsep(stack=True) # setting True single time is enough
+
+        for item in slides.fsep.iter(boxes):
             slides.bullets([item], marker='💘').display()
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### hl`fsep.join()` and 2x2 grid of boxes yoffset`0`')
+        slides.write('# Frames with \n#### hl`fsep.iter(stack=True)` and 2x2 grid of boxes yoffset`0`')
         s.get_source().focus_lines(range(2,7)).display()
-        slides.fsep()
-        slides.fsep.join()
+        slides.fsep() # this time stack is in iter loop
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]
-        for ws, cols in slides.fsep.loop(zip(widths,objs)):
+        for ws, cols in slides.fsep.iter(zip(widths,objs),stack=True):
             slides.write(*cols, widths=ws)
 
     # Youtube
@@ -265,7 +276,7 @@ def demo_slides(slides):
                                 
     --                           
     ::: note-tip
-        Varibale formatting alongwith $ \LaTeX $ alert` \`{var}\` → `{var}`` is seamless.
+        Varibale formatting alongwith $ \LaTeX $ alert`\%{var} → %{var}` is seamless.
     
     --
     ```multicol 50 50
