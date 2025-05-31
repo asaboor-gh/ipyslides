@@ -30,7 +30,7 @@ pip install -e .
 - **Custom Widgets**: 
     - Included custom built widgets for enhanced interaction. 
     - Pass any DOMWidget as a parameter to `interact/interactive` functions unlike default `ipywidgets.interactive` behavior.
-    - Observe any trait of the widget by `{'widget_name': 'trait_name'}` where `'widget_name'` is assigned to a `widget`/`fixed(widget)` in control parameters.
+    - Observe any trait of the widget by `'widget_name.trait_name'` where `'widget_name'` is assigned to a `widget`/`fixed(widget)` in control parameters, OR `'.trait_name'` if `trait_name` exists on instance of interactive.
     - Add `ipywidgets.Button` to hold callbacks which use it as paramter for a click
 - **Plotly Integration**: Modified plotly support with additional traits like `selected` and `clicked`
 - **Matplotlib Support**: Convert matplotlib plots to HTML format using `plt2html`
@@ -49,8 +49,8 @@ import einteract import as ei
     ei.classed(lambda smax: print(f"Maximum amplitude: {smax}"), 'out-smax'),
     slider = ipw.fixed(ipw.IntSlider(min=1,max=10)), 
     frequency = (0.1, 20.0,5), 
-    smax = {'slider': 'max'},
-    amp = {'slider': 'value'},
+    smax = 'slider.max',
+    amp = 'slider.value',
     app_layout = {'left_sidebar': ['slider','frequency', 'out-smax'], 'center':['out-0']}
 )
 def plot_sine(amp=1.0, frequency=5.0):
