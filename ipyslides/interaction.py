@@ -208,7 +208,11 @@ _general_css = {
     },
     '< .ips-interact > .other-area:not(:empty)': { # to distinguish other area when not empty
         'border-top': '1px inset var(--jp-border-color2, #8988)',
-    }
+    },
+    '.content-width-button.jupyter-button, .content-width-button .jupyter-button': {
+            'width':'max-content',
+            'padding-left': '8px', 'padding-right': '8px',
+    },
 }
 
 def _hint_update(btn, remove = False):
@@ -606,6 +610,7 @@ class InteractBase(ipw.interactive):
             - Target center grid with ` > .center ` selector
             - Target widgets by their parameter names as classes
             - Use `:fullscreen` at root level of dict to apply styles in fullscreen mode
+            - Use `[Button, ToggleButton, ToggleButtons].add_class('content-width-button')` to fix button widths easily.
         - center (dict): CSS properties for center grid section
             - Direct access to center grid (same as main's ` > .center `)
             - Useful for grid layout of widgets inside center area
@@ -923,6 +928,8 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - auto_update: Update automatically on widget changes
     - app_layout: Initial layout configuration, see `relayout()` method for details
     - grid_css: CSS Grid properties for layout
+        - Use `:fullscreen` at root level of dict to apply styles in fullscreen mode
+        - Use `[Button, ToggleButton, ToggleButtons].add_class('content-width-button')` to fix button widths easily.
         - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
     - `**kwargs`: Widget parameters
 
