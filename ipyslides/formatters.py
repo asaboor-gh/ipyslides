@@ -535,7 +535,8 @@ class AltDispalyFormatter:
     _ipy_format = _ip.display_formatter.format if _ip else None
 
     def __init__(self):
-        self._ip.display_formatter.format = self.format
+        if self._ip:
+            self._ip.display_formatter.format = self.format
         
     def format(self, obj, *args, **kwargs):
         "Handles Slides.serializer objects inside display command."
@@ -552,10 +553,12 @@ class AltDispalyFormatter:
     @contextmanager
     def reset(self):
         try:
-            self._ip.display_formatter.format = self._ipy_format
+            if self._ip:
+                self._ip.display_formatter.format = self._ipy_format
             yield
         finally:
-            self._ip.display_formatter.format = self.format
+            if self._ip:
+                self._ip.display_formatter.format = self.format
         
 
 altformatter = AltDispalyFormatter() # keep reference for being live
