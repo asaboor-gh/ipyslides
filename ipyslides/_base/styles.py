@@ -173,6 +173,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'background':'var(--bg1-color)',
                 'color':'var(--fg1-color)',
             },
+            '.widget-box': {'flex-shrink': 0}, # avoid collapse
             'hr': {
                 'margin':'0 !important',
                 'margin-block':'0.2em !important',

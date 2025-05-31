@@ -213,6 +213,8 @@ _general_css = {
             'width':'max-content',
             'padding-left': '8px', 'padding-right': '8px',
     },
+    '> * .widget-box': {'flex-shrink': 0}, # avoid collapse of boxes,
+    '.js-plotly-plot': {'flex-grow': 1}, # stretch parent, rest is autosize stuff
 }
 
 def _hint_update(btn, remove = False):
@@ -225,22 +227,19 @@ def _run_callbacks(outputs, kwargs, box):
             out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
 
 class AnyTrait(ipw.fixed):
-    def __init__(self, key,  name, trait, kwargs):
-        self._key = key # its own name
-        self._name = name 
+    "Observe any trait of a widget with name trait inside interactive."
+    def __init__(self,  widget, trait):
+        self._widget = widget
         self._trait = trait
-        if not name in kwargs:
-            raise ValueError(f"Given key {name} is not in other keyword arguments.")
-        
-        widget = kwargs[name]
-        if isinstance(widget, ipw.fixed):
-            widget = widget.value 
 
+        if isinstance(widget, ipw.fixed): # user may be able to use it
+            widget = widget.value
+        
         if not isinstance(widget, ipw.DOMWidget):
-            raise TypeError(f"Given key {name!r} is not a widget in keyword arguments.")
+            raise TypeError(f"widget expects an ipywidgets.DOMWidget even if wrapped in fixed, got {type(widget)}")
         
         if trait not in widget.trait_names():
-            raise traitlets.TraitError(f"Parameter {name!r} does not have trait {trait!r}")
+            raise traitlets.TraitError(f"{widget.__class__} does not have trait {trait}")
         
         # Initialize with current value first, then link
         super().__init__(value=getattr(widget,trait,None))
@@ -296,7 +295,7 @@ class InteractBase(ipw.interactive):
         def _interactive_params(self):
             return {{
                 'x': ipw.IntSlider(0, 0, 100),
-                'y': {{'x': 'value'}},  # observe x's value
+                'y': 'x.value',  # observe x's value
                 'fig': ipw.fixed(go.FigureWidget()),
                 'btn': ipw.Button(icon='refresh', tooltip='Update Plot'),
             }}
@@ -342,7 +341,7 @@ class InteractBase(ipw.interactive):
 
     - Regular ipywidgets with value trait
     - Fixed widgets using ipw.fixed(widget)
-    - Dict {{'widget': 'trait'}} for observing specific traits, 'widget' must be in kwargs
+    - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or '.trait' to observe traits on this instance.
     - Any DOM widget that needs display
     - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
     - Plotly FigureWidgets (use patched_plotly for selection support)
@@ -702,11 +701,27 @@ class InteractBase(ipw.interactive):
                 extras[key] = value # we need to show that widget
 
         # All params should be fixed above before doing below
-        for key, value in params.copy().items():    
-            if isinstance(value, dict) and len(value) == 1:
-                name, trait = next(iter(value.items()))
-                params[key] = AnyTrait(key, name, trait, params)
-                self._mutuals.append((key, *value.keys()))
+        for key, value in params.copy().items(): 
+            # not for random dict, but intended one
+            if isinstance(value, dict) and len(value) == 1 and set(value).issubset(params):
+                print(f"use 'widget.trait' instead of {value}, which allows using '.trait' to observe traits on the instance")
+                value = '.'.join([*value.keys(), *value.values()]) # make a str for old way to work
+                print("converted to:", value)
+
+            if isinstance(value, str) and value.count('.') == 1 and ' ' not in value: # space restricted
+                name, trait_name = value.split('.')
+                if name == '' and trait_name in self.trait_names():
+                    params[key] = AnyTrait(self, trait_name)
+                    # we don't need mutual exclusion on self, as it is not passed
+                elif name in params: # extras are already cleaned widgets, otherwise params must have key under this condition
+                    w = params.get(name, None)
+                    if isinstance(w, ipw.fixed):
+                        w = w.value # wrapper widget may be
+
+                    # We do not want to raise error, so any invalid string can goes to Text widget
+                    if isinstance(w, ipw.DOMWidget) and trait_name in w.trait_names():
+                        params[key] = AnyTrait(w, trait_name)
+                        self._mutuals.append((key, name))
         
         # Set _iparams after clear widgets
         self._iparams = params
@@ -937,7 +952,7 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
 
     - Regular ipywidgets
     - Fixed widgets via ipw.fixed()
-    - Dict {{'widget': 'trait'}} for trait observation, 'widget' must be in kwargs
+    - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or '.trait' to observe traits on this instance.
     - Plotly FigureWidgets (use patched_plotly)
     - `ipywidgets.Button` for manual updates on callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
     
