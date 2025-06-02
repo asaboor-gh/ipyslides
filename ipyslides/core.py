@@ -213,11 +213,11 @@ class Slides(BaseSlides,metaclass=Singleton):
         """Run cell and return result. Use this instead of IPython's run_cell for extra controls."""
         spc = list(self._slides_per_cell) # make copy
         self._unregister_postrun_cell() # important to avoid putting contnet on slides
-        output = self.shell.run_cell(cell, **kwargs)
+        self.shell.run_cell(cell, **kwargs)
+        
         if self.this: # there was post_run_cell under building slides
             self._slides_per_cell.extend(spc) # was cleared above in unregister
             self._register_postrun_cell() # should be back
-        return output
     
     def _update_vars_postrun(self, b = False):
         with suppress(Exception): # Remove previous on each if exits
@@ -711,14 +711,18 @@ class Slides(BaseSlides,metaclass=Singleton):
 
             with _build_slide(self, slide_number) as s:
                 prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)
-                s._set_source(cell, "markdown", fmt_kws)  # Update source beofore parsing content to make it available for variable testing
+                s._set_source(cell, "markdown")  # Update source beofore parsing content to make it available for variable testing
 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
                         s.stack_frames(True)
-                        
-                    fmt(frm,**fmt_kws).parse(returns = False) # handles empty kwargs silently
+                    
+                    if fmt_kws:
+                        s._fmt_kws = fmt_kws # set for rebuild use
+                        fmt(frm, **fmt_kws).parse(returns = False) # enclosed scope set by user
+                    else:
+                        parse(frm, returns = False) # left for notebook to handle
                     
                     if len(frames) > 1:
                         self.fsep() # should not be before, needs at least one thing there

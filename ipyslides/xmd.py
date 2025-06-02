@@ -278,13 +278,14 @@ class XMarkdown(Markdown):
     
     def user_ns(self):
         "Top level namespace or set by user inside `Slides.fmt`."
-        if self._slides and self._slides.this:
-            return self._fmt_ns or { # _fmt_ns really set by only fmt provided, takes precedence always
+        if self._fmt_ns: 
+            return self._fmt_ns # always preferred
+        elif self._slides and self._slides.this:
+            return { 
                 **self._slides._md_vars, # by Notebook variable update, last
                 **self._slides.this._md_vars, # by Slide.rebuild after fmt
-            }
-        
-        return self._fmt_ns or get_main_ns()  # fmt scope or then top scope at end
+            } or get_main_ns() # not yet in _md_vars
+        return get_main_ns()  # top scope at end
 
     def _parse(self, xmd, returns = True): # not intended to be used directly
         """Return a string after fixing markdown and code/multicol blocks returns = True
@@ -441,7 +442,7 @@ class XMarkdown(Markdown):
             new_outputs = []
             for out in outputs:
                 if isinstance(out, DOMWidget):
-                    new_outputs.append(error("RuntimeError", f"{out!r} cannot be displayed in this context!"))
+                    new_outputs.append(error("RuntimeError", f"{out!r} cannot be displayed when returns = True in parse!"))
                 else:
                     new_outputs.append(out)
             return ''.join([f"{out}" for out in new_outputs]) # formats handled automatically
@@ -453,7 +454,7 @@ class XMarkdown(Markdown):
             if self._returns:
                 text = re.sub(
                     r'DISPLAYVAR(\d+)DISPLAYVAR', 
-                    lambda m: error('RuntimeError',f'{self._vars.get(m.group(), m.group())!r} cannot be displayed in this context!').value,
+                    lambda m: error('RuntimeError',f'{self._vars.get(m.group(), m.group())!r} cannot be displayed when returns = True in parse!').value,
                     text
                 )
                 self._resolve_vars(text)
@@ -654,6 +655,6 @@ class fmt:
             raise TypeError(f"as_tuple expects str or fmt, got {type(target)}")
 
     def _ipython_display_(self): # to be correctly captured in write etc. commands
-        return self.parse(returns = False)
-    
+        self.parse(returns = False)
+
     

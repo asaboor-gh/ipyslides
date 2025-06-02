@@ -37,10 +37,12 @@ class Navigation:
             self.btn_settings.icon  = 'minus'
             self.btn_settings.tooltip = "Close Settings [S]"
             self.widgets.panelbox.layout.height = "100%"
+            self.widgets.panelbox.layout.overflow = 'auto'
         else:
             self.btn_settings.icon = 'plus' #'ellipsis-v'
             self.btn_settings.tooltip = "Open Settings [S]"
             self.widgets.panelbox.layout.height = "0"
+            self.widgets.panelbox.layout.overflow = 'hidden'
             
     def _goto_home(self,btn):
         try:

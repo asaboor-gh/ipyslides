@@ -62,11 +62,9 @@ class Slide:
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
   
-    def _set_source(self, text, language, fmt_kws=None):
+    def _set_source(self, text, language):
         "Set source code for this slide. If"
         self._source = {'text': text, 'language': language}
-        if fmt_kws is not None:
-            self._fmt_kws = fmt_kws
     
     def _reset_source(self):
         "Reset old source but leave markdown source for observing chnages"
@@ -128,7 +126,7 @@ class Slide:
                     print(captured.stderr) # Don't throw error on soft warnings
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
-
+            
             self._contents = captured.outputs
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display(go_there=True)    
