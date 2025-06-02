@@ -3,7 +3,6 @@ class Notes:
     "Notes are stored in `Slides` class for consistensy."
     def __init__(self,_insatanceSlides, _instanceWidgets):
         "Instance should be inside `Slides` class."
-        # print(f'Inside: {self.__class__.__name__}')
         self.main = _insatanceSlides
         self.widgets = _instanceWidgets
         self.notes_check = self.widgets.checks.notes

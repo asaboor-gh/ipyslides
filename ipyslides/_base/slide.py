@@ -62,9 +62,11 @@ class Slide:
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
   
-    def _set_source(self, text, language):
-        "Set source code for this slide."
+    def _set_source(self, text, language, fmt_kws=None):
+        "Set source code for this slide. If"
         self._source = {'text': text, 'language': language}
+        if fmt_kws is not None:
+            self._fmt_kws = fmt_kws
     
     def _reset_source(self):
         "Reset old source but leave markdown source for observing chnages"
@@ -172,7 +174,8 @@ class Slide:
             raise RuntimeError("can only rebuild slides created purely from markdown!")
         
         with self._app.navigate_back(self.index if go_there else None):
-            self._app._slide(f'{self.number} -m', self._markdown)
+            fmt_kws = getattr(self, '_fmt_kws',{}) # stored by _slide function for rerun
+            self._app._slide(f'{self.number} -m', self._markdown, fmt_kws = fmt_kws)
             self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
             self._app._update_vars_postrun(True) # Keep updating after this
     
@@ -186,8 +189,7 @@ class Slide:
         "Get variables names info by their enclosing scope on this slide."
         return {
             'by:__main__': self._req_vars, 
-            'by:Slide.rebuild': tuple(self._md_vars.keys()), 
-            'by:Slides.fmt': tuple(getattr(self._markdown, '_ns',{}))
+            'by:Slide.rebuild': tuple(self._md_vars.keys())
         }
 
     def _reset_toc(self):

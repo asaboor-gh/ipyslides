@@ -9,7 +9,7 @@ from functools import wraps
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import fmt, parse, xtr, get_main_ns, extender as _extender
+from .xmd import fmt, parse, get_main_ns, extender as _extender
 from .source import Code
 from .writer import hold, GotoButton, write
 from .formatters import bokeh2html, plt2html, highlight, htmlize, serializer
@@ -671,7 +671,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         return self._next_number # for python file as well as first run of cell in notebook
 
     # defining magics and context managers
-    def _slide(self, line, cell):
+    def _slide(self, line, cell, fmt_kws={}): # fmt_kws for markdown variables substitution
         """Capture content of a cell as `slide`.
             ---------------- Cell ----------------
             %%slide 1
@@ -711,14 +711,14 @@ class Slides(BaseSlides,metaclass=Singleton):
 
             with _build_slide(self, slide_number) as s:
                 prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)
-                s._set_source(cell, "markdown")  # Update source beofore parsing content to make it available for variable testing
+                s._set_source(cell, "markdown", fmt_kws)  # Update source beofore parsing content to make it available for variable testing
 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
                         s.stack_frames(True)
-
-                    parse(xtr.copy_ns(cell, frm), returns = False) # user may have used fmt
+                        
+                    fmt(frm,**fmt_kws).parse(returns = False) # handles empty kwargs silently
                     
                     if len(frames) > 1:
                         self.fsep() # should not be before, needs at least one thing there

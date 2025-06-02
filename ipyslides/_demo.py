@@ -31,7 +31,6 @@ def demo_slides(slides):
     section`Introduction` toc`### Contents`
     ---
     # Introduction
-    Create a variable `x` in notebook to update this %{{x}}
                   
     To see how commands work, use hl`Slides.docs()` to see the documentation.
     Here we will focus on using some of that functionality to create slides.
@@ -287,7 +286,7 @@ def demo_slides(slides):
         $$ ax^2 + bx + c = 0 $$
         {.text-huge}
     ```
-    ''', var = "I was a variable" ))
+    ''', var = "'I was a variable'"))
 
     with slides.build(-1) as some_slide:
         slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')

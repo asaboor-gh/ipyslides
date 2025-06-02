@@ -631,6 +631,8 @@ def _exportable_func(obj):
     if module.startswith('matplotlib') and hasattr(obj,'get_figure'): # any axes
         return lambda obj: plt2html(obj.get_figure()).value
     
+    if re.search('ipyslides.*fmt', mro_str): return lambda obj: obj.parse(returns=True)
+    
     if re.search('matplotlib.*Figure', mro_str):return lambda obj: plt2html(obj).value
     
     if re.search('altair.*JupyterChart', mro_str): return lambda obj: _altair2htmlstr(obj.chart)

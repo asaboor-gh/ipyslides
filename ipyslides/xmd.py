@@ -16,7 +16,7 @@ This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` funct
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
-import textwrap, re, sys, string, builtins
+import textwrap, re, sys, string, builtins, inspect
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
@@ -90,7 +90,7 @@ _special_funcs = {
     "sub": "text",
     "sup": "text",
     "hl": "inline code highlight. Accepts langauge as keywoard.",
-    "today": "fmt like %b-%d-%Y",
+    "today": "format_spec like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "clip": "filename. Paste clipboard image",
     "image": "path/src or clip:filename",
@@ -209,8 +209,6 @@ class HtmlFormatter(string.Formatter):
         if isinstance(key, int):
             return error('RuntimeError','Positional arguments are not supported in custom formatting!').value
         elif isinstance(key, str) and key not in kwargs:
-            if kwargs.get('fmt:scoped', False):
-                return error('KeyError', f'{key!r} was not given in fmt').value
             if not key.isidentifier():
                 return error('NameError', f'name {key!r} is not a valid variable name').value
             return error('NameError', f'name {key!r} is not defined').value
@@ -259,63 +257,6 @@ class TagFixer(HTMLParser):
 tagfixer = TagFixer()
 del TagFixer
 
-class xtr(str):
-    """String that will be parsed with given namespace lazily. Python's default str will be parsed in top level namespace only!
-    If you apply some str operations on it, make sure to use 'copy_ns' method on every generated string to bring it's type back, otherwise it will discard given namespace.
-    This is not intended to do string operations, just to hold namespace for extended markdown.
-    
-    Being as last expression of notebook cell or using self.parse() will parse markdown content.
-    """
-    def with_ns(self, ns): # cannot add ns in __init__
-        if not isinstance(ns, dict):
-            raise TypeError(f"ns should be a dictionary, got {type(ns)}")
-        self._ns = ns
-        return self
-    
-    @property
-    def data(self):
-        return super().__str__()
-    
-    @property
-    def ns(self):
-        return self._ns
-    
-    def format(self, *args, **kwargs):
-        raise RuntimeError("xtr does not support explicit formatting, use .parse instaed!")
-    
-    def format_map(self, mapping):
-        raise RuntimeError("xtr does not support explicit formatting, use .parse instaed!")
-    
-    def __format__(self, spec):
-        raise RuntimeError("xtr is not allowed inside a string formatting!")
-    
-    def __add__(self, other):
-        raise RuntimeError("xtr does not support addition!")
-    
-    def __mul__(self, other):
-        raise RuntimeError("xtr does not support multiplication!")
-    
-    def __rmul__(self, other):
-        raise RuntimeError("xtr does not support multiplication!")
-    
-    def __repr__(self):
-        return f"xtr(data = {self.data!r}, ns = {self.ns})" 
-    
-    def copy_ns(source, target): # This works with xtr as source as well as str and others when called from class
-        "Add ns of source to target str and return target wrapped in source type if source is a 'xtr', otherwise return target."
-        if type(source) == xtr:  # do not check instances here
-            if not hasattr(source, '_ns'):
-                raise AttributeError("The method 'with_ns' was never used on source!")
-            if type(target) == str:
-                return xtr(target).with_ns(source._ns)
-        return target
-    
-    def parse(self, returns = False):
-        "Parse markdown content of itself and returns parsed html or display."
-        return parse(self, returns = returns) # parse from top level
-    
-    def _ipython_display_(self):
-        return self.parse(returns = False)
 
 class XMarkdown(Markdown):
     def __init__(self):
@@ -323,7 +264,7 @@ class XMarkdown(Markdown):
             extensions=extender._all, extension_configs=extender._all_configs
         )
         self._vars = {}
-        self._ns = {} # provided by fmt and xtr
+        self._fmt_ns = {} # provided by fmt
         self._returns = True
         self._slides = get_slides_instance()
 
@@ -338,24 +279,20 @@ class XMarkdown(Markdown):
     def user_ns(self):
         "Top level namespace or set by user inside `Slides.fmt`."
         if self._slides and self._slides.this:
-            return {
+            return self._fmt_ns or { # _fmt_ns really set by only fmt provided, takes precedence always
                 **self._slides._md_vars, # by Notebook variable update, last
                 **self._slides.this._md_vars, # by Slide.rebuild after fmt
-                **self._ns # by fmt, first prefrence
             }
         
-        if self._ns: # only return what fmt given in general cases
-            return {'fmt:scoped': True, **self._ns}
-        # Otherwise get top level namespace only
-        return get_main_ns() 
+        return self._fmt_ns or get_main_ns()  # fmt scope or then top scope at end
 
     def _parse(self, xmd, returns = True): # not intended to be used directly
         """Return a string after fixing markdown and code/multicol blocks returns = True
         otherwise displays objects given as vraibales may not give their proper representation.
         """
         self._returns = returns  # Must change here
-        if isinstance(xmd, xtr):
-            self._ns = xmd._ns
+        if isinstance(xmd,fmt): # scoped variables picked here
+            xmd, self._fmt_ns = fmt.as_tuple(xmd)
 
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
@@ -378,7 +315,7 @@ class XMarkdown(Markdown):
                     outputs.append(XTML(out))
 
         self._vars = {} # reset at end to release references
-        self._ns = {} # reset back at end
+        self._fmt_ns = {} # reset back at end
 
         if returns:
             content = ""
@@ -641,32 +578,82 @@ def parse(xmd, returns = False):
     """
     return XMarkdown()._parse(xmd, returns = returns)
 
-def _filtered_ns(text, kwargs, return_keys=False):
+def _filtered_ns(text, kwargs, return_keys=False, return_all_matches=False):
     matches = [var 
         for slash, var, _ in re.findall(
-            r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]+)(.*?)\s*\}", # avoid \%{ escape
+            r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]*)(.*?)\s*\}", # avoid \%{ escape, [\w\d_]* means zero or more word, to allow single letter
             re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL | re.UNICODE), # backward `{var}` compatibility
             flags = re.DOTALL | re.UNICODE, # unicode varaiable names support
         ) if not slash
     ]
-    if return_keys:
+    if return_keys or return_all_matches:
         return tuple(matches) # This is not for fmt, but for top level slides built by markdown
+    
     # Do not carry full dict, only matching, user can dump locals()/globals() etc
     return {m: kwargs[m] for m in matches if m in kwargs}
-
-
-def fmt(text, **kwargs):
-    """Stores refrences to variables used in syntax \%{var} (slash is for escap here, not part of syntax) from given keyword arguments. You need this if not in top level scope of Notebook.
-    If you do some str operations on output of this function, use hl`output.copy_ns(target)` to attch namespace to new string.
-
-    Output is not intended to do string operations, just to hold namespace for extended markdown.
-
-    Returns an xtr object which delays formatting until it is intercepted by markdown parser.
-    """
-    if isinstance(text, str): # depth belowshoul be 2 to go where fmt will run
-        return xtr(text).with_ns(_filtered_ns(text, kwargs)) # should return as string to be parsed
-    else: # should not allow anything else because it will cause issues in Makrdown formatting
-        return TypeError(f"fmt expects a str, got {type(text)}!")
     
 def _fig_caption(text): # need here to use in many modules
     return f'<figcaption class="no-zoom">{parse(text,True)}</figcaption>' if text else ''
+
+
+class fmt:
+    """Markdown string wrapper that will be parsed with given kwargs lazily. 
+    If markdown contains variables not in kwargs, it will try to resolve them 
+    from local/global namespace and raise error if name is nowhere. Use inside
+    python scripts when creating slides. In notebook, variables are automatically 
+    resolved, although you can still use it there.
+    
+    Being as last expression of notebook cell or using self.parse() will parse markdown content.
+    """
+    def __init__(*args, **kwargs):
+        if len(args) != 2:
+            raise ValueError("fmt expects a markdown str as positional argument!")
+        
+        self, xmd = args  # this enables user passing self and xmd into kwargs
+        if not isinstance(xmd, str):
+            raise TypeError(f"xmd expects a string got {type(xmd)}")
+        
+        self._xmd = xmd
+        self._kws = kwargs.copy() # avoids external change
+
+        self._req_vars = _filtered_ns(xmd, {}, return_all_matches=True)
+        missing_keys = set(self._req_vars) - kwargs.keys()
+
+        # We will fetch missing variables from caller's scope if possible
+        if missing_keys:
+            frame = inspect.currentframe()
+            try:
+                c_locals = frame.f_back.f_locals
+                c_globals = frame.f_back.f_globals
+                # Merge kwargs with any missing values from caller
+                for key in missing_keys:
+                    if key in c_locals:
+                        self._kws[key] = c_locals[key]
+                    elif key in c_globals:
+                        self._kws[key] = c_globals[key]
+                    else:
+                        raise NameError(f"name {key!r} is not defined")
+            finally:
+                del frame  # Prevent reference cycles
+    
+    def __str__(self):
+        return f"{self.__class__.__name__}({self._xmd!r})"
+
+    def parse(self,returns=False):
+        "Parse the associated markdown string."
+        return parse(self if self._kws else self._xmd, returns=returns) # handle empty kwargs silently
+
+    @classmethod
+    def as_tuple(cls, target): # This is required to handle form_markdown
+        "Return (markdown, kwargs) of supplied markdown and kwargs if target is of same type. If str, returns (target, {})"
+        if isinstance(target, fmt):
+            return (target._xmd, target._kws)
+        elif isinstance(target, str):
+            return (target, {})
+        else:
+            raise TypeError(f"as_tuple expects str or fmt, got {type(target)}")
+
+    def _ipython_display_(self): # to be correctly captured in write etc. commands
+        return self.parse(returns = False)
+    
+    

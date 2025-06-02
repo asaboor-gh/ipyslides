@@ -13,7 +13,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML
-from ..xmd import _special_funcs, _md_extensions, error, xtr, get_slides_instance
+from ..xmd import _special_funcs, _md_extensions, error, fmt, get_slides_instance
 from ..utils import _css_docstring
 
 class BaseSlides:
@@ -120,8 +120,8 @@ class BaseSlides:
         ::: note-tip
             - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown.
                 - You can also use hl`Slide[number,].rebuild(**kwargs)` to force update variables if some error happens. This is useful for setting unique values of a variable on each slide.
-                - Markdown enclosed in hl`fmt(content, **vars)` will not expose initialized(encapsulated) `vars` for update, others can be updated later.
-                - In summary, variables are resolved by scope in the prefrence `fmt > rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
+                - Markdown enclosed in hl`fmt(content, **vars)` will not expose encapsulated `vars` for updated later, like static stuff but useful inside scripts.
+                - In summary, variables are resolved by scope in the prefrence `rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
             - Use unique variable names on each slide to avoid accidental overwriting during update.
             - Varibales used as attributes like `\%{{var.attr}}` and indexing like `\%{{var[0]}}`/`\%{{var["key"]}}` will be update only if `var` itself is changed.
 
@@ -242,10 +242,11 @@ class BaseSlides:
         if self.this:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
         
-        if not isinstance(content, str): #check path later or it will throw error
-            raise TypeError(f"content expects a makrdown text block, got {content!r}")
+        if not isinstance(content, (str,fmt)): #check path later or it will throw error
+            raise TypeError(f"content expects a makrdown text block or fmt, got {content!r}")
         
-        content = xtr.copy_ns(content, re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0])
+        content, fmt_kws = fmt.as_tuple(content) # fmt used on top level, or string means no keywords
+        content = re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0]
 
         if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt
             (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
@@ -253,14 +254,13 @@ class BaseSlides:
             raise ValueError("slides separator --- cannot be used inside multicol!")
         
         chunks = _parse_markdown_text(content)
-            
         handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
             if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown, refresh_vars]):
                 with self._loading_splash(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
-                    self._slide(f'{i + start} -m', chunk)
+                    self._slide(f'{i + start} -m', chunk, fmt_kws=fmt_kws)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(handles[i])
         
@@ -371,7 +371,7 @@ class BaseSlides:
                 if (content is not None) and any([code.startswith(c) for c in ('@', 'with')]):
                     raise ValueError("content should be None while using as decorator or contextmanager!")
                 
-                if isinstance(content, str) and not code.startswith('with'): 
+                if isinstance(content, (str,fmt)) and not code.startswith('with'): 
                     return self._app._from_markdown(self._snumber, content)
 
                 if callable(content) and not code.startswith('with'):
@@ -384,7 +384,7 @@ class BaseSlides:
                     return s
             
             if content is not None:
-                raise ValueError(f"content should be None, str, or callable. got {type(content)}")
+                raise ValueError(f"content should be None, str,fmt, or callable. got {type(content)}")
 
             return self # context manager
 
@@ -475,7 +475,8 @@ class BaseSlides:
             self.css_syntax.display()
         
         with self.build(-1), self.code.context():
-            self.write(self.fmt('%{self.version!r} %{self.xmd_syntax}', self=self))
+            # self is in scope, auto picked, also fmt can be parsed on display
+            display(self.fmt('%{self.version!r} %{self.xmd_syntax}'))
             
         with self.build(-1):
             self.write('## Adding Content')
@@ -573,10 +574,9 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
-        Needs slide.rebuild: %{source}, already resolved: %{self.this}
+        **s is assigned variable to this slide**: %{s.source}
         ''', self=self))
 
-        s.rebuild(source=s.source.show_lines(range(3,10)))
         
         with self.build(-1):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
@@ -666,4 +666,4 @@ def _parse_markdown_text(text_block):
     breaks.append(len(lines)) # Last one
     
     ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
-    return [xtr.copy_ns(text_block, '\n'.join(lines[x.start:x.stop])) for x in ranges]
+    return ['\n'.join(lines[x.start:x.stop]) for x in ranges]
