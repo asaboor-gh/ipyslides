@@ -169,11 +169,10 @@ class Slide:
     
     def _rebuild(self, go_there=False):
         if not self._markdown:
-            raise RuntimeError("can only rebuild slides created purely from markdown!")
+            raise RuntimeError("can only rebuild slides created purely from markdown (excluding fmt)!")
         
         with self._app.navigate_back(self.index if go_there else None):
-            fmt_kws = getattr(self, '_fmt_kws',{}) # stored by _slide function for rerun
-            self._app._slide(f'{self.number} -m', self._markdown, fmt_kws = fmt_kws)
+            self._app._slide(f'{self.number} -m', self._markdown)
             self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
             self._app._update_vars_postrun(True) # Keep updating after this
     
@@ -614,5 +613,3 @@ def _build_slide(app, slide_number):
 
     if this._markdown:
         this._has_vars = _filtered_ns(this._markdown, {}, True)
-        if (ns := getattr(this._markdown, '_ns',{})): # embeded vars by fmt should be excluded
-            this._has_vars = tuple(k for k in this._has_vars if k not in ns)

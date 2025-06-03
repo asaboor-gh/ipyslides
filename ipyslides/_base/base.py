@@ -120,7 +120,7 @@ class BaseSlides:
         ::: note-tip
             - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown.
                 - You can also use hl`Slide[number,].rebuild(**kwargs)` to force update variables if some error happens. This is useful for setting unique values of a variable on each slide.
-                - Markdown enclosed in hl`fmt(content, **vars)` will not expose encapsulated `vars` for updated later, like static stuff but useful inside scripts.
+                - Markdown enclosed in hl`fmt(content, **vars)` will not expose encapsulated `vars` for updates later, like static stuff but useful inside scripts.
                 - In summary, variables are resolved by scope in the prefrence `rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
             - Use unique variable names on each slide to avoid accidental overwriting during update.
             - Varibales used as attributes like `\%{{var.attr}}` and indexing like `\%{{var[0]}}`/`\%{{var["key"]}}` will be update only if `var` itself is changed.

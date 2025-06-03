@@ -16,7 +16,7 @@ This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` funct
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
-import textwrap, re, sys, string, builtins, inspect
+import textwrap, re, sys, string, builtins, inspect, ctypes
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
@@ -581,7 +581,7 @@ def parse(xmd, returns = False):
     """
     return XMarkdown()._parse(xmd, returns = returns)
 
-def _filtered_ns(text, kwargs, return_keys=False, return_all_matches=False):
+def _filtered_ns(text, kwargs, return_keys=False):
     matches = [var 
         for slash, var, _ in re.findall(
             r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]*)(.*?)\s*\}", # avoid \%{ escape, [\w\d_]* means zero or more word, to allow single letter
@@ -589,7 +589,7 @@ def _filtered_ns(text, kwargs, return_keys=False, return_all_matches=False):
             flags = re.DOTALL | re.UNICODE, # unicode varaiable names support
         ) if not slash
     ]
-    if return_keys or return_all_matches:
+    if return_keys:
         return tuple(matches) # This is not for fmt, but for top level slides built by markdown
     
     # Do not carry full dict, only matching, user can dump locals()/globals() etc
@@ -619,7 +619,7 @@ class fmt:
         self._xmd = xmd
         self._kws = kwargs.copy() # avoids external change
 
-        self._req_vars = _filtered_ns(xmd, {}, return_all_matches=True)
+        self._req_vars = _filtered_ns(xmd, {}, return_keys=True)
         missing_keys = set(self._req_vars) - kwargs.keys()
 
         # We will fetch missing variables from caller's scope if possible
@@ -638,6 +638,21 @@ class fmt:
                         raise NameError(f"name {key!r} is not defined")
             finally:
                 del frame  # Prevent reference cycles
+        
+        # let's retrieve objects from memory if someone tries to get slide source with fmt executed
+        # This is very specific to source set in markdown slides. Not general purpose
+        mem_objs = {
+            k : hex_ids[0] 
+            for k, v in self._kws.items() 
+            if isinstance(v, str) and (hex_ids := re.findall(' at ([\w\d]*)>$',v))
+        }
+
+        if mem_objs:
+            for key, hex_id in mem_objs.items():
+                int_id = int(hex_id, 16)
+                try:
+                    self._kws[key] = ctypes.cast(int_id, ctypes.py_object).value
+                except: pass
     
     def __str__(self):
         return f"{self.__class__.__name__}({self._xmd!r})"

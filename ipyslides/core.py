@@ -113,6 +113,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
         - See hl`Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
+        - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
     
     ::: note-info
         `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as hl`Slides[number,] -> Slide` 
@@ -710,8 +711,10 @@ class Slides(BaseSlides,metaclass=Singleton):
             edit_idx = 0
 
             with _build_slide(self, slide_number) as s:
-                prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)
-                s._set_source(cell, "markdown")  # Update source beofore parsing content to make it available for variable testing
+                prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)   
+                _kws = ',\n'.join([f"{k} = \'<{getattr(type(v),'__name__','object')} at {hex(id(v))}>\'" for k,v in fmt_kws.items()])      
+                args = (f'fmt("""{cell}\n""", {_kws}\n)',"python") if fmt_kws else (cell,"markdown")
+                s._set_source(*args)  # Update source beofore parsing content to make it available for variable testing
 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
@@ -719,7 +722,6 @@ class Slides(BaseSlides,metaclass=Singleton):
                         s.stack_frames(True)
                     
                     if fmt_kws:
-                        s._fmt_kws = fmt_kws # set for rebuild use
                         fmt(frm, **fmt_kws).parse(returns = False) # enclosed scope set by user
                     else:
                         parse(frm, returns = False) # left for notebook to handle
