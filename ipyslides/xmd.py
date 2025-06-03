@@ -27,7 +27,7 @@ from IPython.core.display import display
 from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 
-from .formatters import XTML, highlight, htmlize, get_slides_instance
+from .formatters import XTML, altformatter, highlight, htmlize, get_slides_instance
 
 _md_extensions = [
     "tables",
@@ -439,14 +439,15 @@ class XMarkdown(Markdown):
         "Ensures that output will be a str."
         outputs = self.convert(text)
         if isinstance(outputs, list): # From Variables
-            new_outputs = []
-            for out in outputs:
-                if isinstance(out, DOMWidget):
-                    new_outputs.append(error("RuntimeError", f"{out!r} cannot be displayed when returns = True in parse!"))
-                else:
-                    new_outputs.append(out)
-            return ''.join([f"{out}" for out in new_outputs]) # formats handled automatically
+            # formats handled automatically for most of objects, as we are returning strings anyhow
+            return ''.join([f"{out}" for out in outputs])
         return outputs
+    
+    def _var_info(self, m):
+        try: 
+            obj = self._vars[m.group()]
+            return type(obj).__name__
+        except: return str(m.group()) # fallback to match group
     
     def _resolve_vars(self, text):
         "Substitute saved variables"
@@ -454,7 +455,7 @@ class XMarkdown(Markdown):
             if self._returns:
                 text = re.sub(
                     r'DISPLAYVAR(\d+)DISPLAYVAR', 
-                    lambda m: error('RuntimeError',f'{self._vars.get(m.group(), m.group())!r} cannot be displayed when returns = True in parse!').value,
+                    lambda m: error('DisplayError',f'{self._var_info(m)!r} caught in a non-displayable context!').value,
                     text
                 )
                 self._resolve_vars(text)
@@ -476,7 +477,8 @@ class XMarkdown(Markdown):
     def _handle_var(self, value): # Put a temporary variable that will be replaced at end of other conversions.
         if isinstance(value, (str, XTML)): 
             key = f"PrivateXmdVar{len(self._vars)}X" # end X to make sure separate it 
-            self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value) # Handle nested like center`alert`text`` things before saving next varibale
+            # Handle nested like center`alert`text`` things before saving next varibale
+            self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value) 
         else: # Handles TOC, DOMWidget and Others rich displays
             key = f"DISPLAYVAR{len(self._vars)}DISPLAYVAR"
             self._vars[key] = value # Direct value stored
@@ -655,6 +657,10 @@ class fmt:
             raise TypeError(f"as_tuple expects str or fmt, got {type(target)}")
 
     def _ipython_display_(self): # to be correctly captured in write etc. commands
-        self.parse(returns = False)
+        with altformatter.reset(): # don't let it be caught in html conversion
+            self.parse(returns = False)
+        
+    def _repr_html_(self): # for functions to consume as html and for export
+        return self.parse(returns=True)
 
     

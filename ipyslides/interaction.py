@@ -68,41 +68,59 @@ class FullscreenButton(AnyWidget):
     """
 
     _esm = """
-    function render({ el }) {
+    function render({model, el}) {
         const btn = document.createElement('button');
         el.className = 'fs-btn ips-fs';
         btn.innerHTML = '<i class="fa fa-expand"></i>';
         btn.title = 'Toggle Fullscreen';
 
         btn.onclick = () => {
-            const parent = el.parentElement; // need define inside, not avaialbe until load
+            const parent = el.parentElement;
             if (!document.fullscreenElement || document.fullscreenElement !== parent) {
-                parent.requestFullscreen();
-                parent.style.background = 'var(--bg1-color, var(--jp-widgets-input-background-color, inherit))'; // available everywhere
-                btn.querySelector('i').className = 'fa fa-compress';
-            } else if (document.fullscreenElement === parent) {
-                document.exitFullscreen();
-                parent.style.background = 'unset';
-                btn.querySelector('i').className = 'fa fa-expand';
+                parent.requestFullscreen()
+                    .then(() => {
+                        model.set('isfullscreen', true);
+                        model.save_changes();
+                    })
+                    .catch(err => console.error('Failed to enter fullscreen:', err));
+            } else {
+                document.exitFullscreen()
+                    .then(() => {
+                        model.set('isfullscreen', false);
+                        model.save_changes();
+                    })
+                    .catch(err => console.error('Failed to exit fullscreen:', err));
             }
+            updateButtonUI(btn, parent);
         };
 
-        // Update icon if user exits fullscreen via Esc key
         document.addEventListener('fullscreenchange', () => {
-            const parent = el.parentElement; // redefine
+            const parent = el.parentElement;
+            if (!parent) return; // Exit if parent is null
             const isFullscreen = parent === document.fullscreenElement;
-            btn.querySelector('i').className = `fa fa-${isFullscreen ? 'compress' : 'expand'}`;
-            parent.style.background = isFullscreen ? 'var(--bg1-color, var(--jp-widgets-input-background-color, inherit))' : 'unset';
+            model.set('isfullscreen', isFullscreen);
+            model.save_changes(); 
+            updateButtonUI(btn, parent);
         });
+
+        function updateButtonUI(button, parent) {
+            const isFullscreen = parent === document.fullscreenElement;
+            button.querySelector('i').className = `fa fa-${isFullscreen ? 'compress' : 'expand'}`;
+            if (!parent) return; // Exit if parent is null
+            parent.style.background = isFullscreen ? 'var(--bg1-color, var(--jp-widgets-input-background-color, inherit))' : 'unset';
+        }
 
         el.appendChild(btn);
     }
-    export default { render }
+
+    export default { render };
     """
+    isfullscreen = traitlets.Bool(False, read_only=True).tag(sync=True)
 
     def __init__(self):
         super().__init__()
         self.layout.width = 'min-content'
+
 
 # We will capture error at user defined callbacks level
 _autoTB = AutoFormattedTB(color_scheme='Linux')
@@ -341,7 +359,7 @@ class InteractBase(ipw.interactive):
 
     - Regular ipywidgets with value trait
     - Fixed widgets using ipw.fixed(widget)
-    - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or '.trait' to observe traits on this instance.
+    - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or e.g. '.trait' to observe traits on this instance.
     - Any DOM widget that needs display
     - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
     - Plotly FigureWidgets (use patched_plotly for selection support)
@@ -357,6 +375,7 @@ class InteractBase(ipw.interactive):
         
     **Attributes & Properties**:  
 
+    - isfullscreen: Read-only trait to detect fullscreen change on python side. Can be observed as '.isfullscreen' in params.
     - groups: NamedTuple(controls, outputs, others) - Widget names by type
     - outputs: Tuple[Output] - Output widgets from callbacks
     - params: NamedTuple of all parameters used in this interact, including fixed widgets. 
@@ -377,6 +396,8 @@ class InteractBase(ipw.interactive):
 
     {css_info}
     """
+    isfullscreen = traitlets.Bool(False, read_only=True)
+
     def __init__(self, auto_update=True, app_layout= None, grid_css={}):
         if not isinstance(grid_css,dict):
             raise TypeError(f"grid_css should be a dict, got {type(grid_css)}")
@@ -597,7 +618,12 @@ class InteractBase(ipw.interactive):
                 setattr(self._app, key, value)
         
         other.children += tuple([v for k,v in self._all_widgets.items() if k not in collected])
-        self.children = (self._app, other, self._style_html, self.out, FullscreenButton()) # button be on top to click
+        
+        # We are adding a reaonly isfullscreen trait set through button on parent class
+        fs_btn = FullscreenButton()
+        fs_btn.observe(lambda c: self.set_trait('isfullscreen',c.new), names='isfullscreen') # setting readonly property
+        
+        self.children = (self._app, other, self._style_html, self.out, fs_btn) # button be on top to click
     
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
@@ -929,11 +955,16 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
         fig.data = []
         fig.add_scatter(x=[0, x], y=[0, y])
     
+    def resize_fig(fig, fs):
+        fig.layout.autosize = True # plotly's figurewidget always make trouble with sizing
+    
     dashboard = interactive(
         classed(update_plot, 'out-plot'),  # Assign CSS class to output, otherwise it will be out-0
-        x=ipw.IntSlider(0, 0, 100),
-        y=ipw.FloatSlider(0, 1),
-        fig=ipw.fixed(fig)
+        resize_fig, # responds to fullscreen change
+        x = ipw.IntSlider(0, 0, 100),
+        y = ipw.FloatSlider(0, 1),
+        fig = ipw.fixed(fig),
+        fs = '.isfullscreen', # detect fullscreen change on instance itself
     )
     ```
 

@@ -531,6 +531,7 @@ def get_slides_instance():
 
 
 class AltDispalyFormatter:
+    "Used to display widgets correctly. Use self.reset() contextmanager to disable for your desired display."
     _ip = get_ipython()
     _ipy_format = _ip.display_formatter.format if _ip else None
 
@@ -552,6 +553,7 @@ class AltDispalyFormatter:
 
     @contextmanager
     def reset(self):
+        "Contextmanager to reset temporarily to default display formatter."
         try:
             if self._ip:
                 self._ip.display_formatter.format = self._ipy_format
