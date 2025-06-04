@@ -712,9 +712,11 @@ class Slides(BaseSlides,metaclass=Singleton):
 
             with _build_slide(self, slide_number) as s:
                 prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)   
-                _kws = ',\n'.join([f"{k} = \'<{getattr(type(v),'__name__','object')} at {hex(id(v))}>\'" for k,v in fmt_kws.items()])      
-                args = (f'fmt("""{cell}\n""", {_kws}\n)',"python") if fmt_kws else (cell,"markdown")
-                s._set_source(*args)  # Update source beofore parsing content to make it available for variable testing
+                # Update source beofore parsing content to make it available for variable testing
+                s._set_source(
+                    str(fmt(cell,**fmt_kws)) if fmt_kws else cell, # nice str repr of fmt
+                    "python" if fmt_kws else "markdown"
+                )  
 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference

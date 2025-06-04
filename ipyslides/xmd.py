@@ -16,7 +16,7 @@ This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` funct
     - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
-import textwrap, re, sys, string, builtins, inspect, ctypes
+import textwrap, re, sys, string, builtins, inspect
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
@@ -38,7 +38,6 @@ _md_extensions = [
     "def_list",
 ]  # For Markdown Parser
 _md_extension_configs = {}
-
 
 class PyMarkdown_Extender:
     def __init__(self):
@@ -292,8 +291,8 @@ class XMarkdown(Markdown):
         otherwise displays objects given as vraibales may not give their proper representation.
         """
         self._returns = returns  # Must change here
-        if isinstance(xmd,fmt): # scoped variables picked here
-            xmd, self._fmt_ns = fmt.as_tuple(xmd)
+        if isinstance(xmd, fmt): # scoped variables picked here
+            xmd, self._fmt_ns = fmt._as_tuple(xmd)
 
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
@@ -489,13 +488,20 @@ class XMarkdown(Markdown):
         user_ns = self.user_ns() # get once, will be called multiple time
         # Replace variables first to have small data
         def handle_match(match):
+            key,*_ = _matched_vars(match.group()) 
+            if key not in user_ns: # top level var without ., indexing not found
+                return self._handle_var(error('NameError', f'name {key!r} is not defined'))
+
             cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
             key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
             if ('[' in key) and (not ']' in key): # There was no spec, just a slicing splitted, but don't need to throw error here based on that
                 key = ''.join([key,':',*fmt_spec])
                 fmt_spec = ()
-
-            value, _ = hfmtr.get_field(key, (), user_ns)
+            try:
+                value, _ = hfmtr.get_field(key, (), user_ns)
+            except Exception as e:
+                return self._handle_var(error('RuntimeError', f'could not resolve {match.group()!r}\n{e}'))
+            
             if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
                 return self._handle_var(value) 
             return self._handle_var(hfmtr.vformat(match.group()[1:], (), user_ns))
@@ -581,7 +587,7 @@ def parse(xmd, returns = False):
     """
     return XMarkdown()._parse(xmd, returns = returns)
 
-def _filtered_ns(text, kwargs, return_keys=False):
+def _matched_vars(text):
     matches = [var 
         for slash, var, _ in re.findall(
             r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]*)(.*?)\s*\}", # avoid \%{ escape, [\w\d_]* means zero or more word, to allow single letter
@@ -589,11 +595,7 @@ def _filtered_ns(text, kwargs, return_keys=False):
             flags = re.DOTALL | re.UNICODE, # unicode varaiable names support
         ) if not slash
     ]
-    if return_keys:
-        return tuple(matches) # This is not for fmt, but for top level slides built by markdown
-    
-    # Do not carry full dict, only matching, user can dump locals()/globals() etc
-    return {m: kwargs[m] for m in matches if m in kwargs}
+    return tuple(matches) 
     
 def _fig_caption(text): # need here to use in many modules
     return f'<figcaption class="no-zoom">{parse(text,True)}</figcaption>' if text else ''
@@ -617,10 +619,10 @@ class fmt:
             raise TypeError(f"xmd expects a string got {type(xmd)}")
         
         self._xmd = xmd
-        self._kws = kwargs.copy() # avoids external change
+        req_vars = _matched_vars(xmd)
+        self._kws = {k:v for k,v in kwargs.items() if k in req_vars} # remove extras
 
-        self._req_vars = _filtered_ns(xmd, {}, return_keys=True)
-        missing_keys = set(self._req_vars) - kwargs.keys()
+        missing_keys = set(req_vars) - kwargs.keys()
 
         # We will fetch missing variables from caller's scope if possible
         if missing_keys:
@@ -638,38 +640,25 @@ class fmt:
                         raise NameError(f"name {key!r} is not defined")
             finally:
                 del frame  # Prevent reference cycles
-        
-        # let's retrieve objects from memory if someone tries to get slide source with fmt executed
-        # This is very specific to source set in markdown slides. Not general purpose
-        mem_objs = {
-            k : hex_ids[0] 
-            for k, v in self._kws.items() 
-            if isinstance(v, str) and (hex_ids := re.findall(' at ([\w\d]*)>$',v))
-        }
-
-        if mem_objs:
-            for key, hex_id in mem_objs.items():
-                int_id = int(hex_id, 16)
-                try:
-                    self._kws[key] = ctypes.cast(int_id, ctypes.py_object).value
-                except: pass
     
     def __str__(self):
-        return f"{self.__class__.__name__}({self._xmd!r})"
+        _kws = ',\n'.join([f"{k} = \'<{getattr(type(v),'__name__','object')} at {hex(id(v))}>\'" for k,v in self._kws.items()])  
+        _kws = f',\n{_kws}\n)' if _kws else ")"    
+        return f'fmt("""\n{self._xmd}\n"""{_kws}'
 
     def parse(self,returns=False):
         "Parse the associated markdown string."
         return parse(self if self._kws else self._xmd, returns=returns) # handle empty kwargs silently
 
     @classmethod
-    def as_tuple(cls, target): # This is required to handle form_markdown
+    def _as_tuple(cls, target): # This is required to handle form_markdown
         "Return (markdown, kwargs) of supplied markdown and kwargs if target is of same type. If str, returns (target, {})"
         if isinstance(target, fmt):
             return (target._xmd, target._kws)
         elif isinstance(target, str):
             return (target, {})
         else:
-            raise TypeError(f"as_tuple expects str or fmt, got {type(target)}")
+            raise TypeError(f"_as_tuple expects str or fmt, got {type(target)}")
 
     def _ipython_display_(self): # to be correctly captured in write etc. commands
         with altformatter.reset(): # don't let it be caught in html conversion

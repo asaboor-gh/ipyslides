@@ -245,7 +245,7 @@ class BaseSlides:
         if not isinstance(content, (str,fmt)): #check path later or it will throw error
             raise TypeError(f"content expects a makrdown text block or fmt, got {content!r}")
         
-        content, fmt_kws = fmt.as_tuple(content) # fmt used on top level, or string means no keywords
+        content, fmt_kws = fmt._as_tuple(content) # fmt used on top level, or string means no keywords
         content = re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0]
 
         if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt

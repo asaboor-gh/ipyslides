@@ -7,7 +7,7 @@ from IPython.utils.capture import RichOutput
 
 from . import styles
 from ..utils import XTML, html, _styled_css, _build_css
-from ..xmd import capture_content, _filtered_ns
+from ..xmd import capture_content, _matched_vars
 from ..formatters import _Output, widget_from_data
 from ._layout_css import background_css
     
@@ -612,4 +612,4 @@ def _build_slide(app, slide_number):
             break # No need to check other widgets if one exists
 
     if this._markdown:
-        this._has_vars = _filtered_ns(this._markdown, {}, True)
+        this._has_vars = _matched_vars(this._markdown)
