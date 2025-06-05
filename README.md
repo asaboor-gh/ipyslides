@@ -63,5 +63,6 @@ def plot_sine(amp=1.0, frequency=5.0):
 ```
 ![simple example](simple.png)
 
-## Comprehensive Example
-For a more comprehensive example, check out the [einteract-demo.ipynb](einteract-demo.ipynb) which demonstates subclassing `InteractBase`, using custom widgets, and observing multiple functions through the `@callback` decorator.
+## Comprehensive Examples
+- Check out the [einteract-demo.ipynb](einteract-demo.ipynb) which demonstates subclassing `InteractBase`, using custom widgets, and observing multiple functions through the `@callback` decorator.
+- See [Bandstructure Visualizer](https://github.com/asaboor-gh/ipyvasp/blob/d181ba9a1789368c5d8bc1460be849c34dcbe341/ipyvasp/widgets.py#L642) and [KPath Builder](https://github.com/asaboor-gh/ipyvasp/blob/d181ba9a1789368c5d8bc1460be849c34dcbe341/ipyvasp/widgets.py#L935) as comprehensive dashboards.
