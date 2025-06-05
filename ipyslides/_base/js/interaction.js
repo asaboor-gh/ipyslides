@@ -41,7 +41,7 @@ function keyboardEvents(box,model) {
         let key = e.key; // True unicode key
         let message = '';
         if ('123456789'.includes(key)) { // send to shift slides by numbers
-            message = (e.ctrlKey? "SHIFT:-" + key: "SHIFT:" + key);
+            message = (e.ctrlKey ? "SHIFT:-" + key : "SHIFT:" + key);
         } else if (key === 'x' || key === 'd') {
             alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
             e.stopPropagation(); // stop propagation to jupyterlab events
@@ -59,7 +59,7 @@ function keyboardEvents(box,model) {
             message = 'NEXT';
         } else if (key === '0') {
             message = (e.ctrlKey? "HOME": "END"); // Numbers don't change with control
-        } else if (key in keyMessage){
+        } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
         }
 

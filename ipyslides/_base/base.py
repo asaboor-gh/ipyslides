@@ -120,7 +120,7 @@ class BaseSlides:
         ::: note-tip
             - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown.
                 - You can also use hl`Slide[number,].rebuild(**kwargs)` to force update variables if some error happens. This is useful for setting unique values of a variable on each slide.
-                - Markdown enclosed in hl`fmt(content, **vars)` will not expose encapsulated `vars` for updates later, like static stuff but useful inside scripts.
+                - Markdown enclosed in hl`fmt(content, **vars)` will not expose encapsulated `vars` for updates later, like static stuff but useful inside python scripts to pick local scope variable.
                 - In summary, variables are resolved by scope in the prefrence `rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
             - Use unique variable names on each slide to avoid accidental overwriting during update.
             - Varibales used as attributes like `\%{{var.attr}}` and indexing like `\%{{var[0]}}`/`\%{{var["key"]}}` will be update only if `var` itself is changed.
@@ -245,7 +245,7 @@ class BaseSlides:
         if not isinstance(content, (str,fmt)): #check path later or it will throw error
             raise TypeError(f"content expects a makrdown text block or fmt, got {content!r}")
         
-        content, fmt_kws = fmt._as_tuple(content) # fmt used on top level, or string means no keywords
+        content, fmt_kws = fmt._astuple(content) # fmt used on top level, or string means no keywords
         content = re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0]
 
         if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt
@@ -343,12 +343,14 @@ class BaseSlides:
             - Use hl`fsep()` from top import or hl`Slides.fsep()` to split content into frames.
             - Use hl`for item in fsep.iter(iterable):` block to automatically add frame separator.
             - Use hl`fsep(True)`/hl`fsep.iter(...,stack=True)` to join content of frames incrementally.
-        3. hl`slides.build(number, str)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
+        3. hl`slides.build(number, str | fmt)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd_syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
+            - In case of str input, varaiables such as \%{var} can be updated by creating/updating `var` in notebook.
+            - In case of `fmt(str, **kwargs)`, varaiables are picked from `kwargs` or local scope and can't be changed later. Useful in python scripts.
         
 
         ::: note-tip

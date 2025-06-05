@@ -606,7 +606,7 @@ def htmlize(obj):
     if isinstance(obj,str):
         from .xmd import parse # Avoid circular import
         return parse(obj, returns = True)
-    elif isinstance(obj,XTML):
+    elif isinstance(obj,XTML) or callable(getattr(obj, '_repr_html_',None)):
         return obj._repr_html_() #_repr_html_ is a method of XTML and it is quick   
     else:
         # Next prefer custom methods of objects as they are more frequently used
@@ -632,7 +632,7 @@ def _exportable_func(obj):
 
     if module.startswith('matplotlib') and hasattr(obj,'get_figure'): # any axes
         return lambda obj: plt2html(obj.get_figure()).value
-    
+
     if re.search('matplotlib.*Figure', mro_str):return lambda obj: plt2html(obj).value
     
     if re.search('altair.*JupyterChart', mro_str): return lambda obj: _altair2htmlstr(obj.chart)

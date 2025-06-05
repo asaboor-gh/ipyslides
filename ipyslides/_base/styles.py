@@ -394,7 +394,10 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             'pre': {
                 'background':'none !important',
                 'color':'var(--fg1-color) !important',
-                '^.Error': {'background': 'hsl(from var(--bg2-color) 10 100% l) !important','padding': '4px !important',},
+                '^.Error': {
+                    'background': 'hsl(from var(--bg2-color) 10 50% l) !important','padding': '4px !important',
+                    '.Error': {'background': 'none !important', 'padding': '4px 0 !important'}, # nested errors blocks
+                },
             },
             'figure': {
                 'margin':'8px', # override default margin

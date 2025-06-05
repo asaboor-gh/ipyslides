@@ -292,7 +292,7 @@ class XMarkdown(Markdown):
         """
         self._returns = returns  # Must change here
         if isinstance(xmd, fmt): # scoped variables picked here
-            xmd, self._fmt_ns = fmt._as_tuple(xmd)
+            xmd, self._fmt_ns = fmt._astuple(xmd)
 
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
@@ -390,7 +390,7 @@ class XMarkdown(Markdown):
                 )
             for w in widths:
                 if not w.strip().replace('.','').isdigit(): # hold float values
-                    raise TypeError(f"{w} is not a positive integer or float value")
+                    raise TypeError(f"{w} is not a positive integer or float value in {header!r}")
 
             widths = [float(w) for w in widths]
         
@@ -442,11 +442,13 @@ class XMarkdown(Markdown):
             return ''.join([f"{out}" for out in outputs])
         return outputs
     
-    def _var_info(self, m):
+    def _var_info(self, match_str):
         try: 
-            obj = self._vars[m.group()]
-            return type(obj).__name__
-        except: return str(m.group()) # fallback to match group
+            obj = self._vars[match_str]
+            ctx = self._vars.get(f"{match_str}_ctx", '')
+            return f"The object {type(obj).__name__!r}" + (f" (returned by {ctx!r})" if ctx else "")
+        except: 
+            return self._vars.get(f"{match_str}_ctx", match_str) # fallback to match ctx/group
     
     def _resolve_vars(self, text):
         "Substitute saved variables"
@@ -454,7 +456,12 @@ class XMarkdown(Markdown):
             if self._returns:
                 text = re.sub(
                     r'DISPLAYVAR(\d+)DISPLAYVAR', 
-                    lambda m: error('DisplayError',f'{self._var_info(m)!r} caught in a non-displayable context!').value,
+                    lambda m: error(
+                        'DisplayError',
+                        f'{self._var_info(m.group())} cannot be displayed in current context '
+                        'because markdown parser was requested to return a string by the caller. '
+                        'You may use write or display to show object properly.'
+                    ).value,
                     text
                 )
                 self._resolve_vars(text)
@@ -464,7 +471,7 @@ class XMarkdown(Markdown):
                     content = block.strip() # Avoid empty objects
                     if i % 2 == 0:
                         key = f"DISPLAYVAR{content}DISPLAYVAR"
-                        objs.append(self._vars.get(key, error('KeyError','Variable not accessible')))
+                        objs.append(self._vars.get(key, error('KeyError',f'Variable {self._var_info(key)!r} is not accessible')))
                     elif (content := tagfixer.fix_html(content)):
                         objs.append(XTML(self._resolve_vars(content)))
                 return objs
@@ -473,7 +480,7 @@ class XMarkdown(Markdown):
         # replacing backtick and %{, sometimes it leads to &amp;, need to cover it
         return re.sub(r"&(?:amp;)?#(?:96;|37;\{)", lambda m: "`" if "96" in m.group() else "%{", out)
     
-    def _handle_var(self, value): # Put a temporary variable that will be replaced at end of other conversions.
+    def _handle_var(self, value, ctx=None): # Put a temporary variable that will be replaced at end of other conversions.
         if isinstance(value, (str, XTML)): 
             key = f"PrivateXmdVar{len(self._vars)}X" # end X to make sure separate it 
             # Handle nested like center`alert`text`` things before saving next varibale
@@ -481,6 +488,9 @@ class XMarkdown(Markdown):
         else: # Handles TOC, DOMWidget and Others rich displays
             key = f"DISPLAYVAR{len(self._vars)}DISPLAYVAR"
             self._vars[key] = value # Direct value stored
+        
+        if ctx: # for better error message
+            self._vars[key + '_ctx'] = ctx
         return key
     
     def _sub_vars(self, html_output):
@@ -490,7 +500,8 @@ class XMarkdown(Markdown):
         def handle_match(match):
             key,*_ = _matched_vars(match.group()) 
             if key not in user_ns: # top level var without ., indexing not found
-                return self._handle_var(error('NameError', f'name {key!r} is not defined'))
+                err = error('NameError', f'name {key!r} is not defined')
+                return self._handle_var(error('Exception', f'could not resolve {match.group()!r}\n{err}'))
 
             cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
             key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
@@ -500,10 +511,10 @@ class XMarkdown(Markdown):
             try:
                 value, _ = hfmtr.get_field(key, (), user_ns)
             except Exception as e:
-                return self._handle_var(error('RuntimeError', f'could not resolve {match.group()!r}\n{e}'))
+                return self._handle_var(error('Exception', f'could not resolve {match.group()!r}\n{e}'))
             
             if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
-                return self._handle_var(value) 
+                return self._handle_var(value,ctx = match.group()) 
             return self._handle_var(hfmtr.vformat(match.group()[1:], (), user_ns))
         
         html_output = re.sub(r"%\{([^{]*?)\}", handle_match, html_output, flags=re.DOTALL | re.UNICODE) # unicode varibales match
@@ -651,20 +662,20 @@ class fmt:
         return parse(self if self._kws else self._xmd, returns=returns) # handle empty kwargs silently
 
     @classmethod
-    def _as_tuple(cls, target): # This is required to handle form_markdown
+    def _astuple(cls, target): # This is required to handle form_markdown
         "Return (markdown, kwargs) of supplied markdown and kwargs if target is of same type. If str, returns (target, {})"
         if isinstance(target, fmt):
             return (target._xmd, target._kws)
         elif isinstance(target, str):
             return (target, {})
         else:
-            raise TypeError(f"_as_tuple expects str or fmt, got {type(target)}")
+            raise TypeError(f"_astuple expects str or fmt, got {type(target)}")
 
     def _ipython_display_(self): # to be correctly captured in write etc. commands
         with altformatter.reset(): # don't let it be caught in html conversion
             self.parse(returns = False)
         
     def _repr_html_(self): # for functions to consume as html and for export
-        return self.parse(returns=True)
+        return parse(self if self._kws else self._xmd, returns=True)
 
     

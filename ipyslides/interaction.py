@@ -137,14 +137,8 @@ def _print_error(out):
                 _autoTB.structured_traceback(*sys.exc_info(),tb_offset=2, number_of_lines_of_context=5)
             ))
 
-def _func2widget(func, mutuals):
+def _func2widget(func):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
-    for p1, p2 in mutuals:
-        if p1 in func_params and p2 in func_params:
-            raise ValueError(
-                f"Function {func} cannot have paramters that depend on each other, {p1!r} depends on {p2!r} "
-                f"Use independent parameter inside callbacks as self.params.{p2} instead of passing it directly.")
-
     out = ipw.Output()
     if klass := func.__dict__.get('_css_class', None):
         out.add_class(klass)
@@ -220,7 +214,7 @@ _general_css = {
     },
     '.Context-Disabled:after': { 
         **Icon('loading',color='red').css,
-        'background': 'hsl(from var(--bg2-color, whitesmoke) 230 100% l)',
+        'background': 'hsl(from var(--bg2-color, whitesmoke) 230 50% l)',
         'padding': '0 0.5em',
         'padding-top': '4px', # button offset sucks
     },
@@ -360,7 +354,7 @@ class InteractBase(ipw.interactive):
     - Regular ipywidgets with value trait
     - Fixed widgets using ipw.fixed(widget)
     - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or e.g. '.trait' to observe traits on this instance.
-    - Any DOM widget that needs display
+    - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
     - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
     - Plotly FigureWidgets (use patched_plotly for selection support)
 
@@ -415,7 +409,7 @@ class InteractBase(ipw.interactive):
         
         self._iparams = {} # just empty reference
         extras = self._fix_kwargs() # params are internally fixed
-        if not self._iparams: # need to interact anyhow
+        if not self._iparams: # need to interact anyhow and also allows a no params function
             self._auto_update = False
         
         self._icallbacks = self._interactive_callbacks() # callbacks after collecting params
@@ -426,7 +420,7 @@ class InteractBase(ipw.interactive):
             raise ValueError("at least one interactive function required!")
     
         outputs = self._func2widgets() # build stuff
-        super().__init__(self._run_updates, {'manual':not auto_update,'manual_name':''}, **self._iparams)
+        super().__init__(self._run_updates, {'manual':not self._auto_update,'manual_name':''}, **self._iparams)
         
         btn = getattr(self, 'manual_button', None) # need it above later
         self.add_class('ips-interact').add_class(self._css_class)
@@ -789,11 +783,42 @@ class InteractBase(ipw.interactive):
                         f"{f.__name__!r} and {used_classes[klass]!r}"
                     )
                 used_classes[klass] = f.__name__
-        
-            self._outputs += (_func2widget(f, self._mutuals),) # convert to output widget
+            
+            self._validate_func(f) # before making widget, check
+            self._outputs += (_func2widget(f),) # convert to output widget
         
         del used_classes # no longer needed
         return self._outputs # explicit
+    
+    def _validate_func(self, f):
+        ps = inspect.signature(f).parameters
+        f_ps = {k:v for k,v in ps.items()}
+        has_varargs = any(param.kind == param.VAR_POSITIONAL for param in ps.values())
+        has_varkwargs = any(param.kind == param.VAR_KEYWORD for param in ps.values())
+
+        if has_varargs or has_varkwargs:
+            raise TypeError(
+                f"Function {f.__name__!r} cannot have *args or **kwargs in its signature. "
+                "Only explicitly named keywords from interactive params are allowed."
+            )
+
+        if len(ps) == 0 and self._auto_update:
+            raise ValueError(
+                f"Function {f.__name__!r} must have at least one parameter when auto_update is enabled (default). "
+                "Any function with no arguments can only run with global interact button click."
+            )
+        
+        for p1, p2 in self._mutuals:
+            if p1 in f_ps and p2 in f_ps:
+                raise ValueError(
+                    f"Function {f} cannot have paramters that depend on each other, {p1!r} depends on {p2!r} "
+                    f"Use independent parameter inside callbacks as self.params.{p2} instead of passing it directly (only possible in subclass of InteractBase).")
+        
+        gievn_params = set(self.params._asdict())
+        extra_params = set(f_ps) - gievn_params
+        if extra_params:
+            raise ValueError(f"Function {f.__name__!r} has parameters {extra_params} that are not defined in interactive params.")
+        
     
     def _create_groups(self, widgets_dict):
         groups = namedtuple('WidgetGropus', ['controls', 'outputs', 'others'])
@@ -984,6 +1009,7 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - Regular ipywidgets
     - Fixed widgets via ipw.fixed()
     - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or '.trait' to observe traits on this instance.
+    - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
     - Plotly FigureWidgets (use patched_plotly)
     - `ipywidgets.Button` for manual updates on callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
     
@@ -1007,6 +1033,7 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - Avoid modifying global slide state
     - Use widget descriptions to prevent name clashes
     - See set_css() method for styling options
+    - interactive(no_args_func_which_may_fetch_data_on_click,) is perfectly valid and run on button click.
     
     {css_info}
     """

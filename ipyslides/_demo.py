@@ -14,8 +14,8 @@ def demo_slides(slides):
             'This': 'I was cited for no reason',
         }, mode = 'footnote')
 
-    slides.run_cell("""
-    %%slide 0 -m
+    # title slide should alway be overwritten by 0 
+    slides.build(0, slides.fmt("""
     # Creating Slides
     ::: align-center
         alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
@@ -24,9 +24,10 @@ def demo_slides(slides):
             sup`1`My University is somewhere in the middle of nowhere
             sup`2`Their University is somewhere in the middle of nowhere
                     
-        vspace`2`Read instructions by clicking ℹ️ button in quick menu
-    """)
-    #Demo for loading slides from a file or text block
+    vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
+    """, btn = slides.widgets.buttons.info))
+    
+    # build_ is same as build(-1)
     slides.build_(f"""
     section`Introduction` toc`### Contents`
     ---
@@ -34,6 +35,10 @@ def demo_slides(slides):
                   
     To see how commands work, use hl`Slides.docs()` to see the documentation.
     Here we will focus on using some of that functionality to create slides.
+    
+    ::: note-info
+        This slide was built with markdown without using `fmt`, so you can create
+        a variable `test` to overwite this → %{{test}}
                   
     Version: `{slides.version}`
     """)
@@ -49,7 +54,10 @@ def demo_slides(slides):
     - Item 2
 
     $$ E = mc^2 $$ 
-    %{btn}                       
+    %{btn}  
+
+    ::: note-tip
+        Above button was encapsulated by `fmt`, so creating a variable `btn` can't overwrite it.                    
     ```
                                        
     ```markdown
