@@ -8,7 +8,7 @@ import sys, re, textwrap
 import inspect 
 import traitlets
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from collections import namedtuple
 
 from IPython.display import display
@@ -127,30 +127,36 @@ _autoTB = AutoFormattedTB(color_scheme='Linux')
 
 @contextmanager
 def _print_error(out):
-    out.remove_class('out-err')
+    if out and not isinstance(out, ipw.Output):
+        raise TypeError(f"out should be None or ipywidgets.Output, got {type(out)!r}")
+    
     try:
+        if out: out.remove_class('out-err')
         yield
-    except Exception as e:
-        out.add_class('out-err').clear_output(wait=True) # clear output on error
-        with out: # We don't want to raise it to let other callbacks run
+    except:
+        if out: 
+            out.add_class('out-err').clear_output(wait=True) # clear output on error
+            
+        with (out or nullcontext()): # We don't want to raise it to let other callbacks run
             print('\n'.join(
                 _autoTB.structured_traceback(*sys.exc_info(),tb_offset=2, number_of_lines_of_context=5)
             ))
 
 def _func2widget(func):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
-    out = ipw.Output()
+    out = None # If No CSS class provided, no output widget will be created, default
+    
     if klass := func.__dict__.get('_css_class', None):
+        out = ipw.Output()
         out.add_class(klass)
         out._kwarg = klass # store for access later
-
-    out._old_kws = {} # store old kwargs to avoid re-running the function if not changed
-    out._fparams = func_params
+    
+    last_kws = {} # store old kwargs to avoid re-running the function if not changed
     
     def call_func(kwargs):
-        out.clear_output(wait=True) # clear previous output
-        with out:
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k in out._fparams}
+        if out: out.clear_output(wait=True) # clear previous output
+        with (out or nullcontext()):
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k in func_params}
 
             # Check if any parameter is a Button
             buttons = [v for v in filtered_kwargs.values() if isinstance(v, ipw.Button)]
@@ -164,7 +170,7 @@ def _func2widget(func):
                     try: # error still be raised, but will be caught by _print_error, so finally is important
                         func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
                     finally:
-                        out._old_kws.update(filtered_kwargs) # update old kwargs to latest values
+                        last_kws.update(filtered_kwargs) # update old kwargs to latest values
                         for btn in buttons:
                             btn._click_triggered = False # reset click trigger
                             _hint_update(btn, remove=True)
@@ -173,19 +179,18 @@ def _func2widget(func):
                 
             # Compare values properly by checking each parameter that is not a Button
             values_changed = any(
-                k not in out._old_kws or other_params[k] != out._old_kws[k]
+                k not in last_kws or other_params[k] != last_kws[k]
                 for k in other_params
             )
             
             # Run function if new values, or does not have parameters or on button click
-            if values_changed or not out._fparams: # function may not have arguments but can be run via others
+            if values_changed or not func_params: # function may not have arguments but can be run via others
                 with _print_error(out):
                     func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
             
-            out._old_kws.update(filtered_kwargs) # update old kwargs to latest values
+            last_kws.update(filtered_kwargs) # update old kwargs to latest values
             
-    out._call_func = call_func # set the function to be called when the widget is updated
-    return out
+    return (call_func, out)
 
 _general_css = {
     'display': 'grid',
@@ -232,11 +237,10 @@ _general_css = {
 def _hint_update(btn, remove = False):
     (btn.remove_class if remove else btn.add_class)('Rerun')
 
-def _run_callbacks(outputs, kwargs, box):
+def _run_callbacks(fcallbacks, kwargs, box):
     # Each callback is executed, Error in any of them don't stop other callbacks, handled in _print_error context manager
-    for out in outputs:
-        if hasattr(out, '_call_func'):
-            out._call_func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
+    for func in fcallbacks:
+        func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
 
 class AnyTrait(ipw.fixed):
     "Observe any trait of a widget with name trait inside interactive."
@@ -312,12 +316,12 @@ class InteractBase(ipw.interactive):
                 'btn': ipw.Button(icon='refresh', tooltip='Update Plot'),
             }}
             
-        @callback # gets out-0 class
+        @callback # captured by out-main 
         def update_plot(self, x, fig, btn): # will need btn click to run
             fig.data = []
             fig.add_scatter(x=[0, x], y=[0, x**2])
             
-        @callback('out-stats')  # custom class for styling
+        @callback('out-stats')  # creates Output widget for it
         def show_stats(self, y):
             print(f"Distance: {{np.sqrt(1 + y**2)}}")
     
@@ -363,10 +367,11 @@ class InteractBase(ipw.interactive):
 
     - Methods decorated with @callback
     - Optional CSS class via @callback('out-myclass')
-    - CSS class must start with 'out-'
-    - Numerical classes (out-1, out-2) reserved for auto-assignment
-    - Each callback gets only needed parameters
-    - Updates happen only when relevant parameters change
+    - CSS class must start with 'out-' excpet reserved 'out-main'
+    - Each callback gets only needed parameters and updates happen only when relevant parameters change
+    - **Output Widget Behavior**:
+        - An output widget is created only if a CSS class is provided via `@callback` or `classed`.
+        - If no CSS class is provided, the callback will use the main output widget, labeled as 'out-main'.
         
     **Attributes & Properties**:  
 
@@ -419,8 +424,8 @@ class InteractBase(ipw.interactive):
         
         if not self._icallbacks:
             raise ValueError("at least one interactive function required!")
-    
-        outputs = self._func2widgets() # build stuff
+
+        outputs = self._func2widgets() # build stuff, before actual interact
         super().__init__(self._run_updates, {'manual':not self._auto_update,'manual_name':''}, **self._iparams)
         
         btn = getattr(self, 'manual_button', None) # need it above later
@@ -429,11 +434,8 @@ class InteractBase(ipw.interactive):
         self.layout.height = 'max-content' # adopt to inner height
 
         self.children += (*extras, *outputs, self._style_html) # add extra widgets to box children
-        self.out.layout.height = '0' # We do not print stuff there, so reclaim space when error thrown
-        
-        for i, out in enumerate([out for out in outputs if not hasattr(out, '_kwarg')]): # user set css_class
-            out.add_class(f'out-{i}')
-            out._kwarg = f'out-{i}'
+        self.out.add_class("out-main")
+        self.out._kwarg = "out-main" # needs to be in all widgets
 
         for w in self.kwargs_widgets:
             c = getattr(w, '_kwarg','')
@@ -452,8 +454,8 @@ class InteractBase(ipw.interactive):
                 if not isinstance(w, (ipw.Text, ipw.Play, AnimationSlider)): 
                     w.observe(lambda change: _hint_update(btn),names=['value'])
             
-            btn._kwarg = 'run-button'
-            btn.add_class('Refresh-Btn').add_class('run-button') # run-button for user
+            btn._kwarg = 'btn-main'
+            btn.add_class('Refresh-Btn').add_class('btn-main') # btn-main for user
             btn.layout = {'width': 'max-content', 'height':'28px', 'padding':'0 24px'}
             btn.tooltip = 'Sync Outputs'
             btn.icon = 'refresh'
@@ -496,7 +498,7 @@ class InteractBase(ipw.interactive):
                 )
             
             if self._auto_update:
-                value = [v for v in value if v != 'run-button'] # avoid throwing error over button, which changes by other paramaters
+                value = [v for v in value if v != 'btn-main'] # avoid throwing error over button, which changes by other paramaters
             
             for i, name in enumerate(value,start=1):
                 if isinstance(name,str):
@@ -618,7 +620,7 @@ class InteractBase(ipw.interactive):
         fs_btn = FullscreenButton()
         fs_btn.observe(lambda c: self.set_trait('isfullscreen',c.new), names='isfullscreen') # setting readonly property
         
-        self.children = (self._app, other, self._style_html, self.out, fs_btn) # button be on top to click
+        self.children = (self._app, other, self._style_html, fs_btn) # button be on top to click
     
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
@@ -639,9 +641,8 @@ class InteractBase(ipw.interactive):
         **CSS Classes Available**:  
 
         - Parameter names from _interactive_params()
-        - 'run-button' for manual update button
-        - 'out-0', 'out-1'... for callback outputs
-        - Custom 'out-*' classes from @callback decorators
+        - 'btn-main' for manual update button
+        - Custom 'out-*' classes from @callback decorators and 'out-main' from main output.
 
         **Example**:       
 
@@ -769,6 +770,7 @@ class InteractBase(ipw.interactive):
     
     def _func2widgets(self):
         self._outputs = ()   # reference for later use
+        self._fcallbacks = () #
         used_classes = {}  # track used CSS classes for conflicts 
 
         for f in self._icallbacks:
@@ -786,7 +788,11 @@ class InteractBase(ipw.interactive):
                 used_classes[klass] = f.__name__
             
             self._validate_func(f) # before making widget, check
-            self._outputs += (_func2widget(f),) # convert to output widget
+            new_func, out = _func2widget(f) # converts to output widget if user set class or empty
+            self._fcallbacks += (new_func,) 
+            
+            if out is not None:
+                self._outputs += (out,)
         
         del used_classes # no longer needed
         return self._outputs # explicit
@@ -830,7 +836,7 @@ class InteractBase(ipw.interactive):
             elif (isinstance(widget, ipw.ValueWidget) and 
               not isinstance(widget, (ipw.HTML, ipw.Label, ipw.HTMLMath))):
                 controls.append(key)
-            elif key == 'run-button' or isinstance(widget, ipw.Button):
+            elif key == 'btn-main' or isinstance(widget, ipw.Button):
                 controls.append(key) # run buttons always in controls
             else:
                 others.append(key)
@@ -871,16 +877,14 @@ class InteractBase(ipw.interactive):
     
     def _run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
-        with _hold_running_slide_builder():
-            try:
-                if btn:
-                    with disabled(btn):
-                        _hint_update(btn, remove=True)
-                        _run_callbacks(self.outputs, kwargs, self) 
-                else:
-                    _run_callbacks(self.outputs, kwargs, self) 
-            except: # clean duplicate errors, each output has already captured their own
-                self.out.outputs = ()
+        with _hold_running_slide_builder(), _print_error(self.out):
+            if btn: # despite _print_error, self.out does not pick class out-err, no idea why
+                with disabled(btn):
+                    _hint_update(btn, remove=True)
+                    _run_callbacks(self._fcallbacks, kwargs, self) 
+            else:
+                _run_callbacks(self._fcallbacks, kwargs, self) 
+            
 
 def callback(css_class = None):
     """Decorator to mark methods as interactive callbacks in InteractBase subclasses.
@@ -890,11 +894,11 @@ def callback(css_class = None):
     - Must be defined inside a class (not nested).
     - Must be a regular method (not static/class method).
     
-    **css_class**: Optional string to assign a CSS class to the callback's output widget.  
+    **css_class**: Optional string to assign a CSS class to the callback's output widget. 
 
-    - Must start with 'out-'
-    - Cannot be numerical like 'out-1', 'out-2' as these are reserved for automatic assignment
+    - Must start with 'out-', but should not be 'out-main' which is reserved for main output
     - Example valid values: 'out-stats', 'out-plot', 'out-details'
+    - If no css_class is provided, the callback will not create a separate output widget and will use the main output instead.
     
     **Usage**:                  
 
@@ -937,7 +941,7 @@ def callback(css_class = None):
     return decorator
 
 def classed(func, css_class):
-    "Use this function to assign a CSS class to a function being used in interactive, interact."
+    "Use this function to assign a CSS class to a function being used in interactive, interact. to make a separate output widget."
     if not callable(func):
         raise TypeError(f"Can only function as first paramter, got {type(func).__name__}")
     
@@ -947,8 +951,11 @@ def classed(func, css_class):
     if not css_class.startswith('out-'):
         raise ValueError(f"css_class must start with 'out-', got {css_class!r}")
     
-    if css_class and re.match(r'out-\d+', css_class):
-        raise ValueError(f"css_class cannot be numerical like 'out-1', 'out-2', got {css_class!r}")
+    if css_class == 'out-main':
+        raise ValueError("out-main is reserved class for main output widget")
+    
+    if css_class and not re.match(r'^out-[a-zA-Z0-9-]+$', css_class):
+        raise ValueError(f"css_class is not valid, must only contain letters, numbers or hyphens, got {css_class!r}")
     
     func.__dict__['_css_class'] = css_class # set on __dict__ to avoid issues with bound methods
     return func
@@ -985,7 +992,7 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
         fig.layout.autosize = True # plotly's figurewidget always make trouble with sizing
     
     dashboard = interactive(
-        classed(update_plot, 'out-plot'),  # Assign CSS class to output, otherwise it will be out-0
+        classed(update_plot, 'out-plot'),  # Assign CSS class to output, otherwise it will be captured by main output
         resize_fig, # responds to fullscreen change
         x = ipw.IntSlider(0, 0, 100),
         y = ipw.FloatSlider(0, 1),
@@ -1022,13 +1029,16 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - Order matters for dependent updates
     - Parameter-less functions run with any interaction
     - Animation widgets work even with manual updates
+    - **Output Widget Behavior**:
+        - Output widgets are created only if a CSS class is provided via `@callback` or `classed`.
+        - If no CSS class is provided, the callback will use the main output widget labeled as 'out-main'.
+    
 
     **CSS Classes**:      
 
     - Parameter names from kwargs
-    - 'out-0', 'out-1'... for unnamed outputs
-    - Custom 'out-*' classes from classed()
-    - 'run-button' for manual update button
+    - Custom 'out-*' classes from classed(), and 'out-main' class.
+    - 'btn-main' for manual update button
 
     **Notes**:       
 
