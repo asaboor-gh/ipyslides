@@ -354,6 +354,7 @@ class InteractBase(ipw.interactive):
     - Regular ipywidgets with value trait
     - Fixed widgets using ipw.fixed(widget)
     - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or e.g. '.trait' to observe traits on this instance.
+    - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
     - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
     - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
     - Plotly FigureWidgets (use patched_plotly for selection support)
@@ -1009,6 +1010,7 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - Regular ipywidgets
     - Fixed widgets via ipw.fixed()
     - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or '.trait' to observe traits on this instance.
+    - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
     - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
     - Plotly FigureWidgets (use patched_plotly)
     - `ipywidgets.Button` for manual updates on callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
