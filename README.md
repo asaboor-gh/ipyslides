@@ -31,6 +31,7 @@ pip install -e .
     - Included custom built widgets for enhanced interaction. 
     - Pass any DOMWidget as a parameter to `interact/interactive` functions unlike default `ipywidgets.interactive` behavior.
     - Observe any trait of the widget by `'widget_name.trait_name'` where `'widget_name'` is assigned to a `widget`/`fixed(widget)` in control parameters, OR `'.trait_name'` if `trait_name` exists on instance of interactive.
+    - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
     - Add `ipywidgets.Button` to hold callbacks which use it as paramter for a click
 - **Plotly Integration**: Modified plotly support with additional traits like `selected` and `clicked`
 - **Matplotlib Support**: Convert matplotlib plots to HTML format using `plt2html`
