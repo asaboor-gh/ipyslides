@@ -29,7 +29,7 @@ This module is a wrapper around the `ipyslides.interaction` modulde.
 """
 
 __all__ = [
-    'InteractBase','callback', 'classed', 'interactive','interact', 'patched_plotly', 'plt2html',
+    'InteractBase','callback', 'classed', 'print_error', 'interactive','interact', 'patched_plotly', 'plt2html',
     'ListWidget', 'AnimationSlider', 'Output'
 ]
 
@@ -39,6 +39,7 @@ from ipyslides.interaction import (
     classed, 
     interact, 
     interactive,
+    print_error,
     patched_plotly)
 from ipyslides._base._widgets import ListWidget, AnimationSlider
 from ipyslides._base.widgets import Output # patched one

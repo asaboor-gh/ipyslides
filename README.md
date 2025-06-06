@@ -38,30 +38,46 @@ pip install -e .
 - **Event Callbacks**: Easy widget event handling with the `@callback` decorator inside the subclass of `InteractBase` or multiple functions in `interact/interactive` functions.
 - **Full Screen Mode**: Transform your dashboards into full-screen applications by added button.
 
-## Quick Start
+## Usage Example
 
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-import einteract import as ei
+import pandas as pd
+import plotly.graph_objects as go
+import einteract as ei
+
+def on_click(cdata,html):
+    display(pd.DataFrame(cdata or {}))
+
+def on_select(sdata, html):
+    plt.scatter(sdata.get('xs',[]),sdata.get('ys',[]))
+    html.value = ei.plt2html().value
+
+def detect_fs(fig, fs):
+    print("isfullscreen = ",fs)
+    fig.layout.autosize = False # double trigger
+    fig.layout.autosize = True
 
 @ei.interact(
-    ei.classed(lambda smax: print(f"Maximum amplitude: {smax}"), 'out-smax'),
-    slider = ipw.fixed(ipw.IntSlider(min=1,max=10)), 
-    frequency = (0.1, 20.0,5), 
-    smax = 'slider.max',
-    amp = 'slider.value',
-    app_layout = {'left_sidebar': ['slider','frequency', 'out-smax'], 'center':['out-0']}
-)
-def plot_sine(amp=1.0, frequency=5.0):
-    plt.figure(figsize=(8, 4))
-    X = np.linspace(0,10,100)
-    plt.plot(X, amp * np.sin(frequency*X)) # amplited is passed as slider
-    plt.grid(True)
-    plt.show()
+    on_select,
+    ei.classed(on_click,'out-click'),
+    detect_fs,
+    fig = ei.patched_plotly(go.FigureWidget()), 
+    html = ipw.HTML('**Select Box/Lesso on figure traces**'),
+    A = (1,10), omega = (0,20), phi = (0,10),
+    sdata = 'fig.selected', cdata = 'fig.clicked', fs = '.isfullscreen',
+    app_layout={'left_sidebar':['A','omega','phi','html','out-main'], 'center': ['fig','out-click'],'pane_widths':[3,7,0]},
+    grid_css={'.left-sidebar':{'background':'whitesmoke'},':fullscreen': {'height': '100vh'}}, 
+    )
+def plot(fig:go.FigureWidget, A, omega,phi): # adding type hint allows auto-completion inside function
+    fig.data = []
+    x = np.linspace(0,10,100)
+    fig.add_trace(go.Scatter(x=x, y=A*np.sin(omega*x + phi), mode='lines+markers'))
+
 ```
-![simple example](simple.png)
+![einteract.gif](einteract.gif)
 
 ## Comprehensive Examples
 - Check out the [einteract-demo.ipynb](einteract-demo.ipynb) which demonstates subclassing `InteractBase`, using custom widgets, and observing multiple functions through the `@callback` decorator.
