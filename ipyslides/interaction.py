@@ -2,7 +2,7 @@
 Enhanced version of ipywidgets's interact/interactive functionality.
 """
 
-__all__ = ['interactive','interact', 'classed', 'patched_plotly','disabled'] # other need to be explicity imported
+__all__ = ['interactive','interact', 'classed', 'patched_plotly','disabled','display_error'] # other need to be explicity imported
 
 import sys, re, textwrap
 import inspect 
@@ -13,10 +13,11 @@ from collections import namedtuple
 
 from IPython.display import display
 from IPython.core.ultratb import AutoFormattedTB
+from ansi2html import Ansi2HTMLConverter
 from anywidget import AnyWidget
 
 from .formatters import get_slides_instance
-from .utils import _build_css, _dict2css
+from .utils import _build_css, _dict2css, html
 from ._base.icons import Icon
 from ._base.widgets import ipw # patch ones required here
 from ._base._widgets import _fix_init_sig, AnimationSlider
@@ -126,21 +127,23 @@ class FullscreenButton(AnyWidget):
 _autoTB = AutoFormattedTB(color_scheme='Linux')
 
 @contextmanager
-def _print_error(out):
-    if out and not isinstance(out, ipw.Output):
-        raise TypeError(f"out should be None or ipywidgets.Output, got {type(out)!r}")
-    
+def display_error():
+    "Contextmanager to catch and display error instead of raising it to keep code executing forward."
     try:
-        if out: out.remove_class('out-err')
         yield
     except:
-        if out: 
-            out.add_class('out-err').clear_output(wait=True) # clear output on error
-            
-        with (out or nullcontext()): # We don't want to raise it to let other callbacks run
-            print('\n'.join(
-                _autoTB.structured_traceback(*sys.exc_info(),tb_offset=2, number_of_lines_of_context=5)
-            ))
+        tb = ''.join(_autoTB.structured_traceback(*sys.exc_info(),tb_offset=2, number_of_lines_of_context=5))
+        html_doc = Ansi2HTMLConverter().convert(tb, full = True) # need a full converter to pick styles
+        match = re.search(
+            r'<style.*?>(?P<style>.*?)</style>.*?<pre.*?>(?P<content>.*?)</pre>',
+            html_doc, flags=re.DOTALL | re.MULTILINE)
+        
+        if match:
+            style = match.group('style')  # Extract the 'style' group
+            content = match.group('content')  # Extract the 'content' group
+            html('', [html('style', style), html('pre',content,css_class='Error')]).display()
+        else: # fallback for standard one
+            print(tb)
 
 def _func2widget(func):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
@@ -166,8 +169,8 @@ def _func2widget(func):
                 if not any(btn._click_triggered for btn in buttons):
                     return # Only update if a button was clicked and skip other parameter changes
                 
-                with _print_error(out), disabled(*buttons): # disable buttons during function call
-                    try: # error still be raised, but will be caught by _print_error, so finally is important
+                with display_error(), disabled(*buttons): # disable buttons during function call
+                    try: # error still be raised, but will be caught by display_error, so finally is important
                         func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
                     finally:
                         last_kws.update(filtered_kwargs) # update old kwargs to latest values
@@ -185,7 +188,7 @@ def _func2widget(func):
             
             # Run function if new values, or does not have parameters or on button click
             if values_changed or not func_params: # function may not have arguments but can be run via others
-                with _print_error(out):
+                with display_error():
                     func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
             
             last_kws.update(filtered_kwargs) # update old kwargs to latest values
@@ -207,10 +210,12 @@ _general_css = {
     },
     '< .ips-interact': {
         '^:fullscreen > *, > *': {'margin' : 0}, # this is import for fullscreen mode to be margin-less directly
-        '.widget-output.out-err': { # same error view as in JupyterLab, covers from main VBox
+        'pre.Error': { # same error view as in JupyterLab, covers from main VBox
+            'padding': '4px', 'font-size': 'var(--jp-code-font-size)',
             'background': 'var(--jp-rendermime-error-background)',
             'margin-block': 'var(--jp-code-padding)', # have some space around to distinguish
         },
+        '.jp-RenderedHTML': {'padding-right':0},
     },
     # below widget-html-content creates issue even in nested divs
     '> *, > .center > *, .widget-html-content' : { # .center is GridBox
@@ -238,7 +243,7 @@ def _hint_update(btn, remove = False):
     (btn.remove_class if remove else btn.add_class)('Rerun')
 
 def _run_callbacks(fcallbacks, kwargs, box):
-    # Each callback is executed, Error in any of them don't stop other callbacks, handled in _print_error context manager
+    # Each callback is executed, Error in any of them don't stop other callbacks, handled in display_error context manager
     for func in fcallbacks:
         func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
 
@@ -877,8 +882,8 @@ class InteractBase(ipw.interactive):
     
     def _run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
-        with _hold_running_slide_builder(), _print_error(self.out):
-            if btn: # despite _print_error, self.out does not pick class out-err, no idea why
+        with _hold_running_slide_builder(), display_error():
+            if btn: 
                 with disabled(btn):
                     _hint_update(btn, remove=True)
                     _run_callbacks(self._fcallbacks, kwargs, self) 
