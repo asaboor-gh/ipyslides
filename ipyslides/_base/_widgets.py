@@ -14,7 +14,7 @@ def _fix_init_sig(cls):
 
 def _fix_trait_sig(cls):
     params = [inspect.Parameter(key, inspect.Parameter.KEYWORD_ONLY, default=value) 
-        for key,value in cls.class_own_traits().items() if not key.startswith('_')] # avoid private
+        for key, value in cls.class_own_traits().items() if not key.startswith('_')] # avoid private
     params.append(inspect.Parameter('kwargs', inspect.Parameter.VAR_KEYWORD)) # Inherited widgets traits
     cls.__signature__ = inspect.Signature(params)
     return cls
@@ -110,19 +110,21 @@ class InteractionWidget(anywidget.AnyWidget):
 @_fix_trait_sig
 class ListWidget(anywidget.AnyWidget,ValueWidget):
     """List widget that displays clickable items with integer values and rich html content.
-    You can observe the `value` trait to run a function on selection.
-    The `options` trait is a list of items to be displayed. Each item can be an htlm string or a tuple of (value, html).
+    
+    The `options` trait is a list of items to be displayed. Each item can be any python object.
     The `description` trait is a string that will be displayed as a label above the list.
 
-    The `value` trait is the currently selected value. If list elements are strings, the value is the index of the selected item.
-    The `html` trait is a convenience accessor that returns the HTML representation of the currently selected item.
+    The `value` trait is the currently selected value. 
+    The `html` trait returns the HTML representation of the currently selected item.
+    You can give `transform` function that accepts a value and return html string. Default is automatically transformed to html.
     You can set `ListWidget.layout.max_height` to limit the maximum height (default 400px) of the list. The list will scroll if it exceeds this height.
     """
-    _active = traitlets.Int(None, allow_none=True).tag(sync=True)
+    _options = traitlets.List(read_only=True).tag(sync=True) # will by [(index, obj),...]
     description = traitlets.Unicode('Select an option', allow_none=True).tag(sync=True)
-    options = traitlets.List().tag(sync=True)
-    value = traitlets.Int(None, allow_none=True).tag(sync=True)
-    html = traitlets.Unicode(None, allow_none=True)  # This is only python side
+    index = traitlets.Int(None, allow_none=True).tag(sync=True)
+    options = traitlets.List() # only on backend
+    value = traitlets.Any(None, allow_none=True,read_only=True) # only backend
+    html = traitlets.Unicode('',read_only=True)  # This is only python side
     
     _esm = """
     function render({model, el}) {
@@ -134,22 +136,22 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
             el.classList.toggle('has-description', Boolean(desc));
         }
         
-        function createItem(opt, index) {
+        function createItem(opt) {
             const item = document.createElement('div');
             item.className = 'list-item';
             
-            const [value, html] = Array.isArray(opt) ? opt : [index, opt];
+            const [index, html] = opt; // Always expects a tuple (index, html)
             item.innerHTML = html;
-            item.dataset.value = value;
+            item.dataset.index = index; // Use index for identification
             
-            if (parseInt(value) === model.get('value')) {
+            if (index === model.get('index')) {
                 item.classList.add('selected');
             }
             
             item.addEventListener('click', () => {
-                const newValue = parseInt(item.dataset.value);
-                if (newValue !== model.get('value')) {
-                    model.set('value', newValue);
+                const newIndex = parseInt(item.dataset.index);
+                if (newIndex !== model.get('index')) {
+                    model.set('index', newIndex); // Update index on click
                     model.save_changes();
                 }
             });
@@ -158,33 +160,38 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
         }
         
         function updateList() {
-            el.innerHTML = '';
-            model.get('options').forEach((opt, index) => {
-                el.appendChild(createItem(opt, index));
+            el.innerHTML = ''; // Clear the list
+            model.get('_options').forEach((opt) => {
+                el.appendChild(createItem(opt));
+            });
+        }
+
+        function updateSelected(index) {
+            el.childNodes.forEach(item => {
+                item.classList.remove('selected');
+                if (parseInt(item.dataset.index) === index) {
+                    item.classList.add('selected');
+                }
             });
         }
         
         updateDescription();
         updateList();
-        
-        model.on('change:value', () => {
-            const value = model.get('value');
-            model.set('_active', value); // this will show which item is selected in the list
-            model.save_changes(); 
-        });
 
-        model.on('change:_active', () => { // This is apparent internal change, without setting value, not intended to be used by user
-            const active = model.get('_active');
-            el.childNodes.forEach(item => {
-                item.classList.remove('selected');
-                if (parseInt(item.dataset.value) === active) {
-                    item.classList.add('selected');
-                }
-            });
+        model.on('change:index', () => { // This is apparent internal change, without setting index, not intended to be used by user
+            const index = model.get('index');
+            updateSelected(index);
         });
         
         model.on('change:description', updateDescription);
-        model.on('change:options', updateList);
+        model.on('change:_options', updateList);
+
+        // Intercept custom messages from the backend
+        model.on('msg:custom', (msg) => {
+            if (msg?.active >= 0) { // Mock active, not changing index, for TOC list
+                updateSelected(msg.active); 
+            }
+        });
     }
 
     export default { render }
@@ -244,53 +251,54 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
     }
     """  
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, transform = None, *args, **kwargs):
+        if callable(transform):
+            self._transform = transform
+        else:
+            from ..formatters import htmlize
+            self._transform = htmlize
+
         super().__init__(*args, **kwargs)
         self.layout.max_height = '400px' # default max height
 
-    @traitlets.observe('value')
-    def _value_html(self,change):
-        "Returns the HTML of the currently selected item. This is not a traitlet, just an accessor of html representation for convenience."
-        indexer = change['new']
-        if indexer is None:
-            self.html = None
-        elif self.options:
-            opts = enumerate(self.options) if isinstance(self.options[0], str) else self.options
-            for i, opt in opts:
-                if i == indexer:
-                    self.html = opt
-                    break
+    @traitlets.validate('index')
+    def _set_value_html(self,proposal):
+        index = proposal['value']
+        if index is None:
+            self.set_trait('html','')
+            self.set_trait('value',None)
+            return index 
+        
+        _max = len(self.options) - 1
+        if isinstance(index, int) and 0 <= index <= _max :
+            self.set_trait('html',self._options[index][1]) # second item is html
+            self.set_trait('value',self.options[index]) 
+            return index
+        else:
+            raise ValueError(f"index should be None or integer in bounds [0, {_max}], got {index}")
 
     @traitlets.validate('options')
     def _validate_options(self, proposal):
         options = proposal['value']
         if not isinstance(options, (list,tuple)):
             raise traitlets.TraitError("Options must be a list/tuple.")
-        if not options: return options  # allow empty list
-
-        _type = str if isinstance(options[0], str) else tuple
-        for opt in options:
-            if not isinstance(opt, _type):
-                raise traitlets.TraitError("Each option must be a string or a tuple (int, str).")
-            if _type is tuple:
-                if len(opt) != 2:
-                    raise traitlets.TraitError("Each tuple option must have exactly two elements (int, str).")
-                if not isinstance(opt[0], int):
-                    raise traitlets.TraitError("The first element of each tuple option must be an integer value.")
-                if not isinstance(opt[1], str):
-                    raise traitlets.TraitError("The second element of each tuple option must be a string (HTML).")
-            
+        
+        if not options: 
+            self.set_trait('_options', options) # adjust accordingly, set_trait for readonly
+            return options  # allow empty list
+        
+        if not isinstance(self._transform(options[0]), str):
+            raise TypeError("tranform given at initialization should be like map(transform, options) -> (str,...)")
+        
+        self.set_trait('_options', [(i, self._transform(op)) for i, op in enumerate(options)])
         return options    
 
     def fmt_html(self):
         from ..formatters import _inline_style
         klass = 'list-widget has-description' if self.description else 'list-widget'
         html = ''
-        for i, opt in enumerate(self.options):
-            if isinstance(opt, str):
-                html += '<div class="list-item {}">{}</div>'.format("selected" if i == self.value else "", opt)
-            elif isinstance(opt, tuple):
-                html += '<div class="list-item {}">{}</div>'.format("selected" if opt[0] == self.value else "", opt[1])
+        for i, opt in self._options:
+            html += '<div class="list-item {}">{}</div>'.format("selected" if i == self.index else "", opt)
         return f'''<style>{self._css}</style>
             <div class="{klass}" {_inline_style(self)} data-description="{self.description}">{html}</div>'''
             

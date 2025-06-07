@@ -145,34 +145,36 @@ def demo_slides(slides):
         
         def display_plot(): return race_plot().display()
         
-        slides.write(slides.interactive(display_plot), rslide.get_source()) # Only first columns will update
+        slides.write(slides.ei.interactive(display_plot), rslide.get_source()) # Only first columns will update
 
     with slides.build(-1) as s:
         slides.write('## Animations with Widgets')
         anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
-        css = {'grid-template-columns': '1fr 2fr', '.out-1': {'height': '2em'}}
+        css = {'grid-template-columns': '1fr 2fr', '.out-main': {'height': '2em'}}
 
-        @slides.interact(grid_css = css, html = slides.as_html_widget(''), source=s.get_source().as_widget(), anim=anim)
+        @slides.ei.interact(grid_css = css, html = slides.as_html_widget(''), source=s.get_source().as_widget(), anim=anim)
         def _(html, source, anim):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area
 
     with slides.build(-1) as s:
-        codes = [
-            'print(np.random.random((10,2)))',
-            'plt.plot(np.random.random((10,2)))\nplt.show()',
-            'plt.plot(np.sin(np.linspace(0,10,100)))\nplt.show()',
-        ]
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        lw = slides.ListWidget(description='Execute a code block',
+            options = [
+                lambda: print(np.random.random((10,2))),
+                lambda: plt.plot(np.random.random((10,2))),
+                lambda: plt.plot(np.sin(np.linspace(0,10,100))),
+            ], # transform = callable(obj) can be used to transform options to html
+        )
 
         def run(c):
-            imports = 'import numpy as np\nimport matplotlib.pyplot as plt\n'
-            slides.run_cell(imports + codes[c or 0]) # avoid None value when not selected
-            # run_cell executes code in top level scope, so varaibles are available in notebook
-
-        lw = slides.ListWidget(description='Execute a code block',options= [slides.hl(c).value for c in codes])
-        css = {'.out-1': {'height':'300px'}, 'grid':'auto-flow / 1fr'} # just single column
-
-        it = slides.interactive(run, c = lw, grid_css=css)
+            if callable(c): c() # avoid None value when not selected
+            plt.show()
+        
+        css = {'.out-main': {'height':'300px'}, 'grid':'auto-flow / 1fr', '.lang-name': {'display': 'none'}} # just single column
+        it = slides.ei.interactive(run, c = lw, grid_css=css)
         slides.write(['### Rich Content hl`ListWidget`', it],s.get_source())
 
 

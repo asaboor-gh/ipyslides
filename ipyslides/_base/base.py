@@ -538,7 +538,7 @@ class BaseSlides:
             with self.capture_content() as cap, self.code.context():
                 import time
 
-                @self.interact(auto_update=False, grid_css = dict({'.out-1': dict(height='2em')},background='var(--bg2-color)'), date = False)  # self is Slides here
+                @self.ei.interact(auto_update=False, grid_css = dict({'.out-main': dict(height='2em')},background='var(--bg2-color)'), date = False)  # self is Slides here
                 def update_time(date): 
                     local_time = time.localtime()
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
@@ -555,7 +555,7 @@ class BaseSlides:
                     time = t.strftime('%H:%M:%S')
                     self.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
             
-            self.write(self.doc(self.interact,'Slides'), [*cap.outputs, c, self.doc(self.on_load,'Slides')])
+            self.write(self.doc(self.ei.interact,'Slides.ei'), [*cap.outputs, c, self.doc(self.on_load,'Slides')])
     
         with self.build(-1):
             self.write('## Content Styling')

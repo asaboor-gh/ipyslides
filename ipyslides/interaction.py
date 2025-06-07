@@ -2,21 +2,23 @@
 Enhanced version of ipywidgets's interact/interactive functionality.
 """
 
-__all__ = ['interactive','interact', 'classed', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
+__all__ = ['interactive','interact', 'classed', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
 
 import sys, re, textwrap
 import inspect 
 import traitlets
 
+from time import perf_counter
 from contextlib import contextmanager, nullcontext
 from collections import namedtuple
+from functools import wraps
 
 from IPython.display import display
 from IPython.core.ultratb import AutoFormattedTB
 from anywidget import AnyWidget
 
 from .formatters import get_slides_instance
-from .utils import _build_css, _dict2css, html
+from .utils import _build_css, _dict2css
 from ._base.icons import Icon
 from ._base.widgets import ipw # patch ones required here
 from ._base._widgets import _fix_init_sig, AnimationSlider
@@ -355,8 +357,9 @@ class InteractBase(ipw.interactive):
 
     **Callbacks**:   
 
-    - Methods decorated with @callback
+    - Methods decorated with @callback. Run in the order of definition.
     - Optional CSS class via @callback('out-myclass')
+    - Decorate with @monitor to check execution time, kwargs etc.
     - CSS class must start with 'out-' excpet reserved 'out-main'
     - Each callback gets only needed parameters and updates happen only when relevant parameters change
     - **Output Widget Behavior**:
@@ -760,7 +763,7 @@ class InteractBase(ipw.interactive):
     
     def _func2widgets(self):
         self._outputs = ()   # reference for later use
-        self._fcallbacks = () #
+        callbacks = [] # collecting processed callback
         used_classes = {}  # track used CSS classes for conflicts 
 
         for f in self._icallbacks:
@@ -779,11 +782,12 @@ class InteractBase(ipw.interactive):
             
             self._validate_func(f) # before making widget, check
             new_func, out = _func2widget(f) # converts to output widget if user set class or empty
-            self._fcallbacks += (new_func,) 
+            callbacks.append(new_func) 
             
             if out is not None:
                 self._outputs += (out,)
         
+        self._icallbacks = callbacks # set back
         del used_classes # no longer needed
         return self._outputs # explicit
     
@@ -871,9 +875,9 @@ class InteractBase(ipw.interactive):
             if btn: 
                 with disabled(btn):
                     _hint_update(btn, remove=True)
-                    _run_callbacks(self._fcallbacks, kwargs, self) 
+                    _run_callbacks(self._icallbacks, kwargs, self) 
             else:
-                _run_callbacks(self._fcallbacks, kwargs, self) 
+                _run_callbacks(self._icallbacks, kwargs, self) 
             
 
 def callback(css_class = None):
@@ -950,6 +954,27 @@ def classed(func, css_class):
     func.__dict__['_css_class'] = css_class # set on __dict__ to avoid issues with bound methods
     return func
 
+def monitor(params=False):
+    "Monitor a function execution time and optionally passed params. Use on callbacks for InteractBase, interactive."
+    def inner(func):            
+        @wraps(func)
+        def wrapped(*args,**kws):
+            start = perf_counter()
+            try:
+                func(*args,**kws)
+            finally:
+                end = perf_counter()
+                print(f"Function {func.__name__!r} took {(end - start)*1000:.3f} ms")
+                if params and not callable(params):
+                    print("kwargs: ", {k: r[:10] + '...' if len(r := repr(v)) > 10 else v 
+                        for k,v in kws.items()
+                    })
+        return wrapped
+    
+    if callable(params): # called without parenthesis
+        return inner(params)
+    return inner
+
 
 @_format_docs(css_info = _css_info)
 def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs):
@@ -968,12 +993,13 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     **Basic Usage**:    
 
     ```python
-    from ipyslides.interaction import interactive, classed
+    from ipyslides.interaction import interactive, classed, monitor
     import ipywidgets as ipw
     import plotly.graph_objects as go
     
     fig = go.FigureWidget()
     
+    @monitor  # check execution time
     def update_plot(x, y, fig):
         fig.data = []
         fig.add_scatter(x=[0, x], y=[0, y])
@@ -1050,7 +1076,7 @@ def interact(*funcs, auto_update=True,app_layout=None, grid_css={}, **kwargs):
 
     **Tips**:    
 
-    - You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.interact, f, x = 5) or Slides.interactive(f, x = 5)`.
+    - You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.ei.interact, f, x = 5) or Slides.ei.interactive(f, x = 5)`.
     - You can also use this under `Slides.capture_content` to display later in a specific place.
     """
     def inner(func):

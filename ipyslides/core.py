@@ -17,9 +17,8 @@ from . import utils
 from . import interaction as _interac
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
-_under_slides.update({k: getattr(_interac, k, None) for k in _interac.__all__})
 
-from ._base.widgets import TOCWidget, ipw # patched one
+from ._base.widgets import TOCWidget, TOCItem, ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
 from ._base.slide import Slide, _build_slide
@@ -143,6 +142,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.get_logo   = get_logo
         self.code       = Code  # Code source
         self.icon       = _Icon  # Icon is useful to add many places
+        self.ei         = _interac # whole interaction module
         self.write      = write
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.parse      = parse  # Parse extended markdown
@@ -210,7 +210,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with self._set_running(None):
             yield
 
-    def run_cell(self, cell, **kwargs):
+    def _run_cell(self, cell, **kwargs):
         """Run cell and return result. Use this instead of IPython's run_cell for extra controls."""
         spc = list(self._slides_per_cell) # make copy
         self._unregister_postrun_cell() # important to avoid putting contnet on slides
@@ -590,7 +590,9 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def _switch_slide(self, old_index, new_index):
         self.notify(self._sectionindex)
-        self._toc_widget._active = self._sectionindex # Update toc widget focus without changing value
+        if inds := [opt.t_i for opt in self._toc_widget.options if opt.s_i == self._sectionindex]:
+            self._toc_widget.send({'active' : inds[0]}) # Update toc widget focus without changing index
+        
         slide = self._iterable[new_index]
         self._update_tmp_output(slide.animation, slide.css)
         
@@ -743,7 +745,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number) as s:
                 s._set_source(cell, "python")  # Update cell source beofore running
-                self.run_cell(cell)  #
+                self._run_cell(cell)  #
 
     def __xmd(self, line, cell=None):
         """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
@@ -802,23 +804,19 @@ class Slides(BaseSlides,metaclass=Singleton):
         return slides_iterable
 
     def _update_toc(self):
-        tocs_dict = {s._section: s for s in self._iterable if s._section}
+        tocs = [(s.index, s._section) for s in self._iterable if s._section]
         children = [
             ipw.HBox([
                 ipw.HTML('<b> Table of Contents</b>'), self.widgets.buttons.toc
             ],layout=dict(border_bottom='1px solid #8988', margin='0 0 8px 0',justify_content='space-between'))
         ]
 
-        if not tocs_dict:
+        if not tocs:
             children.append(self.html('',
                 [r"No sections found!, create sections with markdown syntax alert`section\`content\``"]
             ).as_widget())
         else:
-            self._toc_widget.options = [
-                (slide.index, htmlize(f"color['var(--accent-color)']`{i}.` {sec}") + f"<p>{slide.index}</p>")
-                for i, (sec, slide) in enumerate(tocs_dict.items(), start=1)
-            ]
-            
+            self._toc_widget.options = [TOCItem(t_i, s_i, sec) for t_i,(s_i,sec) in enumerate(tocs)]
             children.append(self._toc_widget)
 
         self.widgets.tocbox.children = children

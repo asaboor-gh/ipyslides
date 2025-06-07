@@ -4,21 +4,27 @@ and then provided to other classes via composition, not inheritance.
 """
 import ipywidgets as ipw
 from dataclasses import dataclass
-from traitlets import observe
+from traitlets import observe, validate
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
 
 from . import styles, _layout_css
 from ._widgets import InteractionWidget, NotesWidget, ListWidget
 from .intro import get_logo, how_to_print
-from ..utils import html
+from ..utils import html, htmlize
 from .. import formatters as fmtrs
 
+@dataclass
+class TOCItem:
+    t_i: int # index of TOC item
+    s_i: int # index of target slide
+    sec: str # section text
+    
 
 class TOCWidget(ListWidget):
     def __init__(self, app, *args, **kwargs):
         self._app = app
-        super().__init__(*args, **kwargs)
+        super().__init__(transform=self._make_toc, *args, **kwargs)
         self.description = '' # no description for this widget
         self.layout.max_height = '' # unset here
     
@@ -27,11 +33,15 @@ class TOCWidget(ListWidget):
             return slide._reset_toc().data.get('text/html','')
         return ''
     
+    def _make_toc(self, obj):
+        return htmlize(f"color['var(--accent-color)']`{obj.t_i + 1}.` {obj.sec}") +  f"<p>{obj.s_i}</p>"
+    
     @observe('value')
     def _jump_to_section(self, change):
-        self._app.navigate_to(change["new"])
-        if self._app.widgets.tocbox.layout.max_height != "0": # only if panel was open, otherwise don't open by clicking on another view
-            self._app.widgets.buttons.toc.click()
+        if change.new:
+            self._app.navigate_to(change.new.s_i) # jump at slide index
+            if self._app.widgets.tocbox.layout.max_height != "0": # only if panel was open, otherwise don't open by clicking on another view
+                self._app.widgets.buttons.toc.click()
 
 
 class Output(fmtrs._Output):
