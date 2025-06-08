@@ -109,22 +109,23 @@ class InteractionWidget(anywidget.AnyWidget):
 
 @_fix_trait_sig
 class ListWidget(anywidget.AnyWidget,ValueWidget):
-    """List widget that displays clickable items with integer values and rich html content.
+    """List widget is a flexible widget that displays clickable items with integer indices and rich html content.
     
-    The `options` trait is a list of items to be displayed. Each item can be any python object.
-    The `description` trait is a string that will be displayed as a label above the list.
+    - `options`: List[Any], each item can be any python object.
+    - `description`: str, will be displayed as a label above the list.
+    - `value`: Any, currently selected value. 
+    - `transform`: Callable, function such that transform(item) -> str, for each item in options.
+    - `html`: str, HTML representation of the currently selected item through transform.
 
-    The `value` trait is the currently selected value. 
-    The `html` trait returns the HTML representation of the currently selected item.
-    You can give `transform` function that accepts a value and return html string. Default is automatically transformed to html.
     You can set `ListWidget.layout.max_height` to limit the maximum height (default 400px) of the list. The list will scroll if it exceeds this height.
     """
-    _options = traitlets.List(read_only=True).tag(sync=True) # will by [(index, obj),...]
+    _options    = traitlets.List(read_only=True).tag(sync=True) # will by [(index, obj),...]
     description = traitlets.Unicode('Select an option', allow_none=True).tag(sync=True)
-    index = traitlets.Int(None, allow_none=True).tag(sync=True)
-    options = traitlets.List() # only on backend
-    value = traitlets.Any(None, allow_none=True,read_only=True) # only backend
-    html = traitlets.Unicode('',read_only=True)  # This is only python side
+    transform   = traitlets.Callable(None, allow_none=True,help="transform(value) -> str")
+    index       = traitlets.Int(None, allow_none=True).tag(sync=True)
+    options     = traitlets.List() # only on backend
+    value       = traitlets.Any(None, allow_none=True,read_only=True) # only backend
+    html        = traitlets.Unicode('',read_only=True, help="html = transform(value)")  # This is only python side
     
     _esm = """
     function render({model, el}) {
@@ -251,16 +252,13 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
     }
     """  
 
-    def __init__(self, transform = None, *args, **kwargs):
-        if callable(transform):
-            self._transform = transform
-        else:
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("transform",None) is None: # default transform set
             from ..formatters import htmlize
-            self._transform = htmlize
-
+            self.transform = htmlize
         super().__init__(*args, **kwargs)
         self.layout.max_height = '400px' # default max height
-
+    
     @traitlets.validate('index')
     def _set_value_html(self,proposal):
         index = proposal['value']
@@ -287,11 +285,18 @@ class ListWidget(anywidget.AnyWidget,ValueWidget):
             self.set_trait('_options', options) # adjust accordingly, set_trait for readonly
             return options  # allow empty list
         
-        if not isinstance(self._transform(options[0]), str):
-            raise TypeError("tranform given at initialization should be like map(transform, options) -> (str,...)")
+        if not isinstance(self.transform(options[0]), str):
+            raise TypeError("tranform function should return a str")
         
-        self.set_trait('_options', [(i, self._transform(op)) for i, op in enumerate(options)])
-        return options    
+        self.set_trait('_options', [(i, self.transform(op)) for i, op in enumerate(options)])
+        return options  
+
+    @traitlets.validate('transform')
+    def _validate_func(self, proposal):
+        func = proposal['value']
+        if self.options and not isinstance(self.transform(self.options[0]), str):
+            raise TypeError("tranform function should return a str")
+        return func
 
     def fmt_html(self):
         from ..formatters import _inline_style

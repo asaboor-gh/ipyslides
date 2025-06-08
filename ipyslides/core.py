@@ -18,7 +18,7 @@ from . import interaction as _interac
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
-from ._base.widgets import TOCWidget, TOCItem, ipw # patched one
+from ._base.widgets import TOCWidget, ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
 from ._base.slide import Slide, _build_slide
@@ -590,7 +590,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def _switch_slide(self, old_index, new_index):
         self.notify(self._sectionindex)
-        if inds := [opt.t_i for opt in self._toc_widget.options if opt.s_i == self._sectionindex]:
+        if inds := [opt.ti for opt in self._toc_widget.options if opt.si == self._sectionindex]:
             self._toc_widget.send({'active' : inds[0]}) # Update toc widget focus without changing index
         
         slide = self._iterable[new_index]
@@ -816,7 +816,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 [r"No sections found!, create sections with markdown syntax alert`section\`content\``"]
             ).as_widget())
         else:
-            self._toc_widget.options = [TOCItem(t_i, s_i, sec) for t_i,(s_i,sec) in enumerate(tocs)]
+            self._toc_widget.set_toc_items(tocs) # instead of setting options here
             children.append(self._toc_widget)
 
         self.widgets.tocbox.children = children

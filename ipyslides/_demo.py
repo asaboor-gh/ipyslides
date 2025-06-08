@@ -5,7 +5,7 @@ def demo_slides(slides):
     slides.close_view() # Close any previous view to speed up loading 10x faster on average
     slides.clear() # Clear previous content
     raw_source = slides.code.cast(__file__).raw
-    N = raw_source.count('.build') + raw_source.count('\n---') + 1 # Count number of slides, +1 for run_cell there
+    N = raw_source.count('.build') + raw_source.count('\n---') 
     slides.create(range(N)) # Create slides first, this is faster
     
     slides.settings.footer.text = 'Author: Abdul Saboor عبدالصبور'
@@ -161,12 +161,15 @@ def demo_slides(slides):
         import numpy as np
         import matplotlib.pyplot as plt
 
+        def plot_sine():
+            plt.plot(np.sin(np.linspace(0,10,100)))
+
         lw = slides.ListWidget(description='Execute a code block',
             options = [
                 lambda: print(np.random.random((10,2))),
                 lambda: plt.plot(np.random.random((10,2))),
-                lambda: plt.plot(np.sin(np.linspace(0,10,100))),
-            ], # transform = callable(obj) can be used to transform options to html
+                plot_sine,
+            ], transform = lambda value: slides.hl(value).value # need simple code, otherwise defult transform is fine
         )
 
         def run(c):

@@ -87,11 +87,16 @@ def _fmt_cols(*objs,widths = None):
     return f'''<div class="columns">{_cols}</div>'''
 
 def hl(code, language="python"): # No need to have in __all__, just for markdown
-    "Highlight (first line of all code only to make it inline only) code in a given language. `language` is the language name, default is python."
+    "Highlight code object in inline mode. `language` is the language name, default is python."
     try: 
-        return XTML('<code class="highlight inline"' + re.findall(
-            r'\<\s*code(.*?\<\s*\/\s*code\s*\>)', highlight(code, language).value
-            )[0]) # Avoid multilines, just first match in code
+        return XTML(
+            '<br>'.join('<code class="highlight inline" style="white-space:pre;"' + c 
+                for c in re.findall(
+                    r'\<\s*code(.*?\<\s*\/\s*code\s*\>)', 
+                    highlight(code, language).value
+                )
+            ) # intended to be one liner, but leave for flexibility
+        ) 
     except:
         return html('code',code) # Fallback , no need to raise errors
 

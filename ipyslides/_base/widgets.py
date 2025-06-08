@@ -2,9 +2,11 @@
 Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
-import ipywidgets as ipw
 from dataclasses import dataclass
-from traitlets import observe, validate
+from collections import namedtuple
+
+from traitlets import observe
+import ipywidgets as ipw
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
 
@@ -13,13 +15,7 @@ from ._widgets import InteractionWidget, NotesWidget, ListWidget
 from .intro import get_logo, how_to_print
 from ..utils import html, htmlize
 from .. import formatters as fmtrs
-
-@dataclass
-class TOCItem:
-    t_i: int # index of TOC item
-    s_i: int # index of target slide
-    sec: str # section text
-    
+  
 
 class TOCWidget(ListWidget):
     def __init__(self, app, *args, **kwargs):
@@ -33,13 +29,18 @@ class TOCWidget(ListWidget):
             return slide._reset_toc().data.get('text/html','')
         return ''
     
+    def set_toc_items(self, items):
+        "items be a list of tuple (target_slide_index, section_text)"
+        tss = namedtuple("TocItem", ['ti', 'si', 'sec'])
+        self.options = [tss(i, *item) for i, item in enumerate(items)]
+    
     def _make_toc(self, obj):
-        return htmlize(f"color['var(--accent-color)']`{obj.t_i + 1}.` {obj.sec}") +  f"<p>{obj.s_i}</p>"
+        return htmlize(f"color['var(--accent-color)']`{obj.ti + 1}.` {obj.sec}") +  f"<p>{obj.si}</p>"
     
     @observe('value')
     def _jump_to_section(self, change):
         if change.new:
-            self._app.navigate_to(change.new.s_i) # jump at slide index
+            self._app.navigate_to(change.new.si) # jump at slide index
             if self._app.widgets.tocbox.layout.max_height != "0": # only if panel was open, otherwise don't open by clicking on another view
                 self._app.widgets.buttons.toc.click()
 
