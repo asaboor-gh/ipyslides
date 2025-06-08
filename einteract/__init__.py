@@ -13,7 +13,7 @@ This module provides extended interactive capabilities including:
 
 **Custom Widgets**:
 
-- ListWidget: Widget for list-based interactions
+- ListWidget: Widget for list-based interactions that can hold any python object.
 - AnimationSlider: Widget for animation controls
 - Output: Modified output widget for display management
 
@@ -29,7 +29,7 @@ This module is a wrapper around the `ipyslides.interaction` modulde.
 """
 
 __all__ = [
-    'InteractBase','callback', 'classed', 'print_error', 'interactive','interact', 'patched_plotly', 'plt2html',
+    'InteractBase','callback', 'classed', 'monitor', 'print_error', 'interactive','interact', 'patched_plotly', 'plt2html',
     'ListWidget', 'AnimationSlider', 'Output'
 ]
 
@@ -37,6 +37,7 @@ from ipyslides.interaction import (
     InteractBase, 
     callback,
     classed, 
+    monitor,
     interact, 
     interactive,
     print_error,
