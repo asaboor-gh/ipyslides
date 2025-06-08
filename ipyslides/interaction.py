@@ -153,9 +153,15 @@ def _func2widget(func):
         with (out or nullcontext()):
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in func_params}
 
-            # Check if any parameter is a Button
+            # Check if any parameter is a Button, and skip them
             buttons = [v for v in filtered_kwargs.values() if isinstance(v, ipw.Button)]
-            other_params  = {k: v for k, v in filtered_kwargs.items() if not isinstance(v, ipw.Button)}
+            
+            # Any parameter which is widget does not change identity even if underlying data changes.
+            # For example, Plotly's FigureWidget relies on underlying data for ==, which can make `new_fig != old_fig`
+            # evaluate to True even when `new_fig is old_fig`. This can trigger unnecessary function calls during active
+            # selections, which cannot be removed from the Python side (unfortunately). 
+            # Checking identity is a mess later together with == and in, we can just exclude them here, widget is supposed to have a static identity
+            other_params  = {k: v for k, v in filtered_kwargs.items() if not isinstance(v, ipw.DOMWidget)}
             
             if buttons:
                 if not any(btn._click_triggered for btn in buttons):
@@ -172,10 +178,11 @@ def _func2widget(func):
                 
                 return # exit after button click handling
                 
-            # Compare values properly by checking each parameter that is not a Button
-            values_changed = any(
-                k not in last_kws or other_params[k] != last_kws[k]
-                for k in other_params
+            # Compare values properly by checking each parameter that is not a Widget (should already be same object)
+            # Not checking identity here to take benifit of mutations like list/dict content
+            values_changed = any( # order of checks matters
+                (k not in last_kws) or (v != last_kws[k]) 
+                for k, v in other_params.items()
             )
             
             # Run function if new values, or does not have parameters or on button click
