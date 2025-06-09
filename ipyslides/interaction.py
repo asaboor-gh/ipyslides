@@ -164,7 +164,7 @@ def _func2widget(func):
             other_params  = {k: v for k, v in filtered_kwargs.items() if not isinstance(v, ipw.DOMWidget)}
             
             if buttons:
-                if not any(btn._click_triggered for btn in buttons):
+                if not any(btn.clicked for btn in buttons):
                     return # Only update if a button was clicked and skip other parameter changes
                 
                 with print_error(), disabled(*buttons): # disable buttons during function call
@@ -172,9 +172,6 @@ def _func2widget(func):
                         func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
                     finally:
                         last_kws.update(filtered_kwargs) # update old kwargs to latest values
-                        for btn in buttons:
-                            btn._click_triggered = False # reset click trigger
-                            _hint_update(btn, remove=True)
                 
                 return # exit after button click handling
                 
@@ -282,6 +279,11 @@ def _size_to_css(size):
         "Got '{}'".format(size))
 
 _css_info = textwrap.indent('\n**Python dictionary to CSS**\n' + _dict2css, '    ')
+
+def _protected(method):
+    "Protect methods during subclassing. methods staring with __ are automatically protected!"
+    method._override_protected = True
+    return method
 
 @_fix_init_sig
 @_format_docs(css_info = _css_info)
@@ -401,39 +403,38 @@ class InteractBase(ipw.interactive):
     def __init__(self, auto_update=True, app_layout= None, grid_css={}):
         if not isinstance(grid_css,dict):
             raise TypeError(f"grid_css should be a dict, got {type(grid_css)}")
-        self._auto_update = auto_update
-        self._grid_css = grid_css
-        self._mutuals = [] # dependent parameters 
-        self._css_class = 'i-'+str(id(self))
-        self._style_html = ipw.HTML()
-        self._style_html.layout.position = 'absolute' # avoid being grid part
-        self.set_css(main=grid_css) # after assigning above
-        self._app = ipw.AppLayout().add_class('interact-app') # base one
-        self._app.layout.display = 'grid' # for correct export to html, other props in set_css
-        self._app.layout.position = 'relative' # contain absolute items inside
-        self._app._size_to_css = _size_to_css # enables em, rem
+        self.__auto_update = auto_update
+        self.__mutuals = [] # dependent parameters 
+        self.__css_class = 'i-'+str(id(self))
+        self.__style_html = ipw.HTML()
+        self.__style_html.layout.position = 'absolute' # avoid being grid part
+        self.set_css(main = grid_css) # after assigning html above
+        self.__app = ipw.AppLayout().add_class('interact-app') # base one
+        self.__app.layout.display = 'grid' # for correct export to html, other props in set_css
+        self.__app.layout.position = 'relative' # contain absolute items inside
+        self.__app._size_to_css = _size_to_css # enables em, rem
         
-        self._iparams = {} # just empty reference
-        extras = self._fix_kwargs() # params are internally fixed
-        if not self._iparams: # need to interact anyhow and also allows a no params function
-            self._auto_update = False
+        self.__iparams = {} # just empty reference
+        extras = self.__fix_kwargs() # params are internally fixed
+        if not self.__iparams: # need to interact anyhow and also allows a no params function
+            self.__auto_update = False
         
-        self._icallbacks = self._interactive_callbacks() # callbacks after collecting params
-        if not isinstance(self._icallbacks, (list, tuple)):
+        self.__icallbacks = self._interactive_callbacks() # callbacks after collecting params
+        if not isinstance(self.__icallbacks, (list, tuple)):
             raise TypeError("_interactive_callbacks should return a tuple of functions!")
         
-        if not self._icallbacks:
+        if not self.__icallbacks:
             raise ValueError("at least one interactive function required!")
 
-        outputs = self._func2widgets() # build stuff, before actual interact
-        super().__init__(self._run_updates, {'manual':not self._auto_update,'manual_name':''}, **self._iparams)
+        outputs = self.__func2widgets() # build stuff, before actual interact
+        super().__init__(self.__run_updates, {'manual':not self.__auto_update,'manual_name':''}, **self.__iparams)
         
         btn = getattr(self, 'manual_button', None) # need it above later
-        self.add_class('ips-interact').add_class(self._css_class)
+        self.add_class('ips-interact').add_class(self.__css_class)
         self.layout.position = 'relative' # contain absolute items inside
         self.layout.height = 'max-content' # adopt to inner height
 
-        self.children += (*extras, *outputs, self._style_html) # add extra widgets to box children
+        self.children += (*extras, *outputs, self.__style_html) # add extra widgets to box children
         self.out.add_class("out-main")
         self.out._kwarg = "out-main" # needs to be in all widgets
 
@@ -464,22 +465,22 @@ class InteractBase(ipw.interactive):
             except Exception as e:
                 print(f"Warning: Initial button click faild: {e}")
 
-        self._all_widgets = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')} # save it once for sending to app layout
-        self._groups = self._create_groups(self._all_widgets) # create groups of widgets for later use
+        self.__all_widgets = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')} # save it once for sending to app layout
+        self.__groups = self.__create_groups(self.__all_widgets) # create groups of widgets for later use
         
-        for func in self._icallbacks:
-            self._hint_btns_update(func) # external buttons update hint
+        for func in self.__icallbacks:
+            self.__hint_btns_update(func) # external buttons update hint
         
         if app_layout is not None:
-            self._validate_layout(app_layout) # validate arguemnts first
+            self.__validate_layout(app_layout) # validate arguemnts first
             self.relayout(**app_layout)
         else:
-            self.relayout(center=list(self._all_widgets.keys())) # add all to GridBox which is single column
+            self.relayout(center=list(self.__all_widgets.keys())) # add all to GridBox which is single column
     
     def __repr__(self): # it throws very big repr, so just show class name and id
         return f"<{self.__module__}.{type(self).__name__} at {hex(id(self))}>"
     
-    def _validate_layout(self, app_layout):
+    def __validate_layout(self, app_layout):
         if not isinstance(app_layout, dict):
             raise TypeError("app_layout should be a dictionary to relayout widgets!")
         
@@ -497,15 +498,15 @@ class InteractBase(ipw.interactive):
                     f"(Box_instance, [names]) tuples, got {type(value).__name__}"
                 )
             
-            if self._auto_update:
+            if self.__auto_update:
                 value = [v for v in value if v != 'btn-main'] # avoid throwing error over button, which changes by other paramaters
             
             for i, name in enumerate(value,start=1):
                 if isinstance(name,str):
-                    if not name in self._all_widgets:
+                    if not name in self.__all_widgets:
                         raise ValueError(
                             f"Invalid widget name {name!r} in {key!r} at position {i}. "
-                            f"Valid names are: {list(self._all_widgets.keys())}")
+                            f"Valid names are: {list(self.__all_widgets.keys())}")
                     continue # valid widget name, no need to check further
 
                 if not isinstance(name, (list,tuple)):
@@ -534,17 +535,23 @@ class InteractBase(ipw.interactive):
                             f"Widget names in tuple at position {i} in {key!r} must be strings, "
                             f"got {type(child).__name__}")
                     
-                    if child not in self._all_widgets:
+                    if child not in self.__all_widgets:
                         raise ValueError(
                             f"Invalid widget name {child!r} in tuple at position {i} in {key!r}. "
-                            f"Valid names are: {list(self._all_widgets.keys())}")
+                            f"Valid names are: {list(self.__all_widgets.keys())}")
     
     def __init_subclass__(cls):
         if (not '_interactive_params' in cls.__dict__) or (not callable(cls._interactive_params)):
             raise AttributeError("implement _interactive_params(self) method in subclass, "
                 "which should returns a dictionary of interaction parameters.")
+        for base in cls.__mro__[1:]: # walk throgh parents, not self
+            for name, attr in base.__dict__.items():
+                if getattr(attr, '_override_protected',False):
+                    if name in cls.__dict__ and cls.__dict__[name] is not attr:
+                        raise Exception(f"Cannot override method {name!r} in class {cls.__name__!r}")
         return super().__init_subclass__()
     
+    @_protected
     def relayout(self, 
         header=None, center=None, left_sidebar=None,right_sidebar=None,footer=None,
         pane_widths=None,pane_heights=None,merge=True, 
@@ -591,7 +598,7 @@ class InteractBase(ipw.interactive):
         - Other areas use vertical box layout
         """
         app_layout = {key:value for key,value in locals().items() if key != 'self'}
-        self._validate_layout(app_layout)
+        self.__validate_layout(app_layout)
         other = ipw.VBox().add_class('other-area') # this should be empty to enable CSS perfectly, unless filled below
         areas = ["header","footer", "center", "left_sidebar","right_sidebar"]
 
@@ -602,26 +609,27 @@ class InteractBase(ipw.interactive):
                 box = ipw.GridBox if key == 'center' else ipw.VBox
                 children = []
                 for name in value:
-                    if isinstance(name,str) and name in self._all_widgets:
-                        children.append(self._all_widgets[name])
+                    if isinstance(name,str) and name in self.__all_widgets:
+                        children.append(self.__all_widgets[name])
                     elif isinstance(name, (list,tuple)) and len(name) == 2: # already checked, but just in case
                         nested_box, childs = name
-                        nested_box.children = tuple([self._all_widgets[n] for n in childs if n in self._all_widgets])
+                        nested_box.children = tuple([self.__all_widgets[n] for n in childs if n in self.__all_widgets])
                         collected.extend(list(childs)) # avoid showing nested ones again.
                         children.append(nested_box) # add box to  main children
                     
-                setattr(self._app, key, box(children, _dom_classes = (key.replace('_','-'),))) # for user CSS
+                setattr(self.__app, key, box(children, _dom_classes = (key.replace('_','-'),))) # for user CSS
             elif value: # class own traits and Layout properties
-                setattr(self._app, key, value)
+                setattr(self.__app, key, value)
         
-        other.children += tuple([v for k,v in self._all_widgets.items() if k not in collected])
+        other.children += tuple([v for k,v in self.__all_widgets.items() if k not in collected])
         
         # We are adding a reaonly isfullscreen trait set through button on parent class
         fs_btn = FullscreenButton()
         fs_btn.observe(lambda c: self.set_trait('isfullscreen',c.new), names='isfullscreen') # setting readonly property
         
-        self.children = (self._app, other, self._style_html, fs_btn) # button be on top to click
+        self.children = (self.__app, other, self.__style_html, fs_btn) # button be on top to click
     
+    @_protected
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
         """Update CSS styling for the main app layout and center grid.
@@ -664,25 +672,27 @@ class InteractBase(ipw.interactive):
 
         {css_info}
         """
+        return self._set_css(main=main, center=center)
+
+    def _set_css(self, main, center): # in ipyvasp I needed ovveriding it, user can, but call super()._set_css for sure
         if main and not isinstance(main,dict):
             raise TypeError('main should be a nesetd dictionary of CSS properties to apply to main app!')
         if center and not isinstance(center,dict):
             raise TypeError('center should be a nesetd dictionary of CSS properties to apply to central grid!')
         
-        
-        main_sl = f".{self._css_class}.widget-interact.ips-interact > .interact-app" # directly inside
+        main_sl = f".{self.__css_class}.widget-interact.ips-interact > .interact-app" # directly inside
         cent_sl = f"{main_sl} > .center"
         _css = _build_css(('.ips-interact > .interact-app',),_general_css)
 
         fs_css = main.pop(':fullscreen',{}) or main.pop('^:fullscreen',{}) # both valid
         if fs_css: # fullscreen css given by user, full screen is top interact, not inside one as button is there
-            _css += ('\n' + _build_css((f".{self._css_class}.widget-interact.ips-interact:fullscreen > .interact-app",), fs_css))
+            _css += ('\n' + _build_css((f".{self.__css_class}.widget-interact.ips-interact:fullscreen > .interact-app",), fs_css))
         
         if main:
             _css += ("\n" + _build_css((main_sl,), main))
         if center:
             _css += ("\n" + _build_css((cent_sl,), center))
-        self._style_html.value = f'<style>{_css}</style>'
+        self.__style_html.value = f'<style>{_css}</style>'
     
     def _interactive_callbacks(self):
         """Collect all methods marked as callbacks. If overridden by subclass, should return a tuple of functions."""
@@ -697,17 +707,17 @@ class InteractBase(ipw.interactive):
                 funcs.append(bound_method)
         return tuple(funcs)
     
-    def _validate_params(self, params):
+    def __validate_params(self, params):
         if not isinstance(params, dict):
             raise TypeError(f"method `_interactive_params(self)` should return a dict of interaction parameters")
                 
         for key in params:
             if not isinstance(key, str) or not key.isidentifier():
                 raise ValueError(f"{key!r} is not a valid name for python variable!")
-           
-    def _fix_kwargs(self):
+ 
+    def __fix_kwargs(self):
         params = self._interactive_params() # subclass defines it
-        self._validate_params(params)   
+        self.__validate_params(params)   
 
         extras = {}
         for key, value in params.copy().items():
@@ -721,6 +731,16 @@ class InteractBase(ipw.interactive):
             elif isinstance(value, ipw.DOMWidget) and not isinstance(value,ipw.ValueWidget): # value widgets are automatically handled
                 params[key] = ipw.fixed(value) # convert to fixed widget, to be passed as value
                 extras[key] = value # we need to show that widget
+        
+        for key, value in extras.items():
+            value._kwarg = key # required for later use
+            if isinstance(value, ipw.Button): # Button can only be in extras, by fixed or itself
+                # Add click trigger flag and handler, callbacks using this can only be triggered by click
+                value.add_traits(clicked=traitlets.Bool(False, read_only=True)) # useful to detect which button pressed in callbacks
+                value.add_class('Refresh-Btn') # add class for styling
+                value.on_click(self.update) # after setting clicked, update outputs on click
+                if not value.tooltip: # will show when not synced
+                    value.tooltip = 'Run Callback'
 
         # All params should be fixed above before doing below
         for key, value in params.copy().items(): 
@@ -743,37 +763,37 @@ class InteractBase(ipw.interactive):
                     # We do not want to raise error, so any invalid string can goes to Text widget
                     if isinstance(w, ipw.DOMWidget) and trait_name in w.trait_names():
                         params[key] = AnyTrait(w, trait_name)
-                        self._mutuals.append((key, name))
+                        self.__mutuals.append((key, name))
         
         # Set _iparams after clear widgets
-        self._iparams = params
-        self._reset_descp(extras)
-        for key, value in extras.items():
-            value._kwarg = key # required for later use
-            if isinstance(value, ipw.Button): # Button can only be in extras, by fixed or itself
-                # Add click trigger flag and handler, callbacks using this can only be triggered by click
-                value._click_triggered = False
-                value.add_class('Refresh-Btn') # add class for styling
-                if not value.tooltip: # will show when not synced
-                    value.tooltip = 'Run Callback'
-                value.on_click(lambda btn: setattr(btn, '_click_triggered', True))
-                value.on_click(self.update) # after setting click trigger, update outputs
-                
+        self.__iparams = params
+        self.__reset_descp(extras)
         return tuple(extras.values())
     
-    def _reset_descp(self, extras):
+    @_protected
+    def update(self, *args):
+        btn = args[0] if args and isinstance(args[0],ipw.Button) else None # if triggered by click on a button
+        try:
+            if btn: btn.set_trait('clicked', True) # since read_only
+            super().update(*args) # args are ignored anyhow but let it pass
+        finally:
+            if btn:
+                btn.set_trait('clicked', False)
+                _hint_update(btn, remove=True)
+    
+    def __reset_descp(self, extras):
         # fix description in extras, like if user pass IntSlider etc.
         for key, value in extras.items():
             if 'description' in value.traits() and not value.description \
                 and not isinstance(value,(ipw.HTML, ipw.HTMLMath, ipw.Label)): # HTML widgets and Labels should not pick extra
                 value.description = key # only if not given
     
-    def _func2widgets(self):
+    def __func2widgets(self):
         self._outputs = ()   # reference for later use
         callbacks = [] # collecting processed callback
         used_classes = {}  # track used CSS classes for conflicts 
 
-        for f in self._icallbacks:
+        for f in self.__icallbacks:
             if not callable(f):
                 raise TypeError(f'Expected callable, got {type(f).__name__}. '
                     'Only functions accepting a subset of kwargs allowed!')
@@ -787,18 +807,18 @@ class InteractBase(ipw.interactive):
                     )
                 used_classes[klass] = f.__name__
             
-            self._validate_func(f) # before making widget, check
+            self.__validate_func(f) # before making widget, check
             new_func, out = _func2widget(f) # converts to output widget if user set class or empty
             callbacks.append(new_func) 
             
             if out is not None:
                 self._outputs += (out,)
         
-        self._icallbacks = callbacks # set back
+        self.__icallbacks = callbacks # set back
         del used_classes # no longer needed
         return self._outputs # explicit
     
-    def _validate_func(self, f):
+    def __validate_func(self, f):
         ps = inspect.signature(f).parameters
         f_ps = {k:v for k,v in ps.items()}
         has_varargs = any(param.kind == param.VAR_POSITIONAL for param in ps.values())
@@ -810,13 +830,13 @@ class InteractBase(ipw.interactive):
                 "Only explicitly named keywords from interactive params are allowed."
             )
 
-        if len(ps) == 0 and self._auto_update:
+        if len(ps) == 0 and self.__auto_update:
             raise ValueError(
                 f"Function {f.__name__!r} must have at least one parameter when auto_update is enabled (default). "
                 "Any function with no arguments can only run with global interact button click."
             )
         
-        for p1, p2 in self._mutuals:
+        for p1, p2 in self.__mutuals:
             if p1 in f_ps and p2 in f_ps:
                 raise ValueError(
                     f"Function {f} cannot have paramters that depend on each other, {p1!r} depends on {p2!r} "
@@ -827,8 +847,7 @@ class InteractBase(ipw.interactive):
         if extra_params:
             raise ValueError(f"Function {f.__name__!r} has parameters {extra_params} that are not defined in interactive params.")
         
-    
-    def _create_groups(self, widgets_dict):
+    def __create_groups(self, widgets_dict):
         groups = namedtuple('WidgetGropus', ['controls', 'outputs', 'others'])
         controls, outputs, others = [], [], []
         for key, widget in widgets_dict.items():
@@ -843,10 +862,10 @@ class InteractBase(ipw.interactive):
                 others.append(key)
         return groups(controls=tuple(controls), outputs=tuple(outputs), others=tuple(others))
     
-    def _hint_btns_update(self, func):
+    def __hint_btns_update(self, func):
         func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
         # Let's observe buttons by shared value widgets in func_params
-        controls = {c: self._all_widgets[c] for c in self.groups.controls if c in func_params} # filter controls by func_params
+        controls = {c: self.__all_widgets[c] for c in self.groups.controls if c in func_params} # filter controls by func_params
         btns = [controls[k] for k in func_params if isinstance(controls.get(k,None), ipw.Button)]
         ctrls = {k: v for k, v in controls.items() if isinstance(v, ipw.ValueWidget)} # other controls
         
@@ -862,29 +881,29 @@ class InteractBase(ipw.interactive):
     def groups(self): 
         """NamedTuple of widget groups: controls, outputs, others."""
         if not hasattr(self, '_groups'):
-            self._groups = self._create_groups(self._all_widgets)
-        return self._groups
+            self.__groups = self.__create_groups(self.__all_widgets)
+        return self.__groups
     
     @property
     def params(self):
         "NamedTuple of all parameters used in this interact, including fixed widgets. Can be access inside callbacks with self.params."
         if not hasattr(self, '_params_tuple'):
-            wparams = self._iparams.copy() # copy to avoid changes
-            for k, v in self._iparams.items():
+            wparams = self.__iparams.copy() # copy to avoid changes
+            for k, v in self.__iparams.items():
                 if isinstance(v, ipw.fixed) and isinstance(v.value, ipw.DOMWidget):
                     wparams[k] = v.value # only widget to expose for use, not other fixed values
             self._params_tuple = namedtuple('InteractiveParams', wparams.keys())(**wparams)
         return self._params_tuple
     
-    def _run_updates(self, **kwargs):
+    def __run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
         with _hold_running_slide_builder(), print_error():
             if btn: 
                 with disabled(btn):
                     _hint_update(btn, remove=True)
-                    _run_callbacks(self._icallbacks, kwargs, self) 
+                    _run_callbacks(self.__icallbacks, kwargs, self) 
             else:
-                _run_callbacks(self._icallbacks, kwargs, self) 
+                _run_callbacks(self.__icallbacks, kwargs, self) 
             
 
 def callback(css_class = None):
