@@ -143,6 +143,7 @@ class Changed:
     Can be used as `changed = '.changed'` in params and then `changed` can be used in callbacks to check 
     some other value y as changed('y') -> True if y was changed else False. You can also test `'y' in changed`.
     This is useful to merge callbacks and execute code blocks conditionally.
+    Using `if changed:` will evalutes to true if any of params is changed.
     
     ```python
     interactive(lambda a,changed: print(a,'a' in changed, changed('changed')), a = 2, changed = '.changed')
@@ -173,6 +174,9 @@ class Changed:
     
     def __contains__(self, key): # 'y' in changed
         return self(key)
+    
+    def __bool__(self): # any key changed
+        return bool(self.__values)
 
 
 def _func2widget(func, change_tracker):
@@ -319,10 +323,6 @@ def _size_to_css(size):
 
 _css_info = textwrap.indent('\n**Python dictionary to CSS**\n' + _dict2css, '    ')
 
-def _protected(method):
-    "Protect methods during subclassing. methods staring with __ are automatically protected!"
-    method._override_protected = True
-    return method
 
 @_fix_init_sig
 @_format_docs(css_info = _css_info)
@@ -456,10 +456,9 @@ class InteractBase(ipw.interactive):
         self.__app.layout.display = 'grid' # for correct export to html, other props in set_css
         self.__app.layout.position = 'relative' # contain absolute items inside
         self.__app._size_to_css = _size_to_css # enables em, rem
-        self._setup(auto_update, app_layout, grid_css)
+        self.__setup(auto_update, app_layout, grid_css)
 
-    @_protected
-    def _setup(self, auto_update, app_layout, grid_css):
+    def __setup(self, auto_update, app_layout, grid_css):
         if not isinstance(grid_css,dict):
             raise TypeError(f"grid_css should be a dict, got {type(grid_css)}")
         
@@ -591,14 +590,11 @@ class InteractBase(ipw.interactive):
                             f"Valid names are: {list(self.__all_widgets.keys())}")
     
     def __init_subclass__(cls):
-        for base in cls.__mro__[1:]: # walk throgh parents, not self
-            for name, attr in base.__dict__.items():
-                if getattr(attr, '_override_protected',False):
-                    if name in cls.__dict__ and cls.__dict__[name] is not attr:
-                        raise Exception(f"Cannot override method {name!r} in class {cls.__name__!r}")
+        for name in ['set_css','relayout','groups','outputs','params','update','isfullscreen','changed']:
+            if name in cls.__dict__:
+                raise Exception(f"Cannot override inherited {name!r} in class {cls.__name__!r}")
         return super().__init_subclass__()
     
-    @_protected
     def relayout(self, 
         header=None, center=None, left_sidebar=None,right_sidebar=None,footer=None,
         pane_widths=None,pane_heights=None,merge=True, 
@@ -676,7 +672,6 @@ class InteractBase(ipw.interactive):
         
         self.children = (self.__app, other, self.__style_html, fs_btn) # button be on top to click
     
-    @_protected
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
         """Update CSS styling for the main app layout and center grid.
@@ -824,7 +819,6 @@ class InteractBase(ipw.interactive):
         self.__reset_descp(extras)
         return tuple(extras.values())
     
-    @_protected
     def update(self, *args):
         btn = args[0] if args and isinstance(args[0],ipw.Button) else None # if triggered by click on a button
         try:
@@ -932,7 +926,7 @@ class InteractBase(ipw.interactive):
             for k,w in ctrls.items():
                 def update_hint(change, button=btn): _hint_update(button) # closure
                 w.observe(update_hint, names='value') # update button hint on value change
-                    
+               
     @property
     def outputs(self): return getattr(self, '__outputs',())
 
