@@ -1,5 +1,6 @@
 """
 Enhanced version of ipywidgets's interact/interactive functionality.
+Use as interactive/@interact or subclass InteractBase. 
 """
 
 __all__ = ['interactive','interact', 'classed', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
@@ -260,6 +261,7 @@ class InteractBase(ipw.interactive):
         self.__app.layout.display = 'grid' # for correct export to html, other props in set_css
         self.__app.layout.position = 'relative' # contain absolute items inside
         self.__app._size_to_css = _size_to_css # enables em, rem
+        self.__other = ipw.VBox().add_class('other-area') # this should be empty to enable CSS perfectly, unless filled below
         self.__setup(auto_update, app_layout, grid_css)
 
     def __setup(self, auto_update, app_layout, grid_css):
@@ -277,7 +279,6 @@ class InteractBase(ipw.interactive):
         self.__icallbacks = self._interactive_callbacks() # callbacks after collecting params
         if not isinstance(self.__icallbacks, (list, tuple)):
             raise TypeError("_interactive_callbacks should return a tuple of functions!")
-
         outputs = self.__func2widgets() # build stuff, before actual interact
         super().__init__(self.__run_updates, {'manual':not self.__auto_update,'manual_name':''}, **self.__iparams)
         
@@ -446,7 +447,6 @@ class InteractBase(ipw.interactive):
         """
         app_layout = {key:value for key,value in locals().items() if key != 'self'}
         self.__validate_layout(app_layout)
-        other = ipw.VBox().add_class('other-area') # this should be empty to enable CSS perfectly, unless filled below
         areas = ["header","footer", "center", "left_sidebar","right_sidebar"]
 
         collected = []
@@ -468,13 +468,13 @@ class InteractBase(ipw.interactive):
             elif value: # class own traits and Layout properties
                 setattr(self.__app, key, value)
         
-        other.children += tuple([v for k,v in self.__all_widgets.items() if k not in collected])
+        self.__other.children += tuple([v for k,v in self.__all_widgets.items() if k not in collected])
         
         # We are adding a reaonly isfullscreen trait set through button on parent class
         fs_btn = FullscreenButton()
         fs_btn.observe(lambda c: self.set_trait('isfullscreen',c.new), names='isfullscreen') # setting readonly property
         
-        self.children = (self.__app, other, self.__style_html, fs_btn) # button be on top to click
+        self.children = (self.__app, self.__other, self.__style_html, fs_btn) # button be on top to click
     
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
@@ -651,8 +651,9 @@ class InteractBase(ipw.interactive):
                 raise TypeError(f'Expected callable, got {type(f).__name__}. '
                     'Only functions accepting a subset of kwargs allowed!')
             
-            if f in seen_funcs:
-                raise ValueError(f"Duplicate callback detected: {f.__name__!r}. Each callback must be unique.")
+            if any(s.__code__ == f.__code__ for s in seen_funcs):
+                continue # don not add dupliate functions, funcs only same if bytecode is same
+
             seen_funcs.add(f)
             
             # Check for CSS class conflicts
