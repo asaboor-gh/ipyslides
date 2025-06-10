@@ -137,7 +137,45 @@ def print_error(tb_offset=2):
         print(tb, file=sys.stderr) # This was dead simple, but I was previously stuck with ansi2html
         # In future if need to return error, use Ansi2HTMLConverter(inline=True).convert(tb, full = False)
 
-def _func2widget(func):
+
+class Changed:
+    """A class to track changes in values of params. It itself does not trigger a change. 
+    Can be used as `changed = '.changed'` in params and then `changed` can be used in callbacks to check 
+    some other value y as changed('y') -> True if y was changed else False. You can also test `'y' in changed`.
+    This is useful to merge callbacks and execute code blocks conditionally.
+    
+    ```python
+    interactive(lambda a,changed: print(a,'a' in changed, changed('changed')), a = 2, changed = '.changed')
+    # If a = 5 and changed from a = 6, prints '5 True False'
+    # If a = 5 and did not change, prints '5 False False', so changed itself is fixed.
+    ```
+
+    In callbacks in subclasses of `InteractBase`, you can just check `self.changed('a')/'a' in self.changed` instead of adding an extra parameter.
+    """
+    def __init__(self, tuple_ = ()):
+        self._set(tuple_)
+        
+    def _set(self, tuple_):
+        if not isinstance(tuple_, (tuple,list)): raise TypeError("tuple expected!")
+        self.__values = tuple(tuple_)
+    
+    def __repr__(self):
+        return f"Changed{list(self.__values)})"
+    
+    def __call__(self, key):
+        "Check name of a variable in changed variabls inside a callback."
+        # We are using key, because value can not be tracked from source,
+        # so in case of x = 8, y = 8, we get 8 == 8 -> True and  8 is 8 -> True, but 'x' is never 'y'.
+        if not isinstance(key, str): raise TypeError(f"expects name of variable as str, got {type(key)!r}")
+        if key in self.__values:
+            return True
+        return False
+    
+    def __contains__(self, key): # 'y' in changed
+        return self(key)
+
+
+def _func2widget(func, change_tracker):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
     out = None # If No CSS class provided, no output widget will be created, default
     
@@ -177,16 +215,17 @@ def _func2widget(func):
                 
             # Compare values properly by checking each parameter that is not a Widget (should already be same object)
             # Not checking identity here to take benifit of mutations like list/dict content
-            values_changed = any( # order of checks matters
-                (k not in last_kws) or (v != last_kws[k]) 
-                for k, v in other_params.items()
-            )
+            values_changed = [k for k, v in other_params.items() 
+                if (k not in last_kws) or (v != last_kws[k]) 
+            ] # order of checks matters
             
             # Run function if new values, or does not have parameters or on button click
             if values_changed or not func_params: # function may not have arguments but can be run via others
+                change_tracker._set(values_changed)
                 with print_error():
                     func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
             
+            change_tracker._set([])
             last_kws.update(filtered_kwargs) # update old kwargs to latest values
             
     return (call_func, out)
@@ -323,8 +362,11 @@ class InteractBase(ipw.interactive):
             fig.add_scatter(x=[0, x], y=[0, x**2])
             
         @callback('out-stats')  # creates Output widget for it
-        def show_stats(self, y):
-            print(f"Distance: {{np.sqrt(1 + y**2)}}")
+        def show_stats(self, x, y):
+            if 'y' in self.changed: # detect if y was changed
+                print(f"Distance: {{np.sqrt(1 + y**2)}}")
+            else:
+                print(x)
     
     # Create and layout
     dash = MyDashboard(auto_update=True)
@@ -362,6 +404,7 @@ class InteractBase(ipw.interactive):
     - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
     - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
     - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
+        - You can have multiple buttons in a single callback and check `btn.clicked` attribute to run code based on which button was clicked.
     - Plotly FigureWidgets (use patched_plotly for selection support)
 
     **Callbacks**:   
@@ -377,6 +420,9 @@ class InteractBase(ipw.interactive):
         
     **Attributes & Properties**:  
 
+    - changed: Read-only trait to detect which parameters of a callback changed:
+        - By providing `changed = '.changed'` in parameters and later in callback by checking `changed('param') -> Bool`.
+        - Directly access `self.changed` in a subclass and use `changed('param') -> Bool`/`'param' in self.changed`. Useful to merge callback.
     - isfullscreen: Read-only trait to detect fullscreen change on python side. Can be observed as '.isfullscreen' in params.
     - groups: NamedTuple(controls, outputs, others) - Widget names by type
     - outputs: Tuple[Output] - Output widgets from callbacks
@@ -399,21 +445,27 @@ class InteractBase(ipw.interactive):
     {css_info}
     """
     isfullscreen = traitlets.Bool(False, read_only=True)
+    changed = traitlets.Instance(Changed, default_value=Changed(), read_only=True) # tracks parameters values changed, but fixed itself
 
     def __init__(self, auto_update=True, app_layout= None, grid_css={}):
-        if not isinstance(grid_css,dict):
-            raise TypeError(f"grid_css should be a dict, got {type(grid_css)}")
-        self.__auto_update = auto_update
         self.__mutuals = [] # dependent parameters 
         self.__css_class = 'i-'+str(id(self))
         self.__style_html = ipw.HTML()
         self.__style_html.layout.position = 'absolute' # avoid being grid part
-        self.set_css(main = grid_css) # after assigning html above
         self.__app = ipw.AppLayout().add_class('interact-app') # base one
         self.__app.layout.display = 'grid' # for correct export to html, other props in set_css
         self.__app.layout.position = 'relative' # contain absolute items inside
         self.__app._size_to_css = _size_to_css # enables em, rem
+        self._setup(auto_update, app_layout, grid_css)
+
+    @_protected
+    def _setup(self, auto_update, app_layout, grid_css):
+        if not isinstance(grid_css,dict):
+            raise TypeError(f"grid_css should be a dict, got {type(grid_css)}")
         
+        self.set_css(main = grid_css)
+        
+        self.__auto_update = auto_update
         self.__iparams = {} # just empty reference
         extras = self.__fix_kwargs() # params are internally fixed
         if not self.__iparams: # need to interact anyhow and also allows a no params function
@@ -422,9 +474,6 @@ class InteractBase(ipw.interactive):
         self.__icallbacks = self._interactive_callbacks() # callbacks after collecting params
         if not isinstance(self.__icallbacks, (list, tuple)):
             raise TypeError("_interactive_callbacks should return a tuple of functions!")
-        
-        if not self.__icallbacks:
-            raise ValueError("at least one interactive function required!")
 
         outputs = self.__func2widgets() # build stuff, before actual interact
         super().__init__(self.__run_updates, {'manual':not self.__auto_update,'manual_name':''}, **self.__iparams)
@@ -450,6 +499,7 @@ class InteractBase(ipw.interactive):
                 w.observe(self.update, names='value')
 
         if btn:
+            btn.add_traits(clicked=traitlets.Bool(False, read_only=True)) # just completeness for global button too
             for w in self.kwargs_widgets: # should tell the button to update
                 # ipywidgets' Play, Text and added Animation Sliders bypass run button, no need to trigger it
                 if not isinstance(w, (ipw.Text, ipw.Play, AnimationSlider)): 
@@ -541,9 +591,6 @@ class InteractBase(ipw.interactive):
                             f"Valid names are: {list(self.__all_widgets.keys())}")
     
     def __init_subclass__(cls):
-        if (not '_interactive_params' in cls.__dict__) or (not callable(cls._interactive_params)):
-            raise AttributeError("implement _interactive_params(self) method in subclass, "
-                "which should returns a dictionary of interaction parameters.")
         for base in cls.__mro__[1:]: # walk throgh parents, not self
             for name, attr in base.__dict__.items():
                 if getattr(attr, '_override_protected',False):
@@ -694,6 +741,10 @@ class InteractBase(ipw.interactive):
             _css += ("\n" + _build_css((cent_sl,), center))
         self.__style_html.value = f'<style>{_css}</style>'
     
+    def _interactive_params(self):
+        raise NotImplementedError("implement _interactive_params(self) method in subclass, "
+            "which should returns a dictionary of interaction parameters.")
+    
     def _interactive_callbacks(self):
         """Collect all methods marked as callbacks. If overridden by subclass, should return a tuple of functions."""
         funcs = []
@@ -752,8 +803,11 @@ class InteractBase(ipw.interactive):
 
             if isinstance(value, str) and value.count('.') == 1 and ' ' not in value: # space restricted
                 name, trait_name = value.split('.')
-                if name == '' and trait_name in self.trait_names():
-                    params[key] = AnyTrait(self, trait_name)
+                if name == '' and trait_name in self.trait_names() and not trait_name.startswith('_'): # avoid privates
+                    if trait_name == 'changed':
+                        params[key] = ipw.fixed(self.changed) # need this without triggering callback
+                    else:
+                        params[key] = AnyTrait(self, trait_name)
                     # we don't need mutual exclusion on self, as it is not passed
                 elif name in params: # extras are already cleaned widgets, otherwise params must have key under this condition
                     w = params.get(name, None)
@@ -765,7 +819,7 @@ class InteractBase(ipw.interactive):
                         params[key] = AnyTrait(w, trait_name)
                         self.__mutuals.append((key, name))
         
-        # Set _iparams after clear widgets
+        # Set __iparams after clear widgets
         self.__iparams = params
         self.__reset_descp(extras)
         return tuple(extras.values())
@@ -789,14 +843,19 @@ class InteractBase(ipw.interactive):
                 value.description = key # only if not given
     
     def __func2widgets(self):
-        self._outputs = ()   # reference for later use
+        self.__outputs = ()   # reference for later use
         callbacks = [] # collecting processed callback
         used_classes = {}  # track used CSS classes for conflicts 
+        seen_funcs = set() # track for any duplicate function
 
         for f in self.__icallbacks:
             if not callable(f):
                 raise TypeError(f'Expected callable, got {type(f).__name__}. '
                     'Only functions accepting a subset of kwargs allowed!')
+            
+            if f in seen_funcs:
+                raise ValueError(f"Duplicate callback detected: {f.__name__!r}. Each callback must be unique.")
+            seen_funcs.add(f)
             
             # Check for CSS class conflicts
             if klass := f.__dict__.get('_css_class', None):
@@ -808,15 +867,15 @@ class InteractBase(ipw.interactive):
                 used_classes[klass] = f.__name__
             
             self.__validate_func(f) # before making widget, check
-            new_func, out = _func2widget(f) # converts to output widget if user set class or empty
+            new_func, out = _func2widget(f, self.changed) # converts to output widget if user set class or empty
             callbacks.append(new_func) 
             
             if out is not None:
-                self._outputs += (out,)
+                self.__outputs += (out,)
         
-        self.__icallbacks = callbacks # set back
-        del used_classes # no longer needed
-        return self._outputs # explicit
+        self.__icallbacks = tuple(callbacks) # set back
+        del used_classes, seen_funcs, callbacks # no longer needed
+        return self.__outputs # explicit
     
     def __validate_func(self, f):
         ps = inspect.signature(f).parameters
@@ -875,12 +934,12 @@ class InteractBase(ipw.interactive):
                 w.observe(update_hint, names='value') # update button hint on value change
                     
     @property
-    def outputs(self): return getattr(self, '_outputs',())
+    def outputs(self): return getattr(self, '__outputs',())
 
     @property
     def groups(self): 
         """NamedTuple of widget groups: controls, outputs, others."""
-        if not hasattr(self, '_groups'):
+        if not hasattr(self, '__groups'):
             self.__groups = self.__create_groups(self.__all_widgets)
         return self.__groups
     
@@ -1031,14 +1090,27 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
         fig.add_scatter(x=[0, x], y=[0, y])
     
     def resize_fig(fig, fs):
+        fig.layout.autosize = False # double trigger
         fig.layout.autosize = True # plotly's figurewidget always make trouble with sizing
+    
+    # Above two functions can be merged since we can use changed detection
+    @monitor  # check execution time
+    def respond(x, y, fig , fs, changed):
+        if 'fs' in changed: # or changed('fs')
+            fig.layout.autosize = False # double trigger
+            fig.layout.autosize = True
+        else:
+            fig.data = []
+            fig.add_scatter(x=[0, x], y=[0, y])
     
     dashboard = interactive(
         classed(update_plot, 'out-plot'),  # Assign CSS class to output, otherwise it will be captured by main output
         resize_fig, # responds to fullscreen change
+        # respond, instead of two functions
         x = ipw.IntSlider(0, 0, 100),
         y = ipw.FloatSlider(0, 1),
         fig = ipw.fixed(fig),
+        changed = '.changed', # detect a change in parameter
         fs = '.isfullscreen', # detect fullscreen change on instance itself
     )
     ```
@@ -1060,10 +1132,11 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - Fixed widgets via ipw.fixed()
     - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or '.trait' to observe traits on this instance.
     - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
+    - You can use `changed = '.changed'` to detect which parameters of a callback changed by checking `changed('param') -> Bool` in a callback.
     - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
     - Plotly FigureWidgets (use patched_plotly)
     - `ipywidgets.Button` for manual updates on callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
-    
+        - You can have multiple buttons in a single callback and check `btn.clicked` attribute to run code based on which button was clicked.
 
     **Widget Updates**:     
 
