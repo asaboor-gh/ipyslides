@@ -651,8 +651,8 @@ class InteractBase(ipw.interactive):
                 raise TypeError(f'Expected callable, got {type(f).__name__}. '
                     'Only functions accepting a subset of kwargs allowed!')
             
-            if any(s.__code__ == f.__code__ for s in seen_funcs):
-                continue # don not add dupliate functions, funcs only same if bytecode is same
+            if f in seen_funcs:
+                raise ValueError(f"Duplicate callback detected {f.__name__!r}")
 
             seen_funcs.add(f)
             
