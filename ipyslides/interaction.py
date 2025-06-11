@@ -37,34 +37,7 @@ def _hold_running_slide_builder():
     else:
         yield
 
-@contextmanager
-def lock_observed(mutuals, func):
-    "Throws error if a user function update an attribute being observed by another parameter. Avoids infinite loop."
-    if not mutuals:
-        yield
-        return
-
-    def reject_with_info(key, name, func):
-        def _reject_changes(self, proposal):
-            raise traitlets.TraitError(
-                f"Cannot modify {name!r} inside {func.__name__!r} - "
-                f"observed by parameter {key!r} (potential infinite loop)"
-            )
-        return _reject_changes
-    
-    rejected = []
-    for key, name, trait in mutuals:
-        rejected.append((trait, trait.validate))
-        trait.validate = reject_with_info(key, name, func)
-    
-    try:
-        yield
-    finally:
-        for trait, validate in rejected:
-            trait.validate = validate # reset back
-
-
-def _func2widget(func, change_tracker, mutuals):
+def _func2widget(func, change_tracker):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
     out = None # If No CSS class provided, no output widget will be created, default
     
@@ -94,7 +67,7 @@ def _func2widget(func, change_tracker, mutuals):
                 if not any(btn.clicked for btn in buttons):
                     return # Only update if a button was clicked and skip other parameter changes
                 
-                with print_error(), disabled(*buttons), lock_observed(mutuals, func): # disable buttons during function call
+                with print_error(), disabled(*buttons): # disable buttons during function call
                     try: # error still be raised, but will be caught by print_error, so finally is important
                         func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
                     finally:
@@ -111,7 +84,7 @@ def _func2widget(func, change_tracker, mutuals):
             # Run function if new values, or does not have parameters or on button click
             if values_changed or not func_params: # function may not have arguments but can be run via others
                 change_tracker._set(values_changed)
-                with print_error(), lock_observed(mutuals, func):
+                with print_error():
                     func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
             
             change_tracker._set([])
@@ -253,7 +226,9 @@ class InteractBase(ipw.interactive):
     changed = traitlets.Instance(Changed, default_value=Changed(), read_only=True) # tracks parameters values changed, but fixed itself
 
     def __init__(self, auto_update=True, app_layout= None, grid_css={}):
-        self.__mutuals = [] # dependent parameters 
+        # I tried to resolve dependent parameters in a func many ways like setting mock validate, notify_change, set, etc.
+        # But each time app misbehaves, so I leave it on user for a function like func(x = widget, y = 'x.trait') 
+        # and expected they should not se x.trait = value in same function, to avoid recursion issue.
         self.__css_class = 'i-'+str(id(self))
         self.__style_html = ipw.HTML()
         self.__style_html.layout.position = 'absolute' # avoid being grid part
@@ -616,8 +591,7 @@ class InteractBase(ipw.interactive):
                     # We do not want to raise error, so any invalid string can goes to Text widget
                     if isinstance(w, ipw.DOMWidget) and trait_name in w.trait_names():
                         params[key] = AnyTrait(w, trait_name)
-                        self.__mutuals.append((key, value, w.traits()[trait_name])) # value is just like 'slides.value'
-        
+
         # Set __iparams after clear widgets
         self.__iparams = params
         self.__reset_descp(extras)
@@ -665,8 +639,8 @@ class InteractBase(ipw.interactive):
                     )
                 used_classes[klass] = f.__name__
             
-            mutuals = self.__validate_func(f) # before making widget, check
-            new_func, out = _func2widget(f, self.changed, mutuals) # converts to output widget if user set class or empty
+            self.__validate_func(f) # before making widget, check
+            new_func, out = _func2widget(f, self.changed) # converts to output widget if user set class or empty
             callbacks.append(new_func) 
             
             if out is not None:
@@ -694,16 +668,10 @@ class InteractBase(ipw.interactive):
                 "Any function with no arguments can only run with global interact button click."
             )
         
-        mutuals = []
-        for key, name, trait in self.__mutuals:
-            if key in f_ps and  name.split('.')[0] in f_ps:
-                mutuals.append((key, name, trait))
-                
         gievn_params = set(self.params._asdict())
         extra_params = set(f_ps) - gievn_params
         if extra_params:
             raise ValueError(f"Function {f.__name__!r} has parameters {extra_params} that are not defined in interactive params.")
-        return tuple(mutuals) # avoid accidental changes by making it tuple
         
     def __create_groups(self, widgets_dict):
         groups = namedtuple('WidgetGropus', ['controls', 'outputs', 'others'])
