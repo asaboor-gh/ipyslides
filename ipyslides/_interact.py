@@ -214,7 +214,7 @@ class FullscreenButton(AnyWidget):
     
     _css = """
     .fs-btn.ips-fs {
-        position: absolute; top: 2px; right: 2px;
+        position: absolute; top: 2px; left:2px; z-index:999;
     }
     .fs-btn.ips-fs button {
         border: none !important;

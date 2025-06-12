@@ -110,6 +110,18 @@ def _run_callbacks(fcallbacks, kwargs, box):
     finally:
         _need_output._active_output = nullcontext()
 
+# We need to link useful traits to set from outside, these will be linked from inside
+# But these raise error if tried to set from __init__, only linked in there
+_useful_traits =  [
+    'pane_widths','pane_heights','merge', 'width','height',
+    'grid_gap', 'justify_content','align_items'
+]
+def _add_traits(cls):
+    for name in _useful_traits:
+        setattr(cls, name, ipw.AppLayout.class_traits()[name])
+    return cls
+
+@_add_traits
 @_fix_init_sig
 @_format_docs(css_info = _css_info)
 class InteractBase(ipw.interactive):
@@ -246,13 +258,16 @@ class InteractBase(ipw.interactive):
         self.__app._size_to_css = _size_to_css # enables em, rem
         self.__other = ipw.VBox().add_class('other-area') # this should be empty to enable CSS perfectly, unless filled below
         self.__setup(auto_update, app_layout, grid_css)
+        
+        # do not add traits in __init__, unknow errors arise, just link
+        for name in _useful_traits:
+            traitlets.link((self, name),(self.__app,name))
 
     def __setup(self, auto_update, app_layout, grid_css):
         if not isinstance(grid_css,dict):
             raise TypeError(f"grid_css should be a dict, got {type(grid_css)}")
         
         self.set_css(main = grid_css)
-        
         self.__auto_update = auto_update
         self.__iparams = {} # just empty reference
         extras = self.__fix_kwargs() # params are internally fixed
@@ -449,15 +464,14 @@ class InteractBase(ipw.interactive):
                     
                 setattr(self.__app, key, box(children, _dom_classes = (key.replace('_','-'),))) # for user CSS
             elif value: # class own traits and Layout properties
-                setattr(self.__app, key, value)
+                setattr(self.__app, key, value) # traits were not added yet
         
         self.__other.children += tuple([v for k,v in self.__all_widgets.items() if k not in collected])
         
         # We are adding a reaonly isfullscreen trait set through button on parent class
         fs_btn = FullscreenButton()
         fs_btn.observe(lambda c: self.set_trait('isfullscreen',c.new), names='isfullscreen') # setting readonly property
-        
-        self.children = (self.__app, self.__other, self.__style_html, fs_btn) # button be on top to click
+        self.children = (self.__app, self.__other, self.__style_html, fs_btn)
     
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
@@ -738,7 +752,7 @@ class InteractBase(ipw.interactive):
                     _run_callbacks(self.__icallbacks, kwargs, self) 
             else:
                 _run_callbacks(self.__icallbacks, kwargs, self) 
-            
+        
 
 def callback(css_class = None, *, timeit = False, throttle = None, debounce = None, logger = None):
     """Decorator to mark methods as interactive callbacks in InteractBase subclasses or for interactive funcs.
@@ -772,6 +786,9 @@ def callback(css_class = None, *, timeit = False, throttle = None, debounce = No
     def decorator(func):
         if not isinstance(func, FunctionType):
             raise TypeError(f"@callback can only decorate functions, got {type(func).__name__}")
+    
+        # get a new function after monitor and then apply attributes
+        func = monitor(timeit=timeit,throttle=throttle,debounce=debounce,logger=logger)(func)
         
         nonlocal css_class # to be used later
         if isinstance(css_class, str):
@@ -786,9 +803,7 @@ def callback(css_class = None, *, timeit = False, throttle = None, debounce = No
                 raise Exception(f"{func.__name__!r} cannot be transformed into a bound method!")
             func._is_interactive_callback = True # for methods in class
 
-        new_func = monitor(timeit=timeit,throttle=throttle,debounce=debounce,logger=logger)(func)
-        new_func.__dict__['_orig_func'] = func
-        return new_func
+        return func
 
     # Handle both @callback and @callback('out-myclass') syntax
     if callable(css_class):
