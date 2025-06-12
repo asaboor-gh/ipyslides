@@ -3,16 +3,15 @@ Enhanced version of ipywidgets's interact/interactive functionality.
 Use as interactive/@interact or subclass InteractBase. 
 """
 
-__all__ = ['interactive','interact', 'classed', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
+__all__ = ['interactive','interact', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
 
 import re, textwrap
 import inspect 
 import traitlets
 
-from time import perf_counter
 from contextlib import contextmanager, nullcontext
 from collections import namedtuple
-from functools import wraps
+from types import FunctionType
 
 from IPython.display import display
 
@@ -22,9 +21,10 @@ from ._base.widgets import ipw # patch ones required here
 from ._base._widgets import _fix_init_sig, AnimationSlider
 from ._interact import (
     AnyTrait, Changed, FullscreenButton, 
-    print_error, disabled, patched_plotly, 
+    monitor, print_error, disabled, patched_plotly, 
     _format_docs, _size_to_css, _general_css
 )
+from . import _interact as _need_output
 
 _css_info = textwrap.indent('\n**Python dictionary to CSS**\n' + _dict2css, '    ')
 
@@ -45,11 +45,15 @@ def _func2widget(func, change_tracker):
         out = ipw.Output()
         out.add_class(klass)
         out._kwarg = klass # store for access later
-    
+        
     last_kws = {} # store old kwargs to avoid re-running the function if not changed
     
     def call_func(kwargs):
-        if out: out.clear_output(wait=True) # clear previous output
+        old_ctx = _need_output._active_output
+        if out:
+            out.clear_output(wait=True) # clear previous output
+            _need_output._active_output = out # to get it for debounce in monitor
+
         with (out or nullcontext()):
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in func_params}
 
@@ -89,7 +93,8 @@ def _func2widget(func, change_tracker):
             
             change_tracker._set([])
             last_kws.update(filtered_kwargs) # update old kwargs to latest values
-            
+            _need_output._active_output = old_ctx
+    
     return (call_func, out)
 
 
@@ -98,9 +103,12 @@ def _hint_update(btn, remove = False):
 
 def _run_callbacks(fcallbacks, kwargs, box):
     # Each callback is executed, Error in any of them don't stop other callbacks, handled in print_error context manager
-    for func in fcallbacks:
-        func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
-
+    _need_output._active_output = box.out if box else nullcontext() # default, unless each func sets and resets
+    try:
+        for func in fcallbacks:
+            func(box.kwargs if box else kwargs) # get latest from box due to internal widget changes
+    finally:
+        _need_output._active_output = nullcontext()
 
 @_fix_init_sig
 @_format_docs(css_info = _css_info)
@@ -193,7 +201,7 @@ class InteractBase(ipw.interactive):
     - CSS class must start with 'out-' excpet reserved 'out-main'
     - Each callback gets only needed parameters and updates happen only when relevant parameters change
     - **Output Widget Behavior**:
-        - An output widget is created only if a CSS class is provided via `@callback` or `classed`.
+        - An output widget is created only if a CSS class is provided via `@callback`.
         - If no CSS class is provided, the callback will use the main output widget, labeled as 'out-main'.
         
     **Attributes & Properties**:  
@@ -732,12 +740,12 @@ class InteractBase(ipw.interactive):
                 _run_callbacks(self.__icallbacks, kwargs, self) 
             
 
-def callback(css_class = None):
-    """Decorator to mark methods as interactive callbacks in InteractBase subclasses.
+def callback(css_class = None, *, timeit = False, throttle = None, debounce = None, logger = None):
+    """Decorator to mark methods as interactive callbacks in InteractBase subclasses or for interactive funcs.
     
     **func**: The method to be marked as a callback.  
 
-    - Must be defined inside a class (not nested).
+    - Must be defined inside a class (not nested) or a pure function in module.
     - Must be a regular method (not static/class method).
     
     **css_class**: Optional string to assign a CSS class to the callback's output widget. 
@@ -745,7 +753,15 @@ def callback(css_class = None):
     - Must start with 'out-', but should not be 'out-main' which is reserved for main output
     - Example valid values: 'out-stats', 'out-plot', 'out-details'
     - If no css_class is provided, the callback will not create a separate output widget and will use the main output instead.
-    
+
+    Other keyword arguments are passed to `monitor`
+
+    - timeit: bool, if True logs function execution time.
+    - throttle: int milliseconds, minimum interval between calls.
+    - debounce: int milliseconds, delay before trailing call. If throttle is given, this is ignored.
+        Functions using debounce lose any printed/displayed outputs, so use it for changing traits only.
+    - logger: callable(str), optional logging function (e.g. print or logging.info).
+
     **Usage**:                  
 
     - Inside a subclass of InteractBase, decorate methods with @callback and @callback('out-important') to make them interactive.
@@ -754,79 +770,45 @@ def callback(css_class = None):
     **Returns**: The decorated method itself.
     """  
     def decorator(func):
-        if not callable(func):
+        if not isinstance(func, FunctionType):
             raise TypeError(f"@callback can only decorate functions, got {type(func).__name__}")
         
         nonlocal css_class # to be used later
         if isinstance(css_class, str):
-            func = classed(func, css_class) # assign CSS class if provided
+            func = _classed(func, css_class) # assign CSS class if provided
         
         qualname = getattr(func, '__qualname__', '')
         if not qualname:
-            raise RuntimeError("@callback can only be used on named functions")
+            raise Exception("@callback can only be used on named functions")
         
-        if qualname.count('.') != 1:
-            raise RuntimeError(
-                f"@callback must be used on instance methods only, got {qualname!r}.\n"
-                "Make sure:\n"
-                "1. Method is defined directly in class (not nested)\n"
-                "2. Not using it on standalone functions\n"
-                "3. Not using it on static/class methods"
-            )
-        
-        if isinstance(func, (staticmethod, classmethod)):
-            raise TypeError("@callback cannot be used with @staticmethod or @classmethod")
-        
-        func._is_interactive_callback = True
-        
-        return func
+        if qualname.count('.') == 1:
+            if len(inspect.signature(func).parameters) < 1:
+                raise Exception(f"{func.__name__!r} cannot be transformed into a bound method!")
+            func._is_interactive_callback = True # for methods in class
+
+        new_func = monitor(timeit=timeit,throttle=throttle,debounce=debounce,logger=logger)(func)
+        new_func.__dict__['_orig_func'] = func
+        return new_func
 
     # Handle both @callback and @callback('out-myclass') syntax
     if callable(css_class):
         return decorator(css_class)
     return decorator
 
-def classed(func, css_class):
+def _classed(func, css_class):
     "Use this function to assign a CSS class to a function being used in interactive, interact. to make a separate output widget."
     if not callable(func):
         raise TypeError(f"Can only function as first paramter, got {type(func).__name__}")
-    
     if not isinstance(css_class, str):
         raise TypeError(f"css_class must be a string, got {type(css_class).__name__}")
-    
     if not css_class.startswith('out-'):
         raise ValueError(f"css_class must start with 'out-', got {css_class!r}")
-    
     if css_class == 'out-main':
         raise ValueError("out-main is reserved class for main output widget")
-    
     if css_class and not re.match(r'^out-[a-zA-Z0-9-]+$', css_class):
         raise ValueError(f"css_class is not valid, must only contain letters, numbers or hyphens, got {css_class!r}")
-    
     func.__dict__['_css_class'] = css_class # set on __dict__ to avoid issues with bound methods
     return func
-
-def monitor(params=False):
-    "Monitor a function execution time and optionally passed params. Use on callbacks for InteractBase, interactive."
-    def inner(func):            
-        @wraps(func)
-        def wrapped(*args,**kws):
-            start = perf_counter()
-            try:
-                func(*args,**kws)
-            finally:
-                end = perf_counter()
-                print(f"Function {func.__name__!r} took {(end - start)*1000:.3f} ms")
-                if params and not callable(params):
-                    print("kwargs: ", {k: r[:10] + '...' if len(r := repr(v)) > 10 else v 
-                        for k,v in kws.items()
-                    })
-        return wrapped
-    
-    if callable(params): # called without parenthesis
-        return inner(params)
-    return inner
-
 
 @_format_docs(css_info = _css_info)
 def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs):
@@ -845,13 +827,13 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     **Basic Usage**:    
 
     ```python
-    from ipyslides.interaction import interactive, classed, monitor
+    from ipyslides.interaction import interactive, callback, monitor
     import ipywidgets as ipw
     import plotly.graph_objects as go
     
     fig = go.FigureWidget()
     
-    @monitor  # check execution time
+    @callback('out-plot', timeit=True)  # check execution time
     def update_plot(x, y, fig):
         fig.data = []
         fig.add_scatter(x=[0, x], y=[0, y])
@@ -871,7 +853,7 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
             fig.add_scatter(x=[0, x], y=[0, y])
     
     dashboard = interactive(
-        classed(update_plot, 'out-plot'),  # Assign CSS class to output, otherwise it will be captured by main output
+        update_plot,
         resize_fig, # responds to fullscreen change
         # respond, instead of two functions
         x = ipw.IntSlider(0, 0, 100),
@@ -912,14 +894,14 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     - Parameter-less functions run with any interaction
     - Animation widgets work even with manual updates
     - **Output Widget Behavior**:
-        - Output widgets are created only if a CSS class is provided via `@callback` or `classed`.
+        - Output widgets are created only if a CSS class is provided via `@callback`.
         - If no CSS class is provided, the callback will use the main output widget labeled as 'out-main'.
     
 
     **CSS Classes**:      
 
     - Parameter names from kwargs
-    - Custom 'out-*' classes from classed(), and 'out-main' class.
+    - Custom 'out-*' classes from @callback, and 'out-main' class.
     - 'btn-main' for manual update button
 
     **Notes**:       
