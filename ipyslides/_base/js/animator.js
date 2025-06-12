@@ -4,6 +4,14 @@ function setLabel(model, el) {
     el.style.display = lab ? "" : "none";  // Hide label if no description is provided
 }
 
+function setClass(container, nframes) {
+    if (nframes === 2) {
+        container.classList.add("slider-hidden");
+    } else if (container.classList.contains("slider-hidden")) {
+        container.classList.remove("slider-hidden");
+    }
+}
+
 let timeouts = new Set();
 
 function render({ model, el }) {
@@ -15,6 +23,8 @@ function render({ model, el }) {
     container.style.maxWidth = "var(--jp-widgets-inline-width)";
     container.style.overflowX = "auto";  // Allow horizontal scrolling if needed
     container.style.overflowY = "hidden";  // Hide vertical scrolling when scaling buttons
+    container.style.position = "relative"; // if hidden slider, contain inside
+    setClass(container, model.get("nframes")); // initially
 
     // Value Element
     const valueLabel = document.createElement("label");
@@ -25,8 +35,10 @@ function render({ model, el }) {
 
     // Play/Pause Button
     const playPauseButton = document.createElement("button");
-    playPauseButton.innerHTML = '<i class="fa fa-play-circle"></i>';  // Initial Play icon
-    playPauseButton.title = "Play/Pause Animation";  // Tooltip
+    playPauseButton.innerHTML = model.get("playing") 
+        ? '<i class="fa fa-pause-circle"></i>' // Playing
+        : '<i class="fa fa-play-circle"></i>';  // Paused
+    playPauseButton.title = "Play/Pause";  // Tooltip
     playPauseButton.style.padding = "4px";  // Compact button size
     playPauseButton.style.border = "none";  // Sleek button design
 
@@ -189,8 +201,10 @@ function render({ model, el }) {
     });
 
     model.on("change:nframes", () => {
-        slider.max = model.get("nframes") - 1;
-        sliderValue.style.width = `${model.get("nframes").toString().length * 1.2}em`;
+        const nframes = model.get("nframes");
+        slider.max = nframes - 1;
+        sliderValue.style.width = `${nframes.toString().length * 1.2}em`;
+        setClass(container, nframes);
     });
 
     model.on("change:interval", () => {
@@ -209,6 +223,7 @@ function render({ model, el }) {
             }
         }
     });
+    animate(); // May be already set playing, why wait for click
     return () => { // clean up at removal time
 		clearTimeout(animationFrame); // remove it to avoid multiplied signals
 	};

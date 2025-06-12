@@ -269,6 +269,7 @@ class InteractBase(ipw.interactive):
         
         self.set_css(main = grid_css)
         self.__auto_update = auto_update
+        self._outputs = ()
         self.__iparams = {} # just empty reference
         extras = self.__fix_kwargs() # params are internally fixed
         if not self.__iparams: # need to interact anyhow and also allows a no params function
@@ -318,7 +319,7 @@ class InteractBase(ipw.interactive):
                 print(f"Warning: Initial button click faild: {e}")
 
         self.__all_widgets = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')} # save it once for sending to app layout
-        self.__groups = self.__create_groups(self.__all_widgets) # create groups of widgets for later use
+        self._groups = self.__create_groups(self.__all_widgets) # create groups of widgets for later use
         
         for func in self.__icallbacks:
             self.__hint_btns_update(func) # external buttons update hint
@@ -471,7 +472,7 @@ class InteractBase(ipw.interactive):
         # We are adding a reaonly isfullscreen trait set through button on parent class
         fs_btn = FullscreenButton()
         fs_btn.observe(lambda c: self.set_trait('isfullscreen',c.new), names='isfullscreen') # setting readonly property
-        self.children = (self.__app, self.__other, self.__style_html, fs_btn)
+        self.children = (self.__app, self.__other, self.__style_html, _need_output._active_timer.widget(True), fs_btn)
     
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
     def set_css(self, main=None, center=None):
@@ -637,7 +638,7 @@ class InteractBase(ipw.interactive):
                 value.description = key # only if not given
     
     def __func2widgets(self):
-        self.__outputs = ()   # reference for later use
+        self._outputs = ()   # reference for later use
         callbacks = [] # collecting processed callback
         used_classes = {}  # track used CSS classes for conflicts 
         seen_funcs = set() # track for any duplicate function
@@ -666,11 +667,11 @@ class InteractBase(ipw.interactive):
             callbacks.append(new_func) 
             
             if out is not None:
-                self.__outputs += (out,)
+                self._outputs += (out,)
         
         self.__icallbacks = tuple(callbacks) # set back
         del used_classes, seen_funcs, callbacks # no longer needed
-        return self.__outputs # explicit
+        return self._outputs # explicit
     
     def __validate_func(self, f):
         ps = inspect.signature(f).parameters
@@ -723,14 +724,14 @@ class InteractBase(ipw.interactive):
                 w.observe(update_hint, names='value') # update button hint on value change
                
     @property
-    def outputs(self): return getattr(self, '__outputs',())
+    def outputs(self): return self._outputs
 
     @property
     def groups(self): 
         """NamedTuple of widget groups: controls, outputs, others."""
-        if not hasattr(self, '__groups'):
-            self.__groups = self.__create_groups(self.__all_widgets)
-        return self.__groups
+        if not hasattr(self, '_groups'):
+            self._groups = self.__create_groups(self.__all_widgets)
+        return self._groups
     
     @property
     def params(self):
@@ -773,7 +774,6 @@ def callback(css_class = None, *, timeit = False, throttle = None, debounce = No
     - timeit: bool, if True logs function execution time.
     - throttle: int milliseconds, minimum interval between calls.
     - debounce: int milliseconds, delay before trailing call. If throttle is given, this is ignored.
-        Functions using debounce lose any printed/displayed outputs, so use it for changing traits only.
     - logger: callable(str), optional logging function (e.g. print or logging.info).
 
     **Usage**:                  

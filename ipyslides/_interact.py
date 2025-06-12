@@ -5,13 +5,15 @@ from datetime import datetime
 from functools import wraps
 from typing import Union, Callable
 
-from ipywidgets import DOMWidget, fixed
+from ipywidgets import DOMWidget, Output, fixed
 from anywidget import AnyWidget
 from IPython.core.ultratb import AutoFormattedTB
 
 from ._base.icons import Icon
+from ._base._widgets import TimerWidget
 
 _active_output = nullcontext() # will be overwritten by function calls
+_active_timer = TimerWidget() # will be displayed inside Interact
 
 def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=None, logger:Callable[[str],None]=None):
     """Decorator that throttles and/or debounces a function, with optional logging and timing.
@@ -19,7 +21,6 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
     - timeit: bool, if True logs function execution time.
     - throttle: int milliseconds, minimum interval between calls.
     - debounce: int milliseconds, delay before trailing call. If throttle is given, this is ignored.
-        Functions using debounce lose any printed/displayed outputs, so use it for changing traits only.
     - logger: callable(str), optional logging function (e.g. print or logging.info).
 
     This type of call will be automatically timed:
@@ -32,8 +33,7 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
 
     but `@monitor()` will do nothing, as no option was used.
     """
-    throttle = throttle / 1000 if throttle else 0
-    debounce = debounce / 1000 if debounce else 0
+    throttle = throttle / 1000 if throttle else 0 # seconds now, but keep debounce in milliseconds
 
     def log(ctx, msg):
         with ctx:
@@ -44,7 +44,6 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
             return fn # optimized way to dodge default settings
         
         last_call_time = [0.0]
-        trailing_timer = [None]
         last_args = [()]
         last_kwargs = [{}]
         fname = fn.__name__
@@ -54,16 +53,18 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
             now = time.time()
             last_args[0] = args
             last_kwargs[0] = kwargs
-
+ 
             def call(out):
-                # print(fn, out) # debugging
+                # print(fn, out, throttle, debounce) # debugging
+                if isinstance(out, Output): # clean output as it is full call
+                    out.clear_output(wait=True)
+
                 start = time.time()
                 with out:
                     fn(*last_args[0], **last_kwargs[0])
-                
                     duration = time.time() - start
                     last_call_time[0] = time.time()
-                    trailing_timer[0] = None
+                    
                     if timeit:
                         log(nullcontext(), # want to be not overwritten above output 
                             f"\033[34m[Timed]\033[0m     {datetime.now()} | {fname!r}: " 
@@ -73,22 +74,14 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
             time_since_last = now - last_call_time[0]
             if throttle and time_since_last >= throttle:
                 call(_active_output)
-                if trailing_timer[0]:
-                    trailing_timer[0].cancel()
-                    trailing_timer[0] = None
             else:
                 if throttle:
                     log(_active_output, f"\033[31m[Throttled]\033[0m {datetime.now()} | {fname!r}: skipped call")
 
                 elif debounce:
-                    if trailing_timer[0]:
-                        trailing_timer[0].cancel()
-                    
                     log(_active_output, f"\033[33m[Debounced]\033[0m {datetime.now()} | {fname!r}: reset timer")
-                    with threading.Lock(): # Outputs still not get captured on _active_output
-                        trailing_timer[0] = threading.Timer(debounce, call, args=(_active_output,))
-                        trailing_timer[0].start()
-                    
+                    # This part loses outputs (which go to jupyter logger) if we use threading.Timer os asyncio.
+                    _active_timer.run(debounce, call, args=(_active_output,)) # so I created a TimerWidget for Jupyter
                 else:
                     call(_active_output)
         return wrapped

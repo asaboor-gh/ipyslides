@@ -1,5 +1,7 @@
 import uuid
+import time
 import traitlets
+import asyncio
 import inspect
 import anywidget
 
@@ -13,9 +15,12 @@ def _fix_init_sig(cls):
     return cls
 
 def _fix_trait_sig(cls):
+    "Avoid showing extra kwargs by having a class attribute _no_kwargs"
     params = [inspect.Parameter(key, inspect.Parameter.KEYWORD_ONLY, default=value) 
         for key, value in cls.class_own_traits().items() if not key.startswith('_')] # avoid private
-    params.append(inspect.Parameter('kwargs', inspect.Parameter.VAR_KEYWORD)) # Inherited widgets traits
+    
+    if not hasattr(cls,'_no_kwargs'):
+        params.append(inspect.Parameter('kwargs', inspect.Parameter.VAR_KEYWORD)) # Inherited widgets traits
     cls.__signature__ = inspect.Signature(params)
     return cls
 
@@ -360,6 +365,10 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     }
     .animation-slider button:active {scale: 1.25;}
     .animation-slider button .fa.fa-rotate-left.inactive {opacity: 0.25 !important;}
+    .animation-slider.slider-hidden input,
+    .animation-slider.slider-hidden .widget-readout {
+        display: none !important;
+    }
     """
     
     value = traitlets.CInt(0).tag(sync=True)          
@@ -370,4 +379,115 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     playing = traitlets.Bool(False).tag(sync=True) 
     continuous_update = traitlets.Bool(True).tag(sync=True)
     cyclic = traitlets.Bool(False).tag(sync=True) 
+
+    @traitlets.validate("nframes")
+    def _ensure_min_frames(self, proposal):
+        value = proposal["value"]
+        if not isinstance(value, int):
+            raise TypeError(f"nframes should be integere, got {type(value)!r}")
+        
+        if value < 2:
+            raise ValueError(f"nframes > 1 should hold, got {value}")
+        return value
+        
+@_fix_init_sig
+class TimerWidget(traitlets.HasTraits):
+    """A widget that provides timer functionality in Jupyter Notebook without threading/blocking.
     
+    This widget allows you to run a function at specified intervals, with options for 
+    looping and control over the timer's state (play/pause). You can change function too by using `run()` again.
+
+    ```python
+    timer = TimerWidget(description="My Timer")
+    display(timer) # must be displayed before running a function to work correctly
+
+    def my_func(msg):
+        print(f"Timer tick: {msg}")
+
+    # Run after 1000ms (1 second)
+    timer.run(1000, my_func, args=("Hello!",))
+
+    # For continuous execution, run every 1000ms
+    timer.run(1000, my_func, args=("Loop!",), loop=True)
+    ```
+    """
+    _value = traitlets.CInt(0).tag(sync=True)  
+    _callback = traitlets.Tuple((None, (), {}))        
+    description = traitlets.Unicode(None, allow_none=True).tag(sync=True) 
+
+    _last_called = traitlets.Float(0)
+
+    def __init__(self, description = None):
+        super().__init__()
+        self._animator = AnimationSlider(nframes=2) # fixed 2 frames make it work
+        traitlets.link((self,'_value'),(self._animator,'value'))
+        traitlets.link((self,'description'),(self._animator,'description'))
+        self.set_trait('description', description) # user set
+    
+    def __dir__(self): return ["description", "play","pause","run","widget"]
+    
+    def _repr_mimebundle_(self,**kwargs): # display
+        return self._animator._repr_mimebundle_(**kwargs)
+    
+    @traitlets.observe("_value")
+    def _do_call(self, change):
+        func, args, kwargs = self._callback
+        now = time.time()
+        elapsed = (now - self._last_called) >= (self._animator.interval / 1000.0)
+        
+        if func and self._animator.playing and elapsed:
+            func(*args, **kwargs)
+            self._last_called = now # giving time to execute function, so its between the functions
+    
+    def play(self): 
+        """Start or resume the timer.
+        
+        If a function was previously set using `run()`, it will be executed at 
+        the specified interval. If no function is set, the timer will still run
+        but won't execute anything.
+        """
+        self._animator.playing = True
+    
+    def pause(self): 
+        """Pause the timer without clearing the underlying function.
+        
+        The function set by `run()` is preserved and will resume execution when
+        `play()` is called again.
+        """
+        self._animator.playing = False
+
+    def run(self, interval, func, args=(),kwargs={},loop=False):
+        """Set up and start a function to run at specified intervals.
+        
+        - interval : int. Time between function calls in milliseconds.
+        - func : callable. The function to execute.
+        - args : tuple, optional. Positional arguments to pass to the function.
+        - kwargs : dict, optional. Keyword arguments to pass to the function.
+        - loop : bool, optional
+            - If True, the function will run repeatedly until paused.
+            - If False, the function will run once after `interval` time and stop.
+
+        **Notes**:
+
+        - The timer widget must be displayed before calling `run()`.
+        - Calling `run()` will stop any previously running timer.
+        - The first function call occurs after the specified interval.
+        """
+        self.clear()
+        self._animator.interval = interval # this is important as we see only value = 1
+        self._animator.loop = loop 
+        self._callback = (func, args, kwargs)
+        self._last_called = time.time()
+        self.play()
+
+    def widget(self, minimal=False):
+        "Get the associated displayable widget. If minimial = True, zero width and height applied."
+        if minimal:
+            self._animator.layout = dict(width='0',height='0',max_width='0',max_height='0')
+        return self._animator
+    
+    def clear(self):
+        "Clear function and reset playing state."
+        self.pause()
+        self._value = 0
+        self._callback = (None, (), {})
