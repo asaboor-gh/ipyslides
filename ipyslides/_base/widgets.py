@@ -11,7 +11,7 @@ from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
 
 from . import styles, _layout_css
-from ._widgets import InteractionWidget, NotesWidget, ListWidget
+from ._widgets import InteractionWidget, NotesWidget, ListWidget, JupyTimer
 from .intro import get_logo, how_to_print
 from ..utils import html, htmlize
 from .. import formatters as fmtrs
@@ -167,6 +167,7 @@ class Widgets:
         self.sliders = _Sliders()
         self.checks  = _Checks()
         self.htmls   = _Htmls()
+        self._timer  = JupyTimer()
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
         self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget'), self.toggles.draw]).add_class('Draw-Wrapper')
@@ -242,6 +243,7 @@ class Widgets:
             self.htmls.theme,
             self.htmls.logo,
             self.iw,
+            self._timer.widget(minimal=True),
             self.quick_menu,
             self.panelbox,
             self.htmls.cursor,

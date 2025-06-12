@@ -1,4 +1,4 @@
-import sys, re, time, threading
+import sys, re, time
 import traitlets
 from contextlib import contextmanager, nullcontext
 from datetime import datetime
@@ -10,10 +10,10 @@ from anywidget import AnyWidget
 from IPython.core.ultratb import AutoFormattedTB
 
 from ._base.icons import Icon
-from ._base._widgets import TimerWidget
+from ._base._widgets import JupyTimer
 
 _active_output = nullcontext() # will be overwritten by function calls
-_active_timer = TimerWidget() # will be displayed inside Interact
+_active_timer = JupyTimer() # will be displayed inside Interact
 
 def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=None, logger:Callable[[str],None]=None):
     """Decorator that throttles and/or debounces a function, with optional logging and timing.
@@ -81,7 +81,7 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
                 elif debounce:
                     log(_active_output, f"\033[33m[Debounced]\033[0m {datetime.now()} | {fname!r}: reset timer")
                     # This part loses outputs (which go to jupyter logger) if we use threading.Timer os asyncio.
-                    _active_timer.run(debounce, call, args=(_active_output,)) # so I created a TimerWidget for Jupyter
+                    _active_timer.run(debounce, call, args=(_active_output,)) # so I created a JupyTimer for Jupyter
                 else:
                     call(_active_output)
         return wrapped

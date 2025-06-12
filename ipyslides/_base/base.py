@@ -291,13 +291,10 @@ class BaseSlides:
         
         # NOTE: Background threads and other methods do not work. Do NOT change this way
         self._from_markdown(start, path.read_text(encoding="utf-8")) # First call itself before declaring other things, so errors can be captured safely
-        
-        if hasattr(self.widgets.iw,'_sync_args'): # remove previous updates
-            self.unsync()
-
+        self.widgets._timer.clear() # remove previous updates
         self._mtime = os.stat(path).st_mtime
 
-        def update(widget, content, buffer):
+        def update():
             if path.is_file():
                 mtime = os.stat(path).st_mtime
                 out_sync = any(['Out-Sync' in s._css_class for s in self.cited_slides]) or False
@@ -312,19 +309,15 @@ class BaseSlides:
                         self.notify(f"{error('SyncError','something went wrong')}<br/><br/>{error(e,text)}",20)
             else:
                 self.notify(error("SyncError", f"file {path!r} no longer exists!").value, 20)
-
-        self.widgets.iw.on_msg(update)
-        self.widgets.iw.msg_tojs = f'SYNC:ON:{interval}'
-        self.widgets.iw._sync_args = {"func": update, "interval": interval}
+        
+        self.widgets._timer.run(interval, update, loop = True)
         print(f"Syncing content from file {path!r}\nYou can use `Slides.unsync()` to stop syncing.")
         
 
     def unsync(self):
         "Stop syncing markdown file synced with `Slides.sync_with_file` function."
-        if hasattr(self.widgets.iw,'_sync_args'):
-            self.widgets.iw.on_msg(self.widgets.iw._sync_args["func"],remove=True)
-            self.widgets.iw.msg_tojs = 'SYNC:OFF'
-            delattr(self.widgets.iw,'_sync_args')
+        if self.widgets._timer._callback[0]:
+            self.widgets._timer.clear()
         else:
             print("There was no markdown file linked to sync!")
     

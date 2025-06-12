@@ -78,9 +78,6 @@ class InteractionWidget(anywidget.AnyWidget):
 
             self.msg_tojs = 'SwitchView' # Trigger view
 
-            if hasattr(self,'_sync_args'):
-                self.msg_tojs = f'SYNC:ON:{self._sync_args["interval"]}'
-
         elif msg in ('FS','!FS'): # This is to make sure visual state of button and slides are correct
             if msg == 'FS':
                 self._toggles.fscreen.icon = 'minus'
@@ -391,14 +388,14 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
         return value
         
 @_fix_init_sig
-class TimerWidget(traitlets.HasTraits):
+class JupyTimer(traitlets.HasTraits):
     """A widget that provides timer functionality in Jupyter Notebook without threading/blocking.
     
     This widget allows you to run a function at specified intervals, with options for 
     looping and control over the timer's state (play/pause). You can change function too by using `run()` again.
 
     ```python
-    timer = TimerWidget(description="My Timer")
+    timer = JupyTimer(description="My Timer")
     display(timer) # must be displayed before running a function to work correctly
 
     def my_func(msg):
@@ -410,6 +407,8 @@ class TimerWidget(traitlets.HasTraits):
     # For continuous execution, run every 1000ms
     timer.run(1000, my_func, args=("Loop!",), loop=True)
     ```
+
+    Automatically displays in Jupyter, but to acces associated widget you can use `.widget` method.
     """
     _value = traitlets.CInt(0).tag(sync=True)  
     _callback = traitlets.Tuple((None, (), {}))        

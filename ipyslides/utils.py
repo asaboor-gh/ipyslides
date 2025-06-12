@@ -1,4 +1,4 @@
-_attrs = ['AnimationSlider', 'TimerWidget', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
     'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
@@ -21,7 +21,7 @@ from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 
-from ._base._widgets import AnimationSlider, TimerWidget, ListWidget # For export
+from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, highlight, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, CustomDisplay, _Output
