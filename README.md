@@ -48,6 +48,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import einteract as ei
 
+@ei.callback('out-click', throttle = 200) # limit click rate by 200 ms
 def on_click(cdata,html):
     display(pd.DataFrame(cdata or {}))
 
@@ -62,7 +63,7 @@ def detect_fs(fig, fs):
 
 @ei.interact(
     on_select,
-    ei.classed(on_click,'out-click'),
+    on_click,
     detect_fs,
     fig = ei.patched_plotly(go.FigureWidget()), 
     html = ipw.HTML('**Select Box/Lesso on figure traces**'),

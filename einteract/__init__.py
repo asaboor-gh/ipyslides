@@ -8,7 +8,8 @@ This module provides extended interactive capabilities including:
 - InteractBase: Base class for creating interactive dashboard applications
 - interact/interactive: wrapper functions for creating simple interactive widgets
 - callback: Decorator for widget event callbacks to be used in subclasses of InteractBase
-- classed: Class decorator for interactive widgets to be used with interact/interactive functions.
+- monitor: Decorator to monitor general functions. All of its parameters are in callback too,
+    but it is does not require function to satisfy being a callback.
 
 
 **Custom Widgets**:
@@ -29,14 +30,13 @@ This module is a wrapper around the `ipyslides.interaction` modulde.
 """
 
 __all__ = [
-    'InteractBase','callback', 'classed', 'monitor', 'print_error', 'interactive','interact', 'patched_plotly', 'plt2html',
+    'InteractBase','callback', 'monitor', 'print_error', 'interactive','interact', 'patched_plotly', 'plt2html',
     'ListWidget', 'AnimationSlider', 'Output'
 ]
 
 from ipyslides.interaction import (
     InteractBase, 
-    callback,
-    classed, 
+    callback, 
     monitor,
     interact, 
     interactive,
@@ -45,3 +45,6 @@ from ipyslides.interaction import (
 from ipyslides._base._widgets import ListWidget, AnimationSlider
 from ipyslides._base.widgets import Output # patched one
 from ipyslides.formatters import plt2html
+
+def classed(*args,**kwargs):
+    raise DeprecationWarning("You can use @callback on pure functions too, so classed is no more required")
