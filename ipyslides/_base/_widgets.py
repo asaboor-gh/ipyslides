@@ -402,7 +402,8 @@ class JupyTimer(traitlets.HasTraits):
         print(f"Timer tick: {msg}")
 
     # Run after 1000ms (1 second)
-    timer.run(1000, my_func, args=("Hello!",))
+    if not timer.busy(): # executing function or looping
+        timer.run(1000, my_func, args=("Hello!",))
 
     # For continuous execution, run every 1000ms
     timer.run(1000, my_func, args=("Loop!",), loop=True)
@@ -414,14 +415,15 @@ class JupyTimer(traitlets.HasTraits):
     _callback = traitlets.Tuple((None, (), {}))        
     description = traitlets.Unicode(None, allow_none=True).tag(sync=True) 
 
-    _last_called = traitlets.Float(0)
-
     def __init__(self, description = None):
         super().__init__()
         self._animator = AnimationSlider(nframes=2) # fixed 2 frames make it work
         traitlets.link((self,'_value'),(self._animator,'value'))
         traitlets.link((self,'description'),(self._animator,'description'))
         self.set_trait('description', description) # user set
+        self._last_called = 0
+        self._running = False # exceuting function
+        self._break = self._animator.interval / 1000 # check after this much time
     
     def __dir__(self): return ["description", "play","pause","run","widget"]
     
@@ -432,11 +434,15 @@ class JupyTimer(traitlets.HasTraits):
     def _do_call(self, change):
         func, args, kwargs = self._callback
         now = time.time()
-        elapsed = (now - self._last_called) >= (self._animator.interval / 1000.0)
+        elapsed = (now - self._last_called) >= self._break
         
-        if func and self._animator.playing and elapsed:
-            func(*args, **kwargs)
-            self._last_called = now # giving time to execute function, so its between the functions
+        if func and elapsed and self._animator.playing and not self._running:
+            try:
+                self._running = True # running call
+                func(*args, **kwargs)
+            finally:
+                self._running = False # free now
+                self._last_called = now # We need to avoid overlapping calls
     
     def play(self): 
         """Start or resume the timer.
@@ -455,7 +461,7 @@ class JupyTimer(traitlets.HasTraits):
         """
         self._animator.playing = False
 
-    def run(self, interval, func, args=(),kwargs={},loop=False):
+    def run(self, interval, func, args = (), kwargs = {},loop = False, tol = None):
         """Set up and start a function to run at specified intervals.
         
         - interval : int. Time between function calls in milliseconds.
@@ -465,6 +471,7 @@ class JupyTimer(traitlets.HasTraits):
         - loop : bool, optional
             - If True, the function will run repeatedly until paused.
             - If False, the function will run once after `interval` time and stop.
+        - tol : int (milliseconds), we check for next execution after `interval - tol`, default is `0.05*interval`.
 
         **Notes**:
 
@@ -472,10 +479,15 @@ class JupyTimer(traitlets.HasTraits):
         - Calling `run()` will stop any previously running timer.
         - The first function call occurs after the specified interval.
         """
+        if tol is None:
+            tol = 0.05*float(interval) # default is 5%
+        
+        if not callable(func): raise TypeError("func should be a callable to accept args and kwargs")
         self.clear()
-        self._animator.interval = interval # this is important as we see only value = 1
-        self._animator.loop = loop 
-        self._callback = (func, args, kwargs)
+        self._animator.interval = float(interval) # type casting to ensure correct types given
+        self._animator.loop = bool(loop) 
+        self._break = (interval - float(tol)) / 1000 # break time to check next
+        self._callback = (func, tuple(args), dict(kwargs))
         self._last_called = time.time()
         self.play()
 
@@ -490,3 +502,15 @@ class JupyTimer(traitlets.HasTraits):
         self.pause()
         self._value = 0
         self._callback = (None, (), {})
+
+    def busy(self):
+        """Use this to test before executing next `run()` to avoid overriding.
+        
+        Returns True:
+
+        - If function is executing right now
+        - If loop was set to True, so technically its alway busy.
+        
+        Otherwise False.
+        """
+        return bool(self._animator.loop or self._running)

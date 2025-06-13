@@ -72,7 +72,7 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
                         )
 
             time_since_last = now - last_call_time[0]
-            if throttle and time_since_last >= throttle:
+            if throttle and time_since_last >= throttle: # no tolerance required here
                 call(_active_output)
             else:
                 if throttle:
@@ -81,7 +81,10 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
                 elif debounce:
                     log(_active_output, f"\033[33m[Debounced]\033[0m {datetime.now()} | {fname!r}: reset timer")
                     # This part loses outputs (which go to jupyter logger) if we use threading.Timer os asyncio.
-                    _active_timer.run(debounce, call, args=(_active_output,)) # so I created a JupyTimer for Jupyter
+                    # so I created a JupyTimer for Jupyter. You may suscpect we can debounce for a simple time check
+                    # like in throttle, but we need to take initial args and kwargs to produce correct ouput
+                    if not _active_timer.busy(): # Do not overlap
+                        _active_timer.run(debounce, call, args=(_active_output,), loop=False, tol = debounce/20) # 5% tolerance
                 else:
                     call(_active_output)
         return wrapped
