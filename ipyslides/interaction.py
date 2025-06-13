@@ -12,6 +12,7 @@ import traitlets
 from contextlib import contextmanager, nullcontext
 from collections import namedtuple
 from types import FunctionType
+from typing import List, Callable, Dict
 
 from IPython.display import display
 
@@ -110,12 +111,38 @@ def _run_callbacks(fcallbacks, kwargs, box):
     finally:
         _need_output._active_output = nullcontext()
 
+
 # We need to link useful traits to set from outside, these will be linked from inside
 # But these raise error if tried to set from __init__, only linked in there
 _useful_traits =  [
     'pane_widths','pane_heights','merge', 'width','height',
     'grid_gap', 'justify_content','align_items'
 ]
+# for validation
+_pmethods = ['set_css','relayout','update']
+_pattrs = ['groups','outputs','params', 'changed','isfullscreen']
+_omethods = ["_interactive_params"]
+
+class InteractMeta(type):
+    def __init__(cls, name, bases, namespace):
+        super().__init__(name, bases, namespace)
+
+        # Identify the first meaningful base class (skip 'object')
+        primary_base = ([base for base in bases if base is not object] or [None])[0]
+
+        # Check protected methods and attributes
+        for attr in [*_pmethods,*_pattrs, *_useful_traits]:
+            if attr in namespace and primary_base and hasattr(primary_base, attr):
+                raise TypeError(f"Class '{name}' cannot override '{attr}'.")
+
+        # Check mandatory methods
+        for method_name in _omethods:
+            if method_name not in namespace:
+                raise TypeError(f"Class '{name}' must override '{method_name}'.")
+
+# Need to avoid conflict with metaclass of interactive, so build a composite metaclass
+_metaclass = type("InteractiveMeta", (InteractMeta, type(ipw.interactive)), {})
+
 def _add_traits(cls):
     for name in _useful_traits:
         setattr(cls, name, ipw.AppLayout.class_traits()[name])
@@ -124,7 +151,7 @@ def _add_traits(cls):
 @_add_traits
 @_fix_init_sig
 @_format_docs(css_info = _css_info)
-class InteractBase(ipw.interactive):
+class InteractBase(ipw.interactive, metaclass = _metaclass):
     """Enhanced interactive widgets with multiple callbacks and fullscreen support.
     
     Use `interctive` function or `@interact` decorator for simpler use cases. For comprehensive dashboards, subclass this class.
@@ -245,7 +272,7 @@ class InteractBase(ipw.interactive):
     isfullscreen = traitlets.Bool(False, read_only=True)
     changed = traitlets.Instance(Changed, default_value=Changed(), read_only=True) # tracks parameters values changed, but fixed itself
 
-    def __init__(self, auto_update=True, app_layout= None, grid_css={}):
+    def __init__(self, auto_update:bool=True, app_layout:dict= None, grid_css:dict={}) -> None:
         # I tried to resolve dependent parameters in a func many ways like setting mock validate, notify_change, set, etc.
         # But each time app misbehaves, so I leave it on user for a function like func(x = widget, y = 'x.trait') 
         # and expected they should not se x.trait = value in same function, to avoid recursion issue.
@@ -257,6 +284,7 @@ class InteractBase(ipw.interactive):
         self.__app.layout.position = 'relative' # contain absolute items inside
         self.__app._size_to_css = _size_to_css # enables em, rem
         self.__other = ipw.VBox().add_class('other-area') # this should be empty to enable CSS perfectly, unless filled below
+        self.update = self.__update # needs avoid checking in metaclass, but restric in subclasses, need before setup
         self.__setup(auto_update, app_layout, grid_css)
         
         # do not add traits in __init__, unknow errors arise, just link
@@ -275,9 +303,9 @@ class InteractBase(ipw.interactive):
         if not self.__iparams: # need to interact anyhow and also allows a no params function
             self.__auto_update = False
         
-        self.__icallbacks = self._interactive_callbacks() # callbacks after collecting params
+        self.__icallbacks = self._registered_callbacks() # callbacks after collecting params
         if not isinstance(self.__icallbacks, (list, tuple)):
-            raise TypeError("_interactive_callbacks should return a tuple of functions!")
+            raise TypeError("_registered_callbacks should return a tuple of functions!")
         outputs = self.__func2widgets() # build stuff, before actual interact
         super().__init__(self.__run_updates, {'manual':not self.__auto_update,'manual_name':''}, **self.__iparams)
         
@@ -393,17 +421,11 @@ class InteractBase(ipw.interactive):
                             f"Invalid widget name {child!r} in tuple at position {i} in {key!r}. "
                             f"Valid names are: {list(self.__all_widgets.keys())}")
     
-    def __init_subclass__(cls):
-        for name in ['set_css','relayout','groups','outputs','params','update','isfullscreen','changed']:
-            if name in cls.__dict__:
-                raise Exception(f"Cannot override inherited {name!r} in class {cls.__name__!r}")
-        return super().__init_subclass__()
-    
     def relayout(self, 
         header=None, center=None, left_sidebar=None,right_sidebar=None,footer=None,
         pane_widths=None,pane_heights=None,merge=True, 
         grid_gap=None, width=None,height=None, justify_content=None,align_items=None,
-        ):
+        ) -> None:
         """Configure widget layout using AppLayout structure.
 
         **Parameters**:  
@@ -475,7 +497,7 @@ class InteractBase(ipw.interactive):
         self.children = (self.__app, self.__other, self.__style_html, _need_output._active_timer.widget(True), fs_btn)
     
     @_format_docs(css_info = textwrap.indent(_css_info,'    ')) # one more time indent for nested method
-    def set_css(self, main=None, center=None):
+    def set_css(self, main:dict=None, center:dict=None) -> None:
         """Update CSS styling for the main app layout and center grid.
         
         **Parameters**:         
@@ -538,11 +560,12 @@ class InteractBase(ipw.interactive):
             _css += ("\n" + _build_css((cent_sl,), center))
         self.__style_html.value = f'<style>{_css}</style>'
     
-    def _interactive_params(self):
+    def _interactive_params(self) -> Dict:
+        "Implement this in subclass to provide a dictionary for creating widgets and observers."
         raise NotImplementedError("implement _interactive_params(self) method in subclass, "
             "which should returns a dictionary of interaction parameters.")
     
-    def _interactive_callbacks(self):
+    def _registered_callbacks(self) -> List[Callable]:
         """Collect all methods marked as callbacks. If overridden by subclass, should return a tuple of functions."""
         funcs = []
         for name, attr in self.__class__.__dict__.items():
@@ -620,7 +643,7 @@ class InteractBase(ipw.interactive):
         self.__reset_descp(extras)
         return tuple(extras.values())
     
-    def update(self, *args):
+    def __update(self, *args):
         btn = args[0] if args and isinstance(args[0],ipw.Button) else None # if triggered by click on a button
         try:
             if btn: btn.set_trait('clicked', True) # since read_only
@@ -724,17 +747,17 @@ class InteractBase(ipw.interactive):
                 w.observe(update_hint, names='value') # update button hint on value change
                
     @property
-    def outputs(self): return self._outputs
+    def outputs(self) -> tuple: return self._outputs
 
     @property
-    def groups(self): 
+    def groups(self) -> namedtuple: 
         """NamedTuple of widget groups: controls, outputs, others."""
         if not hasattr(self, '_groups'):
             self._groups = self.__create_groups(self.__all_widgets)
         return self._groups
     
     @property
-    def params(self):
+    def params(self) -> namedtuple:
         "NamedTuple of all parameters used in this interact, including fixed widgets. Can be access inside callbacks with self.params."
         if not hasattr(self, '_params_tuple'):
             wparams = self.__iparams.copy() # copy to avoid changes
@@ -755,7 +778,7 @@ class InteractBase(ipw.interactive):
                 _run_callbacks(self.__icallbacks, kwargs, self) 
         
 
-def callback(css_class = None, *, timeit = False, throttle = None, debounce = None, logger = None):
+def callback(css_class:str = None, *, timeit:bool = False, throttle:int = None, debounce:int = None, logger:Callable = None) -> Callable:
     """Decorator to mark methods as interactive callbacks in InteractBase subclasses or for interactive funcs.
     
     **func**: The method to be marked as a callback.  
@@ -811,11 +834,7 @@ def callback(css_class = None, *, timeit = False, throttle = None, debounce = No
     return decorator
 
 def _classed(func, css_class):
-    "Use this function to assign a CSS class to a function being used in interactive, interact. to make a separate output widget."
-    if not callable(func):
-        raise TypeError(f"Can only function as first paramter, got {type(func).__name__}")
-    if not isinstance(css_class, str):
-        raise TypeError(f"css_class must be a string, got {type(css_class).__name__}")
+    # callable and str already check in callback
     if not css_class.startswith('out-'):
         raise ValueError(f"css_class must start with 'out-', got {css_class!r}")
     if css_class == 'out-main':
@@ -826,7 +845,7 @@ def _classed(func, css_class):
     return func
 
 @_format_docs(css_info = _css_info)
-def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs):
+def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=None, grid_css:dict={}, **kwargs):
     """Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.
 
     This function is used for quick dashboards. Subclass `InteractBase` for complex applications.
@@ -930,13 +949,13 @@ def interactive(*funcs, auto_update=True, app_layout=None, grid_css={}, **kwargs
     """
     class Interactive(InteractBase): # Encapsulating
         def _interactive_params(self): return kwargs # Must be overriden in subclass
-        def _interactive_callbacks(self): return funcs # funcs can be provided by @callback decorated methods or optionally ovveriding it
+        def _registered_callbacks(self): return funcs # funcs can be provided by @callback decorated methods or optionally ovveriding it
         def __dir__(self): # avoid clutter of traits for end user on instance
             return ['set_css','relayout','groups','outputs','params','isfullscreen','changed'] 
     return Interactive(auto_update=auto_update,app_layout=app_layout, grid_css=grid_css)
     
 @_format_docs(other=interactive.__doc__)
-def interact(*funcs, auto_update=True,app_layout=None, grid_css={}, **kwargs):
+def interact(*funcs:List[Callable], auto_update:bool=True,app_layout:dict=None, grid_css:dict={}, **kwargs) -> None:
     """{other}
 
     **Tips**:    
