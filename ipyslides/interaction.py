@@ -463,9 +463,9 @@ class InteractBase(ipw.interactive):
                         collected.extend(list(childs)) # avoid showing nested ones again.
                         children.append(nested_box) # add box to  main children
                     
-                setattr(self.__app, key, box(children, _dom_classes = (key.replace('_','-'),))) # for user CSS
-            elif value: # class own traits and Layout properties
-                setattr(self.__app, key, value) # traits were not added yet
+                self.__app.set_trait(key, box(children, _dom_classes = (key.replace('_','-'),))) # for user CSS
+            elif value: # class own traits and Layout properties are linked here
+                self.set_trait(key, value) 
         
         self.__other.children += tuple([v for k,v in self.__all_widgets.items() if k not in collected])
         
