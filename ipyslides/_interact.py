@@ -368,6 +368,7 @@ _general_css = {
     '< .ips-interact > .other-area:not(:empty)': { # to distinguish other area when not empty
         'border-top': '1px inset var(--jp-border-color2, #8988)',
     },
+    '.widget-vslider, .jupyter-widget-vslider': {'width': 'auto'}, # otherwise it spans too much area
     '.content-width-button.jupyter-button, .content-width-button .jupyter-button': {
             'width':'max-content',
             'padding-left': '8px', 'padding-right': '8px',

@@ -12,9 +12,10 @@ import traitlets
 from contextlib import contextmanager, nullcontext
 from collections import namedtuple
 from types import FunctionType
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Union, Tuple
 
 from IPython.display import display
+from ipywidgets import DOMWidget, Box # for clean type annotation
 
 from .formatters import get_slides_instance
 from .utils import _build_css, _dict2css
@@ -197,7 +198,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     dash = MyDashboard(auto_update=True)
     dash.relayout(
         left_sidebar=dash.groups.controls,  # controls on left
-        center=[(ipw.VBox(), ('fig', 'out-stats')),]  # plot and stats in a VBox explicitly
+        center=[(ipw.VBox(), ('fig', ipw.HTML('Showing Stats'), 'out-stats')),]  # plot and stats in a VBox explicitly
     )
     
     # Style with CSS Grid
@@ -212,11 +213,11 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
 
     - auto_update (bool): Update outputs automatically on widget changes
     - app_layout (dict): Initial layout configuration, see `relayout` method for details.
-        - header: List[str | (Box, List[str])] - Top widgets
-        - left_sidebar: List[str | (Box, List[str])] - Left side widgets 
-        - center: List[str | (Box, List[str])] - Main content area
-        - right_sidebar: List[str | (Box, List[str])] - Right side widgets
-        - footer: List[str | (Box, List[str])] - Bottom widgets
+        - header: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Top widgets
+        - left_sidebar: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Left side widgets 
+        - center: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Main content area
+        - right_sidebar: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Right side widgets
+        - footer: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Bottom widgets
     - grid_css (dict): CSS Grid properties for layout customization
         - See set_css() method for details
         - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
@@ -390,6 +391,9 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
                             f"Valid names are: {list(self.__all_widgets.keys())}")
                     continue # valid widget name, no need to check further
 
+                if isinstance(name, ipw.DOMWidget):
+                    continue # Allow widgets in layout other than just from params
+
                 if not isinstance(name, (list,tuple)):
                     raise TypeError(
                         f"Item at position {i} in {key!r} must be a widget name or "
@@ -411,20 +415,30 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
                         f"of widget names, got {type(children).__name__}")
                 
                 for child in children:
-                    if not isinstance(child, str):
+                    if not isinstance(child, (str, ipw.DOMWidget)):
                         raise TypeError(
-                            f"Widget names in tuple at position {i} in {key!r} must be strings, "
+                            f"Widget names in tuple at position {i} in {key!r} must be strings or widgets, "
                             f"got {type(child).__name__}")
                     
-                    if child not in self.__all_widgets:
+                    if isinstance(child, str) and child not in self.__all_widgets:
                         raise ValueError(
                             f"Invalid widget name {child!r} in tuple at position {i} in {key!r}. "
                             f"Valid names are: {list(self.__all_widgets.keys())}")
     
     def relayout(self, 
-        header=None, center=None, left_sidebar=None,right_sidebar=None,footer=None,
-        pane_widths=None,pane_heights=None,merge=True, 
-        grid_gap=None, width=None,height=None, justify_content=None,align_items=None,
+        header: List[Union[str, DOMWidget,Tuple[Box, List]]] = None, 
+        center: List[Union[str, DOMWidget,Tuple[Box, List]]] = None, 
+        left_sidebar: List[Union[str, DOMWidget,Tuple[Box, List]]] = None,
+        right_sidebar: List[Union[str, DOMWidget,Tuple[Box, List]]] = None,
+        footer: List[Union[str, DOMWidget,Tuple[Box, List]]] = None,
+        pane_widths: Tuple[float, float, float] = None, 
+        pane_heights: Tuple[float, float, float] = None,
+        merge: bool = True, 
+        grid_gap: str = None, 
+        width: str = None,
+        height: str = None, 
+        justify_content: str = None,
+        align_items: str = None,
         ) -> None:
         """Configure widget layout using AppLayout structure.
 
@@ -436,7 +450,9 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
             - left_sidebar: Left side widgets
             - right_sidebar: Right side widgets  
             - footer: Bottom widgets
-            - Each of above must be a List[str | (Box, List[str])] of widget params names if given. Box is instance of ipywidgets.Box initialized without children.
+            - Each of above must be a List[str | DOMWidget | (Box, List[str | DOMWidget])] of widget params names if given. 
+                - Box is instance of ipywidgets.Box() initialized without children.
+                - Support of any widget other than just params in layout enables flexible and rich dashboards.
         - Grid Properties:
             - pane_widths: List[str] - Widths for [left, center, right]
             - pane_heights: List[str] - Heights for [header, center, footer]
@@ -479,10 +495,12 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
                 for name in value:
                     if isinstance(name,str) and name in self.__all_widgets:
                         children.append(self.__all_widgets[name])
+                    elif isinstance(name, ipw.DOMWidget): # any random widget is allowed in layout
+                        children.append(name)
                     elif isinstance(name, (list,tuple)) and len(name) == 2: # already checked, but just in case
                         nested_box, childs = name
-                        nested_box.children = tuple([self.__all_widgets[n] for n in childs if n in self.__all_widgets])
-                        collected.extend(list(childs)) # avoid showing nested ones again.
+                        nested_box.children = tuple([self.__all_widgets[n] if n in self.__all_widgets else n for n in childs])
+                        collected.extend([c for c in childs if isinstance(c, str)]) # avoid showing nested ones again.
                         children.append(nested_box) # add box to  main children
                     
                 self.__app.set_trait(key, box(children, _dom_classes = (key.replace('_','-'),))) # for user CSS
