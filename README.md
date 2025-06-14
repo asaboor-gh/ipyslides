@@ -1,5 +1,6 @@
 # einteract
 
+[![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/einteract-docs/lab/index.html?path=einteract.ipynb)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb)
 [![PyPI version](https://badge.fury.io/py/einteract.svg)](https://badge.fury.io/py/einteract)
 [![Downloads](https://pepy.tech/badge/einteract)](https://pepy.tech/project/einteract)
@@ -23,6 +24,10 @@ Or if you prefer to install from source, clone the repository and in its top fol
 ```bash
 pip install -e .
 ```
+
+## Interactive Playground
+Run example on [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/einteract-docs/lab/index.html?path=einteract.ipynb) and 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb)
 
 ## Features
 
