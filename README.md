@@ -39,7 +39,10 @@ Run example on [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](ht
     - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
     - Add `ipywidgets.Button` to hold callbacks which use it as paramter for a click
 - **Plotly Integration**: Modified plotly support with additional traits like `selected` and `clicked`
-- **Matplotlib Support**: Convert matplotlib plots to HTML format using `plt2html`
+- **HTML support**: 
+    - Convert matplotlib plots to HTML format using `plt2html`.
+    - Any (supported) python object can be converted to html using `html`, `hstack` and `vstack` function.
+- **JupyTimer**: A non-blocking widget timer for Jupyter Notebooks without threading/asyncio.
 - **Event Callbacks**: Easy widget event handling with the `@callback` decorator inside the subclass of `InteractBase` or multiple functions in `interact/interactive` functions.
 - **Full Screen Mode**: Transform your dashboards into full-screen applications by added button.
 
