@@ -13,7 +13,7 @@ def get_logo(height="60px", text = None):
     </svg>'''
 
 
-how_to_slide = """#### Creating Slides
+how_to_slide = r"""#### Creating Slides
 ```python
 import ipyslides as isd 
 slides = isd.Slides()

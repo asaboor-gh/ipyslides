@@ -1,7 +1,6 @@
 import uuid
 import time
 import traitlets
-import asyncio
 import inspect
 import anywidget
 
@@ -392,7 +391,9 @@ class JupyTimer(traitlets.HasTraits):
     """A widget that provides timer functionality in Jupyter Notebook without threading/blocking.
     
     This widget allows you to run a function at specified intervals, with options for 
-    looping and control over the timer's state (play/pause). You can change function too by using `run()` again.
+    looping and control over the timer's state (play/pause/loop). You can change function too by using `run()` again.
+    
+    The timer widget must be displayed before calling `run()` to take effect.
 
     ```python
     timer = JupyTimer(description="My Timer")
@@ -400,32 +401,40 @@ class JupyTimer(traitlets.HasTraits):
 
     def my_func(msg):
         print(f"Timer tick: {msg}")
+        if timer.nticks > 9:
+            timer.pause()
 
     # Run after 1000ms (1 second)
     if not timer.busy(): # executing function or looping
         timer.run(1000, my_func, args=("Hello!",))
 
-    # For continuous execution, run every 1000ms
+    # For continuous execution, run every 1000ms, 10 times as set in my_func
     timer.run(1000, my_func, args=("Loop!",), loop=True)
     ```
 
-    Automatically displays in Jupyter, but to acces associated widget you can use `.widget` method.
+    - Automatically displays in Jupyter, but to acces the associated widget you can use `.widget` method.
+    - Use `.widget(minimal = True)` if you want to hide GUI, but still needs to be displayed to work.
+    - Call attempts during incomplete interval are skipped. You can alway increase `tol` value to fix unwanted skipping.
+    - This is not a precise timer, it includes processing overhead, but good enough for general tracking.
     """
     _value = traitlets.CInt(0).tag(sync=True)  
-    _callback = traitlets.Tuple((None, (), {}))        
+    _callback = traitlets.Tuple((None, (), {}))     
     description = traitlets.Unicode(None, allow_none=True).tag(sync=True) 
+    nticks = traitlets.Int(0, read_only=True)
 
     def __init__(self, description = None):
         super().__init__()
         self._animator = AnimationSlider(nframes=2) # fixed 2 frames make it work
-        traitlets.link((self,'_value'),(self._animator,'value'))
+        traitlets.dlink((self._animator,'value'),(self,'_value'))
         traitlets.link((self,'description'),(self._animator,'description'))
         self.set_trait('description', description) # user set
+        self._running = False # executing function
+        self._delay = self._animator.interval # check after this much time (ms)
         self._last_called = 0
-        self._running = False # exceuting function
-        self._break = self._animator.interval / 1000 # check after this much time
+        self._animator.observe(lambda c: setattr(self, '_last_called', time.time()), 'playing')
     
-    def __dir__(self): return ["description", "play","pause","run","widget"]
+    def __dir__(self): 
+        return "busy clear description elapsed loop nticks pause play run widget".split()
     
     def _repr_mimebundle_(self,**kwargs): # display
         return self._animator._repr_mimebundle_(**kwargs)
@@ -433,18 +442,28 @@ class JupyTimer(traitlets.HasTraits):
     @traitlets.observe("_value")
     def _do_call(self, change):
         func, args, kwargs = self._callback
-        now = time.time()
-        elapsed = (now - self._last_called) >= self._break
-        
-        if func and elapsed and self._animator.playing and not self._running:
+
+        if ready := self.elapsed >= self._delay:
+            self.set_trait("nticks",self.nticks + 1) # how many time intervals passed overall
+            
+        if func and ready and not self._running: # We need to avoid overlapping calls
             try:
                 self._running = True # running call
                 func(*args, **kwargs)
             finally:
                 self._running = False # free now
-                self._last_called = now # We need to avoid overlapping calls
+                self._last_called = time.time()
     
-    def play(self): 
+    @property
+    def elapsed(self) -> float:
+        """Returns elapsed time since last function call completed in milliseconds.
+
+        If `loop = True`, total time elapsed since start would be approximated as:
+            `self.elapsed + self.nticks * interval` (milliseconds)
+        """
+        return (time.time() - self._last_called) * 1000 # milliseconds
+    
+    def play(self) -> None: 
         """Start or resume the timer.
         
         If a function was previously set using `run()`, it will be executed at 
@@ -453,7 +472,7 @@ class JupyTimer(traitlets.HasTraits):
         """
         self._animator.playing = True
     
-    def pause(self): 
+    def pause(self) -> None: 
         """Pause the timer without clearing the underlying function.
         
         The function set by `run()` is preserved and will resume execution when
@@ -461,7 +480,11 @@ class JupyTimer(traitlets.HasTraits):
         """
         self._animator.playing = False
 
-    def run(self, interval, func, args = (), kwargs = {},loop = False, tol = None):
+    def loop(self, b:bool) -> None:
+        "Toggle looping programmatically."
+        self._animator.loop = b
+
+    def run(self, interval, func, args = (), kwargs = {},loop = False, tol = None) -> None:
         """Set up and start a function to run at specified intervals.
         
         - interval : int. Time between function calls in milliseconds.
@@ -482,34 +505,37 @@ class JupyTimer(traitlets.HasTraits):
         if tol is None:
             tol = 0.05*float(interval) # default is 5%
         
+        if not (0 < tol < interval):
+            raise ValueError("0 < tol < interval should hold!")
+        
         if not callable(func): raise TypeError("func should be a callable to accept args and kwargs")
         self.clear()
         self._animator.interval = float(interval) # type casting to ensure correct types given
         self._animator.loop = bool(loop) 
-        self._break = (interval - float(tol)) / 1000 # break time to check next
+        self._delay = interval - float(tol) # break time to check next, ms
         self._callback = (func, tuple(args), dict(kwargs))
-        self._last_called = time.time()
         self.play()
 
-    def widget(self, minimal=False):
-        "Get the associated displayable widget. If minimial = True, zero width and height applied."
+    def widget(self, minimal=False) -> ValueWidget:
+        "Get the associated displayable widget. If minimal = True, the widget's size will be visually hidden using zero width and height."
         if minimal:
             self._animator.layout = dict(width='0',height='0',max_width='0',max_height='0')
         return self._animator
     
     def clear(self):
         "Clear function and reset playing state."
+        self.set_trait("nticks",0)
         self.pause()
-        self._value = 0
         self._callback = (None, (), {})
+        self._last_called = time.time() # seconds
 
-    def busy(self):
+    def busy(self) -> bool:
         """Use this to test before executing next `run()` to avoid overriding.
         
         Returns True:
 
         - If function is executing right now
-        - If loop was set to True, so technically its alway busy.
+        - If loop was set to True, technically it's alway busy.
         
         Otherwise False.
         """

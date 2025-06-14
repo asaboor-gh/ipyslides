@@ -328,7 +328,7 @@ class BaseSlides:
         return self.build(self._next_number, content=content)
 
     class build(ContextDecorator):
-        """Build slides with a single unified command in three ways:
+        r"""Build slides with a single unified command in three ways:
         
         1. hl`slides.build(number, callable)` to create a slide from a `callable(slide)` immediately, e.g. hl`lambda s: slides.write(1,2,3)` or as a decorator.
             - Docstring of callable (if any) is parsed as markdown before calling function.
