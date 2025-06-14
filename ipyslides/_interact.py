@@ -375,4 +375,14 @@ _general_css = {
     },
     '> * .widget-box': {'flex-shrink': 0}, # avoid collapse of boxes,
     '.js-plotly-plot': {'flex-grow': 1}, # stretch parent, rest is autosize stuff
+    '.columns':{
+        'width':'100%',
+        'max-width':'100%',
+        'display':'inline-flex',
+        'flex-direction':'row',
+        'column-gap':'0.2em',
+        'height':'auto',
+        'box-sizing':'border-box !important',
+        '> *': {'box-sizing':'border-box !important',}
+    }, # as einteract now support vtack, this is good here
 }
