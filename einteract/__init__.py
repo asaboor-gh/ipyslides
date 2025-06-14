@@ -10,6 +10,8 @@ This module provides extended interactive capabilities including:
 - callback: Decorator for widget event callbacks to be used in subclasses of InteractBase
 - monitor: Decorator to monitor general functions. All of its parameters are in callback too,
     but it is does not require function to satisfy being a callback.
+- JupyTimer: A widget to observe a function inside Jupyter withought blocking/threading.
+    The debounce parameter in `monitor` is working based on it.
 
 
 **Custom Widgets**:
