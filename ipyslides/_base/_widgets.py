@@ -351,7 +351,7 @@ class AnimationSlider(anywidget.AnyWidget, ValueWidget):
     """
     _esm = _esm = Path(__file__).with_name('js') / 'animator.js'
     _css = """
-    .animation-slider button {background: transparent; color: inherit;} 
+    .animation-slider button {background: transparent; color: inherit; cursor: pointer;} 
     .animation-slider input[type="range"] {outline: none;}
     .animation-slider button:hover > i,
     .animation-slider button:focus > i,

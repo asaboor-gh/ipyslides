@@ -32,6 +32,8 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
     ```python
 
     but `@monitor()` will do nothing, as no option was used.
+
+    **Note**: Return value of function is not captured because it will skipp calls and throw None returns most of the time.
     """
     throttle = throttle / 1000 if throttle else 0 # seconds now, but keep debounce in milliseconds
 
@@ -220,9 +222,10 @@ class FullscreenButton(AnyWidget):
         transition: opacity 0.2s;
         background: transparent;
         font-size: 16px;
+        cursor: pointer;
         color: var(--accent-color, inherit);
     }
-    .fs-btn.ips-fs button:hover {opacity:1;text-shadow:0 1px var(--bg2-color,#8988)}
+    .fs-btn.ips-fs button:hover { opacity: 1;text-shadow:0 1px var(--bg2-color,#8988)}
     """
 
     _esm = """
