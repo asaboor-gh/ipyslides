@@ -368,6 +368,17 @@ _general_css = {
         'padding': '0 0.5em',
         'padding-top': '4px', # button offset sucks
     },
+    "^.Context-Loading:before": {
+        "content": "''", # should not trigger by minimal interactions
+        "position": "absolute","left": "50%", "top": "0",
+        "z-index": "9999", "transform": "translateX(-50%)",
+        "animation": "dotsFade 0.8s steps(4, end) infinite",
+        "font-size": "16px", "color": "var(--accent-color, skyblue)",
+    },
+    "@keyframes dotsFade": { "0%": { "content": "''" }, 
+        "25%": { "content": "'●'" }, "50%": { "content": "'●●●'" }, 
+        "75%": { "content": "'●●●●●'" }, "100%": { "content": "''" },
+    },
     '< .ips-interact > .other-area:not(:empty)': { # to distinguish other area when not empty
         'border-top': '1px inset var(--jp-border-color2, #8988)',
     },

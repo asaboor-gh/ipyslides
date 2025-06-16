@@ -664,9 +664,11 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     def __update(self, *args):
         btn = args[0] if args and isinstance(args[0],ipw.Button) else None # if triggered by click on a button
         try:
+            self.__app.add_class("Context-Loading")
             if btn: btn.set_trait('clicked', True) # since read_only
             super().update(*args) # args are ignored anyhow but let it pass
         finally:
+            self.__app.remove_class("Context-Loading")
             if btn:
                 btn.set_trait('clicked', False)
                 _hint_update(btn, remove=True)
@@ -969,7 +971,7 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=No
         def _interactive_params(self): return kwargs # Must be overriden in subclass
         def _registered_callbacks(self): return funcs # funcs can be provided by @callback decorated methods or optionally ovveriding it
         def __dir__(self): # avoid clutter of traits for end user on instance
-            return ['set_css','relayout','groups','outputs','params','isfullscreen','changed'] 
+            return ['set_css','relayout','groups','outputs','params','isfullscreen','changed', 'layout', *_useful_traits] 
     return Interactive(auto_update=auto_update,app_layout=app_layout, grid_css=grid_css)
     
 @_format_docs(other=interactive.__doc__)
