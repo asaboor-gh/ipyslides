@@ -38,8 +38,12 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
     throttle = throttle / 1000 if throttle else 0 # seconds now, but keep debounce in milliseconds
 
     def log(ctx, msg):
-        with ctx:
-            logger(msg) if callable(logger) else print(msg)
+        if callable(logger): return logger(msg)
+        elif isinstance(ctx, Output): ctx.append_stdout(msg + '\n') # avoids clearing previous output
+        else:
+            with ctx: print(msg)
+    
+    def stamp(): return datetime.now().strftime("\033[37m%H:%M:%S\033[0m")
 
     def decorator(fn):
         if all(not v for v in [timeit, throttle,debounce]):
@@ -69,7 +73,7 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
                     
                     if timeit:
                         log(nullcontext(), # want to be not overwritten above output 
-                            f"\033[34m[Timed]\033[0m     {datetime.now()} | {fname!r}: " 
+                            f"\033[34m[Timed]\033[0m     {stamp()} | {fname!r}: " 
                             f"executed in {duration*1000:.3f} milliseconds"
                         )
 
@@ -78,14 +82,14 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
                 call(_active_output)
             else:
                 if throttle:
-                    log(_active_output, f"\033[31m[Throttled]\033[0m {datetime.now()} | {fname!r}: skipped call")
+                    log(_active_output, f"\033[31m[Throttled]\033[0m {stamp()} | {fname!r}: skipped call")
 
                 elif debounce:
-                    log(_active_output, f"\033[33m[Debounced]\033[0m {datetime.now()} | {fname!r}: reset timer")
+                    log(_active_output, f"\033[33m[Debounced]\033[0m {stamp()} | {fname!r}: reset timer")
                     # This part loses outputs (which go to jupyter logger) if we use threading.Timer os asyncio.
                     # so I created a JupyTimer for Jupyter. You may suspect we can debounce for a simple time check
                     # like in throttle, but we need to take initial args and kwargs to produce correct ouput
-                    if not _active_timer.busy(): # Do not overlap
+                    if _active_timer.idle(): # Do not overlap
                         _active_timer.run(debounce, call, args=(_active_output,), loop=False, tol = debounce/20) # 5% tolerance
                 else:
                     call(_active_output)

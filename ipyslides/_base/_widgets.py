@@ -405,7 +405,7 @@ class JupyTimer(traitlets.HasTraits):
             timer.pause()
 
     # Run after 1000ms (1 second)
-    if not timer.busy(): # executing function or looping
+    if timer.idle(): # not executing function or looping
         timer.run(1000, my_func, args=("Hello!",))
 
     # For continuous execution, run every 1000ms, 10 times as set in my_func
@@ -529,14 +529,20 @@ class JupyTimer(traitlets.HasTraits):
         self._callback = (None, (), {})
         self._last_called = time.time() # seconds
 
-    def busy(self) -> bool:
+    def idle(self) -> bool:
         """Use this to test before executing next `run()` to avoid overriding.
         
-        Returns True:
+        Returns False:
 
         - If function is executing right now
         - If loop was set to True, technically it's alway busy.
         
-        Otherwise False.
+        Otherwise True.
         """
-        return bool(self._animator.loop or self._running)
+        return not bool(self._animator.loop or self._running)
+    
+    def busy(self) -> bool: 
+        "not self.idle()"
+        return not self.idle
+    
+
