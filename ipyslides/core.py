@@ -748,7 +748,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 self._run_cell(cell)  #
 
     def __xmd(self, line, cell=None):
-        """Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
+        r"""Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
         Can use in place of `write` commnad for strings.
         When using `%xmd`, you can pass variables as \%{var} (slash for escap here) which will substitute HTML representation
         if no other formatting specified.
