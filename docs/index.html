@@ -7,9 +7,83 @@ title: IPySlides Docs
 <head>
   <meta charset="UTF-8">
   <title>{{ page.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    :root {
+      --bg-color: #0d1117;
+      --text-color: #c9d1d9;
+      --link-color: #58a6ff;
+      --border-color: #30363d;
+      --button-bg: #161b22;
+      --button-hover-bg: #21262d;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif,
+                   "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0;
+      line-height: 1.6;
+    }
+    
+    a {
+      color: var(--link-color);
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    header, footer {
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+    }
+    
+    header {
+      border-bottom: none;
+    }
+    
+    footer {
+      border-top: none;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    
+    button {
+      background-color: var(--button-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background-color: var(--button-hover-bg);
+    }
+  </style>
 </head>
 <body>
   <h1>IPySlides Documentation</h1>
-  <a href="docs.html">IPySlides Docs</a>
+    <a href="https://doi.org/10.5281/zenodo.15482350">
+      <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15482350.svg" alt="DOI">
+    </a>
+    <a href="https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb">
+      <img src="https://mybinder.org/badge_logo.svg" alt="Binder">
+    </a>
+    <a href="https://badge.fury.io/py/ipyslides">
+      <img src="https://badge.fury.io/py/ipyslides.svg" alt="PyPI version">
+    </a>
+    <a href="https://pepy.tech/project/ipyslides">
+      <img src="https://pepy.tech/badge/ipyslides" alt="Downloads">
+    </a>
+  <a href="docs560.html">IPySlides 5.6.0</a>
 </body>
 </html>
