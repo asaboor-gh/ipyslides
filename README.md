@@ -11,8 +11,6 @@
    <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
 </svg>  IPySlides is a Python library for creating interactive presentations in Jupyter notebooks. It combines the power of Markdown, LaTeX, interactive widgets, and live variable updates in a single presentation framework.
 
-**[See PDF Slides](Slides.pdf)**
-
 ---
 
 <p float="left"> 
@@ -158,6 +156,8 @@ Use `slides.export_html` to build static slides that you can print as well. Read
 2. Open in Chrome/Edge browser
 3. Use Print → Save as PDF and enable background graphics
 
+Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML slides which you can print to PDF.
+
 ---
 
 ## Advanced Features
@@ -213,7 +213,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Documentation
 
-- Full documentation: `slides.docs()`
+- [Github Pages Documentation](https://asaboor-gh.github.io/ipyslides/)
+- Full documentation: `slides.docs()` same as on github pages.
 - Examples: `slides.demo()`
 - [GitHub Repository](https://github.com/asaboor-gh/ipyslides)
 
