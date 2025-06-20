@@ -9,8 +9,6 @@ An enhanced interactive widget that lets you observe any trait of widgets, obser
 
 ![](interact.png)
 
-See code of this simple yet fully customizable dashboard on binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb)
-
 ## Installation
 
 You can install einteract using pip:
