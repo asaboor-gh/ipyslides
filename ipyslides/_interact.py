@@ -29,7 +29,7 @@ def monitor(timeit: Union[bool,Callable]=False, throttle:int=None, debounce:int=
     @monitor
     def f(*args,**kwargs):
         pass
-    ```python
+    ```
 
     but `@monitor()` will do nothing, as no option was used.
 
