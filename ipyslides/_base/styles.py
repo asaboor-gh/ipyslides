@@ -433,7 +433,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
         },
         'code.highlight.inline': {
             'border': 'none !important',
-            'text-shadow': '0 1px var(--bg1-color)',
+            'text-shadow': '0 1px var(--bg2-color)',
             'background': 'none !important', # Export fix
             'span.n': {'color': 'var(--fg1-color) !important',},
         },

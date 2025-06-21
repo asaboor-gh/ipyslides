@@ -237,23 +237,14 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
         display:{'inline-block' if lineno else 'none'} !important;
     }}\n</style>"""
 
-def highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True, height='400px'):
-    """Highlight code (any python object that has a source or str of code) with given language and style. 
-    
-    - style only works if css_class is given.
-    - If css_class is given and matches any of hl`pygments.styles.get_all_styles()`, then style will be applied immediately.
-    - color is used for text color as some themes dont provide text color. 
-    - height is max-height of code block, it does not expand more than code itself.
-    
-    If you want plain inline highlight, use `Slides.hl` or `ipyslides.utils.hl`.
-    """
+def _highlight(code, language='python', name = None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True, height='400px'):
     if style not in pygments.styles.get_all_styles():
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     if css_class in pygments.styles.get_all_styles():
         style = css_class
     
     if not isinstance(code, str):
-        code = _callable_source(code)
+        code = _source_code(code)
         
     formatter = pygments.formatters.HtmlFormatter(style = style)
     _style = code_css(style=style, color = color, background = background, hover_color = hover_color,css_class=css_class, lineno = lineno) if css_class else ''
@@ -269,11 +260,11 @@ def highlight(code, language='python', name = None, css_class = None, style='def
     if isinstance(css_class, str):
         start = start.replace('class="highlight"',f'class="highlight {css_class}"')
     
-    return XTML(f'''<div><span class="lang-name">{_title}</span>
+    return f'''<div><span class="lang-name">{_title}</span>
         <div class="highlight-wrapper" style="height:auto;max-height:{height};overflow:auto;position:relative;">
         {_style}\n{start}
         <pre>{code_}
-        </pre>\n{end}</div></div>''')
+        </pre>\n{end}</div></div>'''
 
 def _inline_style(kws_or_widget):
     "CSS inline style from keyword arguments having _ inplace of -. Handles widgets layout keys automatically."
@@ -592,13 +583,13 @@ def format_object(obj):
     # If Code object given
     for _type in ['class','function','module','method','builtin','generator']:
         if getattr(inspect,f'is{_type}')(obj):
-            source = highlight(_callable_source(obj), language='python',style='default',css_class=None).value
+            source = _highlight(_source_code(obj), language='python',style='default',css_class=None)
             return (True, source)
     
     # If Nothing found
     return False, NotImplementedError(f"{obj}'s html representation is not implemented yet!")  
 
-def _callable_source(obj):
+def _source_code(obj):
     try:
         source = textwrap.dedent(inspect.getsource(obj)).strip('\n') # dedent is must
         source = re.sub(r'^#\s+','#',source) # Avoid Headings in source

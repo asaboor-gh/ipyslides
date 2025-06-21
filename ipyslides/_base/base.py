@@ -204,7 +204,7 @@ class BaseSlides:
         return XTML(_css_docstring)
    
     def get_source(self, title = 'Source Code', **kwargs):
-        "Return source code of all slides except created as frames with python code. kwargs are passed to `ipyslides.formatters.highlight`."
+        "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.highlight`."
         sources = []
         for slide in self.all_slides:
             if slide._source['text']:
@@ -371,7 +371,7 @@ class BaseSlides:
 
                 if callable(content) and not code.startswith('with'):
                     with _build_slide(self._app, self._snumber) as s: 
-                        s._set_source(self._app.code.from_callable(content).raw,'python') 
+                        s._set_source(self._app.code.from_source(content).raw,'python') 
                         if (doc := getattr(content, '__doc__', None)):
                             self._app.parse(doc, returns=False)
                         content(s) # call directly, set code before to make avaiable in function

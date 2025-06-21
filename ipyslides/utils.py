@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
+    'details', 'set_dir', 'textbox', 'highlight', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
     'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
@@ -22,9 +22,10 @@ from IPython.display import SVG, IFrame
 from IPython.core.display import Image, display
 
 from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
-from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, highlight, _inline_style
+from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
 from .writer import Writer, CustomDisplay, _Output
+from .source import highlight
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -86,19 +87,18 @@ def _fmt_cols(*objs,widths = None):
     
     return f'''<div class="columns">{_cols}</div>'''
 
-def hl(code, language="python"): # No need to have in __all__, just for markdown
+
+def hl(obj, language="python"): # No need to have in __all__, just for markdown
     "Highlight code object in inline mode. `language` is the language name, default is python."
     try: 
-        return XTML(
-            '<br>'.join('<code class="highlight inline" style="white-space:pre;"' + c 
-                for c in re.findall(
-                    r'\<\s*code(.*?\<\s*\/\s*code\s*\>)', 
-                    highlight(code, language).value
-                )
-            ) # intended to be one liner, but leave for flexibility
-        ) 
+        return XTML( 
+            '<br>'.join('<code class="highlight inline" style="white-space:pre;">' + c 
+                for c in re.findall(r'\<\s*code.*?\>(.*?\<\s*\/\s*code\s*\>)', 
+                    highlight(obj, language=language).value, 
+                    flags=re.DOTALL | re.MULTILINE | re.UNICODE
+        ))) # intended to be one liner, but leave for flexibility
     except:
-        return html('code',code) # Fallback , no need to raise errors
+        return html('code',str(obj)) # Fallback , no need to raise errors
 
 _example_props = {
     '.A': { # .A is repeated nowhere! But in CSS it is a lot

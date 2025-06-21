@@ -27,7 +27,7 @@ from IPython.core.display import display
 from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 
-from .formatters import XTML, altformatter, highlight, htmlize, get_slides_instance
+from .formatters import XTML, altformatter, _highlight, htmlize, get_slides_instance
 
 _md_extensions = [
     "tables",
@@ -367,7 +367,7 @@ class XMarkdown(Markdown):
             out = XTML() # empty placeholder
             try:
                 name = " " if line.strip().lower() == "text" else None
-                out.data = highlight(data, language=line.strip(), name=name, css_class=_class).value # intercept code highlight
+                out.data = _highlight(data, language=line.strip(), name=name, css_class=_class) # intercept code highlight
             except:
                 out.data = super().convert(f'```{block}\n```') # Let other extensions parse block
             

@@ -12,7 +12,7 @@ from IPython.display import display, clear_output
 from .xmd import fmt, parse, get_main_ns, extender as _extender
 from .source import Code
 from .writer import hold, GotoButton, write
-from .formatters import bokeh2html, plt2html, highlight, htmlize, serializer
+from .formatters import bokeh2html, plt2html, serializer
 from . import utils
 from . import interaction as _interac
 
@@ -138,7 +138,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.extender   = _extender
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
-        self.highlight  = highlight
         self.get_logo   = get_logo
         self.code       = Code  # Code source
         self.icon       = _Icon  # Icon is useful to add many places
