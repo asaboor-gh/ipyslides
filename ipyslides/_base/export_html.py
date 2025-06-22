@@ -48,7 +48,7 @@ class _HhtmlExporter:
         self.main = _instance_BaseSlides
         self.main.widgets.buttons.export.on_click(self._export) # Export button
         
-    def _htmlize(self):
+    def _htmlize(self, progressbar):
         navui_class = '' if 'Slides-ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
         content = ''
         for item in self.main:
@@ -76,7 +76,7 @@ class _HhtmlExporter:
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
                 sec_id = self._get_sec_id(item)
                 goto_id = self._get_target_id(item,k)
-                footer = f'<div class="Footer {navui_class}">{self.main.settings._get_footer(item, False)}{self._get_progress(item,k)}</div>'
+                footer = f'<div class="Footer {navui_class}">{self.main.settings._get_footer(item, False)}</div>'
 
                 number = ""
                 if self.main.settings.footer.numbering:
@@ -93,6 +93,7 @@ class _HhtmlExporter:
                             </div>
                             {number}
                             {footer}
+                            {self._get_progress(item,k) if progressbar else ""}
                         </div>
                     </section>''')
             
@@ -110,6 +111,7 @@ class _HhtmlExporter:
             click_btns  = self._get_clickables(), 
             height      = f'{int(254/theme_kws["aspect"])}mm', 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
+            bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True -> bottom
             )
     
     def _get_sec_id(self, slide):
@@ -162,28 +164,31 @@ class _HhtmlExporter:
 
         return "".join(f'<a href="#{key}" class="{klass}">{label}</a>' for (klass, label,key) in zip(klasses, names,items))
                 
-    def _writefile(self, path, overwrite = False):
+    def _writefile(self, path, overwrite = False, progressbar = True):
         if os.path.isfile(path) and not overwrite:
             return print(f'File {path!r} already exists. Use overwrite=True to overwrite.')
         
         with open(path,'w', encoding="utf-8") as f: # encode to utf-8 to handle emojis
-            f.write(self._htmlize()) 
+            f.write(self._htmlize(progressbar)) 
             
     
-    def export_html(self, path = 'Slides.html', overwrite = False):
+    def export_html(self, path = 'Slides.html', overwrite = False, progressbar = True):
         """Build html slides that you can print.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
         - You can take screenshot (using system's tool) of a widget and add it back to slide using ` Slides.clip ` or ` Slides.alt(image_filename, ...)` to keep PNG view of a widget. 
         - You can paste a screenshot using ` alt ` or ` clip ` functionality as well.
+        - If progressbar is set to True, 'bottom' or 'top', a progressbar while shown accordingly. True -> 'bottom'.
         
         ::: note-info
             - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Alsp enable background graphics in print dialog.
         """
+        if progressbar not in [True, False, 'top','bottom']:
+            raise ValueError(f"progressbar should be one of True, False, 'top' or 'bottom', got {progressbar}")
         _path = os.path.splitext(path)[0] + '.html' if path != 'Slides.html' else path
-        export_func = lambda: self._writefile(_path, overwrite)
+        export_func = lambda: self._writefile(_path, overwrite, progressbar)
         self.main.widgets.iw._try_exec_with_fallback(export_func)
         
     def _export(self,btn):

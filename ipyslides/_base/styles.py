@@ -271,7 +271,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
 
         },
         '^.Slides-ShowFooter .SlideArea' : {
-            'padding-bottom': 'var(--paddingBottom, 23px) !important', # 20px navbar + 3px progressbar
+            'padding-bottom': 'var(--paddingBottom, 22px) !important', # 20px navbar + 2px progressbar
         },
         '.SlideArea': {
             'position': 'absolute !important',

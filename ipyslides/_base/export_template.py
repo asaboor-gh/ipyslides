@@ -1,6 +1,6 @@
 # Template for building HTML from slides 
 
-def doc_html(code_css, style_css, content, script, click_btns, height, css_class):
+def doc_html(code_css, style_css, content, script, click_btns, height, css_class, bar_loc):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +13,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, css_class
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
     
     <style>{style_css}</style>
-    {slides_css.replace('__HEIGHT__', height)}
+    {slides_css.replace('__HEIGHT__', height).replace('__WHERE__',bar_loc)}
     {code_css}
 
     <!-- Custom stylesheet, it must be in the same directory as the html file -->
@@ -65,7 +65,7 @@ pre {white-space: break-spaces;} /* General rule unless specified in elements */
 .click-wrapper {
     position: fixed !important;
     left:calc(100% - 150px) !important; /* extra space for slide number */
-    bottom:3px !important;
+    bottom:2px !important;
     width: 110px !important;
     height: 21px !important;
     display:flex !important;
@@ -102,14 +102,16 @@ section .SlideBox {
     padding: 0 !important;
     box-sizing: border-box !important;
 }
-section .SlideBox > .Footer > .Progress { 
+section .SlideBox > .Progress { 
     display: block !important; 
     box-sizing: border-box !important;
-    margin-bottom: 0 !important;
-    height: 3px !important;
+    margin: 0 !important;
+    height: 2px !important;
     width: 100% !important;
+    position: absolute !important;
+    left:0 !important;__WHERE__:0 !important;
 }
-section:first-of-type .SlideBox > .Footer > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
+section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
 section .SlideArea {
     /* Will be added by export */
 	margin: auto !important;
@@ -121,7 +123,7 @@ section .SlideBox > .Footer {
     position:absolute !important;
     left:0;
     width: 100%;
-    bottom: 0 !important;
+    bottom: 2px !important;
     overflow: hidden !important;
 }
 section .SlideBox > .Footer.NavHidden {
@@ -157,6 +159,7 @@ a.goto-button:active {
 }
 
 .SlidesWrapper.Scrolling .Footer,
+.SlidesWrapper.Scrolling .Progress,
 .SlidesWrapper.Scrolling .Number,
 .SlidesWrapper.Scrolling .SlideLogo {
     visibility: hidden !important;
@@ -218,7 +221,7 @@ a.goto-button:active {
         page-break-inside: avoid !important;
     }
     .Slides-ShowFooter .SlideArea {
-        --paddingBottom: 26px; /* Default at sacle 1 its at bottom, unlike slides in Notebook, so 3px more*/
+        --paddingBottom: 25px; /* Default at sacle 1 its at bottom, unlike slides in Notebook, so 2px more*/
     }
 }
 </style>
