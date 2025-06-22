@@ -163,12 +163,16 @@ class IMG(XTML):
         super().__init__(self._make_fig())
     
     def _make_fig(self):
+        _, metadata = self._data
+        return f"<figure {metadata['attrs']}>{self.clean()}{metadata['caption']}</figure>" + metadata.get('style', '') # optional style
+
+    def clean(self):
+        "Get clean img tag XTML without figure wrapping. Caption will be lost."
         data, metadata = self._data
         src, *_ = [f'data:{k};base64, {v}' for k,v in data.items()]
         width = metadata['width']
-        im = f"<img src='{src}' width='{width}' height='auto'/>"
-        return f"<figure {metadata['attrs']}>{im}{metadata['caption']}</figure>" + metadata.get('style', '') # optional style
-
+        return XTML(f"<img src='{src}' width='{width}' height='auto'/>")
+    
     def to_pil(self):
         "Return PIL image or None."
         for value in self._data[0].values():

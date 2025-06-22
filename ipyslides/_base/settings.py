@@ -363,7 +363,8 @@ class Settings:
         else:
             self._slides.widgets._snum.layout.display = "none" # hide slide number
 
-        text = parse(text,True).replace('<p','<p style="white-space:nowrap;display:inline;margin-block:0;padding-left:8px;"', 1) 
+        style = 'white-space:nowrap;display:inline;margin-block:0;padding-left:8px;'
+        text = parse(f'<p markdown="1" style="{style}">{text}</p>', True) 
         
         if update_widget:
             self._widgets.htmls.footer.value = text
