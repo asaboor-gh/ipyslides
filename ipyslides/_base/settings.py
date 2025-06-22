@@ -163,15 +163,16 @@ class Footer(ConfigTraits):
 class Layout(ConfigTraits):
     "Set layout of slides."
     centered = Bool(True)
+    yoffset  = Int(None, allow_none=True, help='globally set yoffset to a value in percent')
     scroll   = Bool(True)
     width    = Int(100)
     aspect   = Float(16/9)
     ncol_refs = Int(2)
 
-    @traitlets.validate('width')
+    @traitlets.validate('width','yoffset')
     def _limit_width(self, proposal):
         if not proposal["value"] in range(101):
-            raise ValueError("width should in range [0,100]")
+            raise ValueError("width/yoffset should in range [0,100]")
         return proposal["value"]
   
     def _apply_change(self, change):
@@ -354,7 +355,7 @@ class Settings:
 
         if date:
             text += (
-                " | " if text else ""
+                "<span style='white-space:pre'> | </span>" if text else ""
             ) + f'{today(fg = "var(--fg2-color)") if date == "today" else date}'
         
         if numbering and update_widget:
@@ -362,8 +363,8 @@ class Settings:
         else:
             self._slides.widgets._snum.layout.display = "none" # hide slide number
 
-        text = f'<p style="white-space:nowrap;display:inline;margin-block:0;padding-left:8px;"> {text} </p>'  # To avoid line break in footer
-
+        text = parse(text,True).replace('<p','<p style="white-space:nowrap;display:inline;margin-block:0;padding-left:8px;"', 1) 
+        
         if update_widget:
             self._widgets.htmls.footer.value = text
 

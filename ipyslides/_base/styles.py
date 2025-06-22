@@ -121,7 +121,7 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, aspect = 16/9, width=100, ncol_refs = 2, _root = False):
+def style_css(colors, *, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, yoffset=None, aspect = 16/9, width=100, ncol_refs = 2, _root = False):
     uclass = get_unique_css_class()
     margin = 'auto' if centered else 'unset'
     if (width < 100) and (centered is False):
@@ -294,6 +294,11 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'max-width': f'{width}% !important',
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
+                **({"top": f"{yoffset}% !important", "margin-top": "0 !important"} if yoffset is not None else {}), # global yoffset, even centered
+            },
+            '^.n0 > .jp-OutputArea': { # title slide should not have yoffset, it seems ridiculous
+                "top": "unset !important",   
+                "margin-top": "auto !important",
             },
             ':is(ul,ol)': {
                 'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap

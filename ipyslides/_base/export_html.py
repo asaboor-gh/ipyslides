@@ -147,8 +147,8 @@ class _HhtmlExporter:
         return '<div class="BackLayer">' + slide._bg_image.replace(f".{self.main.uid}", sec_id) + '</div>'
 
     def _get_clickables(self):
-        if len(self.main) < 2:
-            return '' # no clicks for only title
+        if len(self.main) < 2 or not self.main.settings.toggle.navgui:
+            return '' # no clicks for only title, or when navigation UI is off
         
         items = [getattr(item,'_sec_id','') for item in self.main]
         names = ['', *['●' for _ in items[1:-1]],'']
