@@ -218,7 +218,7 @@ class Logo(ConfigTraits):
 
     def _set_props(self, **kwargs):
         self.bottom, self.left = '', '' # allow using top, right, otherwise these will take precedence
-        super()._set_props(**kwargs)
+        return super()._set_props(**kwargs) # returns settings for chaining
     
     def _apply_change(self,change):
         if not self.src: # give as None, '' etc

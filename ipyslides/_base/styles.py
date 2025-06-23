@@ -199,7 +199,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             'h5': {'font-size':'1em'},
             'table, .grid-table': {
                 'border-collapse':'collapse !important',
-                'font-size':'0.85em',
+                'font-size':'0.85em !important',
                 'word-break':'break-all',
                 'overflow':'auto',
                 'margin': 'auto', # keep in center
@@ -215,6 +215,8 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'th, tr, td': {'border': 'none'},
                     'thead': {'border': 'inherit','border-bottom':'1px solid #8988 !important',},
                 },
+                'td, th': {'line-height': '85% !important'},
+                'td:empty': {'display': 'none'}, # extra create when rowspan, colspan used
             },
             '.grid-table': { 
                 '> div': {
@@ -303,14 +305,14 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             ':is(ul,ol)': {
                 'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap
             },
-            'dl': {'display': 'grid'}, # Jupyterlab fix
+            'dl': {'display': 'grid','margin-block':'0.5em'}, # Jupyterlab fix
             'dl > dt': {
                 'color': 'var(--fg3-color)',
                 'font-weight': 'bold', 
                 'width':'max-content',  # override 20% width
                 'text-shadow': '0 1px var(--bg2-color)',
-                'margin-block-start': '0.5em'},
-            'dl > dd': {'margin-inline-start': '16px', 'display': 'block', 'width':'100%'},
+            },
+            'dl > dd': {'margin-inline-start': '16px', 'display': 'block', 'width':'calc(100% - 16px)'},
             'a': {
                 'color': 'var(--accent-color) !important',
                 '^:not(.citelink,.goto-button):visited': {
@@ -429,6 +431,10 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 '> *': {'box-sizing':'border-box !important',}
             },
         },
+        'code': {
+            'color': 'var(--fg2-color) !important',
+            'font-family': 'var(--jp-code-font-family) !important',
+        }, # external code tags
         'span.sig': {
             'color': 'var(--accent-color) !important',
             'font-family': 'var(--jp-code-font-family) !important',
