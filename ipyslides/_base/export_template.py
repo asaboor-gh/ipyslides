@@ -112,36 +112,37 @@ section .SlideBox > .Progress {
     left:0 !important;__WHERE__:0 !important;
 }
 section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
-section .SlideBox .SlideLogo {
-    position: absolute !important;
-    line-height: 0 !important; /* suppress bad line-height here */
-}
 section .SlideArea {
     /* Will be added by export */
 	margin: auto !important;
 	padding: 16px !important;
     box-sizing: border-box !important;
 }
-section .SlideBox > .Footer { 
+.SlidesWrapper .Footer { 
     padding: 0 !important; margin: 0 !important; 
-    position:absolute !important;
+    position: fixed !important;
     left:0;
     width: 100%;
     bottom: 2px !important;
     overflow: hidden !important;
+    background: var(--bg1-color) !important;
 }
-section .SlideBox > .Footer.NavHidden {
+.SlidesWrapper .Footer.NavHidden {
     background: none; /* no important here */
 }
-section .SlideBox > .Footer > p {
+.SlidesWrapper .Footer > p {
     font-size: 14px !important;
     padding: 4px !important;
     padding-left: 8px !important; 
     display:block !important;
     margin:0 !important;
 }
-section .SlideBox > .Footer.NavHidden > p {
+.SlidesWrapper .Footer.NavHidden > p {
     display:none !important;
+}
+.SlidesWrapper .SlideLogo {
+    position: fixed !important;
+    line-height: 0 !important; /* suppress bad line-height here */
 }
 .SlidesWrapper::-webkit-scrollbar,
 .SlidesWrapper::-webkit-scrollbar-button,
@@ -162,15 +163,13 @@ a.goto-button:active {
     color: var(--pointer-color);
 }
 
-.SlidesWrapper.Scrolling .Footer,
 .SlidesWrapper.Scrolling .Progress,
-.SlidesWrapper.Scrolling .Number,
-.SlidesWrapper.Scrolling .SlideLogo {
+.SlidesWrapper.Scrolling .Number {
     visibility: hidden !important;
     transition: visbility 200ms ease-in;
 }
 .SlidesWrapper .Number {
-    color:var(--accent-color);
+    color:var(--fg2-color);
     position:absolute;
     right:8px;
     bottom:6px;

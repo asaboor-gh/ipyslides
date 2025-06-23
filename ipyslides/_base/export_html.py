@@ -50,7 +50,6 @@ class _HhtmlExporter:
         self.main.widgets.buttons.export.on_click(self._export) # Export button
         
     def _htmlize(self, progressbar):
-        navui_class = '' if 'Slides-ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
         content = ''
         for item in self.main:
             objs = item.contents # get conce
@@ -77,7 +76,6 @@ class _HhtmlExporter:
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
                 sec_id = self._get_sec_id(item)
                 goto_id = self._get_target_id(item,k)
-                footer = f'<div class="Footer {navui_class}">{self.main.settings._get_footer(item, False)}</div>'
 
                 number = ""
                 if self.main.settings.footer.numbering:
@@ -88,15 +86,17 @@ class _HhtmlExporter:
                         {self._get_css(item)}
                         <div class="SlideBox">
                             {self._get_bg_image(item)}
-                            {self._get_logo()}
                             <div {goto_id} class="{item._css_class}">
                                 {_html}
                             </div>
                             {number}
-                            {footer}
                             {self._get_progress(item,k) if progressbar else ""}
                         </div>
                     </section>''')
+        
+        navui_class = '' if 'Slides-ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
+        content += f'<div class="Footer {navui_class}">{self.main.settings._get_footer(item, False)}</div>'
+        content += self._get_logo() # Both of these fixed
             
         theme_kws = self.main.settings._theme_kws
         

@@ -71,6 +71,10 @@ def layout_css(accent_color, aspect):
                     "bottom": "0 !important",
                     "padding": "0 2px !important",
                     "font-size": "12px", 
+                    "z-index": "4",  # below matplotlib fullsreen
+                    "cursor": "help",
+                    "^.Menu-Item":{"color": "var(--fg2-color) !important",},
+                    "^:focus,^:active": {"box-shadow": "none !important"},
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
