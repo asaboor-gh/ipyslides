@@ -114,6 +114,7 @@ section .SlideBox > .Progress {
 section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
 section .SlideBox .SlideLogo {
     position: absolute !important;
+    line-height: 0 !important; /* suppress bad line-height here */
 }
 section .SlideArea {
     /* Will be added by export */
