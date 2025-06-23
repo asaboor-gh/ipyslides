@@ -192,32 +192,45 @@ class Toggle(ConfigTraits):
         if change and (widget := getattr(self.main._widgets.checks, change.name, None)):
             widget.value = change.new
 
+class AutoUnicode(Unicode):
+    def validate(self, obj, value):
+        if isinstance(value,(int, float)) and not isinstance(value, bool):
+            value = f"{value}px"
+        elif not isinstance(value, str):
+            raise TraitError(f"The '{self.name}' trait of AutoUnicode instance expected str, int or float, not {type(value)}.")
+        return super().validate(obj, value)
+
 @fix_sig
 class Logo(ConfigTraits):
-    "Set logo for all slides."
-    src   = Unicode(allow_none=True)
-    width = traitlets.Union([Unicode('60px'), Int(), Float()])
-    top   = traitlets.Union([Unicode('4px'), Int(), Float()])
-    right = traitlets.Union([Unicode('4px'), Int(), Float()])
+    "Set logo for all slides. left and bottom take precedence over right and top respectively."
+    src    = Unicode(allow_none=True)
+    width  = AutoUnicode('60px')
+    top    = AutoUnicode('4px')
+    right  = AutoUnicode('4px')
+    left   = AutoUnicode('', help='take precedence over right')
+    bottom = AutoUnicode('', help='take precedence over top')
 
     @traitlets.validate('src')
     def _fix_path(self, proposal):
         if isinstance(proposal["value"], Path):
             return str(Path)
         return proposal["value"]
-    
-    @traitlets.validate('width','top','right')
-    def _fix_number(self, proposal):
-        if isinstance(proposal["value"], (int, float)):
-            return f'{proposal["value"]}px'
-        return proposal["value"]
+
+    def _set_props(self, **kwargs):
+        self.bottom, self.left = '', '' # allow using top, right, otherwise these will take precedence
+        super()._set_props(**kwargs)
     
     def _apply_change(self,change):
         if not self.src: # give as None, '' etc
             self.main._widgets.htmls.logo.value = ''
         elif (image := self.main._resolve_img(self.src, self.width)):
             self.main._widgets.htmls.logo.value = image 
-            self.main._widgets.htmls.logo.layout = dict(**{k:v for k,v in self.props.items() if k !='src'}, height='max-content', margin='0 0 0 auto')
+            kwargs = {k:v for k,v in self.props.items() if k !='src'}
+
+            if self.bottom: kwargs.pop('top',None)
+            if self.left: kwargs.pop('right', None)
+            kwargs.update(dict(height='max-content', margin='0',padding='0',overflow='hidden'))
+            self.main._widgets.htmls.logo.layout = kwargs # absolute position set in CSS, does not work here
         
 
 class Settings:

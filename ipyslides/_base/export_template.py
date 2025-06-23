@@ -112,6 +112,9 @@ section .SlideBox > .Progress {
     left:0 !important;__WHERE__:0 !important;
 }
 section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
+section .SlideBox .SlideLogo {
+    position: absolute !important;
+}
 section .SlideArea {
     /* Will be added by export */
 	margin: auto !important;

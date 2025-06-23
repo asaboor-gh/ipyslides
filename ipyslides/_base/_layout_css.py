@@ -116,7 +116,10 @@ def layout_css(accent_color, aspect):
                     "table": {"width": "100% !important",}, # override width
                     ":is(h1, h2, h3, h4, h5, h6, th)" : {"text-align": "left !important"},
                 },
-                ".LogoHtml": {"position": "absolute !important","margin-left":"auto !important",}, # other properties are set internally
+                ".LogoHtml": {
+                    "position": "absolute !important",
+                    "^, .widget-html-content": {"line-height": "0 !important"},
+                }, # other properties are set internally
                 ".Loading": {
                     "position": "absolute",
                     "left": "0 !important",

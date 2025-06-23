@@ -9,6 +9,7 @@ from contextlib import suppress
 from .export_template import doc_html
 from . import styles
 from ..writer import _fmt_html
+from ..formatters import _inline_style
 
 _script = '''<script>
     let box = document.getElementsByClassName('SlideBox')[0];
@@ -138,7 +139,7 @@ class _HhtmlExporter:
             ".NavWrapper", ".Footer"
             )
     def _get_logo(self):
-        return f'''<div class="SlideLogo" style="position:absolute;right:4px;top:4px;"> 
+        return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 
             {self.main.widgets.htmls.logo.value} 
         </div>'''
     
