@@ -35,7 +35,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, css_class
         // we use CSS to left justify single line equations in code cells.
         displayAlign: "center",
         "HTML-CSS": {{
-            styles: {{".MathJax_Display": {{"margin": 0}}}},
+            styles: {{".MathJax_Display": {{"margin": "0.5em auto"}}}},
             linebreaks: {{ automatic: true }}
         }}
     }});
@@ -144,10 +144,6 @@ section .SlideArea {
     position: fixed !important;
     line-height: 0 !important; /* suppress bad line-height here */
 }
-.SlidesWrapper table td, 
-.SlidesWrapper table th {
-    line-height: 100% !important
-},
 .SlidesWrapper::-webkit-scrollbar,
 .SlidesWrapper::-webkit-scrollbar-button,
 .SlidesWrapper::-webkit-scrollbar-corner {

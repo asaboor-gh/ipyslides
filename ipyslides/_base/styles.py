@@ -199,6 +199,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             'h5': {'font-size':'1em'},
             'table, .grid-table': {
                 'border-collapse':'collapse !important',
+                'table-layout':'auto', # adjust width of columns automatically
                 'font-size':'0.85em !important',
                 'word-break':'break-all',
                 'overflow':'auto',
@@ -215,7 +216,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                     'th, tr, td': {'border': 'none'},
                     'thead': {'border': 'inherit','border-bottom':'1px solid #8988 !important',},
                 },
-                'td, th': {'line-height': '85% !important'},
+                'td, th': {'line-height': f'{150 if _root else 85}% !important'},
                 'td:empty': {'display': 'none'}, # extra create when rowspan, colspan used
             },
             '.grid-table': { 
@@ -428,7 +429,8 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'column-gap':'0.2em',
                 'height':'auto',
                 'box-sizing':'border-box !important',
-                '> *': {'box-sizing':'border-box !important',}
+                '> *': {'box-sizing':'border-box !important',},
+                'table': {'width':'100%'}, # make table full width inside columns
             },
         },
         'code': {
