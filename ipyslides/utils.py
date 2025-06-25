@@ -671,7 +671,7 @@ def alert(text):
     "Alerts text!"
     return XTML(f"<span style='color:#DC143C;'>{text}</span>")
     
-def color(text,fg='blue',bg=None):
+def color(text,fg='var(--accent-color, blue)',bg=None):
     "Colors text, `fg` and `bg` should be valid CSS colors"
     return XTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
 
