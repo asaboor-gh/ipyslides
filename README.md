@@ -1,6 +1,6 @@
 # einteract
 
-[![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/einteract-docs/lab/index.html?path=einteract.ipynb)
+[![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/einteract-docs/notebooks/index.html?path=einteract.ipynb)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb)
 [![PyPI version](https://badge.fury.io/py/einteract.svg)](https://badge.fury.io/py/einteract)
 [![Downloads](https://pepy.tech/badge/einteract)](https://pepy.tech/project/einteract)
@@ -8,8 +8,6 @@
 An enhanced interactive widget that lets you observe any trait of widgets, observe multiple functions and build beautiful dashboards which can be turned into full screen. This is a wrapper library around interact functionality in [ipyslides](https://github.com/asaboor-gh/ipyslides) which also provides rich content representations. 
 
 ![](interact.png)
-
-See code of this simple yet fully customizable dashboard on binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb)
 
 ## Installation
 
@@ -26,8 +24,10 @@ pip install -e .
 ```
 
 ## Interactive Playground
-Run example on [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/einteract-docs/lab/index.html?path=einteract.ipynb) and 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb)
+**✨ Try it in your browser ✨**
+| Jupyter Lab  | Notebook | Binder |
+|----|---|--- |
+|  [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/einteract-docs/lab/index.html?path=einteract.ipynb)  |  [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/einteract-docs/notebooks/index.html?path=einteract.ipynb) | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb) |
 
 ## Features
 
