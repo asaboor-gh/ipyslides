@@ -121,16 +121,16 @@ theme_colors = {
     }   
 }
 
-def style_css(colors, *, text_size = '22px', text_font = None, code_font = None, scroll = True, centered = True, yoffset=None, aspect = 16/9, width=100, ncol_refs = 2, _root = False):
+def style_css(colors, fonts, layout, _root = False):
     uclass = get_unique_css_class()
-    margin = 'auto' if centered else 'unset'
-    if (width < 100) and (centered is False):
+    margin = 'auto' if layout.centered else 'unset'
+    if (layout.width < 100) and (layout.centered is False):
         margin = '0 auto' # if not 100%, horizontally still in center, vertically top
 
     _root_dict = {**{f"--{k}-color":v for k,v in colors.items()}, # Only here change to CSS variables
-        '--text-size':f'{text_size}',
-        '--jp-content-font-family': f'{text_font}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16"',
-        '--jp-code-font-family': f'{code_font}, "Ubuntu Mono", "SimSun-ExtB", "Courier New"',
+        '--text-size':f'{fonts.size}px',
+        '--jp-content-font-family': f'{fonts.text}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16"',
+        '--jp-code-font-family': f'{fonts.code}, "Ubuntu Mono", "SimSun-ExtB", "Courier New"',
     }
     return _build_css(() if _root else (uclass,),{ # uclass is not used in root for exporting purpose
         **(_root_dict if not _root else {':root': _root_dict}),
@@ -183,10 +183,10 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 'background':'linear-gradient(to right, var(--bg1-color),  var(--bg2-color),var(--accent-color), var(--bg2-color),var(--bg1-color))',
             },
             ':is(h1, h2, h3, h4, h5, h6)': {
-                'font-family':'var(--jp-content-font-family) !important',
+                'font-family':f'{fonts.heading}, var(--jp-content-font-family) !important',
                 'font-weight':'normal',
                 'color':'var(--fg3-color)',
-                'text-align':'center' if centered else 'left',
+                'text-align':'center' if layout.centered else 'left',
                 'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
                 'line-height':'1.5',
                 'overflow':'hidden', # Firefox 
@@ -267,7 +267,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
             **({
                 "align-items": "center !important",
                 "justify-content": "center !important",
-            } if centered else { # why above not working for top left alignment as flex-start???
+            } if layout.centered else { # why above not working for top left alignment as flex-start???
                 "align-items": "flex-start !important",
                 "justify-content": "flex-start !important",
             }),
@@ -279,25 +279,25 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
         '.SlideArea': {
             'position': 'absolute !important',
             'width':'254mm !important',
-	        'height': f'{int(254/aspect)}mm !important',
-            'transform-origin': 'center !important' if centered else 'left top !important',
+	        'height': f'{int(254/layout.aspect)}mm !important',
+            'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
 	        'box-sizing': 'border-box !important',
             'display':'flex !important',
             'flex-direction':'column !important',
-            'align-items': 'center !important' if centered else 'baseline !important', 
+            'align-items': 'center !important' if layout.centered else 'baseline !important', 
             'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
             'padding' : '16px !important', # don't make 1em to avoid zoom with fonts
-            'overflow': 'auto !important' if scroll else 'hidden !important',
+            'overflow': 'auto !important' if layout.scroll else 'hidden !important',
             '> .jp-OutputArea': {
                 'position': 'relative !important', # absolute content should not go outside
                 'margin': f'{margin} !important', # for frames margin-top will be defined, don't use here
                 'padding': '0 !important',
-                'width': f'{width}% !important',
-                'max-width': f'{width}% !important',
+                'width': f'{layout.width}% !important',
+                'max-width': f'{layout.width}% !important',
                 'box-sizing': 'border-box !important',
-                'overflow': 'auto !important' if scroll else 'hidden !important', # needs here too besides top
-                **({"top": f"{yoffset}% !important", "margin-top": "0 !important"} if yoffset is not None else {}), # global yoffset, even centered
+                'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
+                **({"top": f"{layout.yoffset}% !important", "margin-top": "0 !important"} if layout.yoffset is not None else {}), # global yoffset, even centered
             },
             '^.n0 > .jp-OutputArea': { # title slide should not have yoffset, it seems ridiculous
                 "top": "unset !important",   
@@ -330,7 +330,7 @@ def style_css(colors, *, text_size = '22px', text_font = None, code_font = None,
                 },
             },
             '.Citations' : {
-                'column-count' :f'{ncol_refs} !important',
+                'column-count' :f'{layout.ncol_refs} !important',
                 'column-gap':'1em',
                 'border-top':'1px solid #8988', # for all colors
                 'margin-block':'0.5em',

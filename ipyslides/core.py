@@ -406,12 +406,12 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def _add_clean_title(self):
         with _build_slide(self, 0):
-            self.cols(
+            self.stack([
                 self.styled("color['var(--accent-color)']`Replace this with creating a slide with number` alert`0`",
                     padding = "8em 8px",
                 ), 
                 '', # empty column for space 🤣
-                how_to_slide,widths=[14,1, 85]).display()
+                how_to_slide],sizes=[14,1, 85]).display()
         
         self._unregister_postrun_cell() # This also clears slides per cell
         self.settings.footer._apply_change(None) # Reset
@@ -703,16 +703,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         slide_number = int(line[0])  # First argument is slide number
 
         if "-m" in line[1:]:
-            if any(map(lambda v: '\n--' in v, # I gave up on single regex after so much attempt
+            if any(map(lambda v: re.search(r"^\s*--\s*$",v, flags=re.DOTALL | re.MULTILINE), 
                 (re.findall(r'```multicol(.*?)\n```', cell, flags=re.DOTALL | re.MULTILINE) or [''])
                 )):
                 raise ValueError("frame separator -- cannot be used inside multicol!")
             
-            frames = re.split(r"^--$|^--\s+$", cell, flags=re.DOTALL | re.MULTILINE)  # Split on -- or --\s+
+            frames = re.split(r"^\s*--\s*$", cell, flags=re.DOTALL | re.MULTILINE)  # Split on -- or --\s+
             edit_idx = 0
 
             with _build_slide(self, slide_number) as s:
-                prames = re.split(r"^--$|^--\s+$", s._markdown, flags=re.DOTALL | re.MULTILINE)   
+                prames = re.split(r"^\s*--\s*$", s._markdown, flags=re.DOTALL | re.MULTILINE)   
                 # Update source beofore parsing content to make it available for variable testing
                 s._set_source(
                     str(fmt(cell,**fmt_kws)) if fmt_kws else cell, # nice str repr of fmt
@@ -751,7 +751,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         Can use in place of `write` commnad for strings.
         When using `%xmd`, you can pass variables as \%{var} (slash for escap here) which will substitute HTML representation
         if no other formatting specified.
-        Inline columns are supported with ||C1||C2|| syntax."""
+        Inline columns are supported with stack`C1 | C2` syntax."""
         if cell is None:
             return parse(line, returns = False)
         else:
@@ -885,18 +885,4 @@ class fsep:
         for item in iterable:
             cls(stack) # put one separator before
             yield item
-
         cls(stack) # put after all done to keep block separated
-    
-    loop = iter # backward compatiable check
-
-    @classmethod
-    def enum(cls, *args, **kwargs):
-        raise DeprecationWarning("Use enumerate(fsep.iter(...)) instead!")
-    
-    @classmethod
-    def accumulate(cls):
-        raise DeprecationWarning("Use fsep(stack=True) or fsep.iter(..., stack=True). Need to set one time only!")
-    
-    join = accumulate # backward compatiable check
-    

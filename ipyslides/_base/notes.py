@@ -45,7 +45,7 @@ class Notes:
         else:
             next_notes = ''
 
-        notes = self.main.cols(this_notes,next_notes)
+        notes = self.main.stack([this_notes,next_notes])
         self.widgets.notes.value = set_value(notes) 
     
     def _popup_display(self):

@@ -99,7 +99,8 @@ _special_funcs = {
     "details": "text",
     "styled": "style objects with CSS classes and inline styles",
     "zoomable": "zoom a block of html when hovered",
-    "center": r"text or \%{variable}", # should be last
+    "center": r"text or \%{variable}", # should after most of the functions
+    "stack": r"text separated by |, like stack[(1,2,1),**css_props]\\`C1 | C2 | C3\\`",
 }
 
 def error(name, msg):
@@ -494,7 +495,7 @@ class XMarkdown(Markdown):
         return key
     
     def _sub_vars(self, html_output):
-        "Substitute variables in html_output given as %{var} and two inline columns as ||C1||C2||"   
+        "Substitute variables in html_output given as %{var}."   
         user_ns = self.user_ns() # get once, will be called multiple time
         # Replace variables first to have small data
         def handle_match(match):
@@ -538,25 +539,23 @@ class XMarkdown(Markdown):
                         _out = eval(f"utils.{func}({arg0!r},{m1[1:-1]})" if arg0 else f"utils.{func}({m1[1:-1]})") # evaluate
                         html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
                     except Exception as e:
-                        raise Exception(rf"Error in {func}{m1}`{m2}`: {e}. Arguments in [] should be proper Python code that does not rely on a scope.")
+                        raise Exception(
+                            rf"Error in {func}{m1}`{m2}`: {e}. Arguments in [] should be proper Python code that does not rely on a scope "
+                            f" and are passed to {func}{inspect.signature(_func)} except first argument which is the text to be processed.")
                     
 
-        # Replace columns at end because they will convert HTML
-        all_cols = re.findall(
+        if all_cols := re.findall(
             r"\|\|(\s*\d*\.?\d*\s*)(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
-        )  # Matches new line as well, useful for inline plots and big objects
-        for width, *cols in all_cols:
-            digit = float(width.strip()) if width.strip() else 50 # could be tabs, new lines etc
-            if digit < 0 or digit > 100: 
-                raise ValueError(f'column width after first || should be 0-100, got {digit}')
-            
-            _cols = "\n".join(
-                f'<div style="width:{w:.3f}%;">{self.convert2str(c.strip())}</div>' for w, c in zip([digit, 100 - digit], cols)
-            )
-            _out = f'<div class="columns">{_cols}</div>'  # Replace new line with 4 spaces to keep indentation if block ::: is used
-            html_output = html_output.replace(f"||{width}{cols[0]}||{cols[1]}||", self._handle_var(_out), 1)
+            ):
+            _sig = str(inspect.signature(utils.stack)).split(',', 1)[1].strip(' )') # get signature without first argument
+            for width, *cols in all_cols:
+                info = error("Exception",
+                    f"Use stack[{_sig}]` C1 | C2 | ...` syntax instead of \n||{width}{cols[0]}||{cols[1]}||\n "
+                    "to have better control over number of columns/rows and their sizes."
+                ).value # raise error if used
+                html_output = html_output.replace(f"||{width}{cols[0]}||{cols[1]}||", self._handle_var(info), 1)
 
-        return html_output  # return in main scope
+        return re.sub(r"&(?:amp;)?#96;","`", html_output)  # return in main scope
 
 
 def parse(xmd, returns = False):
@@ -578,7 +577,7 @@ def parse(xmd, returns = False):
      ```python
      # This will not be executed, only shown
      ```
-     || Inline-column A || Inline-column B ||
+     stack`Inline-column A | Inline-column B`
     ```
 
     ::: note-info

@@ -10,7 +10,7 @@ import ipywidgets as ipw
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
 
-from . import styles, _layout_css
+from . import styles
 from ._widgets import InteractionWidget, NotesWidget, ListWidget, JupyTimer
 from .intro import get_logo, how_to_print
 from ..utils import html, htmlize
@@ -115,8 +115,8 @@ class _Htmls:
     Instantiate under `Widgets` class only.
     """
     footer  = HTML(layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
-    theme   = HTML(html('style',styles.style_css(styles.theme_colors['Jupyter'])).value)
-    main    = HTML(html('style',_layout_css.layout_css(styles.theme_colors['Jupyter']['accent'], 16/9)).value) # Will be update in theme as well
+    theme   = HTML()
+    main    = HTML() 
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
     toast   = HTML().add_class('Toast') # For notifications

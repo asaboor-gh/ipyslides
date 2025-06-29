@@ -129,6 +129,7 @@ class Theme(ConfigTraits):
 @fix_sig
 class Fonts(ConfigTraits):
     "Set fonts of text and code and size."
+    heading = Unicode("Arial", allow_none=True, help="Heading font")
     text = Unicode("Roboto", allow_none=True)
     code = Unicode("Cascadia Code", allow_none=True)
     size = Int(20, help="Can use any large/small value that CSS supports!")
@@ -136,7 +137,7 @@ class Fonts(ConfigTraits):
     def _apply_change(self, change):
         self.main._update_theme()
 
-    @traitlets.validate('text','code')
+    @traitlets.validate('text','code', 'heading')
     def _fix_font(self, proposal):
         return ", ".join(repr(t.strip().strip('\"').strip("\'")) for t in proposal["value"].split(','))
     
@@ -401,11 +402,9 @@ class Settings:
     @property
     def _theme_kws(self):
         return dict(
-            colors=self._colors,
-            text_size= f"{self.fonts.size}px",
-            text_font=self.fonts.text,
-            code_font=self.fonts.code,
-            **self.layout.props
+            colors = self._colors,
+            fonts  = self.fonts,
+            layout = self.layout,
         )
 
     def _update_theme(self, change=None):

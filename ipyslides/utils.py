@@ -1,6 +1,6 @@
-_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'clip', 'color', 'cols', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'highlight', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'rows', 
-    'zoomable','html', 'sig','styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
+_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'clip', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+    'details', 'set_dir', 'textbox', 'highlight', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 
+    'zoomable','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 _attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
 __all__ = sorted(_attrs)
@@ -64,29 +64,6 @@ def get_child_dir(name, *names, create = False):
 def get_clips_dir():
     "Returns directory where clips are saved."
     return get_child_dir(".ipyslides-assets", "clips", create = True)
-
-def _fmt_cols(*objs,widths = None):
-    if not widths and len(objs) >= 1:
-        widths = [100/len(objs) for _ in objs]
-    else:
-        if len(objs) != len(widths):
-            raise ValueError(f'Number of columns ({len(objs)}) and widths ({len(widths)}) do not match')
-        
-        for w in widths:
-            if not isinstance(w,(int, float)):
-                raise TypeError(f'widths must be numbers, got {w}')
-        widths = [w/sum(widths)*100 for w in widths]
-    
-    _cols = [_c if isinstance(_c,(list,tuple)) else [_c] for _c in objs] 
-    _cols = ' '.join([f"""<div style='width:{w:.3f}%;overflow-x:auto;height:auto'>
-                     {' '.join([htmlize(row) for row in _col])}
-                     </div>""" for _col,w in zip(_cols,widths)])
-    
-    if len(objs) == 1:
-        return _cols
-    
-    return f'''<div class="columns">{_cols}</div>'''
-
 
 def hl(obj, language="python"): # No need to have in __all__, just for markdown
     "Highlight code object in inline mode. `language` is the language name, default is python."
@@ -203,7 +180,7 @@ def _build_css(selector, data):
             attributes.append( (key, value) )
     if attributes:
         content += re.sub(r'\s+\^','', (' '.join(selector) + " {\n").lstrip()) # Join nested tags to parent if it starts with ^
-        content += '\n'.join(f"\t{key} : {value};"  for key, value in attributes)  
+        content += '\n'.join(f"\t{key.replace('_','-')} : {value};"  for key, value in attributes)  # _ allows to write dict(key=value) in python, but not in CSS props
         content += "\n}\n"
 
     for key, value in children:
@@ -675,13 +652,42 @@ def color(text,fg='var(--accent-color, blue)',bg=None):
     "Colors text, `fg` and `bg` should be valid CSS colors"
     return XTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
 
-def rows(*objs):
-    "Creates single compact object instead of publishing multiple display data. Create grid using `cols` as children."
-    return XTML(_fmt_cols(objs))
-
-def cols(*objs,widths=None):
-    "Returns HTML containing multiple columns of given widths. This alongwith `rows` can create grid."
-    return XTML(_fmt_cols(*objs,widths=widths))
+def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
+    """Stacks given objects in a column or row with given sizes. 
+    
+    - objs: list/tuple of objects or a markdown string with '|' as separator.
+    - sizes: list/tuple of sizes(int, float) for each object, if not given, all objects will have equal size.
+    - vertical: bool, to stack objects vertically or horizontally, default is horizontal.
+    - css_class: str, to add a class to the container div.
+    - css_props: dict, applied to the container div, so you can control top layout.
+    """
+    if isinstance(objs, str):
+        objs = objs.replace(r'\|','COL-SEP-PIPE').split('|') # Split by pipe if given a string
+    
+    if not isinstance(objs, (list, tuple)):
+        raise TypeError(f'objs should be a markdown string, list or tuple of objects, got {type(objs)}')
+    
+    kwargs = {'display': 'flex', 'flex-direction': 'column' if vertical else 'row', 
+        **css_props, # do not allow to override display and flex-direction
+        'gap': '0.25em','padding':'0.25em',
+    }
+    if sizes is not None:
+        if not isinstance(sizes, (list, tuple)):
+            raise TypeError(f'sizes should be a list or tuple of sizes, got {type(sizes)}')
+        if len(sizes) != len(objs):
+            raise ValueError(f'sizes should have same length as objs, got {len(sizes)} and {len(objs)}')
+        for size in sizes:
+            if not isinstance(size, (int, float)):
+                raise TypeError(f'size should be an int or float, got {type(size)}')
+        sizes = [{'flex': f'{size} 1'} for size in sizes] # Convert to flex style dicts
+    else:
+        sizes = [{'flex': '1 1'}] * len(objs) # default sizes if not given
+    
+    return html('div', [
+        html('div', htmlize(obj).replace('COL-SEP-PIPE','|'), style=size) 
+        for obj, size in zip(objs, sizes)
+    ], style = kwargs, css_class=css_class) 
+    
 
 def table(data, headers = None, widths=None):
     """Creates a table of given data like DataFrame, but with rich elements. 
@@ -710,7 +716,7 @@ def table(data, headers = None, widths=None):
     except TypeError:
         raise TypeError("data should be 2D matrix-like")
     
-    return html('div', [cols(*d, widths=widths) for d in data],css_class=klass + ' zoom-self')
+    return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' zoom-self')
 
 def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class
     if len(objs) == 0:
@@ -835,7 +841,7 @@ def bullets(iterable, ordered = False,marker = None, css_class = None):
     _bullets = []
     for it in iterable:
         start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
-        _bullets.append(f'{start}{_fmt_cols(it)}</li>')
+        _bullets.append(f'{start}{htmlize(it)}</li>')
     return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],css_class = css_class) # Don't use style, it will remove effect of css_class
 
 def _save_clipboard_image(filename, quality = 95, overwrite = False):

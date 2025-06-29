@@ -136,7 +136,7 @@ class BaseSlides:
         - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Two side by side columns can be added inline using alert`|&#124;[width optionally here in 1-99] Column A |&#124; Column B |&#124;` sytnax.
+        - Inline columns can be added by using alert`stack\`Column A | Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
         ```markdown     
@@ -194,7 +194,7 @@ class BaseSlides:
                 `__format__` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
         
         - Other options (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
-        ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\`{v}\`' for k,v in _special_funcs.items()),
+        ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\\`{v}\\`' for k,v in _special_funcs.items()),
         returns = True
         ))
     
@@ -440,7 +440,7 @@ class BaseSlides:
             toc[True]`## Table of contents`
             +++
             ### This is summary of current section
-            Oh we can use inline columns || Column A || Column B || here and what not!
+            Oh we can use inline columns stack`Column A | Column B` here and what not!
             %{btn}
             ```
             ```markdown
@@ -506,9 +506,9 @@ class BaseSlides:
             self.doc(self.clip,'Slides').display()
             
             members = sorted((
-                'AnimationSlider alert block bokeh2html bullets styled fmt color cols details doc '
+                'AnimationSlider alert block bokeh2html bullets styled fmt color details doc '
                 'today error zoomable highlight html iframe image frozen notify plt2html '
-                'raw rows set_dir sig table textbox suppress_output suppress_stdout svg vspace'
+                'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
 
@@ -537,7 +537,7 @@ class BaseSlides:
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
                     if date:
                         objs.append('Date: {0}/{1}/{2}'.format(*local_time))
-                    self.cols(*objs).display()
+                    self.stack(objs).display()
 
             with self.code.context(returns=True) as c:
                 import datetime

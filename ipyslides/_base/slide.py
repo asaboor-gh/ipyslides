@@ -224,7 +224,7 @@ class Slide:
         ol = self._app.html('ol', items, style='', css_class=css_class)
         
         return RichOutput(
-            data = {'text/plain': title,'text/html': self._app.cols([title, ol]).value},
+            data = {'text/plain': title,'text/html': self._app.html('div', [title, ol]).value},
             metadata = {"DataTOC": self.number}) # to access later
     
     def _reset_frames(self):
