@@ -36,7 +36,7 @@ This module is a wrapper around the `ipyslides.interaction` modulde.
 
 __all__ = [
     'InteractBase','callback', 'monitor', 'print_error', 'interactive','interact', 
-    'patched_plotly', 'plt2html', 'hstack', 'vstack', 'html',
+    'patched_plotly', 'plt2html', 'stack', 'hstack', 'vstack', 'html',
     'ListWidget', 'AnimationSlider', 'JupyTimer', 'Output', 
 ]
 
@@ -51,21 +51,28 @@ from ipyslides.interaction import (
 from ipyslides._base._widgets import ListWidget, AnimationSlider, JupyTimer
 from ipyslides._base.widgets import Output # patched one
 from ipyslides.formatters import plt2html
-from ipyslides.utils import cols as _cols, rows as _rows, as_html_widget as _html
+from ipyslides.utils import stack as _stack, as_html_widget as _html
+
+def stack(objs: list, sizes: list=None, vertical: bool=False, css_class: str=None,**css_props):
+    """Stack html representation of objs in columns or rows with optionally setting sizes. Returns a widget.
+    
+    Any python object (except widgets) serializable in ipyslides works, including extended markdown.
+    """
+    return _stack(objs, sizes=sizes, vertical=vertical, css_class=css_class, **css_props).as_widget()
 
 def hstack(objs: list, widths: list=None):
     """Stack html representation of objs in columns with optionally setting widths. Returns a widget.
     
     Any python object (except widgets) serializable in ipyslides works, including extended markdown.
     """
-    return _cols(*objs, widths=widths).as_widget()
+    return _stack(objs, sizes=widths, vertical=False).as_widget()
 
-def vstack(objs: list):
+def vstack(objs: list, heights: list=None):
     """Stack html representation of objs vertically. Returns a widget.
     
     Any python object (except widgets) serializable in ipyslides package works, including extended markdown.
     """
-    return _rows(*objs).as_widget()
+    return _stack(objs, sizes=heights, vertical=True).as_widget()
 
 def html(obj):
     """Convert obj to html representation. Returns a widget.
@@ -73,7 +80,3 @@ def html(obj):
     Any python object (except widgets) serializable in ipyslides works, including extended markdown.
     """
     return _html(obj)
-
-
-def classed(*args,**kwargs):
-    raise DeprecationWarning("You can use @callback on pure functions too, so classed is no more required")
