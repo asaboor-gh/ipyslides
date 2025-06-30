@@ -110,6 +110,8 @@ class BaseSlides:
         
         **General syntax**{{.text-big}}
         
+        - Use alert`fa\`icon_name\`` to add FontAwesome icons, e.g. fa\\`arrow-right\\` → fa`arrow-right`, fa\\`check\\` → fa`check`, fa\\`info-circle\\` → fa`info-circle` etc.
+        - Use syntax \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\` to jump between slides. See `Slides.link` for more details.
         - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\%{{variable}}` (or legacy alert`\`{{variable}}\``) 
             (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
             alert`\%{{variable:format_spec}}` or alert`\%{{variable!conversion}}`, that will take preference.
@@ -412,7 +414,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(range(24)) # Create slides faster
+        self.create(range(25)) # Create slides faster
         
         from ..core import Slides
 
@@ -452,8 +454,16 @@ class BaseSlides:
             ```''', btn = self.draw_button))
             
         with self.build(-1):
-            self.write(['# Main App',self.doc(Slides), '### Jump between slides'])
-            self.doc(self.goto_button, 'Slides').display()
+            self.write('# Main App')
+            self.doc(Slides).display()
+        
+        with self.build(-1):
+            self.write('# Jump between slides')
+            self.doc(self.link, 'Slides').display()
+            with self.code.context(returns=True) as c:
+                skipper = self.link('Skip to dynamic content', 'Back to link info', icon='arrow', back_icon='arrowl')
+                skipper.origin.display() # skipper.target is set later somewhere, can do backward jump too
+            c.display()
         
         with self.build(-1):
             self.write('## Adding Slides section`Adding Slides and Content`')
@@ -480,7 +490,6 @@ class BaseSlides:
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
-            (skipper := self.goto_button('Skip to Dynamic Content', icon='arrowr')).display()
             self.write([rf'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
@@ -525,7 +534,7 @@ class BaseSlides:
             self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
         with self.build(-1):
-            skipper.set_target() # Set target for skip button
+            skipper.target.display() # Set target for skip button
             self.write('## Dynamic Content')
             
             with self.capture_content() as cap, self.code.context():

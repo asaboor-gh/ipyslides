@@ -1,5 +1,6 @@
-import sys, os, json, re, math
+import sys, os, json, re, math, uuid
 from contextlib import contextmanager, suppress
+from collections import namedtuple
 from collections.abc import Iterable
 from itertools import zip_longest
 from threading import Timer
@@ -11,7 +12,7 @@ from IPython.display import display, clear_output
 
 from .xmd import fmt, parse, get_main_ns, extender as _extender
 from .source import Code
-from .writer import hold, GotoButton, write
+from .writer import hold, write
 from .formatters import bokeh2html, plt2html, serializer
 from . import utils
 from . import interaction as _interac
@@ -531,29 +532,34 @@ class Slides(BaseSlides,metaclass=Singleton):
         display(self.this._reset_toc()) # Must to have metadata there
 
     def goto_button(self, text, **kwargs):
+        raise DeprecationWarning("Use `Slides.link` instead of `goto_button` to create links to other slides in a streamlined way.")
+
+    def link(self, label, back_label=None, icon=None, back_icon=None):
+        """Create a link to jump to another slide. Use `label` for link text 
+        and `back_label` for the  optional text on the target slide if need to jump back.
+
+        - Use `link.origin` to create a link to jump to target slide where `link.target` is placed.
+        - If back_label was provided, `link.target` will be able to jump back to the `link.origin`.
+        - In makdown, you can use created link as variables like `\%{link.origin}` and `\%{link.target}` to display links.
+        - Use similar links in markdown as \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\`.
+        - In markdown, icons can be passed in label as alert`"fa\`arrow\` label text"`.
         """
-        Initialize a button to jump to given target slide when clicked.
-        `text` is the text to be displayed on button.
-        `kwargs` are passed to `ipywidgets.Button` function.
-
-        - Pass to write command or use hl`.display()` method to display button in a slide.
-        - Use hl`.set_target()` method under target slide.
-
-        ::: note-tip
-            - `goto_button` is converted to a link in exported slides that can be clicked to jump to slide.
-            - You can use hl`.set_target()` on a previous slides and hl`.display()` on a later slide to create a link that jumps backwards.
-        """
-        kwargs["description"] = text  # override description with text
-        kwargs["layout"] = kwargs.get("layout", {"width": "max-content"})
-
-        def on_click(btn):
-            if btn._TargetSlide:
-                self.navigate_to(btn._TargetSlide.index)
-                btn._TargetSlide.first_frame()
-            else:
-                self.notify(f"Failed to jump to slide {btn._TargetSlide!r}, you may have not used `GotoButton.set_target()` anywhere!")
+        anchor_id = uuid.uuid4().hex  # Generate unique anchor id
         
-        return GotoButton(app=self, on_click=on_click,**kwargs)
+        origin = self.html('a',
+            (f' <i class="fa fa-{icon}"></i>' if icon else '') + label,
+            id=f"origin-{anchor_id}", 
+            href = f"#target-{anchor_id}", 
+            css_class="slide-link"
+        )
+
+        target = self.html('a',
+            (f' <i class="fa fa-{back_icon}"></i>' if back_icon else '') + (back_label or ''), 
+            id=f"target-{anchor_id}", 
+            href = f"#origin-{anchor_id}", 
+            css_class="slide-link"
+        )
+        return namedtuple("Link", ["origin", "target"])(origin, target)
 
     def show(self):
         "Display Slides."

@@ -107,7 +107,7 @@ class _Toggles:
     menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')   
 
     setattr(draw, 'fmt_html', lambda: html('a', '', href=f'https://www.tldraw.com', target="_blank", rel="noopener noreferrer", 
-        style='color:var(--accent-color);text-decoration:none;', css_class='fa fa-edit goto-button').value) # send to website on exported slides 
+        css_class='fa fa-edit link-button').value) # send to website on exported slides 
 
 @dataclass(frozen=True)
 class _Htmls:

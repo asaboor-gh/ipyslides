@@ -37,35 +37,6 @@ class CustomDisplay:
         raise NotImplementedError("display method must be implemented in subclass")
     
 
-class GotoButton(ipw.Button):
-    "Use `Slides.goto_button` function which returns this class."
-    def __init__(self, app, on_click, *args, **kwargs):
-        self._app = app 
-        self._TargetSlide = None # Will be set by set_target
-        self._target_id = f't-{id(self)}'
-        super().__init__(*args,**kwargs)
-        self.add_class("goto-button")
-        self.on_click(on_click)
-    
-    def fmt_html(self):
-        return self._app.html('a',self.description, href=f'#{self._target_id}', 
-            style='color:var(--accent-color);text-decoration:none;', 
-            css_class=f'goto-button export-only {self._app.icon.get_css_class(self.icon)}'
-        ).value
-    
-    def display(self): display(self) # completeness
-
-    def set_target(self):
-        "Set target slide of goto button. Returns itself."
-        self._app.verify_running("GotoButton's target can be set only inside a slide constructor!")
-        
-        if getattr(self, '_TargetSlide', None):
-            self._TargetSlide._target_id = None # Remove previous link
-        
-        self._TargetSlide = self._app.this
-        self._TargetSlide._target_id = self._target_id # Set new link
-        return self 
-
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
     if isinstance(output, str):

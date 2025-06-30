@@ -75,7 +75,6 @@ class _HhtmlExporter:
 
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
                 sec_id = self._get_sec_id(item)
-                goto_id = self._get_target_id(item,k)
 
                 number = ""
                 if self.main.settings.footer.numbering:
@@ -86,7 +85,7 @@ class _HhtmlExporter:
                         {self._get_css(item)}
                         <div class="SlideBox">
                             {self._get_bg_image(item)}
-                            <div {goto_id} class="{item._css_class}">
+                            <div class="{item._css_class}">
                                 {_html}
                             </div>
                             {number}
@@ -110,7 +109,7 @@ class _HhtmlExporter:
             content     = content, 
             script      = _script, 
             click_btns  = self._get_clickables(), 
-            height      = f'{int(254/theme_kws["aspect"])}mm', 
+            height      = f'{int(254/theme_kws["layout"].aspect)}mm', 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
             bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True -> bottom
             )
@@ -118,11 +117,6 @@ class _HhtmlExporter:
     def _get_sec_id(self, slide):
         sec_id = getattr(slide,'_sec_id','')
         return f'id="{sec_id}"' if sec_id else ''
-    
-    def _get_target_id(self, slide,fidx=0): # For goto buttons
-        if fidx != 0: return '' # only first frame
-        target = getattr(slide, '_target_id', '')
-        return f'id="{target}"' if target else ''
     
     def _get_progress(self, slide, fidx=0):
         unit = 100/(self.main._iterable[-1].index or 1) # avoid zero division error or None
@@ -154,14 +148,14 @@ class _HhtmlExporter:
             return '' # no clicks for only title, or when navigation UI is off
         
         items = [getattr(item,'_sec_id','') for item in self.main]
-        names = ['', *['●' for _ in items[1:-1]],'']
+        names = ['●', *['●' for _ in items[1:-1]],'●']
         
         if len(items) > 5: # we need only 0,25,50,75,100 % clickers
             imax = len(items) - 1
             items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
-            names = ' ◔◑◕ ' # spaces around for icons
+            names = '⁰ ¼ ½ ¾ ¹'.split()
         
-        klasses = [f"clicker fa {c}" for c in ['fa-arrowbl',*['' for _ in names[1:-1]],'fa-arrowbr']]
+        klasses = [f"clicker {c}" for c in names] # add clicker class to all
 
         return "".join(f'<a href="#{key}" class="{klass}">{label}</a>' for (klass, label,key) in zip(klasses, names,items))
                 

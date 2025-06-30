@@ -303,6 +303,20 @@ def style_css(colors, fonts, layout, _root = False):
                 "top": "unset !important",   
                 "margin-top": "auto !important",
             },
+            '.slide-link, .link-button': {
+                'background': 'var(--bg2-color)',
+                'color':'var(--accent-color)',
+                'text-decoration':'none !important',
+                'border-radius': '0.2em',
+                'padding': '0 0.2em',
+                'margin': '0 0.2em',
+                'border': '1px solid var(--bg3-color)',
+                'text-shadow': '0 1px var(--bg1-color)',
+            },
+            '.slide-link:empty': {'display': 'inline-block !important', # height width needs a block display
+                'width': '0 !important', 'height': '0 !important',
+                'padding':'0 !important', 'margin': '0 !important'
+            }, # avoid empty links to show, but still need to work in pdf
             ':is(ul,ol)': {
                 'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap
             },
@@ -316,11 +330,11 @@ def style_css(colors, fonts, layout, _root = False):
             'dl > dd': {'margin-inline-start': '16px', 'display': 'block', 'width':'calc(100% - 16px)'},
             'a': {
                 'color': 'var(--accent-color) !important',
-                '^:not(.citelink,.goto-button):visited': {
+                '^:not(.citelink,.slide-link,.link-button):visited': {
                     'color': 'var(--fg2-color) !important',
                     'opacity': '0.75 !important',
                 },
-                '^:not(.citelink,.goto-button)': {
+                '^:not(.citelink,.slide-link,.link-button)': {
                     'text-decoration': 'underline !important', 
                 },
                 '^.citelink': {'color': 'var(--fg1-color) !important',},
@@ -328,6 +342,9 @@ def style_css(colors, fonts, layout, _root = False):
                     '> sup': {'font-weight':'bold',},
                     'text-shadow': '0 1px var(--bg2-color)',
                 },
+                '^.link-button': {
+                    'padding': '0 24px !important', # make it like button, others from slide-link
+                }, # link-button is used for links in slides
             },
             '.Citations' : {
                 'column-count' :f'{layout.ncol_refs} !important',

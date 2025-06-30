@@ -183,13 +183,11 @@ def demo_slides(slides):
 
     slides.build(-1,'section`Simple Animations with Frames` toc`### Contents`')
 
-    forward_skipper = slides.goto_button('Skip All Next Frames', icon='arrowr')
-    backward_skipper = slides.goto_button('Skip Previous Frames', icon='arrowl')
+    skipper = slides.link('Skip All Next Frames', 'Skip Previous Frames', icon='arrowr', back_icon='arrowl')
     
     # Animat plot in slides  
     with slides.build_():
-        backward_skipper.set_target()
-        slides.write("## Animating Matplotlib!", forward_skipper)
+        slides.write("## Animating Matplotlib!", skipper.origin)
 
         with slides.code.context(returns = True) as s:
             for idx in slides.fsep.iter(range(10,19)):
@@ -235,8 +233,7 @@ def demo_slides(slides):
     # Youtube
     from IPython.display import YouTubeVideo
     with slides.build(-1) as ys: # We will use this in next %%magic
-        backward_skipper.display()
-        forward_skipper.set_target()
+        skipper.target.display()
         
         slides.write(f"### Watching Youtube Video?")
         slides.write('**Want to do some drawing instead?** Click on button on the right!', slides.draw_button, widths=[3,1])

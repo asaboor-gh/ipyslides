@@ -46,8 +46,7 @@ class Slide:
     def _set_defaults(self):
         if hasattr(self,'_on_load'):
             del self._on_load # Remove on_load function
-        if hasattr(self,'_target_id'):
-            del self._target_id # Remove target_id
+    
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
         self._section = None # Reset sec_key

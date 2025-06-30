@@ -18,6 +18,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, css_class
 
     <!-- Custom stylesheet, it must be in the same directory as the html file -->
     <link rel="stylesheet" href="overrides.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Loading mathjax macro -->
     <!-- Load mathjax -->
@@ -61,7 +62,7 @@ a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
 p {margin-block: 0.5em !important;}
 pre {white-space: break-spaces;} /* General rule unless specified in elements */
-.toc-item, .goto-button {margin-block: 0.25em}
+.toc-item {margin-block: 0.25em}
 .click-wrapper {
     position: fixed !important;
     left:calc(100% - 150px) !important; /* extra space for slide number */
@@ -148,19 +149,6 @@ section .SlideArea {
 .SlidesWrapper::-webkit-scrollbar-button,
 .SlidesWrapper::-webkit-scrollbar-corner {
     display:none !important;
-}
-a.goto-button {
-    padding: 2px;
-    border: 1px solid var(--accent-color);
-    border-radius: 6px;
-    font-size: 16px;
-}
-a.goto-button:hover, a.goto-button:focus {
-    box-shadow: 2px 2px 4px var(--bg2-color);
-    background: var(--bg2-color);
-}
-a.goto-button:active {
-    color: var(--pointer-color);
 }
 
 .SlidesWrapper.Scrolling .Progress,

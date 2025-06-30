@@ -214,6 +214,39 @@ function setColors(model, box) {
     };
 }
 
+function linkSwitchesSlide(model, box) {
+    box.addEventListener('click', function (event) {
+        const anchor = event.target.closest('a');
+        if (!anchor || !box.contains(anchor)) return;   
+        event.preventDefault(); 
+        const href = anchor.getAttribute('href');
+        const targetId = href.startsWith('#') ? href.slice(1) : null;
+        const targetElement = targetId ? document.getElementById(targetId) : document.querySelector(href);  
+        const originSlide = anchor.closest('.SlideArea');
+        const targetSlide = targetElement?.closest('.SlideArea');   
+        if (originSlide && targetSlide) {
+            
+            const getSlideIndex = (el) => {
+                const className = [...el.classList].find(cls => /^n\d+$/.test(cls)); // regex to find class like n1, n2, etc.
+                return className ? parseInt(className.slice(1), 10) : null;
+            };    
+            
+            const originIndex = getSlideIndex(originSlide);
+            const targetIndex = getSlideIndex(targetSlide);   
+            
+            if (originIndex !== null && targetIndex !== null) {
+                const offset = targetIndex - originIndex;
+                model.set("msg_topy", `SHIFT:${offset}`); // Send message to shift slides
+                model.save_changes();
+            } else {
+                alert(`Link '${anchor.textContent}' does not point to a valid slide`);
+            }
+        } else if (!originSlide || !targetSlide) {
+            alert(`Link target not found or it was not set on a slide: '${anchor.textContent}'`);
+        } 
+    });
+}
+
 function render({ model, el }) {
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
@@ -243,6 +276,9 @@ function render({ model, el }) {
 
         // Remove other views without closing comm
         keepThisViewOnly(box); 
+
+        // Link switches slides
+        linkSwitchesSlide(model, box);
 
         // Sends a message if fullscreen is changed by some other mechanism
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};
