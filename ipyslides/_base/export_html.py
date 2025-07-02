@@ -109,7 +109,7 @@ class _HhtmlExporter:
             content     = content, 
             script      = _script, 
             click_btns  = self._get_clickables(), 
-            height      = f'{int(254/theme_kws["layout"].aspect)}mm', 
+            height      = f'{int(210/theme_kws["layout"].aspect)}mm', 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
             bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True -> bottom
             )
@@ -153,7 +153,7 @@ class _HhtmlExporter:
         if len(items) > 5: # we need only 0,25,50,75,100 % clickers
             imax = len(items) - 1
             items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
-            names = '⁰ ¼ ½ ¾ ¹'.split()
+            names = '●●●●●'
         
         klasses = [f"clicker {c}" for c in names] # add clicker class to all
 
@@ -177,7 +177,7 @@ class _HhtmlExporter:
         - If progressbar is set to True, 'bottom' or 'top', a progressbar while shown accordingly. True -> 'bottom'.
         
         ::: note-info
-            - PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.
+            - PDF printing of slide width is 210mm (8.25in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Alsp enable background graphics in print dialog.
         """
         if progressbar not in [True, False, 'top','bottom']:

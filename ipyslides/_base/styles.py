@@ -188,7 +188,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'color':'var(--fg3-color)',
                 'text-align':'center' if layout.centered else 'left',
                 'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
-                'line-height':'1.5',
+                'line-height':'1.5 !important',
                 'overflow':'hidden', # Firefox 
                 '.MJX-TEX, .MathJax span': {"color":"var(--fg3-color)",}, # MathJax span is for export
             },
@@ -278,8 +278,8 @@ def style_css(colors, fonts, layout, _root = False):
         },
         '.SlideArea': {
             'position': 'absolute !important',
-            'width':'254mm !important',
-	        'height': f'{int(254/layout.aspect)}mm !important',
+            'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
+	        'height': f'{int(210/layout.aspect)}mm !important',
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
 	        'box-sizing': 'border-box !important',

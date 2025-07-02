@@ -247,6 +247,17 @@ function linkSwitchesSlide(model, box) {
     });
 }
 
+function markPrintable(el, className) {
+  // First, remove the class from any previously marked elements
+  document.querySelectorAll('.' + className).forEach(node => node.classList.remove(className));
+
+  // Then walk up from the given element to <body>, adding the class
+  while (el && el !== document.body) {
+    el.classList.add(className);
+    el = el.parentElement;
+  }
+}
+
 function render({ model, el }) {
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
@@ -315,6 +326,9 @@ function render({ model, el }) {
             c.style.width = '100%';
             c.style.height = '100%';
         }
+
+        // Add classes to mark ancestors for printing
+        markPrintable(box, 'ipyslides-print-node');
     }  
     el.appendChild(style);
     model.set("msg_topy", "LOADED"); // to run onload functionality

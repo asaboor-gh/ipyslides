@@ -86,6 +86,8 @@ pre {white-space: break-spaces;} /* General rule unless specified in elements */
     left: 0 !important;
     height: 100vh !important;
     width: 100vw !important;
+    line-height: 1.5 !important; /* Default line-height for all text to match Jupyter */
+    box-sizing: border-box !important;
 }
 section {
 	scroll-snap-align:start !important;
@@ -174,7 +176,7 @@ section .SlideArea {
         ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
     }
     @page {
-        size: 254mm __HEIGHT__; /* 10 inch x decided by aspect by user*/
+        size: 210mm __HEIGHT__; /* 10 inch x decided by aspect by user*/
         margin-top: 0 !important;
         margin-right: 0 !important;
         margin-left: 0 !important;
@@ -196,7 +198,7 @@ section .SlideArea {
         page-break-inside: avoid !important;
         page-break-after: always !important;
         overflow: hidden !important; /* otherwise it throws text to next page */
-        padding-bottom: 2em !important; /* for avoiding overflow to bottom,2em is a reasonable space */
+        padding-bottom: 25px !important; /* for avoiding overflow to bottom,25px is same as under SlideArea */
     }
     section:last-of-type {
         page-break-after: avoid !important;

@@ -428,6 +428,8 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwarg
     - A url to image file.
     - A str/bytes object containing image data.  
     - A str like "clip:image.png" will load an image saved using `Slides.clip('image.png')`. 
+    - A filename like "image.png" will look for the file in current directory and then in `Slides.clips_dir` if not found.
+        Use 'clip:image.png' to pick image from `Slides.clips_dir` directly if another file 'image.png' also exists in current directory.
 
     **Returns** an `IMG` object which can be exported to other formats (if possible):
 
@@ -444,10 +446,19 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwarg
     if isinstance(width,int):
         width = f'{width}px'
     
-    if isinstance(data, str) and data.startswith("clip:"):
-        data = get_clips_dir() / data[5:] # strip clip by index, don't strip other characters
-        if not data.exists():
-            raise FileNotFoundError(f"File: {data!r} does not exist!")
+    if isinstance(data, (str,Path)):
+        fname = str(data) # Convert Path to str
+        if fname.startswith("clip:"):
+            data = get_clips_dir() / fname[5:] # strip clip by index, don't strip other characters
+            if not data.exists():
+                raise FileNotFoundError(f"File: {data!r} does not exist!")
+        else:
+            cwd_file = Path(fname) # Assumes data is a file path
+            if not cwd_file.exists() and len(cwd_file.parts) == 1:
+                # If file is not found in current directory, check if it exists in clips dir
+                cwd_file = get_clips_dir() / cwd_file
+                if cwd_file.exists():
+                    data = cwd_file # Use file from clips dir if exists
     
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     data, metadata = Image(data = _data,**kwargs)._repr_mimebundle_()

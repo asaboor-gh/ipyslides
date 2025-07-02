@@ -132,7 +132,7 @@ class Fonts(ConfigTraits):
     heading = Unicode("Arial", allow_none=True, help="Heading font")
     text = Unicode("Roboto", allow_none=True)
     code = Unicode("Cascadia Code", allow_none=True)
-    size = Int(20, help="Can use any large/small value that CSS supports!")
+    size = Int(18, help="Can use any large/small value that CSS supports!")
 
     def _apply_change(self, change):
         self.main._update_theme()

@@ -299,7 +299,8 @@ class XMarkdown(Markdown):
             xmd = "\n" + xmd
 
         if len(re.findall(r'^```', xmd, flags = re.MULTILINE)) % 2:
-            raise ValueError("Some blocks started with ```, but never closed!")
+            issue = error("ValueError",f"Some blocks started with ```, but never closed, in markdown:\n{xmd}")
+            return issue.value if returns else display(issue) # return value or display
 
         new_strs = textwrap.dedent(xmd).split("\n```")  # \n``` avoids nested blocks and it should be, dedent is important
         outputs = []
@@ -386,12 +387,12 @@ class XMarkdown(Markdown):
                     cols.append("")
 
             if len(widths) < len(cols):
-                raise ValueError(
-                    f"Number of columns {len(cols)} should be <= given widths in {header!r}"
-                )
+                return error('ValueError',
+                    f"Number of columns '{len(cols)}' should be <= given widths in {header!r}"
+                ).value
             for w in widths:
                 if not w.strip().replace('.','').isdigit(): # hold float values
-                    raise TypeError(f"{w} is not a positive integer or float value in {header!r}")
+                    return error('TypeError',f"{w} is not a positive integer or float value in {header!r}").value
 
             widths = [float(w) for w in widths]
         
@@ -509,7 +510,7 @@ class XMarkdown(Markdown):
             key,*_ = _matched_vars(match.group()) 
             if key not in user_ns: # top level var without ., indexing not found
                 err = error('NameError', f'name {key!r} is not defined')
-                return self._handle_var(error('Exception', f'could not resolve {match.group()!r}\n{err}'))
+                return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{err}'))
 
             cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
             key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
@@ -519,7 +520,7 @@ class XMarkdown(Markdown):
             try:
                 value, _ = hfmtr.get_field(key, (), user_ns)
             except Exception as e:
-                return self._handle_var(error('Exception', f'could not resolve {match.group()!r}\n{e}'))
+                return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{e}'))
             
             if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
                 return self._handle_var(value,ctx = match.group()) 
@@ -539,17 +540,20 @@ class XMarkdown(Markdown):
                 arg0 = m2.strip() # avoid spaces in this
 
                 if not m1:
-                    _out = (_func(arg0) if arg0 else _func()) # If no argument, use default
+                    try:
+                        _out = (_func(arg0) if arg0 else _func()) # If no argument, use default
+                    except Exception as e:
+                        _out = error('Exception', f"Could not parse '{func}`{m2}`': \n{e}")
                     html_output = html_output.replace(f"{func}`{m2}`", self._handle_var(_out), 1)
                 else: # func with arguments
                     try:
                         _out = eval(f"utils.{func}({arg0!r},{m1[1:-1]})" if arg0 else f"utils.{func}({m1[1:-1]})") # evaluate
-                        html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
                     except Exception as e:
-                        raise Exception(
-                            rf"Error in {func}{m1}`{m2}`: {e}. Arguments in [] should be proper Python code that does not rely on a scope "
-                            f" and are passed to {func}{inspect.signature(_func)} except first argument which is the text to be processed.")
-                    
+                        _out = error('Exception',
+                            f"Could not parse '{func}{m1}`{m2}`': \n{e}\nArguments in [] should be proper Python code that does not rely on a scope "
+                            f" and are passed to {func}{inspect.signature(_func)} except first argument which is the text to be processed."
+                        )
+                    html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
 
         if all_cols := re.findall(
             r"\|\|(\s*\d*\.?\d*\s*)(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
@@ -559,7 +563,7 @@ class XMarkdown(Markdown):
                 info = error("Exception",
                     f"Use stack[{_sig}]` C1 | C2 | ...` syntax instead of \n||{width}{cols[0]}||{cols[1]}||\n "
                     "to have better control over number of columns/rows and their sizes."
-                ).value # raise error if used
+                ).value # show error if used
                 html_output = html_output.replace(f"||{width}{cols[0]}||{cols[1]}||", self._handle_var(info), 1)
 
         return re.sub(r"&(?:amp;)?#96;","`", html_output)  # return in main scope
