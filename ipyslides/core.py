@@ -661,20 +661,21 @@ class Slides(BaseSlides,metaclass=Singleton):
         if str(number) != '-1': # handle %%slide -1 togther with others
             return number
         
-        code = self.shell.get_parent().get('content',{}).get('code','')
-        p = r"\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
-        matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(sync_with_file{p})", code)
-        number = int(self._next_number) # don't use same attribute, that will be updated too
-        if matches:
-            if len(matches) > 1:
-                number -= (len(matches) - 1) # same cell multislides create a jump in numbering, subtract that
-            
-            for ms in matches:
-                for m in ms:
-                    if m:
-                        code = code.replace(m, f"{m[:m.index('-')]}{number}",1) # replace before -, could be -<spaces>1
-                        number += 1
-            self.shell.set_next_input(code, True) # for notebook
+        with suppress(AttributeError): # some kernels may not implement changing cell code on fly
+            code = self.shell.kernel.get_parent().get('content',{}).get('code','')
+            p = r"\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
+            matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(sync_with_file{p})", code)
+            number = int(self._next_number) # don't use same attribute, that will be updated too
+            if matches:
+                if len(matches) > 1:
+                    number -= (len(matches) - 1) # same cell multislides create a jump in numbering, subtract that
+
+                for ms in matches:
+                    for m in ms:
+                        if m:
+                            code = code.replace(m, f"{m[:m.index('-')]}{number}",1) # replace before -, could be -<spaces>1
+                            number += 1
+                self.shell.set_next_input(code, True) # for notebook
     
         return self._next_number # for python file as well as first run of cell in notebook
 

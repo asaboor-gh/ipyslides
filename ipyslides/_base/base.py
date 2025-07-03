@@ -649,6 +649,9 @@ class BaseSlides:
                 - In python file, it stays same.
                 - You need to run cell twice if creating slides inside a for loop while using `-1`.
                 - Additionally, in python file, you can use `Slides.build_` instead of using `-1`.
+                       
+                ::: note-warning
+                    Some kernels may not support auto slide numbering inside notebook.
             """)
         
         self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self.docs]))
