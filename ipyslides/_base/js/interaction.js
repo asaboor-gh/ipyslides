@@ -277,6 +277,12 @@ function render({ model, el }) {
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
     style.onload = () => { 
+        // Send a clean message after a second, without any error caused by other functions
+        setTimeout(() => {
+            model.set("msg_topy", "CleanView"); // after view, fix all others
+            model.save_changes();
+        }, 1000)
+
         let box = style.parentNode.parentNode;
         box.tabIndex = -1; // Need for event listeners, should be at top
         box.setAttribute("uid", model.get("_uid"));
@@ -348,12 +354,6 @@ function render({ model, el }) {
     el.appendChild(style);
     model.set("msg_topy", "LOADED"); // to run onload functionality
     model.save_changes();
-
-    // Send a clean message after a second
-    setTimeout(()=>{
-        model.set("msg_topy", "CleanView"); // after view, fix all others
-        model.save_changes();
-    }, 1000)
 
     // Clean up old slides if left over from previous session of kernel restart
     let slides = document.getElementsByClassName('SlidesWrapper');

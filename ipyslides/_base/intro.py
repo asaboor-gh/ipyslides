@@ -6,9 +6,9 @@ def get_logo(height="60px", text = None):
     width = 250 if text else 50
     V = text if isinstance(text, str) else ''
     return f'''<svg height="{height}" viewBox="0 0 {width} 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
-        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
-        <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
-        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
+        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="#43D675"/>
+        <path d="M7.5 27.5L22.5 42.5" stroke="#4F8EF7"/>
+        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="#4F8EF7"/>
         <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;">{V}</text>
     </svg>'''
 
