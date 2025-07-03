@@ -596,7 +596,7 @@ def style_css(colors, fonts, layout, _root = False):
         '.block' : {
             '^, ^-red,^-green,^-blue, ^-yellow, ^-magenta, ^-cyan': {
                 '--bg-color': 'var(--bg2-color)',
-                'padding': '8px',
+                'padding': '4px',
                 'border-radius': '4px',
                 'margin': '0.5em 0',
                 'box-shadow': '0px 0px 1px 0.5px hsl(from var(--bg-color) h s 40% / 0.9) inset !important',
