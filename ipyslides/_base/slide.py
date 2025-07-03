@@ -189,6 +189,7 @@ class Slide:
         }
 
     def _reset_toc(self):
+        self._app._sec_id2dom() # for clickable links
         items = []
         for s in self._app[:self.index]:
             if s._section:
@@ -213,8 +214,7 @@ class Slide:
 
         items = [XTML(textwrap.dedent('''
             <li class="toc-item {c}">
-                <a href="#{s._sec_id}" class="export-only citelink">{s._section}</a>
-                <span class="jupyter-only">{s._section}</span>
+                <a href="#{s._sec_id}" class="slide-link citelink">{s._section}</a>
             </li>''').format(**sec))
             for sec in items]
         

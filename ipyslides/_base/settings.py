@@ -187,7 +187,6 @@ class Toggle(ConfigTraits):
     notes  = Bool(False)
     toast  = Bool(True)
     focus  = Bool(True)
-    paste  = Bool(True)
 
     def _apply_change(self, change):
         if change and (widget := getattr(self.main._widgets.checks, change.name, None)):
@@ -267,8 +266,6 @@ class Settings:
         self._widgets.sliders.fontsize.observe(lambda c: self.fonts(size=c.new), names=["value"])
         self._widgets.theme.observe(self._update_theme, names=["value"])
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"])
-        self._widgets.checks.paste.observe(self._toggle_paste_mode, names=["value"])
-        self._widgets.buttons.toc.on_click(self._toggle_tocbox)
         self._widgets.buttons.info.on_click(self._show_info)
         self._widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self._wslider.observe(self._update_size, names=["value"])
@@ -281,7 +278,6 @@ class Settings:
         self._widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self._update_theme({'owner':'layout'})  # Trigger Theme with aspect changed as well
         self._update_size(change=None)  # Trigger this as well
-        self._toggle_paste_mode(change=None) # This should be enabled by default
 
         self._traits = [key for key, value in self.__dict__.items() if isinstance(value, ConfigTraits)]
         parameters=[Parameter('self', Parameter.POSITIONAL_ONLY), 
@@ -302,14 +298,6 @@ class Settings:
         if not name.startswith('_') and hasattr(self, name):
             raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
         self.__dict__[name] = value
-
-    def _toggle_paste_mode(self, change):
-        if self._widgets.checks.paste.value:
-            self._widgets.mainbox.add_class("EditMode")
-            self._slides.notify("Enabled features such as image paste")
-        else:
-            self._widgets.mainbox.remove_class("EditMode")
-            self._slides.notify("Disabled features such as image paste")
 
     def _close_quick_menu(self):
         if self._tgl_menu.value:
@@ -431,19 +419,6 @@ class Settings:
             msg = 'THEME:dark' if "Dark" in self._widgets.theme.value else 'THEME:light'
         self._widgets.iw.msg_tojs = msg # changes theme of board
         self.code._apply_change(None) # Update code theme
-
-
-    def _toggle_tocbox(self, btn):
-        if self._widgets.tocbox.layout.max_height == "0":
-            self._widgets.tocbox.layout.max_height = f"calc(100% - 32px)"
-            self._widgets.tocbox.layout.border = "1px solid var(--bg3-color)"
-            self._widgets.tocbox.layout.padding = "4px"
-            self._widgets.buttons.toc.icon = "minus"
-        else:
-            self._widgets.tocbox.layout.max_height = "0"
-            self._widgets.tocbox.layout.border = "none"
-            self._widgets.tocbox.layout.padding = "0"
-            self._widgets.buttons.toc.icon = "plus"
 
     def _toggle_fullscreen(self, change):
         self._widgets.iw.msg_tojs = 'TFS' # goes to js, toggle fullscreen and chnage icon of button

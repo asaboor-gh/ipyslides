@@ -118,6 +118,21 @@ function handleMessage(model, msg, box, cursor) {
         }
     } else if (msg === "SetColors") { // sent by export_html function only
         setColors(model, box);
+    } else if (msg.includes("ToggleID:")) { // Toggle ID of slides
+        const ids = msg.replace("ToggleID:","").split(",");
+        const slides = box.getElementsByClassName('SlideArea');
+        if (ids.length !== slides.length) {
+            console.warn("Number of ids does not match number of slides, skipping setting ids");
+            return false; // don't set ids if not match
+        }
+        for (let i = 0; i < slides.length; i++) {
+            if (!ids[i]) {
+                slides[i].removeAttribute('id'); // remove id if not set
+            } else {
+                slides[i].setAttribute('id', ids[i]); // set id if provided
+            }
+        }
+        
     }
 };
 
@@ -216,7 +231,7 @@ function setColors(model, box) {
 
 function linkSwitchesSlide(model, box) {
     box.addEventListener('click', function (event) {
-        const anchor = event.target.closest('a');
+        const anchor = event.target.closest('.slide-link'); // Find the closest link with class 'slide-link
         if (!anchor || !box.contains(anchor)) return;   
         event.preventDefault(); 
         const href = anchor.getAttribute('href');

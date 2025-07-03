@@ -304,14 +304,16 @@ def style_css(colors, fonts, layout, _root = False):
                 "margin-top": "auto !important",
             },
             '.slide-link, .link-button': {
-                'background': 'var(--bg2-color)',
                 'color':'var(--accent-color)',
                 'text-decoration':'none !important',
+                'text-shadow': '0 1px var(--bg1-color)',
+            },
+            '.slide-link:not(.citelink), .link-button': {
+                'background': 'var(--bg2-color)',
                 'border-radius': '0.2em',
                 'padding': '0 0.2em',
                 'margin': '0 0.2em',
                 'border': '1px solid var(--bg3-color)',
-                'text-shadow': '0 1px var(--bg1-color)',
             },
             '.slide-link:empty': {'display': 'inline-block !important', # height width needs a block display
                 'width': '0 !important', 'height': '0 !important',
@@ -447,7 +449,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'height':'auto',
                 'box-sizing':'border-box !important',
                 '> *': {'box-sizing':'border-box !important',},
-                'table': {'width':'100%'}, # make table full width inside columns
+                'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },
         },
         'code': {

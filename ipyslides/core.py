@@ -807,13 +807,17 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._box.remove_class("SingleSlide")
 
         return slides_iterable
+    
+    def _sec_id2dom(self):
+        self.widgets.iw._slides_ids = ids = ",".join(
+            s._sec_id if s._section else "" for s in self._iterable
+        )  # Set ids for slides in DOM if section is set
+        self.widgets.iw.msg_tojs = "ToggleID:" + ids # send as well, but keep reerence for when displayed
 
     def _update_toc(self):
         tocs = [(s.index, s._section) for s in self._iterable if s._section]
         children = [
-            ipw.HBox([
-                ipw.HTML('<b> Table of Contents</b>'), self.widgets.buttons.toc
-            ],layout=dict(border_bottom='1px solid #8988', margin='0 0 8px 0',justify_content='space-between'))
+            ipw.HTML('<b> Table of Contents</b>',layout=dict(border_bottom='1px solid #8988', margin='0 0 8px 0'))
         ]
 
         if not tocs:
@@ -825,6 +829,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             children.append(self._toc_widget)
 
         self.widgets.tocbox.children = children
+        self._sec_id2dom()
 
     def create(self, slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is much faster than creating one slide each time."

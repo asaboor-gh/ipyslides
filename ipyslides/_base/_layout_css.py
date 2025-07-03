@@ -32,39 +32,38 @@ def layout_css(accent_color, aspect):
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
                 },  # still should be clickable
-                "^.EditMode" : {
-                    ".paste-box": {
-                        "background": "var(--bg2-color)",
-                        "border": "0.5px solid var(--jp-border-color1,#8988)!important",
-                        "padding":"0",
-                        "border-radius": "8px",
-                    },
-                    ".clipboard-image": {
-                        "^.export-only::before": {
-                            "content": "'Export-only content: Only visible when paste mode is ON!'",
-                            "font-size":"60%", 
-                            "font-style":"italic",
-                            "color": "var(--fg2-color)",
-                            "position": "absolute", "top": "-0.5em", "right": "0.5em",
-                        },
-                        "^, ^.export-only" : {"display": "block !important",},
-                        "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--bg3-color)",},
-                    },
-                    ".paste-btns": {
-                        "display": "grid !important",
-                        "grid-template-columns": "auto auto auto", 
-                        "padding": "8px",
-                        "grid-gap": "4px",
-                        "margin-right": "auto", # Force left align
-                        "> button": {"background": "var(--bg1-color) !important",}, # align center
-                        ".danger": {
-                            "background": "red !important",
-                            "^, > i": {"color": "white !important",},
-                        },
-                    },
-                    ".columns .paste-btns": {"grid-template-columns": "auto",},
+                ".paste-box": {
+                    "background": "var(--bg2-color)",
+                    "border": "0.5px solid var(--jp-border-color1,#8988)!important",
+                    "padding":"0",
+                    "border-radius": "8px",
                 },
-                ".paste-btns": {"display": "none !important"},
+                ".clipboard-image": {
+                    "^.export-only::before": {
+                        "content": "'Export-only content: Only visible when paste mode is ON!'",
+                        "font-size":"60%", 
+                        "font-style":"italic",
+                        "color": "var(--fg2-color)",
+                        "position": "absolute", "top": "-0.5em", "right": "0.5em",
+                    },
+                    "^, ^.export-only" : {"display": "block !important",},
+                    "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--bg3-color)",},
+                },
+                ".paste-btns": {
+                    "display": "grid !important",
+                    "grid-template-columns": "auto auto auto", 
+                    "padding": "8px",
+                    "grid-gap": "4px",
+                    "margin-right": "auto", # Force left align
+                    "> button": {"background": "var(--bg1-color) !important",}, # align center
+                    ".danger": {
+                        "background": "red !important",
+                        "^, > i": {"color": "white !important",},
+                    },
+                },
+                ".columns .paste-btns": {
+                    "grid-template-columns": "auto",
+                },
                 ".Slide-Number" : { # slide number
                     "position": "absolute !important",
                     "right": "0 !important",
@@ -240,13 +239,18 @@ def layout_css(accent_color, aspect):
                     "top": "0px !important",
                     "left": "0px !important",
                     "transition": "height 400ms ease-in-out",
+                    "overflow": "hidden !important",
                     "@container slides (max-width: 400px)": {"width": "100% !important"}, # reinforce width
                     ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",},
-                    ":not(.TopBar) :is(button, .jupyter-button)": {
-                        "margin-left":"var(--jp-widgets-inline-label-width) !important",
-                        "width": "max-content !important",
-                        "min-height": "28px !important",
+                    ":not(.TopBar)": {
+                        ":is(button, .jupyter-button)": {
+                            "margin-left":"var(--jp-widgets-inline-label-width)",
+                            "width": "max-content !important",
+                            "min-height": "28px !important",
+                        },
                     },
+                    ".header": {"background": "var(--bg2-color) !important","box-shadow": "0 1px 2px #8984 !important"},  # subtle shadow
+                    "^, *": {"box-sizing": "border-box !important"},
                     ".Settings-Btn": {
                         "border": "none !important",
                         "outline": "none !important",
@@ -396,11 +400,7 @@ def layout_css(accent_color, aspect):
                 },
             },
             ".TOC": {  # Table of contents panel
-                "position":"absolute",
-                "left": "0",
-                "bottom": "24px", # just above navbar
                 "display": "table-column-group !important", # This to avoid collapsing divs
-                "background": "var(--bg2-color)",
                 **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
                 "margin": "4px",
                 "min-width": "50% !important",
@@ -419,22 +419,19 @@ def layout_css(accent_color, aspect):
                     "font-size": "16px !important", # A litle larger
                 },
             },
-            ".TopBar": {
-                "margin-top": "8px !important",  # Avoid overlap with topbar outside
+            ".TopBar.Outside, .TopBar > div": {
                 "display": "flex",
                 "overflow-x": "auto",
                 "overflow-y": "hidden", # hides useless scrollbars
                 "min-height": "36px !important",
                 "align-items": "center !important",
                 "justify-content": "space-around !important",
-                "padding-top": "4px !important",
+                "padding": "4px !important",
                 "box-sizing": "border-box !important",
-                "^.Inside": {"padding-left": "12px","padding-right": "12px"},
                 "button": {
-                    "font-size": "18px !important",
-                    "padding-top": "2px !important",
+                    "font-size": "14px !important",
                     "min-width": "max-content !important",
-                    "width": "unset !important", # To make equal widths
+                    "width": "auto !important", # To make equal widths
                     "flex-grow": "1 !important",
                     "flex-shrink": "1 !important",
                     "height": "28px !important",
@@ -442,11 +439,15 @@ def layout_css(accent_color, aspect):
                     "border": "none !important",
                     "box-shadow": "none !important",
                     "background": "transparent !important",
+                    "^.jupyter-button": {"margin-left": "unset !important"},  # override margin
                     "> i": {
                         "color": "var(--accent-color) !important",
                     },
                     "^:disabled,^[disabled]": {
                         "display": "none !important",
+                    },
+                    "^:active, ^.mod-active": {
+                        "border-bottom": "1px solid var(--accent-color) !important", # like a navbar
                     },
                 },
             },
@@ -471,6 +472,7 @@ def layout_css(accent_color, aspect):
                     "> button" : {
                         "width": "36px !important",
                         "^.Menu-Btn" : {"margin-left": "auto !important"}, # keep cross right most
+                        "^:active, ^.mod-active": {"border-bottom": "none !important",}, # remove border on click outside
                     },
                 },
                 "> button > i": {"margin-right": "8px !important",}, # Make uniform

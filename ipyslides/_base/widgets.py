@@ -41,8 +41,8 @@ class TOCWidget(ListWidget):
     def _jump_to_section(self, change):
         if change.new:
             self._app.navigate_to(change.new.si) # jump at slide index
-            if self._app.widgets.tocbox.layout.max_height != "0": # only if panel was open, otherwise don't open by clicking on another view
-                self._app.widgets.buttons.toc.click()
+            if self._app.widgets.is_panel_open(): # only if panel was open, otherwise don't open by clicking on another view
+                self._app.widgets.buttons.setting.click()
 
 
 class Output(fmtrs._Output):
@@ -135,7 +135,6 @@ class _Checks:
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
     navgui  = ipw.Checkbox(value = True, description='Show Nav. GUI',layout=auto_layout)
-    paste   = ipw.Checkbox(value = True, description='Edit Mode',layout=auto_layout)
     confirm = ipw.Checkbox(value = False, description='Overwrite Existing File',layout=auto_layout)
 
 @dataclass(frozen=True)
@@ -190,7 +189,6 @@ class Widgets:
                 self.buttons.source,
             ]).add_class('Menu-Box'),
             self.htmls.footer,
-            #HBox([self.htmls.footer]), # should be in Box to avoid overflow
         ],layout=Layout(height='20px')).add_class('NavBox')
         
         self.navbox = VBox([
@@ -200,25 +198,42 @@ class Widgets:
         _many_btns = [self.buttons.setting, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
         _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
         
-        self.panelbox = VBox([
-            HBox(_many_btns).add_class('TopBar').add_class('Inside'),
-            VBox([
+        self.tocbox = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto')).add_class('TOC')
+        navbar = ipw.ToggleButtons(options=[(s,i) for s, i in zip(['Settings','TOC','Clips'],range(3))]).add_class('TopBar')
+        self.panelbox = ipw.AppLayout(
+            header =  HBox([navbar, self.buttons.setting], layout=Layout(justify_content='space-between', width='100%')).add_class('header'),
+            left_sidebar = VBox([
                 HTML('<b>Layout and Theme</b>',layout = _html_layout),
                 self.sliders.fontsize,
                 self.sliders.width,
                 self.theme,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
-                self.checks.paste, self.checks.focus, self.checks.notes,self.checks.toast,
+                self.checks.focus, self.checks.notes,self.checks.toast,
                 self.checks.navgui, self.checks.reflow,
                 HTML(html('details',[html('summary','<b>HTML File Export</b>'), how_to_print]).value,layout = _html_layout),
                 self.buttons.export,
                 self.checks.confirm,
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
-            ],layout=Layout(width='auto',height='max-content',overflow_y='scroll',padding='12px',margin='0')),
-        ],layout = Layout(height='0',overflow='hidden')).add_class('SidePanel') 
+            ],layout=Layout(width='100%',height='100%',overflow_y='scroll')),
+            center = self.tocbox, # TOC box is center
+            right_sidebar = VBox([],layout = Layout(width='100%',height='100%',overflow_y='auto')), # Empty right sidebar
+            layout = Layout(height='0',overflow='hidden'), pane_widths = [1,0,0], pane_heights=['36px',1, 0],
+        ).add_class('SidePanel') 
+
+        def _set_pane_widths(change):
+            widths = {0: [1,0,0], 1:[0,1,0],2:[0,0,1]}
+            if change.new in widths:
+                self.panelbox.pane_widths = widths[change.new] # set widths based on selected button
         
-        self.tocbox = VBox([],layout = Layout(width='30%',min_width='400px',max_height='0',overflow='auto')).add_class('TOC')
+        navbar.observe(_set_pane_widths, names=['value']) # set widths on button click
+
+        def _toggle_tocbox(btn):
+            if not self.is_panel_open():
+                self.buttons.setting.click() # Open side panel if closed
+            navbar.value = 1 # Set TOC button active
+        
+        self.buttons.toc.on_click(_toggle_tocbox) # Toggle TOC box on click
         
         self.slidebox = Box([
             # Slides are added here dynamically
@@ -250,7 +265,6 @@ class Widgets:
             self.htmls.hilite,
             self.htmls.zoom,
             HBox([ #Slide_box must be in a box to have animations work
-                self.tocbox, # Should be on left of slides
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
             self.controls, # Importnat for unique display
@@ -279,4 +293,8 @@ class Widgets:
                 raise ValueError(f"timout should be int/float in seconds or None, got {timeout}")
             
             self.iw.send(to_send) # Send notification
+    
+    def is_panel_open(self):
+        "Check if side panel is open."
+        return self.panelbox.layout.height != '0'
         
