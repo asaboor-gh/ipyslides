@@ -40,6 +40,7 @@ class InteractionWidget(anywidget.AnyWidget):
         self._buttons = _widgets.buttons
         self._checks = _widgets.checks
         self._toast_html = _widgets.htmls.toast
+        self._loading = _widgets.htmls.loading
         self._prog = _widgets.sliders.progress
         self._theme = _widgets.theme
 
@@ -79,6 +80,10 @@ class InteractionWidget(anywidget.AnyWidget):
                self._checks.notes.value = True # opens new linked window
 
             self.msg_tojs = 'SwitchView' # Trigger view
+        elif msg == 'CleanView':
+            # Clear loading splash and other stuff
+            self._loading.value = ""
+            self._loading.layout.display = "none"
 
         elif msg in ('FS','!FS'): # This is to make sure visual state of button and slides are correct
             if msg == 'FS':

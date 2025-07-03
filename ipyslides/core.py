@@ -3,7 +3,6 @@ from contextlib import contextmanager, suppress
 from collections import namedtuple
 from collections.abc import Iterable
 from itertools import zip_longest
-from threading import Timer
 from typing import Tuple, Union
 from functools import wraps
 
@@ -575,7 +574,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._update_vars_postrun(True)
         self._force_update()  # Update before displaying app, some contents get lost
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
-        with self._loading_splash(None, self.get_logo('48px', 'IPySlides'),1): # need this to avoid color flicker in start
+        with self._loading_splash(None, self.get_logo('48px', 'IPySlides')): # need this to avoid color flicker in start
             display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
 
     def close_view(self):
@@ -765,7 +764,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             return parse(cell, returns = False)
 
     @contextmanager
-    def _loading_splash(self, btn, extra = None, timeout=None):
+    def _loading_splash(self, btn, extra = None):
         if btn:
             btn.icon = "minus"
             btn.disabled = True  # Avoid multiple clicks
@@ -777,12 +776,10 @@ class Slides(BaseSlides,metaclass=Singleton):
             if btn:
                 btn.icon = "plus"
                 btn.disabled = False
-
-            def reset():
                 self.widgets.htmls.loading.value = ""
                 self.widgets.htmls.loading.layout.display = "none"
+            # In case of None, when slides are displayed, it will be clear via javascript
             
-            Timer(timeout, reset).start() if timeout else reset()
 
 
     def _force_update(self, btn=None):

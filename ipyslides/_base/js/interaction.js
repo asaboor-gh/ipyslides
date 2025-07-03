@@ -349,6 +349,12 @@ function render({ model, el }) {
     model.set("msg_topy", "LOADED"); // to run onload functionality
     model.save_changes();
 
+    // Send a clean message after a second
+    setTimeout(()=>{
+        model.set("msg_topy", "CleanView"); // after view, fix all others
+        model.save_changes();
+    }, 1000)
+
     // Clean up old slides if left over from previous session of kernel restart
     let slides = document.getElementsByClassName('SlidesWrapper');
     for (let slide of Array.from(slides)) {
