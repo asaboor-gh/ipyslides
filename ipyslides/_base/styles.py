@@ -216,7 +216,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'th, tr, td': {'border': 'none'},
                     'thead': {'border': 'inherit','border-bottom':'1px solid #8988 !important',},
                 },
-                'td, th': {'line-height': f'{150 if _root else 85}% !important'},
+                'td, th': {'line-height': f'{1.2 if _root else 1.1} !important'},
                 'td:empty': {'display': 'none'}, # extra create when rowspan, colspan used
             },
             '.grid-table': { 

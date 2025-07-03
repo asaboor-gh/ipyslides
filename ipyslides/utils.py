@@ -643,7 +643,7 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     - css_props: dict, applied to the container div, so you can control top layout.
     """
     if isinstance(objs, str):
-        objs = objs.replace(r'\|','COL-SEP-PIPE').split('|') # Split by pipe if given a string
+        objs = [v.strip() for v in objs.replace(r'\|','COL-SEP-PIPE').split('|')] # Split by pipe if given a string
     
     if not isinstance(objs, (list, tuple)):
         raise TypeError(f'objs should be a markdown string, list or tuple of objects, got {type(objs)}')
