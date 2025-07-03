@@ -217,7 +217,7 @@ def layout_css(accent_color, aspect):
                         },
                     },
                     ".header": {
-                        "background": "var(--bg2-color) !important",
+                        "background": "var(--bg3-color) !important",
                         "box-shadow": "0 1px 2px #8984 !important", # subtle shadow
                         "button": {"direction": "rtl !important"}, # why toggle buttons icons are on right? flipping direction to fix
                     }, 
@@ -373,13 +373,7 @@ def layout_css(accent_color, aspect):
             },
             ".TOC": {  # Table of contents panel
                 "display": "table-column-group !important", # This to avoid collapsing divs
-                **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
-                "min-width": "50% !important",
-                "box-sizing": "border-box !important",
-                "z-index": "8",
-                "border-radius": "4px",
-                "transition": "height 400ms ease-in-out",
-                "@container slides (max-width: 650px)": {"min-width": "80% !important"},
+                "transition": "padding-bottom 400ms ease-in-out",
                 ".list-item": {
                     "display": "flex",
                     "flex-direction": "row",

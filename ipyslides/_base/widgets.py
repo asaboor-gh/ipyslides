@@ -144,7 +144,7 @@ class _Sliders:
     """
     progress = ipw.IntSlider(min=0, max=0, continuous_update=False,readout=True)
     width    = ipw.IntSlider(**describe('Width (vw)'),min=20,max=100, value = 60,continuous_update=False).add_class('Width-Slider') 
-    fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 20,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.fonts.size`")
+    fontsize = ipw.IntSlider(**describe('Font Size'),min=8,max=64,step=1, value = 16,continuous_update=False, tooltip="If you need more larger/smaller font size, use `Slides.settings.fonts.size`")
 
 class Widgets:
     """

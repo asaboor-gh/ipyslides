@@ -137,7 +137,7 @@ class BaseSlides:
         - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Inline columns can be added by using alert`stack\`Column A | Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack.
+        - Inline columns/rows can be added by using alert`stack\`Column A | Column B\`` sytnax with `?` next to opening \\` and before closing \\` most of the time to properly parse inner markdown. You can escape pipe `|` with `\|` to use it as text inside stack.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
         ```markdown     
