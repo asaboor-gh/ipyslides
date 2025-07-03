@@ -11,11 +11,11 @@ class Navigation:
         self.wprogress = self.widgets.sliders.progress
         self.btn_next = self.widgets.buttons.next
         self.btn_prev = self.widgets.buttons.prev
-        self.btn_settings = self.widgets.buttons.setting
+        self.btn_panel = self.widgets.buttons.panel
         
         self.btn_prev.on_click(self._shift_left)
         self.btn_next.on_click(self._shift_right)
-        self.btn_settings.on_click(self._toggle_panel)
+        self.btn_panel.on_click(self._toggle_panel)
         self.widgets.buttons.home.on_click(self._goto_home)
         self.widgets.buttons.end.on_click(self._goto_end)
         
@@ -33,14 +33,14 @@ class Navigation:
                 self.wprogress.value = self.wprogress.value - 1 # Backwards
     
     def _toggle_panel(self,change):
-        if self.btn_settings.icon == 'plus':
-            self.btn_settings.icon  = 'minus'
-            self.btn_settings.tooltip = "Close Settings [S]"
+        if self.btn_panel.icon == 'plus':
+            self.btn_panel.icon  = 'minus'
+            self.btn_panel.tooltip = "Close Panel [S]"
             self.widgets.panelbox.layout.height = "100%"
             self.widgets.panelbox.layout.overflow = 'auto'
         else:
-            self.btn_settings.icon = 'plus' #'ellipsis-v'
-            self.btn_settings.tooltip = "Open Settings [S]"
+            self.btn_panel.icon = 'plus' #'ellipsis-v'
+            self.btn_panel.tooltip = "Open Side Panel [S]"
             self.widgets.panelbox.layout.height = "0"
             self.widgets.panelbox.layout.overflow = 'hidden'
             

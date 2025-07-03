@@ -55,33 +55,31 @@ class BaseSlides:
     @property
     def css_styles(self):
         """CSS styles for markdown or `styled` command."""
-        # self.html will be added from Chid class
-        return self.raw('''
+        return XTML(self.parse('''
         Use any or combinations of these styles in css_class argument of writing functions:
-        ------------------------------------------------------------------------------------
-         css_class          | Formatting Style                                              
-        ====================================================================================
-         'text-[value]'     | [value] should be one of tiny, small, big, large, huge.
-         'align-[value]'    | [value] should be one of center, left, right.
-         'rtl'              | ------ اردو عربی 
-         'info'             | Blue text. Icon ℹ️  for note-info class.
-         'tip'              | Blue Text. Icon💡 for note-tip class.
-         'warning'          | Orange Text. Icon ⚠️ for note-warning class.
-         'success'          | Green text. Icon ✅ for note-success class.
-         'error'            | Red Text. Icon⚡ for note-error class.
-         'note'             | 📝 Text with note icon.
-         'export-only'      | Hidden on main slides, but will appear in exported slides.
-         'jupyter-only'     | Hidden on exported slides, but will appear on main slides.
-         'block'            | Block of text/objects
-         'block-[color]'    | Block of text/objects with specific background color from red,
-                            | green, blue, yellow, cyan, magenta and gray.
-         'raw-text'         | Text will not be formatted and will be shown as it is.
-         'zoom-self'        | Zooms object on hover, when Zoom is enabled.
-         'zoom-child'       | Zooms child object on hover, when Zoom is enabled.
-         'no-zoom'          | Disables zoom on object when it is child of 'zoom-child'.
-        ------------------------------------------------------------------------------------
+                               
+        | css_class         | Formatting Style                                                                    
+        |:------------------|:---------------------------------------------------------
+         `text-[value]`     | [value] should be one of tiny, small, big, large, huge.
+         `align-[value]`    | [value] should be one of center, left, right.
+         `rtl`              | اردو،  فارسی، عربی،  ۔۔۔ {: .rtl}
+         `info`             | Blue text. Icon ℹ️  for note-info class. {: .info}
+         `tip`              | Blue Text. Icon💡 for note-tip class. {: .tip}
+         `warning`          | Orange Text. Icon ⚠️ for note-warning class. {: .warning}
+         `success`          | Green text. Icon ✅ for note-success class. {: .success}
+         `error`            | Red Text. Icon⚡ for note-error class. {: .error}
+         `note`             | Text with note icon, can combine other classes as shown above. {: .note}
+         `export-only`      | Hidden on main slides, but will appear in exported slides.
+         `jupyter-only`     | Hidden on exported slides, but will appear on main slides.
+         `block`            | Block of text/objects {: .block}
+         `block-[color]`    | Block of text/objects with specific background color from <br> red, green, blue, yellow, cyan, magenta and gray.
+         `raw-text`         | Text will be shown as printed style. {: .raw-text}
+         `zoom-self`        | Zooms object on hover, when Zoom is enabled. {: .zoom-self}
+         `zoom-child`       | Zooms child object on hover, when Zoom is enabled.
+         `no-zoom`          | Disables zoom on object when it is child of 'zoom-child'.
+        
         Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...) functions at your disposal.
-        ''')
+        ''',returns = True))
 
     @property
     def xmd_syntax(self):
@@ -134,11 +132,12 @@ class BaseSlides:
             - Widgets behave same with or without `:nb` format spec. 
             - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
             - Variables are substituted from top level scope (Notebook's hl`locals()`/hl`globals()`). To use variables from a nested scope, use `Slides.fmt`.
-            
+        
+        - Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text \{{: rowspan="2" colspan="1"}}| inside a cell, should be a space bewteen text and attributes.
         - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format.
-        - Inline columns can be added by using alert`stack\`Column A | Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text.
+        - Inline columns can be added by using alert`stack\`Column A | Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
         ```markdown     
@@ -486,7 +485,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides'),self.doc(self.clip,'Slides')])
+            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides')])
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
@@ -510,9 +509,7 @@ class BaseSlides:
                 
         with self.build(-1):
             self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
-            self.write("clip[caption='clipboard image']`test.png`", self.code.cast("clip[caption='clipboard image']`test.png`","markdown"))
-            self.doc(self.alt,'Slides')
-            self.doc(self.clip,'Slides').display()
+            self.doc(self.alt,'Slides').display()
             
             members = sorted((
                 'AnimationSlider alert block bokeh2html bullets styled fmt color details doc '

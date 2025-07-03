@@ -152,8 +152,7 @@ def write(*objs,widths = None, css_class=None):
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh` etc. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
-    - Use `Slides.alt` function to display obj/widget on slides and alternative content/screenshot in exported slides.
-    - Use ` Slides.clip ` to add screenshots from clipboard.
+    - Use `Slides.alt` function to display obj/widget on slides and alternative content/screenshot of widgets in exported slides.
     - hl`ipywidgets.[HTML, Output, Box]` and their subclasses will be displayed as hl`Slides.alt(html_converter_func, widget)`. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.

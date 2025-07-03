@@ -1,4 +1,4 @@
-_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'clip', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'highlight', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 
     'zoomable','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
@@ -265,29 +265,24 @@ def _alt_for_widget(func, widget):
     return widget 
 
 
-def alt(exportable_data, obj, /, **kwargs):
+def alt(exportable_data, obj):
     """Display `obj` for slides and output of `exportable_data` will be and displayed only in exported formats as HTML.
-    `kwargs` are passed to ` clip ` when `exportable_data` is an image filename such as 'clip:test.png' to save clipboard image.
     
-    - `exportable_data` should be an html str or an image file name prefixed with 'clip' e.g. 'clip:filename.png' or a callable to receive `obj` as its only argument.
+    - `exportable_data` should be an html str or a callable to receive `obj` as its only argument.
         - A callable will give the latest representation of widget in exported slides and runtime representation of any other `obj`.
         - An html str, it will export the runtime representation of obj.
-        - A 'clip:filename.png', will allow to take screenshot on slides for export, this may be most flexible use case.
-    
+
     ```python
     import ipywidgets as ipw
     slides.alt(lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">', ipw.IntSlider()).display()
     ```
 
-    ::: note-tip
-        - hl`Slides.alt('clip:test.png', None)` is same as hl`Slides.clip('test.png', export_only=True)`.
-    
     ::: note-info
         - If you happen to be using `alt` many times for same type, you can use `Slides.serializer.register` and then pass that type of widget without `alt`.
         - `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give html representation if used inside `write` command.
     """
     if not any([callable(exportable_data), isinstance(exportable_data, str)]):
-        raise TypeError(f"first arguemnt of alt should be a func (func(obj) -> html str) or html str or an image filename prefixed with 'clip:', got {type(exportable_data)}")
+        raise TypeError(f"first arguemnt of alt should be a func (func(obj) -> html str) or html str, got {type(exportable_data)}")
     
     if isinstance(obj, ipw.DOMWidget) and callable(exportable_data):
         return _alt_for_widget(exportable_data, obj)
@@ -297,11 +292,6 @@ def alt(exportable_data, obj, /, **kwargs):
         text_html = exportable_data(obj)
         if not isinstance(text_html, str):
             raise TypeError(f'First argument, if a function, should return a str, got {type(text_html)}')
-    
-    if text_html.startswith('clip:'):
-        c = clip(text_html[5:], export_only=True,**kwargs)
-        c._display_only_obj = obj 
-        return c
 
     return frozen(obj, metadata={'skip-export':'', 'text/html': text_html}) # skip original obj
 
@@ -313,76 +303,56 @@ def _test_ext_and_parent(filename):
         raise ValueError(f'filename should have an image extension .png, .jpg or .jpeg, got {p.suffix!r}')
 
 
-class clip(CustomDisplay):
-    """Save image from clipboard to file with a given quality when you paste in given area on slides.
-    Pasting UI is automatically enabled and can be disabled in settings panel.
-    On next run, it loads from saved file under `Slides.clips_dir`. 
+def _clipbox_children():
+    """Returns widgets for saving clipboard images as a list of children widgets."""
+    fname = ipw.Text(description="File")
+    paste = ipw.Button(icon="paste", description="Paste", layout={"width": "max-content"})
+    owp = ipw.Button(icon="download", description="Overwrite", layout={"width": "max-content"}, button_style='danger')
+    upload = ipw.Button(icon="upload", description="Preview Saved Image", layout={"width": "max-content", "margin": "0 0 0 var(--jp-widgets-inline-label-width)"})
 
-    If `obj` is given (any object), that is directly shown on slides without any parsing and pasted image is exported.
-    If no `obj` is passed, both slides and exported HTML shares same image view.
+    rep = html("span", 
+        "For best fit, ensure that visual width of screenshot is same as width of area/column on slides where image will be displayed."
+        "<br>On Linux, you need xclip or wl-paste installed"
+    ).as_widget()
+    rep.layout = {"height": "calc(100% - 80px)", "overflow": "auto","border_top":"1px solid #8988","padding":"8px 0"}
 
-    On each paste, existing image is overwritten and stays persistent for later use. You can use these clips
-    in other places with hl`Slides.image("clip:filename")` as well.
-
-    ::: note-tip
-        hl`Slides.alt('clip:test.png', obj)` is same as hl`display(obj);Slides.clip('test.png', export_only=True)`.
-
-    ::: not-info
-        If you have an HTML serialization function for a widget, pass it directly to `write` or use hl`alt(func, widget)` instead. 
-        That will save you the hassel of copy pasting screenshots. `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give
-        html representation if used inside `write` command.
-    
-    **kwargs are passed to ` Slides.image ` function.
-
-    On Linux, you need alert` xclip ` or alert`wl-paste` installed.
-    """
-    def __init__(self, filename, export_only = False, quality =95, **kwargs):
-        if isinstance(filename, Path):
-            filename = str(filename)
-
-        _test_ext_and_parent(filename)
-        self._fname = filename
-        self._quality = quality
-        self._kws = {"width": "100%", **kwargs} # fit full by default
-        self._paste = ipw.Button(icon="paste", description="Paste clipboard image", layout={"width":"max-content"})
-        self._owp = ipw.Button(icon="download", description="Overwrite", layout={"width":"max-content"}).add_class("danger")
-        self._upload = ipw.Button(icon="upload", description="Upload existing image", layout={"width":"max-content"})
-        
-        for btn in [self._paste, self._owp, self._upload]:
-            btn.on_click(self._paste_clip)
-        
-        self._rep = html("div", 
-            alert(f"{filename!r} in `Slides.clips_dir` will receive a clipboard image. Image's visual width on screen equal to width of this box would fit best.").value, 
-        ).as_widget().add_class("clipboard-image").add_class("export-only" if export_only else "")
-        
-        with suppress(FileNotFoundError):
-            self._rep.value = image(f"clip:{self._fname}", **self._kws).value # previous data to be persistent
-
-    def display(self):
-        if getattr(self, '_display_only_obj', None) is not None: # Will be added from alt
-            display(self._display_only_obj, metadata = {"skip-export":"This was abondoned by alt function to export!"})
-        display(ipw.VBox([ipw.GridBox([self._paste, self._owp, self._upload]).add_class('paste-btns'), self._rep]).add_class("paste-box"))
-
-    def _paste_clip(self, btn):
+    def paste_clip(btn):
         try:
-            if btn is self._paste:
-                if (get_clips_dir() / self._fname).is_file():
-                    raise FileExistsError(f"File {self._fname!r} already exists! Click Overwrite button to update image file, can't be undone!")
+            if btn is paste:
+                if (get_clips_dir() / fname.value).is_file():
+                    raise FileExistsError(f"File {fname.value!r} already exists! Click Overwrite button to update image file, can't be undone!")
                 else:
-                    _save_clipboard_image(self._fname, quality= self._quality, overwrite=False)
-            elif btn is self._owp:
-                _save_clipboard_image(self._fname, quality= self._quality, overwrite=True)
+                    _save_clipboard_image(fname.value, overwrite=False)
+            elif btn is owp:
+                _save_clipboard_image(fname.value, overwrite=True)
             # In all cases, finally update
-            self._rep.value = image(f"clip:{self._fname}", **self._kws).value
+            rep.value = image(f"clip:{fname.value}", width="100%").value
         except:
-            ename = 'FileUploadError' if btn is self._upload else 'ClipboardPasteError'
-            e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
-            self._rep.value = f"{error(ename,'something went wrong')}<br/><br/>{error(e,text)}"
-    
-    def to_pil(self): return pilImage.open(get_clips_dir() / self._fname)
-    def to_numpy(self): return IMG.to_numpy(self)
+            ename = 'FileUploadError' if btn is upload else 'ClipboardPasteError'
+            e, text = traceback.format_exc(limit=0).split(':', 1)
+            rep.value = f"{error(ename, 'something went wrong')}\n{error(e, text)}"
 
-        
+    for btn in [paste, owp, upload]:
+        btn.on_click(paste_clip)
+    fname.on_submit(lambda change: paste_clip(paste))
+
+    def match_glob(change):
+        rep.value = "Matching files in <code>Slides.clips_dir</code>:<br>" + html('code', ', '.join(
+                map(lambda path: f"{path.parts[-1]!r}", get_clips_dir().glob(f"{fname.value}*"))
+            )).value
+    fname.observe(match_glob, names='value')
+
+    children = [
+        ipw.HTML('<b>Save Image from Clipboard</b>'),
+        fname,
+        ipw.HBox([paste, owp],
+            layout=ipw.Layout(margin="0 0 0 var(--jp-widgets-inline-label-width)", min_height="28px",)
+        ),
+        upload,
+        rep
+    ]
+    return children
+
 def details(str_html,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
     return XTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>""")
@@ -427,7 +397,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwarg
     - A file path to image file.
     - A url to image file.
     - A str/bytes object containing image data.  
-    - A str like "clip:image.png" will load an image saved using `Slides.clip('image.png')`. 
+    - A str like "clip:image.png" will load an image saved in clips directory. 
     - A filename like "image.png" will look for the file in current directory and then in `Slides.clips_dir` if not found.
         Use 'clip:image.png' to pick image from `Slides.clips_dir` directly if another file 'image.png' also exists in current directory.
 
@@ -856,6 +826,7 @@ def bullets(iterable, ordered = False,marker = None, css_class = None):
     return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],css_class = css_class) # Don't use style, it will remove effect of css_class
 
 def _save_clipboard_image(filename, quality = 95, overwrite = False):
+    # quality is for jpeg only, png is lossless
     _test_ext_and_parent(filename)
     path = get_clips_dir() / filename
     if overwrite or (not path.is_file()):

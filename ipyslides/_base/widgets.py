@@ -42,7 +42,7 @@ class TOCWidget(ListWidget):
         if change.new:
             self._app.navigate_to(change.new.si) # jump at slide index
             if self._app.widgets.is_panel_open(): # only if panel was open, otherwise don't open by clicking on another view
-                self._app.widgets.buttons.setting.click()
+                self._app.widgets.buttons.panel.click()
 
 
 class Output(fmtrs._Output):
@@ -86,14 +86,14 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows').add_class('Prev-Btn')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
-    setting =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Settings [S]').add_class('Menu-Item').add_class('Settings-Btn')
+    panel   =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Side Panel [S]').add_class('Menu-Item').add_class('Panel-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Update Widgets Display').add_class('Menu-Item').add_class('Refresh-Btn')
     source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
     home    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go to Title Page').add_class('Menu-Item').add_class('Home-Btn')
     end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
     info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
-    export  =  Button(description="Export to HTML File",layout= Layout(width='auto',height='auto'))
+    export  =  Button(description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -195,13 +195,13 @@ class Widgets:
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
 
-        _many_btns = [self.buttons.setting, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
+        _many_btns = [self.buttons.panel, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
         _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
         
-        self.tocbox = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto')).add_class('TOC')
-        navbar = ipw.ToggleButtons(options=[(s,i) for s, i in zip(['Settings','TOC','Clips'],range(3))]).add_class('TopBar')
+        self.tocbox = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto',min_width='0')).add_class('TOC')
+        navbar = ipw.ToggleButtons(options=[(s,i) for s, i in zip(['Settings','TOC','Clips'],range(3))],icons=['settings','bars','camera']).add_class('TopBar')
         self.panelbox = ipw.AppLayout(
-            header =  HBox([navbar, self.buttons.setting], layout=Layout(justify_content='space-between', width='100%')).add_class('header'),
+            header =  HBox([navbar, self.buttons.panel], layout=Layout(justify_content='space-between', width='100%')).add_class('header'),
             left_sidebar = VBox([
                 HTML('<b>Layout and Theme</b>',layout = _html_layout),
                 self.sliders.fontsize,
@@ -215,9 +215,9 @@ class Widgets:
                 self.checks.confirm,
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
-            ],layout=Layout(width='100%',height='100%',overflow_y='scroll')),
+            ],layout=Layout(width='100%',height='100%',overflow_y='scroll',min_width='0',padding="8px")), # initial padding
             center = self.tocbox, # TOC box is center
-            right_sidebar = VBox([],layout = Layout(width='100%',height='100%',overflow_y='auto')), # Empty right sidebar
+            right_sidebar = VBox([],layout = Layout(width='100%',height='100%',overflow_y='auto',min_width='0')), # Empty right sidebar
             layout = Layout(height='0',overflow='hidden'), pane_widths = [1,0,0], pane_heights=['36px',1, 0],
         ).add_class('SidePanel') 
 
@@ -225,12 +225,15 @@ class Widgets:
             widths = {0: [1,0,0], 1:[0,1,0],2:[0,0,1]}
             if change.new in widths:
                 self.panelbox.pane_widths = widths[change.new] # set widths based on selected button
+                for w, item in zip(widths[change.new], ['left_sidebar','center','right_sidebar']):
+                    getattr(self.panelbox,item).layout.padding = f"{8*w}px" # dynamic padding to avoid overflow
+            
         
         navbar.observe(_set_pane_widths, names=['value']) # set widths on button click
 
         def _toggle_tocbox(btn):
             if not self.is_panel_open():
-                self.buttons.setting.click() # Open side panel if closed
+                self.buttons.panel.click() # Open side panel if closed
             navbar.value = 1 # Set TOC button active
         
         self.buttons.toc.on_click(_toggle_tocbox) # Toggle TOC box on click
@@ -279,7 +282,7 @@ class Widgets:
             if isinstance(child, HTML):
                 child.layout.margin = "0" # Important to reclaim useless space
 
-        for btn in [self.buttons.next, self.buttons.prev, self.buttons.setting]:
+        for btn in [self.buttons.next, self.buttons.prev, self.buttons.panel]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
     

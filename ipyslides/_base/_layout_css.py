@@ -32,38 +32,6 @@ def layout_css(accent_color, aspect):
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
                 },  # still should be clickable
-                ".paste-box": {
-                    "background": "var(--bg2-color)",
-                    "border": "0.5px solid var(--jp-border-color1,#8988)!important",
-                    "padding":"0",
-                    "border-radius": "8px",
-                },
-                ".clipboard-image": {
-                    "^.export-only::before": {
-                        "content": "'Export-only content: Only visible when paste mode is ON!'",
-                        "font-size":"60%", 
-                        "font-style":"italic",
-                        "color": "var(--fg2-color)",
-                        "position": "absolute", "top": "-0.5em", "right": "0.5em",
-                    },
-                    "^, ^.export-only" : {"display": "block !important",},
-                    "img:focus, img:hover": {"box-shadow": "0 0 2px 1px var(--bg3-color)",},
-                },
-                ".paste-btns": {
-                    "display": "grid !important",
-                    "grid-template-columns": "auto auto auto", 
-                    "padding": "8px",
-                    "grid-gap": "4px",
-                    "margin-right": "auto", # Force left align
-                    "> button": {"background": "var(--bg1-color) !important",}, # align center
-                    ".danger": {
-                        "background": "red !important",
-                        "^, > i": {"color": "white !important",},
-                    },
-                },
-                ".columns .paste-btns": {
-                    "grid-template-columns": "auto",
-                },
                 ".Slide-Number" : { # slide number
                     "position": "absolute !important",
                     "right": "0 !important",
@@ -244,14 +212,17 @@ def layout_css(accent_color, aspect):
                     ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",},
                     ":not(.TopBar)": {
                         ":is(button, .jupyter-button)": {
-                            "margin-left":"var(--jp-widgets-inline-label-width)",
                             "width": "max-content !important",
                             "min-height": "28px !important",
                         },
                     },
-                    ".header": {"background": "var(--bg2-color) !important","box-shadow": "0 1px 2px #8984 !important"},  # subtle shadow
-                    "^, *": {"box-sizing": "border-box !important"},
-                    ".Settings-Btn": {
+                    ".header": {
+                        "background": "var(--bg2-color) !important",
+                        "box-shadow": "0 1px 2px #8984 !important", # subtle shadow
+                        "button": {"direction": "rtl !important"}, # why toggle buttons icons are on right? flipping direction to fix
+                    },  
+                    "^, *": {"box-sizing": "border-box !important",},
+                    ".Panel-Btn": {
                         "border": "none !important",
                         "outline": "none !important",
                         "font-size": "20px",
@@ -402,7 +373,6 @@ def layout_css(accent_color, aspect):
             ".TOC": {  # Table of contents panel
                 "display": "table-column-group !important", # This to avoid collapsing divs
                 **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
-                "margin": "4px",
                 "min-width": "50% !important",
                 "box-sizing": "border-box !important",
                 "z-index": "8",
@@ -439,7 +409,6 @@ def layout_css(accent_color, aspect):
                     "border": "none !important",
                     "box-shadow": "none !important",
                     "background": "transparent !important",
-                    "^.jupyter-button": {"margin-left": "unset !important"},  # override margin
                     "> i": {
                         "color": "var(--accent-color) !important",
                     },
@@ -562,8 +531,8 @@ def layout_css(accent_color, aspect):
                     "chevronr", color=accent_color, size="36px"
                 ).css,
             },
-            ".Settings-Btn": {
-                ".fa.fa-plus": Icon("settings", color=accent_color, size=_icons_size).css,
+            ".Panel-Btn": {
+                ".fa.fa-plus": Icon("panel", color=accent_color, size=_icons_size).css,
                 ".fa.fa-minus": Icon("close", color=accent_color, size=_icons_size).css,
             },
             ".Toc-Btn": {

@@ -172,8 +172,7 @@ class _HhtmlExporter:
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
-        - You can take screenshot (using system's tool) of a widget and add it back to slide using ` Slides.clip ` or ` Slides.alt(image_filename, ...)` to keep PNG view of a widget. 
-        - You can paste a screenshot using ` alt ` or ` clip ` functionality as well.
+        - You can take screenshot (using system's tool) of a widget, save it using Clips GUI in side panel and laod as image to keep PNG view of a widget. 
         - If progressbar is set to True, 'bottom' or 'top', a progressbar while shown accordingly. True -> 'bottom'.
         
         ::: note-info

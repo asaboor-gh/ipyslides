@@ -66,7 +66,7 @@ class InteractionWidget(anywidget.AnyWidget):
         elif msg == 'ZOOM':
             self._toggles.zoom.value = not self._toggles.zoom.value
         elif msg == 'TPAN':
-            self._buttons.setting.click()
+            self._buttons.panel.click()
         elif msg == 'EDIT':
             self._buttons.source.click()
         elif msg == 'JUPYTER' and not ('Jupyter' in self._theme.options):

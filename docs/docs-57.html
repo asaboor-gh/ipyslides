@@ -19,7 +19,7 @@
     --bg3-color : #242424;
     --accent-color : #92C1F4;
     --pointer-color : #e91e63;
-    --text-size : 20px;
+    --text-size : 18px;
     --jp-content-font-family : Roboto, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16";
     --jp-code-font-family : Cascadia Code, "Ubuntu Mono", "SimSun-ExtB", "Courier New";
 }
@@ -95,7 +95,7 @@ code) {
     color : var(--fg3-color);
     text-align : center;
     margin-block : 0.2em 0.3em !important;
-    line-height : 1.5;
+    line-height : 1.5 !important;
     overflow : hidden;
 }
  .SlidesWrapper :is(h1, h2, h3, h4, h5, h6) .MJX-TEX,.SlidesWrapper :is(h1, h2, h3, h4, h5, h6)  .MathJax span {
@@ -272,6 +272,9 @@ code) {
 .fa.fa-loading::before {
     content : url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 50 50" transform="rotate(0)"> <path fill="%2392C1F4" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z"> <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.25s" repeatCount="indefinite"/> </path></svg>');
 }
+.fa.fa-panel::before {
+    content : url('data:image/svg+xml;utf8,<svg height="1em" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <polygon points="2 2,23 2,23 23,2 23,2 2" fill="none" stroke="%2392C1F4"></polygon> <rect x="2" y="2" width="7" height="21" fill="%2392C1F4" stroke="%2392C1F4"/></svg>');
+}
 .fa.fa-pause::before {
     content : url('data:image/svg+xml;utf8,<svg height="1em" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" fill="%2392C1F4" transform="rotate(0)"> <rect x="4" y="4" width="7" height="17"/> <rect x="14" y="4" width="7" height="17"/></svg>');
 }
@@ -332,8 +335,8 @@ code) {
 }
 .SlideArea {
     position : absolute !important;
-    width : 254mm !important;
-    height : 190mm !important;
+    width : 210mm !important;
+    height : 157mm !important;
     transform-origin : center !important;
     transform : translateZ(0) scale(var(--contentScale,1)) !important;
     box-sizing : border-box !important;
@@ -359,14 +362,17 @@ code) {
 }
 .SlideArea .slide-link,
 .SlideArea  .link-button {
-    background : var(--bg2-color);
     color : var(--accent-color);
     text-decoration : none !important;
+    text-shadow : 0 1px var(--bg1-color);
+}
+.SlideArea .slide-link:not(.citelink),
+.SlideArea  .link-button {
+    background : var(--bg2-color);
     border-radius : 0.2em;
     padding : 0 0.2em;
     margin : 0 0.2em;
     border : 1px solid var(--bg3-color);
-    text-shadow : 0 1px var(--bg1-color);
 }
 .SlideArea .slide-link:empty {
     display : inline-block !important;
@@ -541,7 +547,7 @@ code) {
     box-sizing : border-box !important;
 }
 .SlideArea .columns table {
-    width : 100%;
+    width : calc(100% - 0.5em);
 }
 code {
     color : var(--fg2-color) !important;
@@ -887,6 +893,8 @@ pre {white-space: break-spaces;} /* General rule unless specified in elements */
     left: 0 !important;
     height: 100vh !important;
     width: 100vw !important;
+    line-height: 1.5 !important; /* Default line-height for all text to match Jupyter */
+    box-sizing: border-box !important;
 }
 section {
 	scroll-snap-align:start !important;
@@ -975,7 +983,7 @@ section .SlideArea {
         ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
     }
     @page {
-        size: 254mm 190mm; /* 10 inch x decided by aspect by user*/
+        size: 210mm 157mm; /* 10 inch x decided by aspect by user*/
         margin-top: 0 !important;
         margin-right: 0 !important;
         margin-left: 0 !important;
@@ -997,7 +1005,7 @@ section .SlideArea {
         page-break-inside: avoid !important;
         page-break-after: always !important;
         overflow: hidden !important; /* otherwise it throws text to next page */
-        padding-bottom: 2em !important; /* for avoiding overflow to bottom,2em is a reasonable space */
+        padding-bottom: 25px !important; /* for avoiding overflow to bottom,25px is same as under SlideArea */
     }
     section:last-of-type {
         page-break-after: avoid !important;
@@ -1156,17 +1164,17 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 </head>
 <body>
 <div>
-    <div class="click-wrapper"> <a href="#s-2154298604224" class="clicker ⁰">⁰</a><a href="#s-2154298603504" class="clicker ¼">¼</a><a href="#s-2154298366368" class="clicker ½">½</a><a href="#s-2154298595648" class="clicker ¾">¾</a><a href="#s-2154298608800" class="clicker ¹">¹</a> </div>
+    <div class="click-wrapper"> <a href="#s-2285800998272" class="clicker ●">●</a><a href="#s-2285801038560" class="clicker ●">●</a><a href="#s-2285801323728" class="clicker ●">●</a><a href="#s-2285800970656" class="clicker ●">●</a><a href="#s-2285801301040" class="clicker ●">●</a> </div>
     <!-- Classes below work for both scenerios -->
-    <div class="SlidesWrapper Slides-2155905411344 Slides-ShowFooter">
+    <div class="SlidesWrapper Slides-2285278085760 Slides-ShowFooter">
     
-                    <section id="s-2154298604224">
+                    <section id="s-2285800998272">
 
 
                         <div class="SlideBox">
                             <div class="BackLayer">
             <style>
-                #s-2154298604224 .BackLayer {
+                #s-2285800998272 .BackLayer {
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -1176,7 +1184,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         overflow:hidden;
         margin:0;
     }
-    #s-2154298604224 .BackLayer :is(img, svg) {
+    #s-2285800998272 .BackLayer :is(img, svg) {
         position: absolute;
         left:50% !important;
         top:50% !important;
@@ -1187,14 +1195,14 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         filter: blur(10px);
         opacity:0.25;
     }
-    #s-2154298604224 .BackLayer svg {
+    #s-2285800998272 .BackLayer svg {
         max-width: 100% !important;
         max-height: 100% !important;
         width:  !important;
         min-width:  !important;
         min-height:  !important;
     }
-    #s-2154298604224 .BackLayer.jupyter-widgets-disconnected {
+    #s-2285800998272 .BackLayer.jupyter-widgets-disconnected {
         display:none;
     }
 
@@ -1206,9 +1214,9 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;"></text>
     </svg></div>
                             <div class="n0 SlideArea ShowSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 5.7.1 Documentation</h2>
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 5.7.3 Documentation</h2>
 <h3>Creating slides with IPySlides</h3></div><div style="width: 100%; box-sizing:border-box;"><div class="align-center"><p><span style='color:#DC143C;'>Abdul Saboor</span><sup style="font-size:85%;color:inherit;">1</sup></p>
-<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Jun 30, 2025</span></p>
+<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Jul 03, 2025</span></p>
 <p><svg height="4em" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
         <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
         <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
@@ -1223,11 +1231,11 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 0.0%, var(--bg2-color) 0.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298535840">
+                    <section id="s-2285800986464">
 
 <style>
 
-#s-2154298535840 .SlideArea.n1  > .jp-OutputArea:empty:after {
+#s-2285800986464 .SlideArea.n1  > .jp-OutputArea:empty:after {
     content : "Slide(number = 1, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1239,38 +1247,31 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div class="columns writer block-green" style=""><div style="width:50.000%;overflow:auto;height:auto"><div><h2>Table of contents</h2>
 <ol class="toc-list toc-extra" style="">
 <li class="toc-item this">
-    <a href="#s-2154298535840" class="export-only citelink">Introduction</a>
-    <span class="jupyter-only">Introduction</span>
+    <a href="#s-2285800986464" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298606976" class="export-only citelink">Adding Slides and Content</a>
-    <span class="jupyter-only">Adding Slides and Content</span>
+    <a href="#s-2285800608912" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298582544" class="export-only citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
-    <span class="jupyter-only">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</span>
+    <a href="#s-2285801321664" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298366368" class="export-only citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
-    <span class="jupyter-only">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></span>
+    <a href="#s-2285801323728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298807920" class="export-only citelink">Loading from File/Exporting to HTML</a>
-    <span class="jupyter-only">Loading from File/Exporting to HTML</span>
+    <a href="#s-2285801271504" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298595648" class="export-only citelink">Advanced Functionality</a>
-    <span class="jupyter-only">Advanced Functionality</span>
+    <a href="#s-2285800970656" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298608800" class="export-only citelink">Presentation Code</a>
-    <span class="jupyter-only">Presentation Code</span>
+    <a href="#s-2285801301040" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div><div style="width:50.000%;overflow:auto;height:auto"><h3>This is summary of current section</h3>
 <p>Oh we can use inline columns <div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p>Column A</p></div>
 <div style="flex:1 1;"><p>Column B</p></div></div> here and what not!</p>
@@ -1292,11 +1293,11 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 4.1667%, var(--bg2-color) 4.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298607984">
+                    <section id="s-2285277387600">
 
 <style>
 
-#s-2154298607984 .SlideArea.n2  > .jp-OutputArea:empty:after {
+#s-2285277387600 .SlideArea.n2  > .jp-OutputArea:empty:after {
     content : "Slide(number = 2, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1345,11 +1346,11 @@ or access many via list as <code class="highlight inline" style="white-space:pre
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 8.3333%, var(--bg2-color) 8.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298605872">
+                    <section id="s-2285801273712">
 
 <style>
 
-#s-2154298605872 .SlideArea.n3  > .jp-OutputArea:empty:after {
+#s-2285801273712 .SlideArea.n3  > .jp-OutputArea:empty:after {
     content : "Slide(number = 3, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1367,7 +1368,7 @@ and <code>back_label</code> for the  optional text on the target slide if need t
 <li>Use similar links in markdown as <code>&lt;link:[unique id here]:origin label&gt;</code> and <code>&lt;link:[unique id here same as origin]:target [back_label,optional]&gt;</code>.</li>
 <li>In markdown, icons can be passed in label as <span style='color:#DC143C;'>"fa`arrow` label text"</span>.</li>
 </ul>
-</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-da1fb0bd122d42e2a3f3b92f17b49bde" href="#target-da1fb0bd122d42e2a3f3b92f17b49bde"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
+</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-c5f8063269e74a7abea7327cdd6c1cdd" href="#target-c5f8063269e74a7abea7327cdd6c1cdd"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight">
@@ -1382,11 +1383,11 @@ and <code>back_label</code> for the  optional text on the target slide if need t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 12.5%, var(--bg2-color) 12.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298606976">
+                    <section id="s-2285800608912">
 
 <style>
 
-#s-2154298606976 .SlideArea.n4  > .jp-OutputArea:empty:after {
+#s-2285800608912 .SlideArea.n4  > .jp-OutputArea:empty:after {
     content : "Slide(number = 4, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1437,11 +1438,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 16.6667%, var(--bg2-color) 16.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298364448">
+                    <section id="s-2285801040192">
 
 <style>
 
-#s-2154298364448 .SlideArea.n5  > .jp-OutputArea:empty:after {
+#s-2285801040192 .SlideArea.n5  > .jp-OutputArea:empty:after {
     content : "Slide(number = 5, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1583,11 +1584,11 @@ There are few special rules in <code>props</code>:</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 20.8333%, var(--bg2-color) 20.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298603504">
+                    <section id="s-2285801038560">
 
 <style>
 
-#s-2154298603504 .SlideArea.n6  > .jp-OutputArea:empty:after {
+#s-2285801038560 .SlideArea.n6  > .jp-OutputArea:empty:after {
     content : "Slide(number = 6, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1605,7 +1606,7 @@ There are few special rules in <code>props</code>:</p>
 <code><span class="n">display</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fmt</span><span class="p">(</span><span class="s1">&#39;%</span><span class="si">{self.version!r}</span><span class="s1"> %</span><span class="si">{self.xmd_syntax}</span><span class="s1">&#39;</span><span class="p">))</span></code>
         </pre>
 </div>
-</div></div></div><div style="width: 100%; box-sizing:border-box;"><p>'5.7.1' <p><strong class="text-large">Extended Markdown</strong></p>
+</div></div></div><div style="width: 100%; box-sizing:border-box;"><p>'5.7.3' <p><strong class="text-large">Extended Markdown</strong></p>
 <p>Extended syntax for markdown is constructed to support almost full presentation from Markdown.</p>
 <p><strong class="text-big">Slides-specific syntax</strong></p>
 <dl>
@@ -1655,10 +1656,11 @@ With citations mode set as 'footnote', you can add <span style='color:#DC143C;'>
 </ul>
 </div>
 <ul>
+<li>Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text {: rowspan="2" colspan="1"}| inside a cell, should be a space bewteen text and attributes.</li>
 <li>A syntax <span style='color:#DC143C;'>func`?Markdown?`</span> will be converted to <span style='color:#DC143C;'>func`Parsed HTML`</span> in markdown. Useful to nest special syntax.</li>
 <li>Escape a backtick with \, i.e. <span style='color:#DC143C;'>\\` → `</span>. In Python &gt;=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.</li>
 <li><span style='color:#DC143C;'>include`markdown_file.md`</span> to include a file in markdown format.</li>
-<li>Inline columns can be added by using <span style='color:#DC143C;'>stack`Column A | Column B`</span> sytnax. You can escape pipe <code>|</code> with <code>\|</code> to use it as text.</li>
+<li>Inline columns can be added by using <span style='color:#DC143C;'>stack`Column A | Column B`</span> sytnax. You can escape pipe <code>|</code> with <code>\|</code> to use it as text inside stack.</li>
 <li>Block multicolumns are made using follwong syntax, column separator is triple plus <code>+++</code>:</li>
 </ul><div><span class="lang-name">Markdown</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
@@ -1731,7 +1733,6 @@ which is added by default and can be used to build nested html blocks.</p>
 <li><span style='color:#DC143C;'>hl</span>`inline code highlight. Accepts langauge as keywoard.`,</li>
 <li><span style='color:#DC143C;'>today</span>`format_spec like %b-%d-%Y`,</li>
 <li><span style='color:#DC143C;'>textbox</span>`text`,</li>
-<li><span style='color:#DC143C;'>clip</span>`filename. Paste clipboard image`,</li>
 <li><span style='color:#DC143C;'>image</span>`path/src or clip:filename`,</li>
 <li><span style='color:#DC143C;'>raw</span>`text`,</li>
 <li><span style='color:#DC143C;'>svg</span>`path/src`,</li>
@@ -1749,11 +1750,11 @@ which is added by default and can be used to build nested html blocks.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 25.0%, var(--bg2-color) 25.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298584416">
+                    <section id="s-2285801040384">
 
 <style>
 
-#s-2154298584416 .SlideArea.n7  > .jp-OutputArea:empty:after {
+#s-2285801040384 .SlideArea.n7  > .jp-OutputArea:empty:after {
     content : "Slide(number = 7, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1772,8 +1773,7 @@ You can optionally specify <code>widths</code> as a list of percentages for each
 <li>Dispaly IPython widgets such as <code>ipywidgets</code> or <code>ipyvolume</code> by passing them directly.</li>
 <li>Display Axes/Figure form libraries such as <code>matplotlib</code>, <code>plotly</code> <code>altair</code>, <code>bokeh</code> etc. by passing them directly.</li>
 <li>Display source code of functions/classes/modules or other languages by passing them directly or using <code>Slides.code</code> API.</li>
-<li>Use <code>Slides.alt</code> function to display obj/widget on slides and alternative content/screenshot in exported slides.</li>
-<li>Use <code>Slides.clip</code> to add screenshots from clipboard.</li>
+<li>Use <code>Slides.alt</code> function to display obj/widget on slides and alternative content/screenshot of widgets in exported slides.</li>
 <li><code class="highlight inline" style="white-space:pre;"><span class="n">ipywidgets</span><span class="o">.</span><span class="p">[</span><span class="n">HTML</span><span class="p">,</span> <span class="n">Output</span><span class="p">,</span> <span class="n">Box</span><span class="p">]</span></code> and their subclasses will be displayed as <code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">alt</span><span class="p">(</span><span class="n">html_converter_func</span><span class="p">,</span> <span class="n">widget</span><span class="p">)</span></code>. The value of exported HTML will be most recent.</li>
 <li>Other options include but not limited to:<ul>
 <li>Output of functions in <code>ipyslides.utils</code> module that are also linked to <code>Slides</code> object.</li>
@@ -1842,34 +1842,17 @@ If you need output html, use <code>returns = True</code> but that won't display 
 <li>Use <code>Slides.extender</code> or <code>ipyslides.xmd.extender</code> to add <a href="https://python-markdown.github.io/extensions/">markdown extensions</a>.</li>
 </ul>
 </div>
-</div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>clip</b></span><br><p>Save image from clipboard to file with a given quality when you paste in given area on slides.
-Pasting UI is automatically enabled and can be disabled in settings panel.
-On next run, it loads from saved file under <code>Slides.clips_dir</code>. </p>
-<p>If <code>obj</code> is given (any object), that is directly shown on slides without any parsing and pasted image is exported.
-If no <code>obj</code> is passed, both slides and exported HTML shares same image view.</p>
-<p>On each paste, existing image is overwritten and stays persistent for later use. You can use these clips
-in other places with <code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;clip:filename&quot;</span><span class="p">)</span></code> as well.</p>
-<div class="note-tip">
-<p><code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">alt</span><span class="p">(</span><span class="s1">&#39;clip:test.png&#39;</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></code> is same as <code class="highlight inline" style="white-space:pre;"><span class="n">display</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span><span class="n">Slides</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="s1">&#39;test.png&#39;</span><span class="p">,</span> <span class="n">export_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>.</p>
-</div>
-<div class="not-info">
-<p>If you have an HTML serialization function for a widget, pass it directly to <code>write</code> or use <code class="highlight inline" style="white-space:pre;"><span class="n">alt</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">widget</span><span class="p">)</span></code> instead. 
-That will save you the hassel of copy pasting screenshots. <code>ipywidgets</code>'s <code>HTML</code>, <code>Box</code> and <code>Output</code> widgets and their subclasses directly give
-html representation if used inside <code>write</code> command.</p>
-</div>
-<p>**kwargs are passed to <code>Slides.image</code> function.</p>
-<p>On Linux, you need <span style='color:#DC143C;'>xclip</span> or <span style='color:#DC143C;'>wl-paste</span> installed.</p>
 </div></div></div>
                             </div>
                             <span class="Number">7</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 29.1667%, var(--bg2-color) 29.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298596800">
+                    <section id="s-2285800988000">
 
 <style>
 
-#s-2154298596800 .SlideArea.n8  > .jp-OutputArea:empty:after {
+#s-2285800988000 .SlideArea.n8  > .jp-OutputArea:empty:after {
     content : "Slide(number = 8, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1889,11 +1872,11 @@ html representation if used inside <code>write</code> command.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 33.3333%, var(--bg2-color) 33.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298603936">
+                    <section id="s-2285801320608">
 
 <style>
 
-#s-2154298603936 .SlideArea.n9  > .jp-OutputArea:empty:after {
+#s-2285801320608 .SlideArea.n9  > .jp-OutputArea:empty:after {
     content : "Slide(number = 9, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1940,11 +1923,11 @@ If <code>returns</code> is False (by default), then source is displayed before t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 37.5%, var(--bg2-color) 37.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298582544">
+                    <section id="s-2285801321664">
 
 <style>
 
-#s-2154298582544 .SlideArea.n10  > .jp-OutputArea:empty:after {
+#s-2285801321664 .SlideArea.n10  > .jp-OutputArea:empty:after {
     content : "Slide(number = 10, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1956,53 +1939,46 @@ If <code>returns</code> is False (by default), then source is displayed before t
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-2154298535840" class="export-only citelink">Introduction</a>
-    <span class="jupyter-only">Introduction</span>
+    <a href="#s-2285800986464" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2154298606976" class="export-only citelink">Adding Slides and Content</a>
-    <span class="jupyter-only">Adding Slides and Content</span>
+    <a href="#s-2285800608912" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-2154298582544" class="export-only citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
-    <span class="jupyter-only">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</span>
+    <a href="#s-2285801321664" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298366368" class="export-only citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
-    <span class="jupyter-only">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></span>
+    <a href="#s-2285801323728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298807920" class="export-only citelink">Loading from File/Exporting to HTML</a>
-    <span class="jupyter-only">Loading from File/Exporting to HTML</span>
+    <a href="#s-2285801271504" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298595648" class="export-only citelink">Advanced Functionality</a>
-    <span class="jupyter-only">Advanced Functionality</span>
+    <a href="#s-2285800970656" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298608800" class="export-only citelink">Presentation Code</a>
-    <span class="jupyter-only">Presentation Code</span>
+    <a href="#s-2285801301040" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">10</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 41.6667%, var(--bg2-color) 41.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298581632">
+                    <section id="s-2285801322816">
 
 <style>
-#s-2154298581632 {
+#s-2285801322816 {
     --bg1-color : linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color));
 }
 
 
-#s-2154298581632 .SlideArea.n11 .highlight {
+#s-2285801322816 .SlideArea.n11 .highlight {
     background : #8984;
 }
 </style>
@@ -2035,11 +2011,11 @@ e.g. <code class="highlight inline" style="white-space:pre;"><span class="n">Sli
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 45.8333%, var(--bg2-color) 45.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298366368">
+                    <section id="s-2285801323728">
 
 <style>
 
-#s-2154298366368 .SlideArea.n12  > .jp-OutputArea:empty:after {
+#s-2285801323728 .SlideArea.n12  > .jp-OutputArea:empty:after {
     content : "Slide(number = 12, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2048,34 +2024,28 @@ e.g. <code class="highlight inline" style="white-space:pre;"><span class="n">Sli
                         <div class="SlideBox">
 
                             <div class="n12 SlideArea HideSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Useful Functions for Rich Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" style=""><div style="width:50.000%;overflow:auto;height:auto"><div class="paste-box" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;"><div class="paste-btns" style="width:100%;gap:0.2em;"><div class="" style="width:max-content;"></div>
-<div class="danger" style="width:max-content;"></div>
-<div class="" style="width:max-content;"></div></div>
-<div class="clipboard-image " style=""><figure class="zoom-child fig-2156072648000" style="margin-block:0.25em;margin-inline:0.25em"><img src='data:image/png;base64, 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' width='100%' height='auto'/><figcaption class="no-zoom"><p>clipboard image</p></figcaption></figure></div></div></div><div style="width:50.000%;overflow:auto;height:auto"><div><span class="lang-name">Markdown</span>
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Useful Functions for Rich Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>alt</b></span><br><p>Display <code>obj</code> for slides and output of <code>exportable_data</code> will be and displayed only in exported formats as HTML.</p>
+<ul>
+<li><code>exportable_data</code> should be an html str or a callable to receive <code>obj</code> as its only argument.<ul>
+<li>A callable will give the latest representation of widget in exported slides and runtime representation of any other <code>obj</code>.</li>
+<li>An html str, it will export the runtime representation of obj.</li>
+</ul>
+</li>
+</ul><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
-<div class="highlight">
+<div class="highlight ">
         <pre>
-<code>clip[caption=&#39;clipboard image&#39;]`test.png`</code>
+<code><span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
+<code><span class="n">slides</span><span class="o">.</span><span class="n">alt</span><span class="p">(</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;&lt;input type=&quot;range&quot; min=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">min</span><span class="si">}</span><span class="s1">&quot; max=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">max</span><span class="si">}</span><span class="s1">&quot; value=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">&quot;&gt;&#39;</span><span class="p">,</span> <span class="n">ipw</span><span class="o">.</span><span class="n">IntSlider</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
         </pre>
 </div>
-</div></div></div></div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>clip</b></span><br><p>Save image from clipboard to file with a given quality when you paste in given area on slides.
-Pasting UI is automatically enabled and can be disabled in settings panel.
-On next run, it loads from saved file under <code>Slides.clips_dir</code>. </p>
-<p>If <code>obj</code> is given (any object), that is directly shown on slides without any parsing and pasted image is exported.
-If no <code>obj</code> is passed, both slides and exported HTML shares same image view.</p>
-<p>On each paste, existing image is overwritten and stays persistent for later use. You can use these clips
-in other places with <code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;clip:filename&quot;</span><span class="p">)</span></code> as well.</p>
-<div class="note-tip">
-<p><code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">alt</span><span class="p">(</span><span class="s1">&#39;clip:test.png&#39;</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></code> is same as <code class="highlight inline" style="white-space:pre;"><span class="n">display</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span><span class="n">Slides</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="s1">&#39;test.png&#39;</span><span class="p">,</span> <span class="n">export_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>.</p>
+</div></div><div class="note-info">
+<ul>
+<li>If you happen to be using <code>alt</code> many times for same type, you can use <code>Slides.serializer.register</code> and then pass that type of widget without <code>alt</code>.</li>
+<li><code>ipywidgets</code>'s <code>HTML</code>, <code>Box</code> and <code>Output</code> widgets and their subclasses directly give html representation if used inside <code>write</code> command.</li>
+</ul>
 </div>
-<div class="not-info">
-<p>If you have an HTML serialization function for a widget, pass it directly to <code>write</code> or use <code class="highlight inline" style="white-space:pre;"><span class="n">alt</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">widget</span><span class="p">)</span></code> instead. 
-That will save you the hassel of copy pasting screenshots. <code>ipywidgets</code>'s <code>HTML</code>, <code>Box</code> and <code>Output</code> widgets and their subclasses directly give
-html representation if used inside <code>write</code> command.</p>
-</div>
-<p>**kwargs are passed to <code>Slides.image</code> function.</p>
-<p>On Linux, you need <span style='color:#DC143C;'>xclip</span> or <span style='color:#DC143C;'>wl-paste</span> installed.</p>
 </div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>AnimationSlider</b></span><br><p>This is a simple slider widget that can be used to control the animation with an observer function.</p>
 <p>You need to provide parameters like <code>nframes</code> and <code>interval</code> (milliseconds) to control the animation. 
 The <code>value</code> trait can be observed to get the current frame index.
@@ -2182,7 +2152,9 @@ You can provide following to <code>data</code> parameter:</p>
 <li>A file path to image file.</li>
 <li>A url to image file.</li>
 <li>A str/bytes object containing image data.  </li>
-<li>A str like "clip:image.png" will load an image saved using <code>Slides.clip('image.png')</code>. </li>
+<li>A str like "clip:image.png" will load an image saved in clips directory. </li>
+<li>A filename like "image.png" will look for the file in current directory and then in <code>Slides.clips_dir</code> if not found.
+    Use 'clip:image.png' to pick image from <code>Slides.clips_dir</code> directly if another file 'image.png' also exists in current directory.</li>
 </ul>
 <p><strong>Returns</strong> an <code>IMG</code> object which can be exported to other formats (if possible):</p>
 <ul>
@@ -2249,11 +2221,11 @@ Only a subset of inline properties take effect if obj is a widget.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 50.0%, var(--bg2-color) 50.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298367232">
+                    <section id="s-2285801265232">
 
 <style>
 
-#s-2154298367232 .SlideArea.n13  > .jp-OutputArea:empty:after {
+#s-2285801265232 .SlideArea.n13  > .jp-OutputArea:empty:after {
     content : "Slide(number = 13, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2285,11 +2257,11 @@ can be added with <span style='color:#DC143C;'>toc`title`</span>.</p></div><div 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 54.1667%, var(--bg2-color) 54.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298809264">
+                    <section id="s-2285801265136">
 
 <style>
 
-#s-2154298809264 .SlideArea.n14  > .jp-OutputArea:empty:after {
+#s-2285801265136 .SlideArea.n14  > .jp-OutputArea:empty:after {
     content : "Slide(number = 14, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2298,7 +2270,7 @@ can be added with <span style='color:#DC143C;'>toc`title`</span>.</p></div><div 
                         <div class="SlideBox">
 
                             <div class="n14 SlideArea HideSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-da1fb0bd122d42e2a3f3b92f17b49bde" href="#origin-da1fb0bd122d42e2a3f3b92f17b49bde"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" style=""><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">Slides.ei.<b>interact</b></span><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-c5f8063269e74a7abea7327cdd6c1cdd" href="#origin-c5f8063269e74a7abea7327cdd6c1cdd"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" style=""><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">Slides.ei.<b>interact</b></span><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
 <p>This function is used for quick dashboards. Subclass <code>InteractBase</code> for complex applications.</p>
 <p><strong>Features</strong>:    </p>
 <ul>
@@ -2433,11 +2405,11 @@ There are few special rules in <code>props</code>:</p>
         </pre>
 </div>
 </div></div>
-<div class="widget-interact ips-interact i-2154302918464" style="width:100%;gap:0.2em;display:grid;height:max-content;"><div class="interact-app" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
+<div class="widget-interact ips-interact i-2285805546176" style="width:100%;gap:0.2em;display:grid;height:max-content;"><div class="interact-app" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
 "center center center"
 "center center center";grid-template-columns:1fr 2fr 1fr;grid-template-rows:1fr 3fr 1fr;"><div class="center" style="width:100%;gap:0.2em;grid-area:center;"><div class="date" style=""></div>
 <div class="Refresh-Btn btn-main" style="height:28px;padding:0 24px;width:max-content;"></div>
-<div class="out-main" style=""><div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p>Time: 16:40:46</p></div></div></div></div></div>
+<div class="out-main" style=""><div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p>Time: 12:1:19</p></div></div></div></div></div>
 <div class="other-area" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;"></div>
 <div class="" style=""><style>
 .ips-interact > .interact-app {
@@ -2534,10 +2506,10 @@ There are few special rules in <code>props</code>:</p>
 }
 
 
-.i-2154302918464.widget-interact.ips-interact > .interact-app {
+.i-2285805546176.widget-interact.ips-interact > .interact-app {
     background : var(--bg2-color);
 }
-.i-2154302918464.widget-interact.ips-interact > .interact-app .out-main {
+.i-2285805546176.widget-interact.ips-interact > .interact-app .out-main {
     height : 2em;
 }
 </style></div>
@@ -2573,11 +2545,11 @@ Use this to e.g. notify during running presentation. func accepts single arguemn
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 58.3333%, var(--bg2-color) 58.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298584752">
+                    <section id="s-2285800985552">
 
 <style>
 
-#s-2154298584752 .SlideArea.n15  > .jp-OutputArea:empty:after {
+#s-2285800985552 .SlideArea.n15  > .jp-OutputArea:empty:after {
     content : "Slide(number = 15, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2586,30 +2558,86 @@ Use this to e.g. notify during running presentation. func accepts single arguemn
                         <div class="SlideBox">
 
                             <div class="n15 SlideArea HideSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Content Styling</h2></div><div style="width: 100%; box-sizing:border-box;"><p>You can <strong class="error">style</strong> or <strong><span style='background:None;color:teal;padding: 0.1em;border-radius:0.1em;'>colorize</span></strong> your <em style="color:hotpink;">content</em> and <em><span style='background:yellow;color:hotpink;padding: 0.1em;border-radius:0.1em;'>text</span></em>. Provide <strong class="info">CSS</strong> for that using <code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">html</span><span class="p">(</span><span class="s2">&quot;style&quot;</span><span class="p">,</span><span class="o">...</span><span class="p">)</span></code> or use some of the available styles. See these <strong class="success">styles</strong> with <code>Slides.css_styles</code> property as below:</p></div><div style="width: 100%; box-sizing:border-box;"><div class='raw-text '>Use any or combinations of these styles in css_class argument of writing functions:
-------------------------------------------------------------------------------------
- css_class          | Formatting Style                                              
-====================================================================================
- &#x27;text-[value]&#x27;     | [value] should be one of tiny, small, big, large, huge.
- &#x27;align-[value]&#x27;    | [value] should be one of center, left, right.
- &#x27;rtl&#x27;              | ------ اردو عربی 
- &#x27;info&#x27;             | Blue text. Icon ℹ️  for note-info class.
- &#x27;tip&#x27;              | Blue Text. Icon💡 for note-tip class.
- &#x27;warning&#x27;          | Orange Text. Icon ⚠️ for note-warning class.
- &#x27;success&#x27;          | Green text. Icon ✅ for note-success class.
- &#x27;error&#x27;            | Red Text. Icon⚡ for note-error class.
- &#x27;note&#x27;             | 📝 Text with note icon.
- &#x27;export-only&#x27;      | Hidden on main slides, but will appear in exported slides.
- &#x27;jupyter-only&#x27;     | Hidden on exported slides, but will appear on main slides.
- &#x27;block&#x27;            | Block of text/objects
- &#x27;block-[color]&#x27;    | Block of text/objects with specific background color from red,
-                    | green, blue, yellow, cyan, magenta and gray.
- &#x27;raw-text&#x27;         | Text will not be formatted and will be shown as it is.
- &#x27;zoom-self&#x27;        | Zooms object on hover, when Zoom is enabled.
- &#x27;zoom-child&#x27;       | Zooms child object on hover, when Zoom is enabled.
- &#x27;no-zoom&#x27;          | Disables zoom on object when it is child of &#x27;zoom-child&#x27;.
-------------------------------------------------------------------------------------
-Besides these CSS classes, you always have `Slide.set_css`, `Slides.html(&#x27;style&#x27;,...) functions at your disposal.</div></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Content Styling</h2></div><div style="width: 100%; box-sizing:border-box;"><p>You can <strong class="error">style</strong> or <strong><span style='background:None;color:teal;padding: 0.1em;border-radius:0.1em;'>colorize</span></strong> your <em style="color:hotpink;">content</em> and <em><span style='background:yellow;color:hotpink;padding: 0.1em;border-radius:0.1em;'>text</span></em>. Provide <strong class="info">CSS</strong> for that using <code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">html</span><span class="p">(</span><span class="s2">&quot;style&quot;</span><span class="p">,</span><span class="o">...</span><span class="p">)</span></code> or use some of the available styles. See these <strong class="success">styles</strong> with <code>Slides.css_styles</code> property as below:</p></div><div style="width: 100%; box-sizing:border-box;"><p>Use any or combinations of these styles in css_class argument of writing functions:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">css_class</th>
+<th style="text-align: left;">Formatting Style</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text-[value]</code></td>
+<td style="text-align: left;">[value] should be one of tiny, small, big, large, huge.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>align-[value]</code></td>
+<td style="text-align: left;">[value] should be one of center, left, right.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>rtl</code></td>
+<td class="rtl" style="text-align: left;">اردو،  فارسی، عربی،  ۔۔۔</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>info</code></td>
+<td class="info" style="text-align: left;">Blue text. Icon ℹ️  for note-info class.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tip</code></td>
+<td class="tip" style="text-align: left;">Blue Text. Icon💡 for note-tip class.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>warning</code></td>
+<td class="warning" style="text-align: left;">Orange Text. Icon ⚠️ for note-warning class.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>success</code></td>
+<td class="success" style="text-align: left;">Green text. Icon ✅ for note-success class.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>error</code></td>
+<td class="error" style="text-align: left;">Red Text. Icon⚡ for note-error class.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>note</code></td>
+<td class="note" style="text-align: left;">Text with note icon, can combine other classes as shown above.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>export-only</code></td>
+<td style="text-align: left;">Hidden on main slides, but will appear in exported slides.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>jupyter-only</code></td>
+<td style="text-align: left;">Hidden on exported slides, but will appear on main slides.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>block</code></td>
+<td class="block" style="text-align: left;">Block of text/objects</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>block-[color]</code></td>
+<td style="text-align: left;">Block of text/objects with specific background color from <br> red, green, blue, yellow, cyan, magenta and gray.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>raw-text</code></td>
+<td class="raw-text" style="text-align: left;">Text will be shown as printed style.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>zoom-self</code></td>
+<td class="zoom-self" style="text-align: left;">Zooms object on hover, when Zoom is enabled.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>zoom-child</code></td>
+<td style="text-align: left;">Zooms child object on hover, when Zoom is enabled.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>no-zoom</code></td>
+<td style="text-align: left;">Disables zoom on object when it is child of 'zoom-child'.</td>
+</tr>
+</tbody>
+</table>
+<p>Besides these CSS classes, you always have <code>Slide.set_css</code>, `Slides.html('style',...) functions at your disposal.</p></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight">
@@ -2627,11 +2655,11 @@ Besides these CSS classes, you always have `Slide.set_css`, `Slides.html(&#x27;s
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 62.5%, var(--bg2-color) 62.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298808112">
+                    <section id="s-2285800986128">
 
 <style>
 
-#s-2154298808112 .SlideArea.n16  > .jp-OutputArea:empty:after {
+#s-2285800986128 .SlideArea.n16  > .jp-OutputArea:empty:after {
     content : "Slide(number = 16, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2684,11 +2712,11 @@ You can <strong class="error">highlight</strong> code using <code>highlight</cod
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 66.6667%, var(--bg2-color) 66.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807920">
+                    <section id="s-2285801271504">
 
 <style>
 
-#s-2154298807920 .SlideArea.n17  > .jp-OutputArea:empty:after {
+#s-2285801271504 .SlideArea.n17  > .jp-OutputArea:empty:after {
     content : "Slide(number = 17, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2709,13 +2737,12 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
 <ul>
 <li>Use 'overrides.css' file in same folder to override CSS styles.</li>
 <li>If a slide has only widgets or does not have single object with HTML representation, it will be skipped.</li>
-<li>You can take screenshot (using system's tool) of a widget and add it back to slide using <code>Slides.clip</code> or <code>Slides.alt(image_filename, ...)</code> to keep PNG view of a widget. </li>
-<li>You can paste a screenshot using <code>alt</code> or <code>clip</code> functionality as well.</li>
+<li>You can take screenshot (using system's tool) of a widget, save it using Clips GUI in side panel and laod as image to keep PNG view of a widget. </li>
 <li>If progressbar is set to True, 'bottom' or 'top', a progressbar while shown accordingly. True -&gt; 'bottom'.</li>
 </ul>
 <div class="note-info">
 <ul>
-<li>PDF printing of slide width is 254mm (10in). Height is determined by aspect ratio provided.</li>
+<li>PDF printing of slide width is 210mm (8.25in). Height is determined by aspect ratio provided.</li>
 <li>Use <code>Save as PDF</code> option instead of Print PDF in browser to make links work in output PDF. Alsp enable background graphics in print dialog.</li>
 </ul>
 </div>
@@ -2725,11 +2752,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 70.8333%, var(--bg2-color) 70.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298595648">
+                    <section id="s-2285800970656">
 
 <style>
 
-#s-2154298595648 .SlideArea.n18  > .jp-OutputArea:empty:after {
+#s-2285800970656 .SlideArea.n18  > .jp-OutputArea:empty:after {
     content : "Slide(number = 18, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2741,49 +2768,42 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-2154298535840" class="export-only citelink">Introduction</a>
-    <span class="jupyter-only">Introduction</span>
+    <a href="#s-2285800986464" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2154298606976" class="export-only citelink">Adding Slides and Content</a>
-    <span class="jupyter-only">Adding Slides and Content</span>
+    <a href="#s-2285800608912" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2154298582544" class="export-only citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
-    <span class="jupyter-only">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</span>
+    <a href="#s-2285801321664" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2154298366368" class="export-only citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
-    <span class="jupyter-only">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></span>
+    <a href="#s-2285801323728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2154298807920" class="export-only citelink">Loading from File/Exporting to HTML</a>
-    <span class="jupyter-only">Loading from File/Exporting to HTML</span>
+    <a href="#s-2285801271504" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-2154298595648" class="export-only citelink">Advanced Functionality</a>
-    <span class="jupyter-only">Advanced Functionality</span>
+    <a href="#s-2285800970656" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2154298608800" class="export-only citelink">Presentation Code</a>
-    <span class="jupyter-only">Presentation Code</span>
+    <a href="#s-2285801301040" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">18</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.0%, var(--bg2-color) 75.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2817,11 +2837,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.463%, var(--bg2-color) 75.463%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2855,11 +2875,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.9259%, var(--bg2-color) 75.9259%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2893,11 +2913,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.3889%, var(--bg2-color) 76.3889%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2931,11 +2951,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.8519%, var(--bg2-color) 76.8519%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2969,11 +2989,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 77.3148%, var(--bg2-color) 77.3148%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3007,11 +3027,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 77.7778%, var(--bg2-color) 77.7778%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3045,11 +3065,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 78.2407%, var(--bg2-color) 78.2407%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3083,11 +3103,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 78.7037%, var(--bg2-color) 78.7037%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298807104">
+                    <section id="s-2285800911296">
 
 <style>
 
-#s-2154298807104 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3121,11 +3141,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 79.1667%, var(--bg2-color) 79.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298810320">
+                    <section id="s-2285801274336">
 
 <style>
 
-#s-2154298810320 .SlideArea.n20  > .jp-OutputArea:empty:after {
+#s-2285801274336 .SlideArea.n20  > .jp-OutputArea:empty:after {
     content : "Slide(number = 20, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3209,11 +3229,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 83.3333%, var(--bg2-color) 83.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298605920">
+                    <section id="s-2285801271552">
 
 <style>
 
-#s-2154298605920 .SlideArea.n21  > .jp-OutputArea:empty:after {
+#s-2285801271552 .SlideArea.n21  > .jp-OutputArea:empty:after {
     content : "Slide(number = 21, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3241,11 +3261,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 87.5%, var(--bg2-color) 87.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298595456">
+                    <section id="s-2285801301184">
 
 <style>
 
-#s-2154298595456 .SlideArea.n22  > .jp-OutputArea:empty:after {
+#s-2285801301184 .SlideArea.n22  > .jp-OutputArea:empty:after {
     content : "Slide(number = 22, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3433,6 +3453,11 @@ besides standard ipywidgets icons.</p>
         <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.25s" repeatCount="indefinite"/>
     </path>
 </svg></p></div></div>
+<div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p><code>panel</code></p></div>
+<div style="flex:1 1;"><p><svg height="1em" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="2 2,23 2,23 23,2 23,2 2" fill="none" stroke="crimson"></polygon>
+    <rect x="2" y="2" width="7" height="21" fill="crimson" stroke="crimson"/>
+</svg></p></div></div>
 <div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p><code>pause</code></p></div>
 <div style="flex:1 1;"><p><svg height="1em" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" fill="crimson" transform="rotate(0)">
     <rect x="4" y="4" width="7" height="17"/>
@@ -3507,11 +3532,11 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 91.6667%, var(--bg2-color) 91.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298608944">
+                    <section id="s-2285800955040">
 
 <style>
 
-#s-2154298608944 .SlideArea.n23  > .jp-OutputArea:empty:after {
+#s-2285800955040 .SlideArea.n23  > .jp-OutputArea:empty:after {
     content : "Slide(number = 23, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3533,11 +3558,11 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 95.8333%, var(--bg2-color) 95.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2154298608800">
+                    <section id="s-2285801301040">
 
 <style>
 
-#s-2154298608800 .SlideArea.n24  > .jp-OutputArea:empty:after {
+#s-2285801301040 .SlideArea.n24  > .jp-OutputArea:empty:after {
     content : "Slide(number = 24, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3627,7 +3652,7 @@ besides standard ipywidgets icons.</p>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;## Adding Content&#39;</span><span class="p">)</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Besides functions below, you can add content to slides with `</span><span class="si">%%</span><span class="s1">xmd`,`</span><span class="si">%x</span><span class="s1">md` as well.</span><span class="se">\n</span><span class="s1">{.note .info}&#39;</span><span class="p">)</span></code>
-<code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">styled</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">),</span><span class="s1">&#39;block-green&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">),</span><span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clip</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">)])</span></code>
+<code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">styled</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">),</span><span class="s1">&#39;block-green&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">)])</span></code>
 <code></code>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;## Adding Speaker Notes&#39;</span><span class="p">)</span></code>
@@ -3651,9 +3676,7 @@ besides standard ipywidgets icons.</p>
 <code></code>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`&#39;</span><span class="p">)</span></code>
-<code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;clip[caption=&#39;clipboard image&#39;]`test.png`&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="s2">&quot;clip[caption=&#39;clipboard image&#39;]`test.png`&quot;</span><span class="p">,</span><span class="s2">&quot;markdown&quot;</span><span class="p">))</span></code>
-<code>        <span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alt</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">)</span></code>
-<code>        <span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clip</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
+<code>        <span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alt</span><span class="p">,</span><span class="s1">&#39;Slides&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code></code>
 <code>        <span class="n">members</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span></code>
 <code>            <span class="s1">&#39;AnimationSlider alert block bokeh2html bullets styled fmt color details doc &#39;</span></code>

@@ -152,12 +152,17 @@ _icons = {
             <line x1="12.5" y1="2" x2="12.5" y2="23" stroke="{color}"/>
         </svg>''',
     'settings': '''
-    <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="5" stroke="{color}" fill="{color}" transform="rotate({rotation})">
-        <line x1="1" y1="12.5" x2="24" y2="12.5"/>
-        <line x1="6.75" y1="22.46" x2="18.25" y2="2.54"/>
-        <line x1="18.25" y1="22.46" x2="6.75" y2="2.54"/>
-        <circle fill="white" cx="12.5" cy="12.5" r="6"/>
-    </svg>'''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="5" stroke="{color}" fill="{color}" transform="rotate({rotation})">
+            <line x1="1" y1="12.5" x2="24" y2="12.5"/>
+            <line x1="6.75" y1="22.46" x2="18.25" y2="2.54"/>
+            <line x1="18.25" y1="22.46" x2="6.75" y2="2.54"/>
+            <circle fill="white" cx="12.5" cy="12.5" r="6"/>
+        </svg>''',
+    'panel': '''
+        <svg height="{size}" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="2 2,23 2,23 23,2 23,2 2" fill="none" stroke="{color}"></polygon>
+            <rect x="2" y="2" width="7" height="21" fill="{color}" stroke="{color}"/>
+        </svg>'''
 }
 
 _icons["edit"] = _icons["pencil"].format(size="{size}", color="{color}", rotation=45)

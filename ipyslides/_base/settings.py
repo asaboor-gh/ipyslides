@@ -12,7 +12,7 @@ from ipywidgets.widgets.trait_types import InstanceDict
 
 from ..formatters import pygments, fix_ipy_image, code_css
 from ..xmd import parse
-from ..utils import html, today
+from ..utils import html, today, _clipbox_children
 from . import intro, styles, _layout_css
 
 
@@ -278,6 +278,7 @@ class Settings:
         self._widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self._update_theme({'owner':'layout'})  # Trigger Theme with aspect changed as well
         self._update_size(change=None)  # Trigger this as well
+        self._widgets.panelbox.right_sidebar.children = _clipbox_children() # Set clipbox children
 
         self._traits = [key for key, value in self.__dict__.items() if isinstance(value, ConfigTraits)]
         parameters=[Parameter('self', Parameter.POSITIONAL_ONLY), 

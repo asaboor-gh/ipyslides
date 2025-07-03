@@ -91,7 +91,6 @@ _special_funcs = {
     "hl": "inline code highlight. Accepts langauge as keywoard.",
     "today": "format_spec like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
-    "clip": "filename. Paste clipboard image",
     "image": "path/src or clip:filename",
     "raw": "text",
     "svg": "path/src",
