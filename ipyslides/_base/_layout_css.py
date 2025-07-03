@@ -220,7 +220,8 @@ def layout_css(accent_color, aspect):
                         "background": "var(--bg2-color) !important",
                         "box-shadow": "0 1px 2px #8984 !important", # subtle shadow
                         "button": {"direction": "rtl !important"}, # why toggle buttons icons are on right? flipping direction to fix
-                    },  
+                    }, 
+                    "> *": {"transition": "padding-top 400ms ease-in-out",},
                     "^, *": {"box-sizing": "border-box !important",},
                     ".Panel-Btn": {
                         "border": "none !important",

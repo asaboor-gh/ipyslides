@@ -24,14 +24,14 @@ from IPython.core.display import Image, display
 from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, _inline_style
 from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
-from .writer import Writer, CustomDisplay, _Output
+from .writer import Writer, _Output
 from .source import highlight
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
      shell = get_ipython()
-     if shell.__class__.__name__ in ("ZMQInteractiveShell","Shell"):
-         return True # Verify Jupyter and Colab
+     if shell and hasattr(shell,'kernel'): # kernel is not there in ipython terminal
+         return True # Verifies Jupyter, Pyodide, etc.
      else:
          return False
      

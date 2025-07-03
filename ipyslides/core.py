@@ -535,7 +535,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         raise DeprecationWarning("Use `Slides.link` instead of `goto_button` to create links to other slides in a streamlined way.")
 
     def link(self, label, back_label=None, icon=None, back_icon=None):
-        """Create a link to jump to another slide. Use `label` for link text 
+        r"""Create a link to jump to another slide. Use `label` for link text 
         and `back_label` for the  optional text on the target slide if need to jump back.
 
         - Use `link.origin` to create a link to jump to target slide where `link.target` is placed.

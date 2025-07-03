@@ -215,7 +215,7 @@ class Widgets:
                 self.checks.confirm,
                 self._tmp_out,
                 self.notes, # Just to be there for acting on a popup window
-            ],layout=Layout(width='100%',height='100%',overflow_y='scroll',min_width='0',padding="8px")), # initial padding
+            ],layout=Layout(width='100%',height='100%',overflow_y='scroll',min_width='0',padding="8px")), # initial padding for open child
             center = self.tocbox, # TOC box is center
             right_sidebar = VBox([],layout = Layout(width='100%',height='100%',overflow_y='auto',min_width='0')), # Empty right sidebar
             layout = Layout(height='0',overflow='hidden'), pane_widths = [1,0,0], pane_heights=['36px',1, 0],
