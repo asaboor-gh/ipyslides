@@ -84,6 +84,7 @@ class InteractionWidget(anywidget.AnyWidget):
             # Clear loading splash and other stuff
             self._loading.value = ""
             self._loading.layout.display = "none"
+            self._buttons.sload.click() # Safely load previous session settings at end
 
         elif msg in ('FS','!FS'): # This is to make sure visual state of button and slides are correct
             if msg == 'FS':

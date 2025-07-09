@@ -13,7 +13,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML
-from ..xmd import _special_funcs, _md_extensions, error, fmt, get_slides_instance
+from ..xmd import _special_funcs, _md_extensions, error, fmt, get_slides_instance, resolve_included_files
 from ..utils import _css_docstring
 
 class BaseSlides:
@@ -99,8 +99,13 @@ class BaseSlides:
         Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
         Citations
-        : alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function.
-        With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
+        : - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
+        - With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
+        - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
+        <code>\\`\\`\\`citations [inline or footnote]
+        @key1: Saboor et. al., 2025
+        @key2: A citations can span multiple lines, but key should start on new line
+        \\`\\`\\`</code>
         
         Sections & TOC
         : alert`section\`content\`` to add a section that will appear in the table of contents.
@@ -136,7 +141,7 @@ class BaseSlides:
         - Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text \{{: rowspan="2" colspan="1"}}| inside a cell, should be a space bewteen text and attributes.
         - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
-        - alert`include\`markdown_file.md\`` to include a file in markdown format.
+        - alert`include\`markdown_file.md\`` to include a file in markdown format. These files are watched for eidts if included in synced markdown file via `Slides.sync_with_file`.
         - Inline columns/rows can be added by using alert`stack\`Column A | Column B\`` sytnax with `?` next to opening \\` and before closing \\` most of the time to properly parse inner markdown. You can escape pipe `|` with `\|` to use it as text inside stack.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
@@ -238,7 +243,7 @@ class BaseSlides:
             with self.widgets._tmp_out:
                 display(*objs)
         
-    def _from_markdown(self, start, /, content, refresh_vars=True):
+    def _from_markdown(self, start, /, content, synced=False):
         "Sames as `Slides.build` used as a function."
         if self.this:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
@@ -248,6 +253,25 @@ class BaseSlides:
         
         content, fmt_kws = fmt._astuple(content) # fmt used on top level, or string means no keywords
         content = re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0]
+
+        if synced and (refs_matches := re.findall(
+            r'```citations(.*?)\n```', content, flags= re.DOTALL | re.MULTILINE
+            )):
+            if len(refs_matches) != 1:
+                raise ValueError(f"Only a single block of citations is allowed, found {len(refs_matches)} blocks {refs_matches}")
+            
+            # Citations block will itself be remove during parsing slide
+            # We need to keep here to compare changes, otherwise it cannot detect
+            mode, refs = [line.strip() for line in refs_matches[0].split('\n',1)] # should be ```citations mode and then below
+            if not mode:
+                mode = self._cite_mode # keep same
+
+            refs_dict = {
+                k.strip() : v.strip() 
+                for k,v in re.findall(r'^@(.+?):\s*(.*?)(?=^@|\Z)', refs, flags=re.MULTILINE | re.DOTALL)
+            }
+            self.set_citations(refs_dict, mode=mode)
+
 
         if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt
             (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
@@ -259,9 +283,9 @@ class BaseSlides:
 
         for i,chunk in enumerate(chunks):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown, refresh_vars]):
+            if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown]):
                 with self._loading_splash(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
-                    self._slide(f'{i + start} -m', chunk, fmt_kws=fmt_kws)
+                    self._slide(f'{i + start} -m', chunk, fmt_kws=fmt_kws, synced=synced)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(handles[i])
         
@@ -269,13 +293,16 @@ class BaseSlides:
         return handles
     
     def sync_with_file(self, start_slide_number, /, path, interval=500):
-        """Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
+        r"""Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
         interval is in milliseconds, 500 ms default. Read `Slides.build` docs about content of file.
         
         The variables inserted in file content are used from top scope.
+
+        You can add files inside linked file using include\\`file_path.md\\` syntax, which are also watched for changes.
+        This helps modularity of content, and even you can link a citation file in markdown format. Read more in `Slides.xmd_syntax` about it.
         
         ::: note-tip
-            To debug a linked file, use EOF on its own line to keep editing and clearing errors.
+            To debug the linked file or included file, use EOF on its own line to keep editing and clearing errors.
         """
         if not self.inside_jupyter_notebook(self.sync_with_file):
             raise Exception("Notebook-only function executed in another context!")
@@ -291,18 +318,30 @@ class BaseSlides:
         start = self._fix_slide_number(start_slide_number)
         
         # NOTE: Background threads and other methods do not work. Do NOT change this way
-        self._from_markdown(start, path.read_text(encoding="utf-8")) # First call itself before declaring other things, so errors can be captured safely
+        # First call itself before declaring other things, so errors can be captured safely
+        self._from_markdown(start, resolve_included_files(path.read_text(encoding="utf-8")), synced=True) 
         self.widgets._timer.clear() # remove previous updates
         self._mtime = os.stat(path).st_mtime
+        included_files = set()
 
         def update():
             if path.is_file():
-                mtime = os.stat(path).st_mtime
+                # Track whichever file is last edited from included or itself
+                mtime = max(os.stat(f).st_mtime for f in [path, *included_files] if f.is_file())
                 out_sync = any(['Out-Sync' in s._css_class for s in self.cited_slides]) or False
                 if out_sync or (mtime > self._mtime):  # set by interaction widget
                     self._mtime = mtime
                     try: 
-                        self._from_markdown(start, path.read_text(encoding="utf-8"), refresh_vars=False) # Costly inside file, no refresh vars
+                        content = path.read_text(encoding="utf-8")
+                        # included files will be one step behind in sync, beacuse they are only detectable now
+                        included_files.update(
+                            map(Path, re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL))
+                        ) 
+                        print(included_files)
+                        self._from_markdown(start, 
+                            resolve_included_files(content), # add included file text to be detected for changes
+                            synced=True # only one citation block allowed for consistency
+                        ) 
                         self.notify('x') # need to remove any notification from previous error
                         self._unregister_postrun_cell() # No cells buttons from inside file code run
                     except:

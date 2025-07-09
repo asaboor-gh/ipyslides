@@ -90,7 +90,9 @@ class Singleton(type):
 
 class Slides(BaseSlides,metaclass=Singleton):
     """Interactive Slides in IPython Notebook. Only one instance can exist. `settings` 
-    are passed to hl`Slides.settings()` if you like to set during initialization.
+    are passed to hl`Slides.settings()` if you like to set during initialization. You
+    can also edit file .ipyslides-assets/settings.json to make settings persistent across sessions
+    and load/sync them via GUI in sidepanel.
     
     To suppress unwanted print from other libraries/functions, use:
     ```python
@@ -165,9 +167,12 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._md_vars = {} # will be handled by a post run cell
 
         with self.set_dir(self._assets_dir):  # Set assets directory
+            if os.path.isfile("citations.json"): # legacy filename, want to somehow depict it private with .
+                os.rename("citations.json",".citations.json")
             self._set_citations_from_file(
-                "citations.json"
+                ".citations.json"
             )  # Load citations from file if exists
+
 
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
@@ -448,7 +453,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
         new_citations = {k: self.parse(v, returns = True) for k, v in d.items()}
-        if self._citations != new_citations: # same call again should not change anythong
+        if self._citations != new_citations: # same call again should not change anything
             self._citations = new_citations
             self._set_unsynced() # will go synced after rerun
     
@@ -487,7 +492,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         # Finally write resources to file in assets
         with self.set_dir(self._assets_dir):
-            with open("citations.json", "w", encoding="utf-8") as f:
+            with open(".citations.json", "w", encoding="utf-8") as f:
                 json.dump(self._citations, f, indent=4)
 
 
@@ -679,7 +684,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         return self._next_number # for python file as well as first run of cell in notebook
 
     # defining magics and context managers
-    def _slide(self, line, cell, fmt_kws={}): # fmt_kws for markdown variables substitution
+    def _slide(self, line, cell, fmt_kws={}, synced=False): # fmt_kws for markdown variables substitution
         """Capture content of a cell as `slide`.
             ---------------- Cell ----------------
             %%slide 1
@@ -709,6 +714,11 @@ class Slides(BaseSlides,metaclass=Singleton):
         slide_number = int(line[0])  # First argument is slide number
 
         if "-m" in line[1:]:
+            clear_citations = lambda m: '' if synced else self.error("ValueError", 
+                "citations block is only allowed inside synced markdown file! Use `Slides.set_citations` otherwise.\n"
+                + m.group().replace('`','\`')
+            ).value
+            cell = re.sub(r'```citations(.*?)\n```',clear_citations, cell, flags=re.DOTALL | re.MULTILINE) 
             if any(map(lambda v: re.search(r"^\s*--\s*$",v, flags=re.DOTALL | re.MULTILINE), 
                 (re.findall(r'```multicol(.*?)\n```', cell, flags=re.DOTALL | re.MULTILINE) or [''])
                 )):

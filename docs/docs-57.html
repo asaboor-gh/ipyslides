@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='butt' stroke-linejoin='round' stroke-width='7.07'%3E%3Cpath d='M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5' stroke='teal'/%3E%3Cpath d='M7.5 27.5L22.5 42.5' stroke='crimson'/%3E%3Cpath d='M32.5 32.5L20 20L30 10L42.5 22.5' stroke='red'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='butt' stroke-linejoin='round' stroke-width='7.07'%3E%3Cpath d='M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5' stroke='%2343D675'/%3E%3Cpath d='M7.5 27.5L22.5 42.5' stroke='%234F8EF7'/%3E%3Cpath d='M32.5 32.5L20 20L30 10L42.5 22.5' stroke='%234F8EF7'/%3E%3C/svg%3E">
     <title>Slides</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
@@ -19,9 +19,9 @@
     --bg3-color : #242424;
     --accent-color : #92C1F4;
     --pointer-color : #e91e63;
-    --text-size : 18px;
-    --jp-content-font-family : Roboto, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16";
-    --jp-code-font-family : Cascadia Code, "Ubuntu Mono", "SimSun-ExtB", "Courier New";
+    --text-size : 16px;
+    --jp-content-font-family : 'Roboto', -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16";
+    --jp-code-font-family : 'Cascadia Code', "Ubuntu Mono", "SimSun-ExtB", "Courier New";
 }
  .SlidesWrapper,
 .jupyter-widgets,
@@ -90,7 +90,7 @@ code) {
     background : linear-gradient(to right, var(--bg1-color),  var(--bg2-color),var(--accent-color), var(--bg2-color),var(--bg1-color));
 }
  .SlidesWrapper :is(h1, h2, h3, h4, h5, h6) {
-    font-family : Arial, var(--jp-content-font-family) !important;
+    font-family : 'Arial', var(--jp-content-font-family) !important;
     font-weight : normal;
     color : var(--fg3-color);
     text-align : center;
@@ -144,7 +144,7 @@ code) {
     border-bottom : 1px solid #8988 !important;
 }
  .SlidesWrapper table td,.SlidesWrapper table  th,.SlidesWrapper .grid-table td,.SlidesWrapper .grid-table  th {
-    line-height : 150% !important;
+    line-height : 1.2 !important;
 }
  .SlidesWrapper table td:empty,.SlidesWrapper .grid-table td:empty {
     display : none;
@@ -336,7 +336,7 @@ code) {
 .SlideArea {
     position : absolute !important;
     width : 210mm !important;
-    height : 157mm !important;
+    height : 118mm !important;
     transform-origin : center !important;
     transform : translateZ(0) scale(var(--contentScale,1)) !important;
     box-sizing : border-box !important;
@@ -355,10 +355,6 @@ code) {
     max-width : 100% !important;
     box-sizing : border-box !important;
     overflow : auto !important;
-}
-.SlideArea.n0 > .jp-OutputArea {
-    top : unset !important;
-    margin-top : auto !important;
 }
 .SlideArea .slide-link,
 .SlideArea  .link-button {
@@ -799,7 +795,7 @@ pre:hover::-webkit-scrollbar-thumb,
 .block-magenta,
 .block-cyan {
     --bg-color : var(--bg2-color);
-    padding : 8px;
+    padding : 4px;
     border-radius : 4px;
     margin : 0.5em 0;
     box-shadow : 0px 0px 1px 0.5px hsl(from var(--bg-color) h s 40% / 0.9) inset !important;
@@ -867,7 +863,7 @@ details[open] > summary::after {
 .jupyter-only { display:none !important;}
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
-p {margin-block: 0.5em !important;}
+p {margin-block: 0.25em !important;}
 pre {white-space: break-spaces;} /* General rule unless specified in elements */
 .toc-item {margin-block: 0.25em}
 .click-wrapper {
@@ -983,7 +979,7 @@ section .SlideArea {
         ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
     }
     @page {
-        size: 210mm 157mm; /* 10 inch x decided by aspect by user*/
+        size: 210mm 118mm; /* 10 inch x decided by aspect by user*/
         margin-top: 0 !important;
         margin-right: 0 !important;
         margin-left: 0 !important;
@@ -1164,17 +1160,17 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 </head>
 <body>
 <div>
-    <div class="click-wrapper"> <a href="#s-2285800998272" class="clicker ●">●</a><a href="#s-2285801038560" class="clicker ●">●</a><a href="#s-2285801323728" class="clicker ●">●</a><a href="#s-2285800970656" class="clicker ●">●</a><a href="#s-2285801301040" class="clicker ●">●</a> </div>
+    <div class="click-wrapper"> <a href="#s-2775583718608" class="clicker ●">●</a><a href="#s-2775583594048" class="clicker ●">●</a><a href="#s-2775583744208" class="clicker ●">●</a><a href="#s-2775583746512" class="clicker ●">●</a><a href="#s-2775583895456" class="clicker ●">●</a> </div>
     <!-- Classes below work for both scenerios -->
-    <div class="SlidesWrapper Slides-2285278085760 Slides-ShowFooter">
+    <div class="SlidesWrapper Slides-2775060568624 Slides-ShowFooter">
     
-                    <section id="s-2285800998272">
+                    <section id="s-2775583718608">
 
 
                         <div class="SlideBox">
                             <div class="BackLayer">
             <style>
-                #s-2285800998272 .BackLayer {
+                #s-2775583718608 .BackLayer {
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -1184,7 +1180,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         overflow:hidden;
         margin:0;
     }
-    #s-2285800998272 .BackLayer :is(img, svg) {
+    #s-2775583718608 .BackLayer :is(img, svg) {
         position: absolute;
         left:50% !important;
         top:50% !important;
@@ -1195,32 +1191,32 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         filter: blur(10px);
         opacity:0.25;
     }
-    #s-2285800998272 .BackLayer svg {
+    #s-2775583718608 .BackLayer svg {
         max-width: 100% !important;
         max-height: 100% !important;
         width:  !important;
         min-width:  !important;
         min-height:  !important;
     }
-    #s-2285800998272 .BackLayer.jupyter-widgets-disconnected {
+    #s-2775583718608 .BackLayer.jupyter-widgets-disconnected {
         display:none;
     }
 
             </style>
             <svg style="width:100%;height:auto"  height="60px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
-        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
-        <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
-        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
+        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="#43D675"/>
+        <path d="M7.5 27.5L22.5 42.5" stroke="#4F8EF7"/>
+        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="#4F8EF7"/>
         <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;"></text>
     </svg></div>
                             <div class="n0 SlideArea ShowSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 5.7.3 Documentation</h2>
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 5.7.9 Documentation</h2>
 <h3>Creating slides with IPySlides</h3></div><div style="width: 100%; box-sizing:border-box;"><div class="align-center"><p><span style='color:#DC143C;'>Abdul Saboor</span><sup style="font-size:85%;color:inherit;">1</sup></p>
-<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Jul 03, 2025</span></p>
+<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Jul 09, 2025</span></p>
 <p><svg height="4em" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
-        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="teal"/>
-        <path d="M7.5 27.5L22.5 42.5" stroke="crimson"/>
-        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="red"/>
+        <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="#43D675"/>
+        <path d="M7.5 27.5L22.5 42.5" stroke="#4F8EF7"/>
+        <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="#4F8EF7"/>
         <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;"></text>
     </svg></p>
 <div class="text-box">
@@ -1231,11 +1227,11 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 0.0%, var(--bg2-color) 0.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800986464">
+                    <section id="s-2775583428272">
 
 <style>
 
-#s-2285800986464 .SlideArea.n1  > .jp-OutputArea:empty:after {
+#s-2775583428272 .SlideArea.n1  > .jp-OutputArea:empty:after {
     content : "Slide(number = 1, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1247,31 +1243,31 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div class="columns writer block-green" style=""><div style="width:50.000%;overflow:auto;height:auto"><div><h2>Table of contents</h2>
 <ol class="toc-list toc-extra" style="">
 <li class="toc-item this">
-    <a href="#s-2285800986464" class="slide-link citelink">Introduction</a>
+    <a href="#s-2775583428272" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285800608912" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2775583397488" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801321664" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2775583605616" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801323728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2775583744208" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801271504" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2775583746176" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285800970656" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2775583746512" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801301040" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2775583895456" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div><div style="width:50.000%;overflow:auto;height:auto"><h3>This is summary of current section</h3>
 <p>Oh we can use inline columns <div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p>Column A</p></div>
 <div style="flex:1 1;"><p>Column B</p></div></div> here and what not!</p>
@@ -1293,11 +1289,11 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 4.1667%, var(--bg2-color) 4.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285277387600">
+                    <section id="s-2775583595536">
 
 <style>
 
-#s-2285277387600 .SlideArea.n2  > .jp-OutputArea:empty:after {
+#s-2775583595536 .SlideArea.n2  > .jp-OutputArea:empty:after {
     content : "Slide(number = 2, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1307,7 +1303,9 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 
                             <div class="n2 SlideArea HideSlide">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h1>Main App</h1></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig"><b>Slides</b></span><br><p>Interactive Slides in IPython Notebook. Only one instance can exist. <code>settings</code> 
-are passed to <code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">settings</span><span class="p">()</span></code> if you like to set during initialization.</p>
+are passed to <code class="highlight inline" style="white-space:pre;"><span class="n">Slides</span><span class="o">.</span><span class="n">settings</span><span class="p">()</span></code> if you like to set during initialization. You
+can also edit file .ipyslides-assets/settings.json to make settings persistent across sessions
+and load/sync them via GUI in sidepanel.</p>
 <p>To suppress unwanted print from other libraries/functions, use:</p><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
@@ -1346,11 +1344,11 @@ or access many via list as <code class="highlight inline" style="white-space:pre
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 8.3333%, var(--bg2-color) 8.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801273712">
+                    <section id="s-2775583399600">
 
 <style>
 
-#s-2285801273712 .SlideArea.n3  > .jp-OutputArea:empty:after {
+#s-2775583399600 .SlideArea.n3  > .jp-OutputArea:empty:after {
     content : "Slide(number = 3, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1368,7 +1366,7 @@ and <code>back_label</code> for the  optional text on the target slide if need t
 <li>Use similar links in markdown as <code>&lt;link:[unique id here]:origin label&gt;</code> and <code>&lt;link:[unique id here same as origin]:target [back_label,optional]&gt;</code>.</li>
 <li>In markdown, icons can be passed in label as <span style='color:#DC143C;'>"fa`arrow` label text"</span>.</li>
 </ul>
-</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-c5f8063269e74a7abea7327cdd6c1cdd" href="#target-c5f8063269e74a7abea7327cdd6c1cdd"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
+</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-844a89a6a7d14ed1b3d2fab1a89afe92" href="#target-844a89a6a7d14ed1b3d2fab1a89afe92"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight">
@@ -1383,11 +1381,11 @@ and <code>back_label</code> for the  optional text on the target slide if need t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 12.5%, var(--bg2-color) 12.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800608912">
+                    <section id="s-2775583397488">
 
 <style>
 
-#s-2285800608912 .SlideArea.n4  > .jp-OutputArea:empty:after {
+#s-2775583397488 .SlideArea.n4  > .jp-OutputArea:empty:after {
     content : "Slide(number = 4, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1429,8 +1427,10 @@ and <code>back_label</code> for the  optional text on the target slide if need t
 </div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>sync_with_file</b></span><br><p>Auto update slides when content of markdown file changes. You can stop syncing using <code>Slides.unsync</code> function.
 interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs about content of file.</p>
 <p>The variables inserted in file content are used from top scope.</p>
+<p>You can add files inside linked file using include`file_path.md` syntax, which are also watched for changes.
+This helps modularity of content, and even you can link a citation file in markdown format. Read more in <code>Slides.xmd_syntax</code> about it.</p>
 <div class="note-tip">
-<p>To debug a linked file, use EOF on its own line to keep editing and clearing errors.</p>
+<p>To debug the linked file or included file, use EOF on its own line to keep editing and clearing errors.</p>
 </div>
 </div></div></div>
                             </div>
@@ -1438,11 +1438,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 16.6667%, var(--bg2-color) 16.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801040192">
+                    <section id="s-2775583398736">
 
 <style>
 
-#s-2285801040192 .SlideArea.n5  > .jp-OutputArea:empty:after {
+#s-2775583398736 .SlideArea.n5  > .jp-OutputArea:empty:after {
     content : "Slide(number = 5, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1584,11 +1584,11 @@ There are few special rules in <code>props</code>:</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 20.8333%, var(--bg2-color) 20.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801038560">
+                    <section id="s-2775583594048">
 
 <style>
 
-#s-2285801038560 .SlideArea.n6  > .jp-OutputArea:empty:after {
+#s-2775583594048 .SlideArea.n6  > .jp-OutputArea:empty:after {
     content : "Slide(number = 6, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1606,7 +1606,7 @@ There are few special rules in <code>props</code>:</p>
 <code><span class="n">display</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fmt</span><span class="p">(</span><span class="s1">&#39;%</span><span class="si">{self.version!r}</span><span class="s1"> %</span><span class="si">{self.xmd_syntax}</span><span class="s1">&#39;</span><span class="p">))</span></code>
         </pre>
 </div>
-</div></div></div><div style="width: 100%; box-sizing:border-box;"><p>'5.7.3' <p><strong class="text-large">Extended Markdown</strong></p>
+</div></div></div><div style="width: 100%; box-sizing:border-box;"><p>'5.7.9' <p><strong class="text-large">Extended Markdown</strong></p>
 <p>Extended syntax for markdown is constructed to support almost full presentation from Markdown.</p>
 <p><strong class="text-big">Slides-specific syntax</strong></p>
 <dl>
@@ -1616,8 +1616,17 @@ There are few special rules in <code>props</code>:</p>
 <dd>Triple dashes <code>---</code> is used to split text in slides inside markdown content of <code>Slides.build</code> function or markdown file.
 Double dashes <code>--</code> is used to split text in frames. Alongwith this <code>%++</code> can be used to increment text on framed slide.</dd>
 <dt>Citations</dt>
-<dd><span style='color:#DC143C;'>cite`key`</span> to add citation to current slide. citations are automatically added in suitable place and should be set once using <code>Slides.set_citations</code> function.
-With citations mode set as 'footnote', you can add <span style='color:#DC143C;'>refs`ncol_refs`</span> to add citations anywhere on slide. If <code>ncol_refs</code> is not given, it will be picked from layout settings.</dd>
+<dd>
+<ul>
+<li><span style='color:#DC143C;'>cite`key`</span> to add citation to current slide. citations are automatically added in suitable place and should be set once using <code>Slides.set_citations</code> function (or see below).</li>
+<li>With citations mode set as 'footnote', you can add <span style='color:#DC143C;'>refs`ncol_refs`</span> to add citations anywhere on slide. If <code>ncol_refs</code> is not given, it will be picked from layout settings.</li>
+<li>In the synced markdown file (also its included files) through <code>Slides.sync_with_file</code>, you can add citations with block sytnax:                           <br />
+<code>```citations [inline or footnote]
+@key1: Saboor et. al., 2025
+@key2: A citations can span multiple lines, but key should start on new line
+```</code></li>
+</ul>
+</dd>
 <dt>Sections &amp; TOC</dt>
 <dd><span style='color:#DC143C;'>section`content`</span> to add a section that will appear in the table of contents.
 <span style='color:#DC143C;'>toc`Table of content header text`</span> to add a table of contents. See <code>Slides.docs()</code> for creating a <code>TOC</code> accompanied by section summary.</dd>
@@ -1659,8 +1668,8 @@ With citations mode set as 'footnote', you can add <span style='color:#DC143C;'>
 <li>Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text {: rowspan="2" colspan="1"}| inside a cell, should be a space bewteen text and attributes.</li>
 <li>A syntax <span style='color:#DC143C;'>func`?Markdown?`</span> will be converted to <span style='color:#DC143C;'>func`Parsed HTML`</span> in markdown. Useful to nest special syntax.</li>
 <li>Escape a backtick with \, i.e. <span style='color:#DC143C;'>\\` → `</span>. In Python &gt;=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.</li>
-<li><span style='color:#DC143C;'>include`markdown_file.md`</span> to include a file in markdown format.</li>
-<li>Inline columns can be added by using <span style='color:#DC143C;'>stack`Column A | Column B`</span> sytnax. You can escape pipe <code>|</code> with <code>\|</code> to use it as text inside stack.</li>
+<li><span style='color:#DC143C;'>include`markdown_file.md`</span> to include a file in markdown format. These files are watched for eidts if included in synced markdown file via <code>Slides.sync_with_file</code>.</li>
+<li>Inline columns/rows can be added by using <span style='color:#DC143C;'>stack`Column A | Column B`</span> sytnax with <code>?</code> next to opening ` and before closing ` most of the time to properly parse inner markdown. You can escape pipe <code>|</code> with <code>\|</code> to use it as text inside stack.</li>
 <li>Block multicolumns are made using follwong syntax, column separator is triple plus <code>+++</code>:</li>
 </ul><div><span class="lang-name">Markdown</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
@@ -1750,11 +1759,11 @@ which is added by default and can be used to build nested html blocks.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 25.0%, var(--bg2-color) 25.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801040384">
+                    <section id="s-2775583893344">
 
 <style>
 
-#s-2285801040384 .SlideArea.n7  > .jp-OutputArea:empty:after {
+#s-2775583893344 .SlideArea.n7  > .jp-OutputArea:empty:after {
     content : "Slide(number = 7, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1848,11 +1857,11 @@ If you need output html, use <code>returns = True</code> but that won't display 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 29.1667%, var(--bg2-color) 29.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800988000">
+                    <section id="s-2775583894928">
 
 <style>
 
-#s-2285800988000 .SlideArea.n8  > .jp-OutputArea:empty:after {
+#s-2775583894928 .SlideArea.n8  > .jp-OutputArea:empty:after {
     content : "Slide(number = 8, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1872,11 +1881,11 @@ If you need output html, use <code>returns = True</code> but that won't display 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 33.3333%, var(--bg2-color) 33.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801320608">
+                    <section id="s-2775583891664">
 
 <style>
 
-#s-2285801320608 .SlideArea.n9  > .jp-OutputArea:empty:after {
+#s-2775583891664 .SlideArea.n9  > .jp-OutputArea:empty:after {
     content : "Slide(number = 9, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1923,11 +1932,11 @@ If <code>returns</code> is False (by default), then source is displayed before t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 37.5%, var(--bg2-color) 37.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801321664">
+                    <section id="s-2775583605616">
 
 <style>
 
-#s-2285801321664 .SlideArea.n10  > .jp-OutputArea:empty:after {
+#s-2775583605616 .SlideArea.n10  > .jp-OutputArea:empty:after {
     content : "Slide(number = 10, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1939,46 +1948,46 @@ If <code>returns</code> is False (by default), then source is displayed before t
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-2285800986464" class="slide-link citelink">Introduction</a>
+    <a href="#s-2775583428272" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2285800608912" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2775583397488" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-2285801321664" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2775583605616" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801323728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2775583744208" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801271504" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2775583746176" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285800970656" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2775583746512" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801301040" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2775583895456" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">10</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 41.6667%, var(--bg2-color) 41.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801322816">
+                    <section id="s-2775583746128">
 
 <style>
-#s-2285801322816 {
+#s-2775583746128 {
     --bg1-color : linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color));
 }
 
 
-#s-2285801322816 .SlideArea.n11 .highlight {
+#s-2775583746128 .SlideArea.n11 .highlight {
     background : #8984;
 }
 </style>
@@ -2011,11 +2020,11 @@ e.g. <code class="highlight inline" style="white-space:pre;"><span class="n">Sli
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 45.8333%, var(--bg2-color) 45.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801323728">
+                    <section id="s-2775583744208">
 
 <style>
 
-#s-2285801323728 .SlideArea.n12  > .jp-OutputArea:empty:after {
+#s-2775583744208 .SlideArea.n12  > .jp-OutputArea:empty:after {
     content : "Slide(number = 12, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2221,11 +2230,11 @@ Only a subset of inline properties take effect if obj is a widget.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 50.0%, var(--bg2-color) 50.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801265232">
+                    <section id="s-2775583747856">
 
 <style>
 
-#s-2285801265232 .SlideArea.n13  > .jp-OutputArea:empty:after {
+#s-2775583747856 .SlideArea.n13  > .jp-OutputArea:empty:after {
     content : "Slide(number = 13, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2257,11 +2266,11 @@ can be added with <span style='color:#DC143C;'>toc`title`</span>.</p></div><div 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 54.1667%, var(--bg2-color) 54.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801265136">
+                    <section id="s-2775583744064">
 
 <style>
 
-#s-2285801265136 .SlideArea.n14  > .jp-OutputArea:empty:after {
+#s-2775583744064 .SlideArea.n14  > .jp-OutputArea:empty:after {
     content : "Slide(number = 14, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2270,7 +2279,7 @@ can be added with <span style='color:#DC143C;'>toc`title`</span>.</p></div><div 
                         <div class="SlideBox">
 
                             <div class="n14 SlideArea HideSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-c5f8063269e74a7abea7327cdd6c1cdd" href="#origin-c5f8063269e74a7abea7327cdd6c1cdd"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" style=""><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">Slides.ei.<b>interact</b></span><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-844a89a6a7d14ed1b3d2fab1a89afe92" href="#origin-844a89a6a7d14ed1b3d2fab1a89afe92"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" style=""><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">Slides.ei.<b>interact</b></span><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
 <p>This function is used for quick dashboards. Subclass <code>InteractBase</code> for complex applications.</p>
 <p><strong>Features</strong>:    </p>
 <ul>
@@ -2405,11 +2414,11 @@ There are few special rules in <code>props</code>:</p>
         </pre>
 </div>
 </div></div>
-<div class="widget-interact ips-interact i-2285805546176" style="width:100%;gap:0.2em;display:grid;height:max-content;"><div class="interact-app" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
+<div class="widget-interact ips-interact i-2775587212736" style="width:100%;gap:0.2em;display:grid;height:max-content;"><div class="interact-app" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
 "center center center"
 "center center center";grid-template-columns:1fr 2fr 1fr;grid-template-rows:1fr 3fr 1fr;"><div class="center" style="width:100%;gap:0.2em;grid-area:center;"><div class="date" style=""></div>
 <div class="Refresh-Btn btn-main" style="height:28px;padding:0 24px;width:max-content;"></div>
-<div class="out-main" style=""><div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p>Time: 12:1:19</p></div></div></div></div></div>
+<div class="out-main" style=""><div style="display:flex;flex-direction:row;gap:0.25em;padding:0.25em;"><div style="flex:1 1;"><p>Time: 1:12:49</p></div></div></div></div></div>
 <div class="other-area" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;"></div>
 <div class="" style=""><style>
 .ips-interact > .interact-app {
@@ -2506,10 +2515,10 @@ There are few special rules in <code>props</code>:</p>
 }
 
 
-.i-2285805546176.widget-interact.ips-interact > .interact-app {
+.i-2775587212736.widget-interact.ips-interact > .interact-app {
     background : var(--bg2-color);
 }
-.i-2285805546176.widget-interact.ips-interact > .interact-app .out-main {
+.i-2775587212736.widget-interact.ips-interact > .interact-app .out-main {
     height : 2em;
 }
 </style></div>
@@ -2545,11 +2554,11 @@ Use this to e.g. notify during running presentation. func accepts single arguemn
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 58.3333%, var(--bg2-color) 58.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800985552">
+                    <section id="s-2775583746608">
 
 <style>
 
-#s-2285800985552 .SlideArea.n15  > .jp-OutputArea:empty:after {
+#s-2775583746608 .SlideArea.n15  > .jp-OutputArea:empty:after {
     content : "Slide(number = 15, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2655,11 +2664,11 @@ Use this to e.g. notify during running presentation. func accepts single arguemn
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 62.5%, var(--bg2-color) 62.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800986128">
+                    <section id="s-2775583746080">
 
 <style>
 
-#s-2285800986128 .SlideArea.n16  > .jp-OutputArea:empty:after {
+#s-2775583746080 .SlideArea.n16  > .jp-OutputArea:empty:after {
     content : "Slide(number = 16, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2712,11 +2721,11 @@ You can <strong class="error">highlight</strong> code using <code>highlight</cod
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 66.6667%, var(--bg2-color) 66.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801271504">
+                    <section id="s-2775583746176">
 
 <style>
 
-#s-2285801271504 .SlideArea.n17  > .jp-OutputArea:empty:after {
+#s-2775583746176 .SlideArea.n17  > .jp-OutputArea:empty:after {
     content : "Slide(number = 17, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2728,8 +2737,10 @@ You can <strong class="error">highlight</strong> code using <code>highlight</cod
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Loading from File/Exporting to HTML</h2></div><div style="width: 100%; box-sizing:border-box;"><p class="note info">You can parse and view a markdown file. The output you can save by exporting notebook in other formats.</p></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>sync_with_file</b></span><br><p>Auto update slides when content of markdown file changes. You can stop syncing using <code>Slides.unsync</code> function.
 interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs about content of file.</p>
 <p>The variables inserted in file content are used from top scope.</p>
+<p>You can add files inside linked file using include`file_path.md` syntax, which are also watched for changes.
+This helps modularity of content, and even you can link a citation file in markdown format. Read more in <code>Slides.xmd_syntax</code> about it.</p>
 <div class="note-tip">
-<p>To debug a linked file, use EOF on its own line to keep editing and clearing errors.</p>
+<p>To debug the linked file or included file, use EOF on its own line to keep editing and clearing errors.</p>
 </div>
 </div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>demo</b></span><br><p>Demo slides with a variety of content.</p>
 </div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>docs</b></span><br><p>Create presentation from docs of IPySlides.</p>
@@ -2752,11 +2763,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 70.8333%, var(--bg2-color) 70.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800970656">
+                    <section id="s-2775583746512">
 
 <style>
 
-#s-2285800970656 .SlideArea.n18  > .jp-OutputArea:empty:after {
+#s-2775583746512 .SlideArea.n18  > .jp-OutputArea:empty:after {
     content : "Slide(number = 18, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2768,42 +2779,42 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-2285800986464" class="slide-link citelink">Introduction</a>
+    <a href="#s-2775583428272" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2285800608912" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2775583397488" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2285801321664" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2775583605616" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2285801323728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2775583744208" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-2285801271504" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2775583746176" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-2285800970656" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2775583746512" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-2285801301040" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2775583895456" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">18</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.0%, var(--bg2-color) 75.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2837,11 +2848,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.463%, var(--bg2-color) 75.463%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2875,11 +2886,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.9259%, var(--bg2-color) 75.9259%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2913,11 +2924,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.3889%, var(--bg2-color) 76.3889%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2951,11 +2962,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.8519%, var(--bg2-color) 76.8519%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2989,11 +3000,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 77.3148%, var(--bg2-color) 77.3148%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3027,11 +3038,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 77.7778%, var(--bg2-color) 77.7778%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3065,11 +3076,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 78.2407%, var(--bg2-color) 78.2407%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3103,11 +3114,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 78.7037%, var(--bg2-color) 78.7037%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800911296">
+                    <section id="s-2775583885392">
 
 <style>
 
-#s-2285800911296 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2775583885392 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3141,11 +3152,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 79.1667%, var(--bg2-color) 79.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801274336">
+                    <section id="s-2775583745168">
 
 <style>
 
-#s-2285801274336 .SlideArea.n20  > .jp-OutputArea:empty:after {
+#s-2775583745168 .SlideArea.n20  > .jp-OutputArea:empty:after {
     content : "Slide(number = 20, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3229,11 +3240,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 83.3333%, var(--bg2-color) 83.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801271552">
+                    <section id="s-2775583746944">
 
 <style>
 
-#s-2285801271552 .SlideArea.n21  > .jp-OutputArea:empty:after {
+#s-2775583746944 .SlideArea.n21  > .jp-OutputArea:empty:after {
     content : "Slide(number = 21, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3261,11 +3272,11 @@ interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 87.5%, var(--bg2-color) 87.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801301184">
+                    <section id="s-2775583892144">
 
 <style>
 
-#s-2285801301184 .SlideArea.n22  > .jp-OutputArea:empty:after {
+#s-2775583892144 .SlideArea.n22  > .jp-OutputArea:empty:after {
     content : "Slide(number = 22, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3532,11 +3543,11 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 91.6667%, var(--bg2-color) 91.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285800955040">
+                    <section id="s-2775583895312">
 
 <style>
 
-#s-2285800955040 .SlideArea.n23  > .jp-OutputArea:empty:after {
+#s-2775583895312 .SlideArea.n23  > .jp-OutputArea:empty:after {
     content : "Slide(number = 23, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3552,17 +3563,20 @@ besides standard ipywidgets icons.</p>
 <li>In python file, it stays same.</li>
 <li>You need to run cell twice if creating slides inside a for loop while using <code>-1</code>.</li>
 <li>Additionally, in python file, you can use <code>Slides.build_</code> instead of using <code>-1</code>.</li>
-</ul></div></div>
+</ul>
+<div class="note-warning">
+<p>Some kernels may not support auto slide numbering inside notebook.</p>
+</div></div></div>
                             </div>
                             <span class="Number">23</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 95.8333%, var(--bg2-color) 95.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-2285801301040">
+                    <section id="s-2775583895456">
 
 <style>
 
-#s-2285801301040 .SlideArea.n24  > .jp-OutputArea:empty:after {
+#s-2775583895456 .SlideArea.n24  > .jp-OutputArea:empty:after {
     content : "Slide(number = 24, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3816,6 +3830,9 @@ besides standard ipywidgets icons.</p>
 <code><span class="s2">            - In python file, it stays same.</span></code>
 <code><span class="s2">            - You need to run cell twice if creating slides inside a for loop while using `-1`.</span></code>
 <code><span class="s2">            - Additionally, in python file, you can use `Slides.build_` instead of using `-1`.</span></code>
+<code></code>
+<code><span class="s2">            ::: note-warning</span></code>
+<code><span class="s2">                Some kernels may not support auto slide numbering inside notebook.</span></code>
 <code><span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span></code>
 <code></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">([</span><span class="s1">&#39;## Presentation Code section`Presentation Code`&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">docs</span><span class="p">]))</span></code>
@@ -3828,7 +3845,7 @@ besides standard ipywidgets icons.</p>
                             <span class="Number">24</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 100.0%, var(--bg2-color) 100.0%, var(--bg2-color) 100%);"></div>
                         </div>
-                    </section><div class="Footer "><p style="white-space:nowrap;display:inline;margin-block:0;padding-left:8px;">IPySlides Documentation</p></div><div class="SlideLogo" style="margin:0;""> 
+                    </section><div class="Footer "><p style="white-space:nowrap;display:inline;margin-block:0;padding-left:8px;">IPySlides<span style='white-space:pre'> | </span><span style='background:None;color:var(--fg2-color);padding: 0.1em;border-radius:0.1em;'>Jul 09, 2025</span></p></div><div class="SlideLogo" style="margin:0;""> 
              
         </div>
     </div>

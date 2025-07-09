@@ -2,6 +2,7 @@
 Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
+import json
 import traitlets
 
 from traitlets import HasTraits, Int, Unicode, Bool, Float, TraitError
@@ -12,7 +13,7 @@ from ipywidgets.widgets.trait_types import InstanceDict
 
 from ..formatters import pygments, fix_ipy_image, code_css
 from ..xmd import parse
-from ..utils import html, today, _clipbox_children
+from ..utils import html, today, _clipbox_children, get_clips_dir, set_dir
 from . import intro, styles, _layout_css
 
 
@@ -24,7 +25,11 @@ class ConfigTraits(HasTraits):
         self._apply_change(change)
 
     @property
-    def props(self): return self.trait_values()
+    def props(self):  
+        return {
+            k : v.props if isinstance(v, ConfigTraits) else v # clean up
+            for k,v in self.trait_values().items()
+        }
 
     @property
     def main(self): return Settings._instance
@@ -55,7 +60,7 @@ def fix_sig(cls):
 
 @fix_sig
 class Colors(ConfigTraits):
-    "Set theme colors. This changes theme to Custom. Each name will be changed to a CSS vairiable as --[name]-color"
+    "Set theme colors if theme is set to Custom. Each name will be changed to a CSS vairiable as --[name]-color"
     fg1 = Unicode('black')
     fg2 = Unicode('#454545')
     fg3 = Unicode('#00004d')
@@ -66,8 +71,7 @@ class Colors(ConfigTraits):
     pointer = Unicode('red')
 
     def _apply_change(self, change): 
-        if change: # Don't at None
-            self.main._widgets.theme.value = "Custom"  # Trigger theme update
+        if change and self.main._widgets.theme.value == "Custom":  # Trigger theme update only if custom
             self.main._update_theme({'owner':self.main._widgets.theme}) # This chnage is important to update layout theme as well
 
 @fix_sig
@@ -81,8 +85,6 @@ class StylePerTheme(ConfigTraits):
     material_dark = Unicode('github-dark')
 
     def _apply_change(self, change): 
-        if change and change.new in pygments.styles.get_all_styles(): # go there safely
-            self.main._widgets.theme.value = change.name.replace('_',' ').title()
         self.main.code._apply_change(None) # works as validator too, run anyway
     
     def reset(self):
@@ -264,9 +266,11 @@ class Settings:
         self._tgl_menu = self._widgets.toggles.menu
 
         self._widgets.sliders.fontsize.observe(lambda c: self.fonts(size=c.new), names=["value"])
-        self._widgets.theme.observe(self._update_theme, names=["value"])
+        self._widgets.theme.observe(lambda c: self.theme(value=c.new), names=["value"])
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"])
         self._widgets.buttons.info.on_click(self._show_info)
+        self._widgets.buttons.sload.on_click(self._sync_settings)
+        self._widgets.buttons.sdump.on_click(self._sync_settings)
         self._widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self._wslider.observe(self._update_size, names=["value"])
         self._tgl_fscreen.observe(self._toggle_fullscreen, names=["value"])
@@ -284,7 +288,7 @@ class Settings:
         parameters=[Parameter('self', Parameter.POSITIONAL_ONLY), 
         *[Parameter(key, Parameter.POSITIONAL_OR_KEYWORD, default=None) for key in self._traits]]
         type(self).__call__.__signature__ = Signature(parameters) # can only be set over class level
-
+                                         
     def __call__(self, **kwargs):
         "Apply many settings at once! Can apply individual traits in a setting with assignment as well."
         for key, value in kwargs.items():
@@ -493,3 +497,19 @@ class Settings:
 
             if hasattr(self, '_hover_only') and self._hover_only:
                 self._tgl_menu.add_class('Hover-Only')
+
+    def _sync_settings(self,btn):
+        with set_dir(get_clips_dir().parent):
+            file = Path("settings.json")
+            if btn is self._widgets.buttons.sdump:
+                _req_configs = {
+                    key: getattr(self, key).props 
+                    for key in getattr(self,'_traits',[])
+                }
+                with file.open("w") as f: json.dump(_req_configs, f, indent=4)
+                self._slides.notify("Settings saved successfully to .ipyslides-assets/settings.json")
+            elif file.exists():
+                try:
+                    self(**json.loads(file.read_text()))
+                except Exception as e:
+                    self._slides.notify(self._slides.error("Exception", str(e)))

@@ -297,12 +297,12 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-width': f'{layout.width}% !important',
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
-                **({"top": f"{layout.yoffset}% !important", "margin-top": "0 !important"} if layout.yoffset is not None else {}), # global yoffset, even centered
             },
-            '^.n0 > .jp-OutputArea': { # title slide should not have yoffset, it seems ridiculous
-                "top": "unset !important",   
-                "margin-top": "auto !important",
-            },
+            **({'^:not(.n0) > .jp-OutputArea': { # no yoffset on title slide, leave it centered globally
+                    "top": f"{layout.yoffset}% !important", 
+                    "margin-top": "0 !important", 
+                }
+            } if layout.yoffset is not None else {}),# global yoffset, even centered
             '.slide-link, .link-button': {
                 'color':'var(--accent-color)',
                 'text-decoration':'none !important',

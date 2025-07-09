@@ -90,6 +90,7 @@ def layout_css(accent_color, aspect):
                 ".LogoHtml": {
                     "position": "absolute !important",
                     "^, .widget-html-content": {"line-height": "0 !important"},
+                    "@media print": {"position": "fixed !important",},
                 }, # other properties are set internally
                 ".Loading": {
                     "position": "absolute",
@@ -281,6 +282,7 @@ def layout_css(accent_color, aspect):
                 "left": "0 !important",
                 "bottom": "2px !important", # leave space for progressbar
                 "width": "100% !important",
+                "@media print": {"position": "fixed !important","background":"var(--bg1-color) !important",},
                 "^,^ > div": {
                     "padding": "0px",
                     "margin": "0px",
@@ -620,9 +622,6 @@ def layout_css(accent_color, aspect):
                 },
                 ".Controls, .NavWrapper button, div.LaserPointer": {
                     "display": "none !important",
-                },
-                ".NavWrapper p": {
-                    "margin-left": "16px",
                 },
                 "pre, .SlideBox, .SlidesWrapper, .SlideArea": {
                     "height": "auto !important",

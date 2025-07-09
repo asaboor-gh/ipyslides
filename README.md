@@ -29,7 +29,7 @@
 - 📤 Export to HTML/PDF (limited content type)
 - 🎯 Frame-by-frame animations
 - 📝 Speaker notes support
-- 🔄 Markdown file synchronization
+- 🔄 Markdown, citations and settings files synchronization
 - ✏️ Drawing support during presentations
 
 --- 

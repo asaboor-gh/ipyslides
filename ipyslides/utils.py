@@ -72,7 +72,7 @@ def hl(obj, language="python"): # No need to have in __all__, just for markdown
             '<br>'.join('<code class="highlight inline" style="white-space:pre;">' + c 
                 for c in re.findall(r'\<\s*code.*?\>(.*?\<\s*\/\s*code\s*\>)', 
                     highlight(obj, language=language).value, 
-                    flags=re.DOTALL | re.MULTILINE | re.UNICODE
+                    flags=re.DOTALL | re.MULTILINE
         ))) # intended to be one liner, but leave for flexibility
     except:
         return html('code',str(obj)) # Fallback , no need to raise errors

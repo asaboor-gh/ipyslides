@@ -6,7 +6,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, css_class
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='butt' stroke-linejoin='round' stroke-width='7.07'%3E%3Cpath d='M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5' stroke='#43D675'/%3E%3Cpath d='M7.5 27.5L22.5 42.5' stroke='#4F8EF7'/%3E%3Cpath d='M32.5 32.5L20 20L30 10L42.5 22.5' stroke='#4F8EF7'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='butt' stroke-linejoin='round' stroke-width='7.07'%3E%3Cpath d='M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5' stroke='%2343D675'/%3E%3Cpath d='M7.5 27.5L22.5 42.5' stroke='%234F8EF7'/%3E%3Cpath d='M32.5 32.5L20 20L30 10L42.5 22.5' stroke='%234F8EF7'/%3E%3C/svg%3E">
     <title>Slides</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>

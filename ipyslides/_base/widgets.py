@@ -94,6 +94,8 @@ class _Buttons:
     end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
     info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
     export  =  Button(description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
+    sload   =  Button(description="Load from File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'), tooltip='File:.ipyslides-assets/settings.json')
+    sdump   =  Button(description="Sync to File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='File:.ipyslides-assets/settings.json')
     
 @dataclass(frozen=True)
 class _Toggles:
@@ -207,6 +209,8 @@ class Widgets:
                 self.sliders.fontsize,
                 self.sliders.width,
                 self.theme,
+                HTML('<b>Sync Settings</b>',layout = _html_layout),
+                self.buttons.sload, self.buttons.sdump,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.focus, self.checks.notes,self.checks.toast,
                 self.checks.navgui, self.checks.reflow,

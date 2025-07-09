@@ -256,6 +256,15 @@ class TagFixer(HTMLParser):
 tagfixer = TagFixer()
 del TagFixer
 
+# This shoul be outside, as needed in other modules
+def resolve_included_files(text_chunk):
+    "Markdown files added by include`file.md` should be inserted as plain."
+    all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags = re.DOTALL)
+    for match in all_matches:
+        with open(match, "r", encoding="utf-8") as f:
+            text = "\n" + f.read() + "\n" 
+            text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
+    return text_chunk
 
 class XMarkdown(Markdown):
     def __init__(self):
@@ -329,15 +338,6 @@ class XMarkdown(Markdown):
             return content
         else:
             return display(*outputs)
-    
-    def _resolve_files(self, text_chunk):
-        "Markdown files added by include`file.md` should be inserted a plain."
-        all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags=re.DOTALL)
-        for match in all_matches:
-            with open(match, "r", encoding="utf-8") as f:
-                text = "\n" + f.read() + "\n" 
-                text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
-        return text_chunk
 
     def _resolve_nested(self, text_chunk):
         old_returns = self._returns
@@ -416,12 +416,12 @@ class XMarkdown(Markdown):
         """Replaces variables with placeholder after conversion to respect all other extensions.
         Returns str or list of outputs based on context. To ensure str, use `self.convert2str`.
         """
-        text = self._resolve_files(text)
+        text = resolve_included_files(text)
         text = re.sub(r"\\\`", "&#96;", text)  # Escape backticks after files added
         text = re.sub(r"\\%\{", r"&#37;{", text) # Escap \%{, before below latest addition of variables %{var}
 
         # Now let's convert old `{var}` to new  %{var} for backward compatibility
-        text = re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL | re.UNICODE) # Python unicode vars
+        text = re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL)
 
         text = self._resolve_nested(text)  # Resolve nested objects in form func`?text?` to func`html_repr`
         if self._slides and self._slides.this: # under building slide
@@ -525,7 +525,7 @@ class XMarkdown(Markdown):
                 return self._handle_var(value,ctx = match.group()) 
             return self._handle_var(hfmtr.vformat(match.group()[1:], (), user_ns))
         
-        html_output = re.sub(r"%\{([^{]*?)\}", handle_match, html_output, flags=re.DOTALL | re.UNICODE) # unicode varibales match
+        html_output = re.sub(r"%\{([^{]*?)\}", handle_match, html_output, flags=re.DOTALL)
 
         # Replace inline  functions
         from . import utils  # Inside function to avoid circular import
@@ -611,8 +611,8 @@ def _matched_vars(text):
     matches = [var 
         for slash, var, _ in re.findall(
             r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]*)(.*?)\s*\}", # avoid \%{ escape, [\w\d_]* means zero or more word, to allow single letter
-            re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL | re.UNICODE), # backward `{var}` compatibility
-            flags = re.DOTALL | re.UNICODE, # unicode varaiable names support
+            re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL), # backward `{var}` compatibility
+            flags = re.DOTALL,
         ) if not slash
     ]
     return tuple(matches) 
