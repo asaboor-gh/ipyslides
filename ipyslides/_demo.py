@@ -9,10 +9,10 @@ def demo_slides(slides):
     slides.create(range(N)) # Create slides first, this is faster
     
     slides.settings.footer.text = 'Author: Abdul Saboor عبدالصبور'
-    slides.set_citations({
-            'pf': r'This is refernce to FigureWidget using alert`cite\`pf\`` syntax',
-            'This': 'I was cited for no reason',
-        }, mode = 'footnote')
+    slides.set_citations(r'''
+        @pf: This is refernce to FigureWidget using alert`cite\`pf\`` syntax
+        @This: I was cited for no reason
+    ''', mode = 'footnote')
 
     # title slide should alway be overwritten by 0 
     slides.build(0, slides.fmt("""

@@ -162,13 +162,23 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
         
         if i == len(all_matches): # only last one to take effect
             slide_instance.this.yoffset(int(match))
+    
+    # @key -> cite`key` before other stuff
+    at_key_pattern = re.compile(r'''
+        (?<!\\) # negative lookbehind: don't match if there's a backslash
+        (?<!\w) # Don't match if a word before so example@google.com is safe
+        @(?:[A-Za-z_]\w*)(?:\s*,\s*@(?:[A-Za-z_]\w*))*   # @key, @key4 (citation) or single @key
+    ''', re.VERBOSE)
+    for match in at_key_pattern.findall(text_chunk):
+        tocite = f"cite`{match.replace('@','')}`"
+        text_chunk = text_chunk.replace(match, tocite, 1)
 
     # cite`key`
     all_matches = re.findall(r"cite\`(.*?)\`", text_chunk, flags=re.DOTALL)
     for match in all_matches:
         xmd_key = xmd_instance._handle_var(slide_instance._cite(match.strip()))
         text_chunk = text_chunk.replace(f"cite`{match}`", xmd_key, 1)
-    
+
     # section`This is section title`
     all_matches = re.findall(
         r"section\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
@@ -425,9 +435,9 @@ class XMarkdown(Markdown):
 
         text = self._resolve_nested(text)  # Resolve nested objects in form func`?text?` to func`html_repr`
         if self._slides and self._slides.this: # under building slide
-            text = resolve_objs_on_slide(
-                self, self._slides, text
-            )  # Resolve objects in xmd related to current slide
+            text = re.sub("ESCAPED_AT_SYMBOL","@", resolve_objs_on_slide(
+                self, self._slides, re.sub(r"\\@","ESCAPED_AT_SYMBOL", text) # escape \@cite_key before resolving objects on slides
+            ))  # Resolve objects in xmd related to current slide
 
         # Resolve <link:label:origin text> and <link:label:target text?>
         text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", r"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>", text)

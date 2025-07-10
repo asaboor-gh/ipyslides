@@ -3,6 +3,7 @@ Author Notes: Classes in this module should only be instantiated in Slides class
 and then provided to other classes via composition, not inheritance.
 """
 import json
+import atexit
 import traitlets
 
 from traitlets import HasTraits, Int, Unicode, Bool, Float, TraitError
@@ -125,7 +126,7 @@ class Theme(ConfigTraits):
         themes = self.main._widgets.theme.options
         if proposal["value"] not in themes:
             raise ValueError(f"Theme value expect on the followings: {themes!r}")
-        self.main._widgets.theme.value = proposal["value"] # It will update theme itself
+        self.main._widgets.theme.value = proposal["value"] # needs a robust update
         return proposal["value"]  
 
 @fix_sig
@@ -190,9 +191,13 @@ class Toggle(ConfigTraits):
     toast  = Bool(True)
     focus  = Bool(True)
 
-    def _apply_change(self, change):
-        if change and (widget := getattr(self.main._widgets.checks, change.name, None)):
-            widget.value = change.new
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for trait in self.class_own_traits():
+            if widget := getattr(self.main._widgets.checks, trait, None):
+                traitlets.link((self,trait),(widget, "value"))
+
+    def _apply_change(self, change): pass
 
 class AutoUnicode(Unicode):
     def validate(self, obj, value):
@@ -270,7 +275,6 @@ class Settings:
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"])
         self._widgets.buttons.info.on_click(self._show_info)
         self._widgets.buttons.sload.on_click(self._sync_settings)
-        self._widgets.buttons.sdump.on_click(self._sync_settings)
         self._widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self._wslider.observe(self._update_size, names=["value"])
         self._tgl_fscreen.observe(self._toggle_fullscreen, names=["value"])
@@ -498,18 +502,20 @@ class Settings:
             if hasattr(self, '_hover_only') and self._hover_only:
                 self._tgl_menu.add_class('Hover-Only')
 
-    def _sync_settings(self,btn):
+    @atexit.register
+    def _sync_settings(self,btn = None):
         with set_dir(get_clips_dir().parent):
             file = Path("settings.json")
-            if btn is self._widgets.buttons.sdump:
-                _req_configs = {
+            if btn is self._widgets.buttons.sload and file.exists():
+                try:
+                    with self._slides._loading_splash(btn):
+                        self(**json.loads(file.read_text()))
+                except Exception as e:
+                    self._slides.notify(self._slides.error("Exception", str(e)))
+            else:
+                _req_configs = { 
                     key: getattr(self, key).props 
                     for key in getattr(self,'_traits',[])
                 }
-                with file.open("w") as f: json.dump(_req_configs, f, indent=4)
-                self._slides.notify("Settings saved successfully to .ipyslides-assets/settings.json")
-            elif file.exists():
-                try:
-                    self(**json.loads(file.read_text()))
-                except Exception as e:
-                    self._slides.notify(self._slides.error("Exception", str(e)))
+                with file.open("w") as f: 
+                    json.dump(_req_configs, f, indent=4)

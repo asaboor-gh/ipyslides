@@ -99,7 +99,7 @@ class BaseSlides:
         Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
         Citations
-        : - alert`cite\`key\`` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
+        : - alert`cite\`key1,key2\``/alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
         - With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
         - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
         <code>\\`\\`\\`citations [inline or footnote]
@@ -265,13 +265,7 @@ class BaseSlides:
             mode, refs = [line.strip() for line in refs_matches[0].split('\n',1)] # should be ```citations mode and then below
             if not mode:
                 mode = self._cite_mode # keep same
-
-            refs_dict = {
-                k.strip() : v.strip() 
-                for k,v in re.findall(r'^@(.+?):\s*(.*?)(?=^@|\Z)', refs, flags=re.MULTILINE | re.DOTALL)
-            }
-            self.set_citations(refs_dict, mode=mode)
-
+            self.set_citations(refs, mode=mode)
 
         if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt
             (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
@@ -560,9 +554,9 @@ class BaseSlides:
         with self.build(-1):
             self.write(r'''
                 ## Citations and Sections
-                Use syntax alert`cite\`key\`` to add citations which should be already set by hl`Slides.set_citations(data, mode)` method.
+                Use syntax alert`cite\`key\``/alert`\@key` to add citations which should be already set by hl`Slides.set_citations(data, mode)` method.
                 Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
-                hl`Slides.settings.layout(..., ncol_refs = int)`. cite`A`
+                hl`Slides.settings.layout(..., ncol_refs = int)`. @A
                        
                 Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
                 can be added with alert`toc\`title\``.

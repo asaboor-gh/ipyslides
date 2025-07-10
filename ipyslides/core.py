@@ -1,10 +1,11 @@
-import sys, os, json, re, math, uuid
+import sys, os, json, re, math, uuid, textwrap
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 from collections.abc import Iterable
 from itertools import zip_longest
 from typing import Tuple, Union
 from functools import wraps
+from pathlib import Path
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
@@ -166,14 +167,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
         self._md_vars = {} # will be handled by a post run cell
 
-        with self.set_dir(self._assets_dir):  # Set assets directory
-            if os.path.isfile("citations.json"): # legacy filename, want to somehow depict it private with .
-                os.rename("citations.json",".citations.json")
-            self._set_citations_from_file(
-                ".citations.json"
-            )  # Load citations from file if exists
-
-
+        self._set_saved_citations() # from previous session
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
         self.widgets.buttons.refresh.on_click(self._force_update)
@@ -465,8 +459,24 @@ class Slides(BaseSlides,metaclass=Singleton):
                 slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='footnote'):
-        r"""Set citations from dictionary or file that should be a JSON file with citations keys and values, key should be cited in markdown as cite\`key\`.
+        r"""Set citations from dictionary or string with content like `@key: citation value` on their own lines, 
+        key should be cited in markdown as cite\`key\`/\@key, optionally comma separated keys.
         `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by hl`Slides.settings.layout(..., ncol_refs=N)`.
+
+        ```python
+        set_citations({"key1":"value1","key2":"value2"})
+        
+        set_citations('''
+        @key1: citation for key1
+        @key2: citation for key2
+        ''')
+
+        with open("citations_file.md","r") as f:
+            set_citations(f.read()) # same content as string above
+
+        with open("citations_file.json","r") as f:
+            set_citations(json.load(f))   
+        ```
 
         ::: note
             - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
@@ -475,12 +485,12 @@ class Slides(BaseSlides,metaclass=Singleton):
         if isinstance(data, dict):
             self._set_ctns(data)
         elif isinstance(data, str):
-            if not os.path.isfile(data): # raise error here, not in file to let it load by __init__ silently
-                raise FileNotFoundError(f"File: {data!r} does not exists.")
-            
-            self._set_citations_from_file(data) 
+            self._set_ctns({
+                k.strip() : v.strip() 
+                for k,v in re.findall(r'^@(.+?):\s*(.*?)(?=^@|\Z)', textwrap.dedent(data), flags=re.MULTILINE | re.DOTALL)
+            })
         else:
-            raise TypeError(f"data should be a dict or path to a json file for citations, got {type(data)}")
+            raise TypeError(f"data should be a dict or string content (including read from file), got {type(data)}")
     
         # Update mode and display after setting citations
         if mode not in ["inline", "footnote"]:
@@ -496,12 +506,15 @@ class Slides(BaseSlides,metaclass=Singleton):
                 json.dump(self._citations, f, indent=4)
 
 
-    def _set_citations_from_file(self, filename):
+    def _set_saved_citations(self):
         "Load resources from file if present silently"
-        if os.path.isfile(filename):
-            with open(filename, "r", encoding="utf-8") as f:
-                self._set_ctns(json.load(f))
-    
+        with self.set_dir(self._assets_dir):  # Set assets directory
+            if os.path.isfile("citations.json"): # legacy filename, want to somehow depict it private with .
+                os.rename("citations.json",".citations.json")
+        
+            if (path := Path(".citations.json")).exists():
+                self._set_ctns(json.loads(path.read_text()))
+            
     @property
     def cited_slides(self):
         "Return slides which have citations. See also `all_slides`, `markdown_slides`."
@@ -776,7 +789,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     @contextmanager
     def _loading_splash(self, btn, extra = None):
         if btn:
-            btn.icon = "minus"
+            if btn is self.widgets.buttons.refresh: btn.icon = "minus"
             btn.disabled = True  # Avoid multiple clicks
         self.widgets.htmls.loading.layout.display = "block"
         self.widgets.htmls.loading.value = (extra or '') + self.icon('loading', color='var(--accent-color, skyblue)',size='48px').value
@@ -784,7 +797,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             yield
         finally:
             if btn:
-                btn.icon = "plus"
+                if btn is self.widgets.buttons.refresh: btn.icon = "plus"
                 btn.disabled = False
                 self.widgets.htmls.loading.value = ""
                 self.widgets.htmls.loading.layout.display = "none"
