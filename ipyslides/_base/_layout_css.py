@@ -123,20 +123,11 @@ def layout_css(accent_color, aspect):
                     "overflow": "hidden !important",  # To hide at edges */
                 },
                 ".SlideArea": {
-                    "^.Out-Sync" : {
-                        "visibility": "visible !important",
-                        "z-index": "12 !important",
-                        "height": "50% !important", # see behind
-                        "width": "50% !important", # see behind
-                        "border": "2px solid red !important",
-                        "background": "#fdd",
-                        "^:nth-child(1)" : {"translate": "-16px -16px !important"},
-                        "^:nth-child(2)" : {"translate": "-8px -8px !important"},
-                        "^::before" : {
-                            "content": "'citations got out of sync, rerun corresponding slides to update'",
-                            "font-size": "120%",
-                            "color":"red",
-                        }
+                    "^.Out-Sync > .jp-OutputArea::before" : {
+                        "content": "'citations got out of sync, rerun corresponding slide source to update'",
+                        "color":"red",
+                        "border": "1px solid red",
+                        "display": "block",
                     },
                     ".export-only": {"display": "none !important"},
                     ".jp-OutputArea": {
