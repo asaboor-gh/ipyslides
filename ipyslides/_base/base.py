@@ -1,5 +1,5 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
-import os, re, textwrap
+import os, re, textwrap, json
 import traceback
 from pathlib import Path
 from contextlib import ContextDecorator
@@ -254,18 +254,8 @@ class BaseSlides:
         content, fmt_kws = fmt._astuple(content) # fmt used on top level, or string means no keywords
         content = re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0]
 
-        if synced and (refs_matches := re.findall(
-            r'```citations(.*?)\n```', content, flags= re.DOTALL | re.MULTILINE
-            )):
-            if len(refs_matches) != 1:
-                raise ValueError(f"Only a single block of citations is allowed, found {len(refs_matches)} blocks {refs_matches}")
-            
-            # Citations block will itself be remove during parsing slide
-            # We need to keep here to compare changes, otherwise it cannot detect
-            mode, refs = [line.strip() for line in refs_matches[0].split('\n',1)] # should be ```citations mode and then below
-            if not mode:
-                mode = self._cite_mode # keep same
-            self.set_citations(refs, mode=mode)
+        if synced:
+            content = self._process_citations(content)
 
         if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt
             (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
@@ -286,6 +276,21 @@ class BaseSlides:
         # Return refrence to slides for quick update
         return handles
     
+    def _process_citations(self, content):
+        match1, *others = re.findall(r'```citations(.*?)\n```', content, flags= re.DOTALL | re.MULTILINE)
+        if others:
+            raise ValueError(f"Only a single block of citations is parsed, found {len(others) + 1} blocks")
+            
+        content = content.replace(f'```citations{match1}\n```','') # clean up
+        if getattr(self,'_bib_md','') != match1:
+            self._bib_md = match1 # set for next test
+
+            mode, refs = [line.strip() for line in match1.split('\n',1)] # should be ```citations mode and then below
+            if not mode:
+                mode = self._cite_mode # keep same
+            self.set_citations(refs, mode=mode)
+        return content
+    
     def sync_with_file(self, start_slide_number, /, path, interval=500):
         r"""Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
         interval is in milliseconds, 500 ms default. Read `Slides.build` docs about content of file.
@@ -293,7 +298,15 @@ class BaseSlides:
         The variables inserted in file content are used from top scope.
 
         You can add files inside linked file using include\\`file_path.md\\` syntax, which are also watched for changes.
-        This helps modularity of content, and even you can link a citation file in markdown format. Read more in `Slides.xmd_syntax` about it.
+        This helps modularity of content, and even you can link a citation file in markdown format as shown below. Read more in `Slides.xmd_syntax` about it.
+
+        ```markdown
+         ```citations footnote
+         @key1: Saboor et. al., 2025
+         @key2: A citations can span multiple lines, but key should start on new line
+         <!-- Or put this content in a file 'bib.md' and then inside citations block use include`bib.md` -->
+         ```
+        ```
         
         ::: note-tip
             To debug the linked file or included file, use EOF on its own line to keep editing and clearing errors.
@@ -331,7 +344,6 @@ class BaseSlides:
                         included_files.update(
                             map(Path, re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL))
                         ) 
-                        print(included_files)
                         self._from_markdown(start, 
                             resolve_included_files(content), # add included file text to be detected for changes
                             synced=True # only one citation block allowed for consistency
@@ -340,7 +352,7 @@ class BaseSlides:
                         self._unregister_postrun_cell() # No cells buttons from inside file code run
                     except:
                         e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
-                        self.notify(f"{error('SyncError','something went wrong')}<br/><br/>{error(e,text)}",20)
+                        self.notify(f"{error('SyncError','something went wrong')}<br/>{error(e,text)}",20)
             else:
                 self.notify(error("SyncError", f"file {path!r} no longer exists!").value, 20)
         
@@ -451,7 +463,7 @@ class BaseSlides:
         from ..core import Slides
 
         self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'footnote')
-        self.settings.footer(text='IPySlides Documentation', date=None)
+        self.settings.footer(text=self.get_logo("1em") + "IPySlides Documentation", date=None)
 
         with self.build(0): # Title page
             self.this.set_bg_image(self.get_logo(),0.25, filter='blur(10px)', contain=True)

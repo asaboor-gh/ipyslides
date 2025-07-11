@@ -199,7 +199,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     for match in all_matches:
         slide_instance.this._set_refs = False # already added here
         _cits = ''.join(v.value for v in sorted(slide_instance.this._citations.values(), key=lambda x: x._id))
-        out = f"<div class='Citations' style='column-count: {match} !important;'>{_cits}</div>"
+        out = f"<div class='Citations text-small' style='column-count: {match} !important;'>{_cits}</div>"
         text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
 
     return text_chunk
@@ -374,6 +374,11 @@ class XMarkdown(Markdown):
         if "multicol" in line:
             out = self._parse_multicol(data, line, _class)
             return [XTML(out)] if isinstance(out, str) else out # Writer under frames
+        elif "citations" in line:
+            return [error("ValueError", 
+                f"citations block is only parsed inside synced markdown file! "
+                f"Use `Slides.set_citations` otherwise.\n```{block}\n```"
+            )]
         else:
             out = XTML() # empty placeholder
             try:

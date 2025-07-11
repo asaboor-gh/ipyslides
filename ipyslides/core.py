@@ -481,6 +481,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         ::: note
             - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
             - Citations are replaced with new ones, so latest use of this function reprsents available citations.
+            - Makrdown equivalent of this function is a citation block only supported in `Slides.sync_with_file`'s context.
         """
         if isinstance(data, dict):
             self._set_ctns(data)
@@ -727,11 +728,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         slide_number = int(line[0])  # First argument is slide number
 
         if "-m" in line[1:]:
-            clear_citations = lambda m: '' if synced else self.error("ValueError", 
-                "citations block is only allowed inside synced markdown file! Use `Slides.set_citations` otherwise.\n"
-                + m.group().replace('`','\`')
-            ).value
-            cell = re.sub(r'```citations(.*?)\n```',clear_citations, cell, flags=re.DOTALL | re.MULTILINE) 
             if any(map(lambda v: re.search(r"^\s*--\s*$",v, flags=re.DOTALL | re.MULTILINE), 
                 (re.findall(r'```multicol(.*?)\n```', cell, flags=re.DOTALL | re.MULTILINE) or [''])
                 )):

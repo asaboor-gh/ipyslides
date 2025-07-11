@@ -3,7 +3,6 @@ Author Notes: Classes in this module should only be instantiated in Slides class
 and then provided to other classes via composition, not inheritance.
 """
 import json
-import atexit
 import traitlets
 
 from traitlets import HasTraits, Int, Unicode, Bool, Float, TraitError
@@ -274,7 +273,6 @@ class Settings:
         self._widgets.theme.observe(lambda c: self.theme(value=c.new), names=["value"])
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"])
         self._widgets.buttons.info.on_click(self._show_info)
-        self._widgets.buttons.sload.on_click(self._sync_settings)
         self._widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self._wslider.observe(self._update_size, names=["value"])
         self._tgl_fscreen.observe(self._toggle_fullscreen, names=["value"])
@@ -502,20 +500,23 @@ class Settings:
             if hasattr(self, '_hover_only') and self._hover_only:
                 self._tgl_menu.add_class('Hover-Only')
 
-    @atexit.register
-    def _sync_settings(self,btn = None):
-        with set_dir(get_clips_dir().parent):
-            file = Path("settings.json")
-            if btn is self._widgets.buttons.sload and file.exists():
-                try:
-                    with self._slides._loading_splash(btn):
-                        self(**json.loads(file.read_text()))
-                except Exception as e:
-                    self._slides.notify(self._slides.error("Exception", str(e)))
-            else:
-                _req_configs = { 
-                    key: getattr(self, key).props 
-                    for key in getattr(self,'_traits',[])
-                }
-                with file.open("w") as f: 
-                    json.dump(_req_configs, f, indent=4)
+    def load(self, path):
+        "Load settings from a json file. You may need to dump settings and then edit for correct usage."
+        file = Path(path)
+        if file.exists():
+            try:
+                self(**json.loads(file.read_text()))
+            except Exception as e:
+                self._slides.notify(self._slides.error("Exception", str(e)))
+        else:
+            raise FileNotFoundError(f"File {path!r} does not exist!")
+
+    def dump(self, path):
+        "Dump the settings state to a json file. Use it once you have finalized a settings setup of slides."
+        file = Path(path)
+        _req_configs = { 
+            key: getattr(self, key).props 
+            for key in getattr(self,'_traits',[])
+        }
+        with file.open("w") as f: 
+            json.dump(_req_configs, f, indent=4)
