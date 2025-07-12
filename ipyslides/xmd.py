@@ -350,18 +350,19 @@ class XMarkdown(Markdown):
             return display(*outputs)
 
     def _resolve_nested(self, text_chunk):
+        def repl(m: re.Match): # Remove <p> and </p> tags at start and end, also keep backtick
+            return f'`{re.sub("^<p>|</p>$", "", self._parse(m.group(1), returns = True))}`' 
+
         old_returns = self._returns
         try:
-            # match func`?text?` to parse text and return func`html_repr`
-            all_matches = re.findall(
-                r"\`\?(.*?)\?\`", text_chunk, flags=re.DOTALL | re.MULTILINE
-            )
-            for match in all_matches:
-                repr_html = self._parse(match, returns = True)
-                repr_html = re.sub(
-                    "</p>$", "", re.sub("^<p>", "", repr_html)
-                )  # Remove <p> and </p> tags at start and end
-                text_chunk = text_chunk.replace(f"`?{match}?`", f"`{repr_html}`", 1)
+            # match legacy func`?text?` to parse text and return func`html_repr`
+            text_chunk = re.sub(r"\`\?(.*?)\?\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
+            
+            # Now match neseted `_ _` upto many levels
+            for depth in range(4,0,-1): # `____, `___, `__, `_ 
+                op, cl = '\%'*depth, '\%'*depth
+                text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
+
         finally:
             self._returns = old_returns
 

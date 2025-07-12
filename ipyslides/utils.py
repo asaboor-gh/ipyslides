@@ -648,10 +648,11 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     if not isinstance(objs, (list, tuple)):
         raise TypeError(f'objs should be a markdown string, list or tuple of objects, got {type(objs)}')
     
-    kwargs = {'display': 'flex', 'flex-direction': 'column' if vertical else 'row', 
-        **css_props, # do not allow to override display and flex-direction
-        'gap': '0.25em','padding':'0.25em',
-    }
+    kwargs = {
+        'gap': '0.25em', 
+        **css_props, # do not allow to override display and flex-direction, so come later
+        'display': 'flex', 'flex-direction': 'column' if vertical else 'row', 
+    } 
     if sizes is not None:
         if not isinstance(sizes, (list, tuple)):
             raise TypeError(f'sizes should be a list or tuple of sizes, got {type(sizes)}')
@@ -667,7 +668,7 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     return html('div', [
         html('div', htmlize(obj).replace('COL-SEP-PIPE','|'), style=size) 
         for obj, size in zip(objs, sizes)
-    ], style = kwargs, css_class=css_class) 
+    ], style = kwargs, css_class=(f'{css_class or ""} {"" if vertical else "columns"}').strip()) 
     
 
 def table(data, headers = None, widths=None):

@@ -139,10 +139,9 @@ class BaseSlides:
             - Variables are substituted from top level scope (Notebook's hl`locals()`/hl`globals()`). To use variables from a nested scope, use `Slides.fmt`.
         
         - Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text \{{: rowspan="2" colspan="1"}}| inside a cell, should be a space bewteen text and attributes.
-        - A syntax alert`func\`?Markdown?\`` will be converted to alert`func\`Parsed HTML\`` in markdown. Useful to nest special syntax.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format. These files are watched for eidts if included in synced markdown file via `Slides.sync_with_file`.
-        - Inline columns/rows can be added by using alert`stack\`Column A | Column B\`` sytnax with `?` next to opening \\` and before closing \\` most of the time to properly parse inner markdown. You can escape pipe `|` with `\|` to use it as text inside stack.
+        - Inline columns/rows can be added by using alert`stack\`Column A | Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
         ```markdown     
@@ -199,6 +198,10 @@ class BaseSlides:
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
                 `__format__` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
         
+        - Upto 4 level nesting is parsed using as many `%` within backticks in functions given below. 
+            Try alert`stack\`%%% A | stack\`%% B | stack\`% C | stack\` D | E \` %\` %%\` %%%\``. 
+            This always parse markdown in `returns=True` mode internally. Use markdown customblocks for general cases.
+            Legacy single nesting alert`func\`?content?\`` is also supported for backward compatibility.
         - Other options (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\\`{v}\\`' for k,v in _special_funcs.items()),
         returns = True
@@ -542,7 +545,7 @@ class BaseSlides:
             self.write('## Displaying Source Code')
             self.doc(self.code,'Slides.code', members = True, itself = False).display()
         
-        self.build(-1, 'section`?Layout and color["yellow","black"]`Theme` Settings?` toc`### Contents`')
+        self.build(-1, r'section`%Layout and color["yellow","black"]`Theme` Settings%` toc`### Contents`')
         
         with self.build(-1) as s:
             s.set_css({
@@ -553,7 +556,7 @@ class BaseSlides:
             self.doc(self.settings,'Slides', members=True,itself = True).display()
                 
         with self.build(-1):
-            self.write('## Useful Functions for Rich Content section`?Useful Functions for alert`Rich Content`?`')
+            self.write('## Useful Functions for Rich Content section`%Useful Functions for alert`Rich Content`%`')
             self.doc(self.alt,'Slides').display()
             
             members = sorted((
