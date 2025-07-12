@@ -387,7 +387,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'padding':'2px 4px',
                 'color':'var(--fg2-color)',
                 # Below are required to override behavior of span tag
-                'display':'inline-block !important',
+                'display':'inline !important',
                 'white-space':'break-spaces !important',
                 '*': {'color':'var(--fg2-color)',}, # should be same color 
             },

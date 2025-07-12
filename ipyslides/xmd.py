@@ -163,6 +163,9 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
         if i == len(all_matches): # only last one to take effect
             slide_instance.this.yoffset(int(match))
     
+    # @key! for inline citations even in footnote mode, do before others
+    text_chunk = re.sub(r"@(?:[A-Za-z_]\w*)!", lambda m: slide_instance._nocite(m.group()[1:-1]), text_chunk)
+    
     # @key -> cite`key` before other stuff
     at_key_pattern = re.compile(r'''
         (?<!\\) # negative lookbehind: don't match if there's a backslash
@@ -444,7 +447,8 @@ class XMarkdown(Markdown):
             text = re.sub("ESCAPED_AT_SYMBOL","@", resolve_objs_on_slide(
                 self, self._slides, re.sub(r"\\@","ESCAPED_AT_SYMBOL", text) # escape \@cite_key before resolving objects on slides
             ))  # Resolve objects in xmd related to current slide
-
+        text = re.sub(r"\\@","@", text) # same stuff when goes off slides, should be correct
+        
         # Resolve <link:label:origin text> and <link:label:target text?>
         text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", r"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>", text)
         text = re.sub(r"<link:([\w\d-]+):target\s*(.*?)>", r"<a href='#origin-\1' id='target-\1' class='slide-link'>\2</a>", text)

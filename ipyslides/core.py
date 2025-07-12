@@ -61,17 +61,11 @@ class _Citation:
                     <span style="color:var(--accent-color);">{self._id}. </span>
                 </a>{_value}</div>"""
         else:
-            return f'<div class = "warning">Set value for cited key {self._key!r} and run again to clear warning!</div>'
+            return self.inline_value # Just error message
 
     @property
     def inline_value(self):
-        if _value := self._slide._app._citations.get(self._key, None):
-            return utils.textbox(_value.partition("<p>")[-1].rpartition("</p>")[0],
-                left="initial",
-                top="initial",
-            ).value
-        else:
-            return self.value
+        return self._slide._app._nocite(self._key)
         
 class Singleton(type):
     # Before Slides calss was made singleton by creating a global instance. 
@@ -443,6 +437,13 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         # Return string otherwise will be on different place, avoid newline here
         return f'<a href="#{key}" class="citelink"><sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>'
+    
+    def _nocite(self, key): # @key! without adding to citations
+        if key in self._citations:
+            return utils.textbox(self._citations[key].partition("<p>")[-1].rpartition("</p>")[0],
+            left="initial",top="initial").value
+        return utils.error("KeyError",f"Set value for cited key {key!r} and build slide again!").value
+
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations

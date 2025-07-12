@@ -101,6 +101,7 @@ class BaseSlides:
         Citations
         : - alert`cite\`key1,key2\``/alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
         - With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
+        - Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!`.
         - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
         <code>\\`\\`\\`citations [inline or footnote]
         @key1: Saboor et. al., 2025
