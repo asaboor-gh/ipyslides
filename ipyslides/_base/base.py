@@ -162,7 +162,7 @@ class BaseSlides:
         : Item 1 details
         ```
         
-        - `md-[left,right,before,after]` support nesting via proper indentation, but it can be broken by display contexts. 
+        - `md-[left,right,before,after]` and `multicol` support nesting via proper indentation, but it may be broken by display contexts. 
         - Code blocks syntax highlighting. (there is an inline highlight syntax as well alert`hl\`code\``)
         
         ```python

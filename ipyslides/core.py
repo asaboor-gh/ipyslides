@@ -448,12 +448,22 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
         new_citations = {k: self.parse(v, returns = True) for k, v in d.items()}
-        if self._citations != new_citations: # same call again should not change anything
+        added = set(new_citations) - set(self._citations)
+        removed = set(self._citations) - set(new_citations)
+        changed = {k for k in (set(new_citations) & set(self._citations)) if self._citations[k] != new_citations[k]}
+        if changed := (added | removed | changed):
             self._citations = new_citations
-            self._set_unsynced() # will go synced after rerun
+            self._set_unsynced(changed) # will go synced after rerun
     
-    def _set_unsynced(self):
-        for slide in self.cited_slides:
+    def _set_unsynced(self, changed):
+        if changed is True:
+            req_update = self.cited_slides
+        elif isinstance(changed,set):
+            req_update = [s for s in self.cited_slides if changed & set(s._citations)]
+        else:
+            raise TypeError(f"changed should be True or set of keys, got {type(changed)}")
+        
+        for slide in req_update:
             if slide._markdown:
                 slide._rebuild(go_there=False)
             else:
@@ -500,7 +510,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         if self._cite_mode != mode:
             self._cite_mode = mode # Update first as they need in display update
-            self._set_unsynced() # will go synced after rerun 
+            self._set_unsynced(True) # will go synced after rerun 
         
         # Finally write resources to file in assets
         with self.set_dir(self._assets_dir):

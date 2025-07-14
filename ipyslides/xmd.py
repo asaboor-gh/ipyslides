@@ -289,6 +289,14 @@ class XMarkdown(Markdown):
         self._fmt_ns = {} # provided by fmt
         self._returns = True
         self._slides = get_slides_instance()
+        self._nested = False # checks if using _parse in nested manner
+    
+    @property
+    def _wr(self):
+        if not hasattr(self, '_wr_imported'):
+            from . import writer # avoid cyclic, but import once
+            self._wr_imported = writer
+        return self._wr_imported
 
     def _extract_class(self, header):
         header = re.sub(r"\.(\d)",r"~%&!~\1", header) # Avoid .1 like things for cols
@@ -337,9 +345,10 @@ class XMarkdown(Markdown):
                     outputs.extend(out)
                 elif out: # Some syntax like section on its own line can leave empty block later
                     outputs.append(XTML(out))
-
-        self._vars = {} # reset at end to release references
-        self._fmt_ns = {} # reset back at end
+        
+        if not self._nested: # we need to keep these if nested parsing
+            self._vars = {} # reset at end to release references
+            self._fmt_ns = {} # reset back at end
 
         if returns:
             content = ""
@@ -347,29 +356,31 @@ class XMarkdown(Markdown):
                 if isinstance(out, XTML):
                     content += out.value 
                 else:
-                    from .writer import _fmt_html
-                    content += _fmt_html(out) # Rich content from python execution and Writer 
+                    content += self._wr._fmt_html(out) # Rich content from python execution and Writer 
             return content
         else:
             return display(*outputs)
+    
+    def _parse_nested(self, xmd, returns=True):
+        old_returns = self._returns
+        self._nested = True
+        try:
+            out = self._parse(textwrap.dedent(xmd), returns=returns) # allows nesting via indent
+        finally:
+            self._returns = old_returns
+            self._nested = False
+        return out
 
     def _resolve_nested(self, text_chunk):
         def repl(m: re.Match): # Remove <p> and </p> tags at start and end, also keep backtick
-            return f'`{re.sub("^<p>|</p>$", "", self._parse(m.group(1), returns = True))}`' 
+            return f'`{re.sub("^<p>|</p>$", "", self._parse_nested(m.group(1), returns = True))}`' 
 
-        old_returns = self._returns
-        try:
-            # match legacy func`?text?` to parse text and return func`html_repr`
-            text_chunk = re.sub(r"\`\?(.*?)\?\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
-            
-            # Now match neseted `_ _` upto many levels
-            for depth in range(4,0,-1): # `____, `___, `__, `_ 
-                op, cl = '\%'*depth, '\%'*depth
-                text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
-
-        finally:
-            self._returns = old_returns
-
+        # match legacy func`?text?` to parse text and return func`html_repr`
+        text_chunk = re.sub(r"\`\?(.*?)\?\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
+        # Now match neseted `_ _` upto many levels
+        for depth in range(4,0,-1): # `____, `___, `__, `_ 
+            op, cl = '\%'*depth, '\%'*depth
+            text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
         return text_chunk
 
     def _parse_block(self, block):
@@ -408,21 +419,29 @@ class XMarkdown(Markdown):
         if collapse:
             src = XTML(f"<details><summary>Show Markdown Source</summary>\n{src}\n</details>")
         
-        if not self._returns and pos in ("before","after"):
-            with capture_content() as cap:
-                # only before after contexts displayable inline, left, right are inside nesetd write, can't do more
-                if pos == "before": src.display()
-                self._parse(data, returns=False)
-                if pos == "after": src.display()
-            return cap.outputs
+        if self._returns: # display context
+            outs = [XTML(self._parse_nested(data, returns=True))]
         else:
-            objs = (src, data) if pos in ("left","before") else (data, src)
-            from .utils import stack
-            return [stack(objs, vertical=True if pos in ("before","after") else False, css_class="md-block")]
+            with capture_content() as cap:
+                self._parse_nested(data, returns=False)
+            outs = cap.outputs
+        
+        if pos in ("before","after"):
+            return [src, *outs] if pos == "before" else [*outs, src]
+        
+        if self._returns: 
+            objs = (src, outs[0]) if pos == "left" else (outs[0], src) # return mode, len(outs) == 1
+            output = "\n".join(f"<div style='width:50%;overflow-x:auto;height:auto;position:relative;'>{v}</div>" for v in objs)
+            return [XTML(f'<div class="columns md-block" style="display:flex;">\n{output}\n</div>')] # display for notebook
+        
+        with capture_content() as cap:
+            self._wr.write(*((src, outs) if pos == "left" else (outs, src)), css_class="md-block")
+        return cap.outputs
+
 
     def _parse_multicol(self, data, header, _class):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
-        cols = textwrap.dedent(data).split("+++")  # Split by columns, allow nesetd blocks by indents
+        cols = re.split("^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
         if header.strip() == "multicol":
             widths = [100/len(cols) for _ in cols]
         else:
@@ -442,26 +461,32 @@ class XMarkdown(Markdown):
             widths = [float(w) for w in widths]
             widths = [100*w/sum(widths) for w in widths] # allow relative column widths
         
-        # Under slides and any display context, multicol should return Writer 
-        if self._slides and not self._returns:
+        # Under any display context
+        if not self._returns:
+            cap_cols = []
+            for col in cols:
+                with capture_content() as cap:
+                    self._parse_nested(col,returns=False)
+                cap_cols.append(cap)
+
             with capture_content() as cap:
-                self._slides.write(*[self.convert(col) for col in cols], widths=widths, css_class=_class)
+                self._wr.write(*cap_cols, widths=widths, css_class=_class)
             
             return cap.outputs
         
-        cols = [self.convert2str(col) for col in cols]
+        cols = [self._parse_nested(col,returns=True) for col in cols]
         if len(cols) == 1: # do not return before checking widths and adding extra cols if needed
             return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]
 
         cols = "".join(
-            [f"""<div style='width:{w}%;overflow-x:auto;height:auto'>{col}</div>"""
+            [f"""<div style='width:{w}%;overflow-x:auto;height:auto;position:relative;'>{col}</div>"""
                 for col, w in zip(cols, widths)])
 
-        return f'<div class="columns {_class}">{cols}\n</div>'
+        return f'<div class="columns {_class}" style="display:flex;">{cols}\n</div>' # display for notebook
     
     def convert(self, text):
         """Replaces variables with placeholder after conversion to respect all other extensions.
-        Returns str or list of outputs based on context. To ensure str, use `self.convert2str`.
+        Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
         text = resolve_included_files(text)
         text = re.sub(r"\\\`", "&#96;", text)  # Escape backticks after files added
@@ -489,14 +514,6 @@ class XMarkdown(Markdown):
             super().convert(
                 self._sub_vars(text) # sub vars before conversion
             ))
-    
-    def convert2str(self, text):
-        "Ensures that output will be a str."
-        outputs = self.convert(text)
-        if isinstance(outputs, list): # From Variables
-            # formats handled automatically for most of objects, as we are returning strings anyhow
-            return ''.join([f"{out}" for out in outputs])
-        return outputs
     
     def _var_info(self, match_str):
         try: 
@@ -647,7 +664,7 @@ def parse(xmd, returns = False):
         - There are special CSS classes `jupyter-only` and `export-only` that control appearance of content in different modes.
 
     ::: note-warning
-        Nested blocks are supported via indentation in `md-[before,after,left,right]` but can be broken in display contexts.
+        Nested blocks are supported via indentation in `md-[before,after,left,right]` and `multicol`, but may be broken in display contexts.
 
     ::: note-info
         - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
