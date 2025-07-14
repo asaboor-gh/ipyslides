@@ -647,7 +647,7 @@ def parse(xmd, returns = False):
         - There are special CSS classes `jupyter-only` and `export-only` that control appearance of content in different modes.
 
     ::: note-warning
-        Nested blocks are supported via indentation in `multicol` and `md-[before,after,left,right]` but can be broken in display contexts.
+        Nested blocks are supported via indentation in `md-[before,after,left,right]` but can be broken in display contexts.
 
     ::: note-info
         - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
