@@ -16,6 +16,7 @@ def demo_slides(slides):
 
     # title slide should alway be overwritten by 0 
     slides.build(0, slides.fmt("""
+    ```md-after -c
     # Creating Slides
     ::: align-center
         alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
@@ -25,7 +26,7 @@ def demo_slides(slides):
             sup`2`Their University is somewhere in the middle of nowhere
                     
     vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
-    """, btn = slides.widgets.buttons.info))
+    ```""", btn = slides.widgets.buttons.info))
     
     # build_ is same as build(-1)
     slides.build_(f"""
@@ -44,30 +45,23 @@ def demo_slides(slides):
     """)
 
     slides.build(-1, slides.fmt("""
-    section`Adding informative TOC` 
-    ```multicol .block-blue
-    toc[True]`### Contents`
-    +++
-    vspace`1` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
-                                    
-    - Item 1
-    - Item 2
+    ```md-after
+        section`Adding informative TOC` 
+        ```multicol .block-blue
+        toc[True]`### Contents`
+        +++
+        vspace`1` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
 
-    $$ E = mc^2 $$ 
-    %{btn}  
+        - Item 1
+        - Item 2
 
-    ::: note-tip
-        Above button was encapsulated by `fmt`, so creating a variable `btn` can't overwrite it.                    
-    ```
-                                       
-    ```markdown
-     ```multicol .block-blue
-     toc[True]`### Contents`
-     +++
-     Extra content for current section which is on right
-     ```
-    ``` 
-    """,btn=slides.draw_button))
+        $$ E = mc^2 $$ 
+        %{btn}  
+
+        ::: note-tip
+            Above button was encapsulated by `fmt`, so creating a variable `btn` can't overwrite it.                    
+        ```                                
+    ```""",btn=slides.draw_button))
 
     # Matplotlib
     with slides.build_() as sl:
@@ -287,15 +281,16 @@ def demo_slides(slides):
         Varibale formatting alongwith $ \LaTeX $ alert`\%{var} → %{var}` is seamless.
     
     --
-    ```multicol 50 50
-    $$ \int_0^1\\frac{1}{1-x^2}dx $$
-    {.align-left .text-big .info}
-    +++
-    ::: success
-        $$ ax^2 + bx + c = 0 $$
-        {.text-huge}
-    ```
-    ''', var = "'I was a variable'"))
+    ```md-after -c
+        ```multicol 50 50
+        $$ \int_0^1\\frac{1}{1-x^2}dx $$
+        {.align-left .text-big .info}
+        +++
+        ::: success
+            $$ ax^2 + bx + c = 0 $$
+            {.text-huge}
+        ```
+    ```''', var = "'I was a variable'"))
 
     with slides.build(-1) as some_slide:
         slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')

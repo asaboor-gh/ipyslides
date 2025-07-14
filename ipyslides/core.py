@@ -460,7 +460,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
     def set_citations(self, data, mode='footnote'):
-        r"""Set citations from dictionary or string with content like `@key: citation value` on their own lines, 
+        r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
         key should be cited in markdown as cite\`key\`/\@key, optionally comma separated keys.
         `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by hl`Slides.settings.layout(..., ncol_refs=N)`.
 

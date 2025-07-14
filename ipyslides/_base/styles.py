@@ -530,7 +530,7 @@ def style_css(colors, fonts, layout, _root = False):
             'font-size':'0.6em',
             'padding':'4px',
             'text-shadow':'0 1px var(--bg1-color)',
-            
+            '^:empty': {'display':'none !important',},
         },
         '.docs': { # docs have Python code only, so no need to have fancy things there
             'margin-bottom':'1em !important',

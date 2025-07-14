@@ -200,9 +200,6 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     """
     _class = '.highlight' if css_class is None else f'.highlight.{css_class}'
     
-    from .xmd import get_unique_css_class # Avoid circular import
-    _class = get_unique_css_class() + ' ' + _class # Add unique class to avoid conflict with other slides in Jupyter lab
-        
     if style not in pygments.styles.get_all_styles():
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
     _style = pygments.formatters.HtmlFormatter(style = style).get_style_defs(_class)
@@ -233,6 +230,9 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     {_class} pre {{
         padding :4px 8px 4px {0 if lineno else 8}px !important; 
     }}
+    {_class} pre, {_class} code {{
+        background: transparent !important; /* in notebook directly */
+    }}
     {_class} code::before {{
         width: {'1.2em' if lineno else '0'};
         color: {fg};
@@ -259,7 +259,7 @@ def _highlight(code, language='python', name = None, css_class = None, style='de
     middle, end = mid_end.split('</pre>')
     lines = middle.strip().replace('<span></span>','').splitlines()
     code_ = '\n' + '\n'.join([f'<code>{line}</code>' for line in lines]) # start with newline is important
-    _title = name if name else language.title()
+    _title = '' if name is False else name if name else language.title()
     
     if isinstance(css_class, str):
         start = start.replace('class="highlight"',f'class="highlight {css_class}"')

@@ -661,9 +661,9 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
         for size in sizes:
             if not isinstance(size, (int, float)):
                 raise TypeError(f'size should be an int or float, got {type(size)}')
-        sizes = [{'flex': f'{size} 1'} for size in sizes] # Convert to flex style dicts
+        sizes = [{'flex': f'{size} 1','min-width':0} for size in sizes] # Convert to flex style dicts
     else:
-        sizes = [{'flex': '1 1'}] * len(objs) # default sizes if not given
+        sizes = [{'flex': '1 1','min-width':0}] * len(objs) # default sizes if not given
     
     return html('div', [
         html('div', htmlize(obj).replace('COL-SEP-PIPE','|'), style=size) 
@@ -740,7 +740,7 @@ def sig(callable,prepend_str = None):
         _sig = f'<b>{callable.__name__}</b>'
         if prepend_str: 
             _sig = f'{prepend_str}.{_sig}' 
-        _sig = f'<span class="sig">{_sig}</span>' + hl(str(inspect.signature(callable)))
+        _sig = f'<span class="sig">{_sig}</span>' + hl(str(inspect.signature(callable))).value
         return XTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')

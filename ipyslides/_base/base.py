@@ -78,7 +78,7 @@ class BaseSlides:
          `zoom-child`       | Zooms child object on hover, when Zoom is enabled.
          `no-zoom`          | Disables zoom on object when it is child of 'zoom-child'.
         
-        Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...) functions at your disposal.
+        Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...)` functions at your disposal.
         ''',returns = True))
 
     @property
@@ -104,8 +104,8 @@ class BaseSlides:
         - Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!`.
         - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
         <code>\\`\\`\\`citations [inline or footnote]
-        @key1: Saboor et. al., 2025
-        @key2: A citations can span multiple lines, but key should start on new line
+        \@key1: Saboor et. al., 2025
+        \@key2: A citations can span multiple lines, but key should start on new line
         \\`\\`\\`</code>
         
         Sections & TOC
@@ -145,24 +145,16 @@ class BaseSlides:
         - Inline columns/rows can be added by using alert`stack\`Column A | Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
-        ```markdown     
-         ```multicol widthA widthB .class1.class2
-         Column A
-         +++
-         Column B
-         ```
+        ```md-left  -c 
+            ```multicol 3 2 .class1.class2
+            Column A
+            +++
+            Column B
+            ```
         ```
         
         - Definition list syntax:
-        ```multicol 30 10 30 30 .block-red
-            Item 1 Header
-            : Item 1 details
-        
-            Item 1 Header
-            : Item 1 details
-        +++
-        vspace`4`👉
-        +++
+        ```md-left
         Item 1 Header
         : Item 1 details
 
@@ -170,6 +162,7 @@ class BaseSlides:
         : Item 1 details
         ```
         
+        - `md-[left,right,before,after]` and `multicol` support nesting via proper indentation, but it can be broken by display contexts. 
         - Code blocks syntax highlighting. (there is an inline highlight syntax as well alert`hl\`code\``)
         
         ```python
@@ -177,12 +170,7 @@ class BaseSlides:
         ```     
                                                                               
         - A whole block of markdown can be CSS-classed using syntax
-        ```multicol 30 10 30 30 .block-blue
-            ::: block-yellow
-                Some **bold text**
-        +++
-        vspace`2`👉
-        +++
+        ```md-left -c
         ::: block-yellow
             Some **bold text**
         ```
@@ -200,9 +188,26 @@ class BaseSlides:
                 `__format__` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
         
         - Upto 4 level nesting is parsed using as many `%` within backticks in functions given below. 
-            Try alert`stack\`%%% A | stack\`%% B | stack\`% C | stack\` D | E \` %\` %%\` %%%\``. 
-            This always parse markdown in `returns=True` mode internally. Use markdown customblocks for general cases.
-            Legacy single nesting alert`func\`?content?\`` is also supported for backward compatibility.
+        ```md-left -c
+        stack[(6,4),css_class="block-blue"]`%%% 
+            This always parse markdown in `returns=True` mode and is equivalent to markdown customblocks.
+            | 
+            stack[css_class="info"]`%% 
+                B 
+                | 
+                stack[vertical=True]`% 
+                    C 
+                    | 
+                    stack[css_class="block-red"]` 
+                        D 
+                        | 
+                        E 
+                    ` 
+                %` 
+            %%` 
+        %%%`
+        ```
+        
         - Other options (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
         ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\\`{v}\\`' for k,v in _special_funcs.items()),
         returns = True
@@ -485,20 +490,15 @@ class BaseSlides:
                 ''', logo = self.get_logo("4em"))).display()
         
         self.build(-1, self.fmt('''
-            section`Introduction` 
-            ```multicol .block-green
-            toc[True]`## Table of contents`
-            +++
-            ### This is summary of current section
-            Oh we can use inline columns stack`Column A | Column B` here and what not!
-            %{btn}
-            ```
-            ```markdown
-             ```multicol .block-green
-             toc[True]`## Table of contents`
-             +++
-             Extra content for current section which is on right
-             ```
+            ```md-after
+                section`Introduction` 
+                ```multicol .block-green
+                toc[True]`## Table of contents`
+                +++
+                ### This is summary of current section
+                Oh we can use inline columns stack`Column A | Column B` here and what not!
+                %{btn}
+                ```
             ```''', btn = self.draw_button))
             
         with self.build(-1):
@@ -527,14 +527,13 @@ class BaseSlides:
             self.doc(self[0], members='yoffset set_animation set_bg_image update_display get_source show set_css'.split(), itself = False).display()
             self.css_syntax.display()
         
-        with self.build(-1), self.code.context():
-            # self is in scope, auto picked, also fmt can be parsed on display
-            display(self.fmt('%{self.version!r} %{self.xmd_syntax}'))
+        with self.build(-1):
+            self.xmd_syntax.display()
             
         with self.build(-1):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write([self.styled(self.doc(self.write,'Slides'),'block-green'), self.doc(self.parse,'Slides')])
+            self.write(self.doc(self.write,'Slides'), [self.doc(self.parse,'Slides'),self.doc(self.as_html,'Slides'),self.doc(self.html,'Slides')])
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
@@ -544,6 +543,7 @@ class BaseSlides:
                    
         with self.build(-1):
             self.write('## Displaying Source Code')
+            self.write('In markdown, the block `md-[before,after,left,right] [-c]` parses and displays source as well.')
             self.doc(self.code,'Slides.code', members = True, itself = False).display()
         
         self.build(-1, r'section`%Layout and color["yellow","black"]`Theme` Settings%` toc`### Contents`')
@@ -603,18 +603,24 @@ class BaseSlides:
                     time = t.strftime('%H:%M:%S')
                     self.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
             
-            self.write(self.doc(self.ei.interact,'Slides.ei'), [*cap.outputs, c, self.doc(self.on_load,'Slides')])
+            self.write(
+                [self.doc(self.ei.interact,'Slides.ei')], 
+                [*cap.outputs, c, self.doc(self.on_load,'Slides')],
+            )
     
-        with self.build(-1):
-            self.write('## Content Styling')
-            with self.code.context(returns = True) as c:
-                self.write(('You can **style**{.error} or **color["teal"]`colorize`** your *content*{: style="color:hotpink;"} and *color["hotpink","yellow"]`text`*. ' 
-                       'Provide **CSS**{.info} for that using hl`Slides.html("style",...)` or use some of the available styles. '
-                       'See these **styles**{.success} with `Slides.css_styles` property as below:'))
-                self.css_styles.display()
-                c.display()
+        self.build(-1, fmt("""
+        ```md-after -c
+        stack[(3,7)]`%
+        ## Content Styling
+        You can **style**{.error} or **color["teal"]`colorize`** your *content*{: style="color:hotpink;"} and *color["hotpink","yellow"]`text`*.
+        Provide **CSS**{.info} for that using hl`Slides.html("style",...)` or use some of the available styles. 
+        See these **styles**{.success} with `Slides.css_styles` property as shown on right.
+        | %{self.css_styles}
+        %`     
+        ```
+        """))
         
-        s, *_ = self.build(-1, self.fmt('''
+        self.build(-1, self.fmt('''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `highlight` function cite`B` or within markdown using code blocks enclosed with three backticks:
@@ -624,7 +630,7 @@ class BaseSlides:
         ```javascript
         import React, { Component } from "react";
         ```
-        **s is assigned variable to this slide**: %{s.source}
+        Source code of slide can be embeded via variable too: %{self.this.source}
         ''', self=self))
 
         

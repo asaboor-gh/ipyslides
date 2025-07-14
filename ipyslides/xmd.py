@@ -170,6 +170,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     at_key_pattern = re.compile(r'''
         (?<!\\) # negative lookbehind: don't match if there's a backslash
         (?<!\w) # Don't match if a word before so example@google.com is safe
+        (?<!\`) # Don't match keys inside backticks
         @(?:[A-Za-z_]\w*)(?:\s*,\s*@(?:[A-Za-z_]\w*))*   # @key, @key4 (citation) or single @key
     ''', re.VERBOSE)
     for match in at_key_pattern.findall(text_chunk):
@@ -383,6 +384,8 @@ class XMarkdown(Markdown):
                 f"citations block is only parsed inside synced markdown file! "
                 f"Use `Slides.set_citations` otherwise.\n```{block}\n```"
             )]
+        elif "md-" in line:
+            return self._parse_md_src(data, line, _class)
         else:
             out = XTML() # empty placeholder
             try:
@@ -392,10 +395,34 @@ class XMarkdown(Markdown):
                 out.data = super().convert(f'```{block}\n```') # Let other extensions parse block
             
             return [out,] # list 
+        
+    def _parse_md_src(self, data, line, _class):
+        data = textwrap.dedent(data) # dedent allows embeding nested stuff like multicol, it will be parsed in stack
+        pos, *collapse = line.strip()[3:].split()
+        _req_pos = "before,after,left,right"
+        if pos not in _req_pos:
+            return [error("ValueError",f"The suffix after md- should be {_req_pos}, got {pos}")]
+        if collapse and collapse[0] not in ("","-c"):
+            return [error("ValueError",f"Only swicth -c expected if given to collapse code after md-[suffix] other than CSS class, got {collapse[0]}")]
+        src = XTML(_highlight(data, "markdown", name=False if collapse else None, css_class=f"md-src {_class}"))
+        if collapse:
+            src = XTML(f"<details><summary>Show Markdown Source</summary>\n{src}\n</details>")
+        
+        if not self._returns and pos in ("before","after"):
+            with capture_content() as cap:
+                # only before after contexts displayable inline, left, right are inside nesetd write, can't do more
+                if pos == "before": src.display()
+                self._parse(data, returns=False)
+                if pos == "after": src.display()
+            return cap.outputs
+        else:
+            objs = (src, data) if pos in ("left","before") else (data, src)
+            from .utils import stack
+            return [stack(objs, vertical=True if pos in ("before","after") else False, css_class="md-block")]
 
     def _parse_multicol(self, data, header, _class):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
-        cols = data.split("+++")  # Split by columns
+        cols = textwrap.dedent(data).split("+++")  # Split by columns, allow nesetd blocks by indents
         if header.strip() == "multicol":
             widths = [100/len(cols) for _ in cols]
         else:
@@ -413,6 +440,7 @@ class XMarkdown(Markdown):
                     return error('TypeError',f"{w} is not a positive integer or float value in {header!r}").value
 
             widths = [float(w) for w in widths]
+            widths = [100*w/sum(widths) for w in widths] # allow relative column widths
         
         # Under slides and any display context, multicol should return Writer 
         if self._slides and not self._returns:
@@ -619,7 +647,7 @@ def parse(xmd, returns = False):
         - There are special CSS classes `jupyter-only` and `export-only` that control appearance of content in different modes.
 
     ::: note-warning
-        Nested blocks are not supported.
+        Nested blocks are supported via indentation in `multicol` and `md-[before,after,left,right]` but can be broken in display contexts.
 
     ::: note-info
         - Find special syntax to be used in markdown by `Slides.xmd_syntax`.

@@ -159,7 +159,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
 
     **Features**:    
 
-    1. Multiple callback support through @callback decorator
+    1. Multiple callback support through `@callback` decorator
     2. CSS Grid layout system with flexible templating
     3. Extended widget trait observation beyond just 'value'
     4. Automatic widget grouping and layout management
@@ -235,8 +235,8 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
 
     **Callbacks**:   
 
-    - Methods decorated with @callback. Run in the order of definition.
-    - Optional CSS class via @callback('out-myclass')
+    - Methods decorated with `@callback`. Run in the order of definition.
+    - Optional CSS class via `@callback('out-myclass')`
     - Decorate with @monitor to check execution time, kwargs etc.
     - CSS class must start with 'out-' excpet reserved 'out-main'
     - Each callback gets only needed parameters and updates happen only when relevant parameters change
@@ -534,7 +534,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
 
         - Parameter names from _interactive_params()
         - 'btn-main' for manual update button
-        - Custom 'out-*' classes from @callback decorators and 'out-main' from main output.
+        - Custom 'out-*' classes from `@callback` decorators and 'out-main' from main output.
 
         **Example**:       
 
@@ -821,7 +821,7 @@ def callback(css_class:str = None, *, timeit:bool = False, throttle:int = None, 
 
     **Usage**:                  
 
-    - Inside a subclass of InteractBase, decorate methods with @callback and @callback('out-important') to make them interactive.
+    - Inside a subclass of InteractBase, decorate methods with `@callback` and `@callback('out-important')` to make them interactive.
     - See example usage in docs of InteractBase.
 
     **Returns**: The decorated method itself.
@@ -955,7 +955,7 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=No
     **CSS Classes**:      
 
     - Parameter names from kwargs
-    - Custom 'out-*' classes from @callback, and 'out-main' class.
+    - Custom 'out-*' classes from `@callback`, and 'out-main' class.
     - 'btn-main' for manual update button
 
     **Notes**:       
