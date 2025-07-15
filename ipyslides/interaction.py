@@ -248,7 +248,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
 
     - changed: Read-only trait to detect which parameters of a callback changed:
         - By providing `changed = '.changed'` in parameters and later in callback by checking `changed('param') -> Bool`.
-        - Directly access `self.changed` in a subclass and use `changed('param') -> Bool`/`'param' in self.changed`. Useful to merge callback.
+        - Directly access `self.changed` in a subclass and use `changed('param') -> Bool` / `'param' in self.changed`. Useful to merge callback.
     - isfullscreen: Read-only trait to detect fullscreen change on python side. Can be observed as '.isfullscreen' in params.
     - groups: NamedTuple(controls, outputs, others) - Widget names by type
     - outputs: Tuple[Output] - Output widgets from callbacks

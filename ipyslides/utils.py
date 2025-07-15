@@ -541,7 +541,7 @@ def center(obj):
     
 def html(tag, children = None,css_class = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
-    `tag` can be any valid html tag name. A `tag` that ends with `/` will be self closing e.g. `hr/` will be `<hr/>`.  Empty tag gives unwrapped children.
+    `tag` can be any valid html tag name. A `tag` that ends with ` / ` will be self closing e.g. ` hr/ ` will be `<hr/>`.  Empty tag gives unwrapped children.
     `children` expects:
     
     - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
@@ -636,14 +636,14 @@ def color(text,fg='var(--accent-color, blue)',bg=None):
 def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     """Stacks given objects in a column or row with given sizes. 
     
-    - objs: list/tuple of objects or a markdown string with '|' as separator.
+    - objs: list/tuple of objects or a markdown string with '||' as separator.
     - sizes: list/tuple of sizes(int, float) for each object, if not given, all objects will have equal size.
     - vertical: bool, to stack objects vertically or horizontally, default is horizontal.
     - css_class: str, to add a class to the container div.
     - css_props: dict, applied to the container div, so you can control top layout.
     """
     if isinstance(objs, str):
-        objs = [v.strip() for v in objs.replace(r'\|','COL-SEP-PIPE').split('|')] # Split by pipe if given a string
+        objs = [v.strip() for v in objs.replace(r'\|','COL-SEP-PIPE').split('||')] # Split by pipes if given a string
     
     if not isinstance(objs, (list, tuple)):
         raise TypeError(f'objs should be a markdown string, list or tuple of objects, got {type(objs)}')

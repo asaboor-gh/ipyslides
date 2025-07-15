@@ -84,7 +84,8 @@ class BaseSlides:
     @property
     def xmd_syntax(self):
         "Special syntax for markdown."
-        return XTML(self.parse(textwrap.dedent(rf'''
+        with self._hold_running():
+            return XTML(self.parse(textwrap.dedent(rf'''
         **Extended Markdown**{{.text-large}}
                                                
         Extended syntax for markdown is constructed to support almost full presentation from Markdown.
@@ -99,14 +100,15 @@ class BaseSlides:
         Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
         
         Citations
-        : - alert`cite\`key1,key2\``/alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
+        : - alert`cite\`key1,key2\`` / alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
         - With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
         - Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!`.
         - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
-        <code>\\`\\`\\`citations [inline or footnote]
+        hl["markdown"]`
+        \`\`\`citations [inline or footnote]
         \@key1: Saboor et. al., 2025
         \@key2: A citations can span multiple lines, but key should start on new line
-        \\`\\`\\`</code>
+        \`\`\``
         
         Sections & TOC
         : alert`section\`content\`` to add a section that will appear in the table of contents.
@@ -129,7 +131,7 @@ class BaseSlides:
                 - Markdown enclosed in hl`fmt(content, **vars)` will not expose encapsulated `vars` for updates later, like static stuff but useful inside python scripts to pick local scope variable.
                 - In summary, variables are resolved by scope in the prefrence `rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
             - Use unique variable names on each slide to avoid accidental overwriting during update.
-            - Varibales used as attributes like `\%{{var.attr}}` and indexing like `\%{{var[0]}}`/`\%{{var["key"]}}` will be update only if `var` itself is changed.
+            - Varibales used as attributes like `\%{{var.attr}}` and indexing like `\%{{var[0]}}` / `\%{{var["key"]}}` will be update only if `var` itself is changed.
 
         ::: note-warning
             alert`\%{{variable:nb}}` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
@@ -137,12 +139,12 @@ class BaseSlides:
         ::: note-info
             - Widgets behave same with or without `:nb` format spec. 
             - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
-            - Variables are substituted from top level scope (Notebook's hl`locals()`/hl`globals()`). To use variables from a nested scope, use `Slides.fmt`.
+            - Variables are substituted from top level scope (Notebook's hl`locals()` / hl`globals()`). To use variables from a nested scope, use `Slides.fmt`.
         
         - Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text \{{: rowspan="2" colspan="1"}}| inside a cell, should be a space bewteen text and attributes.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
         - alert`include\`markdown_file.md\`` to include a file in markdown format. These files are watched for eidts if included in synced markdown file via `Slides.sync_with_file`.
-        - Inline columns/rows can be added by using alert`stack\`Column A | Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
+        - Inline columns/rows can be added by using alert`stack\`Column A || Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
         ```md-left  -c 
@@ -187,25 +189,16 @@ class BaseSlides:
             - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
                 `__format__` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
         
-        - Upto 4 level nesting is parsed using as many `%` within backticks in functions given below. 
+        - Upto 4 level nesting is parsed using (level + 1) number of alert`/` (at least two) within backticks in functions given below. 
         ```md-left -c
-        stack[(6,4),css_class="block-blue"]`%%% 
-            This always parse markdown in `returns=True` mode and is equivalent to markdown customblocks.
-            | 
-            stack[css_class="info"]`%% 
-                B 
-                | 
-                stack[vertical=True]`% 
-                    C 
-                    | 
-                    stack[css_class="block-red"]` 
-                        D 
-                        | 
-                        E 
-                    ` 
-                %` 
-            %%` 
-        %%%`
+        stack[(6,4),css_class="block-blue"]`////
+            This always parse markdown in `returns=True` mode and is equivalent to markdown customblocks. ||
+            stack[css_class="info"]`/// B || A
+                stack[vertical=True]`// C ||
+                    stack[css_class="block-red"]` D || E ` 
+                //` 
+            ///` 
+        ////`
         ```
         
         - Other options (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
@@ -390,7 +383,7 @@ class BaseSlides:
         2. hl`with slides.build(number):` creates single slide. Equivalent to hl`%%slide number` magic.
             - Use hl`fsep()` from top import or hl`Slides.fsep()` to split content into frames.
             - Use hl`for item in fsep.iter(iterable):` block to automatically add frame separator.
-            - Use hl`fsep(True)`/hl`fsep.iter(...,stack=True)` to join content of frames incrementally.
+            - Use hl`fsep(True)` / hl`fsep.iter(...,stack=True)` to join content of frames incrementally.
         3. hl`slides.build(number, str | fmt)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
@@ -496,7 +489,7 @@ class BaseSlides:
                 toc[True]`## Table of contents`
                 +++
                 ### This is summary of current section
-                Oh we can use inline columns stack`Column A | Column B` here and what not!
+                Oh we can use inline columns stack`Column A || Column B` here and what not!
                 %{btn}
                 ```
             ```''', btn = self.draw_button))
@@ -537,7 +530,7 @@ class BaseSlides:
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
-            self.write([rf'You can use alert`notes\`notes content\`` in markdown.\n{{.note .success}}\n',
+            self.write([rf'styled["note success"]`You can use alert`notes\`notes content\`` in markdown.`',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
@@ -546,7 +539,7 @@ class BaseSlides:
             self.write('In markdown, the block `md-[before,after,left,right] [-c]` parses and displays source as well.')
             self.doc(self.code,'Slides.code', members = True, itself = False).display()
         
-        self.build(-1, r'section`%Layout and color["yellow","black"]`Theme` Settings%` toc`### Contents`')
+        self.build(-1, r'section`//Layout and color["yellow","black"]`Theme` Settings//` toc`### Contents`')
         
         with self.build(-1) as s:
             s.set_css({
@@ -557,7 +550,7 @@ class BaseSlides:
             self.doc(self.settings,'Slides', members=True,itself = True).display()
                 
         with self.build(-1):
-            self.write('## Useful Functions for Rich Content section`%Useful Functions for alert`Rich Content`%`')
+            self.write('## Useful Functions for Rich Content section`//Useful Functions for alert`Rich Content`//`')
             self.doc(self.alt,'Slides').display()
             
             members = sorted((
@@ -570,7 +563,7 @@ class BaseSlides:
         with self.build(-1):
             self.write(r'''
                 ## Citations and Sections
-                Use syntax alert`cite\`key\``/alert`\@key` to add citations which should be already set by hl`Slides.set_citations(data, mode)` method.
+                Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by hl`Slides.set_citations(data, mode)` method.
                 Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
                 hl`Slides.settings.layout(..., ncol_refs = int)`. @A
                        
@@ -610,13 +603,13 @@ class BaseSlides:
     
         self.build(-1, fmt("""
         ```md-after -c
-        stack[(3,7)]`%
+        stack[(3,7)]`//
         ## Content Styling
         You can **style**{.error} or **color["teal"]`colorize`** your *content*{: style="color:hotpink;"} and *color["hotpink","yellow"]`text`*.
         Provide **CSS**{.info} for that using hl`Slides.html("style",...)` or use some of the available styles. 
         See these **styles**{.success} with `Slides.css_styles` property as shown on right.
-        | %{self.css_styles}
-        %`     
+        || %{self.css_styles}
+        //`     
         ```
         """))
         

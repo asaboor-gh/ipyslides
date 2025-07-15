@@ -99,7 +99,7 @@ _special_funcs = {
     "styled": "style objects with CSS classes and inline styles",
     "zoomable": "zoom a block of html when hovered",
     "center": r"text or \%{variable}", # should after most of the functions
-    "stack": r"text separated by |, like stack[(1,2,1),**css_props]\\`C1 | C2 | C3\\`",
+    "stack": r"text separated by ||, like stack[(1,2,1),**css_props]\\`C1 || C2 || C3\\`",
 }
 
 def error(name, msg):
@@ -377,9 +377,9 @@ class XMarkdown(Markdown):
 
         # match legacy func`?text?` to parse text and return func`html_repr`
         text_chunk = re.sub(r"\`\?(.*?)\?\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
-        # Now match neseted `_ _` upto many levels
-        for depth in range(4,0,-1): # `____, `___, `__, `_ 
-            op, cl = '\%'*depth, '\%'*depth
+        # Now match neseted `// //` upto many levels
+        for depth in range(4,1,-1): # `////, `///, `// at least two slashes
+            op, cl = '/'*depth, '/'*depth
             text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
         return text_chunk
 
@@ -597,8 +597,8 @@ class XMarkdown(Markdown):
 
         for func in _special_funcs.keys():
             all_matches = re.findall(
-                rf"{func}(\[.*?\])?\`(.*?)\`", html_output, flags=re.DOTALL | re.MULTILINE
-            ) # returns two matches always
+                rf"(?<!\`){func}(\[.*?\])?\`(.*?)\`", html_output, flags=re.DOTALL | re.MULTILINE
+            ) # returns two matches always, don't match like `image` or and keep trying forward for no reason
             for m1, m2 in all_matches:
                 _func = getattr(utils, func)
                 arg0 = m2.strip() # avoid spaces in this
@@ -618,17 +618,6 @@ class XMarkdown(Markdown):
                             f" and are passed to {func}{inspect.signature(_func)} except first argument which is the text to be processed."
                         )
                     html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
-
-        if all_cols := re.findall(
-            r"\|\|(\s*\d*\.?\d*\s*)(.*?)\|\|(.*?)\|\|", html_output, flags=re.DOTALL | re.MULTILINE
-            ):
-            _sig = str(inspect.signature(utils.stack)).split(',', 1)[1].strip(' )') # get signature without first argument
-            for width, *cols in all_cols:
-                info = error("Exception",
-                    f"Use stack[{_sig}]` C1 | C2 | ...` syntax instead of \n||{width}{cols[0]}||{cols[1]}||\n "
-                    "to have better control over number of columns/rows and their sizes."
-                ).value # show error if used
-                html_output = html_output.replace(f"||{width}{cols[0]}||{cols[1]}||", self._handle_var(info), 1)
 
         return re.sub(r"&(?:amp;)?#96;","`", html_output)  # return in main scope
 
@@ -652,7 +641,7 @@ def parse(xmd, returns = False):
      ```python
      # This will not be executed, only shown
      ```
-     stack`Inline-column A | Inline-column B`
+     stack`Inline-column A || Inline-column B`
     ```
 
     ::: note-info

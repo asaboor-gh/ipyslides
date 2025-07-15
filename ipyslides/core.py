@@ -471,7 +471,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def set_citations(self, data, mode='footnote'):
         r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
-        key should be cited in markdown as cite\`key\`/\@key, optionally comma separated keys.
+        key should be cited in markdown as cite\`key\` / \@key, optionally comma separated keys.
         `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by hl`Slides.settings.layout(..., ncol_refs=N)`.
 
         ```python
@@ -559,9 +559,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.verify_running("toc can only be added under slides constructor!")
         self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there
-
-    def goto_button(self, text, **kwargs):
-        raise DeprecationWarning("Use `Slides.link` instead of `goto_button` to create links to other slides in a streamlined way.")
 
     def link(self, label, back_label=None, icon=None, back_icon=None):
         r"""Create a link to jump to another slide. Use `label` for link text 
@@ -787,7 +784,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         Can use in place of `write` commnad for strings.
         When using `%xmd`, you can pass variables as \%{var} (slash for escap here) which will substitute HTML representation
         if no other formatting specified.
-        Inline columns are supported with stack`C1 | C2` syntax."""
+        Inline columns are supported with stack`C1 || C2` syntax."""
         if cell is None:
             return parse(line, returns = False)
         else:
