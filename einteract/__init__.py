@@ -36,10 +36,13 @@ This module is a wrapper around the `ipyslides.interaction` modulde.
 
 __all__ = [
     'InteractBase','callback', 'monitor', 'print_error', 'interactive','interact', 
-    'patched_plotly', 'plt2html', 'stack', 'hstack', 'vstack', 'html',
+    'patched_plotly', 'plt2html', 'hstack', 'vstack', 'html',
     'ListWidget', 'AnimationSlider', 'JupyTimer', 'Output', 
 ]
 
+from contextlib import suppress
+
+from ipywidgets import DOMWidget, HBox, VBox
 from ipyslides.interaction import (
     InteractBase, 
     callback, 
@@ -51,32 +54,63 @@ from ipyslides.interaction import (
 from ipyslides._base._widgets import ListWidget, AnimationSlider, JupyTimer
 from ipyslides._base.widgets import Output # patched one
 from ipyslides.formatters import plt2html
-from ipyslides.utils import stack as _stack, as_html_widget as _html
+from ipyslides.utils import as_html_widget as _html
 
-def stack(objs: list, sizes: list=None, vertical: bool=False, css_class: str=None,**css_props):
-    """Stack html representation of objs in columns or rows with optionally setting sizes. Returns a widget.
+def _set_sizes(sizes, children, name):
+    if not isinstance(sizes, (list, tuple)):
+            raise TypeError(f'{name}s should be a list or tuple of sizes, got {type(sizes)}')
+        
+    if len(sizes) != len(children):
+        raise ValueError(f"Argument '{name}s' must have same length as 'objs', got {len(sizes)} and {len(children)}")
+        
+    for s in sizes:
+        if not isinstance(s, (int, float)):
+            raise TypeError(f'{name} should be an int or float, got {type(s)}')
+        
+    total = sum(sizes)
+    return [s/total*100 for s in sizes]
+
+def hstack(objs: list, widths: list=None, **layout_props):
+    """Stack widget representation of objs in columns with optionally setting widths (relative integers). Returns a widget.
     
-    Any python object (except widgets) serializable in ipyslides works, including extended markdown.
+    Any python object serializable in ipyslides works, including widgets and extended markdown.
+    layout_props are applied to container widget's layout.
     """
-    return _stack(objs, sizes=sizes, vertical=vertical, css_class=css_class, **css_props).as_widget()
+    children = [_html(obj) if not isinstance(obj, DOMWidget) else obj for obj in objs]
+    if widths is not None:
+        widths = _set_sizes(widths, children, 'width')
+        for w, child in zip(widths, children):
+            with suppress(BaseException): # some widgets like plotly don't like to set dimensions this way
+                child.layout.min_width = "0px" # avoids overflow
+                child.layout.flex = f"{w} 1"
+                child.layout.width = f"{w}%" 
 
-def hstack(objs: list, widths: list=None):
-    """Stack html representation of objs in columns with optionally setting widths. Returns a widget.
+    return HBox(children=children, layout = layout_props)
+
+def vstack(objs: list, heights: list=None, **layout_props):
+    """Stack widget representation of objs vertically with optionally setting heights (relative integers). Returns a widget.
     
-    Any python object (except widgets) serializable in ipyslides works, including extended markdown.
+    Any python object serializable in ipyslides package works, including widgets and extended markdown.
+    layout_props are applied to container widget's layout. Set height of container to apply heights on children.
     """
-    return _stack(objs, sizes=widths, vertical=False).as_widget()
+    children = [_html(obj) if not isinstance(obj, DOMWidget) else obj for obj in objs]
+    if heights is not None:
+        heights = _set_sizes(heights, children, 'height')
+        for h, child in zip(heights, children):
+            with suppress(BaseException): # some widgets like plotly don't like to set dimensions this way
+                child.layout.min_height = "0px" # avoids overflow
+                child.layout.flex = f"{h} 1"
+                child.layout.height = f"{h}%"
 
-def vstack(objs: list, heights: list=None):
-    """Stack html representation of objs vertically. Returns a widget.
-    
-    Any python object (except widgets) serializable in ipyslides package works, including extended markdown.
-    """
-    return _stack(objs, sizes=heights, vertical=True).as_widget()
+    return VBox(children=children, layout=layout_props)
 
-def html(obj):
+
+def html(obj, **layout_props):
     """Convert obj to html representation. Returns a widget.
     
     Any python object (except widgets) serializable in ipyslides works, including extended markdown.
+    layout_props are applied to html widget's layout.
     """
-    return _html(obj)
+    out = _html(obj)
+    out.layout = layout_props
+    return out
