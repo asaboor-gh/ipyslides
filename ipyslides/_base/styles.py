@@ -16,7 +16,7 @@ animations = {'zoom':'''
      0% { transform: scale(0.05); }
     25% { transform: scale(0.35); }
     50% { transform: scale(0.55); }
-	75% { transform: scale(0.85); }
+    75% { transform: scale(0.85); }
    100% { transform: scale(1); }
 }
 ''',
@@ -96,28 +96,29 @@ theme_colors = {
     'Jupyter': {
         'fg1':'var(--jp-content-font-color0,black)',
         'fg2':'var(--jp-content-font-color3, #454545)', 
-        'fg3':'var(--jp-content-font-color2,#00004d)',
+        'fg3':'var(--jp-content-font-color2,#003366)',
         'bg1':'var(--jp-layout-color0,white)',
-        'bg2':'var(--jp-cell-editor-background,whitesmoke)',
+        'bg2':'var(--jp-cell-editor-background,#f7f5f5)',
         'bg3':'var(--jp-layout-color2,#e8e8e8)',
         'accent':'var(--jp-brand-color1,#8988)', # May be a neutral color is good for all themes for buttons
-        'pointer':'var(--jp-error-color1,red)',
+        'pointer':'var(--jp-error-color1,#d32f2f)',
     },
-    'Light': { 'fg1':'black', 'fg2':'#454545', 'fg3':'#00004d', 
-        'bg1':'white', 'bg2':'whitesmoke', 'bg3':'#e8e8e8',
-        'accent':'#005090','pointer':'red',
+    'Light': { 'fg1':'black', 'fg2':'#454545', 'fg3':'#003366', 
+        'bg1':'white', 'bg2':'#f7f5f5', 'bg3':'#e8e8e8',
+        'accent':'#005090','pointer':'#d32f2f',
     },
-    'Dark': { 'fg1' : 'white', 'fg2' : '#8A8989', 'fg3' : 'snow',
-        'bg1' : 'black', 'bg2' : '#353535', 'bg3' : '#282828',
-        'accent' : '#d7e1e5', 'pointer' : '#ff1744',
+    'Dark': { 'fg1' : '#e0e0e0', 'fg2' : '#b0b0b0', 'fg3' : '#b3cfff',
+        'bg1' : '#181a1b', 'bg2' : '#23272b', 'bg3' : '#2c313a',
+        'accent' : '#90caf9', 'pointer' : '#ff5252',
     },
-    'Material Light': { 'fg1': '#3b3b3b', 'fg2': '#838181', 'fg3': '#6389B1',
-	    'bg1': '#fafafa', 'bg2': '#e9eef2', 'bg3': '#d9dee2',
-	    'accent': '#345376', 'pointer': '#f50057',
+    'Material Light': { 'fg1': '#212121', 'fg2': '#757575', 'fg3': '#264d73',
+        'bg1': '#fafafa', 'bg2': '#f5f5fa', 'bg3': '#f4f4f7',
+        'accent': '#1976d2', 'pointer': '#d32f2f',
     },
-    'Material Dark': { 'fg1': '#bebebe', 'fg2': '#fefefe', 'fg3': '#C3D9F1',
-	    'bg1': '#282828', 'bg2': '#383838', 'bg3': '#242424',
-	    'accent': '#92C1F4', 'pointer': '#e91e63',
+    'Material Dark': {
+        'fg1': '#e0e0e0','fg2': '#bdbdbd','fg3': "#d2ddfa",
+        'bg1': "#1F2121",'bg2': "#1b2128",'bg3': "#25282e",
+        'accent': "#94cefd",'pointer': '#ff5252',
     }   
 }
 
@@ -179,8 +180,8 @@ def style_css(colors, fonts, layout, _root = False):
                 'margin-block':'0.2em !important',
                 'border':'none',
                 'width':'auto',
-                'height':'2px',
-                'background':'linear-gradient(to right, var(--bg1-color),  var(--bg2-color),var(--accent-color), var(--bg2-color),var(--bg1-color))',
+                'height':'1px',
+                'background':'linear-gradient(to right, var(--bg2-color),  var(--bg3-color),var(--accent-color), var(--bg3-color),var(--bg2-color))',
             },
             ':is(h1, h2, h3, h4, h5, h6)': {
                 'font-family':f'{fonts.heading}, var(--jp-content-font-family) !important',
@@ -279,10 +280,10 @@ def style_css(colors, fonts, layout, _root = False):
         '.SlideArea': {
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
-	        'height': f'{int(210/layout.aspect)}mm !important',
+            'height': f'{int(210/layout.aspect)}mm !important',
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
-	        'box-sizing': 'border-box !important',
+            'box-sizing': 'border-box !important',
             'display':'flex !important',
             'flex-direction':'column !important',
             'align-items': 'center !important' if layout.centered else 'baseline !important', 
@@ -600,18 +601,15 @@ def style_css(colors, fonts, layout, _root = False):
                 'border-radius': '4px',
                 'margin': '0.5em 0',
                 'box-shadow': '0px 0px 1px 0.5px hsl(from var(--bg-color) h s 40% / 0.9) inset !important',
-                'background': 'hsl(from var(--bg-color) h s l / 0.9)', 
+                'background': 'hsl(from var(--bg-color) h s l / 0.7)', 
             },
-            **({f'^-{c}': {
-                '--bg-color': f'hsl(from var(--bg2-color) {h} {s} l)'} 
-                for c,h, s in [
-                    ('red', 10, '100%'), 
-                    ('yellow', 60, '85%'), 
-                    ('green', 120, '70%'), 
-                    ('cyan', 180, '85%'), 
-                    ('blue', 210, '100%'), 
-                    ('magenta',310, '100%'),
-                ]
+            **({
+                '^-red':     {'--bg-color': 'hsl(from var(--bg2-color) 10 100% l)'},
+                '^-yellow':  {'--bg-color': 'hsl(from var(--bg2-color) 60 95% l)'}, 
+                '^-green':   {'--bg-color': 'hsl(from var(--bg2-color) 120 80% l)'},
+                '^-cyan':    {'--bg-color': 'hsl(from var(--bg2-color) 180 90% l)'}, 
+                '^-blue':    {'--bg-color': 'hsl(from var(--bg2-color) 210 100% l)'},
+                '^-magenta': {'--bg-color': 'hsl(from var(--bg2-color) 310 100% l)'},
             }),
         },
         'details': {

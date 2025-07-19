@@ -118,7 +118,7 @@ class Theme(ConfigTraits):
     colors = InstanceDict(Colors)
 
     def _apply_change(self, change):
-        self.main._update_theme() # otherwise colors don't apply
+        self.main._update_theme({'owner':self.main._widgets.theme}) # otherwise colors don't apply
 
     @traitlets.validate('value')
     def _value(self, proposal):

@@ -272,12 +272,41 @@ del TagFixer
 
 # This shoul be outside, as needed in other modules
 def resolve_included_files(text_chunk):
-    "Markdown files added by include`file.md` should be inserted as plain."
-    all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags = re.DOTALL)
+    "Markdown files added by include`file.md[start:end]` should be inserted as plain."
+    all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags=re.DOTALL)
     for match in all_matches:
-        with open(match, "r", encoding="utf-8") as f:
-            text = "\n" + f.read() + "\n" 
-            text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
+        # Parse match into file path and range
+        range_match = re.search(r'\[(.*?)\]$', match)
+        if range_match:
+            filepath = match[:range_match.start()].strip()
+            range_str = range_match.group(1).strip()
+            
+            start, end = None, None
+            try:
+                if ':' in range_str:
+                    start_str, end_str = range_str.split(':', 1)
+                    start = int(start_str.strip()) - 1 if start_str.strip() else None
+                    end = int(end_str.strip()) if end_str.strip() else None
+                elif range_str: # single line number
+                    start = int(range_str) - 1
+                    end = start + 1
+            except (ValueError, IndexError):
+                # Invalid range, treat whole match as filename
+                filepath = match
+                start, end = None, None
+        else:
+            filepath = match
+            start, end = None, None
+
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                lines = f.readlines()[slice(start,end)]
+                text = "\n" + "".join(lines) + "\n"
+                text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
+        except Exception as e:
+            err_msg = error('Exception', f'Could not include file {filepath!r}:\n{e}').value
+            text_chunk = text_chunk.replace(f"include`{match}`", err_msg, 1)
+
     return text_chunk
 
 class XMarkdown(Markdown):

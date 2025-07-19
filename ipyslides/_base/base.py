@@ -143,15 +143,22 @@ class BaseSlides:
         
         - Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text \{{: rowspan="2" colspan="1"}}| inside a cell, should be a space bewteen text and attributes.
         - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
-        - alert`include\`markdown_file.md\`` to include a file in markdown format. These files are watched for eidts if included in synced markdown file via `Slides.sync_with_file`.
+        - alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format. These files are watched for eidts if included in synced markdown file via `Slides.sync_with_file`.
         - Inline columns/rows can be added by using alert`stack\`Column A || Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
         - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
         
-        ```md-left  -c 
-            ```multicol 3 2 .class1.class2
-            Column A
+        ```md-left
+            ```multicol 2 3 .block-blue
+                ```md-after
+                ## Column A
+                ```
             +++
-            Column B
+                ## Column B
+                ```multicol .block-red
+                **Nested Column A**{{: .block-green}}
+                +++
+                **Nested Column B**{{: .block-yellow}}
+                ```
             ```
         ```
         

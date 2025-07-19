@@ -168,7 +168,8 @@ def write(*objs,widths = None, css_class=None):
         - You can avoid hl`repr(obj)` by hl`Slides.hold(func, ...)` e.g. hl`Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
         - You can use hl`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - A single string passed to `write` is equivalent to `parse` command.
-        - You can add mini columns inside a column by markdown syntax or `Slides.cols`, but content type is limited in that case.
+        - You can add mini columns inside a column by markdown syntax or `Slides.stack`, but content type is limited in that case.
+        - In markdown `multicol` block (starts and ends with three backticks) is similar to `write` command.
     """
     w = Writer(*objs,widths = widths) # Display itself
     if isinstance(css_class, str):

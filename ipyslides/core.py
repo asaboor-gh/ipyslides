@@ -407,7 +407,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 how_to_slide],sizes=[14,1, 85]).display()
         
         self._unregister_postrun_cell() # This also clears slides per cell
-        self.settings.footer._apply_change(None) # Reset
+        self.settings.footer.text = self.get_logo('14px') + ' IPySlides'
 
     def clear(self):
         "Clear all slides."
