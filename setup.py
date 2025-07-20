@@ -3,8 +3,8 @@ from shutil import rmtree
 
 from setuptools import setup, Command, find_packages
 
-if sys.version_info[:2] < (3, 8):
-    sys.exit("Sorry, Python < 3.8 is not supported for einteract")
+if sys.version_info[:2] < (3, 9):
+    sys.exit("Sorry, Python < 3.9 is not supported for einteract")
 
 # Package meta-data.
 NAME = "einteract"
@@ -14,7 +14,7 @@ DESCRIPTION = (
 URL = "https://github.com/asaboor-gh/einteract"
 EMAIL = "asaboor.my@outlook.com"
 AUTHOR = "Abdul Saboor"
-REQUIRES_PYTHON = ">=3.8"
+REQUIRES_PYTHON = ">=3.9"
 
 
 # What packages are required for this module to be executed?
