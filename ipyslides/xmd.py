@@ -470,7 +470,7 @@ class XMarkdown(Markdown):
 
     def _parse_multicol(self, data, header, _class):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
-        cols = re.split("^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
+        cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
         if header.strip() == "multicol":
             widths = [100/len(cols) for _ in cols]
         else:

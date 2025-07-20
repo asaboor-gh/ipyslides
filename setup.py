@@ -4,8 +4,8 @@ from shutil import rmtree
 
 from setuptools import setup, Command, find_packages
 
-if sys.version_info[:2] < (3, 8):
-    sys.exit('Sorry, Python < 3.8 is not supported for ipyslides >= 3.0. You can install ipyslides 2.x.x with Python 3.6 or 3.7.')
+if sys.version_info[:2] < (3, 9):
+    sys.exit('Sorry, Python < 3.9 is not supported for ipyslides >= 3.0. You can install ipyslides 2.x.x with Python 3.6 or 3.7.')
 
 # Package meta-data.
 NAME = 'ipyslides'
@@ -13,7 +13,7 @@ DESCRIPTION = 'Live rich content slides in jupyter notebook'
 URL = 'https://github.com/asaboor-gh/ipyslides'
 EMAIL = 'asaboor.my@outlook.com'
 AUTHOR = 'Abdul Saboor'
-REQUIRES_PYTHON = '>=3.8'
+REQUIRES_PYTHON = '>=3.9'
 
 # What packages are required for this module to be executed?
 REQUIRED = [

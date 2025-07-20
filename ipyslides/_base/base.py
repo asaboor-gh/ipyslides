@@ -660,7 +660,7 @@ class BaseSlides:
                 ), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
                 s.get_source(), widths = [1,3]
             )
-            self.write('If you need to serialize your own or third party objects not serialized by this module, you can use `\@Slides.serializer.register` to serialize them to html.\n{.note .info}')
+            self.write(r'If you need to serialize your own or third party objects not serialized by this module, you can use `\@Slides.serializer.register` to serialize them to html.\n{.note .info}')
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
             self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
