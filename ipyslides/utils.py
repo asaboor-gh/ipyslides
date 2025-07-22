@@ -19,7 +19,7 @@ from PIL import Image as pilImage, ImageGrab
 
 from IPython import get_ipython
 from IPython.display import SVG, IFrame
-from IPython.core.display import Image, display
+from IPython.display import Image, display
 
 from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, _inline_style

@@ -116,7 +116,7 @@ def disabled(*widgets):
             widget.remove_class("Context-Disabled")
 
 # We will capture error at user defined callbacks level
-_autoTB = AutoFormattedTB(mode='Context', color_scheme='Linux')
+_autoTB = AutoFormattedTB(mode='Context', theme_name='linux')
 
 @contextmanager
 def print_error(tb_offset=2):

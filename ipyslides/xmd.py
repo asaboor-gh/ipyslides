@@ -23,7 +23,7 @@ from io import StringIO
 from html.parser import HTMLParser
 
 from markdown import Markdown
-from IPython.core.display import display
+from IPython.display import display
 from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 

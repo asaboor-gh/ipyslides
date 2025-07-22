@@ -13,7 +13,7 @@ import pygments
 import ipywidgets as ipw
 
 from IPython.display import display, HTML, Audio, Video, Image as IPyImage
-from IPython.core.display import __all__ as _all
+from IPython.display import __dict__ as _all
 from IPython.utils.capture import RichOutput, capture_output
 from IPython import get_ipython
 
