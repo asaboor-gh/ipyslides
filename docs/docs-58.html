@@ -20,8 +20,8 @@
     --accent-color : #94cefd;
     --pointer-color : #ff5252;
     --text-size : 16px;
-    --jp-content-font-family : Roboto, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16";
-    --jp-code-font-family : Cascadia Code, "Ubuntu Mono", "SimSun-ExtB", "Courier New";
+    --jp-content-font-family : 'CMU Concrete', -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16";
+    --jp-code-font-family : 'CMU Typewriter Text', "Ubuntu Mono", "SimSun-ExtB", "Courier New";
 }
  .SlidesWrapper,
 .jupyter-widgets,
@@ -90,7 +90,7 @@ code) {
     background : linear-gradient(to right, var(--bg2-color),  var(--bg3-color),var(--accent-color), var(--bg3-color),var(--bg2-color));
 }
  .SlidesWrapper :is(h1, h2, h3, h4, h5, h6) {
-    font-family : Arial, var(--jp-content-font-family) !important;
+    font-family : 'CMU Serif', var(--jp-content-font-family) !important;
     font-weight : normal;
     color : var(--fg3-color);
     text-align : center;
@@ -799,9 +799,8 @@ pre:hover::-webkit-scrollbar-thumb,
 .block-cyan {
     --bg-color : var(--bg2-color);
     padding : 4px;
-    border-radius : 4px;
+    border-radius : 8px;
     margin : 0.5em 0;
-    box-shadow : 0px 0px 1px 0.5px hsl(from var(--bg-color) h s 40% / 0.9) inset !important;
     background : hsl(from var(--bg-color) h s l / 0.7);
 }
 .block-red {
@@ -1032,89 +1031,89 @@ span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; pad
 td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
 span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
 .highlight .hll { background-color: #6e7681 }
-.highlight { background: #0d1117; color: #e6edf3 }
-.highlight .c { color: #8b949e; font-style: italic } /* Comment */
-.highlight .err { color: #f85149 } /* Error */
-.highlight .esc { color: #e6edf3 } /* Escape */
-.highlight .g { color: #e6edf3 } /* Generic */
-.highlight .k { color: #ff7b72 } /* Keyword */
-.highlight .l { color: #a5d6ff } /* Literal */
-.highlight .n { color: #e6edf3 } /* Name */
-.highlight .o { color: #ff7b72; font-weight: bold } /* Operator */
-.highlight .x { color: #e6edf3 } /* Other */
-.highlight .p { color: #e6edf3 } /* Punctuation */
-.highlight .ch { color: #8b949e; font-style: italic } /* Comment.Hashbang */
-.highlight .cm { color: #8b949e; font-style: italic } /* Comment.Multiline */
-.highlight .cp { color: #8b949e; font-weight: bold; font-style: italic } /* Comment.Preproc */
-.highlight .cpf { color: #8b949e; font-style: italic } /* Comment.PreprocFile */
-.highlight .c1 { color: #8b949e; font-style: italic } /* Comment.Single */
-.highlight .cs { color: #8b949e; font-weight: bold; font-style: italic } /* Comment.Special */
-.highlight .gd { color: #ffa198; background-color: #490202 } /* Generic.Deleted */
-.highlight .ge { color: #e6edf3; font-style: italic } /* Generic.Emph */
-.highlight .ges { color: #e6edf3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
-.highlight .gr { color: #ffa198 } /* Generic.Error */
-.highlight .gh { color: #79c0ff; font-weight: bold } /* Generic.Heading */
-.highlight .gi { color: #56d364; background-color: #0f5323 } /* Generic.Inserted */
-.highlight .go { color: #8b949e } /* Generic.Output */
-.highlight .gp { color: #8b949e } /* Generic.Prompt */
-.highlight .gs { color: #e6edf3; font-weight: bold } /* Generic.Strong */
-.highlight .gu { color: #79c0ff } /* Generic.Subheading */
-.highlight .gt { color: #ff7b72 } /* Generic.Traceback */
-.highlight .g-Underline { color: #e6edf3; text-decoration: underline } /* Generic.Underline */
-.highlight .kc { color: #79c0ff } /* Keyword.Constant */
-.highlight .kd { color: #ff7b72 } /* Keyword.Declaration */
-.highlight .kn { color: #ff7b72 } /* Keyword.Namespace */
-.highlight .kp { color: #79c0ff } /* Keyword.Pseudo */
-.highlight .kr { color: #ff7b72 } /* Keyword.Reserved */
-.highlight .kt { color: #ff7b72 } /* Keyword.Type */
-.highlight .ld { color: #79c0ff } /* Literal.Date */
-.highlight .m { color: #a5d6ff } /* Literal.Number */
-.highlight .s { color: #a5d6ff } /* Literal.String */
-.highlight .na { color: #e6edf3 } /* Name.Attribute */
-.highlight .nb { color: #e6edf3 } /* Name.Builtin */
-.highlight .nc { color: #f0883e; font-weight: bold } /* Name.Class */
-.highlight .no { color: #79c0ff; font-weight: bold } /* Name.Constant */
-.highlight .nd { color: #d2a8ff; font-weight: bold } /* Name.Decorator */
-.highlight .ni { color: #ffa657 } /* Name.Entity */
-.highlight .ne { color: #f0883e; font-weight: bold } /* Name.Exception */
-.highlight .nf { color: #d2a8ff; font-weight: bold } /* Name.Function */
-.highlight .nl { color: #79c0ff; font-weight: bold } /* Name.Label */
-.highlight .nn { color: #ff7b72 } /* Name.Namespace */
-.highlight .nx { color: #e6edf3 } /* Name.Other */
-.highlight .py { color: #79c0ff } /* Name.Property */
-.highlight .nt { color: #7ee787 } /* Name.Tag */
-.highlight .nv { color: #79c0ff } /* Name.Variable */
-.highlight .ow { color: #ff7b72; font-weight: bold } /* Operator.Word */
-.highlight .pm { color: #e6edf3 } /* Punctuation.Marker */
-.highlight .w { color: #6e7681 } /* Text.Whitespace */
-.highlight .mb { color: #a5d6ff } /* Literal.Number.Bin */
-.highlight .mf { color: #a5d6ff } /* Literal.Number.Float */
-.highlight .mh { color: #a5d6ff } /* Literal.Number.Hex */
-.highlight .mi { color: #a5d6ff } /* Literal.Number.Integer */
-.highlight .mo { color: #a5d6ff } /* Literal.Number.Oct */
-.highlight .sa { color: #79c0ff } /* Literal.String.Affix */
-.highlight .sb { color: #a5d6ff } /* Literal.String.Backtick */
-.highlight .sc { color: #a5d6ff } /* Literal.String.Char */
-.highlight .dl { color: #79c0ff } /* Literal.String.Delimiter */
-.highlight .sd { color: #a5d6ff } /* Literal.String.Doc */
-.highlight .s2 { color: #a5d6ff } /* Literal.String.Double */
-.highlight .se { color: #79c0ff } /* Literal.String.Escape */
-.highlight .sh { color: #79c0ff } /* Literal.String.Heredoc */
-.highlight .si { color: #a5d6ff } /* Literal.String.Interpol */
-.highlight .sx { color: #a5d6ff } /* Literal.String.Other */
-.highlight .sr { color: #79c0ff } /* Literal.String.Regex */
-.highlight .s1 { color: #a5d6ff } /* Literal.String.Single */
-.highlight .ss { color: #a5d6ff } /* Literal.String.Symbol */
-.highlight .bp { color: #e6edf3 } /* Name.Builtin.Pseudo */
-.highlight .fm { color: #d2a8ff; font-weight: bold } /* Name.Function.Magic */
-.highlight .vc { color: #79c0ff } /* Name.Variable.Class */
-.highlight .vg { color: #79c0ff } /* Name.Variable.Global */
-.highlight .vi { color: #79c0ff } /* Name.Variable.Instance */
-.highlight .vm { color: #79c0ff } /* Name.Variable.Magic */
-.highlight .il { color: #a5d6ff } /* Literal.Number.Integer.Long */
+.highlight { background: #0d1117; color: #E6EDF3 }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
     .highlight { 
         background: #0d1117; 
-        color: #e6edf3; 
+        color: #E6EDF3; 
         border-left: 0.2em solid var(--bg3-color);
         border-radius: 0.2em;
     }
@@ -1130,7 +1129,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
     }
     .highlight code::before {
         width: 1.2em;
-        color: #e6edf3;
+        color: #E6EDF3;
         font-size: 80% !important;
         background: #0d1117 !important;
         display:inline-block !important;
@@ -1166,17 +1165,17 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 </head>
 <body>
 <div>
-    <div class="click-wrapper"> <a href="#s-1962073350928" class="clicker ●">●</a><a href="#s-1962073531104" class="clicker ●">●</a><a href="#s-1962073550960" class="clicker ●">●</a><a href="#s-1962073216576" class="clicker ●">●</a><a href="#s-1962073532208" class="clicker ●">●</a> </div>
+    <div class="click-wrapper"> <a href="#s-2036602347088" class="clicker ●">●</a><a href="#s-2036602174288" class="clicker ●">●</a><a href="#s-2036602172032" class="clicker ●">●</a><a href="#s-2036602549056" class="clicker ●">●</a><a href="#s-2036601775728" class="clicker ●">●</a> </div>
     <!-- Classes below work for both scenerios -->
-    <div class="SlidesWrapper Slides-1961548978640 Slides-ShowFooter">
+    <div class="SlidesWrapper Slides-2036084623680 Slides-ShowFooter">
     
-                    <section id="s-1962073350928">
+                    <section id="s-2036602347088">
 
 
                         <div class="SlideBox">
                             <div class="BackLayer">
             <style>
-                #s-1962073350928 .BackLayer {
+                #s-2036602347088 .BackLayer {
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -1186,7 +1185,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         overflow:hidden;
         margin:0;
     }
-    #s-1962073350928 .BackLayer :is(img, svg) {
+    #s-2036602347088 .BackLayer :is(img, svg) {
         position: absolute;
         left:50% !important;
         top:50% !important;
@@ -1197,14 +1196,14 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         filter: blur(10px);
         opacity:0.25;
     }
-    #s-1962073350928 .BackLayer svg {
+    #s-2036602347088 .BackLayer svg {
         max-width: 100% !important;
         max-height: 100% !important;
         width:  !important;
         min-width:  !important;
         min-height:  !important;
     }
-    #s-1962073350928 .BackLayer.jupyter-widgets-disconnected {
+    #s-2036602347088 .BackLayer.jupyter-widgets-disconnected {
         display:none;
     }
 
@@ -1215,10 +1214,10 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="#4F8EF7"/>
         <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;"></text>
     </svg></div>
-                            <div class="n0 SlideArea ShowSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 5.8.8 Documentation</h2>
+                            <div class="n0 SlideArea HideSlide">
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 5.8.9 Documentation</h2>
 <h3>Creating slides with IPySlides</h3></div><div style="width: 100%; box-sizing:border-box;"><div class="align-center"><p><span style='color:#DC143C;'>Abdul Saboor</span><sup style="font-size:85%;color:inherit;">1</sup></p>
-<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Jul 20, 2025</span></p>
+<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Jul 22, 2025</span></p>
 <p><svg height="4em" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
         <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="#43D675"/>
         <path d="M7.5 27.5L22.5 42.5" stroke="#4F8EF7"/>
@@ -1233,11 +1232,11 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 0.0%, var(--bg2-color) 0.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073554800">
+                    <section id="s-2036602173712">
 
 <style>
 
-#s-1962073554800 .SlideArea.n1  > .jp-OutputArea:empty:after {
+#s-2036602173712 .SlideArea.n1  > .jp-OutputArea:empty:after {
     content : "Slide(number = 1, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1249,31 +1248,31 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div class="columns writer block-green" style=""><div style="width:50.000%;overflow:auto;height:auto"><div><h2>Table of contents</h2>
 <ol class="toc-list toc-extra" style="">
 <li class="toc-item this">
-    <a href="#s-1962073554800" class="slide-link citelink">Introduction</a>
+    <a href="#s-2036602173712" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073551152" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2036602273072" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073553840" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2036602229712" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073550960" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2036602172032" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073218688" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2036602550304" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073216576" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2036602549056" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073532208" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2036601775728" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div><div style="width:50.000%;overflow:auto;height:auto"><h3>This is summary of current section</h3>
 <p>Oh we can use inline columns <div class="columns" style="gap:0.25em;display:flex;flex-direction:row;"><div style="flex:1 1;min-width:0;"><p>Column A</p></div>
 <div style="flex:1 1;min-width:0;"><p>Column B</p></div></div> here and what not!</p>
@@ -1288,9 +1287,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .hll { background-color: #ffffcc }
 .highlight.md-src  { background: #f8f8f8; }
 .highlight.md-src  .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight.md-src  .err { border: 1px solid #FF0000 } /* Error */
+.highlight.md-src  .err { border: 1px solid #F00 } /* Error */
 .highlight.md-src  .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight.md-src  .o { color: #666666 } /* Operator */
+.highlight.md-src  .o { color: #666 } /* Operator */
 .highlight.md-src  .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
 .highlight.md-src  .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
 .highlight.md-src  .cp { color: #9C6500 } /* Comment.Preproc */
@@ -1307,34 +1306,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
 .highlight.md-src  .gs { font-weight: bold } /* Generic.Strong */
 .highlight.md-src  .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight.md-src  .gt { color: #0044DD } /* Generic.Traceback */
+.highlight.md-src  .gt { color: #04D } /* Generic.Traceback */
 .highlight.md-src  .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
 .highlight.md-src  .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
 .highlight.md-src  .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
 .highlight.md-src  .kp { color: #008000 } /* Keyword.Pseudo */
 .highlight.md-src  .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
 .highlight.md-src  .kt { color: #B00040 } /* Keyword.Type */
-.highlight.md-src  .m { color: #666666 } /* Literal.Number */
+.highlight.md-src  .m { color: #666 } /* Literal.Number */
 .highlight.md-src  .s { color: #BA2121 } /* Literal.String */
 .highlight.md-src  .na { color: #687822 } /* Name.Attribute */
 .highlight.md-src  .nb { color: #008000 } /* Name.Builtin */
-.highlight.md-src  .nc { color: #0000FF; font-weight: bold } /* Name.Class */
-.highlight.md-src  .no { color: #880000 } /* Name.Constant */
-.highlight.md-src  .nd { color: #AA22FF } /* Name.Decorator */
+.highlight.md-src  .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight.md-src  .no { color: #800 } /* Name.Constant */
+.highlight.md-src  .nd { color: #A2F } /* Name.Decorator */
 .highlight.md-src  .ni { color: #717171; font-weight: bold } /* Name.Entity */
 .highlight.md-src  .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight.md-src  .nf { color: #0000FF } /* Name.Function */
+.highlight.md-src  .nf { color: #00F } /* Name.Function */
 .highlight.md-src  .nl { color: #767600 } /* Name.Label */
-.highlight.md-src  .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight.md-src  .nn { color: #00F; font-weight: bold } /* Name.Namespace */
 .highlight.md-src  .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight.md-src  .nv { color: #19177C } /* Name.Variable */
-.highlight.md-src  .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight.md-src  .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight.md-src  .mb { color: #666666 } /* Literal.Number.Bin */
-.highlight.md-src  .mf { color: #666666 } /* Literal.Number.Float */
-.highlight.md-src  .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight.md-src  .mi { color: #666666 } /* Literal.Number.Integer */
-.highlight.md-src  .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight.md-src  .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight.md-src  .w { color: #BBB } /* Text.Whitespace */
+.highlight.md-src  .mb { color: #666 } /* Literal.Number.Bin */
+.highlight.md-src  .mf { color: #666 } /* Literal.Number.Float */
+.highlight.md-src  .mh { color: #666 } /* Literal.Number.Hex */
+.highlight.md-src  .mi { color: #666 } /* Literal.Number.Integer */
+.highlight.md-src  .mo { color: #666 } /* Literal.Number.Oct */
 .highlight.md-src  .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight.md-src  .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight.md-src  .sc { color: #BA2121 } /* Literal.String.Char */
@@ -1349,12 +1348,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight.md-src  .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight.md-src  .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight.md-src  .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight.md-src  .fm { color: #00F } /* Name.Function.Magic */
 .highlight.md-src  .vc { color: #19177C } /* Name.Variable.Class */
 .highlight.md-src  .vg { color: #19177C } /* Name.Variable.Global */
 .highlight.md-src  .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight.md-src  .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight.md-src  .il { color: #666666 } /* Literal.Number.Integer.Long */
+.highlight.md-src  .il { color: #666 } /* Literal.Number.Integer.Long */
     .highlight.md-src  { 
         background: var(--bg2-color); 
         color: var(--fg1-color); 
@@ -1397,11 +1396,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 4.1667%, var(--bg2-color) 4.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073237824">
+                    <section id="s-2036602549152">
 
 <style>
 
-#s-1962073237824 .SlideArea.n2  > .jp-OutputArea:empty:after {
+#s-2036602549152 .SlideArea.n2  > .jp-OutputArea:empty:after {
     content : "Slide(number = 2, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1452,11 +1451,11 @@ or access many via list as <code class="highlight inline" style="white-space:pre
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 8.3333%, var(--bg2-color) 8.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073238112">
+                    <section id="s-2036602173424">
 
 <style>
 
-#s-1962073238112 .SlideArea.n3  > .jp-OutputArea:empty:after {
+#s-2036602173424 .SlideArea.n3  > .jp-OutputArea:empty:after {
     content : "Slide(number = 3, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1474,7 +1473,7 @@ and <code>back_label</code> for the  optional text on the target slide if need t
 <li>Use similar links in markdown as <code>&lt;link:[unique id here]:origin label&gt;</code> and <code>&lt;link:[unique id here same as origin]:target [back_label,optional]&gt;</code>.</li>
 <li>In markdown, icons can be passed in label as <span style='color:#DC143C;'>"fa`arrow` label text"</span>.</li>
 </ul>
-</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-bb025d1404dd4c8fa38ab1dd538fe26f" href="#target-bb025d1404dd4c8fa38ab1dd538fe26f"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
+</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-bd6bacea663b42de902107346ec147ff" href="#target-bd6bacea663b42de902107346ec147ff"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight">
@@ -1489,11 +1488,11 @@ and <code>back_label</code> for the  optional text on the target slide if need t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 12.5%, var(--bg2-color) 12.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073551152">
+                    <section id="s-2036602273072">
 
 <style>
 
-#s-1962073551152 .SlideArea.n4  > .jp-OutputArea:empty:after {
+#s-2036602273072 .SlideArea.n4  > .jp-OutputArea:empty:after {
     content : "Slide(number = 4, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1557,11 +1556,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 16.6667%, var(--bg2-color) 16.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073552928">
+                    <section id="s-2036602171504">
 
 <style>
 
-#s-1962073552928 .SlideArea.n5  > .jp-OutputArea:empty:after {
+#s-2036602171504 .SlideArea.n5  > .jp-OutputArea:empty:after {
     content : "Slide(number = 5, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1703,11 +1702,11 @@ There are few special rules in <code>props</code>:</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 20.8333%, var(--bg2-color) 20.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073531104">
+                    <section id="s-2036602174288">
 
 <style>
 
-#s-1962073531104 .SlideArea.n6  > .jp-OutputArea:empty:after {
+#s-2036602174288 .SlideArea.n6  > .jp-OutputArea:empty:after {
     content : "Slide(number = 6, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -1790,9 +1789,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .hll { background-color: #ffffcc }
 .highlight.md-src  { background: #f8f8f8; }
 .highlight.md-src  .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight.md-src  .err { border: 1px solid #FF0000 } /* Error */
+.highlight.md-src  .err { border: 1px solid #F00 } /* Error */
 .highlight.md-src  .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight.md-src  .o { color: #666666 } /* Operator */
+.highlight.md-src  .o { color: #666 } /* Operator */
 .highlight.md-src  .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
 .highlight.md-src  .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
 .highlight.md-src  .cp { color: #9C6500 } /* Comment.Preproc */
@@ -1809,34 +1808,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
 .highlight.md-src  .gs { font-weight: bold } /* Generic.Strong */
 .highlight.md-src  .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight.md-src  .gt { color: #0044DD } /* Generic.Traceback */
+.highlight.md-src  .gt { color: #04D } /* Generic.Traceback */
 .highlight.md-src  .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
 .highlight.md-src  .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
 .highlight.md-src  .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
 .highlight.md-src  .kp { color: #008000 } /* Keyword.Pseudo */
 .highlight.md-src  .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
 .highlight.md-src  .kt { color: #B00040 } /* Keyword.Type */
-.highlight.md-src  .m { color: #666666 } /* Literal.Number */
+.highlight.md-src  .m { color: #666 } /* Literal.Number */
 .highlight.md-src  .s { color: #BA2121 } /* Literal.String */
 .highlight.md-src  .na { color: #687822 } /* Name.Attribute */
 .highlight.md-src  .nb { color: #008000 } /* Name.Builtin */
-.highlight.md-src  .nc { color: #0000FF; font-weight: bold } /* Name.Class */
-.highlight.md-src  .no { color: #880000 } /* Name.Constant */
-.highlight.md-src  .nd { color: #AA22FF } /* Name.Decorator */
+.highlight.md-src  .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight.md-src  .no { color: #800 } /* Name.Constant */
+.highlight.md-src  .nd { color: #A2F } /* Name.Decorator */
 .highlight.md-src  .ni { color: #717171; font-weight: bold } /* Name.Entity */
 .highlight.md-src  .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight.md-src  .nf { color: #0000FF } /* Name.Function */
+.highlight.md-src  .nf { color: #00F } /* Name.Function */
 .highlight.md-src  .nl { color: #767600 } /* Name.Label */
-.highlight.md-src  .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight.md-src  .nn { color: #00F; font-weight: bold } /* Name.Namespace */
 .highlight.md-src  .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight.md-src  .nv { color: #19177C } /* Name.Variable */
-.highlight.md-src  .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight.md-src  .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight.md-src  .mb { color: #666666 } /* Literal.Number.Bin */
-.highlight.md-src  .mf { color: #666666 } /* Literal.Number.Float */
-.highlight.md-src  .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight.md-src  .mi { color: #666666 } /* Literal.Number.Integer */
-.highlight.md-src  .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight.md-src  .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight.md-src  .w { color: #BBB } /* Text.Whitespace */
+.highlight.md-src  .mb { color: #666 } /* Literal.Number.Bin */
+.highlight.md-src  .mf { color: #666 } /* Literal.Number.Float */
+.highlight.md-src  .mh { color: #666 } /* Literal.Number.Hex */
+.highlight.md-src  .mi { color: #666 } /* Literal.Number.Integer */
+.highlight.md-src  .mo { color: #666 } /* Literal.Number.Oct */
 .highlight.md-src  .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight.md-src  .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight.md-src  .sc { color: #BA2121 } /* Literal.String.Char */
@@ -1851,12 +1850,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight.md-src  .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight.md-src  .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight.md-src  .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight.md-src  .fm { color: #00F } /* Name.Function.Magic */
 .highlight.md-src  .vc { color: #19177C } /* Name.Variable.Class */
 .highlight.md-src  .vg { color: #19177C } /* Name.Variable.Global */
 .highlight.md-src  .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight.md-src  .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight.md-src  .il { color: #666666 } /* Literal.Number.Integer.Long */
+.highlight.md-src  .il { color: #666 } /* Literal.Number.Integer.Long */
     .highlight.md-src  { 
         background: var(--bg2-color); 
         color: var(--fg1-color); 
@@ -1909,9 +1908,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .hll { background-color: #ffffcc }
 .highlight.md-src  { background: #f8f8f8; }
 .highlight.md-src  .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight.md-src  .err { border: 1px solid #FF0000 } /* Error */
+.highlight.md-src  .err { border: 1px solid #F00 } /* Error */
 .highlight.md-src  .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight.md-src  .o { color: #666666 } /* Operator */
+.highlight.md-src  .o { color: #666 } /* Operator */
 .highlight.md-src  .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
 .highlight.md-src  .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
 .highlight.md-src  .cp { color: #9C6500 } /* Comment.Preproc */
@@ -1928,34 +1927,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
 .highlight.md-src  .gs { font-weight: bold } /* Generic.Strong */
 .highlight.md-src  .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight.md-src  .gt { color: #0044DD } /* Generic.Traceback */
+.highlight.md-src  .gt { color: #04D } /* Generic.Traceback */
 .highlight.md-src  .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
 .highlight.md-src  .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
 .highlight.md-src  .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
 .highlight.md-src  .kp { color: #008000 } /* Keyword.Pseudo */
 .highlight.md-src  .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
 .highlight.md-src  .kt { color: #B00040 } /* Keyword.Type */
-.highlight.md-src  .m { color: #666666 } /* Literal.Number */
+.highlight.md-src  .m { color: #666 } /* Literal.Number */
 .highlight.md-src  .s { color: #BA2121 } /* Literal.String */
 .highlight.md-src  .na { color: #687822 } /* Name.Attribute */
 .highlight.md-src  .nb { color: #008000 } /* Name.Builtin */
-.highlight.md-src  .nc { color: #0000FF; font-weight: bold } /* Name.Class */
-.highlight.md-src  .no { color: #880000 } /* Name.Constant */
-.highlight.md-src  .nd { color: #AA22FF } /* Name.Decorator */
+.highlight.md-src  .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight.md-src  .no { color: #800 } /* Name.Constant */
+.highlight.md-src  .nd { color: #A2F } /* Name.Decorator */
 .highlight.md-src  .ni { color: #717171; font-weight: bold } /* Name.Entity */
 .highlight.md-src  .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight.md-src  .nf { color: #0000FF } /* Name.Function */
+.highlight.md-src  .nf { color: #00F } /* Name.Function */
 .highlight.md-src  .nl { color: #767600 } /* Name.Label */
-.highlight.md-src  .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight.md-src  .nn { color: #00F; font-weight: bold } /* Name.Namespace */
 .highlight.md-src  .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight.md-src  .nv { color: #19177C } /* Name.Variable */
-.highlight.md-src  .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight.md-src  .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight.md-src  .mb { color: #666666 } /* Literal.Number.Bin */
-.highlight.md-src  .mf { color: #666666 } /* Literal.Number.Float */
-.highlight.md-src  .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight.md-src  .mi { color: #666666 } /* Literal.Number.Integer */
-.highlight.md-src  .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight.md-src  .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight.md-src  .w { color: #BBB } /* Text.Whitespace */
+.highlight.md-src  .mb { color: #666 } /* Literal.Number.Bin */
+.highlight.md-src  .mf { color: #666 } /* Literal.Number.Float */
+.highlight.md-src  .mh { color: #666 } /* Literal.Number.Hex */
+.highlight.md-src  .mi { color: #666 } /* Literal.Number.Integer */
+.highlight.md-src  .mo { color: #666 } /* Literal.Number.Oct */
 .highlight.md-src  .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight.md-src  .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight.md-src  .sc { color: #BA2121 } /* Literal.String.Char */
@@ -1970,12 +1969,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight.md-src  .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight.md-src  .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight.md-src  .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight.md-src  .fm { color: #00F } /* Name.Function.Magic */
 .highlight.md-src  .vc { color: #19177C } /* Name.Variable.Class */
 .highlight.md-src  .vg { color: #19177C } /* Name.Variable.Global */
 .highlight.md-src  .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight.md-src  .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight.md-src  .il { color: #666666 } /* Literal.Number.Integer.Long */
+.highlight.md-src  .il { color: #666 } /* Literal.Number.Integer.Long */
     .highlight.md-src  { 
         background: var(--bg2-color); 
         color: var(--fg1-color); 
@@ -2022,9 +2021,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .hll { background-color: #ffffcc }
 .highlight.md-src  { background: #f8f8f8; }
 .highlight.md-src  .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight.md-src  .err { border: 1px solid #FF0000 } /* Error */
+.highlight.md-src  .err { border: 1px solid #F00 } /* Error */
 .highlight.md-src  .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight.md-src  .o { color: #666666 } /* Operator */
+.highlight.md-src  .o { color: #666 } /* Operator */
 .highlight.md-src  .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
 .highlight.md-src  .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
 .highlight.md-src  .cp { color: #9C6500 } /* Comment.Preproc */
@@ -2041,34 +2040,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
 .highlight.md-src  .gs { font-weight: bold } /* Generic.Strong */
 .highlight.md-src  .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight.md-src  .gt { color: #0044DD } /* Generic.Traceback */
+.highlight.md-src  .gt { color: #04D } /* Generic.Traceback */
 .highlight.md-src  .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
 .highlight.md-src  .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
 .highlight.md-src  .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
 .highlight.md-src  .kp { color: #008000 } /* Keyword.Pseudo */
 .highlight.md-src  .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
 .highlight.md-src  .kt { color: #B00040 } /* Keyword.Type */
-.highlight.md-src  .m { color: #666666 } /* Literal.Number */
+.highlight.md-src  .m { color: #666 } /* Literal.Number */
 .highlight.md-src  .s { color: #BA2121 } /* Literal.String */
 .highlight.md-src  .na { color: #687822 } /* Name.Attribute */
 .highlight.md-src  .nb { color: #008000 } /* Name.Builtin */
-.highlight.md-src  .nc { color: #0000FF; font-weight: bold } /* Name.Class */
-.highlight.md-src  .no { color: #880000 } /* Name.Constant */
-.highlight.md-src  .nd { color: #AA22FF } /* Name.Decorator */
+.highlight.md-src  .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight.md-src  .no { color: #800 } /* Name.Constant */
+.highlight.md-src  .nd { color: #A2F } /* Name.Decorator */
 .highlight.md-src  .ni { color: #717171; font-weight: bold } /* Name.Entity */
 .highlight.md-src  .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight.md-src  .nf { color: #0000FF } /* Name.Function */
+.highlight.md-src  .nf { color: #00F } /* Name.Function */
 .highlight.md-src  .nl { color: #767600 } /* Name.Label */
-.highlight.md-src  .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight.md-src  .nn { color: #00F; font-weight: bold } /* Name.Namespace */
 .highlight.md-src  .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight.md-src  .nv { color: #19177C } /* Name.Variable */
-.highlight.md-src  .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight.md-src  .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight.md-src  .mb { color: #666666 } /* Literal.Number.Bin */
-.highlight.md-src  .mf { color: #666666 } /* Literal.Number.Float */
-.highlight.md-src  .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight.md-src  .mi { color: #666666 } /* Literal.Number.Integer */
-.highlight.md-src  .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight.md-src  .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight.md-src  .w { color: #BBB } /* Text.Whitespace */
+.highlight.md-src  .mb { color: #666 } /* Literal.Number.Bin */
+.highlight.md-src  .mf { color: #666 } /* Literal.Number.Float */
+.highlight.md-src  .mh { color: #666 } /* Literal.Number.Hex */
+.highlight.md-src  .mi { color: #666 } /* Literal.Number.Integer */
+.highlight.md-src  .mo { color: #666 } /* Literal.Number.Oct */
 .highlight.md-src  .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight.md-src  .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight.md-src  .sc { color: #BA2121 } /* Literal.String.Char */
@@ -2083,12 +2082,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight.md-src  .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight.md-src  .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight.md-src  .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight.md-src  .fm { color: #00F } /* Name.Function.Magic */
 .highlight.md-src  .vc { color: #19177C } /* Name.Variable.Class */
 .highlight.md-src  .vg { color: #19177C } /* Name.Variable.Global */
 .highlight.md-src  .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight.md-src  .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight.md-src  .il { color: #666666 } /* Literal.Number.Integer.Long */
+.highlight.md-src  .il { color: #666 } /* Literal.Number.Integer.Long */
     .highlight.md-src  { 
         background: var(--bg2-color); 
         color: var(--fg1-color); 
@@ -2155,9 +2154,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .hll { background-color: #ffffcc }
 .highlight.md-src  { background: #f8f8f8; }
 .highlight.md-src  .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight.md-src  .err { border: 1px solid #FF0000 } /* Error */
+.highlight.md-src  .err { border: 1px solid #F00 } /* Error */
 .highlight.md-src  .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight.md-src  .o { color: #666666 } /* Operator */
+.highlight.md-src  .o { color: #666 } /* Operator */
 .highlight.md-src  .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
 .highlight.md-src  .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
 .highlight.md-src  .cp { color: #9C6500 } /* Comment.Preproc */
@@ -2174,34 +2173,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
 .highlight.md-src  .gs { font-weight: bold } /* Generic.Strong */
 .highlight.md-src  .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight.md-src  .gt { color: #0044DD } /* Generic.Traceback */
+.highlight.md-src  .gt { color: #04D } /* Generic.Traceback */
 .highlight.md-src  .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
 .highlight.md-src  .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
 .highlight.md-src  .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
 .highlight.md-src  .kp { color: #008000 } /* Keyword.Pseudo */
 .highlight.md-src  .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
 .highlight.md-src  .kt { color: #B00040 } /* Keyword.Type */
-.highlight.md-src  .m { color: #666666 } /* Literal.Number */
+.highlight.md-src  .m { color: #666 } /* Literal.Number */
 .highlight.md-src  .s { color: #BA2121 } /* Literal.String */
 .highlight.md-src  .na { color: #687822 } /* Name.Attribute */
 .highlight.md-src  .nb { color: #008000 } /* Name.Builtin */
-.highlight.md-src  .nc { color: #0000FF; font-weight: bold } /* Name.Class */
-.highlight.md-src  .no { color: #880000 } /* Name.Constant */
-.highlight.md-src  .nd { color: #AA22FF } /* Name.Decorator */
+.highlight.md-src  .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight.md-src  .no { color: #800 } /* Name.Constant */
+.highlight.md-src  .nd { color: #A2F } /* Name.Decorator */
 .highlight.md-src  .ni { color: #717171; font-weight: bold } /* Name.Entity */
 .highlight.md-src  .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight.md-src  .nf { color: #0000FF } /* Name.Function */
+.highlight.md-src  .nf { color: #00F } /* Name.Function */
 .highlight.md-src  .nl { color: #767600 } /* Name.Label */
-.highlight.md-src  .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight.md-src  .nn { color: #00F; font-weight: bold } /* Name.Namespace */
 .highlight.md-src  .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight.md-src  .nv { color: #19177C } /* Name.Variable */
-.highlight.md-src  .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight.md-src  .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight.md-src  .mb { color: #666666 } /* Literal.Number.Bin */
-.highlight.md-src  .mf { color: #666666 } /* Literal.Number.Float */
-.highlight.md-src  .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight.md-src  .mi { color: #666666 } /* Literal.Number.Integer */
-.highlight.md-src  .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight.md-src  .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight.md-src  .w { color: #BBB } /* Text.Whitespace */
+.highlight.md-src  .mb { color: #666 } /* Literal.Number.Bin */
+.highlight.md-src  .mf { color: #666 } /* Literal.Number.Float */
+.highlight.md-src  .mh { color: #666 } /* Literal.Number.Hex */
+.highlight.md-src  .mi { color: #666 } /* Literal.Number.Integer */
+.highlight.md-src  .mo { color: #666 } /* Literal.Number.Oct */
 .highlight.md-src  .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight.md-src  .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight.md-src  .sc { color: #BA2121 } /* Literal.String.Char */
@@ -2216,12 +2215,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight.md-src  .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight.md-src  .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight.md-src  .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight.md-src  .fm { color: #00F } /* Name.Function.Magic */
 .highlight.md-src  .vc { color: #19177C } /* Name.Variable.Class */
 .highlight.md-src  .vg { color: #19177C } /* Name.Variable.Global */
 .highlight.md-src  .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight.md-src  .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight.md-src  .il { color: #666666 } /* Literal.Number.Integer.Long */
+.highlight.md-src  .il { color: #666 } /* Literal.Number.Integer.Long */
     .highlight.md-src  { 
         background: var(--bg2-color); 
         color: var(--fg1-color); 
@@ -2287,9 +2286,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .hll { background-color: #ffffcc }
 .highlight.md-src  { background: #f8f8f8; }
 .highlight.md-src  .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight.md-src  .err { border: 1px solid #FF0000 } /* Error */
+.highlight.md-src  .err { border: 1px solid #F00 } /* Error */
 .highlight.md-src  .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight.md-src  .o { color: #666666 } /* Operator */
+.highlight.md-src  .o { color: #666 } /* Operator */
 .highlight.md-src  .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
 .highlight.md-src  .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
 .highlight.md-src  .cp { color: #9C6500 } /* Comment.Preproc */
@@ -2306,34 +2305,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
 .highlight.md-src  .gs { font-weight: bold } /* Generic.Strong */
 .highlight.md-src  .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight.md-src  .gt { color: #0044DD } /* Generic.Traceback */
+.highlight.md-src  .gt { color: #04D } /* Generic.Traceback */
 .highlight.md-src  .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
 .highlight.md-src  .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
 .highlight.md-src  .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
 .highlight.md-src  .kp { color: #008000 } /* Keyword.Pseudo */
 .highlight.md-src  .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
 .highlight.md-src  .kt { color: #B00040 } /* Keyword.Type */
-.highlight.md-src  .m { color: #666666 } /* Literal.Number */
+.highlight.md-src  .m { color: #666 } /* Literal.Number */
 .highlight.md-src  .s { color: #BA2121 } /* Literal.String */
 .highlight.md-src  .na { color: #687822 } /* Name.Attribute */
 .highlight.md-src  .nb { color: #008000 } /* Name.Builtin */
-.highlight.md-src  .nc { color: #0000FF; font-weight: bold } /* Name.Class */
-.highlight.md-src  .no { color: #880000 } /* Name.Constant */
-.highlight.md-src  .nd { color: #AA22FF } /* Name.Decorator */
+.highlight.md-src  .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight.md-src  .no { color: #800 } /* Name.Constant */
+.highlight.md-src  .nd { color: #A2F } /* Name.Decorator */
 .highlight.md-src  .ni { color: #717171; font-weight: bold } /* Name.Entity */
 .highlight.md-src  .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight.md-src  .nf { color: #0000FF } /* Name.Function */
+.highlight.md-src  .nf { color: #00F } /* Name.Function */
 .highlight.md-src  .nl { color: #767600 } /* Name.Label */
-.highlight.md-src  .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight.md-src  .nn { color: #00F; font-weight: bold } /* Name.Namespace */
 .highlight.md-src  .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight.md-src  .nv { color: #19177C } /* Name.Variable */
-.highlight.md-src  .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight.md-src  .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight.md-src  .mb { color: #666666 } /* Literal.Number.Bin */
-.highlight.md-src  .mf { color: #666666 } /* Literal.Number.Float */
-.highlight.md-src  .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight.md-src  .mi { color: #666666 } /* Literal.Number.Integer */
-.highlight.md-src  .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight.md-src  .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight.md-src  .w { color: #BBB } /* Text.Whitespace */
+.highlight.md-src  .mb { color: #666 } /* Literal.Number.Bin */
+.highlight.md-src  .mf { color: #666 } /* Literal.Number.Float */
+.highlight.md-src  .mh { color: #666 } /* Literal.Number.Hex */
+.highlight.md-src  .mi { color: #666 } /* Literal.Number.Integer */
+.highlight.md-src  .mo { color: #666 } /* Literal.Number.Oct */
 .highlight.md-src  .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight.md-src  .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight.md-src  .sc { color: #BA2121 } /* Literal.String.Char */
@@ -2348,12 +2347,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight.md-src  .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight.md-src  .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight.md-src  .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight.md-src  .fm { color: #00F } /* Name.Function.Magic */
 .highlight.md-src  .vc { color: #19177C } /* Name.Variable.Class */
 .highlight.md-src  .vg { color: #19177C } /* Name.Variable.Global */
 .highlight.md-src  .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight.md-src  .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight.md-src  .il { color: #666666 } /* Literal.Number.Integer.Long */
+.highlight.md-src  .il { color: #666 } /* Literal.Number.Integer.Long */
     .highlight.md-src  { 
         background: var(--bg2-color); 
         color: var(--fg1-color); 
@@ -2431,11 +2430,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 25.0%, var(--bg2-color) 25.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073554368">
+                    <section id="s-2036601856784">
 
 <style>
 
-#s-1962073554368 .SlideArea.n7  > .jp-OutputArea:empty:after {
+#s-2036601856784 .SlideArea.n7  > .jp-OutputArea:empty:after {
     content : "Slide(number = 7, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2553,11 +2552,11 @@ If you need output html, use <code>returns = True</code> but that won't display 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 29.1667%, var(--bg2-color) 29.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073553792">
+                    <section id="s-2036602230432">
 
 <style>
 
-#s-1962073553792 .SlideArea.n8  > .jp-OutputArea:empty:after {
+#s-2036602230432 .SlideArea.n8  > .jp-OutputArea:empty:after {
     content : "Slide(number = 8, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2577,11 +2576,11 @@ If you need output html, use <code>returns = True</code> but that won't display 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 33.3333%, var(--bg2-color) 33.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073553648">
+                    <section id="s-2036602174000">
 
 <style>
 
-#s-1962073553648 .SlideArea.n9  > .jp-OutputArea:empty:after {
+#s-2036602174000 .SlideArea.n9  > .jp-OutputArea:empty:after {
     content : "Slide(number = 9, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2628,11 +2627,11 @@ If <code>returns</code> is False (by default), then source is displayed before t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 37.5%, var(--bg2-color) 37.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073553840">
+                    <section id="s-2036602229712">
 
 <style>
 
-#s-1962073553840 .SlideArea.n10  > .jp-OutputArea:empty:after {
+#s-2036602229712 .SlideArea.n10  > .jp-OutputArea:empty:after {
     content : "Slide(number = 10, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2644,46 +2643,46 @@ If <code>returns</code> is False (by default), then source is displayed before t
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-1962073554800" class="slide-link citelink">Introduction</a>
+    <a href="#s-2036602173712" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1962073551152" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2036602273072" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-1962073553840" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2036602229712" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073550960" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2036602172032" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073218688" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2036602550304" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073216576" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2036602549056" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073532208" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2036601775728" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">10</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 41.6667%, var(--bg2-color) 41.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073551488">
+                    <section id="s-2036601857024">
 
 <style>
-#s-1962073551488 {
+#s-2036601857024 {
     --bg1-color : linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color));
 }
 
 
-#s-1962073551488 .SlideArea.n11 .highlight {
+#s-2036601857024 .SlideArea.n11 .highlight {
     background : #8984;
 }
 </style>
@@ -2718,11 +2717,11 @@ e.g. <code class="highlight inline" style="white-space:pre;"><span class="n">Sli
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 45.8333%, var(--bg2-color) 45.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073550960">
+                    <section id="s-2036602172032">
 
 <style>
 
-#s-1962073550960 .SlideArea.n12  > .jp-OutputArea:empty:after {
+#s-2036602172032 .SlideArea.n12  > .jp-OutputArea:empty:after {
     content : "Slide(number = 12, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2743,7 +2742,7 @@ e.g. <code class="highlight inline" style="white-space:pre;"><span class="n">Sli
 
 <div class="highlight ">
         <pre>
-<code><span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
 <code><span class="n">slides</span><span class="o">.</span><span class="n">alt</span><span class="p">(</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;&lt;input type=&quot;range&quot; min=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">min</span><span class="si">}</span><span class="s1">&quot; max=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">max</span><span class="si">}</span><span class="s1">&quot; value=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">&quot;&gt;&#39;</span><span class="p">,</span> <span class="n">ipw</span><span class="o">.</span><span class="n">IntSlider</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
         </pre>
 </div>
@@ -2753,7 +2752,7 @@ e.g. <code class="highlight inline" style="white-space:pre;"><span class="n">Sli
 <li><code>ipywidgets</code>'s <code>HTML</code>, <code>Box</code> and <code>Output</code> widgets and their subclasses directly give html representation if used inside <code>write</code> command.</li>
 </ul>
 </div>
-</div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>AnimationSlider</b></span><code class="highlight inline" style="white-space:pre;"><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">continuous_update</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE5160</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">cyclic</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE5190</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">description</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Unicode</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE5040</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Float</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE5100</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">loop</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE50A0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">nframes</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE50D0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">playing</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE5130</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">value</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001C8B5BE5070</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code><br><p>This is a simple slider widget that can be used to control the animation with an observer function.</p>
+</div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>AnimationSlider</b></span><code class="highlight inline" style="white-space:pre;"><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">continuous_update</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BF40</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">cyclic</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BF70</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">description</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Unicode</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BE20</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Float</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BEE0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">loop</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BE80</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">nframes</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BEB0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">playing</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BF10</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">value</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001DA1053BE50</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code><br><p>This is a simple slider widget that can be used to control the animation with an observer function.</p>
 <p>You need to provide parameters like <code>nframes</code> and <code>interval</code> (milliseconds) to control the animation. 
 The <code>value</code> trait can be observed to get the current frame index.
 The <code>cyclic</code> trait can be set to <code>True</code> to make the animation cyclic and only works when loop mode is ON.</p><div><span class="lang-name">Python</span>
@@ -2761,13 +2760,13 @@ The <code>cyclic</code> trait can be set to <code>True</code> to make the animat
 
 <div class="highlight ">
         <pre>
-<code><span class="kn">from</span> <span class="nn">plotly.graph_objects</span> <span class="kn">import</span> <span class="n">FigureWidget</span></code>
+<code><span class="kn">from</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">FigureWidget</span></code>
 <code></code>
 <code><span class="n">fig</span> <span class="o">=</span> <span class="n">FigureWidget</span><span class="p">()</span></code>
 <code><span class="n">fig</span><span class="o">.</span><span class="n">add_scatter</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span></code>
 <code><span class="n">widget</span> <span class="o">=</span> <span class="n">slides</span><span class="o">.</span><span class="n">AnimationSlider</span><span class="p">()</span> <span class="c1"># assuming slides is the instance of Slides app</span></code>
 <code></code>
-<code><span class="k">def</span> <span class="nf">on_change</span><span class="p">(</span><span class="n">change</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">on_change</span><span class="p">(</span><span class="n">change</span><span class="p">):</span></code>
 <code>    <span class="n">value</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="s1">&#39;new&#39;</span><span class="p">]</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;rgb(</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="o">/</span><span class="n">widget</span><span class="o">.</span><span class="n">nframes</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span><span class="si">}</span><span class="s1">, 100, 100)&#39;</span> <span class="c1"># change color based on frame index</span></code>
 <code></code>
@@ -2780,10 +2779,10 @@ The <code>cyclic</code> trait can be set to <code>True</code> to make the animat
 
 <div class="highlight ">
         <pre>
-<code><span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">interact</span></code>
+<code><span class="kn">from</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">interact</span></code>
 <code></code>
 <code><span class="nd">@interact</span><span class="p">(</span><span class="n">frame</span><span class="o">=</span><span class="n">widget</span><span class="p">)</span></code>
-<code><span class="k">def</span> <span class="nf">show_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">show_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">):</span></code>
 <code>    <span class="nb">print</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span></code>
         </pre>
 </div>
@@ -2909,7 +2908,7 @@ Only a subset of inline properties take effect if obj is a widget.</p>
 
 <div class="highlight ">
         <pre>
-<code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span></code>
 <code><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">]})</span></code>
 <code><span class="n">slides</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span></code>
 <code></code>
@@ -2928,11 +2927,11 @@ Only a subset of inline properties take effect if obj is a widget.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 50.0%, var(--bg2-color) 50.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073104688">
+                    <section id="s-2036602173040">
 
 <style>
 
-#s-1962073104688 .SlideArea.n13  > .jp-OutputArea:empty:after {
+#s-2036602173040 .SlideArea.n13  > .jp-OutputArea:empty:after {
     content : "Slide(number = 13, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2984,11 +2983,11 @@ key should be cited in markdown as cite<code>key</code> / @key, optionally comma
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 54.1667%, var(--bg2-color) 54.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073107424">
+                    <section id="s-2036602270528">
 
 <style>
 
-#s-1962073107424 .SlideArea.n14  > .jp-OutputArea:empty:after {
+#s-2036602270528 .SlideArea.n14  > .jp-OutputArea:empty:after {
     content : "Slide(number = 14, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -2997,7 +2996,7 @@ key should be cited in markdown as cite<code>key</code> / @key, optionally comma
                         <div class="SlideBox">
 
                             <div class="n14 SlideArea HideSlide">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-bb025d1404dd4c8fa38ab1dd538fe26f" href="#origin-bb025d1404dd4c8fa38ab1dd538fe26f"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" style=""><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">Slides.ei.<b>interact</b></span><code class="highlight inline" style="white-space:pre;"><span class="p">(</span><span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span> <span class="n">auto_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">app_layout</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">grid_css</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-bd6bacea663b42de902107346ec147ff" href="#origin-bd6bacea663b42de902107346ec147ff"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" style=""><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">Slides.ei.<b>interact</b></span><code class="highlight inline" style="white-space:pre;"><span class="p">(</span><span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span> <span class="n">auto_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">app_layout</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">grid_css</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
 <p>This function is used for quick dashboards. Subclass <code>InteractBase</code> for complex applications.</p>
 <p><strong>Features</strong>:    </p>
 <ul>
@@ -3012,24 +3011,24 @@ key should be cited in markdown as cite<code>key</code> / @key, optionally comma
 
 <div class="highlight ">
         <pre>
-<code><span class="kn">from</span> <span class="nn">ipyslides.interaction</span> <span class="kn">import</span> <span class="n">interactive</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">monitor</span></code>
-<code><span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
-<code><span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span></code>
+<code><span class="kn">from</span><span class="w"> </span><span class="nn">ipyslides.interaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">interactive</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">monitor</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span></code>
 <code></code>
 <code><span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">FigureWidget</span><span class="p">()</span></code>
 <code></code>
 <code><span class="nd">@callback</span><span class="p">(</span><span class="s1">&#39;out-plot&#39;</span><span class="p">,</span> <span class="n">timeit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># check execution time</span></code>
-<code><span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">update_plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span><span class="p">):</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[]</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">add_scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span></code>
 <code></code>
-<code><span class="k">def</span> <span class="nf">resize_fig</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">resize_fig</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># double trigger</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># plotly&#39;s figurewidget always make trouble with sizing</span></code>
 <code></code>
 <code><span class="c1"># Above two functions can be merged since we can use changed detection</span></code>
 <code><span class="nd">@monitor</span>  <span class="c1"># check execution time</span></code>
-<code><span class="k">def</span> <span class="nf">respond</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span> <span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">changed</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">respond</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span> <span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">changed</span><span class="p">):</span></code>
 <code>    <span class="k">if</span> <span class="s1">&#39;fs&#39;</span> <span class="ow">in</span> <span class="n">changed</span><span class="p">:</span> <span class="c1"># or changed(&#39;fs&#39;)</span></code>
 <code>        <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># double trigger</span></code>
 <code>        <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">True</span></code>
@@ -3120,10 +3119,10 @@ There are few special rules in <code>props</code>:</p>
 
 <div class="highlight">
         <pre>
-<code><span class="kn">import</span> <span class="nn">time</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span></code>
 <code></code>
 <code><span class="nd">@self</span><span class="o">.</span><span class="n">ei</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">auto_update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid_css</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">({</span><span class="s1">&#39;.out-main&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="s1">&#39;2em&#39;</span><span class="p">)},</span><span class="n">background</span><span class="o">=</span><span class="s1">&#39;var(--bg2-color)&#39;</span><span class="p">),</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>  <span class="c1"># self is Slides here</span></code>
-<code><span class="k">def</span> <span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">):</span> </code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">):</span> </code>
 <code>    <span class="n">local_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">()</span></code>
 <code>    <span class="n">objs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Time: </span><span class="si">{3}</span><span class="s1">:</span><span class="si">{4}</span><span class="s1">:</span><span class="si">{5}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">local_time</span><span class="p">)]</span> <span class="c1"># Print time in HH:MM:SS format</span></code>
 <code>    <span class="k">if</span> <span class="n">date</span><span class="p">:</span></code>
@@ -3132,11 +3131,11 @@ There are few special rules in <code>props</code>:</p>
         </pre>
 </div>
 </div></div>
-<div class="widget-interact ips-interact i-1962069579520" style="width:100%;gap:0.2em;display:grid;height:max-content;"><div class="interact-app" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
+<div class="widget-interact ips-interact i-2036621911856" style="width:100%;gap:0.2em;display:grid;height:max-content;"><div class="interact-app" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
 "center center center"
 "center center center";grid-template-columns:1fr 2fr 1fr;grid-template-rows:1fr 3fr 1fr;"><div class="center" style="width:100%;gap:0.2em;grid-area:center;"><div class="date" style=""></div>
 <div class="Refresh-Btn btn-main" style="height:28px;padding:0 24px;width:max-content;"></div>
-<div class="out-main" style=""><div class="columns" style="gap:0.25em;display:flex;flex-direction:row;"><div style="flex:1 1;min-width:0;"><p>Time: 13:59:7</p></div></div></div></div></div>
+<div class="out-main" style=""><div class="columns" style="gap:0.25em;display:flex;flex-direction:row;"><div style="flex:1 1;min-width:0;"><p>Time: 22:10:53</p></div></div></div></div></div>
 <div class="other-area" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;"></div>
 <div class="" style=""><style>
 .ips-interact > .interact-app {
@@ -3233,10 +3232,10 @@ There are few special rules in <code>props</code>:</p>
 }
 
 
-.i-1962069579520.widget-interact.ips-interact > .interact-app {
+.i-2036621911856.widget-interact.ips-interact > .interact-app {
     background : var(--bg2-color);
 }
-.i-1962069579520.widget-interact.ips-interact > .interact-app .out-main {
+.i-2036621911856.widget-interact.ips-interact > .interact-app .out-main {
     height : 2em;
 }
 </style></div>
@@ -3247,10 +3246,10 @@ There are few special rules in <code>props</code>:</p>
 
 <div class="highlight">
         <pre>
-<code><span class="kn">import</span> <span class="nn">datetime</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span></code>
 <code></code>
 <code><span class="nd">@self</span><span class="o">.</span><span class="n">on_load</span>  <span class="c1"># self is Slides here</span></code>
-<code><span class="k">def</span> <span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
 <code>    <span class="n">t</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></code>
 <code>    <span class="n">time</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Notification at </span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s1"> form slide </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1"> and frame </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
@@ -3272,11 +3271,11 @@ Use this to e.g. notify during running presentation. func accepts single arguemn
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 58.3333%, var(--bg2-color) 58.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073108192">
+                    <section id="s-2036602174480">
 
 <style>
 
-#s-1962073108192 .SlideArea.n15  > .jp-OutputArea:empty:after {
+#s-2036602174480 .SlideArea.n15  > .jp-OutputArea:empty:after {
     content : "Slide(number = 15, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3380,9 +3379,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .hll { background-color: #ffffcc }
 .highlight.md-src  { background: #f8f8f8; }
 .highlight.md-src  .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight.md-src  .err { border: 1px solid #FF0000 } /* Error */
+.highlight.md-src  .err { border: 1px solid #F00 } /* Error */
 .highlight.md-src  .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight.md-src  .o { color: #666666 } /* Operator */
+.highlight.md-src  .o { color: #666 } /* Operator */
 .highlight.md-src  .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
 .highlight.md-src  .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
 .highlight.md-src  .cp { color: #9C6500 } /* Comment.Preproc */
@@ -3399,34 +3398,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
 .highlight.md-src  .gs { font-weight: bold } /* Generic.Strong */
 .highlight.md-src  .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight.md-src  .gt { color: #0044DD } /* Generic.Traceback */
+.highlight.md-src  .gt { color: #04D } /* Generic.Traceback */
 .highlight.md-src  .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
 .highlight.md-src  .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
 .highlight.md-src  .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
 .highlight.md-src  .kp { color: #008000 } /* Keyword.Pseudo */
 .highlight.md-src  .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
 .highlight.md-src  .kt { color: #B00040 } /* Keyword.Type */
-.highlight.md-src  .m { color: #666666 } /* Literal.Number */
+.highlight.md-src  .m { color: #666 } /* Literal.Number */
 .highlight.md-src  .s { color: #BA2121 } /* Literal.String */
 .highlight.md-src  .na { color: #687822 } /* Name.Attribute */
 .highlight.md-src  .nb { color: #008000 } /* Name.Builtin */
-.highlight.md-src  .nc { color: #0000FF; font-weight: bold } /* Name.Class */
-.highlight.md-src  .no { color: #880000 } /* Name.Constant */
-.highlight.md-src  .nd { color: #AA22FF } /* Name.Decorator */
+.highlight.md-src  .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight.md-src  .no { color: #800 } /* Name.Constant */
+.highlight.md-src  .nd { color: #A2F } /* Name.Decorator */
 .highlight.md-src  .ni { color: #717171; font-weight: bold } /* Name.Entity */
 .highlight.md-src  .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight.md-src  .nf { color: #0000FF } /* Name.Function */
+.highlight.md-src  .nf { color: #00F } /* Name.Function */
 .highlight.md-src  .nl { color: #767600 } /* Name.Label */
-.highlight.md-src  .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight.md-src  .nn { color: #00F; font-weight: bold } /* Name.Namespace */
 .highlight.md-src  .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight.md-src  .nv { color: #19177C } /* Name.Variable */
-.highlight.md-src  .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight.md-src  .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight.md-src  .mb { color: #666666 } /* Literal.Number.Bin */
-.highlight.md-src  .mf { color: #666666 } /* Literal.Number.Float */
-.highlight.md-src  .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight.md-src  .mi { color: #666666 } /* Literal.Number.Integer */
-.highlight.md-src  .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight.md-src  .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight.md-src  .w { color: #BBB } /* Text.Whitespace */
+.highlight.md-src  .mb { color: #666 } /* Literal.Number.Bin */
+.highlight.md-src  .mf { color: #666 } /* Literal.Number.Float */
+.highlight.md-src  .mh { color: #666 } /* Literal.Number.Hex */
+.highlight.md-src  .mi { color: #666 } /* Literal.Number.Integer */
+.highlight.md-src  .mo { color: #666 } /* Literal.Number.Oct */
 .highlight.md-src  .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight.md-src  .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight.md-src  .sc { color: #BA2121 } /* Literal.String.Char */
@@ -3441,12 +3440,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight.md-src  .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight.md-src  .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight.md-src  .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight.md-src  .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight.md-src  .fm { color: #00F } /* Name.Function.Magic */
 .highlight.md-src  .vc { color: #19177C } /* Name.Variable.Class */
 .highlight.md-src  .vg { color: #19177C } /* Name.Variable.Global */
 .highlight.md-src  .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight.md-src  .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight.md-src  .il { color: #666666 } /* Literal.Number.Integer.Long */
+.highlight.md-src  .il { color: #666 } /* Literal.Number.Integer.Long */
     .highlight.md-src  { 
         background: var(--bg2-color); 
         color: var(--fg1-color); 
@@ -3489,11 +3488,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 62.5%, var(--bg2-color) 62.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073553504">
+                    <section id="s-2036602173184">
 
 <style>
 
-#s-1962073553504 .SlideArea.n16  > .jp-OutputArea:empty:after {
+#s-2036602173184 .SlideArea.n16  > .jp-OutputArea:empty:after {
     content : "Slide(number = 16, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3509,7 +3508,7 @@ You can <strong class="error">highlight</strong> code using <code>highlight</cod
 
 <div class="highlight ">
         <pre>
-<code><span class="kn">import</span> <span class="nn">ipyslides</span> <span class="k">as</span> <span class="nn">isd</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipyslides</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">isd</span></code>
         </pre>
 </div>
 </div></div></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Javascript</span>
@@ -3538,7 +3537,7 @@ You can <strong class="error">highlight</strong> code using <code>highlight</cod
 <code><span class="s2">```</span></code>
 <code><span class="s2">Source code of slide can be embeded via variable too: %</span><span class="si">{self.this.source}</span></code>
 <code><span class="s2">&quot;&quot;&quot;</span><span class="p">,</span></code>
-<code><span class="bp">self</span> <span class="o">=</span> <span class="s1">&#39;&lt;Slides at 0x1c8b56e19d0&gt;&#39;</span></code>
+<code><span class="bp">self</span> <span class="o">=</span> <span class="s1">&#39;&lt;Slides at 0x1da1019c940&gt;&#39;</span></code>
 <code><span class="p">)</span></code>
         </pre>
 </div>
@@ -3555,11 +3554,11 @@ You can <strong class="error">highlight</strong> code using <code>highlight</cod
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 66.6667%, var(--bg2-color) 66.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218688">
+                    <section id="s-2036602550304">
 
 <style>
 
-#s-1962073218688 .SlideArea.n17  > .jp-OutputArea:empty:after {
+#s-2036602550304 .SlideArea.n17  > .jp-OutputArea:empty:after {
     content : "Slide(number = 17, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3608,11 +3607,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 70.8333%, var(--bg2-color) 70.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073216576">
+                    <section id="s-2036602549056">
 
 <style>
 
-#s-1962073216576 .SlideArea.n18  > .jp-OutputArea:empty:after {
+#s-2036602549056 .SlideArea.n18  > .jp-OutputArea:empty:after {
     content : "Slide(number = 18, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3624,42 +3623,42 @@ This helps modularity of content, and even you can link a citation file in markd
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-1962073554800" class="slide-link citelink">Introduction</a>
+    <a href="#s-2036602173712" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1962073551152" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2036602273072" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1962073553840" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2036602229712" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1962073550960" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2036602172032" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1962073218688" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2036602550304" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-1962073216576" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2036602549056" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1962073532208" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2036601775728" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">18</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.0%, var(--bg2-color) 75.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3679,7 +3678,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3693,11 +3692,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.463%, var(--bg2-color) 75.463%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3717,7 +3716,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3731,11 +3730,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 75.9259%, var(--bg2-color) 75.9259%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3755,7 +3754,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3769,11 +3768,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.3889%, var(--bg2-color) 76.3889%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3793,7 +3792,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3807,11 +3806,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.8519%, var(--bg2-color) 76.8519%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3831,7 +3830,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3845,11 +3844,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 77.3148%, var(--bg2-color) 77.3148%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3869,7 +3868,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3883,11 +3882,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 77.7778%, var(--bg2-color) 77.7778%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3907,7 +3906,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3921,11 +3920,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 78.2407%, var(--bg2-color) 78.2407%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3945,7 +3944,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3959,11 +3958,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 78.7037%, var(--bg2-color) 78.7037%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073218112">
+                    <section id="s-2036601789264">
 
 <style>
 
-#s-1962073218112 .SlideArea.n19  > .jp-OutputArea:empty:after {
+#s-2036601789264 .SlideArea.n19  > .jp-OutputArea:empty:after {
     content : "Slide(number = 19, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -3983,7 +3982,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3997,11 +3996,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 79.1667%, var(--bg2-color) 79.1667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073217104">
+                    <section id="s-2036602232400">
 
 <style>
 
-#s-1962073217104 .SlideArea.n20  > .jp-OutputArea:empty:after {
+#s-2036602232400 .SlideArea.n20  > .jp-OutputArea:empty:after {
     content : "Slide(number = 20, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -4043,13 +4042,13 @@ This helps modularity of content, and even you can link a citation file in markd
 
 <div class="highlight ">
         <pre>
-<code><span class="k">class</span> <span class="nc">MyObject</span><span class="p">:</span></code>
-<code>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
+<code><span class="k">class</span><span class="w"> </span><span class="nc">MyObject</span><span class="p">:</span></code>
+<code>    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
 <code>        <span class="k">return</span> <span class="s1">&#39;My object is awesome&#39;</span></code>
 <code></code>
 <code><span class="n">slides</span> <span class="o">=</span> <span class="n">ipyslides</span><span class="o">.</span><span class="n">Slides</span><span class="p">()</span></code>
 <code><span class="nd">@slides</span><span class="o">.</span><span class="n">serializer</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MyObject</span><span class="p">)</span></code>
-<code><span class="k">def</span> <span class="nf">parse_myobject</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">parse_myobject</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span></code>
 <code>    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&lt;h1&gt;</span><span class="si">{</span><span class="n">obj</span><span class="si">!r}</span><span class="s1">&lt;/h1&gt;&#39;</span></code>
 <code></code>
 <code><span class="n">my_object</span> <span class="o">=</span> <span class="n">MyObject</span><span class="p">()</span></code>
@@ -4057,8 +4056,8 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="n">parse_myobject</span><span class="p">(</span><span class="n">my_object</span><span class="p">)</span> <span class="c1">#This will return &quot;&lt;h1&gt;My object is awesome&lt;/h1&gt;&quot;</span></code>
 <code></code>
 <code><span class="c1">#This is equivalent to above for custom objects(builtin objects can&#39;t be modified)</span></code>
-<code><span class="k">class</span> <span class="nc">MyObject</span><span class="p">:</span></code>
-<code>    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
+<code><span class="k">class</span><span class="w"> </span><span class="nc">MyObject</span><span class="p">:</span></code>
+<code>    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
 <code>        <span class="k">return</span> <span class="s1">&#39;&lt;h1&gt;My object is awesome&lt;/h1&gt;&#39;</span></code>
 <code></code>
 <code><span class="n">my_object</span> <span class="o">=</span> <span class="n">MyObject</span><span class="p">()</span></code>
@@ -4085,11 +4084,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 83.3333%, var(--bg2-color) 83.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073551440">
+                    <section id="s-2036602229136">
 
 <style>
 
-#s-1962073551440 .SlideArea.n21  > .jp-OutputArea:empty:after {
+#s-2036602229136 .SlideArea.n21  > .jp-OutputArea:empty:after {
     content : "Slide(number = 21, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -4097,7 +4096,7 @@ This helps modularity of content, and even you can link a citation file in markd
 </style>
                         <div class="SlideBox">
 
-                            <div class="n21 SlideArea HideSlide">
+                            <div class="n21 SlideArea ShowSlide">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Focus on what matters</h2>
 <ul>
 <li>There is a zoom button on top bar which enables zooming of certain elements. This can be toggled by <code>Z</code> key.</li>
@@ -4117,11 +4116,11 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 87.5%, var(--bg2-color) 87.5%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073551200">
+                    <section id="s-2036601774768">
 
 <style>
 
-#s-1962073551200 .SlideArea.n22  > .jp-OutputArea:empty:after {
+#s-2036601774768 .SlideArea.n22  > .jp-OutputArea:empty:after {
     content : "Slide(number = 22, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -4138,7 +4137,7 @@ besides standard ipywidgets icons.</p>
 
 <div class="highlight">
         <pre>
-<code><span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
+<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
 <code><span class="n">btn</span> <span class="o">=</span> <span class="n">ipw</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Chevron-Down Icon&#39;</span><span class="p">,</span><span class="n">icon</span><span class="o">=</span><span class="s1">&#39;chevrond&#39;</span><span class="p">)</span>    </code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">btn</span><span class="p">)</span></code>
         </pre>
@@ -4153,7 +4152,7 @@ besides standard ipywidgets icons.</p>
         <pre>
 <code><span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_content</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span></code>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">():</span></code>
-<code>        <span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
+<code>        <span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
 <code>        <span class="n">btn</span> <span class="o">=</span> <span class="n">ipw</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Chevron-Down Icon&#39;</span><span class="p">,</span><span class="n">icon</span><span class="o">=</span><span class="s1">&#39;chevrond&#39;</span><span class="p">)</span>    </code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">btn</span><span class="p">)</span></code>
 <code></code>
@@ -4388,11 +4387,11 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 91.6667%, var(--bg2-color) 91.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073105264">
+                    <section id="s-2036601778032">
 
 <style>
 
-#s-1962073105264 .SlideArea.n23  > .jp-OutputArea:empty:after {
+#s-2036601778032 .SlideArea.n23  > .jp-OutputArea:empty:after {
     content : "Slide(number = 23, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -4417,11 +4416,11 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 95.8333%, var(--bg2-color) 95.8333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1962073532208">
+                    <section id="s-2036601775728">
 
 <style>
 
-#s-1962073532208 .SlideArea.n24  > .jp-OutputArea:empty:after {
+#s-2036601775728 .SlideArea.n24  > .jp-OutputArea:empty:after {
     content : "Slide(number = 24, index = None, nf = 1)";
     color : var(--accent-color);
     font-size : 2em;
@@ -4435,13 +4434,13 @@ besides standard ipywidgets icons.</p>
 
 <div class="highlight">
         <pre>
-<code><span class="k">def</span> <span class="nf">docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
+<code><span class="k">def</span><span class="w"> </span><span class="nf">docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
 <code>    <span class="s2">&quot;Create presentation from docs of IPySlides.&quot;</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">close_view</span><span class="p">()</span> <span class="c1"># Close any previous view to speed up loading 10x faster on average</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span> <span class="c1"># Clear previous content</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">25</span><span class="p">))</span> <span class="c1"># Create slides faster</span></code>
 <code></code>
-<code>    <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Slides</span></code>
+<code>    <span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Slides</span></code>
 <code></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">set_citations</span><span class="p">({</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="s1">&#39;Citation A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="s1">&#39;Citation B&#39;</span><span class="p">},</span> <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;footnote&#39;</span><span class="p">)</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">footer</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_logo</span><span class="p">(</span><span class="s2">&quot;1em&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;IPySlides Documentation&quot;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
@@ -4556,10 +4555,10 @@ besides standard ipywidgets icons.</p>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;## Dynamic Content&#39;</span><span class="p">)</span></code>
 <code></code>
 <code>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_content</span><span class="p">()</span> <span class="k">as</span> <span class="n">cap</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">():</span></code>
-<code>            <span class="kn">import</span> <span class="nn">time</span></code>
+<code>            <span class="kn">import</span><span class="w"> </span><span class="nn">time</span></code>
 <code></code>
 <code>            <span class="nd">@self</span><span class="o">.</span><span class="n">ei</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">auto_update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid_css</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">({</span><span class="s1">&#39;.out-main&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="s1">&#39;2em&#39;</span><span class="p">)},</span><span class="n">background</span><span class="o">=</span><span class="s1">&#39;var(--bg2-color)&#39;</span><span class="p">),</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>  <span class="c1"># self is Slides here</span></code>
-<code>            <span class="k">def</span> <span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">):</span> </code>
+<code>            <span class="k">def</span><span class="w"> </span><span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">):</span> </code>
 <code>                <span class="n">local_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">()</span></code>
 <code>                <span class="n">objs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Time: </span><span class="si">{3}</span><span class="s1">:</span><span class="si">{4}</span><span class="s1">:</span><span class="si">{5}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">local_time</span><span class="p">)]</span> <span class="c1"># Print time in HH:MM:SS format</span></code>
 <code>                <span class="k">if</span> <span class="n">date</span><span class="p">:</span></code>
@@ -4567,10 +4566,10 @@ besides standard ipywidgets icons.</p>
 <code>                <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code></code>
 <code>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">(</span><span class="n">returns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span></code>
-<code>            <span class="kn">import</span> <span class="nn">datetime</span></code>
+<code>            <span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span></code>
 <code></code>
 <code>            <span class="nd">@self</span><span class="o">.</span><span class="n">on_load</span>  <span class="c1"># self is Slides here</span></code>
-<code>            <span class="k">def</span> <span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
+<code>            <span class="k">def</span><span class="w"> </span><span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
 <code>                <span class="n">t</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></code>
 <code>                <span class="n">time</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span></code>
 <code>                <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Notification at </span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s1"> form slide </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1"> and frame </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
@@ -4617,7 +4616,7 @@ besides standard ipywidgets icons.</p>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="p">(</span><span class="n">stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code>        <span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code>        <span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus_lines</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code>        <span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsep</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -4654,7 +4653,7 @@ besides standard ipywidgets icons.</p>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span></code>
 <code>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_content</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span></code>
 <code>            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">():</span></code>
-<code>                <span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
+<code>                <span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
 <code>                <span class="n">btn</span> <span class="o">=</span> <span class="n">ipw</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Chevron-Down Icon&#39;</span><span class="p">,</span><span class="n">icon</span><span class="o">=</span><span class="s1">&#39;chevrond&#39;</span><span class="p">)</span>    </code>
 <code>                <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">btn</span><span class="p">)</span></code>
 <code></code>
