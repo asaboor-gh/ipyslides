@@ -97,6 +97,7 @@ section {
 	max-height: 100vh !important;
 	min-width: 100vw !important;
 	box-sizing: border-box !important;
+    background: var(--bg1-color) !important; /* need for each slide */
 }
 section .SlideBox {
     width: 100vw !important;
@@ -128,7 +129,6 @@ section .SlideArea {
     width: 100%;
     bottom: 2px !important;
     overflow: hidden !important;
-    background: var(--bg1-color) !important;
 }
 .SlidesWrapper .Footer.NavHidden {
     background: none; /* no important here */

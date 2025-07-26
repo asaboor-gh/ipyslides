@@ -112,7 +112,7 @@ theme_colors = {
         'accent' : '#90caf9', 'pointer' : '#ff5252',
     },
     'Material Light': { 'fg1': '#212121', 'fg2': '#757575', 'fg3': '#264d73',
-        'bg1': '#fafafa', 'bg2': '#f5f5fa', 'bg3': '#f4f4f7',
+        'bg1': '#fafafa', 'bg2': '#f5f5fa', 'bg3': "#e9e9ef",
         'accent': '#1976d2', 'pointer': '#d32f2f',
     },
     'Material Dark': {
