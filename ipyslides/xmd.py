@@ -34,7 +34,6 @@ _md_extensions = [
     "footnotes",
     "attr_list",
     "md_in_html",
-    "customblocks",
     "def_list",
 ]  # For Markdown Parser
 _md_extension_configs = {}
@@ -86,8 +85,8 @@ _special_funcs = {
     "line": "length in units of em, [color, width and style]",
     "alert": "text",
     "color": "text",
-    "sub": "text, or use `_` in place of `sub`",
-    "sup": "text, or use `^` in place of `sup`",
+    "sub": "text, or use _ in place of sub",
+    "sup": "text, or use ^ in place of sup",
     "hl": "inline code highlight. Accepts langauge as keywoard.",
     "today": "format_spec like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
@@ -360,12 +359,19 @@ class XMarkdown(Markdown):
         if len(re.findall(r'^```', xmd, flags = re.MULTILINE)) % 2:
             issue = error("ValueError",f"Some blocks started with ```, but never closed, in markdown:\n{xmd}")
             return issue.value if returns else display(issue) # return value or display
+        
+        blocks = []
+        for i, text in enumerate(textwrap.dedent(xmd).split("\n```")): # \n``` only split top level, nested handleed later
+            if i % 2 == 0:
+                blocks.extend(self._split_blocks_with_dedent(text))  # split by :::
+            else:
+                blocks.append(("block", text.strip()))  # ``` blocks
+        
 
-        new_strs = textwrap.dedent(xmd).split("\n```")  # \n``` avoids nested blocks and it should be, dedent is important
         outputs = []
-        for i, section in enumerate(new_strs, start=1):
+        for typ, section in blocks:
             content = section.strip() # Don't add empty object, they don't let increment columns
-            if content and i % 2 == 0:
+            if content and typ == "block":
                 content = textwrap.dedent(content)  # Remove indentation in code block, useuful to write examples inside markdown block
                 outputs.extend(self._parse_block(content))  # vars are substituted already inside
             elif content: 
@@ -389,6 +395,62 @@ class XMarkdown(Markdown):
             return content
         else:
             return display(*outputs)
+        
+    def _parse_params(self, param_string):
+        """Parse parameter string with simple regex"""
+        RE_PARAM = re.compile(
+            r' (?:([\w\-]+)=)?'
+            r'("([^"]*)"|\'([^\']*)\'|([\S]+))'
+        )
+        positional_args = []
+        keyword_args = {}
+        
+        for match in RE_PARAM.finditer(param_string):
+            key = match.group(1)
+            # The value is captured in one of three groups
+            value = match.group(3) if match.group(3) is not None else \
+                    match.group(4) if match.group(4) is not None else \
+                    match.group(5)
+
+            if key:
+                keyword_args[key] = value
+            else:
+                positional_args.append(value)
+                
+        return positional_args, keyword_args
+    
+    def _split_blocks_with_dedent(self, text):
+        """Split ::: blocks, ending them when dedentation occurs"""
+        BLOCK_PATTERN = re.compile(
+            r'^::: *(.*?)$\n'   # Block start line + block name
+            r'(.*?)'            # Content
+            r'(?=^:::|\Z|^\S)', # Until next block, dedent or EOF
+            re.MULTILINE | re.DOTALL
+        )
+        if not BLOCK_PATTERN.search(text) and (out := text.strip()):
+            return [("raw", out)]
+
+        blocks = []
+        last_end = 0
+
+        for match in BLOCK_PATTERN.finditer(text):
+            start_pos, end_pos = match.span()
+
+            if before_block := text[last_end:start_pos].strip():
+                blocks.append(("raw", before_block))
+
+            block_head = match.group(1)
+            indented_content = match.group(2).rstrip('\n')
+
+            if indented_content:
+                full_block = f"::: {block_head}\n{indented_content}"
+                blocks.append(("block", full_block))
+            last_end = end_pos
+
+        if remaining := text[last_end:].strip():
+            blocks.append(("raw",remaining))
+        return blocks
+
     
     def _parse_nested(self, xmd, returns=True):
         old_returns = self._returns
@@ -419,6 +481,8 @@ class XMarkdown(Markdown):
         if "multicol" in line:
             out = self._parse_multicol(data, line, _class)
             return [XTML(out)] if isinstance(out, str) else out # Writer under frames
+        elif header.startswith(":::"):
+            return self._parse_colon_block(header, data)
         elif "citations" in line:
             return [error("ValueError", 
                 f"citations block is only parsed inside synced markdown file! "
@@ -435,6 +499,16 @@ class XMarkdown(Markdown):
                 out.data = super().convert(f'```{block}\n```') # Let other extensions parse block
             
             return [out,] # list 
+        
+    def _parse_colon_block(self, header, data):
+        _classes, attrs = self._parse_params(header)
+        _class = ' '.join(_classes).strip().replace('.', ' ') # remove leading :::
+        if _classes and _classes[0] in ("column","styled"):
+            # this time attrs are css properties
+            attrs = 'style="' + ' '.join(f'{k}:{v};' for k, v in attrs.items()) + '"'
+        else:
+            attrs = ' '.join(f'{k}="{escape(v)}"' for k, v in attrs.items())
+        return [XTML(f"<div class='{_class}' {attrs}>{self._parse_nested(data, returns=True)}</div>")]
         
     def _parse_md_src(self, data, line, _class):
         data = textwrap.dedent(data) # dedent allows embeding nested stuff like multicol, it will be parsed in stack

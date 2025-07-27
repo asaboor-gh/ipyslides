@@ -162,6 +162,21 @@ class BaseSlides:
             ```
         ```
         
+        - You can also create columns as below (only parsed inline, unlike `multicol` which works like `write` command):
+        
+        ```md-before
+        ::: columns block-blue
+            ::: column block-red width=40%
+                - `column` and `styled` are added syntax to block syntax `:::`.
+                - `column` and `styled` can be used interchangeably as you see below.
+            
+            ::: styled block-yellow width=60% border="2px solid orange" padding="10px"
+                - Top level `columns` is necessary to create columns or use `styled` block with `display=flex`.
+                - This syntax is similar to ` stack ` but offers more flexibility and readability.
+        ```
+        
+        - Above block syntax is pretty flexible, you can use any CSS class, attributes such as id, style etc.  For `styled` and `column`, attributes are just CSS properties for quick styling.
+        
         - Definition list syntax:
         ```md-left
         Item 1 Header
@@ -184,10 +199,6 @@ class BaseSlides:
             Some **bold text**
         ```
             
-        ::: note 
-            Above block syntax is enabled using [customblocks](https://github.com/vokimon/markdown-customblocks) 
-            which is added by default and can be used to build nested html blocks.
-            
         ::: block-red 
             - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
                 [markdown extensions](https://python-markdown.github.io/extensions/) and 
@@ -199,7 +210,7 @@ class BaseSlides:
         - Upto 4 level nesting is parsed using (level + 1) number of alert`/` (at least two) within backticks in functions given below. 
         ```md-left -c
         stack[(6,4),css_class="block-blue"]`////
-            This always parse markdown in `returns=True` mode and is equivalent to markdown customblocks. ||
+            This always parse markdown in `returns=True` mode. ||
             stack[css_class="info"]`/// B || A
                 stack[vertical=True]`// C ||
                     stack[css_class="block-red"]` D || E ` 

@@ -17,8 +17,7 @@ REQUIRES_PYTHON = '>=3.9'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'markdown', 'markdown-customblocks', 'ipywidgets>=8.0.4', 'pillow>=9.3.0', 'anywidget==0.9.13', 'tldraw==2.2.4',
-    'python-magic-bin>=0.4.14',
+    'markdown', 'ipywidgets>=8.0.4', 'pillow>=9.3.0', 'anywidget==0.9.13', 'tldraw==2.2.4',
 ]
 
 # What packages are optional?

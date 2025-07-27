@@ -524,7 +524,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
             - Target center grid with ` > .center ` selector
             - Target widgets by their parameter names as classes
             - Use `:fullscreen` at root level of dict to apply styles in fullscreen mode
-            - Use `[Button, ToggleButton, ToggleButtons].add_class('content-width-button')` to fix button widths easily.
+            - Use `[Button, ToggleButton(s)].add_class('content-width-button')` to fix button widths easily.
         - center (dict): CSS properties for center grid section
             - Direct access to center grid (same as main's ` > .center `)
             - Useful for grid layout of widgets inside center area
@@ -925,7 +925,7 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=No
     - app_layout: Initial layout configuration, see `relayout()` method for details
     - grid_css: CSS Grid properties for layout
         - Use `:fullscreen` at root level of dict to apply styles in fullscreen mode
-        - Use `[Button, ToggleButton, ToggleButtons].add_class('content-width-button')` to fix button widths easily.
+        - Use `[Button, ToggleButton(s)].add_class('content-width-button')` to fix button widths easily.
         - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
     - `**kwargs`: Widget parameters
 
