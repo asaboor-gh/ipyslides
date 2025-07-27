@@ -86,8 +86,8 @@ _special_funcs = {
     "line": "length in units of em, [color, width and style]",
     "alert": "text",
     "color": "text",
-    "sub": "text",
-    "sup": "text",
+    "sub": "text, or use `_` in place of `sub`",
+    "sup": "text, or use `^` in place of `sup`",
     "hl": "inline code highlight. Accepts langauge as keywoard.",
     "today": "format_spec like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
@@ -647,7 +647,9 @@ class XMarkdown(Markdown):
                             f" and are passed to {func}{inspect.signature(_func)} except first argument which is the text to be processed."
                         )
                     html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
-
+        
+        html_output = re.sub(r'\^\`([^\^]+?)\`',r'<sup>\1</sup>', html_output) # superscript
+        html_output = re.sub(r'\_\`([^\_]+?)\`',r'<sub>\1</sub>', html_output) # subscript
         return re.sub(r"&(?:amp;)?#96;","`", html_output)  # return in main scope
 
 

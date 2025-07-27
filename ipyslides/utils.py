@@ -69,7 +69,7 @@ def hl(obj, language="python"): # No need to have in __all__, just for markdown
     "Highlight code object in inline mode. `language` is the language name, default is python."
     try: 
         return XTML( 
-            '<br>'.join('<code class="highlight inline" style="white-space:pre;">' + c 
+            '<br>'.join('<code class="highlight inline" style="white-space:pre-wrap;">' + c 
                 for c in re.findall(r'\<\s*code.*?\>(.*?\<\s*\/\s*code\s*\>)', 
                     highlight(obj, language=language).value, 
                     flags=re.DOTALL | re.MULTILINE
@@ -622,7 +622,7 @@ def line(length=5, color='var(--fg1-color)',width=1,style='solid'):
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""
-    css_props = {'display':'inline','white-space': 'pre', **css_props} # very important to apply text styles in order
+    css_props = {'display':'inline','white-space': 'pre-wrap', **css_props} # very important to apply text styles in order
     return XTML(f'<span class="text-box" {_inline_style(css_props)}>{text}</span>')  # markdown="span" will avoid inner parsing
 
 def alert(text):

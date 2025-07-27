@@ -963,7 +963,7 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=No
     - Avoid modifying global slide state
     - Use widget descriptions to prevent name clashes
     - See set_css() method for styling options
-    - interactive(no_args_func_which_may_fetch_data_on_click,) is perfectly valid and run on button click.
+    - interactive(no_args_func,) is perfectly valid and run on button click to do something like fetch latest data from somewhere.
     
     {css_info}
     """

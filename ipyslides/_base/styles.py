@@ -323,7 +323,12 @@ def style_css(colors, fonts, layout, _root = False):
             ':is(ul,ol)': {
                 'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap
             },
-            'dl': {'display': 'grid','margin-block':'0.5em'}, # Jupyterlab fix
+            'dl': {
+                'display': 'grid',
+                'margin-block':'0.5em',
+                'font-family':'var(--jp-content-font-family) !important',
+                'font-size':'var(--text-size) !important', # somwhow gets different font size
+            }, # Jupyterlab fix
             'dl > dt': {
                 'color': 'var(--fg3-color)',
                 'font-weight': 'bold', 

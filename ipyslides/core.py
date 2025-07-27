@@ -3,7 +3,7 @@ from contextlib import contextmanager, suppress
 from collections import namedtuple
 from collections.abc import Iterable
 from itertools import zip_longest
-from typing import Tuple, Union
+from typing import Union, overload
 from functools import wraps
 from pathlib import Path
 
@@ -295,7 +295,17 @@ class Slides(BaseSlides,metaclass=Singleton):
     def __contains__(self, key): 
         return key in self._slides_dict
     
-    def __getitem__(self, key) -> Union[Slide, Tuple[Slide]]:
+    # Auto-completion after indexing like Slides[2].<Tab> exposes attributes of Slide
+    @overload
+    def __getitem__(self, key: int) -> Slide: ...
+    @overload
+    def __getitem__(self, key: tuple[int]) -> Slide: ...
+    @overload
+    def __getitem__(self, key: list[int]) -> tuple[Slide]: ...
+    @overload
+    def __getitem__(self, key: slice) -> tuple[Slide]: ...
+    
+    def __getitem__(self, key) -> Union[Slide, tuple[Slide]]:
         "Get slide by index or slice of computed index. Use [number,] or [[n1,n2,..]] to access slides by number they were created with."
         if isinstance(key, int):
             return self._iterable[key]
@@ -539,7 +549,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     @property
     def all_slides(self):
-        "Return all slides. Another way is using `Slides[:]` but that loses auto completion on each slide. See also `cited_slides`, `markdown_slides`."
+        "Return all slides. Another way is using `Slides[:]` but explicitly. See also `cited_slides`, `markdown_slides`."
         return self._iterable
 
     def section(self, text):
@@ -892,7 +902,7 @@ class fsep:
     - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
     - Use `fsep.iter(iterable)` to split after each item in iterable automatically.
     - Setting `stack=True` in `fsep` or `fsep.iter` once under a slide to show frames incrementally. 
-        In markdown slides, use %++. The last called value of `stack` overrides any previous value.
+        In markdown slides, use %++. The last called value of stack overrides any previous value.
     - Content before first frame separator is added on all frames. This helps adding same title once.
     """
     _app_ins = Slides.instance # need to be called as it would not be defined initially

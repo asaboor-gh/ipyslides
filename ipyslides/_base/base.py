@@ -486,7 +486,7 @@ class BaseSlides:
                 %{logo}
                                  
                 ::: text-box
-                    sup`1`My University is somewhere in the middle of nowhere
+                    ^`1`My University is somewhere in the middle of nowhere
                 ''', logo = self.get_logo("4em"))).display()
         
         self.build(-1, self.fmt('''
