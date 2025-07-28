@@ -325,14 +325,6 @@ class XMarkdown(Markdown):
             from . import writer # avoid cyclic, but import once
             self._wr_imported = writer
         return self._wr_imported
-
-    def _extract_class(self, header):
-        header = re.sub(r"\.(\d)",r"~%&!~\1", header) # Avoid .1 like things for cols
-        out = header.split(".", 1)  # Can have many classes there
-        cols = out[0].strip().replace("~%&!~",".") # replace back
-        if len(out) == 1:
-            return cols, ""
-        return cols, out[1].replace(".", " ").strip()
     
     def user_ns(self):
         "Top level namespace or set by user inside `Slides.fmt`."
@@ -399,25 +391,24 @@ class XMarkdown(Markdown):
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex"""
         RE_PARAM = re.compile(
-            r' (?:([\w\-]+)=)?'
+            r'(?:([\w\-]+)=)?'
             r'("([^"]*)"|\'([^\']*)\'|([\S]+))'
         )
-        positional_args = []
-        keyword_args = {}
-        
+        numbers, args, kwargs = [], [], {}
         for match in RE_PARAM.finditer(param_string):
-            key = match.group(1)
             # The value is captured in one of three groups
-            value = match.group(3) if match.group(3) is not None else \
-                    match.group(4) if match.group(4) is not None else \
-                    match.group(5)
-
-            if key:
-                keyword_args[key] = value
+            value = match.group(3) or match.group(4) or match.group(5)
+            if key := match.group(1):
+                kwargs[key] = value
             else:
-                positional_args.append(value)
-                
-        return positional_args, keyword_args
+                if value.isdigit() or re.match(r'^\d+(\.\d+)?$', value):
+                    numbers.append(float(value) if '.' in value else int(value))
+                else:
+                    args.append(value.replace('.',' ').strip()) # remove .
+        sizes = numbers if numbers else None # making None is important for multicol and stack 
+        if args:
+            return args[0], ' '.join(args[1:]), kwargs, sizes # block type, className, attributes, sizes
+        return '', '', kwargs, sizes
     
     def _split_blocks_with_dedent(self, text):
         """Split ::: blocks, ending them when dedentation occurs"""
@@ -477,42 +468,67 @@ class XMarkdown(Markdown):
     def _parse_block(self, block):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
         header, data = block.split("\n", 1)
-        line, _class = self._extract_class(header)
-        if "multicol" in line:
-            out = self._parse_multicol(data, line, _class)
-            return [XTML(out)] if isinstance(out, str) else out # Writer under frames
-        elif header.startswith(":::"):
-            return self._parse_colon_block(header, data)
-        elif "citations" in line:
+        if header.strip().startswith(":::"):
+            return self._parse_colon_block(header[3:], data)
+        
+        typ, _class, _, widths = self._parse_params(header)
+        if typ == "multicol":
+            return self._parse_multicol(data, widths, _class)
+        elif typ == "citations":
             return [error("ValueError", 
                 f"citations block is only parsed inside synced markdown file! "
                 f"Use `Slides.set_citations` otherwise.\n```{block}\n```"
             )]
-        elif "md-" in line:
-            return self._parse_md_src(data, line, _class)
+        elif "md-" in typ:
+            return self._parse_md_src(data, header)
         else:
             out = XTML() # empty placeholder
             try:
-                name = " " if line.strip().lower() == "text" else None
-                out.data = _highlight(data, language=line.strip(), name=name, css_class=_class) # intercept code highlight
+                name = " " if typ.lower() == "text" else None
+                out.data = _highlight(data, language=typ, name=name, css_class=_class) # intercept code highlight
             except:
                 out.data = super().convert(f'```{block}\n```') # Let other extensions parse block
             
             return [out,] # list 
         
     def _parse_colon_block(self, header, data):
-        _classes, attrs = self._parse_params(header)
-        _class = ' '.join(_classes).strip().replace('.', ' ') # remove leading :::
-        if _classes and _classes[0] in ("column","styled"):
-            # this time attrs are css properties
-            attrs = 'style="' + ' '.join(f'{k}:{v};' for k, v in attrs.items()) + '"'
-        else:
-            attrs = ' '.join(f'{k}="{escape(v)}"' for k, v in attrs.items())
-        return [XTML(f"<div class='{_class}' {attrs}>{self._parse_nested(data, returns=True)}</div>")]
+        STRICT_TAGS = ("code","pre","raw")
+        CAPTURED_TAGS = ("p","details","summary","center", "captions", *STRICT_TAGS) # tags that are captured by this parser
         
-    def _parse_md_src(self, data, line, _class):
+        tag, _class, attrs, widths = self._parse_params(header)      
+        if tag in ("column","styled"):
+            # this time attrs are css properties
+            _attrs = 'style="' + ' '.join(f'{k}:{v};' for k, v in attrs.items()) + '"'
+        else:
+            _attrs = ' '.join(f'{k}="{escape(v)}"' for k, v in attrs.items())
+        
+        data = textwrap.dedent(data).strip() # clean up data  before processin
+        if tag in CAPTURED_TAGS:
+            if tag in STRICT_TAGS: # keep as is from further processing
+                if tag == "code":
+                    params = inspect.signature(_highlight).parameters.keys()
+                    kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in attrs.items() if k in params} # only pass known params
+                    out = _highlight(data, css_class=_class, **kwargs)
+                else:
+                    out = f"<pre class='{_class} raw-text' {_attrs}>\n{data}\n</pre>"
+                return [XTML(out)]
+            return [XTML(self._parse_nested(f"<{tag} markdown='1' class='{_class}' {_attrs}>\n{data}\n</{tag}>", returns=True))]
+        
+        if tag == "multicol":
+                return self._parse_multicol(data, widths, _class)
+        elif tag.startswith("md-"):
+                return self._parse_md_src(data, header)
+        elif tag == "stack":
+                from .utils import stack
+                return [stack(data, sizes=widths, css_class=_class)]
+        
+        _class = f'{tag} {_class}' if _class else tag # treat tag as class if not given at end
+        return [XTML(f"<div class='{_class}' {_attrs}>{self._parse_nested(data, returns=True)}</div>")]
+        
+    def _parse_md_src(self, data, header):
         data = textwrap.dedent(data) # dedent allows embeding nested stuff like multicol, it will be parsed in stack
-        pos, *collapse = line.strip()[3:].split()
+        pos, *collapse = header.strip()[3:].split()
+        _class = ' '.join(collapse[1:] if collapse and collapse[0] == "-c" else collapse)
         _req_pos = "before,after,left,right"
         if pos not in _req_pos:
             return [error("ValueError",f"The suffix after md- should be {_req_pos}, got {pos}")]
@@ -542,24 +558,20 @@ class XMarkdown(Markdown):
         return cap.outputs
 
 
-    def _parse_multicol(self, data, header, _class):
+    def _parse_multicol(self, data, widths, _class):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
-        if header.strip() == "multicol":
+        if not widths:
             widths = [100/len(cols) for _ in cols]
         else:
-            widths = header.split("multicol")[1].split()
             if len(widths) > len(cols): # This allows merging column notation with frames
                 for _ in range(len(cols), len(widths)):
                     cols.append("")
 
             if len(widths) < len(cols):
-                return error('ValueError',
-                    f"Number of columns '{len(cols)}' should be <= given widths in {header!r}"
-                ).value
-            for w in widths:
-                if not w.strip().replace('.','').isdigit(): # hold float values
-                    return error('TypeError',f"{w} is not a positive integer or float value in {header!r}").value
+                return [error('ValueError',
+                    f"Number of columns '{len(cols)}' should be <= given widths {widths}"
+                )]
 
             widths = [float(w) for w in widths]
             widths = [100*w/sum(widths) for w in widths] # allow relative column widths
@@ -579,13 +591,13 @@ class XMarkdown(Markdown):
         
         cols = [self._parse_nested(col,returns=True) for col in cols]
         if len(cols) == 1: # do not return before checking widths and adding extra cols if needed
-            return f'<div class={_class}">{cols[0]}</div>' if _class else cols[0]
+            return [XTML(f'<div class={_class}">{cols[0]}</div>' if _class else cols[0])]
 
         cols = "".join(
             [f"""<div style='width:{w}%;overflow-x:auto;height:auto;position:relative;'>{col}</div>"""
                 for col, w in zip(cols, widths)])
 
-        return f'<div class="columns {_class}" style="display:flex;">{cols}\n</div>' # display for notebook
+        return [XTML(f'<div class="columns {_class}" style="display:flex;">{cols}\n</div>')] # display for notebook
     
     def convert(self, text):
         """Replaces variables with placeholder after conversion to respect all other extensions.

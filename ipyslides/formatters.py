@@ -199,6 +199,8 @@ def code_css(style='default',color = None, background = None, hover_color = 'var
     """Style code block with given style from pygments module. ` color ` and ` background ` are optional and will be overriden if pygments style provides them.
     """
     _class = '.highlight' if css_class is None else f'.highlight.{css_class}'
+    if lineno:
+        _class += '.numbered'
     
     if style not in pygments.styles.get_all_styles():
         raise KeyError(f"Style {style!r} not found in {list(pygments.styles.get_all_styles())}")
@@ -261,8 +263,8 @@ def _highlight(code, language='python', name = None, css_class = None, style='de
     code_ = '\n' + '\n'.join([f'<code>{line}</code>' for line in lines]) # start with newline is important
     _title = '' if name is False else name if name else language.title()
     
-    if isinstance(css_class, str):
-        start = start.replace('class="highlight"',f'class="highlight {css_class}"')
+    _class = (css_class if isinstance(css_class, str) else '') + (' numbered' if lineno else '')
+    start = start.replace('class="highlight"',f'class="highlight {_class}"')
     
     return f'''<div><span class="lang-name">{_title}</span>
         <div class="highlight-wrapper" style="height:auto;max-height:{height};overflow:auto;position:relative;">

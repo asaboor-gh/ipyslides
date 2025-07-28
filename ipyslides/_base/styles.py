@@ -497,25 +497,14 @@ def style_css(colors, fonts, layout, _root = False):
                 'background':'none !important', # This should be none as will given by the code_css 
             },
             'code': {
-                'counter-increment':'line',
                 'display':'inline-block !important', # should be on new line 
                 'width':'auto',
                 'background':'transparent !important',
                 'white-space':'pre !important',
                 'overflow-wrap':'normal !important',
                 'box-sizing':'border-box !important',
-                '^:before': {
-                    'content':'counter(line,decimal)',
-                    'position':'sticky',
-                    'top':'initial',
-                    'left':'-1px',
-                    'padding':'0 8px',
-                    'display':'inline-block', # should be inline 
-                    'text-align':'right',
-                    '-webkit-user-select':'none',
-                    'margin-right':'8px',
-                    'font-size':'80% !important',
-                    'text-shadow': '0 1px var(--bg1-color)',
+                '^:hover, ^:hover::before': {
+                    'background': 'var(--bg3-color)',
                 },
                 '> span': {
                     'text-shadow': '0 1px var(--bg1-color)',
@@ -525,6 +514,22 @@ def style_css(colors, fonts, layout, _root = False):
                 },
                 '^.code-no-focus': {'opacity':'0.3 !important'},
             },
+        },
+        '.highlight.numbered code': {
+            'counter-increment':'line',
+            '^:before': {
+                'content':'counter(line,decimal)',
+                'position':'sticky',
+                'top':'initial',
+                'left':'-1px',
+                'padding':'0 8px',
+                'display':'inline-block', # should be inline 
+                'text-align':'right',
+                '-webkit-user-select':'none',
+                'margin-right':'8px',
+                'font-size':'80% !important',
+                'text-shadow': '0 1px var(--bg1-color)',
+            },  
         },
         '.highlight, pre, .raw-text': {
             '^:hover::-webkit-scrollbar-thumb': {
