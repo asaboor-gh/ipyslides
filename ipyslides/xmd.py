@@ -17,6 +17,7 @@ This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` funct
     - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
 """
 import textwrap, re, sys, string, builtins, inspect
+from itertools import islice
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
@@ -27,7 +28,7 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 
-from .formatters import XTML, altformatter, _highlight, htmlize, get_slides_instance
+from .formatters import XTML, altformatter, _highlight, htmlize, get_slides_instance, _inline_style
 
 _md_extensions = [
     "tables",
@@ -91,14 +92,14 @@ _special_funcs = {
     "today": "format_spec like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "image": "path/src or clip:filename",
-    "raw": "text",
+    "raw": "text, or use ::: raw block",
     "svg": "path/src",
     "iframe": "src",
-    "details": "text",
-    "styled": "style objects with CSS classes and inline styles",
-    "zoomable": "zoom a block of html when hovered",
-    "center": r"text or \%{variable}", # should after most of the functions
-    "stack": r"text separated by ||, like stack[(1,2,1),**css_props]\\`C1 || C2 || C3\\`",
+    "details": "text or use ::: details block",
+    "styled": "style objects with CSS classes and inline styles or use block ::: with css classes and props inline",
+    "zoomable": "zoom a block of html when hovered or used ::: zoomable block",
+    "center": r"text or \%{variable} or use ::: center, ::: align-center blocks", # should after most of the functions
+    "stack": r"text separated by ||, like stack[(1,2,1),**css_props]\\`C1 || C2 || C3\\`, preferably use ::: columns block",
 }
 
 def error(name, msg):
@@ -179,7 +180,10 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     # cite`key`
     all_matches = re.findall(r"cite\`(.*?)\`", text_chunk, flags=re.DOTALL)
     for match in all_matches:
-        xmd_key = xmd_instance._handle_var(slide_instance._cite(match.strip()))
+        if match.endswith('!'):
+            xmd_key = ''.join(slide_instance._nocite(key) for key in match[:-1].strip().split(','))  # remove ! at end
+        else:
+            xmd_key = xmd_instance._handle_var(slide_instance._cite(match.strip()))
         text_chunk = text_chunk.replace(f"cite`{match}`", xmd_key, 1)
 
     # section`This is section title`
@@ -200,11 +204,8 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     # Footnotes at place user likes
     all_matches = re.findall(r"refs\`([\d+]?)\`", text_chunk) # match digit or empty
     for match in all_matches:
-        slide_instance.this._set_refs = False # already added here
-        _cits = ''.join(v.value for v in sorted(slide_instance.this._citations.values(), key=lambda x: x._id))
-        out = f"<div class='Citations text-small' style='column-count: {match} !important;'>{_cits}</div>"
-        text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
-
+        slide_instance.refs(match or int(match)) # match is empty or digit
+        text_chunk = text_chunk.replace(f"refs`{match}`", "", 1)
     return text_chunk
 
 class HtmlFormatter(string.Formatter):
@@ -221,6 +222,7 @@ class HtmlFormatter(string.Formatter):
         if isinstance(key, int):
             return error('RuntimeError','Positional arguments are not supported in custom formatting!').value
         elif isinstance(key, str) and key not in kwargs:
+            key = key.strip()  # remove leading and trailing spaces, no idea where it causes issues
             if not key.isidentifier():
                 return error('NameError', f'name {key!r} is not a valid variable name').value
             return error('NameError', f'name {key!r} is not defined').value
@@ -272,8 +274,8 @@ del TagFixer
 # This shoul be outside, as needed in other modules
 def resolve_included_files(text_chunk):
     "Markdown files added by include`file.md[start:end]` should be inserted as plain."
-    all_matches = re.findall(r"include\`(.*?)\`", text_chunk, flags=re.DOTALL)
-    for match in all_matches:
+    all_matches = re.findall(r"^(\s*)include\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
+    for indent, match in all_matches:
         # Parse match into file path and range
         range_match = re.search(r'\[(.*?)\]$', match)
         if range_match:
@@ -300,7 +302,7 @@ def resolve_included_files(text_chunk):
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 lines = f.readlines()[slice(start,end)]
-                text = "\n" + "".join(lines) + "\n"
+                text = textwrap.indent("\n" + "".join(lines) + "\n", indent) # need inside ::: blocks
                 text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
         except Exception as e:
             err_msg = error('Exception', f'Could not include file {filepath!r}:\n{e}').value
@@ -356,18 +358,15 @@ class XMarkdown(Markdown):
         for i, text in enumerate(textwrap.dedent(xmd).split("\n```")): # \n``` only split top level, nested handleed later
             if i % 2 == 0:
                 blocks.extend(self._split_blocks_with_dedent(text))  # split by :::
-            else:
-                blocks.append(("block", text.strip()))  # ``` blocks
-        
+            elif len(parts := text.split('\n', 1)) == 2 and parts[1].strip():
+                blocks.append(("block", parts))  # ``` blocks, avoid empty blocks
 
         outputs = []
-        for typ, section in blocks:
-            content = section.strip() # Don't add empty object, they don't let increment columns
-            if content and typ == "block":
-                content = textwrap.dedent(content)  # Remove indentation in code block, useuful to write examples inside markdown block
-                outputs.extend(self._parse_block(content))  # vars are substituted already inside
-            elif content: 
-                out = self.convert(content)
+        for typ, obj in blocks:
+            if typ == "block":
+                outputs.extend(self._parse_block(*obj))  # vars are substituted already inside, obj = (header, data)
+            elif content := obj.strip():  # raw text but avoid empty stuff
+                out = self.convert(content) 
                 if isinstance(out, list):
                     outputs.extend(out)
                 elif out: # Some syntax like section on its own line can leave empty block later
@@ -389,59 +388,73 @@ class XMarkdown(Markdown):
             return display(*outputs)
         
     def _parse_params(self, param_string):
-        """Parse parameter string with simple regex"""
+        """Parse parameter string with simple regex."""
         RE_PARAM = re.compile(
             r'(?:([\w\-]+)=)?'
             r'("([^"]*)"|\'([^\']*)\'|([\S]+))'
         )
-        numbers, args, kwargs = [], [], {}
-        for match in RE_PARAM.finditer(param_string):
+        numbers, args, kwargs, node_attrs = [], [], {}, {}
+        post_slash = False # *widths *classes **props / **attrs
+        for match in RE_PARAM.finditer(param_string.lstrip(': ')): # remove leading : and space
             # The value is captured in one of three groups
             value = match.group(3) or match.group(4) or match.group(5)
+            if value == "/": 
+                post_slash = True
+                continue # skip slashed, it is not a value
             if key := match.group(1):
-                kwargs[key] = value
+                if key.startswith(('fg', 'bg')) and key[2:].isdigit():
+                    key = f'--{key}-color' # if key in fg1,....3, bg1,....3, then it is a css property
+                if post_slash: # node attributes
+                    node_attrs[key] = value
+                else:
+                    kwargs[key] = value
             else:
                 if value.isdigit() or re.match(r'^\d+(\.\d+)?$', value):
                     numbers.append(float(value) if '.' in value else int(value))
                 else:
-                    args.append(value.replace('.',' ').strip()) # remove .
+                    args.append(value.replace('.',' ').strip()) # remove . from classes
         sizes = numbers if numbers else None # making None is important for multicol and stack 
+        # flatten node_attrs to a string, but not css properties
+        node_attrs = ' '.join(f'{k}="{v}"' for k, v in node_attrs.items())
         if args:
-            return args[0], ' '.join(args[1:]), kwargs, sizes # block type, className, attributes, sizes
-        return '', '', kwargs, sizes
+            return args[0], sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
+        return '', sizes, '', kwargs, node_attrs
+
     
     def _split_blocks_with_dedent(self, text):
-        """Split ::: blocks, ending them when dedentation occurs"""
-        BLOCK_PATTERN = re.compile(
-            r'^::: *(.*?)$\n'   # Block start line + block name
-            r'(.*?)'            # Content
-            r'(?=^:::|\Z|^\S)', # Until next block, dedent or EOF
-            re.MULTILINE | re.DOTALL
-        )
-        if not BLOCK_PATTERN.search(text) and (out := text.strip()):
-            return [("raw", out)]
-
+        """Split ::: blocks, ending them when dedentation occurs. 
+        DON'T TRY TO BE OVERSMART WITH COMPLAEX REGEX AS THIS CODE
+        IS MORE EFFICENT THAN REGEX AND CLEAR. I TRIED THAT BEFORE WITH FAILURES.
+        """
+        if not re.search(r'^:::', text, flags=re.MULTILINE):
+            return [("raw", text)] if text.strip() else [] # but keep text as it is
+        
         blocks = []
-        last_end = 0
-
-        for match in BLOCK_PATTERN.finditer(text):
-            start_pos, end_pos = match.span()
-
-            if before_block := text[last_end:start_pos].strip():
-                blocks.append(("raw", before_block))
-
-            block_head = match.group(1)
-            indented_content = match.group(2).rstrip('\n')
-
-            if indented_content:
-                full_block = f"::: {block_head}\n{indented_content}"
-                blocks.append(("block", full_block))
-            last_end = end_pos
-
-        if remaining := text[last_end:].strip():
-            blocks.append(("raw",remaining))
-        return blocks
-
+        parts = re.split(r'^:::',text, flags=re.MULTILINE)
+        # parts[0] is raw text, parts[1:] are blocks
+        if parts and parts[0].strip():
+            blocks.append(("raw", parts[0]))
+            
+        for part in parts[1:]:
+            lines = part.splitlines(keepends=True)
+            header = '::: ' + lines[0].strip() # first line is always header
+            block_body, text_chunk = '', ''
+            still_header = True # still header, until non-indented line
+            for line in islice(lines, 1, None): # skip first line
+                if still_header and line.startswith(':'): # indented line, part of block header
+                    header += line.replace(':',' ',1).rstrip()
+                else:
+                    still_header = False # no more header
+                    if re.search(r'^\s+', line): # indented line with one or more spaces
+                        block_body += line # indented block body
+                    else:
+                        text_chunk += line # text chunk, not part of block
+                        
+            if block_body.strip(): # block comes first, only if not empty
+                blocks.append(("block", (header, block_body)))
+            if text_chunk.strip(): # text chunk comes after block
+                blocks.append(("raw", text_chunk)) # keep text as it is
+        return blocks       
     
     def _parse_nested(self, xmd, returns=True):
         old_returns = self._returns
@@ -465,69 +478,93 @@ class XMarkdown(Markdown):
             text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
         return text_chunk
 
-    def _parse_block(self, block):
+    def _parse_block(self, header, data):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
-        header, data = block.split("\n", 1)
-        if header.strip().startswith(":::"):
-            return self._parse_colon_block(header[3:], data)
+        data = resolve_included_files(textwrap.dedent(data)) # clean up data  before processing 
+        typ, widths, _class, css_props, attrs = self._parse_params(header)
         
-        typ, _class, _, widths = self._parse_params(header)
-        if typ == "multicol":
-            return self._parse_multicol(data, widths, _class)
-        elif typ == "citations":
+        if typ == "citations" or header.lstrip(' :').startswith("citations"): # both kind of blocks
+            pre = '```' if typ == "citations" else '' # correct error message
             return [error("ValueError", 
                 f"citations block is only parsed inside synced markdown file! "
-                f"Use `Slides.set_citations` otherwise.\n```{block}\n```"
+                f"Use `Slides.set_citations` otherwise.\n{pre}{header}\n{data}"
             )]
+        elif typ in ("multicol","columns") and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns and multicol with display mode
+            return self._parse_multicol(data, widths, _class) # simple columns will be handled inline 
         elif "md-" in typ:
             return self._parse_md_src(data, header)
+        elif typ == "table":
+            return self._parse_table(data, widths, _class, css_props, attrs)
+        elif header.strip().startswith(":::") or typ in ("columns","multicol"): # simple flex ```columns without +++ or ::: block
+            return self._parse_colon_block(header, data)
         else:
             out = XTML() # empty placeholder
             try:
                 name = " " if typ.lower() == "text" else None
                 out.data = _highlight(data, language=typ, name=name, css_class=_class) # intercept code highlight
             except:
-                out.data = super().convert(f'```{block}\n```') # Let other extensions parse block
+                out.data = super().convert(f'```{header}\n{data}\n```') # Let other extensions parse block
             
             return [out,] # list 
         
     def _parse_colon_block(self, header, data):
         STRICT_TAGS = ("code","pre","raw")
-        CAPTURED_TAGS = ("p","details","summary","center", "captions", *STRICT_TAGS) # tags that are captured by this parser
+        CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol","nav", *STRICT_TAGS) # tags that are captured by this parser
         
-        tag, _class, attrs, widths = self._parse_params(header)      
-        if tag in ("column","styled"):
-            # this time attrs are css properties
-            _attrs = 'style="' + ' '.join(f'{k}:{v};' for k, v in attrs.items()) + '"'
-        else:
-            _attrs = ' '.join(f'{k}="{escape(v)}"' for k, v in attrs.items())
+        tag, widths, _class, css_props, attrs = self._parse_params(header)
         
-        data = textwrap.dedent(data).strip() # clean up data  before processin
         if tag in CAPTURED_TAGS:
             if tag in STRICT_TAGS: # keep as is from further processing
                 if tag == "code":
-                    params = inspect.signature(_highlight).parameters.keys()
-                    kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in attrs.items() if k in params} # only pass known params
-                    out = _highlight(data, css_class=_class, **kwargs)
-                else:
-                    out = f"<pre class='{_class} raw-text' {_attrs}>\n{data}\n</pre>"
-                return [XTML(out)]
-            return [XTML(self._parse_nested(f"<{tag} markdown='1' class='{_class}' {_attrs}>\n{data}\n</{tag}>", returns=True))]
+                    return self._parse_code(data, _class, css_props, attrs)
+                return [XTML(f"<pre class='{_class} raw-text' {_inline_style(css_props)} {attrs}>\n{data}\n</pre>")]
+            
+            # These tags should strip outer p tags for being properly structured as intended by user
+            out = self._parse_nested(data, returns=True)
+            if re.search(r'^<ul|^<ol|^<p|<nav', out): # these tags are difficult ones to style
+                # remove these in case of ul, ol, p in single regex 
+                out = re.sub(r'^<(p|ol|ul|nav)[^>]*>|</(p|ol|ul|nav)>$', '', out, count=1)
+            return [XTML(f"<{tag} class='{_class}' {_inline_style(css_props)} {attrs}>{out}</{tag}>")]
         
-        if tag == "multicol":
-                return self._parse_multicol(data, widths, _class)
-        elif tag.startswith("md-"):
-                return self._parse_md_src(data, header)
-        elif tag == "stack":
-                from .utils import stack
-                return [stack(data, sizes=widths, css_class=_class)]
-        
-        _class = f'{tag} {_class}' if _class else tag # treat tag as class if not given at end
-        return [XTML(f"<div class='{_class}' {_attrs}>{self._parse_nested(data, returns=True)}</div>")]
+        style = "" # style for columns if widths are given
+        if tag in ("multicol","columns")  and widths: # columns with inline mode
+            klass = f"c-{id(widths)}" # unique class for columns
+            _class = f"{_class} {klass}" if _class else klass # add klass
+            style = '\n'.join(f".{klass} > :nth-child({i+1}) {{flex: {w} 1;}}" for i, w in enumerate(widths)) # nth-child selectors
+            style = f"<style>.{klass} > p:empty {{display:none;}}\n{style}</style>" # empty p tags should not be treated as columns
+            
+        # treat tag as class if not given at end
+        _class = " ".join([tag, _class, "columns" if tag == "multicol" else ""]) # add columns class if multicol
+        return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{self._parse_nested(data, returns=True)}</div>{style}")]
+    
+    def _parse_code(self, data, _class, props, attrs):
+        params = inspect.signature(_highlight).parameters.keys()
+        kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
+        out = _highlight(data, css_class=_class, **kwargs)
+        leftover = {k: v for k, v in props.items() if k not in params} # left over attributes
+        if leftover:
+            out = re.sub(r"^<div([^>]*)>", rf"<div\1 {_inline_style(leftover)} {attrs}>",out, count=1)
+        return [XTML(out)]
+                
+    def _parse_table(self, data, widths, _class, props, attrs):
+        out = self._parse_nested(data, returns=True) # let table extension handle it
+        props["caption-side"] = props.get("caption-side", "top") # default caption side
+        repl = f"<table class='{_class}' {_inline_style(props)} {attrs}>\n"
+    
+        def _caption_repl(m: re.Match):
+            if m.group(1): # return first group
+                nonlocal repl
+                repl += f"<caption>{m.group(1)}</caption>"
+            return ""
+        # subsutute <p> </p> tags with caption tag
+        out = re.sub(r'<p>(.*?)</p>', _caption_repl, out, count=1, flags=re.DOTALL) # only single caption
+        if widths: # widths are given, add them
+            repl += ('<colgroup>' + ''.join(f"<col style='width:{w}%;'>" for w in widths) + '</colgroup>')
+        out = re.sub(r'<table[^>]*>', repl, out, count=1, flags=re.DOTALL)
+        return [XTML(out)] # return table as is, it will be parsed by table extension
         
     def _parse_md_src(self, data, header):
-        data = textwrap.dedent(data) # dedent allows embeding nested stuff like multicol, it will be parsed in stack
-        pos, *collapse = header.strip()[3:].split()
+        pos, *collapse = header.strip(' :')[3:].split() # if ::: md-[suffix] [-c], clean :::
         _class = ' '.join(collapse[1:] if collapse and collapse[0] == "-c" else collapse)
         _req_pos = "before,after,left,right"
         if pos not in _req_pos:
@@ -648,7 +685,8 @@ class XMarkdown(Markdown):
                         'DisplayError',
                         f'{self._var_info(m.group())} cannot be displayed in current context '
                         'because markdown parser was requested to return a string by the caller. '
-                        'You may use write or display to show object properly.'
+                        'You may use a display context such as write function or columns block in '
+                        'display mode (+++ separtor used in multicol/columns) to show object properly.'
                     ).value,
                     text
                 )
@@ -693,6 +731,7 @@ class XMarkdown(Markdown):
 
             cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
             key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
+           
             if ('[' in key) and (not ']' in key): # There was no spec, just a slicing splitted, but don't need to throw error here based on that
                 key = ''.join([key,':',*fmt_spec])
                 fmt_spec = ()

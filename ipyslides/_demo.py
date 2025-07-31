@@ -19,8 +19,8 @@ def demo_slides(slides):
     ```md-after -c
     # Creating Slides
     ::: align-center
-        alert`Abdul Saboor`sup`1`, Unknown Authorsup`2`
-        center`today```
+        alert`Abdul Saboor`^`1`, Unknown Author^`2`
+        center`//today``//`
         ::: text-box
             sup`1`My University is somewhere in the middle of nowhere
             sup`2`Their University is somewhere in the middle of nowhere
@@ -45,7 +45,7 @@ def demo_slides(slides):
     """)
 
     slides.build(-1, slides.fmt("""
-    ```md-after
+    ::: md-after
         section`Adding informative TOC` 
         ```multicol .block-blue
         toc[True]`### Contents`
@@ -61,7 +61,7 @@ def demo_slides(slides):
         ::: note-tip
             Above button was encapsulated by `fmt`, so creating a variable `btn` can't overwrite it.                    
         ```                                
-    ```""",btn=slides.draw_button))
+    """,btn=slides.draw_button))
 
     # Matplotlib
     with slides.build_() as sl:
@@ -250,10 +250,11 @@ def demo_slides(slides):
             [
                 '### Table',
                 '''
-                |h1 |h2 |h3 |
-                |---|---|---|
-                |d1 |d2 |d3 |
-                |r1 |r2 |r3 |
+                ::: table 1 2 1 width=100%
+                    |h1 |h2 |h3 |
+                    |---|---|---|
+                    |d1 |d2 |d3 |
+                    |r1 |r2 |r3 |
                 
                 line`200`
                 ### A rich content table
@@ -281,7 +282,7 @@ def demo_slides(slides):
         Varibale formatting alongwith $ \LaTeX $ alert`\%{var} → %{var}` is seamless.
     
     --
-    ```md-after -c
+    ::: md-after -c
         ```multicol 50 50
         $$ \int_0^1\\frac{1}{1-x^2}dx $$
         {.align-left .text-big .info}
@@ -290,7 +291,7 @@ def demo_slides(slides):
             $$ ax^2 + bx + c = 0 $$
             {.text-huge}
         ```
-    ```''', var = "'I was a variable'"))
+    ''', var = "'I was a variable'"))
 
     with slides.build(-1) as some_slide:
         slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')

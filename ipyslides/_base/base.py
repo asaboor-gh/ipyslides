@@ -6,6 +6,7 @@ from contextlib import ContextDecorator
 
 from IPython.display import display
 
+from . import _syntax
 from .widgets import Widgets
 from .navigation import Navigation
 from .settings import Settings
@@ -13,8 +14,9 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML
-from ..xmd import _special_funcs, _md_extensions, error, fmt, get_slides_instance, resolve_included_files
+from ..xmd import _special_funcs, error, fmt, get_slides_instance, resolve_included_files
 from ..utils import _css_docstring
+
 
 class BaseSlides:
     def __init__(self):
@@ -55,174 +57,18 @@ class BaseSlides:
     @property
     def css_styles(self):
         """CSS styles for markdown or `styled` command."""
-        return XTML(self.parse('''
-        Use any or combinations of these styles in css_class argument of writing functions:
-                               
-        | css_class         | Formatting Style                                                                    
-        |:------------------|:---------------------------------------------------------
-         `text-[value]`     | [value] should be one of tiny, small, big, large, huge.
-         `align-[value]`    | [value] should be one of center, left, right.
-         `rtl`              | اردو،  فارسی، عربی،  ۔۔۔ {: .rtl}
-         `info`             | Blue text. Icon ℹ️  for note-info class. {: .info}
-         `tip`              | Blue Text. Icon💡 for note-tip class. {: .tip}
-         `warning`          | Orange Text. Icon ⚠️ for note-warning class. {: .warning}
-         `success`          | Green text. Icon ✅ for note-success class. {: .success}
-         `error`            | Red Text. Icon⚡ for note-error class. {: .error}
-         `note`             | Text with note icon, can combine other classes as shown above. {: .note}
-         `export-only`      | Hidden on main slides, but will appear in exported slides.
-         `jupyter-only`     | Hidden on exported slides, but will appear on main slides.
-         `block`            | Block of text/objects {: .block}
-         `block-[color]`    | Block of text/objects with specific background color from <br> red, green, blue, yellow, cyan, magenta and gray.
-         `raw-text`         | Text will be shown as printed style. {: .raw-text}
-         `zoom-self`        | Zooms object on hover, when Zoom is enabled. {: .zoom-self}
-         `zoom-child`       | Zooms child object on hover, when Zoom is enabled.
-         `no-zoom`          | Disables zoom on object when it is child of 'zoom-child'.
-        
-        Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...)` functions at your disposal.
-        ''',returns = True))
+        return XTML(self.parse(_syntax.css_styles, returns = True))
 
     @property
     def xmd_syntax(self):
         "Special syntax for markdown."
         with self._hold_running():
-            return XTML(self.parse(textwrap.dedent(rf'''
-        **Extended Markdown**{{.text-large}}
-                                               
-        Extended syntax for markdown is constructed to support almost full presentation from Markdown.
-        
-        **Slides-specific syntax**{{.text-big}}
-        
-        Notes
-        : alert`notes\`This is slide notes\``  to add notes to current slide
-        
-        Slides & Frames Separators
-        : Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-        Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
-        
-        Citations
-        : - alert`cite\`key1,key2\`` / alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
-        - With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
-        - Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!`.
-        - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
-        hl["markdown"]`
-        \`\`\`citations [inline or footnote]
-        \@key1: Saboor et. al., 2025
-        \@key2: A citations can span multiple lines, but key should start on new line
-        \`\`\``
-        
-        Sections & TOC
-        : alert`section\`content\`` to add a section that will appear in the table of contents.
-        alert`toc\`Table of content header text\`` to add a table of contents. See `Slides.docs()` for creating a `TOC` accompanied by section summary.
-        
-        **General syntax**{{.text-big}}
-        
-        - Use alert`fa\`icon_name\`` to add FontAwesome icons, e.g. fa\\`arrow-right\\` → fa`arrow-right`, fa\\`check\\` → fa`check`, fa\\`info-circle\\` → fa`info-circle` etc.
-        - Use syntax \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\` to jump between slides. See `Slides.link` for more details.
-        - Variables can be shown as widgets or replaced with their HTML value (if no other formatting given) using alert`\%{{variable}}` (or legacy alert`\`{{variable}}\``) 
-            (should be single curly braces pair wrapped by backticks after other formattings done) syntax. If a format_spec/conversion is provided like
-            alert`\%{{variable:format_spec}}` or alert`\%{{variable!conversion}}`, that will take preference.
-        - A special formatting alert`\%{{variable:nb}}` is added (`version >= 4.5`) to display objects inside markdown as they are displayed in a Notebook cell.
-            Custom objects serialized with `Slides.serializer` or serialized by `ipyslides` should be displayed without `:nb` whenever possible to appear in correct place in all contexts. e.g.
-            a matplotlib's figure `fig` as shown in `\%{{fig:nb}}` will only capture text representation inplace and actual figure will be shown at end, while `\%{{fig}}` will be shown exactly in place.
-        
-        ::: note-tip
-            - Variables are automatically updated in markdown when changed in Notebook for slides built purely from markdown.
-                - You can also use hl`Slide[number,].rebuild(**kwargs)` to force update variables if some error happens. This is useful for setting unique values of a variable on each slide.
-                - Markdown enclosed in hl`fmt(content, **vars)` will not expose encapsulated `vars` for updates later, like static stuff but useful inside python scripts to pick local scope variable.
-                - In summary, variables are resolved by scope in the prefrence `rebuild > __main__`. Outer scope variables are overwritter by inner scope variables.
-            - Use unique variable names on each slide to avoid accidental overwriting during update.
-            - Varibales used as attributes like `\%{{var.attr}}` and indexing like `\%{{var[0]}}` / `\%{{var["key"]}}` will be update only if `var` itself is changed.
-
-        ::: note-warning
-            alert`\%{{variable:nb}}` breaks the DOM flow, e.g. if you use it inside heading, you will see two headings above and below it with splitted text. Its fine to use at end or start or inside paragraph.                                    
-        
-        ::: note-info
-            - Widgets behave same with or without `:nb` format spec. 
-            - Formatting is done using `str.format` method, so f-string like literal expressions are not supported, but you don't need to supply variables, just enclose text in `Slides.fmt`.
-            - Variables are substituted from top level scope (Notebook's hl`locals()` / hl`globals()`). To use variables from a nested scope, use `Slides.fmt`.
-        
-        - Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text \{{: rowspan="2" colspan="1"}}| inside a cell, should be a space bewteen text and attributes.
-        - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
-        - alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format. These files are watched for eidts if included in synced markdown file via `Slides.sync_with_file`.
-        - Inline columns/rows can be added by using alert`stack\`Column A || Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
-        - Block multicolumns are made using follwong syntax, column separator is triple plus `+++`:
-        
-        ```md-left
-            ```multicol 2 3 .block-blue
-                ```md-after
-                ## Column A
-                ```
-            +++
-                ## Column B
-                ```multicol .block-red
-                **Nested Column A**{{: .block-green}}
-                +++
-                **Nested Column B**{{: .block-yellow}}
-                ```
-            ```
-        ```
-        
-        - You can also create columns as below (only parsed inline, unlike `multicol` which works like `write` command):
-        
-        ```md-before
-        ::: columns block-blue
-            ::: column block-red width=40%
-                - `column` and `styled` are added syntax to block syntax `:::`.
-                - `column` and `styled` can be used interchangeably as you see below.
-            
-            ::: styled block-yellow width=60% border="2px solid orange" padding="10px"
-                - Top level `columns` is necessary to create columns or use `styled` block with `display=flex`.
-                - This syntax is similar to ` stack ` but offers more flexibility and readability.
-        ```
-        
-        - Above block syntax is pretty flexible, you can use any CSS class, attributes such as id, style etc.  For `styled` and `column`, attributes are just CSS properties for quick styling.
-        
-        - Definition list syntax:
-        ```md-left
-        Item 1 Header
-        : Item 1 details
-
-        Item 1 Header
-        : Item 1 details
-        ```
-        
-        - `md-[left,right,before,after]` and `multicol` support nesting via proper indentation, but it may be broken by display contexts. 
-        - Code blocks syntax highlighting. (there is an inline highlight syntax as well alert`hl\`code\``)
-        
-        ```python
-        print('Hello, I was highlighted from a code block!')
-        ```     
-                                                                              
-        - A whole block of markdown can be CSS-classed using syntax
-        ```md-left -c
-        ::: block-yellow
-            Some **bold text**
-        ```
-            
-        ::: block-red 
-            - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
-                [markdown extensions](https://python-markdown.github.io/extensions/) and 
-                [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-            - These markdown extensions are inluded by default hl`{_md_extensions}`.
-            - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-                `__format__` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
-        
-        - Upto 4 level nesting is parsed using (level + 1) number of alert`/` (at least two) within backticks in functions given below. 
-        ```md-left -c
-        stack[(6,4),css_class="block-blue"]`////
-            This always parse markdown in `returns=True` mode. ||
-            stack[css_class="info"]`/// B || A
-                stack[vertical=True]`// C ||
-                    stack[css_class="block-red"]` D || E ` 
-                //` 
-            ///` 
-        ////`
-        ```
-        
-        - Other options (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
-        ''') + '\n' + ',\n'.join(rf'    - alert`{k}`\\`{v}\\`' for k,v in _special_funcs.items()),
-        returns = True
-        ))
+            return XTML(
+                self.parse(_syntax.xmd_syntax + '\n' 
+                    + ',\n'.join(rf'    - alert`{k}`\\`{v}\\`' for k,v in _special_funcs.items()),
+                    returns = True
+                )
+            )
     
     @property
     def css_syntax(self):
@@ -297,18 +143,19 @@ class BaseSlides:
         return handles
     
     def _process_citations(self, content):
-        match1, *others = re.findall(r'```citations(.*?)\n```', content, flags= re.DOTALL | re.MULTILINE)
+        match1, *others = re.findall(r'^```citations.*?^```|^:::\s*citations.*?(?=^:::|\Z|^\S)', content, flags= re.DOTALL | re.MULTILINE)
         if others:
-            raise ValueError(f"Only a single block of citations is parsed, found {len(others) + 1} blocks")
-            
-        content = content.replace(f'```citations{match1}\n```','') # clean up
+            raise ValueError(f"Only a single block of citations is parsed, found {len(others) + 1} blocks\n{(match1, *others)}")
+        print(f"Processing citations block:\n{match1!r}")
+        content = content.replace(match1, '') # clean up
         if getattr(self,'_bib_md','') != match1:
             self._bib_md = match1 # set for next test
-
-            mode, refs = [line.strip() for line in match1.split('\n',1)] # should be ```citations mode and then below
+            head, refs = match1.split('\n', 1) # split into mode and references
+            mode = head[3:].replace('citations','',1).strip() # remove name citations
+            refs = refs.rstrip('` ') # remove trailing ` or space, 
             if not mode:
                 mode = self._cite_mode # keep same
-            self.set_citations(refs, mode=mode)
+            self.set_citations(textwrap.dedent(refs), mode=mode)
         return content
     
     def sync_with_file(self, start_slide_number, /, path, interval=500):
@@ -697,13 +544,14 @@ class BaseSlides:
                     btn = ipw.Button(description='Chevron-Down Icon',icon='chevrond')    
                     self.write(btn)
 
+            group = zip(self.icon.available[::2], self.icon.available[1::2]) # make 4 columns table
             self.write(['''
                 ## SVG Icons
                 Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
                 besides standard ipywidgets icons.
                 ''', *c.outputs, 'line`200`**Source code of this slide**',self.this.get_source()], 
-                self.table([(f'`{k}`', self.icon(k,color='crimson').svg) for k in self.icon.available],headers=['Name','Icon']),
-            widths=[2,1])
+                self.table([(f'`{j}`', self.icon(j,color='crimson').svg,f'`{k}`', self.icon(k,color='crimson').svg) for j, k in group],headers=['Name','Icon','Name','Icon']),
+            widths=[3,2])
                 
             
         with self.build_():

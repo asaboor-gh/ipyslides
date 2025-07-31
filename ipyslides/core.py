@@ -569,6 +569,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.verify_running("toc can only be added under slides constructor!")
         self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there
+    
+    def refs(self, ncol=2):
+        "Displays references when in footnote mode. refs are set in `Slides.set_citations`. In markdown, use refs\`ncol\` syntax."
+        self.verify_running("refs can only be added under slides constructor!")
+        self.this._set_refs = False # already added here
+        if self._cite_mode == "footnote":
+            _cits = ''.join(v.value for v in sorted(self.this._citations.values(), key=lambda x: x._id))
+            self.html("div", _cits, css_class = 'Citations text-small', 
+                style = f'column-count: {ncol} !important;'
+            ).display()
 
     def link(self, label, back_label=None, icon=None, back_icon=None):
         r"""Create a link to jump to another slide. Use `label` for link text 

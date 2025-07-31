@@ -281,7 +281,7 @@ def _inline_style(kws_or_widget):
     else:
         raise TypeError("expects dict or ipywidgets.Layout!")
     out = ''.join(f"{k.replace('_','-')}:{v};" for k,v in kws.items())
-    return f'style="{out}"'
+    return f'style="{out}"' if kws else ''
     
 class Serializer:
     def __init__(self):

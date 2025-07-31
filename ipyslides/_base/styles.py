@@ -454,7 +454,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'column-gap':'0.2em',
                 'height':'auto',
                 'box-sizing':'border-box !important',
-                '> *': {'box-sizing':'border-box !important',},
+                '> *': {'box-sizing':'border-box !important','min-width':'0 !important',}, # avoid overflow due to stubborn elements
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },
         },
