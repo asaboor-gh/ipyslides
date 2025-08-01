@@ -22,10 +22,16 @@ from IPython.display import SVG, IFrame
 from IPython.display import Image, display
 
 from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
-from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, htmlize, _inline_style
-from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error # raw error for export from here
+from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize as _htmlize
+from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error 
 from .writer import Writer, _Output
 from .source import highlight
+
+# DO NOT USE parse in this module directly some functions are called from markdown parser internally.
+def htmlize(obj):
+    if isinstance(obj, str):
+        return globals().get('_parse_nested', parse)(obj, returns=True)
+    return _htmlize(obj) 
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -234,12 +240,12 @@ There are few special rules in `props`:
 Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
 """
 
-_css_docstring = parse(_dict2css + f"""                      
+_css_docstring = htmlize(_dict2css + f"""                      
 ```python
 props = {json.dumps(_example_props, indent=2)}
 ```
 Output of hl`html('style',props)`, hl`set_css(props)` etc. functions. Top selector would be different based on where it is called.
-""", returns=True) + highlight(_styled_css(_example_props).value, "css","CSS").value
+""") + highlight(_styled_css(_example_props).value, "css","CSS").value
 
 def _alt_for_widget(func, widget):
     if not isinstance(widget, ipw.DOMWidget):
@@ -353,9 +359,9 @@ def _clipbox_children():
     ]
     return children
 
-def details(str_html,summary='Click to show content'):
+def details(obj,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
-    return XTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{str_html}</details>""")
+    return XTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{htmlize(obj)}</details>""")
 
 def _check_pil_image(data):
     "Check if data is a PIL Image or numpy array"
@@ -517,8 +523,6 @@ def styled(obj, css_class=None, **css_props):
                 setattr(obj.layout, k, v)
         _patch_display(obj)
         return obj.add_class(klass)
-    elif isinstance(obj, (str, bytes)):
-        return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{parse(obj, True)}</div>')
     else:
         return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{htmlize(obj)}</div>')
     
@@ -809,12 +813,6 @@ def doc(obj,prepend_str = None, members = None, itself = True):
 def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markdown flow
     "Returns today's date in given format."
     return color(datetime.datetime.now().strftime(fmt),fg=fg, bg = None)
-
-def sub(text):
-    return html('sub',text,style="font-size:85%;color:inherit;")
-
-def sup(text):
-    return html('sup',text,style="font-size:85%;color:inherit;")
 
 def bullets(iterable, ordered = False,marker = None, css_class = None):
     """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command.    

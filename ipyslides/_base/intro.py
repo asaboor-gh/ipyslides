@@ -92,7 +92,7 @@ key_maps = {
 
 key_combs = f"""
 | Shortcut                                    | Button                                            | Action                 | 
-|---------------------------------------------|---------------------------------------------------|------------------------|
+|:--------------------------------------------|---------------------------------------------------|:-----------------------|
 | {_key('&#9141;')}/{_key('▸')}               | {_icons["chevronr"]}                              | Move to next slide     |
 | {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["chevronl"]}                           | Move to previous slide |
 | {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_icons['arrowbl']}/{_icons['arrowbr']}       | Jump to Star/End of slides |

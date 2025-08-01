@@ -80,16 +80,14 @@ class PyMarkdown_Extender:
 extender = PyMarkdown_Extender()
 del PyMarkdown_Extender
 
-_special_funcs = {
+_special_funcs = { # later functions can encapsulate earlier ones
     "vspace": "number in units of em",
     "hspace": "number in units of em",
     "line": "length in units of em, [color, width and style]",
+    "today": "format_spec like %b-%d-%Y",
     "alert": "text",
     "color": "text",
-    "sub": "text, or use _ in place of sub",
-    "sup": "text, or use ^ in place of sup",
     "hl": "inline code highlight. Accepts langauge as keywoard.",
-    "today": "format_spec like %b-%d-%Y",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "image": "path/src or clip:filename",
     "raw": "text, or use ::: raw block",
@@ -99,7 +97,7 @@ _special_funcs = {
     "styled": "style objects with CSS classes and inline styles or use block ::: with css classes and props inline",
     "zoomable": "zoom a block of html when hovered or used ::: zoomable block",
     "center": r"text or \%{variable} or use ::: center, ::: align-center blocks", # should after most of the functions
-    "stack": r"text separated by ||, like stack[(1,2,1),**css_props]\\`C1 || C2 || C3\\`, preferably use ::: columns block",
+    "stack": r"text separated by || in inline mode, or use ::: columns block",
 }
 
 def error(name, msg):
@@ -222,7 +220,6 @@ class HtmlFormatter(string.Formatter):
         if isinstance(key, int):
             return error('RuntimeError','Positional arguments are not supported in custom formatting!').value
         elif isinstance(key, str) and key not in kwargs:
-            key = key.strip()  # remove leading and trailing spaces, no idea where it causes issues
             if not key.isidentifier():
                 return error('NameError', f'name {key!r} is not a valid variable name').value
             return error('NameError', f'name {key!r} is not defined').value
@@ -319,7 +316,7 @@ class XMarkdown(Markdown):
         self._fmt_ns = {} # provided by fmt
         self._returns = True
         self._slides = get_slides_instance()
-        self._nested = False # checks if using _parse in nested manner
+        self._nesting_depth = 0 # checks if using _parse in nested manner
     
     @property
     def _wr(self):
@@ -372,7 +369,7 @@ class XMarkdown(Markdown):
                 elif out: # Some syntax like section on its own line can leave empty block later
                     outputs.append(XTML(out))
         
-        if not self._nested: # we need to keep these if nested parsing
+        if not self._nesting_depth: # we need to keep these if nested parsing
             self._vars = {} # reset at end to release references
             self._fmt_ns = {} # reset back at end
 
@@ -439,15 +436,16 @@ class XMarkdown(Markdown):
             lines = part.splitlines(keepends=True)
             header = '::: ' + lines[0].strip() # first line is always header
             block_body, text_chunk = '', ''
-            still_header = True # still header, until non-indented line
+            still_header, still_block = True, True # still header or block, until non-indented line
             for line in islice(lines, 1, None): # skip first line
                 if still_header and line.startswith(':'): # indented line, part of block header
                     header += line.replace(':',' ',1).rstrip()
                 else:
                     still_header = False # no more header
-                    if re.search(r'^\s+', line): # indented line with one or more spaces
+                    if still_block and re.search(r'^\s+', line): # indented line with one or more spaces
                         block_body += line # indented block body
                     else:
+                        still_block = False # no more block body
                         text_chunk += line # text chunk, not part of block
                         
             if block_body.strip(): # block comes first, only if not empty
@@ -458,12 +456,12 @@ class XMarkdown(Markdown):
     
     def _parse_nested(self, xmd, returns=True):
         old_returns = self._returns
-        self._nested = True
+        self._nesting_depth += 1 # increase nesting depth
         try:
             out = self._parse(textwrap.dedent(xmd), returns=returns) # allows nesting via indent
         finally:
             self._returns = old_returns
-            self._nested = False
+            self._nesting_depth -= 1 # decrease nesting depth
         return out
 
     def _resolve_nested(self, text_chunk):
@@ -528,6 +526,7 @@ class XMarkdown(Markdown):
         
         style = "" # style for columns if widths are given
         if tag in ("multicol","columns")  and widths: # columns with inline mode
+            css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
             klass = f"c-{id(widths)}" # unique class for columns
             _class = f"{_class} {klass}" if _class else klass # add klass
             style = '\n'.join(f".{klass} > :nth-child({i+1}) {{flex: {w} 1;}}" for i, w in enumerate(widths)) # nth-child selectors
@@ -683,10 +682,10 @@ class XMarkdown(Markdown):
                     r'DISPLAYVAR(\d+)DISPLAYVAR', 
                     lambda m: error(
                         'DisplayError',
-                        f'{self._var_info(m.group())} cannot be displayed in current context '
+                        f'{self._var_info(m.group())} cannot be displayed in current context or nesting level '
                         'because markdown parser was requested to return a string by the caller. '
-                        'You may use a display context such as write function or columns block in '
-                        'display mode (+++ separtor used in multicol/columns) to show object properly.'
+                        'Display contexts such as write function or markdown columns block in '
+                        'display mode (+++ separtor used in multicol/columns) show object properly.'
                     ).value,
                     text
                 )
@@ -721,60 +720,66 @@ class XMarkdown(Markdown):
     
     def _sub_vars(self, html_output):
         "Substitute variables in html_output given as %{var}."   
-        user_ns = self.user_ns() # get once, will be called multiple time
-        # Replace variables first to have small data
-        def handle_match(match):
-            key,*_ = _matched_vars(match.group()) 
-            if key not in user_ns: # top level var without ., indexing not found
-                err = error('NameError', f'name {key!r} is not defined')
-                return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{err}'))
+        # Check for variables first
+        var_pattern = r"%\{([^{]*?)\}"
+        if re.search(var_pattern, html_output, flags=re.DOTALL):
+            user_ns = self.user_ns() # get once, will be called multiple time
+            def handle_match(match):
+                key,*_ = _matched_vars(match.group()) 
+                if key not in user_ns: # top level var without ., indexing not found
+                    err = error('NameError', f'name {key!r} is not defined')
+                    return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{err}'))
 
-            cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
-            key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
-           
-            if ('[' in key) and (not ']' in key): # There was no spec, just a slicing splitted, but don't need to throw error here based on that
-                key = ''.join([key,':',*fmt_spec])
-                fmt_spec = ()
-            try:
-                value, _ = hfmtr.get_field(key, (), user_ns)
-            except Exception as e:
-                return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{e}'))
-            
-            if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
-                return self._handle_var(value,ctx = match.group()) 
-            return self._handle_var(hfmtr.vformat(match.group()[1:], (), user_ns))
+                cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
+                key, *fmt_spec = cmatch.rsplit(':',1) # split from right, could be slicing
+
+                if ('[' in key) and (not ']' in key): # There was no spec, just a slicing splitted, but don't need to throw error here based on that
+                    key = ''.join([key,':',*fmt_spec])
+                    fmt_spec = ()
+                try:
+                    value, _ = hfmtr.get_field(key, (), user_ns)
+                except Exception as e:
+                    return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{e}'))
+
+                if isinstance(value, DOMWidget) or 'nb' in fmt_spec: # Anything with :nb or widget
+                    return self._handle_var(value,ctx = match.group()) 
+                return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), user_ns)) # clear spaces around variable
+
+            html_output = re.sub(var_pattern, handle_match, html_output, flags=re.DOTALL)
+
+        # Replace inline functions, keep it nested for accessing inner state
+        all_funcs_re = '|'.join(_special_funcs.keys())
+        func_pattern = rf"(?<!\`)\b({all_funcs_re})(\[.*?\])?\`(.*?)\`" # `func avoides, leading space used for readability consumed
         
-        html_output = re.sub(r"%\{([^{]*?)\}", handle_match, html_output, flags=re.DOTALL)
-
-        # Replace inline  functions
-        from . import utils  # Inside function to avoid circular import
-
-        for func in _special_funcs.keys():
-            all_matches = re.findall(
-                rf"(?<!\`){func}(\[.*?\])?\`(.*?)\`", html_output, flags=re.DOTALL | re.MULTILINE
-            ) # returns two matches always, don't match like `image` or and keep trying forward for no reason
-            for m1, m2 in all_matches:
+        if re.search(func_pattern, html_output, flags=re.DOTALL | re.MULTILINE):
+            from . import utils  # Inside function to avoid circular import
+            utils._parse_nested = self._parse_nested # all times pick from instance
+            
+            def repl_inline_func(m):
+                func, args, content = m.groups()
                 _func = getattr(utils, func)
-                arg0 = m2.strip() # avoid spaces in this
-
-                if not m1:
+                arg0 = content.strip()
+    
+                if not args:
                     try:
-                        _out = (_func(arg0) if arg0 else _func()) # If no argument, use default
+                        _out = (_func(arg0) if arg0 else _func())
                     except Exception as e:
-                        _out = error('Exception', f"Could not parse '{func}`{m2}`': \n{e}")
-                    html_output = html_output.replace(f"{func}`{m2}`", self._handle_var(_out), 1)
-                else: # func with arguments
+                        _out = error('Exception', f"Could not parse '{func}`{content}`': \n{e}")
+                else:
                     try:
-                        _out = eval(f"utils.{func}({arg0!r},{m1[1:-1]})" if arg0 else f"utils.{func}({m1[1:-1]})") # evaluate
+                        _out = eval(f"utils.{func}({arg0!r},{args[1:-1]})" if arg0 else f"utils.{func}({args[1:-1]})")
                     except Exception as e:
                         _out = error('Exception',
-                            f"Could not parse '{func}{m1}`{m2}`': \n{e}\nArguments in [] should be proper Python code that does not rely on a scope "
-                            f" and are passed to {func}{inspect.signature(_func)} except first argument which is the text to be processed."
+                            f"Could not parse '{func}{args}`{content}`'. Error in arguments: \n{e}\n"
+                            f"Arguments in [] must be valid Python code (e.g., strings in quotes) and are passed to {func}{inspect.signature(_func)}."
                         )
-                    html_output = html_output.replace(f"{func}{m1}`{m2}`", self._handle_var(_out), 1)
+                return self._handle_var(_out)
+            
+            html_output = re.sub(func_pattern, repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
+            del utils._parse_nested # remove from unintended use in utils
         
-        html_output = re.sub(r'\^\`([^\^]+?)\`',r'<sup>\1</sup>', html_output) # superscript
-        html_output = re.sub(r'\_\`([^\_]+?)\`',r'<sub>\1</sub>', html_output) # subscript
+        html_output = re.sub(r'(?: )?\^([^\^]+?)\^',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
+        html_output = re.sub(r'(?: )?\~([^\~]+?)\~',r'<sub>\1</sub>', html_output) # subscript
         return re.sub(r"&(?:amp;)?#96;","`", html_output)  # return in main scope
 
 

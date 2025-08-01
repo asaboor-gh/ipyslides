@@ -13,8 +13,8 @@ from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
-from ..formatters import XTML
-from ..xmd import _special_funcs, error, fmt, get_slides_instance, resolve_included_files
+from ..formatters import XTML, htmlize
+from ..xmd import error, fmt, get_slides_instance, resolve_included_files
 from ..utils import _css_docstring
 
 
@@ -57,18 +57,13 @@ class BaseSlides:
     @property
     def css_styles(self):
         """CSS styles for markdown or `styled` command."""
-        return XTML(self.parse(_syntax.css_styles, returns = True))
+        return XTML(htmlize(_syntax.css_styles))
 
     @property
     def xmd_syntax(self):
         "Special syntax for markdown."
         with self._hold_running():
-            return XTML(
-                self.parse(_syntax.xmd_syntax + '\n' 
-                    + ',\n'.join(rf'    - alert`{k}`\\`{v}\\`' for k,v in _special_funcs.items()),
-                    returns = True
-                )
-            )
+            return XTML(htmlize(_syntax.xmd_syntax))
     
     @property
     def css_syntax(self):
@@ -325,7 +320,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up loading 10x faster on average
         self.clear() # Clear previous content
-        self.create(range(25)) # Create slides faster
+        self.create(range(31)) # Create slides faster
         
         from ..core import Slides
 
@@ -336,7 +331,7 @@ class BaseSlides:
             self.this.set_bg_image(self.get_logo(),0.25, filter='blur(10px)', contain=True)
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center(self.fmt('''
-                alert`Abdul Saboor`sup`1`
+                alert`Abdul Saboor` ^1^
                                  
                 today``
                 {.text-small}
@@ -344,7 +339,7 @@ class BaseSlides:
                 %{logo}
                                  
                 ::: text-box
-                    ^`1`My University is somewhere in the middle of nowhere
+                    ^1^My University is somewhere in the middle of nowhere
                 ''', logo = self.get_logo("4em"))).display()
         
         self.build(-1, self.fmt('''
@@ -385,8 +380,7 @@ class BaseSlides:
             self.doc(self[0], members='yoffset set_animation set_bg_image update_display get_source show set_css'.split(), itself = False).display()
             self.css_syntax.display()
         
-        with self.build(-1):
-            self.xmd_syntax.display()
+        self.build(-1, re.sub(r'^---\s*$', '---\n## Extended Markdown' ,_syntax.xmd_syntax, flags=re.MULTILINE))
             
         with self.build(-1):
             self.write('## Adding Content')

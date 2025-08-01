@@ -169,7 +169,7 @@ def write(*objs,widths = None, css_class=None):
         - You can use hl`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
-        - In markdown `multicol` block (starts and ends with three backticks) is similar to `write` command.
+        - In markdown `multicol/columns` block syntax is similar to `write` command if `+++` separartor is used there.
     """
     w = Writer(*objs,widths = widths) # Display itself
     if isinstance(css_class, str):

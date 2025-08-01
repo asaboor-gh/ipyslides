@@ -11,8 +11,7 @@ from inspect import Signature, Parameter
 from IPython.display import Image, SVG
 from ipywidgets.widgets.trait_types import InstanceDict
 
-from ..formatters import pygments, fix_ipy_image, code_css
-from ..xmd import parse
+from ..formatters import fix_ipy_image, code_css, htmlize
 from ..utils import html, today, _clipbox_children, get_clips_dir, set_dir
 from . import intro, styles, _layout_css
 
@@ -313,7 +312,7 @@ class Settings:
     def _toast_on_value_change(self, change):
         if change.new:
             if change.new == 'KSC': # Keyboard shortcute
-                content = parse(intro.key_combs, returns = True)
+                content = htmlize(intro.key_combs)
                 self._widgets._push_toast(content, timeout=15)
 
             self._widgets.htmls.toast.value = "" # Reset to make a new signal
@@ -373,7 +372,7 @@ class Settings:
             self._slides.widgets._snum.layout.display = "none" # hide slide number
 
         style = 'white-space:nowrap;display:inline;margin-block:0;padding-left:8px;'
-        text = parse(f'<p markdown="1" style="{style}">{text}</p>', True) 
+        text = htmlize(f'<p markdown="1" style="{style}">{text}</p>') 
         
         if update_widget:
             self._widgets.htmls.footer.value = text
