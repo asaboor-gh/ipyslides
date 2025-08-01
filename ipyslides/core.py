@@ -576,9 +576,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.this._set_refs = False # already added here
         if self._cite_mode == "footnote":
             _cits = ''.join(v.value for v in sorted(self.this._citations.values(), key=lambda x: x._id))
-            self.html("div", _cits, css_class = 'Citations text-small', 
-                style = f'column-count: {ncol} !important;'
-            ).display()
+            return self.html("div", _cits, css_class = 'Citations text-small', 
+                style = f'column-count: {ncol} !important;')
 
     def link(self, label, back_label=None, icon=None, back_icon=None):
         r"""Create a link to jump to another slide. Use `label` for link text 

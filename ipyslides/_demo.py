@@ -19,11 +19,11 @@ def demo_slides(slides):
     ```md-after -c
     # Creating Slides
     ::: align-center
-        alert`Abdul Saboor`^1^, Unknown Author^2^
+        alert`Abdul Saboor`^`1`, Unknown Author^`2`
         center`//today``//`
         ::: text-box
-            ^1^My University is somewhere in the middle of nowhere
-            ^2^Their University is somewhere in the middle of nowhere
+            ^`1`My University is somewhere in the middle of nowhere
+            ^`2`Their University is somewhere in the middle of nowhere
                     
     vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
     ```""", btn = slides.widgets.buttons.info))

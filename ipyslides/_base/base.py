@@ -141,7 +141,7 @@ class BaseSlides:
         match1, *others = re.findall(r'^```citations.*?^```|^:::\s*citations.*?(?=^:::|\Z|^\S)', content, flags= re.DOTALL | re.MULTILINE)
         if others:
             raise ValueError(f"Only a single block of citations is parsed, found {len(others) + 1} blocks\n{(match1, *others)}")
-        print(f"Processing citations block:\n{match1!r}")
+        
         content = content.replace(match1, '') # clean up
         if getattr(self,'_bib_md','') != match1:
             self._bib_md = match1 # set for next test
@@ -331,7 +331,7 @@ class BaseSlides:
             self.this.set_bg_image(self.get_logo(),0.25, filter='blur(10px)', contain=True)
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center(self.fmt('''
-                alert`Abdul Saboor` ^1^
+                alert`Abdul Saboor` ^`1`
                                  
                 today``
                 {.text-small}
@@ -339,7 +339,7 @@ class BaseSlides:
                 %{logo}
                                  
                 ::: text-box
-                    ^1^My University is somewhere in the middle of nowhere
+                    ^`1`My University is somewhere in the middle of nowhere
                 ''', logo = self.get_logo("4em"))).display()
         
         self.build(-1, self.fmt('''

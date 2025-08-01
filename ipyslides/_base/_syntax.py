@@ -5,7 +5,7 @@ This file contains descriptive text strings explaining available formatting opti
 
 from ..xmd import _md_extensions, _special_funcs
 
-_special_funcs = '\n'.join(rf' -  alert`{k}`\\`{v}\\`' for k,v in _special_funcs.items())
+_special_funcs = '\n'.join(rf' -  alert`{k}`\`{v}\`' for k,v in _special_funcs.items())
 
 css_styles = '''
 Use any or combination of these styles in markdown blocks or `css_class` argument of writing functions:
@@ -191,17 +191,17 @@ stack[(6,4),css_class="block-blue"]`////
 **General Syntax**{{.text-big}}
 
 - Use alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format.
-- Use alert`fa\`icon_name\`` to add FontAwesome icons, e.g. fa\\`arrow-right\\` → fa`arrow-right`, fa\\`check\\` → fa`check`, fa\\`info-circle\\` → fa`info-circle` etc.
+- Use alert`fa\`icon_name\`` to add FontAwesome icons, e.g. fa\`arrow-right\` → fa`arrow-right`, fa\`check\` → fa`check`, fa\`info-circle\` → fa`info-circle` etc.
 - Use syntax \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\` to jump between slides. See `Slides.link` for more details.
-- Cells in markdown table can be spanned to multiple rows/columns by attributes | cell text \{{: rowspan="2" colspan="1"}}| inside a cell, should be a space bewteen text and attributes.
+- Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
 - Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
-- Use hl`~sub~` and hl`^sup^`  for subscript and superscript respectively, e.g. H~2~O, E = mc^2^.
+- Use `_\`sub\`` and `^\`sup\``  for subscript and superscript respectively, e.g. H_`2`O, E = mc^`2`.
 - Definition list syntax:
 ```md-left
 Item 1 Header
-: Item 1 details ^1^
+: Item 1 details ^`1`
 Item 1 Header
-: Item 1 details ~2~
+: Item 1 details _`2`
 ```
 
 **Extending Syntax**{{.text-big}}

@@ -202,8 +202,8 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     # Footnotes at place user likes
     all_matches = re.findall(r"refs\`([\d+]?)\`", text_chunk) # match digit or empty
     for match in all_matches:
-        slide_instance.refs(match or int(match)) # match is empty or digit
-        text_chunk = text_chunk.replace(f"refs`{match}`", "", 1)
+        out = xmd_instance._handle_var(slide_instance.refs(match or int(match))) # match is empty or digit
+        text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
     return text_chunk
 
 class HtmlFormatter(string.Formatter):
@@ -706,6 +706,9 @@ class XMarkdown(Markdown):
         return re.sub(r"&(?:amp;)?#(?:96;|37;\{)", lambda m: "`" if "96" in m.group() else "%{", out)
     
     def _handle_var(self, value, ctx=None): # Put a temporary variable that will be replaced at end of other conversions.
+        if value is None: # Avoid None values such as coming from refs
+            return '' # empty string
+        
         if isinstance(value, (str, XTML)): 
             key = f"PrivateXmdVar{len(self._vars)}X" # end X to make sure separate it 
             # Handle nested like center`alert`text`` things before saving next varibale
@@ -778,9 +781,9 @@ class XMarkdown(Markdown):
             html_output = re.sub(func_pattern, repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
             del utils._parse_nested # remove from unintended use in utils
         
-        html_output = re.sub(r'(?: )?\^([^\^]+?)\^',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
-        html_output = re.sub(r'(?: )?\~([^\~]+?)\~',r'<sub>\1</sub>', html_output) # subscript
-        return re.sub(r"&(?:amp;)?#96;","`", html_output)  # return in main scope
+        html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
+        html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
+        return html_output 
 
 
 def parse(xmd, returns = False):
