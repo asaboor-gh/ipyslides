@@ -268,6 +268,26 @@ class TagFixer(HTMLParser):
 tagfixer = TagFixer()
 del TagFixer
 
+class char_esc:
+    """Utility class for escaping and restoring characters \@,\%,\| and \` using backslash in text."""
+    _chars = "`@%|/" # Characters to escape
+
+    @classmethod
+    def escape(cls, text):
+        """Escape characters by replacing with tokens."""
+        for ch in cls._chars:
+            text = text.replace(rf"\{ch}", f"ESC-{ord(ch):03}-CHR")
+        return text
+
+    @classmethod
+    def restore(cls, text, ascii_backtick=False):
+        """Restore escaped tokens back to original characters. ` -> &#96; if ascii_backtick is False (default)."""
+        for ch in cls._chars:
+            repl = r"&#96;" if ch == '`' and not ascii_backtick else ch
+            text = text.replace(f"ESC-{ord(ch):03}-CHR", repl)
+        return text
+    
+
 # This shoul be outside, as needed in other modules
 def resolve_included_files(text_chunk):
     "Markdown files added by include`file.md[start:end]` should be inserted as plain."
@@ -447,7 +467,15 @@ class XMarkdown(Markdown):
                     else:
                         still_block = False # no more block body
                         text_chunk += line # text chunk, not part of block
-                        
+            
+            header = char_esc.escape(header)  # Escape characters in header before splitting
+            if '|' in header:
+                if not block_body.strip(): # if block body is empty but header has pipe, then it is inline block
+                    header, block_body = header.split('|', 1)
+                else:
+                    header, _ = header.split('|', 1) # ignore everything after pipe in header in general
+            header = char_esc.restore(header)  # Restore characters in header after splitting
+            
             if block_body.strip(): # block comes first, only if not empty
                 blocks.append(("block", (header, block_body)))
             if text_chunk.strip(): # text chunk comes after block
@@ -640,18 +668,16 @@ class XMarkdown(Markdown):
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
         text = resolve_included_files(text)
-        text = re.sub(r"\\\`", "&#96;", text)  # Escape backticks after files added
-        text = re.sub(r"\\%\{", r"&#37;{", text) # Escap \%{, before below latest addition of variables %{var}
-
+        text = char_esc.escape(text)  # Escape characters before processing
+        
         # Now let's convert old `{var}` to new  %{var} for backward compatibility
         text = re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL)
 
         text = self._resolve_nested(text)  # Resolve nested objects in form func`?text?` to func`html_repr`
         if self._slides and self._slides.this: # under building slide
-            text = re.sub("ESCAPED_AT_SYMBOL","@", resolve_objs_on_slide(
-                self, self._slides, re.sub(r"\\@","ESCAPED_AT_SYMBOL", text) # escape \@cite_key before resolving objects on slides
-            ))  # Resolve objects in xmd related to current slide
-        text = re.sub(r"\\@","@", text) # same stuff when goes off slides, should be correct
+            text = resolve_objs_on_slide(
+                self, self._slides, text # escape \@cite_key before resolving objects on slides
+            )  # Resolve objects in xmd related to current slide
         
         # Resolve <link:label:origin text> and <link:label:target text?>
         text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", r"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>", text)
@@ -661,7 +687,7 @@ class XMarkdown(Markdown):
         text = re.sub(r"fa\`([^\`]+?)\`", lambda m: f"<i class='fa fa-{m.group(1).strip()}'></i>", text)
         
         # _resolve_vars internally replace escaped \` and `%{ back to ` and %{ 
-        return self._resolve_vars( # reolve vars after conversion
+        return self._resolve_vars( # reolve vars after conversion, resets escaped characters too
             super().convert(
                 self._sub_vars(text) # sub vars before conversion
             ))
@@ -702,9 +728,8 @@ class XMarkdown(Markdown):
                 return objs
 
         out = re.sub(r"PrivateXmdVar(\d+)X", lambda m: self._vars.get(m.group(), m.group()), text)
-        # replacing backtick and %{, sometimes it leads to &amp;, need to cover it
-        return re.sub(r"&(?:amp;)?#(?:96;|37;\{)", lambda m: "`" if "96" in m.group() else "%{", out)
-    
+        return char_esc.restore(out)
+  
     def _handle_var(self, value, ctx=None): # Put a temporary variable that will be replaced at end of other conversions.
         if value is None: # Avoid None values such as coming from refs
             return '' # empty string
@@ -761,7 +786,7 @@ class XMarkdown(Markdown):
             def repl_inline_func(m):
                 func, args, content = m.groups()
                 _func = getattr(utils, func)
-                arg0 = content.strip()
+                arg0 = char_esc.restore(content, True) if func == "hl" else content.strip() # hl needs corrected content
     
                 if not args:
                     try:

@@ -73,6 +73,8 @@ hl["markdown"]`
 The general block syntax is `::: type-or-classes [args] attributes`.
 
 - You can use `/` to divide css properties from node attributes such as `::: note-info border="1px solid red" / id="mynote" dir="ltr"`. Node attributes come after `/`.
+- You can create inline blocks by adding `|` in header (only takes effect if body is empty), such as `::: block-red | text` will create a block with red background and text inside.
+- Both `|` and `/` can be escaped in header by backslah to interpret them as literal characters instead of block body and attributes splitters respectively. 
 - You can optionally continue block header on next multiple adjacent lines with `:` at start of each line. This multiline header is not available in \`\`\` blocks.
 - Theme colors such as `fg1=red bg2=black` upto 3, can be assigned for each block to tweak look and feel of content.
 - Blocks can be escaped by having a space before `:::` at start of line, such as ` ::: block-red` will not be parsed as block.
@@ -105,13 +107,15 @@ Block Columns
 Column separator is triple plus `+++` if intended in display mode.
 
 ```md-before
-::: columns 6 4 block-blue 
+::: columns 6 1 4 block-blue 
 : border="1px dashed red"
     ::: block-red
         - `::: columns/muticol` with a +++ separator act like `write` command and reveal content incrementally when `%++` is used
         - children inside `columns` picks relative width from parent's `columns` block evem if '+++' is not used.
           In thise children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in `::: block` to make them obvious blocks like this one.
         - CSS classes and attributes can be used to style columns besides relative widths.
+    
+    ::: block-blue border="1px solid red" | alert`inline` color`block` text 
     
     ::: block-yellow border="2px solid orange" padding="10px"
         - Top level `columns` is necessary to create columns or use simple block with `display=flex`.
@@ -194,7 +198,7 @@ stack[(6,4),css_class="block-blue"]`////
 - Use alert`fa\`icon_name\`` to add FontAwesome icons, e.g. fa\`arrow-right\` → fa`arrow-right`, fa\`check\` → fa`check`, fa\`info-circle\` → fa`info-circle` etc.
 - Use syntax \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
-- Escape a backtick with \\, i.e. alert`\\\` → \``. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Escape a backtick with \\, i.e. alert`\\\` → \``, other escape characters include alert`@, %, /, |`. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use `_\`sub\`` and `^\`sup\``  for subscript and superscript respectively, e.g. H_`2`O, E = mc^`2`.
 - Definition list syntax:
 ```md-left
