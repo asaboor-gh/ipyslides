@@ -75,8 +75,9 @@ class _Output(ipw.Output):
 
 
 class XTML(HTML):
+    "This HTML will be diplayable, printable and formatable. Use `self.as_widget()` to get a widget with same content."
     def __init__(self, *args,**kwargs):
-        "This HTML will be diplayable, printable and formatable. Use `self.as_widget()` to get a widget with same content."
+        "Initialize with HTML string or other arguments that can be passed to `IPython.display.HTML` class."
         super().__init__(*args,**kwargs)
         
     def __format__(self, spec):
@@ -104,7 +105,9 @@ class XTML(HTML):
     def as_widget(self):
         "Returns ipywidgets.HTML with same data."
         return ipw.HTML(self.value)
-        
+
+def _fig_caption(text): # need here to use in many modules
+    return f'<figcaption class="no-zoom">{htmlize(text)}</figcaption>' if text else ''
 
 def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
@@ -136,8 +139,7 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=No
     
     cap = ''
     if caption:
-        from .xmd import _fig_caption # avoid circular import and only on demenad
-        cap = _fig_caption(caption)
+        cap = _fig_caption(caption) # Caption is optional, but if given, it should be there
 
     return XTML(f"<figure class='zoom-child mpl'>{svg + cap}</figure>")
 
@@ -306,12 +308,12 @@ class Serializer:
         
         slides = ipyslides.Slides()
         @slides.serializer.register(MyObject)
-        def parse_myobject(obj):
+        def make_h1(obj):
             return f'<h1>{obj!r}</h1>'
             
         my_object = MyObject()
         slides.write(my_object) #This will write "My object is awesome" as main heading
-        parse_myobject(my_object) #This will return "<h1>My object is awesome</h1>"
+        make_h1(my_object) #This will return "<h1>My object is awesome</h1>"
         
         #This is equivalent to above for custom objects(builtin objects can't be modified)
         class MyObject:
@@ -323,7 +325,7 @@ class Serializer:
         ```
         ::: note
             - Serializer function should return html string. It is not validated for correct code on registration time.       
-            - Serializer is useful for buitin types mostly, for custom objects, you can always define a `_repr_html_` method which works as expected.
+            - Serializer is useful for buitin types mostly, for custom objects, you can always define a ` _repr_html_ ` method which works as expected.
             - Serialzers for widgets are equivalent to `Slides.alt(func, widget)` inside `write` command for export purpose. Other commands such as `Slides.[cols,rows,...]` will pick oldest value only.
             - IPython's `display` function automatically take care of serialized objects.
         """
@@ -611,8 +613,8 @@ def htmlize(obj):
         return error("TypeError","Received a non-serializable object. Use display or write directly or use %{obj:nb} syntax in markdown!").value
     
     if isinstance(obj,str):
-        from .xmd import parse # Avoid circular import
-        return parse(obj, returns = True) 
+        from .xmd import xmd # Avoid circular import
+        return xmd(obj, returns = True) 
     elif isinstance(obj,XTML) or callable(getattr(obj, '_repr_html_',None)):
         return obj._repr_html_() #_repr_html_ is a method of XTML and it is quick   
     else:

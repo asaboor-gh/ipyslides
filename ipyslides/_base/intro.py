@@ -29,7 +29,7 @@ slides = isd.Slides()
 ```
 ```python
 %%slide 2 -m 
-**Markdown here with extended options (see `slides.xmd_syntax` for info). Nested blocks are not supported**
+**Markdown here with extended options (see `slides.xmd.syntax` for info). Nested blocks are not supported**
  ```multicol 30 70 .success
  less content
  +++
@@ -67,8 +67,8 @@ slides # This displays slides if on the last line of cell, or use hl`slides.show
     - Use `Slides.docs` to see upto date documentation.
     - Use `Slides.demo` to create example slides.
     - Use  `Slides.sync_with_file` to live edit and update slides through a markdown file.
-    - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-    - Use `Slides.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
+    - Find special syntax to be used in markdown by `Slides.xmd.syntax`.
+    - Use `Slides.xmd.extensions` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
 """
 
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _Icon.available}

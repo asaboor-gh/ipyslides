@@ -1,8 +1,7 @@
-_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'block', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
+_attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'highlight', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 
     'zoomable','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
-_attrs.extend([f'block_{c}' for c in 'red green blue cyan magenta yellow'.split()])
 __all__ = sorted(_attrs)
 
 import os, re, json
@@ -22,16 +21,9 @@ from IPython.display import SVG, IFrame
 from IPython.display import Image, display
 
 from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
-from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize as _htmlize
-from .xmd import _fig_caption, get_unique_css_class, capture_content, parse, raw, error 
-from .writer import Writer, _Output
+from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption
+from .xmd import get_unique_css_class, capture_content, raw, error 
 from .source import highlight
-
-# DO NOT USE parse in this module directly some functions are called from markdown parser internally.
-def htmlize(obj):
-    if isinstance(obj, str):
-        return globals().get('_parse_nested', parse)(obj, returns=True)
-    return _htmlize(obj) 
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -624,7 +616,7 @@ def line(length=5, color='var(--fg1-color)',width=1,style='solid'):
     return f"<span style='display:inline-block;border-bottom:{width}px {style} {color};width:{length}em;max-width:100%;'></span>"
 
 def textbox(text, **css_props):
-    """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and `-` should be `_` like `font-size` -> `font_size`. 
+    """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and ` - ` should be ` _ ` like `font-size` -> `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""
     css_props = {'display':'inline','white-space': 'pre-wrap', **css_props} # very important to apply text styles in order
     return XTML(f'<span class="text-box" {_inline_style(css_props)}>{text}</span>')  # markdown="span" will avoid inner parsing
@@ -703,40 +695,6 @@ def table(data, headers = None, widths=None):
         raise TypeError("data should be 2D matrix-like")
     
     return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' zoom-self')
-
-def _block(*objs, widths = None, suffix = ''): # suffix is for block-{suffix} class
-    if len(objs) == 0:
-        return # Nothing
-    
-    if suffix and suffix not in 'red green blue yellow cyan magenta gray'.split():
-        raise ValueError(f'Invalid suffix {suffix!r}, should be one of [red, green, blue, yellow, cyan, magenta, gray]')
-    
-    if len(objs) == 1:
-        out = _Output().add_class('block' + (f'-{suffix}' if suffix else '')) # _Output for adding cite etc.
-        with out:
-            Writer(*objs)
-        display(out, metadata = {'UPDATE', out._model_id}) # For auto refresh
-    else:
-        Writer(*objs,widths = widths).add_class('block' + (f'-{suffix}' if suffix else '')) # Displayed
-
-    
-def block(*objs, widths = None): 
-    """
-    Format a block like in LATEX beamer with `objs` in columns and immediately display it. Format rows by given an obj as list of objects.   
-    ::: block
-        - Block is automatically displayed and returns nothing.
-        - Available functions include: `block_<red,green,blue,yellow,cyan,magenta,gray>`.
-        - You can create blocks just by CSS classes in markdown as {.block}, {.block-red}, {.block-green}, etc.
-        - See documentation of `write` command for details of `objs` and `widths`.
-    """
-    return _block(*objs, widths = widths)  
-
-def block_red(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'red')
-def block_blue(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'blue')
-def block_green(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'green')
-def block_yellow(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'yellow')
-def block_cyan(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'cyan')
-def block_magenta(*objs, widths = None): return _block(*objs, widths = widths, suffix = 'magenta')
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."

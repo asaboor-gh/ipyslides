@@ -8,7 +8,7 @@ from IPython.display import display as display
 from IPython.utils.capture import CapturedIO
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta
-from .xmd import fmt, parse, capture_content
+from .xmd import fmt, xmd, capture_content
 
 
 class hold:
@@ -50,12 +50,15 @@ def _fmt_html(output):
 
 class Writer(ipw.HBox):
     _in_write = False
-    def __init__(self, *objs, widths = None):
-        if self.__class__._in_write: # Like from delayed lambda function
+    def __init__(self, *objs, widths = None, css_class = None):
+        if self.__class__._in_write and len(objs) > 1: # Like from delayed lambda function
             raise RuntimeError("Trying to write inside a writer!")
         
         super().__init__() 
         self.add_class('columns').add_class('writer') # to differentiate from other columns
+        
+        if isinstance(css_class, str): # additional classes
+            [self.add_class(c) for c in css_class.split()]
 
         try:
             self.__class__._in_write = True
@@ -64,7 +67,13 @@ class Writer(ipw.HBox):
             self.__class__._in_write = False
 
         if len(objs) == 1:
-            display(*self._cols[0]['outputs']) # If only one column, display it directly without Box
+            if isinstance(css_class, str):
+                out = _Output(_dom_classes = css_class.split())
+                with out:
+                    display(*self._cols[0]['outputs'])
+                display(out, metadata={'UPDATE', out._model_id}) # For auto refresh
+            else:
+                display(*self._cols[0]['outputs']) 
         elif len(objs) > 1:
             self.children = [_Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
             display(self, metadata=self.metadata) # Just display it with ID
@@ -103,7 +112,7 @@ class Writer(ipw.HBox):
                     elif isinstance(c, CapturedIO):
                         c.show() # Display captured outputs, all of them
                     elif isinstance(c,str):
-                        parse(c, returns = False)
+                        xmd(c, returns = False)
                     elif isinstance(c, hold):
                         _ = c() # If c is hold, call it and it will dispatch whatever is inside, ignore return value
                     else:
@@ -158,7 +167,7 @@ def write(*objs,widths = None, css_class=None):
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.
         - IPython display objects such as Image, SVG, HTML, Audio, Video, YouTubeVideo, IFrame, Latex, Markdown, JSON, Javascript, etc.
-        - Any object that has a `_repr_html_` method, you can create one for your own objects/third party objects by:
+        - Any object that has a ` _repr_html_ ` method, you can create one for your own objects/third party objects by:
             - `Slides.serializer` API. IPython's `display` automatically takes care of such objects on export to html.
             - `IPython.core.formatters` API for third party libraries.
             
@@ -167,10 +176,7 @@ def write(*objs,widths = None, css_class=None):
         - `write` is a robust command that can handle most of the cases. If nothing works, hl`repr(obj)` will be displayed.
         - You can avoid hl`repr(obj)` by hl`Slides.hold(func, ...)` e.g. hl`Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
         - You can use hl`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
-        - A single string passed to `write` is equivalent to `parse` command.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
         - In markdown `multicol/columns` block syntax is similar to `write` command if `+++` separartor is used there.
     """
-    w = Writer(*objs,widths = widths) # Display itself
-    if isinstance(css_class, str):
-        [w.add_class(c) for c in css_class.split()]
+    Writer(*objs,widths = widths, css_class=css_class) # Displays itself

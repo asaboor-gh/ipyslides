@@ -552,21 +552,22 @@ def style_css(colors, fonts, layout, _root = False):
             'margin-block':'0.5px !important', # Two adjacant prints should look closer 
         },
         '.align-center:not(.columns), .align-center > *:not(.columns)': {
-            'display':'table !important',
-            'margin':'0 auto !important',
-            'width':'auto !important', # max-content creates oveflow, do not use it 
+            '^, .jp-OutputArea-output > *': {
+                'margin-left':'auto !important', 
+                'margin-right':'auto !important', 
+            },
+            'width':'auto', # don't make it important
+            '^, p': {'text-align':'center !important'},
         },
         '.align-left:not(.columns)': { 
-            'margin-right':'auto !important', 
-            'text-align':'left !important',
+            '^, .jp-OutputArea-output > *': {'margin-right':'auto !important'}, 
+            '^, p': {'text-align':'left !important'},
         },
         '.align-right:not(.columns)': { 
-            'margin-left':'auto !important', 
-            'text-align':'right !important',
+            '^, .jp-OutputArea-output > *': {'margin-left':'auto !important'}, 
+            '^, p': {'text-align':'right !important'},
         },
         '.align-right:not(.columns), .align-left:not(.columns), .align-center:not(.columns)': {
-            'display':'table !important',
-            'width':'auto !important',
             '> *:last-child': {'margin-bottom':'0.1em !important',}, 
         },
         '.rtl, .rtl > *': {

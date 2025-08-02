@@ -18,14 +18,15 @@ def demo_slides(slides):
     slides.build(0, slides.fmt("""
     ```md-after -c
     # Creating Slides
-    ::: align-center
+    ::: align-center width=50%
         alert`Abdul Saboor`^`1`, Unknown Author^`2`
         center`//today``//`
-        ::: text-box
+        ::: align-left text-box
             ^`1`My University is somewhere in the middle of nowhere
             ^`2`Their University is somewhere in the middle of nowhere
-                    
-    vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
+    
+    ::: display align-center               
+        vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
     ```""", btn = slides.widgets.buttons.info))
     
     # build_ is same as build(-1)
@@ -50,7 +51,7 @@ def demo_slides(slides):
         ```multicol .block-blue
         toc[True]`### Contents`
         +++
-        vspace`1` This is summary for current section created using block syntax of toc. See `Slides.xmd_syntax` for details.
+        vspace`1` This is summary for current section created using block syntax of toc. See `Slides.xmd.syntax` for details.
 
         - Item 1
         - Item 2
@@ -245,8 +246,8 @@ def demo_slides(slides):
 
     with slides.build(-1) as s:
         import ipywidgets as ipw
-        slides.write('## Block API\nNew `block` API is as robust as `write` command. On top of it, it makes single unit of related content.')
-        slides.block_red(
+        slides.write('## Blocks with CSS classes')
+        slides.write(
             [
                 '### Table',
                 '''
@@ -266,7 +267,7 @@ def demo_slides(slides):
                 slides.alt(lambda w: f'<input type="range" min="{w.min}" max="{w.max}" value="{w.value}">', ipw.IntSlider()), 
                 slides.alt('<button>Click to do nothing</button>', ipw.Button(description='Click to do nothing')), 
                 ipw.Checkbox(description='Select to do nothing',indent=False), 
-            ]
+            ], css_class="block-red"
         )
         s.get_source().display(True)
 

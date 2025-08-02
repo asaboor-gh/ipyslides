@@ -10,7 +10,7 @@ from pathlib import Path
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import fmt, parse, get_main_ns, extender as _extender
+from .xmd import xmd, fmt, get_main_ns
 from .source import Code
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, serializer
@@ -78,7 +78,7 @@ class Singleton(type):
             cls._instance = super().__call__(extensions=extensions, **settings)
             cls._instance.fsep = fsep # frame separator is needed to be attached
         else: # reset these settings on previous instance on every call
-            cls._instance.extender.extend(extensions) 
+            xmd.extensions.extend(extensions) 
             cls._instance.settings(**settings)
         return cls._instance
 
@@ -108,7 +108,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
-        - See hl`Slides.xmd_syntax` for extended markdown syntax, especially variables formatting.
+        - See hl`Slides.xmd.syntax` for extended markdown syntax, especially variables formatting.
         - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
     
     ::: note-info
@@ -130,9 +130,8 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         self.get_child_dir('.ipyslides-assets', create = True) # It should be present/created to load resources     
         self.settings(**settings)
-        _extender.extend(extensions) # globally once
-
-        self.extender   = _extender
+        xmd.extensions.extend(extensions) # globally once
+ 
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
         self.get_logo   = get_logo
@@ -141,7 +140,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.ei         = _interac # whole interaction module
         self.write      = write
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
-        self.parse      = parse  # Parse extended markdown
+        self.xmd        = xmd  # Extended markdown parser
         self.fmt        = fmt # So important for flexibility
         self.serializer = serializer  # Serialize IPython objects to HTML
 
@@ -174,7 +173,11 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         # setup toc widget after all attributes are set
         self._toc_widget = TOCWidget(self)
-        
+    
+    @property
+    def extender(self): raise DeprecationWarning("Use `Slides.xmd.extensions` instead.")
+
+    def parse(self,*args,**kwargs): raise DeprecationWarning("Use `Slides.xmd(content)` instead! That aligns with %%xmd magic.")
 
     def __setattr__(self, name: str, value): # Don't raise error
         if not name.startswith('_') and hasattr(self, name):
@@ -457,7 +460,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
-        new_citations = {k: self.parse(v, returns = True) for k, v in d.items()}
+        new_citations = {k: self.xmd(v, returns = True) for k, v in d.items()}
         added = set(new_citations) - set(self._citations)
         removed = set(self._citations) - set(new_citations)
         changed = {k for k in (set(new_citations) & set(self._citations)) if self._citations[k] != new_citations[k]}
@@ -736,7 +739,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             %%slide 2 -m
             Everything here and below is treated as markdown, not python code.
             ::: note-info
-                Find special syntax to be used in markdown by `Slides.xmd_syntax`.
+                Find special syntax to be used in markdown by `Slides.xmd.syntax`.
         ::: note
             - If Markdown is separated by two dashes (--) on it's own line, multiple frames are created and shown incrementally.
             - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
@@ -779,7 +782,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                     if fmt_kws:
                         fmt(frm, **fmt_kws).parse(returns = False) # enclosed scope set by user
                     else:
-                        parse(frm, returns = False) # left for notebook to handle
+                        self.xmd(frm, returns = False) # left for notebook to handle
                     
                     if len(frames) > 1:
                         self.fsep() # should not be before, needs at least one thing there
@@ -805,9 +808,9 @@ class Slides(BaseSlides,metaclass=Singleton):
         if no other formatting specified.
         Inline columns are supported with stack`C1 || C2` syntax."""
         if cell is None:
-            return parse(line, returns = False)
+            return xmd(line, returns = False)
         else:
-            return parse(cell, returns = False)
+            return xmd(cell, returns = False)
 
     @contextmanager
     def _loading_splash(self, btn, extra = None):

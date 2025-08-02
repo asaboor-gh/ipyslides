@@ -1,27 +1,12 @@
-r"""
-Extended Markdown
+# This package exports xmd and fmt at top level.
 
-You can use the following syntax:
-
-# Normal Markdown
-```multicol
-A
-+++
-This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
-```
-::: note-warning
-    Nested blocks are not supported.
-
-::: note-info  
-    - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-    - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
-"""
 import textwrap, re, sys, string, builtins, inspect
 from itertools import islice
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
 from html.parser import HTMLParser
+from typing import Optional
 
 from markdown import Markdown
 from IPython.display import display
@@ -39,24 +24,15 @@ _md_extensions = [
 ]  # For Markdown Parser
 _md_extension_configs = {}
 
-class PyMarkdown_Extender:
+class Extensions:
+    """Adds extensions to the Markdown parser. See [Website of Python-Markdown](https://python-markdown.github.io/extensions/)
+    and [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/) for available extensions."""
     def __init__(self):
-        "Adds extensions to the Markdown parser. See [Website of Python-Markdown](https://python-markdown.github.io/extensions/)"
         self._exts = []
         self._configs = {}
 
     def __repr__(self) -> str:
-        return (
-            "Extensions:\n" + repr(self._all) + "\nConfigs:\n" + repr(self._all_configs)
-        )
-
-    @property
-    def _all(self):
-        return list(set([*self._exts, *_md_extensions]))
-
-    @property
-    def _all_configs(self):
-        return {**self._configs, **_md_extension_configs}
+        return "Extensions: {}\nConfigs: {}".format(*self.active.values())
 
     def extend(self, extensions_list):
         "Add list of extensions to the Markdown parser."
@@ -74,11 +50,10 @@ class PyMarkdown_Extender:
     @property
     def active(self):
         "List of active extensions."
-        return {"extensions": self._all, "configs": self._all_configs}
-
-
-extender = PyMarkdown_Extender()
-del PyMarkdown_Extender
+        return {
+            "extensions": list(set([*self._exts, *_md_extensions])), 
+            "extension_configs": {**self._configs, **_md_extension_configs}
+        }
 
 _special_funcs = { # later functions can encapsulate earlier ones
     "vspace": "number in units of em",
@@ -327,11 +302,11 @@ def resolve_included_files(text_chunk):
 
     return text_chunk
 
+_extensions = Extensions() # Global instance of Extensions, don't delete class Extensions still
+
 class XMarkdown(Markdown):
     def __init__(self):
-        super().__init__(
-            extensions=extender._all, extension_configs=extender._all_configs
-        )
+        super().__init__(**_extensions.active)
         self._vars = {}
         self._fmt_ns = {} # provided by fmt
         self._returns = True
@@ -515,6 +490,10 @@ class XMarkdown(Markdown):
                 f"citations block is only parsed inside synced markdown file! "
                 f"Use `Slides.set_citations` otherwise.\n{pre}{header}\n{data}"
             )]
+        elif typ == "display":
+            with self.active_parser(), capture_content() as cap:
+                self._wr.write(data, css_class=_class)
+            return cap.outputs
         elif typ in ("multicol","columns") and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns and multicol with display mode
             return self._parse_multicol(data, widths, _class) # simple columns will be handled inline 
         elif "md-" in typ:
@@ -617,7 +596,7 @@ class XMarkdown(Markdown):
             output = "\n".join(f"<div style='width:50%;overflow-x:auto;height:auto;position:relative;'>{v}</div>" for v in objs)
             return [XTML(f'<div class="columns md-block" style="display:flex;">\n{output}\n</div>')] # display for notebook
         
-        with capture_content() as cap:
+        with self.active_parser(),capture_content() as cap:
             self._wr.write(*((src, outs) if pos == "left" else (outs, src)), css_class="md-block")
         return cap.outputs
 
@@ -648,7 +627,7 @@ class XMarkdown(Markdown):
                     self._parse_nested(col,returns=False)
                 cap_cols.append(cap)
 
-            with capture_content() as cap:
+            with self.active_parser(), capture_content() as cap:
                 self._wr.write(*cap_cols, widths=widths, css_class=_class)
             
             return cap.outputs
@@ -781,7 +760,6 @@ class XMarkdown(Markdown):
         
         if re.search(func_pattern, html_output, flags=re.DOTALL | re.MULTILINE):
             from . import utils  # Inside function to avoid circular import
-            utils._parse_nested = self._parse_nested # all times pick from instance
             
             def repl_inline_func(m):
                 func, args, content = m.groups()
@@ -803,52 +781,22 @@ class XMarkdown(Markdown):
                         )
                 return self._handle_var(_out)
             
-            html_output = re.sub(func_pattern, repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
-            del utils._parse_nested # remove from unintended use in utils
+            with self.active_parser(): # set instance parser to pass variables
+                html_output = re.sub(func_pattern, repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
         
         html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
         html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
         return html_output 
-
-
-def parse(xmd, returns = False):
-    r"""Parse extended markdown and display immediately.
-    If you need output html, use `returns = True` but that won't display variables.
-
-    **Example**
-    ```markdown
-     # Normal Markdown
-     ```multicol 40 60
-     # First column is 40% width
-     If 40 60 was not given, all columns will be of equal width, this paragraph will be inside info block due to class at bottom
-     {.info}
-     +++
-     # Second column is 60% wide
-     This \%{var_name} (or legacy \`{var_name}\`) can be substituted with `fmt` function or from notebook if whole slide is built with markdown.
-     ```
-
-     ```python
-     # This will not be executed, only shown
-     ```
-     stack`Inline-column A || Inline-column B`
-    ```
-
-    ::: note-info
-        - Each block can have class names (speparated with space or .) after all other options such as `python .friendly` or `multicol .Sucess.info`.
-            - For example, `python .friendly` will be highlighted with friendly theme from pygments.
-            - Pygments themes, however, are not supported with `multicol`.
-            - You need to write and display CSS for a custom class.
-        - The block with `::: class_type` syntax accepts extra classes in quotes, for example `::: multicol "Success" "info"`.
-        - There are special CSS classes `jupyter-only` and `export-only` that control appearance of content in different modes.
-
-    ::: note-warning
-        Nested blocks are supported via indentation in `md-[before,after,left,right]` and `multicol`, but may be broken in display contexts.
-
-    ::: note-info
-        - Find special syntax to be used in markdown by `Slides.xmd_syntax`.
-        - Use `Slides.extender` or `ipyslides.xmd.extender` to add [markdown extensions](https://python-markdown.github.io/extensions/).
-    """
-    return XMarkdown()._parse(xmd, returns = returns)
+    
+    @contextmanager
+    def active_parser(self):
+        XMarkdown._active_parser = self._parse_nested # keep instance parser to pass variables
+        try:
+            yield
+        finally:
+            if hasattr(XMarkdown, '_active_parser'):
+                del XMarkdown._active_parser
+    
 
 def _matched_vars(text):
     matches = [var 
@@ -858,11 +806,7 @@ def _matched_vars(text):
             flags = re.DOTALL,
         ) if not slash
     ]
-    return tuple(matches) 
-    
-def _fig_caption(text): # need here to use in many modules
-    return f'<figcaption class="no-zoom">{parse(text,True)}</figcaption>' if text else ''
-
+    return tuple(matches)  
 
 class fmt:
     """Markdown string wrapper that will be parsed with given kwargs lazily. 
@@ -911,7 +855,7 @@ class fmt:
 
     def parse(self,returns=False):
         "Parse the associated markdown string."
-        return parse(self if self._kws else self._xmd, returns=returns) # handle empty kwargs silently
+        return xmd(self if self._kws else self._xmd, returns=returns) # handle empty kwargs silently
 
     @classmethod
     def _astuple(cls, target): # This is required to handle form_markdown
@@ -928,6 +872,48 @@ class fmt:
             self.parse(returns = False)
         
     def _repr_html_(self): # for functions to consume as html and for export
-        return parse(self if self._kws else self._xmd, returns=True)
+        return xmd(self if self._kws else self._xmd, returns=True)
 
+class _XMDMeta(type):
+    @property
+    def extensions(self) -> Extensions:
+        "Entry point to extend and configure markdown extensions."
+        return _extensions
+    @property
+    def syntax(self) -> XTML:
+        "Extnded markdown syntax information."
+        from ._base._syntax import xmd_syntax # circular import
+        return XTML(htmlize(xmd_syntax))
     
+    @staticmethod
+    def parse(content: str, returns:bool=False) -> Optional[str]: # This is intended to be there, not redundant
+        if hasattr(XMarkdown, '_active_parser'): # keeps variables and fmt namespace
+            return XMarkdown._active_parser(content, returns=returns)
+        return XMarkdown()._parse(content, returns=returns)
+    
+    def __dir__(cls): # tab completion still sucks with meta programming!
+        return sorted(list(super().__dir__()) + ['extensions', 'syntax', 'parse'])
+    
+class xmd(metaclass=_XMDMeta):
+    r"""
+    Extended markdown parser for ipyslides.
+
+    Besides the base [Python-Markdown](https://python-markdown.github.io/) syntax, 
+    it supports additional syntax which you can read about by executing following code a notebook cell:
+
+    ```python
+    import ipyslides as isd
+    display(isd.xmd.syntax)
+    ```
+
+    By default, the extensions `tables`, `footnotes`, `attr_list`, `md_in_html`, `def_list` are enabled.
+
+    You can add extra markdown extensions using `Slides.xmd.extensions` or `ipyslides.xmd.extensions`.
+    See [markdown extensions](https://python-markdown.github.io/extensions/) for deatails.
+    
+    **Returns**: A direct call or xmd.parse method returns a string with HTML content if `returns=True` (default), otherwise display rich output objects.
+    """
+    def __new__(cls, content: str, returns:bool=False) -> Optional[str]:
+        return cls.parse(content, returns=returns) # Call parse method directly
+
+xmd.parse.__doc__ = xmd.__doc__

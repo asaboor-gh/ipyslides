@@ -60,10 +60,7 @@ class BaseSlides:
         return XTML(htmlize(_syntax.css_styles))
 
     @property
-    def xmd_syntax(self):
-        "Special syntax for markdown."
-        with self._hold_running():
-            return XTML(htmlize(_syntax.xmd_syntax))
+    def xmd_syntax(self): raise DeprecationWarning("Use `Slides.xmd.syntax` instead!")
     
     @property
     def css_syntax(self):
@@ -160,7 +157,7 @@ class BaseSlides:
         The variables inserted in file content are used from top scope.
 
         You can add files inside linked file using include\\`file_path.md\\` syntax, which are also watched for changes.
-        This helps modularity of content, and even you can link a citation file in markdown format as shown below. Read more in `Slides.xmd_syntax` about it.
+        This helps modularity of content, and even you can link a citation file in markdown format as shown below. Read more in `Slides.xmd.syntax` about it.
 
         ```markdown
          ```citations footnote
@@ -248,7 +245,7 @@ class BaseSlides:
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
-            - See `slides.xmd_syntax` for extended markdown usage.
+            - See `slides.xmd.syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
             - In case of str input, varaiables such as \%{var} can be updated by creating/updating `var` in notebook.
             - In case of `fmt(str, **kwargs)`, varaiables are picked from `kwargs` or local scope and can't be changed later. Useful in python scripts.
@@ -281,7 +278,7 @@ class BaseSlides:
                     with _build_slide(self._app, self._snumber) as s: 
                         s._set_source(self._app.code.from_source(content).raw,'python') 
                         if (doc := getattr(content, '__doc__', None)):
-                            self._app.parse(doc, returns=False)
+                            self._app.xmd(doc, returns=False)
                         content(s) # call directly, set code before to make avaiable in function
                 
                     return s
@@ -385,7 +382,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write(self.doc(self.write,'Slides'), [self.doc(self.parse,'Slides'),self.doc(self.as_html,'Slides'),self.doc(self.html,'Slides')])
+            self.write(self.doc(self.write,'Slides'), [self.doc(self.xmd,'Slides'),self.doc(self.as_html,'Slides'),self.doc(self.html,'Slides')])
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
@@ -413,7 +410,7 @@ class BaseSlides:
             self.doc(self.alt,'Slides').display()
             
             members = sorted((
-                'AnimationSlider alert block bokeh2html bullets styled fmt color details doc '
+                'AnimationSlider alert bokeh2html bullets styled fmt color details doc '
                 'today error zoomable highlight html iframe image frozen notify plt2html '
                 'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
             ).split())
@@ -515,7 +512,7 @@ class BaseSlides:
             self.write(r'If you need to serialize your own or third party objects not serialized by this module, you can use `\@Slides.serializer.register` to serialize them to html.\n{.note .info}')
             self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
             self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
-            self.doc(self.extender,'Slides.extender', members = True, itself = False).display()
+            self.doc(self.xmd.extensions,'Slides.xmd.extensions', members = True, itself = False).display()
         
         with self.build(-1):
             self.write(r'''
@@ -556,7 +553,7 @@ class BaseSlides:
                 - In Jupyter notebook, this will be updated to current slide number. 
                 - In python file, it stays same.
                 - You need to run cell twice if creating slides inside a for loop while using `-1`.
-                - Additionally, in python file, you can use `Slides.build_` instead of using `-1`.
+                - Additionally, in python file, you can use ` Slides.build_ ` instead of using `-1`.
                        
                 ::: note-warning
                     Some kernels may not support auto slide numbering inside notebook.

@@ -94,6 +94,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: md-[pos]` | Parse markdown in the block, with showing source code at `pos=[before,after,left,right]`. Add `-c` to collapse code and show on click. |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations [inline or footnote]` | Add citations in the block, with `inline` or `footnote` mode. Use `\@key: value` syntax to add citations in block. |
+    | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
 ---
 
@@ -198,8 +199,9 @@ stack[(6,4),css_class="block-blue"]`////
 - Use alert`fa\`icon_name\`` to add FontAwesome icons, e.g. fa\`arrow-right\` → fa`arrow-right`, fa\`check\` → fa`check`, fa\`info-circle\` → fa`info-circle` etc.
 - Use syntax \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
-- Escape a backtick with \\, i.e. alert`\\\` → \``, other escape characters include alert`@, %, /, |`. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Escape a backtick with backslash, i.e. alert`\\` → \``, other escape characters include alert`@, %, /, |`. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use `_\`sub\`` and `^\`sup\``  for subscript and superscript respectively, e.g. H_`2`O, E = mc^`2`.
+- See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
 - Definition list syntax:
 ```md-left
 Item 1 Header
@@ -211,10 +213,10 @@ Item 1 Header
 **Extending Syntax**{{.text-big}}
 
 ::: block-red 
-    - You can use `Slides.extender` to extend additional syntax using Markdown extensions such as 
+    - You can use `Slides.xmd.extensions` to extend additional syntax using Markdown extensions such as 
         [markdown extensions](https://python-markdown.github.io/extensions/) and 
         [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
     - These markdown extensions are inluded by default hl`{_md_extensions}`.
     - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
-        `__format__` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
+        ` __format__ ` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
 '''
