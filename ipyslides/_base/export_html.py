@@ -111,7 +111,7 @@ class _HhtmlExporter:
             click_btns  = self._get_clickables(), 
             height      = f'{int(210/theme_kws["layout"].aspect)}mm', 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
-            bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True -> bottom
+            bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True → bottom
             )
     
     def _get_sec_id(self, slide):
@@ -125,7 +125,7 @@ class _HhtmlExporter:
         return f'<div class="Progress" style="background: {gradient};"></div>'
     
     def _get_css(self, slide):
-        "uclass.SlidesWrapper -> sec_id , .SlidesWrapper -> sec_id, NavWrapper -> Footer"
+        "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, NavWrapper → Footer"
         sec_id = f"#{getattr(slide,'_sec_id','')}"
         return slide.css.value.replace(
             f".{self.main.uid}.SlidesWrapper", sec_id).replace(
@@ -173,7 +173,7 @@ class _HhtmlExporter:
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
         - You can take screenshot (using system's tool) of a widget, save it using Clips GUI in side panel and laod as image to keep PNG view of a widget. 
-        - If progressbar is set to True, 'bottom' or 'top', a progressbar while shown accordingly. True -> 'bottom'.
+        - If progressbar is set to True, 'bottom' or 'top', a progressbar while shown accordingly. True → 'bottom'.
         
         ::: note-info
             - PDF printing of slide width is 210mm (8.25in). Height is determined by aspect ratio provided.

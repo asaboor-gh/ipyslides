@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'highlight', 'hl', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 
+    'details', 'set_dir', 'textbox', 'code', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 
     'zoomable','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 __all__ = sorted(_attrs)
@@ -23,7 +23,7 @@ from IPython.display import Image, display
 from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption
 from .xmd import get_unique_css_class, capture_content, raw, error 
-from .source import highlight
+from .source import code
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -62,18 +62,6 @@ def get_child_dir(name, *names, create = False):
 def get_clips_dir():
     "Returns directory where clips are saved."
     return get_child_dir(".ipyslides-assets", "clips", create = True)
-
-def hl(obj, language="python"): # No need to have in __all__, just for markdown
-    "Highlight code object in inline mode. `language` is the language name, default is python."
-    try: 
-        return XTML( 
-            '<br>'.join('<code class="highlight inline" style="white-space:pre-wrap;">' + c 
-                for c in re.findall(r'\<\s*code.*?\>(.*?\<\s*\/\s*code\s*\>)', 
-                    highlight(obj, language=language).value, 
-                    flags=re.DOTALL | re.MULTILINE
-        ))) # intended to be one liner, but leave for flexibility
-    except:
-        return html('code',str(obj)) # Fallback , no need to raise errors
 
 _example_props = {
     '.A': { # .A is repeated nowhere! But in CSS it is a lot
@@ -225,9 +213,9 @@ _dict2css = """
 CSS is formatted using a `props` nested dictionary to simplify the process. 
 There are few special rules in `props`:
 
-- All nested selectors are joined with space, so hl`'.A': {'.B': ... }` becomes hl['css']`.A .B {...}` in CSS.
-- A '^' in start of a selector joins to parent selector without space, so hl`'.A': {'^:hover': ...}` becomes hl['css']`.A:hover {...}` in CSS. You can also use hl`'.A:hover'` directly but it will restrict other nested keys to hover only.
-- A list/tuple of values for a key in dict generates CSS fallback, so hl`'.A': {'font-size': ('20px','2em')}` becomes hl['css']`.A {font-size: 20px; font-size: 2em;}` in CSS.
+- All nested selectors are joined with space, so code`'.A': {'.B': ... }` becomes code['css']`.A .B {...}` in CSS.
+- A '^' in start of a selector joins to parent selector without space, so code`'.A': {'^:hover': ...}` becomes code['css']`.A:hover {...}` in CSS. You can also use code`'.A:hover'` directly but it will restrict other nested keys to hover only.
+- A list/tuple of values for a key in dict generates CSS fallback, so code`'.A': {'font-size': ('20px','2em')}` becomes code['css']`.A {font-size: 20px; font-size: 2em;}` in CSS.
 
 Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
 """
@@ -236,8 +224,8 @@ _css_docstring = htmlize(_dict2css + f"""
 ```python
 props = {json.dumps(_example_props, indent=2)}
 ```
-Output of hl`html('style',props)`, hl`set_css(props)` etc. functions. Top selector would be different based on where it is called.
-""") + highlight(_styled_css(_example_props).value, "css","CSS").value
+Output of code`html('style',props)`, code`set_css(props)` etc. functions. Top selector would be different based on where it is called.
+""") + code(_styled_css(_example_props).value, "css","CSS").value
 
 def _alt_for_widget(func, widget):
     if not isinstance(widget, ipw.DOMWidget):
@@ -280,7 +268,7 @@ def alt(exportable_data, obj):
         - `ipywidgets`'s `HTML`, `Box` and `Output` widgets and their subclasses directly give html representation if used inside `write` command.
     """
     if not any([callable(exportable_data), isinstance(exportable_data, str)]):
-        raise TypeError(f"first arguemnt of alt should be a func (func(obj) -> html str) or html str, got {type(exportable_data)}")
+        raise TypeError(f"first arguemnt of alt should be a func (func(obj) → html str) or html str, got {type(exportable_data)}")
     
     if isinstance(obj, ipw.DOMWidget) and callable(exportable_data):
         return _alt_for_widget(exportable_data, obj)
@@ -401,8 +389,8 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwarg
 
     **Returns** an `IMG` object which can be exported to other formats (if possible):
 
-    - hl`IMG.to_pil()` returns hl` PIL.Image ` or None.
-    - hl`IMG.to_numpy()` returns image data as numpy array for use in plotting libraries or None.
+    - code`IMG.to_pil()` returns code` PIL.Image ` or None.
+    - code`IMG.to_numpy()` returns image data as numpy array for use in plotting libraries or None.
     """
     if crop:
         try:
@@ -540,10 +528,10 @@ def html(tag, children = None,css_class = None,**node_attrs):
     `tag` can be any valid html tag name. A `tag` that ends with ` / ` will be self closing e.g. ` hr/ ` will be `<hr/>`.  Empty tag gives unwrapped children.
     `children` expects:
     
-    - If None, returns node such as 'image' -> <img alt='Image'></img> and 'image/' -> <img alt='Image' />
+    - If None, returns node such as code`html('image',alt='Image')` → code['html']`<img alt='Image'></img>` and code`html('image/',alt='Image')` → code['html']`<img alt='Image' />`
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
-    - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use hl`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
+    - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use code`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
     
     Example:
     ```python
@@ -616,7 +604,7 @@ def line(length=5, color='var(--fg1-color)',width=1,style='solid'):
     return f"<span style='display:inline-block;border-bottom:{width}px {style} {color};width:{length}em;max-width:100%;'></span>"
 
 def textbox(text, **css_props):
-    """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and ` - ` should be ` _ ` like `font-size` -> `font_size`. 
+    """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and ` - ` should be ` _ ` like `font-size` → `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""
     css_props = {'display':'inline','white-space': 'pre-wrap', **css_props} # very important to apply text styles in order
     return XTML(f'<span class="text-box" {_inline_style(css_props)}>{text}</span>')  # markdown="span" will avoid inner parsing
@@ -702,7 +690,7 @@ def sig(callable,prepend_str = None):
         _sig = f'<b>{callable.__name__}</b>'
         if prepend_str: 
             _sig = f'{prepend_str}.{_sig}' 
-        _sig = f'<span class="sig">{_sig}</span>' + hl(str(inspect.signature(callable))).value
+        _sig = f'<span class="sig">{_sig}</span>' + code(str(inspect.signature(callable))).inline.value
         return XTML(_sig)
     except:
         raise TypeError(f'Object {callable} is not a callable')

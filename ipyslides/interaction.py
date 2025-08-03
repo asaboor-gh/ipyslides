@@ -980,7 +980,7 @@ def interact(*funcs:List[Callable], auto_update:bool=True,app_layout:dict=None, 
 
     **Tips**:    
 
-    - You can use this inside columns using delayed display trick, like hl`write('First column', C2)` where hl`C2 = Slides.hold(Slides.ei.interact, f, x = 5) or Slides.ei.interactive(f, x = 5)`.
+    - You can use this inside columns using delayed display trick, like code`write('First column', C2)` where code`C2 = Slides.hold(Slides.ei.interact, f, x = 5) or Slides.ei.interactive(f, x = 5)`.
     - You can also use this under `Slides.capture_content` to display later in a specific place.
     """
     def inner(func):

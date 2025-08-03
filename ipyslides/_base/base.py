@@ -68,7 +68,7 @@ class BaseSlides:
         return XTML(_css_docstring)
    
     def get_source(self, title = 'Source Code', **kwargs):
-        "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.highlight`."
+        "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.code`."
         sources = []
         for slide in self.all_slides:
             if slide._source['text']:
@@ -235,14 +235,14 @@ class BaseSlides:
     class build(ContextDecorator):
         r"""Build slides with a single unified command in three ways:
         
-        1. hl`slides.build(number, callable)` to create a slide from a `callable(slide)` immediately, e.g. hl`lambda s: slides.write(1,2,3)` or as a decorator.
+        1. code`slides.build(number, callable)` to create a slide from a `callable(slide)` immediately, e.g. code`lambda s: slides.write(1,2,3)` or as a decorator.
             - Docstring of callable (if any) is parsed as markdown before calling function.
-        2. hl`with slides.build(number):` creates single slide. Equivalent to hl`%%slide number` magic.
-            - Use hl`fsep()` from top import or hl`Slides.fsep()` to split content into frames.
-            - Use hl`for item in fsep.iter(iterable):` block to automatically add frame separator.
-            - Use hl`fsep(True)` / hl`fsep.iter(...,stack=True)` to join content of frames incrementally.
-        3. hl`slides.build(number, str | fmt)` creates many slides with markdown content. Equivalent to hl`%%slide number -m` magic in case of one slide.
-            - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to hl`Slides.sync_with_file` too.
+        2. code`with slides.build(number):` creates single slide. Equivalent to code`%%slide number` magic.
+            - Use code`fsep()` from top import or code`Slides.fsep()` to split content into frames.
+            - Use code`for item in fsep.iter(iterable):` block to automatically add frame separator.
+            - Use code`fsep(True)` / code`fsep.iter(...,stack=True)` to join content of frames incrementally.
+        3. code`slides.build(number, str | fmt)` creates many slides with markdown content. Equivalent to code`%%slide number -m` magic in case of one slide.
+            - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to code`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd.syntax` for extended markdown usage.
@@ -253,8 +253,8 @@ class BaseSlides:
 
         ::: note-tip
             - In all cases, `number` could be used as `-1`.
-            - Use yoffet`integer in px` in markdown or hl`Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
-            - You can use hl`build_(...)` (with underscore at end) in python file instead of hl`build(-1,...)`.
+            - Use yoffet`integer in px` in markdown or code`Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
+            - You can use code`build_(...)` (with underscore at end) in python file instead of code`build(-1,...)`.
         """
         @property
         def _app(self):
@@ -382,7 +382,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write(self.doc(self.write,'Slides'), [self.doc(self.xmd,'Slides'),self.doc(self.as_html,'Slides'),self.doc(self.html,'Slides')])
+            self.write(self.doc(self.write,'Slides'), [self.doc(self.xmd,'Slides'),self.doc(self.as_html,'Slides'),self.doc(self.as_html_widget,'Slides'),self.doc(self.html,'Slides')])
         
         with self.build(-1):
             self.write('## Adding Speaker Notes')
@@ -393,7 +393,7 @@ class BaseSlides:
         with self.build(-1):
             self.write('## Displaying Source Code')
             self.write('In markdown, the block `md-[before,after,left,right] [-c]` parses and displays source as well.')
-            self.doc(self.code,'Slides.code', members = True, itself = False).display()
+            self.doc(self.code,'Slides', members = True, itself = True).display()
         
         self.build(-1, r'section`//Layout and color["yellow","black"]`Theme` Settings//` toc`### Contents`')
         
@@ -419,9 +419,9 @@ class BaseSlides:
         with self.build(-1):
             self.write(r'''
                 ## Citations and Sections
-                Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by hl`Slides.set_citations(data, mode)` method.
+                Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data, mode)` method.
                 Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
-                hl`Slides.settings.layout(..., ncol_refs = int)`. @A
+                code`Slides.settings.layout(..., ncol_refs = int)`. @A
                        
                 Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
                 can be added with alert`toc\`title\``.
@@ -462,7 +462,7 @@ class BaseSlides:
         stack[(3,7)]`//
         ## Content Styling
         You can **style**{.error} or **color["teal"]`colorize`** your *content*{: style="color:hotpink;"} and *color["hotpink","yellow"]`text`*.
-        Provide **CSS**{.info} for that using hl`Slides.html("style",...)` or use some of the available styles. 
+        Provide **CSS**{.info} for that using code`Slides.html("style",...)` or use some of the available styles. 
         See these **styles**{.success} with `Slides.css_styles` property as shown on right.
         || %{self.css_styles}
         //`     
@@ -472,7 +472,7 @@ class BaseSlides:
         self.build(-1, self.fmt('''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
-        You can **highlight**{.error} code using `highlight` function cite`B` or within markdown using code blocks enclosed with three backticks:
+        You can **highlight**{.error} code using `Slides.code` cite`B` or within markdown using named code blocks:
         ```python
         import ipyslides as isd
         ```

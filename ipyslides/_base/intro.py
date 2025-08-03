@@ -57,7 +57,7 @@ by fmt can be used to update varaiables from notebook later.
 ```
 
 ```python
-slides # This displays slides if on the last line of cell, or use hl`slides.show()`.
+slides # This displays slides if on the last line of cell, or use code`slides.show()`.
 ```
 
 ::: note-info

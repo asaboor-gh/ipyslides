@@ -82,6 +82,15 @@ class SourceCode(XTML):
                 _lines.append('<code>' + line)
         
         return self.__class__(''.join(_lines))
+    
+    @property
+    def inline(self): 
+        "Return inline code object that can be embedded inside text."
+        return XTML( 
+            '<br>'.join('<code class="highlight inline" style="white-space:pre-wrap;">' + c 
+                for c in re.findall(r'\<\s*code.*?\>(.*?\<\s*\/\s*code\s*\>)', 
+                    self.value, flags=re.DOTALL | re.MULTILINE
+        ))) # intended to be one liner, but leave for flexibility
 
 
 def _file2code(filename,language='python',name=None,**kwargs):
@@ -101,28 +110,30 @@ def _str2code(text,language='python',name=None,**kwargs):
     out.raw = text
     return out
 
-class Code:
-    def __init__(self,*args,**kwargs):
-        raise Exception("""This class is not meant to be instantiated.
-        Use cls.context() to get a context manager for source.
-        Use cls.cast(obj) to get a source code from text, file or callable. Or explicitly:
-            - cls.from_file(filename) to get a source object from a file or file-like object.
-            - cls.from_string(string) to get a source object from a string.
-            - cls.from_source(obj) to get a source object from a python object.
-        """)
+class code:
+    """Create highlighted source code object from text, file or callable.
     
-    @classmethod
-    def cast(cls, obj, language='python',name=None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True, height='400px'):
+    Use code(obj) or code.cast(obj) to get source code from any object that has a source or str of code.
+    
+    Explicitly use:
+    
+    - code.from_file(filename) to get a source object from a file or file-like object.
+    - code.from_string(string) to get a source object from a string.
+    - code.from_source(obj) to get a source object from a python object (class, function, module, method etc.).
+    
+    **Returns**: `SourceCode` object with `show_lines` and `focus_lines` methods to show selective lines, as well as `.inline` property.
+    """
+    def __new__(cls, obj, language='python',name=None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True, height='400px'):
         """Highlight code (any python object that has a source or str of code) with given language and style. 
 
         - style only works if css_class is given.
-        - If css_class is given and matches any of hl`pygments.styles.get_all_styles()`, then style will be applied immediately.
+        - If css_class is given and matches any of code`pygments.styles.get_all_styles()`, then style will be applied immediately.
         - color is used for text color as some themes dont provide text color. 
         - CSS properties like color and background are applied if css_class is provided.
         - height is max-height of code block, it does not expand more than code itself.
         - If `obj` is a file-like object, it's `read` method will be accessed to get source code.
 
-        If you want plain inline syntax highlighting, use `Slides.hl`.
+        If you want plain inline syntax highlighting, use `Slides.code`.
         """
         kwargs = {k:v for k,v in locals().items() if k not in 'cls obj language name'}
         if isinstance(obj, (str,Path)) or (hasattr(obj,'read') and callable(obj.read)):
@@ -132,16 +143,18 @@ class Code:
                 return cls.from_string(obj, language=language,name=name, **kwargs)
         else:
             return cls.from_source(obj, **kwargs)
+    
+    cast = classmethod(__new__)
 
     @classmethod
     def from_string(cls,text,language='python',name=None,**kwargs):
-        "Creates source object from string. `name` is alternate used name for language. `kwargs` are passed to `Slides.highlight`."
+        "Creates source object from string. `name` is alternate used name for language. `kwargs` are passed to `Slides.code`."
         return _str2code(text,language=language,name=name,**kwargs)
     
     @classmethod
     def from_file(cls, file,language = None,name = None,**kwargs):
         """Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language.  
-        `kwargs` are passed to `Slides.highlight`.     
+        `kwargs` are passed to `Slides.code`.     
         
         It tries to auto detect lanaguage from filename extension, if `language` is not given.
         """
@@ -160,7 +173,7 @@ class Code:
     
     @classmethod       
     def from_source(cls, obj,**kwargs):
-        "Returns source code from a given obj [class,function,module,method etc.] with `show_lines` and `focus_lines` methods. `kwargs` are passed to `Slides.highlight`"
+        "Returns source code from a given obj [class,function,module,method etc.] with `show_lines` and `focus_lines` methods. `kwargs` are passed to `Slides.code`"
         for _type in ['class','function','module','method','builtin','generator']:
             if getattr(inspect,f'is{_type}')(obj):
                 source = inspect.getsource(obj)
@@ -172,7 +185,7 @@ class Code:
     @classmethod
     @contextmanager 
     def context(cls, returns = False, **kwargs): 
-        """Execute and displays source code in the context manager. `kwargs` are passed to `Slides.highlight` function.
+        """Execute and displays source code in the context manager. `kwargs` are passed to `Slides.code` function.
         Useful when source is written inside context manager itself.
         If `returns` is False (by default), then source is displayed before the output of code. Otherwise you can assign the source to a variable and display it later anywhere.
         
@@ -222,6 +235,3 @@ class Code:
             source_html.display()
         
         yield source_html
-        
-
-highlight = Code.cast  # need this always

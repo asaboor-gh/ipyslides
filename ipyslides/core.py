@@ -11,7 +11,6 @@ from IPython import get_ipython
 from IPython.display import display, clear_output
 
 from .xmd import xmd, fmt, get_main_ns
-from .source import Code
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, serializer
 from . import utils
@@ -85,7 +84,7 @@ class Singleton(type):
 
 class Slides(BaseSlides,metaclass=Singleton):
     """Interactive Slides in IPython Notebook. Only one instance can exist. `settings` 
-    are passed to hl`Slides.settings()` if you like to set during initialization. You
+    are passed to code`Slides.settings()` if you like to set during initialization. You
     can also edit file .ipyslides-assets/settings.json to make settings persistent across sessions
     and load/sync them via GUI in sidepanel.
     
@@ -98,22 +97,22 @@ class Slides(BaseSlides,metaclass=Singleton):
     ```
     ::: note-info
         The traitlets callables under settings returns settings back to enable chaining 
-        without extra typing, like hl`Slides.settings.logo().layout()...` .
+        without extra typing, like code`Slides.settings.logo().layout()...` .
     
     ::: note-tip
-        - Use hl`Slides.instance()` class method to keep older settings. hl`Slides()` apply default settings every time.
-        - Run hl`slides.demo()` to see a demo of some features.
-        - Run hl`slides.docs()` to see documentation.
+        - Use code`Slides.instance()` class method to keep older settings. code`Slides()` apply default settings every time.
+        - Run code`slides.demo()` to see a demo of some features.
+        - Run code`slides.docs()` to see documentation.
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
-        - See hl`Slides.xmd.syntax` for extended markdown syntax, especially variables formatting.
+        - See code`Slides.xmd.syntax` for extended markdown syntax, especially variables formatting.
         - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
     
     ::: note-info
-        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as hl`Slides[number,] -> Slide` 
-        or access many via list as hl`Slides[[n1,n2,..]] -> tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
+        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as code`Slides[number,] → Slide` 
+        or access many via list as code`Slides[[n1,n2,..]] → tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
     """
 
     @classmethod
@@ -135,7 +134,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.plt2html   = plt2html
         self.bokeh2html = bokeh2html
         self.get_logo   = get_logo
-        self.code       = Code  # Code source
         self.icon       = _Icon  # Icon is useful to add many places
         self.ei         = _interac # whole interaction module
         self.write      = write
@@ -178,6 +176,8 @@ class Slides(BaseSlides,metaclass=Singleton):
     def extender(self): raise DeprecationWarning("Use `Slides.xmd.extensions` instead.")
 
     def parse(self,*args,**kwargs): raise DeprecationWarning("Use `Slides.xmd(content)` instead! That aligns with %%xmd magic.")
+    def highlight(self, *args, **kwargs): raise DeprecationWarning("Use `Slides.code` instead which aligns with ::: code block in markdown.")
+    def hl(self, *args, **kwargs): raise DeprecationWarning("Use `Slides.code(obj).inline` instead which aligns with inline code`import requests` syntax in markdown.")
 
     def __setattr__(self, name: str, value): # Don't raise error
         if not name.startswith('_') and hasattr(self, name):
@@ -277,7 +277,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         if vars_info:
             vars_info = '<table style="width:100%;"><tr><th>Variable</th><th>Scope</th></tr>' + ''.join(
-                [f'<tr><td>{utils.hl(v)}</td><td>{utils.hl(s)}</td></tr>' for v, s in vars_info]) + '</table>'
+                [f'<tr><td>{utils.code(v).inline}</td><td>{utils.code(s).inline}</td></tr>' for v, s in vars_info]) + '</table>'
         
         self.notify(toast + (vars_info or ""), 10 if vars_info else 2) #  seconds to show message
 
@@ -333,7 +333,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         raise KeyError(
             f"A slide could be accessed by index or slice, got {type(key)},\n"
-            "Use `Slides[number,] -> Slide` or `Slides[[n1, n2,..]] -> tuple[Slide]` to access slides by number they were created with."
+            "Use `Slides[number,] → Slide` or `Slides[[n1, n2,..]] → tuple[Slide]` to access slides by number they were created with."
         )
     
     def __del__(self):
@@ -485,7 +485,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     def set_citations(self, data, mode='footnote'):
         r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
         key should be cited in markdown as cite\`key\` / \@key, optionally comma separated keys.
-        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by hl`Slides.settings.layout(..., ncol_refs=N)`.
+        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by code`Slides.settings.layout(..., ncol_refs=N)`.
 
         ```python
         set_citations({"key1":"value1","key2":"value2"})
@@ -589,7 +589,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Use `link.origin` to create a link to jump to target slide where `link.target` is placed.
         - If back_label was provided, `link.target` will be able to jump back to the `link.origin`.
         - In makdown, you can use created link as variables like `\%{link.origin}` and `\%{link.target}` to display links.
-        - Use similar links in markdown as \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\`.
+        - Use similar links in markdown as `<link:[unique id here]:origin label>` and `<link:[unique id here same as origin]:target [back_label,optional]>`.
         - In markdown, icons can be passed in label as alert`"fa\`arrow\` label text"`.
         """
         anchor_id = uuid.uuid4().hex  # Generate unique anchor id

@@ -57,10 +57,10 @@ These files are watched for edits if included in synced markdown file via `Slide
 
 Citations
 : - alert`cite\`key1,key2\`` / alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
-- With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` or hl`Slides.refs` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
+- With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` or code`Slides.refs` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
 - Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!` or alert`cite\`key1,key2!\``.
 - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
-hl["markdown"]`
+code["markdown"]`
  ::: citations [inline or footnote]
     \@key1: Saboor et. al., 2025
     \@key2: A citations can span multiple lines, but key should start on new line
@@ -88,7 +88,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | Block Syntax      | Description                                                                                                 |
     |:----------------- |:----------------------------------------------------------------------------------------------------------- |
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
-    | `::: code`        | Code block with syntax highlighting, parameters are passed to highlight function. |
+    | `::: code `       | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
     | `::: columns/multicol [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. |
     | `::: md-[pos]` | Parse markdown in the block, with showing source code at `pos=[before,after,left,right]`. Add `-c` to collapse code and show on click. |
@@ -129,7 +129,7 @@ Column separator is triple plus `+++` if intended in display mode.
 **Code Display**{{.text-big}}
 
 Inline Code
-: Inline code can be highlighted using alert`hl\`code\`` syntax, e.g. color`hl\`print('Hello')\`` → hl`print('Hello')`.
+: Inline code can be highlighted using alert`code\`code\`` syntax, e.g. color`code\`print('Hello')\`` → code`print('Hello')`.
 
 Code Blocks
 : Use standard markdown fenced code blocks or `::: code` blocks for syntax highlighting.
@@ -143,8 +143,8 @@ Code Blocks
         echo "Hello, I was highlighted from a code block!"
         ls -l | grep ".py" | wc -l
 ```  
-- In `::: code` block, you need to set parameters that are passed to `highlight` function, such as `language`, `name`, `lineno`, `css_class`, etc.
-- The \`\`\` code block does not support parameters for highligh function, but support attributes.
+- In ` ::: code ` block, you need to set parameters that are passed to `code` function, such as `language`, `name`, `lineno`, `css_class`, etc.
+- The \`\`\` code block does act like `::: code ` block and supports same parameters.
 
 ---
 
@@ -161,8 +161,8 @@ Variables from Python code can be embedded directly into Markdown.
 
 **Variable Scope & Updates**
 : - **Live Updates**: Variables are automatically updated in your slides when their values change in the notebook.
-- **Scope Resolution**: Variables are resolved from the global scope. To use variables from a local scope (e.g., inside a function), wrap your markdown content in hl`Slides.fmt(content, **kwargs)`.
-- **Forcing Updates**: You can force a refresh of variables on a specific slide using hl`Slide[number,].rebuild(**kwargs)`. This is also useful for setting unique variable values on different slides.
+- **Scope Resolution**: Variables are resolved from the global scope. To use variables from a local scope (e.g., inside a function), wrap your markdown content in code`Slides.fmt(content, **kwargs)`.
+- **Forcing Updates**: You can force a refresh of variables on a specific slide using code`Slide[number,].rebuild(**kwargs)`. This is also useful for setting unique variable values on different slides.
 - **Attribute/Index Access**: When using expressions like `\%{{var.attr}}` or `\%{{var['key']}}`, the output will only update if the base variable `var` itself is reassigned.
 
 **Important Notes**
@@ -216,7 +216,7 @@ Item 1 Header
     - You can use `Slides.xmd.extensions` to extend additional syntax using Markdown extensions such as 
         [markdown extensions](https://python-markdown.github.io/extensions/) and 
         [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-    - These markdown extensions are inluded by default hl`{_md_extensions}`.
+    - These markdown extensions are inluded by default code`{_md_extensions}`.
     - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
         ` __format__ ` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
 '''

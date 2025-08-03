@@ -35,7 +35,7 @@ def demo_slides(slides):
     ---
     # Introduction
                   
-    To see how commands work, use hl`Slides.docs()` to see the documentation.
+    To see how commands work, use code`Slides.docs()` to see the documentation.
     Here we will focus on using some of that functionality to create slides.
     
     ::: note-info
@@ -164,7 +164,7 @@ def demo_slides(slides):
                 lambda: print(np.random.random((10,2))),
                 lambda: plt.plot(np.random.random((10,2))),
                 plot_sine,
-            ], transform = lambda value: slides.hl(value).value # need simple code, otherwise defult transform is fine
+            ], transform = lambda value: slides.code(value).inline.value # need simple code, otherwise defult transform is fine
         )
 
         def run(c):
@@ -173,7 +173,7 @@ def demo_slides(slides):
         
         css = {'.out-main': {'height':'300px'}, 'grid':'auto-flow / 1fr', '.lang-name': {'display': 'none'}} # just single column
         it = slides.ei.interactive(run, c = lw, grid_css=css)
-        slides.write(['### Rich Content hl`ListWidget`', it],s.get_source())
+        slides.write(['### Rich Content code`ListWidget`', it],s.get_source())
 
 
     slides.build(-1,'section`Simple Animations with Frames` toc`### Contents`')
@@ -209,7 +209,7 @@ def demo_slides(slides):
             slides.write(item)
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### hl`fsep(stack=True)` and Fancy Bullet List yoffset`0`')
+        slides.write('# Frames with \n#### code`fsep(stack=True)` and Fancy Bullet List yoffset`0`')
         s.get_source().focus_lines([2,3,4]).display()
         slides.fsep(stack=True) # setting True single time is enough
 
@@ -217,7 +217,7 @@ def demo_slides(slides):
             slides.bullets([item], marker='💘').display()
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### hl`fsep.iter(stack=True)` and 2x2 grid of boxes yoffset`0`')
+        slides.write('# Frames with \n#### code`fsep.iter(stack=True)` and 2x2 grid of boxes yoffset`0`')
         s.get_source().focus_lines(range(2,7)).display()
         slides.fsep() # this time stack is in iter loop
         objs = [boxes[:2],boxes[2:]]
@@ -260,7 +260,7 @@ def demo_slides(slides):
                 line`200`
                 ### A rich content table
                 ''',
-                slides.table([[slides.icon('loading'), 2,3],[3,'hl`import numpy as np`', 5]],headers=['h1','h2','h3'],widths=[3,5,1]),
+                slides.table([[slides.icon('loading'), 2,3],[3,'code`import numpy as np`', 5]],headers=['h1','h2','h3'],widths=[3,5,1]),
             ], 
             [
                 '### Widgets',

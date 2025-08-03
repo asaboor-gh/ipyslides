@@ -249,7 +249,7 @@ class Settings:
     Slides.settings.layout.aspect = 16/10  # Attribute
     ```
     All settings calls including top level returns settings instance to apply method chaining.
-    e.g. hl`Slides.settings.layout(aspect = 16/10).footer(text="ABC").logo(...)`.
+    e.g. code`Slides.settings.layout(aspect = 16/10).footer(text="ABC").logo(...)`.
     """
     _instance = None
     def __init__(self, _instanceSlides, _instanceWidgets):

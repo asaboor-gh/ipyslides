@@ -171,7 +171,7 @@ class AnyTrait(fixed):
 class Changed:
     """A class to track changes in values of params. It itself does not trigger a change. 
     Can be used as `changed = '.changed'` in params and then `changed` can be used in callbacks to check 
-    some other value y as changed('y') -> True if y was changed else False. You can also test `'y' in changed`.
+    some other value y as changed('y') → True if y was changed else False. You can also test `'y' in changed`.
     This is useful to merge callbacks and execute code blocks conditionally.
     Using `if changed:` will evalutes to true if any of params is changed.
     
@@ -196,7 +196,7 @@ class Changed:
     def __call__(self, key):
         "Check name of a variable in changed variabls inside a callback."
         # We are using key, because value can not be tracked from source,
-        # so in case of x = 8, y = 8, we get 8 == 8 -> True and  8 is 8 -> True, but 'x' is never 'y'.
+        # so in case of x = 8, y = 8, we get 8 == 8 → True and  8 is 8 → True, but 'x' is never 'y'.
         if not isinstance(key, str): raise TypeError(f"expects name of variable as str, got {type(key)!r}")
         if key in self.__values:
             return True

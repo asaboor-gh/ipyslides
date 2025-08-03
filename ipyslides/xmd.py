@@ -62,7 +62,7 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "today": "format_spec like %b-%d-%Y",
     "alert": "text",
     "color": "text",
-    "hl": "inline code highlight. Accepts langauge as keywoard.",
+    "code": "inline code highlighter or use ::: code block",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "image": "path/src or clip:filename",
     "raw": "text, or use ::: raw block",
@@ -500,6 +500,8 @@ class XMarkdown(Markdown):
             return self._parse_md_src(data, header)
         elif typ == "table":
             return self._parse_table(data, widths, _class, css_props, attrs)
+        elif typ == "code":
+            return self._parse_code(data, _class, css_props, attrs)
         elif header.strip().startswith(":::") or typ in ("columns","multicol"): # simple flex ```columns without +++ or ::: block
             return self._parse_colon_block(header, data)
         else:
@@ -513,15 +515,13 @@ class XMarkdown(Markdown):
             return [out,] # list 
         
     def _parse_colon_block(self, header, data):
-        STRICT_TAGS = ("code","pre","raw")
+        STRICT_TAGS = ("pre","raw") # code is handled separately
         CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol","nav", *STRICT_TAGS) # tags that are captured by this parser
         
         tag, widths, _class, css_props, attrs = self._parse_params(header)
         
         if tag in CAPTURED_TAGS:
             if tag in STRICT_TAGS: # keep as is from further processing
-                if tag == "code":
-                    return self._parse_code(data, _class, css_props, attrs)
                 return [XTML(f"<pre class='{_class} raw-text' {_inline_style(css_props)} {attrs}>\n{data}\n</pre>")]
             
             # These tags should strip outer p tags for being properly structured as intended by user
@@ -756,15 +756,16 @@ class XMarkdown(Markdown):
 
         # Replace inline functions, keep it nested for accessing inner state
         all_funcs_re = '|'.join(_special_funcs.keys())
-        func_pattern = rf"(?<!\`)\b({all_funcs_re})(\[.*?\])?\`(.*?)\`" # `func avoides, leading space used for readability consumed
+        func_pattern = r"(?<![\`\.])\b({})(\[.*?\])?\`(.*?)\`" # `func and .func avoides, leading space used for readability consumed
+        html_output = re.sub(func_pattern.format('hl'), r"code\1`\2`", html_output, flags=re.DOTALL | re.MULTILINE) # hl is legacy for code
         
-        if re.search(func_pattern, html_output, flags=re.DOTALL | re.MULTILINE):
+        if re.search(func_pattern.format(all_funcs_re), html_output, flags=re.DOTALL | re.MULTILINE):
             from . import utils  # Inside function to avoid circular import
             
             def repl_inline_func(m):
                 func, args, content = m.groups()
                 _func = getattr(utils, func)
-                arg0 = char_esc.restore(content, True) if func == "hl" else content.strip() # hl needs corrected content
+                arg0 = char_esc.restore(content, True) if func == "code" else content.strip() # hl needs corrected content
     
                 if not args:
                     try:
@@ -779,10 +780,10 @@ class XMarkdown(Markdown):
                             f"Could not parse '{func}{args}`{content}`'. Error in arguments: \n{e}\n"
                             f"Arguments in [] must be valid Python code (e.g., strings in quotes) and are passed to {func}{inspect.signature(_func)}."
                         )
-                return self._handle_var(_out)
+                return self._handle_var(_out.inline if func == "code" else _out)
             
             with self.active_parser(): # set instance parser to pass variables
-                html_output = re.sub(func_pattern, repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
+                html_output = re.sub(func_pattern.format(all_funcs_re), repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
         
         html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
         html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
@@ -896,7 +897,7 @@ class _XMDMeta(type):
     
 class xmd(metaclass=_XMDMeta):
     r"""
-    Extended markdown parser for ipyslides.
+    Extended markdown parser for ipyslides. You can use %%xmd and %xmd cell and line magics in Jupyter Notebook as well.
 
     Besides the base [Python-Markdown](https://python-markdown.github.io/) syntax, 
     it supports additional syntax which you can read about by executing following code a notebook cell:
