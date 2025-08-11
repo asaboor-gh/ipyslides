@@ -126,8 +126,7 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=No
     _fig = plt_fig or plt.gcf()
     plot_bytes = BytesIO()
     _fig.savefig(plot_bytes,format='svg',transparent = transparent)
-    _fig.clf() # Clear image to avoid other display
-    plt.close() #AVoids throwing text outside figure
+    plt.close(_fig) #AVoids throwing text outside figure
     if width is None:
         width = f'{_fig.get_size_inches()[0]}in'
     width = (f'width:{width}px' if isinstance(width,int) else f'width:{width}') + ';max-width:100%;' # important to avoid overflow
