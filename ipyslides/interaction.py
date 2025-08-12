@@ -347,7 +347,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
             except Exception as e:
                 print(f"Warning: Initial button click faild: {e}")
 
-        self.__all_widgets = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')} # save it once for sending to app layout
+        self.__all_widgets = self.__order_widgets(btn) # save it once for sending to app layout
         self._groups = self.__create_groups(self.__all_widgets) # create groups of widgets for later use
         
         for func in self.__icallbacks:
@@ -358,6 +358,21 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
             self.relayout(**app_layout)
         else:
             self.relayout(center=list(self.__all_widgets.keys())) # add all to GridBox which is single column
+    
+    def __order_widgets(self, manual_btn=None):
+        _kw_map = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')}
+        # 1) params in declared order
+        ordered = {name:_kw_map[name] for name in self.__iparams.keys() if name in _kw_map}
+        # 2) Manual button (if any) comes after params
+        if manual_btn:
+            ordered['btn-main'] = manual_btn
+        # 3) outputs in registration order
+        ordered.update({out._kwarg: out for out in self._outputs if hasattr(out, '_kwarg')})
+        # 4) main output
+        ordered["out-main"] = self.out
+        # 5) anything else with _kwarg not yet included
+        ordered.update({name: w for name, w in _kw_map.items() if name not in ordered})
+        return ordered
     
     def __repr__(self): # it throws very big repr, so just show class name and id
         return f"<{self.__module__}.{type(self).__name__} at {hex(id(self))}>"
@@ -658,6 +673,13 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
 
         # Set __iparams after clear widgets
         self.__iparams = params
+        
+        # Tag parameter widgets with their names so we can order later
+        for key, val in self.__iparams.items():
+            w = val.value if isinstance(val, ipw.fixed) else val
+            if isinstance(w, ipw.DOMWidget):
+                w._kwarg = key
+                
         self.__reset_descp(extras)
         return tuple(extras.values())
     
