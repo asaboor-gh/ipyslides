@@ -244,7 +244,7 @@ tagfixer = TagFixer()
 del TagFixer
 
 class char_esc:
-    """Utility class for escaping and restoring characters \@,\%,\| and \` using backslash in text."""
+    r"""Utility class for escaping and restoring characters \@,\%,\| and \` using backslash in text."""
     _chars = "`@%|/" # Characters to escape
 
     @classmethod

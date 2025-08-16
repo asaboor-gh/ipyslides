@@ -3,7 +3,7 @@ Enhanced version of ipywidgets's interact/interactive functionality.
 Use as interactive/@interact or subclass InteractBase. 
 """
 
-__all__ = ['interactive','interact', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
+__all__ = ['interactive','interact', 'var', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
 
 import re, textwrap
 import inspect 
@@ -22,7 +22,7 @@ from .utils import _build_css, _dict2css
 from ._base.widgets import ipw # patch ones required here
 from ._base._widgets import _fix_init_sig, AnimationSlider
 from ._interact import (
-    AnyTrait, Changed, FullscreenButton, 
+    AnyTrait, Changed, FullscreenButton, _ValFunc, var,
     monitor, print_error, disabled, patched_plotly, 
     _format_docs, _size_to_css, _general_css
 )
@@ -38,6 +38,8 @@ def _hold_running_slide_builder():
             yield
     else:
         yield
+        
+_running_callbacks = set()  # Global set to track currently running callbacks
 
 def _func2widget(func, change_tracker):
     func_params = {k:v for k,v in inspect.signature(func).parameters.items()}
@@ -49,8 +51,13 @@ def _func2widget(func, change_tracker):
         out._kwarg = klass # store for access later
         
     last_kws = {} # store old kwargs to avoid re-running the function if not changed
+    callback_id = id(func)
     
     def call_func(kwargs):
+        # callbacks should not run if already running, to avoid infinite loops, specially due to assignments on params
+        if callback_id in _running_callbacks:
+            return  # Skip if this callback is already running
+        
         old_ctx = _need_output._active_output
         if out:
             out.clear_output(wait=True) # clear previous output
@@ -69,18 +76,23 @@ def _func2widget(func, change_tracker):
             # Checking identity is a mess later together with == and in, we can just exclude them here, widget is supposed to have a static identity
             other_params  = {k: v for k, v in filtered_kwargs.items() if not isinstance(v, ipw.DOMWidget)}
             
+            # Unwrap _ValFunc instances to get the actual value
+            unwrapped_kws = {k: v.value if isinstance(v,_ValFunc) else v for k, v in filtered_kwargs.items()}
+            
             if buttons:
                 if not any(btn.clicked for btn in buttons):
                     return # Only update if a button was clicked and skip other parameter changes
                 
                 with print_error(), disabled(*buttons): # disable buttons during function call
                     try: # error still be raised, but will be caught by print_error, so finally is important
-                        func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
+                        _running_callbacks.add(callback_id)  # Mark as running
+                        func(**unwrapped_kws) # Call the function with filtered parameters only if changed or no params
                     finally:
+                        _running_callbacks.discard(callback_id)  # Always remove when done
                         last_kws.update(filtered_kwargs) # update old kwargs to latest values
                 
                 return # exit after button click handling
-                
+            
             # Compare values properly by checking each parameter that is not a Widget (should already be same object)
             # Not checking identity here to take benifit of mutations like list/dict content
             values_changed = [k for k, v in other_params.items() 
@@ -91,7 +103,11 @@ def _func2widget(func, change_tracker):
             if values_changed or not func_params: # function may not have arguments but can be run via others
                 change_tracker._set(values_changed)
                 with print_error():
-                    func(**filtered_kwargs) # Call the function with filtered parameters only if changed or no params
+                    try:
+                        _running_callbacks.add(callback_id)  # Mark as running
+                        func(**unwrapped_kws) # Call the function with filtered parameters only if changed or no params
+                    finally:
+                        _running_callbacks.discard(callback_id)  # Always remove when done
             
             change_tracker._set([])
             last_kws.update(filtered_kwargs) # update old kwargs to latest values
@@ -229,6 +245,8 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or e.g. '.trait' to observe traits on this instance.
     - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
     - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
+    - Wrap any object in `param = var(obj, match)` to use it as a parameter with custom equality check like `match(a, b) -> bool` for dataframes or other objects. Assigning `param.value = new_value` will update the widget and trigger callbacks
+    - Plotly FigureWidgets (use patched_plotly)
     - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
         - You can have multiple buttons in a single callback and check `btn.clicked` attribute to run code based on which button was clicked.
     - Plotly FigureWidgets (use patched_plotly for selection support)
@@ -240,6 +258,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     - Decorate with @monitor to check execution time, kwargs etc.
     - CSS class must start with 'out-' excpet reserved 'out-main'
     - Each callback gets only needed parameters and updates happen only when relevant parameters change
+    - Callbacks cannot call themselves recursively to prevent infinite loops
     - **Output Widget Behavior**:
         - An output widget is created only if a CSS class is provided via `@callback`.
         - If no CSS class is provided, the callback will use the main output widget, labeled as 'out-main'.
@@ -959,6 +978,7 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=No
     - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
     - You can use `changed = '.changed'` to detect which parameters of a callback changed by checking `changed('param') -> Bool` in a callback.
     - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
+    - Wrap any object in `param = var(obj, match)` to use it as a parameter with custom equality check like `match(a, b) -> bool` for dataframes or other objects. Assigning `param.value = new_value` will update the widget and trigger callbacks
     - Plotly FigureWidgets (use patched_plotly)
     - `ipywidgets.Button` for manual updates on callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
         - You can have multiple buttons in a single callback and check `btn.clicked` attribute to run code based on which button was clicked.

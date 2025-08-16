@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Union, Callable
 
-from ipywidgets import DOMWidget, Output, fixed
+from ipywidgets import DOMWidget, Output, fixed, ValueWidget
 from anywidget import AnyWidget
 from IPython.core.ultratb import AutoFormattedTB
 
@@ -207,6 +207,61 @@ class Changed:
     
     def __bool__(self): # any key changed
         return bool(self.__values)
+    
+class _ValFunc:
+    def __init__(self, value, match):
+        self.value = value
+        self.match = match
+
+    def __eq__(self, other):
+        if isinstance(other, _ValFunc):
+            return self.match(self.value, other.value)
+        return self.match(self.value, other)
+    
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+
+class var(ValueWidget):
+    """An object wrapper to be used in interactive with custom comparison for change detection. Default: identity comparison (a is b).
+    
+    Objects such as DataFrames, numpy arrays, or any other objects which do not return boolean on equality comparison can be used.
+    
+    Example:
+    
+    ```python
+    import pandas as pd
+    from einteract import var, interactive
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+    itv = interactive(lambda x: print(x), x = var(df, match=lambda a, b: a.equals(b))) # or match = pd.DataFrame.equals
+    itv # display itv to see the widget
+    # In another cell, you can change value on x and it will trigger the callback
+    itv.params.x.value = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 7]}) # this will trigger callback
+    ```
+    This would have been failed without using `var` as default `==` comparison because DataFrame handles such comparison by `equals` method.
+    """
+    def __init__(self, value, match = None):
+        if match is None:
+            match = lambda a, b: a is b
+        
+        if not callable(match) or len(match.__code__.co_varnames) != 2:
+            raise TypeError("match must be callable with two arguments: match(a, b) -> bool")
+        
+        self.match = match
+        self._type = type(value) # keep type first
+        super().__init__() # Then init
+        self.value = value # set value at last
+
+    def get_interact_value(self):
+        return _ValFunc(self.value, self.match)
+        
+    @traitlets.validate("value")
+    def _cast(self, proposal):
+        value = proposal["value"]
+        if not isinstance(value, self._type):
+            raise TypeError(f"The 'value' trait of 'var' instance expected {self._type}, not {type(value)}.")
+        return value
 
 
 class FullscreenButton(AnyWidget):
