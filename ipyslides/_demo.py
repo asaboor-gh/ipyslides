@@ -147,7 +147,7 @@ def demo_slides(slides):
         anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
         css = {'grid-template-columns': '1fr 2fr', '.out-main': {'height': '2em'}}
 
-        @slides.ei.interact(grid_css = css, html = slides.as_html_widget(''), source=s.get_source().as_widget(), anim=anim)
+        @slides.ei.interact(post_init = lambda self: self.set_css(css), html = slides.as_html_widget(''), source=s.get_source().as_widget(), anim=anim)
         def _(html, source, anim):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area
@@ -172,7 +172,7 @@ def demo_slides(slides):
             plt.show()
         
         css = {'.out-main': {'height':'300px'}, 'grid':'auto-flow / 1fr', '.lang-name': {'display': 'none'}} # just single column
-        it = slides.ei.interactive(run, c = lw, grid_css=css)
+        it = slides.ei.interactive(run, c = lw, post_init = lambda self: self.set_css(css)) 
         slides.write(['### Rich Content code`ListWidget`', it],s.get_source())
 
 

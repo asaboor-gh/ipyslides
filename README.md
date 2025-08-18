@@ -127,17 +127,17 @@ class MyDashboard(InteractBase):
         print(f"Amplitude: {amplitude}\n Frequency: {frequency}")
 
 dash = MyDashboard(auto_update=False)
-dash.relayout( # can be set via app_layout parameter
+dash.set_layout( # Can also be set via post_init callback
     left_sidebar = dash.groups.controls, 
     center = ['html','out-text'], # out-plot, out-text collected in center
     pane_widths = [3,5,0]
 )
 dash.set_css(
-    main = { # can be set via grid_css parameter
+    main = { # can also be set via post_init callback
         'grid-gap': '4px', 'margin': '8px',
         '.left-sidebar': {'background': '#eee','border-radius': '8px'},
     },
-    center = { # can be set via grid_css parameter targetting '> .center'
+    center = { # can be set in main through '> .center' selector
         '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
         'grid-template-columns': '5fr 3fr', # side-by-side layout for outputs
         'grid-gap': '4px', # central grid gap

@@ -136,7 +136,7 @@ _useful_traits =  [
     'grid_gap', 'justify_content','align_items'
 ]
 # for validation
-_pmethods = ['set_css','relayout','update']
+_pmethods = ['set_css','set_layout','update']
 _pattrs = ['groups','outputs','params', 'changed','isfullscreen']
 _omethods = ["_interactive_params"]
 
@@ -212,7 +212,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     
     # Create and layout
     dash = MyDashboard(auto_update=True)
-    dash.relayout(
+    dash.set_layout(
         left_sidebar=dash.groups.controls,  # controls on left
         center=[(ipw.VBox(), ('fig', ipw.HTML('Showing Stats'), 'out-stats')),]  # plot and stats in a VBox explicitly
     )
@@ -228,16 +228,9 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     **Parameters**:      
 
     - auto_update (bool): Update outputs automatically on widget changes
-    - app_layout (dict): Initial layout configuration, see `relayout` method for details.
-        - header: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Top widgets
-        - left_sidebar: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Left side widgets 
-        - center: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Main content area
-        - right_sidebar: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Right side widgets
-        - footer: List[str | DOMWidget | (Box, List[str | DOMWidget])] - Bottom widgets
-    - grid_css (dict): CSS Grid properties for layout customization
-        - See set_css() method for details
-        - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
-
+    - post_init: Optional function to run after all widgets are created as lambda self: (self.set_css(), self.set_layout(),...). 
+      You can annotate the type in function argument with `InteractBase` to enable IDE hints and auto-completion e.g. `def post_init(self:InteractBase): ...`
+    
     **Widget Parameters** (`_interactive_params`'s returned dict):
 
     - Regular ipywidgets with value trait
@@ -269,15 +262,15 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         - By providing `changed = '.changed'` in parameters and later in callback by checking `changed('param') -> Bool`.
         - Directly access `self.changed` in a subclass and use `changed('param') -> Bool` / `'param' in self.changed`. Useful to merge callback.
     - isfullscreen: Read-only trait to detect fullscreen change on python side. Can be observed as '.isfullscreen' in params.
+    - params: Read-only trait for all parameters used in this interact in widget form. Can be accessed inside callbacks by observing as `P = '.params'` 
+      alongwith some `x = True` -> Checkbox, and then inside a callback `P.x.value = False` will uncheck the Checkbox and trigger depnendent callbacks.
     - groups: NamedTuple(controls, outputs, others) - Widget names by type
     - outputs: Tuple[Output] - Output widgets from callbacks
-    - params: NamedTuple of all parameters used in this interact, including fixed widgets. 
-      Can be accessed inside callbacks with self.params.<name> and change their traits other than passed to the callback.
 
     **Methods**:      
 
     - set_css(main, center): Update grid CSS
-    - relayout(**kwargs): Reconfigure widget layout
+    - set_layout(**kwargs): Reconfigure widget layout
         
     **Notes**:     
 
@@ -291,11 +284,9 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     """
     isfullscreen = traitlets.Bool(False, read_only=True)
     changed = traitlets.Instance(Changed, default_value=Changed(), read_only=True) # tracks parameters values changed, but fixed itself
+    params = traitlets.Instance(tuple, default_value=namedtuple('InteractiveParams', [])(), read_only=True) # hold parameters object forms, not just values
 
-    def __init__(self, auto_update:bool=True, app_layout:dict= None, grid_css:dict={}) -> None:
-        # I tried to resolve dependent parameters in a func many ways like setting mock validate, notify_change, set, etc.
-        # But each time app misbehaves, so I leave it on user for a function like func(x = widget, y = 'x.trait') 
-        # and expected they should not se x.trait = value in same function, to avoid recursion issue.
+    def __init__(self, auto_update:bool=True, post_init:callable=None) -> None:
         self.__css_class = 'i-'+str(id(self))
         self.__style_html = ipw.HTML()
         self.__style_html.layout.position = 'absolute' # avoid being grid part
@@ -305,17 +296,18 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         self.__app._size_to_css = _size_to_css # enables em, rem
         self.__other = ipw.VBox().add_class('other-area') # this should be empty to enable CSS perfectly, unless filled below
         self.update = self.__update # needs avoid checking in metaclass, but restric in subclasses, need before setup
-        self.__setup(auto_update, app_layout, grid_css)
+        self.__setup(auto_update)
         
         # do not add traits in __init__, unknow errors arise, just link
         for name in _useful_traits:
             traitlets.link((self, name),(self.__app,name))
-
-    def __setup(self, auto_update, app_layout, grid_css):
-        if not isinstance(grid_css,dict):
-            raise TypeError(f"grid_css should be a dict, got {type(grid_css)}")
         
-        self.set_css(main = grid_css)
+        if callable(post_init):
+            if len(post_init.__code__.co_varnames) != 1:
+                raise TypeError("post_init should be a callable which accepts instance of interact as argument!")
+            post_init(self) # call it with self, so it can access all methods and attributes
+
+    def __setup(self, auto_update):
         self.__auto_update = auto_update
         self._outputs = ()
         self.__iparams = {} # just empty reference
@@ -326,9 +318,24 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         self.__icallbacks = self._registered_callbacks() # callbacks after collecting params
         if not isinstance(self.__icallbacks, (list, tuple)):
             raise TypeError("_registered_callbacks should return a tuple of functions!")
+        
         outputs = self.__func2widgets() # build stuff, before actual interact
         super().__init__(self.__run_updates, {'manual':not self.__auto_update,'manual_name':''}, **self.__iparams)
+        self.unobserve_all("params") # even setting a fixed can trigger callbacks, so remove all
         
+        # Attach params as namedtuple trait for object instances
+        wparams = {k:v for k,v in self.__iparams.items() if not getattr(v, '_self_iparam_ws',False)} # avoid params itself wrappend AnyTrait
+        for child in self.children:
+            if hasattr(child, '_kwarg') and child._kwarg in wparams: # keep only in params, not all, like button, and outputs
+                wparams[child._kwarg] = child # Expose widgets in params for setting options inside callbacks to trigger updates in chain
+        
+        self.set_trait('params', namedtuple('InteractiveParams', wparams.keys())(**wparams))
+        
+        for v in self.kwargs_widgets:
+            if getattr(v, '_self_iparam_ws',False):
+                v.value = self.params # update to pick widgets in kwargs later
+                
+        # Fix manual button and other stuff
         btn = getattr(self, 'manual_button', None) # need it above later
         self.add_class('ips-interact').add_class(self.__css_class)
         self.layout.position = 'relative' # contain absolute items inside
@@ -371,12 +378,9 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         
         for func in self.__icallbacks:
             self.__hint_btns_update(func) # external buttons update hint
-        
-        if app_layout is not None:
-            self.__validate_layout(app_layout) # validate arguemnts first
-            self.relayout(**app_layout)
-        else:
-            self.relayout(center=list(self.__all_widgets.keys())) # add all to GridBox which is single column
+            
+        # add all to GridBox which is single column as default
+        self.set_layout(center=list(self.__all_widgets.keys())) 
     
     def __order_widgets(self, manual_btn=None):
         _kw_map = {w._kwarg: w for w in self.children if hasattr(w, '_kwarg')}
@@ -396,21 +400,21 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     def __repr__(self): # it throws very big repr, so just show class name and id
         return f"<{self.__module__}.{type(self).__name__} at {hex(id(self))}>"
 
-    def __validate_layout(self, app_layout):
-        if not isinstance(app_layout, dict):
-            raise TypeError("app_layout should be a dictionary to relayout widgets!")
+    def __validate_layout(self, layout):
+        if not isinstance(layout, dict):
+            raise TypeError("layout should be a dictionary passed to set_layout for positioning widgets!")
         
-        allowed_keys = inspect.signature(self.relayout).parameters.keys()
-        for key, value in app_layout.items():
+        allowed_keys = inspect.signature(self.set_layout).parameters.keys()
+        for key, value in layout.items():
             if not key in allowed_keys:
-                raise KeyError(f"keys in app_layout should be one of {allowed_keys}, got {key!r}")
+                raise KeyError(f"keys in layout should be one of {allowed_keys}, got {key!r}")
             
             if value is None or key not in ["header", "footer", "center", "left_sidebar", "right_sidebar"]:
                 continue  # only validate content areas, but go for all, don't retrun
 
             if not isinstance(value, (list, tuple)):
                 raise TypeError(
-                    f"{key!r} in app_layout should be a list/tuple of widget names or "
+                    f"{key!r} in layout should be a list/tuple of widget names or "
                     f"(Box_instance, [names]) tuples, got {type(value).__name__}"
                 )
             
@@ -459,7 +463,9 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
                             f"Invalid widget name {child!r} in tuple at position {i} in {key!r}. "
                             f"Valid names are: {list(self.__all_widgets.keys())}")
     
-    def relayout(self, 
+    def relayout(self,*args, **kwargs):raise NotImplementedError("Use set_layout method instead of relayout!")
+    
+    def set_layout(self, 
         header: List[Union[str, DOMWidget,Tuple[Box, List]]] = None, 
         center: List[Union[str, DOMWidget,Tuple[Box, List]]] = None, 
         left_sidebar: List[Union[str, DOMWidget,Tuple[Box, List]]] = None,
@@ -501,7 +507,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         **Example**:       
 
         ```python
-        dash.relayout( # dash is an instance of InteractBase
+        dash.set_layout( # dash is an instance of InteractBase
             left_sidebar=dash.groups.controls,
             center=['fig', *dash.groups.outputs],
             pane_widths=['200px', '1fr', 'auto'],
@@ -516,13 +522,15 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         - Center area uses CSS Grid for flexible layouts
         - Other areas use vertical box layout
         """
-        app_layout = {key:value for key,value in locals().items() if key != 'self'}
-        self.__validate_layout(app_layout)
+        layout = {key:value for key,value in locals().items() if key != 'self'}
+        self.__validate_layout(layout)
         areas = ["header","footer", "center", "left_sidebar","right_sidebar"]
+        for key in areas:
+            self.__app.set_trait(key, None) # reset all areas first
 
         collected = []
-        for key, value in app_layout.items():
-            if value and key in areas:
+        for key, value in layout.items():
+            if value and key in areas: 
                 collected.extend(list(value))
                 box = ipw.GridBox if key == 'center' else ipw.VBox
                 children = []
@@ -676,8 +684,11 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
             if isinstance(value, str) and value.count('.') == 1 and ' ' not in value: # space restricted
                 name, trait_name = value.split('.')
                 if name == '' and trait_name in self.trait_names() and not trait_name.startswith('_'): # avoid privates
-                    if trait_name == 'changed':
-                        params[key] = ipw.fixed(self.changed) # need this without triggering callback
+                    fixed_traits = {"changed": self.changed, "params": self.params} # These should not trigger callbacks
+                    if trait_name in fixed_traits:
+                        params[key] = ipw.fixed(fixed_traits[trait_name]) 
+                        if trait_name == 'params': # params is special to remove later from itself
+                            params[key]._self_iparam_ws = True # mark it as self params, so we can remove it later
                     else:
                         params[key] = AnyTrait(self, trait_name)
                     # we don't need mutual exclusion on self, as it is not passed
@@ -775,7 +786,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
                 "Any function with no arguments can only run with global interact button click."
             )
         
-        gievn_params = set(self.params._asdict())
+        gievn_params = set(self.__iparams)
         extra_params = set(f_ps) - gievn_params
         if extra_params:
             raise ValueError(f"Function {f.__name__!r} has parameters {extra_params} that are not defined in interactive params.")
@@ -816,17 +827,6 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         if not hasattr(self, '_groups'):
             self._groups = self.__create_groups(self.__all_widgets)
         return self._groups
-    
-    @property
-    def params(self) -> namedtuple:
-        "NamedTuple of all parameters used in this interact, including fixed widgets. Can be access inside callbacks with self.params."
-        if not hasattr(self, '_params_tuple'):
-            wparams = self.__iparams.copy() # copy to avoid changes
-            for k, v in self.__iparams.items():
-                if isinstance(v, ipw.fixed) and isinstance(v.value, ipw.DOMWidget):
-                    wparams[k] = v.value # only widget to expose for use, not other fixed values
-            self._params_tuple = namedtuple('InteractiveParams', wparams.keys())(**wparams)
-        return self._params_tuple
     
     def __run_updates(self, **kwargs):
         btn = getattr(self, 'manual_button', None)
@@ -906,7 +906,7 @@ def _classed(func, css_class):
     return func
 
 @_format_docs(css_info = _css_info)
-def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=None, grid_css:dict={}, **kwargs):
+def interactive(*funcs:List[Callable], auto_update:bool=True, post_init: callable=None, **kwargs):
     """Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.
 
     This function is used for quick dashboards. Subclass `InteractBase` for complex applications.
@@ -963,11 +963,8 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=No
 
     - `*funcs`: One or more callback functions
     - auto_update: Update automatically on widget changes
-    - app_layout: Initial layout configuration, see `relayout()` method for details
-    - grid_css: CSS Grid properties for layout
-        - Use `:fullscreen` at root level of dict to apply styles in fullscreen mode
-        - Use `[Button, ToggleButton(s)].add_class('content-width-button')` to fix button widths easily.
-        - See [CSS Grid Layout Guide](https://css-tricks.com/snippets/css/complete-guide-grid/).
+    - post_init: Optional function to run after all widgets are created as lambda self: (self.set_css(), self.set_layout(),...). 
+      You can annotate the type in function argument with `InteractBase` to enable IDE hints and auto-completion e.g. `def post_init(self:InteractBase): ...`
     - `**kwargs`: Widget parameters
 
     **Widget Parameters**:     
@@ -1013,11 +1010,11 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, app_layout:dict=No
         def _interactive_params(self): return kwargs # Must be overriden in subclass
         def _registered_callbacks(self): return funcs # funcs can be provided by @callback decorated methods or optionally ovveriding it
         def __dir__(self): # avoid clutter of traits for end user on instance
-            return ['set_css','relayout','groups','outputs','params','isfullscreen','changed', 'layout', *_useful_traits] 
-    return Interactive(auto_update=auto_update,app_layout=app_layout, grid_css=grid_css)
+            return ['set_css','set_layout','groups','outputs','params','isfullscreen','changed', 'layout', *_useful_traits] 
+    return Interactive(auto_update=auto_update, post_init=post_init)
     
 @_format_docs(other=interactive.__doc__)
-def interact(*funcs:List[Callable], auto_update:bool=True,app_layout:dict=None, grid_css:dict={}, **kwargs) -> None:
+def interact(*funcs:List[Callable], auto_update:bool=True, post_init: callable=None, **kwargs) -> None:
     """{other}
 
     **Tips**:    
@@ -1026,5 +1023,5 @@ def interact(*funcs:List[Callable], auto_update:bool=True,app_layout:dict=None, 
     - You can also use this under `Slides.capture_content` to display later in a specific place.
     """
     def inner(func):
-        return display(interactive(func, *funcs, auto_update = auto_update, app_layout=app_layout, grid_css = grid_css, **kwargs))
+        return display(interactive(func, *funcs, auto_update = auto_update, post_init=post_init, **kwargs))
     return inner
