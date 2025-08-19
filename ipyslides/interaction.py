@@ -332,10 +332,13 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         self.unobserve_all("params") # even setting a fixed can trigger callbacks, so remove all
         
         # Attach params as namedtuple trait for object instances
-        wparams = {k:v for k,v in self.__iparams.items() if not getattr(v, '_self_iparam_ws',False)} # avoid params itself wrappend AnyTrait
+        wparams = {k : v.value if isinstance(v,ipw.fixed) and isinstance(v.value, DOMWidget) else v # expose fixed widgets
+            for k,v in self.__iparams.items() 
+            if not getattr(v, '_self_iparam_ws',False)
+        } # avoid params itself wrappend AnyTrait
         for child in self.children:
             if hasattr(child, '_kwarg') and child._kwarg in wparams: # keep only in params, not all, like button, and outputs
-                wparams[child._kwarg] = child # Expose widgets in params for setting options inside callbacks to trigger updates in chain
+                wparams[child._kwarg] = child # Exposes widgets in params for setting options inside callbacks to trigger updates in chain
         
         self.set_trait('params', namedtuple('InteractiveParams', wparams.keys())(**wparams))
         
