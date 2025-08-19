@@ -3,7 +3,7 @@ Enhanced version of ipywidgets's interact/interactive functionality.
 Use as interactive/@interact or subclass InteractBase. 
 """
 
-__all__ = ['interactive','interact', 'var', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
+__all__ = ['DashLab','interactive','interact', 'var', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
 
 import re, textwrap
 import inspect 
@@ -136,11 +136,11 @@ _useful_traits =  [
     'grid_gap', 'justify_content','align_items'
 ]
 # for validation
-_pmethods = ['set_css','set_layout','update']
+_pmethods = ['set_css','set_layout','update','_reset']
 _pattrs = ['groups','outputs','params', 'changed','isfullscreen']
 _omethods = ["_interactive_params"]
 
-class InteractMeta(type):
+class _DashMeta(type):
     def __init__(cls, name, bases, namespace):
         super().__init__(name, bases, namespace)
 
@@ -158,30 +158,68 @@ class InteractMeta(type):
                 raise TypeError(f"Class '{name}' must override '{method_name}'.")
 
 # Need to avoid conflict with metaclass of interactive, so build a composite metaclass
-_metaclass = type("InteractiveMeta", (InteractMeta, type(ipw.interactive)), {})
+_metaclass = type("InteractiveMeta", (_DashMeta, type(ipw.interactive)), {})
 
 def _add_traits(cls):
     for name in _useful_traits:
         setattr(cls, name, ipw.AppLayout.class_traits()[name])
     return cls
 
+_docs = {
+    "widgets": """
+    - Regular ipywidgets with value trait
+    - Fixed widgets using ipw.fixed(widget)
+    - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or e.g. '.trait' to observe traits on this instance.
+    - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
+    - Use `P = '.params'` to access all parameters in a callback, e.g. `P.x.value = 10` will set x's value to 10 and trigger dependent callbacks.
+    - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
+    - Wrap any object in `param = var(obj, match)` to use it as a parameter with custom equality check like `match(a, b) -> bool` for dataframes or other objects. Assigning `param.value = new_value` will update the widget and trigger callbacks
+    - Plotly FigureWidgets (use patched_plotly)
+    - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
+        - You can have multiple buttons in a single callback and check `btn.clicked` attribute to run code based on which button was clicked.
+    - Plotly FigureWidgets (use patched_plotly for selection support)
+    """,
+    "callbacks": """
+    - Methods decorated with `@callback`. Run in the order of definition.
+    - Optional CSS class via `@callback('out-myclass')`
+    - Decorate with @monitor to check execution time, kwargs etc.
+    - CSS class must start with 'out-' excpet reserved 'out-main'
+    - Each callback gets only needed parameters and updates happen only when relevant parameters change
+    - Callbacks cannot call themselves recursively to prevent infinite loops
+    - **Output Widget Behavior**:
+        - An output widget is created only if a CSS class is provided via `@callback`.
+        - If no CSS class is provided, the callback will use the main output widget, labeled as 'out-main'.
+    """,
+    "props": """
+    - changed: Read-only trait to detect which parameters of a callback changed:
+        - By providing `changed = '.changed'` in parameters and later in callback by checking `changed('param') -> Bool`.
+        - Directly access `self.changed` in a subclass and use `changed('param') -> Bool` / `'param' in self.changed`. Useful to merge callback.
+    - isfullscreen: Read-only trait to detect fullscreen change on python side. Can be observed as '.isfullscreen' in params.
+    - params: Read-only trait for all parameters used in this interact in widget form. Can be accessed inside callbacks by observing as `P = '.params'` 
+      alongwith some `x = True` -> Checkbox, and then inside a callback `P.x.value = False` will uncheck the Checkbox and trigger depnendent callbacks.
+    - groups: NamedTuple(controls, outputs, others) - Widget names by type
+    - outputs: Tuple[Output] - Output widgets from callbacks
+    """,
+    "features": """
+    **Features**:    
+
+    - Multiple function support with selective updates
+    - CSS Grid layout system
+    - Extended widget trait observation
+    - Dynamic widget property updates
+    - Built-in fullscreen support
+    """
+}
+
 @_add_traits
 @_fix_init_sig
-@_format_docs(css_info = _css_info)
+@_format_docs(css_info = _css_info, **_docs)
 class InteractBase(ipw.interactive, metaclass = _metaclass):
     """Enhanced interactive widgets with multiple callbacks and fullscreen support.
     
     Use `interctive` function or `@interact` decorator for simpler use cases. For comprehensive dashboards, subclass this class.
-
-    **Features**:    
-
-    1. Multiple callback support through `@callback` decorator
-    2. CSS Grid layout system with flexible templating
-    3. Extended widget trait observation beyond just 'value'
-    4. Automatic widget grouping and layout management
-    5. Built-in fullscreen support
-    6. Run button for manual updates
-
+    For a ready-to-use interactive application with registering callbacks later, use `DashLab` class.
+    {features}
     **Basic Usage**:    
 
     ```python
@@ -232,41 +270,11 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
       You can annotate the type in function argument with `InteractBase` to enable IDE hints and auto-completion e.g. `def post_init(self:InteractBase): ...`
     
     **Widget Parameters** (`_interactive_params`'s returned dict):
-
-    - Regular ipywidgets with value trait
-    - Fixed widgets using ipw.fixed(widget)
-    - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or e.g. '.trait' to observe traits on this instance.
-    - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
-    - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
-    - Wrap any object in `param = var(obj, match)` to use it as a parameter with custom equality check like `match(a, b) -> bool` for dataframes or other objects. Assigning `param.value = new_value` will update the widget and trigger callbacks
-    - Plotly FigureWidgets (use patched_plotly)
-    - `ipywidgets.Button` for manual updates on heavy callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
-        - You can have multiple buttons in a single callback and check `btn.clicked` attribute to run code based on which button was clicked.
-    - Plotly FigureWidgets (use patched_plotly for selection support)
-
+    {widgets}
     **Callbacks**:   
-
-    - Methods decorated with `@callback`. Run in the order of definition.
-    - Optional CSS class via `@callback('out-myclass')`
-    - Decorate with @monitor to check execution time, kwargs etc.
-    - CSS class must start with 'out-' excpet reserved 'out-main'
-    - Each callback gets only needed parameters and updates happen only when relevant parameters change
-    - Callbacks cannot call themselves recursively to prevent infinite loops
-    - **Output Widget Behavior**:
-        - An output widget is created only if a CSS class is provided via `@callback`.
-        - If no CSS class is provided, the callback will use the main output widget, labeled as 'out-main'.
-        
+    {callbacks}    
     **Attributes & Properties**:  
-
-    - changed: Read-only trait to detect which parameters of a callback changed:
-        - By providing `changed = '.changed'` in parameters and later in callback by checking `changed('param') -> Bool`.
-        - Directly access `self.changed` in a subclass and use `changed('param') -> Bool` / `'param' in self.changed`. Useful to merge callback.
-    - isfullscreen: Read-only trait to detect fullscreen change on python side. Can be observed as '.isfullscreen' in params.
-    - params: Read-only trait for all parameters used in this interact in widget form. Can be accessed inside callbacks by observing as `P = '.params'` 
-      alongwith some `x = True` -> Checkbox, and then inside a callback `P.x.value = False` will uncheck the Checkbox and trigger depnendent callbacks.
-    - groups: NamedTuple(controls, outputs, others) - Widget names by type
-    - outputs: Tuple[Output] - Output widgets from callbacks
-
+    {props}
     **Methods**:      
 
     - set_css(main, center): Update grid CSS
@@ -395,7 +403,11 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         ordered["out-main"] = self.out
         # 5) anything else with _kwarg not yet included
         ordered.update({name: w for name, w in _kw_map.items() if name not in ordered})
-        return ordered
+        return ordered 
+    
+    def _reset(self):
+        "Method not to be ovverridden, needed to add callbacks and widgets dynamically."
+        self.__setup(self.__auto_update) # setup again to update widgets and callbacks on same instance
     
     def __repr__(self): # it throws very big repr, so just show class name and id
         return f"<{self.__module__}.{type(self).__name__} at {hex(id(self))}>"
@@ -524,9 +536,11 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
         """
         layout = {key:value for key,value in locals().items() if key != 'self'}
         self.__validate_layout(layout)
+        self.__other.children = () # reset other area, it will be filled later
         areas = ["header","footer", "center", "left_sidebar","right_sidebar"]
         for key in areas:
             self.__app.set_trait(key, None) # reset all areas first
+        
 
         collected = []
         for key, value in layout.items():
@@ -837,7 +851,8 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
                     _run_callbacks(self.__icallbacks, kwargs, self) 
             else:
                 _run_callbacks(self.__icallbacks, kwargs, self) 
-        
+
+
 
 def callback(css_class:str = None, *, timeit:bool = False, throttle:int = None, debounce:int = None, logger:Callable = None) -> Callable:
     """Decorator to mark methods as interactive callbacks in InteractBase subclasses or for interactive funcs.
@@ -905,20 +920,12 @@ def _classed(func, css_class):
     func.__dict__['_css_class'] = css_class # set on __dict__ to avoid issues with bound methods
     return func
 
-@_format_docs(css_info = _css_info)
+@_format_docs(css_info = _css_info, **_docs)
 def interactive(*funcs:List[Callable], auto_update:bool=True, post_init: callable=None, **kwargs):
     """Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.
 
     This function is used for quick dashboards. Subclass `InteractBase` for complex applications.
-    
-    **Features**:    
-
-    - Multiple function support with selective updates
-    - CSS Grid layout system
-    - Extended widget trait observation
-    - Dynamic widget property updates
-    - Built-in fullscreen support
-
+    {features}
     **Basic Usage**:    
 
     ```python
@@ -968,35 +975,11 @@ def interactive(*funcs:List[Callable], auto_update:bool=True, post_init: callabl
     - `**kwargs`: Widget parameters
 
     **Widget Parameters**:     
-
-    - Regular ipywidgets
-    - Fixed widgets via ipw.fixed()
-    - String pattern 'widget.trait' for trait observation, 'widget' must be in kwargs or '.trait' to observe traits on this instance.
-    - You can use '.fullscreen' to detect fullscreen change and do actions based on that.
-    - You can use `changed = '.changed'` to detect which parameters of a callback changed by checking `changed('param') -> Bool` in a callback.
-    - Any DOM widget that needs display (inside fixed too). A widget and its observed trait in a single function are not allowed, such as `f(fig, v)` where `v='fig.selected'`.
-    - Wrap any object in `param = var(obj, match)` to use it as a parameter with custom equality check like `match(a, b) -> bool` for dataframes or other objects. Assigning `param.value = new_value` will update the widget and trigger callbacks
-    - Plotly FigureWidgets (use patched_plotly)
-    - `ipywidgets.Button` for manual updates on callbacks besides global `auto_update`. Add tooltip for info on button when not synced.
-        - You can have multiple buttons in a single callback and check `btn.clicked` attribute to run code based on which button was clicked.
-
-    **Widget Updates**:     
-
-    - Functions can modify widget traits (e.g. options, min/max)
-    - Order matters for dependent updates
-    - Parameter-less functions run with any interaction
-    - Animation widgets work even with manual updates
-    - **Output Widget Behavior**:
-        - Output widgets are created only if a CSS class is provided via `@callback`.
-        - If no CSS class is provided, the callback will use the main output widget labeled as 'out-main'.
-    
-
-    **CSS Classes**:      
-
-    - Parameter names from kwargs
-    - Custom 'out-*' classes from `@callback`, and 'out-main' class.
-    - 'btn-main' for manual update button
-
+    {widgets}
+    **Callbacks**:   
+    {callbacks}  
+    **Attributes and Traits**:
+    {props}
     **Notes**:       
 
     - Avoid modifying global slide state
@@ -1025,3 +1008,99 @@ def interact(*funcs:List[Callable], auto_update:bool=True, post_init: callable=N
     def inner(func):
         return display(interactive(func, *funcs, auto_update = auto_update, post_init=post_init, **kwargs))
     return inner
+
+
+@_format_docs(css_info = _css_info, **_docs)
+class DashLab(InteractBase):
+    """A ready-to-use interactive dashboard application which allows registering callbacks after initialization.
+    {features}
+    **Parameters**:
+    - auto_update: bool, if True, updates widgets automatically on changes.
+    - interactive_params: kwargs, parameters for interactive widgets, must be provided at initialization.
+
+    **Widget Parameters** (`interactive_params` passed at initialization):
+    {widgets}
+    **Callbacks**:   
+    {callbacks}
+    **Attributes and Traits**:
+    {props}
+    **Usage**:
+
+    ```python
+    from ipyslides.interaction import DashLab
+    app = DashLab(x=5, y=True, z='.params') # no callbacks yet
+    
+    @app.callback('out-f') # creates an output widget with class/name 'out-f'
+    def f(x, z):
+        print(x) # prints value of x
+        print(z.x) # prints reper of IntSlider build internally by x parameter
+        print(app.params == z) # True, as z is a reference to params 
+        
+    @app.callback # without class, will use main output widget
+    def g(x,y):
+        print(x+5,y)
+    
+    # after adding callbacks, we can set CSS and layout to include all output widgets created
+    app.set_layout(left_sidebar=app.groups.controls,center=app.groups.outputs)
+    
+    app # at end of cell to display the app
+    ```
+    
+    This class is different from `InteractBase`, `interactive` and `interact` functions, as it allows registering callbacks dynamically after the app is created, much like a regular app framework.
+    This enables you to build interactive applications step by step, adding functionality as needed instead of defining every callback upfront.
+    
+    **Notes**:
+    - Do not use gloabal callback decorator here which will not add any effect, use `app.callback` instead.
+    - This class does not support subclassing, use InteractBase if you need to create a custom interactive app.
+    
+    
+    """
+    def __init_subclass__(cls, **kwargs):
+        raise TypeError(f"{cls.mro()[1]} does not support subclassing. Subclass InteractBase if you really need to do so.")
+
+    def __init__(self, auto_update=True, **interactive_params):
+        self._iapp_params = interactive_params
+        self._iapp_callbacks = {} # ensures unique functions
+        super().__init__(auto_update=auto_update)
+    
+    def __dir__(self): # avoid clutter of traits for end user on instance
+        return ['callback', 'set_css','set_layout','groups','outputs','params','isfullscreen','changed', 'layout', *_useful_traits] 
+
+    def _interactive_params(self): return self._iapp_params
+    def _registered_callbacks(self): return tuple(self._iapp_callbacks.values())
+
+    def callback(self, css_class:str = None, *, timeit:bool = False, throttle:int = None, debounce:int = None, logger:callable = None) -> callable:
+        """Decorator to register a callback function in DashLab after initialization.
+        This is different from the @callback decorator used in InteractBase, as it allows dynamic registration of callbacks.
+        
+        **Parameters**:
+        - css_class: str, optional CSS class for the callback's output widget. Must start with 'out-'.
+        - timeit: bool, if True, logs function execution time.
+        - throttle: int, minimum interval between calls.
+        - debounce: int, delay before trailing call.
+        - logger: callable, optional logging function (e.g. print or logging.info).
+        
+        **Usage**:
+        ```python
+        @app.callback('out-myclass', timeit=True) # app is an instance of DashLab class
+        def my_callback(x, y):
+            print(f"x: {x}, y: {y}")
+        ```
+        
+        **Notes**:
+        - The callback function must accept parameters defined in the interactive_params of the app.
+        - If css_class is not provided, the callback will use the main output widget.
+        
+        **Returns**: The decorated function itself, which is registered as a callback in the app.
+        """
+        def decorator(func):
+            wrapped = callback(css_class, timeit=timeit, throttle=throttle, debounce=debounce, logger=logger)
+            if not callable(css_class):
+                wrapped = wrapped(func)
+            self._iapp_callbacks[wrapped.__name__] = wrapped
+            self._reset()
+            return wrapped
+        
+        if callable(css_class):
+            return decorator(css_class)
+        return decorator
