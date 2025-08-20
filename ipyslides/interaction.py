@@ -3,7 +3,7 @@ Enhanced version of ipywidgets's interact/interactive functionality.
 Use as interactive/@interact or subclass InteractBase. 
 """
 
-__all__ = ['DashLab','interactive','interact', 'var', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
+__all__ = ['Dashboard','interactive','interact', 'var', 'monitor', 'patched_plotly','disabled','print_error'] # other need to be explicity imported
 
 import re, textwrap
 import inspect 
@@ -218,7 +218,7 @@ class InteractBase(ipw.interactive, metaclass = _metaclass):
     """Enhanced interactive widgets with multiple callbacks and fullscreen support.
     
     Use `interctive` function or `@interact` decorator for simpler use cases. For comprehensive dashboards, subclass this class.
-    For a ready-to-use interactive application with registering callbacks later, use `DashLab` class.
+    For a ready-to-use interactive application with registering callbacks later, use `Dashboard` class.
     {features}
     **Basic Usage**:    
 
@@ -1014,7 +1014,7 @@ def interact(*funcs:List[Callable], auto_update:bool=True, post_init: callable=N
 
 
 @_format_docs(css_info = _css_info, **_docs)
-class DashLab(InteractBase):
+class Dashboard(InteractBase):
     """A ready-to-use interactive dashboard application which allows registering callbacks after initialization.
     {features}
     **Parameters**:
@@ -1030,8 +1030,8 @@ class DashLab(InteractBase):
     **Usage**:
 
     ```python
-    from ipyslides.interaction import DashLab
-    app = DashLab(x=5, y=True, z='.params') # no callbacks yet
+    from ipyslides.interaction import Dashboard
+    app = Dashboard(x=5, y=True, z='.params') # no callbacks yet
     
     @app.callback('out-f') # creates an output widget with class/name 'out-f'
     def f(x, z):
@@ -1073,7 +1073,7 @@ class DashLab(InteractBase):
     def _registered_callbacks(self): return tuple(self._iapp_callbacks.values())
 
     def callback(self, css_class:str = None, *, timeit:bool = False, throttle:int = None, debounce:int = None, logger:callable = None) -> callable:
-        """Decorator to register a callback function in DashLab after initialization.
+        """Decorator to register a callback function in Dashboard after initialization.
         This is different from the @callback decorator used in InteractBase, as it allows dynamic registration of callbacks.
         
         **Parameters**:
@@ -1085,7 +1085,7 @@ class DashLab(InteractBase):
         
         **Usage**:
         ```python
-        @app.callback('out-myclass', timeit=True) # app is an instance of DashLab class
+        @app.callback('out-myclass', timeit=True) # app is an instance of Dashboard class
         def my_callback(x, y):
             print(f"x: {x}, y: {y}")
         ```
