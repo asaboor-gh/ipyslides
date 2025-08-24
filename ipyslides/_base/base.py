@@ -435,7 +435,7 @@ class BaseSlides:
             with self.capture_content() as cap, self.code.context():
                 import time
 
-                @self.ei.interact(auto_update=False, post_init = lambda self: self.set_css(dict({'.out-main': dict(height='2em')},background='var(--bg2-color)')), date = False)  # self is Slides here
+                @self.dl.interact(auto_update=False, post_init = lambda self: self.set_css(dict({'.out-main': dict(height='2em')},background='var(--bg2-color)')), date = False)  # self is Slides here
                 def update_time(date): 
                     local_time = time.localtime()
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
@@ -453,7 +453,7 @@ class BaseSlides:
                     self.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
             
             self.write(
-                [self.doc(self.ei.interact,'Slides.ei')], 
+                [self.doc(self.dl.interact,'ipyslides.dashlab')], 
                 [*cap.outputs, c, self.doc(self.on_load,'Slides')],
             )
     

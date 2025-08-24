@@ -11,6 +11,6 @@ numpy
 pandas
 matplotlib
 voila>=0.4.0
-markdown-customblocks
 pillow>=9.3.0
 plotly==6.0.1
+dashlab

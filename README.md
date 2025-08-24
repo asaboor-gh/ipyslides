@@ -92,7 +92,7 @@ Support for various content types including:
 import numpy as np
 from ipywidgets import HTML
 
-@slides.ei.interact(html = HTML(), amplitude= (0, 2),frequency=(0, 5))
+@slides.dl.interact(html = HTML(), amplitude= (0, 2),frequency=(0, 5))
 def plot(html, amplitude, frequency):
     x = np.linspace(0, 2*np.pi, 100)
     y = amplitude * np.sin(frequency    * x)
@@ -100,14 +100,15 @@ def plot(html, amplitude, frequency):
     html.value = slides.plt2html(). value
 ```
 
-- For comprehensive dashbords, subclass `InteractBase`
+- For comprehensive dashbords, subclass `DashboardBase` or use `Dashboard` from `ipyslides.dashlab`:
 
 ```python
 import numpy as np
+import matplotlib.pyplot as plt
 from ipywidgets import HTML
-from ipyslides.interaction import InteractBase, callback 
+from ipyslides.dashlab import DashboardBase, callback 
 
-class MyDashboard(InteractBase):
+class MyDashboard(DashboardBase):
     def _interactive_params(self): # Define interactive parameters
         return {
             'html': HTML(),
@@ -138,7 +139,7 @@ dash.set_css(
         '.left-sidebar': {'background': '#eee','border-radius': '8px'},
     },
     center = { # can be set in main through '> .center' selector
-        '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}
+        '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'},
         'grid-template-columns': '5fr 3fr', # side-by-side layout for outputs
         'grid-gap': '4px', # central grid gap
         '> *': {'background-color': 'whitesmoke', 'border-radius': '8px','padding':'8px'}

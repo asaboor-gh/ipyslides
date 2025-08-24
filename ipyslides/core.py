@@ -14,7 +14,7 @@ from .xmd import xmd, fmt, get_main_ns
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, serializer
 from . import utils
-from . import interaction as _interac
+from . import dashlab
 
 _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 
@@ -135,7 +135,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.bokeh2html = bokeh2html
         self.get_logo   = get_logo
         self.icon       = _Icon  # Icon is useful to add many places
-        self.ei         = _interac # whole interaction module
+        self.dl         = dashlab # whole dashlab module
         self.write      = write
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.xmd        = xmd  # Extended markdown parser
@@ -174,6 +174,8 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     @property
     def extender(self): raise DeprecationWarning("Use `Slides.xmd.extensions` instead.")
+    @property
+    def ei(self): raise DeprecationWarning("Use `Slides.dl` or explicity import `dashlab` instead.")
 
     def parse(self,*args,**kwargs): raise DeprecationWarning("Use `Slides.xmd(content)` instead! That aligns with %%xmd magic.")
     def highlight(self, *args, **kwargs): raise DeprecationWarning("Use `Slides.code` instead which aligns with ::: code block in markdown.")

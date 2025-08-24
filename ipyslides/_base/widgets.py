@@ -9,9 +9,10 @@ from traitlets import observe
 import ipywidgets as ipw
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
+from dashlab import ListWidget, JupyTimer
 
 from . import styles
-from ._widgets import InteractionWidget, NotesWidget, ListWidget, JupyTimer
+from ._widgets import InteractionWidget, NotesWidget
 from .intro import get_logo, how_to_print
 from ..utils import html, htmlize
 from .. import formatters as fmtrs

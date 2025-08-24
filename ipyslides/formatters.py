@@ -16,6 +16,7 @@ from IPython.display import display, HTML, Audio, Video, Image as IPyImage
 from IPython.display import __dict__ as _all
 from IPython.utils.capture import RichOutput, capture_output
 from IPython import get_ipython
+from dashlab.utils import _inline_style
 
 __reprs = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 
@@ -272,17 +273,6 @@ def _highlight(code, language='python', name = None, css_class = None, style='de
         {_style}\n{start}
         <pre>{code_}
         </pre>\n{end}</div></div>'''
-
-def _inline_style(kws_or_widget):
-    "CSS inline style from keyword arguments having _ inplace of -. Handles widgets layout keys automatically."
-    if isinstance(kws_or_widget, ipw.DOMWidget):
-        kws = {k:v for k,v in kws_or_widget.layout.get_state().items() if v and (k[0]!='_')}
-    elif isinstance(kws_or_widget, dict):
-        kws = kws_or_widget
-    else:
-        raise TypeError("expects dict or ipywidgets.Layout!")
-    out = ''.join(f"{k.replace('_','-')}:{v};" for k,v in kws.items())
-    return f'style="{out}"' if kws else ''
     
 class Serializer:
     def __init__(self):

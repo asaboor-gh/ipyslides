@@ -4,7 +4,7 @@ _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html
 
 __all__ = sorted(_attrs)
 
-import os, re, json
+import os, re, json, textwrap
 import datetime
 import inspect
 import traceback
@@ -19,8 +19,9 @@ from PIL import Image as pilImage, ImageGrab
 from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.display import Image, display
+from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget # For export
+from dashlab.utils import _build_css # This is very light weight and too important dependency
 
-from ._base._widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption
 from .xmd import get_unique_css_class, capture_content, raw, error 
 from .source import code
@@ -138,63 +139,6 @@ def set_dir(path):
     finally:
         os.chdir(current)
 
-def _validate_key(key):
-    "Validate key for CSS,allow only string or tuple of strings. commas are allowed only in :is(.A,#B),:has(.A,#B) etc."
-    if not isinstance(key,str):
-        raise TypeError(f'key should be string, got {key!r}')
-
-    if ',' in key:
-        all_matches = re.findall(r'\((.*?)\)',key,flags=re.DOTALL)
-        for match in all_matches:
-            key = key.replace(f'{match}',match.replace(',','$'),1)  # Make safe from splitting with comma
-    return key
-
-def _build_css(selector, data):
-    "selector is tuple of string(s), data contains nested dictionaries of selectors, attributes etc."
-    content = '\n' # Start with new line so style tag is above it
-    children = []
-    attributes = []
-    
-    for key, value in data.items():
-        key = _validate_key(key) # Just validate key
-        if isinstance(value, dict):
-            children.append( (key, value) )
-        elif isinstance(value, (list, tuple)): # Fallbacks
-            for item in value:
-                attributes.append( (key, item) )
-        else: # str, int, float etc. No need to check. User is responsible for it
-            attributes.append( (key, value) )
-    if attributes:
-        content += re.sub(r'\s+\^','', (' '.join(selector) + " {\n").lstrip()) # Join nested tags to parent if it starts with ^
-        content += '\n'.join(f"\t{key.replace('_','-')} : {value};"  for key, value in attributes)  # _ allows to write dict(key=value) in python, but not in CSS props
-        content += "\n}\n"
-
-    for key, value in children:
-        if key.startswith('<'): # Make it root level
-            content += _build_css((key.lstrip('<'),), value)
-        elif key.startswith('@media') or key.startswith('@container'): # Media query can be inside a selector and will go outside
-            content += f"{key} {{\n\t"
-            content += _build_css(selector, value).replace('\n','\n\t').rstrip('\t') # last tab is bad
-            content += "}\n"
-        elif key.startswith('@'): # Page, @keyframes etc.
-            content += f"{key} {{\n\t"
-            content += _build_css((), value).replace('\n','\n\t').rstrip('\t')
-            content += "}\n"
-        elif  key.startswith(':root'): # This is fine
-            content+= _build_css((key,), value)
-        else:
-            old_sels = re.sub(r'\s+', ' ',' '.join(selector)).replace('\n','').split(',') # clean up whitespace
-            sels = ',\n'.join([f"{s} {k}".strip() for s in old_sels for k in key.split(',')]) # Handles all kind of nested selectors
-            content += _build_css((sels,), value)
-
-    
-    content = re.sub(r'\$', ',', content) # Replace $ with ,
-    content = re.sub(r'\n\s+\n|\n\n','\n', content) # Remove empty lines after tab is replaced above
-    content = re.sub(r'\t', '    ', content) # 4 space instead of tab is bettter option
-    content = re.sub(r'\^',' ', content) # Remove left over ^ from start of main selector
-        
-    return content
-
 def _styled_css(props : dict):
     if not isinstance(props, dict):
         raise TypeError("props should be a dictionay of CSS selectors and properties.")
@@ -209,18 +153,7 @@ def _styled_css(props : dict):
     props = {k:v for k,v in props.items() if (isinstance(v,dict) or k.lstrip(' ^<'))} # Remove root attrs and top level access
     return XTML(f"<style>{_build_css((f'{klass}',),props)}</style>")
 
-_dict2css = """
-CSS is formatted using a `props` nested dictionary to simplify the process. 
-There are few special rules in `props`:
-
-- All nested selectors are joined with space, so code`'.A': {'.B': ... }` becomes code['css']`.A .B {...}` in CSS.
-- A '^' in start of a selector joins to parent selector without space, so code`'.A': {'^:hover': ...}` becomes code['css']`.A:hover {...}` in CSS. You can also use code`'.A:hover'` directly but it will restrict other nested keys to hover only.
-- A list/tuple of values for a key in dict generates CSS fallback, so code`'.A': {'font-size': ('20px','2em')}` becomes code['css']`.A {font-size: 20px; font-size: 2em;}` in CSS.
-
-Read about specificity of CSS selectors [here](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity).
-"""
-
-_css_docstring = htmlize(_dict2css + f"""                      
+_css_docstring = htmlize(textwrap.dedent(_build_css.__doc__) + f"""                      
 ```python
 props = {json.dumps(_example_props, indent=2)}
 ```
