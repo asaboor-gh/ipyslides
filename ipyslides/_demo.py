@@ -138,9 +138,12 @@ def demo_slides(slides):
             See alert`race_plot` function at end of slides.
             ''')
         
-        def display_plot(): return race_plot().display()
+        def display_plot(btn): return race_plot().display()
         
-        slides.write(slides.dl.interactive(display_plot), rslide.get_source()) # Only first columns will update
+        slides.write(
+            slides.dl.interactive(display_plot, btn = slides.dl.button('Refresh Plot', icon='refresh')), 
+            rslide.get_source()
+        ) # Only first columns will update
 
     with slides.build(-1) as s:
         slides.write('## Animations with Widgets')

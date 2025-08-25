@@ -435,8 +435,8 @@ class BaseSlides:
             with self.capture_content() as cap, self.code.context():
                 import time
 
-                @self.dl.interact(auto_update=False, post_init = lambda self: self.set_css(dict({'.out-main': dict(height='2em')},background='var(--bg2-color)')), date = False)  # self is Slides here
-                def update_time(date): 
+                @self.dl.interact(post_init = lambda self: self.set_css(dict({'.out-main': dict(height='2em')},background='var(--bg2-color)')), date = False, btn = self.dl.button())  # self is Slides here
+                def update_time(date, btn): 
                     local_time = time.localtime()
                     objs = ['Time: {3}:{4}:{5}'.format(*local_time)] # Print time in HH:MM:SS format
                     if date:

@@ -127,7 +127,7 @@ class MyDashboard(DashboardBase):
     def text(self, amplitude, frequency):
         print(f"Amplitude: {amplitude}\n Frequency: {frequency}")
 
-dash = MyDashboard(auto_update=False)
+dash = MyDashboard()
 dash.set_layout( # Can also be set via post_init callback
     left_sidebar = dash.groups.controls, 
     center = ['html','out-text'], # out-plot, out-text collected in center
