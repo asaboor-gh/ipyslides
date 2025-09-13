@@ -404,10 +404,7 @@ class Serializer:
         if isinstance(box_widget,ipw.HBox):
             kwargs.update(dict(display="flex",flex_flow="row nowrap"))
         elif isinstance(box_widget,ipw.VBox):
-            if 'ips-interact' in box_widget._dom_classes:
-                kwargs.update(dict(display='grid'))
-            else:
-                kwargs.update(dict(display="flex",flex_flow="column nowrap"))
+            kwargs.update(dict(display="flex",flex_flow="column nowrap"))
         
         kwargs.update({k:v for k,v in box_widget.layout.get_state().items() if v and k[0]!='_'}) # only those if not None
         css_class = ' '.join(box_widget._dom_classes) # To keep style of HTML widget, latest as well
