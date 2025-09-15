@@ -106,31 +106,28 @@ def plot(html, amplitude, frequency):
 import numpy as np
 import matplotlib.pyplot as plt
 from ipywidgets import HTML
-from ipyslides.dashlab import DashboardBase, callback 
+from ipyslides.dashlab import Dashboard
 
-class MyDashboard(DashboardBase):
-    def _interactive_params(self): # Define interactive parameters
-        return {
-            'html': HTML(),
-            'amplitude': (0, 2),
-            'frequency': (0, 5),
-        }
+dash = Dashboard(
+    html = HTML(),
+    amplitude = (0, 2),
+    frequency = (0, 5),
+)
 
-    @callback
-    def plot(self, html, amplitude, frequency):
-        x = np.linspace(0, 2*np.pi, 100)
-        y = amplitude * np.sin(frequency * x)
-        plt.plot(x, y)
-        html.value = slides.plt2html().value
-    
-    @callback('out-text')
-    def text(self, amplitude, frequency):
-        print(f"Amplitude: {amplitude}\n Frequency: {frequency}")
+@dash.callback
+def plot(self, html, amplitude, frequency):
+    x = np.linspace(0, 2*np.pi, 100)
+    y = amplitude * np.sin(frequency * x)
+    plt.plot(x, y)
+    html.value = slides.plt2html().value # can be directly shown on out-main
 
-dash = MyDashboard()
-dash.set_layout( # Can also be set via post_init callback
-    left_sidebar = dash.groups.controls, 
-    center = ['html','out-text'], # out-plot, out-text collected in center
+@dash.callback('out-text')
+def text(self, amplitude, frequency):
+    print(f"Amplitude: {amplitude}\n Frequency: {frequency}")
+
+dash.set_layout( 
+    left_sidebar = ['*ctrl'], # all controls in left sidebar 
+    center = ['html','out-.*'], # out-main, out-text collected in center
     pane_widths = [3,5,0]
 )
 dash.set_css(
