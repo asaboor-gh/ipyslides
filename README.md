@@ -144,7 +144,7 @@ dash.set_css(
 display(dash)
 ```
 ![Dashboard Example](interact.png)
-See more examples in [einteract repository](https://github.com/asaboor-gh/einteract) and on [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/einteract/HEAD?urlpath=%2Fdoc%2Ftree%2Feinteract-demo.ipynb).
+See more examples in [DashLab repository](https://github.com/asaboor-gh/dashlab) and try it out in [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/notebooks/index.html?path=dashlab.ipynb)
 
 - And much more!
 
