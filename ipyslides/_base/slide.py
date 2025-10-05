@@ -159,7 +159,9 @@ class Slide:
     
     def rebuild(self,**kwargs):
         """Rebuild a makrdown slide to update varaiables form kwargs and notebook scope! 
-        Variables on slide will be substituted from notebook if not in kwargs.
+        Variables on slide will be substituted from notebook if not in kwargs. 
+        To manually update all markdown slides, use `Slides.rebuild(**kwargs)` unless 
+        you need unique variables for each slide.
         """
         if (extras := [k for k in kwargs if not k in self._has_vars]):
             print(f"Variables {extras} not in required variables {self.vars}")

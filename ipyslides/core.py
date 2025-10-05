@@ -217,6 +217,23 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._slides_per_cell.extend(spc) # was cleared above in unregister
             self._register_postrun_cell() # should be back
     
+    def rebuild(self, **kwargs):
+        """Rebuild all markdown slides where given variables are used.
+        To have different values of same variable in different slides, 
+        use `slides[number,].rebuild(**vars)` instead.
+        
+        ::: note
+            In Jupyter notebook, variables are tracked automatically after each cell execution.
+            You only need to call this function when you want to update variables inside a python script or manually.
+        """
+        keys = (k for s in self.all_slides for k in s._req_vars) # All slides vars names
+        self._md_vars.update({key:value for key, value in kwargs.items() if key in keys}) # sync from given with only matching keys
+        
+        with self.navigate_back():
+            for s in self.markdown_slides:
+                if kwargs.keys() & s._req_vars: # Intersection of keys
+                    s._rebuild(True) # only update if something changed on a slide
+    
     def _update_vars_postrun(self, b = False):
         with suppress(Exception): # Remove previous on each if exits
             self.shell.events.unregister("post_run_cell", self._md_post_run_cell)
