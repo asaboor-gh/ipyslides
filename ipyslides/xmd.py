@@ -326,8 +326,8 @@ class XMarkdown(Markdown):
             return self._fmt_ns # always preferred
         elif self._slides and self._slides.this and self._slides.this._markdown:
             return { 
-                **{k:v for k,v in get_main_ns().items() if k not in self._slides.this._req_vars}, # top level
-                **self._slides._md_vars, # by Notebook/Slides.rebuild variable update,
+                **self._slides._nb_vars, # top Notebook level
+                **self._slides._md_vars, # by global Slides.rebuild variable update,
                 **self._slides.this._md_vars, # by Slide.rebuild after fmt
             } # slide specific variables based on scope
         return get_main_ns()  # top scope at end

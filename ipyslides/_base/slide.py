@@ -165,9 +165,9 @@ class Slide:
         
         kwargs are reset on each call, so you can set no variables to just update from notebook scope.
         """
-        if (extras := [k for k in kwargs if not k in self._has_vars]):
+        if (extras := [k for k in kwargs if not k in self._req_vars(0)]):
             print(f"Variables {extras} not in required variables {self.vars}")
-        self._md_vars = {k:v for k,v in kwargs.items() if k in self._has_vars} # Rest on each run, don't pile up
+        self._md_vars = {k:v for k,v in kwargs.items() if k in self._req_vars(0)} # Rest on each run, don't pile up
         return self._rebuild(True)
     
     def _rebuild(self, go_there=False):
@@ -179,16 +179,24 @@ class Slide:
             self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
             self._app._update_vars_postrun(True) # Keep updating after this
     
-    @property
-    def _req_vars(self):
-        "Only vars not set by rebuild shoul be taken from top namespace."
-        return tuple([v for v in self._has_vars if not v in self._md_vars])
+    def _req_vars(self, level=0):
+        "Returns varaibales not set at different levels. 0: Slide rebuild, 1: Slides rebuild, 2: Notebook scope, 3: Undefined."
+        if level == 0: # only vars not set by rebuild, so all vars
+            return self._has_vars
+        elif level == 1: # only vars not set by rebuild,
+            return tuple([v for v in self._req_vars(0) if not v in self._md_vars]) 
+        elif level == 2: # only vars not set by rebuild and global rebuild
+            return tuple([v for v in self._req_vars(1) if not v in self._app._md_vars])
+        else: # all undefinded vars
+            return tuple([v for v in self._req_vars(2) if not v in self._app._nb_vars])
     
     @property
     def vars(self):
         "Get variables names info by their enclosing scope on this slide."
         return {
-            'by:__main__': self._req_vars, 
+            'by:Undefined': tuple(self._req_vars(3)),
+            'by:Notebook': tuple(self._app._nb_vars.keys() & self._req_vars(2)),
+            'by:Slides.rebuild': tuple(self._app._md_vars.keys() & self._req_vars(1)),
             'by:Slide.rebuild': tuple(self._md_vars.keys())
         }
 

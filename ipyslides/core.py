@@ -156,7 +156,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._next_number = 0  # Auto numbering of slides should be only in python scripts
         self._citations = {}  # Initialize citations dictionary
         self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
-        self._md_vars = {} # will be handled by a post run cell
+        self._nb_vars = {} # will be handled by a post run cell
+        self._md_vars = {} # Will be handled by rebuild and take precedence over notebook scope
 
         self._set_saved_citations() # from previous session
         self.wprogress = self.widgets.sliders.progress
@@ -220,18 +221,19 @@ class Slides(BaseSlides,metaclass=Singleton):
     def rebuild(self, **kwargs):
         """Rebuild all markdown slides where given variables are used.
         To have different values of same variable in different slides, 
-        use `slides[number,].rebuild(**vars)` instead.
+        use `slides[number,].rebuild(**vars)` instead. kwargs are reset on each call, 
+        so you can set no variables to just update from notebook scope.
         
         ::: note
             In Jupyter notebook, variables are tracked automatically after each cell execution.
             You only need to call this function when you want to update variables inside a python script or manually.
         """
-        keys = (k for s in self.all_slides for k in s._req_vars) # All slides vars names
-        self._md_vars.update({key:value for key, value in kwargs.items() if key in keys}) # sync from given with only matching keys
+        keys = (k for s in self.all_slides for k in s._req_vars(1)) # All slides vars names
+        self._md_vars = {key:value for key, value in kwargs.items() if key in keys} # reset on each call
         
         with self.navigate_back():
             for s in self.markdown_slides:
-                if kwargs.keys() & s._req_vars: # Intersection of keys
+                if kwargs.keys() & s._req_vars(1): # Intersection of keys
                     s._rebuild(True) # only update if something changed on a slide
     
     def _update_vars_postrun(self, b = False):
@@ -244,17 +246,18 @@ class Slides(BaseSlides,metaclass=Singleton):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not proceed for side effects
         
-        keys = (k for s in self.all_slides for k in s._req_vars) # All slides vars names
+        keys = (k for s in self.all_slides for k in s._req_vars(2)) # All slides vars names
         user_ns = get_main_ns() # works both in top running module and notebook
+        self._nb_vars = {k:v for k,v in self._nb_vars.items() if k in user_ns} # remove deleted variables
         new_vars = dict((key, user_ns.get(key)) for key in keys if key in user_ns)
-        diff = {key:value for key, value in new_vars.items() if not (key in self._md_vars)} # diff operator ^ can only work for hashable types
-        diff.update({key:value for key, value in new_vars.items() if value != self._md_vars.get(key,None)}) 
+        diff = {key:value for key, value in new_vars.items() if not (key in self._nb_vars)} # diff operator ^ can only work for hashable types
+        diff.update({key:value for key, value in new_vars.items() if value != self._nb_vars.get(key,None)}) 
         
         if diff:
-            self._md_vars.update(new_vars) # sync from latest
+            self._nb_vars.update(new_vars) # sync from latest
             with self.navigate_back():
                 for slide in self.all_slides: 
-                    if diff.keys() & slide._req_vars: # Intersection of keys
+                    if diff.keys() & slide._req_vars(2): # Intersection of keys
                         slide._rebuild(True)
     
     def _post_run_cell(self, result):
