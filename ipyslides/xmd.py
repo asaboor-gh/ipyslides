@@ -324,11 +324,12 @@ class XMarkdown(Markdown):
         "Top level namespace or set by user inside `Slides.fmt`."
         if self._fmt_ns: 
             return self._fmt_ns # always preferred
-        elif self._slides and self._slides.this:
+        elif self._slides and self._slides.this and self._slides.this._markdown:
             return { 
-                **self._slides._md_vars, # by Notebook variable update, last
+                **{k:v for k,v in get_main_ns().items() if k not in self._slides.this._req_vars}, # top level
+                **self._slides._md_vars, # by Notebook/Slides.rebuild variable update,
                 **self._slides.this._md_vars, # by Slide.rebuild after fmt
-            } or get_main_ns() # not yet in _md_vars
+            } # slide specific variables based on scope
         return get_main_ns()  # top scope at end
 
     def _parse(self, xmd, returns = True): # not intended to be used directly
