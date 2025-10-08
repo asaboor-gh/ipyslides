@@ -15,7 +15,7 @@ def demo_slides(slides):
     ''', mode = 'footnote')
 
     # title slide should alway be overwritten by 0 
-    slides.build(0, slides.fmt("""
+    slides.build(0, """
     ```md-after -c
     # Creating Slides
     ::: align-center width=50%
@@ -27,7 +27,7 @@ def demo_slides(slides):
     
     ::: display align-center               
         vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
-    ```""", btn = slides.widgets.buttons.info))
+    ```""", btn = slides.widgets.buttons.info)
     
     # build_ is same as build(-1)
     slides.build_(f"""
@@ -45,7 +45,7 @@ def demo_slides(slides):
     Version: `{slides.version}`
     """)
 
-    slides.build(-1, slides.fmt("""
+    slides.build(-1, """
     ::: md-after
         section`Adding informative TOC` 
         ```multicol .block-blue
@@ -60,9 +60,9 @@ def demo_slides(slides):
         %{btn}  
 
         ::: note-tip
-            Above button was encapsulated by `fmt`, so creating a variable `btn` can't overwrite it.                    
+            Above `btn` variable can be updated later via `Slides[number,].rebuild` or `Slides.rebuild` methods.                 
         ```                                
-    """,btn=slides.draw_button))
+    """,btn=slides.draw_button)
 
     # Matplotlib
     with slides.build_() as sl:
@@ -274,7 +274,7 @@ def demo_slides(slides):
         )
         s.get_source().display(True)
 
-    slides.build(-1, slides.fmt(r'''
+    slides.build(-1, r'''
     %++
     ## $ \LaTeX $ in Slides
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
@@ -295,7 +295,7 @@ def demo_slides(slides):
             $$ ax^2 + bx + c = 0 $$
             {.text-huge}
         ```
-    ''', var = "'I was a variable'"))
+    ''', var = "'I was a variable'")
 
     with slides.build(-1) as some_slide:
         slides.write('## Serialize Custom Objects to HTML\nThis is useful for displaying user defined/third party objects in slides section`Custom Objects Serilaization`')

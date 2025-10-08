@@ -14,7 +14,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML, htmlize
-from ..xmd import error, fmt, get_slides_instance, resolve_included_files
+from ..xmd import error, fmt, get_slides_instance, resolve_included_files, _matched_vars
 from ..utils import _css_docstring
 
 
@@ -70,7 +70,7 @@ class BaseSlides:
     def get_source(self, title = 'Source Code', **kwargs):
         "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.code`."
         sources = []
-        for slide in self.all_slides:
+        for slide in self[:]:
             if slide._source['text']:
                 kwargs['name'] = f'{slide._source["language"].title()}: Slide {slide.index}' #override name
                 sources.append(slide.get_source(**kwargs))
@@ -101,16 +101,16 @@ class BaseSlides:
             with self.widgets._tmp_out:
                 display(*objs)
         
-    def _from_markdown(self, start, /, content, synced=False):
+    def _from_markdown(self, start, /, content, synced=False, _vars=None):
         "Sames as `Slides.build` used as a function."
         if self.this:
             raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
         
-        if not isinstance(content, (str,fmt)): #check path later or it will throw error
-            raise TypeError(f"content expects a makrdown text block or fmt, got {content!r}")
+        if not isinstance(content, str): #check path later or it will throw error
+            raise TypeError(f"content expects a makrdown string, got {content!r}")
         
-        content, fmt_kws = fmt._astuple(content) # fmt used on top level, or string means no keywords
         content = re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0]
+        md_kws = _vars or {} # given from build function call
 
         if synced:
             content = self._process_citations(content)
@@ -122,14 +122,16 @@ class BaseSlides:
         
         chunks = _parse_markdown_text(content)
         handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
+        mdvars  = [{k:v for k,v in md_kws.items() if k in _matched_vars(chunk)} for chunk in chunks] # vars used in each chunk
 
-        for i,chunk in enumerate(chunks):
+        for chunk, hdl, mvs in zip(chunks, handles, mdvars):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            if any(['Out-Sync' in handles[i]._css_class, chunk != handles[i]._markdown]):
+            if any(['Out-Sync' in hdl._css_class, chunk != hdl._markdown, mvs != hdl._md_vars]):
                 with self._loading_splash(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
-                    self._slide(f'{i + start} -m', chunk, fmt_kws=fmt_kws, synced=synced)
+                    hdl._md_vars = mvs # set corresponding vars to access while building slide
+                    self._slide(f'{hdl.number} -m', chunk)
             else: # when slide is not built, scroll buttons still need an update to point to correct button
-                self._slides_per_cell.append(handles[i])
+                self._slides_per_cell.append(hdl)
         
         # Return refrence to slides for quick update
         return handles
@@ -226,11 +228,11 @@ class BaseSlides:
         else:
             print("There was no markdown file linked to sync!")
     
-    def build_(self, content = None):
+    def build_(self, content = None, /, **vars):
         "Same as `build` but no slide number required inside Python file!"
         if self.inside_jupyter_notebook(self.build_):
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
-        return self.build(self._next_number, content=content)
+        return self.build(self._next_number, content, **vars)
 
     class build(ContextDecorator):
         r"""Build slides with a single unified command in three ways:
@@ -241,20 +243,20 @@ class BaseSlides:
             - Use code`fsep()` from top import or code`Slides.fsep()` to split content into frames.
             - Use code`for item in fsep.iter(iterable):` block to automatically add frame separator.
             - Use code`fsep(True)` / code`fsep.iter(...,stack=True)` to join content of frames incrementally.
-        3. code`slides.build(number, str | fmt)` creates many slides with markdown content. Equivalent to code`%%slide number -m` magic in case of one slide.
+        3. code`slides.build(number, str, **vars)` creates many slides with markdown content. Equivalent to code`%%slide number -m` magic in case of one slide.
             - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to code`Slides.sync_with_file` too.
             - Use `%++` to join content of frames incrementally.
             - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
             - See `slides.xmd.syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
-            - In case of str input, varaiables such as \%{var} can be updated by creating/updating `var` in notebook.
-            - In case of `fmt(str, **kwargs)`, varaiables are picked from `kwargs` or local scope and can't be changed later. Useful in python scripts.
+            - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
         
-
+        
         ::: note-tip
             - In all cases, `number` could be used as `-1`.
-            - Use yoffet`integer in px` in markdown or code`Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
+            - Use yoffet`integer in percent` in markdown or code`Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
             - You can use code`build_(...)` (with underscore at end) in python file instead of code`build(-1,...)`.
+            - `**vars` are ignored silently if `build` is used as contextmanager or decorator.
         """
         @property
         def _app(self):
@@ -263,7 +265,7 @@ class BaseSlides:
                 kls._slides = get_slides_instance()
             return kls._slides
         
-        def __new__(cls, slide_number, /, content = None):
+        def __new__(cls, slide_number, content = None, /, **vars):
             self = super().__new__(cls) # instance
             self._snumber = self._app._fix_slide_number(slide_number)
             
@@ -271,8 +273,8 @@ class BaseSlides:
                 if (content is not None) and any([code.startswith(c) for c in ('@', 'with')]):
                     raise ValueError("content should be None while using as decorator or contextmanager!")
                 
-                if isinstance(content, (str,fmt)) and not code.startswith('with'): 
-                    return self._app._from_markdown(self._snumber, content)
+                if isinstance(content, str) and not code.startswith('with'): 
+                    return self._app._from_markdown(self._snumber, content, _vars = vars)
 
                 if callable(content) and not code.startswith('with'):
                     with _build_slide(self._app, self._snumber) as s: 
@@ -284,7 +286,7 @@ class BaseSlides:
                     return s
             
             if content is not None:
-                raise ValueError(f"content should be None, str,fmt, or callable. got {type(content)}")
+                raise ValueError(f"content should be None, str, or callable. got {type(content)}")
 
             return self # context manager
 
@@ -303,7 +305,7 @@ class BaseSlides:
             return f"<ContextDecorator build at {hex(id(self))}>"
         
         def __call__(self, func):
-            "Use @build decorator. func accepts slide as arguemnt."
+            "Use @build decorator. func accepts slide as argument."
             type(self)(self._snumber, func)
             
 
@@ -339,7 +341,7 @@ class BaseSlides:
                     ^`1`My University is somewhere in the middle of nowhere
                 ''', logo = self.get_logo("4em"))).display()
         
-        self.build(-1, self.fmt('''
+        self.build(-1, '''
             ```md-after
                 section`Introduction` 
                 ```multicol .block-green
@@ -349,7 +351,7 @@ class BaseSlides:
                 Oh we can use inline columns stack`Column A || Column B` here and what not!
                 %{btn}
                 ```
-            ```''', btn = self.draw_button))
+            ```''', btn = self.draw_button)
             
         with self.build(-1):
             self.write('# Main App')
@@ -457,7 +459,7 @@ class BaseSlides:
                 [*cap.outputs, c, self.doc(self.on_load,'Slides')],
             )
     
-        self.build(-1, fmt("""
+        self.build(-1, """
         ```md-after -c
         stack[(3,7)]`//
         ## Content Styling
@@ -467,9 +469,9 @@ class BaseSlides:
         || %{self.css_styles}
         //`     
         ```
-        """))
+        """, self=self)
         
-        self.build(-1, self.fmt('''
+        self.build(-1, '''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `Slides.code` cite`B` or within markdown using named code blocks:
@@ -480,7 +482,7 @@ class BaseSlides:
         import React, { Component } from "react";
         ```
         Source code of slide can be embeded via variable too: %{self.this.source}
-        ''', self=self))
+        ''', self=self)
 
         
         with self.build(-1):
@@ -565,7 +567,6 @@ class BaseSlides:
     
 def _parse_markdown_text(text_block):
     "Parses a Markdown text block and returns text for title and each slide."
-    # user may used fmt
     lines = textwrap.dedent(text_block).splitlines() # Remove overall indentation
     breaks = [-1] # start, will add +1 next
     for i,line in enumerate(lines):

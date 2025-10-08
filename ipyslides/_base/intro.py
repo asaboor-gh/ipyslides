@@ -48,12 +48,11 @@ with slides.build(-1):
 ```
 
 ```python
-slides.build(-1, slides.fmt('''
+slides.build(-1, r'''
 Markdown content can create many slides at once here!
-fmt can encapsulate varaiables like \%{var}.
-This is useful inside python scripts. Markdown not encapsulated
-by fmt can be used to update varaiables from notebook later.
-''',var="I am a variable"))
+Variables like \%{var} can be provided after content or left to be updated later in notebook.
+This is useful inside python scripts. 
+''',var="I am a variable")
 ```
 
 ```python

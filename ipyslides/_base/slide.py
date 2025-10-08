@@ -7,7 +7,7 @@ from IPython.utils.capture import RichOutput
 
 from . import styles
 from ..utils import XTML, html, _styled_css, _build_css
-from ..xmd import capture_content, _matched_vars
+from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data
 from ._layout_css import background_css
     
@@ -53,7 +53,7 @@ class Slide:
         self._indexf = 0 # current frame index
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
-        self._has_vars = () # Update in _build_slide function
+        self._has_vars = () # Update in _slide function for markdown slides
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._split_frames = True
         self._has_top_frame = True
@@ -157,22 +157,27 @@ class Slide:
         self._reset_frames()
         self._app._update_toc()
     
-    def rebuild(self,**kwargs):
-        """Rebuild a makrdown slide to update varaiables form kwargs and notebook scope! 
-        Variables on slide will be substituted from notebook if not in kwargs. 
+    def rebuild(self, *pop_vars, **vars):
+        """Rebuild a makrdown slide to update varaiables form vars and higher scopes! 
+        Variables on slide will be substituted from vars, then those set by `Slides.rebuild` and finally from notebook. 
         To manually update all markdown slides, use `Slides.rebuild(**kwargs)` unless 
         you need unique variables for each slide.
         
-        kwargs are reset on each call, so you can set no variables to just update from notebook scope.
+        `pop_vars` are variable names to be removed from this slide before rebuilding and they will be picked from higher scopes.
+        This takes precedence over supplied `vars`. To see which variables are set at which scope, use `slide.vars` readonly property.
         """
-        if (extras := [k for k in kwargs if not k in self._req_vars(0)]):
+        if (extras := [k for k in vars if not k in self._req_vars(0)]):
             print(f"Variables {extras} not in required variables {self.vars}")
-        self._md_vars = {k:v for k,v in kwargs.items() if k in self._req_vars(0)} # Rest on each run, don't pile up
+        self._md_vars.update({k:v for k,v in vars.items() if k in self._req_vars(0)})
+        
+        for k in pop_vars: # takes precedence over vars
+            self._md_vars.pop(k, None) # avoid key error if not present
+        
         return self._rebuild(True)
     
     def _rebuild(self, go_there=False):
         if not self._markdown:
-            raise RuntimeError("can only rebuild slides created purely from markdown (excluding fmt)!")
+            raise RuntimeError("can only rebuild slides created purely from markdown!")
         
         with self._app.navigate_back(self.index if go_there else None):
             self._app._slide(f'{self.number} -m', self._markdown)
@@ -621,6 +626,3 @@ def _build_slide(app, slide_number):
         if content.data.get('application/vnd.jupyter.widget-view+json',{}):
             this._has_widgets = True
             break # No need to check other widgets if one exists
-
-    if this._markdown:
-        this._has_vars = _matched_vars(this._markdown)

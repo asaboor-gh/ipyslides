@@ -10,7 +10,7 @@ from pathlib import Path
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import xmd, fmt, get_main_ns
+from .xmd import xmd, fmt, get_main_ns, _matched_vars
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, serializer
 from . import utils
@@ -156,7 +156,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._next_number = 0  # Auto numbering of slides should be only in python scripts
         self._citations = {}  # Initialize citations dictionary
         self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
-        self._nb_vars = {} # will be handled by a post run cell
+        self._last_vars = {} # will be handled by a post run cell
         self._md_vars = {} # Will be handled by rebuild and take precedence over notebook scope
 
         self._set_saved_citations() # from previous session
@@ -218,23 +218,38 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._slides_per_cell.extend(spc) # was cleared above in unregister
             self._register_postrun_cell() # should be back
     
-    def rebuild(self, **kwargs):
-        """Rebuild all markdown slides where given variables are used.
+    def rebuild(self, *pop_vars, **vars):
+        """Rebuild all markdown slides where given `**vars` are used.
         To have different values of same variable in different slides, 
-        use `slides[number,].rebuild(**vars)` instead. kwargs are reset on each call, 
-        so you can set no variables to just update from notebook scope.
+        use `slides[number,].rebuild(**vars)` instead. Use `pop_vars`
+        to remove variables from slide before rebuilding, they will be picked
+        from notebook scope and take precedence over `**vars`. 
+        
+        The variables set on per slide basis by `Slide[number,].rebuild` or provided
+        during `Slides.build`  always take precedence over these variables unless they are removed.
         
         ::: note
             In Jupyter notebook, variables are tracked automatically after each cell execution.
             You only need to call this function when you want to update variables inside a python script or manually.
         """
-        keys = (k for s in self.all_slides for k in s._req_vars(1)) # All slides vars names
-        self._md_vars = {key:value for key, value in kwargs.items() if key in keys} # reset on each call
+        keys = (k for s in self.markdown_slides for k in s._req_vars(1)) # All slides vars names
+        self._md_vars.update({key:value for key, value in vars.items() if key in keys})
+        
+        for k in pop_vars: # takes precedence over vars
+            self._md_vars.pop(k, None) # avoid key error if not present
         
         with self.navigate_back():
             for s in self.markdown_slides:
-                if kwargs.keys() & s._req_vars(1): # Intersection of keys
+                print(s.vars)
+                if vars.keys() & s._req_vars(1): # Intersection of keys
                     s._rebuild(True) # only update if something changed on a slide
+    
+    @property
+    def _nb_vars(self): # variables from notebook scope, not set by build/rebuild
+        # Keep this as property, as any pop out from rebuild will be picked at latest
+        keys = [k for s in self.markdown_slides for k in s._req_vars(2)] # All markdown slides vars names
+        user_ns = get_main_ns() # works both in top running module and notebook
+        return {k: user_ns[k] for k in keys if k in user_ns} # avoid undefined variables
     
     def _update_vars_postrun(self, b = False):
         with suppress(Exception): # Remove previous on each if exits
@@ -246,17 +261,13 @@ class Slides(BaseSlides,metaclass=Singleton):
         if result.error_before_exec or result.error_in_exec:
             return  # Do not proceed for side effects
         
-        keys = (k for s in self.all_slides for k in s._req_vars(2)) # All slides vars names
-        user_ns = get_main_ns() # works both in top running module and notebook
-        self._nb_vars = {k:v for k,v in self._nb_vars.items() if k in user_ns} # remove deleted variables
-        new_vars = dict((key, user_ns.get(key)) for key in keys if key in user_ns)
-        diff = {key:value for key, value in new_vars.items() if not (key in self._nb_vars)} # diff operator ^ can only work for hashable types
-        diff.update({key:value for key, value in new_vars.items() if value != self._nb_vars.get(key,None)}) 
-        
+        new_vars = self._nb_vars # latest
+        diff = {key:value for key, value in new_vars.items() if not (key in self._last_vars)} # diff operator ^ can only work for hashable types
+        diff.update({key:value for key, value in new_vars.items() if value != self._last_vars.get(key,None)}) 
         if diff:
-            self._nb_vars.update(new_vars) # sync from latest
+            self._last_vars.update(new_vars) # update to compare next time
             with self.navigate_back():
-                for slide in self.all_slides: 
+                for slide in self.markdown_slides: 
                     if diff.keys() & slide._req_vars(2): # Intersection of keys
                         slide._rebuild(True)
     
@@ -563,19 +574,14 @@ class Slides(BaseSlides,metaclass=Singleton):
                 self._set_ctns(json.loads(path.read_text()))
             
     @property
-    def cited_slides(self):
-        "Return slides which have citations. See also `all_slides`, `markdown_slides`."
+    def cited_slides(self) -> tuple[Slide]:
+        "Tuple of all slides which have citations. See also `markdown_slides`."
         return tuple([s for s in self._iterable if s._citations])
     
     @property
-    def markdown_slides(self):
-        "Return all slides built from markdown. See also `all_slides`, `cited_slides`."
+    def markdown_slides(self) -> tuple[Slide]:
+        "Tuple of all slides built from markdown. See also `cited_slides`."
         return tuple([s for s in self._iterable if s._markdown])
-    
-    @property
-    def all_slides(self):
-        "Return all slides. Another way is using `Slides[:]` but explicitly. See also `cited_slides`, `markdown_slides`."
-        return self._iterable
 
     def section(self, text):
         """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
@@ -585,7 +591,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         self.this._section = text  # assign before updating toc
         
-        for s in self.all_slides:
+        for s in self[:]:
             if s._toc_args and s != self.this: 
                 s.update_display(go_there=False)
  
@@ -750,7 +756,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         return self._next_number # for python file as well as first run of cell in notebook
 
     # defining magics and context managers
-    def _slide(self, line, cell, fmt_kws={}, synced=False): # fmt_kws for markdown variables substitution
+    def _slide(self, line, cell):
         """Capture content of a cell as `slide`.
             ---------------- Cell ----------------
             %%slide 1
@@ -767,6 +773,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
             - Frames separator (--) just after `multicol` creates incremental columns.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
+            - 
 
         """
         line = line.strip().split()  # VSCode bug to inclue \r in line
@@ -791,20 +798,15 @@ class Slides(BaseSlides,metaclass=Singleton):
             with _build_slide(self, slide_number) as s:
                 prames = re.split(r"^\s*--\s*$", s._markdown, flags=re.DOTALL | re.MULTILINE)   
                 # Update source beofore parsing content to make it available for variable testing
-                s._set_source(
-                    str(fmt(cell,**fmt_kws)) if fmt_kws else cell, # nice str repr of fmt
-                    "python" if fmt_kws else "markdown"
-                )  
-
+                s._set_source(cell, "markdown") # set source before running to have it available for user
+                s._has_vars = _matched_vars(cell) # update has_vars before running to have ready for auto rebuild
+                
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
                         s.stack_frames(True)
                     
-                    if fmt_kws:
-                        fmt(frm, **fmt_kws).parse(returns = False) # enclosed scope set by user
-                    else:
-                        self.xmd(frm, returns = False) # left for notebook to handle
+                    self.xmd(frm, returns = False) # parse and display content
                     
                     if len(frames) > 1:
                         self.fsep() # should not be before, needs at least one thing there
@@ -855,7 +857,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def _force_update(self, btn=None):
         with self._loading_splash(btn or self.widgets.buttons.refresh):
-            for slide in self.all_slides:
+            for slide in self[:]:  # Update all slides
                 if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotlty etc
                     slide.update_display(go_there=False)
             
