@@ -412,7 +412,7 @@ class BaseSlides:
             self.doc(self.alt,'Slides').display()
             
             members = sorted((
-                'AnimationSlider alert bokeh2html bullets styled fmt color details doc '
+                'AnimationSlider alert bokeh2html bullets esc styled fmt color details doc '
                 'today error zoomable highlight html iframe image frozen notify plt2html '
                 'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
             ).split())

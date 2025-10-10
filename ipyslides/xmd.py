@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
 from html.parser import HTMLParser
-from typing import Optional
+from typing import Optional, Union
 
 from markdown import Markdown
 from IPython.display import display
@@ -262,6 +262,23 @@ class char_esc:
             text = text.replace(f"ESC-{ord(ch):03}-CHR", repl)
         return text
     
+class esc:
+    r"""Lazy escape of variables in markdown using python formatted strings, to be resolved later and safe from markdown parsing.
+    Use as code`xmd(f"This is an escaped variable: {esc(var or expression)}`
+    or code`xmd("This is an escaped variable: {}".format(esc(var or expression))`.
+    This is in par with \%{var} syntax, but more flexible as it can take any expression. 
+    You are advised to use formatting strings rarely, instead use `fmt` class to pick variables 
+    and avoid clashes with $ \LaTeX $ syntax.
+    """
+    _store = {} # stores escaped varaibles here from formatting.
+    
+    def __init__(self, obj, display=False):
+        self._key = f'ESC_VAR_{id(self)}{"DISPLAY" if display else ""}' # unique key
+        self.__class__._store[self._key] = obj # store it
+        
+    def __format__(self, format_spec):
+        return f"%{{{self._key}:{format_spec}}}" # return placeholder for later formatting
+    
 
 # This shoul be outside, as needed in other modules
 def resolve_included_files(text_chunk):
@@ -338,7 +355,7 @@ class XMarkdown(Markdown):
         """
         self._returns = returns  # Must change here
         if isinstance(xmd, fmt): # scoped variables picked here
-            xmd, self._fmt_ns = fmt._astuple(xmd)
+            xmd, self._fmt_ns = (xmd._xmd, xmd._kws)
 
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
@@ -734,6 +751,13 @@ class XMarkdown(Markdown):
             user_ns = self.user_ns() # get once, will be called multiple time
             def handle_match(match):
                 key,*_ = _matched_vars(match.group()) 
+                # First check if it is an escaped variable
+                if key in esc._store: # escaped variable
+                    value = esc._store.pop(key) # remove after using once
+                    if isinstance(value, DOMWidget) or key.endswith('DISPLAY'): # Anything with display or widget
+                        return self._handle_var(value, ctx = match.group())
+                    return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), {key: value})) # clear spaces around variable
+                
                 if key not in user_ns: # top level var without ., indexing not found
                     err = error('NameError', f'name {key!r} is not defined')
                     return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{err}'))
@@ -818,6 +842,7 @@ class fmt:
     resolved, although you can still use it there.
     
     Being as last expression of notebook cell or using self.parse() will parse markdown content.
+    If you intend to use formatting strings, use `esc` class to lazily escape variables/expressions from being parsed.
     """
     def __init__(*args, **kwargs):
         if len(args) != 2:
@@ -849,25 +874,10 @@ class fmt:
                         raise NameError(f"name {key!r} is not defined")
             finally:
                 del frame  # Prevent reference cycles
-    
-    def __str__(self):
-        _kws = ',\n'.join([f"{k} = \'<{getattr(type(v),'__name__','object')} at {hex(id(v))}>\'" for k,v in self._kws.items()])  
-        _kws = f',\n{_kws}\n)' if _kws else ")"    
-        return f'fmt("""\n{self._xmd}\n"""{_kws}'
 
     def parse(self,returns=False):
         "Parse the associated markdown string."
         return xmd(self if self._kws else self._xmd, returns=returns) # handle empty kwargs silently
-
-    @classmethod
-    def _astuple(cls, target): # This is required to handle form_markdown
-        "Return (markdown, kwargs) of supplied markdown and kwargs if target is of same type. If str, returns (target, {})"
-        if isinstance(target, fmt):
-            return (target._xmd, target._kws)
-        elif isinstance(target, str):
-            return (target, {})
-        else:
-            raise TypeError(f"_astuple expects str or fmt, got {type(target)}")
 
     def _ipython_display_(self): # to be correctly captured in write etc. commands
         with altformatter.reset(): # don't let it be caught in html conversion
@@ -888,7 +898,7 @@ class _XMDMeta(type):
         return XTML(htmlize(xmd_syntax))
     
     @staticmethod
-    def parse(content: str, returns:bool=False) -> Optional[str]: # This is intended to be there, not redundant
+    def parse(content: Union[str, fmt], returns:bool=False) -> Optional[str]: # This is intended to be there, not redundant
         if hasattr(XMarkdown, '_active_parser'): # keeps variables and fmt namespace
             return XMarkdown._active_parser(content, returns=returns)
         return XMarkdown()._parse(content, returns=returns)
@@ -915,7 +925,7 @@ class xmd(metaclass=_XMDMeta):
     
     **Returns**: A direct call or xmd.parse method returns a string with HTML content if `returns=True` (default), otherwise display rich output objects.
     """
-    def __new__(cls, content: str, returns:bool=False) -> Optional[str]:
+    def __new__(cls, content: Union[str, fmt], returns:bool=False) -> Optional[str]:
         return cls.parse(content, returns=returns) # Call parse method directly
 
 xmd.parse.__doc__ = xmd.__doc__

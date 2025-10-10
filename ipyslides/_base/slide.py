@@ -109,8 +109,8 @@ class Slide:
 
         with suppress(Exception): # register only in slides building, not other cells
             self._app._register_postrun_cell()
-        
-        self._app._update_vars_postrun(False) # avoid while building slides to trigger other updates
+
+        self._app.auto_rebuild(None) # avoid while building slides to trigger other updates, but keep auto_rebuild state by None
         
         with self._app._set_running(self):
             with capture_content() as captured:
@@ -182,7 +182,7 @@ class Slide:
         with self._app.navigate_back(self.index if go_there else None):
             self._app._slide(f'{self.number} -m', self._markdown)
             self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
-            self._app._update_vars_postrun(True) # Keep updating after this
+            self._app.auto_rebuild(self._app._ar_opted) # Keep updating after this if user wants
     
     def _req_vars(self, level=0):
         "Returns varaibales not set at different levels. 0: Slide rebuild, 1: Slides rebuild, 2: Notebook scope, 3: Undefined."

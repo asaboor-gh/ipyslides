@@ -39,7 +39,7 @@ def demo_slides(slides):
     Here we will focus on using some of that functionality to create slides.
     
     ::: note-info
-        This slide was built with markdown without using `fmt`, so you can create
+        This slide was built purely from markdown, so you can create
         a variable `test` to overwite this → %{{test}}
                   
     Version: `{slides.version}`
@@ -310,8 +310,7 @@ def demo_slides(slides):
 
     @slides.build(-1)
     def _(slide):
-        '## This is all code to generate slides section`Code to Generate Slides`'
-        slides.code.cast(slides.demo).display()
+        slides.write(f'## This is all code to generate slides section`Code to Generate Slides` {slides.esc(slides.demo)}')
         slides.code.cast(__file__).display()
 
     slides.build(-1, lambda s: slides.get_source().display())

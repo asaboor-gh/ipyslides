@@ -10,7 +10,7 @@ from pathlib import Path
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import xmd, fmt, get_main_ns, _matched_vars
+from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, serializer
 from . import utils
@@ -112,7 +112,8 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     ::: note-info
         `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as code`Slides[number,] → Slide` 
-        or access many via list as code`Slides[[n1,n2,..]] → tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS.
+        or access many via list as code`Slides[[n1,n2,..]] → tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS or acess
+        via attributes such as code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
     """
 
     @classmethod
@@ -140,6 +141,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.xmd        = xmd  # Extended markdown parser
         self.fmt        = fmt # So important for flexibility
+        self.esc        = esc # lazy escape for variables in markdown
         self.serializer = serializer  # Serialize IPython objects to HTML
 
         with suppress(Exception):  # Avoid error when using setuptools to install
@@ -168,7 +170,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         # All Box of Slides
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
-        self._update_vars_postrun(True)
+        self.auto_rebuild(self._ar_opted) # register as it can be initialized many times
 
         # setup toc widget after all attributes are set
         self._toc_widget = TOCWidget(self)
@@ -186,6 +188,20 @@ class Slides(BaseSlides,metaclass=Singleton):
         if not name.startswith('_') and hasattr(self, name):
             raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
         self.__dict__[name] = value
+    
+    def __getattr__(self, name: str) -> Slide:
+        if name.startswith('s') and name[1:].isdigit(): # s0, s1, s2...
+            number = int(name[1:])
+            if number in self._slides_dict:
+                return self._slides_dict[number]
+            raise KeyError(f"Slide with number {number} was never created or may be deleted!")
+        else:
+            return super().__getattr__(name)
+    
+    def __dir__(self):
+        # To show s0, s1, s2... for existing slides in auto-completion
+        slide_attrs = [f's{k}' for k in self._slides_dict]
+        return sorted(super().__dir__() + slide_attrs)
         
     @contextmanager
     def _set_running(self, slide):
@@ -229,7 +245,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         during `Slides.build`  always take precedence over these variables unless they are removed.
         
         ::: note
-            In Jupyter notebook, variables are tracked automatically after each cell execution.
+            In Jupyter notebook, variables are tracked automatically after each cell execution. Use `Slides.auto_rebuild` to enable/disable it.
             You only need to call this function when you want to update variables inside a python script or manually.
         """
         keys = (k for s in self.markdown_slides for k in s._req_vars(1)) # All slides vars names
@@ -251,11 +267,21 @@ class Slides(BaseSlides,metaclass=Singleton):
         user_ns = get_main_ns() # works both in top running module and notebook
         return {k: user_ns[k] for k in keys if k in user_ns} # avoid undefined variables
     
-    def _update_vars_postrun(self, b = False):
+    def auto_rebuild(self, b = True):
+        """Enable/Disable automatic rebuilding of markdown slides after each cell execution to update variables.
+        This is enabled by default and only works in Notebook slides. For slides created in python scripts and 
+        manual update of variables, use `Slides.rebuild(**vars)` and `Slides[number,].rebuild(**vars)` methods.
+        """
+        if b is not None: # None is used to keep previous state but remove handler
+            self._ar_mds = b # update status
         with suppress(Exception): # Remove previous on each if exits
             self.shell.events.unregister("post_run_cell", self._md_post_run_cell)
         if b:
             self.shell.events.register("post_run_cell", self._md_post_run_cell)
+    
+    @property
+    def _ar_opted(self): 
+        return getattr(self, '_ar_mds', True) # auto rebuild opted by default
     
     def _md_post_run_cell(self, result):
         if result.error_before_exec or result.error_in_exec:
@@ -272,7 +298,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                         slide._rebuild(True)
     
     def _post_run_cell(self, result):
-        self._update_vars_postrun(True) # This allows avoiding update from building slides
+        self.auto_rebuild(self._ar_opted) # This allows avoiding update from building slides
         with suppress(Exception):
             self.shell.events.unregister("post_run_cell", self._post_run_cell) # it will be initialized from next building slides
         if result.error_before_exec or result.error_in_exec:
@@ -648,7 +674,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
         self._unregister_postrun_cell() # no need to scroll button where showing itself
-        self._update_vars_postrun(True)
+        self.auto_rebuild(self._ar_opted)
         self._force_update()  # Update before displaying app, some contents get lost
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
         with self._loading_splash(None, self.get_logo('48px', 'IPySlides')): # need this to avoid color flicker in start

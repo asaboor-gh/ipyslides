@@ -183,6 +183,10 @@ Functions (that can also take extra args [python code as strings] as alert`func[
 ::: block-red
 {_special_funcs}
 
+::: note-info
+    You can also use `Slides.esc`/`isd.esc` class to lazily escape variables/expressions/output of functions from being parsed inside f-strings.
+    This should be rarely used when your markdown contains a lot of $ \LaTeX $ equations to avoid excessively escaping them with curly braces in favor of few escaped variables.
+
 Upto 4 level nesting is parsed in inline functions using (level + 1) number of alert`/` (at least two) within backticks in functions given below. 
 ```md-left
 stack[(6,4),css_class="block-blue"]`////
