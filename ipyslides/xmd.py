@@ -344,8 +344,8 @@ class XMarkdown(Markdown):
         elif self._slides and self._slides.this and self._slides.this._markdown:
             return { 
                 **self._slides._nb_vars, # Top level notebook scope variables
-                **self._slides._md_vars, # by global Slides.rebuild variable update,
-                **self._slides.this._md_vars, # by Slide.rebuild after fmt
+                **self._slides.this._md_vars, # by Slide
+                **self._slides.this._esc_vars, # escaped variables stored on slide
             } # slide specific variables based on scope
         return get_main_ns()  # top scope at end
 
@@ -489,9 +489,7 @@ class XMarkdown(Markdown):
         def repl(m: re.Match): # Remove <p> and </p> tags at start and end, also keep backtick
             return f'`{re.sub("^<p>|</p>$", "", self._parse_nested(m.group(1), returns = True))}`' 
 
-        # match legacy func`?text?` to parse text and return func`html_repr`
-        text_chunk = re.sub(r"\`\?(.*?)\?\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
-        # Now match neseted `// //` upto many levels
+        # match neseted `// //` upto many levels
         for depth in range(4,1,-1): # `////, `///, `// at least two slashes
             op, cl = '/'*depth, '/'*depth
             text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
@@ -666,11 +664,8 @@ class XMarkdown(Markdown):
         """
         text = resolve_included_files(text)
         text = char_esc.escape(text)  # Escape characters before processing
-        
-        # Now let's convert old `{var}` to new  %{var} for backward compatibility
-        text = re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL)
 
-        text = self._resolve_nested(text)  # Resolve nested objects in form func`?text?` to func`html_repr`
+        text = self._resolve_nested(text)  # Resolve nested objects in form func`//text//` to func`html_repr`
         if self._slides and self._slides.this: # under building slide
             text = resolve_objs_on_slide(
                 self, self._slides, text # escape \@cite_key before resolving objects on slides
@@ -828,8 +823,7 @@ def _matched_vars(text):
     matches = [var 
         for slash, var, _ in re.findall(
             r"([\\]*?)%\{\s*([a-zA-Z_][\w\d_]*)(.*?)\s*\}", # avoid \%{ escape, [\w\d_]* means zero or more word, to allow single letter
-            re.sub(r"\`\{([^{]*?)\}\`", r"%{\1}", text, flags=re.DOTALL), # backward `{var}` compatibility
-            flags = re.DOTALL,
+            text, flags = re.DOTALL,
         ) if not slash
     ]
     return tuple(matches)  

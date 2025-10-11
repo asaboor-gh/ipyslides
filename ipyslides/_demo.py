@@ -60,7 +60,7 @@ def demo_slides(slides):
         %{btn}  
 
         ::: note-tip
-            Above `btn` variable can be updated later via `Slides[number,].rebuild` or `Slides.rebuild` methods.                 
+            Above `btn` variable can be updated later via `Slides[number,].vars.update` method.                 
         ```                                
     """,btn=slides.draw_button)
 

@@ -187,7 +187,8 @@ class Toggle(ConfigTraits):
     reflow = Bool(False)
     notes  = Bool(False)
     toast  = Bool(True)
-    focus  = Bool(True)
+    focus  = Bool(True, help="Focus on slide area when a slide is built or rebuilt.")
+    rebuild= Bool(True, help="Auto rebuild markdown slides when an included notebook-scoped variable is updated.")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

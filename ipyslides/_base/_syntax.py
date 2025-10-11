@@ -153,17 +153,17 @@ Code Blocks
 Variables from Python code can be embedded directly into Markdown.
 
 **Basic Usage**
-: - **Syntax**: Use alert`\%{{variable}}` to display a variable. Legacy alert`\`{{variable}}\`` is also supported.
+: - **Syntax**: Use alert`\%{{variable}}` to display a variable which is lazily resolved and safely escaped from markdown parsing.
 - **Formatting**: Apply formatting using alert`\%{{variable:format_spec}}` or conversions with alert`\%{{variable!conversion}}`. This works like Python's `str.format` method.
 - **Notebook Display**: To render an object as it would appear in a notebook output cell, use alert`\%{{variable:nb}}`. This is useful for complex objects like plots.
 - For custom objects, it's better to use `Slides.serializer` to define their HTML representation, which allows them to be displayed correctly in place with such as `\%{{fig}}`. 
   Using `\%{{fig:nb}}` might show the object at the end of the slide.
 
 **Variable Scope & Updates**
-: - **Live Updates**: Variables are automatically updated in your slides when their values change in the notebook if not held inside `Slides.build/rebuild` or `Slide[number,].rebuild` scope.
-- **Scope Resolution**: Variables are resolved from per-slide variables (set by `build` or `rebuild`), then from main `Slides.rebuild` variables and finally from the notebook's global scope if a slide is built purely from markdown.
+: - **Live Updates**: Variables are automatically updated in your slides when their values change in the notebook if not held inside `Slide[number,].vars` deepest scope.
+- **Scope Resolution**: Variables are resolved from per-slide variables (set by `build` or `Slide.vars.update`), then from the notebook's global scope if a slide is built purely from markdown.
     In functions which take markdown string such as `write`, `html`, variables are taken from notebook's global scope only. Use `fmt` to encapsulate variables from local scopes.
-- **Forcing Updates**: You can force a refresh of variables on a specific slide using code`Slide[number,].rebuild(**kwargs)`. This is also useful for setting unique variable values on different slides.
+- **Forcing Updates**: You can force a refresh of variables on a specific slide using code`Slide[number,].vars.update(**kwargs)`. This is also useful for setting unique variable values on different slides.
 - **Attribute/Index Access**: When using expressions like `\%{{var.attr}}` or `\%{{var['key']}}`, the output will only update if the base variable `var` itself is reassigned.
 
 **Important Notes**

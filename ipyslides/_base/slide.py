@@ -2,6 +2,7 @@
 
 import time, textwrap
 from contextlib import contextmanager, suppress
+from functools import wraps
 from IPython.display import display
 from IPython.utils.capture import RichOutput
 
@@ -10,7 +11,59 @@ from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data
 from ._layout_css import background_css
+
+class Vars:
+    """Container for markdown slide variables, to see and update variables
+    set on a slide or a group of slides.
     
+    - `slides.s1.vars.update(name="New Name")` updates variable 'name' on slide 1 only
+    - `slides.s2.vars.pop('age')` removes variable 'age' from slide 2 only, so it is picked from notebook scope
+    - `slides.s3.vars.clear()` clears all variables set on slide 3 only, so they are picked from notebook scope
+    - `slides[:].vars.update(theme='dark')` updates variable 'theme' on all slides
+    - `slides[1:3].vars.pop('title')` removes variable 'title' from slide 1 and 2 only
+    - `slides[0].vars.scope` see variables with scope set on slide 0
+    """
+    def __init__(self, *slides):
+        self._slides = slides
+    
+    def __repr__(self):
+        return f"Vars({repr(self.scope)})"
+    
+    @property
+    def scope(self):
+        "Returns variables info at different levels. 0: Slide, 1: Notebook scope, 2: Undefined."
+        scopes = tuple({
+            'Undefined': tuple(v for v in s._req_vars if v not in s._app._nb_vars),
+            'Notebook': tuple(v for v in s._req_vars if v in s._app._nb_vars), # only for this slide out of all
+            'Slide': tuple(s._md_vars)
+        } for s in self._slides)
+        return scopes if len(scopes) > 1 else scopes[0]
+    
+    def update(self, **vars):
+        """Update variables on a slide or group of slides. Unsed variables are ignored silently.
+        
+        - `slides.s1.vars.update(name="New Name", age=30)` updates variables 'name' and 'age' on slide 1 only.
+        - `slides[:].vars.update(theme='dark')` updates variable 'theme' on all slides.
+        - `slides[1:3].vars.update(title="New Title")` updates variable 'title' on slide 1 and 2 only.
+        """
+        for s in self._slides:
+            s._md_vars.update({k:v for k,v in vars.items() if k in s._has_vars}) # only update required vars
+            s._rebuild(True if len(self._slides) == 1 else False) # go there only if single slide
+        
+    __call__ = update # allow calling directly like slide.vars(...)
+    
+    def pop(self, *vars):
+        "Remove variables from a slide or group of slides, so they are picked from higher scopes."
+        for s in self._slides:
+            for k in vars:
+                s._md_vars.pop(k, None) # avoid key error if not present
+            s._rebuild(True if len(self._slides) == 1 else False) # go there only if single slide
+    
+    def clear(self):
+        "Clear all variables from a slide or group of slides, so they are picked from higher scopes."
+        for s in self._slides:
+            s._md_vars.clear()
+            s._rebuild(True if len(self._slides) == 1 else False) # go there only if single slide
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
@@ -26,8 +79,10 @@ class Slide:
         self._index = number if number == 0 else None # First slide should have index ready
         self._animation = None
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
-        self._md_vars = {}
+        self._md_vars = {} # store variables set by build/rebuild on this slide
+        self._esc_vars = {} # store escaped variables for rebuilds form build content
         self._set_defaults()
+        self.vars = Vars(self) # to access variables info and update them
 
         if not self._contents: # show slide number hint there
             self.set_css({
@@ -53,7 +108,7 @@ class Slide:
         self._indexf = 0 # current frame index
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
-        self._has_vars = () # Update in _slide function for markdown slides
+        self._has_vars = () # Update in _slide function for markdown slides only
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._split_frames = True
         self._has_top_frame = True
@@ -110,7 +165,7 @@ class Slide:
         with suppress(Exception): # register only in slides building, not other cells
             self._app._register_postrun_cell()
 
-        self._app.auto_rebuild(None) # avoid while building slides to trigger other updates, but keep auto_rebuild state by None
+        self._app._auto_rebuild(None) # avoid while building slides to trigger other updates, but keep auto_rebuild state by None
         
         with self._app._set_running(self):
             with capture_content() as captured:
@@ -157,53 +212,18 @@ class Slide:
         self._reset_frames()
         self._app._update_toc()
     
-    def rebuild(self, *pop_vars, **vars):
-        """Rebuild a makrdown slide to update varaiables form vars and higher scopes! 
-        Variables on slide will be substituted from vars, then those set by `Slides.rebuild` and finally from notebook. 
-        To manually update all markdown slides, use `Slides.rebuild(**kwargs)` unless 
-        you need unique variables for each slide.
-        
-        `pop_vars` are variable names to be removed from this slide before rebuilding and they will be picked from higher scopes.
-        This takes precedence over supplied `vars`. To see which variables are set at which scope, use `slide.vars` readonly property.
-        """
-        if (extras := [k for k in vars if not k in self._req_vars(0)]):
-            print(f"Variables {extras} not in required variables {self.vars}")
-        self._md_vars.update({k:v for k,v in vars.items() if k in self._req_vars(0)})
-        
-        for k in pop_vars: # takes precedence over vars
-            self._md_vars.pop(k, None) # avoid key error if not present
-        
-        return self._rebuild(True)
-    
     def _rebuild(self, go_there=False):
-        if not self._markdown:
-            raise RuntimeError("can only rebuild slides created purely from markdown!")
+        if not self._markdown and go_there: # this avoid printing logs during bacth rebuilds
+            return print("Exception: Can only rebuild slides created purely from markdown!")
         
         with self._app.navigate_back(self.index if go_there else None):
             self._app._slide(f'{self.number} -m', self._markdown)
-            self._app._unregister_postrun_cell() # Avoid other cells having postrun after this
-            self._app.auto_rebuild(self._app._ar_opted) # Keep updating after this if user wants
-    
-    def _req_vars(self, level=0):
-        "Returns varaibales not set at different levels. 0: Slide rebuild, 1: Slides rebuild, 2: Notebook scope, 3: Undefined."
-        if level == 0: # only vars not set by rebuild, so all vars
-            return self._has_vars
-        elif level == 1: # only vars not set by rebuild,
-            return tuple([v for v in self._req_vars(0) if not v in self._md_vars]) 
-        elif level == 2: # only vars not set by rebuild and global rebuild
-            return tuple([v for v in self._req_vars(1) if not v in self._app._md_vars])
-        else: # all undefinded vars
-            return tuple([v for v in self._req_vars(2) if not v in self._app._nb_vars])
+            self._app._unregister_postrun_cell() # Avoid showing slides in this rebuild
+            self._app._auto_rebuild('ondemand') # set back to previous state as capture removes it
     
     @property
-    def vars(self):
-        "Get variables names info by their enclosing scope on this slide."
-        return {
-            'by:Undefined': tuple(self._req_vars(3)),
-            'by:Notebook': tuple(self._app._nb_vars.keys() & self._req_vars(2)),
-            'by:Slides.rebuild': tuple(self._app._md_vars.keys() & self._req_vars(1)),
-            'by:Slide.rebuild': tuple(self._md_vars.keys())
-        }
+    def _req_vars(self):
+        return tuple([v for v in self._has_vars if not v in self._md_vars]) # only those not set on slide
 
     def _reset_toc(self):
         self._app._sec_id2dom() # for clickable links
@@ -626,3 +646,52 @@ def _build_slide(app, slide_number):
         if content.data.get('application/vnd.jupyter.widget-view+json',{}):
             this._has_widgets = True
             break # No need to check other widgets if one exists
+        
+class SlideGroup:
+    """Proxy calls/attributes to multiple Slide instances.
+
+    - Broadcasts Slide methods to all slides in group; returns None if all methods return None, else a tuple of results
+    - Non-callable attributes return a tuple of values
+    - Special attribute 'vars' returns a Vars proxy over the group
+    - Behaves like a tuple for indexing/iteration; use .values to get underlying slides
+    """
+    def __init__(self, slides):
+        self._slides = tuple(slides)
+
+    def __repr__(self):
+        ids = ','.join(str(s.number) for s in self._slides)
+        return f"SlideGroup([{ids}])"
+
+    def __len__(self): return len(self._slides)
+    def __iter__(self): return iter(self._slides)
+    def __contains__(self, item): return item in self._slides
+    
+    @property
+    def values(self): 
+        "Returns underlying Slide instances as a tuple."
+        return self._slides
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return SlideGroup(self._slides[key])
+        return self._slides[key]
+
+    def __dir__(self):
+        # expose public Slide attributes for completion
+        slide_attrs = [n for n in dir(Slide) if not n.startswith('_')]
+        return sorted(set(slide_attrs + ['vars', 'values'] + list(self.__dict__.keys())))
+
+    def __getattr__(self, name: str):
+        # Broadcast method or collect attribute across slides
+        attr = getattr(Slide, name, None)
+        if callable(attr):
+            @wraps(attr)
+            def _call(*args, **kwargs):
+                results = tuple(getattr(s, name)(*args, **kwargs) for s in self._slides)
+                return None if all(r is None for r in results) else results
+            
+            _call.__doc__ = f"Broadcast Slide.{name} to all slides in this group.\n" + (attr.__doc__ or '')
+            return _call
+        elif name == 'vars':
+            return Vars(*self._slides)
+        return tuple(getattr(s, name) for s in self._slides)

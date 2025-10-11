@@ -60,9 +60,6 @@ class BaseSlides:
         return XTML(htmlize(_syntax.css_styles))
 
     @property
-    def xmd_syntax(self): raise DeprecationWarning("Use `Slides.xmd.syntax` instead!")
-    
-    @property
     def css_syntax(self):
         "CSS syntax for use in Slide.set_css, Slides.html('style', ...) etc."
         return XTML(_css_docstring)
@@ -250,6 +247,7 @@ class BaseSlides:
             - See `slides.xmd.syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
+            - If an f-string is provided, variables in f-string are resolved eagerly and never get updated on rebuild including lazy ones provided by `Slides.esc`.
         
         
         ::: note-tip
@@ -273,6 +271,10 @@ class BaseSlides:
                 if (content is not None) and any([code.startswith(c) for c in ('@', 'with')]):
                     raise ValueError("content should be None while using as decorator or contextmanager!")
                 
+                # using fmt is tempting to delegate vars automatically but it raises error if var not found, 
+                # which is against whole philosophy of lazy evaluation and rebuild.
+                # Also, using vars in decorator mode for function docstring is a bad idea as it
+                # will be evaluated only once and never updated on rebuild, also it is not supported by python syntax.
                 if isinstance(content, str) and not code.startswith('with'): 
                     return self._app._from_markdown(self._snumber, content, _vars = vars)
 
@@ -374,9 +376,10 @@ class BaseSlides:
             self.write('''
                 ## Important Methods on Slide
                 ::: note-warning
-                    Use slide handle or `Slides[number,]` to apply these methods becuase index can change on new builds.
+                    - Use slide handle or `Slides[number,]` to apply these methods becuase index can change on new builds.
+                    - Use `Slides[start:stop:step]` to apply operations on many slides at once such as code`Slides[2:5].vars.update(...)`.
             ''')
-            self.doc(self[0], members='yoffset set_animation set_bg_image update_display get_source show set_css'.split(), itself = False).display()
+            self.doc(self[0], members='yoffset vars set_animation set_bg_image update_display get_source show set_css'.split(), itself = False).display()
             self.css_syntax.display()
         
         self.build(-1, re.sub(r'^---\s*$', '---\n## Extended Markdown' ,_syntax.xmd_syntax, flags=re.MULTILINE))
@@ -412,8 +415,8 @@ class BaseSlides:
             self.doc(self.alt,'Slides').display()
             
             members = sorted((
-                'AnimationSlider alert bokeh2html bullets esc styled fmt color details doc '
-                'today error zoomable highlight html iframe image frozen notify plt2html '
+                'AnimationSlider alert bokeh2html bullets esc styled fmt code color details doc '
+                'today error zoomable html iframe image frozen notify plt2html '
                 'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()

@@ -21,7 +21,7 @@ _under_slides = {k: getattr(utils, k, None) for k in utils.__all__}
 from ._base.widgets import TOCWidget, ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
-from ._base.slide import Slide, _build_slide
+from ._base.slide import Slide, SlideGroup, _build_slide
 from ._base.icons import Icon as _Icon
 from .__version__ import __version__
 
@@ -111,9 +111,12 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
     
     ::: note-info
-        `Slides` can be indexed same way as list for sorted final indices. For indexing slides with given number, use comma as code`Slides[number,] → Slide` 
-        or access many via list as code`Slides[[n1,n2,..]] → tuple[Slide]`. Use indexing with given number to apply persistent effects such as CSS or acess
-        via attributes such as code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
+        - `Slides` can be indexed same way as list for sorted final indices. 
+        - For indexing slides with given number, use comma as code`Slides[number,] → Slide` 
+        - Access many via list as code`Slides[[n1,n2,..]] → SlideGroup` or slice as code`Slides[start:stop:step] → SlideGroup`.
+        - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')` or code`Slides[2:5].set_css(...)`.
+        - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
+          code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
     """
 
     @classmethod
@@ -159,31 +162,21 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._citations = {}  # Initialize citations dictionary
         self._slides_per_cell = [] # all buidling slides in a cell will be added while capture, and removed with post run cell
         self._last_vars = {} # will be handled by a post run cell
-        self._md_vars = {} # Will be handled by rebuild and take precedence over notebook scope
 
         self._set_saved_citations() # from previous session
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
         self.widgets.buttons.refresh.on_click(self._force_update)
         self.widgets.buttons.source.on_click(self._jump_to_source_cell)
+        self.widgets.checks.rebuild.observe(self._auto_rebuild, names=['value'])
 
         # All Box of Slides
         self._box = self.widgets.mainbox.add_class(self.uid)
         self._setup()  # Load some initial data and fixing
-        self.auto_rebuild(self._ar_opted) # register as it can be initialized many times
-
+        
         # setup toc widget after all attributes are set
         self._toc_widget = TOCWidget(self)
     
-    @property
-    def extender(self): raise DeprecationWarning("Use `Slides.xmd.extensions` instead.")
-    @property
-    def ei(self): raise DeprecationWarning("Use `Slides.dl` or explicity import `dashlab` instead.")
-
-    def parse(self,*args,**kwargs): raise DeprecationWarning("Use `Slides.xmd(content)` instead! That aligns with %%xmd magic.")
-    def highlight(self, *args, **kwargs): raise DeprecationWarning("Use `Slides.code` instead which aligns with ::: code block in markdown.")
-    def hl(self, *args, **kwargs): raise DeprecationWarning("Use `Slides.code(obj).inline` instead which aligns with inline code`import requests` syntax in markdown.")
-
     def __setattr__(self, name: str, value): # Don't raise error
         if not name.startswith('_') and hasattr(self, name):
             raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
@@ -234,54 +227,24 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._slides_per_cell.extend(spc) # was cleared above in unregister
             self._register_postrun_cell() # should be back
     
-    def rebuild(self, *pop_vars, **vars):
-        """Rebuild all markdown slides where given `**vars` are used.
-        To have different values of same variable in different slides, 
-        use `slides[number,].rebuild(**vars)` instead. Use `pop_vars`
-        to remove variables from slide before rebuilding, they will be picked
-        from notebook scope and take precedence over `**vars`. 
-        
-        The variables set on per slide basis by `Slide[number,].rebuild` or provided
-        during `Slides.build`  always take precedence over these variables unless they are removed.
-        
-        ::: note
-            In Jupyter notebook, variables are tracked automatically after each cell execution. Use `Slides.auto_rebuild` to enable/disable it.
-            You only need to call this function when you want to update variables inside a python script or manually.
-        """
-        keys = (k for s in self.markdown_slides for k in s._req_vars(1)) # All slides vars names
-        self._md_vars.update({key:value for key, value in vars.items() if key in keys})
-        
-        for k in pop_vars: # takes precedence over vars
-            self._md_vars.pop(k, None) # avoid key error if not present
-        
-        with self.navigate_back():
-            for s in self.markdown_slides:
-                print(s.vars)
-                if vars.keys() & s._req_vars(1): # Intersection of keys
-                    s._rebuild(True) # only update if something changed on a slide
-    
     @property
     def _nb_vars(self): # variables from notebook scope, not set by build/rebuild
         # Keep this as property, as any pop out from rebuild will be picked at latest
-        keys = [k for s in self.markdown_slides for k in s._req_vars(2)] # All markdown slides vars names
+        keys = [k for s in self.markdown_slides for k in s._req_vars] # All markdown slides vars names
         user_ns = get_main_ns() # works both in top running module and notebook
         return {k: user_ns[k] for k in keys if k in user_ns} # avoid undefined variables
     
-    def auto_rebuild(self, b = True):
-        """Enable/Disable automatic rebuilding of markdown slides after each cell execution to update variables.
-        This is enabled by default and only works in Notebook slides. For slides created in python scripts and 
-        manual update of variables, use `Slides.rebuild(**vars)` and `Slides[number,].rebuild(**vars)` methods.
-        """
-        if b is not None: # None is used to keep previous state but remove handler
-            self._ar_mds = b # update status
+    def _auto_rebuild(self, change):
+        # Enable/Disable automatic rebuilding of markdown slides after each cell execution to update variables.
         with suppress(Exception): # Remove previous on each if exits
             self.shell.events.unregister("post_run_cell", self._md_post_run_cell)
-        if b:
+            self.notify('x') # to remove previous toast if any
+            
+        # None is used to keep previous state but remove handler in slide capture
+        if change is not None and self.widgets.checks.rebuild.value: # don't employ change, we need to call it independently
             self.shell.events.register("post_run_cell", self._md_post_run_cell)
-    
-    @property
-    def _ar_opted(self): 
-        return getattr(self, '_ar_mds', True) # auto rebuild opted by default
+            if change != 'ondemand': # only when user checked toggle
+                self.notify("Auto rebuild of markdown slides is enabled for notebook-level variables update!", 10)
     
     def _md_post_run_cell(self, result):
         if result.error_before_exec or result.error_in_exec:
@@ -294,11 +257,11 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._last_vars.update(new_vars) # update to compare next time
             with self.navigate_back():
                 for slide in self.markdown_slides: 
-                    if diff.keys() & slide._req_vars(2): # Intersection of keys
+                    if diff.keys() & slide._req_vars: # Intersection of keys
                         slide._rebuild(True)
     
     def _post_run_cell(self, result):
-        self.auto_rebuild(self._ar_opted) # This allows avoiding update from building slides
+        self._auto_rebuild('ondemand') # keep auto_rebuild state, but register if needed
         with suppress(Exception):
             self.shell.events.unregister("post_run_cell", self._post_run_cell) # it will be initialized from next building slides
         if result.error_before_exec or result.error_in_exec:
@@ -332,7 +295,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         else:
             toast = 'No source cell found!'
         
-        vars_info = [(v ,scope.split(':')[1]) for scope, value in self._current.vars.items() for v in value]
+        vars_info = [(v ,sc) for sc, value in self._current.vars.scope.items() for v in value]
 
         if vars_info:
             vars_info = '<table style="width:100%;"><tr><th>Variable</th><th>Scope</th></tr>' + ''.join(
@@ -363,16 +326,16 @@ class Slides(BaseSlides,metaclass=Singleton):
     @overload
     def __getitem__(self, key: tuple[int]) -> Slide: ...
     @overload
-    def __getitem__(self, key: list[int]) -> tuple[Slide]: ...
+    def __getitem__(self, key: list[int]) -> SlideGroup: ...
     @overload
-    def __getitem__(self, key: slice) -> tuple[Slide]: ...
+    def __getitem__(self, key: slice) -> SlideGroup: ...
     
-    def __getitem__(self, key) -> Union[Slide, tuple[Slide]]:
+    def __getitem__(self, key) -> Union[Slide, SlideGroup]:
         "Get slide by index or slice of computed index. Use [number,] or [[n1,n2,..]] to access slides by number they were created with."
         if isinstance(key, int):
             return self._iterable[key]
         elif isinstance(key, slice):
-            return self._iterable[key.start : key.stop : key.step]
+            return SlideGroup(self._iterable[key.start : key.stop : key.step])
         elif isinstance(key, tuple): # as [1,] or [(1,)]
             if len(key) != 1:
                 raise ValueError(f"Wrong indexing {key} found, use [number,] to access single slide by given number, or [[n1,n2,...]] for many slides!")
@@ -388,7 +351,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 else:
                     raise KeyError(f"Slide with number {k} was never created or may be deleted!")
             
-            return tuple(items)
+            return SlideGroup(items)
 
         raise KeyError(
             f"A slide could be accessed by index or slice, got {type(key)},\n"
@@ -600,14 +563,14 @@ class Slides(BaseSlides,metaclass=Singleton):
                 self._set_ctns(json.loads(path.read_text()))
             
     @property
-    def cited_slides(self) -> tuple[Slide]:
-        "Tuple of all slides which have citations. See also `markdown_slides`."
-        return tuple([s for s in self._iterable if s._citations])
+    def cited_slides(self) -> SlideGroup:
+        "SlideGroup of all slides which have citations. See also `markdown_slides`."
+        return SlideGroup([s for s in self._iterable if s._citations])
     
     @property
-    def markdown_slides(self) -> tuple[Slide]:
-        "Tuple of all slides built from markdown. See also `cited_slides`."
-        return tuple([s for s in self._iterable if s._markdown])
+    def markdown_slides(self) -> SlideGroup:
+        "SlideGroup of all slides built from markdown. See also `cited_slides`."
+        return SlideGroup([s for s in self._iterable if s._markdown])
 
     def section(self, text):
         """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
@@ -674,7 +637,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
         self._unregister_postrun_cell() # no need to scroll button where showing itself
-        self.auto_rebuild(self._ar_opted)
+        self._auto_rebuild('ondemand') # keep auto_rebuild state, but register if needed
         self._force_update()  # Update before displaying app, some contents get lost
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
         with self._loading_splash(None, self.get_logo('48px', 'IPySlides')): # need this to avoid color flicker in start
@@ -825,7 +788,10 @@ class Slides(BaseSlides,metaclass=Singleton):
                 prames = re.split(r"^\s*--\s*$", s._markdown, flags=re.DOTALL | re.MULTILINE)   
                 # Update source beofore parsing content to make it available for variable testing
                 s._set_source(cell, "markdown") # set source before running to have it available for user
-                s._has_vars = _matched_vars(cell) # update has_vars before running to have ready for auto rebuild
+                vars = _matched_vars(cell) # update has_vars before running to have ready for auto rebuild
+                stored = {**esc._store, **s._esc_vars} # keep previous stored variables, first time come only from esc._store
+                s._has_vars = tuple([v for v in vars if v not in stored]) # esc is encapsulated by design
+                s._esc_vars = {v: stored[v] for v in vars if v in stored} # store for rebuilds internally
                 
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
