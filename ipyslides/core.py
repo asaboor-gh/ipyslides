@@ -295,12 +295,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         else:
             toast = 'No source cell found!'
         
-        vars_info = [(v ,sc) for sc, value in self._current.vars.scope.items() for v in value]
-
-        if vars_info:
-            vars_info = '<table style="width:100%;"><tr><th>Variable</th><th>Scope</th></tr>' + ''.join(
-                [f'<tr><td>{utils.code(v).inline}</td><td>{utils.code(s).inline}</td></tr>' for v, s in vars_info]) + '</table>'
-        
+        vars_info = utils.code(repr(self._current.vars)).inline.value if self._current._has_vars else ""
         self.notify(toast + (vars_info or ""), 10 if vars_info else 2) #  seconds to show message
 
     def _setup(self):

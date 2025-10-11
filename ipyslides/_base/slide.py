@@ -16,7 +16,7 @@ class Vars:
     """Container for markdown slide variables, to see and update variables
     set on a slide or a group of slides.
     
-    - `slides.s1.vars.update(name="New Name")` updates variable 'name' on slide 1 only
+    - `slides.s1.vars.update(name="New")` updates variable 'name' on slide 1 only
     - `slides.s2.vars.pop('age')` removes variable 'age' from slide 2 only, so it is picked from notebook scope
     - `slides.s3.vars.clear()` clears all variables set on slide 3 only, so they are picked from notebook scope
     - `slides[:].vars.update(theme='dark')` updates variable 'theme' on all slides
@@ -27,17 +27,23 @@ class Vars:
         self._slides = slides
     
     def __repr__(self):
-        return f"Vars({repr(self.scope)})"
+        scp = self.scope # could be tuple of dicts or single dict
+        scps = (scp,) if isinstance(scp, dict) else scp
+        head = "Scope       Vars\n=====       ====\n"
+        return head + str.join(f"\n-----       ----\n", 
+            ('\n'.join(f"{sc:<12}{value}" 
+            for sc, value in scp.items()) for scp in scps)
+        )
     
     @property
     def scope(self):
         "Returns variables info at different levels. 0: Slide, 1: Notebook scope, 2: Undefined."
         scopes = tuple({
-            'Undefined': tuple(v for v in s._req_vars if v not in s._app._nb_vars),
+            f'Slide{s.number}': tuple(s._md_vars), # only those set on slide
             'Notebook': tuple(v for v in s._req_vars if v in s._app._nb_vars), # only for this slide out of all
-            'Slide': tuple(s._md_vars)
-        } for s in self._slides)
-        return scopes if len(scopes) > 1 else scopes[0]
+            'Undefined': tuple(v for v in s._req_vars if v not in s._app._nb_vars),
+        } for s in self._slides if s._has_vars) # only markdown slides have variables, no need to make empty dict
+        return scopes[0] if len(scopes) == 1 else scopes
     
     def update(self, **vars):
         """Update variables on a slide or group of slides. Unsed variables are ignored silently.
