@@ -22,6 +22,9 @@ class Vars:
     - `slides[:].vars.update(theme='dark')` updates variable 'theme' on all slides
     - `slides[1:3].vars.pop('title')` removes variable 'title' from slide 1 and 2 only
     - `slides[0].vars.scope` see variables with scope set on slide 0
+    
+    ::: note-tip
+        If variables are not set on slide, they are picked from notebook scope if `Auto Rebuild` is enabled in side panel.
     """
     def __init__(self, *slides):
         self._slides = slides

@@ -337,11 +337,15 @@ class XMarkdown(Markdown):
             self._wr_imported = writer
         return self._wr_imported
     
+    @property
+    def _running_md_slide(self): # checks if parsing under purely markdown slide
+        return self._slides and self._slides.this and self._slides.this._markdown
+    
     def user_ns(self):
         "Top level namespace or set by user inside `Slides.fmt`."
         if self._fmt_ns: 
             return self._fmt_ns # always preferred
-        elif self._slides and self._slides.this and self._slides.this._markdown:
+        elif self._running_md_slide:
             return { 
                 **self._slides._nb_vars, # Top level notebook scope variables
                 **self._slides.this._md_vars, # by Slide
@@ -755,6 +759,9 @@ class XMarkdown(Markdown):
                 
                 if key not in user_ns: # top level var without ., indexing not found
                     err = error('NameError', f'name {key!r} is not defined')
+                    if self._running_md_slide: # under slide building purely from markdown
+                        err = err.value + ("You can update this variable by `Slides[int,|list|slice].vars.update` "
+                            "or by defining it in notebook if `Auto Rebuild` is enabled.")
                     return self._handle_var(error('Exception', f'Could not resolve {match.group()!r}:\n{err}'))
 
                 cmatch = match.group()[2:-1].strip().split('!')[0] # conversion split
