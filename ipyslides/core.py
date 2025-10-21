@@ -188,8 +188,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             if number in self._slides_dict:
                 return self._slides_dict[number]
             raise KeyError(f"Slide with number {number} was never created or may be deleted!")
-        else:
-            return super().__getattr__(name)
+        return super().__getattribute__(name)
     
     def __dir__(self):
         # To show s0, s1, s2... for existing slides in auto-completion

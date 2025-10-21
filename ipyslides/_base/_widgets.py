@@ -8,9 +8,11 @@ from dashlab.utils import _fix_init_sig, _fix_trait_sig
 
 
 class InteractionWidget(anywidget.AnyWidget):
-    _esm =  Path(__file__).with_name('js') / 'interaction.js'
+    _esm =  Path(__file__).with_name('static') / 'interaction.js'
+    _css =  Path(__file__).with_name('static') / 'interaction.css'
     _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
     _colors = traitlets.Dict().tag(sync=True) # for export
+    _nfs = traitlets.Dict().tag(sync=True) # frame counts per slide, for js side use
     
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)
@@ -101,7 +103,7 @@ class InteractionWidget(anywidget.AnyWidget):
 
 @_fix_trait_sig
 class NotesWidget(anywidget.AnyWidget):
-    _esm = Path(__file__).with_name('js') / 'notes.js'
+    _esm = Path(__file__).with_name('static') / 'notes.js'
     value = traitlets.Unicode('').tag(sync=True)
     popup = traitlets.Bool(False).tag(sync=True)
 

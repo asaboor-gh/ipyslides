@@ -21,6 +21,48 @@ function hideLaser(box, cursor) {
     box.onmousemove = null;
 }
 
+function printSlides(box, model) {
+    let slides = box.getElementsByClassName('SlideArea'); 
+    window._printFrames = [];
+    const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
+    
+    for (let slide of slides) {
+        if (slide.childNodes.length > 0) { // Need to have scroll positions on top for all slides
+            slide.childNodes[0].scrollTop = 0; // scroll OutputArea to top
+        }
+
+        // Extract slide number from class (e.g., 'n25' -> 25)
+        const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
+        const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
+
+        if (slide.classList.contains('Frames') && numFrames > 1) {
+            for (let i = 1; i < numFrames; i++) { // single frame is already there
+                let clone = slide.cloneNode(true); // deep clone
+                clone.classList.remove('Frames'); // remove frames class to avoid infinite loop 
+                clone.classList.add(`f${numFrames - i}`); // add frame index class: f1, f2, f3...
+                window._printFrames.push(clone);
+                slide.parentNode.insertBefore(clone, slide.nextSibling);
+            }
+        }
+    }
+    // Clean up AFTER print dialog closes
+    window.addEventListener('afterprint', function cleanup() {
+        for (let frame of window._printFrames) {
+            frame.remove();
+        }
+        delete window._printFrames;
+        window.removeEventListener('afterprint', cleanup); // cleanup listener
+    }, { once: true }); // or use { once: true } instead of removeEventListener
+    
+    // Double RAF: ensures browser has painted and computed styles
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            window.print();
+        });
+    }); 
+    // Optionally can send message to Python side
+}
+
 const keyMessage = {
     'f': 'TFS', // Toggle Fullscreen with F but with click from button
     'z': 'ZOOM', // Enable zooming items
@@ -61,6 +103,10 @@ function keyboardEvents(box,model) {
             message = (e.ctrlKey? "HOME": "END"); // Numbers don't change with control
         } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
+        } else if (e.ctrlKey && key === 'p') {
+            e.stopPropagation();   // Ctrl + P for print
+            printSlides(box, model);
+            return false; // Avoid print handling by notebbook further
         }
 
         model.set("msg_topy", message);
@@ -265,7 +311,7 @@ function linkSwitchesSlide(model, box) {
 function markPrintable(el, className) {
   // First, remove the class from any previously marked elements
   document.querySelectorAll('.' + className).forEach(node => node.classList.remove(className));
-
+  
   // Then walk up from the given element to <body>, adding the class
   while (el && el !== document.body) {
     el.classList.add(className);

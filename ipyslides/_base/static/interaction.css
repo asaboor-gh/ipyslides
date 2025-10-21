@@ -1,0 +1,56 @@
+/* PDF printing styles, experimental */
+@media print {
+    body *:not(.ipyslides-print-node):not(.ipyslides-print-node.SlidesWrapper *) {
+        display: none !important;
+    }
+
+
+    * {
+        --contentScale : 1 !important; /* Defualt for printing at same value */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
+    }
+
+    /* Page size is set dynamically via @page in styles.py */
+
+    .ipyslides-print-node:not(.SlidesWrapper) {
+        all: unset !important;
+        display: block !important;
+        margin: none !important;
+        padding: none !important;
+    }
+    .ipyslides-print-node .jupyter-only {
+        display: none !important;
+    }
+    .ipyslides-print-node .export-only {
+        display: block !important;
+    }
+
+    .ipyslides-print-node.SlidesWrapper.SlidesWrapper {
+        display: table !important; /* Manages auto height for multiple slides */
+        --contnetScale : 1 !important; /* Defualt for printing at same value */
+    }
+    .ipyslides-print-node.SlidesWrapper .SlideBox {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 0 0 auto !important;   /* size to content; don't grow/shrink */
+        height: auto !important;     /* expand to fit all slides */
+        width: 100% !important;
+        overflow: hidden !important;
+        min-height: max-content !important;
+    }
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea {
+        position:  static !important;
+        visibility: visible !important;
+        transform: none !important;
+        /* height: auto !important;  */
+        page-break-inside: avoid !important; /* avoid for slides printing */
+        page-break-after: always !important;
+        --paddingBottom: 22px !important; /* to avoid cutting off text with huge padding */
+    }
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:last-of-type  {
+        page-break-after: avoid !important;
+    }
+}

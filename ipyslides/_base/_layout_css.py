@@ -31,7 +31,7 @@ def layout_css(accent_color, aspect):
                 },
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
-                },  # still should be clickable
+                }, 
                 ".Slide-Number" : { # slide number
                     "position": "absolute !important",
                     "right": "0 !important",
@@ -42,6 +42,7 @@ def layout_css(accent_color, aspect):
                     "cursor": "help",
                     "^.Menu-Item":{"color": "var(--fg2-color) !important",},
                     "^:focus,^:active": {"box-shadow": "none !important"},
+                    "@media print": {"display": "none !important",}, # each slide gets its own slide number
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
@@ -50,6 +51,7 @@ def layout_css(accent_color, aspect):
                     "left":"0 !important",
                     "bottom": "0 !important",
                     "background": "var(--bg2-color) !important",
+                    "@media print": {"display": "none !important",}, # each slide gets its own progressbar
                     ".Progress" : {
                         "margin": "0 !important",
                         "padding": "0 !important",

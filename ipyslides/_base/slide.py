@@ -5,6 +5,7 @@ from contextlib import contextmanager, suppress
 from functools import wraps
 from IPython.display import display
 from IPython.utils.capture import RichOutput
+from ipywidgets import HTML as ipwHTML
 
 from . import styles
 from ..utils import XTML, html, _styled_css, _build_css
@@ -124,6 +125,7 @@ class Slide:
         self._set_refs = True
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
+        self._print_css = ipwHTML() # for frame css when printing
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -178,6 +180,7 @@ class Slide:
         
         with self._app._set_running(self):
             with capture_content() as captured:
+                display(self._print_css) # to have print css in output
                 yield captured
             
             if (self.number == 0) and self._fidxs:
@@ -314,7 +317,13 @@ class Slide:
         else:
             self._frame_idxs = tuple(new_frames[1:]) # join first content here as well to make same number of fames
 
+        # Update frame counts per slide for js side
+        nfs = self._app.widgets.iw._nfs.copy()
+        nfs[self.number] = self.nf
+        self._app.widgets.iw._nfs = nfs # need reassign to trigger traitlet sync
+        
         if self._frame_idxs:
+            self._print_css.value = '\n'.join(self._frame_css(i, print_mode=True) for i in range(self.nf))
             self.first_frame() # Bring up first frame to activate CSS
         else:
             if hasattr(self, '_frame_idxs'): # from previous run may be
@@ -353,7 +362,37 @@ class Slide:
             0 < self.indexf < (self.nf - 1)
         ]) and hasattr(self,'_on_load') and callable(self._on_load):
             self._on_load(self)
-                
+    
+    def _frame_css(self, index, print_mode=False):
+        if not self._fidxs:
+            return ''
+        
+        if index < 0 or index >= self.nf:
+            raise IndexError(f"Frame index {index} out of range for slide {self.number} with {self.nf} frames!")
+        
+        start, nrows, ncols, first = 1, self._fidxs[index], 0, getattr(self, '_frame_top',0)
+        if isinstance(nrows, tuple):
+            nrows, ncols = nrows
+        elif isinstance(nrows, range): # not joined
+            start, nrows = nrows.start, nrows.stop
+        sel = f'.n{self.number}.f{index}' if index > 0 and print_mode else f'.n{self.number}' # corresponding frame selectors are added in js side for print mode
+        css = {
+            f'^.n{self.number}{sel} > .jp-OutputArea > .jp-OutputArea-child': {
+                f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': { # start through nrows
+                    'height': '0 !important',
+                },
+                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': { # initial objs on each, increase spacificity 
+                    'height': 'unset !important',
+                },
+                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child({len(self.contents) + 1})': { # for references, shown after contents
+                    'height': 'unset !important'
+                },
+                **({f'^:nth-child({nrows}) .columns.writer:first-of-type > div:nth-child(n + {ncols+1})': { # avoid nested columms
+                    'visibility': 'hidden !important', # enforce this instead of jumps in height
+                }} if isinstance(self._fidxs[index], tuple) else {}), 
+            },
+        }
+        return _styled_css({'@media print': css} if print_mode else css).value 
     
     def _show_frame(self, which):
         if self._fidxs:
@@ -364,29 +403,7 @@ class Slide:
             else:
                 return False
             
-            start, nrows, ncols, first = 1, self._fidxs[self.indexf], 0, getattr(self, '_frame_top',0)
-            if isinstance(nrows, tuple):
-                nrows, ncols = nrows
-            elif isinstance(nrows, range): # not joined
-                start, nrows = nrows.start, nrows.stop
-
-            self._fsep.value = _styled_css({
-                f'^.n{self.number} > .jp-OutputArea > .jp-OutputArea-child': {
-                    f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': { # start through nrows
-                        'height': '0 !important',
-                    },
-                    f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': { # initial objs on each, increase spacificity 
-                        'height': 'unset !important',
-                    },
-                    f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child({len(self.contents) + 1})': { # for references, shown after contents
-                        'height': 'unset !important'
-                    },
-                    **({f'^:nth-child({nrows}) .columns.writer:first-of-type > div:nth-child(n + {ncols+1})': { # avoid nested columms
-                        'visibility': 'hidden !important', # enforce this instead of jumps in height
-                    }} if isinstance(self._fidxs[self.indexf], tuple) else {}), 
-                },
-            }).value
-
+            self._fsep.value = self._frame_css(self.indexf)
             self._update_view(which)
             return True # indicators required
         else:

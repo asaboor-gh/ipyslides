@@ -94,8 +94,8 @@ setup(
     url = URL,
     packages = find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
     package_data= {
-        # all .js files at any package depth
-        '': ['**/*.js'],
+        # all .js, .css files at any package depth
+        '': ['**/*.js','**/*.css'],
     },
     
     # entry_points={

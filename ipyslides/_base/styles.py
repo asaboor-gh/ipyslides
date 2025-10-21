@@ -299,6 +299,12 @@ def style_css(colors, fonts, layout, _root = False):
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
             },
+            '@media print': { # For PDF printing dynamically set page size
+                '@page': {
+                    'margin': '0 !important',
+                    'size': f'210mm {int(210/layout.aspect)}mm !important',
+                },
+            },
             **({'^:not(.n0) > .jp-OutputArea': { # no yoffset on title slide, leave it centered globally
                     "top": f"{layout.yoffset}% !important", 
                     "margin-top": "0 !important", 
