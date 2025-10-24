@@ -85,7 +85,7 @@ class _Buttons:
     """
     Instantiate under `Widgets` class only.
     """
-    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Shift + Space]').add_class('Arrows').add_class('Prev-Btn')
+    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Ctrl + Space]').add_class('Arrows').add_class('Prev-Btn')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     panel   =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Side Panel [S]').add_class('Menu-Item').add_class('Panel-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
@@ -95,6 +95,8 @@ class _Buttons:
     end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
     info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
     export  =  Button(description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
+    print   =  Button(icon='print',description="Print Slides",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + P')
+    print2  =  Button(icon='print',description="Print Slides (merged frames)",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + Alt + P')
 
 @dataclass(frozen=True)
 class _Toggles:
@@ -212,6 +214,9 @@ class Widgets:
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.focus, self.checks.rebuild, self.checks.notes,
                 self.checks.toast, self.checks.navgui, self.checks.reflow, 
+                HTML('<b>PDF Printing (Experimntal)</b>',layout = _html_layout),
+                self.buttons.print, 
+                self.buttons.print2,
                 HTML(html('details',[html('summary','<b>HTML File Export</b>'), how_to_print]).value,layout = _html_layout),
                 self.buttons.export,
                 self.checks.confirm,

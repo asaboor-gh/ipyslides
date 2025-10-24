@@ -14,6 +14,7 @@ from ipywidgets.widgets.trait_types import InstanceDict
 from ..formatters import fix_ipy_image, code_css, htmlize
 from ..utils import html, today, _clipbox_children, get_clips_dir, set_dir
 from . import intro, styles, _layout_css
+from ..dashlab import disabled
 
 
 class ConfigTraits(HasTraits):
@@ -273,6 +274,8 @@ class Settings:
         self._widgets.theme.observe(lambda c: self.theme(value=c.new), names=["value"])
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"])
         self._widgets.buttons.info.on_click(self._show_info)
+        self._widgets.buttons.print.on_click(self._print_pdf)
+        self._widgets.buttons.print2.on_click(self._print_pdf)
         self._widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
         self._wslider.observe(self._update_size, names=["value"])
         self._tgl_fscreen.observe(self._toggle_fullscreen, names=["value"])
@@ -317,6 +320,21 @@ class Settings:
                 self._widgets._push_toast(content, timeout=15)
 
             self._widgets.htmls.toast.value = "" # Reset to make a new signal
+    
+    def _print_pdf(self, btn):
+        with disabled(self._widgets.buttons.print,self._widgets.buttons.print2): # disable both buttons to avoid multiple clicks
+            self._slides.notify("Preparing slides for printing...", timeout=5)
+            keep_frames = True if btn == self._widgets.buttons.print else False
+            
+            # Update frame counts first per slide for js side
+            self._widgets.iw._nfs = {s.number: s.nf if keep_frames else 1 for s in self._slides}
+            
+            # Update CSS for print
+            for slide in self._slides:
+                slide._set_print_css(keep_frames = keep_frames)
+        
+            # Send message to JS to start print
+            self._widgets.iw.msg_tojs = 'PRINT'
     
     def _show_info(self, btn):
         self._widgets.iw.send({

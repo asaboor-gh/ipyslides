@@ -125,7 +125,6 @@ class Slide:
         self._set_refs = True
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
-        self._print_css = ipwHTML() # for frame css when printing
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -180,7 +179,6 @@ class Slide:
         
         with self._app._set_running(self):
             with capture_content() as captured:
-                display(self._print_css) # to have print css in output
                 yield captured
             
             if (self.number == 0) and self._fidxs:
@@ -317,13 +315,7 @@ class Slide:
         else:
             self._frame_idxs = tuple(new_frames[1:]) # join first content here as well to make same number of fames
 
-        # Update frame counts per slide for js side
-        nfs = self._app.widgets.iw._nfs.copy()
-        nfs[self.number] = self.nf
-        self._app.widgets.iw._nfs = nfs # need reassign to trigger traitlet sync
-        
         if self._frame_idxs:
-            self._print_css.value = '\n'.join(self._frame_css(i, print_mode=True) for i in range(self.nf))
             self.first_frame() # Bring up first frame to activate CSS
         else:
             if hasattr(self, '_frame_idxs'): # from previous run may be
@@ -419,7 +411,16 @@ class Slide:
         "Jump to previous frame and return True. If no previous frame, returns False"
         return self._show_frame('prev')
     
-
+    def _set_print_css(self, keep_frames = True):
+        if not keep_frames:
+            if hasattr(self, '_fsep'):
+                self._fsep.value = '' # Just let free print go
+        elif hasattr(self, '_fsep'):
+            self.first_frame() # go to first frame before setting all frames for print mode
+            self._fsep.value = '\n'.join(
+                self._frame_css(i, print_mode=True) for i in range(self.nf)
+            ) # set all frames for print mode
+            
     def _reset_indexf(self, new_index, func): 
         old = int(self.indexf) # avoid pointing to property
         self._indexf = new_index

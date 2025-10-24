@@ -54,13 +54,9 @@ function printSlides(box, model) {
         window.removeEventListener('afterprint', cleanup); // cleanup listener
     }, { once: true }); // or use { once: true } instead of removeEventListener
     
-    // Double RAF: ensures browser has painted and computed styles
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            window.print();
-        });
-    }); 
-    // Optionally can send message to Python side
+    setTimeout(() => {   
+        window.print();
+    }, 1000); // slight delay to ensure rendering
 }
 
 const keyMessage = {
@@ -103,11 +99,9 @@ function keyboardEvents(box,model) {
             message = (e.ctrlKey? "HOME": "END"); // Numbers don't change with control
         } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
-        } else if (e.ctrlKey && key === 'p') {
-            e.stopPropagation();   // Ctrl + P for print
-            printSlides(box, model);
-            return false; // Avoid print handling by notebbook further
-        }
+        } else if (e.ctrlKey && key === 'p') { // Ctrl + Shift + P is picked by system, so using Alt instead
+            message = e.altKey ? 'PRINT2' : 'PRINT'; // Ctrl + P for print, Ctrl + Alt + P for print merged frames
+        } 
 
         model.set("msg_topy", message);
         model.save_changes();
@@ -164,6 +158,8 @@ function handleMessage(model, msg, box, cursor) {
         }
     } else if (msg === "SetColors") { // sent by export_html function only
         setColors(model, box);
+    } else if (msg === "PRINT") {
+        printSlides(box, model);
     } else if (msg.includes("ToggleID:")) { // Toggle ID of slides
         const ids = msg.replace("ToggleID:","").split(",");
         const slides = box.getElementsByClassName('SlideArea');

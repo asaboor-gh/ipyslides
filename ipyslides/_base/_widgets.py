@@ -77,6 +77,10 @@ class InteractionWidget(anywidget.AnyWidget):
                 self._toggles.fscreen.icon = 'plus'
         elif msg == 'KSC':
             self._toast_html.value = 'KSC'
+        elif msg == 'PRINT':
+            self._buttons.print.click()
+        elif msg == 'PRINT2':
+            self._buttons.print2.click()
         
         if quick_menu_was_open: 
             self._toggles.menu.value = True # it might get closed by using some buttons. reset it
