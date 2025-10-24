@@ -21,36 +21,48 @@ function hideLaser(box, cursor) {
     box.onmousemove = null;
 }
 
+
+function progress(numSlides,numFrames, index, fidx) {
+    let unit = 100/((numSlides - 1) || 1); // avoid zero division error or None
+    let pv = Math.round(unit * (index - (numFrames - fidx - 1)/numFrames) * 10000)/10000;
+    let gradient = `linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) ${pv}%, var(--bg2-color) ${pv}%, var(--bg2-color) 100%)`;
+    return gradient
+}
+
 function printSlides(box, model) {
-    let slides = box.getElementsByClassName('SlideArea'); 
-    window._printFrames = [];
+    let slides = Array.from(box.getElementsByClassName('SlideArea')); 
+    window._printOnlyObjs = [];
     const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
     
-    for (let slide of slides) {
+    for (let n= 0; n < slides.length; n++) {
+        let slide = slides[n];
+        slide.style.setProperty('--slide-number', n); // set slide number for CSS
+
         if (slide.childNodes.length > 0) { // Need to have scroll positions on top for all slides
             slide.childNodes[0].scrollTop = 0; // scroll OutputArea to top
         }
-
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
 
+        slide.style.setProperty('--bar-bg-color', progress(slides.length, numFrames, n, 0));
         if (slide.classList.contains('Frames') && numFrames > 1) {
             for (let i = 1; i < numFrames; i++) { // single frame is already there
                 let clone = slide.cloneNode(true); // deep clone
                 clone.classList.remove('Frames'); // remove frames class to avoid infinite loop 
                 clone.classList.add(`f${numFrames - i}`); // add frame index class: f1, f2, f3...
-                window._printFrames.push(clone);
+                clone.style.setProperty('--bar-bg-color', progress(slides.length, numFrames, n, numFrames - i));
+                window._printOnlyObjs.push(clone);
                 slide.parentNode.insertBefore(clone, slide.nextSibling);
             }
         }
     }
     // Clean up AFTER print dialog closes
     window.addEventListener('afterprint', function cleanup() {
-        for (let frame of window._printFrames) {
+        for (let frame of window._printOnlyObjs) {
             frame.remove();
         }
-        delete window._printFrames;
+        delete window._printOnlyObjs;
         window.removeEventListener('afterprint', cleanup); // cleanup listener
     }, { once: true }); // or use { once: true } instead of removeEventListener
     

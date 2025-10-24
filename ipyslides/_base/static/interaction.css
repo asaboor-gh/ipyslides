@@ -24,16 +24,15 @@
     .ipyslides-print-node .jupyter-only {
         display: none !important;
     }
-    .ipyslides-print-node .export-only {
-        display: block !important;
-    }
-
     .ipyslides-print-node.SlidesWrapper.SlidesWrapper {
         display: table !important; /* Manages auto height for multiple slides */
         --contnetScale : 1 !important; /* Defualt for printing at same value */
     }
-    .ipyslides-print-node.SlidesWrapper > *:not(.SlideBox):not(.NavWrapper):not(.LogoHtml) {
+    .ipyslides-print-node.SlidesWrapper > *:not(.SlideBox):not(.LogoHtml) { 
         visibility: hidden !important;
+    }
+    .ipyslides-print-node.SlidesWrapper > .NavWrapper .Footer { 
+        visibility: visible !important; /* keep footer visible but main nav hidden*/
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox {
         display: flex !important;
@@ -51,9 +50,33 @@
         /* height: auto !important;  */
         page-break-inside: avoid !important; /* avoid for slides printing */
         page-break-after: always !important;
-        --paddingBottom: 22px !important; /* to avoid cutting off text with huge padding */
+        --paddingBottom: 23px !important; /* to avoid cutting off text with huge padding */
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:last-of-type  {
         page-break-after: avoid !important;
+    }
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0) {
+        position: relative !important; /* somehow its not relative already */
+        --bar-bg-color: transparent; /* set with JS */
+        --slide-number: 0; /* set with JS */
+    }
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::after {
+        counter-reset: snum var(--slide-number); /* important to pick from CSS variable */
+        content: counter(snum) !important;    
+        position: absolute !important;
+        bottom: 3px !important;
+        right: 6px !important;
+        color: var(--fg2-color) !important;
+        font-size: 12px !important;
+    }
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::before {
+        content: '';
+        position: absolute !important;
+        display: block !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 3px !important;
+        background: var(--bar-bg-color) !important;
     }
 }

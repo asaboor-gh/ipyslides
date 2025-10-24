@@ -131,7 +131,6 @@ def layout_css(accent_color, aspect):
                         "border": "1px solid red",
                         "display": "block",
                     },
-                    ".export-only": {"display": "none !important"},
                     ".jp-OutputArea": {
                         "width": "100% !important",
                         "height": "auto !important", # This is must for layout
@@ -150,7 +149,10 @@ def layout_css(accent_color, aspect):
                     "border": "1px solid var(--bg3-color)",
                     "border-radius": "0.2em",
                 },
-                ".export-only": {"display": "none !important"},
+                ".export-only, .print-only": {
+                    "display": "none !important",
+                    "@media print": {"display": "unset !important",},
+                    },
                 ".widget-inline-hbox": {
                     ".widget-label": {"color": "var(--fg1-color)"},
                     ".widget-readout": {
