@@ -64,7 +64,7 @@
         counter-reset: snum var(--slide-number); /* important to pick from CSS variable */
         content: counter(snum) !important;    
         position: absolute !important;
-        bottom: 3px !important;
+        bottom: 3px !important; /* 1px above the bar */
         right: 6px !important;
         color: var(--fg2-color) !important;
         font-size: 12px !important;
@@ -76,7 +76,7 @@
         bottom: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        height: 3px !important;
+        height: 2px !important;
         background: var(--bar-bg-color) !important;
     }
 }

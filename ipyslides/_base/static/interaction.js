@@ -22,45 +22,65 @@ function hideLaser(box, cursor) {
 }
 
 
-function progress(numSlides,numFrames, index, fidx) {
+function updateProgress(numSlides,numFrames, index, fidx) {
     let unit = 100/((numSlides - 1) || 1); // avoid zero division error or None
     let pv = Math.round(unit * (index - (numFrames - fidx - 1)/numFrames) * 10000)/10000;
     let gradient = `linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) ${pv}%, var(--bg2-color) ${pv}%, var(--bg2-color) 100%)`;
     return gradient
 }
 
+
 function printSlides(box, model) {
     let slides = Array.from(box.getElementsByClassName('SlideArea')); 
     window._printOnlyObjs = [];
     const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
+    const parts = model.get('_pfs') || {}; // get part counts per slide
     
     for (let n= 0; n < slides.length; n++) {
         let slide = slides[n];
-        slide.style.setProperty('--slide-number', n); // set slide number for CSS
-
+        
         if (slide.childNodes.length > 0) { // Need to have scroll positions on top for all slides
             slide.childNodes[0].scrollTop = 0; // scroll OutputArea to top
         }
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
-
-        slide.style.setProperty('--bar-bg-color', progress(slides.length, numFrames, n, 0));
+        slide.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, 0));
+        slide.style.setProperty('--slide-number', n); // set slide number for CSS
+        
         if (slide.classList.contains('Frames') && numFrames > 1) {
+            let lastInserted = slide; // to keep insertion order
+            
             for (let i = 1; i < numFrames; i++) { // single frame is already there
-                let clone = slide.cloneNode(true); // deep clone
-                clone.classList.remove('Frames'); // remove frames class to avoid infinite loop 
-                clone.classList.add(`f${numFrames - i}`); // add frame index class: f1, f2, f3...
-                clone.style.setProperty('--bar-bg-color', progress(slides.length, numFrames, n, numFrames - i));
+                let clone = slide.cloneNode(true); // deep clone, and need to remove n25-like classes to avoid CSS clashes
+                clone.classList.remove('Frames',`n${slideNum}`); // remove frames class to avoid infinite loop 
+                clone.removeAttribute('id'); // remove id to avoid duplicates if any
+                clone.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, numFrames - i));
+                
+                // Set visibility of parts if any
+                if (parts[slideNum] && parts[slideNum][i] !== undefined) {
+                    let outputs = Array.from(clone.getElementsByClassName('jp-OutputArea-child')); // corresponds to contents on python side
+                    
+                    for (let j = 0; j < outputs.length; j++) {
+                        if (j < parts[slideNum][i]) {
+                            outputs[j].style.height = 'unset';
+                            outputs[j].style.visibility = 'visible';
+                        } else {
+                            outputs[j].style.height = '0';
+                            outputs[j].style.visibility = 'hidden';
+                        }
+                    }
+                }
                 window._printOnlyObjs.push(clone);
-                slide.parentNode.insertBefore(clone, slide.nextSibling);
+                slide.parentNode.insertBefore(clone, lastInserted.nextSibling);
+                lastInserted = clone; // update last inserted
             }
         }
     }
     // Clean up AFTER print dialog closes
     window.addEventListener('afterprint', function cleanup() {
-        for (let frame of window._printOnlyObjs) {
-            frame.remove();
+        for (let obj of window._printOnlyObjs) {
+            obj.remove();
         }
         delete window._printOnlyObjs;
         window.removeEventListener('afterprint', cleanup); // cleanup listener

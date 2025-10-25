@@ -367,18 +367,19 @@ class Slide:
             nrows, ncols = nrows
         elif isinstance(nrows, range): # not joined
             start, nrows = nrows.start, nrows.stop
-        sel = f'.n{self.number}.f{index}' if index > 0 and print_mode else f'.n{self.number}' # corresponding frame selectors are added in js side for print mode
+        
+        def hide(b): # PRIN_MODE IS NOT WORKING IN JS, SO REMOVE THAT OPTION OVERALL
+            if self.stacked:
+                return {'visibility': ('hidden' if b else 'visible') + '!important'} # I think height makes it worse to place in this case
+            else:
+                return {'height': ('0' if b else 'unset') + ' !important'} # may add visibility as well?
+            
+        sel = f'.n{self.number}.n{self.number}:nth-child({index+1})' if index > 0 and print_mode else f'.n{self.number}' # corresponding frame selectors are added in js side for print mode
         css = {
-            f'^.n{self.number}{sel} > .jp-OutputArea > .jp-OutputArea-child': {
-                f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': { # start through nrows
-                    'height': '0 !important',
-                },
-                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': { # initial objs on each, increase spacificity 
-                    'height': 'unset !important',
-                },
-                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child({len(self.contents) + 1})': { # for references, shown after contents
-                    'height': 'unset !important'
-                },
+            f'^{sel} > .jp-OutputArea > .jp-OutputArea-child': {
+                f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': hide(True), # start through nrows
+                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': hide(False), # initial objs on each, increase spacificity 
+                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child({len(self.contents) + 1})': hide(False), # for references, shown after contents
                 **({f'^:nth-child({nrows}) .columns.writer:first-of-type > div:nth-child(n + {ncols+1})': { # avoid nested columms
                     'visibility': 'hidden !important', # enforce this instead of jumps in height
                 }} if isinstance(self._fidxs[index], tuple) else {}), 
@@ -411,15 +412,15 @@ class Slide:
         "Jump to previous frame and return True. If no previous frame, returns False"
         return self._show_frame('prev')
     
-    def _set_print_css(self, keep_frames = True):
-        if not keep_frames:
+    def _set_print_css(self, merge_frames = False):
+        if merge_frames:
             if hasattr(self, '_fsep'):
                 self._fsep.value = '' # Just let free print go
-        elif hasattr(self, '_fsep'):
-            self.first_frame() # go to first frame before setting all frames for print mode
-            self._fsep.value = '\n'.join(
-                self._frame_css(i, print_mode=True) for i in range(self.nf)
-            ) # set all frames for print mode
+        elif hasattr(self, '_fsep'): 
+            self._fsep.value = self._frame_css(0) # set first frame for print mode without other actions
+            # self._fsep.value = '\n'.join(
+            #     self._frame_css(i, print_mode=True) for i in range(self.nf)
+            # ) # set all frames for print mode
             
     def _reset_indexf(self, new_index, func): 
         old = int(self.indexf) # avoid pointing to property

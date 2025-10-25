@@ -324,14 +324,15 @@ class Settings:
     def _print_pdf(self, btn):
         with disabled(self._widgets.buttons.print,self._widgets.buttons.print2): # disable both buttons to avoid multiple clicks
             self._slides.notify("Preparing slides for printing...", timeout=5)
-            keep_frames = True if btn == self._widgets.buttons.print else False
+            merge_frames = True if btn is self._widgets.buttons.print2 else False
             
             # Update frame counts first per slide for js side
-            self._widgets.iw._nfs = {s.number: s.nf if keep_frames else 1 for s in self._slides}
+            self._widgets.iw._nfs = {s.number: 1 if merge_frames else s.nf for s in self._slides}
+            self._widgets.iw._pfs = {s.number: list(s._fidxs) for s in self._slides}
             
             # Update CSS for print
             for slide in self._slides:
-                slide._set_print_css(keep_frames = keep_frames)
+                slide._set_print_css(merge_frames = merge_frames)
         
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'

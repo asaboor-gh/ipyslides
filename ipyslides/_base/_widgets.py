@@ -13,6 +13,7 @@ class InteractionWidget(anywidget.AnyWidget):
     _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
     _colors = traitlets.Dict().tag(sync=True) # for export
     _nfs = traitlets.Dict().tag(sync=True) # frame counts per slide, for js side use
+    _pfs = traitlets.Dict().tag(sync=True) # parts counts per slide, for js side use
     
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)
