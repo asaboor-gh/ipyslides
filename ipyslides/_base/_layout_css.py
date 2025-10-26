@@ -131,6 +131,11 @@ def layout_css(accent_color, aspect):
                         "border": "1px solid red",
                         "display": "block",
                     },
+                    "^.HideSlide *": {"visibility": "hidden !important",},
+                    "@media print": {
+                        "^.HideSlide": {"visibility": "visible !important",},
+                        "^.HideSlide *": {"visibility": "inherit !important",},
+                    },
                     ".jp-OutputArea": {
                         "width": "100% !important",
                         "height": "auto !important", # This is must for layout

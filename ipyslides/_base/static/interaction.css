@@ -60,6 +60,12 @@
         --bar-bg-color: transparent; /* set with JS */
         --slide-number: 0; /* set with JS */
     }
+    /* Ensure clones also respect overflow */
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.print-only {
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        padding-bottom: var(--paddingBottom, 23px) !important;
+    }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::after {
         counter-reset: snum var(--slide-number); /* important to pick from CSS variable */
         content: counter(snum) !important;    
@@ -68,6 +74,7 @@
         right: 6px !important;
         color: var(--fg2-color) !important;
         font-size: 12px !important;
+        z-index: 10 !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::before {
         content: '';
@@ -78,5 +85,6 @@
         width: 100% !important;
         height: 2px !important;
         background: var(--bar-bg-color) !important;
+        z-index: 9 !important;
     }
 }

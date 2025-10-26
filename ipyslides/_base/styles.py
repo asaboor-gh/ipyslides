@@ -122,6 +122,20 @@ theme_colors = {
     }   
 }
 
+def collapse_node(b):
+    "Used to collapse div in frames navigation and print mode."
+    css = {
+        'height': '0' if b else 'unset',
+        'min-height': '0' if b else 'unset', # unlike max height, it can't be none
+        'max-height': '0' if b else 'none',
+        'overflow': 'hidden' if b else 'unset',
+        'border': 'none' if b else 'unset', # just to be safe, althout output areas don't have border and others below
+        'outline': 'none' if b else 'unset',
+        'padding': '0' if b else 'unset',
+        'margin': '0' if b else 'unset',
+    }
+    return {k: f'{v} !important' for k, v in css.items()}
+
 def style_css(colors, fonts, layout, _root = False):
     uclass = get_unique_css_class()
     margin = 'auto' if layout.centered else 'unset'
@@ -280,7 +294,7 @@ def style_css(colors, fonts, layout, _root = False):
         '.SlideArea': {
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
-            'height': f'{int(210/layout.aspect)}mm !important',
+            'height': f'{int(210/layout.aspect):.3f}mm !important',
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
             'box-sizing': 'border-box !important',
@@ -298,11 +312,16 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-width': f'{layout.width}% !important',
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
+                '@media print': { # For PDF printing of frames, data-hidden set by JS
+                    '> .jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': {
+                        ' , *': {'visibility': 'hidden !important',}, 
+                    },
+                },
             },
             '@media print': { # For PDF printing dynamically set page size
                 '@page': {
                     'margin': '0 !important',
-                    'size': f'210mm {int(210/layout.aspect)}mm !important',
+                    'size': f'210mm {int(210/layout.aspect):.3f}mm !important',
                 },
             },
             **({'^:not(.n0) > .jp-OutputArea': { # no yoffset on title slide, leave it centered globally

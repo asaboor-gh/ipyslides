@@ -109,7 +109,7 @@ class _HhtmlExporter:
             content     = content, 
             script      = _script, 
             click_btns  = self._get_clickables(), 
-            height      = f'{int(210/theme_kws["layout"].aspect)}mm', 
+            height      = f'{210/theme_kws["layout"].aspect:.3f}mm', 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
             bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True → bottom
             )

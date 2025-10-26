@@ -12,6 +12,7 @@ from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data
 from ._layout_css import background_css
+from .styles import collapse_node
 
 class Vars:
     """Container for markdown slide variables, to see and update variables
@@ -124,7 +125,7 @@ class Slide:
         self._has_top_frame = True
         self._set_refs = True
         self._toc_args = () # empty by default
-        self._widget.add_class(f"n{self.number}").remove_class("Frames") # will be added by fsep
+        self._widget.add_class(f"n{self.number}").remove_class("base") # will be added by fsep
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -179,6 +180,8 @@ class Slide:
         
         with self._app._set_running(self):
             with capture_content() as captured:
+                display(html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
+                    metadata={'skip-export':'export html assign itself'})  # to register section id in DOM
                 yield captured
             
             if (self.number == 0) and self._fidxs:
@@ -236,7 +239,6 @@ class Slide:
         return tuple([v for v in self._has_vars if not v in self._md_vars]) # only those not set on slide
 
     def _reset_toc(self):
-        self._app._sec_id2dom() # for clickable links
         items = []
         for s in self._app[:self.index]:
             if s._section:
@@ -355,7 +357,7 @@ class Slide:
         ]) and hasattr(self,'_on_load') and callable(self._on_load):
             self._on_load(self)
     
-    def _frame_css(self, index, print_mode=False):
+    def _frame_css(self, index):
         if not self._fidxs:
             return ''
         
@@ -368,15 +370,14 @@ class Slide:
         elif isinstance(nrows, range): # not joined
             start, nrows = nrows.start, nrows.stop
         
-        def hide(b): # PRIN_MODE IS NOT WORKING IN JS, SO REMOVE THAT OPTION OVERALL
+        def hide(b): 
             if self.stacked:
-                return {'visibility': ('hidden' if b else 'visible') + '!important'} # I think height makes it worse to place in this case
+                return {'^, ^ *':{'visibility': ('hidden' if b else 'inherit') + '!important'}} # hide all and nested
             else:
-                return {'height': ('0' if b else 'unset') + ' !important'} # may add visibility as well?
+                return collapse_node(b)
             
-        sel = f'.n{self.number}.n{self.number}:nth-child({index+1})' if index > 0 and print_mode else f'.n{self.number}' # corresponding frame selectors are added in js side for print mode
-        css = {
-            f'^{sel} > .jp-OutputArea > .jp-OutputArea-child': {
+        return _styled_css({ # base class is important to avoid CSS clashes while printing clones
+            f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child': {
                 f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': hide(True), # start through nrows
                 f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': hide(False), # initial objs on each, increase spacificity 
                 f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child({len(self.contents) + 1})': hide(False), # for references, shown after contents
@@ -384,8 +385,7 @@ class Slide:
                     'visibility': 'hidden !important', # enforce this instead of jumps in height
                 }} if isinstance(self._fidxs[index], tuple) else {}), 
             },
-        }
-        return _styled_css({'@media print': css} if print_mode else css).value 
+        }).value
     
     def _show_frame(self, which):
         if self._fidxs:
@@ -418,9 +418,6 @@ class Slide:
                 self._fsep.value = '' # Just let free print go
         elif hasattr(self, '_fsep'): 
             self._fsep.value = self._frame_css(0) # set first frame for print mode without other actions
-            # self._fsep.value = '\n'.join(
-            #     self._frame_css(i, print_mode=True) for i in range(self.nf)
-            # ) # set all frames for print mode
             
     def _reset_indexf(self, new_index, func): 
         old = int(self.indexf) # avoid pointing to property

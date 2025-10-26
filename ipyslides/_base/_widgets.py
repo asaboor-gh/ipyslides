@@ -18,8 +18,6 @@ class InteractionWidget(anywidget.AnyWidget):
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)
 
-    _slides_ids = '' # need to send ids to JS once it is loade, besides when updating TOCs
-
     def __init__(self, _widgets, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._toggles = _widgets.toggles
@@ -60,7 +58,6 @@ class InteractionWidget(anywidget.AnyWidget):
             self._theme.options = ['Jupyter', *self._theme.options] 
             self._theme.value = 'Jupyter' # enable it
         elif msg == 'LOADED':
-            self.msg_tojs = "ToggleID:" + self._slides_ids # send ids to JS, it will be used for clickable links in TOC
             if self._checks.notes.value: # Notes window already there
                self._checks.notes.value = False # closes unlinked window
                self._checks.notes.value = True # opens new linked window

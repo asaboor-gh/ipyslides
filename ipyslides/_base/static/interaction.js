@@ -29,12 +29,12 @@ function updateProgress(numSlides,numFrames, index, fidx) {
     return gradient
 }
 
-
 function printSlides(box, model) {
     let slides = Array.from(box.getElementsByClassName('SlideArea')); 
     window._printOnlyObjs = [];
     const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
     const parts = model.get('_pfs') || {}; // get part counts per slide
+    console.log(frameCounts, parts);
     
     for (let n= 0; n < slides.length; n++) {
         let slide = slides[n];
@@ -48,26 +48,39 @@ function printSlides(box, model) {
         slide.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, 0));
         slide.style.setProperty('--slide-number', n); // set slide number for CSS
         
-        if (slide.classList.contains('Frames') && numFrames > 1) {
+        if (slide.classList.contains('base') && numFrames > 1) {
             let lastInserted = slide; // to keep insertion order
             
             for (let i = 1; i < numFrames; i++) { // single frame is already there
-                let clone = slide.cloneNode(true); // deep clone, and need to remove n25-like classes to avoid CSS clashes
-                clone.classList.remove('Frames',`n${slideNum}`); // remove frames class to avoid infinite loop 
-                clone.removeAttribute('id'); // remove id to avoid duplicates if any
-                clone.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, numFrames - i));
-                
-                // Set visibility of parts if any
+                let clone = slide.cloneNode(true); // deep clone
+                clone.classList.remove('base'); // remove base class to avoid CCS clashes
+                clone.classList.add('print-only'); // avoid cluttering screen view
+                clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
+                clone.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, i));
+                // Set visibility of parts if any, Do not change this to CSS only as
+                // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
                     let outputs = Array.from(clone.getElementsByClassName('jp-OutputArea-child')); // corresponds to contents on python side
-                    
+                    let part = parts[slideNum][i];
+                    console.log(part);
                     for (let j = 0; j < outputs.length; j++) {
-                        if (j < parts[slideNum][i]) {
-                            outputs[j].style.height = 'unset';
-                            outputs[j].style.visibility = 'visible';
-                        } else {
-                            outputs[j].style.height = '0';
-                            outputs[j].style.visibility = 'hidden';
+                        console.log(i,j);
+                        if (part.row !== undefined) { // incremental frames
+                            if (j > part.row) {
+                                outputs[j].setAttribute('data-hidden','true'); // rest handled by CSS
+                            }
+                            if (part.col !== undefined && j === part.row) {
+                                // specific column hiding inside last visible row
+                                let cols = outputs[j].querySelectorAll('.columns.writer:first-of-type > div');
+                                for (let k=0; k < cols.length; k++) {
+                                    if (k >= part.col) {
+                                        cols[k].setAttribute('data-hidden','true'); // keep content to avoid reflow
+                                    }
+                                }
+                            }
+                            console.log("In Incremental", i,j);
+                        } else if (Array.isArray(part) && !part.includes(j)) { // non-incremental frames
+                            outputs[j].style.display = 'none'; // will not need to show again, so it safe to remove from layout
                         }
                     }
                 }
@@ -192,22 +205,7 @@ function handleMessage(model, msg, box, cursor) {
         setColors(model, box);
     } else if (msg === "PRINT") {
         printSlides(box, model);
-    } else if (msg.includes("ToggleID:")) { // Toggle ID of slides
-        const ids = msg.replace("ToggleID:","").split(",");
-        const slides = box.getElementsByClassName('SlideArea');
-        if (ids.length !== slides.length) {
-            console.warn("Number of ids does not match number of slides, skipping setting ids");
-            return false; // don't set ids if not match
-        }
-        for (let i = 0; i < slides.length; i++) {
-            if (!ids[i]) {
-                slides[i].removeAttribute('id'); // remove id if not set
-            } else {
-                slides[i].setAttribute('id', ids[i]); // set id if provided
-            }
-        }
-        
-    }
+    } 
 };
 
 function keepThisViewOnly(box){

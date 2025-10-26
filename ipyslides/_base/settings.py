@@ -328,12 +328,24 @@ class Settings:
             
             # Update frame counts first per slide for js side
             self._widgets.iw._nfs = {s.number: 1 if merge_frames else s.nf for s in self._slides}
-            self._widgets.iw._pfs = {s.number: list(s._fidxs) for s in self._slides}
             
-            # Update CSS for print
+            # Update CSS and frames indices for print
+            parts = {}
             for slide in self._slides:
                 slide._set_print_css(merge_frames = merge_frames)
-        
+                if slide._fidxs:
+                    frms = [None] # first frame handled by CSS already, but keep order
+                    for frm in slide._fidxs[1:]: # first frame handled by CSS already
+                        if isinstance(frm , range):
+                            frms.append([*range(slide._fidxs[0].start),*frm]) 
+                        else:
+                            if isinstance(frm, int):
+                                frms.append({'row': frm - 1, 'col': None})
+                            else: # tuple of (row,col)
+                                frms.append({'row': frm[0] - 1, 'col': frm[1]})
+                    parts[slide.number] = frms
+            
+            self._widgets.iw._pfs = parts
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'
     
@@ -400,8 +412,8 @@ class Settings:
         return text
 
     def _update_size(self, change):
-        self._widgets.mainbox.layout.height = "{}vw".format(
-            int(self._wslider.value / self.layout.aspect)
+        self._widgets.mainbox.layout.height = "{:.3f}vw".format(
+            self._wslider.value / self.layout.aspect
         )
         self._widgets.mainbox.layout.width = "{}vw".format(self._wslider.value)
         self._update_theme({'owner':'layout'})  # change aspect for Linked Output view too

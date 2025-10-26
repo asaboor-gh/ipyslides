@@ -865,12 +865,6 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         return slides_iterable
     
-    def _sec_id2dom(self):
-        self.widgets.iw._slides_ids = ids = ",".join(
-            s._sec_id if s._section else "" for s in self._iterable
-        )  # Set ids for slides in DOM if section is set
-        self.widgets.iw.msg_tojs = "ToggleID:" + ids # send as well, but keep reerence for when displayed
-
     def _update_toc(self):
         tocs = [(s.index, s._section) for s in self._iterable if s._section]
         children = [
@@ -886,7 +880,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             children.append(self._toc_widget)
 
         self.widgets.tocbox.children = children
-        self._sec_id2dom()
 
     def create(self, slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is much faster than creating one slide each time."
@@ -933,9 +926,14 @@ class fsep:
     def __init__(self, stack=None):
         app = self._app_ins()
         app.verify_running("Cant use fsep in a capture context other than slides!")
-        app.this._widget.add_class("Frames")
-        app.this._fsep = getattr(app.this, '_fsep',app.html('style','').as_widget()) # create once
-        app.frozen(app.this._fsep, {"FSEP": "","skip-export":"no need in export"}).display()
+        app.this._widget.add_class("base") # this is needed to distinguisg clones during printing
+        
+        sep = app.html('')
+        if not hasattr(app.this, '_fsep'): 
+            sep = sep.as_widget() # first separator must be a widget
+            app.this._fsep = sep # this is used to change frames dynamically
+        
+        display(sep, metadata={"FSEP": "","skip-export":"no need in export"})
         
         if stack in (True, False):
             app.this.stack_frames(stack)
