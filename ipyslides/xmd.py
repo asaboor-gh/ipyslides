@@ -177,7 +177,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     # Footnotes at place user likes
     all_matches = re.findall(r"refs\`([\d+]?)\`", text_chunk) # match digit or empty
     for match in all_matches:
-        out = xmd_instance._handle_var(slide_instance.refs(match or int(match))) # match is empty or digit
+        out = xmd_instance._handle_var(slide_instance.refs(int(match) if match else 2)) # match is empty or digit
         text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
     return text_chunk
 
