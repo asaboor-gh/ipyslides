@@ -376,7 +376,6 @@ class Slide:
             f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child': {
                 f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': hide(True), # start through nrows
                 f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': hide(False), # initial objs on each, increase spacificity 
-                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child({len(self.contents) + 1})': hide(False), # for references, shown after contents
                 **({f'^:nth-child({nrows}) .columns.writer:first-of-type > div:nth-child(n + {ncols+1})': { # avoid nested columms
                     'visibility': 'hidden !important', # enforce this instead of jumps in height
                 }} if isinstance(self._fidxs[index], tuple) else {}), 
@@ -443,6 +442,9 @@ class Slide:
         self._app.widgets._snum.tooltip = f"{self._app._current}" # hint for current slide number
 
     def _handle_refs(self):
+        if self.nf > 1 and self._set_refs and self._app.cite_mode == 'footnote': # on frames skip references
+            return self._app.notify(f"Slide {self.number} has frames, so refs should be set explicitly!", 5)
+        
         if hasattr(self, '_refs'): # from some previous settings and change
             delattr(self, '_refs') # added later  only if need
         
