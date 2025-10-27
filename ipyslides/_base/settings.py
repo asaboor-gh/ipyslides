@@ -329,7 +329,7 @@ class Settings:
             # Update frame counts first per slide for js side
             self._widgets.iw._nfs = {s.number: 1 if merge_frames else s.nf for s in self._slides}
             
-            # Update CSS and frames indices for print
+            # Update frames indices for print
             parts = {}
             for slide in self._slides:
                 slide._set_print_css(merge_frames = merge_frames)
@@ -407,9 +407,23 @@ class Settings:
         text = htmlize(f'<p markdown="1" style="{style}">{text}</p>') 
         
         if update_widget:
-            self._widgets.htmls.footer.value = text
+            self._widgets.htmls.footer.value = text + self._get_clickers()
 
         return text
+    
+    def _get_clickers(self): # in PDF/export mode
+        if len(self._slides) < 2 or not self.toggle.navgui:
+            return '' # no clicks for only title, or when navigation UI is off
+        
+        items = [getattr(item,'_sec_id','') for item in self._slides]
+        names = ['●', *['●' for _ in items[1:-1]],'●']
+        
+        if len(items) > 5: # we need only 0,25,50,75,100 % clickers
+            imax = len(items) - 1
+            items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
+            names = '●●●●●'
+        links = "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(names,items))
+        return f'<div class="click-wrapper print-only"> {links} </div>' 
 
     def _update_size(self, change):
         self._widgets.mainbox.layout.height = "{:.3f}vw".format(

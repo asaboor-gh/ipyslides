@@ -292,6 +292,7 @@ def style_css(colors, fonts, layout, _root = False):
             'padding-bottom': 'var(--paddingBottom, 22px) !important', # 20px navbar + 2px progressbar
         },
         '.SlideArea': {
+            **{f"--{k}-color":v for k,v in colors.items()}, # need for per slide based CSS set by user to not effect all
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
             'height': f'{int(210/layout.aspect):.3f}mm !important',
@@ -682,6 +683,31 @@ def style_css(colors, fonts, layout, _root = False):
             'min-width':'300px',
             'width':'100%',
             'height':'auto',    
+        },
+        '.click-wrapper': { # PDF/HTML -only clicker at bottom right
+            'position': 'fixed !important',
+            'right': '16px !important', # space for slide number
+            'bottom': '3px !important',
+            'width': '110px !important',
+            'max-width': '110px !important',
+            'height': '21px !important',
+            'display': 'flex !important',
+            'z-index': '6 !important',
+            'justify-content': 'space-evenly !important',
+            '.clicker': {
+                'display':'inline-block',
+                'padding':'0 5px !important', # PDF safe
+                'flex-grow':'1',
+                'color':'var(--accent-color)',
+                'text-align':'center',
+                'font-size':'14px',
+                'text-decoration':'none !important',
+                'opacity':'0.4',
+                '^:hover': { # for exported html interactivity
+                    'color':'var(--fg1-color)',
+                    'opacity':'1',
+                },
+            },    
         },
     })
     

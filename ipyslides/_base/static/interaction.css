@@ -52,6 +52,9 @@
         page-break-after: always !important;
         --paddingBottom: 23px !important; /* to avoid cutting off text with huge padding */
     }
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.SlideArea {
+        background: var(--bg1-color) !important; /* user can set bg color per slide */
+    }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:last-of-type  {
         page-break-after: avoid !important;
     }

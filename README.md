@@ -176,9 +176,8 @@ Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML
 - **Custom Styling:**
 ```python
 slides.set_css({ # on all slides or slide[index,].set_css() per slide
-    '--bg1-color': '#f0f0f0',
-    '--text-color': '#333'
-})
+    'p': {'font-size':'1.2em', 'line-height':'1.5em'}, # relaxed paragraph
+}, bg1 = '#f0f0f0') # set theme color on this slide
 ```
 
 - **File Sync:**

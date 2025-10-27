@@ -68,7 +68,7 @@ def demo_slides(slides):
     with slides.build_() as sl:
         slides.write('## Plotting with Matplotlib section`Plotting and DataFrame`')
         with slides.code.context(returns = True) as s:
-            sl.set_css({'--bg1-color':'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)'})
+            sl.set_css(bg1 = 'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')
 
             import numpy as np, matplotlib.pyplot as plt
             plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation

@@ -404,9 +404,8 @@ class BaseSlides:
         
         with self.build(-1) as s:
             s.set_css({
-                '--bg1-color': 'linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color))',
                 '.highlight': {'background':'#8984'}
-            }) 
+            }, bg1 = 'linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color))')
             self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
             self.doc(self.settings,'Slides', members=True,itself = True).display()
                 

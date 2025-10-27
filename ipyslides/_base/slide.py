@@ -94,15 +94,11 @@ class Slide:
         self._esc_vars = {} # store escaped variables for rebuilds form build content
         self._set_defaults()
         self.vars = Vars(self) # to access variables info and update them
+        self._alt_print = ipwHTML().add_class('print-only') # alternate print content for this slide which is shown dynamically on slides
 
-        if not self._contents: # show slide number hint there
-            self.set_css({
-                f' > .jp-OutputArea:empty:after': {
-                    'content': f'"{self!r}"',
-                    'color': 'var(--accent-color)',
-                    'font-size': '2em',
-                }
-            })
+        if not self._contents: # show slide number hint there at first creation
+            with self._widget:
+                print(self)
     
     def __setattr__(self, name: str, value):
         if not name.startswith('_') and hasattr(self, name):
@@ -126,6 +122,7 @@ class Slide:
         self._set_refs = True
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").remove_class("base") # will be added by fsep
+        self._tcolors = {} # theme colors for this slide only
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -182,6 +179,7 @@ class Slide:
             with capture_content() as captured:
                 display(html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
                     metadata={'skip-export':'export html assign itself'})  # to register section id in DOM
+                display(self._alt_print) # alternate print content if any should be on top frame
                 yield captured
             
             if (self.number == 0) and self._fidxs:
@@ -371,10 +369,8 @@ class Slide:
             start, nrows = nrows.start, nrows.stop
         
         def hide(b): 
-            if self.stacked:
-                return {'^, ^ *':{'visibility': ('hidden' if b else 'inherit') + '!important'}} # hide all and nested
-            else:
-                return collapse_node(b)
+            props = {'^, ^ *':{'visibility': ('hidden' if b else 'inherit') + '!important'}} # hide all and nested
+            return props if self.stacked else {**collapse_node(b), '@media print': props}
             
         return _styled_css({ # base class is important to avoid CSS clashes while printing clones
             f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child': {
@@ -493,7 +489,8 @@ class Slide:
     
     @property
     def css(self):
-        return XTML(f'{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
+        back = self._app.html('style',_build_css((f".{self._app.uid}.SlidesWrapper",), self._tcolors), css_class='jupyter-only') # don't mess export here
+        return XTML(f'{back}{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
     
     @property
     def index(self): return self._index
@@ -537,49 +534,61 @@ class Slide:
         else:
             return self._app.code.cast('No source found!\n',language = 'markdown')
     
-    def _fix_css(self,props, this_slide=False):
+    def _fix_css(self,props, colors, this_slide=False):
+        if props is None:
+            props = {} # may be colors only
+        
         if not isinstance(props,dict):
             raise TypeError(f"expects dict, got {type(props)}")
+        
+        for k,v in props.items():
+            if not isinstance(v, dict): # Don't let user modify layout with top level props
+                raise TypeError("CSS properties are not allowed at slide level. "
+                    f"If {k!r} meant to be a CSS selector, its value must be a dict, got {type(v)}")
+            sels = k.split(',') # can be multiple selectors
+            for s in sels:
+                if not s.strip():
+                    raise KeyError(f"Empty CSS selector found in {k!r}, perhaps due to extra comma?")
+                if any([c in s for c in ['^', '<']]): # avoid layout modifications by user
+                    raise KeyError(f"Tryign to access silde node with selector {s!r} in {k!r} is restricted!")
+        
+        _allowed = ['fg1', 'fg2', 'fg3', 'bg1', 'bg2', 'bg3', 'accent', 'pointer']
+        
+        for key, value in colors.items():
+            if key not in _allowed:
+                raise KeyError(f"Theme color key {key!r} not recognized. Allowed color keys are {_allowed}")
+            if not isinstance(value, str):
+                raise TypeError(f"Theme color value for key {key!r} should be str, got {type(value)}")
+        
+        self._tcolors = {f'--{k}-color':v for k,v in colors.items()} # reset to new colors each time
+        props = {**self._tcolors, **props} # allow theme colors to be used directly per slide
         
         if not props:
             return ''
         
-        props = {k:v for k,v in props.items() if k.lstrip(' ^<')} # Don't let user access top level to modify layout
-        
-        back_props = {}
-        for k,v in props.copy().items():
-            if not isinstance(v, dict):
-                value = props.pop(k) # Remove all top level
-                if isinstance(k, str) and k.startswith('--'): # don't check others type here
-                    back_props[k] = value # Allow CSS variables at top
-                else:
-                    print(f"Ignored property {k!r}. At top level, only CSS variables are allowed, such as '--bg1-color'!")
-                    
-        _css = ''
-        if back_props:
-            _css += _build_css((f".{self._app.uid}.SlidesWrapper",), back_props)
-        
         klass = f".{self._app.uid} .SlideArea"
         if this_slide:
             klass += f".n{self.number}"
-        
-        _css += ('\n' + _build_css((klass,), props))
-        return self._app.html('style', _css)
+        return self._app.html('style', _build_css((klass,), props))
     
-    def set_css(self, this: dict=None, overall:dict=None):
+    def _set_alt_print(self):
+        self._alt_print.value = f'{self._css}' # will add bg_image later as well if any
+    
+    def set_css(self, this: dict=None, overall:dict=None, **theme_colors):
         """
-        Attributes at the root level of the dictionary are only picked if they are related to background. 
+        Set CSS on `this` slide or `overall` or both cases. 
         Each call will reset previous call if props given explicitly, otherwise not.
 
         ::: note-tip
             - See code`Slides.css_syntax` for information on how to write CSS dictionary.
-            - Unlike code`slides.html('style',props)`, you can set CSS variables at top level here including theme variables
-            code['css']` --fg[1,2,3]-color `,code['css']` --bg[1,2,3]-color ` and code['css']` --[accent, pointer]-color ` to tweek appearance of individual or all slides.
+            - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`.
+              This does not affect overall theme colors, for that use `Slides.settings.theme.colors`.
         """
-        if this is not None:
-            self._css = self._fix_css(this, this_slide=True)
+        if theme_colors or this is not None:
+            self._css = self._fix_css(this, theme_colors, this_slide=True) # theme colors for this slide only
+            self._set_alt_print() # update alternate print content, we still need to dynamicallly set css for animations etc to work
         if overall is not None: # Avoid accidental re-write of overall CSS
-            self.__class__._overall_css = self._fix_css(overall, this_slide=False)
+            self.__class__._overall_css = self._fix_css(overall, {}, this_slide=False) # no theme colors for overall CSS
         
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects

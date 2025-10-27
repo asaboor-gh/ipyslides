@@ -34,7 +34,7 @@ function printSlides(box, model) {
     window._printOnlyObjs = [];
     const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
     const parts = model.get('_pfs') || {}; // get part counts per slide
-    console.log(frameCounts, parts);
+    // console.log(frameCounts, parts);
     
     for (let n= 0; n < slides.length; n++) {
         let slide = slides[n];
@@ -62,9 +62,9 @@ function printSlides(box, model) {
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
                     let outputs = Array.from(clone.getElementsByClassName('jp-OutputArea-child')); // corresponds to contents on python side
                     let part = parts[slideNum][i];
-                    console.log(part);
+                    // console.log(part);
                     for (let j = 0; j < outputs.length; j++) {
-                        console.log(i,j);
+                        // console.log(i,j);
                         if (part.row !== undefined) { // incremental frames
                             if (j > part.row) {
                                 outputs[j].setAttribute('data-hidden','true'); // rest handled by CSS
@@ -78,7 +78,6 @@ function printSlides(box, model) {
                                     }
                                 }
                             }
-                            console.log("In Incremental", i,j);
                         } else if (Array.isArray(part) && !part.includes(j)) { // non-incremental frames
                             outputs[j].style.display = 'none'; // will not need to show again, so it safe to remove from layout
                         }

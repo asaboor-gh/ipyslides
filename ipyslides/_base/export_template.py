@@ -45,7 +45,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, css_class
 </head>
 <body>
 <div>
-    <div class="click-wrapper"> {click_btns} </div>
+    {click_btns}
     <!-- Classes below work for both scenerios -->
     <div class="{css_class}">
     {content}
@@ -63,18 +63,6 @@ a:hover {text-decoration:underline !important;}
 p {margin-block: 0.25em !important;}
 pre {white-space: break-spaces;} /* General rule unless specified in elements */
 .toc-item {margin-block: 0.25em}
-.click-wrapper {
-    position: fixed !important;
-    left:calc(100% - 150px) !important; /* extra space for slide number */
-    bottom:2px !important;
-    width: 110px !important;
-    height: 21px !important;
-    display:flex !important;
-    z-index: 6 !important;
-    justify-content: space-evenly !important;
-}
-.click-wrapper .clicker {display:block;flex-grow:1;color:var(--accent-color);text-align:center;font-size:14px;height:21px;text-decoration:none !important;opacity:0.4;}
-.click-wrapper .clicker:hover {color:var(--fg1-color);opacity:1;}
 .SlidesWrapper {
 	scroll-snap-type: x mandatory !important;
     display: flex !important;

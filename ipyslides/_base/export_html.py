@@ -85,7 +85,7 @@ class _HhtmlExporter:
                         {self._get_css(item)}
                         <div class="SlideBox">
                             {self._get_bg_image(item)}
-                            <div class="{item._css_class}">
+                            <div class="{item._css_class} export-only">
                                 {_html}
                             </div>
                             {number}
@@ -108,7 +108,7 @@ class _HhtmlExporter:
             style_css   = styles.style_css(**theme_kws, _root=True), 
             content     = content, 
             script      = _script, 
-            click_btns  = self._get_clickables(), 
+            click_btns  = self.main.settings._get_clickers(), 
             height      = f'{210/theme_kws["layout"].aspect:.3f}mm', 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
             bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True → bottom
@@ -142,22 +142,6 @@ class _HhtmlExporter:
             return ''
         sec_id = f"#{getattr(slide,'_sec_id','')}"
         return '<div class="BackLayer">' + slide._bg_image.replace(f".{self.main.uid}", sec_id) + '</div>'
-
-    def _get_clickables(self):
-        if len(self.main) < 2 or not self.main.settings.toggle.navgui:
-            return '' # no clicks for only title, or when navigation UI is off
-        
-        items = [getattr(item,'_sec_id','') for item in self.main]
-        names = ['●', *['●' for _ in items[1:-1]],'●']
-        
-        if len(items) > 5: # we need only 0,25,50,75,100 % clickers
-            imax = len(items) - 1
-            items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
-            names = '●●●●●'
-        
-        klasses = [f"clicker {c}" for c in names] # add clicker class to all
-
-        return "".join(f'<a href="#{key}" class="{klass}">{label}</a>' for (klass, label,key) in zip(klasses, names,items))
                 
     def _writefile(self, path, overwrite = False, progressbar = True):
         if os.path.isfile(path) and not overwrite:
