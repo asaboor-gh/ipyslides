@@ -42,6 +42,13 @@ function printSlides(box, model) {
         if (slide.childNodes.length > 0) { // Need to have scroll positions on top for all slides
             slide.childNodes[0].scrollTop = 0; // scroll OutputArea to top
         }
+        // Clone background image if any after we accessed first child for scroll reset above
+        let bgImage = slide.querySelector('.BackLayer.print-only')?.cloneNode(true) || null;
+        if (bgImage) {
+            window._printOnlyObjs.push(bgImage); // but we don't remove actual image
+            slide.insertBefore(bgImage, slide.firstChild); // to be a at back, need to be first child    
+            bgImage.style.zIndex = 0; // ensure at back further
+        }
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;

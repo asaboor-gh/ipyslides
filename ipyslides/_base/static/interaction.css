@@ -58,6 +58,9 @@
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:last-of-type  {
         page-break-after: avoid !important;
     }
+    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:first-of-type  {
+        page-break-before: avoid !important;
+    }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0) {
         position: relative !important; /* somehow its not relative already */
         --bar-bg-color: transparent; /* set with JS */

@@ -323,7 +323,7 @@ class Settings:
     
     def _print_pdf(self, btn):
         with disabled(self._widgets.buttons.print,self._widgets.buttons.print2): # disable both buttons to avoid multiple clicks
-            self._slides.notify("Preparing slides for printing...", timeout=5)
+            self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
             merge_frames = True if btn is self._widgets.buttons.print2 else False
             
             # Update frame counts first per slide for js side
@@ -333,7 +333,7 @@ class Settings:
             parts = {}
             for slide in self._slides:
                 slide._set_print_css(merge_frames = merge_frames)
-                if slide._fidxs:
+                if slide._fidxs and not merge_frames: # no parts if no frames or merge frames
                     frms = [None] # first frame handled by CSS already, but keep order
                     for frm in slide._fidxs[1:]: # first frame handled by CSS already
                         if isinstance(frm , range):

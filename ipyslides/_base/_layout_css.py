@@ -764,7 +764,7 @@ def zoom_hover_css():
     )
 
 
-def background_css(opacity=0.75, filter='blur(2px)', contain=False):
+def background_css(opacity=0.75, filter='blur(2px)', contain=False, _id=''):
     if filter and not '(' in str(filter):
         raise ValueError(f"blur expects a CSS filter function like 'blur(2px)', 'invert()' etc. or None, got {filter}")
     
@@ -786,11 +786,13 @@ def background_css(opacity=0.75, filter='blur(2px)', contain=False):
         transform: translate(-50%,-50%) !important; /* Make at center */
         width: 100%;
         height: 100%;
+    }}
+    {uclass} .BackLayer #{_id} :is(img, svg) {{
         object-fit:{('contain' if contain else 'cover')} !important;
         filter: {filter};
         opacity:{opacity};
-    }}
-    {uclass} .BackLayer svg {{
+    }}  
+    {uclass} .BackLayer #{_id} svg {{
         max-width: {('100%' if contain else '')} !important;
         max-height: {('100%' if contain else '')} !important;
         width: {('' if contain else 'auto')} !important;

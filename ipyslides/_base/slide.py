@@ -97,8 +97,14 @@ class Slide:
         self._alt_print = ipwHTML().add_class('print-only') # alternate print content for this slide which is shown dynamically on slides
 
         if not self._contents: # show slide number hint there at first creation
-            with self._widget:
-                print(self)
+            self.set_css({
+                f' > .jp-OutputArea:empty:after': {
+                    'content': f'"{self!r}"',
+                    'color': 'var(--accent-color)',
+                    'font-size': '2em',
+                }
+            }) # This will be removed when content is added or bg image is set
+
     
     def __setattr__(self, name: str, value):
         if not name.startswith('_') and hasattr(self, name):
@@ -179,7 +185,7 @@ class Slide:
             with capture_content() as captured:
                 display(html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
                     metadata={'skip-export':'export html assign itself'})  # to register section id in DOM
-                display(self._alt_print) # alternate print content if any should be on top frame
+                display(self._alt_print, metadata={'skip-export':'export html takes css itself'}) # alternate print content if any should be on top frame
                 yield captured
             
             if (self.number == 0) and self._fidxs:
@@ -574,7 +580,10 @@ class Slide:
         return self._app.html('style', _build_css((klass,), props))
     
     def _set_alt_print(self):
-        self._alt_print.value = f'{self._css}' # will add bg_image later as well if any
+        alt = f'{self._css}' # XTML or str
+        if self._bg_image:
+            alt += f'<div class="BackLayer print-only">{self._bg_image}</div>' # print-only additional safe
+        self._alt_print.value = alt
     
     def set_css(self, this: dict=None, overall:dict=None, **theme_colors):
         """
@@ -623,7 +632,11 @@ class Slide:
         filter is a CSS filter like blur(5px), grayscale() etc.
         
         ::: note-tip
-            This function enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
+            - This function enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
+            
+        ::: note-warning
+            - Too many slides withlarge background images may slow down the presentation/print and increase memory usage.
+            - Setting background image on a slide with frames multiplies memory usage as each frame needs to render the background.
         """
         if not src: 
             self._app.widgets.htmls.bglayer.value = ""  # clear
@@ -631,12 +644,14 @@ class Slide:
             return
         
         if (image := self._app.settings._resolve_img(src, '100%')):
-            self._bg_image = f"""
+            uid = f"bgi-uid{self.number}" # for unique filters and styles
+            self._bg_image = f""" 
             <style>
-                {background_css(opacity= opacity, filter=filter, contain=contain)}
+                {background_css(opacity= opacity, filter=filter, contain=contain, _id=uid)}
             </style>
-            {image}"""
+            <div id="{uid}">{image}</div>"""
             self._app.widgets.htmls.bglayer.value = self._bg_image
+            self._set_alt_print() # update alternate print-only content
             if not self._contents:
                 self.set_css({}) # Remove empty CSS
             self._app.navigate_to(self.index) # Go there to see effects
