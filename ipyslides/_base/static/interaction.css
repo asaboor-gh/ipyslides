@@ -44,7 +44,7 @@
         min-height: max-content !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea {
-        position:  static !important;
+        position:  relative !important; /* to hold background image */
         visibility: visible !important;
         transform: none !important;
         /* height: auto !important;  */
@@ -62,7 +62,6 @@
         page-break-before: avoid !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0) {
-        position: relative !important; /* somehow its not relative already */
         --bar-bg-color: transparent; /* set with JS */
         --slide-number: 0; /* set with JS */
     }

@@ -39,21 +39,14 @@ function printSlides(box, model) {
     for (let n= 0; n < slides.length; n++) {
         let slide = slides[n];
         
-        if (slide.childNodes.length > 0) { // Need to have scroll positions on top for all slides
-            slide.childNodes[0].scrollTop = 0; // scroll OutputArea to top
-        }
-        // Clone background image if any after we accessed first child for scroll reset above
-        let bgImage = slide.querySelector('.BackLayer.print-only')?.cloneNode(true) || null;
-        if (bgImage) {
-            window._printOnlyObjs.push(bgImage); // but we don't remove actual image
-            slide.insertBefore(bgImage, slide.firstChild); // to be a at back, need to be first child    
-            bgImage.style.zIndex = 0; // ensure at back further
-        }
+        slide.querySelector('.jp-OutputArea').scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
         slide.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, 0));
         slide.style.setProperty('--slide-number', n); // set slide number for CSS
+        // ensure background image is set for printing, if user may not naviagted all slides or message was sent when slides were not yet loaded
+        setBgImage(slide); // main Image is not needed for print, only per slides
         
         if (slide.classList.contains('base') && numFrames > 1) {
             let lastInserted = slide; // to keep insertion order
@@ -181,6 +174,8 @@ function handleMessage(model, msg, box, cursor) {
     } else if (msg === "SwitchView") {
         let slideNew = box.getElementsByClassName("ShowSlide")[0];
         slideNew.style.visibility = 'visible';
+        setBgImage(slideNew); // ensure background image is set if not yet
+        setMainBgImage(slideNew, box) // set background image if any on current slide
 
         let others = box.getElementsByClassName("HideSlide");
         for (let slide of others) {
@@ -188,6 +183,8 @@ function handleMessage(model, msg, box, cursor) {
                 slide.style.visibility = 'hidden';
             };
         }
+    } else if (msg === "SetIMG") { // set background image content area to slide background
+        box.querySelectorAll('.SlideArea').forEach(setBgImage); // only set which are not yet set
     } else if (msg.includes("THEME:")) {
         let theme = msg.replace("THEME:","");
 
@@ -213,6 +210,28 @@ function handleMessage(model, msg, box, cursor) {
         printSlides(box, model);
     } 
 };
+
+function setBgImage(slide) {
+    let bgImage = slide.querySelector('.BackLayer.print-only'); // it's in first child only
+    if (bgImage) {
+        // remove from current position and reinsert at back, avoid duplicate memory usage
+        bgImage.remove();
+        slide.insertBefore(bgImage, slide.firstChild); // to be a at back, need to be first child    
+        bgImage.style.zIndex = 0; // ensure at back further
+    }
+}
+
+function setMainBgImage(slide, target) {
+    let bgImage = slide.querySelector('.BackLayer.print-only'); // take from slide
+    let targetBg = target.querySelector('.BackLayer'); // target backlayer
+    if (bgImage) {
+        targetBg.innerHTML = bgImage.innerHTML; // clone content
+        targetBg.id = bgImage.id; // keep same id for filters etc
+    } else {
+        targetBg.innerHTML = ""; // clear if none
+        targetBg.id = ""; // clear id too
+    }
+}
 
 function keepThisViewOnly(box){
     let uid = box.getAttribute("uid");
@@ -426,6 +445,12 @@ function render({ model, el }) {
             c.style.height = '100%';
         }
 
+        // Add a div to hold background image
+        let bglayer = document.createElement('div');
+        bglayer.className = 'BackLayer'; // other 
+        box.insertBefore(bglayer, box.firstChild); // at back
+        bglayer.style.zIndex = 0; // ensure at back further
+
         // Add classes to mark ancestors for printing
         markPrintable(box, 'ipyslides-print-node');
     }  
@@ -433,6 +458,10 @@ function render({ model, el }) {
     model.set("msg_topy", "LOADED"); // to run onload functionality
     model.save_changes();
 
+    // Set background images if any left due to being loaded from python script
+    box.querySelectorAll('.SlideArea').forEach(setBgImage); // only set which are not yet set
+    setMainBgImage(box.querySelector('.ShowSlide'), box) // set background image if any on current slide
+    
     // Clean up old slides if left over from previous session of kernel restart
     let slides = document.getElementsByClassName('SlidesWrapper');
     for (let slide of Array.from(slides)) {

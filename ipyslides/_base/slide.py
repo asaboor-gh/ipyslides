@@ -11,7 +11,7 @@ from . import styles
 from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data
-from ._layout_css import background_css
+from ._layout_css import background_css, get_unique_css_class
 from .styles import collapse_node
 
 class Vars:
@@ -85,7 +85,7 @@ class Slide:
         self._app = app
             
         self._css = ''
-        self._bg_image = ''
+        self._bg_ikws = {} # store background image keywords only to save memory
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
         self._animation = None
@@ -156,7 +156,6 @@ class Slide:
         "Called when a slide is loaded into view. Use it to register notifications etc."
         self._widget.layout.height = '100%' # Trigger a height change to reset scroll position
         start = time.time()
-        self._app.widgets.htmls.bglayer.value = self._bg_image
 
         try: # Try is to handle errors in on_load, not for attribute errors, and also finally to reset height
             if hasattr(self,'_on_load') and callable(self._on_load):
@@ -497,6 +496,7 @@ class Slide:
     
     @property
     def css(self):
+        "Returns CSS for this slide including overall CSS. Used while navigating to this slide."
         back = self._app.html('style',_build_css((f".{self._app.uid}.SlidesWrapper",), self._tcolors), css_class='jupyter-only') # don't mess export here
         return XTML(f'{back}{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
     
@@ -581,8 +581,8 @@ class Slide:
     
     def _set_alt_print(self):
         alt = f'{self._css}' # XTML or str
-        if self._bg_image:
-            alt += f'<div class="BackLayer print-only">{self._bg_image}</div>' # print-only additional safe
+        if self._bg_ikws.get('src',None):
+            alt += self._get_bg_image(get_unique_css_class()) # get bg image for print and dispaly behind slides
         self._alt_print.value = alt
     
     def set_css(self, this: dict=None, overall:dict=None, **theme_colors):
@@ -638,23 +638,28 @@ class Slide:
             - Too many slides withlarge background images may slow down the presentation/print and increase memory usage.
             - Setting background image on a slide with frames multiplies memory usage as each frame needs to render the background.
         """
-        if not src: 
-            self._app.widgets.htmls.bglayer.value = ""  # clear
-            self._bg_image = ""
-            return
+        # We only store keywords to save memory and send image on javascript side for quick loading of images and printing
+        self._bg_ikws = {
+            'src': src, 'opacity': opacity, 'filter': filter, 'contain': contain, 
+            '_id': f"bgi-uid{self.number}", # for unique filters and styles
+        } # store for export etc
         
-        if (image := self._app.settings._resolve_img(src, '100%')):
-            uid = f"bgi-uid{self.number}" # for unique filters and styles
-            self._bg_image = f""" 
-            <style>
-                {background_css(opacity= opacity, filter=filter, contain=contain, _id=uid)}
-            </style>
-            <div id="{uid}">{image}</div>"""
-            self._app.widgets.htmls.bglayer.value = self._bg_image
+        if src is not None:
             self._set_alt_print() # update alternate print-only content
             if not self._contents:
                 self.set_css({}) # Remove empty CSS
+            self._app.widgets.iw.msg_tojs = 'SetIMG' # if it not happens to be there yet, will be done on swicthing slides
             self._app.navigate_to(self.index) # Go there to see effects
+    
+    def _get_bg_image(self, selector):
+        if (image := self._app.settings._resolve_img(self._bg_ikws.get('src',None), '100%')):
+            return f'''<div id="{self._bg_ikws['_id']}" class="BackLayer print-only">
+            <style>
+                {background_css(selector, **{k:v for k,v in self._bg_ikws.items() if k != 'src'})}
+            </style>
+            {image}
+            </div>'''
+        return ''
     
     def _instance_animation(self,name):
         if not (name in styles.animations):

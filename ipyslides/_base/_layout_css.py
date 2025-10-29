@@ -764,12 +764,12 @@ def zoom_hover_css():
     )
 
 
-def background_css(opacity=0.75, filter='blur(2px)', contain=False, _id=''):
+def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, _id=''):
     if filter and not '(' in str(filter):
         raise ValueError(f"blur expects a CSS filter function like 'blur(2px)', 'invert()' etc. or None, got {filter}")
     
-    uclass = get_unique_css_class()
-    return f"""{uclass} .BackLayer {{
+    # sel depends on where image is placed
+    return f"""{sel} .BackLayer {{
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -779,7 +779,7 @@ def background_css(opacity=0.75, filter='blur(2px)', contain=False, _id=''):
         overflow:hidden;
         margin:0;
     }}
-    {uclass} .BackLayer :is(img, svg) {{
+    {sel} .BackLayer :is(img, svg) {{
         position: absolute;
         left:50% !important;
         top:50% !important;
@@ -787,19 +787,19 @@ def background_css(opacity=0.75, filter='blur(2px)', contain=False, _id=''):
         width: 100%;
         height: 100%;
     }}
-    {uclass} .BackLayer #{_id} :is(img, svg) {{
+    {sel} #{_id}.BackLayer :is(img, svg) {{
         object-fit:{('contain' if contain else 'cover')} !important;
         filter: {filter};
         opacity:{opacity};
     }}  
-    {uclass} .BackLayer #{_id} svg {{
+    {sel} #{_id}.BackLayer svg {{
         max-width: {('100%' if contain else '')} !important;
         max-height: {('100%' if contain else '')} !important;
         width: {('' if contain else 'auto')} !important;
         min-width: {('' if contain else '100%')} !important;
         min-height: {('' if contain else '100%')} !important;
     }}
-    {uclass} .BackLayer.jupyter-widgets-disconnected {{
+    {sel} .BackLayer.jupyter-widgets-disconnected {{
         display:none;
     }}
     """

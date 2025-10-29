@@ -74,17 +74,16 @@ class _HhtmlExporter:
                     _html += item._refs.value # in case of footnote citations
 
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
-                sec_id = self._get_sec_id(item)
 
                 number = ""
                 if self.main.settings.footer.numbering:
                     number = f'<span class="Number">{item.index or ""}</span>' # 0 handled
 
                 content += textwrap.dedent(f'''
-                    <section {sec_id}>
+                    <section id="{item._sec_id}">
                         {self._get_css(item)}
                         <div class="SlideBox">
-                            {self._get_bg_image(item)}
+                            {item._get_bg_image(f'#{item._sec_id}')}
                             <div class="{item._css_class} export-only">
                                 {_html}
                             </div>
@@ -114,10 +113,6 @@ class _HhtmlExporter:
             bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True → bottom
             )
     
-    def _get_sec_id(self, slide):
-        sec_id = getattr(slide,'_sec_id','')
-        return f'id="{sec_id}"' if sec_id else ''
-    
     def _get_progress(self, slide, fidx=0):
         unit = 100/(self.main._iterable[-1].index or 1) # avoid zero division error or None
         pv = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
@@ -126,22 +121,15 @@ class _HhtmlExporter:
     
     def _get_css(self, slide):
         "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, NavWrapper → Footer"
-        sec_id = f"#{getattr(slide,'_sec_id','')}"
         return slide.css.value.replace(
-            f".{self.main.uid}.SlidesWrapper", sec_id).replace(
-            f".{self.main.uid}", sec_id).replace(
+            f".{self.main.uid}.SlidesWrapper", f"#{slide._sec_id}").replace(
+            f".{self.main.uid}", f"#{slide._sec_id}").replace(
             ".NavWrapper", ".Footer"
             )
     def _get_logo(self):
         return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 
             {self.main.widgets.htmls.logo.value} 
         </div>'''
-    
-    def _get_bg_image(self, slide):
-        if not slide._bg_image:
-            return ''
-        sec_id = f"#{getattr(slide,'_sec_id','')}"
-        return '<div class="BackLayer">' + slide._bg_image.replace(f".{self.main.uid}", sec_id) + '</div>'
                 
     def _writefile(self, path, overwrite = False, progressbar = True):
         if os.path.isfile(path) and not overwrite:
