@@ -142,7 +142,9 @@ class Slide:
     def _on_load_private(self, func):
         with self._app._hold_running(): # slides will not be running during switch, so make it safe
             with capture_content() as cap: # check if code is correct
-                func(self)
+                out = func(self)
+                if callable(out):
+                    out(self) # test call to raise error if any
             
             if cap.outputs or cap.stdout:
                 raise Exception('func in on_load(func) should not print or display anything!')
@@ -153,17 +155,14 @@ class Slide:
         self._on_load = func # This will be called in main app
     
     def _run_on_load(self):
-        "Called when a slide is loaded into view. Use it to register notifications etc."
-        self._widget.layout.height = '100%' # Trigger a height change to reset scroll position
-        start = time.time()
-
-        try: # Try is to handle errors in on_load, not for attribute errors, and also finally to reset height
-            if hasattr(self,'_on_load') and callable(self._on_load):
-                self._on_load(self) # Now no need to raise Error as it is already done in _on_load_private, and no one can handle it either
-        finally:
-            if (t := time.time() - start) < 0.05: # Could not have enought time to resend another event
-                time.sleep(0.05 - t) # Wait at least 50ms, (it does not effect anything else) for the height to change from previous trigger
-            self._widget.layout.height = '' # Reset height to auto
+        "Called when a slide is loaded into view. Use it to register notifications, auto toggle laser pointer etc."
+        # To ensure previous _on_exit and the new _on_load are called properly, try finally
+        try:
+            if callable(getattr(self,'_on_exit', None)):
+                self._on_exit(self) # call exit function of previous slide if any
+        finally: 
+            if callable(getattr(self,'_on_load', None)):
+                self._on_exit = self._on_load(self) # will be called when this slide is exited
         
     def __repr__(self):
         return f'Slide(number = {self.number}, index = {self.index}, nf = {self.nf})'

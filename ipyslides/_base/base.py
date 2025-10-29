@@ -79,14 +79,15 @@ class BaseSlides:
 
     def on_load(self, func):
         """
-        Decorator for running a function when slide is loaded into view. No return value is required.
+        Decorator for running a `func(slide)` when slide is loaded into view.
         Use this to e.g. notify during running presentation. func accepts single arguemnet, slide.
+        Return value could a cleanup function (which also accepts slide as single argument) executed when slide exits.
         
         See `Slides.docs()` for few examples.
 
         ::: note-warning
-            - Do not use this to change global state of slides, because that will affect all slides.
-            - This can be used single time per slide, overwriting previous function.
+            - If you use this to change global state of slides, return a clean up function which accepts slide as argument.
+            - This can be used only single time per slide, overwriting previous function.
         """
         self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
@@ -455,6 +456,7 @@ class BaseSlides:
                     t = datetime.datetime.now()
                     time = t.strftime('%H:%M:%S')
                     self.notify(f'Notification at {time} form slide {slide.index} and frame {slide.indexf}', timeout=5)
+                    return lambda s: self.notify('x') # clear notification immediately on exit by sending 'x'
             
             self.write(
                 [self.doc(self.dl.interact,'ipyslides.dashlab')], 

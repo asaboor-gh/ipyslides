@@ -174,6 +174,7 @@ function handleMessage(model, msg, box, cursor) {
     } else if (msg === "SwitchView") {
         let slideNew = box.getElementsByClassName("ShowSlide")[0];
         slideNew.style.visibility = 'visible';
+        slideNew.querySelector('.jp-OutputArea').scrollTop = 0; // scroll reset is important
         setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
 
