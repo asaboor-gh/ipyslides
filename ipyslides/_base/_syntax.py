@@ -58,6 +58,7 @@ These files are watched for edits if included in synced markdown file via `Slide
 Citations
 : - alert`cite\`key1,key2\`` / alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
 - With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` or code`Slides.refs` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
+  Using alert`refs\`ncol_refs, key1, key2,...\`` will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
 - Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!` or alert`cite\`key1,key2!\``.
 - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
 code["markdown"]`

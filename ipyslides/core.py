@@ -584,12 +584,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there
     
-    def refs(self, ncol=2):
-        r"Displays references when in footnote mode (explicit use on slides with frames required). refs are set in `Slides.set_citations`. In markdown, use refs\`ncol\` syntax."
+    def refs(self, ncol=2, *keys):
+        r"""Displays references when in footnote mode (explicit use on slides with frames required). 
+        References are set in `Slides.set_citations`. In markdown, use refs\`ncol\` syntax.
+        You can optionally provide keys to show only specific citations at a place, which is useful on slides with frames.
+        """
         self.verify_running("refs can only be added under slides constructor!")
         self.this._set_refs = False # already added here
+        objs = self.this._citations.values() if not keys else [v for k,v in self.this._citations.items() if k in keys]
         if self._cite_mode == "footnote":
-            _cits = ''.join(v.value for v in sorted(self.this._citations.values(), key=lambda x: x._id))
+            _cits = ''.join(v.value for v in sorted(objs, key=lambda x: x._id))
             return self.html("div", _cits, css_class = 'Citations text-small', 
                 style = f'column-count: {ncol} !important;')
 
