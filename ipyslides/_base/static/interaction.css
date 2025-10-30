@@ -4,7 +4,6 @@
         display: none !important;
     }
 
-
     * {
         --contentScale : 1 !important; /* Defualt for printing at same value */
         -webkit-print-color-adjust: exact !important;
@@ -14,6 +13,10 @@
     }
 
     /* Page size is set dynamically via @page in styles.py */
+    html, body, .ipyslides-print-node {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 
     .ipyslides-print-node:not(.SlidesWrapper) {
         all: unset !important;
