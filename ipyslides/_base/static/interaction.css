@@ -5,10 +5,9 @@
     }
 
     * {
-        --contentScale : 1 !important; /* Defualt for printing at same value */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        color-adjust: exact !important;
+        color-adjust: exact !important; /* Firefox */
         ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
     }
 
@@ -60,9 +59,11 @@
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:last-of-type  {
         page-break-after: avoid !important;
+        break-after: avoid !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:first-of-type  {
         page-break-before: avoid !important;
+        break-before: avoid !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0) {
         --bar-bg-color: transparent; /* set with JS */

@@ -337,10 +337,10 @@ class Settings:
                     frms = [None] # first frame handled by CSS already, but keep order
                     for frm in slide._fidxs[1:]: # first frame handled by CSS already
                         if isinstance(frm , range):
-                            frms.append([*range(slide._fidxs[0].start),*frm]) 
+                            frms.append([*range(slide._fidxs[0].start),*frm]) # start is after first content on all frames
                         else:
                             if isinstance(frm, int):
-                                frms.append({'row': frm - 1, 'col': None})
+                                frms.append({'row': frm, 'col': None})
                             else: # tuple of (row,col)
                                 frms.append({'row': frm[0] - 1, 'col': frm[1]})
                     parts[slide.number] = frms
@@ -426,7 +426,7 @@ class Settings:
         return f'<div class="click-wrapper print-only"> {links} </div>' 
 
     def _update_size(self, change):
-        self._widgets.mainbox.layout.height = "{:.3f}vw".format(
+        self._widgets.mainbox.layout.height = "{:.1f}vw".format( # 1/10 mm is below usual broweser resolution
             self._wslider.value / self.layout.aspect
         )
         self._widgets.mainbox.layout.width = "{}vw".format(self._wslider.value)

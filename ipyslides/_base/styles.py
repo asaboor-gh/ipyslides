@@ -295,7 +295,7 @@ def style_css(colors, fonts, layout, _root = False):
             **{f"--{k}-color":v for k,v in colors.items()}, # need for per slide based CSS set by user to not effect all
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
-            'height': f'{int(210/layout.aspect):.3f}mm !important',
+            'height': f'{int(210/layout.aspect):.1f}mm !important',
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
             'box-sizing': 'border-box !important',
@@ -320,9 +320,10 @@ def style_css(colors, fonts, layout, _root = False):
                 },
             },
             '@media print': { # For PDF printing dynamically set page size
+                'height': '100vh !important',
                 '@page': {
                     'margin': '0 !important',
-                    'size': f'210mm {int(210/layout.aspect):.3f}mm !important',
+                    'size': f'210mm {int(210/layout.aspect):.1f}mm !important', # 1pt ~ 0.35mm, so no more than one decimal required
                 },
             },
             **({'^:not(.n0) > .jp-OutputArea': { # no yoffset on title slide, leave it centered globally
