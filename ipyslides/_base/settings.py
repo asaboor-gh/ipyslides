@@ -359,6 +359,7 @@ class Settings:
         visible = change.new
         self._widgets.controls.layout.visibility = "visible" if visible else "hidden"
         self._widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
+        self._get_footer(self._slides._current, update_widget=True) # update footer to remove/add clickers
 
         if not visible:
             self._slides.notify("Navigation controls hidden. But keyboard is still working!")
@@ -412,17 +413,14 @@ class Settings:
         return text
     
     def _get_clickers(self): # in PDF/export mode
-        if len(self._slides) < 2 or not self.toggle.navgui:
-            return '' # no clicks for only title, or when navigation UI is off
+        if len(self._slides) < 5 or not self.toggle.navgui:
+            return '' # no clicks for few slides, or when navigation UI is off
         
         items = [getattr(item,'_sec_id','') for item in self._slides]
-        names = ['●', *['●' for _ in items[1:-1]],'●']
-        
-        if len(items) > 5: # we need only 0,25,50,75,100 % clickers
-            imax = len(items) - 1
-            items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
-            names = '●●●●●'
-        links = "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(names,items))
+        imax = len(items) - 1
+        items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
+        labels = '●●●●●'
+        links = "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(labels,items))
         return f'<div class="click-wrapper print-only"> {links} </div>' 
 
     def _update_size(self, change):
