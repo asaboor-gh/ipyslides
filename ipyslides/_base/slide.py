@@ -94,7 +94,7 @@ class Slide:
         self._esc_vars = {} # store escaped variables for rebuilds form build content
         self._set_defaults()
         self.vars = Vars(self) # to access variables info and update them
-        self._alt_print = ipwHTML().add_class('print-only') # alternate print content for this slide which is shown dynamically on slides
+        self._alt_print = ipwHTML(layout={'margin':'0'}).add_class('print-only') # alternate print content for this slide which is shown dynamically on slides
 
         if not self._contents: # show slide number hint there at first creation
             self.set_css({

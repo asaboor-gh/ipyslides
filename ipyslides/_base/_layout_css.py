@@ -156,7 +156,7 @@ def layout_css(accent_color, aspect):
                 },
                 ".export-only, .print-only": {
                     "display": "none !important",
-                    "@media print": {"display": "unset !important",},
+                    "@media print": {"display": "revert !important",},
                     },
                 ".widget-inline-hbox": {
                     ".widget-label": {"color": "var(--fg1-color)"},
