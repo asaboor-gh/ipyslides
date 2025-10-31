@@ -92,7 +92,7 @@ class _HhtmlExporter:
                         </div>
                     </section>''')
         
-        navui_class = '' if 'Slides-ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
+        navui_class = '' if self.main.settings.footer._print_padding > 16 else 'NavHidden' 
         content += f'<div class="Footer {navui_class}">{self.main.settings.footer._to_html()}</div>'
         content += self._get_logo() # Both of these fixed
             
@@ -109,7 +109,7 @@ class _HhtmlExporter:
             script      = _script, 
             click_btns  = self.main.settings._get_clickers(), 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
-            padding_bottom = 23 if self.main.widgets.iw._fkws.get('pad', True) else 16,
+            padding_bottom = self.main.settings.footer._print_padding,
             )
     
     def _get_progress(self, slide, fidx=0):

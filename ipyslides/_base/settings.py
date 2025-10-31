@@ -159,6 +159,7 @@ class Footer(ConfigTraits):
     date = Unicode("today", allow_none=True, help="Set date string or use 'today' for current date.")
     controls = Bool(True, help="Show/hide controls like next/prev buttons and clickers in PDF/export mode.")
     progress = Bool(True, help="Show/hide progress bar at bottom of slides.")
+    _print_padding = 23 # internal use only
 
     def _apply_change(self,change):
         # change is None when called as footer(...), so we update all things together
@@ -166,16 +167,8 @@ class Footer(ConfigTraits):
         wgts.htmls.footer.value = self._to_html() + self.main._get_clickers()
         wgts._snum.layout.display = "" if self.numbering else "none" # show/hide slide number
         wgts._progbar.layout.display = "" if self.progress else "none" # show/hide progress bar
-        
-        fkws = {"bar": self.progress, "snum": self.numbering} # for js side use
-        if any([self.text, self.date]): 
-            wgts.mainbox.add_class("Slides-ShowFooter") # for export mode
-            fkws["pad"] = True # needs extra padding to make space for footer
-        else:
-            wgts.mainbox.remove_class("Slides-ShowFooter")
-            fkws["pad"] = False
-        
-        wgts.iw._fkws = fkws # set before sending rescale message
+        self._print_padding = 23 if any([self.text, self.date]) else 16 # 16 is same around all sides unless footer needs more
+        wgts.iw._fkws = {"bar": self.progress, "snum": self.numbering, "pad": self._print_padding} # set before sending rescale message
         wgts.controls.layout.visibility = "visible" if self.controls else "hidden"
         wgts.iw.msg_tojs = 'RESCALE' # sets padding etc
 

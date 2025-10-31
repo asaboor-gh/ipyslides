@@ -105,18 +105,12 @@ section .SlideBox > .Progress {
     bottom: 0 !important;
 }
 section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
-section .SlideArea {
-    /* Will be added by export */
-	margin: auto !important;
-	padding: 16px !important;
-    box-sizing: border-box !important;
-}
 .SlidesWrapper .Footer { 
     padding: 0 !important; margin: 0 !important; 
     position: fixed !important;
     left:0;
     width: 100%;
-    bottom: 2px !important;
+    bottom: -2px !important; /* something off */
     overflow: hidden !important;
 }
 .SlidesWrapper .Footer.NavHidden {
@@ -150,15 +144,14 @@ section .SlideArea {
 .SlidesWrapper .Number {
     color:var(--fg2-color);
     position:absolute;
-    right:8px;
-    bottom:6px;
-    font-size:16px;
+    right:6px;
+    bottom:3px;
+    font-size:12px;
     z-index:5;
 }
 
 @media print {
     * {
-        --contentScale : 1 !important; /* Defualt for printing at same value */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -166,6 +159,7 @@ section .SlideArea {
     }
     /* Page size is set in style_css */
     .SlidesWrapper {
+        --contentScale : 1 !important; /* Defualt for printing at same value */
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
@@ -195,9 +189,7 @@ section .SlideArea {
         position: static !important; /*override from document as printing absolute is issue */
         overflow: hidden !important;
         page-break-inside: avoid !important;
-    }
-    .Slides-ShowFooter .SlideArea {
-        --paddingBottom: __PADBTM__px; /* fixed for printing */
+        --paddingBottom: __PADBTM__px; /* fixed for printing, padding set in style_css */
     }
 }
 </style>

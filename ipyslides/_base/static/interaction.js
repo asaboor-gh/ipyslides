@@ -38,7 +38,7 @@ function printSlides(box, model) {
     const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
     const parts = model.get('_pfs') || {}; // get part counts per slide
     const fkws = model.get('_fkws') || {}; // get footer kws
-    // console.log(frameCounts, parts);
+    box.style.setProperty('--printPadding', fkws.pad + 'px'); // set padding for print mode
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
@@ -62,6 +62,7 @@ function printSlides(box, model) {
                 clone.classList.add('print-only'); // avoid cluttering screen view
                 clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
+                clone.style.setProperty('--printPadding', fkws.pad + 'px'); // enforce padding for print mode, does not pick from parent
                 // Set visibility of parts if any, Do not change this to CSS only as
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
@@ -306,7 +307,7 @@ function setScale(box, model) {
     if(!scale) { // Only set if there is one, don't set null
         return false; // This will ensure if Notebook is hidden, scale stays same
     }
-    const pad = model.get('_fkws').pad ? 23 : 16; // padding bottom, added few extra pixels for footer if any
+    const pad = model.get('_fkws').pad || 23; // padding bottom, default 23px for footer space
     box.style.setProperty('--contentScale',scale);
     box.style.setProperty('--paddingBottom',Number(pad/scale) + "px");
 }

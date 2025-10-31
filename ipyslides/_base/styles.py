@@ -286,10 +286,6 @@ def style_css(colors, fonts, layout, _root = False):
                 "align-items": "flex-start !important",
                 "justify-content": "flex-start !important",
             }),
-
-        },
-        '^.Slides-ShowFooter .SlideArea' : {
-            'padding-bottom': 'var(--paddingBottom, 23px) !important', # navbar + progressbar
         },
         '.SlideArea': {
             **{f"--{k}-color":v for k,v in colors.items()}, # need for per slide based CSS set by user to not effect all
@@ -304,6 +300,7 @@ def style_css(colors, fonts, layout, _root = False):
             'align-items': 'center !important' if layout.centered else 'baseline !important', 
             'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
             'padding' : '16px !important', # don't make 1em to avoid zoom with fonts
+            'padding-bottom': 'var(--paddingBottom, 23px) !important',
             'overflow': 'auto !important' if layout.scroll else 'hidden !important',
             '> .jp-OutputArea': {
                 'position': 'relative !important', # absolute content should not go outside
@@ -688,7 +685,7 @@ def style_css(colors, fonts, layout, _root = False):
         '.click-wrapper': { # PDF/HTML -only clicker at bottom right
             'position': 'fixed !important',
             'right': '16px !important', # space for slide number
-            'bottom': '3px !important',
+            'bottom': '2px !important',
             'width': '110px !important',
             'max-width': '110px !important',
             'height': '21px !important',
