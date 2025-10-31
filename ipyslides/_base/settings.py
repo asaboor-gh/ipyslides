@@ -154,13 +154,43 @@ class Fonts(ConfigTraits):
 @fix_sig    
 class Footer(ConfigTraits):
     "Set footer attributes of slides."
-    text = Unicode('IPySlides')
-    numbering = Bool(True)
-    date = Unicode("today", allow_none=True)
+    text = Unicode('IPySlides', help="Set footer text. Can use Markdown")
+    numbering = Bool(True, help="Show/hide slide numbering in footer.")
+    date = Unicode("today", allow_none=True, help="Set date string or use 'today' for current date.")
+    controls = Bool(True, help="Show/hide controls like next/prev buttons and clickers in PDF/export mode.")
+    progress = Bool(True, help="Show/hide progress bar at bottom of slides.")
 
     def _apply_change(self,change):
-        if self.main._slides._current:
-            self.main._get_footer(self.main._slides._current, update_widget=True)
+        # change is None when called as footer(...), so we update all things together
+        wgts = self.main._widgets
+        wgts.htmls.footer.value = self._to_html() + self.main._get_clickers()
+        wgts._snum.layout.display = "" if self.numbering else "none" # show/hide slide number
+        wgts._progbar.layout.display = "" if self.progress else "none" # show/hide progress bar
+        
+        fkws = {"bar": self.progress, "snum": self.numbering} # for js side use
+        if any([self.text, self.date]): 
+            wgts.mainbox.add_class("Slides-ShowFooter") # for export mode
+            fkws["pad"] = True # needs extra padding to make space for footer
+        else:
+            wgts.mainbox.remove_class("Slides-ShowFooter")
+            fkws["pad"] = False
+        
+        wgts.iw._fkws = fkws # set before sending rescale message
+        wgts.controls.layout.visibility = "visible" if self.controls else "hidden"
+        wgts.iw.msg_tojs = 'RESCALE' # sets padding etc
+
+        if not self.controls:
+            self.main._slides.notify("Navigation controls hidden. But keyboard is still working!")
+
+    
+    def _to_html(self):
+        style = 'white-space:nowrap;display:inline;margin-block:0;padding-left:8px;'
+        inner = self.text
+        if self.date:
+            inner += (
+                "<span style='white-space:pre'> | </span>" if inner else ""
+            ) + f'{today(fg = "var(--fg2-color)") if self.date == "today" else self.date}'
+        return htmlize(f'<p markdown="1" style="{style}">{inner}</p>') 
 
 @fix_sig
 class Layout(ConfigTraits):
@@ -184,7 +214,6 @@ class Layout(ConfigTraits):
 @fix_sig
 class Toggle(ConfigTraits):
     "Toggle ON/OFF checks in settings panel."
-    navgui = Bool(True) 
     reflow = Bool(False)
     notes  = Bool(False)
     toast  = Bool(True)
@@ -284,7 +313,6 @@ class Settings:
         self._widgets.toggles.laser.observe(self._toggle_laser, names=["value"])
         self._widgets.toggles.draw.observe(self._toggle_overlay, names=["value"])
         self._tgl_menu.observe(self._toggle_menu, names = ["value"])
-        self._widgets.checks.navgui.observe(self._toggle_nav_gui, names=["value"])
         self._update_theme({'owner':'layout'})  # Trigger Theme with aspect changed as well
         self._update_size(change=None)  # Trigger this as well
         self._widgets.panelbox.right_sidebar.children = _clipbox_children() # Set clipbox children
@@ -355,15 +383,6 @@ class Settings:
             "timeout": 120000 # 2 minutes
         })
 
-    def _toggle_nav_gui(self, change):
-        visible = change.new
-        self._widgets.controls.layout.visibility = "visible" if visible else "hidden"
-        self._widgets.iw.msg_tojs = 'RESCALE' # sets padding etc
-        self._get_footer(self._slides._current, update_widget=True) # update footer to remove/add clickers
-
-        if not visible:
-            self._slides.notify("Navigation controls hidden. But keyboard is still working!")
-    
     def _resolve_img(self, src, width):
         if isinstance(src, Path):
             src = str(src)  # important for svg checking below
@@ -379,41 +398,9 @@ class Settings:
                 except:
                     return self._resolve_img(SVG(src)._repr_svg_(), width=width)
         return ''
-
-    def _get_footer(self, slide, update_widget=False):
-        "Get footer text. `slide` is a slide object."
-        if (type(slide).__name__ != "Slide") and (
-            type(slide).__module__.split(".")[0] != "ipyslides"
-        ):
-            raise TypeError(f"slide should be Slide object, not {type(slide)}")
-
-        text, numbering, date = self.footer.text, self.footer.numbering, self.footer.date
-
-        if any([text, date]):
-            self._slides._box.add_class("Slides-ShowFooter")
-        else:
-            self._slides._box.remove_class("Slides-ShowFooter")
-
-        if date:
-            text += (
-                "<span style='white-space:pre'> | </span>" if text else ""
-            ) + f'{today(fg = "var(--fg2-color)") if date == "today" else date}'
-        
-        if numbering and update_widget:
-            self._slides.widgets._snum.layout.display = ""
-        else:
-            self._slides.widgets._snum.layout.display = "none" # hide slide number
-
-        style = 'white-space:nowrap;display:inline;margin-block:0;padding-left:8px;'
-        text = htmlize(f'<p markdown="1" style="{style}">{text}</p>') 
-        
-        if update_widget:
-            self._widgets.htmls.footer.value = text + self._get_clickers()
-
-        return text
     
     def _get_clickers(self): # in PDF/export mode
-        if len(self._slides) < 5 or not self.toggle.navgui:
+        if len(self._slides) < 5 or not self.footer.controls:
             return '' # no clicks for few slides, or when navigation UI is off
         
         items = [getattr(item,'_sec_id','') for item in self._slides]

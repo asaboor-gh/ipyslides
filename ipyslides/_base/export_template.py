@@ -1,6 +1,6 @@
 # Template for building HTML from slides 
 
-def doc_html(code_css, style_css, content, script, click_btns, height, css_class, bar_loc):
+def doc_html(code_css, style_css, content, script, click_btns, css_class, padding_bottom):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +13,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, css_class
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
     
     <style>{style_css}</style>
-    {slides_css.replace('__HEIGHT__', height).replace('__WHERE__',bar_loc)}
+    {slides_css.replace("__PADBTM__",str(padding_bottom))}
     {code_css}
 
     <!-- Custom stylesheet, it must be in the same directory as the html file -->
@@ -52,7 +52,7 @@ def doc_html(code_css, style_css, content, script, click_btns, height, css_class
     </div>
 </div>
 </body>
-{script}
+{script.replace("__PADBTM__",str(padding_bottom))}
 </html>
 '''
 
@@ -101,7 +101,8 @@ section .SlideBox > .Progress {
     height: 2px !important;
     width: 100% !important;
     position: absolute !important;
-    left:0 !important;__WHERE__:0 !important;
+    left:0 !important;
+    bottom: 0 !important;
 }
 section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
 section .SlideArea {
@@ -163,13 +164,7 @@ section .SlideArea {
         color-adjust: exact !important;
         ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
     }
-    @page {
-        size: 210mm __HEIGHT__; /* 10 inch x decided by aspect by user*/
-        margin-top: 0 !important;
-        margin-right: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 0 !important;
-    }
+    /* Page size is set in style_css */
     .SlidesWrapper {
         display: flex !important;
         flex-direction: column !important;
@@ -186,7 +181,7 @@ section .SlideArea {
         page-break-inside: avoid !important;
         page-break-after: always !important;
         overflow: hidden !important; /* otherwise it throws text to next page */
-        padding-bottom: 25px !important; /* for avoiding overflow to bottom,25px is same as under SlideArea */
+        padding-bottom: __PADBTM__px !important; /* for avoiding overflow to bottom,same as under SlideArea */
     }
     section:last-of-type {
         page-break-after: avoid !important;
@@ -202,7 +197,7 @@ section .SlideArea {
         page-break-inside: avoid !important;
     }
     .Slides-ShowFooter .SlideArea {
-        --paddingBottom: 25px; /* Default at sacle 1 its at bottom, unlike slides in Notebook, so 2px more*/
+        --paddingBottom: __PADBTM__px; /* fixed for printing */
     }
 }
 </style>

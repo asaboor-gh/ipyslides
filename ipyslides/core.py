@@ -854,9 +854,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             if btn:
                 self.notify('Widgets updated everywhere!')
             
-            if self._current:
-                self.settings._get_footer(self._current, update_widget=True) # sometimes it is not updated due to message lost, so force it too
-            
+            self.settings.footer._apply_change(None) # sometimes it is not updated due to message lost, so force it too
             self._current._set_progress() # update display can take it over to other sldies
 
     def _collect_slides(self):

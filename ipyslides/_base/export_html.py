@@ -26,7 +26,7 @@ _script = '''<script>
         let scale = scaleH > scaleW ? scaleW : scaleH;
         if (scale) { // Only add if not null or somethings
             document.documentElement.style.setProperty('--contentScale',scale);
-            document.documentElement.style.setProperty('--paddingBottom',Number(26/scale) + "px");
+            document.documentElement.style.setProperty('--paddingBottom',Number(__PADBTM__/scale) + "px");
         };
     };
     window.dispatchEvent(new window.Event('resize')); // First time programatically
@@ -49,7 +49,7 @@ class _HhtmlExporter:
         self.main = _instance_BaseSlides
         self.main.widgets.buttons.export.on_click(self._export) # Export button
         
-    def _htmlize(self, progressbar):
+    def _htmlize(self):
         content = ''
         for item in self.main:
             objs = item.contents # get conce
@@ -88,12 +88,12 @@ class _HhtmlExporter:
                                 {_html}
                             </div>
                             {number}
-                            {self._get_progress(item,k) if progressbar else ""}
+                            {self._get_progress(item,k)}
                         </div>
                     </section>''')
         
         navui_class = '' if 'Slides-ShowFooter' in self.main._box._dom_classes else 'NavHidden' 
-        content += f'<div class="Footer {navui_class}">{self.main.settings._get_footer(item, False)}</div>'
+        content += f'<div class="Footer {navui_class}">{self.main.settings.footer._to_html()}</div>'
         content += self._get_logo() # Both of these fixed
             
         theme_kws = self.main.settings._theme_kws
@@ -108,12 +108,14 @@ class _HhtmlExporter:
             content     = content, 
             script      = _script, 
             click_btns  = self.main.settings._get_clickers(), 
-            height      = f'{210/theme_kws["layout"].aspect:.3f}mm', 
             css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
-            bar_loc     = 'bottom' if progressbar is True else str(progressbar), # True → bottom
+            padding_bottom = 23 if self.main.widgets.iw._fkws.get('pad', True) else 16,
             )
     
     def _get_progress(self, slide, fidx=0):
+        if not self.main.settings.footer.progress:
+            return ''
+        
         unit = 100/(self.main._iterable[-1].index or 1) # avoid zero division error or None
         pv = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
         gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
@@ -131,30 +133,27 @@ class _HhtmlExporter:
             {self.main.widgets.htmls.logo.value} 
         </div>'''
                 
-    def _writefile(self, path, overwrite = False, progressbar = True):
+    def _writefile(self, path, overwrite = False):
         if os.path.isfile(path) and not overwrite:
             return print(f'File {path!r} already exists. Use overwrite=True to overwrite.')
         
         with open(path,'w', encoding="utf-8") as f: # encode to utf-8 to handle emojis
-            f.write(self._htmlize(progressbar)) 
+            f.write(self._htmlize()) 
             
     
-    def export_html(self, path = 'Slides.html', overwrite = False, progressbar = True):
+    def export_html(self, path = 'Slides.html', overwrite = False):
         """Build html slides that you can print.
         
         - Use 'overrides.css' file in same folder to override CSS styles.
         - If a slide has only widgets or does not have single object with HTML representation, it will be skipped.
         - You can take screenshot (using system's tool) of a widget, save it using Clips GUI in side panel and laod as image to keep PNG view of a widget. 
-        - If progressbar is set to True, 'bottom' or 'top', a progressbar while shown accordingly. True → 'bottom'.
         
         ::: note-info
             - PDF printing of slide width is 210mm (8.25in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Alsp enable background graphics in print dialog.
         """
-        if progressbar not in [True, False, 'top','bottom']:
-            raise ValueError(f"progressbar should be one of True, False, 'top' or 'bottom', got {progressbar}")
         _path = os.path.splitext(path)[0] + '.html' if path != 'Slides.html' else path
-        export_func = lambda: self._writefile(_path, overwrite, progressbar)
+        export_func = lambda: self._writefile(_path, overwrite)
         self.main.widgets.iw._try_exec_with_fallback(export_func)
         
     def _export(self,btn):

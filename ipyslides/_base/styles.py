@@ -289,7 +289,7 @@ def style_css(colors, fonts, layout, _root = False):
 
         },
         '^.Slides-ShowFooter .SlideArea' : {
-            'padding-bottom': 'var(--paddingBottom, 22px) !important', # 20px navbar + 2px progressbar
+            'padding-bottom': 'var(--paddingBottom, 23px) !important', # navbar + progressbar
         },
         '.SlideArea': {
             **{f"--{k}-color":v for k,v in colors.items()}, # need for per slide based CSS set by user to not effect all

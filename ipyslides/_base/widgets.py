@@ -136,7 +136,6 @@ class _Checks:
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
     rebuild = ipw.Checkbox(value = True, description='Auto Rebuild',layout=auto_layout)
-    navgui  = ipw.Checkbox(value = True, description='Show Nav. GUI',layout=auto_layout)
     confirm = ipw.Checkbox(value = False, description='Overwrite Existing File',layout=auto_layout)
 
 @dataclass(frozen=True)
@@ -211,7 +210,7 @@ class Widgets:
                 self.theme,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.focus, self.checks.rebuild, self.checks.notes,
-                self.checks.toast, self.checks.navgui, self.checks.reflow, 
+                self.checks.toast, self.checks.reflow, 
                 HTML('<b>PDF Printing (Experimntal)</b>',layout = _html_layout),
                 self.buttons.print, 
                 self.buttons.print2,

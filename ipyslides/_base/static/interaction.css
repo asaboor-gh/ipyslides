@@ -68,6 +68,7 @@
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0) {
         --bar-bg-color: transparent; /* set with JS */
         --slide-number: 0; /* set with JS */
+        --show-snumber: none; /* set with JS */
     }
     /* Ensure clones also respect overflow */
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.print-only {
@@ -76,8 +77,9 @@
         padding-bottom: var(--paddingBottom, 23px) !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::after {
-        counter-reset: snum var(--slide-number); /* important to pick from CSS variable */
-        content: counter(snum) !important;    
+        counter-reset: snum var(--slide-number); /* important to pick from CSS variable set by JS */
+        content: counter(snum) !important;  
+        display: var(--show-snumber) !important;  
         position: absolute !important;
         bottom: 3px !important; /* 1px above the bar */
         right: 6px !important;

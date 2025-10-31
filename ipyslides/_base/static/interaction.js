@@ -22,7 +22,10 @@ function hideLaser(box, cursor) {
 }
 
 
-function updateProgress(numSlides,numFrames, index, fidx) {
+function updateProgress(show, numSlides, numFrames, index, fidx) {
+    if (!show) {
+        return 'transparent';
+    }
     let unit = 100/((numSlides - 1) || 1); // avoid zero division error or None
     let pv = Math.round(unit * (index - (numFrames - fidx - 1)/numFrames) * 10000)/10000;
     let gradient = `linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) ${pv}%, var(--bg2-color) ${pv}%, var(--bg2-color) 100%)`;
@@ -34,17 +37,19 @@ function printSlides(box, model) {
     window._printOnlyObjs = [];
     const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
     const parts = model.get('_pfs') || {}; // get part counts per slide
+    const fkws = model.get('_fkws') || {}; // get footer kws
     // console.log(frameCounts, parts);
     
-    for (let n= 0; n < slides.length; n++) {
+    for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
         
         slide.querySelector('.jp-OutputArea').scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
-        slide.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, 0));
-        slide.style.setProperty('--slide-number', n); // set slide number for CSS
+        slide.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, 0));
+        slide.style.setProperty('--slide-number', n) // set slide number for CSS only if needed
+        slide.style.setProperty('--show-snumber', fkws.snum ? 'block' : 'none'); // show only if numbered
         // ensure background image is set for printing, if user may not naviagted all slides or message was sent when slides were not yet loaded
         setBgImage(slide); // main Image is not needed for print, only per slides
         
@@ -56,7 +61,7 @@ function printSlides(box, model) {
                 clone.classList.remove('base'); // remove base class to avoid CCS clashes
                 clone.classList.add('print-only'); // avoid cluttering screen view
                 clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
-                clone.style.setProperty('--bar-bg-color', updateProgress(slides.length, numFrames, n, i));
+                clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
                 // Set visibility of parts if any, Do not change this to CSS only as
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
@@ -170,7 +175,7 @@ function handleMessage(model, msg, box, cursor) {
         };
     
     } else if (msg === 'RESCALE') {
-        setScale(box);
+        setScale(box, model);
     } else if (msg === "SwitchView") {
         let slideNew = box.getElementsByClassName("ShowSlide")[0];
         slideNew.style.visibility = 'visible';
@@ -282,7 +287,7 @@ function handleToastMessage(toast, msg) {
     }
 }
 
-function setScale(box) {
+function setScale(box, model) {
     let sbox = box.getElementsByClassName('SlideBox')[0];
     let slide = box.getElementsByClassName('SlideArea')[0];
     let rectBox = sbox.getBoundingClientRect();
@@ -301,18 +306,18 @@ function setScale(box) {
     if(!scale) { // Only set if there is one, don't set null
         return false; // This will ensure if Notebook is hidden, scale stays same
     }
-    
+    const pad = model.get('_fkws').pad ? 23 : 16; // padding bottom, added few extra pixels for footer if any
     box.style.setProperty('--contentScale',scale);
-    box.style.setProperty('--paddingBottom',Number(23/scale) + "px");
+    box.style.setProperty('--paddingBottom',Number(pad/scale) + "px");
 }
 
-function handleScale(box) {
+function handleScale(box, model) {
     const resizeObs = new ResizeObserver((entry) => {
-        setScale(box);
+        setScale(box, model);
     });
 
     resizeObs.observe(box);
-    setScale(box); // First time set
+    setScale(box, model); // First time set
 }
 
 function setColors(model, box) {
@@ -402,7 +407,7 @@ function render({ model, el }) {
         keyboardEvents(box,model);
 
         // handle scale of slides size
-        handleScale(box);
+        handleScale(box, model);
 
         // Remove other views without closing comm
         keepThisViewOnly(box); 
