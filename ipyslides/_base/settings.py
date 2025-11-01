@@ -355,17 +355,17 @@ class Settings:
             for slide in self._slides:
                 slide._set_print_css(merge_frames = merge_frames)
                 if slide._fidxs and not merge_frames: # no parts if no frames or merge frames
-                    frms = [None] # first frame handled by CSS already, but keep order
-                    for frm in slide._fidxs[1:]: # first frame handled by CSS already
-                        if isinstance(frm , range):
-                            frms.append([*range(slide._fidxs[0].start),*frm]) # start is after first content on all frames
-                        else:
-                            if isinstance(frm, int):
-                                frms.append({'row': frm, 'col': None})
-                            else: # tuple of (row,col)
-                                frms.append({'row': frm[0] - 1, 'col': frm[1]})
+                    frms = []
+                    for frm in slide._fidxs:
+                        if isinstance(frm, int):
+                            frms.append({'row': frm - 1, 'col': None})
+                        elif isinstance(frm, tuple):
+                            frms.append({'row': frm[0] - 1, 'col': frm[1]})
+                        elif isinstance(frm , range):
+                            frms.append([*range(getattr(slide, '_frame_top',0)),*frm]) # 
+                        
                     parts[slide.number] = frms
-            
+                    
             self._widgets.iw._pfs = parts
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'

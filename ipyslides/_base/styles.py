@@ -317,7 +317,7 @@ def style_css(colors, fonts, layout, _root = False):
                 },
             },
             '@media print': { # For PDF printing dynamically set page size
-                'height': '100vh !important',
+                'padding-bottom': 'var(--printPadding, var(--paddingBottom, 23px)) !important',
                 '@page': {
                     'margin': '0 !important',
                     'size': f'210mm {int(210/layout.aspect):.1f}mm !important', # 1pt ~ 0.35mm, so no more than one decimal required

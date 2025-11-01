@@ -112,8 +112,9 @@ class Slide:
         self.__dict__[name] = value
     
     def _set_defaults(self):
-        if hasattr(self,'_on_load'):
-            del self._on_load # Remove on_load function
+        for attr in ['_on_load', '_on_exit', '_fsep']:
+            if hasattr(self, attr):
+                delattr(self, attr) # reset these attributes if any
     
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
@@ -446,13 +447,13 @@ class Slide:
         self._app.widgets._snum.tooltip = f"{self._app._current}" # hint for current slide number
 
     def _handle_refs(self):
-        if self.nf > 1 and self._set_refs and self._app.cite_mode == 'footnote': # on frames skip references
-            return self._app.notify(f"Slide {self.number} has frames, so refs should be set explicitly!", 5)
-        
         if hasattr(self, '_refs'): # from some previous settings and change
             delattr(self, '_refs') # added later  only if need
         
         if all([self._citations, self._set_refs, self._app.cite_mode == 'footnote']): # don't do in inline mode
+            if self.nf > 1:
+                return self._app.notify(f"Slide {self.number} has frames, so refs should be set explicitly!", 5)
+        
             self._refs = html('div', # need to store attribute for export
                 sorted(self._citations.values(), key=lambda x: x._id), 
                 css_class='Citations', style = '')
@@ -474,9 +475,10 @@ class Slide:
         self._app.html('style', 
             f'''.SlideArea.n{self.number}.n{self.number} > .jp-OutputArea {{
                 top: {value}% !important;
+                height: {100 - value}% !important; 
                 margin-top: 0 !important;
             }}''' # each frames get own yoffset, margin-top 0 is important to force top to take effect
-        ).display()
+        ).display() # height is important to avoid spilling padding of SlideArea
         
     def stack_frames(self, b):
         "If provided argument is True, frames are stacked in one slide top to bottom incrementally, otherwise shown individually."

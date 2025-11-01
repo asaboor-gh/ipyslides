@@ -94,9 +94,9 @@ class _Buttons:
     home    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go to Title Page').add_class('Menu-Item').add_class('Home-Btn')
     end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
     info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
-    export  =  Button(description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
-    print   =  Button(icon='print',description="Print Slides",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + P')
-    print2  =  Button(icon='print',description="Print Slides (merged frames)",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + Alt + P')
+    export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
+    print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + P')
+    print2  =  Button(icon='file-pdf',description="Print Slides (merged frames)",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + Alt + P')
 
 @dataclass(frozen=True)
 class _Toggles:
@@ -211,10 +211,10 @@ class Widgets:
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.focus, self.checks.rebuild, self.checks.notes,
                 self.checks.toast, self.checks.reflow, 
-                HTML('<b>PDF Printing (Experimntal)</b>',layout = _html_layout),
+                HTML('<b>PDF Printing (Experimental) / HTML Export</b>',layout = _html_layout),
+                HTML(html('details',[html('summary','Printing Info'), how_to_print]).value),
                 self.buttons.print, 
                 self.buttons.print2,
-                HTML(html('details',[html('summary','<b>HTML File Export</b>'), how_to_print]).value,layout = _html_layout),
                 self.buttons.export,
                 self.checks.confirm,
                 self._tmp_out,

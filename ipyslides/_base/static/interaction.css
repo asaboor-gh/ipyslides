@@ -52,7 +52,6 @@
         /* height: auto !important;  */
         page-break-inside: avoid !important; /* avoid for slides printing */
         page-break-after: always !important;
-        --paddingBottom: var(--printPadding, 23px) !important; /* to avoid cutting off text with huge padding */
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.SlideArea {
         background: var(--bg1-color) !important; /* user can set bg color per slide */
@@ -74,7 +73,6 @@
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.print-only {
         overflow: hidden !important;
         box-sizing: border-box !important;
-        padding-bottom: var(--printPadding, 23px) !important; /* further ensure padding */
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::after {
         counter-reset: snum var(--slide-number); /* important to pick from CSS variable set by JS */

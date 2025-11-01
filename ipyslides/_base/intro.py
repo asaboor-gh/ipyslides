@@ -80,7 +80,7 @@ key_maps = {
     "▸, Space": "Next slide",
     "◂, Ctrl + Space": "Previous slide",
     "Z": "Toggle objects zoom mode",
-    "P": "Print PDF of current slide",
+    "P": "Print PDF of slides",
     "F": "Toggle fullscreen",
     "Esc": "Exit fullscreen",
     "S": "Toggle settings panel",
@@ -95,17 +95,28 @@ key_combs = f"""
 | {_key('&#9141;')}/{_key('▸')}               | {_icons["chevronr"]}                              | Move to next slide     |
 | {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["chevronl"]}                           | Move to previous slide |
 | {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_icons['arrowbl']}/{_icons['arrowbr']}       | Jump to Star/End of slides |
-| {_key('Ctrl')} + {_key('[1-9]')}/{_key('[1-9]')} |                                       | Shift [1-9] slides left/right |
+| {_key('Ctrl')} + {_key('[1-9]')}/{_key('[1-9]')} | <none>                                      | Shift [1-9] slides left/right |
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
-| {_key('Esc')}                               |                                                   | {key_maps["Esc"]}      |
+| {_key('Esc')}                               |    <none>                                                | {key_maps["Esc"]}      |
 | {_key('S')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["S"]}        |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
-| {_key('K')}                                 |                                                   | {key_maps["K"]}        |
+| {_key('K')}                                 |      <none>                                              | {key_maps["K"]}        |
+| {_key('Ctrl')} + {_key('P')}                |      <none>                                              | {key_maps["P"]}        |
+| {_key('Ctrl')} + {_key('Alt')} + {_key('P')}|      <none>                                     | {key_maps["P"]} (merged frame)|
 """ 
 
 how_to_print = f"""
+**Direct Printing from Slides**<br>
+You can print slides to PDF using `Ctrl + P` or `Ctrl + Alt + P` (merged frames). Corresponding buttons are also available in settings panel.
+Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Also enable background graphics in print dialog if necessary.
+
+::: note-warning
+    - PDF printing is experimental and may not work as expected in all browsers and tested only in JupyterLab.
+    - In case of issues with frames not displaying properly using `Ctrl + P`, try `Ctrl + Alt + P` to fallback to merged frames.
+
+**Printing from Exported HTML File**<br>
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
 
 For widgets and other objects's snapshots to be available in exported

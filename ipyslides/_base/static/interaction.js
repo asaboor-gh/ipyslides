@@ -62,11 +62,11 @@ function printSlides(box, model) {
                 clone.classList.add('print-only'); // avoid cluttering screen view
                 clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
-                clone.style.setProperty('--printPadding', fkws.pad + 'px'); // enforce padding for print mode, does not pick from parent
+                
                 // Set visibility of parts if any, Do not change this to CSS only as
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
-                    let outputs = Array.from(clone.getElementsByClassName('jp-OutputArea-child')); // corresponds to contents on python side
+                    let outputs = Array.from(clone.querySelector('.jp-OutputArea').childNodes); // corresponds to contents on python side
                     let part = parts[slideNum][i];
                     // console.log(part);
                     for (let j = 0; j < outputs.length; j++) {
