@@ -125,6 +125,7 @@ def layout_css(accent_color, aspect):
                     "overflow": "hidden !important",  # To hide at edges */
                 },
                 ".SlideArea": {
+                    "user-select": "none !important", # avoid selecting while clicking on edge to naviagate, inner divs still can select
                     "^.Out-Sync > .jp-OutputArea::before" : {
                         "content": "'citations got out of sync, rerun corresponding slide source to update'",
                         "color":"red",

@@ -365,6 +365,32 @@ function handleScale(box, model) {
     setScale(box, model); // First time set
 }
 
+function handleEdgeClicks(model, box) { // user-select: none is set in CSS for SlideArea to streamline clicks
+    box.addEventListener('click', function(event) {
+        if (!event.target.classList.contains('SlideArea')) {
+            return; // Only handle clicks on slide area itself, avoid quick menu etc.
+        }
+        const rect = box.getBoundingClientRect(); 
+        const clickX = event.clientX - rect.left;
+        const edgeWidth = 16; // 16px padding area
+        
+        let message = '';
+        
+        if (clickX <= edgeWidth) {
+            message = 'PREV'; // Clicked on left edge
+        } else if (clickX >= rect.width - edgeWidth) {
+            message = 'NEXT'; // Clicked on right edge
+        }
+        
+        if (message) {
+            event.preventDefault();
+            event.stopPropagation();
+            model.set("msg_topy", message);
+            model.save_changes();
+        }
+    });
+}
+
 function setColors(model, box) {
     let style = window.getComputedStyle(box);
     const colors = {}
@@ -459,6 +485,9 @@ function render({ model, el }) {
 
         // Link switches slides
         linkSwitchesSlide(model, box);
+
+        // Handle edge clicks for navigation
+        handleEdgeClicks(model, box);
 
         // Sends a message if fullscreen is changed by some other mechanism
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};

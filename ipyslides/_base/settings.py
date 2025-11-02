@@ -173,7 +173,7 @@ class Footer(ConfigTraits):
         wgts.iw.msg_tojs = 'RESCALE' # sets padding etc
 
         if not self.controls:
-            self.main._slides.notify("Navigation controls hidden. But keyboard is still working!")
+            self.main._slides.notify("Navigation controls hidden. But keyboard and edge click is still working!")
 
     
     def _to_html(self):

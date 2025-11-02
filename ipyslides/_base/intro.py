@@ -89,7 +89,8 @@ key_maps = {
     "K": "Show keyboard shortcuts",
 }
 
-key_combs = f"""
+key_combs = f"""color['var(--accent-color)']`Move cursor/airmouse to left/right edge and click.`
+
 | Shortcut                                    | Button                                            | Action                 | 
 |:--------------------------------------------|---------------------------------------------------|:-----------------------|
 | {_key('&#9141;')}/{_key('▸')}               | {_icons["chevronr"]}                              | Move to next slide     |
@@ -99,7 +100,7 @@ key_combs = f"""
 | {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
 | {_key('Esc')}                               |    <none>                                                | {key_maps["Esc"]}      |
-| {_key('S')}                                 | {_icons["settings"]}, {_icons["close"]}           | {key_maps["S"]}        |
+| {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}           | {key_maps["S"]}        |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
 | {_key('K')}                                 |      <none>                                              | {key_maps["K"]}        |
