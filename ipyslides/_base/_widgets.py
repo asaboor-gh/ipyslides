@@ -6,12 +6,22 @@ import anywidget
 from pathlib import Path
 from dashlab.utils import _fix_init_sig, _fix_trait_sig
 
+jupyter_colors = { # used in styles.py and interaction.js
+    'fg1':'--jp-content-font-color0',
+    'fg2':'--jp-content-font-color3',
+    'fg3':'--jp-content-font-color2',
+    'bg1':'--jp-layout-color0',
+    'bg2':'--jp-cell-editor-background',
+    'bg3':'--jp-layout-color2',
+    'accent':'--jp-brand-color1',
+    'pointer':'--jp-error-color1',
+}
 
 class InteractionWidget(anywidget.AnyWidget):
     _esm =  Path(__file__).with_name('static') / 'interaction.js'
     _css =  Path(__file__).with_name('static') / 'interaction.css'
     _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
-    _colors = traitlets.Dict().tag(sync=True) # for export
+    _colors = traitlets.Dict(jupyter_colors).tag(sync=True) # for export
     _nfs = traitlets.Dict().tag(sync=True) # frame counts per slide, for js side use
     _pfs = traitlets.Dict().tag(sync=True) # parts counts per slide, for js side use
     _fkws = traitlets.Dict().tag(sync=True) # footer kws for js side use
@@ -98,7 +108,7 @@ class InteractionWidget(anywidget.AnyWidget):
 
     def _try_exec_with_fallback(self, func):
         if self._theme.value == "Jupyter":
-            self._colors = {} # Reset for getting latest colors
+            self._colors = jupyter_colors # Reset for getting latest colors from these keys
             self.msg_tojs = "SetColors"
             self._run_func = func # called when javascript sets colros
         else:

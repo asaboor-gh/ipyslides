@@ -3,6 +3,7 @@
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
 from .icons import Icon
+from ._widgets import jupyter_colors
 
 _flow_selector = ":is(.jp-OutputArea-child, .columns > div, li)" #":is(.highlight code, li, tr)"
 
@@ -94,14 +95,13 @@ animations = {'zoom':'''
 
 theme_colors = {
     'Jupyter': {
-        'fg1':'var(--jp-content-font-color0,black)',
-        'fg2':'var(--jp-content-font-color3, #454545)', 
-        'fg3':'var(--jp-content-font-color2,#003366)',
-        'bg1':'var(--jp-layout-color0,white)',
-        'bg2':'var(--jp-cell-editor-background,#f7f5f5)',
-        'bg3':'var(--jp-layout-color2,#e8e8e8)',
-        'accent':'var(--jp-brand-color1,#8988)', # May be a neutral color is good for all themes for buttons
-        'pointer':'var(--jp-error-color1,#d32f2f)',
+        k: f'var({jupyter_colors[k]}, {v})' 
+        for k, v in ({
+            'fg1':'black', 'fg2':'#454545', 'fg3':'#003366',
+            'bg1':'white', 'bg2':'#f7f5f5', 'bg3':'#e8e8e8',
+            'accent':'#8988', # May be a neutral color is good for all themes for buttons
+            'pointer':'#d32f2f',
+        }).items()
     },
     'Light': { 'fg1':'black', 'fg2':'#454545', 'fg3':'#003366', 
         'bg1':'white', 'bg2':'#f7f5f5', 'bg3':'#e8e8e8',

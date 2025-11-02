@@ -123,7 +123,7 @@ class _HhtmlExporter:
     
     def _get_css(self, slide):
         "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, NavWrapper → Footer"
-        return slide.css.value.replace(
+        return (f'{slide.css}').replace( # xtml or str
             f".{self.main.uid}.SlidesWrapper", f"#{slide._sec_id}").replace(
             f".{self.main.uid}", f"#{slide._sec_id}").replace(
             ".NavWrapper", ".Footer"

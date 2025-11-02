@@ -262,7 +262,6 @@ class Widgets:
             self.htmls.toast,
             self.htmls.main,
             self.htmls.theme,
-            self.htmls.logo,
             self.iw,
             self._timer.widget(minimal=True),
             self.quick_menu,
@@ -276,6 +275,7 @@ class Widgets:
             self.controls, # Importnat for unique display
             self.drawer, 
             self.navbox,
+            self.htmls.logo,# on top of things
             self._snum,
             self._progbar # progressbar should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto') # 9/16 is default, will change by setting

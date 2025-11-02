@@ -32,6 +32,47 @@ function updateProgress(show, numSlides, numFrames, index, fidx) {
     return gradient
 }
 
+// Function to fix IDs and references in cloned elements, especially for matplotlib SVGs
+function fixIDsAndRefs(clone, cloneIndex = 0) {
+  const idMap = {};
+
+  // Step 1: assign unique IDs for all elements in the clone
+  clone.querySelectorAll('[id]').forEach(el => {
+    const oldId = el.id;
+    const newId = `${oldId}__${cloneIndex}`;
+    idMap[oldId] = newId;
+    el.id = newId;
+  });
+
+  // Step 2: update all attributes containing # references
+  clone.querySelectorAll('*').forEach(el => {
+    for (const attr of el.getAttributeNames()) {
+      const val = el.getAttribute(attr);
+      if (!val || !val.includes('#')) continue;
+
+      let newVal = val;
+      Object.entries(idMap).forEach(([oldId, newId]) => {
+        newVal = newVal.replace(new RegExp(`#${oldId}\\b`, 'g'), `#${newId}`);
+      });
+      if (newVal !== val) el.setAttribute(attr, newVal);
+    }
+  });
+
+  return clone;
+}
+
+function tldrawLinks(box) { // Add a print-only link in draw button 
+    box.querySelectorAll('.Draw-Btn.Menu-Item').forEach((btn) => {
+        let printLink = document.createElement('a');
+        printLink.className = 'print-only fa fa-edit link-button'; // style as in Notebook
+        printLink.href = 'https://www.tldraw.com';
+        printLink.target = '_blank';
+        printLink.rel = 'noopener noreferrer';
+        btn.parentNode.insertBefore(printLink, btn.nextSibling); // insert after draw button
+        btn.classList.add('jupyter-only'); // hide original button in print
+    });
+}
+
 function printSlides(box, model) {
     let slides = Array.from(box.getElementsByClassName('SlideArea')); 
     window._printOnlyObjs = [];
@@ -39,6 +80,7 @@ function printSlides(box, model) {
     const parts = model.get('_pfs') || {}; // get part counts per slide
     const fkws = model.get('_fkws') || {}; // get footer kws
     box.style.setProperty('--printPadding', fkws.pad + 'px'); // set padding for print mode
+    tldrawLinks(box);
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
@@ -62,6 +104,7 @@ function printSlides(box, model) {
                 clone.classList.add('print-only'); // avoid cluttering screen view
                 clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
+                clone.querySelector('.jp-OutputArea').style.maxHeight = '100%'; // force to avoid spilling over padding of slide
                 
                 // Set visibility of parts if any, Do not change this to CSS only as
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
@@ -85,10 +128,11 @@ function printSlides(box, model) {
                                 }
                             }
                         } else if (Array.isArray(part) && !part.includes(j)) { // non-incremental frames
-                            outputs[j].style.display = 'none'; // will not need to show again, so it safe to remove from layout
+                            outputs[j].remove(); // will not need to show again, so it safe to remove from layout
                         }
                     }
                 }
+                clone = fixIDsAndRefs(clone, i); // ensure unique IDs and refs in clone
                 window._printOnlyObjs.push(clone);
                 slide.parentNode.insertBefore(clone, lastInserted.nextSibling);
                 lastInserted = clone; // update last inserted
@@ -324,9 +368,9 @@ function handleScale(box, model) {
 function setColors(model, box) {
     let style = window.getComputedStyle(box);
     const colors = {}
-    for (let prop of ['accent', 'pointer', 'bg1', 'bg2', 'bg3', 'fg1', 'fg2', 'fg3']) {
-        colors[prop] = style.getPropertyValue('--' + prop + '-color');
-    }
+    Object.entries(model.get("_colors")).forEach(([prop, cssVar]) => {
+        colors[prop] = style.getPropertyValue(cssVar);
+    });
     if (colors['accent']) { // Avoid sending empty data due to other closed displays
         model.set("_colors", colors);
         model.save_changes();

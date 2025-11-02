@@ -143,6 +143,51 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=No
 
     return XTML(f"<figure class='zoom-child mpl'>{svg + cap}</figure>")
 
+def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='png', dpi=300):
+    """Convert matplotlib figure to image with base64 encoding.
+    
+    **Parameters**
+    
+    - plt_fig     : Matplotlib's figure instance, auto picks as well.
+    - transparent : True or False for fig background.
+    - width       : CSS style width. Default is calculated from figsize and dpi.
+    - caption     : Caption for figure.
+    - format      : Image format ('png', 'jpg', 'jpeg'). Default is 'png'.
+    - dpi         : Resolution for raster image. Default is 300.
+    """
+    # First line is to remove dependency on matplotlib if not used
+    if not (plt := sys.modules.get('matplotlib.pyplot', None)):
+        return None
+    
+    _fig = plt_fig or plt.gcf()
+    
+    # Determine format
+    fmt = format.lower()
+    if fmt in ('jpg', 'jpeg'):
+        fmt = 'jpeg'
+        transparent = False  # JPEG doesn't support transparency
+    elif fmt == 'png':
+        fmt = 'png'
+    
+    plot_bytes = BytesIO()
+    _fig.savefig(plot_bytes, format=fmt, transparent=transparent, dpi=dpi, bbox_inches='tight')
+    plt.close(_fig)  # Close after saving
+    
+    # Seek to beginning before reading
+    plot_bytes.seek(0)
+    
+    # Encode to base64
+    img_base64 = base64.b64encode(plot_bytes.getvalue()).decode('utf-8')
+    
+    # Create metadata with proper width handling
+    width_str = f'{width}%' if isinstance(width, int) else width
+    
+    metadata = {
+        'width': width_str,
+        'caption': _fig_caption(caption) if caption else '',
+        'attrs': 'class="zoom-child mpl"',
+    }
+    return IMG({f'image/{fmt}': img_base64}, metadata)
 
 def bokeh2html(bokeh_fig,title=""):
     """Write bokeh figure as HTML string to use in `ipyslide.utils.write`.
@@ -623,33 +668,32 @@ def htmlize(obj):
 def _exportable_func(obj):
     module = getattr(obj, '__module__','') or '' # can have None set as __modeule__, fix it
     mro_str = str(obj.__class__.__mro__)  
+    
     # Instead of instance check, we can get mro, same effect without importing modules
-
+    if re.search('matplotlib.*Figure', mro_str, flags=re.DOTALL):return lambda obj: plt2html(obj).value # intercept figure before axes
     if module.startswith('matplotlib') and hasattr(obj,'get_figure'): # any axes
         return lambda obj: plt2html(obj.get_figure()).value
-
-    if re.search('matplotlib.*Figure', mro_str):return lambda obj: plt2html(obj).value
     
-    if re.search('altair.*JupyterChart', mro_str): return lambda obj: _altair2htmlstr(obj.chart)
+    if re.search('altair.*JupyterChart', mro_str, flags=re.DOTALL): return lambda obj: _altair2htmlstr(obj.chart)
     
-    if re.search('altair.*Chart', mro_str): return lambda obj: _altair2htmlstr(obj)
+    if re.search('altair.*Chart', mro_str, flags=re.DOTALL): return lambda obj: _altair2htmlstr(obj)
     
-    if re.search('plotly.*FigureWidget', mro_str): return lambda obj: _zoom_self(obj.to_html(full_html=False))
+    if re.search('plotly.*FigureWidget', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.to_html(full_html=False))
     
-    if re.search('ipympl.*Canvas',mro_str): return lambda obj: plt2html(obj.figure).value
+    if re.search('ipympl.*Canvas',mro_str, flags=re.DOTALL): return lambda obj: plt2html(obj.figure).value
     
-    if re.search('pygal.*Graph', mro_str): return lambda obj: _zoom_self(obj.render(is_unicode=True))
+    if re.search('pygal.*Graph', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.render(is_unicode=True))
     
-    if re.search('pydeck.*Deck', mro_str): return lambda obj: _zoom_self(obj.to_html(as_string=True))
+    if re.search('pydeck.*Deck', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.to_html(as_string=True))
     
-    if re.search('pandas.*DataFrame', mro_str): return lambda obj: _zoom_self(obj.to_html())# full instead of repr
+    if re.search('pandas.*DataFrame', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.to_html())# full instead of repr
     
-    if re.search('pandas.*Series', mro_str):
+    if re.search('pandas.*Series', mro_str, flags=re.DOTALL):
         return lambda obj: f"<code style='color:var(--fg1-color) !important;'>{pprinter.pformat(list(obj))}</code>"# full instead of repr
     
-    if re.search('polars.*DataFrame', mro_str):
+    if re.search('polars.*DataFrame', mro_str, flags=re.DOTALL):
         return lambda obj: _zoom_self(obj.to_pandas().to_html())# full instead of repr
     
-    if re.search('bokeh.*Figure', mro_str): return lambda obj: bokeh2html(obj,title='').value
+    if re.search('bokeh.*Figure', mro_str, flags=re.DOTALL): return lambda obj: bokeh2html(obj,title='').value
     
-    if re.search('IPython.*Image', mro_str): return lambda obj: _zoom_self(fix_ipy_image(obj,width='100%'),False) 
+    if re.search('IPython.*Image', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(fix_ipy_image(obj,width='100%'),False) 

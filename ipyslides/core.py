@@ -12,7 +12,7 @@ from IPython.display import display, clear_output
 
 from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars
 from .writer import hold, write
-from .formatters import bokeh2html, plt2html, serializer
+from .formatters import bokeh2html, plt2html, plt2image, serializer
 from . import utils
 from . import dashlab
 
@@ -136,6 +136,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         xmd.extensions.extend(extensions) # globally once
  
         self.plt2html   = plt2html
+        self.plt2image  = plt2image
         self.bokeh2html = bokeh2html
         self.get_logo   = get_logo
         self.icon       = _Icon  # Icon is useful to add many places
