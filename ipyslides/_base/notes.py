@@ -10,15 +10,17 @@ class Notes:
         
     def insert(self, content):
         r"""Add notes to current slide. Content could be any object except javascript and interactive widgets.
-        Note that notes are not shown inside slides during presentation. They can be viewed in popup window by enabling `Notes Popup` option in settings panel.
-        Notes can also be printed in PDF (after export too) by enabling `Inline Notes` option in settings panel, useful for sharing slides with notes or for personal reference.
+        Note that notes are not shown inside slides during presentation. They can be viewed in popup window by 
+        enabling `Notes Popup` option in settings panel. Notes can also be printed in PDF (after export too) by 
+        enabling `Inline Notes` option in settings panel, useful for sharing slides with notes or for personal reference.
         
         ::: note-tip     
-            In markdown, you can use alert`notes\`notes content\``."""
+            - In markdown, you can use alert`notes\`notes content\``.
+            - Place your (extended) projector on top/bottom of laptop screen while presenting 
+              in Jupyter Notebook to allow right/left edges click navigation work smoothly.
+        """
         self.main.verify_running('Notes can only be added inside a slide constructor.')
         self.main.this._notes = self.main.html('',[content]).value
-        self.main.html('div', self.main.this._notes, 
-            css_class='speaker-notes print-only').display() # hidden inslides always, shown in print/export if enabled
 
     __call__ = insert # Can be called as function
     

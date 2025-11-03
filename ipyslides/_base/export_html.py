@@ -66,7 +66,7 @@ class _HhtmlExporter:
             
             
             for k, objs in enumerate(frames):
-                _html = '' 
+                _html = item._speaker_notes().value if item._notes else '' # speaker notes at top if any
                 for out in objs:
                     _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
 

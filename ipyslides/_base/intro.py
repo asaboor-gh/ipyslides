@@ -127,7 +127,7 @@ into Clips GUI in side panel. On Linux, you need alert` xclip ` or alert`wl-past
 
 ::: note-tip
     - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
-    - Print slides with notes by enabling `Inline Notes` option in settings panel before print/export. Notes appear at same place where they were added in slides.
+    - Print slides with notes by enabling `Inline Notes` option in settings panel before print/export. Notes appear at top to grab immediate attetion of the speaker.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip

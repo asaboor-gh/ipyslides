@@ -195,6 +195,8 @@ slides.set_css({ # on all slides or slide[index,].set_css() per slide
 
 3. **Speaker Notes:**
    - Experimental feature - use with caution
+   - Notes appear at top of slide in PDF to grab speaker's attention and are meant for speaker reference only, e.g. printed handout.
+   - Place extended projector on top/bottom of laptop screen while presenting in Jupyter Notebook to allow right/left edges click navigation work smoothly.
 
 ---
 

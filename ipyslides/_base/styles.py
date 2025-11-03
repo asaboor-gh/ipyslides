@@ -346,13 +346,11 @@ def style_css(colors, fonts, layout, _root = False):
                     'font-size':'0.6em !important', # 60% of note size
                     'position': 'absolute !important',
                     'top': '-0.8em !important',
-                    'left': '50% !important',
-                    'transform': 'translateX(-50%) !important',
-                    'background': 'var(--bg1-color) !important',
-                    'color': 'var(--pointer-color) !important',
+                    'left': '0.5em !important',
+                    'background': 'var(--pointer-color) !important',
+                    'color': 'var(--bg1-color) !important',
                     'padding': '0 0.5em !important',
                     'border-radius': '0.2em !important',
-                    'border': '1px dashed var(--pointer-color) !important',
                 }, 
             },
             '.slide-link, .link-button': {
