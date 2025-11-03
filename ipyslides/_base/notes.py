@@ -10,10 +10,15 @@ class Notes:
         
     def insert(self, content):
         r"""Add notes to current slide. Content could be any object except javascript and interactive widgets.
+        Note that notes are not shown inside slides during presentation. They can be viewed in popup window by enabling `Notes Popup` option in settings panel.
+        Notes can also be printed in PDF (after export too) by enabling `Inline Notes` option in settings panel, useful for sharing slides with notes or for personal reference.
+        
         ::: note-tip     
             In markdown, you can use alert`notes\`notes content\``."""
         self.main.verify_running('Notes can only be added inside a slide constructor.')
         self.main.this._notes = self.main.html('',[content]).value
+        self.main.html('div', self.main.this._notes, 
+            css_class='speaker-notes print-only').display() # hidden inslides always, shown in print/export if enabled
 
     __call__ = insert # Can be called as function
     
@@ -32,10 +37,10 @@ class Notes:
             --fg1-color : {fg};
             --bg2-color: {bg2};
         }}
-        .columns {{columns: 2 auto;font-family: {font};}}
-        .columns > div > * {{background: {bg2};padding:4px;border-left: 2px inset {bg};margin-block:0 !important;}}
-        .columns > div:first-child::before {{content:'This Slide';font-size:80%;font-weight:bold;}}
-        .columns > div:last-child::before {{content:'Next Slide';font-size:80%;font-weight:bold;}}
+        .popup-notes.columns {{columns: 2 auto;font-family: {font};background: {bg};color: {fg};padding:4px;}}
+        .popup-notes.columns > div > * {{background: {bg2};padding:4px;border-left: 2px inset {bg};margin-block:0 !important;}}
+        .popup-notes.columns > div:first-child::before {{content:'This Slide';font-size:80%;font-weight:bold;}}
+        .popup-notes.columns > div:last-child::before {{content:'Next Slide';font-size:80%;font-weight:bold;}}
         </style>{content}"""
 
         this_notes = self.main._current.notes 
@@ -45,7 +50,7 @@ class Notes:
         else:
             next_notes = ''
 
-        notes = self.main.stack([this_notes,next_notes])
+        notes = self.main.stack([this_notes,next_notes], css_class='popup-notes')
         self.widgets.notes.value = set_value(notes) 
     
     def _popup_display(self):

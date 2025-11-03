@@ -328,6 +328,33 @@ def style_css(colors, fonts, layout, _root = False):
                     "margin-top": "0 !important", 
                 }
             } if layout.yoffset is not None else {}),# global yoffset, even centered
+            **({'*': {
+                'max-height':'max-content !important',
+                }
+            } if layout._reflow else {}), # clean way to reflow all content
+            '.speaker-notes': {
+                **({} if layout._inotes else {'display':'none !important',}), # hide notes if not choosen to include in print
+                'border-radius':'0.2em !important',
+                'background':'var(--bg2-color) !important',
+                'border':'1px dashed var(--pointer-color) !important',
+                'padding':'0.4em 0.2em 0.2em 0.2em !important',
+                'font-size':'1.5em !important',
+                'position':'relative !important',
+                'margin-top':'0.5em !important',
+                '^::before': {
+                    'content': '"Speaker Notes"',
+                    'font-size':'0.6em !important', # 60% of note size
+                    'position': 'absolute !important',
+                    'top': '-0.8em !important',
+                    'left': '50% !important',
+                    'transform': 'translateX(-50%) !important',
+                    'background': 'var(--bg1-color) !important',
+                    'color': 'var(--pointer-color) !important',
+                    'padding': '0 0.5em !important',
+                    'border-radius': '0.2em !important',
+                    'border': '1px dashed var(--pointer-color) !important',
+                }, 
+            },
             '.slide-link, .link-button': {
                 'color':'var(--accent-color)',
                 'text-decoration':'none !important',

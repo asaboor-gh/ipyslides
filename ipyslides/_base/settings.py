@@ -195,6 +195,9 @@ class Layout(ConfigTraits):
     aspect   = Float(16/9)
     ncol_refs = Int(2)
 
+    _reflow = False # internal use only
+    _inotes = False # internal use only
+    
     @traitlets.validate('width','yoffset')
     def _limit_width(self, proposal):
         if not proposal["value"] in range(101):
@@ -294,7 +297,8 @@ class Settings:
 
         self._widgets.sliders.fontsize.observe(lambda c: self.fonts(size=c.new), names=["value"])
         self._widgets.theme.observe(lambda c: self.theme(value=c.new), names=["value"])
-        self._widgets.checks.reflow.observe(self._update_theme, names=["value"])
+        self._widgets.checks.reflow.observe(self._update_theme, names=["value"]) # set reflow through layout._reflow
+        self._widgets.checks.inotes.observe(self._update_theme, names=["value"]) # set inline notes through layout._inotes
         self._widgets.buttons.info.on_click(self._show_info)
         self._widgets.buttons.print.on_click(self._print_pdf)
         self._widgets.buttons.print2.on_click(self._print_pdf)
@@ -431,14 +435,12 @@ class Settings:
             self._widgets.htmls.main.value = html('style',
                 _layout_css.layout_css(self._colors['accent'],self.layout.aspect)
             ).value
+            
+        # before applying style_css theme, set reflow and inotes
+        self.layout._reflow = self._widgets.checks.reflow.value
+        self.layout._inotes = self._widgets.checks.inotes.value
         
         theme_css = styles.style_css(**self._theme_kws)
-
-        if self._widgets.checks.reflow.value:
-            theme_css = (
-                theme_css + f"\n.SlideArea * {{max-height:max-content !important;}}\n"
-            )
-
         self._widgets.htmls.theme.value = html("style", theme_css).value
         if self._widgets.checks.notes.value:
             self._slides.notes.display() # Update notes window if open

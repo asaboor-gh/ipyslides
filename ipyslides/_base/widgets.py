@@ -132,7 +132,8 @@ class _Checks:
     Instantiate under `Widgets` class only.
     """
     reflow  = ipw.Checkbox(value = False,description='Reflow Content',layout=auto_layout)
-    notes   = ipw.Checkbox(value = False,description='Notes',layout=auto_layout) # do not observe, just keep track when slides work
+    inotes  = ipw.Checkbox(value = False,description='Inline Notes (PDF only)',layout=auto_layout,)
+    notes   = ipw.Checkbox(value = False,description='Notes Popup',layout=auto_layout) # do not observe, just keep track when slides work
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
     rebuild = ipw.Checkbox(value = True, description='Auto Rebuild',layout=auto_layout)
@@ -210,7 +211,7 @@ class Widgets:
                 self.theme,
                 HTML('<b>Additional Features</b>',layout = _html_layout),
                 self.checks.focus, self.checks.rebuild, self.checks.notes,
-                self.checks.toast, self.checks.reflow, 
+                self.checks.toast, self.checks.reflow, self.checks.inotes,
                 HTML('<b>PDF Printing (Experimental) / HTML Export</b>',layout = _html_layout),
                 HTML(html('details',[html('summary','Printing Info'), how_to_print]).value),
                 self.buttons.print, 

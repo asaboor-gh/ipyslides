@@ -58,6 +58,7 @@ def doc_html(code_css, style_css, content, script, click_btns, css_class, paddin
 
 slides_css = """<style>
 .jupyter-only { display:none !important;}
+.speaker-notes { display:none;} /* hide notes in HTML */
 a {text-decoration:none !important;}
 a:hover {text-decoration:underline !important;}
 p {margin-block: 0.25em !important;}
@@ -158,6 +159,7 @@ section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non
         ::-webkit-scrollbar { height: 0 !important; width: 0 !important; }
     }
     /* Page size is set in style_css */
+    .speaker-notes { display:block !important;} /* show notes in print */
     .SlidesWrapper {
         --contentScale : 1 !important; /* Defualt for printing at same value */
         display: flex !important;

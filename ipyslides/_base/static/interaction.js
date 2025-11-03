@@ -70,6 +70,7 @@ function tldrawLinks(box) { // Add a print-only link in draw button
         printLink.rel = 'noopener noreferrer';
         btn.parentNode.insertBefore(printLink, btn.nextSibling); // insert after draw button
         btn.classList.add('jupyter-only'); // hide original button in print
+        window._printOnlyObjs.push(printLink); // keep track for cleanup, becomes duplicate otherwise on multiple prints
     });
 }
 
@@ -531,16 +532,16 @@ function render({ model, el }) {
         box.insertBefore(bglayer, box.firstChild); // at back
         bglayer.style.zIndex = 0; // ensure at back further
 
+        // Set background images if any left due to being loaded from python script
+        box.querySelectorAll('.SlideArea').forEach(setBgImage); // only set which are not yet set
+        setMainBgImage(box.querySelector('.ShowSlide'), box) // set background image if any on current slide
+        
         // Add classes to mark ancestors for printing
         markPrintable(box, 'ipyslides-print-node');
     }  
     el.appendChild(style);
     model.set("msg_topy", "LOADED"); // to run onload functionality
     model.save_changes();
-
-    // Set background images if any left due to being loaded from python script
-    box.querySelectorAll('.SlideArea').forEach(setBgImage); // only set which are not yet set
-    setMainBgImage(box.querySelector('.ShowSlide'), box) // set background image if any on current slide
     
     // Clean up old slides if left over from previous session of kernel restart
     let slides = document.getElementsByClassName('SlidesWrapper');

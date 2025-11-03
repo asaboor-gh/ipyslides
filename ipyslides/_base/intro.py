@@ -116,6 +116,7 @@ Use `Save as PDF` option instead of Print PDF in browser to make links work in o
 ::: note-warning
     - PDF printing is experimental and may not work as expected in all browsers and tested only in JupyterLab.
     - In case of issues with frames not displaying properly using `Ctrl + P`, try `Ctrl + Alt + P` to fallback to merged frames.
+    - Make sure your presentation is clean for print. "Inline Notes" are only meant for personal reference or sharing slides with notes.
 
 **Printing from Exported HTML File**<br>
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
@@ -126,7 +127,7 @@ into Clips GUI in side panel. On Linux, you need alert` xclip ` or alert`wl-past
 
 ::: note-tip
     - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
-    - In case of Inherit theme selected, you can ensure Jupyterlab colors in exported HTML by rerunning `export_html` or reclicking export button.
+    - Print slides with notes by enabling `Inline Notes` option in settings panel before print/export. Notes appear at same place where they were added in slides.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
