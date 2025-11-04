@@ -30,7 +30,7 @@
         display: table !important; /* Manages auto height for multiple slides */
         --contnetScale : 1 !important; /* Defualt for printing at same value */
     }
-    .ipyslides-print-node.SlidesWrapper > *:not(.SlideBox):not(.LogoHtml) { 
+    .ipyslides-print-node.SlidesWrapper > *:not(.LogoHtml) { 
         visibility: hidden !important;
     }
     .ipyslides-print-node.SlidesWrapper > .NavWrapper .Footer { 

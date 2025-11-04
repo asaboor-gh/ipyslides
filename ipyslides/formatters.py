@@ -607,7 +607,7 @@ del AltDispalyFormatter # Only one
 
 pprinter = PrettyPrinter(indent=2,depth=5,compact=True)
 
-def format_object(obj):
+def _format_object(obj):
     "Returns string of HTML for given object."
     if (func := serializer.get_func(obj)):
         return True, func(obj)
@@ -639,6 +639,11 @@ def _source_code(obj):
 
 def htmlize(obj):
     "Returns string of HTML representation for given object."
+    # Brute force: Matplotlib figure get lost may be due to some race conditions 
+    # if not handled here immediately and becomes bool at some point, ax work fine though
+    if 'matplotlib.figure.Figure' in str(type(obj)):
+        return plt2html(obj).value
+    
     if isinstance(obj, RichOutput):
         from .xmd import error
         return error("TypeError","Received a non-serializable object. Use display or write directly or use %{obj:nb} syntax in markdown!").value
@@ -650,7 +655,7 @@ def htmlize(obj):
         return obj._repr_html_() #_repr_html_ is a method of XTML and it is quick   
     else:
         # Next prefer custom methods of objects as they are more frequently used
-        is_true, _html = format_object(obj)
+        is_true, _html = _format_object(obj)
         if is_true:
             return _html # it is a string
         
