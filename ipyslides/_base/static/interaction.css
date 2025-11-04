@@ -33,9 +33,10 @@
         --contnetScale : 1 !important; /* Defualt for printing at same value */
     }
     .ipyslides-print-node.ipyslides-print-node,
-    .ipyslides-print-node.SlidesWrapper > *:not(.LogoHtml) { 
+    .ipyslides-print-node.SlidesWrapper > * { 
         visibility: hidden !important; /* avoid unessary elements/backgrounds in print */
     }
+    .ipyslides-print-node.SlidesWrapper > .LogoHtml.LogoHtml,
     .ipyslides-print-node.SlidesWrapper > .NavWrapper .Footer { 
         visibility: visible !important; /* keep footer visible but main nav hidden*/
     }
@@ -47,6 +48,7 @@
         max-width: 100vw !important;  /* can't work without it */
         overflow: auto !important;
         height: max-content !important;
+        z-index: -1 !important; /* behind everything */
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox {
         display: flex !important;
