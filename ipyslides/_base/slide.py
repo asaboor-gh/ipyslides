@@ -216,7 +216,7 @@ class Slide:
     
         with self._widget:
             # show speaker notes at top if any to grab immediate attention of speaker, will be shown only in PDF.
-            if self._notes: self._speaker_notes().display()
+            self._speaker_notes(returns=False) # displays directly if any
             for obj in self.contents:
                 display(obj)
                 if hasattr(obj, 'update_display'): 
@@ -461,11 +461,13 @@ class Slide:
                 css_class='Citations', style = '')
             self._refs.display()
     
-    def _speaker_notes(self):
+    def _speaker_notes(self, returns=False):
         if self._notes:
-            return html('div', self._notes, 
+            out = html('div', self._notes, 
                 css_class='speaker-notes print-only'
             ) # hidden in slides always, shown in print/export if enabled
+            return out.value if returns else display(out)
+        return ''
     
     def show(self):
         "Show this slide in cell."
