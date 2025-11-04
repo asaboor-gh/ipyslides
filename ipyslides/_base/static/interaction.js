@@ -63,14 +63,14 @@ function fixIDsAndRefs(clone, cloneIndex = 0) {
 
 function tldrawLinks(box) { // Add a print-only link in draw button 
     box.querySelectorAll('.Draw-Btn.Menu-Item').forEach((btn) => {
-        let printLink = document.createElement('a');
-        printLink.className = 'print-only fa fa-edit link-button'; // style as in Notebook
-        printLink.href = 'https://www.tldraw.com';
-        printLink.target = '_blank';
-        printLink.rel = 'noopener noreferrer';
-        btn.parentNode.insertBefore(printLink, btn.nextSibling); // insert after draw button
+        let cs = window.getComputedStyle(btn); // we need to preserve size
+        let newBtn = document.createElement('button');
+        newBtn.className = 'print-only Draw-Btn';
+        newBtn.innerHTML = `<a href="https://www.tldraw.com" target="_blank" rel="noopener noreferrer" class="fa fa-edit" style="width:100%;height:auto;"></a>`;
+        newBtn.style.cssText = `width: ${cs.width};height: ${cs.height};margin: ${cs.margin};opacity:1;`; // copy layout styles and keep clearly visible
+        btn.parentNode.insertBefore(newBtn, btn.nextSibling); // insert after draw button
         btn.classList.add('jupyter-only'); // hide original button in print
-        window._printOnlyObjs.push(printLink); // keep track for cleanup, becomes duplicate otherwise on multiple prints
+        window._printOnlyObjs.push(newBtn); // keep track for cleanup, becomes duplicate otherwise on multiple prints
     });
 }
 

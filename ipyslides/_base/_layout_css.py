@@ -254,6 +254,7 @@ def layout_css(accent_color, aspect):
                     "> i": {
                         "color": "var(--accent-color) !important",
                     },
+                    '@media print': { "opacity": "0.3",},# want to make it look like disabled in print, no important here as some buttons need to be visible
                 },
                 ".jupyter-button:hover:enabled, .jupyter-button:focus:enabled": {
                     "outline": "none !important",
