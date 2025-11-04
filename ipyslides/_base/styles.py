@@ -708,13 +708,14 @@ def style_css(colors, fonts, layout, _root = False):
             'height':'auto',    
         },
         '.click-wrapper': { # PDF/HTML -only clicker at bottom right
-            'position': 'fixed !important',
+            'position': 'absolute !important',
+            '@media print': {'position': 'fixed !important',},
             'right': '16px !important', # space for slide number
             'bottom': '2px !important',
             'width': '110px !important',
             'max-width': '110px !important',
             'height': '21px !important',
-            'display': 'flex !important',
+            'display': 'flex', # no impportant as in print-only display is none
             'z-index': '6 !important',
             'justify-content': 'space-evenly !important',
             '.clicker': {

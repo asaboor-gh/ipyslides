@@ -272,7 +272,8 @@ class Widgets:
             self.htmls.zoom,
             HBox([ #Slide_box must be in a box to have animations work
                 self.slidebox , 
-            ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')), #should be hidden for animation purpose
+            ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')
+            ).add_class('SBoxWrapper'), # overflow should be hidden for animation purpose, class added to handle print PDF
             self.controls, # Importnat for unique display
             self.drawer, 
             self.navbox,
