@@ -77,14 +77,13 @@ def _key(k): # other properties in CSS
 
 
 key_maps = {
-    "▸, Space": "Next slide",
-    "◂, Ctrl + Space": "Previous slide",
-    "Z": "Toggle objects zoom mode",
+    "▸, +, Space": "Next slide",
+    "◂, -": "Previous slide",
+    ".": "Toggle LASER pointer",
     "P": "Print PDF of slides",
     "F": "Toggle fullscreen",
     "Esc": "Exit fullscreen",
     "S": "Toggle settings panel",
-    "L": "Toggle LASER pointer",
     "E": "Edit Source Cell/View Variables", 
     "K": "Show keyboard shortcuts",
 }
@@ -93,19 +92,19 @@ key_combs = f"""color['var(--accent-color)']`Move cursor/airmouse to left/right 
 
 | Shortcut                                    | Button                                            | Action                 | 
 |:--------------------------------------------|---------------------------------------------------|:-----------------------|
-| {_key('&#9141;')}/{_key('▸')}               | {_icons["chevronr"]}                              | Move to next slide     |
-| {_key('Ctrl')} + {_key('&#9141;')}/{_key('◂')} | {_icons["chevronl"]}                           | Move to previous slide |
-| {_key('Ctrl')} + {_key('0')}/{_key('0')}    | {_icons['arrowbl']}/{_icons['arrowbr']}       | Jump to Star/End of slides |
-| {_key('Ctrl')} + {_key('[1-9]')}/{_key('[1-9]')} | <none>                                      | Shift [1-9] slides left/right |
-| {_key('Z')}                                 | {_icons["zoom-in"]}, {_icons["zoom-out"]}         | {key_maps["Z"]}        |
+| {_key('▸')} / {_key('+')} / {_key('&#9141;')}   | {_icons["chevronr"]}                          | Move to next slide     |
+| {_key('◂')} / {_key('-')}                   | {_icons["chevronl"]}                              | Move to previous slide |
+| {_key('*')}, {_key('/')}                    | <none>                                 | Fast forward/backward by 5 slides |
+| {_key('.')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["."]}        |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
 | {_key('Esc')}                               |    <none>                                                | {key_maps["Esc"]}      |
 | {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}           | {key_maps["S"]}        |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
-| {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
-| {_key('K')}                                 |      <none>                                              | {key_maps["K"]}        |
+| {_key('K')}                                 | {_icons["keyboard"]}                              | {key_maps["K"]}        |
 | {_key('Ctrl')} + {_key('P')}                |      <none>                                              | {key_maps["P"]}        |
 | {_key('Ctrl')} + {_key('Alt')} + {_key('P')}|      <none>                                     | {key_maps["P"]} (merged frame)|
+
+color['var(--fg3-color)']`{_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation.`
 """ 
 
 how_to_print = f"""

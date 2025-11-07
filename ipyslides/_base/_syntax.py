@@ -26,9 +26,9 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `block`            | Block of text/objects {: .block}
  `block-[color]`    | Block of text/objects with specific background color from <br> red, green, blue, yellow, cyan, magenta and gray.
  `raw-text`         | Text will be shown as printed style. {: .raw-text}
- `zoom-self`        | Zooms object on hover, when Zoom is enabled. {: .zoom-self}
- `zoom-child`       | Zooms child object on hover, when Zoom is enabled.
- `no-zoom`          | Disables zoom on object when it is child of 'zoom-child'.
+ `focus-self`       | Focus object with this class on click. {: .focus-self}
+ `focus-child`      | Focus on child objects of node with this class on click.
+ `no-focus`         | Disables focus on object when it is a direct child of 'focus-child'.
 
 Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...)` functions at your disposal.
 '''

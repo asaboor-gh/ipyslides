@@ -1,26 +1,3 @@
-function showLaser(box, cursor){
-    cursor.style.display = 'block'; // show in place
-    function onMouseMove(e) {
-        let bbox = box.getBoundingClientRect()
-        cursor.style.display = "block"; // show everywhere by default
-        if (e.pageX > (bbox.right - 35) || e.pageY > (bbox.bottom - 35)) {
-            cursor.style.display = "none";
-        };
-        if (e.pageX < (bbox.left + 5) || e.pageY < (bbox.top + 5)) {
-            cursor.style.display = "none"; // simulate exit near edges
-        };
-        cursor.style.left = (e.pageX - bbox.left + 20) + "px"; 
-        cursor.style.top = (e.pageY - bbox.top + 20) + "px";
-    };
-
-    box.onmousemove = onMouseMove;
-}
-
-function hideLaser(box, cursor) {
-    cursor.style.display = 'none'; // hide in place
-    box.onmousemove = null;
-}
-
 
 function updateProgress(show, numSlides, numFrames, index, fidx) {
     if (!show) {
@@ -156,11 +133,10 @@ function printSlides(box, model) {
 
 const keyMessage = {
     'f': 'TFS', // Toggle Fullscreen with F but with click from button
-    'z': 'ZOOM', // Enable zooming items
     's': 'TPAN', // Setting panel
     'k': 'KSC', // keyboard shortcuts
-    'l': 'TLSR', // L toggle laser
     'e': 'EDIT', // Edit source cell
+    '.': 'TLSR', // . toggle laser, enables this on purely numpad keyboards
 }
 
 function keyboardEvents(box,model) {
@@ -173,8 +149,8 @@ function keyboardEvents(box,model) {
 
         let key = e.key; // True unicode key
         let message = '';
-        if ('123456789'.includes(key)) { // send to shift slides by numbers
-            message = (e.ctrlKey ? "SHIFT:-" + key : "SHIFT:" + key);
+        if ('/*'.includes(key)) {
+            message = "SHIFT:" + (key === '/' ? "-5" : "5"); // Shift slide by 5
         } else if (key === 'x' || key === 'd') {
             alert("Pressing X or D,D may cut selected cell! Click outside slides to capture these keys!");
             e.stopPropagation(); // stop propagation to jupyterlab events
@@ -186,12 +162,10 @@ function keyboardEvents(box,model) {
         }  else if (key === 'Enter') { 
             e.stopPropagation();   // Don't let it pass over slides though, still can't hold Shift + Enter
             return true; // Enter key or Escape key should act properly
-        } else if (key === 'ArrowLeft' || (e.ctrlKey && key === ' ')) { // ^ + Space, <
+        } else if (key === 'ArrowLeft' || key === '-') { // -, <
             message = 'PREV';
-        } else if (key === 'ArrowRight' || key === ' ') { // Space, >
+        } else if (key === 'ArrowRight' || key === '+' || key === ' ') { // Space, +,  >
             message = 'NEXT';
-        } else if (key === '0') {
-            message = (e.ctrlKey? "HOME": "END"); // Numbers don't change with control
         } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
         } else if (e.ctrlKey && key === 'p') { // Ctrl + Shift + P is picked by system, so using Alt instead
@@ -205,7 +179,7 @@ function keyboardEvents(box,model) {
     box.onkeydown = keyOnSlides;
 };
 
-function handleMessage(model, msg, box, cursor) {
+function handleMessage(model, msg, box) {
     if (msg === "TFS") {
         if (document.fullscreenElement) {
             document.exitFullscreen(); // No box.fullscreen
@@ -213,19 +187,13 @@ function handleMessage(model, msg, box, cursor) {
             box.requestFullscreen();
             box.focus(); // it gets unfocused, no idea why
         }
-    } else if (msg === "TLSR") {
-        if (box.onmousemove) {
-            hideLaser(box,cursor);
-        } else {
-            showLaser(box, cursor);
-        };
-    
     } else if (msg === 'RESCALE') {
         setScale(box, model);
     } else if (msg === "SwitchView") {
         let slideNew = box.getElementsByClassName("ShowSlide")[0];
         slideNew.style.visibility = 'visible';
         slideNew.querySelector('.jp-OutputArea').scrollTop = 0; // scroll reset is important
+        resolveFocusElems(slideNew, model); // ensure focusable elements are set if not before
         setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
 
@@ -283,6 +251,15 @@ function setMainBgImage(slide, target) {
         targetBg.innerHTML = ""; // clear if none
         targetBg.id = ""; // clear id too
     }
+}
+
+function resolveFocusElems(slide, model) {
+    let focusables = model.get("_fsels") || ""; // get from model
+    slide.querySelectorAll(
+        focusables.split(',').map(s => s.trim() + ':not([tabindex])').join(', ')
+    ).forEach((el) => {
+        el.tabIndex = -1; // make focusable by click, if not yet set
+    });
 }
 
 function keepThisViewOnly(box){
@@ -368,8 +345,8 @@ function handleScale(box, model) {
 
 function handleEdgeClicks(model, box) { // user-select: none is set in CSS for SlideArea to streamline clicks
     box.addEventListener('click', function(event) {
-        if (!event.target.classList.contains('SlideArea')) {
-            return; // Only handle clicks on slide area itself, avoid quick menu etc.
+        if (!event.target.classList.contains('SlideArea') && !event.target.classList.contains('SlideBox')) {
+            return; // Only handle clicks on slide area or wrapping box itself(works good in fullscreen), avoid quick menu etc.
         }
         const rect = box.getBoundingClientRect(); 
         const clickX = event.clientX - rect.left;
@@ -467,10 +444,6 @@ function render({ model, el }) {
             model.set("msg_topy","JUPYTER");
             model.save_changes();
         };
-        
-        // Laser pointer
-        let cursor = box.getElementsByClassName('LaserPointer')[0];
-        cursor.style = "position:absolute;display:none;"; // initial
 
         box.onmouseenter = function(){box.focus();};
         box.onmouseleave = function(){box.blur();};
@@ -504,7 +477,7 @@ function render({ model, el }) {
         model.on("change:msg_tojs", () => {
             let msg = model.get("msg_tojs");
             if (!msg) {return false}; // empty message, don't waste time
-            handleMessage(model, msg, box, cursor);
+            handleMessage(model, msg, box);
         })
 
         // Handle notifications

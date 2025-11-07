@@ -299,7 +299,7 @@ def style_css(colors, fonts, layout, _root = False):
             'flex-direction':'column !important',
             'align-items': 'center !important' if layout.centered else 'baseline !important', 
             'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
-            'padding' : '16px !important', # don't make 1em to avoid zoom with fonts
+            'padding' : '16px !important', # don't make 1em to avoid change size with fonts
             'padding-bottom': 'var(--paddingBottom, 23px) !important',
             'overflow': 'auto !important' if layout.scroll else 'hidden !important',
             '> .jp-OutputArea': {

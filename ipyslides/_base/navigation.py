@@ -16,8 +16,6 @@ class Navigation:
         self.btn_prev.on_click(self._shift_left)
         self.btn_next.on_click(self._shift_right)
         self.btn_panel.on_click(self._toggle_panel)
-        self.widgets.buttons.home.on_click(self._goto_home)
-        self.widgets.buttons.end.on_click(self._goto_end)
         
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
@@ -43,19 +41,4 @@ class Navigation:
             self.btn_panel.tooltip = "Open Side Panel [S]"
             self.widgets.panelbox.layout.height = "0"
             self.widgets.panelbox.layout.overflow = 'hidden'
-            
-    def _goto_home(self,btn):
-        try:
-            self.wprogress.value = 0
-            if self.widgets.buttons.toc.icon == 'minus':
-                self.widgets.buttons.toc.click() # Close TOC but only if it was open, let other things work
-        except:
-            self.widgets._push_toast('Cannot go to home page. No slides found.')
-            
-    def _goto_end(self,btn):
-        try:
-            self.wprogress.value = self.wprogress.max
-            if self.widgets.buttons.toc.icon == 'minus':
-                self.widgets.buttons.toc.click() # Close TOC but only if it was open, let other things work
-        except:
-            self.widgets._push_toast('Cannot got to end of slides, may not enough slides exist.')
+               

@@ -302,11 +302,10 @@ class Settings:
         self._widgets.buttons.info.on_click(self._show_info)
         self._widgets.buttons.print.on_click(self._print_pdf)
         self._widgets.buttons.print2.on_click(self._print_pdf)
-        self._widgets.htmls.toast.observe(self._toast_on_value_change, names=["value"])
+        self._widgets.buttons.ksc.on_click(self._show_ksc)
         self._wslider.observe(self._update_size, names=["value"])
         self._tgl_fscreen.observe(self._toggle_fullscreen, names=["value"])
         self._tgl_fscreen.observe(self._on_icon_change, names=["icon"])
-        self._widgets.toggles.zoom.observe(self._push_zoom, names=["value"])
         self._widgets.toggles.laser.observe(self._toggle_laser, names=["value"])
         self._widgets.toggles.draw.observe(self._toggle_overlay, names=["value"])
         self._tgl_menu.observe(self._toggle_menu, names = ["value"])
@@ -338,14 +337,9 @@ class Settings:
         if self._tgl_menu.value:
             self._tgl_menu.value = False
     
-    def _toast_on_value_change(self, change):
-        if change.new:
-            if change.new == 'KSC': # Keyboard shortcute
-                content = htmlize(intro.key_combs)
-                self._widgets._push_toast(content, timeout=15)
+    def _show_ksc(self, btn):
+        self._widgets._push_toast(htmlize(intro.key_combs), timeout=15)
 
-            self._widgets.htmls.toast.value = "" # Reset to make a new signal
-    
     def _print_pdf(self, btn):
         with disabled(self._widgets.buttons.print,self._widgets.buttons.print2): # disable both buttons to avoid multiple clicks
             self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
@@ -402,7 +396,7 @@ class Settings:
         
         items = [getattr(item,'_sec_id','') for item in self._slides]
         imax = len(items) - 1
-        items = [items[i] for i in [0, imax//4,imax//2, 3*imax//4, imax]]
+        items = [items[int(round(i,0))] for i in [0, imax/4,imax/2, 3*imax/4, imax]]
         labels = '●●●●●'
         links = "".join(f'<a href="#{key}" class="clicker">{label}</a>' for (label,key) in zip(labels,items))
         return f'<div class="click-wrapper print-only"> {links} </div>' 
@@ -468,33 +462,11 @@ class Settings:
             self._tgl_fscreen.tooltip = "Enter Fullscreen [F]"
         
     def _toggle_laser(self, change):
-        self._widgets.iw.msg_tojs = 'TLSR'
         tgl = self._widgets.toggles.laser
-        if tgl.value:
-            tgl.icon = "minus"
-            tgl.tooltip = "Hide Laser Pointer [L]"
-        else:
-            tgl.icon = "plus"
-            tgl.tooltip = "Show Laser Pointer [L]"
-
-    def _push_zoom(self, change):
-        tgl = self._widgets.toggles.zoom
-        if tgl.value:
-            tgl.icon = "minus"
-            tgl.tooltip = "Disbale Zooming Items [Z]"
-            self._widgets.htmls.zoom.value = f"<style>\n{_layout_css.zoom_hover_css()}\n</style>"
-
-            # If at some point it may not work properly outside fullscreen use belowe
-            # if self._tgl_fscreen.value:
-            #     self._widgets.htmls.zoom.value = f"<style>\n{_layout_css.zoom_hover_css()}\n</style>"
-            # else:
-            #     self._widgets.htmls.zoom.value = ""  # Clear zoom css immediately to avoid conflict
-            #     self._widgets._push_toast("Objects are not zoomable in inline mode!", timeout=2)
-        else:
-            tgl.icon = "plus"
-            tgl.tooltip = "Enable Zooming Items [Z]"
-            self._widgets.htmls.zoom.value = ""
-
+        self._widgets.htmls.pointer.active = tgl.value
+        tgl.icon = "minus" if tgl.value else "plus"
+        tgl.tooltip = f"{'Hide' if tgl.value else 'Show'} Laser Pointer [.]"
+        
     def _toggle_overlay(self, change):
         tgl = self._widgets.toggles.draw
         if tgl.value:
@@ -515,7 +487,7 @@ class Settings:
             self._tgl_menu.icon = 'minus'
             self._hover_only = 'Hover-Only' in self._tgl_menu._dom_classes
             self._tgl_menu.remove_class('Hover-Only') # If navigation menu hidden by user
-            self._widgets.quick_menu.layout.height = 'min(225px, calc(100% - 30px))'
+            self._widgets.quick_menu.layout.height = 'min(200px, calc(100% - 30px))'
             self._widgets.quick_menu.layout.border = "1px solid var(--bg3-color)"
         else:
             self._tgl_menu.icon = 'plus'

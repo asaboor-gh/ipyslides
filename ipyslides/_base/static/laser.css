@@ -1,0 +1,24 @@
+.LaserPointer { 
+    position: absolute !important;
+    left: -50px;  /* Hides when not required , otherwise handled by javascript, and width and height too */
+    z-index: 9;  /* below side panel but above focused image */ 
+    border-radius: 50%;
+    border: 2px solid white;
+    background: var(--pointer-color);
+    transform: translate(-50%, -50%); /* center on cursor  */
+    box-shadow: 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color);
+    display: none;  /* Initial setup. Display will be set using javascript only  */
+    overflow: hidden !important;  /* To hide at edges  */
+}
+.LaserPointer,
+.LaserPointer * { 
+    cursor: none !important; /* do not show pointer on it and children, this is important here besides JS */
+    pointer-events: none !important; /* pass pointer events through it and children  */
+}
+
+/* PRINT STYLES FOR SLIDES */
+@media print {
+    .LaserPointer {
+        display: none !important; /* hide laser pointer when printing */
+    }
+}

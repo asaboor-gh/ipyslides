@@ -1,6 +1,6 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'code', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 
-    'zoomable','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
+    'focus','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 __all__ = sorted(_attrs)
 
@@ -353,7 +353,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwarg
     data, metadata = Image(data = _data,**kwargs)._repr_mimebundle_()
     metadata['width'] = width
     metadata['caption'] = _fig_caption(caption)
-    metadata['attrs'] = f'class="zoom-child fig-{id(data)}" style="{_fig_style_inline}"'
+    metadata['attrs'] = f'class="focus-child fig-{id(data)}" style="{_fig_style_inline}"'
 
     _verify_css_props(css_props)
     if css_props:
@@ -405,7 +405,7 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, **kwargs):
         css_props['svg'] = {**css_props.get('svg',{}), 'height':'auto', 'width':w} 
     
     svg = svg.replace(node, rnode) # Replace node with rnode
-    fig = html('figure', svg + _fig_caption(caption), css_class=f'zoom-child fig-{id(svg)}', style=_fig_style_inline).value
+    fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)}', style=_fig_style_inline).value
     
     if css_props:
         fig += _styled_css({f'.fig-{id(svg)}': css_props}).value
@@ -439,13 +439,13 @@ def styled(obj, css_class=None, **css_props):
     else:
         return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{htmlize(obj)}</div>')
     
-def zoomable(obj):
-    "Wraps a given obj in a parent with 'zoom-child' class or add 'zoom-self' to widget, whether a widget or html/IPYthon object"
+def focus(obj):
+    "Wraps a given obj in a parent with 'focus-child' class or add 'focus-self' to widget, whether a widget or html/IPYthon object, to focus on click."
     if isinstance(obj,ipw.DOMWidget):
         _patch_display(obj)
-        return obj.add_class('zoom-self')
+        return obj.add_class('focus-self')
     else:
-        return styled(obj, 'zoom-child')
+        return styled(obj, 'focus-child')
 
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
@@ -615,7 +615,7 @@ def table(data, headers = None, widths=None):
     except TypeError:
         raise TypeError("data should be 2D matrix-like")
     
-    return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' zoom-self')
+    return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' focus-self')
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."

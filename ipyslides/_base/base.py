@@ -416,7 +416,7 @@ class BaseSlides:
             
             members = sorted((
                 'AnimationSlider alert bokeh2html bullets esc styled fmt code color details doc '
-                'today error zoomable html iframe image frozen notify plt2html '
+                'today error focus html iframe image frozen notify plt2html '
                 'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
@@ -523,15 +523,13 @@ class BaseSlides:
         with self.build(-1):
             self.write(r'''
             ## Focus on what matters
-            - There is a zoom button on top bar which enables zooming of certain elements. This can be toggled by `Z` key.
-            - Most of supported elements are zoomable by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.
-            - You can also enable zooming for an object/widget by wrapping it inside \`Slide.zoomable\` function conveniently.
-            - You can also enable by manully adding `zoom-self`, `zoom-child` classes to an element. To prevent zooming under as `zoom-child` class, use `no-zoom` class.
+            - Most of supported elements can be focused by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.
+            - You can also enable focus on an object/widget by wrapping it inside \`Slide.focus\` function conveniently.
+            - You can also enable focus by manully adding `focus-self`, `focus-child` classes to an element. To prevent focus under as `focus-child` class, use `no-focus` class.
             
-            ::: zoom-self block-red
+            ::: focus-self block-red
                 ### Focus on Me 😎
-                - If zoom button is enabled, you can hover here to zoom in this part!
-                - You can also zoom in this part by pressing `Z` key while mouse is over this part.
+                click to focus on this block. Click outside to remove focus.
             ''')
 
         with self.build(-1):

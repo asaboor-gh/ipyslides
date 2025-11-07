@@ -108,7 +108,7 @@ class XTML(HTML):
         return ipw.HTML(self.value)
 
 def _fig_caption(text): # need here to use in many modules
-    return f'<figcaption class="no-zoom">{htmlize(text)}</figcaption>' if text else ''
+    return f'<figcaption class="no-focus">{htmlize(text)}</figcaption>' if text else ''
 
 def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.
@@ -141,7 +141,7 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=No
     if caption:
         cap = _fig_caption(caption) # Caption is optional, but if given, it should be there
 
-    return XTML(f"<figure class='zoom-child mpl'>{svg + cap}</figure>")
+    return XTML(f"<figure class='focus-child mpl'>{svg + cap}</figure>")
 
 def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='png', dpi=300):
     """Convert matplotlib figure to image with base64 encoding.
@@ -185,7 +185,7 @@ def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='
     metadata = {
         'width': width_str,
         'caption': _fig_caption(caption) if caption else '',
-        'attrs': 'class="zoom-child mpl"',
+        'attrs': 'class="focus-child mpl"',
     }
     return IMG({f'image/{fmt}': img_base64}, metadata)
 
@@ -197,11 +197,11 @@ def bokeh2html(bokeh_fig,title=""):
     - title     : Title for figure.
     """
     if (bokeh := sys.modules.get('bokeh', None)):
-        return XTML(f'''<div class="zoom-child">
+        return XTML(f'''<div class="focus-child">
             {bokeh.embed.file_html(bokeh_fig, bokeh.resources.CDN, title)}
         </div>''')
 
-def _altair2htmlstr(chart): return _zoom_self(chart._repr_mimebundle_().get('text/html',''))
+def _altair2htmlstr(chart): return _focus_on(chart._repr_mimebundle_().get('text/html',''))
 
 class IMG(XTML):
     "IMG object with embeded data from any possible source. Use `self.to_pil` and `self.to_numpy` to export to other formats."
@@ -232,14 +232,14 @@ class IMG(XTML):
         return asarray(self.to_pil() or [])
     
 
-def fix_ipy_image(image,width='100%'): # Do not add zoom class here, it's done in util as well as below
+def fix_ipy_image(image,width='100%'): # Do not add focs class here, it's done in util as well as below
     img = image._repr_mimebundle_() # Picks PNG/JPEG/etc
     _src, *_ = [f'data:{k};base64, {v}' for k,v in img[0].items()]
     return XTML(f"<img src='{_src}' width='{width}' height='auto'/>") # width is important, height auto fixed
 
-def _zoom_self(html_str, self=True): # Zoom for auto output, self or child
+def _focus_on(html_str, self=True): # Focus for auto output, self or child
     klass = 'self' if self else 'child'
-    return f'<div class="zoom-{klass}">{html_str}</div>'
+    return f'<div class="focus-{klass}">{html_str}</div>'
 
 
 def code_css(style='default',color = None, background = None, hover_color = 'var(--bg3-color)', css_class = None, lineno = True):
@@ -683,22 +683,22 @@ def _exportable_func(obj):
     
     if re.search('altair.*Chart', mro_str, flags=re.DOTALL): return lambda obj: _altair2htmlstr(obj)
     
-    if re.search('plotly.*FigureWidget', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.to_html(full_html=False))
+    if re.search('plotly.*FigureWidget', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.to_html(full_html=False))
     
     if re.search('ipympl.*Canvas',mro_str, flags=re.DOTALL): return lambda obj: plt2html(obj.figure).value
     
-    if re.search('pygal.*Graph', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.render(is_unicode=True))
+    if re.search('pygal.*Graph', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.render(is_unicode=True))
     
-    if re.search('pydeck.*Deck', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.to_html(as_string=True))
+    if re.search('pydeck.*Deck', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.to_html(as_string=True))
     
-    if re.search('pandas.*DataFrame', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(obj.to_html())# full instead of repr
+    if re.search('pandas.*DataFrame', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(obj.to_html())# full instead of repr
     
     if re.search('pandas.*Series', mro_str, flags=re.DOTALL):
         return lambda obj: f"<code style='color:var(--fg1-color) !important;'>{pprinter.pformat(list(obj))}</code>"# full instead of repr
     
     if re.search('polars.*DataFrame', mro_str, flags=re.DOTALL):
-        return lambda obj: _zoom_self(obj.to_pandas().to_html())# full instead of repr
+        return lambda obj: _focus_on(obj.to_pandas().to_html())# full instead of repr
     
     if re.search('bokeh.*Figure', mro_str, flags=re.DOTALL): return lambda obj: bokeh2html(obj,title='').value
     
-    if re.search('IPython.*Image', mro_str, flags=re.DOTALL): return lambda obj: _zoom_self(fix_ipy_image(obj,width='100%'),False) 
+    if re.search('IPython.*Image', mro_str, flags=re.DOTALL): return lambda obj: _focus_on(fix_ipy_image(obj,width='100%'),False) 

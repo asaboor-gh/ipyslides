@@ -70,7 +70,7 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "iframe": "src",
     "details": "text or use ::: details block",
     "styled": "style objects with CSS classes and inline styles or use block ::: with css classes and props inline",
-    "zoomable": "zoom a node of html when hovered or used ::: zoom-self/zoom-child blocks",
+    "focus": "focus on a node of html when clicked or used ::: focus-self/focus-child blocks",
     "center": r"text or \%{variable} or use ::: center, ::: align-center blocks", # should after most of the functions
     "stack": r"text separated by || in inline mode, or use ::: columns block",
 }

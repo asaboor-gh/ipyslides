@@ -3,10 +3,59 @@
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
 from .icons import Icon
+from ._widgets import focus_selectors
 
-_zoom_ables = ".jp-RenderedImage > img, .zoom-self, .zoom-child > *:not(.no-zoom), .plot-container.plotly"
 _icons_size = "1em"  # For all except Chevrons
-
+_focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
+    focus_selectors: {
+        "^:hover": { # visual cue on hover to click
+            "box-shadow": "0px 0px 1px 0.5px #8988 !important",
+            "border-radius": "8px !important",
+            "cursor": "pointer", # indicate clickable as well as it's useful as visual pointer
+        },
+        "^:focus": {
+            "position": "fixed",
+            **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
+            "left": "50px",
+            "top": "50px",
+            "z-index": 8,
+            "cursor": "none", # no cursor on main focused element, inner elements can have their own cursor
+            "width": "calc(100% - 100px)",
+            "height": "calc(100% - 100px)",
+            "object-fit": "scale-down !important",
+            "box-shadow": "-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5) !important",
+            "border-radius": "8px",
+            "overflow": "scroll !important",  # Specially for dataframes
+            ".vega-embed canvas, > .svg-container": {  # Vega embed canvas and plotly svg-container inside hoverabe
+                "position": "fixed !important",  # Will be extra CSS but who cares
+                "width": "100% !important",
+                "height": "100% !important",  # Ovverider plotly and altair style
+                "border-radius": "4px !important",
+                "object-fit": "scale-down !important",
+                "box-sizing": "border-box !important",
+            },
+        },
+    },
+    '.focus-child.mpl > svg:focus': { # matplot size inches need special treatment
+        "width": "calc(100% - 100px) !important",
+        "height": "calc(100% - 100px) !important",
+        "object-fit": "scale-down !important",
+    },
+    # Nested focus classes should occupy full space because parent is focused too
+    ".focus-self, .focus-child": {
+        "^:focus .vega-embed details": {
+            "display": "none !important",
+        },
+        ".focus-self:focus, .focus-child:focus": {
+            "left": "0px !important",
+            "top": "0px !important",
+            "width": "100% !important",
+            "height": "100% !important",
+            "box-sizing": "border-box !important",
+            "background": "var(--bg1-color) !important",  # Avoids overlapping with other elements
+        },
+    },  
+}
 
 def layout_css(accent_color, aspect):
     uclass = get_unique_css_class()
@@ -60,7 +109,7 @@ def layout_css(accent_color, aspect):
                     },
                 },
                 ".Toast, .TOC, .SidePanel": {
-                    "--text-size": "20px", # Don't need these to be zoomed in
+                    "--text-size": "20px", # Don't need these to be changed with slide text size
                 },
                 ".Toast" : {
                     "position":"absolute",
@@ -111,21 +160,20 @@ def layout_css(accent_color, aspect):
                         "justify-content": "center !important",
                     },
                 },
-                "div.LaserPointer": {  # For laser pointer
-                    "position": "absolute !important",
-                    "width": "12px",
-                    "height": "12px",
-                    "left": "-50px",  # Hides when not required , otherwise handled by javascript*/
-                    "z-index": "9",  # below side panel but above zoomed image */
-                    "border-radius": "50%",
-                    "border": " 2px solid white",
-                    "background": " var(--pointer-color)",
-                    "box-shadow": " 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color)",
-                    "display": "none",  # Initial setup. Display will be set using javascript only */
-                    "overflow": "hidden !important",  # To hide at edges */
+                ".SlideBox": {
+                    "^::before, ^::after": {
+                        "content": "''",
+                        "position": "absolute",
+                        "top": "0", "left": "0",
+                        "width": "calc(16px * var(--contentScale,1))", # make it scalable with content to avoid wrong clicks into slide area
+                        "height": "calc(100% - 25px)", # avoid clashes with bottom controls
+                        "cursor": "pointer", # to hint for edge clicks
+                        "z-index": "1", # both on top to be clickable, before stays below if not given
+                    },
+                    "^::after": {"left": "unset", "right": "0",},
+                    "^, .SlideArea": {"user-select": "none !important",}, # avoid selecting while clicking on edge to naviagate, inner divs still can select
                 },
                 ".SlideArea": {
-                    "user-select": "none !important", # avoid selecting while clicking on edge to naviagate, inner divs still can select
                     "^.Out-Sync > .jp-OutputArea::before" : {
                         "content": "'citations got out of sync, rerun corresponding slide source to update'",
                         "color":"red",
@@ -142,12 +190,7 @@ def layout_css(accent_color, aspect):
                         "height": "auto !important", # This is must for layout
                         "box-sizing": "border-box !important",
                     },  # Otherwise it shrinks small columns
-                    _zoom_ables: {
-                        "^:hover": {
-                           "box-shadow": "0px 0px 1px 0.5px #8988 !important",
-                           "border-radius": "8px !important",
-                        },
-                    },
+                    **_focus_css,
                 },
                 "kbd" : {
                     "color":"var(--fg2-color)",
@@ -566,14 +609,6 @@ def layout_css(accent_color, aspect):
                     "circle", color=accent_color, size=_icons_size
                 ).css,
             },
-            ".Zoom-Btn": {
-                ".fa.fa-plus": Icon(
-                    "zoom-in", color=accent_color, size=_icons_size
-                ).css,
-                ".fa.fa-minus": Icon(
-                    "zoom-out", color=accent_color, size=_icons_size
-                ).css,
-            },
             ".Menu-Btn": {
                 ".fa.fa-plus": Icon(
                     "dots", color=accent_color, size=_icons_size
@@ -587,14 +622,9 @@ def layout_css(accent_color, aspect):
                     "code", color=accent_color, size=_icons_size
                 ).css,
             },
-            ".Home-Btn": {
+            ".KSC-Btn": {
                 ".fa.fa-plus": Icon(
-                    "arrowbl", color=accent_color, size=_icons_size
-                ).css,
-            },
-            ".End-Btn": {
-                ".fa.fa-plus": Icon(
-                    "arrowbr", color=accent_color, size=_icons_size
+                    "keyboard", color=accent_color, size=_icons_size
                 ).css,
             },
             ".Info-Btn": {
@@ -622,7 +652,7 @@ def layout_css(accent_color, aspect):
                         "height": "auto !important",
                     },
                 },
-                ".Controls, .NavWrapper button, div.LaserPointer": {
+                ".Controls, .NavWrapper button": {
                     "display": "none !important",
                 },
                 "pre, .SlideBox, .SlidesWrapper, .SlideArea": {
@@ -677,7 +707,7 @@ def layout_css(accent_color, aspect):
                 "padding-bottom": "8px !important",
                 "padding-right": "8px !important",
             },  # Jupyter-Lab make space in input cell
-            "<.cell-output-ipywidget-background": {  # VSCode issue */
+            "<.cell-output-ipywidget-background": {  # VSCode issue  
                 "background": "var(--theme-background,inherit) !important",
                 "margin": "8px 0px",
             },
@@ -713,59 +743,6 @@ def layout_css(accent_color, aspect):
         },
     )
 
-def zoom_hover_css():
-    return _build_css(
-        (".SlideArea",),
-        {
-            # Matplotlib by plt.show, self zoom, child zoom, plotly
-            _zoom_ables: {
-                "^:hover, ^:focus": {
-                    "position": "fixed",
-                    **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
-                    "left": "50px",
-                    "top": "50px",
-                    "z-index": 8,
-                    "width": "calc(100% - 100px)",
-                    "height": "calc(100% - 100px)",
-                    "object-fit": "scale-down !important",
-                    "box-shadow": "-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5) !important",
-                    "border-radius": "8px",
-                    "overflow": "scroll !important",  # Specially for dataframes
-                    ".vega-embed canvas, > .svg-container": {  # Vega embed canvas and plotly svg-container inside hoverabe
-                        "position": "fixed !important",  # Will be extra CSS but who cares
-                        "width": "100% !important",
-                        "height": "100% !important",  # Ovverider plotly and altair style
-                        "border-radius": "4px !important",
-                        "object-fit": "scale-down !important",
-                        "box-sizing": "border-box !important",
-                    },
-                },
-            },
-            '.zoom-child.mpl > svg:hover,.zoom-child.mpl > svg:focus': { # matplot size inches need special treatment
-                "width": "calc(100% - 100px) !important",
-                "height": "calc(100% - 100px) !important",
-                "object-fit": "scale-down !important",
-            },
-            # Nested zoom classes should occupy full space because parent is zoomed too
-            ".zoom-self, .zoom-child": {
-                "^:focus .vega-embed details, ^:hover .vega-embed details": {
-                    "display": "none !important",
-                },
-                ".zoom-self, .zoom-child": {
-                    "^:hover, ^:focus": {
-                        "left": "0px !important",
-                        "top": "0px !important",
-                        "width": "100% !important",
-                        "height": "100% !important",
-                        "box-sizing": "border-box !important",
-                        "background": "var(--bg1-color) !important",  # Avoids overlapping with other elements
-                    },
-                },
-            },
-        },
-    )
-
-
 def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, _id=''):
     if filter and not '(' in str(filter):
         raise ValueError(f"blur expects a CSS filter function like 'blur(2px)', 'invert()' etc. or None, got {filter}")
@@ -785,7 +762,7 @@ def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, _id='')
         position: absolute;
         left:50% !important;
         top:50% !important;
-        transform: translate(-50%,-50%) !important; /* Make at center */
+        transform: translate(-50%,-50%) !important; /* Make at center  
         width: 100%;
         height: 100%;
     }}

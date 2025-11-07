@@ -12,7 +12,7 @@ from tldraw import TldrawWidget
 from dashlab import ListWidget, JupyTimer
 
 from . import styles
-from ._widgets import InteractionWidget, NotesWidget
+from ._widgets import InteractionWidget, NotesWidget, LaserPointer
 from .intro import get_logo, how_to_print
 from ..utils import html, htmlize
 from .. import formatters as fmtrs
@@ -91,9 +91,8 @@ class _Buttons:
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Update Widgets Display').add_class('Menu-Item').add_class('Refresh-Btn')
     source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
-    home    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go to Title Page').add_class('Menu-Item').add_class('Home-Btn')
-    end     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Go To End of Slides').add_class('Menu-Item').add_class('End-Btn')
     info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
+    ksc     =  Button(icon= 'keyboard',layout= Layout(width='auto',height='auto'), tooltip='Keyboard Shortcuts').add_class('Menu-Item').add_class('KSC-Btn')
     export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
     print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + P')
     print2  =  Button(icon='file-pdf',description="Print Slides (merged frames)",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + Alt + P')
@@ -104,8 +103,7 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
-    zoom    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enable Zooming Items [Z]').add_class('Zoom-Btn')
-    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [L]').add_class('Laser-Btn') 
+    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [.]').add_class('Laser-Btn') 
     draw    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Open Drawing Panel').add_class('Draw-Btn').add_class('Menu-Item')  
     menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')   
 
@@ -123,9 +121,8 @@ class _Htmls:
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
     toast   = HTML().add_class('Toast') # For notifications
-    cursor  = HTML().add_class('LaserPointer') # For beautiful cursor
+    pointer = LaserPointer() # For beautiful pointer
     hilite  = HTML() # Updated in settings on creation. For code blocks.
-    zoom    = HTML() # zoom CSS, do not add here!
 @dataclass(frozen=True)
 class _Checks:
     """
@@ -197,7 +194,7 @@ class Widgets:
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
 
-        _many_btns = [self.buttons.panel, self.toggles.fscreen, self.toggles.laser, self.toggles.zoom, self.buttons.refresh, self.toggles.draw]
+        _many_btns = [self.buttons.panel, self.toggles.fscreen, self.toggles.laser, self.buttons.refresh, self.toggles.draw]
         _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
         
         self.tocbox = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto',min_width='0')).add_class('TOC')
@@ -247,7 +244,7 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
-        self.quick_menu = VBox([HBox([self.buttons.home, self.buttons.end, self.buttons.info, self.toggles.menu]),*_many_btns[::-1]],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
+        self.quick_menu = VBox([HBox([self.buttons.ksc, self.buttons.info, self.toggles.menu]),*_many_btns[::-1]],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
 
         def close_quick_menu(change):
             self.toggles.menu.value = False
@@ -267,9 +264,8 @@ class Widgets:
             self._timer.widget(minimal=True),
             self.quick_menu,
             self.panelbox,
-            self.htmls.cursor,
+            self.htmls.pointer,
             self.htmls.hilite,
-            self.htmls.zoom,
             HBox([ #Slide_box must be in a box to have animations work
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')

@@ -17,6 +17,9 @@ jupyter_colors = { # used in styles.py and interaction.js
     'pointer':'--jp-error-color1',
 }
 
+# used to set focusable elements for click-to-focus feature in _layout_css.py and interaction.js
+focus_selectors = ".jp-RenderedImage > img, .focus-self, .focus-child > *:not(.no-focus), .plot-container.plotly"
+
 class InteractionWidget(anywidget.AnyWidget):
     _esm =  Path(__file__).with_name('static') / 'interaction.js'
     _css =  Path(__file__).with_name('static') / 'interaction.css'
@@ -25,6 +28,7 @@ class InteractionWidget(anywidget.AnyWidget):
     _nfs = traitlets.Dict().tag(sync=True) # frame counts per slide, for js side use
     _pfs = traitlets.Dict().tag(sync=True) # parts counts per slide, for js side use
     _fkws = traitlets.Dict().tag(sync=True) # footer kws for js side use
+    _fsels = traitlets.Unicode(focus_selectors, read_only=True).tag(sync=True) # need for frontend focus management by click
     
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)
@@ -34,7 +38,6 @@ class InteractionWidget(anywidget.AnyWidget):
         self._toggles = _widgets.toggles
         self._buttons = _widgets.buttons
         self._checks = _widgets.checks
-        self._toast_html = _widgets.htmls.toast
         self._loading = _widgets.htmls.loading
         self._prog = _widgets.sliders.progress
         self._theme = _widgets.theme
@@ -46,21 +49,17 @@ class InteractionWidget(anywidget.AnyWidget):
         if not msg:
             return # Message set empty, do not waste time
         if 'SHIFT:' in msg:
-            self._prog.value = int(msg.lstrip('SHIFT:')) + self._prog.value
+            self._prog.value = self._prog.value + int(msg.lstrip('SHIFT:')) # shift by given offset
         elif msg == 'TFS': 
             self._toggles.fscreen.value = not self._toggles.fscreen.value
         elif msg == 'NEXT':
             self._buttons.next.click()
         elif msg == 'PREV':
             self._buttons.prev.click()
-        elif msg == 'HOME':
-            self._buttons.home.click()
-        elif msg == 'END':
-            self._buttons.end.click()
+        elif msg == 'KSC':
+            self._buttons.ksc.click()
         elif msg == 'TLSR':
             self._toggles.laser.value = not self._toggles.laser.value
-        elif msg == 'ZOOM':
-            self._toggles.zoom.value = not self._toggles.zoom.value
         elif msg == 'TPAN':
             self._buttons.panel.click()
         elif msg == 'EDIT':
@@ -84,8 +83,6 @@ class InteractionWidget(anywidget.AnyWidget):
                 self._toggles.fscreen.icon = 'minus'
             else:
                 self._toggles.fscreen.icon = 'plus'
-        elif msg == 'KSC':
-            self._toast_html.value = 'KSC'
         elif msg == 'PRINT':
             self._buttons.print.click()
         elif msg == 'PRINT2':
@@ -119,4 +116,23 @@ class NotesWidget(anywidget.AnyWidget):
     _esm = Path(__file__).with_name('static') / 'notes.js'
     value = traitlets.Unicode('').tag(sync=True)
     popup = traitlets.Bool(False).tag(sync=True)
+    
+
+@_fix_init_sig
+class LaserPointer(anywidget.AnyWidget):
+    _esm = Path(__file__).with_name('static') / 'laser.js'
+    _css = Path(__file__).with_name('static') / 'laser.css'
+
+    size = traitlets.Int(12).tag(sync=True)
+    active = traitlets.Bool(False).tag(sync=True)
+    
+    @traitlets.validate("size")
+    def _set_size(self, proposal):
+        size = proposal['value']
+        if not isinstance(size, int) or size < 0:
+            raise traitlets.TraitError("size must be a non-negative integer in units of px.")
+        return size
+
+        
+
 
