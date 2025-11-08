@@ -79,7 +79,7 @@ def _key(k): # other properties in CSS
 key_maps = {
     "▸, +, Space": "Next slide",
     "◂, -": "Previous slide",
-    ".": "Toggle LASER pointer",
+    "L": "Toggle LASER pointer",
     "P": "Print PDF of slides",
     "F": "Toggle fullscreen",
     "Esc": "Exit fullscreen",
@@ -95,14 +95,14 @@ key_combs = f"""color['var(--accent-color)']`Move cursor/airmouse to left/right 
 | {_key('▸')} / {_key('+')} / {_key('&#9141;')}   | {_icons["chevronr"]}                          | Move to next slide     |
 | {_key('◂')} / {_key('-')}                   | {_icons["chevronl"]}                              | Move to previous slide |
 | {_key('*')}, {_key('/')}                    | <none>                                 | Fast forward/backward by 5 slides |
-| {_key('.')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["."]}        |
-| {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
-| {_key('Esc')}                               |    <none>                                                | {key_maps["Esc"]}      |
-| {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}           | {key_maps["S"]}        |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
+| {_key('Esc')}                               |    <none>                                         | {key_maps["Esc"]}      |
+| {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
 | {_key('K')}                                 | {_icons["keyboard"]}                              | {key_maps["K"]}        |
-| {_key('Ctrl')} + {_key('P')}                |      <none>                                              | {key_maps["P"]}        |
-| {_key('Ctrl')} + {_key('Alt')} + {_key('P')}|      <none>                                     | {key_maps["P"]} (merged frame)|
+| {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
+| {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}              | {key_maps["S"]}        |
+| {_key('Ctrl')} + {_key('P')}                |      <none>                                       | {key_maps["P"]}        |
+| {_key('Ctrl')} + {_key('Alt')} + {_key('P')}|      <none>                                | {key_maps["P"]} (merged frame)|
 
 color['var(--fg3-color)']`{_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation.`
 """ 

@@ -136,7 +136,7 @@ const keyMessage = {
     's': 'TPAN', // Setting panel
     'k': 'KSC', // keyboard shortcuts
     'e': 'EDIT', // Edit source cell
-    '.': 'TLSR', // . toggle laser, enables this on purely numpad keyboards
+    'l': 'TLSR', // . toggle laser, enables this on purely numpad keyboards
 }
 
 function keyboardEvents(box,model) {
@@ -381,6 +381,75 @@ function setColors(model, box) {
     };
 }
 
+function getSlideIndex(slide){
+    return Array.from(
+        slide.parentNode.querySelectorAll('.SlideArea')
+    ).indexOf(slide);
+}
+
+function showJumpIndictor(model, box, originIndex, offset) {
+    if (box._jumpIndicator) {
+        clearTimeout(box._jumpIndicator.timerId);
+        clearInterval(box._jumpIndicator.countdownInterval); // Clear countdown too
+        box._jumpIndicator.remove();
+    }
+    
+    let indicator = document.createElement('button');
+    indicator.style.cssText = `
+        position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);cursor: pointer;
+        font-size: 12px; z-index: 10; border:none;outline:none; text-shadow: 0.5px 1px var(--bg2-color);`;
+    indicator.title = `Jumped ${offset > 0 ? 'forward' : 'backward'} by multiple slides, click to go back.`;
+    box.appendChild(indicator);
+
+    let countdown = 10;
+    
+    function updateCountdown() {
+        countdown -= 1;
+        if (countdown > 0 && box._jumpIndicator) {
+            indicator.innerHTML = `<i class="fa fa-arrow${offset > 0 ? 'l' : 'r'}"></i> Back to Link 
+            <span style="color: var(--pointer-color);margin-left:4px;text-shadow: 0.5px 1px var(--bg2-color);">${countdown}</span>`;
+        } else {
+            indicator.remove();
+            box._jumpIndicator = null;
+        }
+    }
+
+    function resetTimer() {
+        clearTimeout(indicator.timerId);
+        clearInterval(indicator.countdownInterval); // Clear old countdown
+        countdown = 10; // Reset countdown
+        indicator.innerHTML = `<i class="fa fa-arrow${offset > 0 ? 'l' : 'r'}"></i> Back to Link 
+        <span style="color: var(--pointer-color);margin-left:4px;text-shadow: 0.5px 1px var(--bg2-color);">${countdown}</span>`;
+        
+        // Start new countdown
+        indicator.countdownInterval = setInterval(updateCountdown, 1000);
+        indicator.timerId = setTimeout(() => {
+            clearInterval(indicator.countdownInterval);
+            indicator.remove();
+            box._jumpIndicator = null;
+        }, 10000);
+    }
+    
+    indicator.onmouseenter = resetTimer;
+    indicator.originIndex = originIndex;
+    
+    indicator.onclick = function() {
+        let currentIndex = getSlideIndex(box.querySelector('.SlideArea.ShowSlide'));
+        if (currentIndex !== null) {
+            let backOffset = indicator.originIndex - currentIndex;
+            model.set("msg_topy", `SHIFT:${backOffset}`);
+            model.save_changes();
+        }
+        clearInterval(indicator.countdownInterval); // Clear countdown on click
+        clearTimeout(indicator.timerId);
+        indicator.remove();
+        box._jumpIndicator = null;
+    };
+    
+    resetTimer(); // Start initial timer and countdown
+    box._jumpIndicator = indicator;
+}
+
 function linkSwitchesSlide(model, box) {
     box.addEventListener('click', function (event) {
         const anchor = event.target.closest('.slide-link'); // Find the closest link with class 'slide-link
@@ -391,13 +460,7 @@ function linkSwitchesSlide(model, box) {
         const targetElement = targetId ? document.getElementById(targetId) : document.querySelector(href);  
         const originSlide = anchor.closest('.SlideArea');
         const targetSlide = targetElement?.closest('.SlideArea');   
-        if (originSlide && targetSlide) {
-            
-            const getSlideIndex = (el) => {
-                const className = [...el.classList].find(cls => /^n\d+$/.test(cls)); // regex to find class like n1, n2, etc.
-                return className ? parseInt(className.slice(1), 10) : null;
-            };    
-            
+        if (originSlide && targetSlide) {    
             const originIndex = getSlideIndex(originSlide);
             const targetIndex = getSlideIndex(targetSlide);   
             
@@ -405,7 +468,8 @@ function linkSwitchesSlide(model, box) {
                 const offset = targetIndex - originIndex;
                 model.set("msg_topy", `SHIFT:${offset}`); // Send message to shift slides
                 model.save_changes();
-            } else {
+                showJumpIndictor(model, box, originIndex, offset); // Show jump indicator to click back
+                } else {
                 alert(`Link '${anchor.textContent}' does not point to a valid slide`);
             }
         } else if (!originSlide || !targetSlide) {

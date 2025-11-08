@@ -122,16 +122,7 @@ class NotesWidget(anywidget.AnyWidget):
 class LaserPointer(anywidget.AnyWidget):
     _esm = Path(__file__).with_name('static') / 'laser.js'
     _css = Path(__file__).with_name('static') / 'laser.css'
-
-    size = traitlets.Int(12).tag(sync=True)
     active = traitlets.Bool(False).tag(sync=True)
-    
-    @traitlets.validate("size")
-    def _set_size(self, proposal):
-        size = proposal['value']
-        if not isinstance(size, int) or size < 0:
-            raise traitlets.TraitError("size must be a non-negative integer in units of px.")
-        return size
 
         
 

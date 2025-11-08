@@ -465,7 +465,7 @@ class Settings:
         tgl = self._widgets.toggles.laser
         self._widgets.htmls.pointer.active = tgl.value
         tgl.icon = "minus" if tgl.value else "plus"
-        tgl.tooltip = f"{'Hide' if tgl.value else 'Show'} Laser Pointer [.]"
+        tgl.tooltip = f"{'Hide' if tgl.value else 'Show'} Laser Pointer [L]"
         
     def _toggle_overlay(self, change):
         tgl = self._widgets.toggles.draw

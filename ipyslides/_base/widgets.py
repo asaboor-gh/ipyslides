@@ -103,7 +103,7 @@ class _Toggles:
     Instantiate under `Widgets` class only.
     """
     fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
-    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [.]').add_class('Laser-Btn') 
+    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [L]').add_class('Laser-Btn') 
     draw    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Open Drawing Panel').add_class('Draw-Btn').add_class('Menu-Item')  
     menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')   
 
