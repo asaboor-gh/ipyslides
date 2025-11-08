@@ -8,24 +8,23 @@ from ._widgets import focus_selectors
 _icons_size = "1em"  # For all except Chevrons
 _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
     focus_selectors: {
-        "^:hover": { # visual cue on hover to click
+        "^:hover:not(.mode-popup-active)": { # visual cue on hover to click
             "box-shadow": "0px 0px 1px 0.5px #8988 !important",
-            "border-radius": "8px !important",
+            "border-radius": "4px !important",
             "cursor": "pointer", # indicate clickable as well as it's useful as visual pointer
         },
-        "^:focus": {
-            "position": "fixed",
-            **{f"{k}backdrop-filter": "blur(50px)" for k in ('', '-webkit-')},
-            "left": "50px",
-            "top": "50px",
-            "z-index": 8,
-            "cursor": "none", # no cursor on main focused element, inner elements can have their own cursor
-            "width": "calc(100% - 100px)",
-            "height": "calc(100% - 100px)",
+        "^.mode-popup-active": {
+            "position": "fixed", # This works because SlideArea has transform to contain it as fixed
+            **{f"{k}backdrop-filter": "blur(100px)" for k in ('', '-webkit-')},
+            "left": "0", # 1px less than slide padding to avoid edges overlap
+            "top": "0",
+            "z-index": 9999,  # above all, including fullscreen button of interactive
+            "width": "100% !important",
+            "height": "100% !important", # leave space for bottom controls
+            "padding": "16px", # same as slide padding 
             "object-fit": "scale-down !important",
-            "box-shadow": "-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5) !important",
-            "border-radius": "8px",
             "outline": "none !important",
+            "border-radius": "4px !important",
             "overflow": "scroll !important",  # Specially for dataframes
             ".vega-embed canvas, > .svg-container": {  # Vega embed canvas and plotly svg-container inside hoverabe
                 "position": "fixed !important",  # Will be extra CSS but who cares
@@ -37,17 +36,17 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
             },
         },
     },
-    '.focus-child.mpl > svg:focus': { # matplot size inches need special treatment
-        "width": "calc(100% - 100px) !important",
-        "height": "calc(100% - 100px) !important",
+    '.focus-child.mpl > svg.mode-popup-active': { # matplot size inches need special treatment
+        "width": "100% !important",
+        "height": "100% !important", 
         "object-fit": "scale-down !important",
     },
     # Nested focus classes should occupy full space because parent is focused too
     ".focus-self, .focus-child": {
-        "^:focus .vega-embed details": {
+        "^.mode-popup-active .vega-embed details": {
             "display": "none !important",
         },
-        ".focus-self:focus, .focus-child:focus": {
+        ".focus-self.mode-popup-active, .focus-child.mode-popup-active": {
             "left": "0px !important",
             "top": "0px !important",
             "width": "100% !important",
@@ -162,7 +161,16 @@ def layout_css(accent_color, aspect):
                         "justify-content": "center !important",
                     },
                 },
-                ".SlideBox": {
+                ".popup-close-btn": {
+                    "position": "absolute",
+                    "top": "8px",
+                    "right": "8px",
+                    "z-index": "10001",  # above focused element
+                    "border": "none",
+                    "padding": "4px 8px",
+                    "backdrop-filter": "blur(4px)",
+                },
+                "^:not(.mode-inactive) .SlideBox": {
                     "^::before, ^::after": {
                         "content": "''",
                         "position": "absolute",
@@ -174,6 +182,9 @@ def layout_css(accent_color, aspect):
                     },
                     "^::after": {"left": "unset", "right": "0",},
                     "^, .SlideArea": {"user-select": "none !important",}, # avoid selecting while clicking on edge to naviagate, inner divs still can select
+                },
+                "^.mode-inactive": { # clean up view
+                    ".NavWrapper, .Controls, .Slide-Number": {"display": "none !important",},
                 },
                 ".SlideArea": {
                     "^.Out-Sync > .jp-OutputArea::before" : {

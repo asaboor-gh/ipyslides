@@ -529,7 +529,7 @@ class BaseSlides:
             
             ::: focus-self block-red
                 ### Focus on Me 😎
-                click to focus on this block. Click outside to remove focus.
+                Click to focus on this block. Click at top right button to exit.
             ''')
 
         with self.build(-1):

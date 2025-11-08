@@ -18,7 +18,7 @@ jupyter_colors = { # used in styles.py and interaction.js
 }
 
 # used to set focusable elements for click-to-focus feature in _layout_css.py and interaction.js
-focus_selectors = ".jp-RenderedImage > img, .focus-self, .focus-child > *:not(.no-focus), .plot-container.plotly"
+focus_selectors = ":is(img, svg, video, canvas, .focus-self, .focus-child > *:not(.no-focus), .plot-container.plotly)"
 
 class InteractionWidget(anywidget.AnyWidget):
     _esm =  Path(__file__).with_name('static') / 'interaction.js'

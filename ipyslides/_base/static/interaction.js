@@ -193,7 +193,6 @@ function handleMessage(model, msg, box) {
         let slideNew = box.getElementsByClassName("ShowSlide")[0];
         slideNew.style.visibility = 'visible';
         slideNew.querySelector('.jp-OutputArea').scrollTop = 0; // scroll reset is important
-        resolveFocusElems(slideNew, model); // ensure focusable elements are set if not before
         setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
 
@@ -253,15 +252,6 @@ function setMainBgImage(slide, target) {
     }
 }
 
-function resolveFocusElems(slide, model) {
-    let focusables = model.get("_fsels") || ""; // get from model
-    slide.querySelectorAll(
-        focusables.split(',').map(s => s.trim() + ':not([tabindex])').join(', ')
-    ).forEach((el) => {
-        el.tabIndex = -1; // make focusable by click, if not yet set
-    });
-}
-
 function keepThisViewOnly(box){
     let uid = box.getAttribute("uid");
     let slides = document.querySelectorAll(`[uid='${uid}']`); // This avoids other notebooks Slides
@@ -311,8 +301,12 @@ function handleToastMessage(toast, msg) {
 }
 
 function setScale(box, model) {
-    let sbox = box.getElementsByClassName('SlideBox')[0];
-    let slide = box.getElementsByClassName('SlideArea')[0];
+    let sbox = box.querySelector('.SlideBox');
+    let slide = box.querySelector('.SlideArea');
+    if (!sbox || !slide) {
+        return false; // not ready yet
+    }
+    
     let rectBox = sbox.getBoundingClientRect();
     let rectSlide = slide.getBoundingClientRect();
 
@@ -343,15 +337,59 @@ function handleScale(box, model) {
     setScale(box, model); // First time set
 }
 
-function handleEdgeClicks(model, box) { // user-select: none is set in CSS for SlideArea to streamline clicks
+// Avoid clicks passing through to underlying clickable elements
+const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary, [contenteditable='true']";  
+
+function handleBoxClicks(box, model) {
     box.addEventListener('click', function(event) {
-        if (!event.target.classList.contains('SlideArea') && !event.target.classList.contains('SlideBox')) {
-            return; // Only handle clicks on slide area or wrapping box itself(works good in fullscreen), avoid quick menu etc.
+        // First, check for interactive elements that should handle their own clicks
+        if (event.target.closest(INTERACTIVE_SEL)) {
+            event.stopPropagation(); // stop propagation to underlying slides
+            return true; // let the click happen
         }
+        
+        if (event.target.closest('.mode-popup-active')) {
+            event.stopPropagation(); // stop propagation to underlying slides
+            event.preventDefault(); // stop default actions
+            return; // Ignore clicks when in focus mode to avoid accidental slide changes
+        }
+
+        // Check for focusable elements
+        const matchedElem = event.target.closest(model.get("_fsels"));
+        if (matchedElem && !matchedElem.hasAttribute('tabindex')) {
+            matchedElem.tabIndex = -1; // make focusable by click if not yet
+        }
+        if (matchedElem) { // Focus by JS to be able to have a close button etc
+            event.preventDefault(); 
+            event.stopPropagation();
+            matchedElem.focus(); // set focus immediately
+            box.classList.add('mode-inactive');
+            matchedElem.classList.add('mode-popup-active');
+            const btn = document.createElement('button');
+            btn.className = 'popup-close-btn';
+            btn.title = 'Close Popup';
+            btn.innerHTML = '<i class="fa fa-close"></i>';
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                matchedElem.blur();
+                box.focus(); // return focus to box
+                box.classList.remove('mode-inactive'); // remove focus active indication
+                matchedElem.classList.remove('mode-popup-active');
+                btn.remove(); // remove button
+            };
+            box.appendChild(btn);
+            return; // Exit early, don't check edge clicks
+        }
+        
+        // Handle edge clicks for navigation (only on SlideArea or SlideBox)
+        if (!event.target.classList.contains('SlideArea') && !event.target.classList.contains('SlideBox')) {
+            return; // Only handle clicks on slide area or wrapping box itself
+        }
+        
         const rect = box.getBoundingClientRect(); 
         const clickX = event.clientX - rect.left;
         const edgeWidth = 16; // 16px padding area
-        
         let message = '';
         
         if (clickX <= edgeWidth) {
@@ -396,8 +434,8 @@ function showJumpIndictor(model, box, originIndex, offset) {
     
     let indicator = document.createElement('button');
     indicator.style.cssText = `
-        position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);cursor: pointer;
-        font-size: 12px; z-index: 10; border:none;outline:none; text-shadow: 0.5px 1px var(--bg2-color);`;
+        position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);cursor: pointer;backdrop-filter: blur(4px);
+        font-size: 12px; z-index: 99; border:none;outline:none; text-shadow: 0px 1px var(--bg2-color);`;
     indicator.title = `Jumped ${offset > 0 ? 'forward' : 'backward'} by multiple slides, click to go back.`;
     box.appendChild(indicator);
 
@@ -502,7 +540,7 @@ function render({ model, el }) {
         let box = style.parentNode.parentNode;
         box.tabIndex = -1; // Need for event listeners, should be at top
         box.setAttribute("uid", model.get("_uid"));
-
+        
         // Only for jupyter, voila, notebook, do as early as possible
         if (window.hasOwnProperty('_JUPYTERLAB')) {
             model.set("msg_topy","JUPYTER");
@@ -524,8 +562,8 @@ function render({ model, el }) {
         // Link switches slides
         linkSwitchesSlide(model, box);
 
-        // Handle edge clicks for navigation
-        handleEdgeClicks(model, box);
+        // Handle box clicks for both focus and edge navigation
+        handleBoxClicks(box, model);
 
         // Sends a message if fullscreen is changed by some other mechanism
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};
