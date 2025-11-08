@@ -25,6 +25,7 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
             "object-fit": "scale-down !important",
             "box-shadow": "-1px -1px 1px rgba(250,250,250,0.5), 1px 1px 1px rgba(10,10,10,0.5) !important",
             "border-radius": "8px",
+            "outline": "none !important",
             "overflow": "scroll !important",  # Specially for dataframes
             ".vega-embed canvas, > .svg-container": {  # Vega embed canvas and plotly svg-container inside hoverabe
                 "position": "fixed !important",  # Will be extra CSS but who cares
@@ -52,6 +53,7 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
             "width": "100% !important",
             "height": "100% !important",
             "box-sizing": "border-box !important",
+            "outline": "none !important",
             "background": "var(--bg1-color) !important",  # Avoids overlapping with other elements
         },
     },  
