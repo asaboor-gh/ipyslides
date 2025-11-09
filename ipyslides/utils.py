@@ -440,7 +440,7 @@ def styled(obj, css_class=None, **css_props):
         return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{htmlize(obj)}</div>')
     
 def focus(obj):
-    "Wraps a given obj in a parent with 'focus-child' class or add 'focus-self' to widget, whether a widget or html/IPYthon object, to focus on click."
+    "Wraps a given obj in a parent with 'focus-child' class or add 'focus-self' to widget, whether a widget or html/IPYthon object, to focus/exit on double click."
     if isinstance(obj,ipw.DOMWidget):
         _patch_display(obj)
         return obj.add_class('focus-self')

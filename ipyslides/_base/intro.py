@@ -104,7 +104,8 @@ key_combs = f"""color['var(--accent-color)']`Move cursor/airmouse to left/right 
 | {_key('Ctrl')} + {_key('P')}                |      <none>                                       | {key_maps["P"]}        |
 | {_key('Ctrl')} + {_key('Alt')} + {_key('P')}|      <none>                                | {key_maps["P"]} (merged frame)|
 
-color['var(--fg3-color)']`{_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation.`
+- color['var(--fg3-color)']`{_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation.`
+- color['var(--fg3-color)']`//Double-click on images/plots and focusable elements (see `Slides.css_styles`) to zoom into focused view.//`
 """ 
 
 how_to_print = f"""

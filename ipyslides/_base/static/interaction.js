@@ -147,6 +147,11 @@ function keyboardEvents(box,model) {
             return true; // inside componets should work properly, avoid going outside
         }; 
 
+        // Block keyboard navigation for extra safety when in popup focus mode
+        if (box.classList.contains('mode-inactive')) {
+            return; // extra safety
+        }
+
         let key = e.key; // True unicode key
         let message = '';
         if ('/*'.includes(key)) {
@@ -341,6 +346,7 @@ function handleScale(box, model) {
 const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary, [contenteditable='true']";  
 
 function handleBoxClicks(box, model) {
+    // Handle single clicks for navigation and blocking
     box.addEventListener('click', function(event) {
         // First, check for interactive elements that should handle their own clicks
         if (event.target.closest(INTERACTIVE_SEL)) {
@@ -348,38 +354,11 @@ function handleBoxClicks(box, model) {
             return true; // let the click happen
         }
         
-        if (event.target.closest('.mode-popup-active')) {
+        // Check if in focus mode, do not pass clicks to slides to avoid accidental slide changes
+        if (event.target.closest('.mode-popup-active') || box.classList.contains('mode-inactive')) {
             event.stopPropagation(); // stop propagation to underlying slides
             event.preventDefault(); // stop default actions
-            return; // Ignore clicks when in focus mode to avoid accidental slide changes
-        }
-
-        // Check for focusable elements
-        const matchedElem = event.target.closest(model.get("_fsels"));
-        if (matchedElem && !matchedElem.hasAttribute('tabindex')) {
-            matchedElem.tabIndex = -1; // make focusable by click if not yet
-        }
-        if (matchedElem) { // Focus by JS to be able to have a close button etc
-            event.preventDefault(); 
-            event.stopPropagation();
-            matchedElem.focus(); // set focus immediately
-            box.classList.add('mode-inactive');
-            matchedElem.classList.add('mode-popup-active');
-            const btn = document.createElement('button');
-            btn.className = 'popup-close-btn';
-            btn.title = 'Close Popup';
-            btn.innerHTML = '<i class="fa fa-close"></i>';
-            btn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                matchedElem.blur();
-                box.focus(); // return focus to box
-                box.classList.remove('mode-inactive'); // remove focus active indication
-                matchedElem.classList.remove('mode-popup-active');
-                btn.remove(); // remove button
-            };
-            box.appendChild(btn);
-            return; // Exit early, don't check edge clicks
+            return; // Exit early
         }
         
         // Handle edge clicks for navigation (only on SlideArea or SlideBox)
@@ -403,6 +382,48 @@ function handleBoxClicks(box, model) {
             event.stopPropagation();
             model.set("msg_topy", message);
             model.save_changes();
+        }
+    });
+
+    // Handle double-click for entering focus mode
+    box.addEventListener('dblclick', function(event) {
+        // Check for interactive elements - they should handle their own double-clicks (text selection, etc.)
+        if (event.target.closest(INTERACTIVE_SEL)) {
+            return; // Let interactive elements handle their own double-clicks
+        }
+        
+        event.preventDefault(); 
+        event.stopPropagation();
+        
+        // Check if already in focus mode - exit it
+        if (box.classList.contains('mode-inactive')) {
+            const closeBtn = box.querySelector('.popup-close-btn');
+            if (closeBtn) {
+                closeBtn.click(); // Trigger close button
+            }
+            return;
+        }
+
+        // Check for focusable elements
+        const matchedElem = event.target.closest(model.get("_fsels"));
+        if (matchedElem) { // Focus by JS to be able to have a close button etc
+            box.blur(); // remove focus from box to avoid keyboard events there
+            box.classList.add('mode-inactive');
+            matchedElem.classList.add('mode-popup-active');
+            
+            const btn = document.createElement('button');
+            btn.className = 'popup-close-btn';
+            btn.title = 'Close Popup (Double-click)';
+            btn.innerHTML = '<i class="fa fa-close"></i>';
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                box.classList.remove('mode-inactive'); // remove focus active indication
+                matchedElem.classList.remove('mode-popup-active');
+                box.focus(); // return focus to box
+                btn.remove(); // remove button
+            };
+            box.appendChild(btn);
         }
     });
 }
@@ -547,7 +568,11 @@ function render({ model, el }) {
             model.save_changes();
         };
 
-        box.onmouseenter = function(){box.focus();};
+        box.onmouseenter = function(){
+            if (!box.classList.contains('mode-inactive')){
+                box.focus(); // focus only if not in inactive mode
+            }
+        };
         box.onmouseleave = function(){box.blur();};
         
         // Keyboard events

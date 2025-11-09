@@ -11,7 +11,7 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
         "^:hover:not(.mode-popup-active)": { # visual cue on hover to click
             "box-shadow": "0px 0px 1px 0.5px #8988 !important",
             "border-radius": "4px !important",
-            "cursor": "pointer", # indicate clickable as well as it's useful as visual pointer
+            "cursor": "zoom-in", # indicate clickable as well as it's useful as visual pointer
         },
         "^.mode-popup-active": {
             "position": "fixed", # This works because SlideArea has transform to contain it as fixed
