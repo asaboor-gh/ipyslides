@@ -112,7 +112,7 @@ class Slide:
         self.__dict__[name] = value
     
     def _set_defaults(self):
-        for attr in ['_on_load', '_on_exit', '_fsep']:
+        for attr in ['_on_load', '_on_exit']:
             if hasattr(self, attr):
                 delattr(self, attr) # reset these attributes if any
     
@@ -125,11 +125,11 @@ class Slide:
         self._has_vars = () # Update in _slide function for markdown slides only
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._split_frames = True
-        self._has_top_frame = True
         self._set_refs = True
         self._toc_args = () # empty by default
-        self._widget.add_class(f"n{self.number}").remove_class("base") # will be added by fsep
+        self._widget.add_class(f"n{self.number}").add_class("base") # base is needed to distinguisg clones during printing where it is removed
         self._tcolors = {} # theme colors for this slide only
+        self._fsep = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -152,7 +152,7 @@ class Slide:
             elif cap.stderr:
                 raise RuntimeError(f'func in on_load(func) raised an error. See above traceback!')
         
-        # This should be outside the try/except block even after finally, if successful, only then assign it.
+        # This should be itemside the try/except block even after finally, if successful, only then assign it.
         self._on_load = func # This will be called in main app
     
     def _run_on_load(self):
@@ -182,9 +182,6 @@ class Slide:
         
         with self._app._set_running(self):
             with capture_content() as captured:
-                display(html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
-                    metadata={'skip-export':'export html assign itself'})  # to register section id in DOM
-                display(self._alt_print, metadata={'skip-export':'export html takes css itself'}) # alternate print content if any should be on top frame
                 yield captured
             
             if (self.number == 0) and self._fidxs:
@@ -197,7 +194,21 @@ class Slide:
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
             
-            self._contents = captured.outputs
+            # Skip trailing delimiters (PAGE or PART) from the end, or empty capture
+            stop = len(captured.outputs)
+            for i in range(stop - 1, -1, -1):
+                out = captured.outputs[i]
+                if set(out.data.keys()) == {'text/plain'}:
+                    stop -= 1
+                    continue  # skip text only captures at end, be it a PART, PAGE, RichOutput or any
+                metadata = getattr(out, 'metadata', None)
+                delim = metadata.get("DELIM", None) if metadata and isinstance(metadata, dict) else None
+                if delim in ("PAGE", "PART"):  # Check if DELIM exists and is PAGE or PART
+                    stop -= 1
+                else:
+                    break
+            
+            self._contents = captured.outputs[:stop]
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display(go_there=True)    
 
@@ -213,10 +224,20 @@ class Slide:
             self._set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
         else:
             self._widget.clear_output(wait = True) # Clear, but don't go there
-    
-        with self._widget:
+        
+        # Need to know how many contents before user provide content
+        with capture_content() as cap:
             # show speaker notes at top if any to grab immediate attention of speaker, will be shown only in PDF.
             self._speaker_notes(returns=False) # displays directly if any
+            display(
+                html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
+                self._alt_print, # alternate print content such as CSS and bg image
+                self._fsep, # frame separator
+                metadata={'skip-export':'export html assign itself'}
+            )  # to register section id in DOM
+                
+        with self._widget:
+            display(*cap.outputs) # speaker notes and metadata stuff as top
             for obj in self.contents:
                 display(obj)
                 if hasattr(obj, 'update_display'): 
@@ -227,7 +248,7 @@ class Slide:
                 self._handle_refs()
             
         # after others to take everything into account
-        self._reset_frames()
+        self._reset_frames(offset = len(cap.outputs))
         self._app._update_toc()
     
     def _rebuild(self, go_there=False):
@@ -280,18 +301,17 @@ class Slide:
             data = {'text/plain': title,'text/html': self._app.html('div', [title, ol]).value},
             metadata = {"DataTOC": self.number}) # to access later
     
-    def _reset_frames(self):
+    def _reset_frames(self, offset=0):
         nc_frames, contents = [], self.contents  # get once
         for i, c in enumerate(contents):
-            if "FSEP" in c.metadata:
+            if "DELIM" in c.metadata:
                 if i > 0: # ignore first separator without content before
                     if "COLUMNS" in contents[i-1].metadata: # last before frame separator, keep poistive index
                         nc_frames.append((i, len(contents[i-1]._cols)))
                     else: 
-                        nc_frames.append(i+1)
+                        nc_frames.append(i + 1)
                 elif not self.stacked: # User may not want to add content on each frame
                     nc_frames.append(0) # avoids creating a frame with no content
-                    self._has_top_frame = False # reset by each run
             
         else: # Handle content after last frame
             if nc_frames: # Do not add if no frames already
@@ -305,9 +325,9 @@ class Slide:
         for f in nc_frames:
             if isinstance(f,tuple):
                 for k in range(f[1]): 
-                    new_frames.append((f[0], k+1)) #upto again
-            elif not f in new_frames: # avoid duplicates at end
-                new_frames.append(f)
+                    new_frames.append((f[0] + offset, k+1)) #upto again
+            elif not f + offset in new_frames: # avoid duplicates at end
+                new_frames.append(f + offset)
         
         
         if not self.stacked:
@@ -327,8 +347,69 @@ class Slide:
         else:
             if hasattr(self, '_frame_idxs'): # from previous run may be
                 del self._frame_idxs
-            if hasattr(self, '_frame_add'):
+            if hasattr(self, '_frame_top'):
                 del self._frame_top
+    
+    # keys in frames are like {"head", "start", "part", "row", "col", "end"}
+    def _reset_frames2(self, offset=0):
+        frames, contents = [], self.contents  # get once
+        pages = [i for i, c in enumerate(contents) if isinstance(c.metadata, dict) and c.metadata.get("DELIM","") == "PAGE"]
+        
+        if pages:
+            pages = [{"head": pages[0] - 1, "start": p, "end": (pages[i+1] if (i+1) < len(pages) else len(contents)) - 1} for i, p in enumerate(pages)]
+        else:
+            pages = [{"head": -1, "start": 0, "end": len(contents) - 1}] # One page by default
+        
+        for ip, page in enumerate(pages):
+            # Parts inside head only take effect on first frame
+            start = 0 if ip == 0 and page["head"] > -1 else page["start"]
+            if parts := self._resolve_parts(page, contents, range(start, page["end"] + 1)):
+                frames.extend(parts)
+            else:
+                frames.append(page)
+        
+        # Add offeset to all indices to keep metadata available across all frames
+        for i, frame in enumerate(frames):
+            for key in ("head", "start", "part", "end"):
+                if key in frame and isinstance(frame[key], int):
+                    frames[i][key] += offset
+        return frames
+    
+    def _resolve_parts(self, page, contents, indxs):
+        frames = []
+        processed = set()  # Track processed indices of columns after part
+
+        for index in indxs:
+            if index in processed:
+                continue
+
+            if isinstance(contents[index].metadata, dict) and contents[index].metadata.get("DELIM", "") == "PART":
+                # Check if PART is before COLUMNS to trigger increments
+                has_column_after = (index + 1 <= indxs.stop - 1 and 
+                    isinstance(contents[index + 1].metadata, dict) and 
+                    "COLUMNS" in contents[index + 1].metadata)
+
+                if has_column_after:
+                    # PART before COLUMNS - trigger column incremental
+                    for part in contents[index + 1]._parts:
+                        frames.append({**page, "part": index + 1, **part})
+                    processed.add(index + 1)  # Mark COLUMNS as processed to skip it
+                    
+                    # Check if there's a PART after COLUMNS and mark it as processed too
+                    # because end of COLUMNS automatically separates rest of content, but PART should not trigger again
+                    if (index + 2 <= indxs.stop - 1 and 
+                        isinstance(contents[index + 2].metadata, dict) and 
+                        contents[index + 2].metadata.get("DELIM", "") == "PART"):
+                        processed.add(index + 2)  # Mark PART after COLUMNS as processed
+                    
+                    continue  # Skip adding PART itself
+                else:
+                    # PART is standalone - add it normally
+                    frames.append({**page, "part": index})
+
+        if frames:  # Only if we had any PART delimiters
+            frames.append({**page, "part": indxs.stop - 1})  # Last index in range
+        return frames       
     
     @property
     def _fidxs(self): return getattr(self, '_frame_idxs', ())
@@ -402,8 +483,7 @@ class Slide:
             self._update_view(which)
             return True # indicators required
         else:
-            if hasattr(self, '_fsep'):
-                del self._fsep
+            self._fsep.value = '' # clear frame css if any
             return False
     
     def next_frame(self):
@@ -416,9 +496,8 @@ class Slide:
     
     def _set_print_css(self, merge_frames = False):
         if merge_frames:
-            if hasattr(self, '_fsep'):
-                self._fsep.value = '' # Just let free print go
-        elif hasattr(self, '_fsep'): 
+            self._fsep.value = '' # Just let free print go
+        else: 
             self._fsep.value = self._frame_css(0) # set first frame for print mode without other actions
             
     def _reset_indexf(self, new_index, func): 

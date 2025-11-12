@@ -4,6 +4,7 @@ Main write functions to add content to slides
 
 __all__ = ['write']
 
+from collections.abc import Iterable
 from IPython.display import display as display
 from IPython.utils.capture import CapturedIO
 
@@ -36,6 +37,25 @@ class CustomDisplay:
     def display(self):
         raise NotImplementedError("display method must be implemented in subclass")
     
+class _DELIMITER:
+    "Internal class to create page/part delimiters."
+    _type: str = None  # to be set in subclass
+    def __init__(self):
+        display(XTML(f'<!-- {self._type} -->'), # need something invisible but to send display message
+            metadata={"DELIM": self._type,"skip-export":"no need in export"}
+        )
+        
+    @classmethod
+    def iter(cls, iterable):
+        "Loop over given iterable by adding a separator before each item and at end of the loop."
+        if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
+            raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
+        
+        for item in iterable:
+            cls() # put one separator before
+            yield item
+        cls() # put after all done to keep block separated
+    
 
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."
@@ -51,6 +71,7 @@ def _fmt_html(output):
 class Writer(ipw.HBox):
     _in_write = False
     def __init__(self, *objs, widths = None, css_class = None):
+        self._parts = () # to store part positions
         if self.__class__._in_write and len(objs) > 1: # Like from delayed lambda function
             raise RuntimeError("Trying to write inside a writer!")
         
@@ -104,17 +125,27 @@ class Writer(ipw.HBox):
         
         widths = [f'{w:.3f}%' for w in widths]
         cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]
+        parts = []
         for i, col in enumerate(cols):
+            row_offset = 0
             with capture_content() as cap:
-                for c in col['outputs']:
-                    if isinstance(c,(fmt, RichOutput, CustomDisplay, ipw.DOMWidget)):
+                for j, c in enumerate(col['outputs']):
+                    if isinstance(c, type) and issubclass(c, _DELIMITER):
+                        if c._type != "PART":
+                            raise RuntimeError(f'Cannot use {c._type} delimiter inside a column! Only PART is allowed.')
+                        # PART in start of end inside a column should be ignored as columns are by default parts
+                        if 0 < j < (len(col['outputs'])-1):
+                            parts.append({"col": i, "row": j - row_offset})
+                        row_offset += 1
+                        continue # just to count marker in place, no need to show
+                    elif isinstance(c,(fmt, RichOutput, CustomDisplay, ipw.DOMWidget)):
                         display(c)
                     elif isinstance(c, CapturedIO):
                         c.show() # Display captured outputs, all of them
                     elif isinstance(c,str):
                         xmd(c, returns = False)
                     elif isinstance(c, hold):
-                        _ = c() # If c is hold, call it and it will dispatch whatever is inside, ignore return value
+                        c() # If c is hold, call it and it will dispatch whatever is inside, ignore return value
                     else:
                         display(XTML(htmlize(c)))
             
@@ -122,7 +153,9 @@ class Writer(ipw.HBox):
                 raise RuntimeError(f'Error in column {i+1}:\n{cap.stderr}')
             
             cols[i]['outputs'] = cap.outputs
-            
+            parts.append({"col": i}) # only columns incremented after rows done inside
+        
+        self._parts = tuple(parts) # make it immutable
         return cols
     
     def update_display(self):

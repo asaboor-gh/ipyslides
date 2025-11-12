@@ -2,16 +2,15 @@ import sys, os, json, re, math, uuid, textwrap
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 from collections.abc import Iterable
-from itertools import zip_longest
+from itertools import zip_longest, chain
 from typing import Union, overload
-from functools import wraps
 from pathlib import Path
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
 from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars
-from .writer import hold, write
+from .writer import hold, write, _DELIMITER
 from .formatters import bokeh2html, plt2html, plt2image, serializer
 from . import utils
 from . import dashlab
@@ -75,7 +74,6 @@ class Singleton(type):
     def __call__(cls, extensions=[], **settings): # I don't know what's magic is here!
         if cls._instance is None:
             cls._instance = super().__call__(extensions=extensions, **settings)
-            cls._instance.fsep = fsep # frame separator is needed to be attached
         else: # reset these settings on previous instance on every call
             xmd.extensions.extend(extensions) 
             cls._instance.settings(**settings)
@@ -904,54 +902,63 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
     
-def _ensure_slides_init(func):
-    @wraps(func)
-    def inner(*args,**kwargs):
-        if Slides.instance() is None:
-            raise RuntimeWarning("Slides was never initialized!")
-        return func(*args, **kwargs)
-    return inner
-
-
-class fsep:
-    """Frame separator! If it is just after `write` command, columns are incremented too.
-    You can import it on top level or use as `Slides.fsep`.
-
-    - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
-    - Use `fsep.iter(iterable)` to split after each item in iterable automatically.
-    - Setting `stack=True` in `fsep` or `fsep.iter` once under a slide to show frames incrementally. 
-        In markdown slides, use %++. The last called value of stack overrides any previous value.
-    - Content before first frame separator is added on all frames. This helps adding same title once.
-    """
-    _app_ins = Slides.instance # need to be called as it would not be defined initially
     
-    @_ensure_slides_init
-    def __init__(self, stack=None):
-        app = self._app_ins()
-        app.verify_running("Cant use fsep in a capture context other than slides!")
-        app.this._widget.add_class("base") # this is needed to distinguisg clones during printing
-        
-        sep = app.html('')
-        if not hasattr(app.this, '_fsep'): 
-            sep = sep.as_widget() # first separator must be a widget
-            app.this._fsep = sep # this is used to change frames dynamically
-        
-        display(sep, metadata={"FSEP": "","skip-export":"no need in export"})
-        
-        if stack in (True, False):
-            app.this.stack_frames(stack)
-        elif stack is not None:
-            raise ValueError(f"stack should be set True or False or left as None for default behavior, got {type(stack)}")
+    class fsep:
+        """Frame separator! If it is just after `write` command, columns are incremented too.
+        You can import it on top level or use as `Slides.fsep`.
 
-    @classmethod
-    @_ensure_slides_init
-    def iter(cls, iterable, stack=None):
-        "Loop over iterable. Frame separator is add before each item and at end of the loop."
-        cls._app_ins().verify_running()
-        if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
-            raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
+        - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
+        - Use `fsep.iter(iterable)` to split after each item in iterable automatically.
+        - Setting `stack=True` in `fsep` or `fsep.iter` once under a slide to show frames incrementally. 
+            In markdown slides, use %++. The last called value of stack overrides any previous value.
+        - Content before first frame separator is added on all frames. This helps adding same title once.
+        """
+        @staticmethod
+        def _app_ins(): return Slides.instance()
         
-        for item in iterable:
-            cls(stack) # put one separator before
-            yield item
-        cls(stack) # put after all done to keep block separated
+        def __init__(self, stack=None):
+            app = self._app_ins()
+            app.verify_running("Cant use fsep in a capture context other than slides!")
+            _type = "" if stack is None else "PART" if stack else "PAGE"
+            display(app.html(''), metadata={"DELIM": _type, "skip-export": "not needed"})
+
+            if stack in (True, False):
+                app.this.stack_frames(stack)
+            elif stack is not None:
+                raise ValueError(f"stack should be set True or False or left as None for default behavior, got {type(stack)}")
+
+        @classmethod
+        def iter(cls, iterable, stack=None):
+            "Loop over iterable. Frame separator is add before each item and at end of the loop."
+            cls._app_ins().verify_running()
+            if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
+                raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
+
+            for item in iterable:
+                cls(stack) # put one separator before
+                yield item
+            cls(stack) # put after all done to keep block separated
+    
+    class PAGE(_DELIMITER):
+       _type = "PAGE"
+
+    class PART(_DELIMITER):
+        _type = "PART"
+        
+        @classmethod
+        def delim(cls, *objs):
+            """Insert `PART` delimiter between multiple objects to create a 
+            column incremented by rows in write command. Works only if
+            `PART` is used before or after write to trigger incremental mode.
+            
+            ```python
+            Slides.write(Slides.PART.delim(
+               "This is part 1",
+                "This is part 2",
+                "This is part 3", 
+            ), "And this is column 2")
+            ```
+            """
+            return tuple(chain(*((obj, cls) for obj in objs)))[:-1]  # remove last separator
+            
+            
