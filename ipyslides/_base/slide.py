@@ -1,6 +1,6 @@
 """Slide Object, should not be instantiated directly"""
 
-import time, textwrap
+import textwrap
 from contextlib import contextmanager, suppress
 from functools import wraps
 from IPython.display import display
@@ -129,7 +129,7 @@ class Slide:
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}").add_class("base") # base is needed to distinguisg clones during printing where it is removed
         self._tcolors = {} # theme colors for this slide only
-        self._fsep = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator
+        self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -194,19 +194,17 @@ class Slide:
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
             
+            outputs = self._handle_fsep_legacy(captured.outputs) # handle old frame separators if any before skipping trails 
             # Skip trailing delimiters (PAGE or PART) from the end, or empty capture
-            stop = len(captured.outputs)
+            stop = len(outputs)
             for i in range(stop - 1, -1, -1):
-                out = captured.outputs[i]
-                if set(out.data.keys()) == {'text/plain'}:
-                    stop -= 1
-                    continue  # skip text only captures at end, be it a PART, PAGE, RichOutput or any
+                out = outputs[i]
                 metadata = getattr(out, 'metadata', None)
                 delim = metadata.get("DELIM", None) if metadata and isinstance(metadata, dict) else None
-                if delim in ("PAGE", "PART"):  # Check if DELIM exists and is PAGE or PART
+                if delim in ("PAGE", "PART") or set(out.data.keys()) == {'text/plain'}:  # Check if DELIM exists or empty content
                     stop -= 1
-                else:
-                    break
+                    continue
+                break # Found non-delimiter / non-empty content, stop here
             
             self._contents = captured.outputs[:stop]
             self._set_css_classes(remove = 'Out-Sync') # Now synced
@@ -214,6 +212,15 @@ class Slide:
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
+    
+    def _handle_fsep_legacy(self, contents):
+        if getattr(self, '_fsep_legacy', False):
+            for c in contents:
+                if isinstance(c.metadata, dict) and "DELIM" in c.metadata:
+                    new_delim = "PAGE" if self._split_frames else "PART"
+                    if c.metadata["DELIM"]  != new_delim: # allow explict setting in fsep
+                        c.metadata["DELIM"] = new_delim
+        return contents
         
     def update_display(self, go_there = True):
         "Update display of this slides including reloading citations, widgets etc."
@@ -232,7 +239,7 @@ class Slide:
             display(
                 html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
                 self._alt_print, # alternate print content such as CSS and bg image
-                self._fsep, # frame separator
+                self._fcss, # frame separator CSS
                 metadata={'skip-export':'export html assign itself'}
             )  # to register section id in DOM
                 
@@ -301,57 +308,11 @@ class Slide:
             data = {'text/plain': title,'text/html': self._app.html('div', [title, ol]).value},
             metadata = {"DataTOC": self.number}) # to access later
     
-    def _reset_frames(self, offset=0):
-        nc_frames, contents = [], self.contents  # get once
-        for i, c in enumerate(contents):
-            if "DELIM" in c.metadata:
-                if i > 0: # ignore first separator without content before
-                    if "COLUMNS" in contents[i-1].metadata: # last before frame separator, keep poistive index
-                        nc_frames.append((i, len(contents[i-1]._cols)))
-                    else: 
-                        nc_frames.append(i + 1)
-                elif not self.stacked: # User may not want to add content on each frame
-                    nc_frames.append(0) # avoids creating a frame with no content
-            
-        else: # Handle content after last frame
-            if nc_frames: # Do not add if no frames already
-                if "COLUMNS" in contents[-1].metadata:
-                    nc_frames.append((len(contents), len(contents[-1]._cols)))
-                
-                if isinstance(nc_frames[-1],int): # safely add full
-                    nc_frames[-1] = len(contents)
-        
-        new_frames = []
-        for f in nc_frames:
-            if isinstance(f,tuple):
-                for k in range(f[1]): 
-                    new_frames.append((f[0] + offset, k+1)) #upto again
-            elif not f + offset in new_frames: # avoid duplicates at end
-                new_frames.append(f + offset)
-        
-        
-        if not self.stacked:
-            new_frames = [0, *[f[0] + 1 if isinstance(f, tuple) else f for f in new_frames]] # column was at index, get upto for range
-            new_frames = [range(i,j) for i,j in zip(new_frames[:-1], new_frames[1:]) if range(i,j)] # as range, non-empty only
-            
-            if len(new_frames) > 1:
-                self._frame_idxs = tuple(new_frames[1:]) # first join on all
-                self._frame_top = new_frames[0].stop
-            else:
-                self._frame_idxs = ()
-        else:
-            self._frame_idxs = tuple(new_frames[1:]) # join first content here as well to make same number of fames
 
-        if self._frame_idxs:
-            self.first_frame() # Bring up first frame to activate CSS
-        else:
-            if hasattr(self, '_frame_idxs'): # from previous run may be
-                del self._frame_idxs
-            if hasattr(self, '_frame_top'):
-                del self._frame_top
-    
-    # keys in frames are like {"head", "start", "part", "row", "col", "end"}
-    def _reset_frames2(self, offset=0):
+
+        
+        
+    def _reset_frames(self, offset=0):
         frames, contents = [], self.contents  # get once
         pages = [i for i, c in enumerate(contents) if isinstance(c.metadata, dict) and c.metadata.get("DELIM","") == "PAGE"]
         
@@ -364,20 +325,29 @@ class Slide:
             # Parts inside head only take effect on first frame
             start = 0 if ip == 0 and page["head"] > -1 else page["start"]
             if parts := self._resolve_parts(page, contents, range(start, page["end"] + 1)):
+                parts[0]["anim"] = "next" # add animation flag to first part while navigative forward
+                parts[-1]["anim"] = "prev" # add animation flag to last part while navigative backward
                 frames.extend(parts)
             else:
-                frames.append(page)
+                frames.append({**page, "anim": "both"}) # no parts, single frame, animate both ways
         
         # Add offeset to all indices to keep metadata available across all frames
         for i, frame in enumerate(frames):
             for key in ("head", "start", "part", "end"):
                 if key in frame and isinstance(frame[key], int):
                     frames[i][key] += offset
+        
+        self._frame_idxs = frames if len(frames) > 1 else ()
+        if self._frame_idxs:
+            self.first_frame() # Bring up first frame to activate CSS
+        elif hasattr(self, '_frame_idxs'): # from previous run may be
+            del self._frame_idxs
         return frames
     
     def _resolve_parts(self, page, contents, indxs):
         frames = []
         processed = set()  # Track processed indices of columns after part
+        prev_was_part = False  # Track for adjacent PART delimiters, they should be treated as one
 
         for index in indxs:
             if index in processed:
@@ -394,21 +364,16 @@ class Slide:
                     for part in contents[index + 1]._parts:
                         frames.append({**page, "part": index + 1, **part})
                     processed.add(index + 1)  # Mark COLUMNS as processed to skip it
-                    
-                    # Check if there's a PART after COLUMNS and mark it as processed too
-                    # because end of COLUMNS automatically separates rest of content, but PART should not trigger again
-                    if (index + 2 <= indxs.stop - 1 and 
-                        isinstance(contents[index + 2].metadata, dict) and 
-                        contents[index + 2].metadata.get("DELIM", "") == "PART"):
-                        processed.add(index + 2)  # Mark PART after COLUMNS as processed
-                    
-                    continue  # Skip adding PART itself
+                    prev_was_part = False # there is columns
                 else:
-                    # PART is standalone - add it normally
-                    frames.append({**page, "part": index})
+                    if prev_was_part: continue  # Skip adjacent PART delimiters
+                    frames.append({**page, "part": index}) # add stand alone PART normally
+                    prev_was_part = True
+            else:
+                prev_was_part = False # reset on normal content
 
-        if frames:  # Only if we had any PART delimiters
-            frames.append({**page, "part": indxs.stop - 1})  # Last index in range
+        if frames and frames[-1].get("part") != index: # Last index in range
+            frames.append({**page, "part": index})  # only up to last part if something is left over
         return frames       
     
     @property
@@ -421,7 +386,7 @@ class Slide:
     
     def _update_view(self, which):
         self._set_progress()
-        if not self.stacked: # In case of incremental frames, only edge slides are animated automatically
+        if self._split_frames: # In case of incremental frames, only edge slides are animated automatically
             if which == 'prev':
                 self._app.widgets.slidebox.add_class('Prev')
             else:
@@ -442,7 +407,7 @@ class Slide:
             0 < self.indexf < (self.nf - 1)
         ]) and hasattr(self,'_on_load') and callable(self._on_load):
             self._on_load(self)
-    
+        
     def _frame_css(self, index):
         if not self._fidxs:
             return ''
@@ -450,25 +415,48 @@ class Slide:
         if index < 0 or index >= self.nf:
             raise IndexError(f"Frame index {index} out of range for slide {self.number} with {self.nf} frames!")
         
-        start, nrows, ncols, first = 1, self._fidxs[index], 0, getattr(self, '_frame_top',0)
-        if isinstance(nrows, tuple):
-            nrows, ncols = nrows
-        elif isinstance(nrows, range): # not joined
-            start, nrows = nrows.start, nrows.stop
-        
+        # Helper to hide/show elements with proper collapse
         def hide(b): 
-            props = {'^, ^ *':{'visibility': ('hidden' if b else 'inherit') + '!important'}} # hide all and nested
-            return props if self.stacked else {**collapse_node(b), '@media print': props}
-            
-        return _styled_css({ # base class is important to avoid CSS clashes while printing clones
-            f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child': {
-                f'^:not(:nth-child(n + {start}):nth-child(-n + {nrows}))': hide(True), # start through nrows
-                f'^.jp-OutputArea-child.jp-OutputArea-child:nth-child(-n + {first})': hide(False), # initial objs on each, increase spacificity 
-                **({f'^:nth-child({nrows}) .columns.writer:first-of-type > div:nth-child(n + {ncols+1})': { # avoid nested columms
-                    'visibility': 'hidden !important', # enforce this instead of jumps in height
-                }} if isinstance(self._fidxs[index], tuple) else {}), 
-            },
-        }).value
+            props = {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
+            return {**collapse_node(b), '@media print': props}
+
+        # Build CSS to show only current frame's content
+        css_rules = {'^': hide(True)}  # Start by hiding everything
+
+        # Show head content if exists (metadata at top: 0 to head index)
+        frame = self._fidxs[index]
+        if frame.get("head", -1) >= 0:
+            head_end = frame["head"] + 1  # CSS nth-child is 1-indexed
+            css_rules[f'^:nth-child(-n + {head_end})'] = hide(False)
+
+        # Show main content range
+        start = frame["start"] + 1  # CSS nth-child is 1-indexed
+
+        if "part" in frame:
+            # Incremental frame - show from start to part
+            part_end = frame["part"] + 1
+            css_rules[f'^:nth-child(n + {start}):nth-child(-n + {part_end})'] = hide(False)
+
+            # Handle column incremental display
+            if "col" in frame:
+                col_idx = frame["col"]
+                # Within the PART output (which contains COLUMNS), hide columns after current one
+                css_rules[f'^:nth-child({part_end}) .columns.writer:first-of-type > div:nth-child(n + {col_idx + 2})'] = hide(True)
+
+                if "row" in frame:
+                    # Hide rows after current one in the current column
+                    row_idx = frame["row"]
+                    css_rules[f'^:nth-child({part_end}) .columns.writer:first-of-type > div:nth-child({col_idx + 1}) > .jp-OutputArea-child:nth-child(n + {row_idx + 2})'] = hide(True)
+        else:
+            # Full frame - show all content from start to end
+            end = frame["end"] + 1
+            css_rules[f'^:nth-child(n + {start}):nth-child(-n + {end})'] = hide(False)
+
+        # Build final CSS with proper selector
+        base_selector = f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child'
+        final_css = {base_selector: css_rules}
+    
+        return _styled_css(final_css).value
     
     def _show_frame(self, which):
         if self._fidxs:
@@ -479,11 +467,11 @@ class Slide:
             else:
                 return False
             
-            self._fsep.value = self._frame_css(self.indexf)
+            self._fcss.value = self._frame_css(self.indexf)
             self._update_view(which)
             return True # indicators required
         else:
-            self._fsep.value = '' # clear frame css if any
+            self._fcss.value = '' # clear frame css if any
             return False
     
     def next_frame(self):
@@ -494,12 +482,6 @@ class Slide:
         "Jump to previous frame and return True. If no previous frame, returns False"
         return self._show_frame('prev')
     
-    def _set_print_css(self, merge_frames = False):
-        if merge_frames:
-            self._fsep.value = '' # Just let free print go
-        else: 
-            self._fsep.value = self._frame_css(0) # set first frame for print mode without other actions
-            
     def _reset_indexf(self, new_index, func): 
         old = int(self.indexf) # avoid pointing to property
         self._indexf = new_index
@@ -519,6 +501,12 @@ class Slide:
     def last_frame(self):
         "Jump to last frame"
         return self._reset_indexf(self.nf, self.prev_frame) # go right and swicth back
+    
+    def _set_print_css(self, merge_frames = False):
+        if merge_frames:
+            self._fcss.value = '' # Just let free print go
+        else: 
+            self._fcss.value = self._frame_css(0) # set first frame for print mode without other actions
     
     def _set_progress(self):
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
@@ -568,15 +556,6 @@ class Slide:
                 margin-top: 0 !important;
             }}''' # each frames get own yoffset, margin-top 0 is important to force top to take effect
         ).display() # height is important to avoid spilling padding of SlideArea
-        
-    def stack_frames(self, b):
-        "If provided argument is True, frames are stacked in one slide top to bottom incrementally, otherwise shown individually."
-        self._split_frames = bool(not b)
-    
-    @property
-    def stacked(self):
-        "Returns True if frames in slide are stacked incrementally, otherwise False."
-        return not self._split_frames
         
     @property
     def notes(self): return self._notes

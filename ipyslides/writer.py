@@ -5,10 +5,11 @@ Main write functions to add content to slides
 __all__ = ['write']
 
 from collections.abc import Iterable
+from itertools import chain
 from IPython.display import display as display
 from IPython.utils.capture import CapturedIO
 
-from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta
+from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta, _delim
 from .xmd import fmt, xmd, capture_content
 
 
@@ -28,22 +29,12 @@ class hold:
 
     def display(self):
         self.__call__()
-
-class CustomDisplay:
-    "Use this to create custom display types for object."
-    def _ipython_display_(self):
-        self.display()
-    
-    def display(self):
-        raise NotImplementedError("display method must be implemented in subclass")
     
 class _DELIMITER:
     "Internal class to create page/part delimiters."
     _type: str = None  # to be set in subclass
     def __init__(self):
-        display(XTML(f'<!-- {self._type} -->'), # need something invisible but to send display message
-            metadata={"DELIM": self._type,"skip-export":"no need in export"}
-        )
+        display(_delim(self._type))
         
     @classmethod
     def iter(cls, iterable):
@@ -125,20 +116,16 @@ class Writer(ipw.HBox):
         
         widths = [f'{w:.3f}%' for w in widths]
         cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]
-        parts = []
+        parts, rowsep = [], _delim("ROW")  # row delimiter
         for i, col in enumerate(cols):
-            row_offset = 0
+            rows = chain(*(
+                (*obj, rowsep) if isinstance(obj, (list, tuple)) # nested rows as single group
+                else (obj, rowsep)  # each object as single row
+                for obj in col['outputs']
+            ))
             with capture_content() as cap:
-                for j, c in enumerate(col['outputs']):
-                    if isinstance(c, type) and issubclass(c, _DELIMITER):
-                        if c._type != "PART":
-                            raise RuntimeError(f'Cannot use {c._type} delimiter inside a column! Only PART is allowed.')
-                        # PART in start of end inside a column should be ignored as columns are by default parts
-                        if 0 < j < (len(col['outputs'])-1):
-                            parts.append({"col": i, "row": j - row_offset})
-                        row_offset += 1
-                        continue # just to count marker in place, no need to show
-                    elif isinstance(c,(fmt, RichOutput, CustomDisplay, ipw.DOMWidget)):
+                for c in rows:
+                    if isinstance(c,(fmt, RichOutput, ipw.DOMWidget)):
                         display(c)
                     elif isinstance(c, CapturedIO):
                         c.show() # Display captured outputs, all of them
@@ -146,13 +133,20 @@ class Writer(ipw.HBox):
                         xmd(c, returns = False)
                     elif isinstance(c, hold):
                         c() # If c is hold, call it and it will dispatch whatever is inside, ignore return value
+                    elif hasattr(c, '_ipython_display_') and callable(c._ipython_display_):
+                        c._ipython_display_() # IPython display protocol takes precedence, but we need some cases handled before it
                     else:
                         display(XTML(htmlize(c)))
             
             if cap.stderr:
                 raise RuntimeError(f'Error in column {i+1}:\n{cap.stderr}')
             
-            cols[i]['outputs'] = cap.outputs
+            cols[i]['outputs'] = cap.outputs[:-1]  # remove last rowsep output
+            
+            for r, out in enumerate(cols[i]['outputs']):
+                meta = getattr(out, 'metadata', {})
+                if isinstance(meta, dict) and meta.get('DELIM','') == 'ROW':
+                    parts.append({"col": i, "row": r}) # mark row positions
             parts.append({"col": i}) # only columns incremented after rows done inside
         
         self._parts = tuple(parts) # make it immutable
@@ -183,7 +177,7 @@ class Writer(ipw.HBox):
     
 def write(*objs,widths = None, css_class=None):
     """
-    Write `objs` to slides in columns. To create rows in a column, wrap objects in a list or tuple.      
+    Write `objs` to slides in columns. To create rows in a column, wrap objects in a list or tuple.   
     You can optionally specify `widths` as a list of percentages for each column. 
     `css_class` can have multiple classes separated by space, works only for multiple columns.
          
@@ -211,5 +205,16 @@ def write(*objs,widths = None, css_class=None):
         - You can use code`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
         - In markdown `multicol/columns` block syntax is similar to `write` command if `+++` separartor is used there.
+    
+    ::: tip
+        To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
+        A single column is flattened up to 2 levels, so `[[obj1], row2, [item1, item2]]` will be displayed as 3 rows.
+        
+        **Incremental display** is triggered only when you place `Slides.PART()` delimiter **before** the `write` command:
+        
+        ```python
+        slides.PART()  # Trigger incremental display, equivalent to ++ before `multicol/columns` in markdown
+        slides.write([row1, [item1, item2], row3], column2)  # Shows rows one by one (item1 and item2 together), then column2
+        ``` 
     """
     Writer(*objs,widths = widths, css_class=css_class) # Displays itself

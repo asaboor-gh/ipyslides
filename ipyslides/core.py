@@ -1,8 +1,8 @@
-import sys, os, json, re, math, uuid, textwrap
+import sys, os, json, re, math, uuid, textwrap, warnings
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 from collections.abc import Iterable
-from itertools import zip_longest, chain
+from itertools import zip_longest
 from typing import Union, overload
 from pathlib import Path
 
@@ -11,7 +11,7 @@ from IPython.display import display, clear_output
 
 from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars
 from .writer import hold, write, _DELIMITER
-from .formatters import bokeh2html, plt2html, plt2image, serializer
+from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim
 from . import utils
 from . import dashlab
 
@@ -793,16 +793,16 @@ class Slides(BaseSlides,metaclass=Singleton):
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
-                        s.stack_frames(True)
+                        self.this._split_frames = False
                     
                     self.xmd(frm, returns = False) # parse and display content
                     
                     if len(frames) > 1:
-                        self.fsep() # should not be before, needs at least one thing there
+                        display(_delim("PAGE" if self.this._split_frames else "PART")) # needs at least one thing before, keeping legacy beahvior, otherwise its just page
                     
                     if prm != frm: 
                         edit_idx = idx
-                        if self.this.stacked and ('```multicol' in frm): # show all columns if edit is inside multicol
+                        if not self.this._split_frames and ('```multicol' in frm): # show all columns if edit is inside multicol
                             edit_idx += (len(re.findall(r'^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE)) + 1)
             
             s.first_frame() # be at start first
@@ -920,12 +920,14 @@ class Slides(BaseSlides,metaclass=Singleton):
             app = self._app_ins()
             app.verify_running("Cant use fsep in a capture context other than slides!")
             _type = "" if stack is None else "PART" if stack else "PAGE"
-            display(app.html(''), metadata={"DELIM": _type, "skip-export": "not needed"})
+            display(_delim(_type))  # display delimiter
+            app.this._fsep_legacy = True  # for backward compatibility
 
             if stack in (True, False):
-                app.this.stack_frames(stack)
+                app.this._split_frames = not stack
             elif stack is not None:
                 raise ValueError(f"stack should be set True or False or left as None for default behavior, got {type(stack)}")
+            warnings.warn("Legacy fsep() detected, converted to new delimiter internally. Consider updating your code to use PAGE and PART explicitly!", DeprecationWarning)
 
         @classmethod
         def iter(cls, iterable, stack=None):
@@ -944,21 +946,3 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     class PART(_DELIMITER):
         _type = "PART"
-        
-        @classmethod
-        def delim(cls, *objs):
-            """Insert `PART` delimiter between multiple objects to create a 
-            column incremented by rows in write command. Works only if
-            `PART` is used before or after write to trigger incremental mode.
-            
-            ```python
-            Slides.write(Slides.PART.delim(
-               "This is part 1",
-                "This is part 2",
-                "This is part 3", 
-            ), "And this is column 2")
-            ```
-            """
-            return tuple(chain(*((obj, cls) for obj in objs)))[:-1]  # remove last separator
-            
-            

@@ -51,6 +51,32 @@ function tldrawLinks(box) { // Add a print-only link in draw button
     });
 }
 
+function handleColsRows(outputs, frame) {
+    if (frame.col !== undefined && outputs[frame.part]) {
+        // specific column hiding inside last visible row
+        let cols = outputs[frame.part].querySelectorAll('.columns.writer:first-of-type > div');
+        for (let k = 0; k < cols.length; k++) {
+            if (k > frame.col) {
+                cols[k].setAttribute('data-hidden', 'true'); // keep content to avoid reflow
+            } else {
+                cols[k].removeAttribute('data-hidden'); // ensure visible
+
+                // Handle incremental rows 
+                if (k === frame.col && frame.row !== undefined) {
+                    let rows = cols[k].childNodes;
+                    for (let r = 0; r < rows.length; r++) {
+                        if (r > frame.row) {
+                            rows[r].setAttribute('data-hidden', 'true');
+                        } else {
+                            rows[r].removeAttribute('data-hidden'); // ensure visible
+                        }
+                    }
+                }
+            }
+        }    
+    }
+}
+
 function printSlides(box, model) {
     let slides = Array.from(box.getElementsByClassName('SlideArea')); 
     window._printOnlyObjs = [];
@@ -88,27 +114,27 @@ function printSlides(box, model) {
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
                     let outputs = Array.from(clone.querySelector('.jp-OutputArea').childNodes); // corresponds to contents on python side
-                    let part = parts[slideNum][i];
-                    // console.log(part);
-                    for (let j = 0; j < outputs.length; j++) {
-                        // console.log(i,j);
-                        if (part.row !== undefined) { // incremental frames
-                            if (j > part.row) {
-                                outputs[j].setAttribute('data-hidden','true'); // rest handled by CSS
-                            }
-                            if (part.col !== undefined && j === part.row) {
-                                // specific column hiding inside last visible row
-                                let cols = outputs[j].querySelectorAll('.columns.writer:first-of-type > div');
-                                for (let k=0; k < cols.length; k++) {
-                                    if (k >= part.col) {
-                                        cols[k].setAttribute('data-hidden','true'); // keep content to avoid reflow
-                                    }
-                                }
-                            }
-                        } else if (Array.isArray(part) && !part.includes(j)) { // non-incremental frames
-                            outputs[j].remove(); // will not need to show again, so it safe to remove from layout
+                    let frame = parts[slideNum][i]; // {head, start, end, row, col}
+                    
+                    // Remove everything NOT in head or start-end range (use END, not PART)
+                    // Iterate backwards to safely remove without affecting indices
+                    for (let j = outputs.length - 1; j >= 0; j--) {
+                        let inHead = (frame.head !== undefined && frame.head >= 0 && j <= frame.head);
+                        let inContent = (j >= frame.start && j <= frame.end); // Use frame.end here
+
+                        if (!inHead && !inContent) {
+                            if (outputs[j]) {outputs[j].remove();} // Not in visible ranges - remove completely
                         }
                     }
+
+                    // Handle partial visibility inside content range
+                    if (frame.part !== undefined) {
+                        for (let j = frame.part + 1; j <= frame.end; j++) { // hide rest after part
+                            outputs[j].setAttribute('data-hidden', 'true');
+                        }
+                        // Show/Hide rows and columns if specified
+                        handleColsRows(outputs, frame);
+                    }  
                 }
                 clone = fixIDsAndRefs(clone, i); // ensure unique IDs and refs in clone
                 window._printOnlyObjs.push(clone);
@@ -117,6 +143,7 @@ function printSlides(box, model) {
             }
         }
     }
+
     // Clean up AFTER print dialog closes
     window.addEventListener('afterprint', function cleanup() {
         for (let obj of window._printOnlyObjs) {

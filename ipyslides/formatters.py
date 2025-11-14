@@ -94,9 +94,9 @@ class XTML(HTML):
         "Display this HTML object."
         return self.display()
     
-    def display(self):
-        "Display this HTML object."
-        display(self)
+    def display(self, metadata=None):
+        "Display this HTML object with optionally passing metadata."
+        display(self, metadata=metadata)
     
     @property
     def value(self):
@@ -106,6 +106,13 @@ class XTML(HTML):
     def as_widget(self):
         "Returns ipywidgets.HTML with same data."
         return ipw.HTML(self.value)
+
+def _delim(_type):
+    "Internal use to create delimiter for rows, parts and pages."
+    return RichOutput(
+        data={'text/plain': '', 'text/html': f'<!-- {_type} -->'},
+        metadata={"DELIM": _type, "skip-export":"no need in export"}
+    )  # to avoid unwanted output in Jupyter, just leave a comment
 
 def _fig_caption(text): # need here to use in many modules
     return f'<figcaption class="no-focus">{htmlize(text)}</figcaption>' if text else ''

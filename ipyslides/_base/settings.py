@@ -353,16 +353,7 @@ class Settings:
             for slide in self._slides:
                 slide._set_print_css(merge_frames = merge_frames)
                 if slide._fidxs and not merge_frames: # no parts if no frames or merge frames
-                    frms = []
-                    for frm in slide._fidxs:
-                        if isinstance(frm, int):
-                            frms.append({'row': frm - 1, 'col': None})
-                        elif isinstance(frm, tuple):
-                            frms.append({'row': frm[0] - 1, 'col': frm[1]})
-                        elif isinstance(frm , range):
-                            frms.append([*range(getattr(slide, '_frame_top',0)),*frm]) # 
-                        
-                    parts[slide.number] = frms
+                    parts[slide.number] = slide._fidxs
                     
             self._widgets.iw._pfs = parts
             # Send message to JS to start print

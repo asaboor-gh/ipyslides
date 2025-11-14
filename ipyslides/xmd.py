@@ -13,7 +13,7 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 
-from .formatters import XTML, altformatter, _highlight, htmlize, get_slides_instance, _inline_style
+from .formatters import XTML, altformatter, _highlight, htmlize, get_slides_instance, _inline_style, _delim
 
 _md_extensions = [
     "tables",
@@ -381,11 +381,16 @@ class XMarkdown(Markdown):
             if typ == "block":
                 outputs.extend(self._parse_block(*obj))  # vars are substituted already inside, obj = (header, data)
             elif content := obj.strip():  # raw text but avoid empty stuff
-                out = self.convert(content) 
-                if isinstance(out, list):
-                    outputs.extend(out)
-                elif out: # Some syntax like section on its own line can leave empty block later
-                    outputs.append(XTML(out))
+                parts = list(self._split_parts(content))
+                for n, part in enumerate(parts, start=1):
+                    out = self.convert(part) 
+                    if isinstance(out, list):
+                        outputs.extend(out)
+                    elif out: # Some syntax like section on its own line can leave empty block later
+                        outputs.append(XTML(out))
+                    
+                    if not self._returns and n < len(parts):  # only add delim if displaying directly
+                        outputs.append(_delim("PART"))
         
         if not self._nesting_depth: # we need to keep these if nested parsing
             self._vars = {} # reset at end to release references
@@ -401,6 +406,12 @@ class XMarkdown(Markdown):
             return content
         else:
             return display(*outputs)
+        
+    def _split_parts(self, content):
+        yield from (
+            chunk for chunk in re.split(r'^\+\+\s*$', content, flags=re.MULTILINE)
+            if chunk.strip() # avoid empty chunks
+        )  # split by ++ on its own line aggressively, not just display
         
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
@@ -645,7 +656,10 @@ class XMarkdown(Markdown):
             cap_cols = []
             for col in cols:
                 with capture_content() as cap:
-                    self._parse_nested(col,returns=False)
+                    for row in self._split_parts(col):
+                        self._parse_nested(row,returns=False)
+                        # row delimiter is added in write command later
+                
                 cap_cols.append(cap)
 
             with self.active_parser(), capture_content() as cap:
@@ -653,7 +667,7 @@ class XMarkdown(Markdown):
             
             return cap.outputs
         
-        cols = [self._parse_nested(col,returns=True) for col in cols]
+        cols = ['\n'.join(self._parse_nested(row,returns=True) for row in self._split_parts(col)) for col in cols]
         if len(cols) == 1: # do not return before checking widths and adding extra cols if needed
             return [XTML(f'<div class={_class}">{cols[0]}</div>' if _class else cols[0])]
 
