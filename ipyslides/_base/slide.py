@@ -78,7 +78,7 @@ class Vars:
 
 class Slide:
     "Slide object, should not be instantiated directly by user."
-    _animations = {'main':'slide_h','frame':'appear'}
+    _animations = {'main':'slide_h','page':'appear'}
     _overall_css = ''
     def __init__(self, app, number):
         self._widget = _Output(layout = dict(margin='auto',padding='16px', visibility='hidden')).add_class("SlideArea")
@@ -242,6 +242,8 @@ class Slide:
                 self._fcss, # frame separator CSS
                 metadata={'skip-export':'export html assign itself'}
             )  # to register section id in DOM
+            
+        self._offset = len(cap.outputs) # to offset frames later, store for export
                 
         with self._widget:
             display(*cap.outputs) # speaker notes and metadata stuff as top
@@ -255,7 +257,7 @@ class Slide:
                 self._handle_refs()
             
         # after others to take everything into account
-        self._reset_frames(offset = len(cap.outputs))
+        self._reset_frames(offset = self._offset)
         self._app._update_toc()
     
     def _rebuild(self, go_there=False):
@@ -309,9 +311,6 @@ class Slide:
             metadata = {"DataTOC": self.number}) # to access later
     
 
-
-        
-        
     def _reset_frames(self, offset=0):
         frames, contents = [], self.contents  # get once
         pages = [i for i, c in enumerate(contents) if isinstance(c.metadata, dict) and c.metadata.get("DELIM","") == "PAGE"]
@@ -386,13 +385,20 @@ class Slide:
     
     def _update_view(self, which):
         self._set_progress()
-        if self._split_frames: # In case of incremental frames, only edge slides are animated automatically
+        # Determine if we should animate based on frame position and type
+        frame = self._fidxs[self.indexf] if self._fidxs else {}
+        anim = frame.get('anim', None)  # 'next', 'prev', or 'both'
+
+        # Only animate on appropriate edges
+        should_animate = anim == 'both' or anim == which
+    
+        if should_animate:
             if which == 'prev':
                 self._app.widgets.slidebox.add_class('Prev')
             else:
                 self._app.widgets.slidebox.remove_class('Prev')
             self._app._update_tmp_output(self.animation, self.css)
-        elif not self.indexf in (self.nf-1, 0):
+        else:
              self._app._update_tmp_output(self.css) # avoid animations between frames
 
         if self.index == self._app.wprogress.max: # This is last slide
@@ -418,39 +424,45 @@ class Slide:
         # Helper to hide/show elements with proper collapse
         def hide(b): 
             props = {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
-            return {**collapse_node(b), '@media print': props}
+            return props #{**props, '@media print': collapse_node(b)}
 
         # Build CSS to show only current frame's content
-        css_rules = {'^': hide(True)}  # Start by hiding everything
-
-        # Show head content if exists (metadata at top: 0 to head index)
         frame = self._fidxs[index]
-        if frame.get("head", -1) >= 0:
-            head_end = frame["head"] + 1  # CSS nth-child is 1-indexed
+        css_rules = {}
+
+        # head content visible everywhere
+        head_end = frame.get("head", -1) + 1 # CSS nth-child is 1-indexed
+        if head_end > 0:
             css_rules[f'^:nth-child(-n + {head_end})'] = hide(False)
+        
+        # Collapse nodes between head and start
+        start = frame["start"] + 1
+        if head_end > 0 and start > head_end + 1:
+            css_rules[f'^:nth-child(n + {head_end + 1}):nth-child(-n + {start - 1})'] = collapse_node(True)
+        
+        # Collapse nodes after end
+        end = frame["end"] + 1
+        css_rules[f'^:nth-child(n + {end + 1})'] = collapse_node(True)
 
-        # Show main content range
-        start = frame["start"] + 1  # CSS nth-child is 1-indexed
-
+        # Handle PART incremental frames
         if "part" in frame:
-            # Incremental frame - show from start to part
             part_end = frame["part"] + 1
             css_rules[f'^:nth-child(n + {start}):nth-child(-n + {part_end})'] = hide(False)
+            # Hide content after part
+            if part_end < end:
+                css_rules[f'^:nth-child(n + {part_end + 1}):nth-child(-n + {end})'] = hide(True)
 
             # Handle column incremental display
             if "col" in frame:
                 col_idx = frame["col"]
                 # Within the PART output (which contains COLUMNS), hide columns after current one
-                css_rules[f'^:nth-child({part_end}) .columns.writer:first-of-type > div:nth-child(n + {col_idx + 2})'] = hide(True)
+                col_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div'
+                css_rules[f'{col_sel}:nth-child(n + {col_idx + 2})'] = hide(True)
 
                 if "row" in frame:
                     # Hide rows after current one in the current column
-                    row_idx = frame["row"]
-                    css_rules[f'^:nth-child({part_end}) .columns.writer:first-of-type > div:nth-child({col_idx + 1}) > .jp-OutputArea-child:nth-child(n + {row_idx + 2})'] = hide(True)
-        else:
-            # Full frame - show all content from start to end
-            end = frame["end"] + 1
-            css_rules[f'^:nth-child(n + {start}):nth-child(-n + {end})'] = hide(False)
+                    rows_hide = frame["row"] + 2 # +2 to start hiding after this row
+                    css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide(True)
 
         # Build final CSS with proper selector
         base_selector = f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child'
@@ -588,7 +600,7 @@ class Slide:
     
     @property
     def animation(self):
-        key = 'frame' if self._fidxs else 'main'
+        key = 'page' if self._fidxs else 'main'
         return html('style', self._animation or self._animations[key])
     
     @property
@@ -735,10 +747,10 @@ class Slide:
             raise KeyError(f'animation {name!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
         return styles.animations[name].replace('.SlideBox',f'.{self._app.uid} .SlideBox')
             
-    def set_animation(self, this=None, main = None,frame = None):
-        "Set animation of this slide. Provide None if need to stop animation. Use `main` and `frame` to set animation to all slides."
+    def set_animation(self, this=None, main = None, page = None):
+        "Set animation of this slide. Provide None if need to stop animation. Use `main` and `page` to set animation to all slides and pages."
         self.__class__._animations['main'] = '' if main is None else self._instance_animation(main)
-        self.__class__._animations['frame'] = '' if frame is None else self._instance_animation(frame)
+        self.__class__._animations['page'] = '' if page is None else self._instance_animation(page)
         self._animation = '' if this is None else self._instance_animation(this)
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects

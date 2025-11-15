@@ -53,17 +53,33 @@ class _HhtmlExporter:
         content = ''
         for item in self.main:
             objs = item.contents # get conce
-            frames, fidxs = [], item._fidxs or [len(objs)]
-            for n, idx in enumerate(fidxs):
-                if isinstance(idx, int):
-                    frames.append(objs[:idx]) #upto
-                elif isinstance(idx, tuple):
-                    idx, jdx = idx[0] - 1, idx[1] # Must be Writer at idx
-                    frames.append([*objs[:idx], objs[idx].fmt_html(_pad_from = jdx)]) 
-                elif isinstance(idx, range):
-                    first = objs[:getattr(item, '_frame_top',0)] # add top to all in case of no join
-                    frames.append([*first, *objs[idx.start:idx.stop]]) # frames not incremental
+            frames = []
             
+            if not item._fidxs:
+                frames = [objs]
+            else:
+                for frame in item._fidxs:
+                    head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
+                    frame_objs = []
+                    
+                    if head >= 0:
+                        frame_objs.extend(objs[:head + 1])
+                    
+                    if not "part" in frame: # full content in range
+                        frame_objs.extend(objs[start:end + 1])
+                    else: # partial content in range
+                        for i in range(start, end + 1):
+                            if i < part:
+                                frame_objs.append(objs[i])
+                            elif i > part:
+                                frame_objs.append(f"<div style='visibility:hidden;'>{_fmt_html(objs[i])}</div>")
+                            else: # i == part, can be Writer
+                                if "col" in frame and hasattr(objs[i], "fmt_html"): # Writer with columns
+                                    frame_objs.append(objs[i].fmt_html(frame))
+                                else: # normal Writer
+                                    frame_objs.append(objs[i])
+                
+                    frames.append(frame_objs)            
             
             for k, objs in enumerate(frames):
                 _html = item._speaker_notes(returns=True) # speaker notes at top if any, returns string

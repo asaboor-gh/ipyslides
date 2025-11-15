@@ -161,20 +161,32 @@ class Writer(ipw.HBox):
             else:
                 out.update_display()
     
-    def fmt_html(self, _pad_from=None):
-        "Make HTML representation of columns that is required for exporting slides to other formats."
+    def fmt_html(self, visible_upto=None):
+        "Make HTML representation of columns for exporting slides to other formats."
         cols = []
+        col_idx = (visible_upto or {}).get("col", float('inf')) 
         for i, col in enumerate(self._cols):
-            content = ''
-            if (_pad_from is None) or (isinstance(_pad_from, int) and (i < _pad_from)): # to make frames
-                content += '\n'.join(map(_fmt_html, col['outputs']))
+            if i > col_idx: # Entire column is hidden
+                content = '\n'.join(map(_fmt_html, col['outputs']))
+                cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto;visibility:hidden">{content}</div>')
+            elif i < col_idx: # Entire column is visible
+                content = '\n'.join(map(_fmt_html, col['outputs']))
+                cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
+            else: # Current column, check rows
+                rows = []
+                row_idx = (visible_upto or {}).get("row", float('inf'))
+                for r, output in enumerate(col['outputs']):
+                    if r <= row_idx:
+                        rows.append(_fmt_html(output))
+                    else:
+                        rows.append(f'<div style="visibility:hidden;">{_fmt_html(output)}</div>')
                 
-            cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
-        
-        css_class = ' '.join(self._dom_classes) # handle custom classes in blocks as well
+                cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{"".join(rows)}</div>')
+                
+        css_class = ' '.join(self._dom_classes)
         return f'<div class="{css_class}" {_inline_style(self)}>{"".join(cols)}</div>'
-    
-    
+
+
 def write(*objs,widths = None, css_class=None):
     """
     Write `objs` to slides in columns. To create rows in a column, wrap objects in a list or tuple.   

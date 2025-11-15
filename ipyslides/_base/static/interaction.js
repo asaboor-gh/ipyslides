@@ -58,19 +58,13 @@ function handleColsRows(outputs, frame) {
         for (let k = 0; k < cols.length; k++) {
             if (k > frame.col) {
                 cols[k].setAttribute('data-hidden', 'true'); // keep content to avoid reflow
-            } else {
-                cols[k].removeAttribute('data-hidden'); // ensure visible
-
+            } else if (k === frame.col && frame.row !== undefined) {
                 // Handle incremental rows 
-                if (k === frame.col && frame.row !== undefined) {
-                    let rows = cols[k].childNodes;
-                    for (let r = 0; r < rows.length; r++) {
-                        if (r > frame.row) {
-                            rows[r].setAttribute('data-hidden', 'true');
-                        } else {
-                            rows[r].removeAttribute('data-hidden'); // ensure visible
-                        }
-                    }
+                let rows = cols[k].querySelector('.jp-OutputArea').childNodes; // inside widget
+                for (let r = 0; r < rows.length; r++) {
+                    if (r > frame.row) {
+                        rows[r].setAttribute('data-hidden', 'true');
+                    } 
                 }
             }
         }    
@@ -116,8 +110,7 @@ function printSlides(box, model) {
                     let outputs = Array.from(clone.querySelector('.jp-OutputArea').childNodes); // corresponds to contents on python side
                     let frame = parts[slideNum][i]; // {head, start, end, row, col}
                     
-                    // Remove everything NOT in head or start-end range (use END, not PART)
-                    // Iterate backwards to safely remove without affecting indices
+                    // Remove everything NOT in head or start-end range 
                     for (let j = outputs.length - 1; j >= 0; j--) {
                         let inHead = (frame.head !== undefined && frame.head >= 0 && j <= frame.head);
                         let inContent = (j >= frame.start && j <= frame.end); // Use frame.end here

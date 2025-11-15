@@ -310,8 +310,8 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-width': f'{layout.width}% !important',
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
-                '@media print': { # For PDF printing of frames, data-hidden set by JS
-                    '> .jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': {
+                '@media print': { # For PDF printing of frames, data-hidden set by JS, first sellectors works for rows too beside top level
+                    '.jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': {
                         ' , *': {'visibility': 'hidden !important',}, 
                     },
                 },
