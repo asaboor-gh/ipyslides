@@ -667,9 +667,9 @@ class Slide:
         return self._app.html('style', _build_css((klass,), props))
     
     def _set_alt_print(self):
+        self._alt_print.value = '' # reset first to recieve new content
         alt = f'{self._css}' # XTML or str
-        if self._bg_ikws.get('src',None):
-            alt += self._get_bg_image(get_unique_css_class()) # get bg image for print and dispaly behind slides
+        alt += self._get_bg_image(get_unique_css_class()) # get bg image for print and dispaly behind slides
         self._alt_print.value = alt
     
     def set_css(self, this: dict=None, overall:dict=None, **theme_colors):
@@ -728,19 +728,18 @@ class Slide:
         # We only store keywords to save memory and send image on javascript side for quick loading of images and printing
         self._bg_ikws = {
             'src': src, 'opacity': opacity, 'filter': filter, 'contain': contain, 
-            '_id': f"bgi-uid{self.number}", # for unique filters and styles
+            'uclass': self._sec_id, # for unique filters and styles
         } # store for export etc
         
-        if src is not None:
-            self._set_alt_print() # update alternate print-only content
-            if not self._contents:
-                self.set_css({}) # Remove empty CSS
-            self._app.widgets.iw.msg_tojs = 'SetIMG' # if it not happens to be there yet, will be done on swicthing slides
-            self._app.navigate_to(self.index) # Go there to see effects
+        self._set_alt_print() # update alternate print-only content
+        if not self._contents:
+            self.set_css({}) # Remove empty CSS
+        self._app.widgets.iw.msg_tojs = 'SwitchView' # enforces js to load background image, does not work otherwise
+        self._app.navigate_to(self.index) # Go there to see effects
     
     def _get_bg_image(self, selector):
         if (image := self._app.settings._resolve_img(self._bg_ikws.get('src',None), '100%')):
-            return f'''<div id="{self._bg_ikws['_id']}" class="BackLayer print-only">
+            return f'''<div class="BackLayer print-only {self._bg_ikws['uclass']}">
             <style>
                 {background_css(selector, **{k:v for k,v in self._bg_ikws.items() if k != 'src'})}
             </style>

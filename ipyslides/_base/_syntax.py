@@ -42,9 +42,9 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 
 Slides, Pages and Parts Separators
 : Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-Double dashes `--` (`PAGE` in Python) is used to split text in pages. Double plus `++` (`PART` in Python) can be used to increment text inparts on slide/page.
+Double dashes `--` (`PAGE` in Python) is used to split text in pages. Double plus `++` (`PART` in Python) can be used to increment objects in parts on slide/page.
 A `++` on its own line before `columns/multicol` block will make it reveal content incrementally, provided that columns are separated by `+++`.
-The combinations of pages and parts create frames on slides.
+The combinations of pages and parts create frames on slides. Note that only `++` allows content on same line after it and following lines.
 
 Sections & TOC
 : alert`section\`content\`` to add a section that will appear in the table of contents.

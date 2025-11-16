@@ -236,8 +236,6 @@ function handleMessage(model, msg, box) {
                 slide.style.visibility = 'hidden';
             };
         }
-    } else if (msg === "SetIMG") { // set background image content area to slide background
-        box.querySelectorAll('.SlideArea').forEach(setBgImage); // only set which are not yet set
     } else if (msg.includes("THEME:")) {
         let theme = msg.replace("THEME:","");
 
@@ -264,13 +262,18 @@ function handleMessage(model, msg, box) {
     } 
 };
 
+
 function setBgImage(slide) {
-    let bgImage = slide.querySelector('.BackLayer.print-only'); // it's in first child only
+    // Remove all previous BackLayer elements in SlideArea
+    slide.querySelectorAll('.SlideArea > .BackLayer').forEach(bg => bg.remove());
+
+    // Find the new background image in the output area
+    let bgImage = slide.querySelector('.jp-OutputArea .BackLayer.print-only');
     if (bgImage) {
-        // remove from current position and reinsert at back, avoid duplicate memory usage
-        bgImage.remove();
-        slide.insertBefore(bgImage, slide.firstChild); // to be a at back, need to be first child    
-        bgImage.style.zIndex = 0; // ensure at back further
+        // Clone the node to avoid moving it from output area
+        let newBackLayer = bgImage.cloneNode(true);
+        slide.insertBefore(newBackLayer, slide.firstChild); // Insert at the back
+        newBackLayer.style.zIndex = 0;
     }
 }
 
@@ -279,10 +282,10 @@ function setMainBgImage(slide, target) {
     let targetBg = target.querySelector('.BackLayer'); // target backlayer
     if (bgImage) {
         targetBg.innerHTML = bgImage.innerHTML; // clone content
-        targetBg.id = bgImage.id; // keep same id for filters etc
+        // copy classes except print-only, so unique classes are preserved
+        targetBg.className = Array.from(bgImage.classList).filter(c => c !== 'print-only').join(' ');
     } else {
         targetBg.innerHTML = ""; // clear if none
-        targetBg.id = ""; // clear id too
     }
 }
 
@@ -662,7 +665,7 @@ function render({ model, el }) {
         bglayer.style.zIndex = 0; // ensure at back further
 
         // Set background images if any left due to being loaded from python script
-        box.querySelectorAll('.SlideArea').forEach(setBgImage); // only set which are not yet set
+        box.querySelectorAll('.SlideArea').forEach((slide) => {setBgImage(slide);}); // only set which are not yet set
         setMainBgImage(box.querySelector('.ShowSlide'), box) // set background image if any on current slide
         
         // Add classes to mark ancestors for printing

@@ -756,7 +756,7 @@ def layout_css(accent_color, aspect):
         },
     )
 
-def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, _id=''):
+def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, uclass=''):
     if filter and not '(' in str(filter):
         raise ValueError(f"blur expects a CSS filter function like 'blur(2px)', 'invert()' etc. or None, got {filter}")
     
@@ -779,12 +779,12 @@ def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, _id='')
         width: 100%;
         height: 100%;
     }}
-    {sel} #{_id}.BackLayer :is(img, svg) {{
+    {sel} .{uclass}.BackLayer :is(img, svg) {{
         object-fit:{('contain' if contain else 'cover')} !important;
         filter: {filter};
         opacity:{opacity};
     }}  
-    {sel} #{_id}.BackLayer svg {{
+    {sel} .{uclass}.BackLayer svg {{
         max-width: {('100%' if contain else '')} !important;
         max-height: {('100%' if contain else '')} !important;
         width: {('' if contain else 'auto')} !important;
