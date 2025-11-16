@@ -380,7 +380,7 @@ class XMarkdown(Markdown):
         for i, (typ, obj) in enumerate(blocks):
             if typ == "block":
                 if i > 0 and blocks[i-1][0] == "raw": # if previous was raw, pick if parts trigger was there
-                    obj = (*obj, True if re.search(r"\n\+\+$", blocks[i-1][1].rstrip()) else False)  # add parts flag
+                    obj = (*obj, True if blocks[i-1][1].strip().splitlines()[-1:] == ['++'] else False)  # this makes sure ++ starts at new line before block 
                 outputs.extend(self._parse_block(*obj))  # vars are substituted already inside, obj = (header, data)
             elif content := obj.strip():  # raw text but avoid empty stuff
                 parts = list(self._split_parts(content))
@@ -410,10 +410,10 @@ class XMarkdown(Markdown):
             return display(*outputs)
         
     def _split_parts(self, content):
-        yield from (
-            chunk for chunk in re.split(r'^\+\+\s*$', content, flags=re.MULTILINE)
+        yield from ( # split by ++ starting on its own line followed by one space charactor or till end of line
+            chunk for chunk in re.split(r'^\+\+(\s*$|\s)', content, flags=re.MULTILINE)
             if chunk.strip() # avoid empty chunks
-        )  # split by ++ on its own line aggressively, not just display
+        )  # split by ++ on its own line aggressively, but keep text on line as part of chunk
         
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
@@ -531,7 +531,7 @@ class XMarkdown(Markdown):
         elif typ in ("multicol","columns") and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns and multicol with display mode
             return self._parse_multicol(data, widths, _class, parts) # simple columns will be handled inline 
         elif "md-" in typ:
-            return self._parse_md_src(data, header)
+            return self._parse_md_src(data, header, parts) # make md-src block aware of parts
         elif typ == "table":
             return self._parse_table(data, widths, _class, css_props, attrs)
         elif typ == "code":
@@ -603,7 +603,7 @@ class XMarkdown(Markdown):
         out = re.sub(r'<table[^>]*>', repl, out, count=1, flags=re.DOTALL)
         return [XTML(out)] # return table as is, it will be parsed by table extension
         
-    def _parse_md_src(self, data, header):
+    def _parse_md_src(self, data, header, parts):
         pos, *collapse = header.strip(' :')[3:].split() # if ::: md-[suffix] [-c], clean :::
         _class = ' '.join(collapse[1:] if collapse and collapse[0] == "-c" else collapse)
         _req_pos = "before,after,left,right"
@@ -622,8 +622,10 @@ class XMarkdown(Markdown):
                 self._parse_nested(data, returns=False)
             outs = cap.outputs
         
+        inner_delim = [_delim("PART")] if parts else [] 
         if pos in ("before","after"):
-            return [src, *outs] if pos == "before" else [*outs, src]
+            out = [src, *inner_delim, *outs] if pos == "before" else [*outs, *inner_delim, src]
+            return inner_delim +  out + inner_delim # make it aware of ++ before and inside
         
         if self._returns: 
             objs = (src, outs[0]) if pos == "left" else (outs[0], src) # return mode, len(outs) == 1
@@ -631,7 +633,10 @@ class XMarkdown(Markdown):
             return [XTML(f'<div class="columns md-block" style="display:flex;">\n{output}\n</div>')] # display for notebook
         
         with self.active_parser(),capture_content() as cap:
-            self._wr.write(*((src, outs) if pos == "left" else (outs, src)), css_class="md-block")
+            if parts:
+                src = inner_delim + [src]
+                display(*inner_delim) # part delimiter for ++ before md-src, otherwise it won't pick properly, needs twice
+            self._wr.write(*((src, [outs]) if pos == "left" else (inner_delim + [outs], src)), css_class="md-block")
         return cap.outputs
 
 

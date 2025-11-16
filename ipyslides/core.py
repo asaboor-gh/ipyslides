@@ -755,9 +755,9 @@ class Slides(BaseSlides,metaclass=Singleton):
             ::: note-info
                 Find special syntax to be used in markdown by `Slides.xmd.syntax`.
         ::: note
-            - If Markdown is separated by two dashes (--) on it's own line, multiple frames are created and shown incrementally.
-            - In case of frames, you can add %++ (percent plus plus) in the content to add frames incrementally.
-            - Frames separator (--) just after `multicol` creates incremental columns.
+            - If Markdown is separated by two dashes (--) on it's own line, multiple pages are created in a slide.
+            - You can add ++ (plus plus) in the content staring on new line to add parts which reveal incrementally.
+            - Parts separator (++) just before `multicol`/`columns` creates incremental columns and rows.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
             - 
 
@@ -794,11 +794,12 @@ class Slides(BaseSlides,metaclass=Singleton):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
                         self.this._split_frames = False
+                        warnings.warn("`%++` is deprecated, use `++` explicitly on each part separation!", DeprecationWarning, stacklevel=2)
                     
                     self.xmd(frm, returns = False) # parse and display content
                     
                     if len(frames) > 1:
-                        display(_delim("PAGE" if self.this._split_frames else "PART")) # needs at least one thing before, keeping legacy beahvior, otherwise its just page
+                        self.PAGE() # legacy will change it to part or page based on context
                     
                     if prm != frm: 
                         edit_idx = idx
@@ -904,7 +905,12 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     
     class fsep:
-        """Frame separator! If it is just after `write` command, columns are incremented too.
+        """::: note-warning
+            Legacy frame seperator for backward compatibility and will be deprecated. It only creates
+            pages or parts based on context. New delimiter classes `Slides.PAGE` and `Slides.PART` are 
+            very flexible to create mixed pages and parts and also allow more control over splitting behavior.
+        
+        Frame separator! If it is just after `write` command, columns are incremented too.
         You can import it on top level or use as `Slides.fsep`.
 
         - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
@@ -927,7 +933,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 app.this._split_frames = not stack
             elif stack is not None:
                 raise ValueError(f"stack should be set True or False or left as None for default behavior, got {type(stack)}")
-            warnings.warn("Legacy fsep() detected, converted to new delimiter internally. Consider updating your code to use PAGE and PART explicitly!", DeprecationWarning)
+            warnings.warn("Legacy fsep() detected, converted to new delimiter internally. Consider updating your code to use PAGE and PART explicitly!", DeprecationWarning, stacklevel=2)
 
         @classmethod
         def iter(cls, iterable, stack=None):
@@ -942,7 +948,29 @@ class Slides(BaseSlides,metaclass=Singleton):
             cls(stack) # put after all done to keep block separated
     
     class PAGE(_DELIMITER):
-       _type = "PAGE"
+        """Page delimiter! Use `Slides.PAGE()` or import at top level to create a new page in slide.
+        In markdown slides, use two dashes -- on its own line.
+        
+        - Content before first PAGE delimiter is added on all pages. This helps adding same title once.
+        - If there is no content after PAGE, a page with header content is created.
+        - Last empty PAGE delimiter is ignored.
+        - Use code`PAGE.iter(iterable)` to create multiple pages from iterable automatically.
+        """
+        _type = "PAGE"
 
     class PART(_DELIMITER):
+        """Part delimiter! Use `Slides.PART()` or import at top level to create a new part in slide/page.
+        In markdown slides, use two plus signs `++` on its own line, optionally add content right after `++ `.
+        
+        - Adjacent `PART` delemiters are ignored, so no empty parts are created.
+        - A call `PART()` before `write` command adds parts inside columns and rows. 
+          See `write` command for more details. This is equivalent to adding `++` before `columns/multicol` block in markdown.
+        - A call `PART(*contents)` adds a part with given contents right away and adds a separator after it.
+        - Use code`PART.iter(iterable)` to create multiple parts from iterable automatically.
+        """
         _type = "PART"
+        
+        def __init__(self, *contents, css_class=None):
+            super().__init__()
+            write([contents], css_class=css_class) # do not let write add extra delimiter in contents
+            display(_delim(self._type)) # separtor after content is important

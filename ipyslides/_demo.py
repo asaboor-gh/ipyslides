@@ -188,7 +188,7 @@ def demo_slides(slides):
         slides.write("## Animating Matplotlib!", skipper.origin)
 
         with slides.code.context(returns = True) as s:
-            for idx in slides.fsep.iter(range(10,19)):
+            for idx in slides.PAGE.iter(range(10,19)):
                 fig, ax = plt.subplots(figsize=(3.4,2.6))
                 x = np.linspace(0,idx,50)
                 ax.plot(x,np.sin(x))
@@ -207,25 +207,23 @@ def demo_slides(slides):
     with slides.build(-1) as s:
         slides.write('# Default Frames')
         s.get_source().focus_lines([2,3]).display()
-        slides.fsep()
-        for item in slides.fsep.iter(boxes):
+        slides.PAGE() # want to show source alone first
+        for item in slides.PAGE.iter(boxes):
             slides.write(item)
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### code`fsep(stack=True)` and Fancy Bullet List yoffset`0`')
+        slides.write('# Frames with \n#### code`PAGE.iter()` and Fancy Bullet List yoffset`0`')
         s.get_source().focus_lines([2,3,4]).display()
-        slides.fsep(stack=True) # setting True single time is enough
-
-        for item in slides.fsep.iter(boxes):
+        slides.PAGE() # want to show source alone first
+        for item in slides.PAGE.iter(boxes):
             slides.bullets([item], marker='💘').display()
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### code`fsep.iter(stack=True)` and 2x2 grid of boxes yoffset`0`')
+        slides.write('# Frames with \n#### code`PART.iter()` and 2x2 grid of boxes yoffset`0`')
         s.get_source().focus_lines(range(2,7)).display()
-        slides.fsep() # this time stack is in iter loop
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]
-        for ws, cols in slides.fsep.iter(zip(widths,objs),stack=True):
+        for ws, cols in slides.PART.iter(zip(widths,objs)):
             slides.write(*cols, widths=ws)
 
     # Youtube
@@ -275,7 +273,6 @@ def demo_slides(slides):
         s.get_source().display(True)
 
     slides.build(-1, r'''
-    %++
     ## $ \LaTeX $ in Slides
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
     $ \LaTeX $ needs time to load, so keeping it in view until it loads would help.
@@ -287,6 +284,7 @@ def demo_slides(slides):
     
     --
     ::: md-after -c
+        ++
         ```multicol 50 50
         $$ \int_0^1\\frac{1}{1-x^2}dx $$
         {.align-left .text-big .info}

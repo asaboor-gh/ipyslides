@@ -112,7 +112,7 @@ class Slide:
         self.__dict__[name] = value
     
     def _set_defaults(self):
-        for attr in ['_on_load', '_on_exit']:
+        for attr in ['_on_load', '_on_exit', '_fsep_legacy']:
             if hasattr(self, attr):
                 delattr(self, attr) # reset these attributes if any
     
@@ -218,7 +218,7 @@ class Slide:
             for c in contents:
                 if isinstance(c.metadata, dict) and "DELIM" in c.metadata:
                     new_delim = "PAGE" if self._split_frames else "PART"
-                    if c.metadata["DELIM"]  != new_delim: # allow explict setting in fsep
+                    if c.metadata["DELIM"] != "ROW": # allow explict setting in fsep for backward compatibility, except rows
                         c.metadata["DELIM"] = new_delim
         return contents
         
@@ -313,7 +313,11 @@ class Slide:
 
     def _reset_frames(self, offset=0):
         frames, contents = [], self.contents  # get once
-        pages = [i for i, c in enumerate(contents) if isinstance(c.metadata, dict) and c.metadata.get("DELIM","") == "PAGE"]
+        pages = [
+            i for i, c in enumerate(contents) 
+            if isinstance(c.metadata, dict) and 
+            c.metadata.get("DELIM","") == "PAGE"
+        ]  # find page delimiters
         
         if pages:
             pages = [{"head": pages[0] - 1, "start": p, "end": (pages[i+1] if (i+1) < len(pages) else len(contents)) - 1} for i, p in enumerate(pages)]
@@ -345,32 +349,32 @@ class Slide:
     
     def _resolve_parts(self, page, contents, indxs):
         frames = []
-        processed = set()  # Track processed indices of columns after part
-        prev_was_part = False  # Track for adjacent PART delimiters, they should be treated as one
-
+        
         for index in indxs:
-            if index in processed:
-                continue
-
-            if isinstance(contents[index].metadata, dict) and contents[index].metadata.get("DELIM", "") == "PART":
+            meta = contents[index].metadata
+            if isinstance(meta, dict) and meta.get("DELIM", "") == "PART":
+                meta_prev = contents[index - 1].metadata if index - 1 in indxs else {}
+                meta_next = contents[index + 1].metadata if index + 1 in indxs else {}
+                if not isinstance(meta_prev, dict): meta_prev = {} # insure dict type
+                if not isinstance(meta_next, dict): meta_next = {} # insure dict type
+                
+                # Single column flattened after PART with its ROW delimiters
+                if ("FLATCOL" in meta_next):
+                    for i in range(index, index + meta_next["FLATCOL"]):
+                        meta_row = contents[i].metadata if i in indxs else {}
+                        if isinstance(meta_row, dict) and meta_row.get("DELIM", "") == "ROW":
+                            meta_row["DELIM"] = "PART"  # change ROW to PART for frame handling
+                
                 # Check if PART is before COLUMNS to trigger increments
-                has_column_after = (index + 1 <= indxs.stop - 1 and 
-                    isinstance(contents[index + 1].metadata, dict) and 
-                    "COLUMNS" in contents[index + 1].metadata)
-
-                if has_column_after:
+                if "COLUMNS" in meta_next:
                     # PART before COLUMNS - trigger column incremental
                     for part in contents[index + 1]._parts:
                         frames.append({**page, "part": index + 1, **part})
-                    processed.add(index + 1)  # Mark COLUMNS as processed to skip it
-                    prev_was_part = False # there is columns
                 else:
-                    if prev_was_part: continue  # Skip adjacent PART delimiters
+                    if meta_prev.get("DELIM") == "PART" or "COLUMNS" in meta_prev: 
+                        continue  # Skip PART adjacent to PART and COLUMNS, already handled
                     frames.append({**page, "part": index}) # add stand alone PART normally
-                    prev_was_part = True
-            else:
-                prev_was_part = False # reset on normal content
-
+        
         if frames and frames[-1].get("part") != index: # Last index in range
             frames.append({**page, "part": index})  # only up to last part if something is left over
         return frames       
@@ -423,8 +427,10 @@ class Slide:
         
         # Helper to hide/show elements with proper collapse
         def hide(b): 
-            props = {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
-            return props #{**props, '@media print': collapse_node(b)}
+            return {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
+        
+        def collapse(b):
+            return {**collapse_node(b), '@media print': hide(b)} # somehow needs invisibility in print, otherwise shows up
 
         # Build CSS to show only current frame's content
         frame = self._fidxs[index]
@@ -438,11 +444,11 @@ class Slide:
         # Collapse nodes between head and start
         start = frame["start"] + 1
         if head_end > 0 and start > head_end + 1:
-            css_rules[f'^:nth-child(n + {head_end + 1}):nth-child(-n + {start - 1})'] = collapse_node(True)
+            css_rules[f'^:nth-child(n + {head_end + 1}):nth-child(-n + {start - 1})'] = collapse(True)
         
         # Collapse nodes after end
         end = frame["end"] + 1
-        css_rules[f'^:nth-child(n + {end + 1})'] = collapse_node(True)
+        css_rules[f'^:nth-child(n + {end + 1})'] = collapse(True)
 
         # Handle PART incremental frames
         if "part" in frame:

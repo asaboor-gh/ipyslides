@@ -775,7 +775,7 @@ def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, _id='')
         position: absolute;
         left:50% !important;
         top:50% !important;
-        transform: translate(-50%,-50%) !important; /* Make at center  
+        transform: translate(-50%,-50%) !important; /* Make at center */ 
         width: 100%;
         height: 100%;
     }}

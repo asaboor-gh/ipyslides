@@ -238,13 +238,14 @@ class BaseSlides:
         1. code`slides.build(number, callable)` to create a slide from a `callable(slide)` immediately, e.g. code`lambda s: slides.write(1,2,3)` or as a decorator.
             - Docstring of callable (if any) is parsed as markdown before calling function.
         2. code`with slides.build(number):` creates single slide. Equivalent to code`%%slide number` magic.
-            - Use code`fsep()` from top import or code`Slides.fsep()` to split content into frames.
-            - Use code`for item in fsep.iter(iterable):` block to automatically add frame separator.
-            - Use code`fsep(True)` / code`fsep.iter(...,stack=True)` to join content of frames incrementally.
+            - Use code`PAGE()` from top import or code`Slides.PAGE()` to split content into pages/sub slides.
+            - Use code`for item in PAGE.iter(iterable):` block to automatically add page separator.
+            - Use code`PAGE()` / code`PAGE.iter(...)` to display content on each page incrementally in parts.
+            - Contents displayed by `write` function can be split into parts if `write` is called after `PART()` adjacently.
         3. code`slides.build(number, str, **vars)` creates many slides with markdown content. Equivalent to code`%%slide number -m` magic in case of one slide.
-            - Frames separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to code`Slides.sync_with_file` too.
-            - Use `%++` to join content of frames incrementally.
-            - Markdown `multicol` before `--` creates incremental columns if `%++` is provided.
+            - Page separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to code`Slides.sync_with_file` too.
+            - Use `++` to separted content into parts for incremental display on ites own line with optionally adding content after one space.
+            - Markdown `multicol`/`columns` can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
             - See `slides.xmd.syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
@@ -499,11 +500,11 @@ class BaseSlides:
         with self.build_() as s:
             self.write("## Adding content on frames incrementally yoffset`0`")
             self.frozen(widget := (code := s.get_source()).as_widget()).display()
-            self.fsep(stack=True) # frozen in above line get oldest metadata for export
+            # frozen in above line get oldest metadata for export
             def highlight_code(slide): widget.value = code.focus_lines(range(slide.indexf + 1)).value
             self.on_load(highlight_code)
         
-            for ws, cols in self.fsep.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
+            for ws, cols in self.PART.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
                 cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
                 self.write(*cols, widths=ws)
                     

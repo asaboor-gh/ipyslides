@@ -10,7 +10,7 @@ from IPython.display import display as display
 from IPython.utils.capture import CapturedIO
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta, _delim
-from .xmd import fmt, xmd, capture_content
+from .xmd import fmt, xmd, capture_content, get_slides_instance
 
 
 class hold:
@@ -78,15 +78,15 @@ class Writer(ipw.HBox):
         finally:
             self.__class__._in_write = False
 
-        if len(objs) == 1:
-            if isinstance(css_class, str):
-                out = _Output(_dom_classes = css_class.split())
-                with out:
-                    display(*self._cols[0]['outputs'])
-                display(out, metadata={'UPDATE', out._model_id}) # For auto refresh
-            else:
-                display(*self._cols[0]['outputs']) 
-        elif len(objs) > 1:
+        if len(objs) == 1 and not isinstance(css_class, str):
+            # css_class still need to make all items in single block, without it just flatten display
+            rows = self._cols[0]['outputs']
+            if len(rows) == 1:
+                display(*rows) # Just display single output directly
+            elif len(rows) > 1:
+                display(rows[0], metadata={"FLATCOL": len(rows)})  # First output with FLATCOL metadata to indicate for frames
+                display(*rows[1:]) # Just display rest of rows directly
+        elif len(objs) >= 1: # avoid empty write
             self.children = [_Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
             display(self, metadata=self.metadata) # Just display it with ID
             self.update_display() # show content on widgets
@@ -227,6 +227,8 @@ def write(*objs,widths = None, css_class=None):
         ```python
         slides.PART()  # Trigger incremental display, equivalent to ++ before `multicol/columns` in markdown
         slides.write([row1, [item1, item2], row3], column2)  # Shows rows one by one (item1 and item2 together), then column2
+        slides.PART()  # Another trigger for next write
+        slides.write([row1, row2]) # Shows both rows incrementally , no additional columns here
         ``` 
     """
     Writer(*objs,widths = widths, css_class=css_class) # Displays itself

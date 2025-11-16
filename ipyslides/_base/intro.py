@@ -40,11 +40,11 @@ slides = isd.Slides()
 
 ```python
 with slides.build(-1):
-    print("I will be on all frames in any case")
-    slides.fsep()
+    print("I will be first item shown!")
+    slides.PART()
     print("-1 will pick latest slide number!")
-    slides.fsep(stack=True)
-    print("I will be incremented to previous content becuase stack=True in line above!")
+    slides.PART()
+    print("I will be last item shown on current page!")
 ```
 
 ```python

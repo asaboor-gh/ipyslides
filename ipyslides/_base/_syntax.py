@@ -40,9 +40,11 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 
 **Presentation Structure**{{.text-big}}
 
-Slides & Frames Separators
+Slides, Pages and Parts Separators
 : Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-Double dashes `--` is used to split text in frames. Alongwith this `%++` can be used to increment text on framed slide.
+Double dashes `--` (`PAGE` in Python) is used to split text in pages. Double plus `++` (`PART` in Python) can be used to increment text inparts on slide/page.
+A `++` on its own line before `columns/multicol` block will make it reveal content incrementally, provided that columns are separated by `+++`.
+The combinations of pages and parts create frames on slides.
 
 Sections & TOC
 : alert`section\`content\`` to add a section that will appear in the table of contents.
@@ -57,7 +59,7 @@ These files are watched for edits if included in synced markdown file via `Slide
 
 Citations
 : - alert`cite\`key1,key2\`` / alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
-- With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` or code`Slides.refs` to add citations anywhere on slide. If `ncol_refs` is not given, it will be picked from layout settings.
+- With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` or code` Slides.refs ` to add citations anywhere on slide. If \`ncol_refs\` is not given, it will be picked from layout settings.
   Using alert`refs\`ncol_refs, key1, key2,...\`` will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
 - Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!` or alert`cite\`key1,key2!\``.
 - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
@@ -106,13 +108,13 @@ Inline Columns
 
 Block Columns
 : You can create columns using `::: columns` or `::: multicol` syntax. 
-Column separator is triple plus `+++` if intended in display mode.
+Column separator is triple plus `+++` if intended in display mode and should be a `++` before block to make it incremental.
 
 ```md-before
 ::: columns 6 1 4 block-blue 
 : border="1px dashed red"
     ::: block-red
-        - `::: columns/muticol` with a +++ separator act like `write` command and reveal content incrementally when `%++` is used
+        - `::: columns/muticol` with a +++ separator act like `write` command and reveal content incrementally when `++` is used before block.
         - children inside `columns` picks relative width from parent's `columns` block evem if '+++' is not used.
           In thise children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in `::: block` to make them obvious blocks like this one.
         - CSS classes and attributes can be used to style columns besides relative widths.

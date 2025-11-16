@@ -82,8 +82,10 @@ function printSlides(box, model) {
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
-        
-        slide.querySelector('.jp-OutputArea').scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
+        let outputArea = slide.querySelector('.jp-OutputArea');
+        if (outputArea) {
+            outputArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
+        }
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
@@ -93,6 +95,7 @@ function printSlides(box, model) {
         // ensure background image is set for printing, if user may not naviagted all slides or message was sent when slides were not yet loaded
         setBgImage(slide); // main Image is not needed for print, only per slides
         
+        let areaStyle = window.getComputedStyle(outputArea); // need for clones
         if (slide.classList.contains('base') && numFrames > 1) {
             let lastInserted = slide; // to keep insertion order
             
@@ -102,8 +105,14 @@ function printSlides(box, model) {
                 clone.classList.add('print-only'); // avoid cluttering screen view
                 clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
-                clone.querySelector('.jp-OutputArea').style.maxHeight = '100%'; // force to avoid spilling over padding of slide
-                
+                let cloneArea = clone.querySelector('.jp-OutputArea'); 
+                if (cloneArea) {
+                    cloneArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
+                    cloneArea.style.top = areaStyle.top; // yooffset related styles
+                    cloneArea.style.height = areaStyle.height;
+                    cloneArea.style.marginTop = areaStyle.marginTop ? areaStyle.marginTop : 'auto';
+                    cloneArea.style.maxHeight = '100%'; // ensure max height is 100% to avoid splilling off bottom padding
+                }
                 // Set visibility of parts if any, Do not change this to CSS only as
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
