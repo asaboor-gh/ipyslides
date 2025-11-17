@@ -593,6 +593,8 @@ function render({ model, el }) {
         let box = style.parentNode.parentNode;
         box.tabIndex = -1; // Need for event listeners, should be at top
         box.setAttribute("uid", model.get("_uid"));
+        // JupyterLab/Notebook specific attribute to suppress shortcuts when focused
+        box.setAttribute("data-lm-suppress-shortcuts", "true"); // how we can know this hack works forever?
         
         // Only for jupyter, voila, notebook, do as early as possible
         if (window.hasOwnProperty('_JUPYTERLAB')) {
