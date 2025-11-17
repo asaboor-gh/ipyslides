@@ -112,7 +112,7 @@ class Slide:
         self.__dict__[name] = value
     
     def _set_defaults(self):
-        for attr in ['_on_load', '_on_exit', '_fsep_legacy']:
+        for attr in ['_on_load', '_on_exit']:
             if hasattr(self, attr):
                 delattr(self, attr) # reset these attributes if any
     
@@ -788,6 +788,9 @@ def _build_slide(app, slide_number):
         this = Slide(app, slide_number)
         app._slides_dict[slide_number] = this
         app.refresh() # rebuild slides to have index ready
+    
+    if hasattr(this, '_fsep_legacy'): # it must be here to have markdown switch modes properly
+        delattr(this, '_fsep_legacy') # reset legacy mode on new build
             
     with this._capture(): 
         yield this
