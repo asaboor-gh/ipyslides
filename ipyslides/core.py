@@ -794,6 +794,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
                         self.this._split_frames = False
+                        self.this._fsep_legacy = True # mark legacy usage
                         warnings.warn("`%++` is deprecated, use `++` explicitly on each part separation!", DeprecationWarning, stacklevel=2)
                     
                     self.xmd(frm, returns = False) # parse and display content
