@@ -14,6 +14,7 @@ from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 
 from .formatters import XTML, altformatter, _highlight, htmlize, get_slides_instance, _inline_style, _delim
+from .source import SourceCode
 
 _md_extensions = [
     "tables",
@@ -282,7 +283,7 @@ class esc:
     
 
 # This shoul be outside, as needed in other modules
-def resolve_included_files(text_chunk):
+def resolve_included_files(parser, text_chunk):
     "Markdown files added by include`file.md[start:end]` should be inserted as plain."
     all_matches = re.findall(r"^(\s*)include\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for indent, match in all_matches:
@@ -315,7 +316,7 @@ def resolve_included_files(text_chunk):
                 text = textwrap.indent("\n" + "".join(lines) + "\n", indent) # need inside ::: blocks
                 text_chunk = text_chunk.replace(f"include`{match}`", text, 1)
         except Exception as e:
-            err_msg = error('Exception', f'Could not include file {filepath!r}:\n{e}').value
+            err_msg = error('Exception', f'Could not include file or markdown snippet {filepath!r}:\n{e}').value
             text_chunk = text_chunk.replace(f"include`{match}`", err_msg, 1)
 
     return text_chunk
@@ -323,6 +324,8 @@ def resolve_included_files(text_chunk):
 _extensions = Extensions() # Global instance of Extensions, don't delete class Extensions still
 
 class XMarkdown(Markdown):
+    _md_ns = {} # md-<var> stored here, stays across calls in session
+    
     def __init__(self):
         super().__init__(**_extensions.active)
         self._vars = {}
@@ -375,7 +378,7 @@ class XMarkdown(Markdown):
                 blocks.extend(self._split_blocks_with_dedent(text))  # split by :::
             elif len(parts := text.split('\n', 1)) == 2 and parts[1].strip():
                 blocks.append(("block", parts))  # ``` blocks, avoid empty blocks
-
+        
         outputs = []
         for i, (typ, obj) in enumerate(blocks):
             if typ == "block":
@@ -390,7 +393,7 @@ class XMarkdown(Markdown):
                         outputs.extend(out)
                     elif out: # Some syntax like section on its own line can leave empty block later
                         outputs.append(XTML(out))
-                    
+
                     if not self._returns and n < len(parts):  # only add delim if displaying directly
                         outputs.append(_delim("PART"))
         
@@ -408,6 +411,7 @@ class XMarkdown(Markdown):
             return content
         else:
             return display(*outputs)
+        
         
     def _split_parts(self, content):
         yield from ( # split by ++ starting on its own line followed by one space charactor or till end of line
@@ -515,7 +519,7 @@ class XMarkdown(Markdown):
 
     def _parse_block(self, header, data, parts=False):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
-        data = resolve_included_files(textwrap.dedent(data)) # clean up data  before processing 
+        data = resolve_included_files(self, textwrap.dedent(data)) # clean up data  before processing 
         typ, widths, _class, css_props, attrs = self._parse_params(header)
         
         if typ == "citations" or header.lstrip(' :').startswith("citations"): # both kind of blocks
@@ -531,7 +535,7 @@ class XMarkdown(Markdown):
         elif typ in ("multicol","columns") and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns and multicol with display mode
             return self._parse_multicol(data, widths, _class, parts) # simple columns will be handled inline 
         elif "md-" in typ:
-            return self._parse_md_src(data, header, parts) # make md-src block aware of parts
+            return self._parse_md_src(data, header)
         elif typ == "table":
             return self._parse_table(data, widths, _class, css_props, attrs)
         elif typ == "code":
@@ -584,7 +588,9 @@ class XMarkdown(Markdown):
         leftover = {k: v for k, v in props.items() if k not in params} # left over attributes
         if leftover:
             out = re.sub(r"^<div([^>]*)>", rf"<div\1 {_inline_style(leftover)} {attrs}>",out, count=1)
-        return [XTML(out)]
+        out = SourceCode(out)
+        out.raw = textwrap.dedent(data) # attach raw code
+        return [out]
                 
     def _parse_table(self, data, widths, _class, props, attrs):
         out = self._parse_nested(data, returns=True) # let table extension handle it
@@ -603,42 +609,21 @@ class XMarkdown(Markdown):
         out = re.sub(r'<table[^>]*>', repl, out, count=1, flags=re.DOTALL)
         return [XTML(out)] # return table as is, it will be parsed by table extension
         
-    def _parse_md_src(self, data, header, parts):
-        pos, *collapse = header.strip(' :')[3:].split() # if ::: md-[suffix] [-c], clean :::
-        _class = ' '.join(collapse[1:] if collapse and collapse[0] == "-c" else collapse)
-        _req_pos = "before,after,left,right"
-        if pos not in _req_pos:
-            return [error("ValueError",f"The suffix after md- should be {_req_pos}, got {pos}")]
-        if collapse and collapse[0] not in ("","-c"):
-            return [error("ValueError",f"Only swicth -c expected if given to collapse code after md-[suffix] other than CSS class, got {collapse[0]}")]
-        src = XTML(_highlight(data, "markdown", name=False if collapse else None, css_class=f"md-src {_class}"))
-        if collapse:
-            src = XTML(f"<details><summary>Show Markdown Source</summary>\n{src}\n</details>")
-        
+    def _parse_md_src(self, data, header):
+        typ, widths, _class, css_props, attrs = self._parse_params(header) 
+        src, = self._parse_code(data, _class, css_props, attrs) # list of one item
+        if typ not in ("md-before", "md-after"):  # normal md block
+            self._md_ns[typ[3:]] = src # store variable without md- prefix to have available in processing below
+        outputs = []
+        if "before" in typ: outputs.append(src)
         if self._returns: # display context
-            outs = [XTML(self._parse_nested(data, returns=True))]
+            outputs.append(XTML(self._parse_nested(data, returns=True)))
         else:
             with capture_content() as cap:
                 self._parse_nested(data, returns=False)
-            outs = cap.outputs
-        
-        inner_delim = [_delim("PART")] if parts else [] 
-        if pos in ("before","after"):
-            out = [src, *inner_delim, *outs] if pos == "before" else [*outs, *inner_delim, src]
-            return inner_delim +  out + inner_delim # make it aware of ++ before and inside
-        
-        if self._returns: 
-            objs = (src, outs[0]) if pos == "left" else (outs[0], src) # return mode, len(outs) == 1
-            output = "\n".join(f"<div style='width:50%;overflow-x:auto;height:auto;position:relative;'>{v}</div>" for v in objs)
-            return [XTML(f'<div class="columns md-block" style="display:flex;">\n{output}\n</div>')] # display for notebook
-        
-        with self.active_parser(),capture_content() as cap:
-            if parts:
-                src = inner_delim + [src]
-                display(*inner_delim) # part delimiter for ++ before md-src, otherwise it won't pick properly, needs twice
-            self._wr.write(*((src, [outs]) if pos == "left" else (inner_delim + [outs], src)), css_class="md-block")
-        return cap.outputs
-
+            outputs.extend(cap.outputs)
+        if "after" in typ: outputs.append(src)
+        return outputs
 
     def _parse_multicol(self, data, widths, _class, parts):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
@@ -689,7 +674,7 @@ class XMarkdown(Markdown):
         """Replaces variables with placeholder after conversion to respect all other extensions.
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
-        text = resolve_included_files(text)
+        text = resolve_included_files(self, text)
         text = char_esc.escape(text)  # Escape characters before processing
 
         text = self._resolve_nested(text)  # Resolve nested objects in form func`//text//` to func`html_repr`
@@ -774,11 +759,14 @@ class XMarkdown(Markdown):
             def handle_match(match):
                 key,*_ = _matched_vars(match.group()) 
                 # First check if it is an escaped variable
+                esc._store.update(self._md_ns)
                 if key in esc._store: # escaped variable
                     value = esc._store.pop(key) # remove after using once
                     if isinstance(value, DOMWidget) or key.endswith('DISPLAY'): # Anything with display or widget
                         return self._handle_var(value, ctx = match.group())
                     return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), {key: value})) # clear spaces around variable
+                else: # clear md- variables after using once from this store if any left, to avoid clutter
+                    esc._store = {k:v for k, v in esc._store.items() if not k in self._md_ns}
                 
                 if key not in user_ns: # top level var without ., indexing not found
                     err = error('NameError', f'name {key!r} is not defined')

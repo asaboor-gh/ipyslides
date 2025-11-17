@@ -348,35 +348,43 @@ class Slide:
         return frames
     
     def _resolve_parts(self, page, contents, indxs):
+        ensure_dict = lambda meta: meta if isinstance(meta, dict) else {} # insure dict type
         frames = []
         
         for index in indxs:
-            meta = contents[index].metadata
+            meta = ensure_dict(contents[index].metadata)
             if isinstance(meta, dict) and meta.get("DELIM", "") == "PART":
-                meta_prev = contents[index - 1].metadata if index - 1 in indxs else {}
-                meta_next = contents[index + 1].metadata if index + 1 in indxs else {}
-                if not isinstance(meta_prev, dict): meta_prev = {} # insure dict type
-                if not isinstance(meta_next, dict): meta_next = {} # insure dict type
+                if index == indxs.stop - 1: 
+                    continue  # skip if PART is last in range
+                
+                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 in indxs else {}
+                meta_next = ensure_dict(contents[index + 1].metadata) if index + 1 in indxs else {}
                 
                 # Single column flattened after PART with its ROW delimiters
                 if ("FLATCOL" in meta_next):
                     for i in range(index, index + meta_next["FLATCOL"]):
-                        meta_row = contents[i].metadata if i in indxs else {}
-                        if isinstance(meta_row, dict) and meta_row.get("DELIM", "") == "ROW":
+                        meta_row = ensure_dict(contents[i].metadata) if i in indxs else {}
+                        if meta_row.get("DELIM", "") == "ROW":
                             meta_row["DELIM"] = "PART"  # change ROW to PART for frame handling
                 
                 # Check if PART is before COLUMNS to trigger increments
-                if "COLUMNS" in meta_next:
+                if "COLUMNS" in meta_next and not getattr(self, '_fsep_legacy', False):
                     # PART before COLUMNS - trigger column incremental
                     for part in contents[index + 1]._parts:
                         frames.append({**page, "part": index + 1, **part})
+                elif getattr(self, '_fsep_legacy', False) and "COLUMNS" in meta_prev:
+                    # Legacy mode: PART after COLUMNS
+                    for part in contents[index - 1]._parts:
+                        frames.append({**page, "part": index - 1, **part})
                 else:
-                    if meta_prev.get("DELIM") == "PART" or "COLUMNS" in meta_prev: 
-                        continue  # Skip PART adjacent to PART and COLUMNS, already handled
+                    if (meta_prev.get("DELIM","") == "PART" # PART adjacent to PART
+                        or (frames and "col" in frames[-1])): # PART adjacent to COLUMNS
+                        continue  # skip this PART as already handled
                     frames.append({**page, "part": index}) # add stand alone PART normally
         
-        if frames and frames[-1].get("part") != index: # Last index in range
-            frames.append({**page, "part": index})  # only up to last part if something is left over
+        if (frames and frames[-1].get("part", index) != index and 
+            meta.get("DELIM", "") != "PART"): # last PART not added
+            frames.append({**page, "part": index})
         return frames       
     
     @property

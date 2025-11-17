@@ -16,7 +16,13 @@ from .formatters import _highlight, XTML
 
 # Do not use this in main work, just inside a function
 class SourceCode(XTML):
-    "Returns the source code of the object as HTML."
+    """Returns the source code of the object as HTML.
+    Use `.show_lines(lines)` to show only selected lines (list/tuple/range).
+    Use `.focus_lines(lines)` to focus on selected lines (list/tuple/range).
+    Use indexing `source[lines]` to focus (if list) or show (if slice) lines.
+    Use `.inline` property to get inline code object.
+    Use `.collapsed` property to get collapsed code object.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._raw = ''
@@ -45,7 +51,7 @@ class SourceCode(XTML):
             return display(self) # Without collapsed
 
     def show_lines(self, lines):
-        "Return source object with selected lines from list/tuple/range of lines."
+        "Return source object with selected lines from list/tuple/range of lines. You can use list/slice indexes to show instead of this."
         if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
         
@@ -68,7 +74,7 @@ class SourceCode(XTML):
         return self.__class__(''.join([*new_lines, end]))     
     
     def focus_lines(self, lines):
-        "Return source object with focus on given list/tuple/range of lines."
+        "Return source object with focus on given list/tuple/range of lines. You can use tuple indexes to focus instead of this."
         if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
         
@@ -83,6 +89,14 @@ class SourceCode(XTML):
         
         return self.__class__(''.join(_lines))
     
+    def __getitem__(self, key):
+        "Focus on lines if key is list, else show lines if key is slice."
+        if isinstance(key, list):
+            return self.focus_lines(key)
+        elif isinstance(key, slice):
+            return self.show_lines(list(range(key.start or 0, key.stop or 0, key.step or 1)))
+        return self.__class__(f'Invalid key type {type(key)!r} for SourceCode! Use slice (show) or list(focus).')
+    
     @property
     def inline(self): 
         "Return inline code object that can be embedded inside text."
@@ -91,6 +105,14 @@ class SourceCode(XTML):
                 for c in re.findall(r'\<\s*code.*?\>(.*?\<\s*\/\s*code\s*\>)', 
                     self.value, flags=re.DOTALL | re.MULTILINE
         ))) # intended to be one liner, but leave for flexibility
+    
+    @property
+    def collapsed(self):
+        "Return collapsed code object that can be expanded on click."
+        return XTML(f"""<details style='max-height:400px;overflow:auto;'>
+            <summary>Show Code</summary>
+            {self.value}
+            </details>""")
 
 
 def _file2code(filename,language='python',name=None,**kwargs):

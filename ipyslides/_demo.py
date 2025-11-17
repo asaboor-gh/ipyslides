@@ -16,7 +16,7 @@ def demo_slides(slides):
 
     # title slide should alway be overwritten by 0 
     slides.build(0, """
-    ```md-after -c
+    ```md-src
     # Creating Slides
     ::: align-center width=50%
         alert`Abdul Saboor`^`1`, Unknown Author^`2`
@@ -27,7 +27,9 @@ def demo_slides(slides):
     
     ::: display align-center               
         vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
-    ```""", btn = slides.widgets.buttons.info)
+    ```
+    %{src.collapsed}
+    """, btn = slides.widgets.buttons.info)
     
     # build_ is same as build(-1)
     slides.build_(f"""
@@ -283,7 +285,7 @@ def demo_slides(slides):
         Varibale formatting alongwith $ \LaTeX $ alert`\%{var} → %{var}` is seamless.
     
     --
-    ::: md-after -c
+    ::: md-src
         ++
         ```multicol 50 50
         $$ \int_0^1\\frac{1}{1-x^2}dx $$
@@ -293,6 +295,7 @@ def demo_slides(slides):
             $$ ax^2 + bx + c = 0 $$
             {.text-huge}
         ```
+    %{src.collapsed}
     ''', var = "'I was a variable'")
 
     with slides.build(-1) as some_slide:

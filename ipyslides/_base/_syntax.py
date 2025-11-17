@@ -94,11 +94,14 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: code `       | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
     | `::: columns/multicol [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. |
-    | `::: md-[pos]` | Parse markdown in the block, with showing source code at `pos=[before,after,left,right]`. Add `-c` to collapse code and show on click. |
+    | `::: md-[before,after,var_name]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use anywhere you want, e.g. \%{{var_name.collapsed}} |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations [inline or footnote]` | Add citations in the block, with `inline` or `footnote` mode. Use `\@key: value` syntax to add citations in block. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
+    ::: note-info
+        - Variable created with `md-var_name` can be used anywhere in markdown using alert`\%{{var_name}}` syntax and take precendence over Python scope variables.
+        - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting. Both can access properties in \%{{var}} such as \%{{var.inline}}, \%{{var.collapsed}} etc.
 ---
 
 **Layouts**{{.text-big}}
@@ -137,11 +140,13 @@ Inline Code
 Code Blocks
 : Use standard markdown fenced code blocks or `::: code` blocks for syntax highlighting.
 
-```md-left
+```md-src
+::: columns
+    %{{src}}
+    +++
     ```python
     print('Hello, I was highlighted from a code block!')
     ```
-    
     ::: code language=bash name=Shell lineno=False style=vim
         echo "Hello, I was highlighted from a code block!"
         ls -l | grep ".py" | wc -l
@@ -191,13 +196,16 @@ Functions (that can also take extra args [python code as strings] as alert`func[
     This should be rarely used when your markdown contains a lot of $ \LaTeX $ equations to avoid excessively escaping them with curly braces in favor of few escaped variables.
 
 Upto 4 level nesting is parsed in inline functions using (level + 1) number of alert`/` (at least two) within backticks in functions given below. 
-```md-left
-stack[(6,4),css_class="block-blue"]`////
-    This always parse markdown in `returns=True` mode. ||
-    stack[css_class="info"]`/// B ||
-        color["skyblue"]`//alert`Alerted Text` Colored Text //`
-    ///` 
-////`
+```md-src_var
+::: columns
+    %{{src_var}}
+    +++
+    stack[(6,4),css_class="block-blue"]`////
+        This always parse markdown in `returns=True` mode. ||
+        stack[css_class="info"]`/// B ||
+            color["skyblue"]`//alert`Alerted Text` Colored Text //`
+        ///` 
+    ////`
 ```
 
 ---
@@ -211,11 +219,14 @@ stack[(6,4),css_class="block-blue"]`////
 - Use `_\`sub\`` and `^\`sup\``  for subscript and superscript respectively, e.g. H_`2`O, E = mc^`2`.
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
 - Definition list syntax:
-```md-left
-Item 1 Header
-: Item 1 details ^`1`
-Item 1 Header
-: Item 1 details _`2`
+```md-src
+::: columns
+    %{{src}}
+    +++
+    Item 1 Header
+    : Item 1 details ^`1`
+    Item 1 Header
+    : Item 1 details _`2`
 ```
 
 **Extending Syntax**{{.text-big}}

@@ -967,6 +967,7 @@ class Slides(BaseSlides,metaclass=Singleton):
           See `write` command for more details. This is equivalent to adding `++` before `columns/multicol` block in markdown.
         - A call `PART(*contents)` adds a part with given contents right away and adds a separator after it.
         - Use code`PART.iter(iterable)` to create multiple parts from iterable automatically.
+        - Last empty PART delimiter is ignored on slide/page.
         """
         _type = "PART"
         

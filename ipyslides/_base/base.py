@@ -399,7 +399,7 @@ class BaseSlides:
                    
         with self.build(-1):
             self.write('## Displaying Source Code')
-            self.write('In markdown, the block `md-[before,after,left,right] [-c]` parses and displays source as well.')
+            self.write('In markdown, the block `md-[before,after,var_name]` parses and displays source as well.')
             self.doc(self.code,'Slides', members = True, itself = True).display()
         
         self.build(-1, r'section`//Layout and color["yellow","black"]`Theme` Settings//` toc`### Contents`')
@@ -465,7 +465,7 @@ class BaseSlides:
             )
     
         self.build(-1, """
-        ```md-after -c
+        ```md-src
         stack[(3,7)]`//
         ## Content Styling
         You can **style**{.error} or **color["teal"]`colorize`** your *content*{: style="color:hotpink;"} and *color["hotpink","yellow"]`text`*.
@@ -474,6 +474,7 @@ class BaseSlides:
         || %{self.css_styles}
         //`     
         ```
+        %{src.collapsed}
         """, self=self)
         
         self.build(-1, '''
