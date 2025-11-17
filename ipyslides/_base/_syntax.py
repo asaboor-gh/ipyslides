@@ -91,17 +91,19 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | Block Syntax      | Description                                                                                                 |
     |:----------------- |:----------------------------------------------------------------------------------------------------------- |
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
-    | `::: code `       | Code block with syntax highlighting, parameters are passed to highlight function. |
+    | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
     | `::: columns/multicol [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. |
-    | `::: md-[before,after,var_name]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use anywhere you want, e.g. \%{{var_name.collapsed}} |
+    | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use anywhere you want, e.g. \%{{var_name.collapsed}} |
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations [inline or footnote]` | Add citations in the block, with `inline` or `footnote` mode. Use `\@key: value` syntax to add citations in block. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
-    ::: note-info
-        - Variable created with `md-var_name` can be used anywhere in markdown using alert`\%{{var_name}}` syntax and take precendence over Python scope variables.
-        - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting. Both can access properties in \%{{var}} such as \%{{var.inline}}, \%{{var.collapsed}} etc.
+::: details
+    ::: summary | Important Notes on `md-` and `code` blocks
+    - Variable created with `md-var_name` can be used anywhere in markdown using alert`\%{{var_name}}` syntax and take precendence over Python scope variables.
+    - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting, but additionally can access properties in \%{{var}} such as \%{{var.inline}}, \%{{var.collapsed}} etc.
+    - Both `code` and `md-var` blocks support attribute access such as `::: code.collapsed` or `::: md-var.inline` to show selected view. You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
 ---
 
 **Layouts**{{.text-big}}
@@ -138,7 +140,7 @@ Inline Code
 : Inline code can be highlighted using alert`code\`code\`` syntax, e.g. color`code\`print('Hello')\`` → code`print('Hello')`.
 
 Code Blocks
-: Use standard markdown fenced code blocks or `::: code` blocks for syntax highlighting.
+: Use standard markdown fenced code blocks or `::: code ` blocks for syntax highlighting.
 
 ```md-src
 ::: columns
@@ -147,12 +149,20 @@ Code Blocks
     ```python
     print('Hello, I was highlighted from a code block!')
     ```
-    ::: code language=bash name=Shell lineno=False style=vim
+    ::: code 2 language=bash name=Shell lineno=False style=vim
         echo "Hello, I was highlighted from a code block!"
         ls -l | grep ".py" | wc -l
-```  
-- In ` ::: code ` block, you need to set parameters that are passed to `code` function, such as `language`, `name`, `lineno`, `css_class`, etc.
-- The \`\`\` code block does act like `::: code ` block and supports same parameters.
+``` 
+
+```md-src.collapsed
+::: details
+    ::: summary | Click to see important notes on code blocks 
+    - In ` ::: code ` block, you need to set parameters that are passed to `code` function, such as `language`, `name`, `lineno`, `css_class`, etc.
+    - The \`\`\` code block does act like `::: code ` block and supports same parameters.
+    - You can focus on specific lines in code blocks using line numbers (1-based) such as `::: code 2 4 5` to focus on lines 2, 4 and 5 visually. 
+    - You can also use `::: code.collapsed` or `::: code.inline` to show collapsed or inline view of code block respectively.
+    %{{src}}
+```
 
 ---
 

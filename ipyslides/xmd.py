@@ -422,7 +422,7 @@ class XMarkdown(Markdown):
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
         RE_PARAM = re.compile(
-            r'(?:([\w\-]+)=)?'
+            r'(?:([\w\-.]+)=)?'
             r'("([^"]*)"|\'([^\']*)\'|([\S]+))'
         )
         numbers, args, kwargs, node_attrs = [], [], {}, {}
@@ -444,13 +444,15 @@ class XMarkdown(Markdown):
                 if value.isdigit() or re.match(r'^\d+(\.\d+)?$', value):
                     numbers.append(float(value) if '.' in value else int(value))
                 else:
-                    args.append(value.replace('.',' ').strip()) # remove . from classes
+                    args.append((value.replace('.',' ') if args else value).strip()) # remove . from classes except from directive name
         sizes = numbers if numbers else None # making None is important for multicol and stack 
         # flatten node_attrs to a string, but not css properties
         node_attrs = ' '.join(f'{k}="{v}"' for k, v in node_attrs.items())
+        
         if args:
-            return args[0], sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
-        return '', sizes, '', kwargs, node_attrs
+            typ, prop = args[0].split('.',1) if '.' in args[0] else (args[0], '')
+            return typ, prop, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
+        return '', '', sizes, '', kwargs, node_attrs
 
     
     def _split_blocks_with_dedent(self, text):
@@ -520,7 +522,7 @@ class XMarkdown(Markdown):
     def _parse_block(self, header, data, parts=False):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
         data = resolve_included_files(self, textwrap.dedent(data)) # clean up data  before processing 
-        typ, widths, _class, css_props, attrs = self._parse_params(header)
+        typ, prop, widths, _class, css_props, attrs = self._parse_params(header)
         
         if typ == "citations" or header.lstrip(' :').startswith("citations"): # both kind of blocks
             pre = '```' if typ == "citations" else '' # correct error message
@@ -539,7 +541,7 @@ class XMarkdown(Markdown):
         elif typ == "table":
             return self._parse_table(data, widths, _class, css_props, attrs)
         elif typ == "code":
-            return self._parse_code(data, _class, css_props, attrs)
+            return self._parse_code(data, prop, widths, _class, css_props, attrs)
         elif header.strip().startswith(":::") or typ in ("columns","multicol"): # simple flex ```columns without +++ or ::: block
             return self._parse_colon_block(header, data)
         else:
@@ -556,7 +558,7 @@ class XMarkdown(Markdown):
         STRICT_TAGS = ("pre","raw") # code is handled separately
         CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol","nav", *STRICT_TAGS) # tags that are captured by this parser
         
-        tag, widths, _class, css_props, attrs = self._parse_params(header)
+        tag, _, widths, _class, css_props, attrs = self._parse_params(header)
         
         if tag in CAPTURED_TAGS:
             if tag in STRICT_TAGS: # keep as is from further processing
@@ -581,7 +583,7 @@ class XMarkdown(Markdown):
         _class = " ".join([tag, _class, "columns" if tag == "multicol" else ""]) # add columns class if multicol
         return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{self._parse_nested(data, returns=True)}</div>{style}")]
     
-    def _parse_code(self, data, _class, props, attrs):
+    def _parse_code(self, data, prop, focus_lines, _class, props, attrs):
         params = inspect.signature(_highlight).parameters.keys()
         kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
         out = _highlight(data, css_class=_class, **kwargs)
@@ -589,7 +591,15 @@ class XMarkdown(Markdown):
         if leftover:
             out = re.sub(r"^<div([^>]*)>", rf"<div\1 {_inline_style(leftover)} {attrs}>",out, count=1)
         out = SourceCode(out)
-        out.raw = textwrap.dedent(data) # attach raw code
+        if focus_lines:
+            lines = lines=[int(l) - 1 for l in focus_lines] # convert to 0-based index for python
+            if min(lines) < 0:
+                return [error('IndexError',f"Focus lines {focus_lines} in markdown code blocks are 1-based index unlike python!")]
+            out = out.focus(lines) 
+        out.raw = textwrap.dedent(data) # attach raw code with even focused lines
+        
+        if prop and getattr(out, prop, None):
+            out = getattr(out, prop) # get property if available
         return [out]
                 
     def _parse_table(self, data, widths, _class, props, attrs):
@@ -610,8 +620,9 @@ class XMarkdown(Markdown):
         return [XTML(out)] # return table as is, it will be parsed by table extension
         
     def _parse_md_src(self, data, header):
-        typ, widths, _class, css_props, attrs = self._parse_params(header) 
-        src, = self._parse_code(data, _class, css_props, attrs) # list of one item
+        typ, prop, focus_lines, _class, kwargs, attrs = self._parse_params(header) 
+        kwargs["language"] = "markdown" # force markdown language anyhow
+        src, = self._parse_code(data, prop, focus_lines, _class, kwargs, attrs) # list of one item
         if typ not in ("md-before", "md-after"):  # normal md block
             self._md_ns[typ[3:]] = src # store variable without md- prefix to have available in processing below
         outputs = []
@@ -933,7 +944,7 @@ class xmd(metaclass=_XMDMeta):
     By default, the extensions `tables`, `footnotes`, `attr_list`, `md_in_html`, `def_list` are enabled.
 
     You can add extra markdown extensions using `Slides.xmd.extensions` or `ipyslides.xmd.extensions`.
-    See [markdown extensions](https://python-markdown.github.io/extensions/) for deatails.
+    See [markdown extensions](https://python-markdown.github.io/extensions/) for details.
     
     **Returns**: A direct call or xmd.parse method returns a string with HTML content if `returns=True` (default), otherwise display rich output objects.
     """

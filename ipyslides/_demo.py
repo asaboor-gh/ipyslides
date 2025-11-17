@@ -78,7 +78,7 @@ def demo_slides(slides):
             with plt.style.context('ggplot'):
                 fig, ax = plt.subplots(figsize=(3.4,2.6))
                 _ = ax.plot(x,np.cos(x))
-            slides.write(ax, s.focus_lines([0,3,4]))
+            slides.write(ax, s.focus([0,3,4]))
 
 
     # Plotly and Pandas DataFrame only show if you have installed
@@ -197,7 +197,7 @@ def demo_slides(slides):
                 ax.set_title(rf'$f(x)=\sin(x)$, 0 < x < {idx+1}')
                 ax.set_xlim([0,18])
                 ax.set_axis_off()
-                slides.write(s.focus_lines([idx - 10]),ax,widths=[60,40])
+                slides.write(s.focus([idx - 10]),ax,widths=[60,40])
 
                 if idx == 10:
                     slides.write('Unlike `interact/interactive`, this animation is based on slide frames, all of which are exported to HTML.',css_class='note-tip')
@@ -208,21 +208,21 @@ def demo_slides(slides):
     boxes = [slides.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in range(1,5)]
     with slides.build(-1) as s:
         slides.write('# Default Frames')
-        s.get_source().focus_lines([2,3]).display()
+        s.get_source().focus([2,3]).display()
         slides.PAGE() # want to show source alone first
         for item in slides.PAGE.iter(boxes):
             slides.write(item)
 
     with slides.build(-1) as s:
         slides.write('# Frames with \n#### code`PAGE.iter()` and Fancy Bullet List yoffset`0`')
-        s.get_source().focus_lines([2,3,4]).display()
+        s.get_source().focus([2,3,4]).display()
         slides.PAGE() # want to show source alone first
         for item in slides.PAGE.iter(boxes):
             slides.bullets([item], marker='💘').display()
 
     with slides.build(-1) as s:
         slides.write('# Frames with \n#### code`PART.iter()` and 2x2 grid of boxes yoffset`0`')
-        s.get_source().focus_lines(range(2,7)).display()
+        s.get_source().focus(range(2,7)).display()
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]
         for ws, cols in slides.PART.iter(zip(widths,objs)):

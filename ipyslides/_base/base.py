@@ -502,7 +502,7 @@ class BaseSlides:
             self.write("## Adding content on frames incrementally yoffset`0`")
             self.frozen(widget := (code := s.get_source()).as_widget()).display()
             # frozen in above line get oldest metadata for export
-            def highlight_code(slide): widget.value = code.focus_lines(range(slide.indexf + 1)).value
+            def highlight_code(slide): widget.value = code.focus(range(slide.indexf + 1)).value
             self.on_load(highlight_code)
         
             for ws, cols in self.PART.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):

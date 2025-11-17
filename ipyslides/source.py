@@ -17,9 +17,8 @@ from .formatters import _highlight, XTML
 # Do not use this in main work, just inside a function
 class SourceCode(XTML):
     """Returns the source code of the object as HTML.
-    Use `.show_lines(lines)` to show only selected lines (list/tuple/range).
-    Use `.focus_lines(lines)` to focus on selected lines (list/tuple/range).
-    Use indexing `source[lines]` to focus (if list) or show (if slice) lines.
+    Use `.show(lines)` to show only selected lines (list/tuple/range).
+    Use `.focus(lines)` to focus on selected lines (list/tuple/range).
     Use `.inline` property to get inline code object.
     Use `.collapsed` property to get collapsed code object.
     """
@@ -50,7 +49,7 @@ class SourceCode(XTML):
         else:
             return display(self) # Without collapsed
 
-    def show_lines(self, lines):
+    def show(self, lines):
         "Return source object with selected lines from list/tuple/range of lines. You can use list/slice indexes to show instead of this."
         if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
@@ -59,50 +58,50 @@ class SourceCode(XTML):
         middle[-1], end = middle[-1].split('</code>')
         middle[-1] += '</code>'
         max_index = len(middle) - 1
-        lines = sorted([idx for idx in lines if idx <= max_index]) # don't throw error, just skip out of bound indices
+        lines = sorted([idx for idx in lines if idx <= max_index]) # don't throw error
+        for line in lines:
+            if not isinstance(line,int) or line < 0:
+                raise ValueError(f'lines must be positive intergers, not {lines}!')
         
         new_lines = [start]
         picks = [-1,*lines]
         for a, b in zip(picks[:-1],picks[1:]):
             if b - a > 1: # Not consecutive lines
-                new_lines.append(f'<code class="code-no-focus"> + {b - a - 1} more lines ... </code>')
+                new_lines.append(f'<code class="dim"> + {b - a - 1} more lines ... </code>')
             new_lines.append('<code>' + middle[b])
         
         if lines and lines[-1] < max_index:
-            new_lines.append(f'<code class="code-no-focus"> + {max_index - lines[-1]} more lines ... </code>')
+            new_lines.append(f'<code class="dim"> + {max_index - lines[-1]} more lines ... </code>')
         
         return self.__class__(''.join([*new_lines, end]))     
     
-    def focus_lines(self, lines):
+    def focus(self, lines):
         "Return source object with focus on given list/tuple/range of lines. You can use tuple indexes to focus instead of this."
         if not isinstance(lines,(list,tuple,range)):
             raise TypeError(f'lines must be list, tuple or range, not {type(lines)}')
+        lines = sorted([idx for idx in lines])
+        for line in lines:
+            if not isinstance(line,int) or line < 0:
+                raise ValueError(f'lines must be positive integers, not {lines}!')
         
         _lines = []
         for i, line in enumerate(self.value.split('<code>'), start = -1):
             if i == -1:
                 _lines.append(line) # start things
             elif i not in lines:
-                _lines.append('<code class="code-no-focus">' + line)
+                _lines.append('<code class="dim">' + line)
             else:
                 _lines.append('<code>' + line)
         
         return self.__class__(''.join(_lines))
     
-    def __getitem__(self, key):
-        "Focus on lines if key is list, else show lines if key is slice."
-        if isinstance(key, list):
-            return self.focus_lines(key)
-        elif isinstance(key, slice):
-            return self.show_lines(list(range(key.start or 0, key.stop or 0, key.step or 1)))
-        return self.__class__(f'Invalid key type {type(key)!r} for SourceCode! Use slice (show) or list(focus).')
-    
     @property
     def inline(self): 
         "Return inline code object that can be embedded inside text."
+        klass = lambda attr: 'highlight inline' + (' dim' if 'dim' in attr else '')
         return XTML( 
-            '<br>'.join('<code class="highlight inline" style="white-space:pre-wrap;">' + c 
-                for c in re.findall(r'\<\s*code.*?\>(.*?\<\s*\/\s*code\s*\>)', 
+            '<br>'.join(f'<code class="{klass(attr)}" style="white-space:pre-wrap;">' + c 
+                for attr, c in re.findall(r'\<\s*code(.*?)\>(.*?\<\s*\/\s*code\s*\>)', 
                     self.value, flags=re.DOTALL | re.MULTILINE
         ))) # intended to be one liner, but leave for flexibility
     
@@ -116,7 +115,7 @@ class SourceCode(XTML):
 
 
 def _file2code(filename,language='python',name=None,**kwargs):
-    "Only reads plain text or StringIO, return source object with `show_lines` and `focus_lines` methods."
+    "Only reads plain text or StringIO, return source object with `show` and `focus` methods."
     try:
         text = filename.read() # if stringIO
     except:
@@ -127,7 +126,7 @@ def _file2code(filename,language='python',name=None,**kwargs):
 
 
 def _str2code(text,language='python',name=None,**kwargs):
-    "Only reads plain text source code, return source object with `show_lines` and `focus_lines` methods."
+    "Only reads plain text source code, return source object with `show` and `focus` methods."
     out = SourceCode(_highlight(text,language = language, name = name, **kwargs))
     out.raw = text
     return out
@@ -143,7 +142,7 @@ class code:
     - code.from_string(string) to get a source object from a string.
     - code.from_source(obj) to get a source object from a python object (class, function, module, method etc.).
     
-    **Returns**: `SourceCode` object with `show_lines` and `focus_lines` methods to show selective lines, as well as `.inline` property.
+    **Returns**: `SourceCode` object with `show` and `focus` methods to show selective lines, as well as `.inline` and `.collapsed` properties.
     """
     def __new__(cls, obj, language='python',name=None, css_class = None, style='default', color = None, background = None, hover_color = 'var(--bg3-color)', lineno = True, height='400px'):
         """Highlight code (any python object that has a source or str of code) with given language and style. 
@@ -175,7 +174,7 @@ class code:
     
     @classmethod
     def from_file(cls, file,language = None,name = None,**kwargs):
-        """Returns source object with `show_lines` and `focus_lines` methods. `name` is alternate used name for language.  
+        """Returns source object with `show` and `focus` methods. `name` is alternate used name for language.  
         `kwargs` are passed to `Slides.code`.     
         
         It tries to auto detect lanaguage from filename extension, if `language` is not given.
@@ -195,7 +194,7 @@ class code:
     
     @classmethod       
     def from_source(cls, obj,**kwargs):
-        "Returns source code from a given obj [class,function,module,method etc.] with `show_lines` and `focus_lines` methods. `kwargs` are passed to `Slides.code`"
+        "Returns source code from a given obj [class,function,module,method etc.] with `show` and `focus` methods. `kwargs` are passed to `Slides.code`"
         for _type in ['class','function','module','method','builtin','generator']:
             if getattr(inspect,f'is{_type}')(obj):
                 source = inspect.getsource(obj)
@@ -218,7 +217,7 @@ class code:
             write(s) # or s.display(), write(s)
             
         #s.raw, s.value are accesible attributes.
-        #s.focus_lines, s.show_lines are methods that are used to show selective lines.
+        #s.focus, s.show are methods that are used to focus/show selective lines.
         ```
         """ 
         frame = sys._getframe() 

@@ -510,6 +510,7 @@ def style_css(colors, fonts, layout, _root = False):
         'code': {
             'color': 'var(--fg2-color) !important',
             'font-family': 'var(--jp-code-font-family) !important',
+            '^.dim': {'opacity':'0.3 !important'}, # should work outside block too
         }, # external code tags
         'span.sig': {
             'color': 'var(--accent-color) !important',
@@ -561,7 +562,6 @@ def style_css(colors, fonts, layout, _root = False):
                     'word-break':'break-word', # for breaking words 
                     '^.err, ^.nn, ^.nc' : {'background': 'none !important', 'text-decoration': 'none !important',}, 
                 },
-                '^.code-no-focus': {'opacity':'0.3 !important'},
             },
         },
         '.highlight.numbered code': {
