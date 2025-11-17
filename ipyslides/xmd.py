@@ -283,7 +283,7 @@ class esc:
     
 
 # This shoul be outside, as needed in other modules
-def resolve_included_files(parser, text_chunk):
+def resolve_included_files(text_chunk):
     "Markdown files added by include`file.md[start:end]` should be inserted as plain."
     all_matches = re.findall(r"^(\s*)include\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for indent, match in all_matches:
@@ -311,6 +311,7 @@ def resolve_included_files(parser, text_chunk):
             start, end = None, None
 
         try:
+            # If we later need to add md-src vars here, we can access from XMarkdown._md_ns as it is a class level
             with open(filepath, "r", encoding="utf-8") as f:
                 lines = f.readlines()[slice(start,end)]
                 text = textwrap.indent("\n" + "".join(lines) + "\n", indent) # need inside ::: blocks
@@ -521,7 +522,7 @@ class XMarkdown(Markdown):
 
     def _parse_block(self, header, data, parts=False):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
-        data = resolve_included_files(self, textwrap.dedent(data)) # clean up data  before processing 
+        data = resolve_included_files(textwrap.dedent(data)) # clean up data  before processing 
         typ, prop, widths, _class, css_props, attrs = self._parse_params(header)
         
         if typ == "citations" or header.lstrip(' :').startswith("citations"): # both kind of blocks
@@ -685,7 +686,7 @@ class XMarkdown(Markdown):
         """Replaces variables with placeholder after conversion to respect all other extensions.
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
-        text = resolve_included_files(self, text)
+        text = resolve_included_files(text)
         text = char_esc.escape(text)  # Escape characters before processing
 
         text = self._resolve_nested(text)  # Resolve nested objects in form func`//text//` to func`html_repr`
