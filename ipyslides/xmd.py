@@ -383,8 +383,12 @@ class XMarkdown(Markdown):
         outputs = []
         for i, (typ, obj) in enumerate(blocks):
             if typ == "block":
-                if i > 0 and blocks[i-1][0] == "raw": # if previous was raw, pick if parts trigger was there
-                    obj = (*obj, True if blocks[i-1][1].strip().splitlines()[-1:] == ['++'] else False)  # this makes sure ++ starts at new line before block 
+                # Add part delimiter if previous block was raw and ended with ++
+                mode, data = blocks[i-1] if i > 0 else ('', '') # previous block
+                if mode == "raw" and data.strip().splitlines()[-1:] == ['++']: # this makes sure ++ starts at new line before block 
+                    outputs.append(_delim("PART")) 
+                
+                # Add other outputs after part delimiter
                 outputs.extend(self._parse_block(*obj))  # vars are substituted already inside, obj = (header, data)
             elif content := obj.strip():  # raw text but avoid empty stuff
                 parts = list(self._split_parts(content))
@@ -520,7 +524,7 @@ class XMarkdown(Markdown):
             text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
         return text_chunk
 
-    def _parse_block(self, header, data, parts=False):
+    def _parse_block(self, header, data):
         "Returns list of parsed block or columns or code, input is without ``` but includes langauge name."
         data = resolve_included_files(textwrap.dedent(data)) # clean up data  before processing 
         typ, prop, widths, _class, css_props, attrs = self._parse_params(header)
@@ -536,7 +540,7 @@ class XMarkdown(Markdown):
                 self._wr.write(data, css_class=_class)
             return cap.outputs
         elif typ in ("multicol","columns") and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns and multicol with display mode
-            return self._parse_multicol(data, widths, _class, parts) # simple columns will be handled inline 
+            return self._parse_multicol(data, widths, _class) # simple columns will be handled inline 
         elif "md-" in typ:
             return self._parse_md_src(data, header)
         elif typ == "table":
@@ -553,7 +557,7 @@ class XMarkdown(Markdown):
             except:
                 out.data = super().convert(f'```{header}\n{data}\n```') # Let other extensions parse block
             
-            return [out,] # list 
+            return [out,] # list is required
         
     def _parse_colon_block(self, header, data):
         STRICT_TAGS = ("pre","raw") # code is handled separately
@@ -637,7 +641,7 @@ class XMarkdown(Markdown):
         if "after" in typ: outputs.append(src)
         return outputs
 
-    def _parse_multicol(self, data, widths, _class, parts):
+    def _parse_multicol(self, data, widths, _class):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
         if not widths:
@@ -667,7 +671,6 @@ class XMarkdown(Markdown):
                 cap_cols.append(rows) 
 
             with self.active_parser(), capture_content() as cap:
-                if parts: display(_delim("PART")) # part delimiter for multicol++
                 self._wr.write(*cap_cols, widths=widths, css_class=_class)
             
             return cap.outputs
