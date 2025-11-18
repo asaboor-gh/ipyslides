@@ -136,6 +136,11 @@ def collapse_node(b):
     }
     return {k: f'{v} !important' for k, v in css.items()}
 
+def hide_node(b): 
+    "Used to hide div in frames navigation and print mode, but keep space."
+    return {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
+        
+
 def style_css(colors, fonts, layout, _root = False):
     uclass = get_unique_css_class()
     margin = 'auto' if layout.centered else 'unset'
@@ -311,9 +316,9 @@ def style_css(colors, fonts, layout, _root = False):
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
                 '@media print': { # For PDF printing of frames, data-hidden set by JS, first sellectors works for rows too beside top level
-                    '.jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': {
-                        ' , *': {'visibility': 'hidden !important',}, 
-                    },
+                    'margin': f'{margin} !important', # reinforce for clones in print
+                    'overflow': 'hidden !important', # no need to scroll in print
+                    '.jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': hide_node(True),
                 },
             },
             '@media print': { # For PDF printing dynamically set page size

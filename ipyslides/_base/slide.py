@@ -12,7 +12,7 @@ from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data
 from ._layout_css import background_css, get_unique_css_class
-from .styles import collapse_node
+from .styles import collapse_node, hide_node
 
 class Vars:
     """Container for markdown slide variables, to see and update variables
@@ -433,13 +433,6 @@ class Slide:
         if index < 0 or index >= self.nf:
             raise IndexError(f"Frame index {index} out of range for slide {self.number} with {self.nf} frames!")
         
-        # Helper to hide/show elements with proper collapse
-        def hide(b): 
-            return {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
-        
-        def collapse(b):
-            return {**collapse_node(b), '@media print': hide(b)} # somehow needs invisibility in print, otherwise shows up
-
         # Build CSS to show only current frame's content
         frame = self._fidxs[index]
         css_rules = {}
@@ -447,36 +440,36 @@ class Slide:
         # head content visible everywhere
         head_end = frame.get("head", -1) + 1 # CSS nth-child is 1-indexed
         if head_end > 0:
-            css_rules[f'^:nth-child(-n + {head_end})'] = hide(False)
+            css_rules[f'^:nth-child(-n + {head_end})'] = hide_node(False)
         
         # Collapse nodes between head and start
         start = frame["start"] + 1
         if head_end > 0 and start > head_end + 1:
-            css_rules[f'^:nth-child(n + {head_end + 1}):nth-child(-n + {start - 1})'] = collapse(True)
+            css_rules[f'^:nth-child(n + {head_end + 1}):nth-child(-n + {start - 1})'] = collapse_node(True)
         
         # Collapse nodes after end
         end = frame["end"] + 1
-        css_rules[f'^:nth-child(n + {end + 1})'] = collapse(True)
+        css_rules[f'^:nth-child(n + {end + 1})'] = collapse_node(True)
 
         # Handle PART incremental frames
         if "part" in frame:
             part_end = frame["part"] + 1
-            css_rules[f'^:nth-child(n + {start}):nth-child(-n + {part_end})'] = hide(False)
+            css_rules[f'^:nth-child(n + {start}):nth-child(-n + {part_end})'] = hide_node(False)
             # Hide content after part
             if part_end < end:
-                css_rules[f'^:nth-child(n + {part_end + 1}):nth-child(-n + {end})'] = hide(True)
+                css_rules[f'^:nth-child(n + {part_end + 1}):nth-child(-n + {end})'] = hide_node(True)
 
             # Handle column incremental display
             if "col" in frame:
                 col_idx = frame["col"]
                 # Within the PART output (which contains COLUMNS), hide columns after current one
                 col_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div'
-                css_rules[f'{col_sel}:nth-child(n + {col_idx + 2})'] = hide(True)
+                css_rules[f'{col_sel}:nth-child(n + {col_idx + 2})'] = hide_node(True)
 
                 if "row" in frame:
                     # Hide rows after current one in the current column
                     rows_hide = frame["row"] + 2 # +2 to start hiding after this row
-                    css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide(True)
+                    css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide_node(True)
 
         # Build final CSS with proper selector
         base_selector = f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child'
