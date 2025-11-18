@@ -120,7 +120,6 @@ class _Htmls:
     main    = HTML() 
     loading = HTML(layout=Layout(display='none')).add_class('Loading') #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
-    toast   = HTML().add_class('Toast') # For notifications
     pointer = LaserPointer() # For beautiful pointer
     hilite  = HTML() # Updated in settings on creation. For code blocks.
 @dataclass(frozen=True)
@@ -257,7 +256,6 @@ class Widgets:
         
         self.mainbox = VBox([
             self.htmls.loading, 
-            self.htmls.toast,
             self.htmls.main,
             self.htmls.theme,
             self.iw,

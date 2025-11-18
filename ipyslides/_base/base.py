@@ -26,9 +26,6 @@ class BaseSlides:
         self.settings = Settings(self, self.widgets)
         self.export_html = _HhtmlExporter(self).export_html
         self.notes = Notes(self, self.widgets) # Needs main class for access to notes
-        
-        self.toast_html = self.widgets.htmls.toast
-        
         self.widgets.checks.toast.observe(self._toggle_notify,names=['value'])
     
     def __setattr__(self, name: str, value):
@@ -39,15 +36,14 @@ class BaseSlides:
     def notify(self,content,timeout=5):
         """Send inside notifications for user to know whats happened on some button click. 
         Send 'x' in content to clear previous notification immediately."""
-        return self.widgets._push_toast(content,timeout=timeout)
+        if self.widgets.checks.toast.value:
+            return self.widgets._push_toast(content,timeout=timeout)
     
     def _toggle_notify(self,change):
         "Blocks notifications if check is not enabled."
-        if self.widgets.checks.toast.value:
-            self.toast_html.layout.visibility = 'visible' 
-            self.notify('Notifications are enabled now!')
-        else:
-            self.toast_html.layout.visibility = 'hidden'
+        self.notify('Notifications are enabled now!') # will only show when on
+        if not self.widgets.checks.toast.value:
+            self.widgets._push_toast('x') # clean previous notifications by this signal
     
     @property
     def uid(self):

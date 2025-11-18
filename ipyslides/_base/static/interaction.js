@@ -82,10 +82,9 @@ function printSlides(box, model) {
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
-        let outputArea = slide.querySelector('.jp-OutputArea');
-        if (outputArea) {
-            outputArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
-        }
+        let outArea = slide.querySelector('.jp-OutputArea');
+        if (outArea) { outArea.scrollTop = 0; } // scroll OutputArea to top to avoid cutoffs
+       
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
@@ -105,12 +104,6 @@ function printSlides(box, model) {
                 clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
                 clone.style.transform = 'translateZ(0) scale(1)'; // force reset transform for print to but need stuff in place
-                
-                let cloneArea = clone.querySelector('.jp-OutputArea'); 
-                if (cloneArea) {
-                    cloneArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
-                    cloneArea.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
-                }
                 
                 // Set visibility of parts if any, Do not change this to CSS only as
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
@@ -141,6 +134,12 @@ function printSlides(box, model) {
                 window._printOnlyObjs.push(clone);
                 slide.parentNode.insertBefore(clone, lastInserted.nextSibling);
                 lastInserted = clone; // update last inserted
+                clone.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
+                let cloneArea = clone.querySelector('.jp-OutputArea');
+                if (cloneArea) {
+                    cloneArea.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
+                    cloneArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
+                }
             }
         }
     }
@@ -307,33 +306,29 @@ function handleChangeFS(box,model){
     model.save_changes();
 }
 
-function handleToastMessage(toast, msg) {
-    if (msg.content){
-        function onClick(){
-            clearTimeout(toast.timerId); // clear previous timout even if null
-            toast.style.top="-120%";
-            toast.innerHTML = "";
-        };
-        onClick(); // Clear up previous things
-        
-        if (msg.content === "x") {
-            return false; // do nothing, cleared above 
-        }
+function showToast(box, msg) {
+    box.querySelectorAll('.ToastMessage').forEach(t => t.remove());
+    if (!msg.content || msg.content === "x") { return; } // empty message or x, do nothing
 
-        let div = document.createElement('div');
-        div.style = "padding:8px;font-size:16px;" // inline fonts are better
-        div.innerHTML = msg.content;
-        let btn = document.createElement('button');
-        btn.innerHTML = "<i class='fa fa-close'></i>";
-        btn.onclick = onClick;
-        toast.appendChild(btn);
-        toast.appendChild(div);
-        toast.style.top="4px";
+    let toast = document.createElement('div');
+    toast.style.transform = 'translateZ(0)'; // force containing button inside as aboslute
+    toast.innerHTML = `<div>${msg.content}</div>`; // to make div scrollable if needed
+    toast.className = 'ToastMessage';
+    let btn = document.createElement('button');
+    btn.innerHTML = "<i class='fa fa-close'></i>";
+    btn.onclick = () => {
+        toast.style.right = '-400px'; // triggers animation on exit in CSS
+        setTimeout(() => toast.remove(), 300); // remove after animation
+        clearTimeout(toast.timerId); // clear timeout if any
+    };
+    toast.appendChild(btn);
+    box.appendChild(toast);
 
-        if (msg.timeout) {
-            toast.timerId = setTimeout(onClick,msg.timeout) // already set to ms in python 
-        }
-    }
+    toast.style.right = '-400px'; // initial position
+    setTimeout(() => {
+        toast.style.right = '4px'; // triggers animation on enter in CSS
+    }, 50); // slight delay to allow initial position to register
+    toast.timerId = setTimeout(() => toast.remove(), msg.timeout || 3000); // default 3 seconds
 }
 
 function setScale(box, model) {
@@ -637,16 +632,14 @@ function render({ model, el }) {
         model.on("change:msg_tojs", () => {
             let msg = model.get("msg_tojs");
             if (!msg) {return false}; // empty message, don't waste time
-            handleMessage(model, msg, box);
+            if (document.hasFocus() && !document.hidden) { // only if document is in view of user
+                handleMessage(model, msg, box);
+            } // sometimes print and other command make issue in other tabs since notebook is a widget with synced state
         })
 
         // Handle notifications
-        let toast = box.getElementsByClassName('Toast')[0]; // Define once
-        toast.style = "top:-120%;transition: top 200ms"; // other props in CSS
-        toast.timerId = null; // Need to auto remove after some time
-
         model.on("msg:custom", (msg) => {
-            handleToastMessage(toast, msg);
+            showToast(box, msg);
         })
 
         // Reset size of drawing board instead of provided by widget

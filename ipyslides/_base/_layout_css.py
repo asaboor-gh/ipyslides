@@ -67,6 +67,8 @@ def layout_css(accent_color, aspect):
             "<.SlidesContainer": {"padding": "2px !important",}, # for box-shadow to appear all sides
             "^.SlidesWrapper": {
                 "container": "slides / inline-size !important",
+                "overflow": "hidden !important", # contain stuff inside
+                "@media print": {"overflow": "auto !important",}, # for print all should be visible
                 "z-index": "1 !important",
                 "aspect-ratio": f"{aspect} !important", # important in notebook context, where width collpases to cell
                 "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important", 
@@ -109,32 +111,35 @@ def layout_css(accent_color, aspect):
                         "background": "var(--accent-color) !important",
                     },
                 },
-                ".Toast, .TOC, .SidePanel": {
+                ".ToastMessage, .TOC, .SidePanel": {
                     "--text-size": "20px", # Don't need these to be changed with slide text size
                 },
-                ".Toast" : {
+                ".ToastMessage" : {
                     "position":"absolute",
-                    "right":"4px", # top is made for animation via javascript
-                    "top": "-120px", # Hides on load
-                    "max-width":"65%",
-                    "min-width":"300px",
-                    "min-height":"100px",
-                    "max-height":"65%", 
+                    "bottom": "4px", # right is set by JS
+                    "height": "min(180px, 65%)",
+                    "width":"min(400px, 65%)",
                     "z-index":"10000",
                     "border-radius": "8px",
                     "padding":"8px",
                     "overflow":"auto",
+                    "transition": "right 300ms ease-in-out",
                     **{f"{k}backdrop-filter": "blur(20px)" for k in ('', '-webkit-')},
                     "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
                     "border-image": "linear-gradient(to bottom,rgba(0,0,0,0) 0, rgba(0,0,0,0) 10%, var(--accent-color) 10% , var(--accent-color) 90%, rgba(0,0,0,0) 90%, rgba(0,0,0,0) 100%) 1/ 0 0 0 2px",
+                    "> div": {"overflow":"auto", "height":"100%"},
                     "> button": {
                         "position":"absolute",
                         "right":"4px",
                         "top":"4px",
+                        "width":"28px",
+                        "height":"28px",
                         "border":"none",
-                        "background":"none",
-                        "border-radius":"50%",
+                        "backdrop-filter":"blur(4px)",
+                        "border-radius":"50% !important",
                         "font-size":"20px",
+                        "cursor":"pointer",
+                        "^:hover": { "scale":"1.1", "color":"var(--accent-color) !important",},
                     },
                     "table": {"width": "100% !important",}, # override width
                     ":is(h1, h2, h3, h4, h5, h6, th)" : {"text-align": "left !important"},
