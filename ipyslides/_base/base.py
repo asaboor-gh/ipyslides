@@ -461,7 +461,7 @@ class BaseSlides:
             )
     
         self.build(-1, """
-        ```md-src
+        ```md-src.collapsed
         stack[(3,7)]`//
         ## Content Styling
         You can **style**{.error} or **color["teal"]`colorize`** your *content*{: style="color:hotpink;"} and *color["hotpink","yellow"]`text`*.
@@ -470,7 +470,7 @@ class BaseSlides:
         || %{self.css_styles}
         //`     
         ```
-        %{src.collapsed}
+        <md-src/>
         """, self=self)
         
         self.build(-1, '''

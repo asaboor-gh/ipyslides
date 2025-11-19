@@ -246,7 +246,7 @@ tagfixer = TagFixer()
 del TagFixer
 
 class char_esc:
-    r"""Utility class for escaping and restoring characters \@,\%,\| and \` using backslash in text."""
+    r"""Utility class for escaping and restoring characters \@,\%,\|, and \` using backslash in text."""
     _chars = "`@%|/" # Characters to escape
 
     @classmethod
@@ -311,7 +311,6 @@ def resolve_included_files(text_chunk):
             start, end = None, None
 
         try:
-            # If we later need to add md-src vars here, we can access from XMarkdown._md_ns as it is a class level
             with open(filepath, "r", encoding="utf-8") as f:
                 lines = f.readlines()[slice(start,end)]
                 text = textwrap.indent("\n" + "".join(lines) + "\n", indent) # need inside ::: blocks
@@ -325,8 +324,6 @@ def resolve_included_files(text_chunk):
 _extensions = Extensions() # Global instance of Extensions, don't delete class Extensions still
 
 class XMarkdown(Markdown):
-    _md_ns = {} # md-<var> stored here, stays across calls in session
-    
     def __init__(self):
         super().__init__(**_extensions.active)
         self._vars = {}
@@ -601,10 +598,11 @@ class XMarkdown(Markdown):
             if min(lines) < 0:
                 return [error('IndexError',f"Focus lines {focus_lines} in markdown code blocks are 1-based index unlike python!")]
             out = out.focus(lines) 
-        out.raw = textwrap.dedent(data) # attach raw code with even focused lines
+        out.raw = textwrap.dedent(data) # attach raw code as well to access
         
         if prop and getattr(out, prop, None):
             out = getattr(out, prop) # get property if available
+            
         return [out]
                 
     def _parse_table(self, data, widths, _class, props, attrs):
@@ -629,7 +627,7 @@ class XMarkdown(Markdown):
         kwargs["language"] = "markdown" # force markdown language anyhow
         src, = self._parse_code(data, prop, focus_lines, _class, kwargs, attrs) # list of one item
         if typ not in ("md-before", "md-after"):  # normal md block
-            self._md_ns[typ[3:]] = src # store variable without md- prefix to have available in processing below
+            esc._store[typ[3:]] = src # store variable excluding md- prefix to have available in processing below
         outputs = []
         if "before" in typ: outputs.append(src)
         if self._returns: # display context
@@ -691,7 +689,8 @@ class XMarkdown(Markdown):
         """
         text = resolve_included_files(text)
         text = char_esc.escape(text)  # Escape characters before processing
-
+        
+        text = self._resolve_md_vars(text)  # Resolve <md-var/> variables stored during md-var blocks
         text = self._resolve_nested(text)  # Resolve nested objects in form func`//text//` to func`html_repr`
         if self._slides and self._slides.this: # under building slide
             text = resolve_objs_on_slide(
@@ -710,6 +709,15 @@ class XMarkdown(Markdown):
             super().convert(
                 self._sub_vars(text) # sub vars before conversion
             ))
+    
+    def _resolve_md_vars(self, text):
+        # Replace <md-var/> variables stored during md-var blocks, 
+        # but reusing snippets expose internal state, AVOID THAT
+        all_matches = re.findall(r"(?<![`])<md-([\w\d]+)/>", text) # avoid ` before < to not match code syntax
+        for match in all_matches:
+            value = esc._store.pop(match, error('NameError', f'Markdown variable {match!r} is not defined or already used!'))
+            text = text.replace(f"<md-{match}/>", self._handle_var(value, f'::: md-{match}'), 1)
+        return text
     
     def _var_info(self, match_str):
         try: 
@@ -774,14 +782,11 @@ class XMarkdown(Markdown):
             def handle_match(match):
                 key,*_ = _matched_vars(match.group()) 
                 # First check if it is an escaped variable
-                esc._store.update(self._md_ns)
                 if key in esc._store: # escaped variable
                     value = esc._store.pop(key) # remove after using once
                     if isinstance(value, DOMWidget) or key.endswith('DISPLAY'): # Anything with display or widget
                         return self._handle_var(value, ctx = match.group())
                     return self._handle_var(hfmtr.vformat(f"{{{match.group()[2:-1].strip()}}}", (), {key: value})) # clear spaces around variable
-                else: # clear md- variables after using once from this store if any left, to avoid clutter
-                    esc._store = {k:v for k, v in esc._store.items() if not k in self._md_ns}
                 
                 if key not in user_ns: # top level var without ., indexing not found
                     err = error('NameError', f'name {key!r} is not defined')

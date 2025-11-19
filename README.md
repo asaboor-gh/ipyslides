@@ -158,7 +158,7 @@ Use `slides.export_html` to build static slides that you can print to PDF. Read 
 - **PDF Export**
 Experimental support for direct PDF printing from slides using `Ctrl + P` or `Ctrl + Alt + P` (merged frames) is available. Use `Save as PDF` option and enable background graphics if necessary. If issues arise in direct printing, consider exporting to HTML first and printing from there.
 
-Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML slides which you can print to PDF.
+Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML slides which you can print to PDF. See [demo.pdf](docs/demo.pdf) for an example exported PDF.
 
 ---
 
