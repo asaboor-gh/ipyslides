@@ -25,8 +25,7 @@ class InteractionWidget(anywidget.AnyWidget):
     _css =  Path(__file__).with_name('static') / 'interaction.css'
     _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
     _colors = traitlets.Dict(jupyter_colors).tag(sync=True) # for export
-    _nfs = traitlets.Dict().tag(sync=True) # frame counts per slide, for js side use
-    _pfs = traitlets.Dict().tag(sync=True) # parts counts per slide, for js side use
+    _parts = traitlets.Dict().tag(sync=True) # parts data for each slide, for js side use
     _fkws = traitlets.Dict().tag(sync=True) # footer kws for js side use
     _fsels = traitlets.Unicode(focus_selectors, read_only=True).tag(sync=True) # need for frontend focus management by click
     

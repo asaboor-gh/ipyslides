@@ -345,17 +345,14 @@ class Settings:
             self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
             merge_frames = True if btn is self._widgets.buttons.print2 else False
             
-            # Update frame counts first per slide for js side
-            self._widgets.iw._nfs = {s.number: 1 if merge_frames else s.nf for s in self._slides}
-            
             # Update frames indices for print
             parts = {}
             for slide in self._slides:
-                slide._set_print_css(merge_frames = merge_frames)
+                slide._set_css_classes('OneFrame' if merge_frames else None, remove='OneFrame') # remove and add conditionally
                 if slide._fidxs and not merge_frames: # no parts if no frames or merge frames
                     parts[slide.number] = slide._fidxs
                     
-            self._widgets.iw._pfs = parts
+            self._widgets.iw._parts = parts
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'
     

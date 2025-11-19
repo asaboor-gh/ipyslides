@@ -95,16 +95,6 @@ class Slide:
         self._set_defaults()
         self.vars = Vars(self) # to access variables info and update them
         self._alt_print = ipwHTML(layout={'margin':'0'}).add_class('print-only') # alternate print content for this slide which is shown dynamically on slides
-
-        if not self._contents: # show slide number hint there at first creation
-            self.set_css({
-                f' > .jp-OutputArea:empty:after': {
-                    'content': f'"{self!r}"',
-                    'color': 'var(--accent-color)',
-                    'font-size': '2em',
-                }
-            }) # This will be removed when content is added or bg image is set
-
     
     def __setattr__(self, name: str, value):
         if not name.startswith('_') and hasattr(self, name):
@@ -127,7 +117,7 @@ class Slide:
         self._split_frames = True
         self._set_refs = True
         self._toc_args = () # empty by default
-        self._widget.add_class(f"n{self.number}").add_class("base") # base is needed to distinguisg clones during printing where it is removed
+        self._widget.add_class(f"n{self.number}")
         self._tcolors = {} # theme colors for this slide only
         self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
   
@@ -312,6 +302,7 @@ class Slide:
     
 
     def _reset_frames(self, offset=0):
+        self._widget.remove_class('HasFrames') # reset first
         frames, contents = [], self.contents  # get once
         pages = [
             i for i, c in enumerate(contents) 
@@ -340,8 +331,9 @@ class Slide:
                 if key in frame and isinstance(frame[key], int):
                     frames[i][key] += offset
         
-        self._frame_idxs = frames if len(frames) > 1 else ()
+        self._frame_idxs = tuple(frames) if len(frames) > 1 else ()
         if self._frame_idxs:
+            self._widget.add_class('HasFrames') # make sure class is added
             self.first_frame() # Bring up first frame to activate CSS
         elif hasattr(self, '_frame_idxs'): # from previous run may be
             del self._frame_idxs
@@ -472,7 +464,7 @@ class Slide:
                     css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide_node(True)
 
         # Build final CSS with proper selector
-        base_selector = f'^.n{self.number}.base > .jp-OutputArea > .jp-OutputArea-child'
+        base_selector = f'^.n{self.number}.HasFrames > .jp-OutputArea > .jp-OutputArea-child'
         final_css = {base_selector: css_rules}
     
         return _styled_css(final_css).value
@@ -515,17 +507,10 @@ class Slide:
     def first_frame(self):
         "Jump to first frame."
         return self._reset_indexf(-1, self.next_frame)  # go left and switch forward
-
     
     def last_frame(self):
         "Jump to last frame"
         return self._reset_indexf(self.nf, self.prev_frame) # go right and swicth back
-    
-    def _set_print_css(self, merge_frames = False):
-        if merge_frames:
-            self._fcss.value = '' # Just let free print go
-        else: 
-            self._fcss.value = self._frame_css(0) # set first frame for print mode without other actions
     
     def _set_progress(self):
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
@@ -712,7 +697,7 @@ class Slide:
 
     @property
     def _css_class(self):
-        "Readonly dom classes on this slide sepaarated by space."
+        "Readonly dom classes on this slide separated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
     def set_bg_image(self, src=None, opacity=1, filter=None, contain=False):
@@ -733,8 +718,6 @@ class Slide:
         } # store for export etc
         
         self._set_alt_print() # update alternate print-only content
-        if not self._contents:
-            self.set_css({}) # Remove empty CSS
         self._app.widgets.iw.msg_tojs = 'SwitchView' # enforces js to load background image, does not work otherwise
         self._app.navigate_to(self.index) # Go there to see effects
     

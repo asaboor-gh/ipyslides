@@ -74,8 +74,7 @@ function handleColsRows(outputs, frame) {
 function printSlides(box, model) {
     let slides = Array.from(box.getElementsByClassName('SlideArea')); 
     window._printOnlyObjs = [];
-    const frameCounts = model.get('_nfs') || {}; // get frame counts per slid
-    const parts = model.get('_pfs') || {}; // get part counts per slide
+    const parts = model.get('_parts') || {}; // get part info for all slides
     const fkws = model.get('_fkws') || {}; // get footer kws
     box.style.setProperty('--printPadding', fkws.pad + 'px'); // set padding for print mode
     tldrawLinks(box);
@@ -84,22 +83,23 @@ function printSlides(box, model) {
         let slide = slides[n];
         let outArea = slide.querySelector('.jp-OutputArea');
         if (outArea) { outArea.scrollTop = 0; } // scroll OutputArea to top to avoid cutoffs
-       
+        
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
-        const numFrames = slideNum !== null ? (frameCounts[slideNum] || 1) : 1;
+        const numFrames = (slideNum !== null && Array.isArray(parts[slideNum])) ? (parts[slideNum].length || 1) : 1;
         slide.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, 0));
         slide.style.setProperty('--slide-number', n) // set slide number for CSS only if needed
         slide.style.setProperty('--show-snumber', fkws.snum ? 'block' : 'none'); // show only if numbered
         // ensure background image is set for printing, if user may not naviagted all slides or message was sent when slides were not yet loaded
         setBgImage(slide); // main Image is not needed for print, only per slides
         
-        if (slide.classList.contains('base') && numFrames > 1) {
+        if (slide.classList.contains('HasFrames') && numFrames > 1) {
             let lastInserted = slide; // to keep insertion order
             
-            for (let i = 1; i < numFrames; i++) { // single frame is already there
+            // we hide original in print to avoid removing stuff, and its too difficult to restore later
+            for (let i = 0; i < numFrames; i++) { 
                 let clone = slide.cloneNode(true); // deep clone
-                clone.classList.remove('base'); // remove base class to avoid CCS clashes
+                clone.classList.remove('HasFrames'); // remove base class to let it display
                 clone.classList.add('print-only'); // avoid cluttering screen view
                 clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
@@ -139,6 +139,7 @@ function printSlides(box, model) {
                 if (cloneArea) {
                     cloneArea.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
                     cloneArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
+                    cloneArea.style.maxHeight = '100%'; // avoid spilling over footer
                 }
             }
         }
@@ -317,14 +318,14 @@ function showToast(box, msg) {
     let btn = document.createElement('button');
     btn.innerHTML = "<i class='fa fa-close'></i>";
     btn.onclick = () => {
-        toast.style.right = '-400px'; // triggers animation on exit in CSS
+        toast.style.right = '-420px'; // triggers animation on exit in CSS
         setTimeout(() => toast.remove(), 300); // remove after animation
         clearTimeout(toast.timerId); // clear timeout if any
     };
     toast.appendChild(btn);
     box.appendChild(toast);
 
-    toast.style.right = '-400px'; // initial position
+    toast.style.right = '-420px'; // initial position, a litte more right than width
     setTimeout(() => {
         toast.style.right = '4px'; // triggers animation on enter in CSS
     }, 50); // slight delay to allow initial position to register
@@ -363,7 +364,7 @@ function handleScale(box, model) {
     const resizeObs = new ResizeObserver((entry) => {
         setScale(box, model);
     });
-
+    box._resObs = resizeObs; // need to cleanup later
     resizeObs.observe(box);
     setScale(box, model); // First time set
 }
@@ -639,7 +640,9 @@ function render({ model, el }) {
 
         // Handle notifications
         model.on("msg:custom", (msg) => {
-            showToast(box, msg);
+            if (document.hasFocus() && !document.hidden) { // only if document is in view of user
+                showToast(box, msg);
+            }
         })
 
         // Reset size of drawing board instead of provided by widget
@@ -676,6 +679,10 @@ function render({ model, el }) {
     };
     return () => { 
         // clean up at removal time
+        if (box && box._resObs) {
+            box._resObs.disconnect();
+            delete box._resObs;
+        }
 	};
 }
 

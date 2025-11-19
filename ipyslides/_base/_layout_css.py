@@ -202,6 +202,7 @@ def layout_css(accent_color, aspect):
                     "@media print": {
                         "^.HideSlide": {"visibility": "visible !important",},
                         "^.HideSlide *": {"visibility": "inherit !important",},
+                        '^.HasFrames:not(.OneFrame)': {'display': 'none !important'}, # only clones are shown if multiple frames
                     },
                     ".jp-OutputArea": {
                         "width": "100% !important",

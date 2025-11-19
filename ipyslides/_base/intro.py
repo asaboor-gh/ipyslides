@@ -116,6 +116,7 @@ Use `Save as PDF` option instead of Print PDF in browser to make links work in o
 ::: note-warning
     - PDF printing is experimental and may not work as expected in all browsers and tested only in JupyterLab.
     - In case of issues with frames not displaying properly using `Ctrl + P`, try `Ctrl + Alt + P` to fallback to merged frames.
+    - Sometimes content may move up or down in print, to fix it, use `yoffset` per slide or globally in `Slides.settings.layout`.
     - Make sure your presentation is clean for print. "Inline Notes" are only meant for personal reference or sharing slides with notes.
 
 **Printing from Exported HTML File**<br>
