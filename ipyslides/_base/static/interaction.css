@@ -31,6 +31,7 @@
     .ipyslides-print-node.SlidesWrapper.SlidesWrapper {
         display: table !important; /* Manages auto height for multiple slides */
         --contnetScale : 1 !important; /* Defualt for printing at same value */
+        --show-snumber: none; /* set with JS */
     }
     .ipyslides-print-node.ipyslides-print-node,
     .ipyslides-print-node.SlidesWrapper > * { 
@@ -80,8 +81,6 @@
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0) {
         --bar-bg-color: transparent; /* set with JS */
-        --slide-number: 0; /* set with JS */
-        --show-snumber: none; /* set with JS */
     }
     /* Ensure clones also respect overflow */
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.print-only {
@@ -89,8 +88,7 @@
         box-sizing: border-box !important;
     }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::after {
-        counter-reset: snum var(--slide-number); /* important to pick from CSS variable set by JS */
-        content: counter(snum) !important;  
+        content: attr(data-snum) !important; /* set with JS */
         display: var(--show-snumber) !important;  
         position: absolute !important;
         bottom: 3px !important; /* 1px above the bar */

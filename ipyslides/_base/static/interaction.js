@@ -76,6 +76,7 @@ function printSlides(box, model) {
     window._printOnlyObjs = [];
     const parts = model.get('_parts') || {}; // get part info for all slides
     const fkws = model.get('_fkws') || {}; // get footer kws
+    box.style.setProperty('--show-snumber', fkws.snum ? 'block' : 'none'); // show only if numbered
     box.style.setProperty('--printPadding', fkws.pad + 'px'); // set padding for print mode
     tldrawLinks(box);
     
@@ -88,8 +89,7 @@ function printSlides(box, model) {
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = (slideNum !== null && Array.isArray(parts[slideNum])) ? (parts[slideNum].length || 1) : 1;
         slide.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, 0));
-        slide.style.setProperty('--slide-number', n) // set slide number for CSS only if needed
-        slide.style.setProperty('--show-snumber', fkws.snum ? 'block' : 'none'); // show only if numbered
+        slide.dataset.snum = n; // set data attribute for slide number to display even without frames
         // ensure background image is set for printing, if user may not naviagted all slides or message was sent when slides were not yet loaded
         setBgImage(slide); // main Image is not needed for print, only per slides
         
@@ -110,6 +110,7 @@ function printSlides(box, model) {
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
                     let outputs = Array.from(clone.querySelector('.jp-OutputArea').childNodes); // corresponds to contents on python side
                     let frame = parts[slideNum][i]; // {head, start, end, row, col}
+                    clone.dataset.snum = frame.page !== undefined ? `${n}.${frame.page}` : n; // set data attribute for slide number to display
                     
                     // Remove everything NOT in head or start-end range 
                     for (let j = outputs.length - 1; j >= 0; j--) {

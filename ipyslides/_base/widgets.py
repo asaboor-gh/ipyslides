@@ -85,7 +85,7 @@ class _Buttons:
     """
     Instantiate under `Widgets` class only.
     """
-    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<, Ctrl + Space]').add_class('Arrows').add_class('Prev-Btn')
+    prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<]').add_class('Arrows').add_class('Prev-Btn')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     panel   =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Side Panel [S]').add_class('Menu-Item').add_class('Panel-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')

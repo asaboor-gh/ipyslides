@@ -79,6 +79,7 @@ def demo_slides(slides):
                 fig, ax = plt.subplots(figsize=(3.4,2.6))
                 _ = ax.plot(x,np.cos(x))
             slides.write(ax, s.focus([0,3,4]))
+            slides.write('Double click on the plot to focus on it!')
 
 
     # Plotly and Pandas DataFrame only show if you have installed

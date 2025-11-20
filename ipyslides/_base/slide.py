@@ -316,6 +316,8 @@ class Slide:
             pages = [{"head": -1, "start": 0, "end": len(contents) - 1}] # One page by default
         
         for ip, page in enumerate(pages):
+            if len(pages) > 1:
+                page["page"] = ip + 1 # page number within slide to display only if more than one page
             # Parts inside head only take effect on first frame
             start = 0 if ip == 0 and page["head"] > -1 else page["start"]
             if parts := self._resolve_parts(page, contents, range(start, page["end"] + 1)):
@@ -499,6 +501,8 @@ class Slide:
 
         try:
             condition = func()
+        except Exception as e:
+            self._app.notify(f"Error while resetting frame index: {e}", 10)
         finally:
             if not condition:
                 self._indexf = old
@@ -515,10 +519,16 @@ class Slide:
     def _set_progress(self):
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
         value = round(unit * ((self.index or 0) - (self.nf - self.indexf - 1)/self.nf), 4)
-        self._app.widgets._progbar.children[0].layout.width = f"{value}%"
-        self._app.widgets._snum.description = f"{self._app.wprogress.value or ''}" # empty for zero
+        self._app.widgets._progbar.children[0].layout.width = f"{value}%"  
+        self._app.widgets._snum.description = self._get_snum(self.indexf) # current slide number with page if any
         self._app.widgets._snum.tooltip = f"{self._app._current}" # hint for current slide number
 
+    def _get_snum(self, fidx):
+        page = "" # default empty
+        if self.nf > 1 and (page := self._fidxs[fidx].get("page","")):
+            page  = f'.{page}'  # add dot before page number if any
+        return f"{self.index or ''}{page}" # empty for zero
+    
     def _handle_refs(self):
         if hasattr(self, '_refs'): # from some previous settings and change
             delattr(self, '_refs') # added later  only if need

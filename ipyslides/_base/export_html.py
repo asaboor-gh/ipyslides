@@ -53,12 +53,12 @@ class _HhtmlExporter:
         content = ''
         for item in self.main:
             objs = item.contents # get conce
-            frames = []
+            frames, snums = [], []
             
             if not item._fidxs:
                 frames = [objs]
             else:
-                for frame in item._fidxs:
+                for fi, frame in enumerate(item._fidxs):
                     head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
                     frame_objs = []
                     
@@ -79,9 +79,10 @@ class _HhtmlExporter:
                                 else: # normal Writer
                                     frame_objs.append(objs[i])
                 
-                    frames.append(frame_objs)            
+                    frames.append(frame_objs) 
+                    snums.append(item._get_snum(fi))           
             
-            for k, objs in enumerate(frames):
+            for k, (snum, objs) in enumerate(zip(snums, frames)):
                 _html = item._speaker_notes(returns=True) # speaker notes at top if any, returns string
                 for out in objs:
                     _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
@@ -93,7 +94,7 @@ class _HhtmlExporter:
 
                 number = ""
                 if self.main.settings.footer.numbering:
-                    number = f'<span class="Number">{item.index or ""}</span>' # 0 handled
+                    number = f'<span class="Number">{snum}</span>' 
 
                 content += textwrap.dedent(f'''
                     <section id="{item._sec_id}">
