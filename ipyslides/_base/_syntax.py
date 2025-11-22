@@ -59,12 +59,13 @@ These files are watched for edits if included in synced markdown file via `Slide
 
 Citations
 : - alert`cite\`key1,key2\`` / alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
-- With citations mode set as 'footnote', you can add alert`refs\`ncol_refs\`` or code` Slides.refs ` to add citations anywhere on slide. If \`ncol_refs\` is not given, it will be picked from layout settings.
+- You can add alert`refs\`ncol_refs\`` or code` Slides.refs ` to add citations anywhere on slide. If \`ncol_refs\` is not given, it will be picked from layout settings.
   Using alert`refs\`ncol_refs, key1, key2,...\`` will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
-- Force a citation to be shown inline by appending a ! even in footnote mode, such as alert`\@key!` or alert`cite\`key1,key2!\``.
+  Unused citations will be added automatically at end of slide.
+- Force citations to be shown inline by appending a !, such as alert`\@key!` or alert`cite\`key1,key2!\``.
 - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
 code["markdown"]`
- ::: citations [inline or footnote]
+ ::: citations
     \@key1: Saboor et. al., 2025
     \@key2: A citations can span multiple lines, but key should start on new line
 `
@@ -96,7 +97,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: columns/multicol [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `<md-var_name/>`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
-    | `::: citations [inline or footnote]` | Add citations in the block, with `inline` or `footnote` mode. Use `\@key: value` syntax to add citations in block. |
+    | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
 ::: details

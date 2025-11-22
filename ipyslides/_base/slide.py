@@ -115,7 +115,6 @@ class Slide:
         self._has_vars = () # Update in _slide function for markdown slides only
         self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._split_frames = True
-        self._set_refs = True
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}")
         self._tcolors = {} # theme colors for this slide only
@@ -197,6 +196,7 @@ class Slide:
                 break # Found non-delimiter / non-empty content, stop here
             
             self._contents = captured.outputs[:stop]
+            self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display(go_there=True)    
 
@@ -243,8 +243,6 @@ class Slide:
                     obj.update_display() # UPDATE metadata objects like columns
                 elif (w := widget_from_data(obj.data)): # Output on top or in children
                     [c.update_display() for c in getattr(w, 'children',[w]) if isinstance(c, _Output)]
-            else: # On successful for loop, handle refs at end
-                self._handle_refs()
             
         # after others to take everything into account
         self._reset_frames(offset = self._offset)
@@ -530,18 +528,22 @@ class Slide:
         return f"{self.index or ''}{page}" # empty for zero
     
     def _handle_refs(self):
-        if hasattr(self, '_refs'): # from some previous settings and change
-            delattr(self, '_refs') # added later  only if need
-        
-        if all([self._citations, self._set_refs, self._app.cite_mode == 'footnote']): # don't do in inline mode
-            if self.nf > 1:
-                return self._app.notify(f"Slide {self.number} has frames, so refs should be set explicitly!", 5)
-        
-            self._refs = html('div', # need to store attribute for export
-                sorted(self._citations.values(), key=lambda x: x._id), 
-                css_class='Citations', style = '')
-            self._refs.display()
+        "Display unused citations at end of slide."
+        unused_citations = [c for c in self._citations.values() if not getattr(c, '_used', False)]
+        with capture_content() as cap:
+            if ret := self._build_refs(unused_citations):
+                display(ret)
+        return cap.outputs
     
+    def _build_refs(self, citations, ncol=None):
+        "Used by `Slides.refs()` as well as internally to display unused citations at end of slide."
+        ncol = ncol if isinstance(ncol, int) else self._app.settings.layout.ncol_refs
+        return html('div',
+            sorted(citations, key=lambda x: x._id), 
+            css_class='Citations text-small', 
+            style = f'column-count: {ncol} !important;'
+        ) if citations else None 
+        
     def _speaker_notes(self, returns=False):
         if self._notes:
             out = html('div', self._notes, 

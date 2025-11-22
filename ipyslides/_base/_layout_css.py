@@ -193,10 +193,8 @@ def layout_css(accent_color, aspect):
                 },
                 ".SlideArea": {
                     "^.Out-Sync > .jp-OutputArea::before" : {
-                        "content": "'citations got out of sync, rerun corresponding slide source to update'",
+                        "content": "'⛓️‍💥 Rebuild slide to update citations!'",
                         "color":"red",
-                        "border": "1px solid red",
-                        "display": "block",
                     },
                     "^.HideSlide *": {"visibility": "hidden !important",},
                     "@media print": {
@@ -208,7 +206,9 @@ def layout_css(accent_color, aspect):
                         "width": "100% !important",
                         "height": "auto !important", # This is must for layout
                         "box-sizing": "border-box !important",
+                        ".jp-OutputPrompt.jp-OutputArea-prompt": {"display": "none !important",},
                     },  # Otherwise it shrinks small columns
+                    
                     **_focus_css,
                 },
                 "kbd" : {

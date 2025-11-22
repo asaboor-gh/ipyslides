@@ -87,9 +87,6 @@ class _HhtmlExporter:
                 for out in objs:
                     _html += f'<div style="width: 100%; box-sizing:border-box;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
 
-                if hasattr(item,'_refs'):
-                    _html += item._refs.value # in case of footnote citations
-
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
 
                 number = ""

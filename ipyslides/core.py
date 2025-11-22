@@ -10,7 +10,7 @@ from IPython import get_ipython
 from IPython.display import display, clear_output
 
 from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars
-from .writer import hold, write, _DELIMITER
+from .writer import hold, write
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim
 from . import utils
 from . import dashlab
@@ -149,8 +149,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(self._slide, magic_kind="cell", magic_name="slide")
             self.shell.register_magic_function(self.__xmd, magic_kind="line_cell", magic_name="xmd")
-
-        self._cite_mode = 'footnote'
 
         self._slides_dict =  {} # Initialize slide dictionary, updated by user or by _setup.
         self._iterable = []  # self._collect_slides() # Collect internally
@@ -392,10 +390,6 @@ class Slides(BaseSlides,metaclass=Singleton):
     def clips_dir(self):
         "Get path to directory where clips are saved. If not exists, created!"
         return utils.get_clips_dir()
-    
-    @property
-    def cite_mode(self):
-        return self._cite_mode
 
     @property
     def _current(self):
@@ -446,10 +440,6 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _cite(self, keys):
         self.verify_running("Citations can be added only inside a slide constructor!")
         citeds = [self._cite_key(key.strip()) for key in keys.split(',')] # avoid whitespaces around key
-
-        if self.cite_mode == "inline":
-            return '<br/>'.join(citeds)
-        
         return '<sup>,</sup>'.join(citeds) 
 
     def _cite_key(self, key):
@@ -457,19 +447,15 @@ class Slides(BaseSlides,metaclass=Singleton):
         Citations corresponding to keys used can be added by ` Slides.set_citations ` method.
         """
         cited = _Citation(slide=self.this, key=key)
-
-        if self.cite_mode == "inline":
-            return cited.inline_value  # Just write here
-        else: # Set _id for citation in footnote mode
-            cited._id = list(self.this._citations.keys()).index(key) + 1 # Get index of key from unsorted ones
+        cited._id = list(self.this._citations.keys()).index(key) + 1 # Get index of key from unsorted ones
 
         # Return string otherwise will be on different place, avoid newline here
         return f'<a href="#{key}" class="citelink"><sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>'
     
-    def _nocite(self, key): # @key! without adding to citations
+    def _nocite(self, key): # @key!, cite`key!` without adding to citations
         if key in self._citations:
-            return utils.textbox(self._citations[key].partition("<p>")[-1].rpartition("</p>")[0],
-            left="initial",top="initial").value
+            return self.html('span',self._citations[key].partition("<p>")[-1].rpartition("</p>")[0],
+            style = dict(left="initial",top="initial"), css_class = "citetext text-box").value
         return utils.error("KeyError",f"Set value for cited key {key!r} and build slide again!").value
 
     
@@ -497,10 +483,10 @@ class Slides(BaseSlides,metaclass=Singleton):
             else:
                 slide._set_css_classes(add = 'Out-Sync') # will go synced after rerun
 
-    def set_citations(self, data, mode='footnote'):
+    def set_citations(self, data):
         r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
         key should be cited in markdown as cite\`key\` / \@key, optionally comma separated keys.
-        `mode` for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by code`Slides.settings.layout(..., ncol_refs=N)`.
+        Number of columns in displayed citations are determined by code`Slides.settings.layout(..., ncol_refs=N)` or markdown refs\`N\`/`Slides.refs(N)`.
 
         ```python
         set_citations({"key1":"value1","key2":"value2"})
@@ -519,7 +505,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         ::: note
             - You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.
-            - Citations are replaced with new ones, so latest use of this function reprsents available citations.
+            - Citations are replaced with new ones, so latest use of this function represents available citations.
             - Makrdown equivalent of this function is a citation block only supported in `Slides.sync_with_file`'s context.
         """
         if isinstance(data, dict):
@@ -531,14 +517,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             })
         else:
             raise TypeError(f"data should be a dict or string content (including read from file), got {type(data)}")
-    
-        # Update mode and display after setting citations
-        if mode not in ["inline", "footnote"]:
-            raise ValueError(f'citation mode must be one of "inline" or "footnote" but got {mode}')
-        
-        if self._cite_mode != mode:
-            self._cite_mode = mode # Update first as they need in display update
-            self._set_unsynced(True) # will go synced after rerun 
         
         # Finally write resources to file in assets
         with self.set_dir(self._assets_dir):
@@ -578,23 +556,22 @@ class Slides(BaseSlides,metaclass=Singleton):
                 s.update_display(go_there=False)
  
     def toc(self, title='## Contents {.align-left}', highlight = False):
-        "You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` or toc[True]`title`, and `Slides.toc_widget as well."
+        """You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` 
+        or toc[True]`title`, and `Slides.toc_widget as well."""
         self.verify_running("toc can only be added under slides constructor!")
         self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there
     
-    def refs(self, ncol=2, *keys):
-        r"""Displays references when in footnote mode (explicit use on slides with frames required). 
+    def refs(self, ncol=None, *keys):
+        r"""Return XTML or None for references with all keys or a subset of keys which were used without `!` at end.
+        Unused keys from all calls to this function will be added at end of slide automatically. 
         References are set in `Slides.set_citations`. In markdown, use refs\`ncol\` syntax.
-        You can optionally provide keys to show only specific citations at a place, which is useful on slides with frames.
         """
         self.verify_running("refs can only be added under slides constructor!")
-        self.this._set_refs = False # already added here
         objs = self.this._citations.values() if not keys else [v for k,v in self.this._citations.items() if k in keys]
-        if self._cite_mode == "footnote":
-            _cits = ''.join(v.value for v in sorted(objs, key=lambda x: x._id))
-            return self.html("div", _cits, css_class = 'Citations text-small', 
-                style = f'column-count: {ncol} !important;')
+        for obj in objs:
+            obj._used = True  # mark as used to track unused ones
+        return self.this._build_refs(objs, ncol=ncol)
 
     def link(self, label, back_label=None, icon=None, back_icon=None):
         r"""Create a link to jump to another slide. Use `label` for link text 
@@ -904,7 +881,6 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
     
-    
     class fsep:
         """::: note-warning
             Legacy frame seperator for backward compatibility and will be deprecated. It only creates
@@ -940,15 +916,9 @@ class Slides(BaseSlides,metaclass=Singleton):
         def iter(cls, iterable, stack=None):
             "Loop over iterable. Frame separator is add before each item and at end of the loop."
             cls._app_ins().verify_running()
-            if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
-                raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
-
-            for item in iterable:
-                cls(stack) # put one separator before
-                yield item
-            cls(stack) # put after all done to keep block separated
+            return _iter_on_delim(iterable, cls, stack)
     
-    class PAGE(_DELIMITER):
+    class PAGE:
         """Page delimiter! Use `Slides.PAGE()` or import at top level to create a new page in slide.
         In markdown slides, use two dashes -- on its own line.
         
@@ -958,8 +928,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Use code`PAGE.iter(iterable)` to create multiple pages from iterable automatically.
         """
         _type = "PAGE"
+    
+        def __init__(self):
+            display(_delim(self._type))
+        
+        @classmethod
+        def iter(cls, iterable):
+            "Loop over given iterable by adding a separator before each item and at end of the loop."
+            return _iter_on_delim(iterable, cls)
 
-    class PART(_DELIMITER):
+    class PART(PAGE):
         """Part delimiter! Use `Slides.PART()` or import at top level to create a new part in slide/page.
         In markdown slides, use two plus signs `++` on its own line, optionally add content right after `++ `.
         
@@ -976,3 +954,13 @@ class Slides(BaseSlides,metaclass=Singleton):
             super().__init__()
             write([contents], css_class=css_class) # do not let write add extra delimiter in contents
             display(_delim(self._type)) # separtor after content is important
+            
+            
+def _iter_on_delim(iterable, cls, *args):
+    # NOTE: Place it directly in PAGE after fsep is deprecated.
+    if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
+        raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
+    for item in iterable:
+        cls(*args) # put one separator before
+        yield item
+    cls(*args) # put after all done to keep block separated

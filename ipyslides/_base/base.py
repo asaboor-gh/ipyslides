@@ -138,12 +138,9 @@ class BaseSlides:
         content = content.replace(match1, '') # clean up
         if getattr(self,'_bib_md','') != match1:
             self._bib_md = match1 # set for next test
-            head, refs = match1.split('\n', 1) # split into mode and references
-            mode = head[3:].replace('citations','',1).strip() # remove name citations
+            _, refs = match1.split('\n', 1) # split into mode and references
             refs = refs.rstrip('` ') # remove trailing ` or space, 
-            if not mode:
-                mode = self._cite_mode # keep same
-            self.set_citations(textwrap.dedent(refs), mode=mode)
+            self.set_citations(textwrap.dedent(refs))
         return content
     
     def sync_with_file(self, start_slide_number, /, path, interval=500):
@@ -156,7 +153,7 @@ class BaseSlides:
         This helps modularity of content, and even you can link a citation file in markdown format as shown below. Read more in `Slides.xmd.syntax` about it.
 
         ```markdown
-         ```citations footnote
+         ```citations
          @key1: Saboor et. al., 2025
          @key2: A citations can span multiple lines, but key should start on new line
          <!-- Or put this content in a file 'bib.md' and then inside citations block use include`bib.md` -->
@@ -323,7 +320,7 @@ class BaseSlides:
         
         from ..core import Slides
 
-        self.set_citations({'A': 'Citation A', 'B': 'Citation B'}, mode = 'footnote')
+        self.set_citations({'A': 'Citation A', 'B': 'Citation B'})
         self.settings.footer(text=self.get_logo("1em") + "IPySlides Documentation", date=None)
 
         with self.build(0): # Title page
@@ -421,9 +418,9 @@ class BaseSlides:
         with self.build(-1):
             self.write(r'''
                 ## Citations and Sections
-                Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data, mode)` method.
-                Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
-                code`Slides.settings.layout(..., ncol_refs = int)`. @A
+                Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data)` method.
+                Any key that ends with `!` is displayed inplace. Number of columns in displayed citations are determined by 
+                code`Slides.settings.layout(..., ncol_refs = int)` or locally by code`Slides.refs(ncol)`. @A
                        
                 Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
                 can be added with alert`toc\`title\``.

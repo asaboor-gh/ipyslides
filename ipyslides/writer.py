@@ -29,24 +29,7 @@ class hold:
 
     def display(self):
         self.__call__()
-    
-class _DELIMITER:
-    "Internal class to create page/part delimiters."
-    _type: str = None  # to be set in subclass
-    def __init__(self):
-        display(_delim(self._type))
         
-    @classmethod
-    def iter(cls, iterable):
-        "Loop over given iterable by adding a separator before each item and at end of the loop."
-        if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
-            raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
-        
-        for item in iterable:
-            cls() # put one separator before
-            yield item
-        cls() # put after all done to keep block separated
-    
 
 def _fmt_html(output):
     "Format captured rich output and others to html if possible. Used in other modules too."

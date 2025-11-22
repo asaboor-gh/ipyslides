@@ -12,7 +12,7 @@ def demo_slides(slides):
     slides.set_citations(r'''
         @pf: This is refernce to FigureWidget using alert`cite\`pf\`` syntax
         @This: I was cited for no reason
-    ''', mode = 'footnote')
+    ''')
 
     # title slide should alway be overwritten by 0 
     slides.build(0, """

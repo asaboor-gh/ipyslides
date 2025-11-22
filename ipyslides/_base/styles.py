@@ -715,17 +715,18 @@ def style_css(colors, fonts, layout, _root = False):
         '.click-wrapper': { # PDF/HTML -only clicker at bottom right
             'position': 'absolute !important',
             '@media print': {'position': 'fixed !important',},
-            'right': '16px !important', # space for slide number
+            'right': '28px !important', # space for slide number
             'bottom': '2px !important',
-            'width': '110px !important',
-            'max-width': '110px !important',
+            'width': 'auto !important',
             'height': '21px !important',
-            'display': 'flex', # no impportant as in print-only display is none
+            'display': 'inline-flex', # no impportant as in print-only display is none
+            'flex-direction': 'row !important',
+            'align-items': 'center !important',
             'z-index': '6 !important',
-            'justify-content': 'space-evenly !important',
+            'justify-content': 'flex-end !important', # align to right
             '.clicker': {
                 'display':'inline-block',
-                'padding':'0 5px !important', # PDF safe
+                'padding':'0 8px !important', # PDF safe
                 'flex-grow':'1',
                 'color':'var(--accent-color)',
                 'text-align':'center',
