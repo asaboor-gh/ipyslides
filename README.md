@@ -156,7 +156,7 @@ See more examples in [DashLab repository](https://github.com/asaboor-gh/dashlab)
 Use `slides.export_html` to build static slides that you can print to PDF. Read export details in settings panel, where you can also export with a single click. 
 
 - **PDF Export**
-Experimental support for direct PDF printing from slides using `Ctrl + P` or `Ctrl + Alt + P` (merged frames) is available. Use `Save as PDF` option and enable background graphics if necessary. If issues arise in direct printing, consider exporting to HTML first and printing from there.
+Experimental support for direct PDF printing from slides using `Ctrl + P` (use options in side panel to prepare for print) is available. Use `Save as PDF` option and enable background graphics if necessary. If issues arise in direct printing, consider exporting to HTML first and printing from there.
 
 Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML slides which you can print to PDF. See [demo.pdf](docs/demo.pdf) for an example exported PDF.
 

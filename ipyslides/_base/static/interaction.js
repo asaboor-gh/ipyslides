@@ -200,8 +200,8 @@ function keyboardEvents(box,model) {
             message = 'NEXT';
         } else if (key in keyMessage && !e.ctrlKey){
             message = keyMessage[key];
-        } else if (e.ctrlKey && key === 'p') { // Ctrl + Shift + P is picked by system, so using Alt instead
-            message = e.altKey ? 'PRINT2' : 'PRINT'; // Ctrl + P for print, Ctrl + Alt + P for print merged frames
+        } else if (e.ctrlKey && key === 'p') { 
+            message = 'PRINT'; // Ctrl + P for print
         } 
 
         model.set("msg_topy", message);
@@ -223,6 +223,8 @@ function toggleFS(box) {
 function handleMessage(model, msg, box) {
     if (msg === "TFS") {
         toggleFS(box);
+    } else if (msg === "ClearLoading") {
+        cleanView(model); // clear loading splash
     } else if (msg === 'RESCALE') {
         setScale(box, model);
     } else if (msg === "SwitchView") {
@@ -609,15 +611,19 @@ function markPrintable(el, className) {
   }
 }
 
+function cleanView(model) {
+    setTimeout(() => {
+        model.set("msg_topy", "CleanView"); // after view, fix all others
+        model.save_changes();
+    }, 1000)
+}
+
 function render({ model, el }) {
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
     style.onload = () => { 
         // Send a clean message after a second, without any error caused by other functions
-        setTimeout(() => {
-            model.set("msg_topy", "CleanView"); // after view, fix all others
-            model.save_changes();
-        }, 1000)
+        cleanView(model);
 
         let box = style.parentNode.parentNode;
         box.tabIndex = -1; // Need for event listeners, should be at top

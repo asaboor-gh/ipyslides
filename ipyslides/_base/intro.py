@@ -102,7 +102,6 @@ key_combs = f"""color['var(--accent-color)']`Move cursor/airmouse to left/right 
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
 | {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}              | {key_maps["S"]}        |
 | {_key('Ctrl')} + {_key('P')}                |      <none>                                       | {key_maps["P"]}        |
-| {_key('Ctrl')} + {_key('Alt')} + {_key('P')}|      <none>                                | {key_maps["P"]} (merged frame)|
 
 - color['var(--fg3-color)']`{_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation.`
 - color['var(--fg3-color)']`//Double-click on images/plots and focusable elements (see `Slides.css_styles`) to zoom into focused view.//`
@@ -110,12 +109,12 @@ key_combs = f"""color['var(--accent-color)']`Move cursor/airmouse to left/right 
 
 how_to_print = f"""
 **Direct Printing from Slides**<br>
-You can print slides to PDF using `Ctrl + P` or `Ctrl + Alt + P` (merged frames). Corresponding buttons are also available in settings panel.
+You can print slides to PDF using `Ctrl + P`. Use options in settings panel to prepare slides for print.
 Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Also enable background graphics in print dialog if necessary.
 
 ::: note-warning
     - PDF printing is experimental and may not work as expected in all browsers and tested only in JupyterLab.
-    - In case of issues with frames not displaying properly using `Ctrl + P`, try `Ctrl + Alt + P` to fallback to merged frames.
+    - In case of issues with frames not displaying properly using `Ctrl + P`, export to HTML and then print.
     - Sometimes content may move up or down in print, to fix it, use `yoffset` per slide or globally in `Slides.settings.layout`.
     - Make sure your presentation is clean for print. "Inline Notes" are only meant for personal reference or sharing slides with notes.
 
@@ -129,6 +128,7 @@ into Clips GUI in side panel. On Linux, you need alert` xclip ` or alert`wl-past
 ::: note-tip
     - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
     - Print slides with notes by enabling `Inline Notes` option in settings panel before print/export. Notes appear at top to grab immediate attetion of the speaker.
+    - Use `Merge Parts` option in settings panel to print all parts of a page/slide as one page/slide.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip

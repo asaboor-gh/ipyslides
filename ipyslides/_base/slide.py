@@ -383,6 +383,18 @@ class Slide:
     def _fidxs(self): return getattr(self, '_frame_idxs', ())
     
     @property
+    def _export_fidxs(self):
+        if self._app.widgets.checks.merge.value:
+            # Merge PART frames into single PAGE frame for export
+            merged_frames = []
+            for frame in self._fidxs:
+                frame = {k:v for k,v in frame.items() if k in ('head','start','end', 'page')} # remove part, col, row info
+                if not frame in merged_frames: # unique frames only
+                    merged_frames.append(frame)
+            return tuple(merged_frames) if len(merged_frames) > 1 else () # should not single frame
+        return self._fidxs    
+    
+    @property
     def nf(self):
         "Number of total frames."
         return len(self._fidxs) or 1 # each slide is single frame

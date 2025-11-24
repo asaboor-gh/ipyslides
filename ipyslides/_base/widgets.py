@@ -5,7 +5,7 @@ and then provided to other classes via composition, not inheritance.
 from dataclasses import dataclass
 from collections import namedtuple
 
-from traitlets import observe, validate
+from traitlets import observe
 import ipywidgets as ipw
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
@@ -42,8 +42,8 @@ class TOCWidget(ListWidget):
     def _jump_to_section(self, change):
         if change.new:
             self._app.navigate_to(change.new.si) # jump at slide index
-            if self._app.widgets.is_panel_open():
-                self._app.widgets._ctxmenu.select('panel', False) # close panel 
+            if self._app.widgets.panelbox.is_open():
+                self._app.widgets.panelbox.toggle(False) # close panel
 
 class CtxMenu(ListWidget):
     def __init__(self, ws, *args, **kwargs):
@@ -75,6 +75,12 @@ class CtxMenu(ListWidget):
 
     def show(self, x, y, units='%'):
         "Open menu at given x,y coordinates in given units."
+        if self.ws.panelbox.is_open():
+            self._set_opts('panel')
+        elif 'FullScreen' in self.ws.mainbox._dom_classes:
+            self._set_opts('fscreen','laser','draw','panel','ksc')
+        else:
+            self._set_opts()
         self.layout.left = f'{x}{units.strip()}' 
         self.layout.top = f'{y}{units.strip()}'
         self.layout.visibility = 'visible'
@@ -117,7 +123,7 @@ class CtxMenu(ListWidget):
         self.options = [{k:v} for k,v in self._state.items() if not keys or k in keys] 
         self.index = None # reset index after options change to allow re-selection of same item
     
-    def is_toggle(self, key):
+    def _istoggle(self, key):
         return bool(self._opts_map.get(key, {}).get("iconFalse", False))
     
     @observe('value')
@@ -125,7 +131,7 @@ class CtxMenu(ListWidget):
         if change.new and isinstance(change.new, dict):
             key, value = list(change.new.items())[0]
             # First update menu's visible state if not same
-            self.update_state(key, lambda old: not old if self.is_toggle(key) else old)
+            self.update_state(key, lambda old: not old if self._istoggle(key) else old)
             value = self._state.get(key, None)
             if key in self._handlers:
                 self._handlers.get(key, lambda ctx, val: None)(self, value)
@@ -169,9 +175,50 @@ class DrawWidget(ipw.Box):
             self.ws.mainbox.focus() # it doesn't stay their otherwise
 
 class SidePanel(TabsWidget):
-    # Need to add panel closing button here
-    # panel   =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Side Panel [S]').add_class('Menu-Item').add_class('Panel-Btn')
+    def __init__(self, ws, *args, **kwargs):
+        self.ws = ws
+        btn = Button(icon= 'chevronl', tooltip='Close Side Panel').add_class('Menu-Item').add_class('Panel-Btn')
+        btn.on_click(lambda btn: self.toggle(False)) # close panel on button click
+        super().__init__(*args, **kwargs)
+        self.add_class('SidePanel')
+        self.toggle(False) # initially closed
+        self._build_tabs()
+        # self.children += (btn,) # add button at the end, so it's not part of tabs stack
     
+    def _build_tabs(self):
+        _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
+        settings = VBox([
+            HTML('<b>Layout and Theme</b>',layout = _html_layout),
+            self.ws.sliders.fontsize,
+            self.ws.sliders.width,
+            self.ws.theme,
+            HTML('<b>Additional Features</b>',layout = _html_layout),
+            self.ws.checks.focus, self.ws.checks.rebuild, self.ws.checks.notes,
+            self.ws.checks.toast, self.ws.checks.reflow,
+            HTML('<b>PDF Printing (Experimental) / HTML Export</b>',layout = _html_layout),
+            HTML(html('details',[html('summary','Printing Info'), how_to_print]).value),
+            self.ws.checks.inotes,
+            self.ws.checks.merge,
+            VBox([self.ws.buttons.print, self.ws.buttons.export],
+                layout=Layout(margin='0 0 0 calc(var(--jp-widgets-inline-label-width) - 4px)')
+            ),
+            self.ws.checks.confirm,
+            self.ws._tmp_out,
+            self.ws.notes, # Just to be there for acting on a popup window
+        ],layout=Layout(width='100%',height='100%',overflow_y='scroll',min_width='0',padding="8px"))
+        
+        self._clipsTab = VBox([],layout = Layout(width='100%',height='100%',overflow_y='auto',min_width='0')) # clips box will be filled later
+        self.children = [settings, self.ws.tocbox, self._clipsTab]
+        self.titles = ['<i class="fa fa-settings"></i> Settings','<i class="fa fa-bars"></i> Table of Contents','<i class="fa fa-camera"></i> Clips']
+    
+    def is_open(self):
+        return self.layout.width != '0'
+    
+    def toggle(self, visible):
+        "Show/hide side panel."
+        self.ws._ctxmenu.update_state('panel', visible) # make icons consistent
+        self.layout.width = "min(400px, 100%)" if visible else "0"
+        self.layout.overflow = 'auto' if visible else 'hidden'
         
 class Output(fmtrs._Output):
     __doc__ = ipw.Output.__doc__ # same docs as main
@@ -217,9 +264,8 @@ class _Buttons:
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
     menu    =  Button(icon='rows', layout= Layout(width='auto',height='auto'), tooltip ='Open Context Menu').add_class('Menu-Btn').add_class('Menu-Item') 
     source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
-    export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
-    print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + P')
-    print2  =  Button(icon='file-pdf',description="Print Slides (merged frames)",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + Alt + P')
+    export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='max-content'))
+    print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='max-content'), tooltip='Ctrl + P')
 
 @dataclass(frozen=True)
 class _Htmls:
@@ -240,6 +286,7 @@ class _Checks:
     """
     reflow  = ipw.Checkbox(value = False,description='Reflow Content',layout=auto_layout)
     inotes  = ipw.Checkbox(value = False,description='Inline Notes (PDF only)',layout=auto_layout,)
+    merge   = ipw.Checkbox(value = False,description='Merge Parts (HTML/PDF)',layout=auto_layout)
     notes   = ipw.Checkbox(value = False,description='Notes Popup',layout=auto_layout) # do not observe, just keep track when slides work
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)
@@ -301,52 +348,15 @@ class Widgets:
         self.navbox = VBox([
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
-
-        _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
-        
         self.tocbox = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto',min_width='0')).add_class('TOC')
-        navbar = ipw.ToggleButtons(options=[(s,i) for s, i in zip(['Settings','TOC','Clips'],range(3))],icons=['settings','bars','camera']).add_class('TopBar')
-        self.panelbox = ipw.AppLayout(
-            header =  HBox([navbar], layout=Layout(justify_content='space-between', width='100%')).add_class('header'),
-            left_sidebar = VBox([
-                HTML('<b>Layout and Theme</b>',layout = _html_layout),
-                self.sliders.fontsize,
-                self.sliders.width,
-                self.theme,
-                HTML('<b>Additional Features</b>',layout = _html_layout),
-                self.checks.focus, self.checks.rebuild, self.checks.notes,
-                self.checks.toast, self.checks.reflow, self.checks.inotes,
-                HTML('<b>PDF Printing (Experimental) / HTML Export</b>',layout = _html_layout),
-                HTML(html('details',[html('summary','Printing Info'), how_to_print]).value),
-                self.buttons.print, 
-                self.buttons.print2,
-                self.buttons.export,
-                self.checks.confirm,
-                self._tmp_out,
-                self.notes, # Just to be there for acting on a popup window
-            ],layout=Layout(width='100%',height='100%',overflow_y='scroll',min_width='0',padding="8px")), # initial padding for open child
-            center = self.tocbox, # TOC box is center
-            right_sidebar = VBox([],layout = Layout(width='100%',height='100%',overflow_y='auto',min_width='0')), # Empty right sidebar
-            layout = Layout(height='0',overflow='hidden'), pane_widths = [1,0,0], pane_heights=['36px',1, 0],
-        ).add_class('SidePanel') 
-
-        def _set_pane_widths(change):
-            widths = {0: [1,0,0], 1:[0,1,0],2:[0,0,1]}
-            if change.new in widths:
-                self.panelbox.pane_widths = widths[change.new] # set widths based on selected button
-                for w, item in zip(widths[change.new], ['left_sidebar','center','right_sidebar']):
-                    getattr(self.panelbox,item).layout.padding = f"{8*w}px" # dynamic padding to avoid overflow
-            
         
-        navbar.observe(_set_pane_widths, names=['value']) # set widths on button click
-
         def _toggle_tocbox(btn):
-            if not self.is_panel_open():
-                self._ctxmenu.select('panel', True) # open panel
-            navbar.value = 1 # Set TOC button active
+            if not self.panelbox.is_open():
+                self.panelbox.toggle(True) # open panel
+            self.panelbox.selected_index = 1 # select toc tab
         
         self.buttons.toc.on_click(_toggle_tocbox) # Toggle TOC box on click
-        
+        self.panelbox = SidePanel(self)
         self.slidebox = Box([
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
@@ -392,8 +402,4 @@ class Widgets:
                 raise ValueError(f"timout should be int/float in seconds or None, got {timeout}")
             
             self.iw.send(to_send) # Send notification
-    
-    def is_panel_open(self):
-        "Check if side panel is open."
-        return self.panelbox.layout.height != '0'
         

@@ -270,31 +270,27 @@ def layout_css(accent_color, aspect):
                     "transform": "translateZ(0)", # to create new stacking context for absolute children
                     "border": "none",
                     "padding": "0 !important",
-                    "width": "min(400px, 100%) !important",
+                    "padding-top": "8px !important", 
+                    "height": "100% !important",
+                    "width": "0", # set by Python, don't add important here
                     "z-index": "10",
                     "top": "0px !important",
                     "left": "0px !important",
-                    "transition": "height 400ms ease-in-out",
+                    "transition": "width 400ms ease-in-out",
                     "overflow": "hidden !important",
                     "@container slides (max-width: 400px)": {"width": "100% !important"}, # reinforce width
-                    ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",},
-                    ":not(.TopBar)": {
-                        ":is(button, .jupyter-button)": {
-                            "width": "max-content !important",
-                            "min-height": "28px !important",
-                        },
-                    },
-                    ".header": {
-                        "background": "var(--bg3-color) !important",
-                        "box-shadow": "0 1px 2px #8984 !important", # subtle shadow
-                        "button": {"direction": "rtl !important"}, # why toggle buttons icons are on right? flipping direction to fix
-                    }, 
+                    ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",}, 
                     "> *": {"transition": "padding-top 400ms ease-in-out",},
                     "^, *": {"box-sizing": "border-box !important",},
                     ".Panel-Btn": {
+                        "position": "absolute !important",
+                        "top": "0px !important",
+                        "right": "8px !important",
+                        "width": "28px !important",
+                        "height": "28px !important",
                         "border": "none !important",
                         "outline": "none !important",
-                        "font-size": "20px",
+                        "font-size": "24px",
                         "background": "transparent !important",
                         "> i": {
                             "color": "var(--accent-color) !important",
@@ -391,7 +387,7 @@ def layout_css(accent_color, aspect):
                              "overflow": "hidden !important", # avoid jump on hover too
                         },
                     },
-                    ".Toc-Btn, .Menu-Btn, .Source-Btn": {
+                    ".Toc-Btn, .Menu-Btn": {
                         "min-width": "28px",
                         "width": "28px", # need this too
                     },  # Avoid overflow in small screens
@@ -483,37 +479,6 @@ def layout_css(accent_color, aspect):
                     "border-radius": "0 !important",
                     "border": "none !important",
                     "font-weight": "normal !important",
-                },
-            },
-            ".TopBar > div": {
-                "display": "flex",
-                "overflow-x": "auto",
-                "overflow-y": "hidden", # hides useless scrollbars
-                "min-height": "36px !important",
-                "align-items": "center !important",
-                "justify-content": "space-around !important",
-                "padding": "4px !important",
-                "box-sizing": "border-box !important",
-                "button": {
-                    "font-size": "14px !important",
-                    "min-width": "max-content !important",
-                    "width": "auto !important", # To make equal widths
-                    "flex-grow": "1 !important",
-                    "flex-shrink": "1 !important",
-                    "height": "28px !important",
-                    "outline": "none !important",
-                    "border": "none !important",
-                    "box-shadow": "none !important",
-                    "background": "transparent !important",
-                    "> i": {
-                        "color": "var(--accent-color) !important",
-                    },
-                    "^:disabled,^[disabled]": {
-                        "display": "none !important",
-                    },
-                    "^:active, ^.mod-active": {
-                        "border-bottom": "1px solid var(--accent-color) !important", # like a navbar
-                    },
                 },
             },
             "<.jp-OutputArea-child": {

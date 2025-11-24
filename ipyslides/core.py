@@ -621,7 +621,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._auto_rebuild('ondemand') # keep auto_rebuild state, but register if needed
         self._force_update()  # Update before displaying app, some contents get lost
         self.settings._update_theme() # force it, sometimes Inherit theme don't update
-        with self._loading_splash(None, self.get_logo('48px', 'IPySlides')): # need this to avoid color flicker in start
+        with self._loading_splash(self.get_logo('48px', 'IPySlides'), delay=True): # need this to avoid color flicker in start
             display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
 
     def close_view(self):
@@ -812,24 +812,20 @@ class Slides(BaseSlides,metaclass=Singleton):
             return xmd(cell, returns = False)
 
     @contextmanager
-    def _loading_splash(self, widget, extra = None):
-        if isinstance(widget, ipw.DOMWidget):
-            widget.disabled = True  # Avoid multiple clicks
+    def _loading_splash(self, extra = None, delay = False):
         self.widgets.htmls.loading.layout.display = "block"
         self.widgets.htmls.loading.value = (extra or '') + self.icon('loading', color='var(--accent-color, skyblue)',size='48px').value
         try:
             yield
         finally:
-            if isinstance(widget, ipw.DOMWidget):
-                widget.disabled = False
+            if not delay:
                 self.widgets.htmls.loading.value = ""
                 self.widgets.htmls.loading.layout.display = "none"
-            # In case of None, when slides are displayed, it will be clear via javascript
-            
-
+            else:
+                self.widgets.iw.msg_tojs = "ClearLoading"
 
     def _force_update(self, ctx=None, value=None):
-        with self._loading_splash(ctx, extra = 'Updating widgets...'):
+        with self._loading_splash('Updating widgets...'):
             for slide in self[:]:  # Update all slides
                 if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotlty etc
                     slide.update_display(go_there=False)
@@ -852,9 +848,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     def _update_toc(self):
         tocs = [(s.index, s._section) for s in self._iterable if s._section]
-        children = [
-            ipw.HTML('<b> Table of Contents</b>',layout=dict(border_bottom='1px solid #8988', margin='0 0 8px 0'))
-        ]
+        children = []
 
         if not tocs:
             children.append(self.html('',

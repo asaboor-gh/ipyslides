@@ -91,8 +91,6 @@ class InteractionWidget(anywidget.AnyWidget):
             self._on_fs_change(self._menu, True if msg == 'FS' else False)
         elif msg == 'PRINT':
             self._buttons.print.click()
-        elif msg == 'PRINT2':
-            self._buttons.print2.click()
         
         self.msg_topy = "" # Reset for successive simliar changes
     
@@ -122,11 +120,8 @@ class InteractionWidget(anywidget.AnyWidget):
             ctx.ws.mainbox.remove_class('FullScreen')   
     
     def _toggle_panel(self, ctx):
-        closed = ctx.ws.panelbox.layout.height == '0'
-        ctx.update_state('panel', closed) # make icons consistent
-        ctx.ws.panelbox.layout.height = "100%" if closed else "0"
-        ctx.ws.panelbox.layout.overflow = 'auto' if closed else 'hidden'
-        ctx._set_opts('panel') if closed else ctx._set_opts() # selective options
+        closed = not ctx.ws.panelbox.is_open()
+        ctx.ws.panelbox.toggle(closed) # show/hide panel
 
 
 @_fix_trait_sig

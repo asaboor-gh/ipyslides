@@ -298,11 +298,10 @@ class Settings:
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"]) # set reflow through layout._reflow
         self._widgets.checks.inotes.observe(self._update_theme, names=["value"]) # set inline notes through layout._inotes
         self._widgets.buttons.print.on_click(self._print_pdf)
-        self._widgets.buttons.print2.on_click(self._print_pdf)
         self._wslider.observe(self._update_size, names=["value"])
         self._update_theme({'owner':'layout'})  # Trigger Theme with aspect changed as well
         self._update_size(change=None)  # Trigger this as well
-        self._widgets.panelbox.right_sidebar.children = _clipbox_children() # Set clipbox children
+        self._widgets.panelbox._clipsTab.children = _clipbox_children() # Set clipbox children
 
         self._traits = [key for key, value in self.__dict__.items() if isinstance(value, ConfigTraits)]
         parameters=[Parameter('self', Parameter.POSITIONAL_ONLY), 
@@ -325,16 +324,16 @@ class Settings:
         self.__dict__[name] = value
 
     def _print_pdf(self, btn):
-        with disabled(self._widgets.buttons.print,self._widgets.buttons.print2): # disable both buttons to avoid multiple clicks
+        with disabled(self._widgets.buttons.print): # disable button to avoid multiple clicks
             self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
-            merge_frames = True if btn is self._widgets.buttons.print2 else False
             
             # Update frames indices for print
             parts = {}
             for slide in self._slides:
-                slide._set_css_classes('OneFrame' if merge_frames else None, remove='OneFrame') # remove and add conditionally
-                if slide._fidxs and not merge_frames: # no parts if no frames or merge frames
-                    parts[slide.number] = slide._fidxs
+                frames = slide._export_fidxs
+                slide._set_css_classes('OneFrame' if not frames else None, remove='OneFrame') # remove and add conditionally
+                if frames: # merged parts automatically handled
+                    parts[slide.number] = frames
                     
             self._widgets.iw._parts = parts
             # Send message to JS to start print
