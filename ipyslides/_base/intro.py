@@ -132,7 +132,7 @@ into Clips GUI in side panel. On Linux, you need alert` xclip ` or alert`wl-past
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip
-    - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
+    - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
     - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
 
 **Key Bindings**{{.success}} {_Icon("pencil", color="var(--accent-color)", rotation=45)}

@@ -5,15 +5,15 @@ and then provided to other classes via composition, not inheritance.
 from dataclasses import dataclass
 from collections import namedtuple
 
-from traitlets import observe
+from traitlets import observe, validate
 import ipywidgets as ipw
 from ipywidgets import HTML, VBox, HBox, Box, Layout, Button
 from tldraw import TldrawWidget
-from dashlab import ListWidget, JupyTimer
+from dashlab import ListWidget, JupyTimer, TabsWidget
 
 from . import styles
 from ._widgets import InteractionWidget, NotesWidget, LaserPointer
-from .intro import get_logo, how_to_print
+from .intro import get_logo, how_to_print, instructions, key_combs
 from ..utils import html, htmlize
 from .. import formatters as fmtrs
   
@@ -42,10 +42,137 @@ class TOCWidget(ListWidget):
     def _jump_to_section(self, change):
         if change.new:
             self._app.navigate_to(change.new.si) # jump at slide index
-            if self._app.widgets.is_panel_open(): # only if panel was open, otherwise don't open by clicking on another view
-                self._app.widgets.buttons.panel.click()
+            if self._app.widgets.is_panel_open():
+                self._app.widgets._ctxmenu.select('panel', False) # close panel 
 
+class CtxMenu(ListWidget):
+    def __init__(self, ws, *args, **kwargs):
+        self.ws = ws # store reference to widgets class
+        kwargs['transform'] = self._transform # custom transform for icons
+        super().__init__(*args, **kwargs)
+        self._handlers = {}
+        self._opts_map = {
+            "fscreen": {"text":"{state} Fullscreen <kbd>F</kbd>","icon":"compress","iconFalse":"expand", "state":("Enter", "Exit")},
+            "draw": {"text":"Open Drawing Board","icon":"edit"},
+            "laser": {"text":"{state} Laser Pointer <kbd>L</kbd>","icon":"circle","iconFalse":"laser", "state":("Show", "Hide")},
+            "ksc": {"text":"Keyboard Shortcuts <kbd>K</kbd>","icon":"keyboard" },
+            "info": {"text":"Read Instructions","icon":"info" },
+            "panel": {"text":"{state} Side Panel <kbd>S</kbd>","icon":"close","iconFalse":"panel", "state":("Open", "Close")},
+            "source": {"text":"Edit Source Cell <kbd>E</kbd>","icon":"code" },
+            "refresh": {"text":"Refresh Widgets Display","icon":"refresh" },
+        }
+        self._state = {"fscreen": False, "draw": None, "laser": False, "source": None, "refresh": None, "panel": False, "ksc": None, "info": None}
+        self.add_class('CtxMenu')
+        self.hide() # initially closed
+        self._set_opts() # set all options initially
+        
+    def _transform(self, item):
+        key, value = list(item.items())[0]
+        obj = self._opts_map.get(key, {})
+        icon = obj.get("iconFalse" if value is False else "icon", "")
+        text = obj.get("text", key).format(state=obj.get("state", ("Enable","Disable"))[1 if value else 0])
+        return f"<i class='fa fa-{icon}'></i> {text}" if icon else text
 
+    def show(self, x, y, units='%'):
+        "Open menu at given x,y coordinates in given units."
+        self.layout.left = f'{x}{units.strip()}' 
+        self.layout.top = f'{y}{units.strip()}'
+        self.layout.visibility = 'visible'
+    
+    def hide(self):
+        "Close menu."
+        self.layout.top = '101%' # below view, keep left as is
+        self.layout.visibility = 'hidden'
+    
+    def _callback(self, key, handler):
+        "Register single handler for selection of given key in options. handler should accept two argument (ctxmenu, new_value)."
+        if key not in self._opts_map:
+            raise KeyError(f'Key {key!r} not found in menu options. Available keys: {list(self._opts_map.keys())}')
+        self._handlers[key] = handler
+    
+    def select(self, key, state=None):
+        """Select menu item by unique key in options and set state to True/False/None
+        (optionally with a function on old state) if option is a toggle. Use update_state for no event trigger.
+        """
+        self.index = self.update_state(key, state)
+    
+    def update_state(self, key, state):
+        """Update state of given key in options and return index without triggering selection. 
+        State can be a function on old state or True/False/None.
+        Use select() method if you want to trigger selection event as well.
+        """
+        index = None
+        for i, opt in enumerate(self.options):
+            if key in opt:
+                index = i
+                value = state(opt[key]) if callable(state) else state
+                if isinstance(opt[key], bool) and value in (True, False):
+                    self._state[key] = value
+                
+        self._set_opts() # reset options to trigger re-render
+        return index
+
+    def _set_opts(self, *keys):
+        "Set options for given keys or all if none provided"
+        self.options = [{k:v} for k,v in self._state.items() if not keys or k in keys] 
+        self.index = None # reset index after options change to allow re-selection of same item
+    
+    def is_toggle(self, key):
+        return bool(self._opts_map.get(key, {}).get("iconFalse", False))
+    
+    @observe('value')
+    def _on_select(self, change):
+        if change.new and isinstance(change.new, dict):
+            key, value = list(change.new.items())[0]
+            # First update menu's visible state if not same
+            self.update_state(key, lambda old: not old if self.is_toggle(key) else old)
+            value = self._state.get(key, None)
+            if key in self._handlers:
+                self._handlers.get(key, lambda ctx, val: None)(self, value)
+            # Now update left over widgets
+            elif key == 'laser':
+                self.ws.htmls.pointer.active = value
+            elif key == 'fscreen':
+                self.ws.iw.msg_tojs = 'TFS' # we will get back FS/!FS message
+            elif key == 'draw':
+                self.ws.drawer.toggle(True) # open drawing board
+            elif key == 'panel':
+                self.ws.iw._toggle_panel(self)
+            elif key == 'ksc':
+                self.ws._push_toast(htmlize(key_combs), timeout=15)
+            elif key == 'info':
+                self.ws.iw.send({
+                    "content": html('',[instructions]).value,
+                    "timeout": 120000 # 2 minutes
+                })
+
+        
+        self.index = None # reset index after selection to allow re-selection of same item
+        self.hide() # hide menu on selection
+        self.set_trait('value', {}) # reset value to allow re-selection of same item
+        
+class DrawWidget(ipw.Box):
+    def __init__(self, ws, **kwargs):
+        self.ws = ws
+        btn = Button(icon='chevronu', tooltip='Open Drawing Board').add_class('Draw-Btn').add_class('Menu-Item')
+        btn.on_click(lambda btn: self.toggle(False)) # open is by context menu only or draw_button used by user
+        super().__init__(children = [TldrawWidget().add_class('Draw-Widget'), btn], **kwargs)
+        self.add_class('Draw-Wrapper')
+        
+    def toggle(self, visible):
+        "Show/hide drawing widget."
+        self.layout.height = "100%" if visible else "0"
+        if visible:
+            if self.ws.theme.value == "Jupyter":
+                self.ws.iw.msg_tojs = "THEME:jupyterlab" # make like that
+        else:
+            self.ws.mainbox.focus() # it doesn't stay their otherwise
+
+class SidePanel(TabsWidget):
+    # Need to add panel closing button here
+    # panel   =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Side Panel [S]').add_class('Menu-Item').add_class('Panel-Btn')
+    
+        
 class Output(fmtrs._Output):
     __doc__ = ipw.Output.__doc__ # same docs as main
 
@@ -87,28 +214,12 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<]').add_class('Arrows').add_class('Prev-Btn')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
-    panel   =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Open Side Panel [S]').add_class('Menu-Item').add_class('Panel-Btn')
     toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
-    refresh =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Update Widgets Display').add_class('Menu-Item').add_class('Refresh-Btn')
+    menu    =  Button(icon='rows', layout= Layout(width='auto',height='auto'), tooltip ='Open Context Menu').add_class('Menu-Btn').add_class('Menu-Item') 
     source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
-    info    =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Read Information').add_class('Menu-Item').add_class('Info-Btn')
-    ksc     =  Button(icon= 'keyboard',layout= Layout(width='auto',height='auto'), tooltip='Keyboard Shortcuts').add_class('Menu-Item').add_class('KSC-Btn')
     export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'))
     print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + P')
     print2  =  Button(icon='file-pdf',description="Print Slides (merged frames)",layout= Layout(width='auto',height='auto', margin='0 0 0 var(--jp-widgets-inline-label-width)'),tooltip='Ctrl + Alt + P')
-
-@dataclass(frozen=True)
-class _Toggles:
-    """
-    Instantiate under `Widgets` class only.
-    """
-    fscreen = ipw.ToggleButton(icon='plus',value = False, tooltip ='Enter Fullscreen [F]').add_class('FullScreen-Btn').add_class('Menu-Item')
-    laser   = ipw.ToggleButton(icon='plus',value = False, tooltip ='Show Laser Pointer [L]').add_class('Laser-Btn') 
-    draw    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Open Drawing Panel').add_class('Draw-Btn').add_class('Menu-Item')  
-    menu    = ipw.ToggleButton(icon='plus',value = False, tooltip ='Toggle Quick Menu').add_class('Menu-Btn').add_class('Menu-Item')   
-
-    setattr(draw, 'fmt_html', lambda: html('a', '', href=f'https://www.tldraw.com', target="_blank", rel="noopener noreferrer", 
-        css_class='fa fa-edit link-button').value) # send to website on exported slides 
 
 @dataclass(frozen=True)
 class _Htmls:
@@ -159,15 +270,15 @@ class Widgets:
         self._progbar = ipw.Box([ipw.Box(layout={"width":"0"}).add_class("Progress")],layout=dict(width="100%",height="2px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
         self._snum   = Button(disabled=True, layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
         self.theme   = ipw.Dropdown(**describe('Theme'),options=[*[k for k in styles.theme_colors.keys() if k != 'Jupyter'],'Custom']).add_class("ThemeSelect") # Jupyter will be added on demand
-        self.buttons = _Buttons()
-        self.toggles = _Toggles()
+        self.buttons = _Buttons() 
         self.sliders = _Sliders()
         self.checks  = _Checks()
         self.htmls   = _Htmls()
         self._timer  = JupyTimer()
+        self.drawer  = DrawWidget(self)
+        self._ctxmenu= CtxMenu(self, description='Shift + Right Click Browser Menu')
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
-        self.drawer  = ipw.Box([TldrawWidget().add_class('Draw-Widget'), self.toggles.draw]).add_class('Draw-Wrapper')
         self.drawer.layout = dict(width='100%',height='0',overflow='hidden') # height will be chnaged by button
         
         # Layouts build on these widgets
@@ -181,10 +292,8 @@ class Widgets:
 
         self.footerbox = HBox([
             HBox([
-                self.toggles.menu,
-                self.toggles.draw,
+                self.buttons.menu,
                 self.buttons.toc, 
-                self.buttons.source,
             ]).add_class('Menu-Box'),
             self.htmls.footer,
         ],layout=Layout(height='20px')).add_class('NavBox')
@@ -193,13 +302,12 @@ class Widgets:
             self.footerbox,
         ]).add_class('NavWrapper')   #class is must
 
-        _many_btns = [self.buttons.panel, self.toggles.fscreen, self.toggles.laser, self.buttons.refresh, self.toggles.draw]
         _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
         
         self.tocbox = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto',min_width='0')).add_class('TOC')
         navbar = ipw.ToggleButtons(options=[(s,i) for s, i in zip(['Settings','TOC','Clips'],range(3))],icons=['settings','bars','camera']).add_class('TopBar')
         self.panelbox = ipw.AppLayout(
-            header =  HBox([navbar, self.buttons.panel], layout=Layout(justify_content='space-between', width='100%')).add_class('header'),
+            header =  HBox([navbar], layout=Layout(justify_content='space-between', width='100%')).add_class('header'),
             left_sidebar = VBox([
                 HTML('<b>Layout and Theme</b>',layout = _html_layout),
                 self.sliders.fontsize,
@@ -234,7 +342,7 @@ class Widgets:
 
         def _toggle_tocbox(btn):
             if not self.is_panel_open():
-                self.buttons.panel.click() # Open side panel if closed
+                self._ctxmenu.select('panel', True) # open panel
             navbar.value = 1 # Set TOC button active
         
         self.buttons.toc.on_click(_toggle_tocbox) # Toggle TOC box on click
@@ -243,24 +351,12 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
-        self.quick_menu = VBox([HBox([self.buttons.ksc, self.buttons.info, self.toggles.menu]),*_many_btns[::-1]],layout= dict(width='auto', height='0')).add_class('TopBar').add_class('Outside')
-
-        def close_quick_menu(change):
-            self.toggles.menu.value = False
-
-        for btn in self.quick_menu.children: # All buttons should close menu
-            if hasattr(btn, 'on_click'):
-                btn.on_click(close_quick_menu)
-            else:
-                btn.observe(close_quick_menu, names=["value"])
-        
         self.mainbox = VBox([
             self.htmls.loading, 
             self.htmls.main,
             self.htmls.theme,
             self.iw,
             self._timer.widget(minimal=True),
-            self.quick_menu,
             self.panelbox,
             self.htmls.pointer,
             self.htmls.hilite,
@@ -273,6 +369,7 @@ class Widgets:
             self.navbox,
             self.htmls.logo,# on top of things
             self._snum,
+            self._ctxmenu, # at top 
             self._progbar # progressbar should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto') # 9/16 is default, will change by setting
         ).add_class('SlidesWrapper')  #Very Important to add this class
@@ -281,10 +378,10 @@ class Widgets:
             if isinstance(child, HTML):
                 child.layout.margin = "0" # Important to reclaim useless space
 
-        for btn in [self.buttons.next, self.buttons.prev, self.buttons.panel]:
+        for btn in [self.buttons.next, self.buttons.prev]:
             btn.style.button_color= 'transparent'
             btn.layout.min_width = 'max-content' #very important parameter
-    
+        
     def _push_toast(self,content,timeout=5):
         "Send inside notifications for user to know whats happened on some button click."
         if content and isinstance(content,str):

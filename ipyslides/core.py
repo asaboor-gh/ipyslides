@@ -103,7 +103,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Run code`slides.docs()` to see documentation.
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
-        - In JupyterLab, right click on the slides and select `Create New View for Output` for optimized display.
+        - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
         - See code`Slides.xmd.syntax` for extended markdown syntax, especially variables formatting.
         - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
@@ -163,8 +163,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._set_saved_citations() # from previous session
         self.wprogress = self.widgets.sliders.progress
         self.wprogress.observe(self._update_content, names=["value"])
-        self.widgets.buttons.refresh.on_click(self._force_update)
-        self.widgets.buttons.source.on_click(self._jump_to_source_cell)
+        self.widgets._ctxmenu._callback('refresh',self._force_update) # only single callback is allowed
+        self.widgets._ctxmenu._callback('source',self._jump_to_source_cell) 
         self.widgets.checks.rebuild.observe(self._auto_rebuild, names=['value'])
 
         # All Box of Slides
@@ -284,7 +284,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with suppress(Exception): 
             self.shell.events.register("post_run_cell", self._post_run_cell)
         
-    def _jump_to_source_cell(self, btn):
+    def _jump_to_source_cell(self, ctx=None, value=None):
         if hasattr(self._current, '_scroll_btn'):
             toast = ""
             self._current._scroll_btn.focus()
@@ -405,7 +405,14 @@ class Slides(BaseSlides,metaclass=Singleton):
     @property
     def draw_button(self):
         "Get a button to reveal drawing board easily from slide. Like it lets you remeber to draw now."
-        return self.widgets.toggles.draw
+        return self.html('span', 
+            self.html('button', '<i class="fa fa-edit"></i>', 
+                title = 'Open Drawing Board',
+                css_class="req-click jupyter-only", # req-click for internal use only
+                style = dict(border="none",background="transparent",cursor="pointer") # overwrite for avoiding double border
+            ).value + '<a href="https://www.tldraw.com" target="_blank" rel="noopener noreferrer" class="fa fa-edit export-only"></a>',
+            css_class = "link-button jupyter-button draw-button"
+        )
     
     @property
     def toc_widget(self):
@@ -455,7 +462,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _nocite(self, key): # @key!, cite`key!` without adding to citations
         if key in self._citations:
             return self.html('span',self._citations[key].partition("<p>")[-1].rpartition("</p>")[0],
-            style = dict(left="initial",top="initial"), css_class = "citetext text-box").value
+            style = dict(left="initial",top="initial"), css_class = "citetext text-box text-small").value
         return utils.error("KeyError",f"Set value for cited key {key!r} and build slide again!").value
 
     
@@ -805,31 +812,29 @@ class Slides(BaseSlides,metaclass=Singleton):
             return xmd(cell, returns = False)
 
     @contextmanager
-    def _loading_splash(self, btn, extra = None):
-        if btn:
-            if btn is self.widgets.buttons.refresh: btn.icon = "minus"
-            btn.disabled = True  # Avoid multiple clicks
+    def _loading_splash(self, widget, extra = None):
+        if isinstance(widget, ipw.DOMWidget):
+            widget.disabled = True  # Avoid multiple clicks
         self.widgets.htmls.loading.layout.display = "block"
         self.widgets.htmls.loading.value = (extra or '') + self.icon('loading', color='var(--accent-color, skyblue)',size='48px').value
         try:
             yield
         finally:
-            if btn:
-                if btn is self.widgets.buttons.refresh: btn.icon = "plus"
-                btn.disabled = False
+            if isinstance(widget, ipw.DOMWidget):
+                widget.disabled = False
                 self.widgets.htmls.loading.value = ""
                 self.widgets.htmls.loading.layout.display = "none"
             # In case of None, when slides are displayed, it will be clear via javascript
             
 
 
-    def _force_update(self, btn=None):
-        with self._loading_splash(btn or self.widgets.buttons.refresh):
+    def _force_update(self, ctx=None, value=None):
+        with self._loading_splash(ctx, extra = 'Updating widgets...'):
             for slide in self[:]:  # Update all slides
                 if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotlty etc
                     slide.update_display(go_there=False)
             
-            if btn:
+            if ctx:
                 self.notify('Widgets updated everywhere!')
             
             self.settings.footer._apply_change(None) # sometimes it is not updated due to message lost, so force it too

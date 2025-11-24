@@ -216,6 +216,9 @@ def layout_css(accent_color, aspect):
                     "background": "var(--bg2-color)",
                     "border": "1px solid var(--bg3-color)",
                     "border-radius": "0.2em",
+                    "padding": "0 0.2em",
+                    "box-shadow": "inset 0 -0.1em 0 var(--bg3-color)",
+                    "font-size": "0.9em",
                 },
                 ".export-only, .print-only": {
                     "display": "none !important",
@@ -264,6 +267,7 @@ def layout_css(accent_color, aspect):
                     "background": "var(--bg3-color)",
                     "backdrop-filter": "blur(10px)",
                     "position": "absolute",
+                    "transform": "translateZ(0)", # to create new stacking context for absolute children
                     "border": "none",
                     "padding": "0 !important",
                     "width": "min(400px, 100%) !important",
@@ -387,7 +391,7 @@ def layout_css(accent_color, aspect):
                              "overflow": "hidden !important", # avoid jump on hover too
                         },
                     },
-                    ".Toc-Btn, .Menu-Btn, .Draw-Btn, .Source-Btn": {
+                    ".Toc-Btn, .Menu-Btn, .Source-Btn": {
                         "min-width": "28px",
                         "width": "28px", # need this too
                     },  # Avoid overflow in small screens
@@ -450,7 +454,38 @@ def layout_css(accent_color, aspect):
                     "font-size": "16px !important", # A litle larger
                 },
             },
-            ".TopBar.Outside, .TopBar > div": {
+            ".CtxMenu": {
+                "position": "absolute",
+                "z-index": "99999",  # above all
+                # "background": "var(--bg2-color) !important",
+                "backdrop-filter": "blur(10px)",
+                "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
+                "border-radius": "4px",
+                "padding-top": "1.2em", # for top description
+                "overflow-y": "auto",
+                "width": "min(200px, 50%) !important", 
+                "height": "max-content !important",
+                "max-height": "min(600px, 90%) !important",
+                "transform": "translate(-4px,-4px)", # subtle edge views
+                "transition": "top 200ms ease-in-out, visibility 200ms ease-in-out",
+                "^, .list-item.list-item":  {
+                    "border-top": "1px solid var(--bg3-color) !important",
+                    "font-size": "14px !important", # fixed size
+                },
+                "^.list-widget:hover .list-item": {
+                    "border": "none !important",
+                    "border-radius": "0 !important",
+                    "margin":"0.5px !important", # keep size same on hover
+                }, 
+                ".list-item:hover, .list-item.selected": {
+                    "background": "var(--bg3-color) !important",
+                    "box-shadow": "none !important",
+                    "border-radius": "0 !important",
+                    "border": "none !important",
+                    "font-weight": "normal !important",
+                },
+            },
+            ".TopBar > div": {
                 "display": "flex",
                 "overflow-x": "auto",
                 "overflow-y": "hidden", # hides useless scrollbars
@@ -480,37 +515,6 @@ def layout_css(accent_color, aspect):
                         "border-bottom": "1px solid var(--accent-color) !important", # like a navbar
                     },
                 },
-            },
-            ".TopBar.Outside": {
-                "position": "absolute !important",
-                "z-index": "7 !important",  # below matplotlib fullsreen
-                "left" : "4px !important",
-                "bottom": "30px !important", 
-                "padding": "0 !important",
-                "min-height": "0 !important", #override panel top bar
-                "max-height": "calc(100% - 30px) !important",
-                "overflow-y": "auto !important",
-                "overflow": "hidden", # hides scrollbars with single button
-                "background": "var(--bg2-color) !important",
-                "box-sizing": "border-box !important",
-                "border-radius": "4px",
-                "transition": "height 400ms ease-in-out",
-                "display": "table-column-group !important", # avoid collapse
-                "> .widget-hbox": { # upper buttons
-                    "border-bottom": "1px solid #8988",
-                    "margin": "0 4px !important",
-                    "> button" : {
-                        "width": "36px !important",
-                        "^.Menu-Btn" : {"margin-left": "auto !important"}, # keep cross right most
-                        "^:active, ^.mod-active": {"border-bottom": "none !important",}, # remove border on click outside
-                    },
-                },
-                "> button > i": {"margin-right": "8px !important",}, # Make uniform
-                "> button::after":{
-                    "content": "attr(title)",
-                    "font-size": "14px !important",
-                    "color": "var(--fg1-color) !important",
-                },    
             },
             "<.jp-OutputArea-child": {
                 "^, .jp-OutputArea-output": {  # For some themes
@@ -592,41 +596,9 @@ def layout_css(accent_color, aspect):
                     "chevronr", color=accent_color, size="36px"
                 ).css,
             },
-            ".Panel-Btn": {
-                ".fa.fa-plus": Icon("panel", color=accent_color, size=_icons_size).css,
-                ".fa.fa-minus": Icon("close", color=accent_color, size=_icons_size).css,
-            },
             ".Toc-Btn": {
                 ".fa.fa-plus": Icon("bars", color=accent_color, size=_icons_size).css,
                 ".fa.fa-minus": Icon("close", color=accent_color, size=_icons_size).css,
-            },
-            ".Draw-Btn": {
-                ".fa.fa-plus": Icon(
-                    "pencil", color=accent_color, size=_icons_size, rotation=45
-                ).css,
-                ".fa.fa-minus": Icon(
-                    "arrowl", color=accent_color, size=_icons_size
-                ).css,
-            },
-            ".FullScreen-Btn": {
-                ".fa.fa-plus": Icon("expand", color=accent_color, size=_icons_size).css,
-                ".fa.fa-minus": Icon(
-                    "compress", color=accent_color, size=_icons_size
-                ).css,
-            },
-            ".Refresh-Btn": {
-                ".fa.fa-plus": Icon(
-                    "refresh", color=accent_color, size=_icons_size
-                ).css,
-                ".fa.fa-minus": Icon(
-                    "loading", color=accent_color, size=_icons_size
-                ).css,
-            },
-            ".Laser-Btn": {
-                ".fa.fa-plus": Icon("laser", color=accent_color, size=_icons_size).css,
-                ".fa.fa-minus": Icon(
-                    "circle", color=accent_color, size=_icons_size
-                ).css,
             },
             ".Menu-Btn": {
                 ".fa.fa-plus": Icon(
@@ -634,21 +606,6 @@ def layout_css(accent_color, aspect):
                 ).css,
                 ".fa.fa-minus": Icon(
                     "close", color=accent_color, size=_icons_size
-                ).css,
-            },
-            ".Source-Btn": {
-                ".fa.fa-plus": Icon(
-                    "code", color=accent_color, size=_icons_size
-                ).css,
-            },
-            ".KSC-Btn": {
-                ".fa.fa-plus": Icon(
-                    "keyboard", color=accent_color, size=_icons_size
-                ).css,
-            },
-            ".Info-Btn": {
-                ".fa.fa-plus": Icon(
-                    "info", color=accent_color, size=_icons_size,
                 ).css,
             },
             "<.Scroll-Btn": { # top level

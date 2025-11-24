@@ -121,7 +121,7 @@ class BaseSlides:
         for chunk, hdl, mvs in zip(chunks, handles, mdvars):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
             if any(['Out-Sync' in hdl._css_class, chunk != hdl._markdown, mvs != hdl._md_vars]):
-                with self._loading_splash(self.widgets.buttons.refresh): # Hold and disable other refresh button while doing it
+                with self._loading_splash(self.widgets._ctxmenu): # Hold and disable context menu while building
                     hdl._md_vars = mvs # set corresponding vars to access while building slide
                     self._slide(f'{hdl.number} -m', chunk)
             else: # when slide is not built, scroll buttons still need an update to point to correct button

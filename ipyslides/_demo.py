@@ -26,10 +26,10 @@ def demo_slides(slides):
             ^`2`Their University is somewhere in the middle of nowhere
     
     ::: display align-center               
-        vspace`2`Read instructions by clicking on %{btn} or same button in quick menu
+        vspace`2`Right click and select on fa`info` icon for instructions.
     ```
     <md-src/>
-    """, btn = slides.widgets.buttons.info)
+    """)
     
     # build_ is same as build(-1)
     slides.build_(f"""

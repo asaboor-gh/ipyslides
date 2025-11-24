@@ -57,6 +57,7 @@ class _HhtmlExporter:
             
             if not item._fidxs:
                 frames = [objs]
+                snums = [str(item.index)]
             else:
                 for fi, frame in enumerate(item._fidxs):
                     head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
@@ -80,7 +81,8 @@ class _HhtmlExporter:
                                     frame_objs.append(objs[i])
                 
                     frames.append(frame_objs) 
-                    snums.append(item._get_snum(fi))           
+                    snums.append(item._get_snum(fi)) 
+            print(len(frames), snums, item.index, item.nf)          
             
             for k, (snum, objs) in enumerate(zip(snums, frames)):
                 _html = item._speaker_notes(returns=True) # speaker notes at top if any, returns string

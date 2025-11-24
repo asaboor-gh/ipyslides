@@ -11,11 +11,9 @@ class Navigation:
         self.wprogress = self.widgets.sliders.progress
         self.btn_next = self.widgets.buttons.next
         self.btn_prev = self.widgets.buttons.prev
-        self.btn_panel = self.widgets.buttons.panel
         
         self.btn_prev.on_click(self._shift_left)
         self.btn_next.on_click(self._shift_right)
-        self.btn_panel.on_click(self._toggle_panel)
         
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
@@ -29,16 +27,4 @@ class Navigation:
             self.widgets.slidebox.add_class('Prev') # Backwards Animation
             if self.wprogress.value > 0:
                 self.wprogress.value = self.wprogress.value - 1 # Backwards
-    
-    def _toggle_panel(self,change):
-        if self.btn_panel.icon == 'plus':
-            self.btn_panel.icon  = 'minus'
-            self.btn_panel.tooltip = "Close Panel [S]"
-            self.widgets.panelbox.layout.height = "100%"
-            self.widgets.panelbox.layout.overflow = 'auto'
-        else:
-            self.btn_panel.icon = 'plus' #'ellipsis-v'
-            self.btn_panel.tooltip = "Open Side Panel [S]"
-            self.widgets.panelbox.layout.height = "0"
-            self.widgets.panelbox.layout.overflow = 'hidden'
                

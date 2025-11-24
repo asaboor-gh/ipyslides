@@ -408,11 +408,19 @@ def style_css(colors, fonts, layout, _root = False):
                     'padding': '0 24px !important', # make it like button, others from slide-link
                 }, # link-button is used for links in slides
             },
+            '.link-button.draw-button > :is(button, a)': {
+                'padding': '0 24px !important', # make it like button under draw button too
+            },
             '.Citations' : {
                 'column-count' :f'{layout.ncol_refs} !important',
                 'column-gap':'1em',
                 'border-top':'1px solid #8988', # for all colors
                 'margin-block':'0.5em',
+            },
+            '.citetext': { # subtle difference from normal text
+                'border-radius':'4px',
+                'border-left': '1px solid var(--fg2-color)',
+                'border-right': '1px solid var(--fg2-color)',
             },
             '.columns > div': {"position": "relative !important"}, # keep absolute items inside column itself
             '.toc-list.toc-extra' : {

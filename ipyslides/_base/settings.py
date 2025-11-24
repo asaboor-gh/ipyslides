@@ -292,23 +292,14 @@ class Settings:
         self.logo   = Logo()
         
         self._wslider = self._widgets.sliders.width # Used in multiple places
-        self._tgl_fscreen = self._widgets.toggles.fscreen
-        self._tgl_menu = self._widgets.toggles.menu
 
         self._widgets.sliders.fontsize.observe(lambda c: self.fonts(size=c.new), names=["value"])
         self._widgets.theme.observe(lambda c: self.theme(value=c.new), names=["value"])
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"]) # set reflow through layout._reflow
         self._widgets.checks.inotes.observe(self._update_theme, names=["value"]) # set inline notes through layout._inotes
-        self._widgets.buttons.info.on_click(self._show_info)
         self._widgets.buttons.print.on_click(self._print_pdf)
         self._widgets.buttons.print2.on_click(self._print_pdf)
-        self._widgets.buttons.ksc.on_click(self._show_ksc)
         self._wslider.observe(self._update_size, names=["value"])
-        self._tgl_fscreen.observe(self._toggle_fullscreen, names=["value"])
-        self._tgl_fscreen.observe(self._on_icon_change, names=["icon"])
-        self._widgets.toggles.laser.observe(self._toggle_laser, names=["value"])
-        self._widgets.toggles.draw.observe(self._toggle_overlay, names=["value"])
-        self._tgl_menu.observe(self._toggle_menu, names = ["value"])
         self._update_theme({'owner':'layout'})  # Trigger Theme with aspect changed as well
         self._update_size(change=None)  # Trigger this as well
         self._widgets.panelbox.right_sidebar.children = _clipbox_children() # Set clipbox children
@@ -333,13 +324,6 @@ class Settings:
             raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
         self.__dict__[name] = value
 
-    def _close_quick_menu(self):
-        if self._tgl_menu.value:
-            self._tgl_menu.value = False
-    
-    def _show_ksc(self, btn):
-        self._widgets._push_toast(htmlize(intro.key_combs), timeout=15)
-
     def _print_pdf(self, btn):
         with disabled(self._widgets.buttons.print,self._widgets.buttons.print2): # disable both buttons to avoid multiple clicks
             self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
@@ -355,12 +339,6 @@ class Settings:
             self._widgets.iw._parts = parts
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'
-    
-    def _show_info(self, btn):
-        self._widgets.iw.send({
-            "content": html('',[intro.instructions]).value,
-            "timeout": 120000 # 2 minutes
-        })
 
     def _resolve_img(self, src, width):
         if isinstance(src, Path):
@@ -433,57 +411,6 @@ class Settings:
             msg = 'THEME:dark' if "Dark" in self._widgets.theme.value else 'THEME:light'
         self._widgets.iw.msg_tojs = msg # changes theme of board
         self.code._apply_change(None) # Update code theme
-
-    def _toggle_fullscreen(self, change):
-        self._widgets.iw.msg_tojs = 'TFS' # goes to js, toggle fullscreen and chnage icon of button
-
-    def _on_icon_change(self, change): # icon will changes when Javscript sends a message
-        if change.new == 'minus':
-            self._wsv = self._wslider.value
-            self._wslider.value = 100
-            self._widgets.mainbox.add_class('FullScreen')
-            self._tgl_fscreen.tooltip = "Exit Fullscreen [F]"
-        else:
-            if hasattr(self, '_wsv'):
-                self._wslider.value = self._wsv  # restore
-            self._widgets.mainbox.remove_class('FullScreen')
-            self._tgl_fscreen.tooltip = "Enter Fullscreen [F]"
-        
-    def _toggle_laser(self, change):
-        tgl = self._widgets.toggles.laser
-        self._widgets.htmls.pointer.active = tgl.value
-        tgl.icon = "minus" if tgl.value else "plus"
-        tgl.tooltip = f"{'Hide' if tgl.value else 'Show'} Laser Pointer [L]"
-        
-    def _toggle_overlay(self, change):
-        tgl = self._widgets.toggles.draw
-        if tgl.value:
-            if self._widgets.theme.value == "Jupyter":
-                self._widgets.iw.msg_tojs = "THEME:jupyterlab" # make like that
-
-            tgl.icon = "minus"
-            tgl.tooltip = "Close Drawing Panel"
-            self._widgets.drawer.layout.height = "100%"
-        else:
-            tgl.icon = "plus"
-            tgl.tooltip = "Open Drawing Panel"
-            self._widgets.drawer.layout.height = "0"
-            self._widgets.mainbox.focus() # it doesn't stay their otherwise
-
-    def _toggle_menu(self, change):
-        if self._tgl_menu.value:
-            self._tgl_menu.icon = 'minus'
-            self._hover_only = 'Hover-Only' in self._tgl_menu._dom_classes
-            self._tgl_menu.remove_class('Hover-Only') # If navigation menu hidden by user
-            self._widgets.quick_menu.layout.height = 'min(200px, calc(100% - 30px))'
-            self._widgets.quick_menu.layout.border = "1px solid var(--bg3-color)"
-        else:
-            self._tgl_menu.icon = 'plus'
-            self._widgets.quick_menu.layout.height = '0'
-            self._widgets.quick_menu.layout.border = "none"
-
-            if hasattr(self, '_hover_only') and self._hover_only:
-                self._tgl_menu.add_class('Hover-Only')
 
     def load(self, path):
         "Load settings from a json file. You may need to dump settings and then edit for correct usage."

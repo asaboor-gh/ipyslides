@@ -34,35 +34,46 @@ class InteractionWidget(anywidget.AnyWidget):
 
     def __init__(self, _widgets, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._toggles = _widgets.toggles
         self._buttons = _widgets.buttons
         self._checks = _widgets.checks
         self._loading = _widgets.htmls.loading
         self._prog = _widgets.sliders.progress
         self._theme = _widgets.theme
+        self._menu = _widgets._ctxmenu
 
     @traitlets.observe("msg_topy")
     def _see_changes(self, change):
-        quick_menu_was_open = self._toggles.menu.value # JS message should not result in its closing
         msg = change.new
         if not msg:
             return # Message set empty, do not waste time
         if 'SHIFT:' in msg:
             self._prog.value = self._prog.value + int(msg.lstrip('SHIFT:')) # shift by given offset
-        elif msg == 'TFS': 
-            self._toggles.fscreen.value = not self._toggles.fscreen.value
+        elif msg == 'CCTX':
+            self._menu.hide() # close context menu
+        elif 'CTX:' in msg:
+            # Context menu requested at given coordinates
+            coords = msg.lstrip('CTX:').split(',')
+            if len(coords) == 2:
+                try:
+                    xPerc = round(float(coords[0]),2)
+                    yPerc = round(float(coords[1]),2)
+                    self._menu.show(xPerc, yPerc)
+                except:
+                    pass
         elif msg == 'NEXT':
             self._buttons.next.click()
         elif msg == 'PREV':
             self._buttons.prev.click()
         elif msg == 'KSC':
-            self._buttons.ksc.click()
+            self._menu.select('ksc')
         elif msg == 'TLSR':
-            self._toggles.laser.value = not self._toggles.laser.value
+            self._menu.select('laser', lambda old: not old) # toggle
         elif msg == 'TPAN':
-            self._buttons.panel.click()
+            self._toggle_panel(self._menu)
+        elif "Draw:" in msg:
+            self._menu.ws.drawer.toggle(False if "OFF" in msg else True) # toggle drawing board
         elif msg == 'EDIT':
-            self._buttons.source.click()
+            self._menu.select('source')
         elif msg == 'JUPYTER' and not ('Jupyter' in self._theme.options):
             self._theme.options = ['Jupyter', *self._theme.options] 
             self._theme.value = 'Jupyter' # enable it
@@ -76,20 +87,13 @@ class InteractionWidget(anywidget.AnyWidget):
             # Clear loading splash and other stuff
             self._loading.value = ""
             self._loading.layout.display = "none"
-
-        elif msg in ('FS','!FS'): # This is to make sure visual state of button and slides are correct
-            if msg == 'FS':
-                self._toggles.fscreen.icon = 'minus'
-            else:
-                self._toggles.fscreen.icon = 'plus'
+        elif msg in ('FS','!FS'): # Fullscreen change notice from JS
+            self._on_fs_change(self._menu, True if msg == 'FS' else False)
         elif msg == 'PRINT':
             self._buttons.print.click()
         elif msg == 'PRINT2':
             self._buttons.print2.click()
         
-        if quick_menu_was_open: 
-            self._toggles.menu.value = True # it might get closed by using some buttons. reset it
-
         self.msg_topy = "" # Reset for successive simliar changes
     
     @traitlets.observe("msg_tojs")
@@ -108,7 +112,22 @@ class InteractionWidget(anywidget.AnyWidget):
             self.msg_tojs = "SetColors"
             self._run_func = func # called when javascript sets colros
         else:
-            func() # Direct call            
+            func() # Direct call
+    
+    def _on_fs_change(self, ctx, value):
+        ctx.update_state('fscreen', value) # make icons consistent
+        if value:
+            ctx.ws.mainbox.add_class('FullScreen')
+        else:
+            ctx.ws.mainbox.remove_class('FullScreen')   
+    
+    def _toggle_panel(self, ctx):
+        closed = ctx.ws.panelbox.layout.height == '0'
+        ctx.update_state('panel', closed) # make icons consistent
+        ctx.ws.panelbox.layout.height = "100%" if closed else "0"
+        ctx.ws.panelbox.layout.overflow = 'auto' if closed else 'hidden'
+        ctx._set_opts('panel') if closed else ctx._set_opts() # selective options
+
 
 @_fix_trait_sig
 class NotesWidget(anywidget.AnyWidget):

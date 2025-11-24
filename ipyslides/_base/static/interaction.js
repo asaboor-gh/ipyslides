@@ -38,17 +38,14 @@ function fixIDsAndRefs(clone, cloneIndex = 0) {
   return clone;
 }
 
-function tldrawLinks(box) { // Add a print-only link in draw button 
-    box.querySelectorAll('.Draw-Btn.Menu-Item').forEach((btn) => {
-        let cs = window.getComputedStyle(btn); // we need to preserve size
-        let newBtn = document.createElement('button');
-        newBtn.className = 'print-only Draw-Btn';
-        newBtn.innerHTML = `<a href="https://www.tldraw.com" target="_blank" rel="noopener noreferrer" class="fa fa-edit" style="width:100%;height:auto;"></a>`;
-        newBtn.style.cssText = `width: ${cs.width};height: ${cs.height};margin: ${cs.margin};opacity:1;`; // copy layout styles and keep clearly visible
-        btn.parentNode.insertBefore(newBtn, btn.nextSibling); // insert after draw button
-        btn.classList.add('jupyter-only'); // hide original button in print
-        window._printOnlyObjs.push(newBtn); // keep track for cleanup, becomes duplicate otherwise on multiple prints
-    });
+function tldrawLinks(node, model) { 
+    node.querySelectorAll('.link-button > .req-click').forEach(btn => {
+        btn.classList.remove('req-click'); // remove class to avoid next time
+        btn.onclick = () => { // set proper onclick
+            model.set("msg_topy", "Draw:ON");
+            model.save_changes();
+        }
+    })
 }
 
 function handleColsRows(outputs, frame) {
@@ -78,7 +75,6 @@ function printSlides(box, model) {
     const fkws = model.get('_fkws') || {}; // get footer kws
     box.style.setProperty('--show-snumber', fkws.snum ? 'block' : 'none'); // show only if numbered
     box.style.setProperty('--printPadding', fkws.pad + 'px'); // set padding for print mode
-    tldrawLinks(box);
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
@@ -161,7 +157,6 @@ function printSlides(box, model) {
 }
 
 const keyMessage = {
-    'f': 'TFS', // Toggle Fullscreen with F but with click from button
     's': 'TPAN', // Setting panel
     'k': 'KSC', // keyboard shortcuts
     'e': 'EDIT', // Edit source cell
@@ -196,6 +191,9 @@ function keyboardEvents(box,model) {
         }  else if (key === 'Enter') { 
             e.stopPropagation();   // Don't let it pass over slides though, still can't hold Shift + Enter
             return true; // Enter key or Escape key should act properly
+        } else if (key === 'f' || key === 'F11' && !e.ctrlKey) { // F11 for fullscreen toggle
+            toggleFS(box);
+            return false;
         } else if (key === 'ArrowLeft' || key === '-') { // -, <
             message = 'PREV';
         } else if (key === 'ArrowRight' || key === '+' || key === ' ') { // Space, +,  >
@@ -213,14 +211,18 @@ function keyboardEvents(box,model) {
     box.onkeydown = keyOnSlides;
 };
 
+function toggleFS(box) {
+    if (document.fullscreenElement) {
+        document.exitFullscreen(); // No box.fullscreen
+    } else {
+        box.requestFullscreen();
+        box.focus(); // it gets unfocused, no idea why
+    }
+}
+
 function handleMessage(model, msg, box) {
     if (msg === "TFS") {
-        if (document.fullscreenElement) {
-            document.exitFullscreen(); // No box.fullscreen
-        } else {
-            box.requestFullscreen();
-            box.focus(); // it gets unfocused, no idea why
-        }
+        toggleFS(box);
     } else if (msg === 'RESCALE') {
         setScale(box, model);
     } else if (msg === "SwitchView") {
@@ -229,6 +231,7 @@ function handleMessage(model, msg, box) {
         slideNew.querySelector('.jp-OutputArea').scrollTop = 0; // scroll reset is important
         setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
+        tldrawLinks(slideNew, model); // fix draw links for new slide
 
         let others = box.getElementsByClassName("HideSlide");
         for (let slide of others) {
@@ -308,6 +311,27 @@ function handleChangeFS(box,model){
     model.save_changes();
 }
 
+function handleContextMenu(box, model, event) {
+    event.preventDefault(); // stop default actions
+    event.stopPropagation(); // stop propagation to underlying slides
+    // get relative coordinates to box in percents
+    let rect = box.getBoundingClientRect();
+    // Make context menu appear fully inside box
+    let menuRect = box.querySelector('.SlidesWrapper > .CtxMenu').getBoundingClientRect();
+    let wPerc = (menuRect.width / rect.width) * 100;
+    let hPerc = (menuRect.height / rect.height) * 100;
+    
+    let xPerc = ((event.clientX - rect.left) / rect.width) * 100;
+    let yPerc = ((event.clientY - rect.top) / rect.height) * 100;
+    if (xPerc + wPerc > 100) xPerc = 100 - wPerc;
+    if (yPerc + hPerc > 100) yPerc = 100 - hPerc;
+    if (xPerc < 0) xPerc = 0; // still stays in bounds
+    if (yPerc < 0) yPerc = 0; // still stays in bounds
+
+    model.set("msg_topy", `CTX:${xPerc},${yPerc}`); // will parse on python side
+    model.save_changes();
+}
+
 function showToast(box, msg) {
     box.querySelectorAll('.ToastMessage').forEach(t => t.remove());
     if (!msg.content || msg.content === "x") { return; } // empty message or x, do nothing
@@ -376,7 +400,16 @@ const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary
 function handleBoxClicks(box, model) {
     // Handle single clicks for navigation and blocking
     box.addEventListener('click', function(event) {
-        // First, check for interactive elements that should handle their own clicks
+        // First check if context menu is open, clicked outside, close it, option click is handled by python
+        if (!event.target.closest('.SlidesWrapper > .CtxMenu')) {
+            model.set("msg_topy", "CCTX"); // close context menu
+            model.save_changes();
+        }
+        if (event.target.closest('.Menu-Btn')) { // Open context menu with button too
+            handleContextMenu(box, model, event);
+            return;
+        }
+        // Then, check for interactive elements that should handle their own clicks
         if (event.target.closest(INTERACTIVE_SEL)) {
             event.stopPropagation(); // stop propagation to underlying slides
             return true; // let the click happen
@@ -623,6 +656,12 @@ function render({ model, el }) {
         // Sends a message if fullscreen is changed by some other mechanism
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};
 
+        // Capture context menu to avoid passing to underlying elements
+        box.addEventListener('contextmenu', function(event) {
+            if (event.shiftKey) {return true}; // allow Shift + Right click for normal context menu
+            handleContextMenu(box, model, event);
+        });
+
         // If voila, turn on full viewport
         let base_url = box.ownerDocument.body.getAttribute('data-base-url');
         if (base_url && base_url.includes("voila")) {
@@ -650,6 +689,7 @@ function render({ model, el }) {
         let drawing = box.getElementsByClassName('Draw-Widget')[0];
         // Let all keys work here but don't go further up and avoid navigation of slides too.
         drawing.onkeydown = (e) => {e.stopPropagation();} 
+        drawing.oncontextmenu = (e) => {e.stopPropagation();} // avoid context menu passing up
         
         for (let c of drawing.childNodes) {
             c.style.width = '100%';
@@ -665,6 +705,7 @@ function render({ model, el }) {
         // Set background images if any left due to being loaded from python script
         box.querySelectorAll('.SlideArea').forEach((slide) => {setBgImage(slide);}); // only set which are not yet set
         setMainBgImage(box.querySelector('.ShowSlide'), box) // set background image if any on current slide
+        tldrawLinks(box, model); // fix draw links for all slides
         
         // Add classes to mark ancestors for printing
         markPrintable(box, 'ipyslides-print-node');
