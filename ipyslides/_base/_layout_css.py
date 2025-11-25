@@ -186,10 +186,13 @@ def layout_css(accent_color, aspect):
                         "z-index": "1", # both on top to be clickable, before stays below if not given
                     },
                     "^::after": {"left": "unset", "right": "0",},
-                    "^, .SlideArea": {"user-select": "none !important",}, # avoid selecting while clicking on edge to naviagate, inner divs still can select
+                    "^, .SlideArea": {"user-select": "none !important",}, # avoid selecting while swiping to naviagate, inner divs still can select
                 },
                 "^.mode-inactive": { # clean up view
                     ".FooterBox, .Controls, .Slide-Number": {"display": "none !important",},
+                },
+                ".SlideBox, .SlideBox *": {
+                    "touch-action": "none !important", # disable default touch actions to allow custom swipe handling
                 },
                 ".SlideArea": {
                     "^.Out-Sync > .jp-OutputArea::before" : {

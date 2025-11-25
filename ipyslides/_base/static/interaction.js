@@ -398,6 +398,37 @@ function handleScale(box, model) {
     setScale(box, model); // First time set
 }
 
+// Touch and Stylus are working perfect, mouse has text selection issues and broweser navigation issues
+function handlePointerSwipe(box, model) {
+    let initialX = null;
+    let initialY = null;
+    let swiped = false;
+    const THRESHOLD_SWIPE = 70;
+    const THRESHOLD_Y_MAX = 30;
+
+    // Ensure swipe works , added tocuh-action CSS to SlideBox
+    function setState(e, setValue) {
+        swiped = false;
+        initialX = setValue ? e.clientX : null;
+        initialY = setValue ? e.clientY : null;
+    }
+
+    box.addEventListener('pointerdown', (e) => {setState(e, true);}); // initialize coordinates
+    box.addEventListener('pointermove', (e) => {
+        if (initialX === null || swiped) return;
+        const diffX = e.clientX - initialX;
+        const diffY = e.clientY - initialY;
+        if (Math.abs(diffX) >= THRESHOLD_SWIPE && Math.abs(diffY) <= THRESHOLD_Y_MAX) {
+            model.set("msg_topy", diffX < 0 ? "NEXT" : "PREV");
+            model.save_changes();
+            swiped = true; // Only one navigation per gesture
+        }
+    });
+    box.addEventListener('pointerup', (e) => { setState(e, false); });
+    // left the area, cancel swipe
+    box.addEventListener('pointercancel', (e) => { setState(e, false); });
+}
+
 // Avoid clicks passing through to underlying clickable elements
 const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary, [contenteditable='true']";  
 
@@ -425,30 +456,7 @@ function handleBoxClicks(box, model) {
         if (event.target.closest('.mode-popup-active') || box.classList.contains('mode-inactive')) {
             event.stopPropagation(); // stop propagation to underlying slides
             event.preventDefault(); // stop default actions
-            return; // Exit early
-        }
-        
-        // Handle edge clicks for navigation (only on SlideArea or SlideBox)
-        if (!event.target.classList.contains('SlideArea') && !event.target.classList.contains('SlideBox')) {
-            return; // Only handle clicks on slide area or wrapping box itself
-        }
-        
-        const rect = box.getBoundingClientRect(); 
-        const clickX = event.clientX - rect.left;
-        const edgeWidth = 16; // 16px padding area
-        let message = '';
-        
-        if (clickX <= edgeWidth) {
-            message = 'PREV'; // Clicked on left edge
-        } else if (clickX >= rect.width - edgeWidth) {
-            message = 'NEXT'; // Clicked on right edge
-        }
-        
-        if (message) {
-            event.preventDefault();
-            event.stopPropagation();
-            model.set("msg_topy", message);
-            model.save_changes();
+            return; // Exit 
         }
     });
 
@@ -664,6 +672,9 @@ function render({ model, el }) {
 
         // Handle box clicks for both focus and edge navigation
         handleBoxClicks(box, model);
+
+        // Handle swipe events for navigation
+        handlePointerSwipe(box, model);
 
         // Sends a message if fullscreen is changed by some other mechanism
         box.onfullscreenchange = ()=>{handleChangeFS(box,model)};

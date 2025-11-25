@@ -88,7 +88,7 @@ key_maps = {
     "K": "Show keyboard shortcuts",
 }
 
-key_combs = f"""color['var(--accent-color)']`Move cursor/airmouse to left/right edge and click.`
+key_combs = f"""color['var(--accent-color)']`Left/right swipe and right-click + drag left/right can also navigate slides.`
 
 | Shortcut                                    | Button                                            | Action                 | 
 |:--------------------------------------------|---------------------------------------------------|:-----------------------|
