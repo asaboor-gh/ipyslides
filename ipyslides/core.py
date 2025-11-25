@@ -858,7 +858,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._toc_widget.set_toc_items(tocs) # instead of setting options here
             children.append(self._toc_widget)
 
-        self.widgets.tocbox.children = children
+        self.widgets.panelbox._tocsTab.children = children
 
     def create(self, slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is much faster than creating one slide each time."

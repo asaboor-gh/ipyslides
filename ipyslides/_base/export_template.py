@@ -138,11 +138,11 @@ section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non
 }
 
 .SlidesWrapper.Scrolling .Progress,
-.SlidesWrapper.Scrolling .Number {
+.SlidesWrapper.Scrolling .SlideBox > .Number {
     visibility: hidden !important;
     transition: visbility 200ms ease-in;
 }
-.SlidesWrapper .Number {
+.SlidesWrapper .SlideBox > .Number {
     color:var(--fg2-color);
     position:absolute;
     right:6px;

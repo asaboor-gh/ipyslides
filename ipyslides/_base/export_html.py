@@ -91,7 +91,7 @@ class _HhtmlExporter:
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
 
                 number = ""
-                if self.main.settings.footer.numbering:
+                if item.index > 0 and self.main.settings.footer.numbering:
                     number = f'<span class="Number">{snum}</span>' 
 
                 content += textwrap.dedent(f'''
@@ -137,11 +137,11 @@ class _HhtmlExporter:
         return f'<div class="Progress" style="background: {gradient};"></div>'
     
     def _get_css(self, slide):
-        "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, NavWrapper → Footer"
+        "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, FooterBox → Footer"
         return (f'{slide.css}').replace( # xtml or str
             f".{self.main.uid}.SlidesWrapper", f"#{slide._sec_id}").replace(
             f".{self.main.uid}", f"#{slide._sec_id}").replace(
-            ".NavWrapper", ".Footer"
+            ".FooterBox", ".Footer"
             )
     def _get_logo(self):
         return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 

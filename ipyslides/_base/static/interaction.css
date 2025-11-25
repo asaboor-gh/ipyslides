@@ -38,7 +38,7 @@
         visibility: hidden !important; /* avoid unessary elements/backgrounds in print */
     }
     .ipyslides-print-node.SlidesWrapper > .LogoHtml.LogoHtml,
-    .ipyslides-print-node.SlidesWrapper > .NavWrapper .Footer { 
+    .ipyslides-print-node.SlidesWrapper > .FooterBox .Footer { 
         visibility: visible !important; /* keep footer visible but main nav hidden*/
     }
     .ipyslides-print-node.SlidesWrapper > .SBoxWrapper { /* This is main culprit to mess up print */

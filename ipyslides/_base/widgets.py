@@ -60,8 +60,9 @@ class CtxMenu(ListWidget):
             "panel": {"text":"{state} Side Panel <kbd>S</kbd>","icon":"close","iconFalse":"panel", "state":("Open", "Close")},
             "source": {"text":"Edit Source Cell <kbd>E</kbd>","icon":"code" },
             "refresh": {"text":"Refresh Widgets Display","icon":"refresh" },
+            "toc": {"text":"Table of Contents","icon":"bars" },
         }
-        self._state = {"fscreen": False, "draw": None, "laser": False, "source": None, "refresh": None, "panel": False, "ksc": None, "info": None}
+        self._state = {"draw": None,  "toc":None, "fscreen": False, "laser": False, "panel": False, "source": None, "refresh": None, "ksc": None, "info": None}
         self.add_class('CtxMenu')
         self.hide() # initially closed
         self._set_opts() # set all options initially
@@ -77,8 +78,10 @@ class CtxMenu(ListWidget):
         "Open menu at given x,y coordinates in given units."
         if self.ws.panelbox.is_open():
             self._set_opts('panel')
-        elif 'FullScreen' in self.ws.mainbox._dom_classes:
-            self._set_opts('fscreen','laser','draw','panel','ksc')
+        elif 'mode-inactive' in self.ws.mainbox._dom_classes: # prefer over fullscreen
+            self._set_opts('fscreen','laser','draw')
+        elif 'mode-fullscreen' in self.ws.mainbox._dom_classes:
+            self._set_opts('fscreen','laser','draw','panel','toc','ksc')
         else:
             self._set_opts()
         self.layout.left = f'{x}{units.strip()}' 
@@ -89,7 +92,7 @@ class CtxMenu(ListWidget):
         "Close menu."
         self.layout.top = '101%' # below view, keep left as is
         self.layout.visibility = 'hidden'
-    
+        
     def _callback(self, key, handler):
         "Register single handler for selection of given key in options. handler should accept two argument (ctxmenu, new_value)."
         if key not in self._opts_map:
@@ -144,6 +147,9 @@ class CtxMenu(ListWidget):
                 self.ws.drawer.toggle(True) # open drawing board
             elif key == 'panel':
                 self.ws.iw._toggle_panel(self)
+            elif key == 'toc':
+                self.ws.panelbox.toggle(True) # open panel
+                self.ws.panelbox.select_tab(1) # select toc tab
             elif key == 'ksc':
                 self.ws._push_toast(htmlize(key_combs), timeout=15)
             elif key == 'info':
@@ -151,6 +157,8 @@ class CtxMenu(ListWidget):
                     "content": html('',[instructions]).value,
                     "timeout": 120000 # 2 minutes
                 })
+            elif self.ws.htmls.loading.value: # Just a handy cleanup
+                self.ws.iw.msg_tojs = "ClearLoading"
 
         
         self.index = None # reset index after selection to allow re-selection of same item
@@ -160,7 +168,7 @@ class CtxMenu(ListWidget):
 class DrawWidget(ipw.Box):
     def __init__(self, ws, **kwargs):
         self.ws = ws
-        btn = Button(icon='chevronu', tooltip='Open Drawing Board').add_class('Draw-Btn').add_class('Menu-Item')
+        btn = Button(icon='chevronu', tooltip='Close Drawing Board').add_class('Draw-Btn').add_class('Menu-Item')
         btn.on_click(lambda btn: self.toggle(False)) # open is by context menu only or draw_button used by user
         super().__init__(children = [TldrawWidget().add_class('Draw-Widget'), btn], **kwargs)
         self.add_class('Draw-Wrapper')
@@ -174,18 +182,15 @@ class DrawWidget(ipw.Box):
         else:
             self.ws.mainbox.focus() # it doesn't stay their otherwise
 
-class SidePanel(TabsWidget):
+class SidePanel(VBox):
     def __init__(self, ws, *args, **kwargs):
         self.ws = ws
-        btn = Button(icon= 'chevronl', tooltip='Close Side Panel').add_class('Menu-Item').add_class('Panel-Btn')
-        btn.on_click(lambda btn: self.toggle(False)) # close panel on button click
         super().__init__(*args, **kwargs)
         self.add_class('SidePanel')
         self.toggle(False) # initially closed
-        self._build_tabs()
-        # self.children += (btn,) # add button at the end, so it's not part of tabs stack
+        self._build_layout()
     
-    def _build_tabs(self):
+    def _build_layout(self):
         _html_layout = Layout(border_bottom='1px solid #8988', margin='8px 0 0 8px')
         settings = VBox([
             HTML('<b>Layout and Theme</b>',layout = _html_layout),
@@ -207,9 +212,17 @@ class SidePanel(TabsWidget):
             self.ws.notes, # Just to be there for acting on a popup window
         ],layout=Layout(width='100%',height='100%',overflow_y='scroll',min_width='0',padding="8px"))
         
+        self._tocsTab = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto',min_width='0')).add_class('TOC') # toc box will be filled later
         self._clipsTab = VBox([],layout = Layout(width='100%',height='100%',overflow_y='auto',min_width='0')) # clips box will be filled later
-        self.children = [settings, self.ws.tocbox, self._clipsTab]
-        self.titles = ['<i class="fa fa-settings"></i> Settings','<i class="fa fa-bars"></i> Table of Contents','<i class="fa fa-camera"></i> Clips']
+        self._tabs = TabsWidget(
+            children=[settings, self._tocsTab, self._clipsTab],
+            titles=['<i class="fa fa-settings"></i> Options','<i class="fa fa-bars"></i> Table of Contents','<i class="fa fa-camera"></i> Clips'],
+            tabs_height='28px', # fixed height for tabs
+        )
+        btn = Button(icon='chevronl', tooltip='Close Side Panel').add_class('panel-close-btn')
+        btn.on_click(lambda btn: self.toggle(False))
+        self._head = HBox([HTML(get_logo("28px", "IPySlides")), btn], layout=Layout(justify_content='space-between', align_items='center', padding='0'))
+        self.children = [self._head, self._tabs]
     
     def is_open(self):
         return self.layout.width != '0'
@@ -219,6 +232,10 @@ class SidePanel(TabsWidget):
         self.ws._ctxmenu.update_state('panel', visible) # make icons consistent
         self.layout.width = "min(400px, 100%)" if visible else "0"
         self.layout.overflow = 'auto' if visible else 'hidden'
+    
+    def select_tab(self,index):
+        "Select tab by index."
+        self._tabs.selected_index = index
         
 class Output(fmtrs._Output):
     __doc__ = ipw.Output.__doc__ # same docs as main
@@ -261,9 +278,6 @@ class _Buttons:
     """
     prev    =  Button(icon='chevron-left',layout= Layout(width='auto',height='auto'),tooltip='Previous Slide [<]').add_class('Arrows').add_class('Prev-Btn')
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
-    toc     =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Toggle Table of Contents').add_class('Menu-Item').add_class('Toc-Btn')
-    menu    =  Button(icon='rows', layout= Layout(width='auto',height='auto'), tooltip ='Open Context Menu').add_class('Menu-Btn').add_class('Menu-Item') 
-    source  =  Button(icon= 'plus',layout= Layout(width='auto',height='auto'), tooltip='Edit Source Cell [E]').add_class('Menu-Item').add_class('Source-Btn')
     export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='max-content'))
     print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='max-content'), tooltip='Ctrl + P')
 
@@ -337,25 +351,7 @@ class Widgets:
             self.buttons.next
         ]).add_class('Controls') 
 
-        self.footerbox = HBox([
-            HBox([
-                self.buttons.menu,
-                self.buttons.toc, 
-            ]).add_class('Menu-Box'),
-            self.htmls.footer,
-        ],layout=Layout(height='20px')).add_class('NavBox')
-        
-        self.navbox = VBox([
-            self.footerbox,
-        ]).add_class('NavWrapper')   #class is must
-        self.tocbox = VBox([],layout = Layout(width='100%',height='100%', overflow_y='auto',min_width='0')).add_class('TOC')
-        
-        def _toggle_tocbox(btn):
-            if not self.panelbox.is_open():
-                self.panelbox.toggle(True) # open panel
-            self.panelbox.selected_index = 1 # select toc tab
-        
-        self.buttons.toc.on_click(_toggle_tocbox) # Toggle TOC box on click
+        self.footerbox = HBox([self.htmls.footer,]).add_class('FooterBox')   #class is must
         self.panelbox = SidePanel(self)
         self.slidebox = Box([
             # Slides are added here dynamically
@@ -376,7 +372,7 @@ class Widgets:
             ).add_class('SBoxWrapper'), # overflow should be hidden for animation purpose, class added to handle print PDF
             self.controls, # Importnat for unique display
             self.drawer, 
-            self.navbox,
+            self.footerbox,
             self.htmls.logo,# on top of things
             self._snum,
             self._ctxmenu, # at top 

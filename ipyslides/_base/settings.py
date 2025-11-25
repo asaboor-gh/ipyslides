@@ -330,6 +330,7 @@ class Settings:
             # Update frames indices for print
             parts = {}
             for slide in self._slides:
+                slide._fcss.value = '' # reset frame css for print, will be set back on navigation
                 frames = slide._export_fidxs
                 slide._set_css_classes('OneFrame' if not frames else None, remove='OneFrame') # remove and add conditionally
                 if frames: # merged parts automatically handled

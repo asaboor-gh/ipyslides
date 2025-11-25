@@ -78,12 +78,12 @@ def layout_css(accent_color, aspect):
                 "^:focus": {
                     "outline" : "none !important",
                 },
-                "^.Voila-Child, ^.FullScreen": {
+                "^.Voila-Child, ^.mode-fullscreen": {
                     ".Width-Slider, .Source-Btn": {"display": "none !important"},
                 },
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
-                }, 
+                },
                 ".Slide-Number" : { # slide number
                     "position": "absolute !important",
                     "right": "0 !important",
@@ -189,7 +189,7 @@ def layout_css(accent_color, aspect):
                     "^, .SlideArea": {"user-select": "none !important",}, # avoid selecting while clicking on edge to naviagate, inner divs still can select
                 },
                 "^.mode-inactive": { # clean up view
-                    ".NavWrapper, .Controls, .Slide-Number": {"display": "none !important",},
+                    ".FooterBox, .Controls, .Slide-Number": {"display": "none !important",},
                 },
                 ".SlideArea": {
                     "^.Out-Sync > .jp-OutputArea::before" : {
@@ -270,7 +270,6 @@ def layout_css(accent_color, aspect):
                     "transform": "translateZ(0)", # to create new stacking context for absolute children
                     "border": "none",
                     "padding": "0 !important",
-                    "padding-top": "8px !important", 
                     "height": "100% !important",
                     "width": "0", # set by Python, don't add important here
                     "z-index": "10",
@@ -278,14 +277,12 @@ def layout_css(accent_color, aspect):
                     "left": "0px !important",
                     "transition": "width 400ms ease-in-out",
                     "overflow": "hidden !important",
-                    "@container slides (max-width: 400px)": {"width": "100% !important"}, # reinforce width
+                    "> div:first-child": {"line-height": "1 !important",}, # avoid extra height from default line-height
                     ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",}, 
                     "> *": {"transition": "padding-top 400ms ease-in-out",},
                     "^, *": {"box-sizing": "border-box !important",},
-                    ".Panel-Btn": {
-                        "position": "absolute !important",
-                        "top": "0px !important",
-                        "right": "8px !important",
+                    ".list-widget": {"font-size": "16px !important","flex-wrap": "nowrap !important",},
+                    ".panel-close-btn": {
                         "width": "28px !important",
                         "height": "28px !important",
                         "border": "none !important",
@@ -340,67 +337,29 @@ def layout_css(accent_color, aspect):
                     "color": "var(--fg1-color) !important"
                 },  # All widgets text color
             },
-            ".NavWrapper": {
+            ".FooterBox": {
                 "max-width": "100% !important",
                 "position": "absolute !important",
                 "left": "0 !important",
                 "bottom": "2px !important", # leave space for progressbar
                 "width": "100% !important",
                 "@media print": {"position": "fixed !important","background":"var(--bg1-color) !important",},
-                "^,^ > div": {
+                "^,^ > .Footer": {
                     "padding": "0px",
                     "margin": "0px",
                     "overflow": "hidden",
                     "max-width": "100%",
                 },
-                ".NavBox": {
-                    "position": "relative !important", # for menubox
-                    "overflow": "hidden",
-                    "align-items": "center",
-                    "height": "max-content",
-                    "justify-content": "flex-start",
-                    ".Menu-Item": {
-                        "font-size": "18px !important",
-                        "overflow": "hidden",
-                        "opacity": "0.7",
-                        "z-index": "3",
-                        "^:hover": {
-                            "opacity": "1",
-                        },
-                        "^:active, ^.mod-active": {
-                            "box-shadow": "none !important",
-                            "opacity": "1 !important",
-                        },
+                ".Footer": {
+                    "overflow": "hidden !important",
+                    ".widget-html-content": {
+                        "display": "flex",
+                        "align-items": "center",
+                        "justify-content": "flex-start",
+                        "line-height": "1.5 !important",
                     },
-                    ".Menu-Box": {
-                        "position": "absolute !important",
-                        "z-index": "3 !important",
-                        **{f"{k}backdrop-filter": "blur(10px)" for k in ('', '-webkit-')},
-                        "width": "0 !important",
-                        "transition": "width 400ms ease-in-out", # transition on exit
-                        "overflow": "hidden !important", # needs to not jump on chnage of width
-                    },
-                    "^:hover, ^:focus, ^:active, ^.mod-active" : {
-                        ".Menu-Box" : {
-                            "width": "148px !important", # 4*32 + margin + paddings
-                            "transition": "width 400ms ease-in-out", # transition on enter hover
-                             "overflow": "hidden !important", # avoid jump on hover too
-                        },
-                    },
-                    ".Toc-Btn, .Menu-Btn": {
-                        "min-width": "28px",
-                        "width": "28px", # need this too
-                    },  # Avoid overflow in small screens
-                    ".Footer": {
-                        "overflow": "hidden !important",
-                        ".widget-html-content": {
-                            "display": "flex",
-                            "align-items": "center",
-                            "justify-content": "flex-start",
-                        },
-                        "p": {
-                            "font-size": "14px !important",
-                        },
+                    "p": {
+                        "font-size": "14px !important",
                     },
                 },
             },
@@ -453,8 +412,7 @@ def layout_css(accent_color, aspect):
             ".CtxMenu": {
                 "position": "absolute",
                 "z-index": "99999",  # above all
-                # "background": "var(--bg2-color) !important",
-                "backdrop-filter": "blur(10px)",
+                "backdrop-filter": "blur(20px)",
                 "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
                 "border-radius": "4px",
                 "padding-top": "1.2em", # for top description
@@ -561,18 +519,6 @@ def layout_css(accent_color, aspect):
                     "chevronr", color=accent_color, size="36px"
                 ).css,
             },
-            ".Toc-Btn": {
-                ".fa.fa-plus": Icon("bars", color=accent_color, size=_icons_size).css,
-                ".fa.fa-minus": Icon("close", color=accent_color, size=_icons_size).css,
-            },
-            ".Menu-Btn": {
-                ".fa.fa-plus": Icon(
-                    "dots", color=accent_color, size=_icons_size
-                ).css,
-                ".fa.fa-minus": Icon(
-                    "close", color=accent_color, size=_icons_size
-                ).css,
-            },
             "<.Scroll-Btn": { # top level
                 "color": "var(--jp-brand-color1,skyblue) !important",
                 "background": "transparent !important",
@@ -593,7 +539,7 @@ def layout_css(accent_color, aspect):
                         "height": "auto !important",
                     },
                 },
-                ".Controls, .NavWrapper button": {
+                ".Controls": {
                     "display": "none !important",
                 },
                 "pre, .SlideBox, .SlidesWrapper, .SlideArea": {

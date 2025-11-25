@@ -306,9 +306,9 @@ function keepThisViewOnly(box){
 
 function handleChangeFS(box,model){
     if (box === document.fullscreenElement) {
-        model.set("msg_topy", "FS")
+        model.set("msg_topy", "mode-fullscreen")
     } else {
-        model.set("msg_topy", "!FS")
+        model.set("msg_topy", "!mode-fullscreen")
     };
     model.save_changes();
 }
@@ -319,14 +319,14 @@ function handleContextMenu(box, model, event) {
     // get relative coordinates to box in percents
     let rect = box.getBoundingClientRect();
     // Make context menu appear fully inside box
-    let menuRect = box.querySelector('.SlidesWrapper > .CtxMenu').getBoundingClientRect();
+    let menuRect = box.querySelector(':scope > .CtxMenu').getBoundingClientRect();
     let wPerc = (menuRect.width / rect.width) * 100;
     let hPerc = (menuRect.height / rect.height) * 100;
     
     let xPerc = ((event.clientX - rect.left) / rect.width) * 100;
     let yPerc = ((event.clientY - rect.top) / rect.height) * 100;
     if (xPerc + wPerc > 100) xPerc = 100 - wPerc;
-    if (yPerc + hPerc > 100) yPerc = 100 - hPerc;
+    if (yPerc + hPerc > 100) yPerc = 100 - hPerc - (16/rect.height*100); // a little above from bottom
     if (xPerc < 0) xPerc = 0; // still stays in bounds
     if (yPerc < 0) yPerc = 0; // still stays in bounds
 
@@ -335,7 +335,7 @@ function handleContextMenu(box, model, event) {
 }
 
 function showToast(box, msg) {
-    box.querySelectorAll('.ToastMessage').forEach(t => t.remove());
+    box.querySelectorAll(':scope > .ToastMessage').forEach(t => t.remove());
     if (!msg.content || msg.content === "x") { return; } // empty message or x, do nothing
 
     let toast = document.createElement('div');
@@ -402,20 +402,22 @@ const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary
 function handleBoxClicks(box, model) {
     // Handle single clicks for navigation and blocking
     box.addEventListener('click', function(event) {
-        // First check if context menu is open, clicked outside, close it, option click is handled by python
-        if (!event.target.closest('.SlidesWrapper > .CtxMenu')) {
+        // Handle footer area click to toggle context menu
+        const ctxMenu = box.querySelector(':scope > .CtxMenu');
+        const isCtxOpen = ctxMenu && ctxMenu.style.visibility === 'visible';
+        if (isCtxOpen && !event.target.closest('.SlidesWrapper > .CtxMenu')) {
             model.set("msg_topy", "CCTX"); // close context menu
-            model.save_changes();
+            model.save_changes(); // after that go on with other checks
+        } else if (event.target.closest('.SlidesWrapper > .FooterBox')) {
+            handleContextMenu(box, model, event); 
+            return; // exit after handling footer click
         }
-        if (event.target.closest('.Menu-Btn')) { // Open context menu with button too
-            handleContextMenu(box, model, event);
-            return;
-        }
+        
         // Then, check for interactive elements that should handle their own clicks
         if (event.target.closest(INTERACTIVE_SEL)) {
             event.stopPropagation(); // stop propagation to underlying slides
             return true; // let the click happen
-        }
+        } 
         
         // Check if in focus mode, do not pass clicks to slides to avoid accidental slide changes
         if (event.target.closest('.mode-popup-active') || box.classList.contains('mode-inactive')) {
@@ -471,8 +473,9 @@ function handleBoxClicks(box, model) {
         const matchedElem = event.target.closest(model.get("_fsels"));
         if (matchedElem) { // Focus by JS to be able to have a close button etc
             box.blur(); // remove focus from box to avoid keyboard events there
-            box.classList.add('mode-inactive');
             matchedElem.classList.add('mode-popup-active');
+            model.set("msg_topy", "mode-inactive");
+            model.save_changes();
             
             const btn = document.createElement('button');
             btn.className = 'popup-close-btn';
@@ -481,8 +484,9 @@ function handleBoxClicks(box, model) {
             btn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                box.classList.remove('mode-inactive'); // remove focus active indication
                 matchedElem.classList.remove('mode-popup-active');
+                model.set("msg_topy", "!mode-inactive");
+                model.save_changes();
                 box.focus(); // return focus to box
                 btn.remove(); // remove button
             };

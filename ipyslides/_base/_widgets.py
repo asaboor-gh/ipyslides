@@ -58,8 +58,7 @@ class InteractionWidget(anywidget.AnyWidget):
                     xPerc = round(float(coords[0]),2)
                     yPerc = round(float(coords[1]),2)
                     self._menu.show(xPerc, yPerc)
-                except:
-                    pass
+                except: pass
         elif msg == 'NEXT':
             self._buttons.next.click()
         elif msg == 'PREV':
@@ -87,8 +86,11 @@ class InteractionWidget(anywidget.AnyWidget):
             # Clear loading splash and other stuff
             self._loading.value = ""
             self._loading.layout.display = "none"
-        elif msg in ('FS','!FS'): # Fullscreen change notice from JS
-            self._on_fs_change(self._menu, True if msg == 'FS' else False)
+        elif msg == 'ClosePanel':
+            self._toggle_panel(self._menu) # close side panel
+        elif 'mode-' in msg: # layout mode changes
+            value = False if msg.startswith('!') else True
+            self._on_mode_change(self._menu, value, msg.lstrip('!'))
         elif msg == 'PRINT':
             self._buttons.print.click()
         
@@ -112,12 +114,13 @@ class InteractionWidget(anywidget.AnyWidget):
         else:
             func() # Direct call
     
-    def _on_fs_change(self, ctx, value):
-        ctx.update_state('fscreen', value) # make icons consistent
+    def _on_mode_change(self, ctx, value, klass):
+        if 'fullscreen' in klass.lower():
+            ctx.update_state('fscreen', value) # make icons consistent
         if value:
-            ctx.ws.mainbox.add_class('FullScreen')
+            ctx.ws.mainbox.add_class(klass)
         else:
-            ctx.ws.mainbox.remove_class('FullScreen')   
+            ctx.ws.mainbox.remove_class(klass)   
     
     def _toggle_panel(self, ctx):
         closed = not ctx.ws.panelbox.is_open()
