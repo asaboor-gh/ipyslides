@@ -429,7 +429,12 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _add_clean_title(self):
         with _build_slide(self, 0):
             self.stack([
-                self.styled("color['var(--accent-color)']`Replace this with creating a slide with number` alert`0`",
+                self.styled("""
+                    color['var(--accent-color)']`Replace this with creating a slide with number` alert`0`
+                    
+                    ::: note-tip
+                        Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
+                    """,
                     padding = "8em 8px",
                 ), 
                 '', # empty column for space 🤣
@@ -827,7 +832,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _force_update(self, ctx=None, value=None):
         with self._loading_splash('Updating widgets...'):
             for slide in self[:]:  # Update all slides
-                if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotlty etc
+                if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotly etc
                     slide.update_display(go_there=False)
             
             if ctx:

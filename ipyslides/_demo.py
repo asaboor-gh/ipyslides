@@ -26,7 +26,7 @@ def demo_slides(slides):
             ^`2`Their University is somewhere in the middle of nowhere
     
     ::: display align-center               
-        vspace`2`Right click and select on fa`info` icon for instructions.
+        vspace`2`Right click (or click on footer) to open context menu and click on fa`info` icon for instructions.
     ```
     <md-src/>
     """)

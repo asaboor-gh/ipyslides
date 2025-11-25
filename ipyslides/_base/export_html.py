@@ -12,8 +12,8 @@ from ..writer import _fmt_html
 from ..formatters import _inline_style
 
 _script = '''<script>
-    let box = document.getElementsByClassName('SlideBox')[0];
-    let slide = box.getElementsByClassName('SlideArea')[0];
+    let box = document.querySelector('.SlideBox');
+    let slide = box.querySelector('.SlideArea');
 
     window.onresize = function() {
         let rectBox = box.getBoundingClientRect();
@@ -31,7 +31,7 @@ _script = '''<script>
     };
     window.dispatchEvent(new window.Event('resize')); // First time programatically
 
-    let slides = document.getElementsByClassName("SlidesWrapper")[0];
+    let slides = document.querySelector(".SlidesWrapper");
 
     slides.addEventListener("scroll", (event) => {
         slides.classList.add("Scrolling");

@@ -417,7 +417,7 @@ def layout_css(accent_color, aspect):
                 "border-radius": "4px",
                 "padding-top": "1.2em", # for top description
                 "overflow-y": "auto",
-                "width": "min(200px, 50%) !important", 
+                "width": "min(200px, 90%) !important", # very small screens should show a graceful menu
                 "height": "max-content !important",
                 "max-height": "min(600px, 90%) !important",
                 "transform": "translate(-4px,-4px)", # subtle edge views

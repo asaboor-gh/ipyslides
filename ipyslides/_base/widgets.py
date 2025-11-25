@@ -52,23 +52,35 @@ class CtxMenu(ListWidget):
         super().__init__(*args, **kwargs)
         self._handlers = {}
         self._opts_map = {
-            "fscreen": {"text":"{state} Fullscreen <kbd>F</kbd>","icon":"compress","iconFalse":"expand", "state":("Enter", "Exit")},
+            "fscreen": {
+                "text":"{state} Fullscreen <kbd>F</kbd>","icon":"compress",
+                "iconFalse":"expand", "state":("Enter", "Exit")
+            },
+            "laser": {
+                "text":"{state} Laser Pointer <kbd>L</kbd>","icon":"circle",
+                "iconFalse":"laser", "state":("Show", "Hide")
+            },
+            "panel": {
+                "text":"{state} Side Panel <kbd>S</kbd>","icon":"close",
+                "iconFalse":"panel", "state":("Open", "Close")
+            },
             "draw": {"text":"Open Drawing Board","icon":"edit"},
-            "laser": {"text":"{state} Laser Pointer <kbd>L</kbd>","icon":"circle","iconFalse":"laser", "state":("Show", "Hide")},
             "ksc": {"text":"Keyboard Shortcuts <kbd>K</kbd>","icon":"keyboard" },
             "info": {"text":"Read Instructions","icon":"info" },
-            "panel": {"text":"{state} Side Panel <kbd>S</kbd>","icon":"close","iconFalse":"panel", "state":("Open", "Close")},
             "source": {"text":"Edit Source Cell <kbd>E</kbd>","icon":"code" },
             "refresh": {"text":"Refresh Widgets Display","icon":"refresh" },
             "toc": {"text":"Table of Contents","icon":"bars" },
         }
-        self._state = {"draw": None,  "toc":None, "fscreen": False, "laser": False, "panel": False, "source": None, "refresh": None, "ksc": None, "info": None}
+        self._state = {
+            "draw": None,  "toc":None, "fscreen": False, "laser": False, "panel": False, 
+            "source": None, "refresh": None, "ksc": None, "info": None
+        } # state changes on selection
         self.add_class('CtxMenu')
         self.hide() # initially closed
         self._set_opts() # set all options initially
         
     def _transform(self, item):
-        key, value = list(item.items())[0]
+        key, value = item
         obj = self._opts_map.get(key, {})
         icon = obj.get("iconFalse" if value is False else "icon", "")
         text = obj.get("text", key).format(state=obj.get("state", ("Enable","Disable"))[1 if value else 0])
@@ -111,11 +123,11 @@ class CtxMenu(ListWidget):
         Use select() method if you want to trigger selection event as well.
         """
         index = None
-        for i, opt in enumerate(self.options):
-            if key in opt:
+        for i, (sk, sv) in enumerate(self.options):
+            if key == sk:
                 index = i
-                value = state(opt[key]) if callable(state) else state
-                if isinstance(opt[key], bool) and value in (True, False):
+                value = state(sv) if callable(state) else state
+                if isinstance(sv, bool) and value in (True, False):
                     self._state[key] = value
                 
         self._set_opts() # reset options to trigger re-render
@@ -123,7 +135,7 @@ class CtxMenu(ListWidget):
 
     def _set_opts(self, *keys):
         "Set options for given keys or all if none provided"
-        self.options = [{k:v} for k,v in self._state.items() if not keys or k in keys] 
+        self.options = [(k, v) for k,v in self._state.items() if not keys or k in keys] 
         self.index = None # reset index after options change to allow re-selection of same item
     
     def _istoggle(self, key):
@@ -131,8 +143,8 @@ class CtxMenu(ListWidget):
     
     @observe('value')
     def _on_select(self, change):
-        if change.new and isinstance(change.new, dict):
-            key, value = list(change.new.items())[0]
+        if change.new and isinstance(change.new, tuple):
+            key, value = change.new
             # First update menu's visible state if not same
             self.update_state(key, lambda old: not old if self._istoggle(key) else old)
             value = self._state.get(key, None)
@@ -142,7 +154,7 @@ class CtxMenu(ListWidget):
             elif key == 'laser':
                 self.ws.htmls.pointer.active = value
             elif key == 'fscreen':
-                self.ws.iw.msg_tojs = 'TFS' # we will get back FS/!FS message
+                self.ws.iw.msg_tojs = 'TFS' # we will get back [!]mode-fullscreen message
             elif key == 'draw':
                 self.ws.drawer.toggle(True) # open drawing board
             elif key == 'panel':

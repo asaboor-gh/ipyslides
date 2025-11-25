@@ -336,6 +336,9 @@ class BaseSlides:
                                  
                 ::: text-box
                     ^`1`My University is somewhere in the middle of nowhere
+                
+                ::: info
+                    Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
                 ''', logo = self.get_logo("4em"))).display()
         
         self.build(-1, '''

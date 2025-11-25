@@ -467,11 +467,19 @@ code) {
 .SlideArea a.link-button {
     padding : 0 24px !important;
 }
+.SlideArea .link-button.draw-button > :is(button, a) {
+    padding : 0 24px !important;
+}
 .SlideArea .Citations {
     column-count : 2 !important;
     column-gap : 1em;
     border-top : 1px solid #8988;
     margin-block : 0.5em;
+}
+.SlideArea .citetext {
+    border-radius : 4px;
+    border-left : 1px solid var(--fg2-color);
+    border-right : 1px solid var(--fg2-color);
 }
 .SlideArea .columns > div {
     position : relative !important;
@@ -935,14 +943,15 @@ details[open] > summary::after {
 }
 .click-wrapper {
     position : absolute !important;
-    right : 16px !important;
+    right : 28px !important;
     bottom : 2px !important;
-    width : 110px !important;
-    max-width : 110px !important;
+    width : auto !important;
     height : 21px !important;
-    display : flex;
+    display : inline-flex;
+    flex-direction : row !important;
+    align-items : center !important;
     z-index : 6 !important;
-    justify-content : space-evenly !important;
+    justify-content : flex-end !important;
 }
 @media print {
     .click-wrapper {
@@ -951,7 +960,7 @@ details[open] > summary::after {
 }
 .click-wrapper .clicker {
     display : inline-block;
-    padding : 0 5px !important;
+    padding : 0 8px !important;
     flex-grow : 1;
     color : var(--accent-color);
     text-align : center;
@@ -1046,11 +1055,11 @@ section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non
 }
 
 .SlidesWrapper.Scrolling .Progress,
-.SlidesWrapper.Scrolling .Number {
+.SlidesWrapper.Scrolling .SlideBox > .Number {
     visibility: hidden !important;
     transition: visbility 200ms ease-in;
 }
-.SlidesWrapper .Number {
+.SlidesWrapper .SlideBox > .Number {
     color:var(--fg2-color);
     position:absolute;
     right:6px;
@@ -1111,89 +1120,89 @@ span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; pad
 td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
 span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
 .highlight.numbered .hll { background-color: #6e7681 }
-.highlight.numbered { background: #0d1117; color: #E6EDF3 }
-.highlight.numbered .c { color: #8B949E; font-style: italic } /* Comment */
-.highlight.numbered .err { color: #F85149 } /* Error */
-.highlight.numbered .esc { color: #E6EDF3 } /* Escape */
-.highlight.numbered .g { color: #E6EDF3 } /* Generic */
-.highlight.numbered .k { color: #FF7B72 } /* Keyword */
-.highlight.numbered .l { color: #A5D6FF } /* Literal */
-.highlight.numbered .n { color: #E6EDF3 } /* Name */
-.highlight.numbered .o { color: #FF7B72; font-weight: bold } /* Operator */
-.highlight.numbered .x { color: #E6EDF3 } /* Other */
-.highlight.numbered .p { color: #E6EDF3 } /* Punctuation */
-.highlight.numbered .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
-.highlight.numbered .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
-.highlight.numbered .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
-.highlight.numbered .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
-.highlight.numbered .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
-.highlight.numbered .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
-.highlight.numbered .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
-.highlight.numbered .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
-.highlight.numbered .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
-.highlight.numbered .gr { color: #FFA198 } /* Generic.Error */
-.highlight.numbered .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
-.highlight.numbered .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
-.highlight.numbered .go { color: #8B949E } /* Generic.Output */
-.highlight.numbered .gp { color: #8B949E } /* Generic.Prompt */
-.highlight.numbered .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
-.highlight.numbered .gu { color: #79C0FF } /* Generic.Subheading */
-.highlight.numbered .gt { color: #FF7B72 } /* Generic.Traceback */
-.highlight.numbered .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
-.highlight.numbered .kc { color: #79C0FF } /* Keyword.Constant */
-.highlight.numbered .kd { color: #FF7B72 } /* Keyword.Declaration */
-.highlight.numbered .kn { color: #FF7B72 } /* Keyword.Namespace */
-.highlight.numbered .kp { color: #79C0FF } /* Keyword.Pseudo */
-.highlight.numbered .kr { color: #FF7B72 } /* Keyword.Reserved */
-.highlight.numbered .kt { color: #FF7B72 } /* Keyword.Type */
-.highlight.numbered .ld { color: #79C0FF } /* Literal.Date */
-.highlight.numbered .m { color: #A5D6FF } /* Literal.Number */
-.highlight.numbered .s { color: #A5D6FF } /* Literal.String */
-.highlight.numbered .na { color: #E6EDF3 } /* Name.Attribute */
-.highlight.numbered .nb { color: #E6EDF3 } /* Name.Builtin */
-.highlight.numbered .nc { color: #F0883E; font-weight: bold } /* Name.Class */
-.highlight.numbered .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
-.highlight.numbered .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
-.highlight.numbered .ni { color: #FFA657 } /* Name.Entity */
-.highlight.numbered .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
-.highlight.numbered .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
-.highlight.numbered .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
-.highlight.numbered .nn { color: #FF7B72 } /* Name.Namespace */
-.highlight.numbered .nx { color: #E6EDF3 } /* Name.Other */
-.highlight.numbered .py { color: #79C0FF } /* Name.Property */
-.highlight.numbered .nt { color: #7EE787 } /* Name.Tag */
-.highlight.numbered .nv { color: #79C0FF } /* Name.Variable */
-.highlight.numbered .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
-.highlight.numbered .pm { color: #E6EDF3 } /* Punctuation.Marker */
-.highlight.numbered .w { color: #6E7681 } /* Text.Whitespace */
-.highlight.numbered .mb { color: #A5D6FF } /* Literal.Number.Bin */
-.highlight.numbered .mf { color: #A5D6FF } /* Literal.Number.Float */
-.highlight.numbered .mh { color: #A5D6FF } /* Literal.Number.Hex */
-.highlight.numbered .mi { color: #A5D6FF } /* Literal.Number.Integer */
-.highlight.numbered .mo { color: #A5D6FF } /* Literal.Number.Oct */
-.highlight.numbered .sa { color: #79C0FF } /* Literal.String.Affix */
-.highlight.numbered .sb { color: #A5D6FF } /* Literal.String.Backtick */
-.highlight.numbered .sc { color: #A5D6FF } /* Literal.String.Char */
-.highlight.numbered .dl { color: #79C0FF } /* Literal.String.Delimiter */
-.highlight.numbered .sd { color: #A5D6FF } /* Literal.String.Doc */
-.highlight.numbered .s2 { color: #A5D6FF } /* Literal.String.Double */
-.highlight.numbered .se { color: #79C0FF } /* Literal.String.Escape */
-.highlight.numbered .sh { color: #79C0FF } /* Literal.String.Heredoc */
-.highlight.numbered .si { color: #A5D6FF } /* Literal.String.Interpol */
-.highlight.numbered .sx { color: #A5D6FF } /* Literal.String.Other */
-.highlight.numbered .sr { color: #79C0FF } /* Literal.String.Regex */
-.highlight.numbered .s1 { color: #A5D6FF } /* Literal.String.Single */
-.highlight.numbered .ss { color: #A5D6FF } /* Literal.String.Symbol */
-.highlight.numbered .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
-.highlight.numbered .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
-.highlight.numbered .vc { color: #79C0FF } /* Name.Variable.Class */
-.highlight.numbered .vg { color: #79C0FF } /* Name.Variable.Global */
-.highlight.numbered .vi { color: #79C0FF } /* Name.Variable.Instance */
-.highlight.numbered .vm { color: #79C0FF } /* Name.Variable.Magic */
-.highlight.numbered .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.highlight.numbered { background: #0d1117; color: #e6edf3 }
+.highlight.numbered .c { color: #8b949e; font-style: italic } /* Comment */
+.highlight.numbered .err { color: #f85149 } /* Error */
+.highlight.numbered .esc { color: #e6edf3 } /* Escape */
+.highlight.numbered .g { color: #e6edf3 } /* Generic */
+.highlight.numbered .k { color: #ff7b72 } /* Keyword */
+.highlight.numbered .l { color: #a5d6ff } /* Literal */
+.highlight.numbered .n { color: #e6edf3 } /* Name */
+.highlight.numbered .o { color: #ff7b72; font-weight: bold } /* Operator */
+.highlight.numbered .x { color: #e6edf3 } /* Other */
+.highlight.numbered .p { color: #e6edf3 } /* Punctuation */
+.highlight.numbered .ch { color: #8b949e; font-style: italic } /* Comment.Hashbang */
+.highlight.numbered .cm { color: #8b949e; font-style: italic } /* Comment.Multiline */
+.highlight.numbered .cp { color: #8b949e; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight.numbered .cpf { color: #8b949e; font-style: italic } /* Comment.PreprocFile */
+.highlight.numbered .c1 { color: #8b949e; font-style: italic } /* Comment.Single */
+.highlight.numbered .cs { color: #8b949e; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight.numbered .gd { color: #ffa198; background-color: #490202 } /* Generic.Deleted */
+.highlight.numbered .ge { color: #e6edf3; font-style: italic } /* Generic.Emph */
+.highlight.numbered .ges { color: #e6edf3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight.numbered .gr { color: #ffa198 } /* Generic.Error */
+.highlight.numbered .gh { color: #79c0ff; font-weight: bold } /* Generic.Heading */
+.highlight.numbered .gi { color: #56d364; background-color: #0f5323 } /* Generic.Inserted */
+.highlight.numbered .go { color: #8b949e } /* Generic.Output */
+.highlight.numbered .gp { color: #8b949e } /* Generic.Prompt */
+.highlight.numbered .gs { color: #e6edf3; font-weight: bold } /* Generic.Strong */
+.highlight.numbered .gu { color: #79c0ff } /* Generic.Subheading */
+.highlight.numbered .gt { color: #ff7b72 } /* Generic.Traceback */
+.highlight.numbered .g-Underline { color: #e6edf3; text-decoration: underline } /* Generic.Underline */
+.highlight.numbered .kc { color: #79c0ff } /* Keyword.Constant */
+.highlight.numbered .kd { color: #ff7b72 } /* Keyword.Declaration */
+.highlight.numbered .kn { color: #ff7b72 } /* Keyword.Namespace */
+.highlight.numbered .kp { color: #79c0ff } /* Keyword.Pseudo */
+.highlight.numbered .kr { color: #ff7b72 } /* Keyword.Reserved */
+.highlight.numbered .kt { color: #ff7b72 } /* Keyword.Type */
+.highlight.numbered .ld { color: #79c0ff } /* Literal.Date */
+.highlight.numbered .m { color: #a5d6ff } /* Literal.Number */
+.highlight.numbered .s { color: #a5d6ff } /* Literal.String */
+.highlight.numbered .na { color: #e6edf3 } /* Name.Attribute */
+.highlight.numbered .nb { color: #e6edf3 } /* Name.Builtin */
+.highlight.numbered .nc { color: #f0883e; font-weight: bold } /* Name.Class */
+.highlight.numbered .no { color: #79c0ff; font-weight: bold } /* Name.Constant */
+.highlight.numbered .nd { color: #d2a8ff; font-weight: bold } /* Name.Decorator */
+.highlight.numbered .ni { color: #ffa657 } /* Name.Entity */
+.highlight.numbered .ne { color: #f0883e; font-weight: bold } /* Name.Exception */
+.highlight.numbered .nf { color: #d2a8ff; font-weight: bold } /* Name.Function */
+.highlight.numbered .nl { color: #79c0ff; font-weight: bold } /* Name.Label */
+.highlight.numbered .nn { color: #ff7b72 } /* Name.Namespace */
+.highlight.numbered .nx { color: #e6edf3 } /* Name.Other */
+.highlight.numbered .py { color: #79c0ff } /* Name.Property */
+.highlight.numbered .nt { color: #7ee787 } /* Name.Tag */
+.highlight.numbered .nv { color: #79c0ff } /* Name.Variable */
+.highlight.numbered .ow { color: #ff7b72; font-weight: bold } /* Operator.Word */
+.highlight.numbered .pm { color: #e6edf3 } /* Punctuation.Marker */
+.highlight.numbered .w { color: #6e7681 } /* Text.Whitespace */
+.highlight.numbered .mb { color: #a5d6ff } /* Literal.Number.Bin */
+.highlight.numbered .mf { color: #a5d6ff } /* Literal.Number.Float */
+.highlight.numbered .mh { color: #a5d6ff } /* Literal.Number.Hex */
+.highlight.numbered .mi { color: #a5d6ff } /* Literal.Number.Integer */
+.highlight.numbered .mo { color: #a5d6ff } /* Literal.Number.Oct */
+.highlight.numbered .sa { color: #79c0ff } /* Literal.String.Affix */
+.highlight.numbered .sb { color: #a5d6ff } /* Literal.String.Backtick */
+.highlight.numbered .sc { color: #a5d6ff } /* Literal.String.Char */
+.highlight.numbered .dl { color: #79c0ff } /* Literal.String.Delimiter */
+.highlight.numbered .sd { color: #a5d6ff } /* Literal.String.Doc */
+.highlight.numbered .s2 { color: #a5d6ff } /* Literal.String.Double */
+.highlight.numbered .se { color: #79c0ff } /* Literal.String.Escape */
+.highlight.numbered .sh { color: #79c0ff } /* Literal.String.Heredoc */
+.highlight.numbered .si { color: #a5d6ff } /* Literal.String.Interpol */
+.highlight.numbered .sx { color: #a5d6ff } /* Literal.String.Other */
+.highlight.numbered .sr { color: #79c0ff } /* Literal.String.Regex */
+.highlight.numbered .s1 { color: #a5d6ff } /* Literal.String.Single */
+.highlight.numbered .ss { color: #a5d6ff } /* Literal.String.Symbol */
+.highlight.numbered .bp { color: #e6edf3 } /* Name.Builtin.Pseudo */
+.highlight.numbered .fm { color: #d2a8ff; font-weight: bold } /* Name.Function.Magic */
+.highlight.numbered .vc { color: #79c0ff } /* Name.Variable.Class */
+.highlight.numbered .vg { color: #79c0ff } /* Name.Variable.Global */
+.highlight.numbered .vi { color: #79c0ff } /* Name.Variable.Instance */
+.highlight.numbered .vm { color: #79c0ff } /* Name.Variable.Magic */
+.highlight.numbered .il { color: #a5d6ff } /* Literal.Number.Integer.Long */
     .highlight.numbered { 
         background: #0d1117; 
-        color: #E6EDF3; 
+        color: #e6edf3; 
         border-left: 0.2em solid var(--bg3-color);
         border-radius: 0.2em;
     }
@@ -1209,7 +1218,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
     }
     .highlight.numbered code::before {
         width: 1.2em;
-        color: #E6EDF3;
+        color: #e6edf3;
         font-size: 80% !important;
         background: #0d1117 !important;
         display:inline-block !important;
@@ -1245,18 +1254,18 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 </head>
 <body>
 <div>
-    <div class="click-wrapper print-only"> <a href="#s-1839914089440" class="clicker">●</a><a href="#s-1839914533984" class="clicker">●</a><a href="#s-1839914920832" class="clicker">●</a><a href="#s-1839914354432" class="clicker">●</a><a href="#s-1839915468544" class="clicker">●</a> </div>
+    <div class="click-wrapper print-only"> <a href="#s-1988046796640" class="clicker">●</a><a href="#s-1988047289456" class="clicker">●</a><a href="#s-1988047573344" class="clicker">●</a><a href="#s-1988048159120" class="clicker">●</a><a href="#s-1988048426656" class="clicker">●</a> </div>
     <!-- Classes below work for both scenerios -->
-    <div class="SlidesWrapper Slides-1839905446016">
+    <div class="SlidesWrapper Slides-1988038233920">
     
-                    <section id="s-1839914089440">
+                    <section id="s-1988046796640">
                         <style>
 </style>
 
                         <div class="SlideBox">
-                            <div class="BackLayer print-only s-1839914089440">
+                            <div class="BackLayer print-only s-1988046796640">
             <style>
-                #s-1839914089440 .BackLayer {
+                #s-1988046796640 .BackLayer {
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -1266,7 +1275,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         overflow:hidden;
         margin:0;
     }
-    #s-1839914089440 .BackLayer :is(img, svg) {
+    #s-1988046796640 .BackLayer :is(img, svg) {
         position: absolute;
         left:50% !important;
         top:50% !important;
@@ -1274,19 +1283,19 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         width: 100%;
         height: 100%;
     }
-    #s-1839914089440 .s-1839914089440.BackLayer :is(img, svg) {
+    #s-1988046796640 .s-1988046796640.BackLayer :is(img, svg) {
         object-fit:contain !important;
         filter: blur(10px);
         opacity:0.25;
     }  
-    #s-1839914089440 .s-1839914089440.BackLayer svg {
+    #s-1988046796640 .s-1988046796640.BackLayer svg {
         max-width: 100% !important;
         max-height: 100% !important;
         width:  !important;
         min-width:  !important;
         min-height:  !important;
     }
-    #s-1839914089440 .BackLayer.jupyter-widgets-disconnected {
+    #s-1988046796640 .BackLayer.jupyter-widgets-disconnected {
         display:none;
     }
 
@@ -1298,60 +1307,60 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;"></text>
     </svg>
             </div>
-                            <div class="n0 SlideArea HideSlide export-only">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 6.5.6 Documentation</h2>
+                            <div class="n0 SlideArea HideSlide OneFrame export-only">
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>IPySlides 6.6.0 Documentation</h2>
 <h3>Creating slides with IPySlides</h3></div><div style="width: 100%; box-sizing:border-box;"><div class="align-center"><p><span style='color:#DC143C;'>Abdul Saboor</span><sup>1</sup></p>
-<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Nov 19, 2025</span></p>
+<p class="text-small"><span style='background:None;color:inherit;padding: 0.1em;border-radius:0.1em;'>Nov 25, 2025</span></p>
 <p><svg height="4em" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="round" stroke-width="7.071067811865476">
         <path d="M22.5 7.5L10 20L20 30L30 20L40 30L27.5 42.5" stroke="#43D675"/>
         <path d="M7.5 27.5L22.5 42.5" stroke="#4F8EF7"/>
         <path d="M32.5 32.5L20 20L30 10L42.5 22.5" stroke="#4F8EF7"/>
         <text x="55" y="37.5" stroke-width="0" fill="currentColor" style="font-size:1.5em;font-weight:bold;"></text>
-    </svg></p><div class='text-box  '  ><p><sup>1</sup>My University is somewhere in the middle of nowhere</p></div></div></div></div>
+    </svg></p><div class='text-box  '  ><p><sup>1</sup>My University is somewhere in the middle of nowhere</p></div><div class='info  '  ><p>Right click (or click on footer) to open context menu for accessing settings, table of contents etc.</p></div></div></div></div>
                             </div>
-                            <span class="Number"></span>
+
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 0.0%, var(--bg2-color) 0.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839913929024">
+                    <section id="s-1988047297888">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n1 FirstTOC SlideArea HideSlide export-only">
+                            <div class="n1 FirstTOC SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div class="columns writer block-green" ><div style="width:50.000%;overflow:auto;height:auto"><div><h2>Table of contents</h2>
 <ol class="toc-list toc-extra" style="">
 <li class="toc-item this">
-    <a href="#s-1839913929024" class="slide-link citelink">Introduction</a>
+    <a href="#s-1988047297888" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914921648" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-1988047477296" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914749232" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-1988047954464" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914747792" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-1988048000816" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914782288" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-1988048161856" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914821856" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-1988048205664" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839915468544" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-1988048426656" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div><div style="width:50.000%;overflow:auto;height:auto"><h3>This is summary of current section</h3>
 <p>Oh we can use inline columns <div class="columns" style="gap:0.25em;display:flex;flex-direction:row;"><div style="flex:1 1;min-width:0;"><p>Column A</p></div>
-<div style="flex:1 1;min-width:0;"><p>Column B</p></div></div> here and what not!</p>
-<a class="fa fa-edit link-button" href="https://www.tldraw.com" target="_blank" rel="noopener noreferrer"></a></div></div></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Markdown</span>
+<div style="flex:1 1;min-width:0;"><p>Column B</p></div></div> here and what not!
+<span class="link-button jupyter-button draw-button" ><button class="req-click jupyter-only" title="Open Drawing Board" style="border:none;background:transparent;cursor:pointer;"><i class="fa fa-edit"></i></button><a href="https://www.tldraw.com" target="_blank" rel="noopener noreferrer" class="fa fa-edit export-only"></a></span></p></div></div></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Markdown</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight  numbered">
@@ -1372,13 +1381,13 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 3.3333%, var(--bg2-color) 3.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914964304">
+                    <section id="s-1988047340496">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n2 SlideArea HideSlide export-only">
+                            <div class="n2 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h1>Main App</h1></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig"><b>Slides</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">extensions</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span></code><br><p>Interactive Slides in IPython Notebook. Only one instance can exist. <code>settings</code> 
 are passed to <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">settings</span><span class="p">()</span></code> if you like to set during initialization. You
 can also edit file .ipyslides-assets/settings.json to make settings persistent across sessions
@@ -1401,7 +1410,7 @@ without extra typing, like <code class="highlight inline" style="white-space:pre
 <li>Run <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">slides</span><span class="o">.</span><span class="n">docs</span><span class="p">()</span></code> to see documentation.</li>
 <li>Instructions in left settings panel are always on your fingertips.</li>
 <li>Creating slides in a batch using <code>Slides.create</code> is much faster than adding them one by one.</li>
-<li>In JupyterLab, right click on the slides and select <code>Create New View for Output</code> for optimized display.</li>
+<li>In JupyterLab, right click on the cell containing slides (outside slides) and select <code>Create New View for Output</code> for optimized display.</li>
 <li>To jump to source cell and back to slides by clicking buttons, set <code>Windowing mode</code> in Notebook settings to <code>defer</code> or <code>none</code>.</li>
 <li>See <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">xmd</span><span class="o">.</span><span class="n">syntax</span></code> for extended markdown syntax, especially variables formatting.</li>
 <li>Inside python scripts or for encapsulation, use <code>Slides.fmt</code> to pick variables from local scope.</li>
@@ -1419,13 +1428,13 @@ without extra typing, like <code class="highlight inline" style="white-space:pre
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 6.6667%, var(--bg2-color) 6.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914806000">
+                    <section id="s-1988047574736">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n3 SlideArea HideSlide export-only">
+                            <div class="n3 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h1>Jump between slides</h1></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>link</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">back_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">back_icon</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code><br><p>Create a link to jump to another slide. Use <code>label</code> for link text 
 and <code>back_label</code> for the  optional text on the target slide if need to jump back.</p>
 <ul>
@@ -1435,7 +1444,7 @@ and <code>back_label</code> for the  optional text on the target slide if need t
 <li>Use similar links in markdown as <code>&lt;link:[unique id here]:origin label&gt;</code> and <code>&lt;link:[unique id here same as origin]:target [back_label,optional]&gt;</code>.</li>
 <li>In markdown, icons can be passed in label as <span style='color:#DC143C;'>"fa&#96;arrow&#96; label text"</span>.</li>
 </ul>
-</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-d65b8759fde040ea98f00c629d2aae4f" href="#target-d65b8759fde040ea98f00c629d2aae4f"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
+</div></div><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="origin-e02e02f39e5e402b800966a85b3f2e87" href="#target-e02e02f39e5e402b800966a85b3f2e87"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight  numbered">
@@ -1450,13 +1459,13 @@ and <code>back_label</code> for the  optional text on the target slide if need t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 10.0%, var(--bg2-color) 10.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914921648">
+                    <section id="s-1988047477296">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n4 SlideArea HideSlide export-only">
+                            <div class="n4 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Adding Slides</h2></div><div style="width: 100%; box-sizing:border-box;"><p class="note info">Besides function below, you can add slides with <code>%%slide number [-m]</code> magic as well.</p></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>build</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">slide_number</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="nb">vars</span><span class="p">)</span></code><br><p>Build slides with a single unified command in three ways:</p>
 <ol>
 <li><code class="highlight inline" style="white-space:pre-wrap;"><span class="n">slides</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="nb">callable</span><span class="p">)</span></code> to create a slide from a <code>callable(slide)</code> immediately, e.g. <code class="highlight inline" style="white-space:pre-wrap;"><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">slides</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span></code> or as a decorator.<ul>
@@ -1495,7 +1504,7 @@ This helps modularity of content, and even you can link a citation file in markd
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="sb">```citations</span><span class="w"> </span>footnote</code>
+<code><span class="sb">```citations</span></code>
 <code><span class="s">@key1: Saboor et. al., 2025</span></code>
 <code><span class="s">@key2: A citations can span multiple lines, but key should start on new line</span></code>
 <code><span class="s">&lt;!-- Or put this content in a file &#39;bib.md&#39; and then inside citations block use include`bib.md` --&gt;</span></code>
@@ -1509,13 +1518,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 13.3333%, var(--bg2-color) 13.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914921024">
+                    <section id="s-1988046900384">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n5 SlideArea HideSlide export-only">
+                            <div class="n5 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Important Methods on Slide</h2></div><div style="width: 100%; box-sizing:border-box;"><div class='note-warning  '  ><ul>
 <li>Use slide handle or <code>Slides[number,]</code> to apply these methods becuase index can change on new builds.</li>
 <li>Use <code>Slides[start:stop:step]</code> to apply operations on many slides at once such as <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">vars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></code>.</li>
@@ -1656,13 +1665,13 @@ Each call will reset previous call if props given explicitly, otherwise not.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 16.6667%, var(--bg2-color) 16.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914964640">
+                    <section id="s-1988047309936">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n6 SlideArea HideSlide export-only">
+                            <div class="n6 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Extended Markdown</h2>
 <p>Extended syntax on top of <a href="https://python-markdown.github.io/">Python-Markdown</a> supports almost full presentation from Markdown.</p>
 <p><strong class="text-big">Presentation Structure</strong></p>
@@ -1684,11 +1693,12 @@ These files are watched for edits if included in synced markdown file via <code>
 <dd>
 <ul>
 <li><span style='color:#DC143C;'>cite&#96;key1,key2&#96;</span> / <span style='color:#DC143C;'>@key1,@key2</span> to add citation to current slide. citations are automatically added in suitable place and should be set once using <code>Slides.set_citations</code> function (or see below).</li>
-<li>With citations mode set as 'footnote', you can add <span style='color:#DC143C;'>refs&#96;ncol_refs&#96;</span> or <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">refs</span></code> to add citations anywhere on slide. If &#96;ncol_refs&#96; is not given, it will be picked from layout settings.
-  Using <span style='color:#DC143C;'>refs&#96;ncol_refs, key1, key2,...&#96;</span> will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.</li>
-<li>Force a citation to be shown inline by appending a ! even in footnote mode, such as <span style='color:#DC143C;'>@key!</span> or <span style='color:#DC143C;'>cite&#96;key1,key2!&#96;</span>.</li>
+<li>You can add <span style='color:#DC143C;'>refs&#96;ncol_refs&#96;</span> or <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">refs</span></code> to add citations anywhere on slide. If &#96;ncol_refs&#96; is not given, it will be picked from layout settings.
+  Using <span style='color:#DC143C;'>refs&#96;ncol_refs, key1, key2,...&#96;</span> will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
+  Unused citations will be added automatically at end of slide.</li>
+<li>Force citations to be shown inline by appending a !, such as <span style='color:#DC143C;'>@key!</span> or <span style='color:#DC143C;'>cite&#96;key1,key2!&#96;</span>.</li>
 <li>In the synced markdown file (also its included files) through <code>Slides.sync_with_file</code>, you can add citations with block sytnax:                           <br />
-<code class="highlight inline" style="white-space:pre-wrap;">::: citations [inline or footnote]</code><br><code class="highlight inline" style="white-space:pre-wrap;">   <span class="ni">@key1:</span> Saboor et. al., 2025</code><br><code class="highlight inline" style="white-space:pre-wrap;">   <span class="ni">@key2:</span> A citations can span multiple lines, but key should start on new line</code></li>
+<code class="highlight inline" style="white-space:pre-wrap;">::: citations</code><br><code class="highlight inline" style="white-space:pre-wrap;">   <span class="ni">@key1:</span> Saboor et. al., 2025</code><br><code class="highlight inline" style="white-space:pre-wrap;">   <span class="ni">@key2:</span> A citations can span multiple lines, but key should start on new line</code></li>
 </ul>
 </dd>
 </dl></div></div>
@@ -1697,13 +1707,13 @@ These files are watched for edits if included in synced markdown file via <code>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 20.0%, var(--bg2-color) 20.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914555136">
+                    <section id="s-1988047478256">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n7 SlideArea HideSlide export-only">
+                            <div class="n7 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Extended Markdown</h2>
 <p><strong class="text-big">Content Blocks</strong></p>
 <p>The general block syntax is <code>::: type-or-classes [args] attributes</code>.</p>
@@ -1752,8 +1762,8 @@ Each of these blocks can have additional CSS classes and properties, besides the
 <td style="text-align: left;">Create a table with optional column widths, e.g. <code>::: table 1 2</code> for 33% and 66% width. Use <code>caption-side=top/bottom</code> to place caption on top/bottom.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>::: citations [inline or footnote]</code></td>
-<td style="text-align: left;">Add citations in the block, with <code>inline</code> or <code>footnote</code> mode. Use <code>@key: value</code> syntax to add citations in block.</td>
+<td style="text-align: left;"><code>::: citations</code></td>
+<td style="text-align: left;">Add citations in the block (only in <code>sync_with_file</code> context) instead of <code>Slides.set_citations</code>. Use <code>@key: value</code> syntax on its own line to add citations in block.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>::: display css_classes</code></td>
@@ -1771,13 +1781,13 @@ You can also use <code>::: code 1 3</code> to focus on specific lines based on i
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 23.3333%, var(--bg2-color) 23.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914533984">
+                    <section id="s-1988047289456">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n8 SlideArea HideSlide export-only">
+                            <div class="n8 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Extended Markdown</h2>
 <p><strong class="text-big">Layouts</strong></p>
 <dl>
@@ -1807,7 +1817,7 @@ Column separator is triple plus <code>+++</code> if intended in display mode and
 <code><span class="w">        </span><span class="k">-</span><span class="w"> </span>Indentation is important, so use tabs or spaces consistently.</code>
         </pre>
 </div>
-</div></div></div><div style="width: 100%; box-sizing:border-box;"><div class='columns block-blue c-1839918875200 ' style="display:flex;border:1px dashed red;" ><div class='block-red  '  ><ul>
+</div></div></div><div style="width: 100%; box-sizing:border-box;"><div class='columns block-blue c-1988050751808 ' style="display:flex;border:1px dashed red;" ><div class='block-red  '  ><ul>
 <li><code>::: columns/muticol</code> with a +++ separator act like <code>write</code> command and reveal content incrementally when <code>++</code> is used before block.</li>
 <li>children inside <code>columns</code> picks relative width from parent's <code>columns</code> block evem if '+++' is not used.
   In thise children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in <code>::: block</code> to make them obvious blocks like this one.</li>
@@ -1816,22 +1826,22 @@ Column separator is triple plus <code>+++</code> if intended in display mode and
 <li>Top level <code>columns</code> is necessary to create columns or use simple block with <code>display=flex</code>.
 and frame speactor is used at end of block.</li>
 <li>Indentation is important, so use tabs or spaces consistently.</li>
-</ul></div></div><style>.c-1839918875200 > p:empty {display:none;}
-.c-1839918875200 > :nth-child(1) {flex: 6 1;}
-.c-1839918875200 > :nth-child(2) {flex: 1 1;}
-.c-1839918875200 > :nth-child(3) {flex: 4 1;}</style></div></div>
+</ul></div></div><style>.c-1988050751808 > p:empty {display:none;}
+.c-1988050751808 > :nth-child(1) {flex: 6 1;}
+.c-1988050751808 > :nth-child(2) {flex: 1 1;}
+.c-1988050751808 > :nth-child(3) {flex: 4 1;}</style></div></div>
                             </div>
                             <span class="Number">8</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 26.6667%, var(--bg2-color) 26.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914556816">
+                    <section id="s-1988047286672">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n9 SlideArea HideSlide export-only">
+                            <div class="n9 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Extended Markdown</h2>
 <p><strong class="text-big">Code Display</strong></p>
 <dl>
@@ -1902,13 +1912,13 @@ and frame speactor is used at end of block.</li>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 30.0%, var(--bg2-color) 30.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914963728">
+                    <section id="s-1988046735680">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n10 SlideArea HideSlide export-only">
+                            <div class="n10 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Extended Markdown</h2>
 <p><strong class="text-big">Variables Substitution</strong></p>
 <p>Variables from Python code can be embedded directly into Markdown.</p>
@@ -1950,13 +1960,13 @@ and frame speactor is used at end of block.</li>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 33.3333%, var(--bg2-color) 33.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914918000">
+                    <section id="s-1988047379664">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n11 SlideArea HideSlide export-only">
+                            <div class="n11 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Extended Markdown</h2>
 <p><strong class="text-big">Inline Python Functions</strong></p>
 <p>Functions (that can also take extra args [python code as strings] as <span style='color:#DC143C;'>func[arg1,x=2,y=A]&#96;arg0&#96;</span>) include:</p></div><div style="width: 100%; box-sizing:border-box;"><div class='block-red  '  ><ul>
@@ -2002,13 +2012,13 @@ This should be rarely used when your markdown contains a lot of $ \LaTeX $ equat
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 36.6667%, var(--bg2-color) 36.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914920928">
+                    <section id="s-1988047592176">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n12 SlideArea ShowSlide export-only">
+                            <div class="n12 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Extended Markdown</h2>
 <p><strong class="text-big">General Syntax</strong></p>
 <ul>
@@ -2042,13 +2052,13 @@ This should be rarely used when your markdown contains a lot of $ \LaTeX $ equat
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 40.0%, var(--bg2-color) 40.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914103952">
+                    <section id="s-1988047576704">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n13 SlideArea HideSlide export-only">
+                            <div class="n13 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div class="speaker-notes print-only" ><p>,</p></div><div style="width: 100%; box-sizing:border-box;"><h2>Adding Content</h2></div><div style="width: 100%; box-sizing:border-box;"><p class="note info">Besides functions below, you can add content to slides with <code>%%xmd</code>,<code>%xmd</code> as well.</p></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" ><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">Slides.<b>write</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="n">objs</span><span class="p">,</span> <span class="n">widths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">css_class</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code><br><p>Write <code>objs</code> to slides in columns. To create rows in a column, wrap objects in a list or tuple. <br />
 You can optionally specify <code>widths</code> as a list of percentages for each column. 
 <code>css_class</code> can have multiple classes separated by space, works only for multiple columns.</p>
@@ -2100,7 +2110,7 @@ it supports additional syntax which you can read about by executing following co
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipyslides</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">isd</span></code>
+<code><span class="kn">import</span> <span class="nn">ipyslides</span> <span class="k">as</span> <span class="nn">isd</span></code>
 <code><span class="n">display</span><span class="p">(</span><span class="n">isd</span><span class="o">.</span><span class="n">xmd</span><span class="o">.</span><span class="n">syntax</span><span class="p">)</span></code>
         </pre>
 </div>
@@ -2140,13 +2150,13 @@ See <a href="https://python-markdown.github.io/extensions/">markdown extensions<
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 43.3333%, var(--bg2-color) 43.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914903968">
+                    <section id="s-1988047576752">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n14 SlideArea HideSlide export-only">
+                            <div class="n14 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Adding Speaker Notes</h2></div><div style="width: 100%; box-sizing:border-box;"><p><div class="note success" ><p>You can use alert</p></div>notes&#96;notes content&#96;<code>in markdown.</code></p></div><div style="width: 100%; box-sizing:border-box;"></div><div style="width: 100%; box-sizing:border-box;"><p class="note-error error">This is experimental feature, and may not work as expected.</p></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.notes.<b>display</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">()</span></code><br>
 </div><div class='docs'><span class="sig">Slides.notes.<b>insert</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">content</span><span class="p">)</span></code><br><p>Add notes to current slide. Content could be any object except javascript and interactive widgets.
 Note that notes are not shown inside slides during presentation. They can be viewed in popup window by 
@@ -2162,13 +2172,13 @@ enabling <code>Inline Notes</code> option in settings panel, useful for sharing 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 46.6667%, var(--bg2-color) 46.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914920832">
+                    <section id="s-1988047573344">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n15 SlideArea HideSlide export-only">
+                            <div class="n15 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Displaying Source Code</h2></div><div style="width: 100%; box-sizing:border-box;"><p>In markdown, the block <code>md-[before,after,var_name]</code> parses and displays source as well.</p></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>code</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">css_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hover_color</span><span class="o">=</span><span class="s1">&#39;var(--bg3-color)&#39;</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="s1">&#39;400px&#39;</span><span class="p">)</span></code><br><p>Create highlighted source code object from text, file or callable.</p>
 <p>Use code(obj) or code.cast(obj) to get source code from any object that has a source or str of code.</p>
 <p>Explicitly use:</p>
@@ -2206,64 +2216,64 @@ If <code>returns</code> is False (by default), then source is displayed before t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 50.0%, var(--bg2-color) 50.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914749232">
+                    <section id="s-1988047954464">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n16 SlideArea HideSlide export-only">
+                            <div class="n16 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-1839913929024" class="slide-link citelink">Introduction</a>
+    <a href="#s-1988047297888" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1839914921648" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-1988047477296" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-1839914749232" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-1988047954464" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914747792" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-1988048000816" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914782288" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-1988048161856" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839914821856" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-1988048205664" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839915468544" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-1988048426656" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">16</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 53.3333%, var(--bg2-color) 53.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914903728">
+                    <section id="s-1988047957200">
                         <style>
-#s-1839914903728 {
+#s-1988047957200 {
     --bg1-color : linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color));
 }
 </style>
 <style>
-#s-1839914903728 .SlideArea.n17 {
+#s-1988047957200 .SlideArea.n17 {
     --bg1-color : linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color));
 }
-#s-1839914903728 .SlideArea.n17 .highlight {
+#s-1988047957200 .SlideArea.n17 .highlight {
     background : #8984;
 }
 </style>
                         <div class="SlideBox">
 
-                            <div class="n17 SlideArea HideSlide export-only">
+                            <div class="n17 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div class="info" style="border:1px solid red;"><h2>Layout and Theme Settings</h2></div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>Settings</b></span><br><p>Apply settings to slides programatically. Fewer settings are available as widgets.</p>
 <p>Settings can be nested or individual attributes as set as well. For example:</p><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
@@ -2292,13 +2302,13 @@ e.g. <code class="highlight inline" style="white-space:pre-wrap;"><span class="n
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 56.6667%, var(--bg2-color) 56.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914747792">
+                    <section id="s-1988048000816">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n18 SlideArea HideSlide export-only">
+                            <div class="n18 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Useful Functions for Rich Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>alt</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">exportable_data</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></code><br><p>Display <code>obj</code> for slides and output of <code>exportable_data</code> will be and displayed only in exported formats as HTML.</p>
 <ul>
 <li><code>exportable_data</code> should be an html str or a callable to receive <code>obj</code> as its only argument.<ul>
@@ -2311,7 +2321,7 @@ e.g. <code class="highlight inline" style="white-space:pre-wrap;"><span class="n
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
+<code><span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
 <code><span class="n">slides</span><span class="o">.</span><span class="n">alt</span><span class="p">(</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;&lt;input type=&quot;range&quot; min=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">min</span><span class="si">}</span><span class="s1">&quot; max=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">max</span><span class="si">}</span><span class="s1">&quot; value=&quot;</span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">&quot;&gt;&#39;</span><span class="p">,</span> <span class="n">ipw</span><span class="o">.</span><span class="n">IntSlider</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
         </pre>
 </div>
@@ -2319,7 +2329,7 @@ e.g. <code class="highlight inline" style="white-space:pre-wrap;"><span class="n
 <li>If you happen to be using <code>alt</code> many times for same type, you can use <code>Slides.serializer.register</code> and then pass that type of widget without <code>alt</code>.</li>
 <li><code>ipywidgets</code>'s <code>HTML</code>, <code>Box</code> and <code>Output</code> widgets and their subclasses directly give html representation if used inside <code>write</code> command.</li>
 </ul></div>
-</div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>AnimationSlider</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">continuous_update</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8C40</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">cyclic</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8C70</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">description</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Unicode</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8B50</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Float</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8BE0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">loop</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8B80</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">nframes</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8BB0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">playing</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8C10</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">value</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001AC632A8A30</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code><br><p>This is a simple slider widget that can be used to control the animation with an observer function.</p>
+</div></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>AnimationSlider</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">continuous_update</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE0964520</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">cyclic</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE0964550</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">description</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Unicode</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE0964430</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Float</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE09644C0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">loop</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE0964460</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">nframes</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE0964490</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">playing</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE09644F0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">value</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000001CEE0964310</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code><br><p>This is a simple slider widget that can be used to control the animation with an observer function.</p>
 <p>You need to provide parameters like <code>nframes</code> and <code>interval</code> (milliseconds) to control the animation. 
 The <code>value</code> trait can be observed to get the current frame index.
 The <code>cyclic</code> trait can be set to <code>True</code> to make the animation cyclic and only works when loop mode is ON.</p><div><span class="lang-name">Python</span>
@@ -2327,14 +2337,14 @@ The <code>cyclic</code> trait can be set to <code>True</code> to make the animat
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">from</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="kn">import</span> <span class="n">FigureWidget</span></code>
-<code><span class="kn">from</span><span class="w"> </span><span class="nn">dashlab.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnimationSlider</span></code>
+<code><span class="kn">from</span> <span class="nn">plotly.graph_objects</span> <span class="kn">import</span> <span class="n">FigureWidget</span></code>
+<code><span class="kn">from</span> <span class="nn">dashlab.widgets</span> <span class="kn">import</span> <span class="n">AnimationSlider</span></code>
 <code></code>
 <code><span class="n">fig</span> <span class="o">=</span> <span class="n">FigureWidget</span><span class="p">()</span></code>
 <code><span class="n">fig</span><span class="o">.</span><span class="n">add_scatter</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span></code>
 <code><span class="n">widget</span> <span class="o">=</span> <span class="n">AnimationSlider</span><span class="p">()</span> </code>
 <code></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">on_change</span><span class="p">(</span><span class="n">change</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">on_change</span><span class="p">(</span><span class="n">change</span><span class="p">):</span></code>
 <code>    <span class="n">value</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="s1">&#39;new&#39;</span><span class="p">]</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;rgb(</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="o">/</span><span class="n">widget</span><span class="o">.</span><span class="n">nframes</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span><span class="si">}</span><span class="s1">, 100, 100)&#39;</span> <span class="c1"># change color based on frame index</span></code>
 <code></code>
@@ -2347,10 +2357,10 @@ The <code>cyclic</code> trait can be set to <code>True</code> to make the animat
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">from</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">interact</span></code>
+<code><span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">interact</span></code>
 <code></code>
 <code><span class="nd">@interact</span><span class="p">(</span><span class="n">frame</span><span class="o">=</span><span class="n">widget</span><span class="p">)</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">show_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">show_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">):</span></code>
 <code>    <span class="nb">print</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span></code>
         </pre>
 </div>
@@ -2469,7 +2479,7 @@ Only a subset of inline properties take effect if obj is a widget.</p><div class
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span></code>
+<code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span></code>
 <code><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">]})</span></code>
 <code><span class="n">slides</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">widths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span></code>
 <code></code>
@@ -2487,21 +2497,21 @@ Only a subset of inline properties take effect if obj is a widget.</p><div class
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 60.0%, var(--bg2-color) 60.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914964016">
+                    <section id="s-1988047574544">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n19 SlideArea HideSlide export-only">
+                            <div class="n19 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Citations and Sections</h2>
-<p>Use syntax <span style='color:#DC143C;'>cite&#96;key&#96;</span> / <span style='color:#DC143C;'>@key</span> to add citations which should be already set by <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">set_citations</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span></code> method.
-Citations are written on suitable place according to given mode. Number of columns in citations are determined by 
-<code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">layout</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ncol_refs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">)</span></code>. <a href="#A" class="citelink"><sup id ="A-back" style="color:var(--accent-color) !important;">1</sup></a></p>
+<p>Use syntax <span style='color:#DC143C;'>cite&#96;key&#96;</span> / <span style='color:#DC143C;'>@key</span> to add citations which should be already set by <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">set_citations</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code> method.
+Any key that ends with <code>!</code> is displayed inplace. Number of columns in displayed citations are determined by 
+<code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">layout</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ncol_refs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">)</span></code> or locally by <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">refs</span><span class="p">(</span><span class="n">ncol</span><span class="p">)</span></code>. <a href="#A" class="citelink"><sup id ="A-back" style="color:var(--accent-color) !important;">1</sup></a></p>
 <p>Add sections in slides to separate content by <span style='color:#DC143C;'>section&#96;text&#96;</span>. Corresponding table of contents
-can be added with <span style='color:#DC143C;'>toc&#96;title&#96;</span>.</p></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>set_citations</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;footnote&#39;</span><span class="p">)</span></code><br><p>Set citations from dictionary or string with content like <code>@key: citation value</code> on their own lines, 
+can be added with <span style='color:#DC143C;'>toc&#96;title&#96;</span>.</p></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>set_citations</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">data</span><span class="p">)</span></code><br><p>Set citations from dictionary or string with content like <code>@key: citation value</code> on their own lines, 
 key should be cited in markdown as cite&#96;key&#96; / @key, optionally comma separated keys.
-<code>mode</code> for citations should be one of ['inline', 'footnote']. Number of columns in citations are determined by <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">layout</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ncol_refs</span><span class="o">=</span><span class="n">N</span><span class="p">)</span></code>.</p><div><span class="lang-name">Python</span>
+Number of columns in displayed citations are determined by <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">layout</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ncol_refs</span><span class="o">=</span><span class="n">N</span><span class="p">)</span></code> or markdown refs&#96;N&#96;/<code>Slides.refs(N)</code>.</p><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight  numbered">
@@ -2522,26 +2532,26 @@ key should be cited in markdown as cite&#96;key&#96; / @key, optionally comma se
 </div>
 </div></div><div class='note  '  ><ul>
 <li>You should set citations in start if using voila or python script. Setting in start in notebook is useful as well.</li>
-<li>Citations are replaced with new ones, so latest use of this function reprsents available citations.</li>
+<li>Citations are replaced with new ones, so latest use of this function represents available citations.</li>
 <li>Makrdown equivalent of this function is a citation block only supported in <code>Slides.sync_with_file</code>'s context.</li>
 </ul></div>
-</div></div><div class="Citations" style=""><div class = "citation" id="A">
+</div></div><div style="width: 100%; box-sizing:border-box;"><div class="Citations text-small" style="column-count: 2 !important;"><div class = "citation" id="A">
                 <a href="#A-back" class="citelink"> 
                     <span style="color:var(--accent-color);">1. </span>
-                </a><p>Citation A</p></div></div></div>
+                </a><p>Citation A</p></div></div></div></div>
                             </div>
                             <span class="Number">19</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 63.3333%, var(--bg2-color) 63.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914901712">
+                    <section id="s-1988048051120">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n20 SlideArea HideSlide export-only">
-                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-d65b8759fde040ea98f00c629d2aae4f" href="#origin-d65b8759fde040ea98f00c629d2aae4f"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" ><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">ipyslides.dashlab.<b>interact</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">callable</span><span class="p">],</span> <span class="n">post_init</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span> <span class="n">function</span> <span class="nb">callable</span><span class="o">&gt;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
+                            <div class="n20 SlideArea HideSlide OneFrame export-only">
+                                <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><a class="slide-link" id="target-e02e02f39e5e402b800966a85b3f2e87" href="#origin-e02e02f39e5e402b800966a85b3f2e87"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%; box-sizing:border-box;"><h2>Dynamic Content</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" ><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">ipyslides.dashlab.<b>interact</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">callable</span><span class="p">],</span> <span class="n">post_init</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span> <span class="n">function</span> <span class="nb">callable</span><span class="o">&gt;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
 <p>This function is used for quick dashboards. Subclass <code>DashboardBase</code> for complex applications.</p>
 <p><strong>Features</strong>:    </p>
 <ul>
@@ -2556,24 +2566,24 @@ key should be cited in markdown as cite&#96;key&#96; / @key, optionally comma se
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">from</span><span class="w"> </span><span class="nn">dashlab</span><span class="w"> </span><span class="kn">import</span> <span class="n">interactive</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">monitor</span></code>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span></code>
+<code><span class="kn">from</span> <span class="nn">dashlab</span> <span class="kn">import</span> <span class="n">interactive</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">monitor</span></code>
+<code><span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
+<code><span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span></code>
 <code></code>
 <code><span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">FigureWidget</span><span class="p">()</span></code>
 <code></code>
 <code><span class="nd">@callback</span><span class="p">(</span><span class="s1">&#39;out-plot&#39;</span><span class="p">,</span> <span class="n">timeit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># check execution time</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">update_plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span><span class="p">):</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[]</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">add_scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span></code>
 <code></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">resize_fig</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">resize_fig</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># double trigger</span></code>
 <code>    <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># plotly&#39;s figurewidget always make trouble with sizing</span></code>
 <code></code>
 <code><span class="c1"># Above two functions can be merged since we can use changed detection</span></code>
 <code><span class="nd">@monitor</span>  <span class="c1"># check execution time</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">respond</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span> <span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">changed</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">respond</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fig</span> <span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">changed</span><span class="p">):</span></code>
 <code>    <span class="k">if</span> <span class="s1">&#39;fs&#39;</span> <span class="ow">in</span> <span class="n">changed</span><span class="p">:</span> <span class="c1"># or changed(&#39;fs&#39;)</span></code>
 <code>        <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># double trigger</span></code>
 <code>        <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">autosize</span> <span class="o">=</span> <span class="kc">True</span></code>
@@ -2672,10 +2682,10 @@ key should be cited in markdown as cite&#96;key&#96; / @key, optionally comma se
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span></code>
+<code><span class="kn">import</span> <span class="nn">time</span></code>
 <code></code>
 <code><span class="nd">@self</span><span class="o">.</span><span class="n">dl</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">post_init</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_css</span><span class="p">(</span><span class="nb">dict</span><span class="p">({</span><span class="s1">&#39;.out-main&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="s1">&#39;2em&#39;</span><span class="p">)},</span><span class="n">background</span><span class="o">=</span><span class="s1">&#39;var(--bg2-color)&#39;</span><span class="p">)),</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">btn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="o">.</span><span class="n">button</span><span class="p">())</span>  <span class="c1"># self is Slides here</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">btn</span><span class="p">):</span> </code>
+<code><span class="k">def</span> <span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">btn</span><span class="p">):</span> </code>
 <code>    <span class="n">local_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">()</span></code>
 <code>    <span class="n">objs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Time: </span><span class="si">{3}</span><span class="s1">:</span><span class="si">{4}</span><span class="s1">:</span><span class="si">{5}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">local_time</span><span class="p">)]</span> <span class="c1"># Print time in HH:MM:SS format</span></code>
 <code>    <span class="k">if</span> <span class="n">date</span><span class="p">:</span></code>
@@ -2685,7 +2695,7 @@ key should be cited in markdown as cite&#96;key&#96; / @key, optionally comma se
 </div>
 </div></div>
 
-<div class="widget-interact dl-dashboard i-1839916779360" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;height:max-content;"><div class="dl-DashApp" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
+<div class="widget-interact dl-dashboard i-1988051132720" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;height:max-content;"><div class="dl-DashApp" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
 "center center center"
 "center center center";grid-template-columns:1fr 2fr 1fr;grid-template-rows:1fr 3fr 1fr;"><div class="center" style="width:100%;gap:0.2em;grid-area:center;"><div class="date widget-param widget-control" ></div>
 <div class="out-main" ></div>
@@ -2791,10 +2801,10 @@ key should be cited in markdown as cite&#96;key&#96; / @key, optionally comma se
 }
 
 
-.i-1839916779360.widget-interact.dl-dashboard > .dl-DashApp {
+.i-1988051132720.widget-interact.dl-dashboard > .dl-DashApp {
     background : var(--bg2-color);
 }
-.i-1839916779360.widget-interact.dl-dashboard > .dl-DashApp .out-main {
+.i-1988051132720.widget-interact.dl-dashboard > .dl-DashApp .out-main {
     height : 2em;
 }
 </style></div>
@@ -2806,10 +2816,10 @@ key should be cited in markdown as cite&#96;key&#96; / @key, optionally comma se
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span></code>
+<code><span class="kn">import</span> <span class="nn">datetime</span></code>
 <code></code>
 <code><span class="nd">@self</span><span class="o">.</span><span class="n">on_load</span>  <span class="c1"># self is Slides here</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
 <code>    <span class="n">t</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></code>
 <code>    <span class="n">time</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Notification at </span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s1"> form slide </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1"> and frame </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
@@ -2825,19 +2835,19 @@ Return value could a cleanup function (which also accepts slide as single argume
 <li>If you use this to change global state of slides, return a clean up function which accepts slide as argument.</li>
 <li>This can be used only single time per slide, overwriting previous function.</li>
 </ul></div>
-</div></div></div></div><div class="Citations" style=""><pre class='Error'><b style='color:crimson;'>KeyError</b><span>: Set value for cited key 'monitor' and build slide again!</span></pre></div></div>
+</div></div></div></div><div style="width: 100%; box-sizing:border-box;"><div class="Citations text-small" style="column-count: 2 !important;"><pre class='Error'><b style='color:crimson;'>KeyError</b><span>: Set value for cited key 'monitor' and build slide again!</span></pre></div></div></div>
                             </div>
                             <span class="Number">20</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 66.6667%, var(--bg2-color) 66.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914630160">
+                    <section id="s-1988048103072">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n21 SlideArea HideSlide export-only">
+                            <div class="n21 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><p><div class="columns" style="gap:0.25em;display:flex;flex-direction:row;"><div style="flex:3 1;min-width:0;"><h2>Content Styling</h2>
 <p>You can <strong class="error">style</strong> or <strong><span style='background:None;color:teal;padding: 0.1em;border-radius:0.1em;'>colorize</span></strong> your <em style="color:hotpink;">content</em> and <em><span style='background:yellow;color:hotpink;padding: 0.1em;border-radius:0.1em;'>text</span></em>.
 Provide <strong class="info">CSS</strong> for that using <code class="highlight inline" style="white-space:pre-wrap;"><span class="n">Slides</span><span class="o">.</span><span class="n">html</span><span class="p">(</span><span class="s2">&quot;style&quot;</span><span class="p">,</span><span class="o">...</span><span class="p">)</span></code> or use some of the available styles. 
@@ -2944,13 +2954,13 @@ See these <strong class="success">styles</strong> with <code>Slides.css_styles</
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 70.0%, var(--bg2-color) 70.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914354432">
+                    <section id="s-1988048159120">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n22 SlideArea HideSlide export-only">
+                            <div class="n22 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Highlighting Code</h2>
 <p><a href="https://pygments.org/">pygments</a> is used for syntax highlighting <a href="#A" class="citelink"><sup id ="A-back" style="color:var(--accent-color) !important;">1</sup></a>.
 You can <strong class="error">highlight</strong> code using <code>Slides.code</code> <a href="#B" class="citelink"><sup id ="B-back" style="color:var(--accent-color) !important;">2</sup></a> or within markdown using named code blocks:</p></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
@@ -2958,7 +2968,7 @@ You can <strong class="error">highlight</strong> code using <code>Slides.code</c
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipyslides</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">isd</span></code>
+<code><span class="kn">import</span> <span class="nn">ipyslides</span> <span class="k">as</span> <span class="nn">isd</span></code>
         </pre>
 </div>
 </div></div></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Javascript</span>
@@ -2978,7 +2988,7 @@ You can <strong class="error">highlight</strong> code using <code>Slides.code</c
 <code>[<span class="nt">pygments</span>](<span class="na">https://pygments.org/</span>) is used for syntax highlighting cite`A`.</code>
 <code>You can <span class="gs">**highlight**</span>{.error} code using <span class="sb">`Slides.code`</span> cite`B` or within markdown using named code blocks:</code>
 <code><span class="sb">```python</span></code>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipyslides</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">isd</span></code>
+<code><span class="kn">import</span> <span class="nn">ipyslides</span> <span class="k">as</span> <span class="nn">isd</span></code>
 <code><span class="sb">```</span></code>
 <code><span class="sb">```javascript</span></code>
 <code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Component</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;react&quot;</span><span class="p">;</span></code>
@@ -2986,26 +2996,26 @@ You can <strong class="error">highlight</strong> code using <code>Slides.code</c
 <code>Source code of slide can be embeded via variable too: %{self.this.source}</code>
         </pre>
 </div>
-</div></div></p></div><div class="Citations" style=""><div class = "citation" id="A">
+</div></div></p></div><div style="width: 100%; box-sizing:border-box;"><div class="Citations text-small" style="column-count: 2 !important;"><div class = "citation" id="A">
                 <a href="#A-back" class="citelink"> 
                     <span style="color:var(--accent-color);">1. </span>
                 </a><p>Citation A</p></div>
 <div class = "citation" id="B">
                 <a href="#B-back" class="citelink"> 
                     <span style="color:var(--accent-color);">2. </span>
-                </a><p>Citation B</p></div></div></div>
+                </a><p>Citation B</p></div></div></div></div>
                             </div>
                             <span class="Number">22</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 73.3333%, var(--bg2-color) 73.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914782288">
+                    <section id="s-1988048161856">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n23 SlideArea HideSlide export-only">
+                            <div class="n23 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Loading from File/Exporting to HTML</h2></div><div style="width: 100%; box-sizing:border-box;"><p class="note info">You can parse and view a markdown file. The output you can save by exporting notebook in other formats.</p></div><div style="width: 100%; box-sizing:border-box;"><div class='docs'><span class="sig">Slides.<b>sync_with_file</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">start_slide_number</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span></code><br><p>Auto update slides when content of markdown file changes. You can stop syncing using <code>Slides.unsync</code> function.
 interval is in milliseconds, 500 ms default. Read <code>Slides.build</code> docs about content of file.</p>
 <p>The variables inserted in file content are used from top scope.</p>
@@ -3015,7 +3025,7 @@ This helps modularity of content, and even you can link a citation file in markd
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="sb">```citations</span><span class="w"> </span>footnote</code>
+<code><span class="sb">```citations</span></code>
 <code><span class="s">@key1: Saboor et. al., 2025</span></code>
 <code><span class="s">@key2: A citations can span multiple lines, but key should start on new line</span></code>
 <code><span class="s">&lt;!-- Or put this content in a file &#39;bib.md&#39; and then inside citations block use include`bib.md` --&gt;</span></code>
@@ -3040,54 +3050,54 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.6667%, var(--bg2-color) 76.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914821856">
+                    <section id="s-1988048205664">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n24 SlideArea HideSlide export-only">
+                            <div class="n24 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-1839913929024" class="slide-link citelink">Introduction</a>
+    <a href="#s-1988047297888" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1839914921648" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-1988047477296" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1839914749232" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-1988047954464" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1839914747792" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-1988048000816" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1839914782288" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-1988048161856" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-1839914821856" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-1988048205664" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1839915468544" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-1988048426656" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">24</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 80.0%, var(--bg2-color) 80.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3100,7 +3110,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3114,13 +3124,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 80.3704%, var(--bg2-color) 80.3704%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3133,7 +3143,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3147,13 +3157,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 80.7407%, var(--bg2-color) 80.7407%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3166,7 +3176,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3180,13 +3190,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 81.1111%, var(--bg2-color) 81.1111%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3199,7 +3209,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3213,13 +3223,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 81.4815%, var(--bg2-color) 81.4815%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3232,7 +3242,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3246,13 +3256,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 81.8519%, var(--bg2-color) 81.8519%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3265,7 +3275,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3279,13 +3289,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 82.2222%, var(--bg2-color) 82.2222%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3298,7 +3308,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3312,13 +3322,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 82.5926%, var(--bg2-color) 82.5926%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3331,7 +3341,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3345,13 +3355,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 82.963%, var(--bg2-color) 82.963%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914673344">
+                    <section id="s-1988048253520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n25 SlideArea HideSlide HasFrames export-only">
+                            <div class="n25 SlideArea HasFrames HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><style>.SlideArea.n25.n25 > .jp-OutputArea {
                 top: 0% !important;
                 height: 100% !important; 
@@ -3364,7 +3374,7 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code><span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code><span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code><span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -3378,13 +3388,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 83.3333%, var(--bg2-color) 83.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914398288">
+                    <section id="s-1988048255920">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n26 SlideArea HideSlide export-only">
+                            <div class="n26 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Adding User defined Objects/Markdown Extensions</h2></div><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" ><div style="width:25.000%;overflow:auto;height:auto"><h3 class="warning">I will be on exported slides</h3></div><div style="width:75.000%;overflow:auto;height:auto"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
@@ -3418,13 +3428,13 @@ This helps modularity of content, and even you can link a citation file in markd
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="k">class</span><span class="w"> </span><span class="nc">MyObject</span><span class="p">:</span></code>
-<code>    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
+<code><span class="k">class</span> <span class="nc">MyObject</span><span class="p">:</span></code>
+<code>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
 <code>        <span class="k">return</span> <span class="s1">&#39;My object is awesome&#39;</span></code>
 <code></code>
 <code><span class="n">slides</span> <span class="o">=</span> <span class="n">ipyslides</span><span class="o">.</span><span class="n">Slides</span><span class="p">()</span></code>
 <code><span class="nd">@slides</span><span class="o">.</span><span class="n">serializer</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MyObject</span><span class="p">)</span></code>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">make_h1</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">make_h1</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span></code>
 <code>    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&lt;h1&gt;</span><span class="si">{</span><span class="n">obj</span><span class="si">!r}</span><span class="s1">&lt;/h1&gt;&#39;</span></code>
 <code></code>
 <code><span class="n">my_object</span> <span class="o">=</span> <span class="n">MyObject</span><span class="p">()</span></code>
@@ -3432,8 +3442,8 @@ This helps modularity of content, and even you can link a citation file in markd
 <code><span class="n">make_h1</span><span class="p">(</span><span class="n">my_object</span><span class="p">)</span> <span class="c1">#This will return &quot;&lt;h1&gt;My object is awesome&lt;/h1&gt;&quot;</span></code>
 <code></code>
 <code><span class="c1">#This is equivalent to above for custom objects(builtin objects can&#39;t be modified)</span></code>
-<code><span class="k">class</span><span class="w"> </span><span class="nc">MyObject</span><span class="p">:</span></code>
-<code>    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
+<code><span class="k">class</span> <span class="nc">MyObject</span><span class="p">:</span></code>
+<code>    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
 <code>        <span class="k">return</span> <span class="s1">&#39;&lt;h1&gt;My object is awesome&lt;/h1&gt;&#39;</span></code>
 <code></code>
 <code><span class="n">my_object</span> <span class="o">=</span> <span class="n">MyObject</span><span class="p">()</span></code>
@@ -3457,13 +3467,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 86.6667%, var(--bg2-color) 86.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914891056">
+                    <section id="s-1988048316112">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n27 SlideArea HideSlide export-only">
+                            <div class="n27 SlideArea ShowSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Focus on what matters</h2>
 <ul>
 <li>Most of supported elements can be focused by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.</li>
@@ -3476,13 +3486,13 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 90.0%, var(--bg2-color) 90.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839915418288">
+                    <section id="s-1988048359872">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n28 SlideArea HideSlide export-only">
+                            <div class="n28 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><div class="columns writer" ><div style="width:60.000%;overflow:auto;height:auto"><h2>SVG Icons</h2>
 <p>Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
 besides standard ipywidgets icons.</p>
@@ -3492,7 +3502,7 @@ besides standard ipywidgets icons.</p>
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
+<code><span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
 <code><span class="n">btn</span> <span class="o">=</span> <span class="n">ipw</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Chevron-Down Icon&#39;</span><span class="p">,</span><span class="n">icon</span><span class="o">=</span><span class="s1">&#39;chevrond&#39;</span><span class="p">)</span>    </code>
 <code><span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">btn</span><span class="p">)</span></code>
         </pre>
@@ -3510,7 +3520,7 @@ besides standard ipywidgets icons.</p>
         <pre>
 <code><span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_content</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span></code>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">():</span></code>
-<code>        <span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
+<code>        <span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
 <code>        <span class="n">btn</span> <span class="o">=</span> <span class="n">ipw</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Chevron-Down Icon&#39;</span><span class="p">,</span><span class="n">icon</span><span class="o">=</span><span class="s1">&#39;chevrond&#39;</span><span class="p">)</span>    </code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">btn</span><span class="p">)</span></code>
 <code></code>
@@ -3762,13 +3772,13 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 93.3333%, var(--bg2-color) 93.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839914980592">
+                    <section id="s-1988047475520">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n29 SlideArea HideSlide export-only">
+                            <div class="n29 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h1>Auto Slide Numbering</h1>
 <p>Use <span style='color:#DC143C;'>-1</span> as placeholder to update slide number automatically. </p>
 <ul>
@@ -3782,27 +3792,27 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 96.6667%, var(--bg2-color) 96.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1839915468544">
+                    <section id="s-1988048426656">
                         <style>
 </style>
 
                         <div class="SlideBox">
 
-                            <div class="n30 SlideArea HideSlide export-only">
+                            <div class="n30 SlideArea HideSlide OneFrame export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%; box-sizing:border-box;"><h2>Presentation Code</h2></div><div style="width: 100%; box-sizing:border-box;"></div><div style="width: 100%; box-sizing:border-box;"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight  numbered">
         <pre>
-<code><span class="k">def</span><span class="w"> </span><span class="nf">docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
+<code><span class="k">def</span> <span class="nf">docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></code>
 <code>    <span class="s2">&quot;Create presentation from docs of IPySlides.&quot;</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">close_view</span><span class="p">()</span> <span class="c1"># Close any previous view to speed up loading 10x faster on average</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span> <span class="c1"># Clear previous content</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">31</span><span class="p">))</span> <span class="c1"># Create slides faster</span></code>
 <code></code>
-<code>    <span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Slides</span></code>
+<code>    <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Slides</span></code>
 <code></code>
-<code>    <span class="bp">self</span><span class="o">.</span><span class="n">set_citations</span><span class="p">({</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="s1">&#39;Citation A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="s1">&#39;Citation B&#39;</span><span class="p">},</span> <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;footnote&#39;</span><span class="p">)</span></code>
+<code>    <span class="bp">self</span><span class="o">.</span><span class="n">set_citations</span><span class="p">({</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="s1">&#39;Citation A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="s1">&#39;Citation B&#39;</span><span class="p">})</span></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">footer</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_logo</span><span class="p">(</span><span class="s2">&quot;1em&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;IPySlides Documentation&quot;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 <code></code>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="mi">0</span><span class="p">):</span> <span class="c1"># Title page</span></code>
@@ -3818,6 +3828,9 @@ besides standard ipywidgets icons.</p>
 <code></code>
 <code><span class="s1">            ::: text-box</span></code>
 <code><span class="s1">                ^`1`My University is somewhere in the middle of nowhere</span></code>
+<code></code>
+<code><span class="s1">            ::: info</span></code>
+<code><span class="s1">                Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  </span></code>
 <code><span class="s1">            &#39;&#39;&#39;</span><span class="p">,</span> <span class="n">logo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_logo</span><span class="p">(</span><span class="s2">&quot;4em&quot;</span><span class="p">)))</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code></code>
 <code>    <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;&#39;&#39;</span></code>
@@ -3900,9 +3913,9 @@ besides standard ipywidgets icons.</p>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;&#39;&#39;</span></code>
 <code><span class="s1">            ## Citations and Sections</span></code>
-<code><span class="s1">            Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data, mode)` method.</span></code>
-<code><span class="s1">            Citations are written on suitable place according to given mode. Number of columns in citations are determined by </span></code>
-<code><span class="s1">            code`Slides.settings.layout(..., ncol_refs = int)`. @A</span></code>
+<code><span class="s1">            Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data)` method.</span></code>
+<code><span class="s1">            Any key that ends with `!` is displayed inplace. Number of columns in displayed citations are determined by </span></code>
+<code><span class="s1">            code`Slides.settings.layout(..., ncol_refs = int)` or locally by code`Slides.refs(ncol)`. @A</span></code>
 <code></code>
 <code><span class="s1">            Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents</span></code>
 <code><span class="s1">            can be added with alert`toc\`title\``.</span></code>
@@ -3914,10 +3927,10 @@ besides standard ipywidgets icons.</p>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;## Dynamic Content&#39;</span><span class="p">)</span></code>
 <code></code>
 <code>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_content</span><span class="p">()</span> <span class="k">as</span> <span class="n">cap</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">():</span></code>
-<code>            <span class="kn">import</span><span class="w"> </span><span class="nn">time</span></code>
+<code>            <span class="kn">import</span> <span class="nn">time</span></code>
 <code></code>
 <code>            <span class="nd">@self</span><span class="o">.</span><span class="n">dl</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">post_init</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_css</span><span class="p">(</span><span class="nb">dict</span><span class="p">({</span><span class="s1">&#39;.out-main&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="s1">&#39;2em&#39;</span><span class="p">)},</span><span class="n">background</span><span class="o">=</span><span class="s1">&#39;var(--bg2-color)&#39;</span><span class="p">)),</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">btn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="o">.</span><span class="n">button</span><span class="p">())</span>  <span class="c1"># self is Slides here</span></code>
-<code>            <span class="k">def</span><span class="w"> </span><span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">btn</span><span class="p">):</span> </code>
+<code>            <span class="k">def</span> <span class="nf">update_time</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">btn</span><span class="p">):</span> </code>
 <code>                <span class="n">local_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">()</span></code>
 <code>                <span class="n">objs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Time: </span><span class="si">{3}</span><span class="s1">:</span><span class="si">{4}</span><span class="s1">:</span><span class="si">{5}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">local_time</span><span class="p">)]</span> <span class="c1"># Print time in HH:MM:SS format</span></code>
 <code>                <span class="k">if</span> <span class="n">date</span><span class="p">:</span></code>
@@ -3925,10 +3938,10 @@ besides standard ipywidgets icons.</p>
 <code>                <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code></code>
 <code>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">(</span><span class="n">returns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span></code>
-<code>            <span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span></code>
+<code>            <span class="kn">import</span> <span class="nn">datetime</span></code>
 <code></code>
 <code>            <span class="nd">@self</span><span class="o">.</span><span class="n">on_load</span>  <span class="c1"># self is Slides here</span></code>
-<code>            <span class="k">def</span><span class="w"> </span><span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
+<code>            <span class="k">def</span> <span class="nf">push_toast</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span></code>
 <code>                <span class="n">t</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></code>
 <code>                <span class="n">time</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span></code>
 <code>                <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Notification at </span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s1"> form slide </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1"> and frame </span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
@@ -3977,7 +3990,7 @@ besides standard ipywidgets icons.</p>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;## Adding content on frames incrementally yoffset`0`&quot;</span><span class="p">)</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">(</span><span class="n">widget</span> <span class="o">:=</span> <span class="p">(</span><span class="n">code</span> <span class="o">:=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_source</span><span class="p">())</span><span class="o">.</span><span class="n">as_widget</span><span class="p">())</span><span class="o">.</span><span class="n">display</span><span class="p">()</span></code>
 <code>        <span class="c1"># frozen in above line get oldest metadata for export</span></code>
-<code>        <span class="k">def</span><span class="w"> </span><span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
+<code>        <span class="k">def</span> <span class="nf">highlight_code</span><span class="p">(</span><span class="n">slide</span><span class="p">):</span> <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">focus</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">indexf</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">value</span></code>
 <code>        <span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">(</span><span class="n">highlight_code</span><span class="p">)</span></code>
 <code></code>
 <code>        <span class="k">for</span> <span class="n">ws</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PART</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="kc">None</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)])):</span></code>
@@ -4012,7 +4025,7 @@ besides standard ipywidgets icons.</p>
 <code>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span></code>
 <code>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_content</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span></code>
 <code>            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">context</span><span class="p">():</span></code>
-<code>                <span class="kn">import</span><span class="w"> </span><span class="nn">ipywidgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipw</span></code>
+<code>                <span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">ipw</span></code>
 <code>                <span class="n">btn</span> <span class="o">=</span> <span class="n">ipw</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Chevron-Down Icon&#39;</span><span class="p">,</span><span class="n">icon</span><span class="o">=</span><span class="s1">&#39;chevrond&#39;</span><span class="p">)</span>    </code>
 <code>                <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">btn</span><span class="p">)</span></code>
 <code></code>
@@ -4062,8 +4075,8 @@ besides standard ipywidgets icons.</p>
 </div>
 </body>
 <script>
-    let box = document.getElementsByClassName('SlideBox')[0];
-    let slide = box.getElementsByClassName('SlideArea')[0];
+    let box = document.querySelector('.SlideBox');
+    let slide = box.querySelector('.SlideArea');
 
     window.onresize = function() {
         let rectBox = box.getBoundingClientRect();
@@ -4081,7 +4094,7 @@ besides standard ipywidgets icons.</p>
     };
     window.dispatchEvent(new window.Event('resize')); // First time programatically
 
-    let slides = document.getElementsByClassName("SlidesWrapper")[0];
+    let slides = document.querySelector(".SlidesWrapper");
 
     slides.addEventListener("scroll", (event) => {
         slides.classList.add("Scrolling");

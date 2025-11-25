@@ -328,15 +328,17 @@ class Settings:
             self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
             
             # Update frames indices for print
-            parts = {}
+            parts, post_print = {}, []
             for slide in self._slides:
-                slide._fcss.value = '' # reset frame css for print, will be set back on navigation
+                post_print.append([slide, slide._fcss.value]) # store current css
+                slide._fcss.value = '' # reset frame css for print, will be set back after print
                 frames = slide._export_fidxs
                 slide._set_css_classes('OneFrame' if not frames else None, remove='OneFrame') # remove and add conditionally
                 if frames: # merged parts automatically handled
                     parts[slide.number] = frames
                     
             self._widgets.iw._parts = parts
+            self._widgets.iw._post_print = post_print # restore later for better user experience
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'
 

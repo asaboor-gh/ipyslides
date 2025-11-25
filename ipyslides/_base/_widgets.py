@@ -93,6 +93,10 @@ class InteractionWidget(anywidget.AnyWidget):
             self._on_mode_change(self._menu, value, msg.lstrip('!'))
         elif msg == 'PRINT':
             self._buttons.print.click()
+        elif msg == 'PrintDone' and hasattr(self, '_post_print'):
+            for slide, css in self._post_print:
+                slide._fcss.value = css
+            delattr(self, '_post_print')
         
         self.msg_topy = "" # Reset for successive simliar changes
     

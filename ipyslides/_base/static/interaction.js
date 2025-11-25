@@ -14,7 +14,7 @@ function fixIDsAndRefs(clone, cloneIndex = 0) {
   const idMap = {};
 
   // Step 1: assign unique IDs for all elements in the clone
-  clone.querySelectorAll('[id]').forEach(el => {
+  clone.querySelectorAll(':scope [id]').forEach(el => { // only descendent elements
     const oldId = el.id;
     const newId = `${oldId}__${cloneIndex}`;
     idMap[oldId] = newId;
@@ -22,7 +22,7 @@ function fixIDsAndRefs(clone, cloneIndex = 0) {
   });
 
   // Step 2: update all attributes containing # references
-  clone.querySelectorAll('*').forEach(el => {
+  clone.querySelectorAll(':scope *').forEach(el => { // only decendent elements
     for (const attr of el.getAttributeNames()) {
       const val = el.getAttribute(attr);
       if (!val || !val.includes('#')) continue;
@@ -39,7 +39,7 @@ function fixIDsAndRefs(clone, cloneIndex = 0) {
 }
 
 function tldrawLinks(node, model) { 
-    node.querySelectorAll('.link-button > .req-click').forEach(btn => {
+    node.querySelectorAll(':scope .link-button > .req-click').forEach(btn => {
         btn.classList.remove('req-click'); // remove class to avoid next time
         btn.onclick = () => { // set proper onclick
             model.set("msg_topy", "Draw:ON");
@@ -51,13 +51,13 @@ function tldrawLinks(node, model) {
 function handleColsRows(outputs, frame) {
     if (frame.col !== undefined && outputs[frame.part]) {
         // specific column hiding inside last visible row
-        let cols = outputs[frame.part].querySelectorAll('.columns.writer:first-of-type > div');
+        let cols = outputs[frame.part].querySelectorAll(':scope .columns.writer:first-of-type > div');
         for (let k = 0; k < cols.length; k++) {
             if (k > frame.col) {
                 cols[k].setAttribute('data-hidden', 'true'); // keep content to avoid reflow
             } else if (k === frame.col && frame.row !== undefined) {
                 // Handle incremental rows 
-                let rows = cols[k].querySelector('.jp-OutputArea').childNodes; // inside widget
+                let rows = cols[k].querySelector(':scope .jp-OutputArea').childNodes; // inside widget
                 for (let r = 0; r < rows.length; r++) {
                     if (r > frame.row) {
                         rows[r].setAttribute('data-hidden', 'true');
@@ -69,7 +69,7 @@ function handleColsRows(outputs, frame) {
 }
 
 function printSlides(box, model) {
-    let slides = Array.from(box.getElementsByClassName('SlideArea')); 
+    let slides = Array.from(box.querySelectorAll(':scope .SlideBox >.SlideArea')); 
     window._printOnlyObjs = [];
     const parts = model.get('_parts') || {}; // get part info for all slides
     const fkws = model.get('_fkws') || {}; // get footer kws
@@ -78,7 +78,7 @@ function printSlides(box, model) {
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
-        let outArea = slide.querySelector('.jp-OutputArea');
+        let outArea = slide.querySelector(':scope .jp-OutputArea');
         if (outArea) { outArea.scrollTop = 0; } // scroll OutputArea to top to avoid cutoffs
         
         // Extract slide number from class (e.g., 'n25' -> 25)
@@ -97,14 +97,14 @@ function printSlides(box, model) {
                 let clone = slide.cloneNode(true); // deep clone
                 clone.classList.remove('HasFrames'); // remove base class to let it display
                 clone.classList.add('print-only'); // avoid cluttering screen view
-                clone.querySelector('.Slide-UID')?.remove(); // remove section id from clone
+                clone.querySelector(':scope .Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
                 clone.style.transform = 'translateZ(0) scale(1)'; // force reset transform for print to but need stuff in place
                 
                 // Set visibility of parts if any, Do not change this to CSS only as
                 // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
-                    let outputs = Array.from(clone.querySelector('.jp-OutputArea').childNodes); // corresponds to contents on python side
+                    let outputs = Array.from(clone.querySelector(':scope .jp-OutputArea').childNodes); // corresponds to contents on python side
                     let frame = parts[slideNum][i]; // {head, start, end, row, col}
                     clone.dataset.snum = frame.page !== undefined ? `${n}.${frame.page}` : n; // set data attribute for slide number to display
                     
@@ -132,7 +132,7 @@ function printSlides(box, model) {
                 slide.parentNode.insertBefore(clone, lastInserted.nextSibling);
                 lastInserted = clone; // update last inserted
                 clone.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
-                let cloneArea = clone.querySelector('.jp-OutputArea');
+                let cloneArea = clone.querySelector(':scope .jp-OutputArea');
                 if (cloneArea) {
                     cloneArea.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
                     cloneArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
@@ -149,6 +149,8 @@ function printSlides(box, model) {
         }
         delete window._printOnlyObjs;
         window.removeEventListener('afterprint', cleanup); // cleanup listener
+        model.set("msg_topy", "PrintDone"); // notify print done to restore states
+        model.save_changes();
     }, { once: true }); // or use { once: true } instead of removeEventListener
     
     setTimeout(() => {   
@@ -228,14 +230,14 @@ function handleMessage(model, msg, box) {
     } else if (msg === 'RESCALE') {
         setScale(box, model);
     } else if (msg === "SwitchView") {
-        let slideNew = box.getElementsByClassName("ShowSlide")[0];
+        let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
         slideNew.style.visibility = 'visible';
-        slideNew.querySelector('.jp-OutputArea').scrollTop = 0; // scroll reset is important
+        slideNew.querySelector(':scope .jp-OutputArea').scrollTop = 0; // scroll reset is important
         setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
         tldrawLinks(slideNew, model); // fix draw links for new slide
 
-        let others = box.getElementsByClassName("HideSlide");
+        let others = box.querySelectorAll(":scope .SlideArea.HideSlide");
         for (let slide of others) {
             if (slide.style.visibility === 'visible') {
                 slide.style.visibility = 'hidden';
@@ -253,7 +255,7 @@ function handleMessage(model, msg, box) {
                 theme = "light"; // update
             }
         }
-        let container = box.getElementsByClassName("Draw-Widget")[0].getElementsByClassName("tl-container")[0];
+        let container = box.querySelector(":scope .Draw-Widget").querySelector(":scope .tl-container");
         container.classList.remove((theme === "light") ? "tl-theme__dark" : "tl-theme__light")
         container.classList.add("tl-theme__" + theme) // worst way to do it, internal frames are changed with CSS
     } else if (msg === "CloseView") { // deletes node without closing comm to kernl
@@ -270,10 +272,10 @@ function handleMessage(model, msg, box) {
 
 function setBgImage(slide) {
     // Remove all previous BackLayer elements in SlideArea
-    slide.querySelectorAll('.SlideArea > .BackLayer').forEach(bg => bg.remove());
+    slide.querySelectorAll(':scope .SlideArea > .BackLayer').forEach(bg => bg.remove());
 
     // Find the new background image in the output area
-    let bgImage = slide.querySelector('.jp-OutputArea .BackLayer.print-only');
+    let bgImage = slide.querySelector(':scope .jp-OutputArea .BackLayer.print-only');
     if (bgImage) {
         // Clone the node to avoid moving it from output area
         let newBackLayer = bgImage.cloneNode(true);
@@ -283,8 +285,8 @@ function setBgImage(slide) {
 }
 
 function setMainBgImage(slide, target) {
-    let bgImage = slide.querySelector('.BackLayer.print-only'); // take from slide
-    let targetBg = target.querySelector('.BackLayer'); // target backlayer
+    let bgImage = slide.querySelector(':scope .BackLayer.print-only'); // take from slide
+    let targetBg = target.querySelector(':scope .BackLayer'); // target backlayer
     if (bgImage) {
         targetBg.innerHTML = bgImage.innerHTML; // clone content
         // copy classes except print-only, so unique classes are preserved
@@ -360,8 +362,8 @@ function showToast(box, msg) {
 }
 
 function setScale(box, model) {
-    let sbox = box.querySelector('.SlideBox');
-    let slide = box.querySelector('.SlideArea');
+    let sbox = box.querySelector(':scope .SlideBox');
+    let slide = box.querySelector(':scope .SlideArea');
     if (!sbox || !slide) {
         return false; // not ready yet
     }
@@ -462,7 +464,7 @@ function handleBoxClicks(box, model) {
         
         // Check if already in focus mode - exit it
         if (box.classList.contains('mode-inactive')) {
-            const closeBtn = box.querySelector('.popup-close-btn');
+            const closeBtn = box.querySelector(':scope .popup-close-btn');
             if (closeBtn) {
                 closeBtn.click(); // Trigger close button
             }
@@ -509,7 +511,7 @@ function setColors(model, box) {
 
 function getSlideIndex(slide){
     return Array.from(
-        slide.parentNode.querySelectorAll('.SlideArea')
+        slide.parentNode.querySelectorAll(':scope > .SlideArea')
     ).indexOf(slide);
 }
 
@@ -560,7 +562,7 @@ function showJumpIndictor(model, box, originIndex, offset) {
     indicator.originIndex = originIndex;
     
     indicator.onclick = function() {
-        let currentIndex = getSlideIndex(box.querySelector('.SlideArea.ShowSlide'));
+        let currentIndex = getSlideIndex(box.querySelector(':scope .SlideArea.ShowSlide'));
         if (currentIndex !== null) {
             let backOffset = indicator.originIndex - currentIndex;
             model.set("msg_topy", `SHIFT:${backOffset}`);
@@ -696,7 +698,7 @@ function render({ model, el }) {
         })
 
         // Reset size of drawing board instead of provided by widget
-        let drawing = box.getElementsByClassName('Draw-Widget')[0];
+        let drawing = box.querySelector(':scope .Draw-Widget');
         // Let all keys work here but don't go further up and avoid navigation of slides too.
         drawing.onkeydown = (e) => {e.stopPropagation();} 
         drawing.oncontextmenu = (e) => {e.stopPropagation();} // avoid context menu passing up
@@ -713,8 +715,8 @@ function render({ model, el }) {
         bglayer.style.zIndex = 0; // ensure at back further
 
         // Set background images if any left due to being loaded from python script
-        box.querySelectorAll('.SlideArea').forEach((slide) => {setBgImage(slide);}); // only set which are not yet set
-        setMainBgImage(box.querySelector('.ShowSlide'), box) // set background image if any on current slide
+        box.querySelectorAll(':scope .SlideArea').forEach((slide) => {setBgImage(slide);}); // only set which are not yet set
+        setMainBgImage(box.querySelector(':scope .ShowSlide'), box) // set background image if any on current slide
         tldrawLinks(box, model); // fix draw links for all slides
         
         // Add classes to mark ancestors for printing
@@ -725,7 +727,7 @@ function render({ model, el }) {
     model.save_changes();
     
     // Clean up old slides if left over from previous session of kernel restart
-    let slides = document.getElementsByClassName('SlidesWrapper');
+    let slides = document.querySelectorAll('.SlidesWrapper');
     for (let slide of Array.from(slides)) {
         if (slide.classList.contains('jupyter-widgets-disconnected')) {slide.remove();};
     };
