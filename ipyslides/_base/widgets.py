@@ -111,19 +111,16 @@ class CtxMenu(ListWidget):
             raise KeyError(f'Key {key!r} not found in menu options. Available keys: {list(self._opts_map.keys())}')
         self._handlers[key] = handler
     
-    def select(self, key, state=None):
-        """Select menu item by unique key in options and set state to True/False/None
-        (optionally with a function on old state) if option is a toggle. Use update_state for no event trigger.
+    def select(self, key):
+        """Select menu item by unique key in options and trigger it's handler.
         """
-        self.index = self.update_state(key, state)
+        self.index = None # reset index to allow re-selection of same item
+        self.index = self._update_state(key, None)
     
-    def update_state(self, key, state):
-        """Update state of given key in options and return index without triggering selection. 
-        State can be a function on old state or True/False/None.
-        Use select() method if you want to trigger selection event as well.
-        """
+    def _update_state(self, key, state):
+        "Update internal state for given key. state can be a value or a callable that accepts old value and returns new value."
         index = None
-        for i, (sk, sv) in enumerate(self.options):
+        for i, (sk, sv) in enumerate(self._state.items()):
             if key == sk:
                 index = i
                 value = state(sv) if callable(state) else state
@@ -132,6 +129,16 @@ class CtxMenu(ListWidget):
                 
         self._set_opts() # reset options to trigger re-render
         return index
+    
+    def _on_mode_change(self, msg):
+        # make icons consistent, this is special case from js response
+        value, klass = False if msg.startswith('!') else True, msg.lstrip('!')
+        if 'fullscreen' in klass.lower():
+            self._update_state('fscreen', value) 
+        if value:
+            self.ws.mainbox.add_class(klass)
+        else:
+            self.ws.mainbox.remove_class(klass)  
 
     def _set_opts(self, *keys):
         "Set options for given keys or all if none provided"
@@ -146,7 +153,7 @@ class CtxMenu(ListWidget):
         if change.new and isinstance(change.new, tuple):
             key, value = change.new
             # First update menu's visible state if not same
-            self.update_state(key, lambda old: not old if self._istoggle(key) else old)
+            self._update_state(key, lambda old: not old if self._istoggle(key) else old)
             value = self._state.get(key, None)
             if key in self._handlers:
                 self._handlers.get(key, lambda ctx, val: None)(self, value)
@@ -158,7 +165,7 @@ class CtxMenu(ListWidget):
             elif key == 'draw':
                 self.ws.drawer.toggle(True) # open drawing board
             elif key == 'panel':
-                self.ws.iw._toggle_panel(self)
+                self.ws.panelbox.toggle(value)
             elif key == 'toc':
                 self.ws.panelbox.toggle(True) # open panel
                 self.ws.panelbox.select_tab(1) # select toc tab
@@ -171,7 +178,6 @@ class CtxMenu(ListWidget):
                 })
             elif self.ws.htmls.loading.value: # Just a handy cleanup
                 self.ws.iw.msg_tojs = "ClearLoading"
-
         
         self.index = None # reset index after selection to allow re-selection of same item
         self.hide() # hide menu on selection
@@ -241,7 +247,7 @@ class SidePanel(VBox):
     
     def toggle(self, visible):
         "Show/hide side panel."
-        self.ws._ctxmenu.update_state('panel', visible) # make icons consistent
+        self.ws._ctxmenu._update_state('panel', visible) # keep menu state in sync, important due to internal calls
         self.layout.width = "min(400px, 100%)" if visible else "0"
         self.layout.overflow = 'auto' if visible else 'hidden'
     

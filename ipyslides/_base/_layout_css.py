@@ -175,19 +175,6 @@ def layout_css(accent_color, aspect):
                     "padding": "4px 8px",
                     "backdrop-filter": "blur(4px)",
                 },
-                "^:not(.mode-inactive) .SlideBox": {
-                    "^::before, ^::after": {
-                        "content": "''",
-                        "position": "absolute",
-                        "top": "0", "left": "0",
-                        "width": "calc(16px * var(--contentScale,1))", # make it scalable with content to avoid wrong clicks into slide area
-                        "height": "calc(100% - 25px)", # avoid clashes with bottom controls
-                        "cursor": "pointer", # to hint for edge clicks
-                        "z-index": "1", # both on top to be clickable, before stays below if not given
-                    },
-                    "^::after": {"left": "unset", "right": "0",},
-                    "^, .SlideArea": {"user-select": "none !important",}, # avoid selecting while swiping to naviagate, inner divs still can select
-                },
                 "^.mode-inactive": { # clean up view
                     ".FooterBox, .Controls, .Slide-Number": {"display": "none !important",},
                 },

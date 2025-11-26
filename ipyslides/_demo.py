@@ -237,7 +237,10 @@ def demo_slides(slides):
         slides.write(f"### Watching Youtube Video?")
         slides.write('**Want to do some drawing instead?** Click on button on the right!', slides.draw_button, widths=[3,1])
 
-        slides.write(YouTubeVideo('thgLGl14-tg',width='100%',height='266px'))
+        slides.write(
+            YouTubeVideo('thgLGl14-tg',width='100%',height='266px'),
+            YouTubeVideo('XZt-lH8Za3Q',width='100%',height='266px'),
+        )
 
         @slides.on_load
         def push(slide):

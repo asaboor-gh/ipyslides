@@ -88,7 +88,7 @@ key_maps = {
     "K": "Show keyboard shortcuts",
 }
 
-key_combs = f"""color['var(--accent-color)']`Left/right swipe and right-click + drag left/right can also navigate slides.`
+key_combs = f"""color['var(--accent-color)']`//fa`info`Swipe left/right on touch devices to navigate slides.//`
 
 | Shortcut                                    | Button                                            | Action                 | 
 |:--------------------------------------------|---------------------------------------------------|:-----------------------|

@@ -405,19 +405,35 @@ function handlePointerSwipe(box, model) {
     let swiped = false;
     const THRESHOLD_SWIPE = 70;
     const THRESHOLD_Y_MAX = 30;
+    const SELECTION_X_MAX = 10;
 
-    // Ensure swipe works , added tocuh-action CSS to SlideBox
+    // To ensure swipe works , added tocuh-action CSS to SlideBox and all children
     function setState(e, setValue) {
         swiped = false;
         initialX = setValue ? e.clientX : null;
         initialY = setValue ? e.clientY : null;
     }
 
-    box.addEventListener('pointerdown', (e) => {setState(e, true);}); // initialize coordinates
+    box.addEventListener('pointerdown', (e) => {
+        setState(e, true);
+    }); // initialize coordinates
     box.addEventListener('pointermove', (e) => {
         if (initialX === null || swiped) return;
         const diffX = e.clientX - initialX;
         const diffY = e.clientY - initialY;
+
+        if (Math.abs(diffY) > THRESHOLD_Y_MAX) {
+            setState(e, false); // reset swipe state
+            return; // exit
+        }
+
+        if (Math.abs(diffX) >= SELECTION_X_MAX) {
+            const selection = window.getSelection();
+            if (selection && selection.type === "Range" &&selection.toString().length > 0) {
+                setState(e, false); // reset swipe state 
+                return; // exit
+            }; 
+        }
         if (Math.abs(diffX) >= THRESHOLD_SWIPE && Math.abs(diffY) <= THRESHOLD_Y_MAX) {
             model.set("msg_topy", diffX < 0 ? "NEXT" : "PREV");
             model.save_changes();
