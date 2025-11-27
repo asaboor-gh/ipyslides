@@ -146,7 +146,7 @@ class CtxMenu(ListWidget):
             if 'mode-inactive' in klasses: # prefer over fullscreen
                 keys = ['fscreen','laser','draw']
             elif 'mode-fullscreen' in klasses:
-                keys = ['fscreen','laser','draw','panel','toc','ksc']
+                keys = ['fscreen','laser','draw','panel','swipe', 'toc','ksc']
         
         self.options = [(k, v) for k,v in self._state.items() if not keys or k in keys] 
         self.index = None # reset index after options change to allow re-selection of same item

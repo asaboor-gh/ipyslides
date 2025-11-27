@@ -145,7 +145,7 @@ def layout_css(accent_color, aspect):
                     **{f"{k}backdrop-filter": "blur(20px)" for k in ('', '-webkit-')},
                     "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
                     "border-image": "linear-gradient(to bottom,rgba(0,0,0,0) 0, rgba(0,0,0,0) 10%, var(--accent-color) 10% , var(--accent-color) 90%, rgba(0,0,0,0) 90%, rgba(0,0,0,0) 100%) 1/ 0 0 0 2px",
-                    "> div": {"overflow":"auto", "height":"100%"},
+                    "> div": {"overflow":"auto", "height":"100%", "*": {"font-size": "16px !important",},},
                     "> button": {
                         "position":"absolute",
                         "right":"4px",

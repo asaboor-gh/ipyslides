@@ -5,7 +5,10 @@ from ..xmd import get_unique_css_class
 from .icons import Icon
 from ._widgets import jupyter_colors
 
-_flow_selector = ":is(.jp-OutputArea-child, .columns > div, li)" #":is(.highlight code, li, tr)"
+_flow_sels = (".jp-OutputArea-child", ".columns > div", "li") #":is(.highlight code, li, tr)"
+_is_flowsel = ':is(' + ','.join(_flow_sels) + ')'
+_nth_flowsel = ','.join(f".SlideBox > .SlideArea {sel}" for sel in _flow_sels)
+
 
 # Animations are fixed for instnace on the fly, no need uclass thing here
 animations = {'zoom':'''
@@ -22,17 +25,16 @@ animations = {'zoom':'''
 }
 ''',
 'appear': f'''
-.SlideBox {_flow_selector} {{
+.SlideBox {_is_flowsel} {{
     animation-name: appear;
     animation-timing-function: ease-in;
 }}
-''' + _build_css((f".SlideBox {_flow_selector}",), {
-    **{f"^:nth-child({i + 1})":{"animation-duration": f"{int(400 + i*200)}ms"} for i in range(21)},
-    "@keyframes appear" : {
-        "0%" : { "opacity": 0},
-        "50%" : { "opacity": 0},
-        "100%" : { "opacity": 1},
-    },
+@keyframes appear {{
+    0% {{ opacity: 0; }}
+    100% {{ opacity: 1; }}
+}}
+''' + _build_css((_nth_flowsel,), {
+    f"^:nth-child({i + 1})":{"animation-duration": f"{int(200 + i*150)}ms"} for i in range(21)
 }),
 'slide_h': '''
 .SlideBox {
@@ -71,27 +73,26 @@ animations = {'zoom':'''
 }
 ''',
 'flow': f'''
-.SlideBox {_flow_selector} {{
+.SlideBox {_is_flowsel} {{
     animation-name: flow;
     animation-timing-function: ease-in-out;
 }}
-.SlideBox.Prev {_flow_selector} {{ /* .Prev acts when moving slides backward */
+.SlideBox.Prev {_is_flowsel} {{ /* .Prev acts when moving slides backward */
     animation-name: flowPrev;
     animation-timing-function: ease-in-out;
 }}
-''' + _build_css((f".SlideBox {_flow_selector}",), {
-    **{f"^:nth-child({i + 1})":{"animation-duration": f"{int(400 + i*200)}ms"} for i in range(21)},
-    '@keyframes flow':{
-        'from' : {'transform': 'translateX(50%)', 'opacity': 0},
-        'to' : {'transform': 'translateX(0)', 'opacity': 1}
-    },
-    '@keyframes flowPrev':{
-        'from' : {'transform': 'translateX(-50%)', 'opacity': 0},
-        'to' : {'transform': 'translateX(0)', 'opacity': 1}
-    },
+@keyframes flow {{
+    from {{ transform: translateX(50%); opacity: 0.5; }}
+    to {{ transform: translateX(0); opacity: 1; }}
+}}
+@keyframes flowPrev {{
+    from {{ transform: translateX(-50%); opacity: 0.5; }}
+    to {{ transform: translateX(0); opacity: 1; }}
+}}
+''' + _build_css((_nth_flowsel,), {
+    f"^:nth-child({i + 1})":{"animation-duration": f"{int(200 + i*150)}ms"} for i in range(21)
 }) 
 }
-  
 
 theme_colors = {
     'Jupyter': {
