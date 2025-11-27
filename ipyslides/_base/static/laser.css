@@ -11,12 +11,21 @@
     box-shadow: 0 0 4px 2px white, 0 0 6px 6px var(--pointer-color);
     display: none;  /* Initial setup. Display will be set using javascript only  */
     overflow: hidden !important;  /* To hide at edges  */
+    transition: opacity 0.2s ease-in, scale 0.1s ease-in; /* near edges fade and shrink */
 }
 
 .LaserPointer,
 .LaserPointer * { 
     cursor: none !important; /* do not show pointer on it and children, this is important here besides JS */
     pointer-events: none !important; /* pass pointer events through it and children  */
+}
+
+.LaserPointer.Animated {
+    box-shadow: 0 0 12px 4px white, 0 0 16px 12px var(--pointer-color);
+    transition:
+        left 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
+        top 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
+        box-shadow 0.6s ease-in;
 }
 
 /* Its hidden in print by another stylesheet, no need here */

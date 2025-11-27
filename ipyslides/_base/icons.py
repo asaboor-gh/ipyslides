@@ -177,6 +177,25 @@ _icons = {
             <line x1="10" y1="17" x2="15" y2="17" stroke-width="2.5"/>
             <circle cx="18.5" cy="17" r="1.5" fill="{color}" stroke="none"/>
         </svg>''',
+    'swipe-on': '''
+        <svg width="{size}" height="{size}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <rect x="14" y="8" width="36" height="48" rx="16" stroke="{color}" stroke-width="6" fill="none"/>
+            <line x1="32" y1="8" x2="32" y2="32" stroke="{color}" stroke-width="5"/>
+            <line x1="12" y1="32" x2="52" y2="32" stroke="{color}" stroke-width="5"/>
+            <circle cx="24" cy="22" r="4" fill="{color}" />
+            <polyline points="8,38 4,32 8,26" stroke="{color}" stroke-width="5" fill="none"/>
+            <polyline points="56,38 60,32 56,26" stroke="{color}" stroke-width="5" fill="none"/>
+        </svg>''',
+    'swipe-off': '''
+        <svg width="{size}" height="{size}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <rect x="14" y="8" width="36" height="48" rx="16" stroke="{color}" stroke-width="6" fill="none" opacity="0.5"/>
+            <line x1="32" y1="8" x2="32" y2="32" stroke="{color}" stroke-width="5" opacity="0.5"/>
+            <line x1="12" y1="32" x2="52" y2="32" stroke="{color}" stroke-width="5" opacity="0.5"/>
+            <circle cx="24" cy="22" r="4" fill="{color}" opacity="0.5"/>
+            <polyline points="8,38 4,32 8,26" stroke="{color}" stroke-width="5" fill="none" opacity="0.5"/>
+            <polyline points="56,38 60,32 56,26" stroke="{color}" stroke-width="5" fill="none" opacity="0.5"/>
+            <line x1="56" y1="8" x2="8" y2="56" stroke="{color}" stroke-width="6"/>
+        </svg>''',
 }
 
 _icons["edit"] = _icons["pencil"].format(size="{size}", color="{color}", rotation=45)

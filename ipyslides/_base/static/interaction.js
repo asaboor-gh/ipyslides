@@ -159,10 +159,10 @@ function printSlides(box, model) {
 }
 
 const keyMessage = {
-    's': 'TPAN', // Setting panel
-    'k': 'KSC', // keyboard shortcuts
-    'e': 'EDIT', // Edit source cell
-    'l': 'TLSR', // . toggle laser, enables this on purely numpad keyboards
+    's': 'menu:panel', // toggle side panel
+    'k': 'menu:ksc', // keyboard shortcuts
+    'e': 'menu:source', // Edit source cell
+    'l': 'menu:laser', // toggle laser pointer
 }
 
 function keyboardEvents(box,model) {
@@ -398,23 +398,30 @@ function handleScale(box, model) {
     setScale(box, model); // First time set
 }
 
-// Touch and Stylus are working perfect, mouse has text selection issues and broweser navigation issues
+// Touch and Stylus are working perfect, mouse needs special handling to avoid hover effects and text selection
+// Do not fall for mouse button combinations, they exclude touch pad users
 function handlePointerSwipe(box, model) {
     let initialX = null;
     let initialY = null;
     let swiped = false;
     const THRESHOLD_SWIPE = 70;
     const THRESHOLD_Y_MAX = 30;
-    const SELECTION_X_MAX = 10;
 
     // To ensure swipe works , added tocuh-action CSS to SlideBox and all children
     function setState(e, setValue) {
         swiped = false;
-        initialX = setValue ? e.clientX : null;
-        initialY = setValue ? e.clientY : null;
+        // Avoid swipe when in inactive mode like popup focus should not trigger slide changes
+        initialX = setValue && !box.classList.contains('mode-inactive') ? e.clientX : null;
+        initialY = setValue && !box.classList.contains('mode-inactive') ? e.clientY : null;
+        if (!setValue) box.classList.remove('mouse-swipe-active'); // reset on end
     }
 
     box.addEventListener('pointerdown', (e) => {
+        // let interactive elements be not effected unintentionally
+        if (e.target.closest(INTERACTIVE_SEL)) return;
+        if (e.pointerType === 'mouse') { // only left mouse button be held down for swipe
+            if (e.button !== 0 || !box.classList.contains('mouse-swipe-enabled')) return;
+        }
         setState(e, true);
     }); // initialize coordinates
     box.addEventListener('pointermove', (e) => {
@@ -422,19 +429,22 @@ function handlePointerSwipe(box, model) {
         const diffX = e.clientX - initialX;
         const diffY = e.clientY - initialY;
 
-        if (Math.abs(diffY) > THRESHOLD_Y_MAX) {
-            setState(e, false); // reset swipe state
-            return; // exit
+        // show overlay for mouse swipe, but only after 20% threshold to let clicks work
+        // It is only needed for mouse, touch/stylus have no hover effects to worry about
+        if (e.pointerType === 'mouse') { 
+            if (Math.abs(diffX) > THRESHOLD_SWIPE/4 && !box.classList.contains('mouse-swipe-active')) { 
+                box.classList.add('mouse-swipe-active'); // show overlay after 25% threshold
+            } else if (box.classList.contains('mouse-swipe-active')) {
+                box.classList.remove('mouse-swipe-active'); // reset if user wants to cancel in middle of swipe
+            }
         }
 
-        if (Math.abs(diffX) >= SELECTION_X_MAX) {
-            const selection = window.getSelection();
-            if (selection && selection.type === "Range" &&selection.toString().length > 0) {
-                setState(e, false); // reset swipe state 
-                return; // exit
-            }; 
+        if (Math.abs(diffY) > THRESHOLD_Y_MAX) {
+            setState(e, false); // reset swipe state
+            return; // exit early, too much vertical movement
         }
-        if (Math.abs(diffX) >= THRESHOLD_SWIPE && Math.abs(diffY) <= THRESHOLD_Y_MAX) {
+
+        if (Math.abs(diffX) >= THRESHOLD_SWIPE) {
             model.set("msg_topy", diffX < 0 ? "NEXT" : "PREV");
             model.save_changes();
             swiped = true; // Only one navigation per gesture
@@ -446,7 +456,7 @@ function handlePointerSwipe(box, model) {
 }
 
 // Avoid clicks passing through to underlying clickable elements
-const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary, [contenteditable='true']";  
+const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary, [contenteditable='true'], .widget-slider";  
 
 function handleBoxClicks(box, model) {
     // Handle single clicks for navigation and blocking
@@ -483,21 +493,20 @@ function handleBoxClicks(box, model) {
             return; // Let interactive elements handle their own double-clicks
         }
         
-        event.preventDefault(); 
-        event.stopPropagation();
-        
         // Check if already in focus mode - exit it
         if (box.classList.contains('mode-inactive')) {
             const closeBtn = box.querySelector(':scope .popup-close-btn');
             if (closeBtn) {
                 closeBtn.click(); // Trigger close button
             }
-            return;
+            return false; // already in focus mode, exit
         }
 
         // Check for focusable elements
         const matchedElem = event.target.closest(model.get("_fsels"));
         if (matchedElem) { // Focus by JS to be able to have a close button etc
+            event.preventDefault(); 
+            event.stopPropagation();
             box.blur(); // remove focus from box to avoid keyboard events there
             matchedElem.classList.add('mode-popup-active');
             model.set("msg_topy", "mode-inactive");
@@ -549,7 +558,7 @@ function showJumpIndictor(model, box, originIndex, offset) {
     let indicator = document.createElement('button');
     indicator.style.cssText = `
         position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);cursor: pointer;backdrop-filter: blur(4px);
-        font-size: 12px; z-index: 99; border:none;outline:none; text-shadow: 0px 1px var(--bg2-color);`;
+        font-size: 12px; z-index: 9; border:none;outline:none; text-shadow: 0px 1px var(--bg2-color);`;
     indicator.title = `Jumped ${offset > 0 ? 'forward' : 'backward'} by multiple slides, click to go back.`;
     box.appendChild(indicator);
 

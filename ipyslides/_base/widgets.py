@@ -64,6 +64,10 @@ class CtxMenu(ListWidget):
                 "text":"{state} Side Panel <kbd>S</kbd>","icon":"close",
                 "iconFalse":"panel", "state":("Open", "Close")
             },
+            "swipe": {
+                "text":"{state} Mouse Swipe","icon":"swipe-off",
+                "iconFalse":"swipe-on", "state":("Enable", "Disable")
+            },
             "draw": {"text":"Open Drawing Board","icon":"edit"},
             "ksc": {"text":"Keyboard Shortcuts <kbd>K</kbd>","icon":"keyboard" },
             "info": {"text":"Read Instructions","icon":"info" },
@@ -73,11 +77,11 @@ class CtxMenu(ListWidget):
         }
         self._state = {
             "draw": None,  "toc":None, "fscreen": False, "laser": False, "panel": False, 
-            "source": None, "refresh": None, "ksc": None, "info": None
+            "swipe": False, "source": None, "refresh": None, "ksc": None, "info": None
         } # state changes on selection
         self.add_class('CtxMenu')
         self.hide() # initially closed
-        self._set_opts() # set all options initially
+        self._set_opts() # set initial options
         
     def _transform(self, item):
         key, value = item
@@ -88,14 +92,7 @@ class CtxMenu(ListWidget):
 
     def show(self, x, y, units='%'):
         "Open menu at given x,y coordinates in given units."
-        if self.ws.panelbox.is_open():
-            self._set_opts('panel')
-        elif 'mode-inactive' in self.ws.mainbox._dom_classes: # prefer over fullscreen
-            self._set_opts('fscreen','laser','draw')
-        elif 'mode-fullscreen' in self.ws.mainbox._dom_classes:
-            self._set_opts('fscreen','laser','draw','panel','toc','ksc')
-        else:
-            self._set_opts()
+        self._set_opts() # update options before showing
         self.layout.left = f'{x}{units.strip()}' 
         self.layout.top = f'{y}{units.strip()}'
         self.layout.visibility = 'visible'
@@ -117,7 +114,7 @@ class CtxMenu(ListWidget):
         self.index = None # reset index to allow re-selection of same item
         self.index = self._update_state(key, None)
     
-    def _update_state(self, key, state):
+    def _update_state(self, key, state): # use this inside functions which are promatically called, like toggle in side panel
         "Update internal state for given key. state can be a value or a callable that accepts old value and returns new value."
         index = None
         for i, (sk, sv) in enumerate(self._state.items()):
@@ -140,8 +137,17 @@ class CtxMenu(ListWidget):
         else:
             self.ws.mainbox.remove_class(klass)  
 
-    def _set_opts(self, *keys):
-        "Set options for given keys or all if none provided"
+    def _set_opts(self):
+        "Set options based on current state."
+        keys = list(self._state) # all keys
+        if hasattr(self.ws, 'panelbox') and self.ws.panelbox.is_open(): # may not be ready yet
+            keys = ['panel']
+        elif hasattr(self.ws, 'mainbox') and (klasses := self.ws.mainbox._dom_classes): # may not be ready yet
+            if 'mode-inactive' in klasses: # prefer over fullscreen
+                keys = ['fscreen','laser','draw']
+            elif 'mode-fullscreen' in klasses:
+                keys = ['fscreen','laser','draw','panel','toc','ksc']
+        
         self.options = [(k, v) for k,v in self._state.items() if not keys or k in keys] 
         self.index = None # reset index after options change to allow re-selection of same item
     
@@ -166,13 +172,17 @@ class CtxMenu(ListWidget):
                 self.ws.drawer.toggle(True) # open drawing board
             elif key == 'panel':
                 self.ws.panelbox.toggle(value)
+            elif key == 'swipe':
+                toggle_klass = self.ws.mainbox.add_class if value else self.ws.mainbox.remove_class
+                toggle_klass('mouse-swipe-enabled')
+                self.ws._push_toast("Move mouse left/right while holding down left mouse button to navigate slides." if value else "Mouse swipe disabled.")
             elif key == 'toc':
                 self.ws.panelbox.toggle(True) # open panel
                 self.ws.panelbox.select_tab(1) # select toc tab
             elif key == 'ksc':
                 self.ws._push_toast(htmlize(key_combs), timeout=15)
             elif key == 'info':
-                self.ws.iw.send({
+                self.ws.iw.send({ # don't want to duplicate logo here, so directly send js message
                     "content": html('',[instructions]).value,
                     "timeout": 120000 # 2 minutes
                 })
@@ -355,7 +365,7 @@ class Widgets:
         self.htmls   = _Htmls()
         self._timer  = JupyTimer()
         self.drawer  = DrawWidget(self)
-        self._ctxmenu= CtxMenu(self, description='Shift + Right Click Browser Menu')
+        self._ctxmenu= CtxMenu(self, description='Shift + Right Click for Browser Menu')
         self.iw      = InteractionWidget(self)
         self.notes   = NotesWidget(value = 'Notes Preview')
         self.drawer.layout = dict(width='100%',height='0',overflow='hidden') # height will be chnaged by button

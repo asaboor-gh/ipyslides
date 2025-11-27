@@ -411,6 +411,10 @@ def style_css(colors, fonts, layout, _root = False):
             '.link-button.draw-button > :is(button, a)': {
                 'padding': '0 24px !important', # make it like button under draw button too
             },
+            '.link-button, .slide-link': {'^, *': {
+                f'{k}user-select':'none !important' for k in ['','-moz-','-ms-','-webkit-']
+                },
+            }, # avoid selection
             '.Citations' : {
                 'column-count' :f'{layout.ncol_refs} !important',
                 'column-gap':'1em',
@@ -587,7 +591,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'padding':'0 8px',
                 'display':'inline-block', # should be inline 
                 'text-align':'right',
-                '-webkit-user-select':'none',
+                **{f'{k}user-select':'none !important' for k in ['','-moz-','-ms-','-webkit-']},
                 'margin-right':'8px',
                 'font-size':'80% !important',
                 'text-shadow': '0 1px var(--bg1-color)',

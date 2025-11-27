@@ -84,6 +84,23 @@ def layout_css(accent_color, aspect):
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
                 },
+                "^.mouse-swipe-enabled": {
+                    "^, *": {f'{k}user-select':'none !important' for k in ['','-moz-','-ms-','-webkit-']}, # avoid selecting text while swiping
+                    "^.mouse-swipe-active::after": {
+                        "content": "''",
+                        "display": "block",
+                        "position": "absolute",
+                        "top": "0",
+                        "left": "0",
+                        "right": "0",
+                        "bottom": "0",
+                        "pointer-events": "auto",
+                        "touch-action": "none !important", # still alow touch swipes
+                        "cursor": "grabbing !important",
+                        "background": "rgba(0,0,0,0.01)", # slight overlay to indicate swipe mode
+                        "z-index": 99999, # above all, also it does not let pointer events pass through
+                    },    
+                },
                 ".Slide-Number" : { # slide number
                     "position": "absolute !important",
                     "right": "0 !important",
@@ -117,9 +134,10 @@ def layout_css(accent_color, aspect):
                 ".ToastMessage" : {
                     "position":"absolute",
                     "bottom": "4px", # right is set by JS
-                    "height": "min(180px, 65%)",
+                    "height": "max-content",
+                    "max-height": "min(400px, 65%)",
                     "width":"min(400px, 65%)",
-                    "z-index":"10000",
+                    "z-index":"9",  # above slide content
                     "border-radius": "8px",
                     "padding":"8px",
                     "overflow":"auto",
@@ -170,7 +188,7 @@ def layout_css(accent_color, aspect):
                     "position": "absolute",
                     "top": "8px",
                     "right": "8px",
-                    "z-index": "10001",  # above focused element
+                    "z-index": "10",  # above focused element
                     "border": "none",
                     "padding": "4px 8px",
                     "backdrop-filter": "blur(4px)",
@@ -401,7 +419,7 @@ def layout_css(accent_color, aspect):
             },
             ".CtxMenu": {
                 "position": "absolute",
-                "z-index": "99999",  # above all
+                "z-index": "11",  # above all
                 "backdrop-filter": "blur(20px)",
                 "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
                 "border-radius": "4px",

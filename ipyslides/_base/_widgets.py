@@ -37,7 +37,6 @@ class InteractionWidget(anywidget.AnyWidget):
         super().__init__(*args, **kwargs)
         self.prog = _widgets.sliders.progress
         self._menu = _widgets._ctxmenu
-        self._menu_map = {'KSC': 'ksc', 'TLSR': 'laser', 'TPAN': 'panel', 'EDIT': 'source'}
         self._callbacks = {
             'CCTX': self._menu.hide, # close context menu
             'NEXT': self.ws.buttons.next.click,
@@ -50,8 +49,9 @@ class InteractionWidget(anywidget.AnyWidget):
         msg = change.new
         if not msg:
             return # Message set empty, do not waste time
-        if msg in self._menu_map:
-            self._menu.select(self._menu_map[msg])
+        
+        if msg.startswith('menu:'):
+            self._menu.select(msg.split(':')[1]) # select menu option
         elif msg in self._callbacks:
             self._callbacks[msg]() # call the callback
         elif 'SHIFT:' in msg:

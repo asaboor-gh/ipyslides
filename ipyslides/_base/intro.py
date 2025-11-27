@@ -88,7 +88,7 @@ key_maps = {
     "K": "Show keyboard shortcuts",
 }
 
-key_combs = f"""color['var(--accent-color)']`//fa`info`Swipe left/right on touch devices to navigate slides.//`
+key_combs = f"""color['var(--accent-color)']`//fa`info`Swipe left/right on touch devices to navigate slides. Opt in mouse swipe from context menu.//`
 
 | Shortcut                                    | Button                                            | Action                 | 
 |:--------------------------------------------|---------------------------------------------------|:-----------------------|
