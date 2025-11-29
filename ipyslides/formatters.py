@@ -66,13 +66,22 @@ class _Output(ipw.Output):
         "Widgets output sometimes disappear on when Output is removed and displayed again. Fix that with this function."
         old_outputs = self.outputs
         self.outputs = () # Reset
+        pending_displays = [] # Need to handle nested Output widgets to refresh as well
 
         for i, out in enumerate(old_outputs): # Update TOC if in column
-            if (toc := toc_from_meta(out.get("metadata",{}))):
+            meta, data = out.get("metadata",{}), out.get("data",{})
+            if (toc := toc_from_meta(meta)):
                 old_outputs[i]['data'] = toc.data
+            elif (widget := widget_from_data(data)):
+                if isinstance(widget, type(self)):
+                    pending_displays.append(widget)
+                elif isinstance(widget, ipw.Box): # handles columns too
+                    pending_displays.extend([child for child in widget.children if isinstance(child, type(self))])   
 
         self.outputs = old_outputs
         del old_outputs
+        for widget in pending_displays:
+            widget.update_display()
 
 
 class XTML(HTML):

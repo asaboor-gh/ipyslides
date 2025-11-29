@@ -314,7 +314,7 @@ class BaseSlides:
         
     def docs(self):
         "Create presentation from docs of IPySlides."
-        self.close_view() # Close any previous view to speed up loading 10x faster on average
+        self.close_view() # Close any previous view to speed up building (minor effect but visually better)
         self.clear() # Clear previous content
         self.create(range(31)) # Create slides faster
         

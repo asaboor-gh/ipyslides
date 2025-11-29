@@ -413,11 +413,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             ).value + '<a href="https://www.tldraw.com" target="_blank" rel="noopener noreferrer" class="fa fa-edit export-only"></a>',
             css_class = "link-button jupyter-button draw-button"
         )
-    
-    @property
-    def toc_widget(self):
-        "Get table of contents widget. It can be exported to HTML as well. Normally use Slides.toc()."
-        return self._toc_widget
 
     def verify_running(self, error_msg=""):
         "Verify if slide is being built, otherwise raise error."
@@ -569,7 +564,7 @@ class Slides(BaseSlides,metaclass=Singleton):
  
     def toc(self, title='## Contents {.align-left}', highlight = False):
         """You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` 
-        or toc[True]`title`, and `Slides.toc_widget as well."""
+        or toc[True]`title`."""
         self.verify_running("toc can only be added under slides constructor!")
         self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there

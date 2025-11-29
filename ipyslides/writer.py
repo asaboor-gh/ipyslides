@@ -137,7 +137,7 @@ class Writer(ipw.HBox):
     
     def update_display(self):
         for col, out in zip(self._cols, self.children):
-            if not out.outputs:
+            if not out.outputs: # first time update
                 out.clear_output(wait=True)
                 with out:
                     display(*[toc_from_meta(o.metadata) or o for o in col['outputs']])
