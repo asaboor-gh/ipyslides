@@ -137,6 +137,8 @@ def layout_css(accent_color, aspect):
                     "height": "max-content",
                     "max-height": "min(400px, 65%)",
                     "width":"min(400px, 65%)",
+                    "display": "grid", # grid can contain a child div even wihout defined height
+                    "grid-template-rows": "1fr", # to make child div take full height
                     "z-index":"9",  # above slide content
                     "border-radius": "8px",
                     "padding":"8px",
