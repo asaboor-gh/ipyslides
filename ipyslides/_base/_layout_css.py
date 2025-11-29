@@ -571,6 +571,7 @@ def layout_css(accent_color, aspect):
                     "left": "0 !important",
                     "right": "0 !important",
                     "bottom": "0 !important",
+                    "@media print": {"all": "unset !important",}, # need to reset for print
                 },
                 "^, *": {
                     "color": "var(--fg1-color)",
@@ -613,11 +614,13 @@ def layout_css(accent_color, aspect):
                     "width":"100% !important",
                     "height": "100% !important",
                     "overflow": "hidden !important",
+                    "@media print": {"all": "unset !important",}, # need to show all outputs
                 },
                 ".SlidesContainer": {
                     "container-type": "size !important",
                     "container-name": "resize-box !important",
                     "overflow": "hidden !important",
+                    "@media print": {"all": "unset !important",}, # need to fully reset for print
                     "width": "100% !important",
                     "height": "100% !important",
                     "> .SlidesWrapper": {
