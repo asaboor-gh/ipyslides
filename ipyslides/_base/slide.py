@@ -581,6 +581,7 @@ class Slide:
             f'''.SlideArea.n{self.number}.n{self.number} > .jp-OutputArea {{
                 top: {value}% !important;
                 height: {100 - value}% !important; 
+                transform: none !important;
                 margin-top: 0 !important;
             }}''' # each frames get own yoffset, margin-top 0 is important to force top to take effect
         ).display() # height is important to avoid spilling padding of SlideArea

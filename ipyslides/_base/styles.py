@@ -304,7 +304,7 @@ def style_css(colors, fonts, layout, _root = False):
             'display':'flex !important',
             'flex-direction':'column !important',
             'align-items': 'center !important' if layout.centered else 'baseline !important', 
-            'justify-content': 'flex-start !important', # Aligns the content to the top of box to avoid hiding things
+            'justify-content': 'center !important' if layout.centered else 'flex-start !important', 
             'padding' : '16px !important', # don't make 1em to avoid change size with fonts
             'padding-bottom': 'var(--paddingBottom, 23px) !important',
             'overflow': 'auto !important' if layout.scroll else 'hidden !important',
@@ -317,7 +317,9 @@ def style_css(colors, fonts, layout, _root = False):
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
                 '@media print': { # For PDF printing of frames, data-hidden set by JS, first sellectors works for rows too beside top level
-                    'margin': f'{margin} !important', # reinforce for clones in print
+                    'margin-top': '0 !important', # print shifts upwards otherwise due to SlideArea becoming relative, it's too hacky and I am still not willing to use transform here
+                    'top': f'{layout.yoffset}% !important' if layout.yoffset is not None else f'{"50%" if layout.centered else 0} !important',
+                    'transform': 'translateY(-50%) !important' if (layout.yoffset is None and layout.centered) else 'none !important',
                     'overflow': 'hidden !important', # no need to scroll in print
                     '.jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': hide_node(True),
                 },
