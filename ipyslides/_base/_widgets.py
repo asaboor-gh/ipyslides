@@ -100,7 +100,7 @@ class InteractionWidget(anywidget.AnyWidget):
             delattr(self, '_run_func')
 
     def _try_exec_with_fallback(self, func):
-        if self._theme.value == "Jupyter":
+        if self.ws.theme.value == "Jupyter":
             self._colors = jupyter_colors # Reset for getting latest colors from these keys
             self.msg_tojs = "SetColors"
             self._run_func = func # called when javascript sets colros

@@ -64,7 +64,6 @@
         position:  relative !important; /* to hold background image and stuff properly and itself in order */
         visibility: visible !important;
         transform: translateZ(0) scale(1) !important; /* still need to contain stuff properly inside it and have crispy text*/
-        /* height: auto !important;  */
         page-break-inside: avoid !important; /* avoid for slides printing */
         page-break-after: always !important;
     }

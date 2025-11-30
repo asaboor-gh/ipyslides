@@ -578,13 +578,11 @@ class Slide:
             raise ValueError("yoffset value should be integer in units of percent betweem [0,100]!")
         
         self._app.html('style', 
-            f'''.SlideArea.n{self.number}.n{self.number} > .jp-OutputArea {{
-                top: {value}% !important;
-                height: {100 - value}% !important; 
-                transform: none !important;
-                margin-top: 0 !important;
-            }}''' # each frames get own yoffset, margin-top 0 is important to force top to take effect
-        ).display() # height is important to avoid spilling padding of SlideArea
+            f'''.SlideArea.n{self.number}.n{self.number} {{
+                align-items: start !important;
+                padding-top: calc({value}% + 16px) !important;
+            }}''' # yoffset by padding top, align-content:start is important to take effect
+        ).display() 
         
     @property
     def notes(self): return self._notes

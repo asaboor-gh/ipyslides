@@ -187,7 +187,7 @@ class Footer(ConfigTraits):
 
 @fix_sig
 class Layout(ConfigTraits):
-    "Set layout of slides."
+    "Set layout of slides. yoffset is in percent of slide height and if None, it disables vertical centering but text alignment is preserved."
     centered = Bool(True)
     yoffset  = Int(None, allow_none=True, help='globally set yoffset to a value in percent')
     scroll   = Bool(True)
@@ -370,8 +370,8 @@ class Settings:
         return f'<div class="click-wrapper print-only"> {links} </div>' 
 
     def _update_size(self, change):
-        self._widgets.mainbox.layout.height = "{:.1f}vw".format( # 1/10 mm is below usual broweser resolution
-            self._wslider.value / self.layout.aspect
+        self._widgets.mainbox.layout.height = "{}vw".format( # avoiding fractional numbers as that conflicts in print resolution
+            int(self._wslider.value / self.layout.aspect)
         )
         self._widgets.mainbox.layout.width = "{}vw".format(self._wslider.value)
         self._update_theme({'owner':'layout'})  # change aspect for Linked Output view too

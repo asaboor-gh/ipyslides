@@ -212,15 +212,14 @@ def layout_css(accent_color, aspect):
                         "^.HideSlide *": {"visibility": "inherit !important",},
                         '^.HasFrames:not(.OneFrame)': {'display': 'none !important'}, # only clones are shown if multiple frames
                     },
-                    ".jp-OutputArea": {
-                        "width": "100% !important",
-                        "height": "auto !important", # This is must for layout
-                        "box-sizing": "border-box !important",
-                        ".jp-OutputPrompt.jp-OutputArea-prompt": {"display": "none !important",},
-                    },  # Otherwise it shrinks small columns
-                    
                     **_focus_css,
                 },
+                ".jp-OutputArea": {
+                    "width": "100% !important",
+                    "height": "auto !important", # This is must for layout
+                    "box-sizing": "border-box !important",
+                    ".jp-OutputPrompt.jp-OutputArea-prompt": {"display": "none !important",},
+                },  # Otherwise it shrinks small columns
                 "kbd" : {
                     "color":"var(--fg2-color)",
                     "background": "var(--bg2-color)",

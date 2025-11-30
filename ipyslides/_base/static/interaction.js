@@ -96,7 +96,7 @@ function printSlides(box, model) {
             for (let i = 0; i < numFrames; i++) { 
                 let clone = slide.cloneNode(true); // deep clone
                 clone.classList.remove('HasFrames'); // remove base class to let it display
-                clone.classList.add('print-only'); // avoid cluttering screen view
+                clone.style.visibility = 'hidden'; // avoid cluttering screen view but only via visibility hidden, let display to be correct size and alignment, this previously gave me huge headache
                 clone.querySelector(':scope .Slide-UID')?.remove(); // remove section id from clone
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
                 clone.style.transform = 'translateZ(0) scale(1)'; // force reset transform for print to but need stuff in place

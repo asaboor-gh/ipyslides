@@ -144,10 +144,6 @@ def hide_node(b):
 
 def style_css(colors, fonts, layout, _root = False):
     uclass = get_unique_css_class()
-    margin = 'auto' if layout.centered else 'unset'
-    if (layout.width < 100) and (layout.centered is False):
-        margin = '0 auto' # if not 100%, horizontally still in center, vertically top
-
     _root_dict = {**{f"--{k}-color":v for k,v in colors.items()}, # Only here change to CSS variables
         '--text-size':f'{fonts.size}px',
         '--jp-content-font-family': f'{fonts.text}, -apple-system, "BlinkMacSystemFont", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16"',
@@ -297,29 +293,29 @@ def style_css(colors, fonts, layout, _root = False):
             **{f"--{k}-color":v for k,v in colors.items()}, # need for per slide based CSS set by user to not effect all
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
-            'height': f'{int(210/layout.aspect):.1f}mm !important',
+            'height': f'{int(210/layout.aspect)}mm !important',
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
             'box-sizing': 'border-box !important',
-            'display':'flex !important',
-            'flex-direction':'column !important',
-            'align-items': 'center !important' if layout.centered else 'baseline !important', 
-            'justify-content': 'center !important' if layout.centered else 'flex-start !important', 
             'padding' : '16px !important', # don't make 1em to avoid change size with fonts
             'padding-bottom': 'var(--paddingBottom, 23px) !important',
-            'overflow': 'auto !important' if layout.scroll else 'hidden !important',
+            'overflow': 'hidden !important', # important to avoid scroll of slide area, output area will handle it
+            'display': 'grid !important', # can use align-content with block, but its came in 2024, so avoid new stuff
+            'align-items': 'center !important' if layout.centered and layout.yoffset is None else 'start !important', # yoffset will essentially override centering, align-content clips top, but items don't
+            'padding-top': f'calc({layout.yoffset}% + 16px) !important' if layout.yoffset is not None else '16px !important', 
             '> .jp-OutputArea': {
-                'position': 'relative !important', # absolute content should not go outside
-                'margin': f'{margin} !important', # for frames margin-top will be defined, don't use here
+                'position': 'static !important', # absolute content should be relative to SlideArea
                 'padding': '0 !important',
+                'margin': '0 !important',
                 'width': f'{layout.width}% !important',
+                'margin-right': 'auto !important' if layout.centered else '0 !important', # for horizontal centering
+                'margin-left': 'auto !important' if layout.centered else '0 !important', # for horizontal centering
                 'max-width': f'{layout.width}% !important',
+                'max-height': '100% !important', # avoid overflow of output area and let it scroll
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
                 '@media print': { # For PDF printing of frames, data-hidden set by JS, first sellectors works for rows too beside top level
-                    'margin-top': '0 !important', # print shifts upwards otherwise due to SlideArea becoming relative, it's too hacky and I am still not willing to use transform here
-                    'top': f'{layout.yoffset}% !important' if layout.yoffset is not None else f'{"50%" if layout.centered else 0} !important',
-                    'transform': 'translateY(-50%) !important' if (layout.yoffset is None and layout.centered) else 'none !important',
+                    'display': 'block !important', # need some fix
                     'overflow': 'hidden !important', # no need to scroll in print
                     '.jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': hide_node(True),
                 },
@@ -328,14 +324,17 @@ def style_css(colors, fonts, layout, _root = False):
                 'padding-bottom': 'var(--printPadding, var(--paddingBottom, 23px)) !important',
                 '@page': {
                     'margin': '0 !important',
-                    'size': f'210mm {int(210/layout.aspect):.1f}mm !important', # 1pt ~ 0.35mm, so no more than one decimal required
+                    'size': f'210mm {int(210/layout.aspect)}mm !important', # 1pt ~ 0.35mm, so no more than one decimal required
                 },
             },
-            **({'^:not(.n0) > .jp-OutputArea': { # no yoffset on title slide, leave it centered globally
-                    "top": f"{layout.yoffset}% !important", 
-                    "margin-top": "0 !important", 
-                }
-            } if layout.yoffset is not None else {}),# global yoffset, even centered
+            '^.n0': { 
+                "align-items": "center !important", 
+                "justify-items": "center !important", 
+                "padding-top": "16px !important", 
+                ":is(h1, h2, h3, h4, h5, h6)": { # even headings need to be centered on title slide
+                    "text-align": "center", # not important to allow user override
+                },
+            }, # no yoffset on title slide, leave it centered globally, unless user applys yoffset there
             **({'*': {
                 'max-height':'max-content !important',
                 }
