@@ -314,6 +314,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-height': '100% !important', # avoid overflow of output area and let it scroll
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
+                '.jp-OutputArea-child, .jp-OutputArea-output': {"position": "static !important"}, # absolute content should not be stuck here too
                 '@media print': { # For PDF printing of frames, data-hidden set by JS, first sellectors works for rows too beside top level
                     'display': 'block !important', # need some fix
                     'overflow': 'hidden !important', # no need to scroll in print
