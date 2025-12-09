@@ -442,7 +442,7 @@ class Slide:
         frame = self._fidxs[index]
         # Use merged frames if printing PDF
         if hasattr(self._app.settings, '_printingPDF'):
-            if not self._export_fidxs:
+            if not self._export_fidxs or index >= len(self._export_fidxs):
                 return ''  # its all parts in single frame, no CSS needed
             frame = self._export_fidxs[index]  
 

@@ -181,18 +181,13 @@ function printSlides(box, model) {
             obj.remove(); // Remove cloned slides
         }
         delete window._printOnlyObjs;
-        
-        // Remove cleanup button if exists
-        if (box._printCleanupBtn) {
-            box._printCleanupBtn.remove();
-            delete box._printCleanupBtn;
-        }
+        box.querySelectorAll(':scope > .print-cleanup-btn').forEach(btn => btn.remove());
     }
     // Add a manual cleanup button in case afterprint event does not fire
     let cleanupBtn = document.createElement('button');
     cleanupBtn.innerHTML = '<i class="fa fa-trash"></i> Cleanup Print Artifacts';
-    cleanupBtn.style.cssText = `position:absolute;top:4px;right:4px;z-index:10;padding:4px 8px;font-size:12px;`;
-    box._printCleanupBtn = cleanupBtn; // store reference for later removal
+    cleanupBtn.className = 'jupyter-button print-cleanup-btn';
+    cleanupBtn.style.cssText = `position:absolute;top:4px;right:4px;z-index:11;padding:4px 8px;font-size:12px;`;
     
     function afterPrintHandler() {
         cleanupAfterPrint();
@@ -201,8 +196,10 @@ function printSlides(box, model) {
     
     cleanupBtn.onclick = afterPrintHandler;
     window.addEventListener('afterprint', afterPrintHandler, { once: true }); 
+    box.querySelectorAll(':scope .SlideArea').forEach(sa => { 
+        void sa.offsetHeight; // force reflow of CSS
+     }); 
     setTimeout(() => {   
-        box.querySelectorAll(':scope .SlideArea').forEach(oa => { oa.offsetHeight; }); // ensure reflow for output areas
         box.appendChild(cleanupBtn); // should not be visible immediately to distract user
         window.print();
     }, 1000); // slight delay to ensure rendering

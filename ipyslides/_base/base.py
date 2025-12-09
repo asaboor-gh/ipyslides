@@ -495,7 +495,7 @@ class BaseSlides:
         self.build(-1, 'section`Advanced Functionality` toc`### Contents`')
 
         with self.build_() as s:
-            self.write("## Adding content on frames incrementally yoffset`0`")
+            self.write("## Adding content on frames incrementally")
             self.frozen(widget := (code := s.get_source()).as_widget()).display()
             # frozen in above line get oldest metadata for export
             def highlight_code(slide): widget.value = code.focus(range(slide.indexf + 1)).value

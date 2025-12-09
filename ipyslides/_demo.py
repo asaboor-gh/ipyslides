@@ -215,7 +215,7 @@ def demo_slides(slides):
             slides.bullets([item], marker='💘').display()
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### code`PART.iter()` and 2x2 grid of boxes yoffset`0`')
+        slides.write('# Frames with \n#### code`PART.iter()` and 2x2 grid of boxes')
         s.get_source().focus(range(2,7)).display()
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]

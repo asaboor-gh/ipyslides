@@ -135,12 +135,32 @@ def collapse_node(b):
         'padding': '0' if b else 'unset',
         'margin': '0' if b else 'unset',
     }
-    return {k: f'{v} !important' for k, v in css.items()}
+    out = {k: f'{v} !important' for k, v in css.items()}
+    if b: # to avoid taking space and effect layout, this solved months long issue why output was moving upwards! Thanks to Claude Opus for correcting this!
+        out['position'] = 'absolute !important' 
+    return out
 
 def hide_node(b): 
     "Used to hide div in frames navigation and print mode, but keep space."
     return {'^, ^ *': {'visibility': ('hidden' if b else 'inherit') + '!important'}}
-        
+
+def _safe_height(aspect):
+    """Calculate slide height with a tiny epsilon to avoid exact boundary issues in print.
+    
+    When aspect ratio produces an exact height (e.g., 16/10 = 131.25mm), browsers may 
+    experience precision issues where content height exactly equals container height,
+    causing grid centering to fail and content to disappear during print/PDF export.
+    
+    Adding 0.001mm is imperceptible but prevents this boundary condition.
+    
+    This elegant solution was discovered with the help of Claude Opus 4.5,
+    who also solved a months-long struggle with grid centering during print
+    by suggesting `position: absolute` for collapsed elements - removing them
+    from document flow while keeping them in DOM for links to work.
+    
+    Sometimes the simplest fixes are the hardest to find! 🎉
+    """
+    return round(210 / aspect, 2) + 0.001
 
 def style_css(colors, fonts, layout, _root = False):
     uclass = get_unique_css_class()
@@ -293,7 +313,7 @@ def style_css(colors, fonts, layout, _root = False):
             **{f"--{k}-color":v for k,v in colors.items()}, # need for per slide based CSS set by user to not effect all
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
-            'height': f'{int(210/layout.aspect)}mm !important',
+            'height': f'{_safe_height(layout.aspect)}mm !important',
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
             'box-sizing': 'border-box !important',
@@ -326,7 +346,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'padding-bottom': 'var(--printPadding, var(--paddingBottom, 23px)) !important',
                 '@page': {
                     'margin': '0 !important',
-                    'size': f'210mm {int(210/layout.aspect)}mm !important', # 1pt ~ 0.35mm, so no more than one decimal required
+                    'size': f'210mm {_safe_height(layout.aspect)}mm !important', # 1pt ~ 0.35mm, so no more than one decimal required
                 },
             },
             '^.n0': { 

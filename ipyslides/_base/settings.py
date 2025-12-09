@@ -369,9 +369,7 @@ class Settings:
         return f'<div class="click-wrapper print-only"> {links} </div>' 
 
     def _update_size(self, change):
-        self._widgets.mainbox.layout.height = "{}vw".format( # avoiding fractional numbers as that conflicts in print resolution
-            int(self._wslider.value / self.layout.aspect)
-        )
+        self._widgets.mainbox.layout.height = "{:.2f}vw".format(self._wslider.value / self.layout.aspect)
         self._widgets.mainbox.layout.width = "{}vw".format(self._wslider.value)
         self._update_theme({'owner':'layout'})  # change aspect for Linked Output view too
         self._widgets.iw.msg_tojs = 'RESCALE'
