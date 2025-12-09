@@ -326,21 +326,20 @@ class Settings:
     def _print_pdf(self, btn):
         with disabled(self._widgets.buttons.print): # disable button to avoid multiple clicks
             self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
-            
+            self._printingPDF = True # set before setting frame to pick correct content
+                
             # Update frames indices for print
-            parts, post_print = {}, []
+            parts = {}
             for slide in self._slides:
-                post_print.append([slide, slide._fcss.value]) # store current css
-                slide._fcss.value = '' # reset frame css for print, will be set back after print
                 frames = slide._export_fidxs
-                slide._set_css_classes('OneFrame' if not frames else None, remove='OneFrame') # remove and add conditionally
+                slide._fcss.value = slide._frame_css(0) # reset frame css to show first or all content
                 if frames: # merged parts automatically handled
                     parts[slide.number] = frames
                     
             self._widgets.iw._parts = parts
-            self._widgets.iw._post_print = post_print # restore later for better user experience
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'
+            del self._printingPDF  # remove flag after use
 
     def _resolve_img(self, src, width):
         if isinstance(src, Path):

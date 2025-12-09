@@ -82,10 +82,6 @@ class InteractionWidget(anywidget.AnyWidget):
             self.ws.htmls.loading.layout.display = "none"
         elif 'mode-' in msg: # layout mode changes
             self._menu._on_mode_change(msg)
-        elif msg == 'PrintDone' and hasattr(self, '_post_print'):
-            for slide, css in self._post_print:
-                slide._fcss.value = css
-            delattr(self, '_post_print')
         
         self.msg_topy = "" # Reset for successive simliar changes
     

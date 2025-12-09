@@ -11,26 +11,52 @@ function updateProgress(show, numSlides, numFrames, index, fidx) {
 
 // Function to fix IDs and references in cloned elements, especially for matplotlib SVGs
 function fixIDsAndRefs(clone, cloneIndex = 0) {
-  const idMap = {};
-
-  // Step 1: assign unique IDs for all elements in the clone
-  clone.querySelectorAll(':scope [id]').forEach(el => { // only descendent elements
-    const oldId = el.id;
-    const newId = `${oldId}__${cloneIndex}`;
-    idMap[oldId] = newId;
-    el.id = newId;
+  // Step 1: Collect all IDs in the clone
+  const idElements = new Map();
+  clone.querySelectorAll(':scope [id]').forEach(el => {
+    idElements.set(el.id, el);
   });
 
-  // Step 2: update all attributes containing # references
-  clone.querySelectorAll(':scope *').forEach(el => { // only decendent elements
+  if (idElements.size === 0) return clone;
+
+  // Step 2: Find which IDs are actually referenced within this clone
+  const referencedIds = new Set();
+  clone.querySelectorAll(':scope *').forEach(el => {
     for (const attr of el.getAttributeNames()) {
+      if (attr === 'id') continue; // skip id attribute itself
+      const val = el.getAttribute(attr);
+      if (!val || !val.includes('#')) continue;
+
+      // Check each known ID for a reference
+      for (const id of idElements.keys()) {
+        if (val.includes(`#${id}`)) {
+          referencedIds.add(id);
+        }
+      }
+    }
+  });
+
+  if (referencedIds.size === 0) return clone;
+
+  // Step 3: Build ID map only for referenced IDs and rename them
+  const idMap = {};
+  referencedIds.forEach(oldId => {
+    const newId = `${oldId}__${cloneIndex}`;
+    idMap[oldId] = newId;
+    idElements.get(oldId).id = newId;
+  });
+
+  // Step 4: Update references in attributes
+  clone.querySelectorAll(':scope *').forEach(el => {
+    for (const attr of el.getAttributeNames()) {
+      if (attr === 'id') continue;
       const val = el.getAttribute(attr);
       if (!val || !val.includes('#')) continue;
 
       let newVal = val;
-      Object.entries(idMap).forEach(([oldId, newId]) => {
-        newVal = newVal.replace(new RegExp(`#${oldId}\\b`, 'g'), `#${newId}`);
-      });
+      for (const [oldId, newId] of Object.entries(idMap)) {
+        newVal = newVal.replace(new RegExp(`#${oldId}(?![\\w-])`, 'g'), `#${newId}`);
+      }
       if (newVal !== val) el.setAttribute(attr, newVal);
     }
   });
@@ -53,14 +79,16 @@ function handleColsRows(outputs, frame) {
         // specific column hiding inside last visible row
         let cols = outputs[frame.part].querySelectorAll(':scope .columns.writer:first-of-type > div');
         for (let k = 0; k < cols.length; k++) {
+            cols[k].classList.remove('print-invisible'); // reset first
             if (k > frame.col) {
-                cols[k].setAttribute('data-hidden', 'true'); // keep content to avoid reflow
+                cols[k].classList.add('print-invisible');
             } else if (k === frame.col && frame.row !== undefined) {
                 // Handle incremental rows 
                 let rows = cols[k].querySelector(':scope .jp-OutputArea').childNodes; // inside widget
                 for (let r = 0; r < rows.length; r++) {
+                    rows[r].classList.remove('print-invisible'); // reset first
                     if (r > frame.row) {
-                        rows[r].setAttribute('data-hidden', 'true');
+                        rows[r].classList.add('print-invisible');
                     } 
                 }
             }
@@ -92,12 +120,15 @@ function printSlides(box, model) {
         if (slide.classList.contains('HasFrames') && numFrames > 1) {
             let lastInserted = slide; // to keep insertion order
             
-            // we hide original in print to avoid removing stuff, and its too difficult to restore later
+            // we keep first slide with full content to ensure links work
+            let clone = slide; // first is original
             for (let i = 0; i < numFrames; i++) { 
-                let clone = slide.cloneNode(true); // deep clone
-                clone.classList.remove('HasFrames'); // remove base class to let it display
-                clone.style.visibility = 'hidden'; // avoid cluttering screen view but only via visibility hidden, let display to be correct size and alignment, this previously gave me huge headache
-                clone.querySelector(':scope .Slide-UID')?.remove(); // remove section id from clone
+                if (i > 0) {
+                    clone = slide.cloneNode(true); // deep clone
+                    clone.classList.remove('HasFrames'); // remove base class to let it display
+                    clone.classList.add('HideSlide'); // avoid showing in normal view 
+                    clone.querySelector(':scope .Slide-UID')?.remove(); // remove section id from clone
+                }
                 clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
                 clone.style.transform = 'translateZ(0) scale(1)'; // force reset transform for print to but need stuff in place
                 
@@ -112,48 +143,67 @@ function printSlides(box, model) {
                     for (let j = outputs.length - 1; j >= 0; j--) {
                         let inHead = (frame.head !== undefined && frame.head >= 0 && j <= frame.head);
                         let inContent = (j >= frame.start && j <= frame.end); // Use frame.end here
+                        outputs[j].classList.remove('print-collapsed'); // reset first to avoid collapse everywhere
+                        outputs[j].classList.remove('print-invisible'); // reset first to avoid invisible everywhere
 
                         if (!inHead && !inContent) {
-                            if (outputs[j]) {outputs[j].remove();} // Not in visible ranges - remove completely
+                            if (outputs[j]) {
+                                i > 0 ? outputs[j].remove() : outputs[j].classList.add('print-collapsed'); // only first frame keeps all for links to work
+                            } // Not in visible ranges - remove completely except first frame
                         }
                     }
 
                     // Handle partial visibility inside content range
                     if (frame.part !== undefined) {
                         for (let j = frame.part + 1; j <= frame.end; j++) { // hide rest after part
-                            outputs[j].setAttribute('data-hidden', 'true');
+                            outputs[j].classList.add('print-invisible');
                         }
                         // Show/Hide rows and columns if specified
                         handleColsRows(outputs, frame);
                     }  
                 }
-                clone = fixIDsAndRefs(clone, i); // ensure unique IDs and refs in clone
-                window._printOnlyObjs.push(clone);
-                slide.parentNode.insertBefore(clone, lastInserted.nextSibling);
-                lastInserted = clone; // update last inserted
-                clone.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
-                let cloneArea = clone.querySelector(':scope .jp-OutputArea');
-                if (cloneArea) {
-                    cloneArea.offsetHeight; // force reflow CSS, must, otherwise its contents goes up
-                    cloneArea.scrollTop = 0; // scroll OutputArea to top to avoid cutoffs
-                    cloneArea.style.maxHeight = '100%'; // avoid spilling over footer
+                if (i > 0) {
+                    clone = fixIDsAndRefs(clone, i); // ensure unique IDs and refs in clone
+                    window._printOnlyObjs.push(clone);
+                    slide.parentNode.insertBefore(clone, lastInserted.nextSibling);
+                    lastInserted = clone; // update last inserted
+                    
                 }
             }
         }
     }
 
-    // Clean up AFTER print dialog closes
-    window.addEventListener('afterprint', function cleanup() {
-        for (let obj of window._printOnlyObjs) {
-            obj.remove();
+    // Clean up AFTER print dialog closes or user may click if print fails in soome IDEs like vscode
+    function cleanupAfterPrint() {
+        box.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
+        box.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
+        for (let obj of window._printOnlyObjs || []) {
+            obj.remove(); // Remove cloned slides
         }
         delete window._printOnlyObjs;
-        window.removeEventListener('afterprint', cleanup); // cleanup listener
-        model.set("msg_topy", "PrintDone"); // notify print done to restore states
-        model.save_changes();
-    }, { once: true }); // or use { once: true } instead of removeEventListener
+        
+        // Remove cleanup button if exists
+        if (box._printCleanupBtn) {
+            box._printCleanupBtn.remove();
+            delete box._printCleanupBtn;
+        }
+    }
+    // Add a manual cleanup button in case afterprint event does not fire
+    let cleanupBtn = document.createElement('button');
+    cleanupBtn.innerHTML = '<i class="fa fa-trash"></i> Cleanup Print Artifacts';
+    cleanupBtn.style.cssText = `position:absolute;top:4px;right:4px;z-index:10;padding:4px 8px;font-size:12px;`;
+    box._printCleanupBtn = cleanupBtn; // store reference for later removal
     
+    function afterPrintHandler() {
+        cleanupAfterPrint();
+        window.removeEventListener('afterprint', afterPrintHandler);
+    }
+    
+    cleanupBtn.onclick = afterPrintHandler;
+    window.addEventListener('afterprint', afterPrintHandler, { once: true }); 
     setTimeout(() => {   
+        box.querySelectorAll(':scope .SlideArea').forEach(oa => { oa.offsetHeight; }); // ensure reflow for output areas
+        box.appendChild(cleanupBtn); // should not be visible immediately to distract user
         window.print();
     }, 1000); // slight delay to ensure rendering
 }

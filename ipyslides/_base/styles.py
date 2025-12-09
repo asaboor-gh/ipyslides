@@ -315,10 +315,11 @@ def style_css(colors, fonts, layout, _root = False):
                 'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
                 '.jp-OutputArea-child, .jp-OutputArea-output': {"position": "static !important"}, # absolute content should not be stuck here too
-                '@media print': { # For PDF printing of frames, data-hidden set by JS, first sellectors works for rows too beside top level
+                '@media print': { # For PDF printing of frames, invisible, collapsed set by JS, first sellectors works for rows too beside top level
                     'display': 'block !important', # need some fix
                     'overflow': 'hidden !important', # no need to scroll in print
-                    '.jp-OutputArea-child[data-hidden], .columns.writer > div[data-hidden]': hide_node(True),
+                    '.jp-OutputArea-child.print-invisible, .columns.writer > div.print-invisible': hide_node(True),
+                    '.jp-OutputArea-child.print-collapsed': {'^, *': collapse_node(True)},
                 },
             },
             '@media print': { # For PDF printing dynamically set page size

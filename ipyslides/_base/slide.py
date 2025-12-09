@@ -438,8 +438,13 @@ class Slide:
             raise IndexError(f"Frame index {index} out of range for slide {self.number} with {self.nf} frames!")
         
         # Build CSS to show only current frame's content
-        frame = self._fidxs[index]
         css_rules = {}
+        frame = self._fidxs[index]
+        # Use merged frames if printing PDF
+        if hasattr(self._app.settings, '_printingPDF'):
+            if not self._export_fidxs:
+                return ''  # its all parts in single frame, no CSS needed
+            frame = self._export_fidxs[index]  
 
         # head content visible everywhere
         head_end = frame.get("head", -1) + 1 # CSS nth-child is 1-indexed
@@ -508,7 +513,7 @@ class Slide:
     def _reset_indexf(self, new_index, func): 
         old = int(self.indexf) # avoid pointing to property
         self._indexf = new_index
-
+        condition = False
         try:
             condition = func()
         except Exception as e:

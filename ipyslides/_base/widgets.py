@@ -116,16 +116,15 @@ class CtxMenu(ListWidget):
     
     def _update_state(self, key, state): # use this inside functions which are promatically called, like toggle in side panel
         "Update internal state for given key. state can be a value or a callable that accepts old value and returns new value."
-        index = None
         for i, (sk, sv) in enumerate(self._state.items()):
             if key == sk:
-                index = i
                 value = state(sv) if callable(state) else state
                 if isinstance(sv, bool) and value in (True, False):
                     self._state[key] = value
                 
         self._set_opts() # reset options to trigger re-render
-        return index
+        opts_keys = [k for k,v in self.options]
+        return opts_keys.index(key) if key in opts_keys else None
     
     def _on_mode_change(self, msg):
         # make icons consistent, this is special case from js response

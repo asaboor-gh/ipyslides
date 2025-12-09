@@ -210,7 +210,6 @@ def layout_css(accent_color, aspect):
                     "@media print": {
                         "^.HideSlide": {"visibility": "visible !important",},
                         "^.HideSlide *": {"visibility": "inherit !important",},
-                        '^.HasFrames:not(.OneFrame)': {'display': 'none !important'}, # only clones are shown if multiple frames
                     },
                     **_focus_css,
                 },
@@ -421,7 +420,7 @@ def layout_css(accent_color, aspect):
             ".CtxMenu": {
                 "position": "absolute",
                 "z-index": "11",  # above all
-                "backdrop-filter": "blur(20px)",
+                "backdrop-filter": "blur(50px)",
                 "box-shadow": "0 0 5px 0 rgba(255,255,255,0.2), 0 0 10px 0 rgba(0,0,0,0.2)",
                 "border-radius": "4px",
                 "padding-top": "1.2em", # for top description
