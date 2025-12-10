@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'code', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 
+    'details', 'set_dir', 'textbox', 'code', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'warn',
     'focus','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 __all__ = sorted(_attrs)
@@ -23,7 +23,7 @@ from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from dashlab.utils import _build_css # This is very light weight and too important dependency
 
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption
-from .xmd import get_unique_css_class, capture_content, raw, error 
+from .xmd import get_unique_css_class, capture_content, raw, error, warn
 from .source import code
 
 def is_jupyter_session():
