@@ -82,7 +82,7 @@ def error(name, msg):
 
 def warn(msg, name="UserWarning"):
     "Show warning message in slides but not in fullscreen mode."
-    return XTML(f"<pre class='Error Warn'><b style='color:orange;'>{name}</b><span>: {msg}</span></pre>")
+    return XTML(f"<pre class='Error Warn jupyter-only'><b style='color:orange;'>{name}</b><span>: {msg}</span></pre>")
 
 def raw(text, css_class=None): # css_class is required here to make compatible with utils
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
