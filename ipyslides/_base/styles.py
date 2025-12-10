@@ -520,6 +520,7 @@ def style_css(colors, fonts, layout, _root = False):
                 '^.Error': {
                     'background': 'hsl(from var(--bg2-color) 10 50% l) !important','padding': '4px !important',
                     '.Error': {'background': 'none !important', 'padding': '4px 0 !important'}, # nested errors blocks
+                    '^.ips-warning': {'background': 'hsl(from var(--bg2-color) 60 50% l) !important',},
                 },
             },
             'figure': {

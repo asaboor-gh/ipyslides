@@ -1,4 +1,4 @@
-import sys, os, json, re, math, uuid, textwrap, warnings
+import sys, os, json, re, math, uuid, textwrap
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 from collections.abc import Iterable
@@ -31,6 +31,9 @@ except:
     print("Slides only work in IPython Notebook!")
     sys.exit()
 
+def warn(message, name="UserWarning"):
+    "Show warning message in slides but not in fullscreen mode."
+    utils.error(name, message, css_class="ips-warning jupyter-only").display()
 
 class _Citation:
     "Add citation to the slide with a unique key and value."
@@ -779,8 +782,8 @@ class Slides(BaseSlides,metaclass=Singleton):
                         frm = frm.replace('%++','').strip() # remove that empty line too
                         self.this._split_frames = False
                         self.this._fsep_legacy = True # mark legacy usage
-                        warnings.warn("`%++` is deprecated, use `++` explicitly on each part separation!", DeprecationWarning, stacklevel=2)
-                    
+                        warn("`%++` is deprecated, use `++` explicitly on each part separation!")
+                        
                     self.xmd(frm, returns = False) # parse and display content
                     
                     if len(frames) > 1:
@@ -909,7 +912,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 app.this._split_frames = not stack
             elif stack is not None:
                 raise ValueError(f"stack should be set True or False or left as None for default behavior, got {type(stack)}")
-            warnings.warn("Legacy fsep() detected, converted to new delimiter internally. Consider updating your code to use PAGE and PART explicitly!", DeprecationWarning, stacklevel=2)
+            warn("Legacy fsep() detected, converted to new delimiter internally. Consider updating your code to use PAGE and PART explicitly!")
 
         @classmethod
         def iter(cls, iterable, stack=None):

@@ -76,9 +76,10 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "stack": r"text separated by || in inline mode, or use ::: columns block",
 }
 
-def error(name, msg):
+def error(name, msg, css_class=None):
     "Add error without breaking execution."
-    return XTML(f"<pre class='Error'><b style='color:crimson;'>{name}</b><span>: {msg}</span></pre>")
+    klass = f" {css_class}" if css_class else ""
+    return XTML(f"<pre class='Error {klass}'><b style='color:crimson;'>{name}</b><span>: {msg}</span></pre>")
 
 def raw(text, css_class=None): # css_class is required here to make compatible with utils
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "

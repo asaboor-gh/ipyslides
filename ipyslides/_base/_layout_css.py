@@ -79,7 +79,13 @@ def layout_css(accent_color, aspect):
                     "outline" : "none !important",
                 },
                 "^.Voila-Child, ^.mode-fullscreen": {
-                    ".Width-Slider, .Source-Btn": {"display": "none !important"},
+                    ".Width-Slider, .ips-warning": {"display": "none !important"},
+                },
+                ".ips-warning::before": {
+                    "display": "block",
+                    "content": "'⚠️ This warning is not visible in fullscreen mode!'",
+                    "color": "var(--fg2-color)",
+                    "background": "var(--bg2-color)",  
                 },
                 "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
