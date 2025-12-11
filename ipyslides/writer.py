@@ -14,7 +14,11 @@ from .xmd import fmt, xmd, capture_content, get_slides_instance
 
 
 class hold:
-    "Hold the display of a callable (return value is discarded) until the instance is called. Use this to delay display of a function until it is captured in a column of `Slides.write`"
+    """Hold the display of a callable (return value is discarded) until the instance is called. 
+    Use this to delay display of a function until it is captured in a column of `Slides.write`.
+    
+    Alternatively, you can use `capture_content` context manager to capture multiple outputs together and pass that to `Slides.write`.
+    """
     def __init__(self, f, *args, **kwargs):
         if not callable(f):
             raise TypeError(f'Expected first argument a callable, got {type(f)}')
@@ -192,6 +196,7 @@ def write(*objs,widths = None, css_class=None):
         - Any object that has a ` _repr_html_ ` method, you can create one for your own objects/third party objects by:
             - `Slides.serializer` API. IPython's `display` automatically takes care of such objects on export to html.
             - `IPython.core.formatters` API for third party libraries.
+        - A whole column in `write` can be multiple captured outputs from a `capture_content` context manager, which can be used as alternative to `Slides.hold`.
             
     ::: note
         - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.

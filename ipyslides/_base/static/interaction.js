@@ -187,7 +187,7 @@ function printSlides(box, model) {
     let cleanupBtn = document.createElement('button');
     cleanupBtn.innerHTML = '<i class="fa fa-trash"></i> Cleanup Print Artifacts';
     cleanupBtn.className = 'jupyter-button print-cleanup-btn';
-    cleanupBtn.style.cssText = `position:absolute;top:4px;right:4px;z-index:11;padding:4px 8px;font-size:12px;`;
+    cleanupBtn.style.cssText = `position:absolute;top:4px;right:4px;z-index:11;padding:4px 8px;font-size:16px;`;
     
     function afterPrintHandler() {
         cleanupAfterPrint();

@@ -192,7 +192,7 @@ class Layout(ConfigTraits):
     yoffset  = Int(None, allow_none=True, help='globally set yoffset to a value in percent')
     scroll   = Bool(True)
     width    = Int(100)
-    aspect   = Float(16/9)
+    aspect   = Float(16/9.001, help="Aspect ratio of slides, width/height. Add a small value to avoid exact 16/9, 16/10 etc. which causes bottom border gap in some browsers.")
     ncol_refs = Int(2)
 
     _reflow = False # internal use only

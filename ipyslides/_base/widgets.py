@@ -227,7 +227,7 @@ class SidePanel(VBox):
             HTML('<b>Additional Features</b>',layout = _html_layout),
             self.ws.checks.focus, self.ws.checks.rebuild, self.ws.checks.notes,
             self.ws.checks.toast, self.ws.checks.reflow,
-            HTML('<b>PDF Printing (Experimental) / HTML Export</b>',layout = _html_layout),
+            HTML('<b>PDF Printing / HTML Export</b>',layout = _html_layout),
             HTML(html('details',[html('summary','Printing Info'), how_to_print]).value),
             self.ws.checks.inotes,
             self.ws.checks.merge,

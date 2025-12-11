@@ -113,10 +113,10 @@ You can print slides to PDF using `Ctrl + P`. Use options in settings panel to p
 Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Also enable background graphics in print dialog if necessary.
 
 ::: note-warning
-    - PDF printing is experimental and may not work as expected in all browsers and tested only in JupyterLab.
+    - PDF printing may not work as expected in all browsers/IDEs and tested only in JupyterLab.
     - In case of issues with frames not displaying properly using `Ctrl + P`, export to HTML and then print.
-    - Sometimes content may move up or down in print, to fix it, use `yoffset` per slide or globally in `Slides.settings.layout`.
     - Make sure your presentation is clean for print. "Inline Notes" are only meant for personal reference or sharing slides with notes.
+    - `Slides.settings.layout.aspect` may be adjusted for a little different than standard aspect ratios to avoid rounding issues in print, such as 16/9 to 16/9.001, etc.
 
 **Printing from Exported HTML File**<br>
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
