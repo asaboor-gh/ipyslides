@@ -5,6 +5,7 @@ _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html
 __all__ = sorted(_attrs)
 
 import os, re, json, textwrap
+import base64
 import datetime
 import inspect
 import traceback
@@ -402,9 +403,13 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, **kwargs):
 
     _verify_css_props(css_props)
     if re.search(r'\s+width\=[\"\'].*?[\"\']|\s+height\=[\"\'].*?[\"\']', node): # Add height and width to svg tag if none present inline
-        css_props['svg'] = {**css_props.get('svg',{}), 'height':'auto', 'width':w} 
+        css_props['img'] = {**css_props.get('img',{}), 'height':'auto', 'width':w} 
+
+    svg = svg.replace(node, rnode)
     
-    svg = svg.replace(node, rnode) # Replace node with rnode
+    # We encapsulate svg in img tag to avoid issues with rendering and clipping of texts plus ids conflicts
+    svg_b64 = base64.b64encode(svg.encode('utf-8')).decode('ascii')
+    svg = f'<img src="data:image/svg+xml;base64,{svg_b64}"/>'
     fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)}', style=_fig_style_inline).value
     
     if css_props:

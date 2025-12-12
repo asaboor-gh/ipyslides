@@ -53,7 +53,7 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
             "height": "100% !important",
             "box-sizing": "border-box !important",
             "outline": "none !important",
-            "background": "var(--bg2-color) !important",  # Avoids overlapping with other elements
+            "background": "var(--bg1-altcolor) !important",  # Avoids overlapping with other elements
         },
     },  
 }
