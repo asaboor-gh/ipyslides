@@ -599,7 +599,7 @@ class Slide:
     def css(self):
         "Returns CSS for this slide including overall CSS. Used while navigating to this slide."
         back = self._app.html('style',_build_css((f".{self._app.uid}.SlidesWrapper",), self._tcolors), css_class='jupyter-only') # don't mess export here
-        return XTML(f'{back}{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
+        return XTML(f'{back}\n{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
     
     @property
     def index(self): return self._index
@@ -669,8 +669,9 @@ class Slide:
             if not isinstance(value, str):
                 raise TypeError(f"Theme color value for key {key!r} should be str, got {type(value)}")
         
-        self._tcolors = {f'--{k}-color':v for k,v in colors.items()} # reset to new colors each time
-        props = {**self._tcolors, **props} # allow theme colors to be used directly per slide
+        if this_slide: # do not modify while setting overall CSS
+            self._tcolors = {f'--{k}-color':v for k,v in colors.items()} # reset to new colors each time
+            props = {**self._tcolors, **props} # allow theme colors to be used directly per slide
         
         if not props:
             return ''
