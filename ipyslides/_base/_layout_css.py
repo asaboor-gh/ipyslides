@@ -53,7 +53,7 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
             "height": "100% !important",
             "box-sizing": "border-box !important",
             "outline": "none !important",
-            "background": "var(--bg1-color) !important",  # Avoids overlapping with other elements
+            "background": "var(--bg2-color) !important",  # Avoids overlapping with other elements
         },
     },  
 }
@@ -334,7 +334,7 @@ def layout_css(accent_color, aspect):
                     "opacity": "1 !important",
                     "box-shadow": "none !important",
                     "background": "var(--bg3-color)",
-                    "text-shadow": "0 0 1px var(--bg1-color), 0 0 2px var(--accent-color)",
+                    "text-shadow": "0 0 1px var(--bg2-color), 0 0 2px var(--accent-color)",
                 },
                 ".widget-play .jupyter-button": {
                     "background": "var(--bg2-color)",
@@ -344,7 +344,7 @@ def layout_css(accent_color, aspect):
                     "> select, > select > option": {
                         "color": "var(--fg1-color) !important",
                         "font-family": "var(--jp-content-font-family) !important", # why system fonts here?
-                        "background": "var(--bg1-color) !important",
+                        "background": "var(--bg2-color) !important",
                     },
                 },
                 ".jupyter-widgets:not(button)": {
@@ -357,7 +357,7 @@ def layout_css(accent_color, aspect):
                 "left": "0 !important",
                 "bottom": "2px !important", # leave space for progressbar
                 "width": "100% !important",
-                "@media print": {"position": "fixed !important","background":"var(--bg1-color) !important",},
+                "@media print": {"position": "fixed !important",},
                 "^,^ > .Footer": {
                     "padding": "0px",
                     "margin": "0px",

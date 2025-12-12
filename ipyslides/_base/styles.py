@@ -207,7 +207,7 @@ def style_css(colors, fonts, layout, _root = False):
             },
             '::-webkit-scrollbar-corner': {'display':'none',},
             '.widget-text input': {
-                'background':'var(--bg1-color)',
+                'background':'transparent !important',
                 'color':'var(--fg1-color)',
             },
             '.widget-box': {'flex-shrink': 0}, # avoid collapse
@@ -242,11 +242,11 @@ def style_css(colors, fonts, layout, _root = False):
                 'overflow':'auto',
                 'margin': 'auto', # keep in center
                 'color':'var(--fg1-color) !important',
-                'background':'var(--bg1-color) !important',
+                'background':'transparent !important',
                 'border':'1px solid var(--bg3-color) !important', # Makes it pleasant to view
                 'tr': {
                     '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
-                    '^:nth-child(even)': {'background':'var(--bg1-color) !important',},
+                    '^:nth-child(even)': {'background':'transparent !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},
                 },
                 '^.dataframe': {
@@ -262,7 +262,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'display': 'flex !important',
                     'flex-direction': 'row !important',
                     '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
-                    '^:nth-child(even)': {'background':'var(--bg1-color) !important',},
+                    '^:nth-child(even)': {'background':'transparent !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},
                 },
                 '^.header > div': {
@@ -272,7 +272,7 @@ def style_css(colors, fonts, layout, _root = False):
                         'border-bottom':'1px solid #8988 !important',
                         '^:hover': {'background':'var(--bg3-color) !important',},
                     },
-                    '^:nth-child(odd)': {'background':'var(--bg1-color) !important',}, # flip color for header case
+                    '^:nth-child(odd)': {'background':'transparent !important',}, # flip color for header case
                     '^:nth-child(even)': {'background':'var(--bg2-color) !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},
                 }, # For header of grid table
@@ -377,7 +377,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'top': '-0.8em !important',
                     'left': '0.5em !important',
                     'background': 'var(--pointer-color) !important',
-                    'color': 'var(--bg1-color) !important',
+                    'color': 'var(--bg2-color) !important',
                     'padding': '0 0.5em !important',
                     'border-radius': '0.2em !important',
                 }, 
