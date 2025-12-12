@@ -380,7 +380,7 @@ def layout_css(accent_color, aspect):
             ".Controls": {
                 "position": "absolute",
                 "right": "8px !important",
-                "bottom": "1px !important", # bring center at top of Navbox for symmetry
+                "bottom": "0 !important", # bring buttons center at top edge for symmetry
                 "z-index": "4",  # below matplotlib fullsreen
                 "padding": "0 !important",
                 "justify-content": " flex-end !important",
