@@ -409,7 +409,7 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, **kwargs):
     
     # We encapsulate svg in img tag to avoid issues with rendering and clipping of texts plus ids conflicts
     svg_b64 = base64.b64encode(svg.encode('utf-8')).decode('ascii')
-    svg = f'<img src="data:image/svg+xml;base64,{svg_b64}"/>'
+    svg = f'<img src="data:image/svg+xml;base64,{svg_b64}" alt="SVG Image"/>'
     fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)}', style=_fig_style_inline).value
     
     if css_props:
