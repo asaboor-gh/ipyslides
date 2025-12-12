@@ -29,9 +29,9 @@ class Notes:
             colors, _colors = self.main.settings._colors, {}
             if self.widgets.theme.value == 'Jupyter': # Try to match inherit theme
                 _colors = self.widgets.iw._colors
-            bg  = _colors.get('bg1',colors.get('bg1','white'))
             fg  = _colors.get('fg1',colors.get('fg1','black'))
             bg2 = _colors.get('bg2',colors.get('bg2','#181818'))
+            bg = f'hsl(from {bg2} h s calc(l*1.5))' # avoid bg1 if user set slides background as gradient
             font = self.main.settings.fonts.props.get('text', 'Roboto')
             return f"""<style>
         :root {{

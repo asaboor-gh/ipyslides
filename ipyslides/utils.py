@@ -588,7 +588,7 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     ], style = kwargs, css_class=(f'{css_class or ""} {"" if vertical else "columns"}').strip()) 
     
 
-def table(data, headers = None, widths=None):
+def table(data, headers = None, widths=None, css_class=None):
     """Creates a table of given data like DataFrame, but with rich elements. 
     `data` should be a 2D matrix-like. `headers` is a list of column names. `widths` is a list of widths for each column.
     
@@ -602,6 +602,8 @@ def table(data, headers = None, widths=None):
     ```
     """
     klass = 'grid-table' if headers is None else 'grid-table header'
+    if isinstance(css_class, str):
+        klass += f' {css_class}'
 
     try:
         [col for row in data for col in row] # Check if data is iterable and 2D

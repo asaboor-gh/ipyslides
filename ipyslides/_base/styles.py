@@ -181,6 +181,7 @@ def style_css(colors, fonts, layout, _root = False):
                 '--jp-content-font-color2': 'var(--fg3-color)',
                 '--jp-content-font-color3': 'var(--fg2-color)',
                 '--jp-widgets-label-color': 'var(--fg1-color)', # That's also needed
+                '--bg1-altcolor': 'hsl(from var(--bg2-color) h s calc(l*1.5))', # bg1 can be gradient, but we need pure color for text shadows etc.
             }),
             '.raw-text, code > span, .jp-RenderedHTMLCommon :is(pre, code)': {
                 'font-family': 'var(--jp-code-font-family) !important',
@@ -207,7 +208,7 @@ def style_css(colors, fonts, layout, _root = False):
             },
             '::-webkit-scrollbar-corner': {'display':'none',},
             '.widget-text input': {
-                'background':'transparent !important',
+                'background':'var(--bg1-altcolor) !important',
                 'color':'var(--fg1-color)',
             },
             '.widget-box': {'flex-shrink': 0}, # avoid collapse
@@ -242,11 +243,11 @@ def style_css(colors, fonts, layout, _root = False):
                 'overflow':'auto',
                 'margin': 'auto', # keep in center
                 'color':'var(--fg1-color) !important',
-                'background':'transparent !important',
+                'background':'var(--bg1-altcolor) !important',
                 'border':'1px solid var(--bg3-color) !important', # Makes it pleasant to view
                 'tr': {
                     '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
-                    '^:nth-child(even)': {'background':'transparent !important',},
+                    '^:nth-child(even)': {'background':'var(--bg1-altcolor) !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},
                 },
                 '^.dataframe': {
@@ -262,7 +263,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'display': 'flex !important',
                     'flex-direction': 'row !important',
                     '^:nth-child(odd)': {'background':'var(--bg2-color) !important',},
-                    '^:nth-child(even)': {'background':'transparent !important',},
+                    '^:nth-child(even)': {'background':'var(--bg1-altcolor) !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},
                 },
                 '^.header > div': {
@@ -272,7 +273,7 @@ def style_css(colors, fonts, layout, _root = False):
                         'border-bottom':'1px solid #8988 !important',
                         '^:hover': {'background':'var(--bg3-color) !important',},
                     },
-                    '^:nth-child(odd)': {'background':'transparent !important',}, # flip color for header case
+                    '^:nth-child(odd)': {'background':'var(--bg1-altcolor) !important',}, # flip color for header case
                     '^:nth-child(even)': {'background':'var(--bg2-color) !important',},
                     '^:hover': {'background':'var(--bg3-color) !important',},
                 }, # For header of grid table
@@ -385,7 +386,7 @@ def style_css(colors, fonts, layout, _root = False):
             '.slide-link, .link-button': {
                 'color':'var(--accent-color)',
                 'text-decoration':'none !important',
-                'text-shadow': '0 1px var(--bg1-color)',
+                'text-shadow': '0 1px var(--bg1-altcolor)',
             },
             '.slide-link:not(.citelink), .link-button': {
                 'background': 'var(--bg2-color)',
@@ -557,7 +558,7 @@ def style_css(colors, fonts, layout, _root = False):
         'span.sig': {
             'color': 'var(--accent-color) !important',
             'font-family': 'var(--jp-code-font-family) !important',
-            'text-shadow': '0 1px var(--bg1-color)',
+            'text-shadow': '0 1px var(--bg1-altcolor)',
             '> b': {'color': 'var(--fg1-color) !important',},
             '+ code.inline': {'padding': '1px !important',},
         },
@@ -599,7 +600,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'background': 'var(--bg3-color)',
                 },
                 '> span': {
-                    'text-shadow': '0 1px var(--bg1-color)',
+                    'text-shadow': '0 1px var(--bg1-altcolor)',
                     'white-space':'pre', #normal  for breaking words 
                     'word-break':'break-word', # for breaking words 
                     '^.err, ^.nn, ^.nc' : {'background': 'none !important', 'text-decoration': 'none !important',}, 
@@ -619,7 +620,7 @@ def style_css(colors, fonts, layout, _root = False):
                 **{f'{k}user-select':'none !important' for k in ['','-moz-','-ms-','-webkit-']},
                 'margin-right':'8px',
                 'font-size':'80% !important',
-                'text-shadow': '0 1px var(--bg1-color)',
+                'text-shadow': '0 1px var(--bg1-altcolor)',
             },  
         },
         '.highlight, pre, .raw-text': {
@@ -631,7 +632,7 @@ def style_css(colors, fonts, layout, _root = False):
             'color':'var(--accent-color)',
             'font-size':'0.6em',
             'padding':'4px',
-            'text-shadow':'0 1px var(--bg1-color)',
+            'text-shadow':'0 1px var(--bg1-altcolor)',
             '^:empty': {'display':'none !important',},
         },
         '.docs': { # docs have Python code only, so no need to have fancy things there
@@ -699,6 +700,7 @@ def style_css(colors, fonts, layout, _root = False):
         '.block' : {
             '^, ^-red,^-green,^-blue, ^-yellow, ^-magenta, ^-cyan': {
                 '--bg-color': 'var(--bg2-color)',
+                '--bg1-altcolor': r'hsl(from var(--bg-color) h 80% l)', # make table rows, text show etc align with block color
                 'padding': '4px',
                 'border-radius': '8px',
                 'margin': '0.5em 0',

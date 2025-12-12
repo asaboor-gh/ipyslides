@@ -344,7 +344,7 @@ def layout_css(accent_color, aspect):
                     "> select, > select > option": {
                         "color": "var(--fg1-color) !important",
                         "font-family": "var(--jp-content-font-family) !important", # why system fonts here?
-                        "background": "var(--bg2-color) !important",
+                        "background": "var(--bg1-altcolor) !important",
                     },
                 },
                 ".jupyter-widgets:not(button)": {
@@ -521,7 +521,7 @@ def layout_css(accent_color, aspect):
                     "height": "100% !important",
                 },  
                 'rect.tl-frame__body': { # Due to lack of dark mode in widget
-                    'fill':'var(--bg1-color)',
+                    'fill':'var(--bg1-altcolor)',
                     'stroke':'var(--bg2-color)',
                 },
             },

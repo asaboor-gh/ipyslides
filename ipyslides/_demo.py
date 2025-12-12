@@ -251,7 +251,7 @@ def demo_slides(slides):
             [
                 '### Table',
                 '''
-                ::: table 1 2 1 width=100%
+                ::: table 1 2 1 block-green width=100%
                     |h1 |h2 |h3 |
                     |---|---|---|
                     |d1 |d2 |d3 |

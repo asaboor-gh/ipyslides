@@ -696,6 +696,7 @@ class Slide:
             - See code`Slides.css_syntax` for information on how to write CSS dictionary.
             - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`.
               This does not affect overall theme colors, for that use `Slides.settings.theme.colors`.
+            - Avoid gradient colors for other than `bg1`, as it will be ignored in most places and may lead to bad styling.
         """
         if theme_colors or this is not None:
             self._css = self._fix_css(this, theme_colors, this_slide=True) # theme colors for this slide only
