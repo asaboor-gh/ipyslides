@@ -356,6 +356,7 @@ def style_css(colors, fonts, layout, _root = False):
                 "justify-items": "center !important", 
                 "padding": "16px !important", # A little less compact title slide
                 "padding-top": "16px !important", 
+                "padding-bottom": "var(--paddingBottom, 23px) !important", # it get's overridden otherwise
                 ":is(h1, h2, h3, h4, h5, h6)": { # even headings need to be centered on title slide
                     "text-align": "center", # not important to allow user override
                 },
