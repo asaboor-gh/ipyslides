@@ -81,11 +81,6 @@
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0) {
         --bar-bg-color: transparent; /* set with JS */
     }
-    /* Ensure clones also respect overflow */
-    .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea.print-only {
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-    }
     .ipyslides-print-node.SlidesWrapper .SlideBox .SlideArea:not(.n0)::after {
         content: attr(data-snum) !important; /* set with JS */
         display: var(--show-snumber) !important;  

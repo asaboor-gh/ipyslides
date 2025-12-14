@@ -81,7 +81,7 @@ class Slide:
     _animations = {'main':'slide_h','page':'appear'}
     _overall_css = ''
     def __init__(self, app, number):
-        self._widget = _Output(layout = dict(margin='auto',padding='16px', visibility='hidden')).add_class("SlideArea")
+        self._widget = _Output(layout = dict(margin='auto',padding='8px', visibility='hidden')).add_class("SlideArea")
         self._app = app
             
         self._css = ''
@@ -585,7 +585,7 @@ class Slide:
         self._app.html('style', 
             f'''.SlideArea.n{self.number}.n{self.number} {{
                 align-items: start !important;
-                padding-top: calc({value}% + 16px) !important;
+                padding-top: calc({value}% + 8px) !important;
             }}''' # yoffset by padding top, align-content:start is important to take effect
         ).display() 
         

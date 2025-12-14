@@ -196,6 +196,10 @@ def style_css(colors, fonts, layout, _root = False):
             'font-size':'var(--text-size) !important',
             'background':'var(--bg1-color)',
             'max-width':'100vw', # This is very important
+            '^, *, *::before, *::after': { # single reset for all inside slides
+                'box-sizing':'border-box !important',
+            },
+            '> div': {'padding':'0 !important', 'margin':'0 !important'}, # direct children of slides wrappe to avoid extra spaces, but avoid button
             '::-webkit-scrollbar': {
                 'height':'4px',
                 'width':'4px',
@@ -225,7 +229,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'font-weight':'normal',
                 'color':'var(--fg3-color)',
                 'text-align':'center' if layout.centered else 'left',
-                'margin-block': '0.2em 0.3em !important', # Closer to the text of its own scope
+                'margin-block': '0.15em 0.25em !important', # Closer to the text of its own scope
                 'line-height':'1.5 !important',
                 'overflow':'hidden', # Firefox 
                 '.MJX-TEX, .MathJax span': {"color":"var(--fg3-color)",}, # MathJax span is for export
@@ -301,7 +305,6 @@ def style_css(colors, fonts, layout, _root = False):
             'display': 'flex !important',
             "flex-direction": "column !important",
             "overflow":"hidden !important", 
-            "box-sizing": "border-box !important",
             **({
                 "align-items": "center !important",
                 "justify-content": "center !important",
@@ -317,13 +320,12 @@ def style_css(colors, fonts, layout, _root = False):
             'height': f'{_safe_height(layout.aspect)}mm !important',
             'transform-origin': 'center !important' if layout.centered else 'left top !important',
             'transform': 'translateZ(0) scale(var(--contentScale,1)) !important', # Set by Javascript , translateZ is important to avoid blurry text
-            'box-sizing': 'border-box !important',
-            'padding' : '16px !important', # don't make 1em to avoid change size with fonts
+            'padding' : '8px !important', # don't make 1em to avoid change size with fonts
             'padding-bottom': 'var(--paddingBottom, 23px) !important',
             'overflow': 'hidden !important', # important to avoid scroll of slide area, output area will handle it
             'display': 'grid !important', # can use align-content with block, but its came in 2024, so avoid new stuff
             'align-items': 'center !important' if layout.centered and layout.yoffset is None else 'start !important', # yoffset will essentially override centering, align-content clips top, but items don't
-            'padding-top': f'calc({layout.yoffset}% + 16px) !important' if layout.yoffset is not None else '16px !important', 
+            'padding-top': f'calc({layout.yoffset}% + 8px) !important' if layout.yoffset is not None else '8px !important', 
             '> .jp-OutputArea': {
                 'position': 'static !important', # absolute content should be relative to SlideArea
                 'padding': '0 !important',
@@ -333,7 +335,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'margin-left': 'auto !important' if layout.centered else '0 !important', # for horizontal centering
                 'max-width': f'{layout.width}% !important',
                 'max-height': '100% !important', # avoid overflow of output area and let it scroll
-                'box-sizing': 'border-box !important',
                 'overflow': 'auto !important' if layout.scroll else 'hidden !important', # needs here too besides top
                 '.jp-OutputArea-child, .jp-OutputArea-output': {"position": "static !important"}, # absolute content should not be stuck here too
                 '@media print': { # For PDF printing of frames, invisible, collapsed set by JS, first sellectors works for rows too beside top level
@@ -353,6 +354,7 @@ def style_css(colors, fonts, layout, _root = False):
             '^.n0': { 
                 "align-items": "center !important", 
                 "justify-items": "center !important", 
+                "padding": "16px !important", # A little less compact title slide
                 "padding-top": "16px !important", 
                 ":is(h1, h2, h3, h4, h5, h6)": { # even headings need to be centered on title slide
                     "text-align": "center", # not important to allow user override
@@ -545,8 +547,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'flex-direction':'row',
                 'column-gap':'0.2em',
                 'height':'auto',
-                'box-sizing':'border-box !important',
-                '> *': {'box-sizing':'border-box !important','min-width':'0 !important',}, # avoid overflow due to stubborn elements
+                '> *': {'min-width':'0 !important',}, # avoid overflow due to stubborn elements
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },
         },
@@ -572,7 +573,6 @@ def style_css(colors, fonts, layout, _root = False):
             'min-width':'100% !important',
             'width':'100% !important',
             'max-width':'100vw !important',
-            'box-sizing':'border-box !important',
             'overflow':'auto !important',
             'padding':'0 !important',
             'margin':'4px 0px !important', # Opposite to padding to balance it 
@@ -583,7 +583,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'display':'grid !important',
                 'overflow':'auto !important',
                 'width':'auto !important',
-                'box-sizing':'border-box !important',
                 'height':'auto',
                 'margin':'0px !important',
                 'counter-reset':'line', # important to add line numbers 
@@ -595,7 +594,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'background':'transparent !important',
                 'white-space':'pre !important',
                 'overflow-wrap':'normal !important',
-                'box-sizing':'border-box !important',
                 '^:hover, ^:hover::before': {
                     'background': 'var(--bg3-color)',
                 },
@@ -677,7 +675,6 @@ def style_css(colors, fonts, layout, _root = False):
         '.note, .note-info, .note-warning, .note-success, .note-error, .note-tip' : {
             'padding-left': '0.5em',
             'padding-right': '0.5em',
-            'box-sizing': 'border-box',
             'border-radius': '2px',
             'border-left': '2px inset var(--accent-color)',
             'margin-top': '0.5em',
@@ -689,7 +686,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'display':'block',
                 'color': 'var(--accent-color)',
                 'border-bottom': '1px solid #8988',
-                'box-sizing': 'border-box',
             },
             '^-info::before': {'content': '"❇️ Info" !important'},
             '^-warning::before': {'content': '"⚠️ Alert" !important'},

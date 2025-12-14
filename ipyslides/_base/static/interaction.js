@@ -502,8 +502,8 @@ function handlePointerSwipe(box, model) {
     box.addEventListener('pointercancel', (e) => { setState(e, false); });
 }
 
-// Avoid clicks passing through to underlying clickable elements
-const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary, [contenteditable='true'], .widget-slider";  
+// Avoid clicks passing through to underlying clickable elements // include vuetify/ipymaterialui sliders too
+const INTERACTIVE_SEL = "a, button, input, select, textarea, area[href], summary, [contenteditable='true'], .widget-slider .v-slider .MuiSlider-root";  
 
 function handleBoxClicks(box, model) {
     // Handle single clicks for navigation and blocking

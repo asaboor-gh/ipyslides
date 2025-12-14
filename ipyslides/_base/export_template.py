@@ -76,7 +76,6 @@ pre {white-space: break-spaces;} /* General rule unless specified in elements */
     height: 100vh !important;
     width: 100vw !important;
     line-height: 1.5 !important; /* Default line-height for all text to match Jupyter */
-    box-sizing: border-box !important;
 }
 section {
 	scroll-snap-align:start !important;
@@ -85,7 +84,6 @@ section {
 	height: 100vh !important;
 	max-height: 100vh !important;
 	min-width: 100vw !important;
-	box-sizing: border-box !important;
     background: var(--bg1-color) !important; /* need for each slide */
 }
 section .SlideBox {
@@ -93,11 +91,9 @@ section .SlideBox {
     height: 100vh !important; 
     /* Extra CSS will come from export here */
     padding: 0 !important;
-    box-sizing: border-box !important;
 }
 section .SlideBox > .Progress { 
     display: block !important; 
-    box-sizing: border-box !important;
     margin: 0 !important;
     height: 2px !important;
     width: 100% !important;

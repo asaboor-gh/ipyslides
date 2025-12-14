@@ -11,7 +11,6 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
         "^:hover:not(.mode-popup-active)": { # visual cue on hover to click
             "box-shadow": "0px 0px 1px 0.5px #8988 !important",
             "border-radius": "4px !important",
-            "cursor": "zoom-in", # indicate clickable as well as it's useful as visual pointer
         },
         "^.mode-popup-active": {
             "position": "fixed", # This works because SlideArea has transform to contain it as fixed
@@ -21,7 +20,7 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
             "z-index": 9999,  # above all, including fullscreen button of interactive
             "width": "100% !important",
             "height": "100% !important", # leave space for bottom controls
-            "padding": "16px", # same as slide padding 
+            "padding": "8px", # same as slide padding 
             "object-fit": "scale-down !important",
             "outline": "none !important",
             "border-radius": "4px !important",
@@ -32,7 +31,6 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
                 "height": "100% !important",  # Ovverider plotly and altair style
                 "border-radius": "4px !important",
                 "object-fit": "scale-down !important",
-                "box-sizing": "border-box !important",
             },
         },
     },
@@ -51,7 +49,6 @@ _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
             "top": "0px !important",
             "width": "100% !important",
             "height": "100% !important",
-            "box-sizing": "border-box !important",
             "outline": "none !important",
             "background": "var(--bg1-altcolor) !important",  # Avoids overlapping with other elements
         },
@@ -222,7 +219,6 @@ def layout_css(accent_color, aspect):
                 ".jp-OutputArea": {
                     "width": "100% !important",
                     "height": "auto !important", # This is must for layout
-                    "box-sizing": "border-box !important",
                     ".jp-OutputPrompt.jp-OutputArea-prompt": {"display": "none !important",},
                 },  # Otherwise it shrinks small columns
                 "kbd" : {
@@ -294,7 +290,6 @@ def layout_css(accent_color, aspect):
                     "> div:first-child": {"line-height": "1 !important",}, # avoid extra height from default line-height
                     ".widget-html-content": {"font-size": "var(--jp-widgets-font-size) !important",}, 
                     "> *": {"transition": "padding-top 400ms ease-in-out",},
-                    "^, *": {"box-sizing": "border-box !important",},
                     ".list-widget": {"font-size": "16px !important","flex-wrap": "nowrap !important",},
                     ".panel-close-btn": {
                         "width": "28px !important",
@@ -313,9 +308,6 @@ def layout_css(accent_color, aspect):
                     "border-radius": "4px",
                     "min-height": "28px",
                     "min-width": "28px",
-                },
-                "^, *": {
-                    "box-sizing": "border-box",
                 },
                 "button:not(.tlui-button)": {
                     "color": "var(--accent-color) !important",
@@ -514,7 +506,6 @@ def layout_css(accent_color, aspect):
                     "top": "0",
                     "width": "100%",
                     "height": "100%",
-                    "box-sizing": "border-box",
                 },
                 "> div": {
                     "width": "100% !important", # inner div issue, override
@@ -568,7 +559,6 @@ def layout_css(accent_color, aspect):
             },  # @media print
             "<body.Voila-App": {  # Voila
                 "background": "var(--bg3-color)",
-                "box-sizing": "border-box !important",
                 "^, .SlidesWrapper.Voila-Child": {
                     "position": "fixed !important",
                     "top": "0 !important",
@@ -658,7 +648,6 @@ def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, uclass=
         left:0 !important;
         width: 100% !important;
         height: 100% !important;
-        box-sizing:border-box !important;
         overflow:hidden;
         margin:0;
     }}
