@@ -72,7 +72,7 @@ class CtxMenu(ListWidget):
             "ksc": {"text":"Keyboard Shortcuts <kbd>K</kbd>","icon":"keyboard" },
             "info": {"text":"Read Instructions","icon":"info" },
             "source": {"text":"Edit Source Cell <kbd>E</kbd>","icon":"code" },
-            "refresh": {"text":"Refresh Widgets Display","icon":"refresh" },
+            "refresh": {"text":"Re-Render Widgets","icon":"refresh" },
             "toc": {"text":"Table of Contents","icon":"bars" },
         }
         self._state = {

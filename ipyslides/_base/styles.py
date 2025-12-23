@@ -199,7 +199,7 @@ def style_css(colors, fonts, layout, _root = False):
             '^, *, *::before, *::after': { # single reset for all inside slides
                 'box-sizing':'border-box !important',
             },
-            '> div': {'padding':'0 !important', 'margin':'0 !important'}, # direct children of slides wrappe to avoid extra spaces, but avoid button
+            '> .jupyter-widgets:not(button)': {'padding':'0 !important', 'margin':'0 !important'}, # direct children of slides wrappe to avoid extra spaces, but avoid button/ctx menu issues
             '::-webkit-scrollbar': {
                 'height':'4px',
                 'width':'4px',

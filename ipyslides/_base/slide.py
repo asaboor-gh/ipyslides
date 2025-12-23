@@ -651,15 +651,15 @@ class Slide:
             raise TypeError(f"expects dict, got {type(props)}")
         
         for k,v in props.items():
-            if not isinstance(v, dict): # Don't let user modify layout with top level props
+            if k.strip() and not isinstance(v, dict): # Don't let user modify layout with top level props
                 raise TypeError("CSS properties are not allowed at slide level. "
                     f"If {k!r} meant to be a CSS selector, its value must be a dict, got {type(v)}")
             sels = k.split(',') # can be multiple selectors
             for s in sels:
-                if not s.strip():
-                    raise KeyError(f"Empty CSS selector found in {k!r}, perhaps due to extra comma?")
+                if not s.strip() and len(sels) > 1: # single empty selector is allowed to directly inject CSS
+                    raise KeyError(f"Empty CSS selector found in a compound selector {k!r}, perhaps due to extra comma?")
                 if any([c in s for c in ['^', '<']]): # avoid layout modifications by user
-                    raise KeyError(f"Tryign to access silde node with selector {s!r} in {k!r} is restricted!")
+                    raise KeyError(f"Trying to access silde node with selector {s!r} in {k!r} is restricted!")
         
         _allowed = ['fg1', 'fg2', 'fg3', 'bg1', 'bg2', 'bg3', 'accent', 'pointer']
         
@@ -676,10 +676,10 @@ class Slide:
         if not props:
             return ''
         
-        klass = f".{self._app.uid} .SlideArea"
+        klass = f".{self._app.uid}.SlidesWrapper .SlideArea" # strong selector base
         if this_slide:
             klass += f".n{self.number}"
-        return self._app.html('style', _build_css((klass,), props))
+        return self._app.html('style', _build_css((klass,'.jp-OutputArea-output'), props)) # make user CSS high priority, but don't let access area children directly
     
     def _set_alt_print(self):
         self._alt_print.value = '' # reset first to recieve new content
@@ -694,6 +694,7 @@ class Slide:
 
         ::: note-tip
             - See code`Slides.css_syntax` for information on how to write CSS dictionary.
+            - An empty selector `''` is allowed to directly inject CSS string, useful for complex CSS rules and external imports.
             - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`.
               This does not affect overall theme colors, for that use `Slides.settings.theme.colors`.
             - Avoid gradient colors for other than `bg1`, as it will be ignored in most places and may lead to bad styling.

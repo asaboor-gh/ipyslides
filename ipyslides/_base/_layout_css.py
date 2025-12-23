@@ -446,10 +446,10 @@ def layout_css(accent_color, aspect):
                 },
             },
             "<.jp-OutputArea-child": {
-                "^, .jp-OutputArea-output": {  # For some themes
-                    "background": "transparent !important",
-                    "background-color": "transparent !important",
-                    "margin": "0 !important",
+                "^, .jp-OutputArea-output": {  # For some themes, but do not use important here
+                    "background": "transparent",
+                    "background-color": "transparent",
+                    "margin": "0",
                 },
             },
             ".jp-RenderedHTMLCommon": {
