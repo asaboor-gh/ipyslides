@@ -669,6 +669,9 @@ class Slide:
             if not isinstance(value, str):
                 raise TypeError(f"Theme color value for key {key!r} should be str, got {type(value)}")
         
+        if props:
+            props = {'.jp-OutputArea-output': props} # wrap below output area to avoid messing layout, but colors need to be at Slide Level
+            
         if this_slide: # do not modify while setting overall CSS
             self._tcolors = {f'--{k}-color':v for k,v in colors.items()} # reset to new colors each time
             props = {**self._tcolors, **props} # allow theme colors to be used directly per slide
@@ -679,7 +682,7 @@ class Slide:
         klass = f".{self._app.uid}.SlidesWrapper .SlideArea" # strong selector base
         if this_slide:
             klass += f".n{self.number}"
-        return self._app.html('style', _build_css((klass,'.jp-OutputArea-output'), props)) # make user CSS high priority, but don't let access area children directly
+        return self._app.html('style', _build_css((klass,), props))
     
     def _set_alt_print(self):
         self._alt_print.value = '' # reset first to recieve new content
@@ -694,7 +697,8 @@ class Slide:
 
         ::: note-tip
             - See code`Slides.css_syntax` for information on how to write CSS dictionary.
-            - An empty selector `''` is allowed to directly inject CSS string, useful for complex CSS rules and external imports.
+            - An empty selector `''` is allowed to directly inject CSS string, useful to read a local CSS file while files from web must be downloaded first.
+              Advanced CSS concepts like `@import`, `@layer` may not work as expected due to CSS scoping inside slides. Large files should be added to `overall` CSS only for performance reasons.
             - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`.
               This does not affect overall theme colors, for that use `Slides.settings.theme.colors`.
             - Avoid gradient colors for other than `bg1`, as it will be ignored in most places and may lead to bad styling.
