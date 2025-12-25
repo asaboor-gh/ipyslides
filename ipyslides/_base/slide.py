@@ -651,15 +651,12 @@ class Slide:
             raise TypeError(f"expects dict, got {type(props)}")
         
         for k,v in props.items():
-            if k.strip() and not isinstance(v, dict): # Don't let user modify layout with top level props
-                raise TypeError("CSS properties are not allowed at slide level. "
-                    f"If {k!r} meant to be a CSS selector, its value must be a dict, got {type(v)}")
             sels = k.split(',') # can be multiple selectors
             for s in sels:
                 if not s.strip() and len(sels) > 1: # single empty selector is allowed to directly inject CSS
                     raise KeyError(f"Empty CSS selector found in a compound selector {k!r}, perhaps due to extra comma?")
-                if any([c in s for c in ['^', '<']]): # avoid layout modifications by user
-                    raise KeyError(f"Trying to access silde node with selector {s!r} in {k!r} is restricted!")
+                if '<' in s: # avoid extreme selector
+                    raise KeyError(f"Trying to access top level with selector {s!r} in {k!r} is restricted!")
         
         _allowed = ['fg1', 'fg2', 'fg3', 'bg1', 'bg2', 'bg3', 'accent', 'pointer']
         
