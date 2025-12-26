@@ -698,10 +698,11 @@ def style_css(colors, fonts, layout, _root = False):
             '^, ^-red,^-green,^-blue, ^-yellow, ^-magenta, ^-cyan': {
                 '--bg-color': 'var(--bg2-color)',
                 '--bg1-altcolor': r'hsl(from var(--bg-color) h 80% l)', # make table rows, text show etc align with block color
-                'padding': '4px',
                 'border-radius': '8px',
                 'margin': '0.5em 0',
                 'background': 'hsl(from var(--bg-color) h s l / 0.7)', 
+                'padding': '4px',
+                '^:is(ul,ol)': {'padding-inline-start':'40px'} # align list inside block, same as normal lists
             },
             **({
                 '^-red':     {'--bg-color': 'hsl(from var(--bg2-color) 10 100% l)'},

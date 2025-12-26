@@ -700,15 +700,33 @@ def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markd
     "Returns today's date in given format."
     return color(datetime.datetime.now().strftime(fmt),fg=fg, bg = None)
 
-def bullets(iterable, ordered = False,marker = None, css_class = None):
-    """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command.    
-    `marker` could be a unicode charcter or string, only effects unordered list.
+def bullets(iterable, ordered = False, list_style = None, css_class = None, **css_props):
+    """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command. 
+    
+    - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item list-style.   
+    - `ordered`: bool, to create ordered or unordered list.
+    - `list_style`: str, CSS list-style property for overall list, e.g. 'disc', 'circle', 'square', 'decimal' etc. 
+    
+    See [list-style](https://developer.mozilla.org/en-US/docs/Web/CSS/list-style) for marker types details.
+    
+    Markdown Equivalent (note "''" to use custom marker as string with single quotes inside):
+    ```markdown
+    ::: ul list-style="'✅'" 
+        ::: li list-style="'❌'" | First item
+        ::: li list-style="'🔴'" | Second item 
+        ::: li
+            Third item takes default marker and is large, so made block
+    ```
     """
     _bullets = []
     for it in iterable:
-        start = f'<li style="list-style-type:\'{marker} \';">' if (marker and not ordered) else '<li>'
-        _bullets.append(f'{start}{htmlize(it)}</li>')
-    return html('div',children=[html('ol' if ordered else 'ul',_bullets, style='')],css_class = css_class) # Don't use style, it will remove effect of css_class
+        start = '<li'
+        if isinstance(it, (list, tuple)) and len(it) == 2 and isinstance(it[0], str):
+            li_style, it = it # allow per item marker
+            start += (" " + _inline_style({'list-style': li_style}))
+        _bullets.append(f'{start}>{htmlize(it)}</li>')
+    style = {**css_props,'list-style': list_style} if list_style is not None else css_props
+    return html('ol' if ordered else 'ul', children = _bullets, style=style, css_class = css_class) 
 
 def _save_clipboard_image(filename, quality = 95, overwrite = False):
     # quality is for jpeg only, png is lossless

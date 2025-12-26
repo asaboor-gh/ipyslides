@@ -562,7 +562,7 @@ class XMarkdown(Markdown):
         
     def _parse_colon_block(self, header, data):
         STRICT_TAGS = ("pre","raw") # code is handled separately
-        CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol","nav", *STRICT_TAGS) # tags that are captured by this parser
+        CAPTURED_TAGS = ("p","details","summary","center","blockquote","ul","ol", "li", "nav", *STRICT_TAGS) # tags that are captured by this parser
         
         tag, _, widths, _class, css_props, attrs = self._parse_params(header)
         
@@ -574,7 +574,7 @@ class XMarkdown(Markdown):
             out = self._parse_nested(data, returns=True)
             if re.search(r'^<ul|^<ol|^<p|<nav', out): # these tags are difficult ones to style
                 # remove these in case of ul, ol, p in single regex 
-                out = re.sub(r'^<(p|ol|ul|nav)[^>]*>|</(p|ol|ul|nav)>$', '', out, count=1)
+                out = re.sub(r'^<(p|ol|ul|nav)[^>]*>|</(p|ol|ul|nav)>$', '', out)
             return [XTML(f"<{tag} class='{_class}' {_inline_style(css_props)} {attrs}>{out}</{tag}>")]
         
         style = "" # style for columns if widths are given

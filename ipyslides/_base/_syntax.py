@@ -84,6 +84,8 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 - Blocks can be escaped by having a space before `:::` at start of line, such as ` ::: block-red` will not be parsed as block.
 - Some block levels HTML tags are handled specially, such as p, pre, ul, ol, blockquote, details, summary, table.
 - You can use `::: block` nested inside \`\`\` block at same indentation level but otherwise must be correctly indented.
+- Bullet points are hard to stylize, so use `::: ul/ol` blocks to create lists with custom styles and in side have `::: li` blocks for each item.
+  e.g. a per item marker can be added using `::: li list-style="'👉'" | item text` besides all other CSS styles.
 
 ::: table 1 4 caption-side=top bg3=#8988
     This table, itself created with a `::: table` block, lists common block types and their usage.
@@ -128,10 +130,11 @@ Column separator is triple plus `+++` if intended in display mode and should be 
     
     ::: block-blue border="1px solid red" | alert`inline` color`block` text 
     
-    ::: block-yellow border="2px solid orange" padding="10px"
-        - Top level `columns` is necessary to create columns or use simple block with `display=flex`.
-        and frame speactor is used at end of block.
-        - Indentation is important, so use tabs or spaces consistently.
+    ::: ul block-yellow border="2px solid orange"
+        ::: li list-style="'👉'" 
+            Top level `columns` is necessary to create columns or use simple block with `display=flex`.
+            and frame speactor is used at end of block.
+        ::: li list-style="'ℹ️'" | Indentation is important, so use tabs or spaces consistently.
 ```
 
 ---

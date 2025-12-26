@@ -212,7 +212,7 @@ def demo_slides(slides):
         s.get_source().focus([2,3,4]).display()
         slides.PAGE() # want to show source alone first
         for item in slides.PAGE.iter(boxes):
-            slides.bullets([item], marker='💘').display()
+            slides.bullets([item], list_style='💘').display()
 
     with slides.build(-1) as s:
         slides.write('# Frames with \n#### code`PART.iter()` and 2x2 grid of boxes')
