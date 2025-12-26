@@ -25,10 +25,11 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `jupyter-only`     | Hidden on exported slides, but will appear on main slides.
  `block`            | Block of text/objects {: .block}
  `block-[color]`    | Block of text/objects with specific background color from <br> red, green, blue, yellow, cyan, magenta and gray.
+ `[h,v]rules`       | Horizontal and vertical rules between children of a node. Combined with `ul` or `ol` for lists gives nice effect and can be used to create tabular grids.
  `raw-text`         | Text will be shown as printed style. {: .raw-text}
  `focus-self`       | Double-click on element to zoom into popup view. Double-click again or press close button to exit. {: .focus-self}
  `focus-child`      | Focus on child objects of node with this class. Same double-click to zoom in/out behavior.
- `no-focus`         | Disables focus on object when it is a direct child of 'focus-child'.
+ `no-focus `        | Disables focus on object when it is a direct child of 'focus-child'.
 
 Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...)` functions at your disposal.
 '''
@@ -76,7 +77,7 @@ code["markdown"]`
 
 The general block syntax is `::: type-or-classes [args] attributes`.
 
-- You can use `/` to divide css properties from node attributes such as `::: note-info border="1px solid red" / id="mynote" dir="ltr"`. Node attributes come after `/`.
+- You can use `/` to divide css properties from node attributes such as `::: note-info border="1px solid red" / id="mynote" dir="ltr"`. Node attributes come after `/`. 'data-' prefixed attributes can appear anywhere.
 - You can create inline blocks by adding `|` in header (only takes effect if body is empty), such as `::: block-red | text` will create a block with red background and text inside.
 - Both `|` and `/` can be escaped in header by backslah to interpret them as literal characters instead of block body and attributes splitters respectively. 
 - You can optionally continue block header on next multiple adjacent lines with `:` at start of each line. This multiline header is not available in \`\`\` blocks.
@@ -85,7 +86,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 - Some block levels HTML tags are handled specially, such as p, pre, ul, ol, blockquote, details, summary, table.
 - You can use `::: block` nested inside \`\`\` block at same indentation level but otherwise must be correctly indented.
 - Bullet points are hard to stylize, so use `::: ul/ol` blocks to create lists with custom styles and in side have `::: li` blocks for each item.
-  e.g. a per item marker can be added using `::: li list-style="'👉'" | item text` besides all other CSS styles.
+  e.g. a per item marker can be added using `::: li list-style="'👉'" | item text` besides all other CSS styles, or a `data-marker` attribute directly.
 
 ::: table 1 4 caption-side=top bg3=#8988
     This table, itself created with a `::: table` block, lists common block types and their usage.
@@ -130,11 +131,12 @@ Column separator is triple plus `+++` if intended in display mode and should be 
     
     ::: block-blue border="1px solid red" | alert`inline` color`block` text 
     
-    ::: ul block-yellow border="2px solid orange"
+    ::: ul block-yellow border="2px solid orange" list-style=disc
         ::: li list-style="'👉'" 
             Top level `columns` is necessary to create columns or use simple block with `display=flex`.
             and frame speactor is used at end of block.
-        ::: li list-style="'ℹ️'" | Indentation is important, so use tabs or spaces consistently.
+        <li data-marker=ℹ️> Indentation is important, so use tabs or spaces consistently.</li>
+        ::: li | This follows disc marker from parent `ul` block.
 ```
 
 ---

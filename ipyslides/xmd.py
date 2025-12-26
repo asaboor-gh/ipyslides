@@ -442,7 +442,7 @@ class XMarkdown(Markdown):
             if key := match.group(1):
                 if key.startswith(('fg', 'bg')) and key[2:].isdigit():
                     key = f'--{key}-color' # if key in fg1,....3, bg1,....3, then it is a css property
-                if post_slash: # node attributes
+                if post_slash or key.strip().startswith('data-'): # node attributes
                     node_attrs[key] = value
                 else:
                     kwargs[key] = value

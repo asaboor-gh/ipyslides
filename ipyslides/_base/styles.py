@@ -403,7 +403,10 @@ def style_css(colors, fonts, layout, _root = False):
                 'padding':'0 !important', 'margin': '0 !important'
             }, # avoid empty links to show, but still need to work in pdf
             ':is(ul,ol)': {
-                'margin-block': '0.2em !important' # avoid extra space, just add as much as column gap
+                'padding-left': '1.5em', 
+                '^[data-marker]': {'list-style': 'attr(data-marker) !important'}, # custom marker for all list
+                'li' : {'padding-left': '4px', 'padding-top': '0.25em'}, # avoid text touching bullet/number and add spce netween items
+                'li[data-marker]::marker': {'content': 'attr(data-marker) !important'}, # custom marker from data attribute
             },
             'dl': {
                 'display': 'grid',
@@ -702,7 +705,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'margin': '0.5em 0',
                 'background': 'hsl(from var(--bg-color) h s l / 0.7)', 
                 'padding': '4px',
-                '^:is(ul,ol)': {'padding-inline-start':'40px'} # align list inside block, same as normal lists
+                '^:is(ul,ol)': {'padding-left':'1.5em'} # align list inside block, same as normal lists
             },
             **({
                 '^-red':     {'--bg-color': 'hsl(from var(--bg2-color) 10 100% l)'},
@@ -713,6 +716,8 @@ def style_css(colors, fonts, layout, _root = False):
                 '^-magenta': {'--bg-color': 'hsl(from var(--bg2-color) 310 100% l)'},
             }),
         },
+        '.hrules > *:not(:last-child)': {'border-bottom': '1px solid #8988 !important'},
+        '.vrules > *:not(:last-child)': {'border-right': '1px solid #8988 !important'},
         'details': {
             'padding': '0.2em',
             '^, > summary': {'padding': '0.2em'},

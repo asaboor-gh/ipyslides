@@ -700,20 +700,21 @@ def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markd
     "Returns today's date in given format."
     return color(datetime.datetime.now().strftime(fmt),fg=fg, bg = None)
 
-def bullets(iterable, ordered = False, list_style = None, css_class = None, **css_props):
+def bullets(iterable, ordered = False, marker = None, css_class = None, **css_props):
     """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command. 
     
-    - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item list-style.   
+    - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item marker.   
     - `ordered`: bool, to create ordered or unordered list.
-    - `list_style`: str, CSS list-style property for overall list, e.g. 'disc', 'circle', 'square', 'decimal' etc. 
+    - `marker`: str, CSS list-style-marker property for overall list, e.g. '✅' or '🔴' etc.
     
+    You can also use CSS `list-style` property in `css_props` for overall list, e.g. disc, circle, square, upper-roman etc. but it will be overridden by `marker` parameter if given.
     See [list-style](https://developer.mozilla.org/en-US/docs/Web/CSS/list-style) for marker types details.
     
-    Markdown Equivalent (note "''" to use custom marker as string with single quotes inside):
-    ```markdown
-    ::: ul list-style="'✅'" 
+    Markdown Equivalent:
+    ```md-before
+    ::: ul .hrules list-style="'✅'" 
         ::: li list-style="'❌'" | First item
-        ::: li list-style="'🔴'" | Second item 
+        ::: li data-marker=🔴 | Second item 
         ::: li
             Third item takes default marker and is large, so made block
     ```
@@ -722,11 +723,14 @@ def bullets(iterable, ordered = False, list_style = None, css_class = None, **cs
     for it in iterable:
         start = '<li'
         if isinstance(it, (list, tuple)) and len(it) == 2 and isinstance(it[0], str):
-            li_style, it = it # allow per item marker
-            start += (" " + _inline_style({'list-style': li_style}))
+            limkr, it = it # allow per item marker
+            start += f" data-marker={limkr!r}"
         _bullets.append(f'{start}>{htmlize(it)}</li>')
-    style = {**css_props,'list-style': list_style} if list_style is not None else css_props
-    return html('ol' if ordered else 'ul', children = _bullets, style=style, css_class = css_class) 
+    kwargs = dict(style = css_props)
+    if marker is not None:
+        kwargs['data-marker'] = marker
+    
+    return html('ol' if ordered else 'ul', children = _bullets, css_class = css_class, **kwargs) 
 
 def _save_clipboard_image(filename, quality = 95, overwrite = False):
     # quality is for jpeg only, png is lossless

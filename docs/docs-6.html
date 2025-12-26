@@ -468,7 +468,17 @@ code) {
     margin : 0 !important;
 }
 .SlideArea :is(ul,ol) {
-    margin-block : 0.2em !important;
+    padding-left : 1.5em;
+}
+.SlideArea :is(ul,ol)[data-marker] {
+    list-style : attr(data-marker) !important;
+}
+.SlideArea :is(ul,ol) li {
+    padding-left : 4px;
+    padding-top : 0.25em;
+}
+.SlideArea :is(ul,ol) li[data-marker]::marker {
+    content : attr(data-marker) !important;
 }
 .SlideArea dl {
     display : grid;
@@ -939,7 +949,7 @@ pre:hover::-webkit-scrollbar-thumb,
 .block-yellow:is(ul,ol),
 .block-magenta:is(ul,ol),
 .block-cyan:is(ul,ol) {
-    padding-inline-start : 40px;
+    padding-left : 1.5em;
 }
 .block-red {
     --bg-color : hsl(from var(--bg2-color) 10 100% l);
@@ -958,6 +968,12 @@ pre:hover::-webkit-scrollbar-thumb,
 }
 .block-magenta {
     --bg-color : hsl(from var(--bg2-color) 310 100% l);
+}
+.hrules > *:not(:last-child) {
+    border-bottom : 1px solid #8988 !important;
+}
+.vrules > *:not(:last-child) {
+    border-right : 1px solid #8988 !important;
 }
 details {
     padding : 0.2em;
@@ -1307,19 +1323,19 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 </head>
 <body>
 <div>
-    <div class="click-wrapper print-only"> <a href="#s-1784248431472" class="clicker">●</a><a href="#s-1784248512864" class="clicker">●</a><a href="#s-1784248296496" class="clicker">●</a><a href="#s-1784248297600" class="clicker">●</a><a href="#s-1784249408576" class="clicker">●</a> </div>
+    <div class="click-wrapper print-only"> <a href="#s-2922940524864" class="clicker">●</a><a href="#s-2922940312688" class="clicker">●</a><a href="#s-2922940567904" class="clicker">●</a><a href="#s-2922940753184" class="clicker">●</a><a href="#s-2922940323920" class="clicker">●</a> </div>
     <!-- Classes below work for both scenerios -->
-    <div class="SlidesWrapper Slides-1784221939312">
+    <div class="SlidesWrapper Slides-2922930976176">
     
-                    <section id="s-1784248431472">
+                    <section id="s-2922940524864">
                         <style>
 </style>
 
 
                         <div class="SlideBox">
-                            <div class="BackLayer print-only s-1784248431472">
+                            <div class="BackLayer print-only s-2922940524864">
             <style>
-                #s-1784248431472 .BackLayer {
+                #s-2922940524864 .BackLayer {
         position: absolute !important;
         top:0 !important;
         left:0 !important;
@@ -1328,7 +1344,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         overflow:hidden;
         margin:0;
     }
-    #s-1784248431472 .BackLayer :is(img, svg) {
+    #s-2922940524864 .BackLayer :is(img, svg) {
         position: absolute;
         left:50% !important;
         top:50% !important;
@@ -1336,19 +1352,19 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
         width: 100%;
         height: 100%;
     }
-    #s-1784248431472 .s-1784248431472.BackLayer :is(img, svg) {
+    #s-2922940524864 .s-2922940524864.BackLayer :is(img, svg) {
         object-fit:contain !important;
         filter: blur(10px);
         opacity:0.25;
     }  
-    #s-1784248431472 .s-1784248431472.BackLayer svg {
+    #s-2922940524864 .s-2922940524864.BackLayer svg {
         max-width: 100% !important;
         max-height: 100% !important;
         width:  !important;
         min-width:  !important;
         min-height:  !important;
     }
-    #s-1784248431472 .BackLayer.jupyter-widgets-disconnected {
+    #s-2922940524864 .BackLayer.jupyter-widgets-disconnected {
         display:none;
     }
 
@@ -1375,7 +1391,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 0.0%, var(--bg2-color) 0.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248317216">
+                    <section id="s-2922940066736">
                         <style>
 </style>
 
@@ -1386,31 +1402,31 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                                 <div class="jp-OutputArea"><div style="width: 100%;"><div class="columns writer block-green" ><div style="width:50.000%;overflow:auto;height:auto"><div><h2>Table of contents</h2>
 <ol class="toc-list toc-extra" style="">
 <li class="toc-item this">
-    <a href="#s-1784248317216" class="slide-link citelink">Introduction</a>
+    <a href="#s-2922940066736" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784248348336" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2922940325024" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784248298560" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2922940540288" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784248982928" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2922940569728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784249192800" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2922940752032" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784249195584" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2922941343104" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784249408576" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2922940323920" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div><div style="width:50.000%;overflow:auto;height:auto"><h3>This is summary of current section</h3>
 <p>Oh we can use inline columns <div class="columns" style="gap:0.25em;display:flex;flex-direction:row;"><div style="flex:1 1;min-width:0;"><p>Column A</p></div>
 <div style="flex:1 1;min-width:0;"><p>Column B</p></div></div> here and what not!
@@ -1435,7 +1451,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 3.3333%, var(--bg2-color) 3.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248274416">
+                    <section id="s-2922940661616">
                         <style>
 </style>
 
@@ -1483,7 +1499,7 @@ without extra typing, like <code class="highlight inline" style="white-space:pre
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 6.6667%, var(--bg2-color) 6.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248107216">
+                    <section id="s-2922940595408">
                         <style>
 </style>
 
@@ -1500,7 +1516,7 @@ and <code>back_label</code> for the  optional text on the target slide if need t
 <li>Use similar links in markdown as <code>&lt;link:[unique id here]:origin label&gt;</code> and <code>&lt;link:[unique id here same as origin]:target [back_label,optional]&gt;</code>.</li>
 <li>In markdown, icons can be passed in label as <span style='color:#DC143C;'>"fa&#96;arrow&#96; label text"</span>.</li>
 </ul>
-</div></div><div style="width: 100%;"><a class="slide-link" id="origin-42f88642a19e4af6ba89b21102271965" href="#target-42f88642a19e4af6ba89b21102271965"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%;"><div><span class="lang-name">Python</span>
+</div></div><div style="width: 100%;"><a class="slide-link" id="origin-8d7fa82d72474709a2159ecd93f3f832" href="#target-8d7fa82d72474709a2159ecd93f3f832"> <i class="fa fa-arrow"></i>Skip to dynamic content</a></div><div style="width: 100%;"><div><span class="lang-name">Python</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight  numbered">
@@ -1515,7 +1531,7 @@ and <code>back_label</code> for the  optional text on the target slide if need t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 10.0%, var(--bg2-color) 10.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248348336">
+                    <section id="s-2922940325024">
                         <style>
 </style>
 
@@ -1575,7 +1591,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 13.3333%, var(--bg2-color) 13.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248319520">
+                    <section id="s-2922940311968">
                         <style>
 </style>
 
@@ -1728,7 +1744,7 @@ Each call will reset previous call if props given explicitly, otherwise not.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 16.6667%, var(--bg2-color) 16.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248107696">
+                    <section id="s-2922940659888">
                         <style>
 </style>
 
@@ -1771,7 +1787,7 @@ These files are watched for edits if included in synced markdown file via <code>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 20.0%, var(--bg2-color) 20.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248515696">
+                    <section id="s-2922940325408">
                         <style>
 </style>
 
@@ -1783,7 +1799,7 @@ These files are watched for edits if included in synced markdown file via <code>
 <p><strong class="text-big">Content Blocks</strong></p>
 <p>The general block syntax is <code>::: type-or-classes [args] attributes</code>.</p>
 <ul>
-<li>You can use <code>/</code> to divide css properties from node attributes such as <code>::: note-info border="1px solid red" / id="mynote" dir="ltr"</code>. Node attributes come after <code>/</code>.</li>
+<li>You can use <code>/</code> to divide css properties from node attributes such as <code>::: note-info border="1px solid red" / id="mynote" dir="ltr"</code>. Node attributes come after <code>/</code>. 'data-' prefixed attributes can appear anywhere.</li>
 <li>You can create inline blocks by adding <code>|</code> in header (only takes effect if body is empty), such as <code>::: block-red | text</code> will create a block with red background and text inside.</li>
 <li>Both <code>|</code> and <code>/</code> can be escaped in header by backslah to interpret them as literal characters instead of block body and attributes splitters respectively. </li>
 <li>You can optionally continue block header on next multiple adjacent lines with <code>:</code> at start of each line. This multiline header is not available in &#96;&#96;&#96; blocks.</li>
@@ -1792,7 +1808,7 @@ These files are watched for edits if included in synced markdown file via <code>
 <li>Some block levels HTML tags are handled specially, such as p, pre, ul, ol, blockquote, details, summary, table.</li>
 <li>You can use <code>::: block</code> nested inside &#96;&#96;&#96; block at same indentation level but otherwise must be correctly indented.</li>
 <li>Bullet points are hard to stylize, so use <code>::: ul/ol</code> blocks to create lists with custom styles and in side have <code>::: li</code> blocks for each item.
-  e.g. a per item marker can be added using <code>::: li list-style="'👉'" | item text</code> besides all other CSS styles.</li>
+  e.g. a per item marker can be added using <code>::: li list-style="'👉'" | item text</code> besides all other CSS styles, or a <code>data-marker</code> attribute inside <code>li</code> tag directly.</li>
 </ul></div><div style="width: 100%;">
 <table class='' style="caption-side:top;--bg3-color:#8988;" >
 <caption>This table, itself created with a <code>::: table</code> block, lists common block types and their usage.
@@ -1848,14 +1864,14 @@ You can also use <code>::: code 1 3</code> to focus on specific lines based on i
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 23.3333%, var(--bg2-color) 23.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248512864">
+                    <section id="s-2922940312688">
                         <style>
 </style>
 
 
                         <div class="SlideBox">
 
-                            <div class="n8 SlideArea ShowSlide export-only">
+                            <div class="n8 SlideArea HideSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%;"><h2>Extended Markdown</h2>
 <p><strong class="text-big">Layouts</strong></p>
 <dl>
@@ -1879,29 +1895,30 @@ Column separator is triple plus <code>+++</code> if intended in display mode and
 <code></code>
 <code>    ::: block-blue border=&quot;1px solid red&quot; | alert`inline` color`block` text </code>
 <code></code>
-<code>    ::: ul block-yellow border=&quot;2px solid orange&quot;</code>
+<code>    ::: ul block-yellow border=&quot;2px solid orange&quot; list-style=disc</code>
 <code>        ::: li list-style=&quot;&#39;👉&#39;&quot; </code>
 <code>            Top level <span class="sb">`columns`</span> is necessary to create columns or use simple block with <span class="sb">`display=flex`</span>.</code>
 <code>            and frame speactor is used at end of block.</code>
-<code>        ::: li list-style=&quot;&#39;ℹ️&#39;&quot; | Indentation is important, so use tabs or spaces consistently.</code>
+<code>        &lt;li data-marker=ℹ️&gt; Indentation is important, so use tabs or spaces consistently.&lt;/li&gt;</code>
+<code>        ::: li | This follows disc marker from parent <span class="sb">`ul`</span> block.</code>
         </pre>
 </div>
-</div></div></div><div style="width: 100%;"><div class='columns block-blue c-1784245269120 ' style="display:flex;border:1px dashed red;" ><div class='block-red  '  ><ul>
+</div></div></div><div style="width: 100%;"><div class='columns block-blue c-2922937334592 ' style="display:flex;border:1px dashed red;" ><div class='block-red  '  ><ul>
 <li><code>::: columns/muticol</code> with a +++ separator act like <code>write</code> command and reveal content incrementally when <code>++</code> is used before block.</li>
 <li>children inside <code>columns</code> picks relative width from parent's <code>columns</code> block evem if '+++' is not used.
   In thise children should be visually blocks themselves like headings, paragraphs, lists etc or wrapped in <code>::: block</code> to make them obvious blocks like this one.</li>
 <li>CSS classes and attributes can be used to style columns besides relative widths.</li>
-</ul></div><div class='block-blue  ' style="border:1px solid red;" ><p><span style='color:#DC143C;'>inline</span> <span style='background:None;color:var(--accent-color, blue);padding: 0.1em;border-radius:0.1em;'>block</span> text</p></div><ul class='block-yellow' style="border:2px solid orange;" ><li class='' style="list-style:'👉';" >Top level <code>columns</code> is necessary to create columns or use simple block with <code>display=flex</code>.
-and frame speactor is used at end of block.</li><li class='' style="list-style:'ℹ️';" >Indentation is important, so use tabs or spaces consistently.</li></ul></div><style>.c-1784245269120 > p:empty {display:none;}
-.c-1784245269120 > :nth-child(1) {flex: 6 1;}
-.c-1784245269120 > :nth-child(2) {flex: 1 1;}
-.c-1784245269120 > :nth-child(3) {flex: 4 1;}</style></div></div>
+</ul></div><div class='block-blue  ' style="border:1px solid red;" ><p><span style='color:#DC143C;'>inline</span> <span style='background:None;color:var(--accent-color, blue);padding: 0.1em;border-radius:0.1em;'>block</span> text</p></div><ul class='block-yellow' style="border:2px solid orange;list-style:disc;" ><li class='' style="list-style:'👉';" >Top level <code>columns</code> is necessary to create columns or use simple block with <code>display=flex</code>.
+and frame speactor is used at end of block.</li><li data-marker=ℹ️> Indentation is important, so use tabs or spaces consistently.</li><li class=''  >This follows disc marker from parent <code>ul</code> block.</li></ul></div><style>.c-2922937334592 > p:empty {display:none;}
+.c-2922937334592 > :nth-child(1) {flex: 6 1;}
+.c-2922937334592 > :nth-child(2) {flex: 1 1;}
+.c-2922937334592 > :nth-child(3) {flex: 4 1;}</style></div></div>
                             </div>
                             <span class="Number">8</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 26.6667%, var(--bg2-color) 26.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248392336">
+                    <section id="s-2922940457984">
                         <style>
 </style>
 
@@ -1979,7 +1996,7 @@ and frame speactor is used at end of block.</li><li class='' style="list-style:'
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 30.0%, var(--bg2-color) 30.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248273984">
+                    <section id="s-2922940312208">
                         <style>
 </style>
 
@@ -2028,7 +2045,7 @@ and frame speactor is used at end of block.</li><li class='' style="list-style:'
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 33.3333%, var(--bg2-color) 33.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784247866992">
+                    <section id="s-2922940752416">
                         <style>
 </style>
 
@@ -2081,7 +2098,7 @@ This should be rarely used when your markdown contains a lot of $ \LaTeX $ equat
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 36.6667%, var(--bg2-color) 36.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248420864">
+                    <section id="s-2922940657776">
                         <style>
 </style>
 
@@ -2122,7 +2139,7 @@ This should be rarely used when your markdown contains a lot of $ \LaTeX $ equat
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 40.0%, var(--bg2-color) 40.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248823520">
+                    <section id="s-2922940675600">
                         <style>
 </style>
 
@@ -2222,7 +2239,7 @@ See <a href="https://python-markdown.github.io/extensions/">markdown extensions<
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 43.3333%, var(--bg2-color) 43.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248870704">
+                    <section id="s-2922940742768">
                         <style>
 </style>
 
@@ -2245,7 +2262,7 @@ enabling <code>Inline Notes</code> option in settings panel, useful for sharing 
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 46.6667%, var(--bg2-color) 46.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248296496">
+                    <section id="s-2922940567904">
                         <style>
 </style>
 
@@ -2290,7 +2307,7 @@ If <code>returns</code> is False (by default), then source is displayed before t
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 50.0%, var(--bg2-color) 50.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248298560">
+                    <section id="s-2922940540288">
                         <style>
 </style>
 
@@ -2301,49 +2318,49 @@ If <code>returns</code> is False (by default), then source is displayed before t
                                 <div class="jp-OutputArea"><div style="width: 100%;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-1784248317216" class="slide-link citelink">Introduction</a>
+    <a href="#s-2922940066736" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1784248348336" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2922940325024" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-1784248298560" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2922940540288" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784248982928" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2922940569728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784249192800" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2922940752032" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784249195584" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2922941343104" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784249408576" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2922940323920" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">16</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 53.3333%, var(--bg2-color) 53.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248298656">
+                    <section id="s-2922940571024">
                         <style>
-#s-1784248298656 {
+#s-2922940571024 {
     --bg1-color : linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color));
 }
 </style>
 
 <style>
-#s-1784248298656 .SlideArea.n17 {
+#s-2922940571024 .SlideArea.n17 {
     --bg1-color : linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color));
 }
-#s-1784248298656 .SlideArea.n17 .jp-OutputArea-output .highlight {
+#s-2922940571024 .SlideArea.n17 .jp-OutputArea-output .highlight {
     background : #8984;
 }
 </style>
@@ -2378,14 +2395,14 @@ e.g. <code class="highlight inline" style="white-space:pre-wrap;"><span class="n
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 56.6667%, var(--bg2-color) 56.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248982928">
+                    <section id="s-2922940569728">
                         <style>
 </style>
 
 
                         <div class="SlideBox">
 
-                            <div class="n18 SlideArea HideSlide export-only">
+                            <div class="n18 SlideArea ShowSlide export-only">
                                 <div class="jp-OutputArea"><div style="width: 100%;"><h2>Useful Functions for Rich Content</h2></div><div style="width: 100%;"><div class='docs'><span class="sig">Slides.<b>alt</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">exportable_data</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></code><br><p>Display <code>obj</code> for slides and output of <code>exportable_data</code> will be and displayed only in exported formats as HTML.</p>
 <ul>
 <li><code>exportable_data</code> should be an html str or a callable to receive <code>obj</code> as its only argument.<ul>
@@ -2406,7 +2423,7 @@ e.g. <code class="highlight inline" style="white-space:pre-wrap;"><span class="n
 <li>If you happen to be using <code>alt</code> many times for same type, you can use <code>Slides.serializer.register</code> and then pass that type of widget without <code>alt</code>.</li>
 <li><code>ipywidgets</code>'s <code>HTML</code>, <code>Box</code> and <code>Output</code> widgets and their subclasses directly give html representation if used inside <code>write</code> command.</li>
 </ul></div>
-</div></div><div style="width: 100%;"><div class='docs'><span class="sig">Slides.<b>AnimationSlider</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">continuous_update</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D3808B0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">cyclic</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D3808E0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">description</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Unicode</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D3807C0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Float</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D380850</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">loop</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D3807F0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">nframes</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D380820</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">playing</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D380880</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">value</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000019F6D3806A0</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code><br><p>This is a simple slider widget that can be used to control the animation with an observer function.</p>
+</div></div><div style="width: 100%;"><div class='docs'><span class="sig">Slides.<b>AnimationSlider</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">continuous_update</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C912430</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">cyclic</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C912460</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">description</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Unicode</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C912340</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Float</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C9123D0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">loop</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C912370</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">nframes</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C9123A0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">playing</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">Bool</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C912400</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">value</span><span class="o">=&lt;</span><span class="n">traitlets</span><span class="o">.</span><span class="n">traitlets</span><span class="o">.</span><span class="n">CInt</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000002A88C912220</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code><br><p>This is a simple slider widget that can be used to control the animation with an observer function.</p>
 <p>You need to provide parameters like <code>nframes</code> and <code>interval</code> (milliseconds) to control the animation. 
 The <code>value</code> trait can be observed to get the current frame index.
 The <code>cyclic</code> trait can be set to <code>True</code> to make the animation cyclic and only works when loop mode is ON.</p><div><span class="lang-name">Python</span>
@@ -2449,26 +2466,27 @@ The <code>cyclic</code> trait can be set to <code>True</code> to make the animat
 <li>bokeh_fig : Bokeh figure instance.</li>
 <li>title     : Title for figure.</li>
 </ul>
-</div><div class='docs'><span class="sig">Slides.<b>bullets</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">list_style</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">css_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">css_props</span><span class="p">)</span></code><br><p>A powerful bullet list. <code>iterable</code> could be list of anything that you can pass to <code>write</code> command. </p>
+</div><div class='docs'><span class="sig">Slides.<b>bullets</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">css_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">css_props</span><span class="p">)</span></code><br><p>A powerful bullet list. <code>iterable</code> could be list of anything that you can pass to <code>write</code> command. </p>
 <ul>
-<li>If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item list-style.   </li>
+<li>If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item marker.   </li>
 <li><code>ordered</code>: bool, to create ordered or unordered list.</li>
-<li><code>list_style</code>: str, CSS list-style property for overall list, e.g. 'disc', 'circle', 'square', 'decimal' etc. </li>
+<li><code>marker</code>: str, CSS list-style-marker property for overall list, e.g. '✅' or '🔴' etc.</li>
 </ul>
-<p>See <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/list-style">list-style</a> for marker types details.</p>
-<p>Markdown Equivalent (note "''" to use custom marker as string with single quotes inside):</p><div><span class="lang-name">Markdown</span>
+<p>You can also use CSS <code>list-style</code> property in <code>css_props</code> for overall list, e.g. disc, circle, square, upper-roman etc. but it will be overridden by <code>marker</code> parameter if given.
+See <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/list-style">list-style</a> for marker types details.</p>
+<p>Markdown Equivalent:</p><div><span class="lang-name">Markdown</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
 
 <div class="highlight  numbered">
         <pre>
-<code>::: ul list-style=&quot;&#39;✅&#39;&quot; </code>
+<code>::: ul .hrules list-style=&quot;&#39;✅&#39;&quot; </code>
 <code>    ::: li list-style=&quot;&#39;❌&#39;&quot; | First item</code>
-<code>    ::: li list-style=&quot;&#39;🔴&#39;&quot; | Second item </code>
+<code>    ::: li data-marker=🔴 | Second item </code>
 <code>    ::: li</code>
 <code>        Third item takes default marker and is large, so made block</code>
         </pre>
 </div>
-</div></div>
+</div></div><ul class='hrules' style="list-style:'✅';" ><li class='' style="list-style:'❌';" >First item</li><li class=''  data-marker="🔴">Second item</li><li class=''  >Third item takes default marker and is large, so made block</li></ul>
 </div><div class='docs'><span class="sig">Slides.<b>code</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">css_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hover_color</span><span class="o">=</span><span class="s1">&#39;var(--bg3-color)&#39;</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="s1">&#39;400px&#39;</span><span class="p">)</span></code><br><p>Create highlighted source code object from text, file or callable.</p>
 <p>Use code(obj) or code.cast(obj) to get source code from any object that has a source or str of code.</p>
 <p>Explicitly use:</p>
@@ -2592,7 +2610,7 @@ Only a subset of inline properties take effect if obj is a widget.</p><div class
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 60.0%, var(--bg2-color) 60.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248296736">
+                    <section id="s-2922940674736">
                         <style>
 </style>
 
@@ -2640,7 +2658,7 @@ Number of columns in displayed citations are determined by <code class="highligh
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 63.3333%, var(--bg2-color) 63.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249094640">
+                    <section id="s-2922941173376">
                         <style>
 </style>
 
@@ -2648,7 +2666,7 @@ Number of columns in displayed citations are determined by <code class="highligh
                         <div class="SlideBox">
 
                             <div class="n20 SlideArea HideSlide export-only">
-                                <div class="jp-OutputArea"><div style="width: 100%;"><a class="slide-link" id="target-42f88642a19e4af6ba89b21102271965" href="#origin-42f88642a19e4af6ba89b21102271965"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%;"><h2>Dynamic Content</h2></div><div style="width: 100%;"><div class="columns writer" ><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">ipyslides.dashlab.<b>interact</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">callable</span><span class="p">],</span> <span class="n">post_init</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span> <span class="n">function</span> <span class="nb">callable</span><span class="o">&gt;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
+                                <div class="jp-OutputArea"><div style="width: 100%;"><a class="slide-link" id="target-8d7fa82d72474709a2159ecd93f3f832" href="#origin-8d7fa82d72474709a2159ecd93f3f832"> <i class="fa fa-arrowl"></i>Back to link info</a></div><div style="width: 100%;"><h2>Dynamic Content</h2></div><div style="width: 100%;"><div class="columns writer" ><div style="width:50.000%;overflow:auto;height:auto"><div class='docs'><span class="sig">ipyslides.dashlab.<b>interact</b></span><code class="highlight inline" style="white-space:pre-wrap;"><span class="p">(</span><span class="o">*</span><span class="n">funcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">callable</span><span class="p">],</span> <span class="n">post_init</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span> <span class="n">function</span> <span class="nb">callable</span><span class="o">&gt;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code><br><p>Enhanced interactive widget with multiple callbacks, grid layout and fullscreen support.</p>
 <p>This function is used for quick dashboards. Subclass <code>DashboardBase</code> for complex applications.</p>
 <p><strong>Features</strong>:    </p>
 <ul>
@@ -2794,7 +2812,7 @@ Number of columns in displayed citations are determined by <code class="highligh
 </div>
 </div></div>
 
-<div class="widget-interact dl-dashboard i-1784252175456" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;height:max-content;"><div class="dl-DashApp" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
+<div class="widget-interact dl-dashboard i-2922944579568" style="width:100%;gap:0.2em;display:flex;flex-flow:column nowrap;height:max-content;"><div class="dl-DashApp" style="width:100%;gap:0.2em;display:grid;grid-template-areas:"center center center"
 "center center center"
 "center center center";grid-template-columns:1fr 2fr 1fr;grid-template-rows:1fr 3fr 1fr;"><div class="center" style="width:100%;gap:0.2em;grid-area:center;"><div class="date widget-param widget-control" ></div>
 <div class="out-main" ></div>
@@ -2900,10 +2918,10 @@ Number of columns in displayed citations are determined by <code class="highligh
 }
 
 
-.i-1784252175456.widget-interact.dl-dashboard > .dl-DashApp {
+.i-2922944579568.widget-interact.dl-dashboard > .dl-DashApp {
     background : var(--bg2-color);
 }
-.i-1784252175456.widget-interact.dl-dashboard > .dl-DashApp .out-main {
+.i-2922944579568.widget-interact.dl-dashboard > .dl-DashApp .out-main {
     height : 2em;
 }
 </style></div>
@@ -2940,7 +2958,7 @@ Return value could a cleanup function (which also accepts slide as single argume
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 66.6667%, var(--bg2-color) 66.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249097376">
+                    <section id="s-2922941233136">
                         <style>
 </style>
 
@@ -3014,6 +3032,10 @@ See these <strong class="success">styles</strong> with <code>Slides.css_styles</
 <td style="text-align: left;">Block of text/objects with specific background color from <br> red, green, blue, yellow, cyan, magenta and gray.</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>[h,v]rules</code></td>
+<td style="text-align: left;">Horizontal and vertical rules between children of a node. Combined with <code>ul</code> or <code>ol</code> for lists gives nice effect and can be used to create tabular grids.</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>raw-text</code></td>
 <td class="raw-text" style="text-align: left;">Text will be shown as printed style.</td>
 </tr>
@@ -3026,12 +3048,12 @@ See these <strong class="success">styles</strong> with <code>Slides.css_styles</
 <td style="text-align: left;">Focus on child objects of node with this class. Same double-click to zoom in/out behavior.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>no-<div class="focus-child" ><p>| Disables focus on object when it is a direct child of 'focus-child'.</p>
-<p>Besides these CSS classes, you always have</p></div>Slide.set_css</code>, <code>Slides.html('style',...)</code> functions at your disposal.</td>
-<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>no-focus</code></td>
+<td style="text-align: left;">Disables focus on object when it is a direct child of 'focus-child'.</td>
 </tr>
 </tbody>
-</table></div></div></p></div><div style="width: 100%;"><p><details style='max-height:400px;overflow:auto;'>
+</table>
+<p>Besides these CSS classes, you always have <code>Slide.set_css</code>, <code>Slides.html('style',...)</code> functions at your disposal.</p></div></div></p></div><div style="width: 100%;"><p><details style='max-height:400px;overflow:auto;'>
             <summary>Show Code</summary>
             <div><span class="lang-name">Markdown</span>
         <div class="highlight-wrapper" style="height:auto;max-height:400px;overflow:auto;position:relative;">
@@ -3054,7 +3076,7 @@ See these <strong class="success">styles</strong> with <code>Slides.css_styles</
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 70.0%, var(--bg2-color) 70.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784248297600">
+                    <section id="s-2922940753184">
                         <style>
 </style>
 
@@ -3110,7 +3132,7 @@ You can <strong class="error">highlight</strong> code using <code>Slides.code</c
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 73.3333%, var(--bg2-color) 73.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249192800">
+                    <section id="s-2922940752032">
                         <style>
 </style>
 
@@ -3152,7 +3174,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 76.6667%, var(--bg2-color) 76.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249195584">
+                    <section id="s-2922941343104">
                         <style>
 </style>
 
@@ -3163,38 +3185,38 @@ This helps modularity of content, and even you can link a citation file in markd
                                 <div class="jp-OutputArea"><div style="width: 100%;"><div><h3>Contents</h3>
 <ol class="toc-list" style="">
 <li class="toc-item prev">
-    <a href="#s-1784248317216" class="slide-link citelink">Introduction</a>
+    <a href="#s-2922940066736" class="slide-link citelink">Introduction</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1784248348336" class="slide-link citelink">Adding Slides and Content</a>
+    <a href="#s-2922940325024" class="slide-link citelink">Adding Slides and Content</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1784248298560" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
+    <a href="#s-2922940540288" class="slide-link citelink">Layout and <span style='background:black;color:yellow;padding: 0.1em;border-radius:0.1em;'>Theme</span> Settings</a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1784248982928" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
+    <a href="#s-2922940569728" class="slide-link citelink">Useful Functions for <span style='color:#DC143C;'>Rich Content</span></a>
 </li>
 
 <li class="toc-item prev">
-    <a href="#s-1784249192800" class="slide-link citelink">Loading from File/Exporting to HTML</a>
+    <a href="#s-2922940752032" class="slide-link citelink">Loading from File/Exporting to HTML</a>
 </li>
 
 <li class="toc-item this">
-    <a href="#s-1784249195584" class="slide-link citelink">Advanced Functionality</a>
+    <a href="#s-2922941343104" class="slide-link citelink">Advanced Functionality</a>
 </li>
 
 <li class="toc-item next">
-    <a href="#s-1784249408576" class="slide-link citelink">Presentation Code</a>
+    <a href="#s-2922940323920" class="slide-link citelink">Presentation Code</a>
 </li></ol></div></div></div>
                             </div>
                             <span class="Number">24</span>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 80.0%, var(--bg2-color) 80.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3224,7 +3246,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 80.3704%, var(--bg2-color) 80.3704%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3254,7 +3276,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 80.7407%, var(--bg2-color) 80.7407%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3284,7 +3306,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 81.1111%, var(--bg2-color) 81.1111%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3314,7 +3336,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 81.4815%, var(--bg2-color) 81.4815%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3344,7 +3366,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 81.8519%, var(--bg2-color) 81.8519%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3374,7 +3396,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 82.2222%, var(--bg2-color) 82.2222%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3404,7 +3426,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 82.5926%, var(--bg2-color) 82.5926%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3434,7 +3456,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 82.963%, var(--bg2-color) 82.963%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249239344">
+                    <section id="s-2922941379056">
                         <style>
 </style>
 
@@ -3464,7 +3486,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 83.3333%, var(--bg2-color) 83.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249303488">
+                    <section id="s-2922941381552">
                         <style>
 </style>
 
@@ -3544,7 +3566,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 86.6667%, var(--bg2-color) 86.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249306176">
+                    <section id="s-2922940494320">
                         <style>
 </style>
 
@@ -3564,7 +3586,7 @@ This helps modularity of content, and even you can link a citation file in markd
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 90.0%, var(--bg2-color) 90.0%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249354032">
+                    <section id="s-2922940752704">
                         <style>
 </style>
 
@@ -3870,7 +3892,7 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 93.3333%, var(--bg2-color) 93.3333%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249405840">
+                    <section id="s-2922941438368">
                         <style>
 </style>
 
@@ -3891,7 +3913,7 @@ besides standard ipywidgets icons.</p>
                             <div class="Progress" style="background: linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) 96.6667%, var(--bg2-color) 96.6667%, var(--bg2-color) 100%);"></div>
                         </div>
                     </section>
-                    <section id="s-1784249408576">
+                    <section id="s-2922940323920">
                         <style>
 </style>
 
