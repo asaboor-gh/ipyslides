@@ -5,16 +5,22 @@ from ..xmd import get_unique_css_class
 from .icons import Icon
 from ._widgets import jupyter_colors
 
-_flow_sels = (".jp-OutputArea-child", ".columns > div", "li") #":is(.highlight code, li, tr)"
+_flow_sels = (".jp-OutputArea-child", ".columns > div", "li", "tr")
+_exclude = ":not([class*='anim-']):not(.anim-group *)" # exclude user defined animations on content
 _is_flowsel = ':is(' + ','.join(_flow_sels) + ')'
-_nth_flowsel = ','.join(f".SlideBox > .SlideArea {sel}" for sel in _flow_sels)
+_nth_flowsel = ','.join(f".SlideBox > .SlideArea {sel}{_exclude}" for sel in _flow_sels)
 
+def anim_dur(n):
+    """Return animation duration CSS dictionary based on exponential approach to 1500ms."""
+    if n < 1: raise ValueError("n must be at least 1")
+    dur = 500 + 900*(1 - 2.71828**(-0.22*n)) # exponential approach to 1500ms at n = 20
+    return {"animation-duration": f"{int(dur)}ms"}
 
 # Animations are fixed for instnace on the fly, no need uclass thing here
 animations = {'zoom':'''
 .SlideBox {
-    animation-name: zoom; animation-duration: 400ms;
-    animation-timing-function: ease-in-out;
+    animation-name: zoom; animation-duration: 500ms;
+    animation-timing-function: ease-out;
 }
 @keyframes zoom {
      0% { transform: scale(0.05); }
@@ -34,15 +40,16 @@ animations = {'zoom':'''
     100% {{ opacity: 1; }}
 }}
 ''' + _build_css((_nth_flowsel,), {
-    f"^:nth-child({i + 1})":{"animation-duration": f"{int(200 + i*150)}ms"} for i in range(21)
+    **{f"^:nth-child({i})":anim_dur(i) for i in range(1, 21)},
+    "^:nth-child(20) ~ *": anim_dur(20), # cap at 20 to show rest with same duration
 }),
 'slide_h': '''
 .SlideBox {
-    animation-name: slideH; animation-duration: 400ms;
+    animation-name: slideH; animation-duration: 600ms;
     animation-timing-function: ease-in-out;
 }
 .SlideBox.Prev { /* .Prev acts when moving slides backward */
-    animation-name: slideHPrev; animation-duration: 400ms;
+    animation-name: slideHPrev; animation-duration: 600ms;
     animation-timing-function: ease-in-out;
 }
 @keyframes slideH {
@@ -56,11 +63,11 @@ animations = {'zoom':'''
 ''',
 'slide_v': '''
 .SlideBox {
-    animation-name: slideV; animation-duration: 400ms;
+    animation-name: slideV; animation-duration: 600ms;
     animation-timing-function: ease-in-out;
 }
 .SlideBox.Prev { /* .Prev acts when moving slides backward */
-    animation-name: slideVPrev; animation-duration: 400ms;
+    animation-name: slideVPrev; animation-duration: 600ms;
     animation-timing-function: ease-in-out;
 }
 @keyframes slideV {
@@ -90,8 +97,183 @@ animations = {'zoom':'''
     to {{ transform: translateX(0); opacity: 1; }}
 }}
 ''' + _build_css((_nth_flowsel,), {
-    f"^:nth-child({i + 1})":{"animation-duration": f"{int(200 + i*150)}ms"} for i in range(21)
-}) 
+    **{f"^:nth-child({i})":anim_dur(i) for i in range(1,21)},
+    "^:nth-child(20) ~ *": anim_dur(20), # cap at 20 to show rest with same duration
+}),
+'wipe': '''
+.SlideBox {
+    animation-name: wipe; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+.SlideBox.Prev { /* .Prev acts when moving slides backward */
+    animation-name: wipePrev; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+@keyframes wipe {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0);}
+}
+@keyframes wipePrev {
+    from { clip-path: inset(0 0 0 100%);}
+    to { clip-path: inset(0 0 0 0);}
+}
+''',
+'flip': '''
+.SlideBox {
+    animation-name: flip; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+.SlideBox.Prev { /* .Prev acts when moving slides backward */
+    animation-name: flipPrev; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+@keyframes flip {
+    from { 
+        transform: perspective(800px) rotateY(-90deg);
+        opacity: 0.5;
+    }
+    to { 
+        transform: perspective(800px) rotateY(0deg);
+        opacity: 1;
+    }
+}
+@keyframes flipPrev {
+    from { 
+        transform: perspective(800px) rotateY(90deg);
+        opacity: 0.5;
+    }
+    to { 
+        transform: perspective(800px) rotateY(0deg);
+        opacity: 1;
+    }
+}
+''',
+'fade': '''
+.SlideBox {
+    animation-name: fade; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+.SlideBox.Prev {
+    animation-name: fade; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+@keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+''',
+'dissolve': '''
+.SlideBox {
+    animation-name: dissolve; animation-duration: 700ms;
+    animation-timing-function: ease-in-out;
+}
+.SlideBox.Prev {
+    animation-name: dissolve; animation-duration: 700ms;
+    animation-timing-function: ease-in-out;
+}
+@keyframes dissolve {
+    from { 
+        opacity: 0;
+        transform: scale(1.05);
+        filter: blur(2px);
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+}
+''',
+'push': '''
+.SlideBox {
+    animation-name: push; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+.SlideBox.Prev {
+    animation-name: pushPrev; animation-duration: 600ms;
+    animation-timing-function: ease-in-out;
+}
+@keyframes push {
+    from { 
+        clip-path: inset(0 0 0 100%);
+        transform: translateX(100%);
+    }
+    to { 
+        clip-path: inset(0 0 0 0);
+        transform: translateX(0);
+    }
+}
+@keyframes pushPrev {
+    from { 
+        clip-path: inset(0 100% 0 0);
+        transform: translateX(-100%);
+    }
+    to { 
+        clip-path: inset(0 0 0 0);
+        transform: translateX(0);
+    }
+}
+''',
+'iris': '''
+.SlideBox {
+    animation-name: iris; animation-duration: 700ms;
+    animation-timing-function: ease-in-out;
+}
+.SlideBox.Prev {
+    animation-name: iris; animation-duration: 700ms;
+    animation-timing-function: ease-in-out;
+}
+@keyframes iris {
+    from { 
+        clip-path: circle(0% at 50% 50%);
+        opacity: 0.7;
+    }
+    to { 
+        clip-path: circle(100% at 50% 50%);
+        opacity: 1;
+    }
+}
+''',
+'book': '''
+.SlideBox {
+    animation-name: book; animation-duration: 800ms;
+    animation-timing-function: ease-in-out;
+    transform-style: preserve-3d;
+}
+.SlideBox.Prev {
+    animation-name: bookPrev; animation-duration: 800ms;
+    animation-timing-function: ease-in-out;
+    transform-style: preserve-3d;
+}
+@keyframes book {
+    from {
+        clip-path: inset(0 50% 0 0);
+        transform: perspective(1200px) rotateY(-90deg);
+        transform-origin: right center;
+        opacity: 0.7;
+    }
+    to {
+        clip-path: inset(0 0 0 0);
+        transform: perspective(1200px) rotateY(0deg);
+        transform-origin: right center;
+        opacity: 1;
+    }
+}
+@keyframes bookPrev {
+    from {
+        clip-path: inset(0 0 0 50%);
+        transform: perspective(1200px) rotateY(90deg);
+        transform-origin: left center;
+        opacity: 0.7;
+    }
+    to {
+        clip-path: inset(0 0 0 0);
+        transform: perspective(1200px) rotateY(0deg);
+        transform-origin: left center;
+        opacity: 1;
+    }
+}
+''',
 }
 
 theme_colors = {
