@@ -320,7 +320,7 @@ def collapse_node(b):
     out = {k: f'{v} !important' for k, v in css.items()}
     if b: # to avoid taking space and effect layout, this solved months long issue why output was moving upwards! Thanks to Claude Opus for correcting this!
         out['position'] = 'absolute !important' 
-    return out
+    return {**out, **hide_node(b)} # hide is required for animations to take effect on parts on reveal
 
 def hide_node(b): 
     "Used to hide div in frames navigation and print mode, but keep space."

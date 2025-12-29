@@ -59,6 +59,11 @@ class BaseSlides:
     def css_syntax(self):
         "CSS syntax for use in Slide.set_css, Slides.html('style', ...) etc."
         return XTML(_css_docstring)
+    
+    @property
+    def css_animations(self):
+        "CSS animations for use in content blocks."
+        return XTML(htmlize(_syntax.css_animations))
    
     def get_source(self, title = 'Source Code', **kwargs):
         "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.code`."
@@ -316,7 +321,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up building (minor effect but visually better)
         self.clear() # Clear previous content
-        self.create(range(31)) # Create slides faster
+        self.create(range(32)) # Create slides faster
         
         from ..core import Slides
 
@@ -472,6 +477,9 @@ class BaseSlides:
         ```
         <md-src/>
         """, self=self)
+        
+        with self.build(-1):
+            self.css_animations.display()
         
         self.build(-1, '''
         ## Highlighting Code

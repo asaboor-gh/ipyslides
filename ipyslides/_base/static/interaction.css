@@ -103,3 +103,306 @@
         z-index: 9 !important;
     }
 }
+
+
+/* ==========================================================================
+   CONTENT ANIMATIONS - Composable & Modern
+   ========================================================================== */
+
+/* --- CSS VARIABLES (on top container) --- */
+.SlideArea .anim-group,
+.SlideArea [class*="anim-"] {
+    --time: 0.6s;
+    --distance: 120px;
+    --angle: 180deg;
+    --scale: 0.5;
+    --blur: 10px;
+    --perspective: 800px;
+    --skew: 20deg;
+}
+
+/* --- BASE STATE --- */
+.SlideArea [class*="anim-"]:not(.anim-group) {
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+    
+    /* Composed transform - all components combine automatically */
+    transform: 
+        translateX(var(--translate-x, 0)) 
+        translateY(var(--translate-y, 0))
+        translateZ(var(--translate-z, 0))
+        scale(var(--scale-uniform, 1))
+        scaleX(var(--scale-x, 1))
+        scaleY(var(--scale-y, 1))
+        rotate(var(--rotate, 0deg))
+        rotateX(var(--rotate-x, 0deg))
+        rotateY(var(--rotate-y, 0deg))
+        skewX(var(--skew-x, 0deg))
+        perspective(var(--persp, none));
+    
+    /* Composed filters */
+    filter: 
+        blur(var(--blur-val, 0px)) 
+        brightness(var(--brightness, 1));
+    
+    transition: 
+        opacity var(--time) ease, 
+        transform var(--time) cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter var(--time) ease;
+}
+
+.SlideArea .anim-group > * {
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+    
+    /* Same composed transform */
+    transform: 
+        translateX(var(--translate-x, 0)) 
+        translateY(var(--translate-y, 0))
+        translateZ(var(--translate-z, 0))
+        scale(var(--scale-uniform, 1))
+        scaleX(var(--scale-x, 1))
+        scaleY(var(--scale-y, 1))
+        rotate(var(--rotate, 0deg))
+        rotateX(var(--rotate-x, 0deg))
+        rotateY(var(--rotate-y, 0deg))
+        skewX(var(--skew-x, 0deg))
+        perspective(var(--persp, none));
+    
+    filter: 
+        blur(var(--blur-val, 0px)) 
+        brightness(var(--brightness, 1));
+    
+    transition: 
+        opacity var(--time) ease, 
+        transform var(--time) cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter var(--time) ease;
+}
+
+/* --- ANIMATED STATE --- */
+.SlideBox:not(.Prev) [class*="anim-"]:not(.anim-group)._ips-content-animated {
+    opacity: 1 !important;
+    transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
+    filter: blur(0px) brightness(1) !important;
+    pointer-events: auto !important;
+    transition-delay: var(--delay, 0s) !important;
+}
+
+.SlideBox:not(.Prev) .anim-group._ips-content-animated > * {
+    opacity: 1 !important;
+    transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
+    filter: blur(0px) brightness(1) !important;
+    pointer-events: auto !important;
+    transition-delay: calc(var(--delay, 0s) + var(--stagger, 0s)) !important;
+}
+
+/* --- RESET FOR BACKWARD NAV & PRINT --- */
+.SlideBox.Prev [class*="anim-"]:not(.anim-group),
+.SlideBox.Prev .anim-group > * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    transition: none !important;
+    filter: none !important;
+    pointer-events: auto !important;
+}
+
+@media print {
+    [class*="anim-"]:not(.anim-group),
+    .anim-group > * {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        transition: none !important;
+        filter: none !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* ==========================================================================
+   ANIMATION COMPONENTS - Set CSS variables (composable!)
+   ========================================================================== */
+
+/* --- SLIDE ANIMATIONS --- */
+.anim-slide-up:not(.anim-group),
+.anim-group.anim-slide-up > * { 
+    --translate-y: var(--distance);
+}
+
+.anim-slide-down:not(.anim-group),
+.anim-group.anim-slide-down > * { 
+    --translate-y: calc(var(--distance) * -1);
+}
+
+.anim-slide-left:not(.anim-group),
+.anim-group.anim-slide-left > * { 
+    --translate-x: var(--distance);
+}
+
+.anim-slide-right:not(.anim-group),
+.anim-group.anim-slide-right > * { 
+    --translate-x: calc(var(--distance) * -1);
+}
+
+/* Diagonal slides - set both X and Y */
+.anim-slide-tl:not(.anim-group),
+.anim-group.anim-slide-tl > * { 
+    --translate-x: calc(var(--distance) * -0.7);
+    --translate-y: calc(var(--distance) * -0.7);
+}
+
+.anim-slide-tr:not(.anim-group),
+.anim-group.anim-slide-tr > * { 
+    --translate-x: calc(var(--distance) * 0.7);
+    --translate-y: calc(var(--distance) * -0.7);
+}
+
+.anim-slide-bl:not(.anim-group),
+.anim-group.anim-slide-bl > * { 
+    --translate-x: calc(var(--distance) * -0.7);
+    --translate-y: calc(var(--distance) * 0.7);
+}
+
+.anim-slide-br:not(.anim-group),
+.anim-group.anim-slide-br > * { 
+    --translate-x: calc(var(--distance) * 0.7);
+    --translate-y: calc(var(--distance) * 0.7);
+}
+
+/* --- ZOOM ANIMATIONS --- */
+.anim-zoom:not(.anim-group),
+.anim-group.anim-zoom > * { 
+    --scale-uniform: var(--scale);
+}
+
+.anim-zoom-x:not(.anim-group),
+.anim-group.anim-zoom-x > * { 
+    --scale-x: var(--scale);
+}
+
+.anim-zoom-y:not(.anim-group),
+.anim-group.anim-zoom-y > * { 
+    --scale-y: var(--scale);
+}
+
+/* --- ROTATION ANIMATIONS --- */
+.anim-rotate:not(.anim-group),
+.anim-group.anim-rotate > * { 
+    --rotate: var(--angle);
+}
+
+.anim-spin:not(.anim-group),
+.anim-group.anim-spin > * { 
+    --rotate: calc(var(--angle) * 2);
+    --scale-uniform: calc(var(--scale) - 0.2);
+}
+
+/* --- SKEW ANIMATIONS --- */
+.anim-skew-left:not(.anim-group),
+.anim-group.anim-skew-left > * { 
+    --skew-x: var(--skew, 20deg);
+    --translate-x: calc(var(--distance) * -1);
+}
+
+.anim-skew-right:not(.anim-group),
+.anim-group.anim-skew-right > * { 
+    --skew-x: calc(var(--skew, 20deg) * -1);
+    --translate-x: var(--distance);
+}
+
+/* --- FILTER ANIMATIONS --- */
+.anim-blur:not(.anim-group),
+.anim-group.anim-blur > * { 
+    --blur-val: var(--blur);
+}
+
+.anim-brighten:not(.anim-group),
+.anim-group.anim-brighten > * { 
+    --brightness: 0;
+    --blur-val: calc(var(--blur) * 2);
+}
+
+/* --- 3D FLIP ANIMATIONS --- */
+.anim-flip-x:not(.anim-group),
+.anim-group.anim-flip-x > * { 
+    --persp: var(--perspective);
+    --rotate-x: 90deg;
+    transform-origin: center bottom;
+}
+
+.anim-flip-x-reverse:not(.anim-group),
+.anim-group.anim-flip-x-reverse > * { 
+    --persp: var(--perspective);
+    --rotate-x: -90deg;
+    transform-origin: center top;
+}
+
+.anim-flip-y:not(.anim-group),
+.anim-group.anim-flip-y > * { 
+    --persp: var(--perspective);
+    --rotate-y: 90deg;
+    transform-origin: left center;
+}
+
+.anim-flip-y-reverse:not(.anim-group),
+.anim-group.anim-flip-y-reverse > * { 
+    --persp: var(--perspective);
+    --rotate-y: -90deg;
+    transform-origin: right center;
+}
+
+/* --- 3D PERSPECTIVE ANIMATIONS --- */
+.anim-perspective-up:not(.anim-group),
+.anim-group.anim-perspective-up > * { 
+    --persp: calc(var(--perspective) * 1.5);
+    --translate-z: calc(var(--distance) * -4);
+    --rotate-x: 15deg;
+}
+
+.anim-perspective-down:not(.anim-group),
+.anim-group.anim-perspective-down > * { 
+    --persp: calc(var(--perspective) * 1.5);
+    --translate-z: calc(var(--distance) * -4);
+    --rotate-x: -15deg;
+}
+
+.anim-perspective-left:not(.anim-group),
+.anim-group.anim-perspective-left > * { 
+    --persp: calc(var(--perspective) * 1.5);
+    --translate-z: calc(var(--distance) * -4);
+    --rotate-y: -15deg;
+}
+
+.anim-perspective-right:not(.anim-group),
+.anim-group.anim-perspective-right > * { 
+    --persp: calc(var(--perspective) * 1.5);
+    --translate-z: calc(var(--distance) * -4);
+    --rotate-y: 15deg;
+}
+
+/* --- COMBINED/SPECIAL ANIMATIONS --- */
+.anim-bounce:not(.anim-group),
+.anim-group.anim-bounce > * { 
+    --translate-y: var(--distance);
+    --scale-uniform: calc(var(--scale) + 0.3);
+}
+
+.anim-swing:not(.anim-group),
+.anim-group.anim-swing > * { 
+    --rotate: 30deg;
+    --scale-uniform: var(--scale);
+    transform-origin: top center;
+}
+
+.anim-elastic:not(.anim-group),
+.anim-group.anim-elastic > * { 
+    --scale-uniform: calc(var(--scale) - 0.2);
+    transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+}
+
+/* --- STAGGER DELAYS --- */
+.anim-group > * { 
+    --stagger: 0.05s; /* Fallback if JS doesn't run */
+}

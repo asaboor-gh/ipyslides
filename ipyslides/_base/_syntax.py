@@ -256,3 +256,42 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
     - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
         ` __format__ ` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
 '''
+
+css_animations = '''
+## 🎬 IPySlides Content Animations
+All animations are **fully composable** - combine multiple animation classes to create complex effects! Use `anim-group` on a parent container to apply staggered animations to all children.
+Python functions accepting `css_class` parameter can use these animation classes directly, such as `Slide.write(..., css_class='anim-slide-left anim-zoom')` and tweek variables if `**css_props` parameter is available.
+
+Animation Class        | Description                                                                                                 | Effective Variables (`--time`:0.6s for all)
+:----------------------|:------------------------------------------------------------------------------------------------------------|:-------------------------------------------
+`anim-slide-[direction]` | Slide in from specified direction: `left`, `right`, `up`, `down`, `tl`, `tr`,`bl` and `br`.  {: .anim-slide-up}  | `--distance`: Positive CSS length value (default: 120px)
+`anim-zoom` / `anim-zoom-[x,y]` | Zoom in effect, optionally specify axis: `x` or `y`.   {: .anim-zoom-x}                            | `--scale`: Positive number (default: 0.5)
+`anim-rotate`         | Rotate in effect. {: .anim-rotate}                                                                           | `--angle`: CSS angle value (default: 180deg)
+`anim-spin`           | Spin in effect with 2x rotation + scale {: .anim-spin}                                                       | `--scale`, `--angle`
+`anim-skew-[left,right]` | Skew in effect to left or right. {: .anim-skew-left}                                                      | `--distance`
+`anim-blur`           | Blur in effect. {: .anim-blur}                                                                               | `--blur`: CSS length value (default: 10px)
+`anim-brighten`       | Brighten in effect: fades in from dark + blurs. {: .anim-brighten}                                           | `--blur`: Positive CSS length (default: 10px)
+`anim-flip-x` / `anim-flip-x-reverse` | Flip up from bottom / down from top (horizontal axis). {: .anim-flip-x}                      | `--perspective`: CSS length (default: 800px)
+`anim-flip-y` / `anim-flip-y-reverse` | Flip right from left / left from right (vertical axis). {: .anim-flip-y}                     | `--perspective`: CSS length (default: 800px)
+`anim-perspective-[direction]` | 3D perspective effect from specified direction: `up`, `down`, `left`, `right`. {: .anim-perspective-up} | `--perspective`, `--distance`
+`anim-bounce`         | Bouncy entrance with slide + scale. {: .anim-bounce}                                                         | `--distance`, `--scale`
+`anim-swing`          | Swing in from top anchor point. {: .anim-swing}                                                              | `--scale`
+`anim-elastic`        | Elastic bounce timing function. {: .anim-elastic}                                                            | `--scale`
+`anim-group`          | **Power mode!** Container class that applies staggered animations to all children.                           | All variables + auto stagger (100ms/10 items, sine curve)
+
+### Example Usage
+```md-after.collapsed
+::: columns anim-group
+    ::: block anim-slide-left border="1px solid red" padding="10px"
+        Slide in to left
+    ::: block anim-zoom border="1px solid green" padding="10px"
+        Zoom in
+    ::: block anim-rotate --angle=60deg border="1px solid blue" padding="10px"
+        Rotate in
+    ::: block anim-slide-up anim-zoom border="1px solid orange" padding="10px"
+        Slide up + Zoom in
+
+::: block-red anim-elastic anim-blur --blur=20px
+    Combine multiple animations for complex effects and customize with CSS variables!
+```
+'''

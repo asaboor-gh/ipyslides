@@ -438,6 +438,10 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def clear(self):
         "Clear all slides."
+        # Break circular references
+        for slide in self._slides_dict.values():
+            slide._citations.clear()
+            
         self._slides_dict = {}  # Clear slides
         self._next_number = 0  # Reset slide number to 0, because user will overwrite title page.
         self._add_clean_title()  # Add clean title page without messing with resources.
@@ -660,6 +664,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children[old_index].remove_class("ShowSlide").add_class("HideSlide")
         self.widgets.slidebox.children[new_index].add_class("ShowSlide").remove_class("HideSlide")
         self.widgets.iw.msg_tojs = 'SwitchView'
+        if not slide._fidxs: # do after ShowSlide available on naviagted slide
+            self.widgets.iw.msg_tojs = "NAV:LEFT" if new_index < old_index else "NAV:RIGHT" # when no frames, need this
 
     def _update_content(self, change):
         if self.wprogress.value == 0:  # First slide

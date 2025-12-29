@@ -280,6 +280,24 @@ function handleMessage(model, msg, box) {
         let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
         slideNew.style.visibility = 'visible';
         slideNew.querySelector(':scope .jp-OutputArea').scrollTop = 0; // scroll reset is important
+        // Set stagger delays for all anim-group children
+        slideNew.querySelectorAll(':scope .anim-group').forEach(group => {
+            const children = Array.from(group.children);
+            const numChildren = children.length;
+            if (numChildren === 0) return; // safety check
+
+            children.forEach((child, index) => {
+                // Linear time budget: 100ms per item
+                // Sine curve applied to distribution within that budget
+                const totalTime = (numChildren - 1) / 10; // Total time for all children
+                const progress = index / (numChildren - 1 || 1); // 0 to 1
+                const angle = progress * (Math.PI / 2); // Map to sine curve
+                const sinValue = Math.sin(angle); // Apply sine easing
+                const stagger = totalTime * sinValue; // Scale to actual time
+                child.style.setProperty('--stagger', `${stagger.toFixed(3)}s`);
+            });
+        });
+        
         setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
         tldrawLinks(slideNew, model); // fix draw links for new slide
@@ -289,6 +307,31 @@ function handleMessage(model, msg, box) {
             if (slide.style.visibility === 'visible') {
                 slide.style.visibility = 'hidden';
             };
+            // Remove animation classes from all hidden slides to prevent reverse animation
+            slide.querySelectorAll(':scope ._ips-content-animated').forEach(el => {
+                el.classList.remove('_ips-content-animated');
+            });
+        }
+    } else if (msg.includes("NAV:")) {
+        console.log("Navigation message received:", msg);
+        if (msg === "NAV:LEFT") {
+            box.querySelectorAll(':scope ._ips-content-animated').forEach(el => {
+                el.classList.remove('_ips-content-animated');
+            });
+        } else if (msg === "NAV:RIGHT") {
+            // Trigger animations AFTER a microtask to ensure DOM is fully updated
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => { // Double RAF ensures layout is complete
+                    let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
+                    if (!slideNew) return;
+                    slideNew.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated)').forEach(el => {
+                        const style = window.getComputedStyle(el);
+                        if (style.display !== 'none' && style.visibility !== 'hidden') {
+                            el.classList.add('_ips-content-animated');
+                        }
+                    });
+                });
+            });     
         }
     } else if (msg.includes("THEME:")) {
         let theme = msg.replace("THEME:","");
