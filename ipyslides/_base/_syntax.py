@@ -259,39 +259,150 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
 
 css_animations = '''
 ## 🎬 IPySlides Content Animations
+
+--
+
 All animations are **fully composable** - combine multiple animation classes to create complex effects! Use `anim-group` on a parent container to apply staggered animations to all children.
-Python functions accepting `css_class` parameter can use these animation classes directly, such as `Slide.write(..., css_class='anim-slide-left anim-zoom')` and tweek variables if `**css_props` parameter is available.
 
-Animation Class        | Description                                                                                                 | Effective Variables (`--time`:0.6s for all)
+Python functions accepting `css_class` parameter can use these animation classes directly, such as `Slide.write(..., css_class='anim-slide-left anim-zoom')` and tweak variables if `**css_props` parameter is available.
+
+Animation Class        | Description                                                                                                 | Effective Variables (`--time`: 0.6s for all)
 :----------------------|:------------------------------------------------------------------------------------------------------------|:-------------------------------------------
-`anim-slide-[direction]` | Slide in from specified direction: `left`, `right`, `up`, `down`, `tl`, `tr`,`bl` and `br`.  {: .anim-slide-up}  | `--distance`: Positive CSS length value (default: 120px)
-`anim-zoom` / `anim-zoom-[x,y]` | Zoom in effect, optionally specify axis: `x` or `y`.   {: .anim-zoom-x}                            | `--scale`: Positive number (default: 0.5)
-`anim-rotate`         | Rotate in effect. {: .anim-rotate}                                                                           | `--angle`: CSS angle value (default: 180deg)
-`anim-spin`           | Spin in effect with 2x rotation + scale {: .anim-spin}                                                       | `--scale`, `--angle`
-`anim-skew-[left,right]` | Skew in effect to left or right. {: .anim-skew-left}                                                      | `--distance`
-`anim-blur`           | Blur in effect. {: .anim-blur}                                                                               | `--blur`: CSS length value (default: 10px)
-`anim-brighten`       | Brighten in effect: fades in from dark + blurs. {: .anim-brighten}                                           | `--blur`: Positive CSS length (default: 10px)
-`anim-flip-x` / `anim-flip-x-reverse` | Flip up from bottom / down from top (horizontal axis). {: .anim-flip-x}                      | `--perspective`: CSS length (default: 800px)
-`anim-flip-y` / `anim-flip-y-reverse` | Flip right from left / left from right (vertical axis). {: .anim-flip-y}                     | `--perspective`: CSS length (default: 800px)
-`anim-perspective-[direction]` | 3D perspective effect from specified direction: `up`, `down`, `left`, `right`. {: .anim-perspective-up} | `--perspective`, `--distance`
-`anim-bounce`         | Bouncy entrance with slide + scale. {: .anim-bounce}                                                         | `--distance`, `--scale`
-`anim-swing`          | Swing in from top anchor point. {: .anim-swing}                                                              | `--scale`
-`anim-elastic`        | Elastic bounce timing function. {: .anim-elastic}                                                            | `--scale`
-`anim-group`          | **Power mode!** Container class that applies staggered animations to all children.                           | All variables + auto stagger (100ms/10 items, sine curve)
+`anim-slide-[direction]` | Slide in from specified direction: `left`, `right`, `up`, `down`, `tl`, `tr`, `bl`, `br`. {: .anim-slide-up} | `--distance`: CSS length (default: 120px)
+`anim-wipe-[direction]` | Wipe/reveal from edge: `left`, `right`, `up`, `down`. Linear clip-path reveal. | None (only `--time`)
+`anim-iris`           | Circular reveal (camera iris/aperture effect). Center customizable via `--origin`. {: .anim-iris} | `--origin`: Position as "X Y" (default: "50% 50%").
+`anim-zoom` / `anim-zoom-[x,y]` | Zoom in effect, optionally specify axis: `x` or `y`. Respects `--origin`. {: .anim-zoom-x} | `--scale`: Number (default: 0.5)
+`anim-rotate`         | Rotate in effect. Respects `--origin`. {: .anim-rotate} | `--angle`: CSS angle (default: 180deg)
+`anim-spin`           | Spin in with 2x rotation + scale. Respects `--origin`. {: .anim-spin} | `--scale`, `--angle`
+`anim-skew-[left,right]` | Skew in to left or right. {: .anim-skew-left} | `--distance`, `--skew`: angle (default: 20deg)
+`anim-blur`           | Blur in effect. {: .anim-blur} | `--blur`: CSS length (default: 10px)
+`anim-brighten`       | Brighten from dark + blur. {: .anim-brighten} | `--blur`: CSS length (default: 10px)
+`anim-flip-x` / `anim-flip-x-reverse` | 3D flip on horizontal axis. Respects `--origin`. {: .anim-flip-x} | `--perspective`: CSS length (default: 800px)
+`anim-flip-y` / `anim-flip-y-reverse` | 3D flip on vertical axis. Respects `--origin`. {: .anim-flip-y} | `--perspective`: CSS length (default: 800px)
+`anim-perspective-[direction]` | 3D perspective from: `up`, `down`, `left`, `right`. {: .anim-perspective-up} | `--perspective`, `--distance`
+`anim-bounce`         | Bouncy entrance with slide + scale. {: .anim-bounce} | `--distance`, `--scale`
+`anim-swing`          | Swing from anchor. Respects `--origin`. {: .anim-swing} | `--scale`, `--origin` (e.g., "top center")
+`anim-elastic`        | Elastic bounce timing. {: .anim-elastic} | `--scale`
+`anim-group`          | **Power mode!** Applies staggered animations to all children. | All variables + auto stagger (sine curve)
 
-### Example Usage
+### 🎨 Global Variables (Customizable)
+- Add on children of `anim-group` or individual animated elements to tweak animation effects.
+- You can set these via calculating in python systimatically for multiple elements and pass through variables embeding.
+
+Variable | Default | Description
+:--------|:--------|:-----------
+`--time` | 0.6s | Animation duration
+`--distance` | 120px | Translation distance for slides
+`--angle` | 180deg | Rotation angle
+`--scale` | 0.5 | Scale factor (0-1)
+`--blur` | 10px | Blur intensity
+`--perspective` | 800px | 3D perspective depth
+`--skew` | 20deg | Skew angle
+`--origin` | 50% 50% | **Universal origin** for transform-origin and iris center. Can add per item in `anim-group` like any other CSS property.
+`--delay` | 0s | Individual delay automatically calculated from sine curve (use on specific elements)
+
+--
+
+### 💡 Usage Examples
+
+**Basic Animations**
+```md-after
+::: block anim-slide-up
+    Slides up from bottom
+
+::: block anim-iris
+    Opens like camera iris from center
+
+::: block anim-wipe-left
+    Wipes in from right edge
+```
+
+**Composable Animations** (Stack Multiple!)
+```md-after
+::: block anim-slide-left anim-rotate anim-zoom
+    Slides, rotates, and zooms at once!
+
+::: block anim-blur anim-brighten anim-slide-up
+    Fades in with blur from dark
+
+::: block anim-iris anim-zoom --origin="0% 0%"
+    Iris opens from top-left corner while zooming!
+```
+
+--
+
+**Custom Variables**
+```md-after
+::: block anim-slide-up anim-zoom --distance=200px --scale=0.2 --time=1s
+    Custom distance, scale, and timing!
+
+::: block anim-iris --origin="100% 100%"
+    Iris opens from bottom-right corner
+
+::: block anim-rotate --origin="left center" --angle=360deg
+    Rotates 360° around left edge
+```
+
+**🌟 Power Mode: `anim-group`** (Staggered Animations)
+```md-after
+::: ul anim-group anim-slide-left anim-zoom
+    ::: li | Item 1 (0ms delay)
+    ::: li | Item 2 (~84ms delay)
+    ::: li | Item 3 (~188ms delay)
+    ::: li | Item 4 (~295ms delay)
+    // Delays follow smooth sine curve: 100ms per 10 items
+```
+
+--
+
+**Per Item Origins** (Dynamic Effects)
+```md-after
+::: ul anim-group anim-iris anim-rotate
+    ::: li --origin="33% 50%" | Each item opens from different origin
+    ::: li --origin="50% 50%" | With rotation
+    ::: li --origin="67% 50%" | Staggered naturally
+```
+
+**Advanced Combinations**
 ```md-after.collapsed
 ::: columns anim-group
     ::: block anim-slide-left border="1px solid red" padding="10px"
-        Slide in to left
+        Slide in from left
     ::: block anim-zoom border="1px solid green" padding="10px"
         Zoom in
     ::: block anim-rotate --angle=60deg border="1px solid blue" padding="10px"
-        Rotate in
+        Rotate 60°
     ::: block anim-slide-up anim-zoom border="1px solid orange" padding="10px"
-        Slide up + Zoom in
+        Slide up + Zoom
 
 ::: block-red anim-elastic anim-blur --blur=20px
-    Combine multiple animations for complex effects and customize with CSS variables!
+    Elastic bounce with heavy blur!
+
+::: block anim-flip-x anim-zoom --origin="center bottom"
+    Flips up from bottom while zooming!
 ```
+
+--
+
+### ✨ Key Features
+
+- ✅ **Fully Composable** - Mix any animations by stacking classes
+- ✅ **Universal `--origin`** - Controls transform-origin AND iris center position
+- ✅ **No order dependency** - `anim-zoom anim-rotate` = `anim-rotate anim-zoom`
+- ✅ **Smart stagger** - `anim-group` auto-calculates delays with sine curve (100ms/10 items)
+- ✅ **Per item positioning** - Use `--origin` per item on children of `anim-group` for dynamic effects
+- ✅ **Print-friendly** - All animations visible in print/PDF mode
+- ✅ **No reverse animation** - Instantly visible on backward navigation
+- ✅ **Easy customization** - Override any variable inline or globally
+
+### 🎯 Pro Tips
+
+1. **Combine wisely**: `anim-slide-up anim-zoom anim-rotate` creates dramatic entrances
+2. **Use `anim-group` for lists**: Automatically staggers children for smooth reveals
+3. **Control origin**: Set `--origin` to change rotation/zoom/iris center point
+5. **Test combinations**: 27+ base animations = **1000+ possible combinations!**
+6. **Timing matters**: Adjust `--time` for slower/faster effects
+7. **Iris from corners**: Use `--origin: 0% 0%` or `100% 100%` for dramatic reveals
+
+**The power is in composition!** 🚀
 '''

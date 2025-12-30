@@ -119,13 +119,25 @@
     --blur: 10px;
     --perspective: 800px;
     --skew: 20deg;
+    --origin: 50% 50%; /* Universal origin for transform-origin and clip-path effects */
+}
+
+.SlideArea .anim-iris,
+.SlideArea [class*="anim-wipe"],
+.SlideArea [class*="anim-flip"],
+.SlideArea [class*="anim-perspective"] {
+    --time: 1s; /* longer for clip-path reveals and 3D perspective */
 }
 
 /* --- BASE STATE --- */
-.SlideArea [class*="anim-"]:not(.anim-group) {
+.SlideArea [class*="anim-"]:not(.anim-group),
+.SlideArea .anim-group > * {
     opacity: 0;
     pointer-events: none;
-    will-change: transform, opacity;
+    will-change: transform, opacity, clip-path;
+    
+    /* Use --origin for transform-origin (affects rotate, scale, flip, skew) */
+    transform-origin: var(--origin, 50% 50%);
     
     /* Composed transform - all components combine automatically */
     transform: 
@@ -149,53 +161,38 @@
     transition: 
         opacity var(--time) ease, 
         transform var(--time) cubic-bezier(0.2, 0.8, 0.2, 1),
-        filter var(--time) ease;
-}
-
-.SlideArea .anim-group > * {
-    opacity: 0;
-    pointer-events: none;
-    will-change: transform, opacity;
-    
-    /* Same composed transform */
-    transform: 
-        translateX(var(--translate-x, 0)) 
-        translateY(var(--translate-y, 0))
-        translateZ(var(--translate-z, 0))
-        scale(var(--scale-uniform, 1))
-        scaleX(var(--scale-x, 1))
-        scaleY(var(--scale-y, 1))
-        rotate(var(--rotate, 0deg))
-        rotateX(var(--rotate-x, 0deg))
-        rotateY(var(--rotate-y, 0deg))
-        skewX(var(--skew-x, 0deg))
-        perspective(var(--persp, none));
-    
-    filter: 
-        blur(var(--blur-val, 0px)) 
-        brightness(var(--brightness, 1));
-    
-    transition: 
-        opacity var(--time) ease, 
-        transform var(--time) cubic-bezier(0.2, 0.8, 0.2, 1),
-        filter var(--time) ease;
+        filter var(--time) ease,
+        clip-path calc(var(--time) * 1.5) cubic-bezier(0.15, 0.85, 0.35, 1); /* clip lags slightly for better effect */
 }
 
 /* --- ANIMATED STATE --- */
-.SlideBox:not(.Prev) [class*="anim-"]:not(.anim-group)._ips-content-animated {
+.SlideBox:not(.Prev) [class*="anim-"]:not(.anim-group)._ips-content-animated,
+.SlideBox:not(.Prev) .anim-group._ips-content-animated > * {
     opacity: 1 !important;
     transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
     filter: blur(0px) brightness(1) !important;
     pointer-events: auto !important;
     transition-delay: var(--delay, 0s) !important;
 }
-
 .SlideBox:not(.Prev) .anim-group._ips-content-animated > * {
-    opacity: 1 !important;
-    transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
-    filter: blur(0px) brightness(1) !important;
-    pointer-events: auto !important;
     transition-delay: calc(var(--delay, 0s) + var(--stagger, 0s)) !important;
+}
+
+/* Iris needs special clip-path with 150% radius for corner origins */
+.SlideBox:not(.Prev) .anim-iris:not(.anim-group)._ips-content-animated,
+.SlideBox:not(.Prev) .anim-group.anim-iris._ips-content-animated > * {
+    clip-path: circle(150% at var(--origin, 50% 50%)) !important;
+}
+/* Wipe animations need inset(0 0 0 0) - fully visible */
+.SlideBox:not(.Prev) [class*="anim-wipe"]:not(.anim-group)._ips-content-animated,
+.SlideBox:not(.Prev) .anim-group[class*="anim-wipe"]._ips-content-animated > * {
+    clip-path: inset(0 0 0 0) !important;
+} 
+
+/* Other animations clear clip-path completely */
+.SlideBox:not(.Prev) [class*="anim-"]:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-group)._ips-content-animated,
+.SlideBox:not(.Prev) .anim-group:not(.anim-iris):not([class*="anim-wipe"])._ips-content-animated > * {
+    clip-path: none !important;
 }
 
 /* --- RESET FOR BACKWARD NAV & PRINT --- */
@@ -206,17 +203,19 @@
     transform: none !important;
     transition: none !important;
     filter: none !important;
+    clip-path: none !important;
     pointer-events: auto !important;
 }
 
-@media print {
-    [class*="anim-"]:not(.anim-group),
-    .anim-group > * {
+@media print { /* make print mode more robust */
+    .SlideBox .SlideArea [class*="anim-"]:not(.anim-group),
+    .SlideBox .SlideArea .anim-group > * {
         opacity: 1 !important;
         visibility: visible !important;
         transform: none !important;
         transition: none !important;
         filter: none !important;
+        clip-path: none !important;
         pointer-events: auto !important;
     }
 }
@@ -269,6 +268,33 @@
 .anim-group.anim-slide-br > * { 
     --translate-x: calc(var(--distance) * 0.7);
     --translate-y: calc(var(--distance) * 0.7);
+}
+
+/* --- WIPE ANIMATIONS (clip-path reveal) --- */
+.anim-wipe-right:not(.anim-group),
+.anim-group.anim-wipe-right > * { 
+    clip-path: inset(0 100% 0 0);
+}
+
+.anim-wipe-left:not(.anim-group),
+.anim-group.anim-wipe-left > * { 
+    clip-path: inset(0 0 0 100%);
+}
+
+.anim-wipe-down:not(.anim-group),
+.anim-group.anim-wipe-down > * { 
+    clip-path: inset(100% 0 0 0);
+}
+
+.anim-wipe-up:not(.anim-group),
+.anim-group.anim-wipe-up > * { 
+    clip-path: inset(0 0 100% 0);
+}
+
+/* --- IRIS ANIMATION (circular reveal with --origin) --- */
+.anim-iris:not(.anim-group),
+.anim-group.anim-iris > * { 
+    clip-path: circle(0% at var(--origin, 50% 50%));
 }
 
 /* --- ZOOM ANIMATIONS --- */
@@ -329,28 +355,28 @@
 .anim-group.anim-flip-x > * { 
     --persp: var(--perspective);
     --rotate-x: 90deg;
-    transform-origin: center bottom;
+    --origin: center bottom; /* Flip up from bottom edge */
 }
 
 .anim-flip-x-reverse:not(.anim-group),
 .anim-group.anim-flip-x-reverse > * { 
     --persp: var(--perspective);
     --rotate-x: -90deg;
-    transform-origin: center top;
+    --origin: center top; /* Flip down from top edge */
 }
 
 .anim-flip-y:not(.anim-group),
 .anim-group.anim-flip-y > * { 
     --persp: var(--perspective);
     --rotate-y: 90deg;
-    transform-origin: left center;
+    --origin: left center; /* Flip right from left edge */
 }
 
 .anim-flip-y-reverse:not(.anim-group),
 .anim-group.anim-flip-y-reverse > * { 
     --persp: var(--perspective);
     --rotate-y: -90deg;
-    transform-origin: right center;
+    --origin: right center; /* Flip left from right edge */
 }
 
 /* --- 3D PERSPECTIVE ANIMATIONS --- */
@@ -393,7 +419,7 @@
 .anim-group.anim-swing > * { 
     --rotate: 30deg;
     --scale-uniform: var(--scale);
-    transform-origin: top center;
+    --origin: top center; /* Swing from top like a pendulum */
 }
 
 .anim-elastic:not(.anim-group),

@@ -55,9 +55,7 @@ class InteractionWidget(anywidget.AnyWidget):
         elif msg in self._callbacks:
             self._callbacks[msg]() # call the callback
         elif 'SHIFT:' in msg:
-            offset = int(msg.lstrip('SHIFT:')) # shift by given offset 
-            self.prog.value = self.prog.value + offset
-            self.msg_tojs = f'NAV:{"RIGHT" if offset > 0 else "LEFT"}' # inform JS side
+            self.prog.value = self.prog.value + int(msg.lstrip('SHIFT:')) # shift by given offset 
         elif 'CTX:' in msg:
             # Context menu requested at given coordinates
             coords = msg.lstrip('CTX:').split(',')

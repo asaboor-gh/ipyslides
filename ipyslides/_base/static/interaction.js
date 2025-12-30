@@ -324,6 +324,7 @@ function handleMessage(model, msg, box) {
                 requestAnimationFrame(() => { // Double RAF ensures layout is complete
                     let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
                     if (!slideNew) return;
+                    
                     slideNew.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated)').forEach(el => {
                         const style = window.getComputedStyle(el);
                         if (style.display !== 'none' && style.visibility !== 'hidden') {
@@ -386,11 +387,16 @@ function setMainBgImage(slide, target) {
     }
 }
 
+const _viewCleanups = new Map(); // Store cleanup functions by box UID
+
 function keepThisViewOnly(box){
     let uid = box.getAttribute("uid");
     let slides = document.querySelectorAll(`[uid='${uid}']`); // This avoids other notebooks Slides
     slides.forEach((slide) => {
         if (slide !== box) { // only keep this view
+            // CRITICAL: Call cleanup before removing!
+            const cleanup = _viewCleanups.get(slide);
+            if (cleanup) cleanup(); // Remove listeners
             slide.remove(); // deletes node, but keeps comm live
         }
     })
@@ -748,6 +754,9 @@ function cleanView(model) {
 }
 
 function render({ model, el }) {
+    // Store listener references for cleanup
+    const listeners = { msgToJs: null, msgCustom: null};
+
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
     style.onload = () => { 
@@ -808,20 +817,22 @@ function render({ model, el }) {
         };
         
         // Handle changes from Python side  
-        model.on("change:msg_tojs", () => {
+        listeners.msgToJs = () => {
             let msg = model.get("msg_tojs");
             if (!msg) {return false}; // empty message, don't waste time
             if (document.hasFocus() && !document.hidden) { // only if document is in view of user
                 handleMessage(model, msg, box);
             } // sometimes print and other command make issue in other tabs since notebook is a widget with synced state
-        })
+        };
+        model.on("change:msg_tojs", listeners.msgToJs);
 
         // Handle notifications
-        model.on("msg:custom", (msg) => {
+        listeners.msgCustom = (msg) => {
             if (document.hasFocus() && !document.hidden) { // only if document is in view of user
                 showToast(box, msg);
             }
-        })
+        };
+        model.on("msg:custom", listeners.msgCustom);
 
         // Reset size of drawing board instead of provided by widget
         let drawing = box.querySelector(':scope .Draw-Widget');
@@ -847,6 +858,18 @@ function render({ model, el }) {
         
         // Add classes to mark ancestors for printing
         markPrintable(box, 'ipyslides-print-node');
+
+        // Store cleanup function (it removes itself from map when called)
+        _viewCleanups.set(box, () => {
+            console.log("Cleaning up view:", box.getAttribute("uid"));
+            if (listeners.msgToJs) model.off("change:msg_tojs", listeners.msgToJs);
+            if (listeners.msgCustom) model.off("msg:custom", listeners.msgCustom);
+            if (box._resObs) {
+                box._resObs.disconnect();
+                delete box._resObs;
+            }
+            _viewCleanups.delete(box); // Remove from map at end
+        });
     }  
     el.appendChild(style);
     model.set("msg_topy", "LOADED"); // to run onload functionality
@@ -855,15 +878,18 @@ function render({ model, el }) {
     // Clean up old slides if left over from previous session of kernel restart
     let slides = document.querySelectorAll('.SlidesWrapper');
     for (let slide of Array.from(slides)) {
-        if (slide.classList.contains('jupyter-widgets-disconnected')) {slide.remove();};
+        if (slide.classList.contains('jupyter-widgets-disconnected')) {
+            const cleanup = _viewCleanups.get(slide);
+            if (cleanup) cleanup(); // Clean up before removing
+            slide.remove();
+        };
     };
+    // Return cleanup function (called by widget framework when view is properly destroyed)
     return () => { 
-        // clean up at removal time
-        if (box && box._resObs) {
-            box._resObs.disconnect();
-            delete box._resObs;
-        }
-	};
+        console.log("Widget framework cleanup called");
+        const cleanup = _viewCleanups.get(style.parentNode?.parentNode);
+        if (cleanup) cleanup();
+    };
 }
 
 export default { render }

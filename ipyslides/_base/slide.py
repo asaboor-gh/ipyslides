@@ -422,7 +422,8 @@ class Slide:
                 self._app._box.add_class("InView-Last")
             else:
                 self._app._box.remove_class("InView-Last")
-        self._app.widgets.iw.msg_tojs = "NAV:LEFT" if which == 'prev' else "NAV:RIGHT" # inform JS side
+        
+        self._app._send_nav_msg(which == 'next') # inform JS side
         if any([ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
             self.indexf == 0 and which == 'prev',
             self.indexf + 1 == self.nf and which == 'next',

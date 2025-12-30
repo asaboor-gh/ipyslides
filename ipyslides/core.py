@@ -665,7 +665,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children[new_index].add_class("ShowSlide").remove_class("HideSlide")
         self.widgets.iw.msg_tojs = 'SwitchView'
         if not slide._fidxs: # do after ShowSlide available on naviagted slide
-            self.widgets.iw.msg_tojs = "NAV:LEFT" if new_index < old_index else "NAV:RIGHT" # when no frames, need this
+            self._send_nav_msg(new_index > old_index)
 
     def _update_content(self, change):
         if self.wprogress.value == 0:  # First slide
@@ -680,7 +680,11 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.notify('x') # clear notification
             self._switch_slide(old_index=change["old"], new_index=change["new"])
             self._current._run_on_load()  # Run on_load setup after switching slide, it updates footer as well
-
+    
+    def _send_nav_msg(self, forward=True):
+        "Send navigation message to front-end on slide or frame switching."
+        self.widgets.iw.msg_tojs = "NAV:RIGHT" if forward else "NAV:LEFT"
+    
     def refresh(self):
         "Auto Refresh whenever you create new slide or you can force refresh it"
         self._iterable = self._collect_slides()  # would be at least one title slide

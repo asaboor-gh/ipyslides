@@ -14,8 +14,9 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML, htmlize
-from ..xmd import error, fmt, get_slides_instance, resolve_included_files, _matched_vars
+from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars
 from ..utils import _css_docstring
+from ._syntax import css_animations
 
 
 class BaseSlides:
@@ -478,8 +479,7 @@ class BaseSlides:
         <md-src/>
         """, self=self)
         
-        with self.build(-1):
-            self.css_animations.display()
+        self.build(-1, css_animations)
         
         self.build(-1, '''
         ## Highlighting Code
