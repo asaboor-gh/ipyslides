@@ -819,7 +819,6 @@ class XMarkdown(Markdown):
         # Replace inline functions, keep it nested for accessing inner state
         all_funcs_re = '|'.join(_special_funcs.keys())
         func_pattern = r"(?<![\`\.])\b({})(\[.*?\])?\`(.*?)\`" # `func and .func avoides, leading space used for readability consumed
-        html_output = re.sub(func_pattern.format('hl'), r"code\1`\2`", html_output, flags=re.DOTALL | re.MULTILINE) # hl is legacy for code
         
         if re.search(func_pattern.format(all_funcs_re), html_output, flags=re.DOTALL | re.MULTILINE):
             from . import utils  # Inside function to avoid circular import

@@ -325,10 +325,10 @@ function handleMessage(model, msg, box) {
                     let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
                     if (!slideNew) return;
                     
-                    slideNew.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated)').forEach(el => {
+                    slideNew.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated), :scope .anim-group > *:not(._ips-content-animated)').forEach(el => {
                         const style = window.getComputedStyle(el);
                         if (style.display !== 'none' && style.visibility !== 'hidden') {
-                            el.classList.add('_ips-content-animated');
+                            if (!el.classList.contains("anim-group")) el.classList.add('_ips-content-animated'); // anim-group itself should not be animated
                         }
                     });
                 });

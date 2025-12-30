@@ -1,4 +1,4 @@
-import sys, os, json, re, math, uuid, textwrap
+import sys, json, re, math, uuid, textwrap
 from contextlib import contextmanager, suppress
 from collections import namedtuple
 from collections.abc import Iterable
@@ -536,9 +536,6 @@ class Slides(BaseSlides,metaclass=Singleton):
     def _set_saved_citations(self):
         "Load resources from file if present silently"
         with self.set_dir(self._assets_dir):  # Set assets directory
-            if os.path.isfile("citations.json"): # legacy filename, want to somehow depict it private with .
-                os.rename("citations.json",".citations.json")
-        
             if (path := Path(".citations.json")).exists():
                 self._set_ctns(json.loads(path.read_text()))
             
@@ -665,7 +662,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children[new_index].add_class("ShowSlide").remove_class("HideSlide")
         self.widgets.iw.msg_tojs = 'SwitchView'
         if not slide._fidxs: # do after ShowSlide available on naviagted slide
-            self._send_nav_msg(new_index > old_index)
+            self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
 
     def _update_content(self, change):
         if self.wprogress.value == 0:  # First slide
@@ -785,19 +782,14 @@ class Slides(BaseSlides,metaclass=Singleton):
                 for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
-                        self.this._split_frames = False
-                        self.this._fsep_legacy = True # mark legacy usage
-                        utils.warn("`%++` is deprecated, use `++` explicitly on each part separation!").display()
+                        utils.warn("`%++` is deprecated and no more backward compatible, use `++` explicitly on each part separation!").display()
                         
                     self.xmd(frm, returns = False) # parse and display content
                     
-                    if len(frames) > 1:
-                        self.PAGE() # legacy will change it to part or page based on context
+                    if len(frames) > 1: self.PAGE() # add page separator if multiple frames
                     
                     if prm != frm: 
                         edit_idx = idx
-                        if not self.this._split_frames and ('```multicol' in frm): # show all columns if edit is inside multicol
-                            edit_idx += (len(re.findall(r'^\+\+\+$|^\+\+\+\s+$',frm, flags=re.DOTALL | re.MULTILINE)) + 1)
             
             s.first_frame() # be at start first
             for _ in range(edit_idx): 
@@ -843,6 +835,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             
             self.settings.footer._apply_change(None) # sometimes it is not updated due to message lost, so force it too
             self._current._set_progress() # update display can take it over to other sldies
+            self._send_nav_msg(True)  # to trigger any animation on current slide on refresh
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
@@ -889,41 +882,14 @@ class Slides(BaseSlides,metaclass=Singleton):
         return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
     
     class fsep:
-        """::: note-warning
-            Legacy frame seperator for backward compatibility and will be deprecated. It only creates
-            pages or parts based on context. New delimiter classes `Slides.PAGE` and `Slides.PART` are 
-            very flexible to create mixed pages and parts and also allow more control over splitting behavior.
-        
-        Frame separator! If it is just after `write` command, columns are incremented too.
-        You can import it on top level or use as `Slides.fsep`.
-
-        - Use `fsep()` to split code into frames. In markdown slides, use two dashes --.
-        - Use `fsep.iter(iterable)` to split after each item in iterable automatically.
-        - Setting `stack=True` in `fsep` or `fsep.iter` once under a slide to show frames incrementally. 
-            In markdown slides, use %++. The last called value of stack overrides any previous value.
-        - Content before first frame separator is added on all frames. This helps adding same title once.
-        """
-        @staticmethod
-        def _app_ins(): return Slides.instance()
-        
+        """No more backward compatible! Use `Slides.PAGE()` and `Slides.PART()` explicitly!"""
         def __init__(self, stack=None):
-            app = self._app_ins()
-            app.verify_running("Cant use fsep in a capture context other than slides!")
-            _type = "" if stack is None else "PART" if stack else "PAGE"
-            display(_delim(_type))  # display delimiter
-            app.this._fsep_legacy = True  # for backward compatibility
-
-            if stack in (True, False):
-                app.this._split_frames = not stack
-            elif stack is not None:
-                raise ValueError(f"stack should be set True or False or left as None for default behavior, got {type(stack)}")
-            utils.warn("Legacy fsep() detected, converted to new delimiter internally. Consider updating your code to use PAGE and PART explicitly!").display()
+            utils.warn("fsep is deprecated and no more backward compatible, use PAGE and PART explicitly!").display()
 
         @classmethod
         def iter(cls, iterable, stack=None):
-            "Loop over iterable. Frame separator is add before each item and at end of the loop."
-            cls._app_ins().verify_running()
-            return _iter_on_delim(iterable, cls, stack)
+            cls(stack=stack) # for warning only
+            return iterable
     
     class PAGE:
         """Page delimiter! Use `Slides.PAGE()` or import at top level to create a new page in slide.
@@ -942,7 +908,12 @@ class Slides(BaseSlides,metaclass=Singleton):
         @classmethod
         def iter(cls, iterable):
             "Loop over given iterable by adding a separator before each item and at end of the loop."
-            return _iter_on_delim(iterable, cls)
+            if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
+                raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
+            for item in iterable:
+                cls() # put one separator before
+                yield item
+            cls() # put after all done to keep block separated
 
     class PART(PAGE):
         """Part delimiter! Use `Slides.PART()` or import at top level to create a new part in slide/page.
@@ -961,13 +932,3 @@ class Slides(BaseSlides,metaclass=Singleton):
             super().__init__()
             write([contents], css_class=css_class) # do not let write add extra delimiter in contents
             display(_delim(self._type)) # separtor after content is important
-            
-            
-def _iter_on_delim(iterable, cls, *args):
-    # NOTE: Place it directly in PAGE after fsep is deprecated.
-    if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
-        raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
-    for item in iterable:
-        cls(*args) # put one separator before
-        yield item
-    cls(*args) # put after all done to keep block separated

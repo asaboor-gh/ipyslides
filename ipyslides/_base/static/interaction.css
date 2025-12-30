@@ -125,7 +125,10 @@
 .SlideArea [class*="anim-wipe"],
 .SlideArea [class*="anim-flip"],
 .SlideArea [class*="anim-perspective"] {
-    --time: 1s; /* longer for clip-path reveals and 3D perspective */
+    --time: 0.8s; /* longer for clip-path reveals and 3D perspective */
+}
+.SlideArea .anim-iris {
+    --time: 1s; /* even longer for iris to counter 150% radius lag effect */
 }
 
 /* --- BASE STATE --- */
@@ -161,36 +164,36 @@
         opacity var(--time) ease, 
         transform var(--time) cubic-bezier(0.2, 0.8, 0.2, 1),
         filter var(--time) ease,
-        clip-path calc(var(--time) * 1.5) cubic-bezier(0.15, 0.85, 0.35, 1); /* clip lags slightly for better effect */
+        clip-path var(--time) ease-in; 
 }
 
 /* --- ANIMATED STATE --- */
 .SlideArea [class*="anim-"]:not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group._ips-content-animated > * {
+.SlideArea .anim-group > ._ips-content-animated {
     opacity: 1 !important;
     transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
     filter: blur(0px) brightness(1) !important;
     pointer-events: auto !important;
     transition-delay: var(--delay, 0s) !important;
 }
-.SlideArea .anim-group._ips-content-animated > * {
+.SlideArea .anim-group > ._ips-content-animated {
     transition-delay: calc(var(--delay, 0s) + var(--stagger, 0s)) !important;
 }
 
 /* Iris needs special clip-path with 150% radius for corner origins */
 .SlideArea .anim-iris:not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group.anim-iris._ips-content-animated > * {
+.SlideArea .anim-group.anim-iris > ._ips-content-animated {
     clip-path: circle(150% at var(--origin, 50% 50%)) !important;
 }
 /* Wipe animations need inset(0 0 0 0) - fully visible */
 .SlideArea [class*="anim-wipe"]:not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group[class*="anim-wipe"]._ips-content-animated > * {
+.SlideArea .anim-group[class*="anim-wipe"] > ._ips-content-animated {
     clip-path: inset(0 0 0 0) !important;
 } 
 
 /* Other animations clear clip-path completely */
 .SlideArea [class*="anim-"]:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"])._ips-content-animated > * {
+.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"]) > ._ips-content-animated {
     clip-path: none !important;
 }
 

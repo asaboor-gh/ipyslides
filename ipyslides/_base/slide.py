@@ -114,7 +114,6 @@ class Slide:
         self._has_widgets = False # Update in _build_slide function
         self._has_vars = () # Update in _slide function for markdown slides only
         self._source = {'text': '', 'language': ''} # Should be update by Slides
-        self._split_frames = True
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}")
         self._tcolors = {} # theme colors for this slide only
@@ -183,7 +182,7 @@ class Slide:
                 else:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
             
-            outputs = self._handle_fsep_legacy(captured.outputs) # handle old frame separators if any before skipping trails 
+            outputs = captured.outputs
             # Skip trailing delimiters (PAGE or PART) from the end, or empty capture
             stop = len(outputs)
             for i in range(stop - 1, -1, -1):
@@ -202,15 +201,6 @@ class Slide:
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
-    
-    def _handle_fsep_legacy(self, contents):
-        if getattr(self, '_fsep_legacy', False):
-            for c in contents:
-                if isinstance(c.metadata, dict) and "DELIM" in c.metadata:
-                    new_delim = "PAGE" if self._split_frames else "PART"
-                    if c.metadata["DELIM"] != "ROW": # allow explict setting in fsep for backward compatibility, except rows
-                        c.metadata["DELIM"] = new_delim
-        return contents
         
     def update_display(self, go_there = True):
         "Update display of this slides including reloading citations, widgets etc."
@@ -247,6 +237,8 @@ class Slide:
         # after others to take everything into account
         self._reset_frames(offset = self._offset)
         self._app._update_toc()
+        if go_there:
+            self._app._send_nav_msg(True) # inform JS side of reload animation on update/build time without navigation
     
     def _rebuild(self, go_there=False):
         if not self._markdown and go_there: # this avoid printing logs during bacth rebuilds
@@ -360,14 +352,10 @@ class Slide:
                             meta_row["DELIM"] = "PART"  # change ROW to PART for frame handling
                 
                 # Check if PART is before COLUMNS to trigger increments
-                if "COLUMNS" in meta_next and not getattr(self, '_fsep_legacy', False):
+                if "COLUMNS" in meta_next:
                     # PART before COLUMNS - trigger column incremental
                     for part in contents[index + 1]._parts:
                         frames.append({**page, "part": index + 1, **part})
-                elif getattr(self, '_fsep_legacy', False) and "COLUMNS" in meta_prev:
-                    # Legacy mode: PART after COLUMNS
-                    for part in contents[index - 1]._parts:
-                        frames.append({**page, "part": index - 1, **part})
                 else:
                     if (meta_prev.get("DELIM","") == "PART" # PART adjacent to PART
                         or (frames and "col" in frames[-1])): # PART adjacent to COLUMNS
@@ -401,6 +389,10 @@ class Slide:
     
     def _update_view(self, which):
         self._set_progress()
+        getattr(self._app.widgets.slidebox, 
+            'remove_class' if which == 'next' else 'add_class'
+        )('AnimPrev') # set content animation direction always even between parts
+        
         # Determine if we should animate based on frame position and type
         frame = self._fidxs[self.indexf] if self._fidxs else {}
         anim = frame.get('anim', None)  # 'next', 'prev', or 'both'
@@ -410,9 +402,9 @@ class Slide:
         
         if should_animate:
             if which == 'prev':
-                self._app.widgets.slidebox.add_class('Prev').add_class('AnimPrev') # Backwards Animation
+                self._app.widgets.slidebox.add_class('Prev') # Backwards Animation
             else:
-                self._app.widgets.slidebox.remove_class('Prev').remove_class('AnimPrev') # remove backwards animation safely
+                self._app.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
             self._app._update_tmp_output(self.animation, self.css)
         else:
              self._app._update_tmp_output(self.css) # avoid animations between frames
@@ -695,6 +687,7 @@ class Slide:
 
         ::: note-tip
             - See code`Slides.css_syntax` for information on how to write CSS dictionary.
+            - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.
             - An empty selector `''` is allowed to directly inject CSS string, useful to read a local CSS file while files from web must be downloaded first.
               Advanced CSS concepts like `@import`, `@layer` may not work as expected due to CSS scoping inside slides. Large files should be added to `overall` CSS only for performance reasons.
             - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`.
@@ -800,10 +793,7 @@ def _build_slide(app, slide_number):
         this = Slide(app, slide_number)
         app._slides_dict[slide_number] = this
         app.refresh() # rebuild slides to have index ready
-    
-    if hasattr(this, '_fsep_legacy'): # it must be here to have markdown switch modes properly
-        delattr(this, '_fsep_legacy') # reset legacy mode on new build
-            
+       
     with this._capture(): 
         yield this
 
