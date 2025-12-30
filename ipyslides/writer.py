@@ -75,7 +75,7 @@ class Writer(ipw.HBox):
                 display(rows[0], metadata={"FLATCOL": len(rows)})  # First output with FLATCOL metadata to indicate for frames
                 display(*rows[1:]) # Just display rest of rows directly
         elif len(objs) >= 1: # avoid empty write
-            self.children = [_Output(layout = ipw.Layout(width = c['width'],overflow='auto',height='auto')) for c in self._cols]
+            self.children = [_Output(layout = ipw.Layout(flex = c['flex'],min_width='0',height='auto')) for c in self._cols]
             display(self, metadata=self.metadata) # Just display it with ID
             self.update_display() # show content on widgets
 
@@ -99,11 +99,10 @@ class Writer(ipw.HBox):
             for w in widths:
                 if not isinstance(w,(int, float)):
                     raise TypeError(f'widths must be numbers, got {w}')
-            widths = [w/sum(widths)*100 for w in widths]
+            widths = [w/(sum(widths) or 1) for w in widths]
         
         
-        widths = [f'{w:.3f}%' for w in widths]
-        cols = [{'width':w,'outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]
+        cols = [{'flex': f'{w:.3f} {w:.3f} {w*100:.3f}%','outputs':_c if isinstance(_c,(list,tuple)) else [_c]} for w,_c in zip(widths,objs)]
         parts, rowsep = [], _delim("ROW")  # row delimiter
         for i, col in enumerate(cols):
             rows = chain(*(
@@ -160,12 +159,13 @@ class Writer(ipw.HBox):
         cols = []
         col_idx = (visible_upto or {}).get("col", float('inf')) 
         for i, col in enumerate(self._cols):
+            flex = f'flex:{col["flex"]};height:auto;min-width:0;'
             if i > col_idx: # Entire column is hidden
                 content = '\n'.join(map(_fmt_html, col['outputs']))
-                cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto;visibility:hidden">{content}</div>')
+                cols.append(f'<div style="{flex}visibility:hidden">{content}</div>')
             elif i < col_idx: # Entire column is visible
                 content = '\n'.join(map(_fmt_html, col['outputs']))
-                cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{content}</div>')
+                cols.append(f'<div style="{flex}">{content}</div>')
             else: # Current column, check rows
                 rows = []
                 row_idx = (visible_upto or {}).get("row", float('inf'))
@@ -175,7 +175,7 @@ class Writer(ipw.HBox):
                     else:
                         rows.append(f'<div style="visibility:hidden;">{_fmt_html(output)}</div>')
                 
-                cols.append(f'<div style="width:{col["width"]};overflow:auto;height:auto">{"".join(rows)}</div>')
+                cols.append(f'<div style={flex}">{"".join(rows)}</div>')
                 
         css_class = ' '.join(self._dom_classes)
         return f'<div class="{css_class}" {_inline_style(self)}>{"".join(cols)}</div>'
@@ -225,7 +225,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         slides.write([row1, [item1, item2], row3], column2)  # Shows rows one by one (item1 and item2 together), then column2
         slides.PART()  # Another trigger for next write
         slides.write([row1, row2]) # Shows both rows incrementally , no additional columns here
-        slides.write(1,2,3,4, css_class='anim-group anim-iris', __origin='0 50%') # animated group of columns
+        slides.write(1,2,3,4, css_class='anim-group anim-slide-up', __distance='400px',display='grid',grid_template_columns='1fr 1fr') # animated group of columns
         ``` 
     """
     Writer(*objs,widths = widths, css_class=css_class, **css_props) # Displays itself

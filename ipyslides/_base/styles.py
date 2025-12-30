@@ -639,7 +639,6 @@ def style_css(colors, fonts, layout, _root = False):
                 'border-left': '1px solid var(--fg2-color)',
                 'border-right': '1px solid var(--fg2-color)',
             },
-            '.columns > div': {"position": "relative !important"}, # keep absolute items inside column itself
             '.toc-list.toc-extra' : {
                 'margin-right': '1em',
                 '.toc-item.this' : {
