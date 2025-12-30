@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from itertools import chain
 from IPython.display import display as display
 from IPython.utils.capture import CapturedIO
+from dashlab.utils import _build_css
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta, _delim
 from .xmd import fmt, xmd, capture_content, get_slides_instance
@@ -48,7 +49,7 @@ def _fmt_html(output):
 
 class Writer(ipw.HBox):
     _in_write = False
-    def __init__(self, *objs, widths = None, css_class = None):
+    def __init__(self, *objs, widths = None, css_class = None, **css_props):
         self._parts = () # to store part positions
         if self.__class__._in_write and len(objs) > 1: # Like from delayed lambda function
             raise RuntimeError("Trying to write inside a writer!")
@@ -61,12 +62,12 @@ class Writer(ipw.HBox):
 
         try:
             self.__class__._in_write = True
-            self._cols = self._capture_objs(*objs, widths = widths) # run after getting slides instance
+            self._cols = self._capture_objs(*objs, widths = widths, css_props=css_props) # run after getting slides instance
         finally:
             self.__class__._in_write = False
 
-        if len(objs) == 1 and not isinstance(css_class, str):
-            # css_class still need to make all items in single block, without it just flatten display
+        if len(objs) == 1 and not any([isinstance(css_class, str), css_props]):
+            # css_class/css_props still need to make all items in single block, without it just flatten display
             rows = self._cols[0]['outputs']
             if len(rows) == 1:
                 display(*rows) # Just display single output directly
@@ -88,7 +89,7 @@ class Writer(ipw.HBox):
     def __repr__(self):
         return f'<{self.__module__}.Writer at {hex(id(self))}>'
 
-    def _capture_objs(self, *objs, widths = None):
+    def _capture_objs(self, *objs, widths = None, css_props=None):
         if widths is None: # len(objs) check is done in write
             widths = [100/len(objs) for _ in objs]
         else:
@@ -111,6 +112,12 @@ class Writer(ipw.HBox):
                 for obj in col['outputs']
             ))
             with capture_content() as cap:
+                if i == 0 and css_props: # display CSS in first column only
+                    uklass = f"wr-{id(self)}"
+                    self.add_class(uklass) # unique class for this writer
+                    klass = '.' + '.'.join(self._dom_classes)  # pick all classes to pass vriables at local scope
+                    XTML(f'<style>\n{_build_css((klass,), css_props)}\n</style>') .display() 
+                    
                 for c in rows:
                     if isinstance(c,(fmt, RichOutput, ipw.DOMWidget)):
                         display(c)
@@ -174,11 +181,12 @@ class Writer(ipw.HBox):
         return f'<div class="{css_class}" {_inline_style(self)}>{"".join(cols)}</div>'
 
 
-def write(*objs,widths = None, css_class=None):
+def write(*objs,widths = None, css_class=None, **css_props):
     """
     Write `objs` to slides in columns. To create rows in a column, wrap objects in a list or tuple.   
     You can optionally specify `widths` as a list of percentages for each column. 
-    `css_class` can have multiple classes separated by space, works only for multiple columns.
+    `css_class` can have multiple classes separated by space, use this to do animations with classes. See `Slides.css_animations` for details.
+    `**css_props` are additional CSS properties applied to the writer block node, CSS variables names like `--origin` should be passed as `__origin`.
          
     Write any object that can be displayed in a cell with some additional features:
     
@@ -217,6 +225,7 @@ def write(*objs,widths = None, css_class=None):
         slides.write([row1, [item1, item2], row3], column2)  # Shows rows one by one (item1 and item2 together), then column2
         slides.PART()  # Another trigger for next write
         slides.write([row1, row2]) # Shows both rows incrementally , no additional columns here
+        slides.write(1,2,3,4, css_class='anim-group anim-iris', __origin='0 50%') # animated group of columns
         ``` 
     """
-    Writer(*objs,widths = widths, css_class=css_class) # Displays itself
+    Writer(*objs,widths = widths, css_class=css_class, **css_props) # Displays itself

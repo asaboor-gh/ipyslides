@@ -109,9 +109,8 @@
    CONTENT ANIMATIONS - Composable & Modern
    ========================================================================== */
 
-/* --- CSS VARIABLES (on top container) --- */
-.SlideArea .anim-group,
-.SlideArea [class*="anim-"] {
+/* --- CSS VARIABLES (on top container, so can be changed globally) --- */
+.SlideArea {
     --time: 0.6s;
     --distance: 120px;
     --angle: 180deg;
@@ -132,7 +131,7 @@
 /* --- BASE STATE --- */
 .SlideArea [class*="anim-"]:not(.anim-group),
 .SlideArea .anim-group > * {
-    opacity: 0;
+    opacity: 0 !important;
     pointer-events: none;
     will-change: transform, opacity, clip-path;
     
@@ -195,14 +194,12 @@
     clip-path: none !important;
 }
 
-/* --- RESET FOR BACKWARD NAV & PRINT (higher specificity) --- */
-.SlideBox.AnimPrev .SlideArea ._ips-content-animated:not(.anim-group),
-.SlideBox.AnimPrev .SlideArea ._ips-content-animated > *,
-.SlideBox.AnimPrev .SlideArea [class*="anim-"],
-.SlideBox.AnimPrev .SlideArea .anim-group > * {
+/* --- RESET FOR BACKWARD NAV & PRINT (higher specificity and ShowSlide is important to keep things visible) --- */
+.SlideBox.AnimPrev .ShowSlide [class*="anim-"],
+.SlideBox.AnimPrev .ShowSlide .anim-group > * {
     --time: 0s !important; /* instant reset */
     --delay: 0s !important;
-    opacity: 1 !important;
+    opacity: 1 !important; /* keep visible when going backward */
     transform: none !important;
     transition: none !important;
     filter: none !important;

@@ -266,8 +266,9 @@ All animations are **fully composable** - combine multiple animation classes to 
 
 Python functions accepting `css_class` parameter can use these animation classes directly, such as `Slide.write(..., css_class='anim-slide-left anim-zoom')` and tweak variables if `**css_props` parameter is available.
 
-Animation Class        | Description                                                                                                 | Effective Variables (`--time`: 0.6s for all)
+Animation Class        | Description                                                                                                 | Effective Variables (`--time`: 0.6s, `--delay`: 0s` for all)
 :----------------------|:------------------------------------------------------------------------------------------------------------|:-------------------------------------------
+`anim-appear`          | Simple fade-in effect. {: .anim-appear}                                                                     | None (only `--time`, `--delay`)
 `anim-slide-[direction]` | Slide in from specified direction: `left`, `right`, `up`, `down`, `tl`, `tr`, `bl`, `br`. {: .anim-slide-up} | `--distance`: CSS length (default: 120px)
 `anim-wipe-[direction]` | Wipe/reveal from edge: `left`, `right`, `up`, `down`. Linear clip-path reveal. | None (only `--time`)
 `anim-iris`           | Circular reveal (camera iris/aperture effect). Center customizable via `--origin`. {: .anim-iris} | `--origin`: Position as "X Y" (default: "50% 50%").

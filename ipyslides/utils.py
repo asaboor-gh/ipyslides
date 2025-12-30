@@ -307,7 +307,7 @@ def _crop_image(image, bbox):
     return image.crop(bbox)
 
     
-def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwargs):
+def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_class=None, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
     `css_props` are applied to `figure` element, so you can control top layout and nested img tag.
@@ -354,7 +354,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, **kwarg
     data, metadata = Image(data = _data,**kwargs)._repr_mimebundle_()
     metadata['width'] = width
     metadata['caption'] = _fig_caption(caption)
-    metadata['attrs'] = f'class="focus-child fig-{id(data)}" style="{_fig_style_inline}"'
+    metadata['attrs'] = f'class="focus-child fig-{id(data)} {css_class}" style="{_fig_style_inline}"'
 
     _verify_css_props(css_props)
     if css_props:
@@ -375,7 +375,7 @@ def _crop_svg(node, bbox):
     return re.sub(r'viewBox\=[\"\'](.*?)[\"\']', crop_viewbox, node ,1, flags=re.DOTALL)
     
 
-def svg(data=None,width = None,caption=None, crop=None, css_props={}, **kwargs):
+def svg(data=None,width = None,caption=None, crop=None, css_props={}, css_class=None, **kwargs):
     """Display svg file or svg string/bytes with additional customizations. 
     `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
     `css_props` are applied to `figure` element, so you can control top layout and nested svg tag.
@@ -410,7 +410,7 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, **kwargs):
     # We encapsulate svg in img tag to avoid issues with rendering and clipping of texts plus ids conflicts
     svg_b64 = base64.b64encode(svg.encode('utf-8')).decode('ascii')
     svg = f'<img src="data:image/svg+xml;base64,{svg_b64}" alt="SVG Image"/>'
-    fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)}', style=_fig_style_inline).value
+    fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)}{css_class}', style=_fig_style_inline).value
     
     if css_props:
         fig += _styled_css({f'.fig-{id(svg)}': css_props}).value
@@ -593,7 +593,7 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     ], style = kwargs, css_class=(f'{css_class or ""} {"" if vertical else "columns"}').strip()) 
     
 
-def table(data, headers = None, widths=None, css_class=None):
+def table(data, headers = None, widths=None, css_class=None, **css_props):
     """Creates a table of given data like DataFrame, but with rich elements. 
     `data` should be a 2D matrix-like. `headers` is a list of column names. `widths` is a list of widths for each column.
     
@@ -622,7 +622,7 @@ def table(data, headers = None, widths=None, css_class=None):
     except TypeError:
         raise TypeError("data should be 2D matrix-like")
     
-    return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' focus-self')
+    return html('div', [stack(d, sizes=widths) for d in data],css_class=klass + ' focus-self', style=css_props)
 
 def sig(callable,prepend_str = None):
     "Returns signature of a callable. You can prepend a class/module name."

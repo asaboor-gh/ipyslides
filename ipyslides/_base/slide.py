@@ -770,7 +770,10 @@ class Slide:
         return styles.animations[name].replace('.SlideBox',f'.{self._app.uid} .SlideBox')
             
     def set_animation(self, this=None, main = None, page = None):
-        "Set animation of this slide. Provide None if need to stop animation. Use `main` and `page` to set animation to all slides and pages."
+        """Set animation of this slide. Provide None if need to stop animation. 
+        Use `main` and `page` to set animation to all slides and pages.
+        For parts and general content animations, see `Slides.css_animations` for details which are more flexible.
+        """
         self.__class__._animations['main'] = '' if main is None else self._instance_animation(main)
         self.__class__._animations['page'] = '' if page is None else self._instance_animation(page)
         self._animation = '' if this is None else self._instance_animation(this)
