@@ -17,14 +17,16 @@ class Navigation:
         
     def _shift_right(self,change):
         self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
+        self.widgets.slidebox.remove_class('AnimPrev') # content animation flag
         if change and not self.slides._current.next_frame():
             if self.wprogress.value < self.wprogress.max:
                 self.wprogress.value = self.wprogress.value + 1 # Forwards
             
     def _shift_left(self,change):
-        self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
+        self.widgets.slidebox.remove_class('Prev') # remove backwards animation safely, need trigger before adding
         if change and not self.slides._current.prev_frame():
             self.widgets.slidebox.add_class('Prev') # Backwards Animation
+            self.widgets.slidebox.add_class('AnimPrev') # content animation flag, need to stay persistent to avoid trigger removal too early
             if self.wprogress.value > 0:
                 self.wprogress.value = self.wprogress.value - 1 # Backwards
                

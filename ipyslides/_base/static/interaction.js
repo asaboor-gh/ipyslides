@@ -316,7 +316,7 @@ function handleMessage(model, msg, box) {
         console.log("Navigation message received:", msg);
         if (msg === "NAV:LEFT") {
             box.querySelectorAll(':scope ._ips-content-animated').forEach(el => {
-                el.classList.remove('_ips-content-animated');
+                el.classList.remove('_ips-content-animated'); // clear animations on going back to available again
             });
         } else if (msg === "NAV:RIGHT") {
             // Trigger animations AFTER a microtask to ensure DOM is fully updated

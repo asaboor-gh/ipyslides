@@ -407,12 +407,12 @@ class Slide:
 
         # Only animate on appropriate edges
         should_animate = anim == 'both' or anim == which
-    
+        
         if should_animate:
             if which == 'prev':
-                self._app.widgets.slidebox.add_class('Prev')
+                self._app.widgets.slidebox.add_class('Prev').add_class('AnimPrev') # Backwards Animation
             else:
-                self._app.widgets.slidebox.remove_class('Prev')
+                self._app.widgets.slidebox.remove_class('Prev').remove_class('AnimPrev') # remove backwards animation safely
             self._app._update_tmp_output(self.animation, self.css)
         else:
              self._app._update_tmp_output(self.css) # avoid animations between frames

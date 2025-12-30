@@ -166,40 +166,43 @@
 }
 
 /* --- ANIMATED STATE --- */
-.SlideBox:not(.Prev) [class*="anim-"]:not(.anim-group)._ips-content-animated,
-.SlideBox:not(.Prev) .anim-group._ips-content-animated > * {
+.SlideArea [class*="anim-"]:not(.anim-group)._ips-content-animated,
+.SlideArea .anim-group._ips-content-animated > * {
     opacity: 1 !important;
     transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
     filter: blur(0px) brightness(1) !important;
     pointer-events: auto !important;
     transition-delay: var(--delay, 0s) !important;
 }
-.SlideBox:not(.Prev) .anim-group._ips-content-animated > * {
+.SlideArea .anim-group._ips-content-animated > * {
     transition-delay: calc(var(--delay, 0s) + var(--stagger, 0s)) !important;
 }
 
 /* Iris needs special clip-path with 150% radius for corner origins */
-.SlideBox:not(.Prev) .anim-iris:not(.anim-group)._ips-content-animated,
-.SlideBox:not(.Prev) .anim-group.anim-iris._ips-content-animated > * {
+.SlideArea .anim-iris:not(.anim-group)._ips-content-animated,
+.SlideArea .anim-group.anim-iris._ips-content-animated > * {
     clip-path: circle(150% at var(--origin, 50% 50%)) !important;
 }
 /* Wipe animations need inset(0 0 0 0) - fully visible */
-.SlideBox:not(.Prev) [class*="anim-wipe"]:not(.anim-group)._ips-content-animated,
-.SlideBox:not(.Prev) .anim-group[class*="anim-wipe"]._ips-content-animated > * {
+.SlideArea [class*="anim-wipe"]:not(.anim-group)._ips-content-animated,
+.SlideArea .anim-group[class*="anim-wipe"]._ips-content-animated > * {
     clip-path: inset(0 0 0 0) !important;
 } 
 
 /* Other animations clear clip-path completely */
-.SlideBox:not(.Prev) [class*="anim-"]:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-group)._ips-content-animated,
-.SlideBox:not(.Prev) .anim-group:not(.anim-iris):not([class*="anim-wipe"])._ips-content-animated > * {
+.SlideArea [class*="anim-"]:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-group)._ips-content-animated,
+.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"])._ips-content-animated > * {
     clip-path: none !important;
 }
 
-/* --- RESET FOR BACKWARD NAV & PRINT --- */
-.SlideBox.Prev [class*="anim-"]:not(.anim-group),
-.SlideBox.Prev .anim-group > * {
+/* --- RESET FOR BACKWARD NAV & PRINT (higher specificity) --- */
+.SlideBox.AnimPrev .SlideArea ._ips-content-animated:not(.anim-group),
+.SlideBox.AnimPrev .SlideArea ._ips-content-animated > *,
+.SlideBox.AnimPrev .SlideArea [class*="anim-"],
+.SlideBox.AnimPrev .SlideArea .anim-group > * {
+    --time: 0s !important; /* instant reset */
+    --delay: 0s !important;
     opacity: 1 !important;
-    visibility: visible !important;
     transform: none !important;
     transition: none !important;
     filter: none !important;
@@ -208,7 +211,7 @@
 }
 
 @media print { /* make print mode more robust */
-    .SlideBox .SlideArea [class*="anim-"]:not(.anim-group),
+    .SlideBox .SlideArea [class*="anim-"],
     .SlideBox .SlideArea .anim-group > * {
         opacity: 1 !important;
         visibility: visible !important;
