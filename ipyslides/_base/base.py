@@ -64,7 +64,12 @@ class BaseSlides:
     @property
     def css_animations(self):
         "CSS animations for use in content blocks."
-        return XTML(htmlize(_syntax.css_animations))
+        pages = re.split(r'^--\s*$', _syntax.css_animations, flags=re.MULTILINE)
+        if self.this: # inside running slides, show animations and pages
+            for page in self.PAGE.iter(pages[1:]): # set pages for current slide
+                self.xmd(pages[0] + "\n" + page, returns=False)
+            return # displayed automatically
+        return XTML(htmlize("\n".join(pages))) # this removes --
    
     def get_source(self, title = 'Source Code', **kwargs):
         "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.code`."

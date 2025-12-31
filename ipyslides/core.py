@@ -678,9 +678,12 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._switch_slide(old_index=change["old"], new_index=change["new"])
             self._current._run_on_load()  # Run on_load setup after switching slide, it updates footer as well
     
-    def _send_nav_msg(self, forward=True):
+    def _send_nav_msg(self, forward=True, parts=False):
         "Send navigation message to front-end on slide or frame switching."
-        self.widgets.iw.msg_tojs = "NAV:RIGHT" if forward else "NAV:LEFT"
+        msg = "NAV:RIGHT" if forward else "NAV:LEFT"
+        if parts: 
+            msg += f"/PARTS" # can be PARTS > PAGES > SLIDES if needed in future
+        self.widgets.iw.msg_tojs = msg
     
     def refresh(self):
         "Auto Refresh whenever you create new slide or you can force refresh it"

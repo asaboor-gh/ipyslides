@@ -314,18 +314,27 @@ function handleMessage(model, msg, box) {
         }
     } else if (msg.includes("NAV:")) {
         console.log("Navigation message received:", msg);
-        if (msg === "NAV:LEFT") {
-            box.querySelectorAll(':scope ._ips-content-animated').forEach(el => {
-                el.classList.remove('_ips-content-animated'); // clear animations on going back to available again
+        let slide = box.querySelector(":scope .SlideArea.ShowSlide");
+        if (!slide) return;
+
+        if (msg.includes("NAV:LEFT")) {
+            const inParts = msg.includes("/PARTS")
+            slide.querySelectorAll(':scope ._ips-content-animated').forEach(el => { 
+                if (inParts) {
+                    // In parts mode, only remove animation from elements which are invisible to avoid unnecessary re-animations
+                    const style = window.getComputedStyle(el);
+                    if (style.display === 'none' || style.visibility === 'hidden') {
+                        el.classList.remove('_ips-content-animated');
+                    }
+                } else {
+                    el.classList.remove('_ips-content-animated'); // clear animations on going back to available again
+                }
             });
-        } else if (msg === "NAV:RIGHT") {
+        } else if (msg.includes("NAV:RIGHT")) {
             // Trigger animations AFTER a microtask to ensure DOM is fully updated
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => { // Double RAF ensures layout is complete
-                    let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
-                    if (!slideNew) return;
-                    
-                    slideNew.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated), :scope .anim-group > *:not(._ips-content-animated)').forEach(el => {
+                    slide.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated), :scope .anim-group > *:not(._ips-content-animated)').forEach(el => {
                         const style = window.getComputedStyle(el);
                         if (style.display !== 'none' && style.visibility !== 'hidden') {
                             if (!el.classList.contains("anim-group")) el.classList.add('_ips-content-animated'); // anim-group itself should not be animated

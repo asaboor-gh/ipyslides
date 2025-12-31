@@ -152,8 +152,9 @@ def demo_slides(slides):
         slides.write('## Animations with Widgets')
         anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
         css = {'grid-template-columns': '1fr 2fr', '.out-main': {'height': '2em'}}
-
-        @slides.dl.interact(post_init = lambda self: self.set_css(css), html = slides.as_html_widget(''), source=s.get_source().as_widget(), anim=anim)
+        whtml = slides.as_html_widget('').add_class('anim-iris')
+        
+        @slides.dl.interact(post_init = lambda self: self.set_css(css), html = whtml, source=s.get_source().as_widget(), anim=anim)
         def _(html, source, anim):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area
@@ -212,7 +213,7 @@ def demo_slides(slides):
         s.get_source().focus([2,3,4]).display()
         slides.PAGE() # want to show source alone first
         for item in slides.PAGE.iter(boxes):
-            slides.bullets([item], marker='💘').display()
+            slides.bullets([item], marker='💘', css_class='anim-group anim-slide-left').display()
 
     with slides.build(-1) as s:
         slides.write('# Frames with \n#### code`PART.iter()` and 2x2 grid of boxes')
@@ -220,7 +221,7 @@ def demo_slides(slides):
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]
         for ws, cols in slides.PART.iter(zip(widths,objs)):
-            slides.write(*cols, widths=ws)
+            slides.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
 
     # Youtube
     from IPython.display import YouTubeVideo
@@ -284,7 +285,7 @@ def demo_slides(slides):
     --
     ::: md-src.collapsed
         ++
-        ```multicol 50 50
+        ```multicol 50 50 anim-group anim-slide-up
         $$ \int_0^1\\frac{1}{1-x^2}dx $$
         {.align-left .text-big .info}
         +++
