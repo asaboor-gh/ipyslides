@@ -183,25 +183,72 @@ class Slide:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
             
             outputs = captured.outputs
-            # Skip trailing delimiters (PAGE or PART) from the end, or empty capture
-            stop = len(outputs)
-            for i in range(stop - 1, -1, -1):
-                out = outputs[i]
-                metadata = getattr(out, 'metadata', None)
-                delim = metadata.get("DELIM", None) if metadata and isinstance(metadata, dict) else None
-                if delim in ("PAGE", "PART") or set(out.data.keys()) == {'text/plain'}:  # Check if DELIM exists or empty content
-                    stop -= 1
-                    continue
-                break # Found non-delimiter / non-empty content, stop here
-            
-            self._contents = captured.outputs[:stop]
+            # Clean up delimiters: trailing, empty, adjacent, and around PAGE boundaries
+            self._contents = self._cleanup_delimiters(outputs)
             self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display(go_there=True)    
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
-        
+    
+    def _cleanup_delimiters(self, outputs):
+        """
+        Clean up delimiters: remove outputs with only text/plain and no metadata,
+        then remove trailing, empty, adjacent PARTs/PAGEs, PART after/before PAGE.
+        """
+        # First pass: skip outputs with only text/plain and no metadata
+        filtered = []
+        for out in outputs:
+            metadata = getattr(out, 'metadata', None)
+            if set(out.data.keys()) == {'text/plain'} and not metadata:
+                continue
+            filtered.append(out)
+
+        # Build [None, "PAGE", ...] list
+        delim_list = []
+        for out in filtered:
+            metadata = getattr(out, 'metadata', None)
+            delim = metadata.get("DELIM", None) if metadata and isinstance(metadata, dict) else None
+            delim_list.append(delim if delim in ("PAGE", "PART") else None)
+
+        # Remove trailing delimiters
+        while delim_list and delim_list[-1] is not None:
+            delim_list.pop()
+        filtered = filtered[:len(delim_list)]  # sync filtered outputs
+
+        # Now, enumerate and apply rules
+        indices = []
+        prev_delim, page_streak = None, 0
+        for i, delim in enumerate(delim_list):
+            if delim is None:
+                indices.append(i)
+                prev_delim, page_streak = None, 0
+                continue
+
+            if delim == "PART":
+                # PART right before PAGE or PART after PART
+                next_delim = delim_list[i+1] if i+1 < len(delim_list) else None
+                if next_delim == "PAGE" or prev_delim == "PART":
+                    prev_delim = delim
+                    continue
+                indices.append(i)
+                prev_delim, page_streak = delim, 0
+                continue
+
+            if delim == "PAGE":
+                # Allow up to two adjacent PAGEs, but not more
+                if prev_delim == "PAGE":
+                    page_streak += 1
+                else:
+                    page_streak = 1
+                if page_streak <= 2:
+                    indices.append(i)
+                prev_delim = delim
+                continue
+
+        return [filtered[i] for i in indices] 
+           
     def update_display(self, go_there = True):
         "Update display of this slides including reloading citations, widgets etc."
         if go_there:
@@ -238,7 +285,7 @@ class Slide:
         self._reset_frames(offset = self._offset)
         self._app._update_toc()
         if go_there:
-            self._app._send_nav_msg(True) # inform JS side of reload animation on update/build time without navigation
+            self._app.run_animation() # inform JS side of reload animation on update/build time without navigation
     
     def _rebuild(self, go_there=False):
         if not self._markdown and go_there: # this avoid printing logs during bacth rebuilds
@@ -350,23 +397,31 @@ class Slide:
                         meta_row = ensure_dict(contents[i].metadata) if i in indxs else {}
                         if meta_row.get("DELIM", "") == "ROW":
                             meta_row["DELIM"] = "PART"  # change ROW to PART for frame handling
-                
-                # Check if PART is before COLUMNS to trigger increments
+                   
+                # --- PART before COLUMNS ---
                 if "COLUMNS" in meta_next:
-                    # PART before COLUMNS - trigger column incremental
+                    # Add a frame for the PART itself, unless previous frame was for this PART
+                    if index > indxs.start and not (frames and "col" in frames[-1]):
+                        frames.append({**page, "part": index})
+                    # Add frames for each column part
                     for part in contents[index + 1]._parts:
                         frames.append({**page, "part": index + 1, **part})
-                else:
-                    if (meta_prev.get("DELIM","") == "PART" # PART adjacent to PART
-                        or (frames and "col" in frames[-1])): # PART adjacent to COLUMNS
-                        continue  # skip this PART as already handled
-                    frames.append({**page, "part": index}) # add stand alone PART normally
-        
-        if (frames and frames[-1].get("part", index) != index and 
-            meta.get("DELIM", "") != "PART"): # last PART not added
+
+                # --- PART after COLUMNS ---
+                elif "COLUMNS" in meta_prev:
+                    # If last frame was built by previous columns, skip this PART
+                    if index == indxs.start or (frames and "col" in frames[-1]):
+                        continue  # skip adding extra frame after columns parts
+                    frames.append({**page, "part": index})
+
+                # --- Regular PART ---
+                elif index > indxs.start:
+                    frames.append({**page, "part": index})
+
+        # Ensure at least one frame at the end if needed
+        if frames and frames[-1].get("part", index) != index:
             frames.append({**page, "part": index})
-        return frames       
-    
+        return frames    
     @property
     def _fidxs(self): return getattr(self, '_frame_idxs', ())
     
@@ -415,7 +470,7 @@ class Slide:
             else:
                 self._app._box.remove_class("InView-Last")
         
-        self._app._send_nav_msg(which == 'next', parts = not should_animate) # inform JS side
+        self._app._send_nav_msg(which == 'next', parts = "part" in frame) # inform JS side
         if any([ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
             self.indexf == 0 and which == 'prev',
             self.indexf + 1 == self.nf and which == 'next',

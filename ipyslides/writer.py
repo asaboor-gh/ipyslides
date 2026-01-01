@@ -56,6 +56,7 @@ class Writer(ipw.HBox):
         
         super().__init__() 
         self.add_class('columns').add_class('writer') # to differentiate from other columns
+        self.layout.display = 'flex' # html export shown in notebook should follow
         
         if isinstance(css_class, str): # additional classes
             [self.add_class(c) for c in css_class.split()]
@@ -159,13 +160,13 @@ class Writer(ipw.HBox):
         cols = []
         col_idx = (visible_upto or {}).get("col", float('inf')) 
         for i, col in enumerate(self._cols):
-            flex = f'flex:{col["flex"]};height:auto;min-width:0;'
+            flex = f'flex:{col["flex"]};height:auto;min-width:0'
             if i > col_idx: # Entire column is hidden
                 content = '\n'.join(map(_fmt_html, col['outputs']))
-                cols.append(f'<div style="{flex}visibility:hidden">{content}</div>')
+                cols.append(f'<div style="{flex};visibility:hidden">{content}</div>')
             elif i < col_idx: # Entire column is visible
                 content = '\n'.join(map(_fmt_html, col['outputs']))
-                cols.append(f'<div style="{flex}">{content}</div>')
+                cols.append(f'<div style="{flex};">{content}</div>')
             else: # Current column, check rows
                 rows = []
                 row_idx = (visible_upto or {}).get("row", float('inf'))
@@ -175,7 +176,7 @@ class Writer(ipw.HBox):
                     else:
                         rows.append(f'<div style="visibility:hidden;">{_fmt_html(output)}</div>')
                 
-                cols.append(f'<div style={flex}">{"".join(rows)}</div>')
+                cols.append(f'<div style="{flex};">{"".join(rows)}</div>')
                 
         css_class = ' '.join(self._dom_classes)
         return f'<div class="{css_class}" {_inline_style(self)}>{"".join(cols)}</div>'
@@ -212,7 +213,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         - You can avoid code`repr(obj)` by code`Slides.hold(func, ...)` e.g. code`Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
         - You can use code`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
-        - In markdown `multicol/columns` block syntax is similar to `write` command if `+++` separartor is used there.
+        - In markdown `columns` block syntax is similar to `write` command if `+++` separartor is used there.
     
     ::: tip
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
@@ -221,7 +222,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         **Incremental display** is triggered only when you place `Slides.PART()` delimiter **before** the `write` command:
         
         ```python
-        slides.PART()  # Trigger incremental display, equivalent to ++ before `multicol/columns` in markdown
+        slides.PART()  # Trigger incremental display, equivalent to ++ before `columns` in markdown
         slides.write([row1, [item1, item2], row3], column2)  # Shows rows one by one (item1 and item2 together), then column2
         slides.PART()  # Another trigger for next write
         slides.write([row1, row2]) # Shows both rows incrementally , no additional columns here

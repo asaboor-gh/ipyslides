@@ -50,7 +50,7 @@ def demo_slides(slides):
     slides.build(-1, """
     ::: md-after
         section`Adding informative TOC` 
-        ```multicol .block-blue
+        ```columns .block-blue
         toc[True]`### Contents`
         +++
         vspace`1` This is summary for current section created using block syntax of toc. See `Slides.xmd.syntax` for details.
@@ -132,7 +132,7 @@ def demo_slides(slides):
             ax.spines[s].set_visible(False)
 
         ax.set(title='Race Plot', ylim = [-0.05,0.95], xticks=[],yticks=[c for c in x],yticklabels=[rf'$X_{int(c*10)}$' for c in x[_sort]])
-        return slides.plt2html(fig, transparent=False, caption='A Silly Plot')
+        return slides.html("div", slides.plt2html(fig, transparent=False, caption='A Silly Plot').value, css_class="anim-wipe-down") # class auto triggers on chnaging content
 
     with slides.build(-1) as rslide:
         slides.write('''
@@ -150,11 +150,10 @@ def demo_slides(slides):
 
     with slides.build(-1) as s:
         slides.write('## Animations with Widgets')
-        anim = slides.AnimationSlider(nframes=20, interval=100, continuous_update=False)
+        anim = slides.AnimationSlider(nframes=20, interval=1500, continuous_update=False)
         css = {'grid-template-columns': '1fr 2fr', '.out-main': {'height': '2em'}}
-        whtml = slides.as_html_widget('').add_class('anim-iris')
         
-        @slides.dl.interact(post_init = lambda self: self.set_css(css), html = whtml, source=s.get_source().as_widget(), anim=anim)
+        @slides.dl.interact(post_init = lambda self: self.set_css(center=css), html = slides.as_html_widget(''), source=s.get_source().as_widget(), anim=anim)
         def _(html, source, anim):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area
@@ -285,7 +284,7 @@ def demo_slides(slides):
     --
     ::: md-src.collapsed
         ++
-        ```multicol 50 50 anim-group anim-slide-up
+        ```columns 50 50 anim-group anim-slide-up
         $$ \int_0^1\\frac{1}{1-x^2}dx $$
         {.align-left .text-big .info}
         +++

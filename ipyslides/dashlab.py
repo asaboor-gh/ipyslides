@@ -10,6 +10,7 @@ def _hold_running_slide_builder():
     if (slides := get_slides_instance()):
         with slides._hold_running():
             yield
+        slides.run_animation(selector=dashlab.base._this_klass) # automatically run animation after this content
     else:
         yield
 

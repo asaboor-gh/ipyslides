@@ -332,12 +332,17 @@ function handleMessage(model, msg, box) {
             });
         } else if (msg.includes("NAV:RIGHT")) {
             // Trigger animations AFTER a microtask to ensure DOM is fully updated
+            let elem = msg.includes("/SELECTOR") 
+                ? slide.querySelector(":scope " + msg.replace("NAV:RIGHT/SELECTOR:", "")) 
+                : slide; // prefer specific selector if provided
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => { // Double RAF ensures layout is complete
-                    slide.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated), :scope .anim-group > *:not(._ips-content-animated)').forEach(el => {
+                    elem.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated), :scope .anim-group > *:not(._ips-content-animated)').forEach(el => {
                         const style = window.getComputedStyle(el);
                         if (style.display !== 'none' && style.visibility !== 'hidden') {
-                            if (!el.classList.contains("anim-group")) el.classList.add('_ips-content-animated'); // anim-group itself should not be animated
+                            if (!el.classList.contains("anim-group")) {
+                                el.classList.add('_ips-content-animated'); // triggers animation
+                            } // anim-group itself should not be animated
                         }
                     });
                 });

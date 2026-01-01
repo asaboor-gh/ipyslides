@@ -64,7 +64,7 @@ class BaseSlides:
     @property
     def css_animations(self):
         "CSS animations for use in content blocks."
-        pages = re.split(r'^--\s*$', _syntax.css_animations, flags=re.MULTILINE)
+        pages = _chunkify_markdown(_syntax.css_animations, sep='--')
         if self.this: # inside running slides, show animations and pages
             for page in self.PAGE.iter(pages[1:]): # set pages for current slide
                 self.xmd(pages[0] + "\n" + page, returns=False)
@@ -119,13 +119,8 @@ class BaseSlides:
 
         if synced:
             content = self._process_citations(content)
-
-        if any(map(lambda v: '\n---' in v, # I gave up on single regex after so much attempt
-            (re.findall(r'```multicol(.*?)\n```', content, flags=re.DOTALL | re.MULTILINE) or [''])
-            )):
-            raise ValueError("slides separator --- cannot be used inside multicol!")
         
-        chunks = _parse_markdown_text(content)
+        chunks = _chunkify_markdown(content)
         handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
         mdvars  = [{k:v for k,v in md_kws.items() if k in _matched_vars(chunk)} for chunk in chunks] # vars used in each chunk
 
@@ -249,7 +244,7 @@ class BaseSlides:
         3. code`slides.build(number, str, **vars)` creates many slides with markdown content. Equivalent to code`%%slide number -m` magic in case of one slide.
             - Page separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to code`Slides.sync_with_file` too.
             - Use `++` to separted content into parts for incremental display on ites own line with optionally adding content after one space.
-            - Markdown `multicol`/`columns` can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
+            - Markdown `columns` can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
             - See `slides.xmd.syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
@@ -355,7 +350,7 @@ class BaseSlides:
         self.build(-1, '''
             ```md-after
                 section`Introduction` 
-                ```multicol .block-green
+                ```columns .block-green
                 toc[True]`## Table of contents`
                 +++
                 ### This is summary of current section
@@ -578,14 +573,19 @@ class BaseSlides:
         self.navigate_to(0) # Go to title
         return self
     
-def _parse_markdown_text(text_block):
+def _chunkify_markdown(text_block, sep='---'):
     "Parses a Markdown text block and returns text for title and each slide."
     lines = textwrap.dedent(text_block).splitlines() # Remove overall indentation
     breaks = [-1] # start, will add +1 next
+    nticks = 0 # number of ``` ticks found
     for i,line in enumerate(lines):
-        if line and re.search(r'^---$|^---\s+$', line): # for hr, can add space in start
-            breaks.append(i)
-
+        if line and re.search(rf'^{sep}$|^{sep}\s+$', line): # for hr, can add space in start
+            if nticks % 2 == 0: # not inside ticked block
+                breaks.append(i)
+            # Ignore separators inside ticked blocks
+        elif re.match(r'^```', line):
+            nticks += 1
+                
     breaks.append(len(lines)) # Last one
     
     ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]

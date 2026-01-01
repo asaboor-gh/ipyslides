@@ -43,8 +43,10 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 
 Slides, Pages and Parts Separators
 : Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-Double dashes `--` (`PAGE` in Python) is used to split text in pages. Double plus `++` (`PART` in Python) can be used to increment objects in parts on slide/page.
-A `++` on its own line before `columns/multicol` block will make it reveal content incrementally, provided that columns are separated by `+++`.
+Double dashes `--` (`PAGE` in Python) is used to split text in pages. 
+Both `---` and `--` should be on their own lines in main content (not inside block syntax) to be recognized as slide/page separators.
+Double plus `++` (`PART` in Python) can be used to increment objects in parts on slide/page.
+A `++` on its own line before `columns` block will make it reveal content incrementally, provided that columns are separated by `+++`.
 The combinations of pages and parts create frames on slides. Note that only `++` allows content on same line after it and following lines.
 
 Sections & TOC
@@ -97,7 +99,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
-    | `::: columns/multicol [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. |
+    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `<md-var_name/>`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
@@ -117,7 +119,7 @@ Inline Columns
 : Inline columns/rows can be added by using alert`stack\`Column A || Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
 
 Block Columns
-: You can create columns using `::: columns` or `::: multicol` syntax. 
+: You can create columns using `::: columns` syntax. 
 Column separator is triple plus `+++` if intended in display mode and should be a `++` before block to make it incremental.
 
 ```md-before
@@ -264,7 +266,8 @@ css_animations = '''
 
 All animations are **fully composable** - combine multiple animation classes to create complex effects! Use `anim-group` on a parent container to apply staggered animations to all children.
 
-Python functions accepting `css_class` parameter can use these animation classes directly, such as `Slide.write(..., css_class='anim-slide-left anim-zoom')` and tweak variables if `**css_props` parameter is available.
+- Python functions accepting `css_class` parameter can use these animation classes directly, such as `Slide.write(..., css_class='anim-slide-left anim-zoom')` and tweak variables if `**css_props` parameter is available.
+- You can used `Slides.run_animation` on demand with optional selector to target specific elements on slide after they are built. `dashlab` integration automatically runs animations after content inside changes.
 
 Animation Class        | Description                                                                                                 | Effective Variables (`--time`: 0.6s, `--delay`: 0s` for all)
 :----------------------|:------------------------------------------------------------------------------------------------------------|:-------------------------------------------

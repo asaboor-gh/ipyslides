@@ -12,6 +12,7 @@ from IPython.display import display, clear_output
 from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim
+from ._base.base import _chunkify_markdown
 from . import utils
 from . import dashlab
 
@@ -661,8 +662,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children[old_index].remove_class("ShowSlide").add_class("HideSlide")
         self.widgets.slidebox.children[new_index].add_class("ShowSlide").remove_class("HideSlide")
         self.widgets.iw.msg_tojs = 'SwitchView'
-        if not slide._fidxs: # do after ShowSlide available on naviagted slide
-            self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
+        # do after ShowSlide available on naviagted slide
+        self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
 
     def _update_content(self, change):
         if self.wprogress.value == 0:  # First slide
@@ -678,12 +679,21 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._switch_slide(old_index=change["old"], new_index=change["new"])
             self._current._run_on_load()  # Run on_load setup after switching slide, it updates footer as well
     
-    def _send_nav_msg(self, forward=True, parts=False):
+    def _send_nav_msg(self, forward=True, parts=False, selector=None):
         "Send navigation message to front-end on slide or frame switching."
         msg = "NAV:RIGHT" if forward else "NAV:LEFT"
-        if parts: 
+        if selector is not None:
+            msg += f"/SELECTOR:{selector}"
+        elif parts: 
             msg += f"/PARTS" # can be PARTS > PAGES > SLIDES if needed in future
         self.widgets.iw.msg_tojs = msg
+    
+    def run_animation(self, selector=None):
+        """Run animation of current slide from python side. 
+        Optionally, you can provide CSS selector to restrict animation inside specific element.
+        In dashlab's interactive components, animation is run automatically when a content with `anim-` class is created each time.
+        """
+        self._send_nav_msg(forward=True, selector=selector)
     
     def refresh(self):
         "Auto Refresh whenever you create new slide or you can force refresh it"
@@ -749,7 +759,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         ::: note
             - If Markdown is separated by two dashes (--) on it's own line, multiple pages are created in a slide.
             - You can add ++ (plus plus) in the content staring on new line to add parts which reveal incrementally.
-            - Parts separator (++) just before `multicol`/`columns` creates incremental columns and rows.
+            - Parts separator (++) just before `columns` creates incremental columns and rows.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
             - 
 
@@ -764,17 +774,12 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         slide_number = int(line[0])  # First argument is slide number
 
-        if "-m" in line[1:]:
-            if any(map(lambda v: re.search(r"^\s*--\s*$",v, flags=re.DOTALL | re.MULTILINE), 
-                (re.findall(r'```multicol(.*?)\n```', cell, flags=re.DOTALL | re.MULTILINE) or [''])
-                )):
-                raise ValueError("frame separator -- cannot be used inside multicol!")
-            
-            frames = re.split(r"^\s*--\s*$", cell, flags=re.DOTALL | re.MULTILINE)  # Split on -- or --\s+
+        if "-m" in line[1:]:            
+            frames = _chunkify_markdown(cell, sep='--')
             edit_idx = 0
 
             with _build_slide(self, slide_number) as s:
-                prames = re.split(r"^\s*--\s*$", s._markdown, flags=re.DOTALL | re.MULTILINE)   
+                prames = _chunkify_markdown(s._markdown, sep='--')  
                 # Update source beofore parsing content to make it available for variable testing
                 s._set_source(cell, "markdown") # set source before running to have it available for user
                 vars = _matched_vars(cell) # update has_vars before running to have ready for auto rebuild
@@ -838,7 +843,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             
             self.settings.footer._apply_change(None) # sometimes it is not updated due to message lost, so force it too
             self._current._set_progress() # update display can take it over to other sldies
-            self._send_nav_msg(True)  # to trigger any animation on current slide on refresh
+            self.run_animation()  # to trigger any animation on current slide on refresh
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
@@ -924,7 +929,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         - Adjacent `PART` delemiters are ignored, so no empty parts are created.
         - A call `PART()` before `write` command adds parts inside columns and rows. 
-          See `write` command for more details. This is equivalent to adding `++` before `columns/multicol` block in markdown.
+          See `write` command for more details. This is equivalent to adding `++` before `columns` block in markdown.
         - A call `PART(*contents)` adds a part with given contents right away and adds a separator after it.
         - Use code`PART.iter(iterable)` to create multiple parts from iterable automatically.
         - Last empty PART delimiter is ignored on slide/page.

@@ -210,6 +210,14 @@
     pointer-events: auto !important;
 }
 
+/* These slide directions (with --translate) need overflow hidden to avoid scrollbars during/left over after animation */
+.SlideArea [class*="anim-slide"],
+.SlideArea [class*="anim-slide"].anim-group
+.SlideArea .anim-bounce,
+.SlideArea .anim-group.anim-bounce {
+    overflow: hidden;
+}
+
 @media print { /* make print mode more robust */
     .SlideBox .SlideArea [class*="anim-"],
     .SlideBox .SlideArea .anim-group > * {
@@ -286,12 +294,12 @@
 
 .anim-wipe-down:not(.anim-group),
 .anim-group.anim-wipe-down > * { 
-    clip-path: inset(100% 0 0 0);
+    clip-path: inset(0 0 100% 0);
 }
 
 .anim-wipe-up:not(.anim-group),
 .anim-group.anim-wipe-up > * { 
-    clip-path: inset(0 0 100% 0);
+    clip-path: inset(100% 0 0 0);
 }
 
 /* --- IRIS ANIMATION (circular reveal with --origin) --- */

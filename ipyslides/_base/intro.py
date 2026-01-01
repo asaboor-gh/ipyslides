@@ -30,7 +30,7 @@ slides = isd.Slides()
 ```python
 %%slide 2 -m 
 **Markdown here with extended options (see `slides.xmd.syntax` for info). Nested blocks are not supported**
- ```multicol 30 70 .success
+ ```columns 30 70 .success
  less content
  +++
  more content

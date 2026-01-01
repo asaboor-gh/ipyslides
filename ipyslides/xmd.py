@@ -360,7 +360,7 @@ class XMarkdown(Markdown):
         return get_main_ns()  # top scope at end
 
     def _parse(self, xmd, returns = True): # not intended to be used directly
-        """Return a string after fixing markdown and code/multicol blocks returns = True
+        """Return a string after fixing markdown and code blocks returns = True
         otherwise displays objects given as vraibales may not give their proper representation.
         """
         self._returns = returns  # Must change here
@@ -393,16 +393,15 @@ class XMarkdown(Markdown):
                 outputs.extend(self._parse_block(*obj))  # vars are substituted already inside, obj = (header, data)
             elif content := obj.strip():  # raw text but avoid empty stuff
                 parts = list(self._split_parts(content))
-                for n, part in enumerate(parts, start=1):
+                for part in parts:
                     out = self.convert(part) 
+                    if len(parts) > 1: # avoid adding PART for single chunk
+                        outputs.append(_delim("PART")) # add before part as we do for blocks above
                     if isinstance(out, list):
                         outputs.extend(out)
                     elif out: # Some syntax like section on its own line can leave empty block later
                         outputs.append(XTML(out))
 
-                    if not self._returns and n < len(parts):  # only add delim if displaying directly
-                        outputs.append(_delim("PART"))
-        
         if not self._nesting_depth: # we need to keep these if nested parsing
             self._vars = {} # reset at end to release references
             self._fmt_ns = {} # reset back at end
@@ -451,12 +450,13 @@ class XMarkdown(Markdown):
                     numbers.append(float(value) if '.' in value else int(value))
                 else:
                     args.append((value.replace('.',' ') if args else value).strip()) # remove . from classes except from directive name
-        sizes = numbers if numbers else None # making None is important for multicol and stack 
+        sizes = numbers if numbers else None # making None is important for columns and stack 
         # flatten node_attrs to a string, but not css properties
         node_attrs = ' '.join(f'{k}="{v}"' for k, v in node_attrs.items())
         
         if args:
             typ, prop = args[0].split('.',1) if '.' in args[0] else (args[0], '')
+            if typ == "multicol": typ = "columns" # for backward compatibility
             return typ, prop, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
         return '', '', sizes, '', kwargs, node_attrs
 
@@ -540,15 +540,15 @@ class XMarkdown(Markdown):
             with self.active_parser(), capture_content() as cap:
                 self._wr.write(data, css_class=_class)
             return cap.outputs
-        elif typ in ("multicol","columns") and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns and multicol with display mode
-            return self._parse_multicol(data, widths, _class) # simple columns will be handled inline 
+        elif typ == "columns" and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns with display mode
+            return self._parse_columns(data, widths, _class) # simple columns will be handled inline 
         elif "md-" in typ:
             return self._parse_md_src(data, header)
         elif typ == "table":
             return self._parse_table(data, widths, _class, css_props, attrs)
         elif typ == "code":
             return self._parse_code(data, prop, widths, _class, css_props, attrs)
-        elif header.strip().startswith(":::") or typ in ("columns","multicol"): # simple flex ```columns without +++ or ::: block
+        elif header.strip().startswith(":::") or typ == "columns": # simple flex ```columns without +++ or ::: block
             return self._parse_colon_block(header, data)
         else:
             out = XTML() # empty placeholder
@@ -578,7 +578,7 @@ class XMarkdown(Markdown):
             return [XTML(f"<{tag} class='{_class}' {_inline_style(css_props)} {attrs}>{out}</{tag}>")]
         
         style = "" # style for columns if widths are given
-        if tag in ("multicol","columns")  and widths: # columns with inline mode
+        if tag == "columns"  and widths: # columns with inline mode
             css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
             klass = f"c-{id(widths)}" # unique class for columns
             _class = f"{_class} {klass}" if _class else klass # add klass
@@ -586,7 +586,7 @@ class XMarkdown(Markdown):
             style = f"<style>.{klass} > p:empty {{display:none;}}\n{style}</style>" # empty p tags should not be treated as columns
             
         # treat tag as class if not given at end
-        _class = " ".join([tag, _class, "columns" if tag == "multicol" else ""]) # add columns class if multicol
+        _class = " ".join([tag, _class])
         return [XTML(f"<div class='{_class}' {_inline_style(css_props)} {attrs}>{self._parse_nested(data, returns=True)}</div>{style}")]
     
     def _parse_code(self, data, prop, focus_lines, _class, props, attrs):
@@ -643,7 +643,7 @@ class XMarkdown(Markdown):
         if "after" in typ: outputs.append(src)
         return outputs
 
-    def _parse_multicol(self, data, widths, _class):
+    def _parse_columns(self, data, widths, _class):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
         if not widths:
@@ -742,7 +742,7 @@ class XMarkdown(Markdown):
                         f'{self._var_info(m.group())} cannot be displayed in current context or nesting level '
                         'because markdown parser was requested to return a string by the caller. '
                         'Display contexts such as write function or markdown columns block in '
-                        'display mode (+++ separtor used in multicol/columns) show object properly.'
+                        'display mode (+++ separtor used in columns) show object properly.'
                     ).value,
                     text
                 )
