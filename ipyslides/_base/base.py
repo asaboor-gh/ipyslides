@@ -1,5 +1,5 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
-import os, re, textwrap, json
+import os, re, textwrap
 import traceback
 from pathlib import Path
 from contextlib import ContextDecorator
@@ -14,9 +14,8 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML, htmlize
-from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars
+from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_pages
 from ..utils import _css_docstring
-from ._syntax import css_animations
 
 
 class BaseSlides:
@@ -64,12 +63,7 @@ class BaseSlides:
     @property
     def css_animations(self):
         "CSS animations for use in content blocks."
-        pages = _chunkify_markdown(_syntax.css_animations, sep='--')
-        if self.this: # inside running slides, show animations and pages
-            for page in self.PAGE.iter(pages[1:]): # set pages for current slide
-                self.xmd(pages[0] + "\n" + page, returns=False)
-            return # displayed automatically
-        return XTML(htmlize("\n".join(pages))) # this removes --
+        return _parse_pages(_syntax.css_animations)
    
     def get_source(self, title = 'Source Code', **kwargs):
         "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.code`."
@@ -322,7 +316,7 @@ class BaseSlides:
         "Create presentation from docs of IPySlides."
         self.close_view() # Close any previous view to speed up building (minor effect but visually better)
         self.clear() # Clear previous content
-        self.create(range(32)) # Create slides faster
+        self.create(range(21)) # Create slides faster
         
         from ..core import Slides
 
@@ -360,10 +354,11 @@ class BaseSlides:
             ```''', btn = self.draw_button)
             
         with self.build(-1):
+            self.PAGE()
             self.write('# Main App')
             self.doc(Slides).display()
-        
-        with self.build(-1):
+            
+            self.PAGE()
             self.write('# Jump between slides')
             self.doc(self.link, 'Slides').display()
             with self.code.context(returns=True) as c:
@@ -371,12 +366,12 @@ class BaseSlides:
                 skipper.origin.display() # skipper.target is set later somewhere, can do backward jump too
             c.display()
         
-        with self.build(-1):
+            self.PAGE()
             self.write('## Adding Slides section`Adding Slides and Content`')
             self.write('Besides function below, you can add slides with `%%slide number [-m]` magic as well.\n{.note .info}')
             self.write([self.doc(self.build,'Slides'), self.doc(self.sync_with_file,'Slides')])
         
-        with self.build_():
+            self.PAGE()
             self.write('''
                 ## Important Methods on Slide
                 ::: note-warning
@@ -386,20 +381,22 @@ class BaseSlides:
             self.doc(self[0], members='yoffset vars set_animation set_bg_image update_display get_source show set_css'.split(), itself = False).display()
             self.css_syntax.display()
         
-        self.build(-1, re.sub(r'^---\s*$', '---\n## Extended Markdown' ,_syntax.xmd_syntax, flags=re.MULTILINE))
+        with self.build(-1): 
+            self.xmd.syntax.display()
             
         with self.build(-1):
+            self.PAGE()
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
             self.write(self.doc(self.write,'Slides'), [self.doc(self.xmd,'Slides'),self.doc(self.as_html,'Slides'),self.doc(self.as_html_widget,'Slides'),self.doc(self.html,'Slides')])
         
-        with self.build(-1):
+            self.PAGE()
             self.write('## Adding Speaker Notes')
             self.write([rf'styled["note success"]`You can use alert`notes\`notes content\`` in markdown.`',
                        'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
             self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
                    
-        with self.build(-1):
+            self.PAGE()
             self.write('## Displaying Source Code')
             self.write('In markdown, the block `md-[before,after,var_name]` parses and displays source as well.')
             self.doc(self.code,'Slides', members = True, itself = True).display()
@@ -479,7 +476,8 @@ class BaseSlides:
         <md-src/>
         """, self=self)
         
-        self.build(-1, css_animations)
+        with self.build(-1):
+            self.css_animations.display()
         
         self.build(-1, '''
         ## Highlighting Code
@@ -511,7 +509,7 @@ class BaseSlides:
         
             for ws, cols in self.PART.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
                 cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
-                self.write(*cols, widths=ws)
+                self.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
                     
         with self.build(-1) as s:
             self.write('## Adding User defined Objects/Markdown Extensions')

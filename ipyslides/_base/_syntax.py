@@ -36,7 +36,7 @@ Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style'
 
 xmd_syntax = rf'''
 ## Extended Markdown
-                                       
+--                                       
 Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) supports almost full presentation from Markdown.
 
 **Presentation Structure**{{.text-big}}
@@ -73,7 +73,7 @@ code["markdown"]`
     \@key2: A citations can span multiple lines, but key should start on new line
 `
 
----
+--
 
 **Content Blocks**{{.text-big}}
 
@@ -111,7 +111,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and get deleted on first use.
     - Both `code` and `md-var` blocks support attribute access such as `::: code.collapsed` or `::: md-var.inline` to show selected view. 
     You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
----
+--
 
 **Layouts**{{.text-big}}
 
@@ -141,7 +141,7 @@ Column separator is triple plus `+++` if intended in display mode and should be 
         ::: li | This follows disc marker from parent `ul` block.
 ```
 
----
+--
 
 **Code Display**{{.text-big}}
 
@@ -173,7 +173,7 @@ Code Blocks
     <md-src/>
 ```
 
----
+--
 
 **Variables Substitution**{{.text-big}}
 
@@ -201,7 +201,7 @@ Variables from Python code can be embedded directly into Markdown.
 - Widgets behave same with or without `:nb` format spec. 
 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
     
----
+--
 
 **Inline Python Functions**{{.text-big}}
 
@@ -227,7 +227,7 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
     ////`
 ```
 
----
+--
 **General Syntax**{{.text-big}}
 
 - Use alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format.
@@ -237,6 +237,7 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
 - Escape a backtick with backslash, i.e. alert`\\` → \``, other escape characters include alert`@, %, /, |`. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
 - Use `_\`sub\`` and `^\`sup\``  for subscript and superscript respectively, e.g. H_`2`O, E = mc^`2`.
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
+- See `Slides.css_animations` for available CSS animation classes to use in markdown blocks and other places.
 - Definition list syntax:
 ```md-src.inline
 ::: columns

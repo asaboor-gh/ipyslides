@@ -46,6 +46,14 @@ def _fmt_html(output):
     
     return serializer._export_other_reprs(output)
 
+def _style_for_widget(widget, **css_props):
+    "Not all widgets support all CSS properties, so we build style from user specified props."
+    if not css_props or not isinstance(widget, ipw.DOMWidget):
+        return
+    uklass = f"wuid-{id(widget)}"
+    widget.add_class(uklass) # unique class for this writer
+    klass = '.' + '.'.join(widget._dom_classes)  # pick all classes to pass vriables at local scope
+    return f'<style>\n{_build_css((klass,), css_props)}\n</style>'
 
 class Writer(ipw.HBox):
     _in_write = False
@@ -56,7 +64,7 @@ class Writer(ipw.HBox):
         
         super().__init__() 
         self.add_class('columns').add_class('writer') # to differentiate from other columns
-        self.layout.display = 'flex' # html export shown in notebook should follow
+        self.layout.display = css_props.get('display', 'flex') # html export as well as user specified should be honored
         
         if isinstance(css_class, str): # additional classes
             [self.add_class(c) for c in css_class.split()]
@@ -85,7 +93,7 @@ class Writer(ipw.HBox):
     def data(self): return self._repr_mimebundle_() # Required to mimic RichOutput
     
     @property
-    def metadata(self): return {'UPDATE': self._model_id,"COLUMNS": ""} # Required to update both display and frames
+    def metadata(self): return {'_MODEL_ID': self._model_id,"COLUMNS": ""} # Required to update both display and frames
 
     def __repr__(self):
         return f'<{self.__module__}.Writer at {hex(id(self))}>'
@@ -113,10 +121,7 @@ class Writer(ipw.HBox):
             ))
             with capture_content() as cap:
                 if i == 0 and css_props: # display CSS in first column only
-                    uklass = f"wr-{id(self)}"
-                    self.add_class(uklass) # unique class for this writer
-                    klass = '.' + '.'.join(self._dom_classes)  # pick all classes to pass vriables at local scope
-                    XTML(f'<style>\n{_build_css((klass,), css_props)}\n</style>') .display() 
+                    XTML(_style_for_widget(self, **css_props)).display() 
                     
                 for c in rows:
                     if isinstance(c,(fmt, RichOutput, ipw.DOMWidget)):

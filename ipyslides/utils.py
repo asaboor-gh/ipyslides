@@ -26,6 +26,8 @@ from dashlab.utils import _build_css # This is very light weight and too importa
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption
 from .xmd import get_unique_css_class, capture_content, raw, error, warn
 from .source import code
+from .writer import _style_for_widget
+
 
 def is_jupyter_session():
      "Return True if code is executed inside jupyter session even while being imported."
@@ -427,7 +429,8 @@ _patch_display = lambda obj: setattr(obj, 'display', MethodType(XTML.display, ob
 def styled(obj, css_class=None, **css_props):
     """Add a class to a given object, whether a widget or html/IPYthon object.
     CSS inline style properties should be given with names including '-' replaced with '_' but values should not.
-    Only a subset of inline properties take effect if obj is a widget.
+    A widget will be wrapped in a Box to apply class and styles which otherwise may not work properly for some widgets.
+    If you need a styled, yet not a block level widget, use `display="inline-grid"` in `css_props`.
 
     ::: note-tip
         Objects other than widgets will be wrapped in a 'div' tag. Use `html` function if you need more flexibility.
@@ -435,13 +438,30 @@ def styled(obj, css_class=None, **css_props):
     klass = css_class if isinstance(css_class, str) else ''
 
     if isinstance(obj,ipw.DOMWidget):
-        if hasattr(obj, 'layout'):
-            kwargs = {k.replace('_','-'):v for k,v in css_props.items()}
-            for k,v in kwargs.items():
-                setattr(obj.layout, k, v)
-        _patch_display(obj)
-        return obj.add_class(klass)
+        if not any([css_class, css_props]): 
+            _patch_display(obj) # user expects this function might has display
+            return obj # nothing to do
+        # We need a box to properly handle class and props
+        # Some AyWidget-based widgets struggle with class and style directly
+        # While others like plotly FigureWidget has different meaning of layout
+        out = ipw.Box([obj])
+        if klass: [out.add_class(k) for k in klass.split()] # needs each class separately
+        _patch_display(out)
+        
+        # Attach few inline properties, inline-grid is better for most widgets
+        out.layout.padding = str(css_props.get('padding', 0)) 
+        out.layout.margin = str(css_props.get('margin', 0)) 
+        
+        if not css_props: 
+            return out
+        
+        style = ipw.HTML(_style_for_widget(out, **css_props))
+        style.layout.position = 'absolute' # to avoid taking space
+        out.children = [style, obj] # style before obj to apply first
+        return out
     else:
+        # Same properties in div
+        css_props = {"padding": 0, "margin": 0, **css_props}
         return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{htmlize(obj)}</div>')
     
 def focus(obj):

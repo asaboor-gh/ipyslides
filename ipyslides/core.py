@@ -904,8 +904,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         In markdown slides, use two dashes -- on its own line.
         
         - Content before first PAGE delimiter is added on all pages. This helps adding same title once.
-        - If there is no content after PAGE, a page with header content is created.
-        - Last empty PAGE delimiter is ignored.
+        - If there is no content after PAGE, a page with header content is created or kept empty unless it is the last PAGE delimiter.
+        - Using `PAGE` delimiter frequently improves the perforamce and memory usage compared to pure slides.
         - Use code`PAGE.iter(iterable)` to create multiple pages from iterable automatically.
         """
         _type = "PAGE"
@@ -914,14 +914,27 @@ class Slides(BaseSlides,metaclass=Singleton):
             display(_delim(self._type))
         
         @classmethod
-        def iter(cls, iterable):
-            "Loop over given iterable by adding a separator before each item and at end of the loop."
+        def _optional_trail(self, trail):
+            if trail is True: display(_delim(self._type))
+            elif trail in ("PART", "PAGE"): display(_delim(trail))
+            elif trail is not False: 
+                raise ValueError(f"trail should be True, False, 'PART' or 'PAGE', got {trail!r}")
+        
+        @classmethod
+        def iter(cls, iterable, trail=True):
+            """Loop over given iterable by adding a separator before each item.
+            If `trail` is True (default), a separator of this type is added at end as well.
+            You can also set `trail` to 'PART' or 'PAGE' to add that type of separator at end instead 
+            or set to False to avoid adding any separator at end, while is useful to avoid incremental 
+            behavior in next write command in case of PART delimiter.
+            """
             if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
                 raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
             for item in iterable:
                 cls() # put one separator before
                 yield item
-            cls() # put after all done to keep block separated
+            # This will be only one separator at end if no items were yielded, its like itself called once
+            cls._optional_trail(trail) # put one separator at end if needed, default True
 
     class PART(PAGE):
         """Part delimiter! Use `Slides.PART()` or import at top level to create a new part in slide/page.
@@ -930,13 +943,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Adjacent `PART` delemiters are ignored, so no empty parts are created.
         - A call `PART()` before `write` command adds parts inside columns and rows. 
           See `write` command for more details. This is equivalent to adding `++` before `columns` block in markdown.
-        - A call `PART(*contents)` adds a part with given contents right away and adds a separator after it.
+        - A call `PART(*parts)` adds multiple parts right away. A part wrapped in list/tuple is treated as a singe part with multiple rows.
+          - You can style each part explicitly using `styled` function if needed, or use `write` command explicitly.
+          - You can add trailing delimiter using `trail` argument as True/'PART'/'PAGE' or False to avoid it. Default is True and only inserted if `*parts` were given.
+          - Setting `trail=False` is useful when next command is `write` and you do NOT want it to be incremental.
         - Use code`PART.iter(iterable)` to create multiple parts from iterable automatically.
         - Last empty PART delimiter is ignored on slide/page.
         """
         _type = "PART"
         
-        def __init__(self, *contents, css_class=None):
+        def __init__(self, *parts, trail=True):
             super().__init__()
-            write([contents], css_class=css_class) # do not let write add extra delimiter in contents
-            display(_delim(self._type)) # separtor after content is important
+            write(parts) # If user want style, they should use styled function explicitly, here write just need to display rows
+            if parts: type(self)._optional_trail(trail) # separtor after content is important

@@ -14,9 +14,12 @@ import ipywidgets as ipw
 
 from IPython.display import display, HTML, Audio, Video, Image as IPyImage
 from IPython.display import __dict__ as _all
-from IPython.utils.capture import RichOutput, capture_output
+from IPython.utils.capture import RichOutput, CapturedIO, capture_output
 from IPython import get_ipython
 from dashlab.utils import _inline_style
+
+# Patch CapturedIO to for a display method
+CapturedIO.display = CapturedIO.show # for completenes with other returns
 
 __reprs = [rep.replace('display_','') for rep in _all if rep.startswith('display_')] # Can display these in write command
 
@@ -556,7 +559,11 @@ def frozen(obj, metadata=None):
     Returned object has a display method, or can be directly passed to display/write commands.
     """
     if isinstance(obj, str):
-        return RichOutput(data={'text/plain':'', 'text/html': obj}) # no metadta required
+        return RichOutput(data={'text/plain':'', 'text/html': obj}) # no metadata required
+    
+    if isinstance(obj, CapturedIO):
+        obj._ipython_display_ = obj.show # This is important to not being caught by altformatter
+        return obj # already frozen object
 
     with altformatter.reset(), capture_output() as cap:
         metadata= serializer.get_metadata(obj) if metadata is None else metadata
@@ -565,7 +572,6 @@ def frozen(obj, metadata=None):
     if len(cap.outputs) == 1:
         return cap.outputs[0] # single object
     
-    cap.display = cap.show # for completenes with other returns
     cap._ipython_display_ = cap.show # This is important to not being caught by altformatter
     return cap
     

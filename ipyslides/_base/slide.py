@@ -277,7 +277,7 @@ class Slide:
             for obj in self.contents:
                 display(obj)
                 if hasattr(obj, 'update_display'): 
-                    obj.update_display() # UPDATE metadata objects like columns
+                    obj.update_display() # Update metadata objects like columns
                 elif (w := widget_from_data(obj.data)): # Output on top or in children
                     [c.update_display() for c in getattr(w, 'children',[w]) if isinstance(c, _Output)]
             
@@ -675,8 +675,8 @@ class Slide:
     def contents(self):
         outputs = []
         for out in self._contents:
-            if "UPDATE" in out.metadata: # need this for export
-                outputs.append(widget_from_data(out.metadata["UPDATE"]))
+            if "_MODEL_ID" in out.metadata: # need this for export
+                outputs.append(widget_from_data(out.metadata["_MODEL_ID"]))
             elif 'DataTOC' in out.metadata:
                 outputs.append(self._reset_toc())
             else:

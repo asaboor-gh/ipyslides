@@ -13,7 +13,8 @@ from IPython.display import display
 from IPython.utils.capture import capture_output
 from ipywidgets import DOMWidget
 
-from .formatters import XTML, altformatter, _highlight, htmlize, get_slides_instance, _inline_style, _delim
+from .formatters import (XTML, altformatter, htmlize, get_slides_instance, 
+    frozen, widget_from_data, _highlight, _inline_style, _delim)
 from .source import SourceCode
 
 _md_extensions = [
@@ -538,10 +539,10 @@ class XMarkdown(Markdown):
             )]
         elif typ == "display":
             with self.active_parser(), capture_content() as cap:
-                self._wr.write(data, css_class=_class)
+                self._wr.write(data, css_class=_class, **css_props)
             return cap.outputs
         elif typ == "columns" and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns with display mode
-            return self._parse_columns(data, widths, _class) # simple columns will be handled inline 
+            return self._parse_columns(data, widths, _class, css_props) # simple columns will be handled inline 
         elif "md-" in typ:
             return self._parse_md_src(data, header)
         elif typ == "table":
@@ -582,7 +583,10 @@ class XMarkdown(Markdown):
             css_props = {"display":"flex", **css_props} # add display flex for in notebook formatting
             klass = f"c-{id(widths)}" # unique class for columns
             _class = f"{_class} {klass}" if _class else klass # add klass
-            style = '\n'.join(f".{klass} > :nth-child({i+1}) {{flex: {w} 1;}}" for i, w in enumerate(widths)) # nth-child selectors
+            widths = [float(w) for w in widths]
+            widths = [w/(sum(widths) or 1) for w in widths] # allow relative column widths
+            style = '\n'.join(f".{klass} > :nth-child({i+1}) {{flex: {w:.3f} {w:.3f} {100*w:.3f}%;}}" for i, w in enumerate(widths)) # nth-child selectors
+            style += '\n' + f".{klass} > :nth-child({len(widths)}) ~ * {{flex: {min(widths):.3f} {min(widths):.3f} {100*min(widths):.3f}%;}}" # rest all columns get min width
             style = f"<style>.{klass} > p:empty {{display:none;}}\n{style}</style>" # empty p tags should not be treated as columns
             
         # treat tag as class if not given at end
@@ -643,7 +647,7 @@ class XMarkdown(Markdown):
         if "after" in typ: outputs.append(src)
         return outputs
 
-    def _parse_columns(self, data, widths, _class):
+    def _parse_columns(self, data, widths, _class, css_props):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
         if not widths:
@@ -662,30 +666,27 @@ class XMarkdown(Markdown):
             widths = [100*w/sum(widths) for w in widths] # allow relative column widths
         
         # Under any display context
-        if not self._returns:
-            cap_cols = []
-            for col in cols:
-                rows = [] # list to make row-wise parts
-                for row in self._split_parts(col):
-                    with capture_content() as cap:
-                        self._parse_nested(row,returns=False)
-                    rows.append(cap.outputs)
-                cap_cols.append(rows) 
-
-            with self.active_parser(), capture_content() as cap:
-                self._wr.write(*cap_cols, widths=widths, css_class=_class)
+        cap_cols = []
+        for col in cols:
+            rows = [] # list to make row-wise parts
+            for row in self._split_parts(col):
+                with capture_content() as cap:
+                    if self._returns: self._show_disply_error = True # to show error in display var resolution if top level returns
+                    try:
+                        self._parse_nested(row,returns=False) # +++ splitted context always display mode
+                    finally:
+                        if hasattr(self, '_show_disply_error'): del self._show_disply_error # cleanup
+                        
+                rows.append(cap.outputs)
+            cap_cols.append(rows) 
             
+        with self.active_parser(), capture_content() as cap:
+            self._wr.write(*cap_cols, widths=widths, css_class=_class, **css_props)
+            
+        if not self._returns:
             return cap.outputs
-        
-        cols = ['\n'.join(self._parse_nested(row,returns=True) for row in self._split_parts(col)) for col in cols]
-        if len(cols) == 1: # do not return before checking widths and adding extra cols if needed
-            return [XTML(f'<div class={_class}">{cols[0]}</div>' if _class else cols[0])]
-
-        cols = "".join(
-            [f"""<div style='width:{w}%;overflow-x:auto;height:auto;position:relative;'>{col}</div>"""
-                for col, w in zip(cols, widths)])
-
-        return [XTML(f'<div class="columns {_class}" style="display:flex;">{cols}\n</div>')] # display for notebook
+        else:
+            return [XTML("\n".join(self._wr._fmt_html(out) for out in cap.outputs))]
     
     def convert(self, text):
         """Replaces variables with placeholder after conversion to respect all other extensions.
@@ -734,7 +735,7 @@ class XMarkdown(Markdown):
     def _resolve_vars(self, text):
         "Substitute saved variables"
         if re.findall(r'DISPLAYVAR(\d+)DISPLAYVAR', text):
-            if self._returns:
+            if self._returns or getattr(self, '_show_disply_error', False):
                 text = re.sub(
                     r'DISPLAYVAR(\d+)DISPLAYVAR', 
                     lambda m: error(
@@ -930,7 +931,7 @@ class _XMDMeta(type):
     def syntax(self) -> XTML:
         "Extnded markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
-        return XTML(htmlize(xmd_syntax))
+        return _parse_pages(xmd_syntax)
     
     @staticmethod
     def parse(content: Union[str, fmt], returns:bool=False) -> Optional[str]: # This is intended to be there, not redundant
@@ -964,3 +965,18 @@ class xmd(metaclass=_XMDMeta):
         return cls.parse(content, returns=returns) # Call parse method directly
 
 xmd.parse.__doc__ = xmd.__doc__
+
+def _parse_pages(markdown):
+    "Parse pages from markdown content using -- separator."
+    if not isinstance(markdown, str):
+        raise TypeError(f"markdown expects a string, got {markdown!r}")
+    
+    from ._base.base import _chunkify_markdown # circular import
+    
+    pages = _chunkify_markdown(markdown, sep='--')
+    with capture_content() as cap:
+        for page in pages[1:]: # set pages for current slide
+            display(_delim("PAGE"))
+            xmd(pages[0] + "\n" + page, returns=False)
+        display(_delim("PAGE")) # split from rest of content, will be ignored if last
+    return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
