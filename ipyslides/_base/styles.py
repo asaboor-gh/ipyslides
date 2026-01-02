@@ -543,7 +543,7 @@ def style_css(colors, fonts, layout, _root = False):
                     "text-align": "center", # not important to allow user override
                 },
             }, # no yoffset on title slide, leave it centered globally, unless user applys yoffset there
-            **({'*': {
+            **({'*:not(.mode-popup-active)': { # avoid effecting popup zoomed content
                 'max-height':'max-content !important',
                 }
             } if layout._reflow else {}), # clean way to reflow all content
