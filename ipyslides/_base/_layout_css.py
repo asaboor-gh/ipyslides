@@ -333,10 +333,18 @@ def layout_css(accent_color, aspect):
                     "color": "var(--accent-color) !important",
                 },
                 ".widget-dropdown": {
-                    "> select, > select > option": {
-                        "color": "var(--fg1-color) !important",
-                        "font-family": "var(--jp-content-font-family) !important", # why system fonts here?
-                        "background": "var(--bg1-altcolor) !important",
+                    "> select": { # Jupyter theme variables need additional fallbacks for dropdown
+                        "color": "var(--fg1-color, var(--jp-content-font-color0)) !important",
+                        "background": "var(--bg1-altcolor, var(--jp-cell-editor-background)) !important",
+                        "border": "1px solid var(--bg3-color, var(--jp-layout-color2)) !important",
+                        "border-radius": "4px !important",
+                        "padding": "4px 8px !important",
+                        "box-shadow": "none !important",
+                        "outline": "none !important",
+                    },
+                    "> select > option": {
+                        "color": "var(--fg1-color, var(--jp-content-font-color0)) !important",
+                        "background": "var(--bg1-altcolor, var(--jp-cell-editor-background)) !important",
                     },
                 },
                 ".jupyter-widgets:not(button)": {

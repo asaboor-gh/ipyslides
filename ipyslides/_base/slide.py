@@ -852,6 +852,7 @@ def _build_slide(app, slide_number):
     with this._capture(): 
         yield this
 
+    app.widgets.iw.msg_tojs = 'SwitchView' # enforce immediate view cleanup to avoid overlapping slides content
     for content in this._contents:
         if content.data.get('application/vnd.jupyter.widget-view+json',{}):
             this._has_widgets = True

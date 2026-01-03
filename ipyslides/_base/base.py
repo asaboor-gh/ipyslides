@@ -14,7 +14,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import _build_slide
 from ..formatters import XTML, htmlize
-from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_pages
+from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_pages, _stream_chunks
 from ..utils import _css_docstring
 
 
@@ -114,7 +114,7 @@ class BaseSlides:
         if synced:
             content = self._process_citations(content)
         
-        chunks = _chunkify_markdown(content)
+        chunks = list(_stream_chunks(content, '---'))
         handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
         mdvars  = [{k:v for k,v in md_kws.items() if k in _matched_vars(chunk)} for chunk in chunks] # vars used in each chunk
 
@@ -570,21 +570,3 @@ class BaseSlides:
         self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self.docs]))
         self.navigate_to(0) # Go to title
         return self
-    
-def _chunkify_markdown(text_block, sep='---'):
-    "Parses a Markdown text block and returns text for title and each slide."
-    lines = textwrap.dedent(text_block).splitlines() # Remove overall indentation
-    breaks = [-1] # start, will add +1 next
-    nticks = 0 # number of ``` ticks found
-    for i,line in enumerate(lines):
-        if line and re.search(rf'^{sep}$|^{sep}\s+$', line): # for hr, can add space in start
-            if nticks % 2 == 0: # not inside ticked block
-                breaks.append(i)
-            # Ignore separators inside ticked blocks
-        elif re.match(r'^```', line):
-            nticks += 1
-                
-    breaks.append(len(lines)) # Last one
-    
-    ranges = [range(j+1,k) for j,k in zip(breaks[:-1],breaks[1:])]
-    return ['\n'.join(lines[x.start:x.stop]) for x in ranges]

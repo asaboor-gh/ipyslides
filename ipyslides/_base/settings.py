@@ -71,6 +71,11 @@ class Colors(ConfigTraits):
     pointer = Unicode('red')
 
     def _apply_change(self, change): 
+        if getattr(self.main.theme, '_initiated', False):
+            self.main.theme.value = "Custom"  
+            # switch to custom automatically if colors changed only after theme initiated, 
+            # otherwise it jumps to custom on first init
+            
         if change and self.main._widgets.theme.value == "Custom":  # Trigger theme update only if custom
             self.main._update_theme({'owner':self.main._widgets.theme}) # This chnage is important to update layout theme as well
 
@@ -116,8 +121,15 @@ class Theme(ConfigTraits):
     "Set theme value. colors and code have their own nested traits."
     value  = Unicode('Jupyter')
     colors = InstanceDict(Colors)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initiated = True # need this to not apply colors on first init
 
     def _apply_change(self, change):
+        if change and change['owner'] == "colors":
+            self.value = "Custom"  # switch to custom automatically if colors changed
+            
         self.main._update_theme({'owner':self.main._widgets.theme}) # otherwise colors don't apply
 
     @traitlets.validate('value')

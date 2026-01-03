@@ -328,6 +328,11 @@ def resolve_included_files(text_chunk):
 
 _extensions = Extensions() # Global instance of Extensions, don't delete class Extensions still
 
+# Internal cache to avoid re-compiling regex for every slide/fragment
+_PATTERN_CACHE = {}
+_PLUS_RE = re.compile(r'^\+\+(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line, 
+# not need to be in above cache which is general and can be used to split with ++ differently
+
 class XMarkdown(Markdown):
     def __init__(self):
         super().__init__(**_extensions.active)
@@ -383,25 +388,21 @@ class XMarkdown(Markdown):
                 blocks.append(("block", parts))  # ``` blocks, avoid empty blocks
         
         outputs = []
-        for i, (typ, obj) in enumerate(blocks):
+        for typ, obj in blocks:
             if typ == "block":
-                # Add part delimiter if previous block was raw and ended with ++
-                mode, data = blocks[i-1] if i > 0 else ('', '') # previous block
-                if mode == "raw" and data.strip().splitlines()[-1:] == ['++']: # this makes sure ++ starts at new line before block 
-                    outputs.append(_delim("PART")) 
+                outputs.extend(self._parse_block(*obj))  
+                continue # vars are substituted already inside, obj = (header, data)
+
+            for part in self._split_parts(obj, delimited=True):
+                if not isinstance(part, str):
+                    outputs.append(part) # Delimiter
+                    continue
                 
-                # Add other outputs after part delimiter
-                outputs.extend(self._parse_block(*obj))  # vars are substituted already inside, obj = (header, data)
-            elif content := obj.strip():  # raw text but avoid empty stuff
-                parts = list(self._split_parts(content))
-                for part in parts:
-                    out = self.convert(part) 
-                    if len(parts) > 1: # avoid adding PART for single chunk
-                        outputs.append(_delim("PART")) # add before part as we do for blocks above
-                    if isinstance(out, list):
-                        outputs.extend(out)
-                    elif out: # Some syntax like section on its own line can leave empty block later
-                        outputs.append(XTML(out))
+                out = self.convert(part) 
+                if isinstance(out, list):
+                    outputs.extend(out)
+                elif out: # Some syntax like section on its own line can leave empty block after conversion
+                    outputs.append(XTML(out))
 
         if not self._nesting_depth: # we need to keep these if nested parsing
             self._vars = {} # reset at end to release references
@@ -418,13 +419,30 @@ class XMarkdown(Markdown):
         else:
             return display(*outputs)
         
-        
-    def _split_parts(self, content):
-        yield from ( # split by ++ starting on its own line followed by one space charactor or till end of line
-            chunk for chunk in re.split(r'^\+\+(\s*$|\s)', content, flags=re.MULTILINE)
-            if chunk.strip() # avoid empty chunks
-        )  # split by ++ on its own line aggressively, but keep text on line as part of chunk
-        
+
+    def _split_parts(self, content, delimited=False):
+        "Split content at '++', optionally yielding Delimiter objects."
+        start = 0
+        first = True
+
+        content = textwrap.dedent(content)  # Dedent content before processing to make sure ++ is at start of line
+        for m in _PLUS_RE.finditer(content):
+            chunk = content[start:m.start()].rstrip() # preserve leading indentation, clear trailing junk
+
+            if chunk:
+                yield chunk
+                if delimited:
+                    yield _delim("PART")
+            elif first and delimited:
+                yield _delim("PART")
+
+            first = False
+            start = m.end()
+
+        if tail := content[start:].rstrip():
+            yield tail
+    
+    
     def _parse_params(self, param_string):
         """Parse parameter string with simple regex."""
         RE_PARAM = re.compile(
@@ -971,12 +989,37 @@ def _parse_pages(markdown):
     if not isinstance(markdown, str):
         raise TypeError(f"markdown expects a string, got {markdown!r}")
     
-    from ._base.base import _chunkify_markdown # circular import
-    
-    pages = _chunkify_markdown(markdown, sep='--')
+    pages = list(_stream_chunks(markdown, sep='--'))
     with capture_content() as cap:
         for page in pages[1:]: # set pages for current slide
             display(_delim("PAGE"))
             xmd(pages[0] + "\n" + page, returns=False)
         display(_delim("PAGE")) # split from rest of content, will be ignored if last
     return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
+
+
+def _stream_chunks(text, sep='---'):
+    "Used for slides and pages splitting, yields chunks."
+    s = sep.strip()
+    if s.startswith('```'):
+        raise ValueError(f"Invalid separator '{s}'. To split by backticks, use re.split instead!")
+    
+    if s not in _PATTERN_CACHE:
+        # Group 1: Shield (3+ backticks) | Group 2: Cut (Separator)
+        _PATTERN_CACHE[s] = re.compile(rf"(?m)(^`{{3,}})|(^{re.escape(s)}\s*$)")
+    
+    text = textwrap.dedent(text)  # content coming from python functions is usually indented, fix for all cases, need --- at start
+    pattern = _PATTERN_CACHE[s]
+    last_pos = 0
+    in_block = False
+    
+    for match in pattern.finditer(text):
+        if match.group(1): # It's a backtick fence (toggle shielding)
+            in_block = not in_block
+        elif not in_block: # It's a separator and we're NOT inside a block
+            if chunk := text[last_pos:match.start()].rstrip(): # need to preseve leading indents, so only rstrip
+                yield chunk
+            last_pos = match.end()
+
+    if final_chunk := text[last_pos:].rstrip():
+        yield final_chunk

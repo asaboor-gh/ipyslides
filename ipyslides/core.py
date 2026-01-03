@@ -9,10 +9,9 @@ from pathlib import Path
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars
+from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars, _stream_chunks
 from .writer import hold, write
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim
-from ._base.base import _chunkify_markdown
 from . import utils
 from . import dashlab
 
@@ -775,11 +774,11 @@ class Slides(BaseSlides,metaclass=Singleton):
         slide_number = int(line[0])  # First argument is slide number
 
         if "-m" in line[1:]:            
-            frames = _chunkify_markdown(cell, sep='--')
+            frames = list(_stream_chunks(cell, sep='--'))
             edit_idx = 0
 
             with _build_slide(self, slide_number) as s:
-                prames = _chunkify_markdown(s._markdown, sep='--')  
+                prames = list(_stream_chunks(s._markdown, sep='--'))  
                 # Update source beofore parsing content to make it available for variable testing
                 s._set_source(cell, "markdown") # set source before running to have it available for user
                 vars = _matched_vars(cell) # update has_vars before running to have ready for auto rebuild
