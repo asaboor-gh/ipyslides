@@ -210,7 +210,7 @@ def demo_slides(slides):
     with slides.build(-1) as s:
         slides.write('# Frames with \n#### code`PAGE.iter()` and Fancy Bullet List yoffset`0`')
         s.get_source().focus([2,3,4]).display()
-        slides.PAGE() # want to show source alone first
+        slides.PAGE(empty=True) # want to show source alone first
         for item in slides.PAGE.iter(boxes):
             slides.bullets([item], marker='💘', css_class='anim-group anim-slide-left').display()
 

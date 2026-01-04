@@ -92,6 +92,7 @@ class Slide:
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
         self._md_vars = {} # store variables set by build/rebuild on this slide
         self._esc_vars = {} # store escaped variables for rebuilds form build content
+        self._source = {'text': '', 'language': ''} # Should be set at init once, since markdown needs to compare with previous
         self._set_defaults()
         self.vars = Vars(self) # to access variables info and update them
         self._alt_print = ipwHTML(layout={'margin':'0'}).add_class('print-only') # alternate print content for this slide which is shown dynamically on slides
@@ -113,11 +114,11 @@ class Slide:
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
         self._has_vars = () # Update in _slide function for markdown slides only
-        self._source = {'text': '', 'language': ''} # Should be update by Slides
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}")
         self._tcolors = {} # theme colors for this slide only
         self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
+        self._lre_page = 0 # Leaset recently edited page number for quick jump while editing markdown
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -216,14 +217,14 @@ class Slide:
         while delim_list and delim_list[-1] is not None:
             delim_list.pop()
         filtered = filtered[:len(delim_list)]  # sync filtered outputs
-
+    
         # Now, enumerate and apply rules
         indices = []
-        prev_delim, page_streak = None, 0
+        prev_delim = None
         for i, delim in enumerate(delim_list):
             if delim is None:
                 indices.append(i)
-                prev_delim, page_streak = None, 0
+                prev_delim = None
                 continue
 
             if delim == "PART":
@@ -233,17 +234,15 @@ class Slide:
                     prev_delim = delim
                     continue
                 indices.append(i)
-                prev_delim, page_streak = delim, 0
+                prev_delim = delim
                 continue
 
             if delim == "PAGE":
-                # Allow up to two adjacent PAGEs, but not more
+                # Allow up PART before PAGE, skip multiple empty PAGEs
                 if prev_delim == "PAGE":
-                    page_streak += 1
-                else:
-                    page_streak = 1
-                if page_streak <= 2:
-                    indices.append(i)
+                    prev_delim = delim
+                    continue
+                indices.append(i)
                 prev_delim = delim
                 continue
 
@@ -356,7 +355,7 @@ class Slide:
             if len(pages) > 1:
                 page["page"] = ip + 1 # page number within slide to display only if more than one page
             # Parts inside head only take effect on first frame
-            start = 0 if ip == 0 and page["head"] > -1 else page["start"]
+            start = 0 if ip == 0 and page["head"] > -1 else page["start"] + 1
             if parts := self._resolve_parts(page, contents, range(start, page["end"] + 1)):
                 parts[0]["anim"] = "next" # add animation flag to first part while navigative forward
                 parts[-1]["anim"] = "prev" # add animation flag to last part while navigative backward
@@ -373,7 +372,7 @@ class Slide:
         self._frame_idxs = tuple(frames) if len(frames) > 1 else ()
         if self._frame_idxs:
             self._widget.add_class('HasFrames') # make sure class is added
-            self.first_frame() # Bring up first frame to activate CSS
+            self._goto_edited_page() # go to page being edited if any or first frame
         elif hasattr(self, '_frame_idxs'): # from previous run may be
             del self._frame_idxs
         return frames
@@ -388,7 +387,7 @@ class Slide:
                 if index == indxs.stop - 1: 
                     continue  # skip if PART is last in range
                 
-                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 in indxs else {}
+                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 > 0 else {} # can go to PAGE index
                 meta_next = ensure_dict(contents[index + 1].metadata) if index + 1 in indxs else {}
                 
                 # Single column flattened after PART with its ROW delimiters
@@ -421,7 +420,8 @@ class Slide:
         # Ensure at least one frame at the end if needed
         if frames and frames[-1].get("part", index) != index:
             frames.append({**page, "part": index})
-        return frames    
+        return frames 
+       
     @property
     def _fidxs(self): return getattr(self, '_frame_idxs', ())
     
@@ -578,6 +578,15 @@ class Slide:
     def last_frame(self):
         "Jump to last frame"
         return self._reset_indexf(self.nf, self.prev_frame) # go right and swicth back
+    
+    def _goto_edited_page(self):
+        "Go to page being edited if any, else first frame."
+        self.first_frame() # go to first frame by default
+        if self._lre_page > 0: # page being edited
+            for frame in self._fidxs[1:]: # rest of frames
+                if frame.get("page", 0) < self._lre_page:
+                    self.next_frame()
+            self._lre_page = 0 # reset at first jump
     
     def _set_progress(self):
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None

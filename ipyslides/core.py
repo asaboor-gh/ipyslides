@@ -775,8 +775,6 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         if "-m" in line[1:]:            
             frames = list(_stream_chunks(cell, sep='--'))
-            edit_idx = 0
-
             with _build_slide(self, slide_number) as s:
                 prames = list(_stream_chunks(s._markdown, sep='--'))  
                 # Update source beofore parsing content to make it available for variable testing
@@ -786,7 +784,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 s._has_vars = tuple([v for v in vars if v not in stored]) # esc is encapsulated by design
                 s._esc_vars = {v: stored[v] for v in vars if v in stored} # store for rebuilds internally
                 
-                for idx, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue='')):
+                for page, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue=''), start=1): # page starts from 1
                     if '%++' in frm: # remove %++ from here, but stays in source above for user reference
                         frm = frm.replace('%++','').strip() # remove that empty line too
                         utils.warn("`%++` is deprecated and no more backward compatible, use `++` explicitly on each part separation!").display()
@@ -796,11 +794,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                     if len(frames) > 1: self.PAGE() # add page separator if multiple frames
                     
                     if prm != frm: 
-                        edit_idx = idx
-            
-            s.first_frame() # be at start first
-            for _ in range(edit_idx): 
-                s.next_frame() # go at latest edit
+                        s._lre_page = page  # mark least recent edited page for jumping there
 
         else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
             with _build_slide(self, slide_number) as s:
@@ -902,15 +896,20 @@ class Slides(BaseSlides,metaclass=Singleton):
         """Page delimiter! Use `Slides.PAGE()` or import at top level to create a new page in slide.
         In markdown slides, use two dashes -- on its own line.
         
-        - Content before first PAGE delimiter is added on all pages. This helps adding same title once.
-        - If there is no content after PAGE, a page with header content is created or kept empty unless it is the last PAGE delimiter.
+        - Content before first PAGE delimiter is added on all pages. This helps adding same title once. To avoid common header, start with `PAGE()` itself.
+        - Adjacent `PAGE` delemiters are ignored, so no empty pages are created. Use `empty=True` to create empty page if needed.
+          Note that it is convenient to have empty page for a split between header and content to avoid showing both at once. `PART` on the other hand is
+          a splitter of content insdide a page, and does not need empty parts, they are always appear one after another.
         - Using `PAGE` delimiter frequently improves the perforamce and memory usage compared to pure slides.
         - Use code`PAGE.iter(iterable)` to create multiple pages from iterable automatically.
         """
         _type = "PAGE"
     
-        def __init__(self):
+        def __init__(self, empty=False):
             display(_delim(self._type))
+            if empty:
+                utils.html('span','').display() # to preserve empty page, otherwise two adjacent PAGE delimiters are ignored
+                display(_delim(self._type)) # add one more to create empty page
         
         @classmethod
         def _optional_trail(self, trail):

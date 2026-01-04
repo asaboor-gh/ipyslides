@@ -1006,20 +1006,27 @@ def _stream_chunks(text, sep='---'):
     
     if s not in _PATTERN_CACHE:
         # Group 1: Shield (3+ backticks) | Group 2: Cut (Separator)
-        _PATTERN_CACHE[s] = re.compile(rf"(?m)(^`{{3,}})|(^{re.escape(s)}\s*$)")
+        _PATTERN_CACHE[s] = re.compile(rf"(?m)(^`{{3}})|(^{re.escape(s)}\s*$)")
     
+    if eof := re.search(r'^\s*EOF\s*$',text, flags = re.MULTILINE):
+        text = text[:eof.start()]  # truncate at EOF
+        
     text = textwrap.dedent(text)  # content coming from python functions is usually indented, fix for all cases, need --- at start
     pattern = _PATTERN_CACHE[s]
     last_pos = 0
     in_block = False
+    first = True if s == '--' else False # for pages, first chunk is always header, yield even if empty
     
     for match in pattern.finditer(text):
         if match.group(1): # It's a backtick fence (toggle shielding)
             in_block = not in_block
         elif not in_block: # It's a separator and we're NOT inside a block
-            if chunk := text[last_pos:match.start()].rstrip(): # need to preseve leading indents, so only rstrip
+            if (chunk := text[last_pos:match.start()].rstrip()) or first: # need to preseve leading indents, so only rstrip
                 yield chunk
             last_pos = match.end()
+            first = False # only first chunk is special for pages
 
     if final_chunk := text[last_pos:].rstrip():
+        if in_block:
+            final_chunk += '\n```'  # close unclosed code block in forgiven manner instead of raising error
         yield final_chunk

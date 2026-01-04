@@ -108,7 +108,6 @@ class BaseSlides:
         if not isinstance(content, str): #check path later or it will throw error
             raise TypeError(f"content expects a makrdown string, got {content!r}")
         
-        content = re.split(r'^\s*EOF\s*$',content, flags = re.MULTILINE)[0]
         md_kws = _vars or {} # given from build function call
 
         if synced:
