@@ -352,6 +352,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
                 if cwd_file.exists():
                     data = cwd_file # Use file from clips dir if exists
     
+    if css_class is None: css_class = ''
     _data = _check_pil_image(data) #Check if data is a PIL Image or return data
     data, metadata = Image(data = _data,**kwargs)._repr_mimebundle_()
     metadata['width'] = width
@@ -408,11 +409,12 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, css_class=
         css_props['img'] = {**css_props.get('img',{}), 'height':'auto', 'width':w} 
 
     svg = svg.replace(node, rnode)
+    if css_class is None: css_class = ''
     
     # We encapsulate svg in img tag to avoid issues with rendering and clipping of texts plus ids conflicts
     svg_b64 = base64.b64encode(svg.encode('utf-8')).decode('ascii')
     svg = f'<img src="data:image/svg+xml;base64,{svg_b64}" alt="SVG Image"/>'
-    fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)}{css_class}', style=_fig_style_inline).value
+    fig = html('figure', svg + _fig_caption(caption), css_class=f'focus-child fig-{id(svg)} {css_class}', style=_fig_style_inline).value
     
     if css_props:
         fig += _styled_css({f'.fig-{id(svg)}': css_props}).value
