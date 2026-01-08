@@ -2,10 +2,11 @@
 
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
-from .icons import Icon
+from .icons import Icon, _inline_svg
 from ._widgets import focus_selectors
+from .intro import get_logo
 
-_icons_size = "1em"  # For all except Chevrons
+
 _focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
     focus_selectors: {
         "^:hover:not(.mode-popup-active)": { # visual cue on hover to click
@@ -187,6 +188,7 @@ def layout_css(accent_color, aspect):
                         "display": "flex !important",
                         "align-items": "center !important",
                         "justify-content": "center !important",
+                        "gap": "8px !important",
                     },
                 },
                 ".popup-close-btn": {
@@ -200,6 +202,41 @@ def layout_css(accent_color, aspect):
                 },
                 "^.mode-inactive": { # clean up view
                     ".FooterBox, .Controls, .Slide-Number": {"display": "none !important",},
+                },
+                "> .Build-Btn": {"visibility": "hidden !important",}, # hide build button by default
+                "^:has(.SlideArea.Stale) > .Build-Btn": {
+                    "visibility": "visible !important",
+                    "position": "absolute",
+                    "top": "-2px", 
+                    "left": "50%",
+                    "padding":"4px 8px",
+                    "background": "var(--bg2-color) !important",
+                    "border": "0.5px solid var(--bg3-color) !important",
+                    "border-radius":"0 0 8px 8px",
+                    "transform": "translateX(-50%)",
+                    "color": "hsl(from var(--accent-color) 40 100% l) !important",
+                    "font-family": "var(--code-font) !important",
+                    "font-size": "10px",
+                    "letter-spacing": "1px",
+                    "z-index": 10, #  just below loading splash
+                    "^:hover": {
+                        "letter-spacing": "2px",
+                        "transition": "letter-spacing 200ms ease-in-out",
+                    },
+                },
+                "^.DisplaySplash::before": {
+                    "--bg1c": "var(--bg1-color, var(--jp-layout-color0, black))", # fallback for early load
+                    "--bg2c": "var(--bg2-color, var(--jp-layout-color2, gray))", # fallback for early load
+                    "content": '""',
+                    "position": "absolute",
+                    "display": "block",
+                    "inset": 0,
+                    "z-index": 11, # above all
+                    "background": (f"url('data:image/svg+xml;utf8,{_inline_svg(get_logo())}') no-repeat center, "
+                        "linear-gradient(90deg, var(--bg1c) 25%, var(--bg2c) 50%, var(--bg1c) 75%)"),
+                    "background-size": "80px 80px, 200% 100%",
+                    "animation": "shimmer-load 1.5s infinite ease-in-out",
+                    "pointer-events": "none",
                 },
                 ".SlideBox, .SlideBox *": {
                     "touch-action": "none !important", # disable default touch actions to allow custom swipe handling
@@ -643,7 +680,12 @@ def layout_css(accent_color, aspect):
                 **{f"{k}box-shadow": "none !important" for k in ('', '-webkit-')},
             },
         },
-    )
+    ) + """
+    @keyframes shimmer-load {
+        0% { background-position: center, 200% 0; }
+        100% { background-position: center, -200% 0; }
+    }
+    """ # keyframes should be global
 
 def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, uclass=''):
     if filter and not '(' in str(filter):

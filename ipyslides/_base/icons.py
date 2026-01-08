@@ -204,6 +204,9 @@ for c, r in zip('rlud',(0, 180,-90,90)): # their base svgs should stilll be able
     _icons[f"arrowb{c}"] = _icons["arrowb"].format(size="{size}", color="{color}", rotation=r)
     _icons[f"chevron{c}"] = _icons["chevron"].format(size="{size}", color="{color}", rotation=r)
 
+def _inline_svg(value: str) -> str:
+    # remove newlines and extra spaces, keep 1 space between attributes
+    return re.sub(r' +', ' ', value).replace('\n', '').replace('#', '%23')  # replace # with %23 for svg
 class Icon(XTML):
     "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
     available = tuple(sorted(_icons.keys()))
@@ -218,7 +221,7 @@ class Icon(XTML):
         return f'Icon(css = {self.css}, svg = {self.value!r})'
     
     def __format__(self, spec):
-        return f'{self._svg_inline:{spec}}' # important for f-strings be iinline to add in tables etc.
+        return f'{_inline_svg(self.value):{spec}}' # important for f-strings be iinline to add in tables etc.
     
     @property
     def svg(self):
@@ -226,13 +229,9 @@ class Icon(XTML):
         return self.value
     
     @property
-    def _svg_inline(self):
-        return re.sub(r' +', ' ', self.value).replace('\n', '') # remove newlines and extra spaces, keep 1
-    
-    @property
     def css(self):
         "Get the CSS code of the icon as dictionary of {'content': url(svg)}."
-        return {'content': f"url('data:image/svg+xml;utf8,{self._svg_inline}')"}   
+        return {'content': f"url('data:image/svg+xml;utf8,{_inline_svg(self.value)}')"}   
     
     @classmethod
     def get_css_class(cls, name):

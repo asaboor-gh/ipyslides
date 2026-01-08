@@ -251,7 +251,9 @@ function keyboardEvents(box,model) {
             message = keyMessage[key];
         } else if (e.ctrlKey && key === 'p') { 
             message = 'PRINT'; // Ctrl + P for print
-        } 
+        } else if (key === 'b') {
+            message = 'BUILD'; // b for pending slides
+        }
 
         model.set("msg_topy", message);
         model.save_changes();
@@ -272,8 +274,6 @@ function toggleFS(box) {
 function handleMessage(model, msg, box) {
     if (msg === "TFS") {
         toggleFS(box);
-    } else if (msg === "ClearLoading") {
-        cleanView(model); // clear loading splash
     } else if (msg === 'RESCALE') {
         setScale(box, model);
     } else if (msg === "SwitchView") {
@@ -335,6 +335,8 @@ function handleMessage(model, msg, box) {
             let elem = msg.includes("/SELECTOR") 
                 ? slide.querySelector(":scope " + msg.replace("NAV:RIGHT/SELECTOR:", "")) 
                 : slide; // prefer specific selector if provided
+
+            if (!elem) return; // safety check
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => { // Double RAF ensures layout is complete
                     elem.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated), :scope .anim-group > *:not(._ips-content-animated)').forEach(el => {
@@ -760,11 +762,11 @@ function markPrintable(el, className) {
   }
 }
 
-function cleanView(model) {
+function displaySplash(box) {
+    box.classList.add('DisplaySplash');
     setTimeout(() => {
-        model.set("msg_topy", "CleanView"); // after view, fix all others
-        model.save_changes();
-    }, 1000)
+        box.classList.remove('DisplaySplash');
+    }, 1000); // slight delay to ensure smooth transition
 }
 
 function render({ model, el }) {
@@ -774,10 +776,9 @@ function render({ model, el }) {
     let style = document.createElement('style');
     //  Trick to get main slide element is to wait for a loadable element
     style.onload = () => { 
-        // Send a clean message after a second, without any error caused by other functions
-        cleanView(model);
-
+        
         let box = style.parentNode.parentNode;
+        displaySplash(box);
         box.tabIndex = -1; // Need for event listeners, should be at top
         box.setAttribute("uid", model.get("_uid"));
         // JupyterLab/Notebook specific attribute to suppress shortcuts when focused

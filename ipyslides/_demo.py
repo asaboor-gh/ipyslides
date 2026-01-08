@@ -2,10 +2,9 @@
 # This demonstrates that you can generate slides from a .py file too, which you can import in notebook.
 
 def demo_slides(slides):
-    slides.close_view() # Close any previous view to speed up building (minor effect but visually better)
-    slides.clear() # Clear previous content
     raw_source = slides.code.cast(__file__).raw
     N = raw_source.count('.build') + raw_source.count('\n---') 
+    slides.clear(keep = N) # Clear previous content
     slides.create(range(N)) # Create slides first, this is faster
     
     slides.settings.footer.text = slides.get_logo("1em") + 'Author: Abdul Saboor عبدالصبور'
@@ -313,6 +312,4 @@ def demo_slides(slides):
 
     slides.build(-1, lambda s: slides.get_source().display())
 
-    slides.navigate_to(0) # Go to title slide
-
-    return slides
+    slides.navigate_to(0) # Go to title slide without returning self

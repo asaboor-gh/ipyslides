@@ -42,6 +42,7 @@ class InteractionWidget(anywidget.AnyWidget):
             'NEXT': self.ws.buttons.next.click,
             'PREV': self.ws.buttons.prev.click,
             'PRINT': self.ws.buttons.print.click,
+            'BUILD': self.ws.buttons.build.click,
         }
 
     @traitlets.observe("msg_topy")
@@ -76,10 +77,6 @@ class InteractionWidget(anywidget.AnyWidget):
                self.ws.checks.notes.value = True # opens new linked window
 
             self.msg_tojs = 'SwitchView' # Trigger view
-        elif msg == 'CleanView':
-            # Clear loading splash and other stuff
-            self.ws.htmls.loading.value = ""
-            self.ws.htmls.loading.layout.display = "none"
         elif 'mode-' in msg: # layout mode changes
             self._menu._on_mode_change(msg)
         

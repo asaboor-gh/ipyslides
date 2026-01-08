@@ -1,6 +1,7 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
 import os, re, textwrap
 import traceback
+import inspect
 from pathlib import Path
 from contextlib import ContextDecorator
 
@@ -12,7 +13,7 @@ from .navigation import Navigation
 from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
-from .slide import _build_slide
+from .slide import SlideGroup, _build_slide
 from ..formatters import XTML, htmlize
 from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_pages, _stream_chunks
 from ..utils import _css_docstring
@@ -117,17 +118,20 @@ class BaseSlides:
         handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
         mdvars  = [{k:v for k,v in md_kws.items() if k in _matched_vars(chunk)} for chunk in chunks] # vars used in each chunk
 
+        last_updated = None
         for chunk, hdl, mvs in zip(chunks, handles, mdvars):
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
             if any(['Out-Sync' in hdl._css_class, chunk != hdl._markdown, mvs != hdl._md_vars]):
-                with self._loading_splash('Building markdown slides...'):
-                    hdl._md_vars = mvs # set corresponding vars to access while building slide
-                    self._slide(f'{hdl.number} -m', chunk)
+                hdl._md_vars = mvs # set corresponding vars to access while building slide
+                self._slide(f'{hdl.number} -m', chunk)
+                last_updated = hdl # mark as updated for live edit
+                    
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(hdl)
-        
+                
+        if synced and last_updated: self.navigate_to(last_updated.index) # only in sync mode
         # Return refrence to slides for quick update
-        return handles
+        return SlideGroup(handles)
     
     def _process_citations(self, content):
         match1, *others = re.findall(r'^```citations.*?^```|^:::\s*citations.*?(?=^:::|\Z|^\S)', content, flags= re.DOTALL | re.MULTILINE)
@@ -224,11 +228,15 @@ class BaseSlides:
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
         return self.build(self._next_number, content, **vars)
 
+
     class build(ContextDecorator):
         r"""Build slides with a single unified command in three ways:
         
         1. code`slides.build(number, callable)` to create a slide from a `callable(slide)` immediately, e.g. code`lambda s: slides.write(1,2,3)` or as a decorator.
+            - **Lazy Execution**: The slide is created immediately, but the function is executed only when first accessed during navigation. 
+              This defers heavy computations until the user reaches that slide. Future navigation does not trigger re-computation.
             - Docstring of callable (if any) is parsed as markdown before calling function.
+            - Function must accept a single argument: the slide handle.
         2. code`with slides.build(number):` creates single slide. Equivalent to code`%%slide number` magic.
             - Use code`PAGE()` from top import or code`Slides.PAGE()` to split content into pages/sub slides.
             - Use code`for item in PAGE.iter(iterable):` block to automatically add page separator.
@@ -273,18 +281,38 @@ class BaseSlides:
                     return self._app._from_markdown(self._snumber, content, _vars = vars)
 
                 if callable(content) and not code.startswith('with'):
-                    with _build_slide(self._app, self._snumber) as s: 
-                        s._set_source(self._app.code.from_source(content).raw,'python') 
-                        if (doc := getattr(content, '__doc__', None)):
-                            self._app.xmd(doc, returns=False)
-                        content(s) # call directly, set code before to make avaiable in function
-                
-                    return s
+                    slide, = self._app.create([self._snumber]) # access or create slide first in both cases
+                    return self._handle_callable(slide, content)
             
             if content is not None:
                 raise ValueError(f"content should be None, str, or callable. got {type(content)}")
 
             return self # context manager
+        
+        def _handle_callable(self, s, func):   
+            if hasattr(s, '_build_func') and hasattr(s, '_build_now'): # lazy build marked earlier, _build_now is set during navigation
+                with _build_slide(self._app, self._snumber) as s: 
+                    s._set_source(self._app.code.from_source(s._build_func).raw,'python') # set source code to be accessible
+                    if (doc := getattr(s._build_func, '__doc__', None)):
+                        self._app.xmd(doc, returns=False)
+                    
+                    s._build_func(s) 
+                    s._set_css_classes(remove = 'Stale') # lazy slides will be back here to be built
+                    del s._build_func # remove after building for no future pending
+                    if hasattr(s, '_build_now'): del s._build_now # remove marker after building once
+            else:
+                # Do some static checks, so it at least valid function
+                uw_func = inspect.unwrap(func) # unwrap to get original function
+                if inspect.isgeneratorfunction(uw_func):
+                    raise TypeError("@build decorator does not support generator functions. Use standard functions only.")
+                
+                if len(inspect.signature(uw_func).parameters) != 1:
+                    raise ValueError("@build decorator function must accept single argument, slide.")
+                
+                s._build_func = func # store for later build
+                s._set_css_classes(add = 'Stale') # mark as stale to build later
+            
+            return s # return in both cases
 
         def __enter__(self):
             "Use as contextmanager to create a slide."
@@ -308,14 +336,19 @@ class BaseSlides:
     def demo(self):
         "Demo slides with a variety of content."
         from .._demo import demo_slides
-        return demo_slides(self)
-        
+        with self.loading('Creating demo slides ...'):
+            demo_slides(self) # Do not return anything
+            self.notify('x') # clear any previous notification
         
     def docs(self):
         "Create presentation from docs of IPySlides."
-        self.close_view() # Close any previous view to speed up building (minor effect but visually better)
-        self.clear() # Clear previous content
+        with self.loading('Creating documentation slides ...'):
+            self._docs()
+            self.notify('x') # clear any previous notification
+        
+    def _docs(self):
         self.create(range(21)) # Create slides faster
+        self.clear(keep = 21) # Clear previous slides except first 21
         
         from ..core import Slides
 
@@ -351,8 +384,11 @@ class BaseSlides:
                 %{btn}
                 ```
             ```''', btn = self.draw_button)
-            
-        with self.build(-1):
+        
+        skipper = self.link('Skip to dynamic content', 'Back to link info', icon='arrow', back_icon='arrowl')
+          
+        @self.build(-1)
+        def _(s):
             self.PAGE()
             self.write('# Main App')
             self.doc(Slides).display()
@@ -361,7 +397,6 @@ class BaseSlides:
             self.write('# Jump between slides')
             self.doc(self.link, 'Slides').display()
             with self.code.context(returns=True) as c:
-                skipper = self.link('Skip to dynamic content', 'Back to link info', icon='arrow', back_icon='arrowl')
                 skipper.origin.display() # skipper.target is set later somewhere, can do backward jump too
             c.display()
         
@@ -383,7 +418,8 @@ class BaseSlides:
         with self.build(-1): 
             self.xmd.syntax.display()
             
-        with self.build(-1):
+        @self.build(-1)
+        def _(s):
             self.PAGE()
             self.write('## Adding Content')
             self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
@@ -409,7 +445,8 @@ class BaseSlides:
             self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
             self.doc(self.settings,'Slides', members=True,itself = True).display()
                 
-        with self.build(-1):
+        @self.build(-1)
+        def _(s):
             self.write('## Useful Functions for Rich Content section`//Useful Functions for alert`Rich Content`//`')
             self.doc(self.alt,'Slides').display()
             
@@ -432,7 +469,8 @@ class BaseSlides:
             ''')
             self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
-        with self.build(-1):
+        @self.build(-1)
+        def _(s):
             skipper.target.display() # Set target for skip button
             self.write('## Dynamic Content')
             
@@ -566,6 +604,5 @@ class BaseSlides:
                     Some kernels may not support auto slide numbering inside notebook.
             """)
         
-        self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self.docs]))
-        self.navigate_to(0) # Go to title
-        return self
+        self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self._docs]))
+        self.navigate_to(0) # Go to title, do not return to avoid display shift to this cell

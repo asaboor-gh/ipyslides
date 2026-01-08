@@ -8,11 +8,11 @@ from IPython.utils.capture import RichOutput
 from ipywidgets import HTML as ipwHTML
 
 from . import styles
+from ._layout_css import background_css, get_unique_css_class
+from .styles import collapse_node, hide_node
 from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data
-from ._layout_css import background_css, get_unique_css_class
-from .styles import collapse_node, hide_node
 
 class Vars:
     """Container for markdown slide variables, to see and update variables
@@ -188,7 +188,7 @@ class Slide:
             self._contents = self._cleanup_delimiters(outputs)
             self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
-            self.update_display(go_there=True)    
+            self.update_display()    
 
             if self._app.widgets.checks.focus.value: # User preference
                 self._app._box.focus()
@@ -247,17 +247,10 @@ class Slide:
                 continue
 
         return [filtered[i] for i in indices] 
-           
-    def update_display(self, go_there = True):
+     
+    def update_display(self):
         "Update display of this slides including reloading citations, widgets etc."
-        if go_there:
-            self._app.navigate_to(self.index) # Go there to see effects
-            self._widget.clear_output(wait = True) # Avoid flickering
-            self._app._update_tmp_output(self.css) # Update corresponding CSS but avoid animation here
-            self._set_css_classes('SlideArea', 'SlideArea') # Hard refresh, removes first and add later
-        else:
-            self._widget.clear_output(wait = True) # Clear, but don't go there
-        
+        self._widget.clear_output(wait = True) # Clear, but don't go there
         # Need to know how many contents before user provide content
         with capture_content() as cap:
             # show speaker notes at top if any to grab immediate attention of speaker, will be shown only in PDF.
@@ -283,7 +276,7 @@ class Slide:
         # after others to take everything into account
         self._reset_frames(offset = self._offset)
         self._app._update_toc()
-        if go_there:
+        if self is self._app._current: # only on viewed slide, not in background rebuilds
             self._app.run_animation() # inform JS side of reload animation on update/build time without navigation
     
     def _rebuild(self, go_there=False):
@@ -589,6 +582,7 @@ class Slide:
             self._lre_page = 0 # reset at first jump
     
     def _set_progress(self):
+        if self is not self._app._current: return # avoid wrong indicators
         unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
         value = round(unit * ((self.index or 0) - (self.nf - self.indexf - 1)/self.nf), 4)
         self._app.widgets._progbar.children[0].layout.width = f"{value}%"  
@@ -858,8 +852,12 @@ def _build_slide(app, slide_number):
         app._slides_dict[slide_number] = this
         app.refresh() # rebuild slides to have index ready
        
-    with this._capture(): 
-        yield this
+    with this._capture(), app.loading(f'Building Slide {slide_number} ...'): 
+        outer_loading = app.loading.value if app.loading.active > 1 else "" # 1 is this
+        try: yield this
+        finally:
+            if outer_loading:
+                app.loading.value = outer_loading # restore outer loading state
 
     app.widgets.iw.msg_tojs = 'SwitchView' # enforce immediate view cleanup to avoid overlapping slides content
     for content in this._contents:
