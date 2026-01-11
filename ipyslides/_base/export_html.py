@@ -167,12 +167,14 @@ class _HhtmlExporter:
             - PDF printing of slide width is 210mm (8.25in). Height is determined by aspect ratio provided.
             - Use `Save as PDF` option instead of Print PDF in browser to make links work in output PDF. Alsp enable background graphics in print dialog.
         """
+        if not self._export_ready(): return
         _path = os.path.splitext(path)[0] + '.html' if path != 'Slides.html' else path
         export_func = lambda: self._writefile(_path, overwrite)
         self.main.widgets.iw._try_exec_with_fallback(export_func)
         
     def _export(self,btn):
         "Export to HTML slides on button click."
+        if not self._export_ready(): return
         path = 'Slides.html'
         if os.path.isfile(path) and not self.main.widgets.checks.confirm.value:
             return self.main.notify(f'File {path!r} already exists. Select overwrite checkbox if you want to replace it.')
@@ -181,3 +183,8 @@ class _HhtmlExporter:
         self.main.notify(f'File saved: {path!r}',10)
         with suppress(BaseException): # Does not work on some systems, so safely continue.
             os.startfile(path) 
+    
+    def _export_ready(self):
+        if not self.main._next_pending: return True
+        self.main.notify(self.main.error("Export Error", "Please build pending slides by naviagting/clicking on 'Pending Slides' button before you can export to HTML.").value)
+        return False

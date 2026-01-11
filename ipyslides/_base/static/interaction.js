@@ -251,8 +251,6 @@ function keyboardEvents(box,model) {
             message = keyMessage[key];
         } else if (e.ctrlKey && key === 'p') { 
             message = 'PRINT'; // Ctrl + P for print
-        } else if (key === 'b') {
-            message = 'BUILD'; // b for pending slides
         }
 
         model.set("msg_topy", message);
@@ -763,9 +761,10 @@ function markPrintable(el, className) {
 }
 
 function displaySplash(box) {
-    box.classList.add('DisplaySplash');
+    box.classList.add('ips-loading');
+    window.dispatchEvent(new Event('resize')); // ensure resize event on load
     setTimeout(() => {
-        box.classList.remove('DisplaySplash');
+        box.classList.remove('ips-loading');
     }, 1000); // slight delay to ensure smooth transition
 }
 

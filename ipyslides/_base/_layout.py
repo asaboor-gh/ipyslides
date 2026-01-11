@@ -70,6 +70,13 @@ def layout_css(accent_color, aspect):
                 "z-index": "1 !important",
                 "aspect-ratio": f"{aspect} !important", # important in notebook context, where width collpases to cell
                 "box-shadow": "var(--jp-border-color1,#8988) 0px 0px 1px 0.5px !important", 
+                "^:not(:fullscreen)": {
+                    # Smoothly animate the box resizing, this also helps initial loading
+                    "transition": "height 0.8s cubic-bezier(0.9, 0, 0.5, 1), width 0.4s ease-in-out !important", 
+                },
+                "^:fullscreen":{ # fast height transition while going in fullscreen
+                     "transition": "height 0.4s cubic-bezier(0.9, 0, 0.5, 1) !important", 
+                },
                 "^.SingleSlide .Controls": {
                     "display": "none !important",
                 },
@@ -143,7 +150,7 @@ def layout_css(accent_color, aspect):
                     "width":"min(400px, 65%)",
                     "display": "grid", # grid can contain a child div even wihout defined height
                     "grid-template-rows": "1fr", # to make child div take full height
-                    "z-index":"9",  # above slide content
+                    "z-index":"10",  # above slide content
                     "border-radius": "8px",
                     "padding":"8px",
                     "overflow":"auto",
@@ -173,24 +180,6 @@ def layout_css(accent_color, aspect):
                     "^, .widget-html-content": {"line-height": "0 !important"},
                     "@media print": {"position": "fixed !important",},
                 }, # other properties are set internally
-                ".Loading": {
-                    "position": "absolute",
-                    "left": "0 !important",
-                    "top": "0 !important",
-                    "width": "100% !important",
-                    "height": "100% !important",
-                    "z-index": "11",  # Above all
-                    "text-shadow": "0 0 2px white, 0 0 4px var(--bg2-color, black)",
-                    "background": "var(--jp-layout-color0,white)", # colors are not yet there in start
-                    ".widget-html-content": {
-                        "width": "100% !important",
-                        "height": "100% !important",
-                        "display": "flex !important",
-                        "align-items": "center !important",
-                        "justify-content": "center !important",
-                        "gap": "8px !important",
-                    },
-                },
                 ".popup-close-btn": {
                     "position": "absolute",
                     "top": "8px",
@@ -207,36 +196,20 @@ def layout_css(accent_color, aspect):
                 "^:has(.SlideArea.Stale) > .Build-Btn": {
                     "visibility": "visible !important",
                     "position": "absolute",
-                    "top": "-2px", 
-                    "left": "50%",
-                    "padding":"4px 8px",
-                    "background": "var(--bg2-color) !important",
-                    "border": "0.5px solid var(--bg3-color) !important",
-                    "border-radius":"0 0 8px 8px",
-                    "transform": "translateX(-50%)",
+                    "bottom": "36px", # above navigation controls 
+                    "right": "2px",
+                    "padding":"2px 4px",
+                    "border-radius":"4px",
                     "color": "hsl(from var(--accent-color) 40 100% l) !important",
                     "font-family": "var(--code-font) !important",
                     "font-size": "10px",
                     "letter-spacing": "1px",
-                    "z-index": 10, #  just below loading splash
+                    "z-index": 5, # above controls 
                     "^:hover": {
                         "letter-spacing": "2px",
                         "transition": "letter-spacing 200ms ease-in-out",
                     },
-                },
-                "^.DisplaySplash::before": {
-                    "--bg1c": "var(--bg1-color, var(--jp-layout-color0, black))", # fallback for early load
-                    "--bg2c": "var(--bg2-color, var(--jp-layout-color2, gray))", # fallback for early load
-                    "content": '""',
-                    "position": "absolute",
-                    "display": "block",
-                    "inset": 0,
-                    "z-index": 11, # above all
-                    "background": (f"url('data:image/svg+xml;utf8,{_inline_svg(get_logo())}') no-repeat center, "
-                        "linear-gradient(90deg, var(--bg1c) 25%, var(--bg2c) 50%, var(--bg1c) 75%)"),
-                    "background-size": "80px 80px, 200% 100%",
-                    "animation": "shimmer-load 1.5s infinite ease-in-out",
-                    "pointer-events": "none",
+                    "> i": {"color": "inherit !important",},
                 },
                 ".SlideBox, .SlideBox *": {
                     "touch-action": "none !important", # disable default touch actions to allow custom swipe handling
@@ -257,6 +230,9 @@ def layout_css(accent_color, aspect):
                     "width": "100% !important",
                     "height": "auto !important", # This is must for layout
                     ".jp-OutputPrompt.jp-OutputArea-prompt": {"display": "none !important",},
+                    ".jp-OutputArea-output": { # clean reveal after loading skeleton ends
+                        "animation": "ips-reveal 0.5s ease-in-out",
+                    }
                 },  # Otherwise it shrinks small columns
                 "kbd" : {
                     "color":"var(--fg2-color)",
@@ -680,12 +656,7 @@ def layout_css(accent_color, aspect):
                 **{f"{k}box-shadow": "none !important" for k in ('', '-webkit-')},
             },
         },
-    ) + """
-    @keyframes shimmer-load {
-        0% { background-position: center, 200% 0; }
-        100% { background-position: center, -200% 0; }
-    }
-    """ # keyframes should be global
+    ) 
 
 def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, uclass=''):
     if filter and not '(' in str(filter):
@@ -725,3 +696,114 @@ def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, uclass=
         display:none;
     }}
     """
+
+# This is used in slide content loading placeholder
+loading_style = """
+<style>
+.skeleton-wrapper {
+    padding: 16px;
+    background: transparent;
+    height: max-content;
+    min-height: 250px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between Header and Columns */
+}
+
+.skeleton-header {
+    width: 100%;
+    border-bottom: 1px solid var(--jp-border-color2, rgba(128,128,128,0.2));
+    padding-bottom: 15px;
+}
+.skeleton-columns { display: flex; gap: 30px; flex: 1; }
+.skeleton-left { flex: 3; display: flex; flex-direction: column; gap: 12px; }
+.skeleton-right { flex: 2; display: flex; }
+
+.skeleton-item {
+    background: var(--bg3-color, var(--jp-layout-color2, #262626)); 
+    border-radius: 8px; 
+}
+
+/* Heights for different levels */
+.skeleton-item.header-bar { height: 36px; }
+.skeleton-item.title { height: 24px; }
+.skeleton-item.text { height: 12px; }
+.skeleton-item.media { width: 100%; height: 100%; min-height: 200px; }
+
+.ips-loading { position: relative; overflow: hidden; }
+.ips-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, 
+        var(--bg3-color, var(--jp-layout-color2, #262626)), 
+        hsl(from var(--bg2-color, var(--jp-layout-color2, #bbb)) h calc(s*0.75) calc(l*0.75)), 
+        var(--bg3-color, var(--jp-layout-color2, #262626))
+    );
+    background-size: 200% 100%;
+    animation: skeleton-swipe 2s infinite linear;
+}
+
+@keyframes skeleton-swipe {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes ips-reveal {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    99% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        /* Explicitly unset to collapse the stacking context */
+        opacity: unset;
+        transform: unset;
+    }
+}
+
+.skeleton-footer { 
+    margin-top: 20px; 
+    color: var(--fg2-color, var(--jp-ui-font-color2, #888)); 
+    font-size: 10px; 
+    font-family: var(--jp-ui-font-family, sans-serif);
+}
+</style>
+"""
+
+def loading_skeleton(info="Loading ..."):
+    # Randomize widths
+    import random
+    widths = [random.randint(70, 98) for _ in range(3)]
+    main_header_width = random.randint(30, 50) # The new top-level title
+    column_title_width = random.randint(40, 70) 
+    
+    # Randomly flip layout
+    flex_direction = random.choice(["row", "row-reverse"])
+    return f"""{loading_style}
+    <div class="skeleton-wrapper">
+        <div class="skeleton-header">
+            <div class="skeleton-item header-bar ips-loading" style="width: {main_header_width}%;"></div>
+        </div>
+
+        <div class="skeleton-columns" style="flex-direction: {flex_direction};">
+            <div class="skeleton-left">
+                <div class="skeleton-item title ips-loading" style="width: {column_title_width}%;"></div>
+                <div class="skeleton-item text ips-loading" style="width: {widths[0]}%;"></div>
+                <div class="skeleton-item text ips-loading" style="width: {widths[1]}%;"></div>
+                <div class="skeleton-item text ips-loading" style="width: {widths[2]}%;"></div>
+                <div class="skeleton-item text ips-loading" style="width: {random.randint(30, 50)}%; margin-top: 10px;"></div>
+            </div>
+            
+            <div class="skeleton-right">
+                <div class="skeleton-item media ips-loading"></div>
+            </div>
+        </div>
+        <div class="skeleton-footer">IPySlides | {info}</div>
+    </div>
+    """ 

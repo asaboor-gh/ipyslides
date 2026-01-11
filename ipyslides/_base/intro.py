@@ -85,7 +85,6 @@ key_maps = {
     "Esc": "Exit fullscreen",
     "S": "Toggle settings panel",
     "E": "Edit Source Cell/View Variables", 
-    "B": "Build Pending Lazy Slides",
     "K": "Show keyboard shortcuts",
 }
 
@@ -103,7 +102,6 @@ key_combs = f"""color['var(--accent-color)']`//fa`info`Swipe left/right on touch
 | {_key('L')}                                 | {_icons["laser"]}, {_icons["circle"]}             | {key_maps["L"]}        |
 | {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}              | {key_maps["S"]}        |
 | {_key('Ctrl')} + {_key('P')}                |      <none>                                       | {key_maps["P"]}        |
-| {_key('B')}                                 | <none>                                            | {key_maps["B"]}        |
 
 - color['var(--fg3-color)']`{_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation.`
 - color['var(--fg3-color)']`//Double-click on images/plots and focusable elements (see `Slides.css_styles`) to zoom into focused view.//`

@@ -143,7 +143,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.fmt        = fmt # So important for flexibility
         self.esc        = esc # lazy escape for variables in markdown
         self.serializer = serializer  # Serialize IPython objects to HTML
-        self.loading = self.widgets.htmls.loading # for user access
 
         with suppress(Exception):  # Avoid error when using setuptools to install
             self.shell.register_magic_function(self._slide, magic_kind="cell", magic_name="slide")
@@ -466,7 +465,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def clear(self, keep):
         """Clear all slides except first `keep` slides (default 1). Contents are removed to free memory.
-        After clearing, auto slide numbering restarts next to last slide for use in `Slides.build(-1)`.
+        After clearing, auto slide numbering restarts from 0 for use in `Slides.build(-1)`.
         """
         if not isinstance(keep, int) or keep < 1:
             raise ValueError("keep should be positive integer > 0 to keep that many slides from start, at least one!")
@@ -480,7 +479,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 if hasattr(slide, '_scroll_btn'): del slide._scroll_btn
         
         self._slides_dict = {k: s for k, s in self._slides_dict.items() if s.index is not None and s.index < keep}
-        self._next_number = max(self._slides_dict.keys(), default=-1) + 1 # reset next number
+        self._next_number = 0 # reset next number
         self.refresh() # Reset internal structures
 
     def _cite(self, keys):
@@ -651,13 +650,20 @@ class Slides(BaseSlides,metaclass=Singleton):
         "Auto display when self is on last line of a cell"
         if not self.is_jupyter_session():
             raise Exception("Python/IPython REPL cannot show slides. Use IPython notebook instead.")
-
-        self._unregister_postrun_cell() # no need to scroll button where showing itself
-        self._auto_rebuild('ondemand') # keep auto_rebuild state, but register if needed
-        self._force_update()  # Update before displaying app, some contents get lost
-        self.settings._update_theme() # force it, sometimes Inherit theme don't update
-        clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
-        display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
+        self._clean_display()
+        
+    def _clean_display(self): # This helps reduce a jarring flash on display
+        height = self._box.layout.height
+        self._box.layout.height = '0'  # collapse during updates
+        try:
+            self._unregister_postrun_cell() # no need to scroll button where showing itself
+            self._auto_rebuild('ondemand') # keep auto_rebuild state, but register if needed
+            self.settings._update_theme() # force it, sometimes Inherit theme don't update
+            self._force_update()  # Update to avoid some content like widgets may be lost
+            clear_output(wait = True) # Avoids jump buttons and other things in same cell created by scripts producing slides
+            display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
+        finally: 
+            self._box.layout.height = height  # restore height
 
     def close_view(self):
         "Close slides/cell view, but keep slides in memory than can be shown again."
@@ -679,7 +685,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._toc_widget.send({'active' : inds[0]}) # Update toc widget focus without changing index
         
         slide = self._iterable[new_index]
-        self._build_if_pending(slide)  # build if pending, then proceed
         self._update_tmp_output(slide.animation, slide.css)
         
         # Do this here, not in navigation module, as slider can jump to any value
@@ -699,19 +704,26 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.iw.msg_tojs = 'SwitchView'
         # do after ShowSlide available on naviagted slide
         self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
+        self._build_if_pending(slide)  # build if pending, should be at end to see loading on current slide
     
     def _build_if_pending(self, slide):
         if hasattr(slide, '_build_func'):
             slide._build_now = True  # mark to build now
             self.build(slide.number, slide._build_func) 
             # cleanup is handled in same build class, no worries of multiple builds
-            return True # indicator for button building
     
     def _click_build_if_pending(self, btn):
         "Build first pending slide when user clicks build button."
-        if self._build_if_pending(self._current): return # This will build current if pending
-        if pending := [i for i, s in enumerate(self._iterable) if hasattr(s, '_build_func')]:
-            self.navigate_to(pending[0])  # go to first pending slide, that will build it
+        with dashlab.disabled(btn): # disable button during build
+            if slide := self._next_pending:
+                self._build_if_pending(slide) # build first pending slide
+    
+    @property
+    def _next_pending(self):
+        if hasattr(self._current, '_build_func'): 
+            return self._current # check current first
+        for slide in self._iterable:
+            if hasattr(slide, '_build_func'): return slide # get and exit
 
     def _update_content(self, change):
         if self.wprogress.value == 0:  # First slide
@@ -862,17 +874,19 @@ class Slides(BaseSlides,metaclass=Singleton):
             return xmd(cell, returns = False)
 
     def _force_update(self, ctx=None, value=None):
-        with self.loading('Updating widgets ...'):
-            for slide in self[:]:  # Update all slides
-                if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotly etc
-                    slide.update_display()
-            
-            if ctx:
-                self.notify('Widgets updated everywhere!')
-            
-            self.settings.footer._apply_change(None) # sometimes it is not updated due to message lost, so force it too
-            self._current._set_progress() # update display can take it over to other sldies
-            self.run_animation()  # to trigger any animation on current slide on refresh
+        if self._current: 
+            self._current._waiting_contents() # show loading sekeleton 
+        
+        for slide in self[:]:  # Update all slides
+            if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotly etc
+                slide.update_display()
+        
+        if ctx:
+            self.notify('Widgets updated everywhere!')
+        
+        self.settings.footer._apply_change(None) # sometimes it is not updated due to message lost, so force it too
+        self._current._set_progress() # update display can take it over to other sldies
+        self.run_animation()  # to trigger any animation on current slide on refresh
 
     def _collect_slides(self):
         slides_iterable = tuple(sorted(self._slides_dict.values(), key= lambda s: s.number))
@@ -900,9 +914,6 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def create(self, slide_numbers):
         "Create empty slides with given slide numbers. If a slide already exists, it remains same. This is much faster than creating one slide each time."
-        if self._in_restricted_ctx:
-            raise RuntimeError("Cannot create slides while a capturing context is active!")
-        
         if not isinstance(slide_numbers, Iterable):
             raise TypeError("slide_numbers should be list-like!")
         

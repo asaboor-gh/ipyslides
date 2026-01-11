@@ -3,7 +3,7 @@ import os, re, textwrap
 import traceback
 import inspect
 from pathlib import Path
-from contextlib import ContextDecorator
+from contextlib import ContextDecorator, contextmanager
 
 from IPython.display import display
 
@@ -223,7 +223,7 @@ class BaseSlides:
             print("There was no markdown file linked to sync!")
     
     def build_(self, content = None, /, **vars):
-        "Same as `build` but no slide number required inside Python file!"
+        "Same as `build` but no slide number required inside Python file! Should not close parenthesis if used as decorator."
         if self.inside_jupyter_notebook(self.build_):
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
         return self.build(self._next_number, content, **vars)
@@ -268,38 +268,31 @@ class BaseSlides:
         def __new__(cls, slide_number, content = None, /, **vars):
             self = super().__new__(cls) # instance
             self._snumber = self._app._fix_slide_number(slide_number)
-            
-            with self._app.code.context(returns = True, depth=3, start = True) as code:
-                if (content is not None) and any([code.startswith(c) for c in ('@', 'with')]):
-                    raise ValueError("content should be None while using as decorator or contextmanager!")
-                
-                # using fmt is tempting to delegate vars automatically but it raises error if var not found, 
-                # which is against whole philosophy of lazy evaluation and rebuild.
-                # Also, using vars in decorator mode for function docstring is a bad idea as it
-                # will be evaluated only once and never updated on rebuild, also it is not supported by python syntax.
-                if isinstance(content, str) and not code.startswith('with'): 
-                    return self._app._from_markdown(self._snumber, content, _vars = vars)
 
-                if callable(content) and not code.startswith('with'):
-                    slide, = self._app.create([self._snumber]) # access or create slide first in both cases
-                    return self._handle_callable(slide, content)
+            # using fmt is tempting to delegate vars automatically but it raises error if var not found, 
+            # which is against whole philosophy of lazy evaluation and rebuild.
+            # Also, using vars in decorator mode for function docstring is a bad idea as it
+            # will be evaluated only once and never updated on rebuild, also it is not supported by python syntax.
+            if isinstance(content, str):
+                return self._app._from_markdown(self._snumber, content, _vars=vars)
+
+            if callable(content):
+                return self._handle_callable(content)
             
             if content is not None:
                 raise ValueError(f"content should be None, str, or callable. got {type(content)}")
 
-            return self # context manager
+            return self # context manager or decorator path
         
-        def _handle_callable(self, s, func):   
+        def _handle_callable(self, func):  
+            s, = self._app.create([self._snumber]) # access or create slide first
             if hasattr(s, '_build_func') and hasattr(s, '_build_now'): # lazy build marked earlier, _build_now is set during navigation
-                with _build_slide(self._app, self._snumber) as s: 
-                    s._set_source(self._app.code.from_source(s._build_func).raw,'python') # set source code to be accessible
-                    if (doc := getattr(s._build_func, '__doc__', None)):
-                        self._app.xmd(doc, returns=False)
-                    
-                    s._build_func(s) 
-                    s._set_css_classes(remove = 'Stale') # lazy slides will be back here to be built
-                    del s._build_func # remove after building for no future pending
-                    if hasattr(s, '_build_now'): del s._build_now # remove marker after building once
+                s._set_css_classes(remove = 'Stale') # lazy slides will be back here to be built
+                del s._build_now, s._build_func # remove markers for building once
+                with _build_slide(self._app, self._snumber): 
+                    s._set_source(self._app.code.from_source(func).raw,'python') # set source code to be accessible
+                    if (doc := getattr(func, '__doc__', None)): self._app.xmd(doc, returns=False)
+                    func(s) # call to build slide now
             else:
                 # Do some static checks, so it at least valid function
                 uw_func = inspect.unwrap(func) # unwrap to get original function
@@ -311,6 +304,8 @@ class BaseSlides:
                 
                 s._build_func = func # store for later build
                 s._set_css_classes(add = 'Stale') # mark as stale to build later
+                with _build_slide(self._app, self._snumber): 
+                    pass # make state synced like next_number, resets etc.
             
             return s # return in both cases
 
@@ -330,25 +325,18 @@ class BaseSlides:
         
         def __call__(self, func):
             "Use @build decorator. func accepts slide as argument."
-            type(self)(self._snumber, func)
+            return self._handle_callable(func)
             
-
+            
     def demo(self):
         "Demo slides with a variety of content."
         from .._demo import demo_slides
-        with self.loading('Creating demo slides ...'):
-            demo_slides(self) # Do not return anything
-            self.notify('x') # clear any previous notification
+        demo_slides(self) # Do not return anything
         
     def docs(self):
         "Create presentation from docs of IPySlides."
-        with self.loading('Creating documentation slides ...'):
-            self._docs()
-            self.notify('x') # clear any previous notification
-        
-    def _docs(self):
-        self.create(range(21)) # Create slides faster
-        self.clear(keep = 21) # Clear previous slides except first 21
+        self.clear(keep = 17) # Clear previous slides except first 19
+        self.create(range(17)) # Create slides if missing for first 18 slides
         
         from ..core import Slides
 
@@ -604,5 +592,5 @@ class BaseSlides:
                     Some kernels may not support auto slide numbering inside notebook.
             """)
         
-        self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self._docs]))
+        self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self.docs]))
         self.navigate_to(0) # Go to title, do not return to avoid display shift to this cell

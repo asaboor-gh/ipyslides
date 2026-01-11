@@ -66,7 +66,8 @@ def demo_slides(slides):
     """,btn=slides.draw_button)
 
     # Matplotlib
-    with slides.build_() as sl:
+    @slides.build(-1)
+    def _(sl):
         slides.write('## Plotting with Matplotlib section`Plotting and DataFrame`')
         with slides.code.context(returns = True) as s:
             sl.set_css(bg1 = 'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')
@@ -157,7 +158,8 @@ def demo_slides(slides):
             html.value = race_plot().value
             print(f'Animation Frame: {anim}') # goes to output area
 
-    with slides.build(-1) as s:
+    @slides.build_
+    def _(s):
         import numpy as np
         import matplotlib.pyplot as plt
 
@@ -186,10 +188,14 @@ def demo_slides(slides):
     skipper = slides.link('Skip All Next Frames', 'Skip Previous Frames', icon='arrowr', back_icon='arrowl')
     
     # Animat plot in slides  
-    with slides.build_():
+    @slides.build_
+    def _(s):
         slides.write("## Animating Matplotlib!", skipper.origin)
 
         with slides.code.context(returns = True) as s:
+            import numpy as np
+            import matplotlib.pyplot as plt
+            
             for idx in slides.PAGE.iter(range(10,19)):
                 fig, ax = plt.subplots(figsize=(3.4,2.6))
                 x = np.linspace(0,idx,50)

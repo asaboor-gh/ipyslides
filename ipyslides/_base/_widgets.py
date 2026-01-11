@@ -17,7 +17,7 @@ jupyter_colors = { # used in styles.py and interaction.js
     'pointer':'--jp-error-color1',
 }
 
-# used to set focusable elements for click-to-focus feature in _layout_css.py and interaction.js
+# used to set focusable elements for click-to-focus feature in _layout.py and interaction.js
 focus_selectors = ":is(img, svg, video, canvas, .focus-self, .focus-child > *:not(.no-focus), .plot-container.plotly)"
 
 class InteractionWidget(anywidget.AnyWidget):
@@ -42,7 +42,6 @@ class InteractionWidget(anywidget.AnyWidget):
             'NEXT': self.ws.buttons.next.click,
             'PREV': self.ws.buttons.prev.click,
             'PRINT': self.ws.buttons.print.click,
-            'BUILD': self.ws.buttons.build.click,
         }
 
     @traitlets.observe("msg_topy")

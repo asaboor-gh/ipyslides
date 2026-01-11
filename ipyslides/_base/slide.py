@@ -8,7 +8,7 @@ from IPython.utils.capture import RichOutput
 from ipywidgets import HTML as ipwHTML
 
 from . import styles
-from ._layout_css import background_css, get_unique_css_class
+from ._layout import background_css, get_unique_css_class, loading_skeleton
 from .styles import collapse_node, hide_node
 from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
@@ -834,6 +834,23 @@ class Slide:
                 self._app._update_tmp_output(self.animation, self.css) # force refresh
             else:
                 self._app.navigate_to(self.index) # Go there to see effects
+    
+    def _waiting_contents(self, info="Updating Slides ..."):
+        """DO NOT TRY TO BE SMART HERE! Jupyter Handshake Delay is real!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # DO NOT REVERT TO WIDGET CLASS TOGGLING (.add_class / .remove_class)
+        # Reason: The "Jupyter Handshake Delay."
+        # Toggle state via Python kernel flushes instantly, but the Frontend (Browser) 
+        # only acknowledges the "Task Finished" after DOM rendering is complete. 
+        #
+        # SOLUTION: Use clear_output(wait=True) with a hard-coded HTML/CSS skeleton.
+        # This forces the browser to keep the shimmer visible until the next 
+        # frame is fully ready to paint after update_display is called.
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        """
+        self._widget.clear_output(wait=True)
+        with self._widget:
+            XTML(loading_skeleton(info)).display()
 
 @contextmanager
 def _build_slide(app, slide_number):
@@ -852,13 +869,11 @@ def _build_slide(app, slide_number):
         app._slides_dict[slide_number] = this
         app.refresh() # rebuild slides to have index ready
        
-    with this._capture(), app.loading(f'Building Slide {slide_number} ...'): 
-        outer_loading = app.loading.value if app.loading.active > 1 else "" # 1 is this
-        try: yield this
-        finally:
-            if outer_loading:
-                app.loading.value = outer_loading # restore outer loading state
-
+    this._waiting_contents(f'Building Slide {this.number} ...') # show loading skeleton
+    if not hasattr(this, '_build_func'): app.navigate_to(this.index) # avoid naviagting to lazy slides here
+    with this._capture(): 
+        yield this
+        
     app.widgets.iw.msg_tojs = 'SwitchView' # enforce immediate view cleanup to avoid overlapping slides content
     for content in this._contents:
         if content.data.get('application/vnd.jupyter.widget-view+json',{}):

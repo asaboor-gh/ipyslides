@@ -14,7 +14,6 @@ from tldraw import TldrawWidget
 from . import styles
 from ._widgets import InteractionWidget, NotesWidget, LaserPointer
 from .intro import get_logo, how_to_print, instructions, key_combs
-from ._layout_css import Icon
 from ..utils import html, htmlize
 from ..dashlab import ListWidget, JupyTimer, TabsWidget
 from .. import formatters as fmtrs
@@ -187,8 +186,6 @@ class CtxMenu(ListWidget):
                     "content": html('',[instructions]).value,
                     "timeout": 120000 # 2 minutes
                 })
-            elif self.ws.htmls.loading.active: # Just a handy cleanup
-                self.ws.htmls.loading.hide()
         
         self.index = None # reset index after selection to allow re-selection of same item
         self.hide() # hide menu on selection
@@ -294,42 +291,6 @@ class Output(fmtrs._Output):
 ipw.interaction.Output = Output
 ipw.Output = Output
 ipw.widget_output.Output = Output
-
-class Loading(ipw.HTML):
-    "Loading widget with show/hide methods and itself as context manager. It covers entire slide area while doing heavy operations if needed."
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.layout.display = "none" # initially hidden
-        self.add_class('Loading')
-        self._ctx_active = 0 # context manager active flag
-
-    def show(self, value):
-        "Show loading with given HTML value. This can be useed to update as well."
-        self.layout.display = "block"
-        self.value = value + Icon('loading', color='var(--accent-color, skyblue)',size='48px').value
-        
-    def hide(self):
-        "Hide loading. Does not hide if inside context manager until exited."
-        # do not hide if inside context manager for user experience
-        if self._ctx_active: return 
-        self.layout.display = "none"
-        self.value = ""
-    
-    @property
-    def active(self):
-        "Return whether loading is active as integer. 0 means inactive, >= 1 means inside (nested) context manager(s)."
-        return self._ctx_active or int(self.layout.display != "none")
-    
-    @contextmanager
-    def __call__(self, value="Loading..."):
-        "Context manager to show loading around a block."
-        try: 
-            self.show(value)
-            self._ctx_active += 1
-            yield
-        finally: 
-            self._ctx_active -= 1
-            self.hide() # will hide if no more context active
     
 
 auto_layout =  Layout(width='auto')
@@ -346,7 +307,7 @@ class _Buttons:
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='max-content'))
     print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='max-content'), tooltip='Ctrl + P')
-    build   =  Button(icon='redo',description="Navigate/Click to Build Pending Slides",layout= Layout(width='max-content'), tooltip='Click to Build next pending slide [B]').add_class('Build-Btn')
+    build   =  Button(icon='warning',description="Pending Slides",layout= Layout(width='max-content'), tooltip='Navigate/Click to Build Pending Slides').add_class('Build-Btn')
 
 @dataclass(frozen=True)
 class _Htmls:
@@ -356,7 +317,6 @@ class _Htmls:
     footer  = HTML(layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML()
     main    = HTML() 
-    loading = Loading() #SVG Animation in it
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
     pointer = LaserPointer() # For beautiful pointer
     hilite  = HTML() # Updated in settings on creation. For code blocks.
@@ -424,8 +384,7 @@ class Widgets:
             # Slides are added here dynamically
         ],layout= Layout(min_width='100%',min_height='100%', overflow='hidden')).add_class('SlideBox') 
         
-        self.mainbox = VBox([
-            self.htmls.loading, 
+        self.mainbox = VBox([ 
             self.htmls.main,
             self.htmls.theme,
             self.iw,

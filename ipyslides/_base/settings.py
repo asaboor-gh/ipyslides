@@ -13,7 +13,7 @@ from ipywidgets.widgets.trait_types import InstanceDict
 
 from ..formatters import fix_ipy_image, code_css, htmlize
 from ..utils import html, today, _clipbox_children, get_clips_dir, set_dir
-from . import intro, styles, _layout_css
+from . import styles, _layout
 from ..dashlab import disabled
 
 
@@ -336,6 +336,11 @@ class Settings:
         self.__dict__[name] = value
 
     def _print_pdf(self, btn):
+        if self._slides._next_pending:
+            return self._slides.notify(
+                self._slides.error("Print Error", "Please build pending slides by naviagting/clicking on 'Pending Slides' button before you can print to PDF.").value
+            )
+            
         with disabled(self._widgets.buttons.print): # disable button to avoid multiple clicks
             self._slides.notify("Loading PDF window… <br>Use <code class='info'>Save as PDF</code> to preserve links.", timeout=5)
             self._printingPDF = True # set before setting frame to pick correct content
@@ -404,8 +409,8 @@ class Settings:
         # Only update layout CSS if theme changes, not on each call
         if change and change['owner'] in ('layout',self._widgets.theme): # function called with owner without widget works too much
             self._widgets.htmls.main.value = html('style',
-                _layout_css.layout_css(self._colors['accent'],self.layout.aspect)
-            ).value
+                _layout.layout_css(self._colors['accent'],self.layout.aspect)
+            ).value + _layout.loading_style # loading style should be always there
             
         # before applying style_css theme, set reflow and inotes
         self.layout._reflow = self._widgets.checks.reflow.value
