@@ -182,7 +182,8 @@ slides.set_css({ # on all slides or slide[index,].set_css() per slide
     Live edit a linked markdown file that updates slides in real-time using `slides.sync_with_file`.
 
 - **Content Animations:**
-    Beside slides switch transitions, you can animate content anywhere in slides using `anim-` prefixed classes and related varaiables. See `slides.css_animations` for details.
+    - Slides builders now support skeleton animation automatically for a premium editing experience.
+    - Beside slides switch transitions, you can animate content anywhere in slides using `anim-` prefixed classes and related varaiables. See `slides.css_animations` for details.
 
 ---
 

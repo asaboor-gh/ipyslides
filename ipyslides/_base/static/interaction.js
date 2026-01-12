@@ -296,6 +296,7 @@ function handleMessage(model, msg, box) {
             });
         });
         
+        setScale(box, model); // rescale on slide change if left over, useful in VSCode
         setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
         tldrawLinks(slideNew, model); // fix draw links for new slide
@@ -762,8 +763,8 @@ function markPrintable(el, className) {
 
 function displaySplash(box) {
     box.classList.add('ips-loading');
-    window.dispatchEvent(new Event('resize')); // ensure resize event on load
     setTimeout(() => {
+        window.dispatchEvent(new Event('resize')); // another resize after load
         box.classList.remove('ips-loading');
     }, 1000); // slight delay to ensure smooth transition
 }

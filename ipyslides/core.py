@@ -279,8 +279,8 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         if self._slides_per_cell:
             slide = self._slides_per_cell[0]
-            if not hasattr(slide, '_build_func'): 
-                self.navigate_to(slide.index) # avoid auto naviagte to pending builds to wait unexpectedly for execution
+            if not slide._pending(): # avoid auto naviagte to pending builds to wait unexpectedly for execution
+                self.navigate_to(slide.index) 
 
             scroll_btn = ipw.Button(description= 'Go to Slides', icon= 'scroll', layout={'height':'0px'}).add_class('Scroll-Btn') # height later handled by hover
             scroll_btn.on_click(lambda btn: self._box.focus()) # only need to go there, no slide switching 
@@ -465,7 +465,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def clear(self, keep):
         """Clear all slides except first `keep` slides (default 1). Contents are removed to free memory.
-        After clearing, auto slide numbering restarts from 0 for use in `Slides.build(-1)`.
+        After clearing, auto slide numbering is reset to `Slides[-1].number + 1` for use in `Slides.build(-1)`.
         """
         if not isinstance(keep, int) or keep < 1:
             raise ValueError("keep should be positive integer > 0 to keep that many slides from start, at least one!")
@@ -479,8 +479,8 @@ class Slides(BaseSlides,metaclass=Singleton):
                 if hasattr(slide, '_scroll_btn'): del slide._scroll_btn
         
         self._slides_dict = {k: s for k, s in self._slides_dict.items() if s.index is not None and s.index < keep}
-        self._next_number = 0 # reset next number
         self.refresh() # Reset internal structures
+        self._next_number = self[-1].number + 1 if self._slides_dict else 0 # reset next number
 
     def _cite(self, keys):
         self.verify_running("Citations can be added only inside a slide constructor!")
@@ -664,6 +664,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             display(ipw.HBox([self.widgets.mainbox]).add_class("SlidesContainer"))  # Display slides within another box
         finally: 
             self._box.layout.height = height  # restore height
+            self.widgets.iw.msg_tojs = "RESCALE"  # force rescale after display
 
     def close_view(self):
         "Close slides/cell view, but keep slides in memory than can be shown again."
@@ -707,7 +708,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._build_if_pending(slide)  # build if pending, should be at end to see loading on current slide
     
     def _build_if_pending(self, slide):
-        if hasattr(slide, '_build_func'):
+        if slide._pending():
             slide._build_now = True  # mark to build now
             self.build(slide.number, slide._build_func) 
             # cleanup is handled in same build class, no worries of multiple builds
@@ -720,10 +721,10 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     @property
     def _next_pending(self):
-        if hasattr(self._current, '_build_func'): 
+        if self._current and self._current._pending(): 
             return self._current # check current first
         for slide in self._iterable:
-            if hasattr(slide, '_build_func'): return slide # get and exit
+            if slide._pending(): return slide # get and exit
 
     def _update_content(self, change):
         if self.wprogress.value == 0:  # First slide
@@ -846,10 +847,6 @@ class Slides(BaseSlides,metaclass=Singleton):
                 s._esc_vars = {v: stored[v] for v in vars if v in stored} # store for rebuilds internally
                 
                 for page, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue=''), start=1): # page starts from 1
-                    if '%++' in frm: # remove %++ from here, but stays in source above for user reference
-                        frm = frm.replace('%++','').strip() # remove that empty line too
-                        utils.warn("`%++` is deprecated and no more backward compatible, use `++` explicitly on each part separation!").display()
-                        
                     self.xmd(frm, returns = False) # parse and display content
                     
                     if len(frames) > 1: self.PAGE() # add page separator if multiple frames
@@ -874,12 +871,13 @@ class Slides(BaseSlides,metaclass=Singleton):
             return xmd(cell, returns = False)
 
     def _force_update(self, ctx=None, value=None):
-        if self._current: 
+        if not self._current: return # no slides yet
+        try:
             self._current._waiting_contents() # show loading sekeleton 
-        
-        for slide in self[:]:  # Update all slides
-            if slide._has_widgets or (slide is self._current): # Update current even if not has_widgets, fixes plotly etc
-                slide.update_display()
+            for slide in self[:]:  # Update all slides
+                if slide._has_widgets and (slide is not self._current): # Update current at end
+                    slide.update_display()
+        finally: self._current.update_display()  # Update current slide at end to remove waiting contents
         
         if ctx:
             self.notify('Widgets updated everywhere!')
@@ -931,16 +929,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.refresh()  # Refresh all slides
 
         return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
-    
-    class fsep:
-        """No more backward compatible! Use `Slides.PAGE()` and `Slides.PART()` explicitly!"""
-        def __init__(self, stack=None):
-            utils.warn("fsep is deprecated and no more backward compatible, use PAGE and PART explicitly!").display()
-
-        @classmethod
-        def iter(cls, iterable, stack=None):
-            cls(stack=stack) # for warning only
-            return iterable
     
     class PAGE:
         """Page delimiter! Use `Slides.PAGE()` or import at top level to create a new page in slide.

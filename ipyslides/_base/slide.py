@@ -851,6 +851,8 @@ class Slide:
         self._widget.clear_output(wait=True)
         with self._widget:
             XTML(loading_skeleton(info)).display()
+    
+    def _pending(self): return hasattr(self, '_build_func') # built if no build_func
 
 @contextmanager
 def _build_slide(app, slide_number):
@@ -870,7 +872,7 @@ def _build_slide(app, slide_number):
         app.refresh() # rebuild slides to have index ready
        
     this._waiting_contents(f'Building Slide {this.number} ...') # show loading skeleton
-    if not hasattr(this, '_build_func'): app.navigate_to(this.index) # avoid naviagting to lazy slides here
+    if not this._pending(): app.navigate_to(this.index) # avoid naviagting to lazy slides here
     with this._capture(): 
         yield this
         

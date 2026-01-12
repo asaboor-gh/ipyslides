@@ -71,6 +71,7 @@ class InteractionWidget(anywidget.AnyWidget):
             self.ws.theme.options = ['Jupyter', *self.ws.theme.options] 
             self.ws.theme.value = 'Jupyter' # enable it
         elif msg == 'LOADED':
+            self.msg_tojs = 'RESCALE' # Trigger rescale on load, since naimation might keep it small
             if self.ws.checks.notes.value: # Notes window already there
                self.ws.checks.notes.value = False # closes unlinked window
                self.ws.checks.notes.value = True # opens new linked window

@@ -120,6 +120,7 @@ class BaseSlides:
 
         last_updated = None
         for chunk, hdl, mvs in zip(chunks, handles, mdvars):
+            self._next_number = hdl.number + 1 # This is need if markdown does not change, slide number still needs to be updated
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
             if any(['Out-Sync' in hdl._css_class, chunk != hdl._markdown, mvs != hdl._md_vars]):
                 hdl._md_vars = mvs # set corresponding vars to access while building slide
@@ -223,7 +224,7 @@ class BaseSlides:
             print("There was no markdown file linked to sync!")
     
     def build_(self, content = None, /, **vars):
-        "Same as `build` but no slide number required inside Python file! Should not close parenthesis if used as decorator."
+        "Same as `build` but no slide number required inside Python file! Should not close parentheses if used as decorator."
         if self.inside_jupyter_notebook(self.build_):
             raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
         return self.build(self._next_number, content, **vars)
@@ -274,10 +275,10 @@ class BaseSlides:
             # Also, using vars in decorator mode for function docstring is a bad idea as it
             # will be evaluated only once and never updated on rebuild, also it is not supported by python syntax.
             if isinstance(content, str):
-                return self._app._from_markdown(self._snumber, content, _vars=vars)
+                return self._no_further_build(self._app._from_markdown(self._snumber, content, _vars=vars))
 
             if callable(content):
-                return self._handle_callable(content)
+                return self._no_further_build(self._handle_callable(content))
             
             if content is not None:
                 raise ValueError(f"content should be None, str, or callable. got {type(content)}")
@@ -286,7 +287,8 @@ class BaseSlides:
         
         def _handle_callable(self, func):  
             s, = self._app.create([self._snumber]) # access or create slide first
-            if hasattr(s, '_build_func') and hasattr(s, '_build_now'): # lazy build marked earlier, _build_now is set during navigation
+            
+            if s._pending() and hasattr(s, '_build_now'): # lazy build marked earlier, _build_now is set during navigation
                 s._set_css_classes(remove = 'Stale') # lazy slides will be back here to be built
                 del s._build_now, s._build_func # remove markers for building once
                 with _build_slide(self._app, self._snumber): 
@@ -305,7 +307,7 @@ class BaseSlides:
                 s._build_func = func # store for later build
                 s._set_css_classes(add = 'Stale') # mark as stale to build later
                 with _build_slide(self._app, self._snumber): 
-                    pass # make state synced like next_number, resets etc.
+                    pass # make state synced like next_number, resets etc. and restricts nesting
             
             return s # return in both cases
 
@@ -325,7 +327,15 @@ class BaseSlides:
         
         def __call__(self, func):
             "Use @build decorator. func accepts slide as argument."
-            return self._handle_callable(func)
+            self._handle_callable(func) # no need to pollute namespace
+            
+        def _no_further_build(self, obj):
+            "Prevent further use as contextmanager/decorator. This is better than code introspection to test @ or with."
+            def _raise(*args, **kwargs):
+                raise RuntimeError('Already built slide(s) with given content cannot be further used as contextmanager/decorator!')
+            
+            for attr in ('enter', 'exit', 'call'): setattr(type(obj), f'__{attr}__', _raise)
+            return obj
             
             
     def demo(self):
@@ -334,9 +344,10 @@ class BaseSlides:
         demo_slides(self) # Do not return anything
         
     def docs(self):
-        "Create presentation from docs of IPySlides."
-        self.clear(keep = 17) # Clear previous slides except first 19
-        self.create(range(17)) # Create slides if missing for first 18 slides
+        "Create presentation from docs of IPySlides. Using @build excessively speeds up initial loading."
+        self.clear(keep = 20) # Clear previous slides except first 19
+        self.create(range(20)) # Create slides if missing for first 18 slides
+        # Using clear, create and @build lazy execution cuts down initial loading time by ~85% of eager loading
         
         from ..core import Slides
 
@@ -426,7 +437,8 @@ class BaseSlides:
         
         self.build(-1, r'section`//Layout and color["yellow","black"]`Theme` Settings//` toc`### Contents`')
         
-        with self.build(-1) as s:
+        @self.build_
+        def _(s):
             s.set_css({
                 '.highlight': {'background':'#8984'}
             }, bg1 = 'linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color))')
@@ -445,7 +457,8 @@ class BaseSlides:
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
 
-        with self.build(-1):
+        @self.build(-1)
+        def _(s):
             self.write(r'''
                 ## Citations and Sections
                 Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data)` method.
@@ -501,8 +514,7 @@ class BaseSlides:
         <md-src/>
         """, self=self)
         
-        with self.build(-1):
-            self.css_animations.display()
+        self.build(-1, lambda s: self.css_animations.display())
         
         self.build(-1, '''
         ## Highlighting Code
@@ -525,7 +537,8 @@ class BaseSlides:
         
         self.build(-1, 'section`Advanced Functionality` toc`### Contents`')
 
-        with self.build_() as s:
+        @self.build_
+        def _(s):
             self.write("## Adding content on frames incrementally")
             self.frozen(widget := (code := s.get_source()).as_widget()).display()
             # frozen in above line get oldest metadata for export
@@ -536,7 +549,8 @@ class BaseSlides:
                 cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
                 self.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
                     
-        with self.build(-1) as s:
+        @self.build_
+        def _(s):
             self.write('## Adding User defined Objects/Markdown Extensions')
             self.write(
                 self.hold(display, self.html('h3','I will be on main slides',css_class='warning'),
@@ -561,7 +575,8 @@ class BaseSlides:
                 Double click to focus on this block. Click at top right button or double click to exit.
             ''')
 
-        with self.build(-1):
+        @self.build_
+        def _(s):
             with self.capture_content() as c:
                 with self.code.context():
                     import ipywidgets as ipw

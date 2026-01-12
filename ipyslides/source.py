@@ -37,7 +37,7 @@ class SourceCode(XTML):
     @raw.setter
     def raw(self, value):
         "Set raw source code."
-        self._raw = value.strip() # avoid new lines
+        self._raw = value.strip("\n").rstrip() # avoid new lines, but also preseve indents
     
     def display(self,collapsed = False, summary = "Show Code"):
         "Display source object in IPython notebook, with optionally showing as collpased element."
