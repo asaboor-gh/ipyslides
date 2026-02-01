@@ -21,7 +21,6 @@ from ._base.widgets import TOCWidget, ipw # patched one
 from ._base.base import BaseSlides
 from ._base.intro import how_to_slide, get_logo
 from ._base.slide import Slide, SlideGroup, _build_slide
-from ._base.icons import Icon as _Icon
 from .__version__ import __version__
 
 
@@ -135,7 +134,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.plt2image  = plt2image
         self.bokeh2html = bokeh2html
         self.get_logo   = get_logo
-        self.icon       = _Icon  # Icon is useful to add many places
         self.dl         = dashlab # whole dashlab module
         self.write      = write
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`

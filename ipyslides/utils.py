@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'code', 'hspace', 'vspace', 'center', 'image', 'svg','iframe','frozen', 'raw', 'warn',
+    'details', 'set_dir', 'textbox', 'code', 'fa', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn',
     'focus','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 __all__ = sorted(_attrs)
@@ -23,6 +23,7 @@ from IPython.display import Image, display
 from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from dashlab.utils import _build_css # This is very light weight and too important dependency
 
+from ._base.icons import Icon as icon # for export and overrides in fa function
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption
 from .xmd import get_unique_css_class, capture_content, raw, error, warn
 from .source import code
@@ -569,13 +570,28 @@ def textbox(text, **css_props):
     css_props = {'display':'inline','white-space': 'pre-wrap', **css_props} # very important to apply text styles in order
     return XTML(f'<span class="text-box" {_inline_style(css_props)}>{text}</span>')  # markdown="span" will avoid inner parsing
 
-def alert(text):
-    "Alerts text!"
-    return XTML(f"<span style='color:#DC143C;'>{text}</span>")
+def alert(text, bold=False, italic=False, **css_props):
+    "Alerts text in red color. `css_props` are applied to span element."
+    kws = {'color':'#DC143C', 'font-weight': 'bold' if bold else 'normal', 'font-style': 'italic' if italic else 'normal', **css_props}
+    return XTML(f"<span {_inline_style(kws)}>{text}</span>")
     
-def color(text,fg='var(--accent-color, blue)',bg=None):
-    "Colors text, `fg` and `bg` should be valid CSS colors"
-    return XTML(f"<span style='background:{bg};color:{fg};padding: 0.1em;border-radius:0.1em;'>{text}</span>")
+def color(text,fg='var(--accent-color, blue)',bg=None, **css_props):
+    "Colors text, `fg` and `bg` should be valid CSS colors. `css_props` are applied to span element."
+    style_kws = {'color': fg, 'background': bg, 'padding': '0.1em', 'border-radius':'0.1em', **css_props}
+    return XTML(f"<span {_inline_style(style_kws)}>{text}</span>")
+
+def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0, **css_props):
+    """Returns FontAwesome icon as html. `name` is the icon name without 'fa-' prefix. 
+    You can control `color`, `size` (like '2em', '24px'), `rotation` (0, 90, 180, 270) and other `css_props` applied to icon.
+    If an icon is available through ipyslides, it takes precedence over online fontawesome icons, use `fa-` prefix in that case to avoid conflict.
+    """
+    if name in icon.available:
+        return XTML(icon(name, color=color, size=size, rotation=rotation).value)  # use built-in icon but return same type
+    
+    if not name.startswith('fa-'):
+        name = f'fa-{name}' # use online fontawesome icon
+    style_kws = {'color': color, 'font-size': size, 'transform': f'rotate({rotation}deg)' if rotation else '', **css_props}
+    return XTML(f'<i class="fa {name}" {_inline_style(style_kws)}></i>')
 
 def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     """Stacks given objects in a column or row with given sizes. 

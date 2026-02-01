@@ -62,6 +62,7 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "hspace": "number in units of em",
     "line": "length in units of em, [color, width and style]",
     "today": "format_spec like %b-%d-%Y",
+    "fa": "fontawesome icon name, [css_props]",
     "alert": "text",
     "color": "text",
     "code": "inline code highlighter or use ::: code block",
@@ -723,9 +724,6 @@ class XMarkdown(Markdown):
         # Resolve <link:label:origin text> and <link:label:target text?>
         text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", r"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>", text)
         text = re.sub(r"<link:([\w\d-]+):target\s*(.*?)>", r"<a href='#origin-\1' id='target-\1' class='slide-link'>\2</a>", text)
-
-        # Replace fa`name` with <i class="fa fa-name"></i>
-        text = re.sub(r"fa\`([^\`]+?)\`", lambda m: f"<i class='fa fa-{m.group(1).strip()}'></i>", text)
         
         # _resolve_vars internally replace escaped \` and `%{ back to ` and %{ 
         return self._resolve_vars( # reolve vars after conversion, resets escaped characters too

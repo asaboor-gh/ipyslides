@@ -207,12 +207,13 @@ for c, r in zip('rlud',(0, 180,-90,90)): # their base svgs should stilll be able
 def _inline_svg(value: str) -> str:
     # remove newlines and extra spaces, keep 1 space between attributes
     return re.sub(r' +', ' ', value).replace('\n', '').replace('#', '%23')  # replace # with %23 for svg
+
 class Icon(XTML):
-    "Get an icon from the available icon set with a given color and size. Not every icon supports rotation."
+    "Get an icon from the available icon set with a given color and size. Not every icon supports rotation. Use ` Slides.fa ` to include fontawesome icons."
     available = tuple(sorted(_icons.keys()))
     def __init__(self, name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0) :
         if name not in _icons:
-            raise KeyError(f'Icon {name} not found. Available icons: {", ".join(_icons.keys())}')
+            raise KeyError(f'Icon {name} not found, you may use Slides.fa function for including fontawesome icons.\nAvailable icons here: {self.available}')
         
         _value = _icons[name].format(color=color, size=size, rotation = rotation).replace('#', '%23')  # replace # with %23 for svg
         super().__init__(textwrap.dedent(_value).strip()) # remove leading and trailing whitespace/newlines
