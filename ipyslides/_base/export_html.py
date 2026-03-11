@@ -130,8 +130,15 @@ class _HhtmlExporter:
     def _get_progress(self, slide, fidx=0):
         if not self.main.settings.footer.progress:
             return ''
-        
-        unit = 100/(self.main._iterable[-1].index or 1) # avoid zero division error or None
+        # Last slide: only first frame shows progress bar
+        if slide.index == self.main._iterable[-1].index:
+            if fidx == 0:
+                pv = 100
+                gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
+                return f'<div class="Progress" style="background: {gradient};"></div>'
+            else:
+                return ''
+        unit = 100/(self.main._iterable[-1].index or 1)
         pv = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
         gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'

@@ -583,13 +583,32 @@ class Slide:
     
     def _set_progress(self):
         if self is not self._app._current: return # avoid wrong indicators
-        unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
-        value = round(unit * ((self.index or 0) - (self.nf - self.indexf - 1)/self.nf), 4)
-        self._app.widgets._progbar.children[0].layout.width = f"{value}%"  
+        if self.index == self._app.wprogress.max:
+            if self.indexf == 0:
+                # Last slide, first frame: progress bar full
+                self._app.widgets._progbar.children[0].layout.width = "100%"
+                self._app.widgets._progbar.layout.display = ''
+            else:
+                # Last slide, other frames: hide progress bar
+                self._app.widgets._progbar.children[0].layout.width = "0%"
+                self._app.widgets._progbar.layout.display = 'none'
+        else:
+            self._app.widgets._progbar.layout.display = ''
+            unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
+            value = round(unit * ((self.index or 0) - (self.nf - self.indexf - 1)/self.nf), 4)
+            self._app.widgets._progbar.children[0].layout.width = f"{value}%"  
         self._app.widgets._snum.description = self._get_snum(self.indexf) # current slide number with page if any
         self._app.widgets._snum.tooltip = f"{self._app._current}" # hint for current slide number
 
     def _get_snum(self, fidx):
+        # On last slide, show only the main slide number on first frame.
+        # For other frames, show S.1, S.2, ...
+        if self.index == self._app.wprogress.max:
+            if fidx == 0:
+                return f"{self.index}"
+            else:
+                return f"S.{fidx}" # supplemntal slides
+            
         page = "" # default empty
         if self.nf > 1 and (page := self._fidxs[fidx].get("page","")):
             page  = f'.{page}'  # add dot before page number if any

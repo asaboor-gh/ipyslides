@@ -3,10 +3,14 @@ function updateProgress(show, numSlides, numFrames, index, fidx) {
     if (!show) {
         return 'transparent';
     }
+    if (index === numSlides - 1) {
+        // Last slide: always full progress
+        return 'linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) 100%, var(--bg2-color) 100%, var(--bg2-color) 100%)';
+    }
     let unit = 100/((numSlides - 1) || 1); // avoid zero division error or None
     let pv = Math.round(unit * (index - (numFrames - fidx - 1)/numFrames) * 10000)/10000;
     let gradient = `linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) ${pv}%, var(--bg2-color) ${pv}%, var(--bg2-color) 100%)`;
-    return gradient
+    return gradient;
 }
 
 // Function to fix IDs and references in cloned elements, especially for matplotlib SVGs
@@ -107,67 +111,78 @@ function printSlides(box, model) {
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
         let outArea = slide.querySelector(':scope .jp-OutputArea');
-        if (outArea) { outArea.scrollTop = 0; } // scroll OutputArea to top to avoid cutoffs
-        
+        if (outArea) { outArea.scrollTop = 0; }
+
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = (slideNum !== null && Array.isArray(parts[slideNum])) ? (parts[slideNum].length || 1) : 1;
         slide.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, 0));
-        slide.dataset.snum = n; // set data attribute for slide number to display even without frames
-        // ensure background image is set for printing, if user may not naviagted all slides or message was sent when slides were not yet loaded
-        setBgImage(slide); // main Image is not needed for print, only per slides
-        
+        // Only show number on first frame of last slide, else show 1/(nf-1), 2/(nf-1), ...
+        if (n === slides.length - 1) {
+            slide.dataset.snum = n;
+        } else {
+            slide.dataset.snum = n;
+        }
+        setBgImage(slide);
+
         if (slide.classList.contains('HasFrames') && numFrames > 1) {
-            let lastInserted = slide; // to keep insertion order
-            
-            // we keep first slide with full content to ensure links work
-            let clone = slide; // first is original
-            for (let i = 0; i < numFrames; i++) { 
+            let lastInserted = slide;
+            let clone = slide;
+            let nframes = numFrames - 1;
+            for (let i = 0; i < numFrames; i++) {
                 if (i > 0) {
-                    clone = slide.cloneNode(true); // deep clone
-                    clone.classList.remove('HasFrames'); // remove base class to let it display
-                    clone.classList.add('HideSlide'); // avoid showing in normal view 
-                    clone.querySelector(':scope .Slide-UID')?.remove(); // remove section id from clone
+                    clone = slide.cloneNode(true);
+                    clone.classList.remove('HasFrames');
+                    clone.classList.add('HideSlide');
+                    clone.querySelector(':scope .Slide-UID')?.remove();
                 }
-                clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
-                clone.style.transform = 'translateZ(0) scale(1)'; // force reset transform for print to but need stuff in place
-                
-                // Set visibility of parts if any, Do not change this to CSS only as
-                // clones were not working proprly with already set with CSS anyway, after all struggle, here is brute force way
+                // Progress bar: only show for first frame of last slide
+                if (n === slides.length - 1 && i > 0) {
+                    clone.style.setProperty('--bar-bg-color', 'none');
+                } else {
+                    clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
+                }
+                clone.style.transform = 'translateZ(0) scale(1)';
+
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
-                    let outputs = Array.from(clone.querySelector(':scope .jp-OutputArea').childNodes); // corresponds to contents on python side
-                    let frame = parts[slideNum][i]; // {head, start, end, row, col}
-                    clone.dataset.snum = frame.page !== undefined ? `${n}.${frame.page}` : n; // set data attribute for slide number to display
-                    
-                    // Remove everything NOT in head or start-end range 
+                    let outputs = Array.from(clone.querySelector(':scope .jp-OutputArea').childNodes);
+                    let frame = parts[slideNum][i];
+                    // Last slide: first frame = slide number, others = 1/(nf-1), 2/(nf-1), ...
+                    if (n === slides.length - 1) {
+                        if (i === 0) {
+                            clone.dataset.snum = n;
+                        } else {
+                            clone.dataset.snum = i > 0 ? `S.${i}` : "";
+                        }
+                    } else {
+                        clone.dataset.snum = frame.page !== undefined ? `${n}.${frame.page}` : n;
+                    }
+
                     for (let j = outputs.length - 1; j >= 0; j--) {
                         let inHead = (frame.head !== undefined && frame.head >= 0 && j <= frame.head);
-                        let inContent = (j >= frame.start && j <= frame.end); // Use frame.end here
-                        outputs[j].classList.remove('print-collapsed'); // reset first to avoid collapse everywhere
-                        outputs[j].classList.remove('print-invisible'); // reset first to avoid invisible everywhere
+                        let inContent = (j >= frame.start && j <= frame.end);
+                        outputs[j].classList.remove('print-collapsed');
+                        outputs[j].classList.remove('print-invisible');
 
                         if (!inHead && !inContent) {
                             if (outputs[j]) {
-                                i > 0 ? outputs[j].remove() : outputs[j].classList.add('print-collapsed'); // only first frame keeps all for links to work
-                            } // Not in visible ranges - remove completely except first frame
+                                i > 0 ? outputs[j].remove() : outputs[j].classList.add('print-collapsed');
+                            }
                         }
                     }
 
-                    // Handle partial visibility inside content range
                     if (frame.part !== undefined) {
-                        for (let j = frame.part + 1; j <= frame.end; j++) { // hide rest after part
+                        for (let j = frame.part + 1; j <= frame.end; j++) {
                             outputs[j].classList.add('print-invisible');
                         }
-                        // Show/Hide rows and columns if specified
                         handleColsRows(outputs, frame);
-                    }  
+                    }
                 }
                 if (i > 0) {
-                    clone = fixIDsAndRefs(clone, i); // ensure unique IDs and refs in clone
+                    clone = fixIDsAndRefs(clone, i);
                     window._printOnlyObjs.push(clone);
                     slide.parentNode.insertBefore(clone, lastInserted.nextSibling);
-                    lastInserted = clone; // update last inserted
-                    
+                    lastInserted = clone;
                 }
             }
         }

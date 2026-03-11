@@ -112,6 +112,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')` or code`Slides[2:5].set_css(...)`.
         - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
           code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
+        - The frames at last slide are considered supplemental after first frame (numbered as S.1, S.2, ...), and can be used for backup content, extra notes etc.
     """
 
     @classmethod
@@ -938,6 +939,7 @@ class Slides(BaseSlides,metaclass=Singleton):
           a splitter of content insdide a page, and does not need empty parts, they are always appear one after another.
         - Using `PAGE` delimiter frequently improves the perforamce and memory usage compared to pure slides.
         - Use code`PAGE.iter(iterable)` to create multiple pages from iterable automatically.
+        - Pages at last slide are considered supplemental (numbered as S.1, S.2, ...) after first page, and can be used for backup content, extra notes etc.
         """
         _type = "PAGE"
     
