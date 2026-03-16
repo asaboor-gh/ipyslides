@@ -258,6 +258,10 @@ function keyboardEvents(box,model) {
         } else if (key === 'f' || key === 'F11' && !e.ctrlKey) { // F11 for fullscreen toggle
             toggleFS(box);
             return false;
+        } else if (key === 'Home') { // Jump to first slide
+            message = 'FIRST';
+        } else if (key === 'End') { // Jump to last slide
+            message = 'LAST';
         } else if (key === 'ArrowLeft' || key === '-') { // -, <
             message = 'PREV';
         } else if (key === 'ArrowRight' || key === '+' || key === ' ') { // Space, +,  >
