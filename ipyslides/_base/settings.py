@@ -359,10 +359,12 @@ class Settings:
             del self._printingPDF  # remove flag after use
 
     def _resolve_img(self, src, width):
+        if src is None: return ''
         if isinstance(src, Path):
             src = str(src)  # important for svg checking below
         
         if isinstance(src, str):
+            if not src.strip(): return '' # empty string
             if "<svg" in src and "</svg>" in src:
                 return src.replace('<svg', f'<svg style="width:{width};height:auto" ') # extra space at end
             else:
