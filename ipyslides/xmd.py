@@ -331,6 +331,24 @@ _extensions = Extensions() # Global instance of Extensions, don't delete class E
 
 # Internal cache to avoid re-compiling regex for every slide/fragment
 _PATTERN_CACHE = {}
+
+_HTML_COMMENT_RE = re.compile(r'<!--.*?-->', re.DOTALL)
+
+def _mask_html_comments(text):
+    """Mask HTML comments so their content is not treated as xmd markers (:::, ++, ---, --).
+    Returns (masked_text, restore) where restore(s) replaces placeholders back with originals.
+    Each call is independent — safe to use in generators and nested parsers simultaneously.
+    """
+    comments = []
+    def _mask(m):
+        comments.append(m.group())
+        return f'<!--_xmd_cmt_{len(comments) - 1}_-->'
+    masked = _HTML_COMMENT_RE.sub(_mask, text)
+    def restore(s):
+        for i, c in enumerate(comments):
+            s = s.replace(f'<!--_xmd_cmt_{i}_-->', c)
+        return s
+    return masked, restore
 _PLUS_RE = re.compile(r'^\+\+(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line, 
 # not need to be in above cache which is general and can be used to split with ++ differently
 
@@ -374,6 +392,10 @@ class XMarkdown(Markdown):
         if isinstance(xmd, fmt): # scoped variables picked here
             xmd, self._fmt_ns = (xmd._xmd, xmd._kws)
 
+        # Mask HTML comments before any splitting so their content (:::, ++, ```) is not treated as markers.
+        # Python-Markdown passes <!--...--> through unchanged, so short placeholders survive convert().
+        xmd, _restore_comments = _mask_html_comments(xmd)
+
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
 
@@ -413,10 +435,10 @@ class XMarkdown(Markdown):
             content = ""
             for out in outputs:
                 if isinstance(out, XTML):
-                    content += out.value 
+                    content += out.value
                 else:
-                    content += self._wr._fmt_html(out) # Rich content from python execution and Writer 
-            return content
+                    content += self._wr._fmt_html(out) # Rich content from python execution and Writer
+            return _restore_comments(content)
         else:
             return display(*outputs)
         
@@ -1001,30 +1023,34 @@ def _stream_chunks(text, sep='---'):
     s = sep.strip()
     if s.startswith('```'):
         raise ValueError(f"Invalid separator '{s}'. To split by backticks, use re.split instead!")
-    
+
     if s not in _PATTERN_CACHE:
         # Group 1: Shield (3+ backticks) | Group 2: Cut (Separator)
         _PATTERN_CACHE[s] = re.compile(rf"(?m)(^`{{3}})|(^{re.escape(s)}\s*$)")
-    
+
     if eof := re.search(r'^\s*EOF\s*$',text, flags = re.MULTILINE):
         text = text[:eof.start()]  # truncate at EOF
-        
+
     text = textwrap.dedent(text)  # content coming from python functions is usually indented, fix for all cases, need --- at start
+
+    # Mask HTML comments so --- or -- inside them are not treated as separators.
+    text, _restore = _mask_html_comments(text)
+
     pattern = _PATTERN_CACHE[s]
     last_pos = 0
     in_block = False
     first = True if s == '--' else False # for pages, first chunk is always header, yield even if empty
-    
+
     for match in pattern.finditer(text):
         if match.group(1): # It's a backtick fence (toggle shielding)
             in_block = not in_block
         elif not in_block: # It's a separator and we're NOT inside a block
             if (chunk := text[last_pos:match.start()].rstrip()) or first: # need to preseve leading indents, so only rstrip
-                yield chunk
+                yield _restore(chunk)
             last_pos = match.end()
             first = False # only first chunk is special for pages
 
     if final_chunk := text[last_pos:].rstrip():
         if in_block:
             final_chunk += '\n```'  # close unclosed code block in forgiven manner instead of raising error
-        yield final_chunk
+        yield _restore(final_chunk)

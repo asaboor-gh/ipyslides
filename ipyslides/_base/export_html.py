@@ -94,8 +94,9 @@ class _HhtmlExporter:
                 if item.index > 0 and self.main.settings.footer.numbering:
                     number = f'<span class="Number">{snum}</span>' 
 
+                sec_id = f'id="{item._sec_id}"' if k == 0 else '' # avoid duplicate ids
                 content += textwrap.dedent(f'''
-                    <section id="{item._sec_id}">
+                    <section {sec_id}>
                         {self._get_css(item)}
                         <div class="SlideBox">
                             {item._get_bg_image(f'#{item._sec_id}')}

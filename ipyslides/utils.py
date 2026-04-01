@@ -407,7 +407,8 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, css_class=
 
     _verify_css_props(css_props)
     if re.search(r'\s+width\=[\"\'].*?[\"\']|\s+height\=[\"\'].*?[\"\']', node): # Add height and width to svg tag if none present inline
-        css_props['img'] = {**css_props.get('img',{}), 'height':'auto', 'width':w} 
+        css_props['img'] = {**css_props.get('img',{}), 'height':'auto', 'width':w}
+    css_props['img'] = {'max-width': '100%', **css_props.get('img',{})}  # prevent overflow in HTML export, user can override
 
     svg = svg.replace(node, rnode)
     if css_class is None: css_class = ''

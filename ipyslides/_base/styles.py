@@ -440,7 +440,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'th, tr, td': {'border': 'none'},
                     'thead': {'border': 'inherit','border-bottom':'1px solid #8988 !important',},
                 },
-                'td, th': {'line-height': f'{1.2 if _root else 1.1} !important'},
+                'td, th': {'line-height': f'{1.2 if _root else 1.1} !important', 'padding': '0.35em !important', 'border': '1px solid var(--bg3-color) !important'},
                 'td:empty': {'display': 'none'}, # extra create when rowspan, colspan used
             },
             '.grid-table': { 

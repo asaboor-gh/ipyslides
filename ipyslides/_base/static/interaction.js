@@ -396,8 +396,8 @@ function handleMessage(model, msg, box) {
 
 
 function setBgImage(slide) {
-    // Remove all previous BackLayer elements in SlideArea
-    slide.querySelectorAll(':scope .SlideArea > .BackLayer').forEach(bg => bg.remove());
+    // Remove all previous BackLayer elements in SlideArea (direct children only)
+    slide.querySelectorAll(':scope > .BackLayer').forEach(bg => bg.remove());
 
     // Find the new background image in the output area
     let bgImage = slide.querySelector(':scope .jp-OutputArea .BackLayer.print-only');
@@ -405,7 +405,13 @@ function setBgImage(slide) {
         // Clone the node to avoid moving it from output area
         let newBackLayer = bgImage.cloneNode(true);
         slide.insertBefore(newBackLayer, slide.firstChild); // Insert at the back
-        newBackLayer.style.zIndex = 0;
+        // z-index:-1 paints behind normal-flow content (jp-OutputArea).
+        // isolation:isolate scopes the z-index to this SlideArea stacking context so
+        // the BackLayer is not pushed behind the SlideBox background.
+        newBackLayer.style.zIndex = -1;
+        slide.style.isolation = 'isolate';
+    } else {
+        slide.style.isolation = ''; // reset if no background on this slide
     }
 }
 
