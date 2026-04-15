@@ -88,7 +88,9 @@ function handleColsRows(outputs, frame) {
                 cols[k].classList.add('print-invisible');
             } else if (k === frame.col && frame.row !== undefined) {
                 // Handle incremental rows 
-                let rows = cols[k].querySelector(':scope .jp-OutputArea').childNodes; // inside widget
+                const rowsRoot = cols[k].querySelector(':scope .jp-OutputArea');
+                if (!rowsRoot) { continue; }
+                let rows = rowsRoot.children; // inside widget (elements only)
                 for (let r = 0; r < rows.length; r++) {
                     rows[r].classList.remove('print-invisible'); // reset first
                     if (r > frame.row) {
@@ -102,6 +104,13 @@ function handleColsRows(outputs, frame) {
 
 function printSlides(box, model) {
     let slides = Array.from(box.querySelectorAll(':scope .SlideBox >.SlideArea')); 
+
+    // Defensive cleanup: VSCode/IDE print flows may skip afterprint and leave stale clones/classes.
+    box.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
+    box.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
+    box.querySelectorAll(':scope .SlideArea.print-clone').forEach(el => el.remove());
+    box.querySelectorAll(':scope > .print-cleanup-btn').forEach(btn => btn.remove());
+
     window._printOnlyObjs = [];
     const parts = model.get('_parts') || {}; // get part info for all slides
     const fkws = model.get('_fkws') || {}; // get footer kws
@@ -128,14 +137,20 @@ function printSlides(box, model) {
         if (slide.classList.contains('HasFrames') && numFrames > 1) {
             let lastInserted = slide;
             let clone = slide;
-            let nframes = numFrames - 1;
+            const slideTemplate = slide.cloneNode(true); // immutable source for all cloned frames
             for (let i = 0; i < numFrames; i++) {
                 if (i > 0) {
-                    clone = slide.cloneNode(true);
+                    clone = slideTemplate.cloneNode(true);
                     clone.classList.remove('HasFrames');
                     clone.classList.add('HideSlide');
+                    clone.classList.add('print-clone');
                     clone.querySelector(':scope .Slide-UID')?.remove();
                 }
+
+                // Ensure each frame starts from a clean print state.
+                clone.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
+                clone.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
+
                 // Progress bar: only show for first frame of last slide
                 if (n === slides.length - 1 && i > 0) {
                     clone.style.setProperty('--bar-bg-color', 'none');
@@ -145,7 +160,9 @@ function printSlides(box, model) {
                 clone.style.transform = 'translateZ(0) scale(1)';
 
                 if (parts[slideNum] && parts[slideNum][i] !== undefined) {
-                    let outputs = Array.from(clone.querySelector(':scope .jp-OutputArea').childNodes);
+                    const outRoot = clone.querySelector(':scope .jp-OutputArea');
+                    if (!outRoot) { continue; }
+                    let outputs = Array.from(outRoot.children);
                     let frame = parts[slideNum][i];
                     // Last slide: first frame = slide number, others = 1/(nf-1), 2/(nf-1), ...
                     if (n === slides.length - 1) {
@@ -173,7 +190,9 @@ function printSlides(box, model) {
 
                     if (frame.part !== undefined) {
                         for (let j = frame.part + 1; j <= frame.end; j++) {
-                            outputs[j].classList.add('print-invisible');
+                            if (outputs[j]) {
+                                outputs[j].classList.add('print-invisible');
+                            }
                         }
                         handleColsRows(outputs, frame);
                     }
@@ -195,6 +214,7 @@ function printSlides(box, model) {
         for (let obj of window._printOnlyObjs || []) {
             obj.remove(); // Remove cloned slides
         }
+        box.querySelectorAll(':scope .SlideArea.print-clone').forEach(el => el.remove());
         delete window._printOnlyObjs;
         box.querySelectorAll(':scope > .print-cleanup-btn').forEach(btn => btn.remove());
     }
