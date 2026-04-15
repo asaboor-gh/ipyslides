@@ -453,9 +453,9 @@ class Slide:
                 self._app.widgets.slidebox.add_class('Prev') # Backwards Animation
             else:
                 self._app.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
-            self._app._update_tmp_output(self.animation, self.css)
+            self._update_transition_objs()
         else:
-             self._app._update_tmp_output(self.css) # avoid animations between frames
+            self._update_transition_objs(animation=False) # avoid animations between frames
 
         if self.index == self._app.wprogress.max: # This is last slide
             if self.indexf + 1 == self.nf:
@@ -670,6 +670,18 @@ class Slide:
         "Returns CSS for this slide including overall CSS. Used while navigating to this slide."
         back = self._app.html('style',_build_css((f".{self._app.uid}.SlidesWrapper",), self._tcolors), css_class='jupyter-only') # don't mess export here
         return XTML(f'{back}\n{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
+
+    def _update_transition_objs(self, animation=True):
+        "Update objects that need to be re-displayed for transition to work properly, such as animation style changes at naviagtion time."
+        objs = []
+        if animation:
+            objs.append(self.animation)
+        
+        # Only in jupyter
+        if self._app.is_jupyter_session():
+            self._app.widgets._tmp_out.clear_output(wait=True)
+            with self._app.widgets._tmp_out:
+                display(*objs)
     
     @property
     def index(self): return self._index
@@ -756,6 +768,18 @@ class Slide:
         alt = f'{self._css}' # XTML or str
         alt += self._get_bg_image(get_unique_css_class()) # get bg image for print and dispaly behind slides
         self._alt_print.value = alt
+
+    def _mount_user_css(self):
+        "Update persistent user CSS mount from slide-managed CSS state."
+        if not hasattr(self._app.widgets, 'htmls'):
+            return
+
+        css_text = lambda value: getattr(value, 'value', value) if value else ''
+        overall_css = css_text(self.__class__._overall_css)
+        slides_css = '\n'.join(
+            css_text(s._css) for s in getattr(self._app, '_iterable', ()) if getattr(s, '_css', '')
+        )
+        self._app.widgets.htmls.usercss.value = '\n'.join(x for x in (overall_css, slides_css) if x)
     
     def set_css(self, this: dict=None, overall:dict=None, **theme_colors):
         """
@@ -765,6 +789,7 @@ class Slide:
         ::: note-tip
             - See code`Slides.css_syntax` for information on how to write CSS dictionary.
             - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.
+            - You can define custom `@keyframes` in CSS and use them with `anim-kf` class by setting `--kf-name` and optional `--kf-*` controls.
             - An empty selector `''` is allowed to directly inject CSS string, useful to read a local CSS file while files from web must be downloaded first.
               Advanced CSS concepts like `@import`, `@layer` may not work as expected due to CSS scoping inside slides. Large files should be added to `overall` CSS only for performance reasons.
             - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`.
@@ -776,13 +801,10 @@ class Slide:
             self._set_alt_print() # update alternate print content, we still need to dynamicallly set css for animations etc to work
         if overall is not None: # Avoid accidental re-write of overall CSS
             self.__class__._overall_css = self._fix_css(overall, {}, this_slide=False) # no theme colors for overall CSS
-        
+        self._mount_user_css() # update user CSS to even clear old overall CSS if needed
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
-            if self._app._current is self:
-                self._app._update_tmp_output(self.animation, self.css) # force refresh CSS
-            else:
-                self._app.navigate_to(self.index) # Go there to see effects automatically
+            self._app.navigate_to(self.index) # Go there to see effects automatically
 
     def _set_css_classes(self, add=None, remove=None):
         "Set CSS classes on this slide separated by space. classes are remove first and add after it."
@@ -850,7 +872,7 @@ class Slide:
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
             if self._app._current is self:
-                self._app._update_tmp_output(self.animation, self.css) # force refresh
+                self._update_transition_objs() # force refresh
             else:
                 self._app.navigate_to(self.index) # Go there to see effects
     

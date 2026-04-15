@@ -288,6 +288,7 @@ Animation Class        | Description                                            
 `anim-bounce`         | Bouncy entrance with slide + scale. {: .anim-bounce} | `--distance`, `--scale`
 `anim-swing`          | Swing from anchor. Respects `--origin`. {: .anim-swing} | `--scale`, `--origin` (e.g., "top center")
 `anim-elastic`        | Elastic bounce timing. {: .anim-elastic} | `--scale`
+`anim-kf`             | Run user-defined `@keyframes` with animation lifecycle/stagger support. {: .anim-kf --kf-name=pulsePop} | `--kf-name` (required), `--kf-time`, `--kf-delay`, `--kf-ease`, `--kf-fill`, `--kf-count`, `--kf-direction`
 `anim-group`          | **Power mode!** Applies staggered animations to all children. | All variables + auto stagger (sine curve)
 
 ### 🎨 Global Variables (Customizable)
@@ -305,6 +306,13 @@ Variable | Default | Description
 `--skew` | 20deg | Skew angle
 `--origin` | 50% 50% | **Universal origin** for transform-origin and iris center. Can add per item in `anim-group` like any other CSS property.
 `--delay` | 0s | Individual delay automatically calculated from sine curve (use on specific elements)
+`--kf-name` | none | Name of user-defined `@keyframes` used by `.anim-kf`.
+`--kf-time` | `var(--time)` | Duration for `.anim-kf`.
+`--kf-delay` | `var(--delay)` | Delay for `.anim-kf`.
+`--kf-ease` | ease | Timing function for `.anim-kf`.
+`--kf-fill` | both | Fill mode for `.anim-kf`.
+`--kf-count` | 1 | Iteration count for `.anim-kf`.
+`--kf-direction` | normal | Animation direction for `.anim-kf`.
 
 --
 
@@ -346,6 +354,13 @@ Variable | Default | Description
 
 ::: block anim-rotate --origin="left center" --angle=360deg
     Rotates 360° around left edge
+```
+
+**Custom Keyframes**
+```md-after
+// Define @keyframes in Slides.set_css(...) or any slide/global CSS first.
+::: block anim-kf --kf-name=pulsePop --kf-time=900ms --kf-ease=ease-out
+    Plays user-defined @keyframes pulsePop with nav/parts animation lifecycle.
 ```
 
 **🌟 Power Mode: `anim-group`** (Staggered Animations)

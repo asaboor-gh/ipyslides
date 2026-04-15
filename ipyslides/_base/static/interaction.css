@@ -168,16 +168,34 @@
 }
 
 /* --- ANIMATED STATE --- */
-.SlideArea [class*="anim-"]:not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group > ._ips-content-animated {
+.SlideArea [class*="anim-"]:not(.anim-group):not(.anim-kf)._ips-content-animated,
+.SlideArea .anim-group:not(.anim-kf) > ._ips-content-animated {
     opacity: 1 !important;
     transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
     filter: blur(0px) brightness(1) !important;
     pointer-events: auto !important;
     transition-delay: var(--delay, 0s) !important;
 }
-.SlideArea .anim-group > ._ips-content-animated {
+.SlideArea .anim-group:not(.anim-kf) > ._ips-content-animated {
     transition-delay: calc(var(--delay, 0s) + var(--stagger, 0s)) !important;
+}
+
+/* Custom keyframes: define @keyframes in user CSS and set --kf-name on anim-kf elements. */
+.SlideArea .anim-kf:not(.anim-group)._ips-content-animated,
+.SlideArea .anim-group.anim-kf > ._ips-content-animated {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: none !important;
+    animation-name: var(--kf-name) !important;
+    animation-duration: var(--kf-time, var(--time)) !important;
+    animation-delay: var(--kf-delay, var(--delay, 0s)) !important;
+    animation-timing-function: var(--kf-ease, ease) !important;
+    animation-fill-mode: var(--kf-fill, both) !important;
+    animation-iteration-count: var(--kf-count, 1) !important;
+    animation-direction: var(--kf-direction, normal) !important;
+}
+.SlideArea .anim-group.anim-kf > ._ips-content-animated {
+    animation-delay: calc(var(--kf-delay, var(--delay, 0s)) + var(--stagger, 0s)) !important;
 }
 
 /* Iris needs special clip-path with 150% radius for corner origins */
@@ -192,8 +210,8 @@
 } 
 
 /* Other animations clear clip-path completely */
-.SlideArea [class*="anim-"]:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"]) > ._ips-content-animated {
+.SlideArea [class*="anim-"]:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-group):not(.anim-kf)._ips-content-animated,
+.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-kf) > ._ips-content-animated {
     clip-path: none !important;
 }
 
@@ -205,6 +223,7 @@
     opacity: 1 !important; /* keep visible when going backward */
     transform: none !important;
     transition: none !important;
+    animation: none !important;
     filter: none !important;
     clip-path: none !important;
     pointer-events: auto !important;
@@ -225,6 +244,7 @@
         visibility: visible !important;
         transform: none !important;
         transition: none !important;
+        animation: none !important;
         filter: none !important;
         clip-path: none !important;
         pointer-events: auto !important;

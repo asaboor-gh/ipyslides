@@ -316,6 +316,7 @@ class _Htmls:
     """
     footer  = HTML(layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
     theme   = HTML()
+    usercss = HTML() # Persistent user CSS mount for overall + all per-slide styles
     main    = HTML() 
     logo    = HTML().add_class('LogoHtml') # somehow my defined class is not behaving well in this case
     pointer = LaserPointer() # For beautiful pointer
@@ -387,6 +388,7 @@ class Widgets:
         self.mainbox = VBox([ 
             self.htmls.main,
             self.htmls.theme,
+            self.htmls.usercss,
             self.iw,
             self._timer.widget(minimal=True),
             self.panelbox,

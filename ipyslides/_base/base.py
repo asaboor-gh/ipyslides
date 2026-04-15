@@ -93,13 +93,6 @@ class BaseSlides:
         """
         self.verify_running('on_load decorator can only be used inside slide constructor!')
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
-
-    def _update_tmp_output(self, *objs):
-        "Used for CSS/animations etc. HTML widget does not work properly."
-        if self.is_jupyter_session():
-            self.widgets._tmp_out.clear_output(wait=True)
-            with self.widgets._tmp_out:
-                display(*objs)
         
     def _from_markdown(self, start, /, content, synced=False, _vars=None):
         "Sames as `Slides.build` used as a function."

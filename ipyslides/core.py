@@ -685,7 +685,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._toc_widget.send({'active' : inds[0]}) # Update toc widget focus without changing index
         
         slide = self._iterable[new_index]
-        self._update_tmp_output(slide.animation, slide.css)
+        slide._update_transition_objs()
         
         # Do this here, not in navigation module, as slider can jump to any value
         if not slide._fidxs:

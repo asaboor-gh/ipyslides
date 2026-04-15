@@ -334,9 +334,9 @@ function handleMessage(model, msg, box) {
         console.log("Navigation message received:", msg);
         let slide = box.querySelector(":scope .SlideArea.ShowSlide");
         if (!slide) return;
+        const inParts = msg.includes("/PARTS");
 
         if (msg.includes("NAV:LEFT")) {
-            const inParts = msg.includes("/PARTS")
             slide.querySelectorAll(':scope ._ips-content-animated').forEach(el => { 
                 if (inParts) {
                     // In parts mode, only remove animation from elements which are invisible to avoid unnecessary re-animations
