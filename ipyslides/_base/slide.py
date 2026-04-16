@@ -676,12 +676,16 @@ class Slide:
     @property
     def css(self):
         "Returns CSS for this slide including overall CSS. Used while navigating to this slide."
-        back = self._app.html('style',_build_css((f".{self._app.uid}.SlidesWrapper",), self._tcolors), css_class='jupyter-only') # don't mess export here
-        return XTML(f'{back}\n{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
+        return XTML(f'{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
+    
+    @property
+    def _runtime_css(self):
+        if not self._tcolors: return '' # avoid extra CSS if no theme colors used
+        return self._app.html('style',_build_css((f".{self._app.uid}.SlidesWrapper",), self._tcolors))
 
     def _update_transition_objs(self, animation=True):
         "Update objects that need to be re-displayed for transition to work properly, such as animation style changes at naviagtion time."
-        objs = []
+        objs = [self._runtime_css] # per slide colors at runtime should be included
         if animation:
             objs.append(self.animation)
         
@@ -978,6 +982,8 @@ def _build_slide(app, slide_number):
         if content.data.get('application/vnd.jupyter.widget-view+json',{}):
             this._has_widgets = True
             break # No need to check other widgets if one exists
+    
+    this._update_transition_objs() # any animation/CSS etc set during build should be applied immediately
         
 class SlideGroup:
     """Proxy calls/attributes to multiple Slide instances.

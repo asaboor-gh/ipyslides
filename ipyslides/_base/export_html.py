@@ -149,7 +149,8 @@ class _HhtmlExporter:
     
     def _get_css(self, slide, sec_uid):
         "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, FooterBox → Footer"
-        return (f'{slide.css}').replace( # xtml or str
+        overall = slide._overall_css if slide in self.main[:1] else '' # only one time
+        return (f'{overall}\n{slide._runtime_css}\n{slide._css}').replace( # xtml or str, runtime for colors per slide
             f".{self.main.uid}.SlidesWrapper", f"#{sec_uid}").replace(
             f".{self.main.uid}", f"#{sec_uid}").replace(
             ".FooterBox", ".Footer"
@@ -164,6 +165,7 @@ class _HhtmlExporter:
         if page in getattr(slide, '_bg_ikws_pages', {}):
             return slide._get_bg_image(f'#{sec_uid}', ikws=slide._bg_ikws_pages[page], page=page)
         return ''
+    
     def _get_logo(self):
         return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 
             {self.main.widgets.htmls.logo.value} 
