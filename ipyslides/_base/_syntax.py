@@ -56,6 +56,12 @@ alert`toc\`Table of content header text\`` to add a table of contents. See `Slid
 Notes
 : alert`notes\`This is slide notes\``  to add notes to current slide.
 
+Backgrounds
+: alert`bg\`image_src_or_path\`` to set background for the current page.
+If placed before first `PAGE`/`--` delimiter, it applies to first page only.
+If multiple `bg` calls target the same page, the last one wins.
+Use alert`bg[opacity=0.4, contain=True, filter='blur(2px)']\`image_src_or_path\`` for options. `contain` must be `True` or `False`.
+
 Including Files
 : alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format.
 These files are watched for edits if included in synced markdown file via `Slides.sync_with_file`.

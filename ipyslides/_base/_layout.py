@@ -684,13 +684,14 @@ def background_css(sel, opacity=0.75, filter='blur(2px)', contain=False, uclass=
         object-fit:{('contain' if contain else 'cover')} !important;
         filter: {filter};
         opacity:{opacity};
+        max-width: 100% !important;
+        max-height: 100% !important;
     }}  
     {sel} .{uclass}.BackLayer svg {{
-        max-width: {('100%' if contain else '')} !important;
-        max-height: {('100%' if contain else '')} !important;
-        width: {('' if contain else 'auto')} !important;
-        min-width: {('' if contain else '100%')} !important;
-        min-height: {('' if contain else '100%')} !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
     }}
     {sel} .BackLayer.jupyter-widgets-disconnected {{
         display:none;

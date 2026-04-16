@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'code', 'fa', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn',
+    'details', 'set_dir', 'textbox', 'code', 'fa', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
 
 __all__ = sorted(_attrs)
@@ -364,6 +364,29 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
     if css_props:
         metadata["style"] = _styled_css({f'.fig-{id(data)}': css_props}).value
     return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
+
+def bg(src=None, opacity=1, filter=None, contain=False):
+    """Set background image for the current slide page while building content.
+
+    Markdown usage: `bg`src`` or `bg[opacity=0.4,contain=True]`src``.
+    """
+    if isinstance(src, str) and src.strip().lower() in ('none', 'null'):
+        src = None
+
+    slides = get_slides_instance()
+    if not (slides and slides.this):
+        return error('RuntimeError', "bg`...` can only be used while building slide content.")
+
+    if not isinstance(contain, bool):
+        raise TypeError(f"contain expects bool (True/False), got {type(contain).__name__}: {contain!r}")
+
+    slides.this._set_bg_image_content(
+        src=src,
+        opacity=opacity,
+        filter=filter,
+        contain=contain,
+    )
+    return ''
 
 def _crop_svg(node, bbox):
     _verify_bbox(bbox) # left, top, right, bottom in 0-1 range

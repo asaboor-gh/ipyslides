@@ -178,6 +178,21 @@ slides.set_css({ # on all slides or slide[index,].set_css() per slide
 }, bg1 = '#f0f0f0') # set theme color on this slide
 ```
 
+- **Per-Page Backgrounds:**
+```python
+# Content-driven background API 
+with slides.build(5):
+    slides.PAGE()
+    slides.bg('bg-page-1.jpg')
+    slides.write('Page 1')
+
+    slides.PAGE()
+    slides.bg('bg-page-2.jpg')
+    slides.write('Page 2')
+
+# Markdown equivalent
+# bg[opacity=0.5]`bg-page-2.jpg`
+```
 - **File Sync:**
     Live edit a linked markdown file that updates slides in real-time using `slides.sync_with_file`.
 

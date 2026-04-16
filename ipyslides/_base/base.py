@@ -348,7 +348,7 @@ class BaseSlides:
         self.settings.footer(text=self.get_logo("1em") + "IPySlides Documentation", date=None)
 
         with self.build(0): # Title page
-            self.this.set_bg_image(self.get_logo(),0.25, filter='blur(10px)', contain=True)
+            self.bg(self.get_logo(),0.25, filter='blur(10px)', contain=True)
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center(self.fmt('''
                 alert`Abdul Saboor` ^`1`
@@ -404,7 +404,7 @@ class BaseSlides:
                     - Use slide handle or `Slides[number,]` to apply these methods becuase index can change on new builds.
                     - Use `Slides[start:stop:step]` to apply operations on many slides at once such as code`Slides[2:5].vars.update(...)`.
             ''')
-            self.doc(self[0], members='yoffset vars set_animation set_bg_image update_display get_source show set_css'.split(), itself = False).display()
+            self.doc(self[0], members='yoffset vars set_animation update_display get_source show set_css'.split(), itself = False).display()
             self.css_syntax.display()
         
         with self.build(-1): 

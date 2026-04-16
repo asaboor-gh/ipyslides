@@ -147,6 +147,10 @@ function printSlides(box, model) {
                     clone.querySelector(':scope .Slide-UID')?.remove();
                 }
 
+                const frame = (parts[slideNum] && parts[slideNum][i] !== undefined) ? parts[slideNum][i] : null;
+                const framePage = frame && Number.isInteger(frame.page) ? frame.page : null;
+                setBgImage(clone, framePage);
+
                 // Ensure each frame starts from a clean print state.
                 clone.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
                 clone.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
@@ -159,11 +163,10 @@ function printSlides(box, model) {
                 }
                 clone.style.transform = 'translateZ(0) scale(1)';
 
-                if (parts[slideNum] && parts[slideNum][i] !== undefined) {
+                if (frame) {
                     const outRoot = clone.querySelector(':scope .jp-OutputArea');
                     if (!outRoot) { continue; }
                     let outputs = Array.from(outRoot.children);
-                    let frame = parts[slideNum][i];
                     // Last slide: first frame = slide number, others = 1/(nf-1), 2/(nf-1), ...
                     if (n === slides.length - 1) {
                         if (i === 0) {
@@ -355,6 +358,13 @@ function handleMessage(model, msg, box) {
         let slide = box.querySelector(":scope .SlideArea.ShowSlide");
         if (!slide) return;
         const inParts = msg.includes("/PARTS");
+        const navPageMatch = msg.match(/\/PAGE:(\d+)/);
+        const navPage = navPageMatch ? Number(navPageMatch[1]) : null;
+
+        if (navPage !== null) {
+            setBgImage(slide, navPage);
+            setMainBgImage(slide, box, navPage);
+        }
 
         if (msg.includes("NAV:LEFT")) {
             slide.querySelectorAll(':scope ._ips-content-animated').forEach(el => { 
@@ -415,12 +425,22 @@ function handleMessage(model, msg, box) {
 };
 
 
-function setBgImage(slide) {
+function pickBackLayer(slide, page = null) {
+    const outArea = slide.querySelector(':scope .jp-OutputArea');
+    if (!outArea) return null;
+
+    const targetPage = (Number.isInteger(page) && page > 0) ? page : 1;
+    const byPage = outArea.querySelector(`:scope .BackLayer.print-only[data-page="${targetPage}"]`);
+    if (byPage) return byPage;
+    return null;
+}
+
+function setBgImage(slide, page = null) {
     // Remove all previous BackLayer elements in SlideArea (direct children only)
     slide.querySelectorAll(':scope > .BackLayer').forEach(bg => bg.remove());
 
     // Find the new background image in the output area
-    let bgImage = slide.querySelector(':scope .jp-OutputArea .BackLayer.print-only');
+    let bgImage = pickBackLayer(slide, page);
     if (bgImage) {
         // Clone the node to avoid moving it from output area
         let newBackLayer = bgImage.cloneNode(true);
@@ -435,9 +455,10 @@ function setBgImage(slide) {
     }
 }
 
-function setMainBgImage(slide, target) {
-    let bgImage = slide.querySelector(':scope .BackLayer.print-only'); // take from slide
+function setMainBgImage(slide, target, page = null) {
+    let bgImage = pickBackLayer(slide, page); // page-specific lookup
     let targetBg = target.querySelector(':scope .BackLayer'); // target backlayer
+    if (!targetBg) return;
     if (bgImage) {
         targetBg.innerHTML = bgImage.innerHTML; // clone content
         // copy classes except print-only, so unique classes are preserved

@@ -68,6 +68,7 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "code": "inline code highlighter or use ::: code block",
     "textbox": "text",  # Anything above this can be enclosed in a textbox
     "image": "path/src or clip:filename",
+    "bg": "path/src or none, [opacity, filter, contain] (before first PAGE/-- targets page 1; last one wins per page)",
     "raw": "text, or use ::: raw block",
     "svg": "path/src",
     "iframe": "src",

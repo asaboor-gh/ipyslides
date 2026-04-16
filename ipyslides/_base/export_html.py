@@ -53,11 +53,12 @@ class _HhtmlExporter:
         content = ''
         for item in self.main:
             objs = item.contents # get conce
-            frames, snums = [], []
+            frames, snums, frame_metas = [], [], []
             
             if not item._export_fidxs:
                 frames = [objs]
                 snums = [str(item.index)]
+                frame_metas = [{}]
             else:
                 for fi, frame in enumerate(item._export_fidxs):
                     head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
@@ -80,10 +81,11 @@ class _HhtmlExporter:
                                 else: # normal Writer
                                     frame_objs.append(objs[i])
                 
-                    frames.append(frame_objs) 
-                    snums.append(item._get_snum(fi))         
+                    frames.append(frame_objs)
+                    snums.append(item._get_snum(fi))
+                    frame_metas.append(frame)
             
-            for k, (snum, objs) in enumerate(zip(snums, frames)):
+            for k, (snum, objs, frame_meta) in enumerate(zip(snums, frames, frame_metas)):
                 _html = item._speaker_notes(returns=True) # speaker notes at top if any, returns string
                 for out in objs:
                     _html += f'<div style="width: 100%;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
@@ -94,12 +96,13 @@ class _HhtmlExporter:
                 if item.index > 0 and self.main.settings.footer.numbering:
                     number = f'<span class="Number">{snum}</span>' 
 
-                sec_id = f'id="{item._sec_id}"' if k == 0 else '' # avoid duplicate ids
+                sec_uid = item._sec_id if k == 0 else f"{item._sec_id}-{k}"
+                sec_id = f'id="{sec_uid}"'
                 content += textwrap.dedent(f'''
                     <section {sec_id}>
-                        {self._get_css(item)}
+                        {self._get_css(item, sec_uid)}
                         <div class="SlideBox">
-                            {item._get_bg_image(f'#{item._sec_id}')}
+                            {self._get_bg_image(item, sec_uid, frame_meta)}
                             <div class="{item._css_class} export-only">
                                 {_html}
                             </div>
@@ -144,13 +147,23 @@ class _HhtmlExporter:
         gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'
     
-    def _get_css(self, slide):
+    def _get_css(self, slide, sec_uid):
         "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, FooterBox → Footer"
         return (f'{slide.css}').replace( # xtml or str
-            f".{self.main.uid}.SlidesWrapper", f"#{slide._sec_id}").replace(
-            f".{self.main.uid}", f"#{slide._sec_id}").replace(
+            f".{self.main.uid}.SlidesWrapper", f"#{sec_uid}").replace(
+            f".{self.main.uid}", f"#{sec_uid}").replace(
             ".FooterBox", ".Footer"
             )
+
+    def _get_bg_image(self, slide, sec_uid, frame_meta):
+        "Pick background for exported frame using resolved internal page mapping."
+        page = frame_meta.get('page', 1) if isinstance(frame_meta, dict) else 1
+        if not isinstance(page, int) or page < 1:
+            page = 1
+
+        if page in getattr(slide, '_bg_ikws_pages', {}):
+            return slide._get_bg_image(f'#{sec_uid}', ikws=slide._bg_ikws_pages[page], page=page)
+        return ''
     def _get_logo(self):
         return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 
             {self.main.widgets.htmls.logo.value} 

@@ -1,5 +1,6 @@
 """Slide Object, should not be instantiated directly"""
 
+import base64
 import textwrap
 from contextlib import contextmanager, suppress
 from functools import wraps
@@ -85,7 +86,7 @@ class Slide:
         self._app = app
             
         self._css = ''
-        self._bg_ikws = {} # store background image keywords only to save memory
+        self._bg_ikws_pages = {} # internal frame-page number -> background image keywords
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
         self._animation = None
@@ -119,6 +120,7 @@ class Slide:
         self._tcolors = {} # theme colors for this slide only
         self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
         self._lre_page = 0 # Leaset recently edited page number for quick jump while editing markdown
+        self._bg_ikws_pages = {} # rebuild always re-derives background mapping from content
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -186,6 +188,8 @@ class Slide:
             outputs = captured.outputs
             # Clean up delimiters: trailing, empty, adjacent, and around PAGE boundaries
             self._contents = self._cleanup_delimiters(outputs)
+            self._contents = self._resolve_bg_markers(self._contents) # background per page after clean markers
+            self._set_alt_print() # rebuild BackLayer HTML from current page background map
             self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display()    
@@ -463,7 +467,11 @@ class Slide:
             else:
                 self._app._box.remove_class("InView-Last")
         
-        self._app._send_nav_msg(which == 'next', parts = "part" in frame) # inform JS side
+        self._app._send_nav_msg(
+            which == 'next',
+            parts = "part" in frame,
+            page = frame.get('page', None)
+        ) # inform JS side
         if any([ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
             self.indexf == 0 and which == 'prev',
             self.indexf + 1 == self.nf and which == 'next',
@@ -766,7 +774,9 @@ class Slide:
     def _set_alt_print(self):
         self._alt_print.value = '' # reset first to recieve new content
         alt = f'{self._css}' # XTML or str
-        alt += self._get_bg_image(get_unique_css_class()) # get bg image for print and dispaly behind slides
+        selector = get_unique_css_class()
+        for page, ikws in sorted(self._bg_ikws_pages.items()):
+            alt += self._get_bg_image(selector, ikws=ikws, page=page)
         self._alt_print.value = alt
 
     def _mount_user_css(self):
@@ -825,32 +835,78 @@ class Slide:
         "Readonly dom classes on this slide separated by space."
         return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
     
-    def set_bg_image(self, src=None, opacity=1, filter=None, contain=False):
-        """Adds background image to this slide. `src` can be a url or a local image path or an svg str.
-        filter is a CSS filter like blur(5px), grayscale() etc.
-        
-        ::: note-tip
-            - This function enables you to add a slide purely with an image, possibly with `opacity=1` and `contain = True`.
-            
-        ::: note-warning
-            - Too many slides withlarge background images may slow down the presentation/print and increase memory usage.
-            - Setting background image on a slide with frames multiplies memory usage as each frame needs to render the background.
+    def set_bg_image(self, *args, **kwargs):
+        """Removed legacy API.
+
+        Use content-driven backgrounds with `Slides.bg(...)` in Python or `bg`...`` in markdown.
         """
-        # We only store keywords to save memory and send image on javascript side for quick loading of images and printing
-        self._bg_ikws = {
-            'src': src, 'opacity': opacity, 'filter': filter, 'contain': contain, 
-            'uclass': self._sec_id, # for unique filters and styles
-        } # store for export etc
-        
-        self._set_alt_print() # update alternate print-only content
-        self._app.widgets.iw.msg_tojs = 'SwitchView' # enforces js to load background image, does not work otherwise
-        self._app.navigate_to(self.index) # Go there to see effects
+        raise RuntimeError(
+            "set_bg_image is removed. Use Slides.bg(...) while building a slide, "
+            "or markdown bg`...` / bg[... ]`...` syntax."
+        )
+
+    def _set_bg_image_content(self, src=None, opacity=1, filter=None, contain=False):
+        "Queue content-driven background marker; page is resolved after delimiter cleanup."
+        XTML('<!-- BG_IMAGE -->').display(metadata={
+            "BG_IMAGE": {
+                "src": src,
+                "opacity": opacity,
+                "filter": filter,
+                "contain": contain,
+            },
+            "skip-export": "bg marker resolved in Slide",
+        })
+
+    def _resolve_bg_markers(self, outputs):
+        "Resolve content-driven backgrounds into internal pages; same-page calls are last-write-wins."
+        self._bg_ikws_pages = {}
+
+        resolved = []
+        page_delims_seen = 0
+        for out in outputs:
+            meta = getattr(out, 'metadata', None)
+            meta = meta if isinstance(meta, dict) else {}
+
+            if meta.get("DELIM", "") == "PAGE":
+                page_delims_seen += 1
+                resolved.append(out)
+                continue
+
+            if not isinstance(meta.get("BG_IMAGE", None), dict):
+                resolved.append(out)
+                continue
+
+            payload = meta["BG_IMAGE"]
+            # Content before first PAGE and content on first PAGE both target page 1.
+            internal_page = max(page_delims_seen, 1)
+
+            kwargs = {
+                "src": payload.get("src", None),
+                "opacity": payload.get("opacity", 1),
+                "filter": payload.get("filter", None),
+                "contain": payload.get("contain", False),
+                "uclass": f"{self._sec_id}-p{internal_page}",
+            }
+
+            if kwargs["src"] is None:
+                self._bg_ikws_pages.pop(internal_page, None)
+            else:
+                self._bg_ikws_pages[internal_page] = kwargs
+
+        return resolved
     
-    def _get_bg_image(self, selector):
-        if (image := self._app.settings._resolve_img(self._bg_ikws.get('src',None), '100%')):
-            return f'''<div class="BackLayer print-only {self._bg_ikws['uclass']}">
+    def _get_bg_image(self, selector, ikws=None, page=None):
+        ikws = ikws if isinstance(ikws, dict) else {}
+        if (image := self._app.settings._resolve_img(ikws.get('src',None), '100%')):
+            if isinstance(image, str) and ("<svg" in image) and ("</svg>" in image):
+                # Normalize svg to img so cover/contain behavior stays consistent across environments.
+                svg_b64 = base64.b64encode(image.encode('utf-8')).decode('ascii')
+                image = f'<img src="data:image/svg+xml;base64,{svg_b64}" alt="Background SVG"/>'
+
+            page_attr = f' data-page="{page}"' if isinstance(page, int) and page > 0 else ''
+            return f'''<div class="BackLayer print-only {ikws['uclass']}"{page_attr}>
             <style>
-                {background_css(selector, **{k:v for k,v in self._bg_ikws.items() if k != 'src'})}
+                {background_css(selector, **{k:v for k,v in ikws.items() if k != 'src'})}
             </style>
             {image}
             </div>'''
