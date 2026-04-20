@@ -188,7 +188,6 @@ class Slide:
             outputs = captured.outputs
             # Clean up delimiters: trailing, empty, adjacent, and around PAGE boundaries
             self._contents = self._cleanup_delimiters(outputs)
-            self._contents = self._resolve_bg_markers(self._contents) # per-slide background after clean markers
             self._set_alt_print() # rebuild BackLayer HTML from current slide background map
             self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
@@ -940,47 +939,11 @@ class Slide:
             "or markdown bg`...` / bg[... ]`...` syntax."
         )
 
-    def _set_bg_image_content(self, src=None, opacity=1, filter=None, contain=False):
-        "Queue content-driven background marker; slide-level background is resolved after cleanup."
-        XTML('<!-- BG_IMAGE -->').display(metadata={
-            "BG_IMAGE": {
-                "src": src,
-                "opacity": opacity,
-                "filter": filter,
-                "contain": contain,
-            },
-            "skip-export": "bg marker resolved in Slide",
-        })
-
-    def _resolve_bg_markers(self, outputs):
-        "Resolve content-driven backgrounds into single slide background; last call wins."
-        self._bg_ikws = {}
-
-        resolved = []
-        for out in outputs:
-            meta = getattr(out, 'metadata', None)
-            meta = meta if isinstance(meta, dict) else {}
-
-            if not isinstance(meta.get("BG_IMAGE", None), dict):
-                resolved.append(out)
-                continue
-
-            payload = meta["BG_IMAGE"]
-
-            kwargs = {
-                "src": payload.get("src", None),
-                "opacity": payload.get("opacity", 1),
-                "filter": payload.get("filter", None),
-                "contain": payload.get("contain", False),
-                "uclass": f"{self._sec_id}-bg",
-            }
-
-            if kwargs["src"] is None:
-                self._bg_ikws = {}
-            else:
-                self._bg_ikws = kwargs
-
-        return resolved
+    def _set_bg_ikws(self, src=None, **kwargs):
+        "Set per-slide background keywords directly; last call wins."
+        self._bg_ikws = {} # reset state first to avoid stale values if src is None or invalid
+        if src is None: return
+        self._bg_ikws = {"src": src,"uclass": f"{self._sec_id}-bg", **kwargs}
     
     def _get_bg_image(self, selector, ikws=None):
         ikws = ikws if isinstance(ikws, dict) else {}

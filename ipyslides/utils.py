@@ -380,12 +380,7 @@ def bg(src=None, opacity=1, filter=None, contain=False):
     if not isinstance(contain, bool):
         raise TypeError(f"contain expects bool (True/False), got {type(contain).__name__}: {contain!r}")
 
-    slides.this._set_bg_image_content(
-        src=src,
-        opacity=opacity,
-        filter=filter,
-        contain=contain,
-    )
+    slides.this._set_bg_ikws(src=src, opacity=opacity, filter=filter,contain=contain)
     return ''
 
 def _crop_svg(node, bbox):
