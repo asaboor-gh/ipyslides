@@ -351,8 +351,18 @@ class Slide:
         for ip, page in enumerate(pages):
             if len(pages) > 1:
                 page["page"] = ip + 1 # page number within slide to display only if more than one page
-            # Parts inside head only take effect on first frame
-            start = 0 if ip == 0 and page["head"] > -1 else page["start"] + 1
+            # Parts inside head only take effect on first frame.
+            # Also include index 0 when there is no PAGE delimiter at the start,
+            # so a leading PART can trigger column incrementals.
+            if ip == 0 and page["head"] > -1:
+                start = 0
+            elif page["start"] == 0 and contents and not (
+                isinstance(contents[0].metadata, dict)
+                and contents[0].metadata.get("DELIM", "") == "PAGE"
+            ):
+                start = 0
+            else:
+                start = page["start"] + 1
             if parts := self._resolve_parts(page, contents, range(start, page["end"] + 1)):
                 parts[0]["anim"] = "next" # add animation flag to first part while navigative forward
                 parts[-1]["anim"] = "prev" # add animation flag to last part while navigative backward
@@ -361,10 +371,16 @@ class Slide:
                 frames.append({**page, "anim": "both"}) # no parts, single frame, animate both ways
         
         # Add offeset to all indices to keep metadata available across all frames
+        updated_persist = set()
         for i, frame in enumerate(frames):
             for key in ("head", "start", "part", "end"):
                 if key in frame and isinstance(frame[key], int):
                     frames[i][key] += offset
+            persist = frame.get("_focus_persist")
+            if isinstance(persist, dict) and id(persist) not in updated_persist:
+                if isinstance(persist.get("idx"), int):
+                    persist["idx"] += offset
+                updated_persist.add(id(persist))
         
         self._frame_idxs = tuple(frames) if len(frames) > 1 else ()
         if self._frame_idxs:
@@ -376,7 +392,19 @@ class Slide:
     
     def _resolve_parts(self, page, contents, indxs):
         ensure_dict = lambda meta: meta if isinstance(meta, dict) else {} # insure dict type
+        def has_visible_before(part_idx):
+            left = page["start"]
+            for j in range(part_idx - 1, page["start"] - 1, -1):
+                delim = ensure_dict(getattr(contents[j], 'metadata', {})).get("DELIM", "")
+                if delim in ("PART", "PAGE"):
+                    left = j + 1
+                    break
+            return any(
+                not ensure_dict(getattr(contents[j], 'metadata', {})).get("DELIM", "")
+                for j in range(left, part_idx)
+            )
         frames = []
+        _focus_persist = None  # Track focus-rows persistence after exiting columns
         
         for index in indxs:
             meta = ensure_dict(contents[index].metadata)
@@ -396,27 +424,60 @@ class Slide:
                    
                 # --- PART before COLUMNS ---
                 if "COLUMNS" in meta_next:
-                    # Add a frame for the PART itself, unless previous frame was for this PART
-                    if index > indxs.start and not (frames and "col" in frames[-1]):
-                        frames.append({**page, "part": index})
-                    # Add frames for each column part
+                    # PART before COLUMNS triggers incrementals.
+                    # Add explicit trigger frame only when there is real content before this PART,
+                    # or in the standard non-adjacent case.
+                    if has_visible_before(index) or (index > indxs.start and not (frames and "col" in frames[-1])):
+                        new_frame = {**page, "part": index}
+                        if _focus_persist:
+                            new_frame["_focus_persist"] = _focus_persist
+                        frames.append(new_frame)
+                    # Pre-compute last row delimiter per column for focus-rows
+                    col_last_rows = {}
                     for part in contents[index + 1]._parts:
-                        frames.append({**page, "part": index + 1, **part})
+                        if "row" in part:
+                            col_last_rows[part["col"]] = part["row"]
+                    # Add frames for each column part, tracking previous row per column
+                    prev_row_per_col = {}
+                    for part in contents[index + 1]._parts:
+                        new_frame = {**page, "part": index + 1, **part}
+                        col = part.get("col")
+                        if "row" in part:
+                            if col in prev_row_per_col:
+                                new_frame["prev_row"] = prev_row_per_col[col]
+                            prev_row_per_col[col] = part["row"]
+                        if col_last_rows:
+                            new_frame["_col_last_rows"] = col_last_rows
+                        if _focus_persist:
+                            new_frame["_focus_persist"] = _focus_persist
+                        frames.append(new_frame)
+                    # Only persist focus-rows collapse if this writer has focus-rows class
+                    if col_last_rows and 'focus-rows' in getattr(contents[index + 1], '_dom_classes', ()): 
+                        _focus_persist = {"idx": index + 1, "_col_last_rows": col_last_rows}
 
                 # --- PART after COLUMNS ---
                 elif "COLUMNS" in meta_prev:
                     # If last frame was built by previous columns, skip this PART
                     if index == indxs.start or (frames and "col" in frames[-1]):
                         continue  # skip adding extra frame after columns parts
-                    frames.append({**page, "part": index})
+                    new_frame = {**page, "part": index}
+                    if _focus_persist:
+                        new_frame["_focus_persist"] = _focus_persist
+                    frames.append(new_frame)
 
                 # --- Regular PART ---
                 elif index > indxs.start:
-                    frames.append({**page, "part": index})
+                    new_frame = {**page, "part": index}
+                    if _focus_persist:
+                        new_frame["_focus_persist"] = _focus_persist
+                    frames.append(new_frame)
 
         # Ensure at least one frame at the end if needed
         if frames and frames[-1].get("part", index) != index:
-            frames.append({**page, "part": index})
+            new_frame = {**page, "part": index}
+            if _focus_persist:
+                new_frame["_focus_persist"] = _focus_persist
+            frames.append(new_frame)
         return frames 
        
     @property
@@ -528,6 +589,36 @@ class Slide:
                     # Hide rows after current one in the current column
                     rows_hide = frame["row"] + 2 # +2 to start hiding after this row
                     css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide_node(True)
+
+                    # Focus-rows: collapse non-current rows so only the active row is visible
+                    focus_sel = f'^:nth-child({part_end}) .columns.writer.focus-rows:first-of-type > div'
+                    row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
+                    if "prev_row" in frame:
+                        css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1})'] = collapse_node(True)
+                    css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1})'] = collapse_node(True)
+
+                # Focus-rows: collapse non-last rows in previous columns and current col when fully visible
+                col_last_rows = frame.get("_col_last_rows", {})
+                if col_last_rows:
+                    focus_sel = f'^:nth-child({part_end}) .columns.writer.focus-rows:first-of-type > div'
+                    # Previous columns: show only last row, collapse the rest
+                    for c in range(col_idx):
+                        if c in col_last_rows:
+                            prev_row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
+                            css_rules[f'{prev_row_sel}:nth-child(-n + {col_last_rows[c] + 1})'] = collapse_node(True)
+                    # Current column fully visible (no row): show only last row
+                    if "row" not in frame and col_idx in col_last_rows:
+                        curr_row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
+                        css_rules[f'{curr_row_sel}:nth-child(-n + {col_last_rows[col_idx] + 1})'] = collapse_node(True)
+
+        # Persistent focus-rows: collapse non-last rows in columns we already exited
+        if "_focus_persist" in frame:
+            persist = frame["_focus_persist"]
+            cols_idx = persist["idx"] + 1  # 1-indexed for CSS
+            focus_sel = f'^:nth-child({cols_idx}) .columns.writer.focus-rows:first-of-type > div'
+            for c, last_row in persist["_col_last_rows"].items():
+                row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
+                css_rules[f'{row_sel}:nth-child(-n + {last_row + 1})'] = collapse_node(True)
 
         # Build final CSS with proper selector
         base_selector = f'^.n{self.number}.HasFrames > .jp-OutputArea > .jp-OutputArea-child'

@@ -70,9 +70,24 @@ class _HhtmlExporter:
                     if not "part" in frame: # full content in range
                         frame_objs.extend(objs[start:end + 1])
                     else: # partial content in range
+                        focus_persist = frame.get("_focus_persist")
+                        focus_persist_idx = None
+                        if isinstance(focus_persist, dict) and isinstance(focus_persist.get("idx"), int):
+                            focus_persist_idx = focus_persist["idx"] - item._offset
                         for i in range(start, end + 1):
                             if i < part:
-                                frame_objs.append(objs[i])
+                                # Check if this is a focus-rows columns widget we exited
+                                if focus_persist and i == focus_persist_idx and hasattr(objs[i], "fmt_html"):
+                                    frame_objs.append(objs[i].fmt_html(focus_persist))
+                                # Fallback: any completed focus-rows writer before current part keeps only last rows
+                                elif hasattr(objs[i], "fmt_html") and hasattr(objs[i], "_dom_classes") and 'focus-rows' in objs[i]._dom_classes:
+                                    clr = {}
+                                    for p in getattr(objs[i], "_parts", ()): 
+                                        if "row" in p:
+                                            clr[p["col"]] = p["row"]
+                                    frame_objs.append(objs[i].fmt_html({"_col_last_rows": clr}))
+                                else:
+                                    frame_objs.append(objs[i])
                             elif i > part:
                                 frame_objs.append(f"<div style='visibility:hidden;'>{_fmt_html(objs[i])}</div>")
                             else: # i == part, can be Writer

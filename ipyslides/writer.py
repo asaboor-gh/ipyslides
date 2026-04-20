@@ -163,28 +163,47 @@ class Writer(ipw.HBox):
     def fmt_html(self, visible_upto=None):
         "Make HTML representation of columns for exporting slides to other formats."
         cols = []
-        col_idx = (visible_upto or {}).get("col", float('inf')) 
+        is_focus = 'focus-rows' in self._dom_classes
+        col_idx = (visible_upto or {}).get("col", float('inf'))
+        col_last_rows = (visible_upto or {}).get("_col_last_rows", {}) if is_focus else {}
         for i, col in enumerate(self._cols):
             flex = f'flex:{col["flex"]};height:auto;min-width:0'
             if i > col_idx: # Entire column is hidden
                 content = '\n'.join(map(_fmt_html, col['outputs']))
                 cols.append(f'<div style="{flex};visibility:hidden">{content}</div>')
-            elif i < col_idx: # Entire column is visible
-                content = '\n'.join(map(_fmt_html, col['outputs']))
-                cols.append(f'<div style="{flex};">{content}</div>')
+            elif i < col_idx: # Entire column is visible (or previous in focus mode)
+                if i in col_last_rows:
+                    # Focus mode: previous column shows only last row, skip others entirely
+                    last_r = col_last_rows[i]
+                    rows = [_fmt_html(output) for r, output in enumerate(col['outputs']) if r > last_r]
+                    cols.append(f'<div style="{flex};">{chr(10).join(rows)}</div>')
+                else:
+                    content = '\n'.join(map(_fmt_html, col['outputs']))
+                    cols.append(f'<div style="{flex};">{content}</div>')
             else: # Current column, check rows
                 rows = []
                 row_idx = (visible_upto or {}).get("row", float('inf'))
-                for r, output in enumerate(col['outputs']):
-                    if r <= row_idx:
-                        rows.append(_fmt_html(output))
-                    else:
-                        rows.append(f'<div style="visibility:hidden;">{_fmt_html(output)}</div>')
+                prev_row_idx = (visible_upto or {}).get("prev_row", -1) if is_focus else -1
+                # Focus mode on current column when fully visible (no row key)
+                if is_focus and row_idx == float('inf') and i in col_last_rows:
+                    last_r = col_last_rows[i]
+                    rows = [_fmt_html(output) for r, output in enumerate(col['outputs']) if r > last_r]
+                else:
+                    for r, output in enumerate(col['outputs']):
+                        if is_focus and row_idx != float('inf'):
+                            # Focus mode: only include current row content, skip others
+                            if prev_row_idx < r < row_idx:
+                                rows.append(_fmt_html(output))
+                        else:
+                            if r <= row_idx:
+                                rows.append(_fmt_html(output))
+                            else:
+                                rows.append(f'<div style="visibility:hidden;">{_fmt_html(output)}</div>')
                 
-                cols.append(f'<div style="{flex};">{"".join(rows)}</div>')
+                cols.append(f'<div style="{flex};">{chr(10).join(rows)}</div>')
                 
         css_class = ' '.join(self._dom_classes)
-        return f'<div class="{css_class}" {_inline_style(self)}>{"".join(cols)}</div>'
+        return f'<div class="{css_class}" {_inline_style(self)}>{chr(10).join(cols)}</div>'
 
 
 def write(*objs,widths = None, css_class=None, **css_props):
@@ -223,6 +242,8 @@ def write(*objs,widths = None, css_class=None, **css_props):
     ::: tip
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
         A single column is flattened up to 2 levels, so `[[obj1], row2, [item1, item2]]` will be displayed as 3 rows.
+        
+        Use `css_class='focus-rows'` to reveal each row in isolation, collapsing all other rows instead of accumulating them.
         
         **Incremental display** is triggered only when you place `Slides.PART()` delimiter **before** the `write` command:
         
