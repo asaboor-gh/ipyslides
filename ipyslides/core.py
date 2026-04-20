@@ -703,11 +703,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children[new_index].add_class("ShowSlide").remove_class("HideSlide")
         self.widgets.iw.msg_tojs = 'SwitchView'
         # do after ShowSlide available on naviagted slide
-        page = None
-        if slide._fidxs:
-            frame = slide._fidxs[slide.indexf] if slide.indexf < len(slide._fidxs) else {}
-            page = frame.get('page', None)
-        self._send_nav_msg(new_index > old_index or new_index == 0, page=page) # There is no other way to animate title slide except on returning back to it
+        self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
         self._build_if_pending(slide)  # build if pending, should be at end to see loading on current slide
     
     def _build_if_pending(self, slide):
@@ -743,16 +739,13 @@ class Slides(BaseSlides,metaclass=Singleton):
             self._switch_slide(old_index=change["old"], new_index=change["new"])
             self._current._run_on_load()  # Run on_load setup after switching slide, it updates footer as well
     
-    def _send_nav_msg(self, forward=True, parts=False, selector=None, page=None):
+    def _send_nav_msg(self, forward=True, parts=False, selector=None):
         "Send navigation message to front-end on slide or frame switching."
         msg = "NAV:RIGHT" if forward else "NAV:LEFT"
-        # NAV uses internal 1-based frame page numbers.
-        if isinstance(page, int) and page >= 1:
-            msg += f"/PAGE:{page}"
         if selector is not None:
             msg += f"/SELECTOR:{selector}"
         elif parts: 
-            msg += f"/PARTS" # can be PARTS > PAGES > SLIDES if needed in future
+            msg += f"/PARTS"
         self.widgets.iw.msg_tojs = msg
     
     def run_animation(self, selector=None):

@@ -366,7 +366,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
     return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
 
 def bg(src=None, opacity=1, filter=None, contain=False):
-    """Set background image for the current slide page while building content.
+    """Set background image for the current slide.
 
     Markdown usage: `bg`src`` or `bg[opacity=0.4,contain=True]`src``.
     """

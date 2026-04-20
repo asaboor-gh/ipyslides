@@ -172,13 +172,10 @@ class _HhtmlExporter:
             )
 
     def _get_bg_image(self, slide, sec_uid, frame_meta):
-        "Pick background for exported frame using resolved internal page mapping."
-        page = frame_meta.get('page', 1) if isinstance(frame_meta, dict) else 1
-        if not isinstance(page, int) or page < 1:
-            page = 1
-
-        if page in getattr(slide, '_bg_ikws_pages', {}):
-            return slide._get_bg_image(f'#{sec_uid}', ikws=slide._bg_ikws_pages[page], page=page)
+        "Pick background for exported frame using slide-level background mapping."
+        ikws = getattr(slide, '_bg_ikws', None)
+        if isinstance(ikws, dict) and ikws:
+            return slide._get_bg_image(f'#{sec_uid}', ikws=ikws)
         return ''
     
     def _get_logo(self):

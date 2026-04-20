@@ -86,7 +86,7 @@ class Slide:
         self._app = app
             
         self._css = ''
-        self._bg_ikws_pages = {} # internal frame-page number -> background image keywords
+        self._bg_ikws = {} # per-slide background image keywords
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
         self._animation = None
@@ -120,7 +120,7 @@ class Slide:
         self._tcolors = {} # theme colors for this slide only
         self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
         self._lre_page = 0 # Leaset recently edited page number for quick jump while editing markdown
-        self._bg_ikws_pages = {} # rebuild always re-derives background mapping from content
+        self._bg_ikws = {} # rebuild always re-derives background mapping from content
   
     def _set_source(self, text, language):
         "Set source code for this slide. If"
@@ -188,8 +188,8 @@ class Slide:
             outputs = captured.outputs
             # Clean up delimiters: trailing, empty, adjacent, and around PAGE boundaries
             self._contents = self._cleanup_delimiters(outputs)
-            self._contents = self._resolve_bg_markers(self._contents) # background per page after clean markers
-            self._set_alt_print() # rebuild BackLayer HTML from current page background map
+            self._contents = self._resolve_bg_markers(self._contents) # per-slide background after clean markers
+            self._set_alt_print() # rebuild BackLayer HTML from current slide background map
             self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display()    
@@ -530,8 +530,7 @@ class Slide:
         
         self._app._send_nav_msg(
             which == 'next',
-            parts = "part" in frame,
-            page = frame.get('page', None)
+            parts = "part" in frame
         ) # inform JS side
         if any([ # first and last frames are speacial cases, handled by navigation if swicthing from other slide
             self.indexf == 0 and which == 'prev',
@@ -870,8 +869,9 @@ class Slide:
         self._alt_print.value = '' # reset first to recieve new content
         alt = f'{self._css}' # XTML or str
         selector = get_unique_css_class()
-        for page, ikws in sorted(self._bg_ikws_pages.items()):
-            alt += self._get_bg_image(selector, ikws=ikws, page=page)
+        ikws = self._bg_ikws if isinstance(getattr(self, '_bg_ikws', None), dict) else {}
+        if ikws:
+            alt += self._get_bg_image(selector, ikws=ikws)
         self._alt_print.value = alt
 
     def _mount_user_css(self):
@@ -941,7 +941,7 @@ class Slide:
         )
 
     def _set_bg_image_content(self, src=None, opacity=1, filter=None, contain=False):
-        "Queue content-driven background marker; page is resolved after delimiter cleanup."
+        "Queue content-driven background marker; slide-level background is resolved after cleanup."
         XTML('<!-- BG_IMAGE -->').display(metadata={
             "BG_IMAGE": {
                 "src": src,
@@ -953,44 +953,36 @@ class Slide:
         })
 
     def _resolve_bg_markers(self, outputs):
-        "Resolve content-driven backgrounds into internal pages; same-page calls are last-write-wins."
-        self._bg_ikws_pages = {}
+        "Resolve content-driven backgrounds into single slide background; last call wins."
+        self._bg_ikws = {}
 
         resolved = []
-        page_delims_seen = 0
         for out in outputs:
             meta = getattr(out, 'metadata', None)
             meta = meta if isinstance(meta, dict) else {}
-
-            if meta.get("DELIM", "") == "PAGE":
-                page_delims_seen += 1
-                resolved.append(out)
-                continue
 
             if not isinstance(meta.get("BG_IMAGE", None), dict):
                 resolved.append(out)
                 continue
 
             payload = meta["BG_IMAGE"]
-            # Content before first PAGE and content on first PAGE both target page 1.
-            internal_page = max(page_delims_seen, 1)
 
             kwargs = {
                 "src": payload.get("src", None),
                 "opacity": payload.get("opacity", 1),
                 "filter": payload.get("filter", None),
                 "contain": payload.get("contain", False),
-                "uclass": f"{self._sec_id}-p{internal_page}",
+                "uclass": f"{self._sec_id}-bg",
             }
 
             if kwargs["src"] is None:
-                self._bg_ikws_pages.pop(internal_page, None)
+                self._bg_ikws = {}
             else:
-                self._bg_ikws_pages[internal_page] = kwargs
+                self._bg_ikws = kwargs
 
         return resolved
     
-    def _get_bg_image(self, selector, ikws=None, page=None):
+    def _get_bg_image(self, selector, ikws=None):
         ikws = ikws if isinstance(ikws, dict) else {}
         if (image := self._app.settings._resolve_img(ikws.get('src',None), '100%')):
             if isinstance(image, str) and ("<svg" in image) and ("</svg>" in image):
@@ -998,8 +990,7 @@ class Slide:
                 svg_b64 = base64.b64encode(image.encode('utf-8')).decode('ascii')
                 image = f'<img src="data:image/svg+xml;base64,{svg_b64}" alt="Background SVG"/>'
 
-            page_attr = f' data-page="{page}"' if isinstance(page, int) and page > 0 else ''
-            return f'''<div class="BackLayer print-only {ikws['uclass']}"{page_attr}>
+            return f'''<div class="BackLayer print-only {ikws['uclass']}">
             <style>
                 {background_css(selector, **{k:v for k,v in ikws.items() if k != 'src'})}
             </style>

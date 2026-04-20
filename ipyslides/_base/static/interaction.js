@@ -227,8 +227,7 @@ function printSlides(box, model) {
                 }
 
                 const frame = (parts[slideNum] && parts[slideNum][i] !== undefined) ? parts[slideNum][i] : null;
-                const framePage = frame && Number.isInteger(frame.page) ? frame.page : null;
-                setBgImage(clone, framePage);
+                setBgImage(clone);
 
                 // Ensure each frame starts from a clean print state.
                 clone.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
@@ -437,13 +436,6 @@ function handleMessage(model, msg, box) {
         let slide = box.querySelector(":scope .SlideArea.ShowSlide");
         if (!slide) return;
         const inParts = msg.includes("/PARTS");
-        const navPageMatch = msg.match(/\/PAGE:(\d+)/);
-        const navPage = navPageMatch ? Number(navPageMatch[1]) : null;
-
-        if (navPage !== null) {
-            setBgImage(slide, navPage);
-            setMainBgImage(slide, box, navPage);
-        }
 
         if (msg.includes("NAV:LEFT")) {
             slide.querySelectorAll(':scope ._ips-content-animated').forEach(el => { 
@@ -504,22 +496,21 @@ function handleMessage(model, msg, box) {
 };
 
 
-function pickBackLayer(slide, page = null) {
+function pickBackLayer(slide) {
     const outArea = slide.querySelector(':scope .jp-OutputArea');
     if (!outArea) return null;
 
-    const targetPage = (Number.isInteger(page) && page > 0) ? page : 1;
-    const byPage = outArea.querySelector(`:scope .BackLayer.print-only[data-page="${targetPage}"]`);
-    if (byPage) return byPage;
+    const targetLayer = outArea.querySelector(':scope .BackLayer.print-only');
+    if (targetLayer) return targetLayer;
     return null;
 }
 
-function setBgImage(slide, page = null) {
+function setBgImage(slide) {
     // Remove all previous BackLayer elements in SlideArea (direct children only)
     slide.querySelectorAll(':scope > .BackLayer').forEach(bg => bg.remove());
 
     // Find the new background image in the output area
-    let bgImage = pickBackLayer(slide, page);
+    let bgImage = pickBackLayer(slide);
     if (bgImage) {
         // Clone the node to avoid moving it from output area
         let newBackLayer = bgImage.cloneNode(true);
@@ -534,8 +525,8 @@ function setBgImage(slide, page = null) {
     }
 }
 
-function setMainBgImage(slide, target, page = null) {
-    let bgImage = pickBackLayer(slide, page); // page-specific lookup
+function setMainBgImage(slide, target) {
+    let bgImage = pickBackLayer(slide);
     let targetBg = target.querySelector(':scope .BackLayer'); // target backlayer
     if (!targetBg) return;
     if (bgImage) {

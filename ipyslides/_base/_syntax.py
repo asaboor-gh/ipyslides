@@ -57,9 +57,8 @@ Notes
 : alert`notes\`This is slide notes\``  to add notes to current slide.
 
 Backgrounds
-: alert`bg\`image_src_or_path\`` to set background for the current page.
-If placed before first `PAGE`/`--` delimiter, it applies to first page only.
-If multiple `bg` calls target the same page, the last one wins.
+: alert`bg\`image_src_or_path\`` to set background for the current slide.
+If multiple `bg` calls are used in one slide, the last one wins.
 Use alert`bg[opacity=0.4, contain=True, filter='blur(2px)']\`image_src_or_path\`` for options. `contain` must be `True` or `False`.
 
 Including Files
