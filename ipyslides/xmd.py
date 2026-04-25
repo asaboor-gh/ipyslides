@@ -699,7 +699,7 @@ class XMarkdown(Markdown):
     def _parse_columns(self, data, widths, _class, css_props):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
-        marker_re = re.compile(r"(?<!`)<\s*iter(?:-|_)rows\s*/\s*>(?!`)", flags=re.IGNORECASE)
+        marker_re = re.compile(r"^\s*\[\s*snapshots\s*\]\s*$", flags=re.IGNORECASE | re.MULTILINE)
 
         if not widths:
             widths = [100/len(cols) for _ in cols]
@@ -718,9 +718,9 @@ class XMarkdown(Markdown):
         
         # Under any display context
         cap_cols = []
-        for i, col in enumerate(cols):
-            use_iter_rows = bool(marker_re.search(col))
-            if use_iter_rows:
+        for col in cols:
+            use_snapshots = bool(marker_re.search(col))
+            if use_snapshots:
                 col = marker_re.sub("", col)  # remove marker from rendered output
 
             rows = [] # list to make row-wise parts
@@ -733,8 +733,8 @@ class XMarkdown(Markdown):
                         if hasattr(self, '_show_disply_error'): del self._show_disply_error # cleanup
                         
                 rows.append(cap.outputs)
-            if use_iter_rows and callable(getattr(self._wr, "column", None)):
-                cap_cols.append(self._wr.column(rows, iter_rows=True))
+            if use_snapshots and callable(getattr(self._wr, "snapshots", None)):
+                cap_cols.append(self._wr.snapshots(rows))
             else:
                 cap_cols.append(rows)
             
@@ -1028,10 +1028,16 @@ def _parse_pages(markdown):
     
     pages = list(_stream_chunks(markdown, sep='--'))
     with capture_content() as cap:
+        xmd(pages[0], returns=False) # render common header part
+        
+        from .writer import snapshots, write  # circular import
+        snaps = snapshots()
         for page in pages[1:]: # set pages for current slide
-            display(_delim("PAGE"))
-            xmd(pages[0] + "\n" + page, returns=False)
-        display(_delim("PAGE")) # split from rest of content, will be ignored if last
+            with snaps.capture():
+                xmd(page, returns=False)
+                
+        _delim("PART").display() # trigger parts
+        write(snaps) # will show each page one by one
     return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
 
 

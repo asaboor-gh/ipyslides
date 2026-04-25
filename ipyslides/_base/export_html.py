@@ -70,19 +70,19 @@ class _HhtmlExporter:
                     if not "part" in frame: # full content in range
                         frame_objs.extend(objs[start:end + 1])
                     else: # partial content in range
-                        iter_rows_persist = frame.get("_iter_rows_persist")
-                        iter_rows_persist_idx = None
-                        if isinstance(iter_rows_persist, dict) and isinstance(iter_rows_persist.get("idx"), int):
-                            iter_rows_persist_idx = iter_rows_persist["idx"] - item._offset
+                        snapshots_persist = frame.get("_snapshots_persist")
+                        snapshots_persist_idx = None
+                        if isinstance(snapshots_persist, dict) and isinstance(snapshots_persist.get("idx"), int):
+                            snapshots_persist_idx = snapshots_persist["idx"] - item._offset
                         for i in range(start, end + 1):
                             if i < part:
-                                # Check if this writer has persisted iter_rows metadata.
-                                if iter_rows_persist and i == iter_rows_persist_idx and hasattr(objs[i], "fmt_html"):
-                                    frame_objs.append(objs[i].fmt_html(iter_rows_persist))
-                                # Fallback: any completed iter_rows writer before current part keeps only last rows
-                                elif hasattr(objs[i], "fmt_html") and getattr(objs[i], "_iter_rows_cols", None):
-                                    clr = dict(getattr(objs[i], "_iter_rows_cols", {}) or {})
-                                    frame_objs.append(objs[i].fmt_html({"_col_last_rows": clr}))
+                                # Check if this writer has persisted snapshots metadata.
+                                if snapshots_persist and i == snapshots_persist_idx and hasattr(objs[i], "fmt_html"):
+                                    frame_objs.append(objs[i].fmt_html(snapshots_persist))
+                                # Fallback: any completed snapshots writer before current part keeps only last rows
+                                elif hasattr(objs[i], "fmt_html") and getattr(objs[i], "_snapshots_cols", None):
+                                    clr = dict(getattr(objs[i], "_snapshots_cols", {}) or {})
+                                    frame_objs.append(objs[i].fmt_html({"_snapshots_last_rows": clr}))
                                 else:
                                     frame_objs.append(objs[i])
                             elif i > part:
@@ -114,7 +114,7 @@ class _HhtmlExporter:
                     <section {sec_id}>
                         {self._get_css(item, sec_uid)}
                         <div class="SlideBox">
-                            {self._get_bg_image(item, sec_uid, frame_meta)}
+                            {item._get_bg_image(f'#{item._sec_id}')}
                             <div class="{item._css_class} export-only">
                                 {_html}
                             </div>
@@ -170,14 +170,6 @@ class _HhtmlExporter:
             f".{self.main.uid}", f"#{sec_uid}").replace(
             ".FooterBox", ".Footer"
             )
-
-    def _get_bg_image(self, slide, sec_uid, frame_meta):
-        "Pick background for exported frame using slide-level background mapping."
-        ikws = getattr(slide, '_bg_ikws', None)
-        if isinstance(ikws, dict) and ikws:
-            return slide._get_bg_image(f'#{sec_uid}', ikws=ikws)
-        return ''
-    
     def _get_logo(self):
         return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 
             {self.main.widgets.htmls.logo.value} 

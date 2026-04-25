@@ -196,7 +196,7 @@ def demo_slides(slides):
             import numpy as np
             import matplotlib.pyplot as plt
 
-            plots = []
+            plots = slides.snapshots() # create empty snapshots object to append frames to later
             for idx in range(10,19):
                 _, ax = plt.subplots(figsize=(3.4,2.6))
                 x = np.linspace(0,idx,50)
@@ -208,11 +208,7 @@ def demo_slides(slides):
 
         # Fixed source at left + row-wise reveals of plots at right.
         slides.pause()
-        slides.write(
-            src,
-            slides.column(plots, iter_rows=True),
-            widths=[60,40],
-        )
+        slides.write(src, plots, widths=[60,40])
         slides.write('Unlike `interact/interactive`, this animation is based on slide frames, all of which are exported to HTML.',css_class='note-tip')
 
     slides.build(-1,'section`Controlling Content on Frames` toc`### Contents`')
@@ -220,10 +216,10 @@ def demo_slides(slides):
     # Frames structure
     boxes = [slides.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in range(1,5)]
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### Fancy Bullet List yoffset`0`')
+        slides.write('# Frames with Snapshots yoffset`0`')
         s.get_source().focus([2,3,4]).display()
-        slides.pause() 
-        slides.write(slides.column(boxes, css_class='anim-slide-up', iter_rows=True)) # iter_rows to reveal rows in isolation
+        slides.pause(isolate=True) # isolate to split from previous content
+        slides.write(slides.snapshots(boxes), css_class='anim-group anim-slide-up') # snapshots reveal rows in isolation
         
 
     with slides.build(-1) as s:
@@ -231,7 +227,7 @@ def demo_slides(slides):
         s.get_source().focus(range(2,7)).display()
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]
-        for ws, cols in slides.pause.iter(zip(widths,objs)):
+        for ws, cols in slides.pause.iter(zip(widths,objs), isolate=True): # isolate to split from previous content
             slides.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
 
     # Youtube

@@ -105,7 +105,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
-    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. Add `<iter-rows/>` inside a column to reveal rows exclusively for that column. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
+    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. Add `[snapshots]` inside a column to reveal rows exclusively for that column. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `<md-var_name/>`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
@@ -127,7 +127,7 @@ Inline Columns
 Block Columns
 : You can create columns using `::: columns` syntax. 
 Column separator is triple plus `+++` if intended in display mode and should be a `++` before block to make it incremental.
-Use `<iter-rows/>` or `<iter_rows/>` inside any column to enable per-row iteration exclusively for that column.
+Use `[snapshots]` inside any column to enable per-row iteration exclusively for that column.
 Use `++[isolate]` before `::: columns` to separate previous content from first column reveal.
 
 ```md-before

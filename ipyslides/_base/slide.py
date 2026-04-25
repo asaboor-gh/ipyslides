@@ -375,7 +375,7 @@ class Slide:
             for key in ("head", "start", "part", "end"):
                 if key in frame and isinstance(frame[key], int):
                     frames[i][key] += offset
-            persist = frame.get("_iter_rows_persist")
+            persist = frame.get("_snapshots_persist")
             if isinstance(persist, dict) and id(persist) not in updated_persist:
                 if isinstance(persist.get("idx"), int):
                     persist["idx"] += offset
@@ -392,7 +392,7 @@ class Slide:
     def _resolve_parts(self, page, contents, indxs):
         ensure_dict = lambda meta: meta if isinstance(meta, dict) else {} # insure dict type
         frames = []
-        _iter_rows_persist = None  # Track iter_rows persistence after exiting columns
+        _snapshots_persist = None  # Track snapshots persistence after exiting columns
         last_index = None
         
         for index in indxs:
@@ -418,14 +418,14 @@ class Slide:
                     # This keeps previous content visible and shows the first column part together.
                     if meta.get("ISOLATE", False) and index > indxs.start:
                         new_frame = {**page, "part": index}
-                        if _iter_rows_persist:
-                            new_frame["_iter_rows_persist"] = _iter_rows_persist
+                        if _snapshots_persist:
+                            new_frame["_snapshots_persist"] = _snapshots_persist
                         frames.append(new_frame)
                     # Pre-compute row isolation columns from writer metadata
-                    col_last_rows = {}
-                    iter_rows_cols = getattr(contents[index + 1], '_iter_rows_cols', {})
-                    if isinstance(iter_rows_cols, dict):
-                        col_last_rows = {int(k): v for k, v in iter_rows_cols.items() if isinstance(v, int)}
+                    snapshots_last_rows = {}
+                    snapshots_cols = getattr(contents[index + 1], '_snapshots_cols', {})
+                    if isinstance(snapshots_cols, dict):
+                        snapshots_last_rows = {int(k): v for k, v in snapshots_cols.items() if isinstance(v, int)}
                     # Add frames for each column part, tracking previous row per column
                     prev_row_per_col = {}
                     for part in contents[index + 1]._parts:
@@ -435,14 +435,14 @@ class Slide:
                             if col in prev_row_per_col:
                                 new_frame["prev_row"] = prev_row_per_col[col]
                             prev_row_per_col[col] = part["row"]
-                        if col_last_rows:
-                            new_frame["_col_last_rows"] = col_last_rows
-                        if _iter_rows_persist:
-                            new_frame["_iter_rows_persist"] = _iter_rows_persist
+                        if snapshots_last_rows:
+                            new_frame["_snapshots_last_rows"] = snapshots_last_rows
+                        if _snapshots_persist:
+                            new_frame["_snapshots_persist"] = _snapshots_persist
                         frames.append(new_frame)
-                    # Persist iter_rows columns collapse after exiting this writer.
-                    if col_last_rows:
-                        _iter_rows_persist = {"idx": index + 1, "_col_last_rows": col_last_rows}
+                    # Persist snapshots columns collapse after exiting this writer.
+                    if snapshots_last_rows:
+                        _snapshots_persist = {"idx": index + 1, "_snapshots_last_rows": snapshots_last_rows}
 
                 # --- PART after COLUMNS ---
                 elif "COLUMNS" in meta_prev:
@@ -450,15 +450,15 @@ class Slide:
                     if index == indxs.start or (frames and "col" in frames[-1]):
                         continue  # skip adding extra frame after columns parts
                     new_frame = {**page, "part": index}
-                    if _iter_rows_persist:
-                        new_frame["_iter_rows_persist"] = _iter_rows_persist
+                    if _snapshots_persist:
+                        new_frame["_snapshots_persist"] = _snapshots_persist
                     frames.append(new_frame)
 
                 # --- Regular PART ---
                 elif index > indxs.start:
                     new_frame = {**page, "part": index}
-                    if _iter_rows_persist:
-                        new_frame["_iter_rows_persist"] = _iter_rows_persist
+                    if _snapshots_persist:
+                        new_frame["_snapshots_persist"] = _snapshots_persist
                     frames.append(new_frame)
 
         # Ensure at least one frame at the end when last item is real content.
@@ -467,8 +467,8 @@ class Slide:
         last_meta = ensure_dict(contents[last_index].metadata) if isinstance(last_index, int) else {}
         if frames and isinstance(last_index, int) and frames[-1].get("part", last_index) != last_index and not last_meta.get("DELIM", ""):
             new_frame = {**page, "part": last_index}
-            if _iter_rows_persist:
-                new_frame["_iter_rows_persist"] = _iter_rows_persist
+            if _snapshots_persist:
+                new_frame["_snapshots_persist"] = _snapshots_persist
             frames.append(new_frame)
         return frames 
     
@@ -579,34 +579,34 @@ class Slide:
                     rows_hide = frame["row"] + 2 # +2 to start hiding after this row
                     css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide_node(True)
 
-                    # iter_rows: collapse non-current rows so only the active row is visible
-                    if col_idx in frame.get("_col_last_rows", {}):
-                        focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.iter-rows'
+                    # snapshots: collapse non-current rows so only the active row is visible
+                    if col_idx in frame.get("_snapshots_last_rows", {}):
+                        focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.snapshots-rows'
                         row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
                         if "prev_row" in frame:
                             css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1})'] = collapse_node(True)
                         css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1})'] = collapse_node(True)
 
-                # iter_rows: collapse non-last rows in previous columns and current col when fully visible
-                col_last_rows = frame.get("_col_last_rows", {})
-                if col_last_rows:
-                    focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.iter-rows'
+                # snapshots: collapse non-last rows in previous columns and current col when fully visible
+                snapshots_last_rows = frame.get("_snapshots_last_rows", {})
+                if snapshots_last_rows:
+                    focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.snapshots-rows'
                     # Previous columns: show only last row, collapse the rest
                     for c in range(col_idx):
-                        if c in col_last_rows:
+                        if c in snapshots_last_rows:
                             prev_row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                            css_rules[f'{prev_row_sel}:nth-child(-n + {col_last_rows[c] + 1})'] = collapse_node(True)
+                            css_rules[f'{prev_row_sel}:nth-child(-n + {snapshots_last_rows[c] + 1})'] = collapse_node(True)
                     # Current column fully visible (no row): show only last row
-                    if "row" not in frame and col_idx in col_last_rows:
+                    if "row" not in frame and col_idx in snapshots_last_rows:
                         curr_row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                        css_rules[f'{curr_row_sel}:nth-child(-n + {col_last_rows[col_idx] + 1})'] = collapse_node(True)
+                        css_rules[f'{curr_row_sel}:nth-child(-n + {snapshots_last_rows[col_idx] + 1})'] = collapse_node(True)
 
-        # Persistent iter_rows: collapse non-last rows in columns we already exited
-        if "_iter_rows_persist" in frame:
-            persist = frame["_iter_rows_persist"]
+        # Persistent snapshots: collapse non-last rows in columns we already exited
+        if "_snapshots_persist" in frame:
+            persist = frame["_snapshots_persist"]
             cols_idx = persist["idx"] + 1  # 1-indexed for CSS
-            focus_sel = f'^:nth-child({cols_idx}) .columns.writer:first-of-type > div.iter-rows'
-            for c, last_row in persist["_col_last_rows"].items():
+            focus_sel = f'^:nth-child({cols_idx}) .columns.writer:first-of-type > div.snapshots-rows'
+            for c, last_row in persist["_snapshots_last_rows"].items():
                 row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
                 css_rules[f'{row_sel}:nth-child(-n + {last_row + 1})'] = collapse_node(True)
 
