@@ -934,9 +934,11 @@ class Slides(BaseSlides,metaclass=Singleton):
         """Pause delimiter! Use `Slides.pause()` or import `pause` from top level to create a new revealable part in slide.
         In markdown slides, use two plus signs `++` on its own line, optionally add content right after `++ `.
         
-        - Adjacent pause delimiters are ignored, so no empty parts are created.
+        - Adjacent pause delimiters are ignored, so no empty parts are created in normal flow.
         - A call `pause()` before `write` command adds parts inside columns and rows. 
-          See `write` command for more details. This is equivalent to adding `++` before `columns` block in markdown.
+            - Use code`pause(isolate=True)` to isolate previous content from a following `write(...columns...)` reveal.
+            - In markdown, use `++[isolate]` before `::: columns` (with `+++` separators) for the same behavior.
+                    See `write` command for more details.
         - Use code`pause.iter(iterable)` to create multiple parts from iterable automatically.
         - Last empty pause delimiter is ignored.
         
@@ -945,8 +947,11 @@ class Slides(BaseSlides,metaclass=Singleton):
         """
         _type = "PART"
         
-        def __init__(self):
-            display(_delim(self._type))
+        def __init__(self, isolate=False):
+            delim = _delim(self._type)
+            if isolate and isinstance(getattr(delim, 'metadata', None), dict):
+                delim.metadata['ISOLATE'] = True
+            display(delim)
 
         @classmethod
         def _optional_trail(self, trail):
@@ -957,17 +962,18 @@ class Slides(BaseSlides,metaclass=Singleton):
                 raise ValueError(f"trail should be True, False, 'PART' or 'PAGE', got {trail!r}")
 
         @classmethod
-        def iter(cls, iterable, trail=True):
+        def iter(cls, iterable, isolate=False, trail=True):
             """Loop over given iterable by adding a separator before each item.
             If `trail` is True (default), a separator of this type is added at end as well.
             You can also set `trail` to 'PART' or 'PAGE' to add that type of separator at end instead 
             or set to False to avoid adding any separator at end, while is useful to avoid incremental 
             behavior in next write command in case of pause delimiter.
+            Set `isolate=True` to mark only the first inserted delimiter as isolate.
             """
             if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
                 raise TypeError(f"iterable should be a list-like object, got {type(iterable)}")
-            for item in iterable:
-                cls() # put one separator before
+            for i, item in enumerate(iterable):
+                cls(isolate=bool(isolate) and i == 0) # isolate should affect only the first delimiter
                 yield item
             # This will be only one separator at end if no items were yielded, its like itself called once
             cls._optional_trail(trail) # put one separator at end if needed, default True

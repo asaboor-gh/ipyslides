@@ -350,7 +350,7 @@ def _mask_html_comments(text):
             s = s.replace(f'<!--_xmd_cmt_{i}_-->', c)
         return s
     return masked, restore
-_PLUS_RE = re.compile(r'^\+\+(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line, 
+_PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
 # not need to be in above cache which is general and can be used to split with ++ differently
 
 class XMarkdown(Markdown):
@@ -446,19 +446,26 @@ class XMarkdown(Markdown):
 
     def _split_parts(self, content, delimited=False):
         "Split content at '++', optionally yielding Delimiter objects."
+        def _part_delim():
+            delim = _delim("PART")
+            if opt == 'isolate' and isinstance(getattr(delim, 'metadata', None), dict):
+                delim.metadata['ISOLATE'] = True
+            return delim
+        
         start = 0
         first = True
 
         content = textwrap.dedent(content)  # Dedent content before processing to make sure ++ is at start of line
         for m in _PLUS_RE.finditer(content):
+            opt = (m.group('opt') or '').strip().lower().replace('_', '-')
             chunk = content[start:m.start()].rstrip() # preserve leading indentation, clear trailing junk
 
             if chunk:
                 yield chunk
                 if delimited:
-                    yield _delim("PART")
+                    yield _part_delim()
             elif first and delimited:
-                yield _delim("PART")
+                yield _part_delim()
 
             first = False
             start = m.end()
@@ -711,7 +718,7 @@ class XMarkdown(Markdown):
         
         # Under any display context
         cap_cols = []
-        for col in cols:
+        for i, col in enumerate(cols):
             use_iter_rows = bool(marker_re.search(col))
             if use_iter_rows:
                 col = marker_re.sub("", col)  # remove marker from rendered output

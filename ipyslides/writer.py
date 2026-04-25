@@ -84,7 +84,7 @@ class column:
     css_class:
         Extra CSS class(es) applied to this column output widget.
     iter_rows:
-        If True, this column uses row-isolation behavior during incremental PART frames.
+        If True, this column uses row-isolation behavior during incremental frames. Works only if `pause` is used before `write`.
     **css_props:
         CSS properties scoped to this column output widget.
     """
@@ -216,10 +216,15 @@ class Writer(ipw.HBox):
         iter_rows_cols = {}
         first_delim_rows = {}
         for i, col in enumerate(cols):
+            col_outputs = list(col['outputs'])
+            if i > 0: # for i == 0, we want to preserve empty start for paused columns, handled in _split_parts
+                while col_outputs and col_outputs[0] == "":
+                    col_outputs.pop(0)
+
             rows = chain(*(
                 (*obj, rowsep) if isinstance(obj, (list, tuple)) # nested rows as single group
                 else (obj, rowsep)  # each object as single row
-                for obj in col['outputs']
+                for obj in col_outputs
             ))
             with capture_content() as cap:
                 if i == 0 and css_props: # display CSS in first column only

@@ -391,17 +391,6 @@ class Slide:
     
     def _resolve_parts(self, page, contents, indxs):
         ensure_dict = lambda meta: meta if isinstance(meta, dict) else {} # insure dict type
-        def has_visible_before(part_idx):
-            left = page["start"]
-            for j in range(part_idx - 1, page["start"] - 1, -1):
-                delim = ensure_dict(getattr(contents[j], 'metadata', {})).get("DELIM", "")
-                if delim in ("PART", "PAGE"):
-                    left = j + 1
-                    break
-            return any(
-                not ensure_dict(getattr(contents[j], 'metadata', {})).get("DELIM", "")
-                for j in range(left, part_idx)
-            )
         frames = []
         _iter_rows_persist = None  # Track iter_rows persistence after exiting columns
         last_index = None
@@ -425,14 +414,9 @@ class Slide:
                    
                 # --- PART before COLUMNS ---
                 if "COLUMNS" in meta_next:
-                    # PART before COLUMNS triggers incrementals.
-                    # Add explicit trigger frame only when there is real content before this PART,
-                    # or in the standard non-adjacent case.
-                    should_add_trigger = (
-                        "COLUMNS" not in meta_prev
-                        and (has_visible_before(index) or (index > indxs.start and not (frames and "col" in frames[-1])))
-                    )
-                    if should_add_trigger:
+                    # PART before COLUMNS should not create a trigger-only frame.
+                    # This keeps previous content visible and shows the first column part together.
+                    if meta.get("ISOLATE", False) and index > indxs.start:
                         new_frame = {**page, "part": index}
                         if _iter_rows_persist:
                             new_frame["_iter_rows_persist"] = _iter_rows_persist

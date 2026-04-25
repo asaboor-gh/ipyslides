@@ -536,7 +536,7 @@ class BaseSlides:
             def highlight_code(slide): widget.value = code.focus(range(slide.indexf + 1)).value
             self.on_load(highlight_code)
         
-            for ws, cols in self.pause.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)])):
+            for ws, cols in self.pause.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)]), isolate=True): # isolate to split from previous content
                 cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
                 self.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
                     
