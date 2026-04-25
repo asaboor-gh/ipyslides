@@ -192,39 +192,46 @@ def demo_slides(slides):
     def _(s):
         slides.write("## Animating Matplotlib!", skipper.origin)
 
-        with slides.code.context(returns = True) as s:
+        with slides.code.context(returns = True) as src:
             import numpy as np
             import matplotlib.pyplot as plt
-            
-            for idx in slides.PAGE.iter(range(10,19)):
-                fig, ax = plt.subplots(figsize=(3.4,2.6))
+
+            plots = []
+            for idx in range(10,19):
+                _, ax = plt.subplots(figsize=(3.4,2.6))
                 x = np.linspace(0,idx,50)
                 ax.plot(x,np.sin(x))
                 ax.set_title(rf'$f(x)=\sin(x)$, 0 < x < {idx+1}')
                 ax.set_xlim([0,18])
                 ax.set_axis_off()
-                slides.write(s.focus([idx - 10]),ax,widths=[60,40])
+                plots.append(ax)
 
-                if idx == 10:
-                    slides.write('Unlike `interact/interactive`, this animation is based on slide frames, all of which are exported to HTML.',css_class='note-tip')
+        # Fixed source at left + row-wise reveals of plots at right.
+        slides.pause()
+        slides.write(
+            src,
+            slides.column(plots, iter_rows=True),
+            widths=[60,40],
+        )
+        slides.write('Unlike `interact/interactive`, this animation is based on slide frames, all of which are exported to HTML.',css_class='note-tip')
 
     slides.build(-1,'section`Controlling Content on Frames` toc`### Contents`')
 
     # Frames structure
     boxes = [slides.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in range(1,5)]
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### code`PAGE.iter()` and Fancy Bullet List yoffset`0`')
+        slides.write('# Frames with \n#### Fancy Bullet List yoffset`0`')
         s.get_source().focus([2,3,4]).display()
-        slides.PAGE(empty=True) # want to show source alone first
-        for item in slides.PAGE.iter(boxes):
-            slides.bullets([item], marker='💘', css_class='anim-group anim-slide-left').display()
+        slides.pause() 
+        slides.write(slides.column(boxes, css_class='anim-slide-up', iter_rows=True)) # iter_rows to reveal rows in isolation
+        
 
     with slides.build(-1) as s:
-        slides.write('# Frames with \n#### code`PART.iter()` and 2x2 grid of boxes')
+        slides.write('# Frames with \n#### code`pause.iter()` and 2x2 grid of boxes')
         s.get_source().focus(range(2,7)).display()
         objs = [boxes[:2],boxes[2:]]
         widths = [(1,3),(3,2)]
-        for ws, cols in slides.PART.iter(zip(widths,objs)):
+        for ws, cols in slides.pause.iter(zip(widths,objs)):
             slides.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
 
     # Youtube

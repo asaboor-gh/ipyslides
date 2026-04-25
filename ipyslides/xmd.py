@@ -692,6 +692,8 @@ class XMarkdown(Markdown):
     def _parse_columns(self, data, widths, _class, css_props):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
         cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
+        marker_re = re.compile(r"(?<!`)<\s*iter(?:-|_)rows\s*/\s*>(?!`)", flags=re.IGNORECASE)
+
         if not widths:
             widths = [100/len(cols) for _ in cols]
         else:
@@ -710,6 +712,10 @@ class XMarkdown(Markdown):
         # Under any display context
         cap_cols = []
         for col in cols:
+            use_iter_rows = bool(marker_re.search(col))
+            if use_iter_rows:
+                col = marker_re.sub("", col)  # remove marker from rendered output
+
             rows = [] # list to make row-wise parts
             for row in self._split_parts(col):
                 with capture_content() as cap:
@@ -720,7 +726,10 @@ class XMarkdown(Markdown):
                         if hasattr(self, '_show_disply_error'): del self._show_disply_error # cleanup
                         
                 rows.append(cap.outputs)
-            cap_cols.append(rows) 
+            if use_iter_rows and callable(getattr(self._wr, "column", None)):
+                cap_cols.append(self._wr.column(rows, iter_rows=True))
+            else:
+                cap_cols.append(rows)
             
         with self.active_parser(), capture_content() as cap:
             self._wr.write(*cap_cols, widths=widths, css_class=_class, **css_props)

@@ -225,11 +225,10 @@ class SidePanel(VBox):
             self.ws.theme,
             HTML('<b>Additional Features</b>',layout = _html_layout),
             self.ws.checks.focus, self.ws.checks.rebuild, self.ws.checks.notes,
-            self.ws.checks.toast, self.ws.checks.reflow,
+            self.ws.checks.toast, self.ws.checks.reflow,self.ws.checks.merge,
             HTML('<b>PDF Printing / HTML Export</b>',layout = _html_layout),
             HTML(html('details',[html('summary','Printing Info'), how_to_print]).value),
             self.ws.checks.inotes,
-            self.ws.checks.merge,
             VBox([self.ws.buttons.print, self.ws.buttons.export],
                 layout=Layout(margin='0 0 0 calc(var(--jp-widgets-inline-label-width) - 4px)')
             ),
@@ -328,7 +327,7 @@ class _Checks:
     """
     reflow  = ipw.Checkbox(value = False,description='Reflow Content',layout=auto_layout)
     inotes  = ipw.Checkbox(value = False,description='Inline Notes (PDF only)',layout=auto_layout,)
-    merge   = ipw.Checkbox(value = False,description='Merge Parts (HTML/PDF)',layout=auto_layout)
+    merge   = ipw.Checkbox(value = False,description='Merge Parts',layout=auto_layout)
     notes   = ipw.Checkbox(value = False,description='Notes Popup',layout=auto_layout) # do not observe, just keep track when slides work
     toast   = ipw.Checkbox(value = True, description='Notifications',layout=auto_layout)
     focus   = ipw.Checkbox(value = True, description='Auto Focus',layout=auto_layout)

@@ -309,6 +309,7 @@ class Settings:
         self._widgets.theme.observe(lambda c: self.theme(value=c.new), names=["value"])
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"]) # set reflow through layout._reflow
         self._widgets.checks.inotes.observe(self._update_theme, names=["value"]) # set inline notes through layout._inotes
+        self._widgets.checks.merge.observe(self._set_merge_class, names=["value"])
         self._widgets.buttons.print.on_click(self._print_pdf)
         self._wslider.observe(self._update_size, names=["value"])
         self._update_theme({'owner':'layout'})  # Trigger Theme with aspect changed as well
@@ -335,6 +336,12 @@ class Settings:
             raise AttributeError(f"Can't reset attribute {name!r} on {self!r}")
         self.__dict__[name] = value
 
+    def _set_merge_class(self, change=None):
+        if self._widgets.checks.merge.value:
+            self._widgets.mainbox.add_class('SlidesMerged')
+        else:
+            self._widgets.mainbox.remove_class('SlidesMerged')
+
     def _print_pdf(self, btn):
         if self._slides._next_pending:
             return self._slides.notify(
@@ -348,8 +355,9 @@ class Settings:
             # Update frames indices for print
             parts = {}
             for slide in self._slides:
-                frames = slide._export_fidxs
-                slide._fcss.value = slide._frame_css(0) # reset frame css to show first or all content
+                frames = slide._fidxs
+                # JS print flow handles per-frame visibility; clear runtime frame CSS to avoid over-hiding.
+                slide._fcss.value = ''
                 if frames: # merged parts automatically handled
                     parts[slide.number] = frames
                     

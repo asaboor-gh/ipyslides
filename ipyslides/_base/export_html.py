@@ -55,12 +55,12 @@ class _HhtmlExporter:
             objs = item.contents # get conce
             frames, snums, frame_metas = [], [], []
             
-            if not item._export_fidxs:
+            if not item._fidxs:
                 frames = [objs]
                 snums = [str(item.index)]
                 frame_metas = [{}]
             else:
-                for fi, frame in enumerate(item._export_fidxs):
+                for fi, frame in enumerate(item._fidxs):
                     head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
                     frame_objs = []
                     
@@ -70,21 +70,18 @@ class _HhtmlExporter:
                     if not "part" in frame: # full content in range
                         frame_objs.extend(objs[start:end + 1])
                     else: # partial content in range
-                        focus_persist = frame.get("_focus_persist")
-                        focus_persist_idx = None
-                        if isinstance(focus_persist, dict) and isinstance(focus_persist.get("idx"), int):
-                            focus_persist_idx = focus_persist["idx"] - item._offset
+                        iter_rows_persist = frame.get("_iter_rows_persist")
+                        iter_rows_persist_idx = None
+                        if isinstance(iter_rows_persist, dict) and isinstance(iter_rows_persist.get("idx"), int):
+                            iter_rows_persist_idx = iter_rows_persist["idx"] - item._offset
                         for i in range(start, end + 1):
                             if i < part:
-                                # Check if this is a focus-rows columns widget we exited
-                                if focus_persist and i == focus_persist_idx and hasattr(objs[i], "fmt_html"):
-                                    frame_objs.append(objs[i].fmt_html(focus_persist))
-                                # Fallback: any completed focus-rows writer before current part keeps only last rows
-                                elif hasattr(objs[i], "fmt_html") and hasattr(objs[i], "_dom_classes") and 'focus-rows' in objs[i]._dom_classes:
-                                    clr = {}
-                                    for p in getattr(objs[i], "_parts", ()): 
-                                        if "row" in p:
-                                            clr[p["col"]] = p["row"]
+                                # Check if this writer has persisted iter_rows metadata.
+                                if iter_rows_persist and i == iter_rows_persist_idx and hasattr(objs[i], "fmt_html"):
+                                    frame_objs.append(objs[i].fmt_html(iter_rows_persist))
+                                # Fallback: any completed iter_rows writer before current part keeps only last rows
+                                elif hasattr(objs[i], "fmt_html") and getattr(objs[i], "_iter_rows_cols", None):
+                                    clr = dict(getattr(objs[i], "_iter_rows_cols", {}) or {})
                                     frame_objs.append(objs[i].fmt_html({"_col_last_rows": clr}))
                                 else:
                                     frame_objs.append(objs[i])
@@ -135,10 +132,13 @@ class _HhtmlExporter:
         if self.main.widgets.theme.value == "Jupyter":  # jupyterlab themes colors to export
             if self.main.widgets.iw._colors:
                 theme_kws["colors"] = self.main.widgets.iw._colors
-
+                    
         return doc_html(
             code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}',''), # remove id from code here
-            style_css   = styles.style_css(**theme_kws, _root=True), 
+            style_css   = (
+                self.main.html('style', styles.style_css(**theme_kws, _root=True)).value
+                + '\n' + (self.main.widgets.htmls.usercss.value or '') # user css comes after default to override it if needed
+            ), 
             content     = content, 
             script      = _script, 
             click_btns  = self.main.settings._get_clickers(), 

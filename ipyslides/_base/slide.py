@@ -375,7 +375,7 @@ class Slide:
             for key in ("head", "start", "part", "end"):
                 if key in frame and isinstance(frame[key], int):
                     frames[i][key] += offset
-            persist = frame.get("_focus_persist")
+            persist = frame.get("_iter_rows_persist")
             if isinstance(persist, dict) and id(persist) not in updated_persist:
                 if isinstance(persist.get("idx"), int):
                     persist["idx"] += offset
@@ -403,9 +403,11 @@ class Slide:
                 for j in range(left, part_idx)
             )
         frames = []
-        _focus_persist = None  # Track focus-rows persistence after exiting columns
+        _iter_rows_persist = None  # Track iter_rows persistence after exiting columns
+        last_index = None
         
         for index in indxs:
+            last_index = index
             meta = ensure_dict(contents[index].metadata)
             if isinstance(meta, dict) and meta.get("DELIM", "") == "PART":
                 if index == indxs.stop - 1: 
@@ -426,16 +428,20 @@ class Slide:
                     # PART before COLUMNS triggers incrementals.
                     # Add explicit trigger frame only when there is real content before this PART,
                     # or in the standard non-adjacent case.
-                    if has_visible_before(index) or (index > indxs.start and not (frames and "col" in frames[-1])):
+                    should_add_trigger = (
+                        "COLUMNS" not in meta_prev
+                        and (has_visible_before(index) or (index > indxs.start and not (frames and "col" in frames[-1])))
+                    )
+                    if should_add_trigger:
                         new_frame = {**page, "part": index}
-                        if _focus_persist:
-                            new_frame["_focus_persist"] = _focus_persist
+                        if _iter_rows_persist:
+                            new_frame["_iter_rows_persist"] = _iter_rows_persist
                         frames.append(new_frame)
-                    # Pre-compute last row delimiter per column for focus-rows
+                    # Pre-compute row isolation columns from writer metadata
                     col_last_rows = {}
-                    for part in contents[index + 1]._parts:
-                        if "row" in part:
-                            col_last_rows[part["col"]] = part["row"]
+                    iter_rows_cols = getattr(contents[index + 1], '_iter_rows_cols', {})
+                    if isinstance(iter_rows_cols, dict):
+                        col_last_rows = {int(k): v for k, v in iter_rows_cols.items() if isinstance(v, int)}
                     # Add frames for each column part, tracking previous row per column
                     prev_row_per_col = {}
                     for part in contents[index + 1]._parts:
@@ -447,12 +453,12 @@ class Slide:
                             prev_row_per_col[col] = part["row"]
                         if col_last_rows:
                             new_frame["_col_last_rows"] = col_last_rows
-                        if _focus_persist:
-                            new_frame["_focus_persist"] = _focus_persist
+                        if _iter_rows_persist:
+                            new_frame["_iter_rows_persist"] = _iter_rows_persist
                         frames.append(new_frame)
-                    # Only persist focus-rows collapse if this writer has focus-rows class
-                    if col_last_rows and 'focus-rows' in getattr(contents[index + 1], '_dom_classes', ()): 
-                        _focus_persist = {"idx": index + 1, "_col_last_rows": col_last_rows}
+                    # Persist iter_rows columns collapse after exiting this writer.
+                    if col_last_rows:
+                        _iter_rows_persist = {"idx": index + 1, "_col_last_rows": col_last_rows}
 
                 # --- PART after COLUMNS ---
                 elif "COLUMNS" in meta_prev:
@@ -460,39 +466,40 @@ class Slide:
                     if index == indxs.start or (frames and "col" in frames[-1]):
                         continue  # skip adding extra frame after columns parts
                     new_frame = {**page, "part": index}
-                    if _focus_persist:
-                        new_frame["_focus_persist"] = _focus_persist
+                    if _iter_rows_persist:
+                        new_frame["_iter_rows_persist"] = _iter_rows_persist
                     frames.append(new_frame)
 
                 # --- Regular PART ---
                 elif index > indxs.start:
                     new_frame = {**page, "part": index}
-                    if _focus_persist:
-                        new_frame["_focus_persist"] = _focus_persist
+                    if _iter_rows_persist:
+                        new_frame["_iter_rows_persist"] = _iter_rows_persist
                     frames.append(new_frame)
 
-        # Ensure at least one frame at the end if needed
-        if frames and frames[-1].get("part", index) != index:
-            new_frame = {**page, "part": index}
-            if _focus_persist:
-                new_frame["_focus_persist"] = _focus_persist
+        # Ensure at least one frame at the end when last item is real content.
+        # If the range ends with a trailing delimiter (e.g. from pause.iter default trail),
+        # appending a frame here creates a no-op extra click.
+        last_meta = ensure_dict(contents[last_index].metadata) if isinstance(last_index, int) else {}
+        if frames and isinstance(last_index, int) and frames[-1].get("part", last_index) != last_index and not last_meta.get("DELIM", ""):
+            new_frame = {**page, "part": last_index}
+            if _iter_rows_persist:
+                new_frame["_iter_rows_persist"] = _iter_rows_persist
             frames.append(new_frame)
         return frames 
-       
-    @property
-    def _fidxs(self): return getattr(self, '_frame_idxs', ())
     
     @property
-    def _export_fidxs(self):
+    def _fidxs(self):
+        idxs = getattr(self, '_frame_idxs', ())
         if self._app.widgets.checks.merge.value:
-            # Merge PART frames into single PAGE frame for export
+            # Merge PART frames into single PAGE frame for export, PAGE will be depricated later:
             merged_frames = []
-            for frame in self._fidxs:
+            for frame in idxs:
                 frame = {k:v for k,v in frame.items() if k in ('head','start','end', 'page')} # remove part, col, row info
                 if not frame in merged_frames: # unique frames only
                     merged_frames.append(frame)
             return tuple(merged_frames) if len(merged_frames) > 1 else () # should not single frame
-        return self._fidxs    
+        return idxs    
     
     @property
     def nf(self):
@@ -550,9 +557,9 @@ class Slide:
         frame = self._fidxs[index]
         # Use merged frames if printing PDF
         if hasattr(self._app.settings, '_printingPDF'):
-            if not self._export_fidxs or index >= len(self._export_fidxs):
+            if not self._fidxs or index >= len(self._fidxs):
                 return ''  # its all parts in single frame, no CSS needed
-            frame = self._export_fidxs[index]  
+            frame = self._fidxs[index]  
 
         # head content visible everywhere
         head_end = frame.get("head", -1) + 1 # CSS nth-child is 1-indexed
@@ -588,17 +595,18 @@ class Slide:
                     rows_hide = frame["row"] + 2 # +2 to start hiding after this row
                     css_rules[f'{col_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child:nth-child(n + {rows_hide})'] = hide_node(True)
 
-                    # Focus-rows: collapse non-current rows so only the active row is visible
-                    focus_sel = f'^:nth-child({part_end}) .columns.writer.focus-rows:first-of-type > div'
-                    row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                    if "prev_row" in frame:
-                        css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1})'] = collapse_node(True)
-                    css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1})'] = collapse_node(True)
+                    # iter_rows: collapse non-current rows so only the active row is visible
+                    if col_idx in frame.get("_col_last_rows", {}):
+                        focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.iter-rows'
+                        row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
+                        if "prev_row" in frame:
+                            css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1})'] = collapse_node(True)
+                        css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1})'] = collapse_node(True)
 
-                # Focus-rows: collapse non-last rows in previous columns and current col when fully visible
+                # iter_rows: collapse non-last rows in previous columns and current col when fully visible
                 col_last_rows = frame.get("_col_last_rows", {})
                 if col_last_rows:
-                    focus_sel = f'^:nth-child({part_end}) .columns.writer.focus-rows:first-of-type > div'
+                    focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.iter-rows'
                     # Previous columns: show only last row, collapse the rest
                     for c in range(col_idx):
                         if c in col_last_rows:
@@ -609,11 +617,11 @@ class Slide:
                         curr_row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
                         css_rules[f'{curr_row_sel}:nth-child(-n + {col_last_rows[col_idx] + 1})'] = collapse_node(True)
 
-        # Persistent focus-rows: collapse non-last rows in columns we already exited
-        if "_focus_persist" in frame:
-            persist = frame["_focus_persist"]
+        # Persistent iter_rows: collapse non-last rows in columns we already exited
+        if "_iter_rows_persist" in frame:
+            persist = frame["_iter_rows_persist"]
             cols_idx = persist["idx"] + 1  # 1-indexed for CSS
-            focus_sel = f'^:nth-child({cols_idx}) .columns.writer.focus-rows:first-of-type > div'
+            focus_sel = f'^:nth-child({cols_idx}) .columns.writer:first-of-type > div.iter-rows'
             for c, last_row in persist["_col_last_rows"].items():
                 row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
                 css_rules[f'{row_sel}:nth-child(-n + {last_row + 1})'] = collapse_node(True)

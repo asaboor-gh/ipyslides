@@ -12,7 +12,7 @@ def doc_html(code_css, style_css, content, script, click_btns, css_class, paddin
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
     
-    <style>{style_css}</style>
+    {style_css}
     {slides_css.replace("__PADBTM__",str(padding_bottom))}
     {code_css}
 
@@ -76,6 +76,9 @@ pre {white-space: break-spaces;} /* General rule unless specified in elements */
     height: 100vh !important;
     width: 100vw !important;
     line-height: 1.5 !important; /* Default line-height for all text to match Jupyter */
+}
+.SlidesWrapper.SlidesMerged .iter-rows .iter-rows-merge-hide {
+    display: none !important;
 }
 section {
 	scroll-snap-align:start !important;

@@ -79,14 +79,15 @@ function tldrawLinks(node, model) {
 }
 
 function handleColsRows(outputs, frame) {
-    // Fallback persistence: completed focus-rows writers before current part keep only last row in each column.
+    // Fallback persistence: completed iter_rows columns before current part keep only last row.
     if (frame.part !== undefined) {
         for (let j = 0; j < frame.part; j++) {
             if (!outputs[j]) continue;
-            const writer = outputs[j].querySelector(':scope .columns.writer.focus-rows:first-of-type');
+            const writer = outputs[j].querySelector(':scope .columns.writer:first-of-type');
             if (!writer) continue;
             const cols = writer.querySelectorAll(':scope > div');
             for (const colDiv of cols) {
+                if (!colDiv.classList.contains('iter-rows')) continue;
                 const rowsRoot = colDiv.querySelector(':scope .jp-OutputArea');
                 if (!rowsRoot) continue;
                 const rows = rowsRoot.children;
@@ -100,17 +101,18 @@ function handleColsRows(outputs, frame) {
         }
     }
 
-    // Persistent focus-rows: collapse non-last rows in columns we already exited
-    if (frame._focus_persist) {
-        const persist = frame._focus_persist;
+    // Persistent iter_rows: collapse non-last rows in columns we already exited.
+    if (frame._iter_rows_persist) {
+        const persist = frame._iter_rows_persist;
         const colsOutput = outputs[persist.idx];
         if (colsOutput) {
-            const writer = colsOutput.querySelector(':scope .columns.writer.focus-rows:first-of-type');
+            const writer = colsOutput.querySelector(':scope .columns.writer:first-of-type');
             if (writer) {
                 const cols = writer.querySelectorAll(':scope > div');
                 for (const [c, lastRow] of Object.entries(persist._col_last_rows)) {
                     const colDiv = cols[Number(c)];
                     if (!colDiv) continue;
+                    if (!colDiv.classList.contains('iter-rows')) continue;
                     const rowsRoot = colDiv.querySelector(':scope .jp-OutputArea');
                     if (!rowsRoot) continue;
                     const rows = rowsRoot.children;
@@ -127,15 +129,15 @@ function handleColsRows(outputs, frame) {
     if (frame.col !== undefined && outputs[frame.part]) {
         const writer = outputs[frame.part].querySelector(':scope .columns.writer:first-of-type');
         if (!writer) return;
-        const isFocus = writer.classList.contains('focus-rows');
         const colLastRows = frame._col_last_rows || {};
         let cols = writer.querySelectorAll(':scope > div');
         for (let k = 0; k < cols.length; k++) {
+            const isIterRows = cols[k].classList.contains('iter-rows');
             cols[k].classList.remove('print-invisible'); // reset first
             if (k > frame.col) {
                 cols[k].classList.add('print-invisible');
-            } else if (k < frame.col && isFocus && colLastRows[k] !== undefined) {
-                // Focus-rows: previous columns show only last row
+            } else if (k < frame.col && isIterRows && colLastRows[k] !== undefined) {
+                // iter_rows: previous columns show only last row
                 const rowsRoot = cols[k].querySelector(':scope .jp-OutputArea');
                 if (!rowsRoot) { continue; }
                 let rows = rowsRoot.children;
@@ -156,16 +158,16 @@ function handleColsRows(outputs, frame) {
                         rows[r].classList.remove('print-collapsed');
                         if (r > frame.row) {
                             rows[r].classList.add('print-invisible');
-                        } else if (isFocus) {
-                            // Focus-rows: collapse rows before current
+                        } else if (isIterRows && colLastRows[k] !== undefined) {
+                            // iter_rows: collapse rows before current
                             const prevRow = frame.prev_row;
                             if (prevRow !== undefined && r <= prevRow) {
                                 rows[r].classList.add('print-collapsed');
                             }
                         }
                     }
-                } else if (isFocus && colLastRows[k] !== undefined) {
-                    // Focus-rows: current column fully visible, show only last row
+                } else if (isIterRows && colLastRows[k] !== undefined) {
+                    // iter_rows: current column fully visible, show only last row
                     const rowsRoot = cols[k].querySelector(':scope .jp-OutputArea');
                     if (!rowsRoot) { continue; }
                     let rows = rowsRoot.children;

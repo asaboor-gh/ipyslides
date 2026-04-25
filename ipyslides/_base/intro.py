@@ -41,9 +41,9 @@ slides = isd.Slides()
 ```python
 with slides.build(-1):
     print("I will be first item shown!")
-    slides.PART()
+    slides.pause()
     print("-1 will pick latest slide number!")
-    slides.PART()
+    slides.pause()
     print("I will be last item shown on current page!")
 ```
 
@@ -129,7 +129,7 @@ into Clips GUI in side panel. On Linux, you need alert` xclip ` or alert`wl-past
 ::: note-tip
     - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
     - Print slides with notes by enabling `Inline Notes` option in settings panel before print/export. Notes appear at top to grab immediate attetion of the speaker.
-    - Use `Merge Parts` option in settings panel to print all parts of a page/slide as one page/slide.
+    - Use `Merge Parts` option in settings panel to show all parts of a page/slide as one page/slide.
 """
 more_instructions = f"""{get_logo('2em', 'IPySlides')}
 ::: note-tip

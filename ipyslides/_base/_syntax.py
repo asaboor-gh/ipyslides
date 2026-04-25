@@ -43,9 +43,9 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 
 Slides, Pages and Parts Separators
 : Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-Double dashes `--` (`PAGE` in Python) is used to split text in pages. 
+Double dashes `--` are used to split text in pages and map to the legacy `PAGE` delimiter on the Python side.
 Both `---` and `--` should be on their own lines in main content (not inside block syntax) to be recognized as slide/page separators.
-Double plus `++` (`PART` in Python) can be used to increment objects in parts on slide/page.
+Double plus `++` (`pause` in Python, `PART` deprecated alias) can be used to increment objects in parts on slide/page.
 A `++` on its own line before `columns` block will make it reveal content incrementally, provided that columns are separated by `+++`.
 The combinations of pages and parts create frames on slides. Note that only `++` allows content on same line after it and following lines.
 
@@ -104,7 +104,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
-    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. |
+    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. Add `<iter-rows/>` inside a column to reveal rows exclusively for that column. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `<md-var_name/>`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
@@ -126,6 +126,7 @@ Inline Columns
 Block Columns
 : You can create columns using `::: columns` syntax. 
 Column separator is triple plus `+++` if intended in display mode and should be a `++` before block to make it incremental.
+Use `<iter-rows/>` or `<iter_rows/>` inside any column to enable per-row iteration exclusively for that column.
 
 ```md-before
 ::: columns 6 1 4 block-blue 
