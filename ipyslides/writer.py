@@ -70,12 +70,29 @@ def _snapshots_merge_style(selectors):
 
     return f'<style>\n{_build_css(tuple(selectors), {"display": "none !important"})}\n</style>'
 
+
+def _snapshots_header_xtml(header):
+    "Build header output for snapshots columns using markdown parsing."
+    if header is None:
+        return None
+    header_md = header if isinstance(header, str) else htmlize(header)
+    return XTML(f"<div class='snapshots-header-content'>{xmd(header_md, returns=True)}</div>")
+
+
+def _is_snapshots_header_output(output):
+    "Check if output is a snapshots header wrapper."
+    return isinstance(output, XTML) and ('snapshots-header-content' in output.value)
+
 class snapshots(UserList):
     """Column-content wrapper to reveal items one-by-one during frame navigation.
 
     You can append displayable items directly, or use `capture()` to collect multiple
     outputs as one snapshot step, especially when content is generated in a loop or from a function that doesn't return all content at once.
     """
+    def __init__(self, initlist=(), header=None):
+        super().__init__(initlist)
+        self.header = header
+
     @contextmanager
     def capture(self):
         """Capture multiple outputs as one snapshot item.
@@ -169,6 +186,7 @@ class Writer(ipw.HBox):
                 'flex': f'{w:.3f} {w:.3f} {w*100:.3f}%',
                 'outputs': content if isinstance(content, (list, tuple)) else [content],
                 'snapshots': is_snapshots,
+                'snapshots_header': (raw.header if is_snapshots else None),
                 'uclass': f'coluid-{id(self)}-{i}',
             })
 
@@ -177,6 +195,7 @@ class Writer(ipw.HBox):
         snapshots_first_rows = {}
         for i, col in enumerate(cols):
             col_outputs = list(col['outputs'])
+            header_output = _snapshots_header_xtml(col.get('snapshots_header'))
             if i > 0: # for i == 0, we want to preserve empty start for paused columns, handled in _split_parts
                 while col_outputs and col_outputs[0] == "":
                     col_outputs.pop(0)
@@ -189,6 +208,9 @@ class Writer(ipw.HBox):
             with capture_content() as cap:
                 if i == 0 and css_props: # display CSS in first column only
                     XTML(_style_for_widget(self, **css_props)).display() 
+
+                if header_output:
+                    display(header_output)
                     
                 for c in rows:
                     if isinstance(c,(fmt, RichOutput, ipw.DOMWidget)):
@@ -207,7 +229,12 @@ class Writer(ipw.HBox):
             if cap.stderr:
                 raise RuntimeError(f'Error in column {i+1}:\n{cap.stderr}')
 
-            base_outputs = cap.outputs[:-1]  # remove last rowsep output
+            base_outputs = list(cap.outputs)
+            # Remove trailing row separator only when present.
+            if base_outputs:
+                tail_meta = getattr(base_outputs[-1], 'metadata', {})
+                if isinstance(tail_meta, dict) and tail_meta.get('DELIM', '') == 'ROW':
+                    base_outputs = base_outputs[:-1]
             if col.get('snapshots'):
                 first_row_idx = next((
                     r for r, out in enumerate(base_outputs)
@@ -264,7 +291,9 @@ class Writer(ipw.HBox):
                 html = _fmt_html(output)
                 if not html:
                     continue
-                if isinstance(hide_after, int) and r > hide_after:
+                if _is_snapshots_header_output(output):
+                    rows.append(html)
+                elif isinstance(hide_after, int) and r > hide_after:
                     rows.append(f'<div class="{merge_hide_class}">{html}</div>')
                 else:
                     rows.append(html)
@@ -282,7 +311,11 @@ class Writer(ipw.HBox):
                 if i in snapshots_last_rows:
                     # snapshots mode: previous column shows only last row, skip others entirely
                     last_r = snapshots_last_rows[i]
-                    rows = [_fmt_html(output) for r, output in enumerate(col['outputs']) if r > last_r]
+                    rows = [
+                        _fmt_html(output)
+                        for r, output in enumerate(col['outputs'])
+                        if _is_snapshots_header_output(output) or r > last_r
+                    ]
                     cols.append(f'<div{class_attr} style="{flex};">{chr(10).join(rows)}</div>')
                 else:
                     content = '\n'.join(_fmt_rows(col['outputs'], hide_after=merge_hide_after))
@@ -294,9 +327,16 @@ class Writer(ipw.HBox):
                 # snapshots mode on current column when fully visible (no row key)
                 if row_idx == float('inf') and i in snapshots_last_rows:
                     last_r = snapshots_last_rows[i]
-                    rows = [_fmt_html(output) for r, output in enumerate(col['outputs']) if r > last_r]
+                    rows = [
+                        _fmt_html(output)
+                        for r, output in enumerate(col['outputs'])
+                        if _is_snapshots_header_output(output) or r > last_r
+                    ]
                 else:
                     for r, output in enumerate(col['outputs']):
+                        if _is_snapshots_header_output(output):
+                            rows.append(_fmt_html(output))
+                            continue
                         if row_idx != float('inf') and i in snapshots_last_rows:
                             # snapshots mode: only include current row content, skip others
                             if prev_row_idx < r < row_idx:
@@ -324,6 +364,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
     - Wrap a column content list using code`snapshots([...])` to reveal items one-by-one during frame navigation.
+        You can set a static header with code`snapshots([...], header='Header')`; it remains visible while snapshot rows change.
         You can also build it with code`s = snapshots(); with s.capture(): ...` and pass `s` as a column.
     - Display another function to capture its output in order using code`Slides.hold(func,...)`. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
@@ -346,8 +387,8 @@ def write(*objs,widths = None, css_class=None, **css_props):
         - You can avoid code`repr(obj)` by code`Slides.hold(func, ...)` e.g. code`Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
         - You can use code`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
-        - In markdown `columns` block syntax is similar to `write` command if `+++` separartor is used there.
-        - In markdown `::: columns` with `+++`, put `[snapshots]` inside a specific column to enable code`snapshots([...])` behavior for that column.
+        - In markdown `columns`/`group` block syntax is similar to `write` command if `+++` separartor is used there.
+        - In markdown `::: columns` or `::: group`, put `[snapshots]` or `[snapshots: header]` inside a specific column to enable code`snapshots([...])` behavior for that column.
     
     ::: tip
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.

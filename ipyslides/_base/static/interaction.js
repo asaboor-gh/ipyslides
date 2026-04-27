@@ -1,14 +1,24 @@
 
-function updateProgress(show, numSlides, numFrames, index, fidx) {
+function toIntOrNull(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? Math.trunc(num) : null;
+}
+
+function formatMainSlideNumber(index, page = undefined) {
+    const base = index === 0 ? '' : `${index}`;
+    return page !== undefined ? `${base}.${page}` : base;
+}
+
+function updateProgress(show, mainEnd, index, numFrames, fidx, isSupplemental) {
     if (!show) {
         return 'transparent';
     }
-    if (index === numSlides - 1) {
-        // Last slide: always full progress
-        return 'linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) 100%, var(--bg2-color) 100%, var(--bg2-color) 100%)';
+    if (isSupplemental) {
+        return 'none';
     }
-    let unit = 100/((numSlides - 1) || 1); // avoid zero division error or None
+    let unit = 100/(mainEnd || 1); // avoid zero division when main end is title (0)
     let pv = Math.round(unit * (index - (numFrames - fidx - 1)/numFrames) * 10000)/10000;
+    pv = Math.max(0, Math.min(100, pv));
     let gradient = `linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) ${pv}%, var(--bg2-color) ${pv}%, var(--bg2-color) 100%)`;
     return gradient;
 }
@@ -78,6 +88,10 @@ function tldrawLinks(node, model) {
     })
 }
 
+function isSnapshotsHeaderRow(rowEl) {
+    return !!(rowEl && rowEl.querySelector('.snapshots-header-content'));
+}
+
 function handleColsRows(outputs, frame) {
     // Fallback persistence: completed snapshots columns before current part keep only last row.
     if (frame.part !== undefined) {
@@ -91,9 +105,19 @@ function handleColsRows(outputs, frame) {
                 const rowsRoot = colDiv.querySelector(':scope .jp-OutputArea');
                 if (!rowsRoot) continue;
                 const rows = rowsRoot.children;
+
+                let lastVisible = -1;
+                for (let r = rows.length - 1; r >= 0; r--) {
+                    if (!isSnapshotsHeaderRow(rows[r])) {
+                        lastVisible = r;
+                        break;
+                    }
+                }
+
                 for (let r = 0; r < rows.length; r++) {
                     rows[r].classList.remove('print-collapsed');
-                    if (r < rows.length - 1) {
+                    if (isSnapshotsHeaderRow(rows[r])) continue;
+                    if (lastVisible >= 0 && r < lastVisible) {
                         rows[r].classList.add('print-collapsed');
                     }
                 }
@@ -118,6 +142,7 @@ function handleColsRows(outputs, frame) {
                     const rows = rowsRoot.children;
                     for (let r = 0; r < rows.length; r++) {
                         rows[r].classList.remove('print-collapsed');
+                        if (isSnapshotsHeaderRow(rows[r])) continue;
                         if (r <= lastRow) {
                             rows[r].classList.add('print-collapsed');
                         }
@@ -143,6 +168,7 @@ function handleColsRows(outputs, frame) {
                 let rows = rowsRoot.children;
                 for (let r = 0; r < rows.length; r++) {
                     rows[r].classList.remove('print-collapsed');
+                    if (isSnapshotsHeaderRow(rows[r])) continue;
                     if (r <= snapshotsLastRows[k]) {
                         rows[r].classList.add('print-collapsed');
                     }
@@ -156,6 +182,7 @@ function handleColsRows(outputs, frame) {
                     for (let r = 0; r < rows.length; r++) {
                         rows[r].classList.remove('print-invisible');
                         rows[r].classList.remove('print-collapsed');
+                        if (isSnapshotsHeaderRow(rows[r])) continue;
                         if (r > frame.row) {
                             rows[r].classList.add('print-invisible');
                         } else if (isSnapshotsRows && snapshotsLastRows[k] !== undefined) {
@@ -173,6 +200,7 @@ function handleColsRows(outputs, frame) {
                     let rows = rowsRoot.children;
                     for (let r = 0; r < rows.length; r++) {
                         rows[r].classList.remove('print-collapsed');
+                        if (isSnapshotsHeaderRow(rows[r])) continue;
                         if (r <= snapshotsLastRows[k]) {
                             rows[r].classList.add('print-collapsed');
                         }
@@ -195,6 +223,34 @@ function printSlides(box, model) {
     window._printOnlyObjs = [];
     const parts = model.get('_parts') || {}; // get part info for all slides
     const fkws = model.get('_fkws') || {}; // get footer kws
+    const frameCounts = slides.map((slide) => {
+        const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
+        if (slideNum === null || !Array.isArray(parts[slideNum])) {
+            return 1;
+        }
+        return parts[slideNum].length || 1;
+    });
+    const modelExtraStart = toIntOrNull(model.get('_extra_start'));
+    const modelMainEnd = toIntOrNull(model.get('_main_end'));
+    const classExtraStart = slides.findIndex(slide => slide.classList.contains('ExtraSlide'));
+    const supplementalStart = modelExtraStart !== null
+        ? modelExtraStart
+        : (classExtraStart >= 0 ? classExtraStart : null);
+    const mainEnd = modelMainEnd !== null
+        ? modelMainEnd
+        : (supplementalStart === null ? Math.max(slides.length - 1, 0) : Math.max(supplementalStart - 1, 0));
+
+    function supplementalFrameIndex(slideIndex, fidx = 0) {
+        if (supplementalStart === null || slideIndex < supplementalStart) {
+            return null;
+        }
+        let count = 0;
+        for (let i = supplementalStart; i < slideIndex; i++) {
+            count += frameCounts[i] || 1;
+        }
+        return count + fidx + 1;
+    }
+
     box.style.setProperty('--show-snumber', fkws.snum ? 'block' : 'none'); // show only if numbered
     box.style.setProperty('--printPadding', fkws.pad + 'px'); // set padding for print mode
     
@@ -205,13 +261,16 @@ function printSlides(box, model) {
 
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
-        const numFrames = (slideNum !== null && Array.isArray(parts[slideNum])) ? (parts[slideNum].length || 1) : 1;
-        slide.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, 0));
-        // Only show number on first frame of last slide, else show 1/(nf-1), 2/(nf-1), ...
-        if (n === slides.length - 1) {
-            slide.dataset.snum = n;
+        const numFrames = frameCounts[n] || 1;
+        const isSupplemental = supplementalStart !== null && n >= supplementalStart;
+
+        slide.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, mainEnd, n, numFrames, 0, isSupplemental));
+
+        if (isSupplemental) {
+            const sidx = supplementalFrameIndex(n, 0);
+            slide.dataset.snum = sidx !== null ? `S.${sidx}` : '';
         } else {
-            slide.dataset.snum = n;
+            slide.dataset.snum = formatMainSlideNumber(n);
         }
         setBgImage(slide);
 
@@ -235,27 +294,20 @@ function printSlides(box, model) {
                 clone.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
                 clone.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
 
-                // Progress bar: only show for first frame of last slide
-                if (n === slides.length - 1 && i > 0) {
-                    clone.style.setProperty('--bar-bg-color', 'none');
-                } else {
-                    clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, slides.length, numFrames, n, i));
-                }
+                clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, mainEnd, n, numFrames, i, isSupplemental));
                 clone.style.transform = 'translateZ(0) scale(1)';
 
                 if (frame) {
                     const outRoot = clone.querySelector(':scope .jp-OutputArea');
                     if (!outRoot) { continue; }
                     let outputs = Array.from(outRoot.children);
-                    // Last slide: first frame = slide number, others = 1/(nf-1), 2/(nf-1), ...
-                    if (n === slides.length - 1) {
-                        if (i === 0) {
-                            clone.dataset.snum = n;
-                        } else {
-                            clone.dataset.snum = i > 0 ? `S.${i}` : "";
-                        }
+                    if (isSupplemental) {
+                        const sidx = supplementalFrameIndex(n, i);
+                        clone.dataset.snum = sidx !== null ? `S.${sidx}` : '';
                     } else {
-                        clone.dataset.snum = frame.page !== undefined ? `${n}.${frame.page}` : n;
+                        clone.dataset.snum = frame.page !== undefined
+                            ? formatMainSlideNumber(n, frame.page)
+                            : formatMainSlideNumber(n);
                     }
 
                     for (let j = outputs.length - 1; j >= 0; j--) {
@@ -363,7 +415,7 @@ function keyboardEvents(box,model) {
             return false;
         } else if (key === 'Home') { // Jump to first slide
             message = 'FIRST';
-        } else if (key === 'End') { // Jump to last slide
+        } else if (key === 'End') { // Jump to last main slide (before extra slides)
             message = 'LAST';
         } else if (key === 'ArrowLeft' || key === '-') { // -, <
             message = 'PREV';

@@ -53,12 +53,11 @@ class _HhtmlExporter:
         content = ''
         for item in self.main:
             objs = item.contents # get conce
-            frames, snums, frame_metas = [], [], []
+            frames, snums = [], []
             
             if not item._fidxs:
                 frames = [objs]
-                snums = [str(item.index)]
-                frame_metas = [{}]
+                snums = [item._get_snum(0)]
             else:
                 for fi, frame in enumerate(item._fidxs):
                     head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
@@ -95,12 +94,12 @@ class _HhtmlExporter:
                 
                     frames.append(frame_objs)
                     snums.append(item._get_snum(fi))
-                    frame_metas.append(frame)
             
-            for k, (snum, objs, frame_meta) in enumerate(zip(snums, frames, frame_metas)):
+            for k, (snum, objs) in enumerate(zip(snums, frames)):
                 _html = item._speaker_notes(returns=True) # speaker notes at top if any, returns string
                 for out in objs:
-                    _html += f'<div style="width: 100%;">{_fmt_html(out)}</div>' # Important to have each content in a div, so that it can be same as notebook content
+                    _html += f'<div class="jp-OutputArea-child"><div class="jp-OutputArea-output" style="width: 100%;">{_fmt_html(out)}</div></div>' 
+                    # Important to have each content in similar node structure as notebook content
 
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
 
@@ -114,7 +113,7 @@ class _HhtmlExporter:
                     <section {sec_id}>
                         {self._get_css(item, sec_uid)}
                         <div class="SlideBox">
-                            {item._get_bg_image(f'#{item._sec_id}')}
+                            {item._get_bg_image(f'#{sec_uid}', ikws = item._bg_ikws)}
                             <div class="{item._css_class} export-only">
                                 {_html}
                             </div>
@@ -133,43 +132,40 @@ class _HhtmlExporter:
             if self.main.widgets.iw._colors:
                 theme_kws["colors"] = self.main.widgets.iw._colors
                     
+        dom_classes = tuple(self.main._box._dom_classes)
+        css_classes = [c for c in dom_classes if c.startswith('Slides')]
+        if self.main.uid in dom_classes:
+            css_classes.append(self.main.uid)
+            
+        overall_css = ''.join(f'{s._overall_css}' for s in self.main[:1] if s._overall_css) # only one time
         return doc_html(
             code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}',''), # remove id from code here
-            style_css   = (
-                self.main.html('style', styles.style_css(**theme_kws, _root=True)).value
-                + '\n' + (self.main.widgets.htmls.usercss.value or '') # user css comes after default to override it if needed
-            ), 
+            style_css   = self.main.html('style', styles.style_css(**theme_kws, _root=True)).value + overall_css,
             content     = content, 
             script      = _script, 
             click_btns  = self.main.settings._get_clickers(), 
-            css_class   = ' '.join(c for c in self.main._box._dom_classes if c.startswith('Slides')),
+            css_class   = ' '.join(css_classes),
             padding_bottom = self.main.settings.footer._print_padding,
             )
     
     def _get_progress(self, slide, fidx=0):
         if not self.main.settings.footer.progress:
             return ''
-        # Last slide: only first frame shows progress bar
-        if slide.index == self.main._iterable[-1].index:
-            if fidx == 0:
-                pv = 100
-                gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
-                return f'<div class="Progress" style="background: {gradient};"></div>'
-            else:
-                return ''
-        unit = 100/(self.main._iterable[-1].index or 1)
-        pv = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
+        pv = self.main._progress_value(slide, fidx)
+        if pv is None: return ''
+
         gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
         return f'<div class="Progress" style="background: {gradient};"></div>'
     
     def _get_css(self, slide, sec_uid):
         "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, FooterBox → Footer"
-        overall = slide._overall_css if slide in self.main[:1] else '' # only one time
-        return (f'{overall}\n{slide._runtime_css}\n{slide._css}').replace( # xtml or str, runtime for colors per slide
+        return (f'{slide._css}').replace( # xtml or str, runtime for colors per slide
             f".{self.main.uid}.SlidesWrapper", f"#{sec_uid}").replace(
             f".{self.main.uid}", f"#{sec_uid}").replace(
+            "ShowSlide", "SlideArea").replace( # ShowSlide is used for runtime display but here it is SlideArea in export
             ".FooterBox", ".Footer"
             )
+            
     def _get_logo(self):
         return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 
             {self.main.widgets.htmls.logo.value} 

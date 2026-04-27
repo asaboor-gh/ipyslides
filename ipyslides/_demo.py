@@ -316,7 +316,7 @@ def demo_slides(slides):
 
     @slides.build(-1)
     def _(slide):
-        slides.write(f'## This is all code to generate slides section`Code to Generate Slides`\n{slides.esc(slides.demo)}')
+        slides.write(f'## This is all code to generate slides section`extra:Code to Generate Slides`\n{slides.esc(slides.demo)}')
         slides.code.cast(__file__).display()
 
     slides.build(-1, lambda s: slides.get_source().display())

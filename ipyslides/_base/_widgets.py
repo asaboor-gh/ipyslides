@@ -27,6 +27,8 @@ class InteractionWidget(anywidget.AnyWidget):
     _colors = traitlets.Dict(jupyter_colors).tag(sync=True) # for export
     _parts = traitlets.Dict().tag(sync=True) # parts data for each slide, for js side use
     _fkws = traitlets.Dict().tag(sync=True) # footer kws for js side use
+    _extra_start = traitlets.Any(default_value=None, allow_none=True).tag(sync=True) # first supplemental slide index
+    _main_end = traitlets.Int(default_value=0).tag(sync=True) # last main slide index
     _fsels = traitlets.Unicode(focus_selectors, read_only=True).tag(sync=True) # need for frontend focus management by click
     
     msg_topy = traitlets.Unicode('').tag(sync=True)
@@ -43,8 +45,15 @@ class InteractionWidget(anywidget.AnyWidget):
             'PREV': self.ws.buttons.prev.click,
             'PRINT': self.ws.buttons.print.click,
             'FIRST': lambda: setattr(self.prog, 'value', 0),
-            'LAST': lambda: setattr(self.prog, 'value', self.prog.max),
+            'LAST': self._jump_last_main,
         }
+
+    def _jump_last_main(self):
+        "Jump to last non-supplemental slide; if none, fallback to slider max."
+        target = self._main_end
+        if not isinstance(target, int):
+            target = self.prog.max
+        self.prog.value = min(max(int(target), 0), self.prog.max)
 
     @traitlets.observe("msg_topy")
     def _see_changes(self, change):

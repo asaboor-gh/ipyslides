@@ -112,7 +112,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')` or code`Slides[2:5].set_css(...)`.
         - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
           code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
-        - The frames at last slide are considered supplemental after first frame (numbered as S.1, S.2, ...), and can be used for backup content, extra notes etc.
+        - Use code`section\`extra:Backup slides\`` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.
     """
 
     @classmethod
@@ -588,10 +588,24 @@ class Slides(BaseSlides,metaclass=Singleton):
     def section(self, text):
         """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
         Sections can be written as table of contents.
+        Use `extra:` prefix (e.g. `section\`extra:Backup\``) to start supplemental slides.
         """
         self.verify_running("Sections can be added only inside a slide constructor!")
 
-        self.this._section = text  # assign before updating toc
+        sec_text = str(text).strip()
+        is_extra = False
+        # `section`extra:...`` marks the start of supplemental slides.
+        if m := re.match(r"^extra\s*:\s*(.*)$", sec_text, flags=re.IGNORECASE | re.DOTALL):
+            is_extra = True
+            sec_text = (m.group(1) or '').strip() or 'Extra'
+
+        self.this._section = sec_text  # assign before updating toc
+        self.this._is_extra = is_extra
+
+        # Keep keyboard End/Home boundaries in sync even when rebuilding existing slides.
+        extra_start = self._extra_start_index()
+        self.widgets.iw._extra_start = extra_start
+        self.widgets.iw._main_end = self.wprogress.max if extra_start is None else max(extra_start - 1, 0)
         
         for s in self[:]:
             if s._toc_args and s != self.this: 
@@ -681,6 +695,52 @@ class Slides(BaseSlides,metaclass=Singleton):
             ]  # Get all section indexes before current slide
             return idxs[-1] if idxs else 0  # Get last section index
 
+    def _extra_start_index(self):
+        "Index of first supplemental slide, or None when no extra section exists."
+        for s in self._iterable:
+            if getattr(s, '_is_extra', False):
+                return s.index
+        return None
+
+    def _main_progress_index(self):
+        "Last slide index that contributes to main progress."
+        if not self._iterable:
+            return 0
+        extra_start = self._extra_start_index()
+        if extra_start is None:
+            return self._iterable[-1].index
+        return max(extra_start - 1, 0)
+
+    def _is_supplemental_slide(self, slide):
+        "True when slide belongs to supplemental section (extra:...)."
+        if (extra_start := self._extra_start_index()) is None or slide.index is None:
+            return False
+        return slide.index >= extra_start
+
+    def _progress_value(self, slide, fidx=0):
+        "Progress percentage for a slide/frame, or None for supplemental slides."
+        if self._is_supplemental_slide(slide):
+            return None
+
+        unit = 100/(self._main_progress_index() or 1)
+        value = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
+        return max(0, min(100, value))
+
+    def _supplemental_index(self, slide, fidx=0):
+        "1-based supplemental frame index across all supplemental slides."
+        extra_start = self._extra_start_index()
+        if extra_start is None or slide.index is None or slide.index < extra_start:
+            return None
+
+        count = 0
+        for s in self._iterable:
+            if s.index is None or s.index < extra_start:
+                continue
+            if s is slide:
+                break
+            count += s.nf
+        return count + (fidx + 1)
+
     def _switch_slide(self, old_index, new_index):
         if inds := [opt.ti for opt in self._toc_widget.options if opt.si == self._sectionindex]:
             self._toc_widget.send({'active' : inds[0]}) # Update toc widget focus without changing index
@@ -761,6 +821,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._iterable = self._collect_slides()  # would be at least one title slide
         if not self._iterable:
             self.wprogress.max = 0
+            self.widgets.iw._extra_start = None
+            self.widgets.iw._main_end = 0
             self.widgets.slidebox.children = []  # Clear older slides
             return None
         
@@ -772,6 +834,15 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.slidebox.children = [it._widget for it in self._iterable]
         for i, s in enumerate(self._iterable):
             s._index = i  # Update index
+
+        extra_start = self._extra_start_index()
+        self.widgets.iw._extra_start = extra_start
+        self.widgets.iw._main_end = self.wprogress.max if extra_start is None else max(extra_start - 1, 0)
+        for s in self._iterable:
+            if extra_start is not None and (s.index is not None and s.index >= extra_start):
+                s._widget.add_class('ExtraSlide')
+            else:
+                s._widget.remove_class('ExtraSlide')
 
         self._update_toc()  # Update table of content if any
         self._force_update() # refresh causes lose widgets sometimes

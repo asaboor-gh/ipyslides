@@ -76,7 +76,7 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "styled": "style objects with CSS classes and inline styles or use block ::: with css classes and props inline",
     "focus": "focus on a node of html when clicked or used ::: focus-self/focus-child blocks",
     "center": r"text or \%{variable} or use ::: center, ::: align-center blocks", # should after most of the functions
-    "stack": r"text separated by || in inline mode, or use ::: columns block",
+    "stack": r"text separated by || in inline mode, or use ::: columns/::: group block",
 }
 
 def error(name, msg):
@@ -351,6 +351,7 @@ def _mask_html_comments(text):
         return s
     return masked, restore
 _PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
+_SNAPSHOTS_RE = re.compile(r"^\s*\[\s*snapshots(?:\s*:\s*(?P<header>[^\]\n]*))?\s*\]\s*$",flags=re.IGNORECASE | re.MULTILINE)
 # not need to be in above cache which is general and can be used to split with ++ differently
 
 class XMarkdown(Markdown):
@@ -506,7 +507,7 @@ class XMarkdown(Markdown):
         
         if args:
             typ, prop = args[0].split('.',1) if '.' in args[0] else (args[0], '')
-            if typ == "multicol": typ = "columns" # for backward compatibility
+            if typ == "multicol": typ = "columns" # backward-compatible alias
             return typ, prop, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
         return '', '', sizes, '', kwargs, node_attrs
 
@@ -590,7 +591,13 @@ class XMarkdown(Markdown):
             with self.active_parser(), capture_content() as cap:
                 self._wr.write(data, css_class=_class, **css_props)
             return cap.outputs
-        elif typ == "columns" and re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE): # handle columns with display mode
+        elif typ == "group":
+            return self._parse_columns(data, None, _class, css_props, single=True)
+        elif typ == "columns" and (
+            re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE)
+            or _SNAPSHOTS_RE.search(data)
+            or _PLUS_RE.search(data) # let ++ in single column works
+        ): # handle columns with display mode
             return self._parse_columns(data, widths, _class, css_props) # simple columns will be handled inline 
         elif "md-" in typ:
             return self._parse_md_src(data, header)
@@ -696,12 +703,13 @@ class XMarkdown(Markdown):
         if "after" in typ: outputs.append(src)
         return outputs
 
-    def _parse_columns(self, data, widths, _class, css_props):
+    def _parse_columns(self, data, widths, _class, css_props, single=False):
         "Returns parsed block or columns or code, input is without ``` but includes langauge name."
-        cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
-        marker_re = re.compile(r"^\s*\[\s*snapshots\s*\]\s*$", flags=re.IGNORECASE | re.MULTILINE)
+        cols = [data] if single else re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
 
-        if not widths:
+        if single:
+            widths = [100]
+        elif not widths:
             widths = [100/len(cols) for _ in cols]
         else:
             if len(widths) > len(cols): # This allows merging column notation with frames
@@ -719,9 +727,13 @@ class XMarkdown(Markdown):
         # Under any display context
         cap_cols = []
         for col in cols:
-            use_snapshots = bool(marker_re.search(col))
+            marker_match = _SNAPSHOTS_RE.search(col)
+            use_snapshots = bool(marker_match)
+            snapshots_header = None
+            if marker_match:
+                snapshots_header = (marker_match.group('header') or '').strip() or None
             if use_snapshots:
-                col = marker_re.sub("", col)  # remove marker from rendered output
+                col = _SNAPSHOTS_RE.sub("", col)  # remove marker from rendered output
 
             rows = [] # list to make row-wise parts
             for row in self._split_parts(col):
@@ -733,8 +745,8 @@ class XMarkdown(Markdown):
                         if hasattr(self, '_show_disply_error'): del self._show_disply_error # cleanup
                         
                 rows.append(cap.outputs)
-            if use_snapshots and callable(getattr(self._wr, "snapshots", None)):
-                cap_cols.append(self._wr.snapshots(rows))
+            if use_snapshots:
+                cap_cols.append(self._wr.snapshots(rows, header=snapshots_header))
             else:
                 cap_cols.append(rows)
             

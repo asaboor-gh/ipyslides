@@ -598,5 +598,5 @@ class BaseSlides:
                     Some kernels may not support auto slide numbering inside notebook.
             """)
         
-        self.build(-1, lambda s: self.write(['## Presentation Code section`Presentation Code`',self.docs]))
+        self.build(-1, lambda s: self.write(['## Presentation Code section`extra:Presentation Code`',self.docs]))
         self.navigate_to(0) # Go to title, do not return to avoid display shift to this cell

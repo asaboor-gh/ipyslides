@@ -52,6 +52,8 @@ The combinations of pages and parts create frames on slides. Note that only `++`
 
 Sections & TOC
 : alert`section\`content\`` to add a section that will appear in the table of contents.
+Use alert`section\`extra:Backup slides\`` to mark the beginning of supplemental slides with `extra:` prefix in section name.
+Slides in this section remain navigable, use supplemental numbering (`S.1`, `S.2`, ...), and do not advance the main progress bar.
 alert`toc\`Table of content header text\`` to add a table of contents. See `Slides.docs()` for creating a `TOC` accompanied by section summary.
 
 Notes
@@ -105,7 +107,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
-    | `::: columns [widths]` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. Use `+++` separator to reveal content incrementally/make display columns. Add `[snapshots]` inside a column to reveal rows exclusively for that column. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
+    | `::: columns [widths]` / `::: group` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. `group` is a single-column display block (no widths or `+++` needed). Add `[snapshots]` (or `[snapshots: Header text]`) inside a column/group to reveal rows exclusively for that block. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `<md-var_name/>`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
@@ -125,9 +127,11 @@ Inline Columns
 : Inline columns/rows can be added by using alert`stack\`Column A || Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
 
 Block Columns
-: You can create columns using `::: columns` syntax. 
-Column separator is triple plus `+++` if intended in display mode and should be a `++` before block to make it incremental.
-Use `[snapshots]` inside any column to enable per-row iteration exclusively for that column.
+: You can create columns using `::: columns` syntax, or use `::: group` for a single-column display block.
+Column separator is triple plus `+++` for `::: columns` when intended in display mode; `::: group` does not need `+++` or widths.
+Use `[snapshots]` inside any column/group to enable per-row iteration exclusively for that block.
+Use `[snapshots: Header text]` to keep a static header visible while rows reveal.
+If `[snapshots]` or `[snapshots: ...]` is present, display-mode parsing is enabled for that columns block even without `+++` separators.
 Use `++[isolate]` before `::: columns` to separate previous content from first column reveal.
 
 ```md-before

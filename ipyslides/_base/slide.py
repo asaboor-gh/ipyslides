@@ -111,13 +111,13 @@ class Slide:
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
         self._section = None # Reset sec_key
+        self._is_extra = False # mark start of supplemental section via section`extra:...`
         self._indexf = 0 # current frame index
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
         self._has_vars = () # Update in _slide function for markdown slides only
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}")
-        self._tcolors = {} # theme colors for this slide only
         self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
         self._lre_page = 0 # Leaset recently edited page number for quick jump while editing markdown
         self._bg_ikws = {} # rebuild always re-derives background mapping from content
@@ -584,8 +584,8 @@ class Slide:
                         focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.snapshots-rows'
                         row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
                         if "prev_row" in frame:
-                            css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1})'] = collapse_node(True)
-                        css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1})'] = collapse_node(True)
+                            css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
+                        css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
 
                 # snapshots: collapse non-last rows in previous columns and current col when fully visible
                 snapshots_last_rows = frame.get("_snapshots_last_rows", {})
@@ -595,11 +595,11 @@ class Slide:
                     for c in range(col_idx):
                         if c in snapshots_last_rows:
                             prev_row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                            css_rules[f'{prev_row_sel}:nth-child(-n + {snapshots_last_rows[c] + 1})'] = collapse_node(True)
+                            css_rules[f'{prev_row_sel}:nth-child(-n + {snapshots_last_rows[c] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
                     # Current column fully visible (no row): show only last row
                     if "row" not in frame and col_idx in snapshots_last_rows:
                         curr_row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                        css_rules[f'{curr_row_sel}:nth-child(-n + {snapshots_last_rows[col_idx] + 1})'] = collapse_node(True)
+                        css_rules[f'{curr_row_sel}:nth-child(-n + {snapshots_last_rows[col_idx] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
 
         # Persistent snapshots: collapse non-last rows in columns we already exited
         if "_snapshots_persist" in frame:
@@ -608,7 +608,7 @@ class Slide:
             focus_sel = f'^:nth-child({cols_idx}) .columns.writer:first-of-type > div.snapshots-rows'
             for c, last_row in persist["_snapshots_last_rows"].items():
                 row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                css_rules[f'{row_sel}:nth-child(-n + {last_row + 1})'] = collapse_node(True)
+                css_rules[f'{row_sel}:nth-child(-n + {last_row + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
 
         # Build final CSS with proper selector
         base_selector = f'^.n{self.number}.HasFrames > .jp-OutputArea > .jp-OutputArea-child'
@@ -672,31 +672,20 @@ class Slide:
     
     def _set_progress(self):
         if self is not self._app._current: return # avoid wrong indicators
-        if self.index == self._app.wprogress.max:
-            if self.indexf == 0:
-                # Last slide, first frame: progress bar full
-                self._app.widgets._progbar.children[0].layout.width = "100%"
-                self._app.widgets._progbar.layout.display = ''
-            else:
-                # Last slide, other frames: hide progress bar
-                self._app.widgets._progbar.children[0].layout.width = "0%"
-                self._app.widgets._progbar.layout.display = 'none'
+        value = self._app._progress_value(self, self.indexf)
+        if value is None:
+            # Progress completes before supplemental section and stays navigable.
+            self._app.widgets._progbar.children[0].layout.width = "0%"
+            self._app.widgets._progbar.layout.display = 'none'
         else:
             self._app.widgets._progbar.layout.display = ''
-            unit = 100/(self._app._iterable[-1].index or 1) # avoid zero division error or None
-            value = round(unit * ((self.index or 0) - (self.nf - self.indexf - 1)/self.nf), 4)
-            self._app.widgets._progbar.children[0].layout.width = f"{value}%"  
+            self._app.widgets._progbar.children[0].layout.width = f"{value}%"
         self._app.widgets._snum.description = self._get_snum(self.indexf) # current slide number with page if any
         self._app.widgets._snum.tooltip = f"{self._app._current}" # hint for current slide number
 
     def _get_snum(self, fidx):
-        # On last slide, show only the main slide number on first frame.
-        # For other frames, show S.1, S.2, ...
-        if self.index == self._app.wprogress.max:
-            if fidx == 0:
-                return f"{self.index}"
-            else:
-                return f"S.{fidx}" # supplemntal slides
+        if (sidx := self._app._supplemental_index(self, fidx)) is not None:
+            return f"S.{sidx}"
             
         page = "" # default empty
         if self.nf > 1 and (page := self._fidxs[fidx].get("page","")):
@@ -758,15 +747,10 @@ class Slide:
     def css(self):
         "Returns CSS for this slide including overall CSS. Used while navigating to this slide."
         return XTML(f'{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
-    
-    @property
-    def _runtime_css(self):
-        if not self._tcolors: return '' # avoid extra CSS if no theme colors used
-        return self._app.html('style',_build_css((f".{self._app.uid}.SlidesWrapper",), self._tcolors))
 
     def _update_transition_objs(self, animation=True):
         "Update objects that need to be re-displayed for transition to work properly, such as animation style changes at naviagtion time."
-        objs = [self._runtime_css] # per slide colors at runtime should be included
+        objs = [] 
         if animation:
             objs.append(self.animation)
         
@@ -843,10 +827,14 @@ class Slide:
         
         if props:
             props = {'.jp-OutputArea-output': props} # wrap below output area to avoid messing layout, but colors need to be at Slide Level
-            
-        if this_slide: # do not modify while setting overall CSS
-            self._tcolors = {f'--{k}-color':v for k,v in colors.items()} # reset to new colors each time
-            props = {**self._tcolors, **props} # allow theme colors to be used directly per slide
+        
+        css = ''    
+        if this_slide and colors: # do not modify while setting overall CSS or no colors
+            # Set CSS variables for theme colors at top level to be used when this slide will be shown. No need to set dynmaically at navigation time after this trick.
+            tcolors = {f'--{k}-color':v for k,v in colors.items()} # reset to new colors each time
+            css += _build_css((f".{self._app.uid}.SlidesWrapper:has(.ShowSlide.n{self.number})",), tcolors) 
+            # Also, allow theme colors to be used directly per slide during print and export
+            props = {**tcolors, **props} 
         
         if not props:
             return ''
@@ -854,7 +842,8 @@ class Slide:
         klass = f".{self._app.uid}.SlidesWrapper .SlideArea" # strong selector base
         if this_slide:
             klass += f".n{self.number}"
-        return self._app.html('style', _build_css((klass,), props))
+        css += _build_css((klass,), props)
+        return self._app.html('style', css)
     
     def _set_alt_print(self):
         self._alt_print.value = '' # reset first to recieve new content
