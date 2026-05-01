@@ -13,4 +13,4 @@ PART = Slides.PART  # deprecated alias of pause
 
 version = __version__ # add a public attribute
 
-__all__ = ["Slides", "PAGE", "pause", "PART", "fmt", "esc", "write", "xmd"]
+__all__ = ["Slides", "pause", "fmt", "esc", "write", "xmd"]

@@ -133,7 +133,8 @@
 
 /* --- BASE STATE --- */
 .SlideArea [class*="anim-"]:not(.anim-group),
-.SlideArea .anim-group > * {
+.SlideArea .anim-group > *:not(.jp-OutputArea),
+.SlideArea .anim-group > .jp-OutputArea > .jp-OutputArea-child {
     opacity: 0 !important;
     pointer-events: none;
     will-change: transform, opacity, clip-path;
@@ -169,20 +170,23 @@
 
 /* --- ANIMATED STATE --- */
 .SlideArea [class*="anim-"]:not(.anim-group):not(.anim-kf)._ips-content-animated,
-.SlideArea .anim-group:not(.anim-kf) > ._ips-content-animated {
+.SlideArea .anim-group:not(.anim-kf) > ._ips-content-animated,
+.SlideArea .anim-group:not(.anim-kf) > .jp-OutputArea > ._ips-content-animated {
     opacity: 1 !important;
     transform: translateX(0) translateY(0) translateZ(0) scale(1) scaleX(1) scaleY(1) rotate(0deg) rotateX(0deg) rotateY(0deg) skewX(0deg) perspective(none) !important;
     filter: blur(0px) brightness(1) !important;
     pointer-events: auto !important;
     transition-delay: var(--delay, 0s) !important;
 }
-.SlideArea .anim-group:not(.anim-kf) > ._ips-content-animated {
+.SlideArea .anim-group:not(.anim-kf) > ._ips-content-animated,
+.SlideArea .anim-group:not(.anim-kf) > .jp-OutputArea > ._ips-content-animated {
     transition-delay: calc(var(--delay, 0s) + var(--stagger, 0s)) !important;
 }
 
 /* Custom keyframes: define @keyframes in user CSS and set --kf-name on anim-kf elements. */
 .SlideArea .anim-kf:not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group.anim-kf > ._ips-content-animated {
+.SlideArea .anim-group.anim-kf > ._ips-content-animated,
+.SlideArea .anim-group.anim-kf > .jp-OutputArea > ._ips-content-animated {
     opacity: 1 !important;
     pointer-events: auto !important;
     transition: none !important;
@@ -194,30 +198,35 @@
     animation-iteration-count: var(--kf-count, 1) !important;
     animation-direction: var(--kf-direction, normal) !important;
 }
-.SlideArea .anim-group.anim-kf > ._ips-content-animated {
+.SlideArea .anim-group.anim-kf > ._ips-content-animated,
+.SlideArea .anim-group.anim-kf > .jp-OutputArea > ._ips-content-animated {
     animation-delay: calc(var(--kf-delay, var(--delay, 0s)) + var(--stagger, 0s)) !important;
 }
 
 /* Iris needs special clip-path with 150% radius for corner origins */
 .SlideArea .anim-iris:not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group.anim-iris > ._ips-content-animated {
+.SlideArea .anim-group.anim-iris > ._ips-content-animated,
+.SlideArea .anim-group.anim-iris > .jp-OutputArea > ._ips-content-animated {
     clip-path: circle(150% at var(--origin, 50% 50%)) !important;
 }
 /* Wipe animations need inset(0 0 0 0) - fully visible */
 .SlideArea [class*="anim-wipe"]:not(.anim-group)._ips-content-animated,
-.SlideArea .anim-group[class*="anim-wipe"] > ._ips-content-animated {
+.SlideArea .anim-group[class*="anim-wipe"] > ._ips-content-animated,
+.SlideArea .anim-group[class*="anim-wipe"] > .jp-OutputArea > ._ips-content-animated {
     clip-path: inset(0 0 0 0) !important;
 } 
 
 /* Other animations clear clip-path completely */
 .SlideArea [class*="anim-"]:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-group):not(.anim-kf)._ips-content-animated,
-.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-kf) > ._ips-content-animated {
+.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-kf) > ._ips-content-animated,
+.SlideArea .anim-group:not(.anim-iris):not([class*="anim-wipe"]):not(.anim-kf) > .jp-OutputArea > ._ips-content-animated {
     clip-path: none !important;
 }
 
 /* --- RESET FOR BACKWARD NAV & PRINT (higher specificity and ShowSlide is important to keep things visible) --- */
 .SlideBox.AnimPrev .ShowSlide [class*="anim-"],
-.SlideBox.AnimPrev .ShowSlide .anim-group > * {
+.SlideBox.AnimPrev .ShowSlide .anim-group > *:not(.jp-OutputArea),
+.SlideBox.AnimPrev .ShowSlide .anim-group > .jp-OutputArea > .jp-OutputArea-child {
     --time: 0s !important; /* instant reset */
     --delay: 0s !important;
     opacity: 1 !important; /* keep visible when going backward */
@@ -239,7 +248,8 @@
 
 @media print { /* make print mode more robust */
     .SlideBox .SlideArea [class*="anim-"],
-    .SlideBox .SlideArea .anim-group > * {
+    .SlideBox .SlideArea .anim-group > *:not(.jp-OutputArea),
+    .SlideBox .SlideArea .anim-group > .jp-OutputArea > .jp-OutputArea-child {
         opacity: 1 !important;
         visibility: visible !important;
         transform: none !important;
@@ -304,28 +314,33 @@
 
 /* --- WIPE ANIMATIONS (clip-path reveal) --- */
 .SlideArea .anim-wipe-right:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-right > * { 
+.SlideArea .anim-group.anim-wipe-right > *,
+.SlideArea .anim-group.anim-wipe-right > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(0 100% 0 0);
 }
 
 .SlideArea .anim-wipe-left:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-left > * { 
+.SlideArea .anim-group.anim-wipe-left > *,
+.SlideArea .anim-group.anim-wipe-left > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(0 0 0 100%);
 }
 
 .SlideArea .anim-wipe-down:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-down > * { 
+.SlideArea .anim-group.anim-wipe-down > *,
+.SlideArea .anim-group.anim-wipe-down > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(0 0 100% 0);
 }
 
 .SlideArea .anim-wipe-up:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-up > * { 
+.SlideArea .anim-group.anim-wipe-up > *,
+.SlideArea .anim-group.anim-wipe-up > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(100% 0 0 0);
 }
 
 /* --- IRIS ANIMATION (circular reveal with --origin) --- */
 .SlideArea .anim-iris:not(.anim-group),
-.SlideArea .anim-group.anim-iris > * { 
+.SlideArea .anim-group.anim-iris > *,
+.SlideArea .anim-group.anim-iris > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: circle(0% at var(--origin, 50% 50%));
 }
 
@@ -455,12 +470,14 @@
 }
 
 .SlideArea .anim-elastic:not(.anim-group),
-.SlideArea .anim-group.anim-elastic > * { 
+.SlideArea .anim-group.anim-elastic > *,
+.SlideArea .anim-group.anim-elastic > .jp-OutputArea > .jp-OutputArea-child { 
     --scale-uniform: calc(var(--scale) - 0.2);
     transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
 }
 
 /* --- STAGGER DELAYS --- */
-.SlideArea .anim-group > * { 
+.SlideArea .anim-group > *,
+.SlideArea .anim-group > .jp-OutputArea > .jp-OutputArea-child { 
     --stagger: 0.05s; /* Fallback if JS doesn't run */
 }

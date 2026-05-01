@@ -88,8 +88,8 @@ function tldrawLinks(node, model) {
     })
 }
 
-function isSnapshotsHeaderRow(rowEl) {
-    return !!(rowEl && rowEl.querySelector('.snapshots-header-content'));
+function isGroupHeaderRow(rowEl) {
+    return !!(rowEl && rowEl.querySelector('.group-header-content'));
 }
 
 function handleColsRows(outputs, frame) {
@@ -108,7 +108,7 @@ function handleColsRows(outputs, frame) {
 
                 let lastVisible = -1;
                 for (let r = rows.length - 1; r >= 0; r--) {
-                    if (!isSnapshotsHeaderRow(rows[r])) {
+                    if (!isGroupHeaderRow(rows[r])) {
                         lastVisible = r;
                         break;
                     }
@@ -116,7 +116,7 @@ function handleColsRows(outputs, frame) {
 
                 for (let r = 0; r < rows.length; r++) {
                     rows[r].classList.remove('print-collapsed');
-                    if (isSnapshotsHeaderRow(rows[r])) continue;
+                    if (isGroupHeaderRow(rows[r])) continue;
                     if (lastVisible >= 0 && r < lastVisible) {
                         rows[r].classList.add('print-collapsed');
                     }
@@ -142,7 +142,7 @@ function handleColsRows(outputs, frame) {
                     const rows = rowsRoot.children;
                     for (let r = 0; r < rows.length; r++) {
                         rows[r].classList.remove('print-collapsed');
-                        if (isSnapshotsHeaderRow(rows[r])) continue;
+                        if (isGroupHeaderRow(rows[r])) continue;
                         if (r <= lastRow) {
                             rows[r].classList.add('print-collapsed');
                         }
@@ -168,7 +168,7 @@ function handleColsRows(outputs, frame) {
                 let rows = rowsRoot.children;
                 for (let r = 0; r < rows.length; r++) {
                     rows[r].classList.remove('print-collapsed');
-                    if (isSnapshotsHeaderRow(rows[r])) continue;
+                    if (isGroupHeaderRow(rows[r])) continue;
                     if (r <= snapshotsLastRows[k]) {
                         rows[r].classList.add('print-collapsed');
                     }
@@ -182,7 +182,7 @@ function handleColsRows(outputs, frame) {
                     for (let r = 0; r < rows.length; r++) {
                         rows[r].classList.remove('print-invisible');
                         rows[r].classList.remove('print-collapsed');
-                        if (isSnapshotsHeaderRow(rows[r])) continue;
+                        if (isGroupHeaderRow(rows[r])) continue;
                         if (r > frame.row) {
                             rows[r].classList.add('print-invisible');
                         } else if (isSnapshotsRows && snapshotsLastRows[k] !== undefined) {
@@ -200,7 +200,7 @@ function handleColsRows(outputs, frame) {
                     let rows = rowsRoot.children;
                     for (let r = 0; r < rows.length; r++) {
                         rows[r].classList.remove('print-collapsed');
-                        if (isSnapshotsHeaderRow(rows[r])) continue;
+                        if (isGroupHeaderRow(rows[r])) continue;
                         if (r <= snapshotsLastRows[k]) {
                             rows[r].classList.add('print-collapsed');
                         }

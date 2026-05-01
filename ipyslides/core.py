@@ -10,7 +10,7 @@ from IPython import get_ipython
 from IPython.display import display, clear_output
 
 from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars, _stream_chunks
-from .writer import hold, write, snapshots
+from .writer import hold, write, group
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim
 from . import utils
 from . import dashlab
@@ -137,8 +137,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.get_logo   = get_logo
         self.dl         = dashlab # whole dashlab module
         self.write      = write
+        self.group      = group
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
-        self.snapshots  = snapshots
         self.xmd        = xmd  # Extended markdown parser
         self.fmt        = fmt # So important for flexibility
         self.esc        = esc # lazy escape for variables in markdown
@@ -889,9 +889,8 @@ class Slides(BaseSlides,metaclass=Singleton):
             ::: note-info
                 Find special syntax to be used in markdown by `Slides.xmd.syntax`.
         ::: note
-            - If Markdown is separated by two dashes (--) on it's own line, multiple pages are created in a slide.
             - You can add ++ (plus plus) in the content staring on new line to add parts which reveal incrementally.
-            - Parts separator (++) just before `columns` creates incremental columns and rows.
+            - Parts separator (++) just before `columns` creates incremental columns and rows. `++[isolate]` triggers isolation of columns from previous content.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
             - 
 

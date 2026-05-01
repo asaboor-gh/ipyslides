@@ -351,8 +351,6 @@ def _mask_html_comments(text):
         return s
     return masked, restore
 _PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
-_SNAPSHOTS_RE = re.compile(r"^\s*\[\s*snapshots(?:\s*:\s*(?P<header>[^\]\n]*))?\s*\]\s*$",flags=re.IGNORECASE | re.MULTILINE)
-# not need to be in above cache which is general and can be used to split with ++ differently
 
 class XMarkdown(Markdown):
     def __init__(self):
@@ -592,10 +590,9 @@ class XMarkdown(Markdown):
                 self._wr.write(data, css_class=_class, **css_props)
             return cap.outputs
         elif typ == "group":
-            return self._parse_columns(data, None, _class, css_props, single=True)
+            return self._parse_group(data, _class, css_props)
         elif typ == "columns" and (
             re.search(r'^\+\+\+\s*$', data, flags=re.MULTILINE)
-            or _SNAPSHOTS_RE.search(data)
             or _PLUS_RE.search(data) # let ++ in single column works
         ): # handle columns with display mode
             return self._parse_columns(data, widths, _class, css_props) # simple columns will be handled inline 
@@ -653,7 +650,7 @@ class XMarkdown(Markdown):
         params = inspect.signature(_highlight).parameters.keys()
         kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
         out = _highlight(data, css_class=_class, **kwargs)
-        leftover = {k: v for k, v in props.items() if k not in params} # left over attributes
+        leftover = {k: v for k, v in props.items() if k not in params} # left over css properties
         if leftover:
             out = re.sub(r"^<div([^>]*)>", rf"<div\1 {_inline_style(leftover)} {attrs}>",out, count=1)
         out = SourceCode(out)
@@ -668,6 +665,66 @@ class XMarkdown(Markdown):
             out = getattr(out, prop) # get property if available
             
         return [out]
+    
+    def _parse_group(self, data, _class, props, as_group=False):
+        params = inspect.signature(self._wr.group).parameters.keys()
+        kwargs = {k: eval(v) if v in "TrueFalseNone" else v for k, v in props.items() if k in params} # only pass known params
+        css_props = {k: v for k, v in props.items() if k not in params} # left over css properties
+        grp = self._wr.group(
+            list(_stream_chunks(data, sep='++')),
+            css_class=_class, **kwargs, **css_props
+        )
+
+        if as_group:
+            return grp
+        
+        with capture_content() as cap:
+            self._wr.write(grp)
+        return cap.outputs
+
+    def _column_group_object(self, col_text):
+        """Return a group object for column-level group handling, else None.
+
+        - If the entire column is a single group block (::: group or ```group),
+          return the parsed group object.
+        - If a group block marker appears but does not occupy the whole column,
+          return a group whose first item is a ValueError output.
+        """
+        text = textwrap.dedent(col_text).strip()
+        if not text:
+            return None
+
+        def _make_group(header, data):
+            typ, _, _, _class, props, _ = self._parse_params(header)
+            if typ == "group":
+                return self._parse_group(data, _class, props, as_group=True)
+
+        blocks = self._split_blocks_with_dedent(text)
+        if len(blocks) == 1 and blocks[0][0] == "block":
+            group_obj = _make_group(*blocks[0][1])
+            if group_obj is not None:
+                return group_obj
+
+        fenced = re.match(r'^\s*```([^\n]*)\n(.*?)\n```\s*$', text, flags=re.DOTALL)
+        if fenced:
+            group_obj = _make_group(*fenced.groups())
+            if group_obj is not None:
+                return group_obj
+
+        has_group_marker = bool(
+            re.search(r'^\s*:::\s*group(?:\s|$)', text, flags=re.MULTILINE)
+            or re.search(r'^\s*```+\s*group(?:\s|$)', text, flags=re.MULTILINE)
+        )
+        if has_group_marker:
+            return self._wr.group([
+                error('ValueError',
+                    'A group block inside ::: columns must occupy the whole column with no extra text. '
+                    'Use a full-column ::: group ... block (or ```group ...``` fenced block).'
+                )
+            ])
+
+        return None
+
                 
     def _parse_table(self, data, widths, _class, props, attrs):
         out = self._parse_nested(data, returns=True) # let table extension handle it
@@ -703,11 +760,10 @@ class XMarkdown(Markdown):
         if "after" in typ: outputs.append(src)
         return outputs
 
-    def _parse_columns(self, data, widths, _class, css_props, single=False):
-        "Returns parsed block or columns or code, input is without ``` but includes langauge name."
-        cols = [data] if single else re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
+    def _parse_columns(self, data, widths, _class, css_props):
+        cols = re.split(r"^\+\+\+\s*$", data, flags=re.MULTILINE)  # Split by columns, allow nesetd blocks by indents
 
-        if single:
+        if len(cols) == 1: # full width one column
             widths = [100]
         elif not widths:
             widths = [100/len(cols) for _ in cols]
@@ -727,13 +783,10 @@ class XMarkdown(Markdown):
         # Under any display context
         cap_cols = []
         for col in cols:
-            marker_match = _SNAPSHOTS_RE.search(col)
-            use_snapshots = bool(marker_match)
-            snapshots_header = None
-            if marker_match:
-                snapshots_header = (marker_match.group('header') or '').strip() or None
-            if use_snapshots:
-                col = _SNAPSHOTS_RE.sub("", col)  # remove marker from rendered output
+            group_obj = self._column_group_object(col)
+            if group_obj is not None:
+                cap_cols.append(group_obj)
+                continue
 
             rows = [] # list to make row-wise parts
             for row in self._split_parts(col):
@@ -745,10 +798,7 @@ class XMarkdown(Markdown):
                         if hasattr(self, '_show_disply_error'): del self._show_disply_error # cleanup
                         
                 rows.append(cap.outputs)
-            if use_snapshots:
-                cap_cols.append(self._wr.snapshots(rows, header=snapshots_header))
-            else:
-                cap_cols.append(rows)
+            cap_cols.append(rows)
             
         with self.active_parser(), capture_content() as cap:
             self._wr.write(*cap_cols, widths=widths, css_class=_class, **css_props)
@@ -998,7 +1048,7 @@ class _XMDMeta(type):
     def syntax(self) -> XTML:
         "Extnded markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
-        return _parse_pages(xmd_syntax)
+        return _parse_as_snapshots(xmd_syntax)
     
     @staticmethod
     def parse(content: Union[str, fmt], returns:bool=False) -> Optional[str]: # This is intended to be there, not redundant
@@ -1033,17 +1083,17 @@ class xmd(metaclass=_XMDMeta):
 
 xmd.parse.__doc__ = xmd.__doc__
 
-def _parse_pages(markdown):
-    "Parse pages from markdown content using -- separator."
+def _parse_as_snapshots(markdown):
+    "Parse an implied group without header from markdown content using ++ separator."
     if not isinstance(markdown, str):
         raise TypeError(f"markdown expects a string, got {markdown!r}")
     
-    pages = list(_stream_chunks(markdown, sep='--'))
+    pages = list(_stream_chunks(markdown, sep='++'))
     with capture_content() as cap:
         xmd(pages[0], returns=False) # render common header part
         
-        from .writer import snapshots, write  # circular import
-        snaps = snapshots()
+        from .writer import group, write  # circular import
+        snaps = group(snapshots=True)
         for page in pages[1:]: # set pages for current slide
             with snaps.capture():
                 xmd(page, returns=False)

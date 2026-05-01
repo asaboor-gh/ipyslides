@@ -571,7 +571,7 @@ class Slide:
             if "col" in frame:
                 col_idx = frame["col"]
                 # Within the PART output (which contains COLUMNS), hide columns after current one
-                col_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div'
+                col_sel = f'^:nth-child({part_end}) > .jp-OutputArea-output > .columns.writer:first-of-type > div'
                 css_rules[f'{col_sel}:nth-child(n + {col_idx + 2})'] = hide_node(True)
 
                 if "row" in frame:
@@ -581,34 +581,34 @@ class Slide:
 
                     # snapshots: collapse non-current rows so only the active row is visible
                     if col_idx in frame.get("_snapshots_last_rows", {}):
-                        focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.snapshots-rows'
+                        focus_sel = f'^:nth-child({part_end}) > .jp-OutputArea-output > .columns.writer:first-of-type > div.snapshots-rows'
                         row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
                         if "prev_row" in frame:
-                            css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
-                        css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
+                            css_rules[f'{row_sel}:nth-child(-n + {frame["prev_row"] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
+                        css_rules[f'{row_sel}:nth-child(n + {frame["row"] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
 
                 # snapshots: collapse non-last rows in previous columns and current col when fully visible
                 snapshots_last_rows = frame.get("_snapshots_last_rows", {})
                 if snapshots_last_rows:
-                    focus_sel = f'^:nth-child({part_end}) .columns.writer:first-of-type > div.snapshots-rows'
+                    focus_sel = f'^:nth-child({part_end}) > .jp-OutputArea-output > .columns.writer:first-of-type > div.snapshots-rows'
                     # Previous columns: show only last row, collapse the rest
                     for c in range(col_idx):
                         if c in snapshots_last_rows:
                             prev_row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                            css_rules[f'{prev_row_sel}:nth-child(-n + {snapshots_last_rows[c] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
+                            css_rules[f'{prev_row_sel}:nth-child(-n + {snapshots_last_rows[c] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
                     # Current column fully visible (no row): show only last row
                     if "row" not in frame and col_idx in snapshots_last_rows:
                         curr_row_sel = f'{focus_sel}:nth-child({col_idx + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                        css_rules[f'{curr_row_sel}:nth-child(-n + {snapshots_last_rows[col_idx] + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
+                        css_rules[f'{curr_row_sel}:nth-child(-n + {snapshots_last_rows[col_idx] + 1}):not(:has(.group-header-content))'] = collapse_node(True)
 
         # Persistent snapshots: collapse non-last rows in columns we already exited
         if "_snapshots_persist" in frame:
             persist = frame["_snapshots_persist"]
             cols_idx = persist["idx"] + 1  # 1-indexed for CSS
-            focus_sel = f'^:nth-child({cols_idx}) .columns.writer:first-of-type > div.snapshots-rows'
+            focus_sel = f'^:nth-child({cols_idx}) > .jp-OutputArea-output > .columns.writer:first-of-type > div.snapshots-rows'
             for c, last_row in persist["_snapshots_last_rows"].items():
                 row_sel = f'{focus_sel}:nth-child({c + 1}) > .jp-OutputArea > .jp-OutputArea-child'
-                css_rules[f'{row_sel}:nth-child(-n + {last_row + 1}):not(:has(.snapshots-header-content))'] = collapse_node(True)
+                css_rules[f'{row_sel}:nth-child(-n + {last_row + 1}):not(:has(.group-header-content))'] = collapse_node(True)
 
         # Build final CSS with proper selector
         base_selector = f'^.n{self.number}.HasFrames > .jp-OutputArea > .jp-OutputArea-child'

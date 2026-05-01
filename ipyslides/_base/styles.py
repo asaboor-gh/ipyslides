@@ -573,6 +573,49 @@ def style_css(colors, fonts, layout, _root = False):
                 'text-decoration':'none !important',
                 'text-shadow': '0 1px var(--bg1-altcolor)',
             },
+            '.columns.writer > div.bullet-points-rows': {
+                'display': 'grid',
+                'grid-template-columns': 'max-content 1fr',
+                'column-gap': '0.45em',
+                'align-items': 'start',
+                'width': '100%',
+                '> .group-header-content': {'grid-column': '1 / -1'},
+                '> .bullet-points-marker': {'grid-column': '1', 'justify-self': 'end', 'color': 'var(--accent-color)'},
+                '> *:not(.group-header-content):not(.bullet-points-marker):not(.jp-OutputArea)': {'grid-column': '2', 'min-width': '0'},
+                '> .jp-OutputArea': {
+                    'grid-column': '1 / -1',
+                    'display': 'grid',
+                    'grid-template-columns': 'max-content 1fr',
+                    'column-gap': 'inherit',
+                    'align-items': 'inherit',
+                    'width': '100%',
+                    '> .jp-OutputArea-child:has(.group-header-content)': {'grid-column': '1 / -1'},
+                    '> .jp-OutputArea-child:has(.bullet-points-marker)': {
+                        'grid-column': '1', 
+                        'justify-self': 'end', # to show markers aligned to right
+                        'display': 'inline-block', # need to be collapsed width for print
+                        'color': 'var(--accent-color)',
+                    },
+                    '> .jp-OutputArea-child:not(:has(.group-header-content)):not(:has(.bullet-points-marker))': {
+                        'grid-column': '2',
+                        'min-width': '0',
+                        'width': 'auto',
+                        'max-width': '100%',
+                        'display': 'block', # important to avoid shrink
+                    },
+                    '@media print': {
+                        'display': 'grid !important',
+                        'grid-template-columns': 'max-content 1fr !important',
+                        'column-gap': 'inherit !important',
+                        '> .jp-OutputArea-child:not(:has(.group-header-content)):not(:has(.bullet-points-marker))': {
+                            'min-width': '0 !important',
+                            'width': 'auto !important',
+                            'max-width': '100% !important',
+                            'display': 'block !important',
+                        },
+                    },
+                },
+            },
             '.slide-link:not(.citelink), .link-button': {
                 'background': 'var(--bg2-color)',
                 'border-radius': '0.2em',
@@ -586,6 +629,7 @@ def style_css(colors, fonts, layout, _root = False):
             }, # avoid empty links to show, but still need to work in pdf
             ':is(ul,ol)': {
                 'padding-left': '1.5em', 
+                'margin-block': '0.1em', # very subtle, avoid two much space
                 '^[data-marker]': {'list-style': 'attr(data-marker) !important'}, # custom marker for all list
                 'li' : {'padding-left': '4px', 'padding-top': '0.25em'}, # avoid text touching bullet/number and add spce netween items
                 'li[data-marker]::marker': {'content': 'attr(data-marker) !important'}, # custom marker from data attribute
@@ -731,7 +775,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'display':'inline-flex',
                 'flex-direction':'row',
                 'column-gap':'0.2em',
-                'height':'auto',
+                'align-items':'stretch',
                 '> *': {'min-width':'0 !important',}, # avoid overflow due to stubborn elements
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },

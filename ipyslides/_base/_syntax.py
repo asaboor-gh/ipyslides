@@ -36,19 +36,18 @@ Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style'
 
 xmd_syntax = rf'''
 ## Extended Markdown
---                                       
+++                                      
 Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) supports almost full presentation from Markdown.
 
 **Presentation Structure**{{.text-big}}
 
-Slides, Pages and Parts Separators
-: Triple dashes `---` is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-Double dashes `--` are used to split text in pages and map to the legacy `PAGE` delimiter on the Python side.
-Both `---` and `--` should be on their own lines in main content (not inside block syntax) to be recognized as slide/page separators.
-Double plus `++` (`pause` in Python, `PART` deprecated alias) can be used to increment objects in parts on slide/page.
-A `++` on its own line before `columns` block will make it reveal content incrementally, provided that columns are separated by `+++`.
-Use `++[isolate]` before a `::: columns` block to isolate previous content from column reveal.
-The combinations of pages and parts create frames on slides. Note that only `++` allows content on same line after it and following lines.
+Slides and Parts Separators
+: Triple dashes `---` separator is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
+`---` should be on their own lines in main content (not inside block syntax) to be recognized as slide separators.
+Double plus `++` (`pause` in Python) can be used to increment objects in parts on a slide.
+A `++` on its own line before `columns` block will make it reveal content incrementally, provided that columns are separated by `+++` or single column only with `++` inside.
+Use `++[isolate]` before a `::: columns/::: group` blocks to isolate previous content from column reveal.
+Note that only `++` allows content on same line after it and following lines.
 
 Sections & TOC
 : alert`section\`content\`` to add a section that will appear in the table of contents.
@@ -81,7 +80,7 @@ code["markdown"]`
     \@key2: A citations can span multiple lines, but key should start on new line
 `
 
---
+++
 
 **Content Blocks**{{.text-big}}
 
@@ -107,7 +106,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: raw/pre`     | Raw text or preformatted text, no markdown parsing. Use `raw` or `pre` as first word in block. |
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
-    | `::: columns [widths]` / `::: group` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. `group` is a single-column display block (no widths or `+++` needed). Add `[snapshots]` (or `[snapshots: Header text]`) inside a column/group to reveal rows exclusively for that block. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
+    | `::: columns [widths]` / `::: group` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. `group` is a single-column display block (no widths or `+++` needed). Use `::: group snapshots=True` (optionally with `header='Header text'`) to reveal rows exclusively for that block. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
     | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `<md-var_name/>`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
@@ -119,7 +118,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and get deleted on first use.
     - Both `code` and `md-var` blocks support attribute access such as `::: code.collapsed` or `::: md-var.inline` to show selected view. 
     You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
---
+++
 
 **Layouts**{{.text-big}}
 
@@ -129,9 +128,8 @@ Inline Columns
 Block Columns
 : You can create columns using `::: columns` syntax, or use `::: group` for a single-column display block.
 Column separator is triple plus `+++` for `::: columns` when intended in display mode; `::: group` does not need `+++` or widths.
-Use `[snapshots]` inside any column/group to enable per-row iteration exclusively for that block.
-Use `[snapshots: Header text]` to keep a static header visible while rows reveal.
-If `[snapshots]` or `[snapshots: ...]` is present, display-mode parsing is enabled for that columns block even without `+++` separators.
+Use `::: group snapshots=True` to enable per-row iteration for that block.
+Use `header='Header text'` in the same group header to keep a static header visible while rows reveal.
 Use `++[isolate]` before `::: columns` to separate previous content from first column reveal.
 
 ```md-before
@@ -153,7 +151,7 @@ Use `++[isolate]` before `::: columns` to separate previous content from first c
         ::: li | This follows disc marker from parent `ul` block.
 ```
 
---
+++
 
 **Code Display**{{.text-big}}
 
@@ -165,14 +163,16 @@ Code Blocks
 
 ```md-src
 ::: columns
-    <md-src/>
+    ::: block-green
+        <md-src/>
     +++
-    ```python
-    print('Hello, I was highlighted from a code block!')
-    ```
-    ::: code 2 language=bash name=Shell lineno=False style=vim
-        echo "Hello, I was highlighted from a code block!"
-        ls -l | grep ".py" | wc -l
+    ::: block-red
+        ```python
+        print('Hello, I was highlighted from a code block!')
+        ```
+        ::: code 2 language=bash name=Shell lineno=False style=vim
+            echo "Hello, I was highlighted from a code block!"
+            ls -l | grep ".py" | wc -l
 ``` 
 
 ```md-src.collapsed
@@ -185,7 +185,7 @@ Code Blocks
     <md-src/>
 ```
 
---
+++
 
 **Variables Substitution**{{.text-big}}
 
@@ -213,7 +213,7 @@ Variables from Python code can be embedded directly into Markdown.
 - Widgets behave same with or without `:nb` format spec. 
 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
     
---
+++
 
 **Inline Python Functions**{{.text-big}}
 
@@ -230,7 +230,7 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
 ```md-src_var
 ::: columns
     <md-src_var/>
-    +++
+    
     stack[(6,4),css_class="block-blue"]`////
         This always parse markdown in `returns=True` mode. ||
         stack[css_class="info"]`/// B ||
@@ -239,7 +239,7 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
     ////`
 ```
 
---
+++
 **General Syntax**{{.text-big}}
 
 - Use alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format.
@@ -275,7 +275,7 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
 css_animations = '''
 ## 🎬 IPySlides Content Animations
 
---
+++
 
 All animations are **fully composable** - combine multiple animation classes to create complex effects! Use `anim-group` on a parent container to apply staggered animations to all children.
 
@@ -326,7 +326,7 @@ Variable | Default | Description
 `--kf-count` | 1 | Iteration count for `.anim-kf`.
 `--kf-direction` | normal | Animation direction for `.anim-kf`.
 
---
+++
 
 ### 💡 Usage Examples
 
@@ -354,7 +354,7 @@ Variable | Default | Description
     Iris opens from top-left corner while zooming!
 ```
 
---
+++
 
 **Custom Variables**
 ```md-after
@@ -385,7 +385,7 @@ Variable | Default | Description
     // Delays follow smooth sine curve: 100ms per 10 items
 ```
 
---
+++
 
 **Per Item Origins** (Dynamic Effects)
 ```md-after
@@ -414,7 +414,7 @@ Variable | Default | Description
     Flips up from bottom while zooming!
 ```
 
---
+++
 
 ### ✨ Key Features
 

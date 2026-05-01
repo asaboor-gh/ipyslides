@@ -759,6 +759,7 @@ def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markd
 
 def bullets(iterable, ordered = False, marker = None, css_class = None, **css_props):
     """A powerful bullet list. `iterable` could be list of anything that you can pass to `write` command. 
+    Use `group` for revealing points step by step in `write`, which also supports widgets.
     
     - If an item in iterable is a tuple/list of 2 elements and first element is a str, it will be used as per item marker.   
     - `ordered`: bool, to create ordered or unordered list.

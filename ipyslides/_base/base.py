@@ -15,7 +15,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import SlideGroup, _build_slide
 from ..formatters import XTML, htmlize
-from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_pages, _stream_chunks
+from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_as_snapshots, _stream_chunks
 from ..utils import _css_docstring
 
 
@@ -64,7 +64,7 @@ class BaseSlides:
     @property
     def css_animations(self):
         "CSS animations for use in content blocks."
-        return _parse_pages(_syntax.css_animations)
+        return _parse_as_snapshots(_syntax.css_animations)
    
     def get_source(self, title = 'Source Code', **kwargs):
         "Return source code of all slides except created as frames with python code. kwargs are passed to `Slides.code`."
@@ -233,11 +233,10 @@ class BaseSlides:
             - Function must accept a single argument: the slide handle.
         2. code`with slides.build(number):` creates single slide. Equivalent to code`%%slide number` magic.
             - Contents displayed by `write` function can be split into incremental parts if `write` is called after `pause()` adjacently.
-            - For markdown-driven page splitting, use `--` (and `---` for slide splitting) in markdown content; `--` maps to legacy `PAGE` internally.
         3. code`slides.build(number, str, **vars)` creates many slides with markdown content. Equivalent to code`%%slide number -m` magic in case of one slide.
-            - Page separator is double dashes `--` and slides separator is triple dashes `---`. Same applies to code`Slides.sync_with_file` too.
+            - Multiple slides can be built using triple dashes `---` as separators. Same applies to code`Slides.sync_with_file` too.
             - Use `++` to separted content into parts for incremental display on ites own line with optionally adding content after one space.
-            - Markdown `columns` can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
+            - Markdown `columns/group` blocks can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
             - See `slides.xmd.syntax` for extended markdown usage.
             - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.

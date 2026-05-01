@@ -196,7 +196,7 @@ def demo_slides(slides):
             import numpy as np
             import matplotlib.pyplot as plt
 
-            plots = slides.snapshots() # create empty snapshots object to append frames to later
+            plots = slides.group(snapshots=True) # create empty snapshots-like group to append frames to later
             for idx in range(10,19):
                 _, ax = plt.subplots(figsize=(3.4,2.6))
                 x = np.linspace(0,idx,50)
@@ -218,8 +218,13 @@ def demo_slides(slides):
     with slides.build(-1) as s:
         slides.write('# Frames with Snapshots yoffset`0`')
         s.get_source().focus([2,3,4]).display()
+        icons = {1:'edit', 2:'gear', 3:'download', 4:'trash'} # just for fun, can be any marker or None
         slides.pause(isolate=True) # isolate to split from previous content
-        slides.write(slides.snapshots(boxes), css_class='anim-group anim-slide-up') # snapshots reveal rows in isolation
+        slides.write(slides.group(boxes, 
+            points=True, snapshots=True, 
+            marker=lambda idx:f"fa['red']`{icons[idx]}`",
+            css_class='anim-group anim-slide-left', # per item animation via parent group
+        )) # snapshots reveal rows in isolation
         
 
     with slides.build(-1) as s:

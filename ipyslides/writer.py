@@ -2,7 +2,7 @@
 Main write functions to add content to slides
 """
 
-__all__ = ['write', 'snapshots']
+__all__ = ['write', 'group']
 
 from collections import UserList
 from collections.abc import Iterable
@@ -71,37 +71,62 @@ def _snapshots_merge_style(selectors):
     return f'<style>\n{_build_css(tuple(selectors), {"display": "none !important"})}\n</style>'
 
 
-def _snapshots_header_xtml(header):
-    "Build header output for snapshots columns using markdown parsing."
+def _group_header_xtml(header):
+    "Build header output for group columns using markdown parsing."
     if header is None:
         return None
     header_md = header if isinstance(header, str) else htmlize(header)
-    return XTML(f"<div class='snapshots-header-content'>{xmd(header_md, returns=True)}</div>")
+    return XTML(f"<div class='group-header-content'>{xmd(header_md, returns=True)}</div>")
 
 
-def _is_snapshots_header_output(output):
-    "Check if output is a snapshots header wrapper."
-    return isinstance(output, XTML) and ('snapshots-header-content' in output.value)
+def _is_group_header_output(output):
+    "Check if output is a group header wrapper."
+    return isinstance(output, XTML) and ('group-header-content' in output.value)
 
-class snapshots(UserList):
-    """Column-content wrapper to reveal items one-by-one during frame navigation.
 
-    You can append displayable items directly, or use `capture()` to collect multiple
-    outputs as one snapshot step, especially when content is generated in a loop or from a function that doesn't return all content at once.
+def _is_row_delim(output):
+    "Check if output is a row delimiter."
+    meta = getattr(output, 'metadata', {})
+    return isinstance(meta, dict) and meta.get('DELIM', '') == 'ROW'
+
+
+def _points_marker_xtml(marker, index):
+    "Build points marker as escaped plain text in a span for marker column layout." 
+    value = marker
+    if isinstance(marker, str):
+        try: value = marker.format(index)
+        except Exception: pass # marker already set above
+    elif callable(marker):
+        try: value = marker(index)
+        except Exception as e: 
+            raise RuntimeError(f'Error calling marker function with index {index}: {e}')
+        
+    return XTML(htmlize(f'<div markdown="1" class="bullet-points-marker">{value}</div>'))
+class group(UserList):
+    """Column-content wrapper that can optionally behave like snapshots.
+
+    `snapshots=True` enables row-by-row reveal behavior in `write`.
+    `marker` can be a markdown parsable str and have format placeholder for row index 
+    like 'Step {}' to show dynamic markers, works only when `points=True`.
+    If `marker` is a callable, it will be called with row index to get marker value, and should return an html serializable object.
+    `header` can be a markdown parsable str or any object to show as static header for the group, it remains visible during snapshots reveal.
+    `css_class` and `css_props` are applied to the column widget.
     """
-    def __init__(self, initlist=(), header=None):
+    def __init__(self, initlist=(), points=False, snapshots=False, marker=None, header=None, css_class=None, **css_props):
         super().__init__(initlist)
+        self.points = points
+        self.snapshots = snapshots
+        self.marker = marker
         self.header = header
+        self.css_class = css_class
+        self.css_props = css_props
 
     @contextmanager
     def capture(self):
-        """Capture multiple outputs as one snapshot item.
-
-        This is a convenient when a single snapshot step should contain multiple displayed objects.
-        """
+        """Capture multiple outputs as one group item."""
         with capture_content() as cap:
             yield
-        self.append(cap) # Append captured content as a single item to maintain row grouping in `write`
+        self.append(cap)
 
 class Writer(ipw.HBox):
     _in_write = False
@@ -131,6 +156,9 @@ class Writer(ipw.HBox):
             isinstance(css_class, str),
             css_props,
             single_meta.get('snapshots', False),
+            single_meta.get('points', False),
+            single_meta.get('col_css_class', ''),
+            single_meta.get('col_css_props', {}),
         ])
 
         if can_flatten_single:
@@ -149,8 +177,12 @@ class Writer(ipw.HBox):
             for i, (col, out) in enumerate(zip(self._cols, self.children)):
                 if col.get('uclass'):
                     out.add_class(col['uclass'])
+                if col.get('col_css_class'):
+                    [out.add_class(c) for c in str(col['col_css_class']).split()]
                 if col.get('snapshots'):
                     out.add_class('snapshots-rows')
+                if col.get('points'):
+                    out.add_class('bullet-points-rows')
             display(self, metadata=self.metadata) # Just display it with ID
             self.update_display() # show content on widgets
 
@@ -180,13 +212,21 @@ class Writer(ipw.HBox):
         
         cols = []
         for i, (w, raw) in enumerate(zip(widths, raw_cols)):
-            is_snapshots = isinstance(raw, snapshots)
-            content = list(raw) if is_snapshots else raw
+            is_group = isinstance(raw, group)
+            is_snapshots = bool(raw.snapshots) if is_group else False
+            content = list(raw) if is_group else raw
+            outputs = content if isinstance(content, (list, tuple)) else [content]
+            col_css_props = dict(raw.css_props) if is_group else {}
+
             cols.append({
                 'flex': f'{w:.3f} {w:.3f} {w*100:.3f}%',
-                'outputs': content if isinstance(content, (list, tuple)) else [content],
+                'outputs': outputs,
                 'snapshots': is_snapshots,
-                'snapshots_header': (raw.header if is_snapshots else None),
+                'group_header': (raw.header if is_group else None),
+                'points': (raw.points if is_group else False),
+                'points_marker': (raw.marker if is_group else None),
+                'col_css_class': (raw.css_class if is_group else ''),
+                'col_css_props': col_css_props,
                 'uclass': f'coluid-{id(self)}-{i}',
             })
 
@@ -195,24 +235,41 @@ class Writer(ipw.HBox):
         snapshots_first_rows = {}
         for i, col in enumerate(cols):
             col_outputs = list(col['outputs'])
-            header_output = _snapshots_header_xtml(col.get('snapshots_header'))
-            if i > 0: # for i == 0, we want to preserve empty start for paused columns, handled in _split_parts
-                while col_outputs and col_outputs[0] == "":
-                    col_outputs.pop(0)
+            header_output = _group_header_xtml(col.get('group_header'))
 
-            rows = chain(*(
-                (*obj, rowsep) if isinstance(obj, (list, tuple)) # nested rows as single group
-                else (obj, rowsep)  # each object as single row
-                for obj in col_outputs
-            ))
+            use_points = bool(col.get('points'))
+
+            def _row_items(row_idx, obj):
+                if use_points:
+                    yield _points_marker_xtml(col.get('points_marker'), row_idx)
+                if isinstance(obj, (list, tuple)): # nested rows as single group
+                    yield from obj
+                else:  # each object as single row
+                    yield obj
+                yield rowsep
+
+            rows = chain.from_iterable(
+                _row_items(row_idx, obj)
+                for row_idx, obj in enumerate(col_outputs, start=1)
+            )
+
             with capture_content() as cap:
                 if i == 0 and css_props: # display CSS in first column only
                     XTML(_style_for_widget(self, **css_props)).display() 
+
+                if col.get('col_css_props'):
+                    col_selector = f'.{col["uclass"]}'
+                    XTML(f'<style>\n{_build_css((col_selector,), col["col_css_props"])}\n</style>').display()
 
                 if header_output:
                     display(header_output)
                     
                 for c in rows:
+                    if isinstance(c, group):
+                        raise ValueError(
+                            f"Column {i+1} contains a nested group object. "
+                            "Pass group directly as a column argument, not inside column rows."
+                        )
                     if isinstance(c,(fmt, RichOutput, ipw.DOMWidget)):
                         display(c)
                     elif isinstance(c, CapturedIO):
@@ -232,14 +289,12 @@ class Writer(ipw.HBox):
             base_outputs = list(cap.outputs)
             # Remove trailing row separator only when present.
             if base_outputs:
-                tail_meta = getattr(base_outputs[-1], 'metadata', {})
-                if isinstance(tail_meta, dict) and tail_meta.get('DELIM', '') == 'ROW':
+                if _is_row_delim(base_outputs[-1]):
                     base_outputs = base_outputs[:-1]
             if col.get('snapshots'):
                 first_row_idx = next((
                     r for r, out in enumerate(base_outputs)
-                    if isinstance(getattr(out, 'metadata', {}), dict)
-                    and getattr(out, 'metadata', {}).get('DELIM', '') == 'ROW'
+                    if _is_row_delim(out)
                 ), None)
                 if isinstance(first_row_idx, int):
                     live_start_n = first_row_idx + 3 # +1 for prepended style, +2 for nth-child cutoff in widget DOM
@@ -254,8 +309,7 @@ class Writer(ipw.HBox):
                 cols[i]['outputs'] = base_outputs
 
             for r, out in enumerate(cols[i]['outputs']):
-                meta = getattr(out, 'metadata', {})
-                if isinstance(meta, dict) and meta.get('DELIM','') == 'ROW':
+                if _is_row_delim(out):
                     parts.append({"col": i, "row": r}) # mark row positions
                     if col.get('snapshots'):
                         if i not in snapshots_first_rows:
@@ -291,7 +345,7 @@ class Writer(ipw.HBox):
                 html = _fmt_html(output)
                 if not html:
                     continue
-                if _is_snapshots_header_output(output):
+                if _is_group_header_output(output):
                     rows.append(html)
                 elif isinstance(hide_after, int) and r > hide_after:
                     rows.append(f'<div class="{merge_hide_class}">{html}</div>')
@@ -301,7 +355,12 @@ class Writer(ipw.HBox):
 
         for i, col in enumerate(self._cols):
             flex = f'flex:{col["flex"]};height:auto;min-width:0'
-            col_class = ' '.join(x for x in (col.get('uclass', ''), 'snapshots-rows' if col.get('snapshots') else '') if x)
+            col_class = ' '.join(x for x in (
+                col.get('uclass', ''),
+                col.get('col_css_class', ''),
+                'bullet-points-rows' if col.get('points') else '',
+                'snapshots-rows' if col.get('snapshots') else ''
+            ) if x)
             class_attr = f' class="{col_class}"' if col_class else ''
             merge_hide_after = self._snapshots_first_rows.get(i) if col.get('snapshots') else None
             if i > col_idx: # Entire column is hidden
@@ -314,7 +373,7 @@ class Writer(ipw.HBox):
                     rows = [
                         _fmt_html(output)
                         for r, output in enumerate(col['outputs'])
-                        if _is_snapshots_header_output(output) or r > last_r
+                        if _is_group_header_output(output) or r > last_r
                     ]
                     cols.append(f'<div{class_attr} style="{flex};">{chr(10).join(rows)}</div>')
                 else:
@@ -330,11 +389,11 @@ class Writer(ipw.HBox):
                     rows = [
                         _fmt_html(output)
                         for r, output in enumerate(col['outputs'])
-                        if _is_snapshots_header_output(output) or r > last_r
+                        if _is_group_header_output(output) or r > last_r
                     ]
                 else:
                     for r, output in enumerate(col['outputs']):
-                        if _is_snapshots_header_output(output):
+                        if _is_group_header_output(output):
                             rows.append(_fmt_html(output))
                             continue
                         if row_idx != float('inf') and i in snapshots_last_rows:
@@ -363,9 +422,9 @@ def write(*objs,widths = None, css_class=None, **css_props):
     Write any object that can be displayed in a cell with some additional features:
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
-    - Wrap a column content list using code`snapshots([...])` to reveal items one-by-one during frame navigation.
-        You can set a static header with code`snapshots([...], header='Header')`; it remains visible while snapshot rows change.
-        You can also build it with code`s = snapshots(); with s.capture(): ...` and pass `s` as a column.
+    - Use code`group([...], snapshots=True)` to reveal items one-by-one during frame navigation.
+        You can set a static header with code`group([...], header='Header')`; it remains visible while group rows change.
+        You can also build it with code`g = group([], snapshots=True); with g.capture(): ...` and pass `g` as a column.
     - Display another function to capture its output in order using code`Slides.hold(func,...)`. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh` etc. by passing them directly.
@@ -388,13 +447,13 @@ def write(*objs,widths = None, css_class=None, **css_props):
         - You can use code`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
         - In markdown `columns`/`group` block syntax is similar to `write` command if `+++` separartor is used there.
-        - In markdown `::: columns` or `::: group`, put `[snapshots]` or `[snapshots: header]` inside a specific column to enable code`snapshots([...])` behavior for that column.
+        - Use `::: group snapshots=True` (and optional `header=...`) in markdown to enable snapshots behavior for that group block.
     
     ::: tip
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
         A single column is flattened up to 2 levels, so `[[obj1], row2, [item1, item2]]` will be displayed as 3 rows.
         
-        Use code`snapshots([...])` to reveal rows in isolation for a specific column.
+        Use code`group([...], snapshots=True)` to reveal rows in isolation for a specific column.
         
         **Incremental display** is triggered only when you place `Slides.pause()` delimiter **before** the `write` command:
         
