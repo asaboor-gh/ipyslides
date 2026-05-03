@@ -1,3 +1,5 @@
+from ..formatters import slidebound
+
 
 class Notes:
     "Notes are stored in `Slides` class for consistensy."
@@ -8,6 +10,7 @@ class Notes:
         self.notes_check = self.widgets.checks.notes
         self.notes_check.observe(self.__open_close_notes, names=['value'])
         
+    @slidebound("Notes")
     def insert(self, content):
         r"""Add notes to current slide. Content could be any object except javascript and interactive widgets.
         Note that notes are not shown inside slides during presentation. They can be viewed in popup window by 
@@ -19,7 +22,6 @@ class Notes:
             - Place your (extended) projector on top/bottom of laptop screen while presenting 
               in Jupyter Notebook to allow right/left edges click navigation work smoothly.
         """
-        self.main.verify_running('Notes can only be added inside a slide constructor.')
         self.main.this._notes = self.main.html('',[content]).value
 
     __call__ = insert # Can be called as function

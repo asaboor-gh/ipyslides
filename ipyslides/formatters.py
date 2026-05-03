@@ -5,6 +5,7 @@ import sys
 import textwrap
 import inspect, re, base64
 
+from functools import wraps
 from pprint import PrettyPrinter
 from io import BytesIO
 from contextlib import contextmanager
@@ -575,15 +576,29 @@ def frozen(obj, metadata=None):
     cap._ipython_display_ = cap.show # This is important to not being caught by altformatter
     return cap
     
-
+_slides_singleton = None # set on initialization for Slides, strictly private
 def get_slides_instance():
     "Get the slides instance from the current namespace."
-    if (isd:= sys.modules.get('ipyslides',None)):
-        if (slides := getattr(isd, "Slides",None)): # Avoid partial initialization
-            return slides.instance()
+    return _slides_singleton
 
+def slidebound(fname=None):
+    """Decorator to make sure a function is only used inside a slide constructor."""
+    def decorate(func):
+        name = fname or func.__name__
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            slides = get_slides_instance()
+            if slides is None or getattr(slides, "this", None) is None:
+                raise RuntimeError(f"{name} can only be used inside a slide constructor.")
+            return func(*args, **kwargs)
+        return wrapper
 
-class AltDispalyFormatter:
+    if callable(fname):  # used as @slidebound
+        func, fname = fname, None
+        return decorate(func)
+    return decorate      # used as @slidebound(...) or @slidebound()
+
+class AltDisplayFormatter:
     "Used to display widgets correctly. Use self.reset() contextmanager to disable for your desired display."
     _ip = get_ipython()
     _ipy_format = _ip.display_formatter.format if _ip else None
@@ -616,8 +631,8 @@ class AltDispalyFormatter:
                 self._ip.display_formatter.format = self.format
         
 
-altformatter = AltDispalyFormatter() # keep reference for being live
-del AltDispalyFormatter # Only one
+altformatter = AltDisplayFormatter() # keep reference for being live
+del AltDisplayFormatter # Only one
 
 
 pprinter = PrettyPrinter(indent=2,depth=5,compact=True)

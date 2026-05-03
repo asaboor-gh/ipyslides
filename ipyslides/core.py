@@ -11,7 +11,8 @@ from IPython.display import display, clear_output
 
 from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars, _stream_chunks
 from .writer import hold, write, group
-from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim
+from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim, slidebound
+from . import formatters
 from . import utils
 from . import dashlab
 
@@ -74,6 +75,8 @@ class Singleton(type):
         else: # reset these settings on previous instance on every call
             xmd.extensions.extend(extensions) 
             cls._instance.settings(**settings)
+        
+        formatters._slides_singleton = cls._instance # internal use
         return cls._instance
 
 
@@ -438,13 +441,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             css_class = "link-button jupyter-button draw-button"
         )
 
-    def verify_running(self, error_msg=""):
-        "Verify if slide is being built, otherwise raise error."
-        if self.this is None:
-            raise RuntimeError(
-                error_msg or "This operation is only allowed under slide constructor."
-            )
-
     def _add_clean_title(self):
         with _build_slide(self, 0):
             self.stack([
@@ -482,8 +478,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.refresh() # Reset internal structures
         self._next_number = self[-1].number + 1 if self._slides_dict else 0 # reset next number
 
+    @slidebound("Citations")
     def _cite(self, keys):
-        self.verify_running("Citations can be added only inside a slide constructor!")
         citeds = [self._cite_key(key.strip()) for key in keys.split(',')] # avoid whitespaces around key
         return '<sup>,</sup>'.join(citeds) 
 
@@ -585,13 +581,13 @@ class Slides(BaseSlides,metaclass=Singleton):
         "SlideGroup of all slides built from markdown. See also `cited_slides`."
         return SlideGroup([s for s in self._iterable if s._markdown])
 
+    
+    @slidebound("Section")
     def section(self, text):
         """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
         Sections can be written as table of contents.
         Use `extra:` prefix (e.g. `section\`extra:Backup\``) to start supplemental slides.
         """
-        self.verify_running("Sections can be added only inside a slide constructor!")
-
         sec_text = str(text).strip()
         is_extra = False
         # `section`extra:...`` marks the start of supplemental slides.
@@ -611,19 +607,19 @@ class Slides(BaseSlides,metaclass=Singleton):
             if s._toc_args and s != self.this: 
                 s.update_display()
  
+    @slidebound
     def toc(self, title='## Contents {.align-left}', highlight = False):
         """You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` 
         or toc[True]`title`."""
-        self.verify_running("toc can only be added under slides constructor!")
         self.this._toc_args = (title, highlight)
         display(self.this._reset_toc()) # Must to have metadata there
     
+    @slidebound
     def refs(self, ncol=None, *keys):
         r"""Return XTML or None for references with all keys or a subset of keys which were used without `!` at end.
         Unused keys from all calls to this function will be added at end of slide automatically. 
         References are set in `Slides.set_citations`. In markdown, use refs\`ncol\` syntax.
         """
-        self.verify_running("refs can only be added under slides constructor!")
         objs = self.this._citations.values() if not keys else [v for k,v in self.this._citations.items() if k in keys]
         for obj in objs:
             obj._used = True  # mark as used to track unused ones

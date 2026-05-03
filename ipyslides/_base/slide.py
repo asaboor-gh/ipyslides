@@ -13,7 +13,7 @@ from ._layout import background_css, get_unique_css_class, loading_skeleton
 from .styles import collapse_node, hide_node
 from ..utils import XTML, html, _styled_css, _build_css
 from ..xmd import capture_content
-from ..formatters import _Output, widget_from_data
+from ..formatters import _Output, widget_from_data, slidebound
 
 class Vars:
     """Container for markdown slide variables, to see and update variables
@@ -723,10 +723,10 @@ class Slide:
         with out:
             display(*self.contents)
         return display(out)
-        
+    
+    @slidebound
     def yoffset(self, value):
         "Set yoffset (in percent) for frames to have equal height in incremental content. Set global yoffset in layout settings."
-        self._app.verify_running("yoffset can only be used inside slide constructor!")
         if (not isinstance(value, int)) or (value not in range(101)): 
             raise ValueError("yoffset value should be integer in units of percent betweem [0,100]!")
         

@@ -3,7 +3,7 @@ import os, re, textwrap
 import traceback
 import inspect
 from pathlib import Path
-from contextlib import ContextDecorator, contextmanager
+from contextlib import ContextDecorator
 
 from IPython.display import display
 
@@ -14,7 +14,7 @@ from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
 from .slide import SlideGroup, _build_slide
-from ..formatters import XTML, htmlize
+from ..formatters import XTML, htmlize, slidebound
 from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_as_snapshots, _stream_chunks
 from ..utils import _css_docstring
 
@@ -79,6 +79,7 @@ class BaseSlides:
         else:
             self.html('p', 'No source code found.', css_class='info')
 
+    @slidebound("on_load decorator")
     def on_load(self, func):
         """
         Decorator for running a `func(slide)` when slide is loaded into view.
@@ -91,7 +92,15 @@ class BaseSlides:
             - If you use this to change global state of slides, return a clean up function which accepts slide as argument.
             - This can be used only single time per slide, overwriting previous function.
         """
-        self.verify_running('on_load decorator can only be used inside slide constructor!')
+        # inside BaseSlides.on_load, before self.this._on_load_private(func)
+        uw_func = inspect.unwrap(func)
+
+        if inspect.isgeneratorfunction(uw_func):
+            raise TypeError("@on_load does not support generator functions.")
+
+        if len(inspect.signature(uw_func).parameters) != 1:
+            raise ValueError("@on_load callback must accept exactly one argument: slide.")
+        
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
         
     def _from_markdown(self, start, /, content, synced=False, _vars=None):
@@ -378,52 +387,74 @@ class BaseSlides:
           
         @self.build(-1)
         def _(s):
-            self.PAGE()
-            self.write('# Main App')
-            self.doc(Slides).display()
+            grp = self.group(snapshots=True) # display separately as snaphots
+            grp.append(['# Main App', self.doc(Slides)])
             
-            self.PAGE()
-            self.write('# Jump between slides')
-            self.doc(self.link, 'Slides').display()
-            with self.code.context(returns=True) as c:
-                skipper.origin.display() # skipper.target is set later somewhere, can do backward jump too
-            c.display()
+            with grp.capture(): # displayed stuff need to be captured
+                self.write('# Jump between slides')
+                self.doc(self.link, 'Slides').display()
+                with self.code.context(returns=True) as c:
+                    skipper.origin.display() # skipper.target is set later somewhere, can do backward jump too
+                c.display()
         
-            self.PAGE()
-            self.write('## Adding Slides section`Adding Slides and Content`')
-            self.write('Besides function below, you can add slides with `%%slide number [-m]` magic as well.\n{.note .info}')
-            self.write([self.doc(self.build,'Slides'), self.doc(self.sync_with_file,'Slides')])
+            grp.append([
+                '## Adding Slides section`Adding Slides and Content`',
+                'Besides function below, you can add slides with `%%slide number [-m]` magic as well.\n{.note .info}',
+                self.doc(self.build,'Slides'), 
+                self.doc(self.sync_with_file,'Slides'),
+            ])
         
-            self.PAGE()
-            self.write('''
-                ## Important Methods on Slide
-                ::: note-warning
-                    - Use slide handle or `Slides[number,]` to apply these methods becuase index can change on new builds.
-                    - Use `Slides[start:stop:step]` to apply operations on many slides at once such as code`Slides[2:5].vars.update(...)`.
-            ''')
-            self.doc(self[0], members='yoffset vars set_animation update_display get_source show set_css'.split(), itself = False).display()
-            self.css_syntax.display()
+            with grp.capture():
+                self.write('''
+                    ## Important Methods on Slide
+                    ::: note-warning
+                        - Use slide handle or `Slides[number,]` to apply these methods becuase index can change on new builds.
+                        - Use `Slides[start:stop:step]` to apply operations on many slides at once such as code`Slides[2:5].vars.update(...)`.
+                ''')
+                self.doc(self[0], members='yoffset vars set_animation update_display get_source show set_css'.split(), itself = False).display()
+                self.css_syntax.display()
+            
+            self.pause() # incremental display on
+            self.write(grp)
         
         with self.build(-1): 
             self.xmd.syntax.display()
             
         @self.build(-1)
         def _(s):
-            self.PAGE()
-            self.write('## Adding Content')
-            self.write('Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.\n{.note .info}')
-            self.write(self.doc(self.write,'Slides'), [self.doc(self.xmd,'Slides'),self.doc(self.as_html,'Slides'),self.doc(self.as_html_widget,'Slides'),self.doc(self.html,'Slides')])
+            grp = self.group(snapshots=True) # display separately as snaphots
+            with grp.capture():
+                self.xmd('''
+                    ## Adding Content
+                    Besides functions below, you can add content to slides with `%%xmd`,`%xmd` as well.
+                    {.note .info}
+                ''')
+                self.write(
+                    self.doc(self.write,'Slides'), 
+                    [
+                        self.doc(self.xmd,'Slides'),
+                        self.doc(self.as_html,'Slides'),
+                        self.doc(self.as_html_widget,'Slides'),
+                        self.doc(self.html,'Slides')
+                    ]
+                )
         
-            self.PAGE()
-            self.write('## Adding Speaker Notes')
-            self.write([rf'styled["note success"]`You can use alert`notes\`notes content\`` in markdown.`',
-                       'This is experimental feature, and may not work as expected.\n{.note-error .error}'])
-            self.doc(self.notes,'Slides.notes', members = True, itself = False).display()
+            grp.append(['''
+                ## Adding Speaker Notes
+                styled["note success"]`You can use alert`notes\`notes content\`` in markdown.`'
+                ::: note-error error | This is experimental feature, and may not work as expected.
+                ''', # multiple objects appneded togther are shown togther in incremental display
+                self.doc(self.notes,'Slides.notes', members = True, itself = False)
+            ])
                    
-            self.PAGE()
-            self.write('## Displaying Source Code')
-            self.write('In markdown, the block `md-[before,after,var_name]` parses and displays source as well.')
-            self.doc(self.code,'Slides', members = True, itself = True).display()
+            grp.append([
+                '## Displaying Source Code',
+                'In markdown, the block `md-[before,after,var_name]` parses and displays source as well.',
+                self.doc(self.code,'Slides', members = True, itself = True)
+            ])
+            
+            self.pause() # incremental display on
+            self.write(grp)
         
         self.build(-1, r'section`//Layout and color["yellow","black"]`Theme` Settings//` toc`### Contents`')
         
