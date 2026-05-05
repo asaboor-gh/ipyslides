@@ -254,7 +254,7 @@ class BaseSlides:
         
         ::: note-tip
             - In all cases, `number` could be used as `-1`.
-            - Use yoffet`integer in percent` in markdown or code`Slides.this.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
+            - Use yoffet`integer in percent` in markdown or code`Slides.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
             - You can use code`build_(...)` (with underscore at end) in python file instead of code`build(-1,...)`.
             - `**vars` are ignored silently if `build` is used as contextmanager or decorator.
         """

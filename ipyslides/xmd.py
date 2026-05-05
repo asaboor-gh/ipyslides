@@ -77,6 +77,7 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "focus": "focus on a node of html when clicked or used ::: focus-self/focus-child blocks",
     "center": r"text or \%{variable} or use ::: center, ::: align-center blocks", # should after most of the functions
     "stack": r"text separated by || in inline mode, or use ::: columns/::: group block",
+    "yoffset": "integer in percent, use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
 }
 
 def error(name, msg):
@@ -135,14 +136,6 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     for match in all_matches:
         slide_instance.notes.insert(match)
         text_chunk = text_chunk.replace(f"notes`{match}`", "", 1)
-
-    # yoffset`interger in pixels`
-    all_matches = re.findall(r"yoffset\`(\d+)\`", text_chunk, flags= re.MULTILINE)
-    for i, match in enumerate(all_matches, start=1):
-        text_chunk = text_chunk.replace(f"yoffset`{match}`", "", 1)
-        
-        if i == len(all_matches): # only last one to take effect
-            slide_instance.this.yoffset(int(match))
     
     # @key! for inline citations even in footnote mode, do before others
     text_chunk = re.sub(r"@(?:[A-Za-z_]\w*)!", lambda m: slide_instance._nocite(m.group()[1:-1]), text_chunk)
@@ -945,7 +938,7 @@ class XMarkdown(Markdown):
                 func, args, content = m.groups()
                 _func = getattr(utils, func)
                 arg0 = char_esc.restore(content, True) if func == "code" else content.strip() # hl needs corrected content
-    
+                
                 if not args:
                     try:
                         _out = (_func(arg0) if arg0 else _func())

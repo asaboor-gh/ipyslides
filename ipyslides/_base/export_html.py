@@ -137,7 +137,7 @@ class _HhtmlExporter:
         if self.main.uid in dom_classes:
             css_classes.append(self.main.uid)
             
-        overall_css = ''.join(f'{s._overall_css}' for s in self.main[:1] if s._overall_css) # only one time
+        overall_css = ''.join(f'{type(s._specs).style}\n{s._yoffset_css(True)}' for s in self.main[:1] if type(s._specs).style) # only one time
         return doc_html(
             code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}',''), # remove id from code here
             style_css   = self.main.html('style', styles.style_css(**theme_kws, _root=True)).value + overall_css,
@@ -159,7 +159,7 @@ class _HhtmlExporter:
     
     def _get_css(self, slide, sec_uid):
         "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, FooterBox → Footer"
-        return (f'{slide._css}').replace( # xtml or str, runtime for colors per slide
+        return (f'{slide._specs.style}\n{slide._yoffset_css(False)}').replace( # xtml or str, runtime for colors per slide
             f".{self.main.uid}.SlidesWrapper", f"#{sec_uid}").replace(
             f".{self.main.uid}", f"#{sec_uid}").replace(
             "ShowSlide", "SlideArea").replace( # ShowSlide is used for runtime display but here it is SlideArea in export

@@ -506,8 +506,7 @@ def style_css(colors, fonts, layout, _root = False):
             'padding-bottom': 'var(--paddingBottom, 23px) !important',
             'overflow': 'hidden !important', # important to avoid scroll of slide area, output area will handle it
             'display': 'grid !important', # can use align-content with block, but its came in 2024, so avoid new stuff
-            'align-items': 'center !important' if layout.centered and layout.yoffset is None else 'start !important', # yoffset will essentially override centering, align-content clips top, but items don't
-            'padding-top': f'calc({layout.yoffset}% + 8px) !important' if layout.yoffset is not None else '8px !important', 
+            'align-items': 'center !important' if layout.centered else 'start !important',
             '> .jp-OutputArea': {
                 'position': 'static !important', # absolute content should be relative to SlideArea
                 'padding': '0 !important',

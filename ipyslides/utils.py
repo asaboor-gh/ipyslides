@@ -1,6 +1,6 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'code', 'fa', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
-    'focus','html', 'sig','stack', 'styled', 'doc','today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook']
+    'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset']
 
 __all__ = sorted(_attrs)
 
@@ -20,14 +20,16 @@ from PIL import Image as pilImage, ImageGrab
 from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.display import Image, display
+from tomlkit import value
 from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from dashlab.utils import _build_css # This is very light weight and too important dependency
 
 from ._base.icons import Icon as icon # for export and overrides in fa function
-from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption
+from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption, slidebound, slidesready
 from .xmd import get_unique_css_class, capture_content, raw, error, warn
 from .source import code
 from .writer import _style_for_widget
+from ._base.styles import animations
 
 
 def is_jupyter_session():
@@ -365,6 +367,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
         metadata["style"] = _styled_css({f'.fig-{id(data)}': css_props}).value
     return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
 
+@slidebound
 def bg(src=None, opacity=1, filter=None, contain=False):
     """Set background image for the current slide.
 
@@ -373,16 +376,77 @@ def bg(src=None, opacity=1, filter=None, contain=False):
     if isinstance(src, str) and src.strip().lower() in ('none', 'null'):
         src = None
 
-    slides = get_slides_instance()
-    if not (slides and slides.this):
-        return error('RuntimeError', "bg`...` can only be used while building slide content.")
-
     if not isinstance(contain, bool):
         raise TypeError(f"contain expects bool (True/False), got {type(contain).__name__}: {contain!r}")
 
-    slides.this._set_bg_ikws(src=src, opacity=opacity, filter=filter,contain=contain)
-    return ''
+    get_slides_instance().this._set_bg_ikws(
+        src=src, opacity=opacity, filter=filter,contain=contain
+    )
 
+def _rselove_targets(applyto):
+    slides = get_slides_instance()
+    if applyto is None and not slides.this:
+        raise ValueError("applyto cannot be None when not under a slide builder, as there is no current slide to apply to!")
+    
+    if applyto is None:
+        return slides.this, [slides.this._specs]
+    elif applyto == 'all':
+        return slides._current or slides[0], [type(s._specs) for s in slides[:1]] # gloabal setup
+    else:
+        if isinstance(applyto, int):
+            applyto = [applyto]
+        selected = slides[applyto] # by indexer they created with
+        if not selected:
+            raise ValueError(f"No slides selected with applyto={applyto!r}")
+        return selected[0], [s._specs for s  in selected] 
+
+@slidesready
+def transition(name:str, applyto=None):
+    """Set transition animation for the current slide or slides selected by `applyto`. 
+    Use `Slides.css_animations` for available animations and details.
+    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
+    if 'all', it applies to all slides, otherwise it should be index or list of indices of slides to apply animation to.
+    """
+    if name and not name in animations:
+        raise ValueError(f"Transition {name!r} is not defined, available transitions are: {list(animations.keys())}")
+    slide, spec_targets = _rselove_targets(applyto)
+    for spec in spec_targets:
+        spec.anim = name
+    slide._view_transition()
+    
+@slidesready
+def yoffset(value:int, applyto=None):
+    """Set vertical offset for the current slide or slides selected by `applyto`. 
+    Value should be an integer between 0 and 100, representing percentage of slide height.
+    """
+    if isinstance(value, str): # from markdown
+        if value.strip().isdigit(): 
+            value = int(value.strip())
+        else:
+            value = None # gracefully handle non-integers
+    
+    if value and value not in range(101): # handle None itself
+        raise ValueError("yoffset value should be integer in units of percent betweem [0,100]!")
+        
+    slide, spec_targets = _rselove_targets(applyto)
+    for spec in spec_targets:
+        spec.yoffset = value
+    slide._mount_user_css()
+
+@slidesready
+def style(props, applyto=None, **theme_colors):
+    # NOTE: Needs work on this, since it can set gloabl colors too, in class with theme colors
+    # if theme_colors or this is not None:
+    #         self._specs.style = self._fix_css(this, theme_colors, this_slide=True) # theme colors for this slide only
+    #         self._set_alt_print() # update alternate print content, we still need to dynamicallly set css for animations etc to work
+    #     if overall is not None: # Avoid accidental re-write of overall CSS
+    #         type(self._specs).style = self._fix_css(overall, {}, this_slide=False) # no theme colors for overall CSS, set on class
+    #     self._mount_user_css() # update user CSS to even clear old overall CSS if needed
+    #     # See effect of changes
+    #     if not self._app.this: # Otherwise it has side effects
+    #         self._app.navigate_to(self.index) # Go 
+    pass
+            
 def _crop_svg(node, bbox):
     _verify_bbox(bbox) # left, top, right, bottom in 0-1 range
 

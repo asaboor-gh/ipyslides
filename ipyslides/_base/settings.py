@@ -199,9 +199,8 @@ class Footer(ConfigTraits):
 
 @fix_sig
 class Layout(ConfigTraits):
-    "Set layout of slides. yoffset is in percent of slide height and if None, it disables vertical centering but text alignment is preserved."
+    "Set overall layout of slides."
     centered = Bool(True)
-    yoffset  = Int(None, allow_none=True, help='globally set yoffset to a value in percent')
     scroll   = Bool(True)
     width    = Int(100)
     aspect   = Float(16/9.001, help="Aspect ratio of slides, width/height. Add a small value to avoid exact 16/9, 16/10 etc. which causes bottom border gap in some browsers.")
@@ -210,10 +209,10 @@ class Layout(ConfigTraits):
     _reflow = False # internal use only
     _inotes = False # internal use only
     
-    @traitlets.validate('width','yoffset')
+    @traitlets.validate('width')
     def _limit_width(self, proposal):
         if not proposal["value"] in range(101):
-            raise ValueError("width/yoffset should in range [0,100]")
+            raise ValueError("width should in range [0,100]")
         return proposal["value"]
   
     def _apply_change(self, change):

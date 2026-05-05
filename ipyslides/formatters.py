@@ -598,6 +598,16 @@ def slidebound(fname=None):
         return decorate(func)
     return decorate      # used as @slidebound(...) or @slidebound()
 
+def slidesready(func):
+    "Decorator to make sure a function is only used after slides is initialized and at least one slide exists."
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        slides = get_slides_instance()
+        if slides is None or not slides[:1]:
+            raise RuntimeError(f"{func.__name__} can only be used after slides is initialized.")
+        return func(*args, **kwargs)
+    return wrapper
+
 class AltDisplayFormatter:
     "Used to display widgets correctly. Use self.reset() contextmanager to disable for your desired display."
     _ip = get_ipython()

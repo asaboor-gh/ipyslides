@@ -77,19 +77,38 @@ class Vars:
             s._md_vars.clear()
             s._rebuild(True if len(self._slides) == 1 else False) # go there only if single slide
 
+
+class Specs:
+    """Slide configuration specs, can be set as content under slide or outside.
+    Should not reset on slide build."""
+    yoffset: int = None
+    anim: str = None
+    enim: str = None # page animation, will be removed
+    style = ''
+    
+    def __getattr__(self, name):
+        # Return None if not set on instance, but has in class
+        if name in dir(type(self)):
+            return None 
+        raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
+
+    def __setattr__(self, name, value):
+        # Only allow setting attributes that are defined in class, to avoid typos and unintended attributes
+        if not name.startswith('_') and not hasattr(type(self), name):
+            raise AttributeError(f"Can't set undefined attribute {name!r} on {type(self).__name__!r}")
+        super().__setattr__(name, value)
+    
+
 class Slide:
     "Slide object, should not be instantiated directly by user."
-    _animations = {'main':'slide_h','page':'appear'}
-    _overall_css = ''
     def __init__(self, app, number):
         self._widget = _Output(layout = dict(margin='auto',padding='8px', visibility='hidden')).add_class("SlideArea")
         self._app = app
-            
-        self._css = ''
+        
+        self._specs = Specs() # instance specs that are persistent accross builds 
         self._bg_ikws = {} # per-slide background image keywords
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
-        self._animation = None
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
         self._md_vars = {} # store variables set by build/rebuild on this slide
         self._esc_vars = {} # store escaped variables for rebuilds form build content
@@ -726,16 +745,20 @@ class Slide:
     
     @slidebound
     def yoffset(self, value):
-        "Set yoffset (in percent) for frames to have equal height in incremental content. Set global yoffset in layout settings."
-        if (not isinstance(value, int)) or (value not in range(101)): 
-            raise ValueError("yoffset value should be integer in units of percent betweem [0,100]!")
+        "Use Slides.yoffset inseatd, this will be deprecated soon."
+        self._app.yoffset(value) # this slide will be picked automatically. NEED DEPRECATION
+    
+    def _yoffset_css(self, shared=False):
+        yoffset = type(self._specs).yoffset if shared else self._specs.yoffset
+        if not isinstance(yoffset, int): return '' # no yoffset CSS if not set or '' from markdown
         
-        self._app.html('style', 
-            f'''.SlideArea.n{self.number}.n{self.number} {{
+        selector = '.SlideArea' + ('' if shared else f'.n{self.number}.n{self.number}') 
+        return self._app.html('style', 
+            f'''.{self._app.uid} {selector} {{
                 align-items: start !important;
-                padding-top: calc({value}% + 8px) !important;
+                padding-top: calc({yoffset}% + 8px) !important;
             }}''' # yoffset by padding top, align-content:start is important to take effect
-        ).display() 
+        )
         
     @property
     def notes(self): return self._notes
@@ -746,7 +769,7 @@ class Slide:
     @property
     def css(self):
         "Returns CSS for this slide including overall CSS. Used while navigating to this slide."
-        return XTML(f'{self._overall_css}\n{self._css}') # Add overall CSS but self._css should override it
+        return XTML(f'{type(self._specs).style}\n{self._specs.style}') # Add overall CSS but self one should override it
 
     def _update_transition_objs(self, animation=True):
         "Update objects that need to be re-displayed for transition to work properly, such as animation style changes at naviagtion time."
@@ -779,8 +802,12 @@ class Slide:
     
     @property
     def animation(self):
-        key = 'page' if self._fidxs else 'main'
-        return html('style', self._animation or self._animations[key])
+        overall = type(self._specs).enim if self._fidxs else type(self._specs).anim
+        return html('style', 
+            styles.animations.get(self._specs.anim or overall, '').replace(
+                '.SlideBox',f'.{self._app.uid} .SlideBox'
+            )
+        )
     
     @property
     def contents(self):
@@ -847,7 +874,7 @@ class Slide:
     
     def _set_alt_print(self):
         self._alt_print.value = '' # reset first to recieve new content
-        alt = f'{self._css}' # XTML or str
+        alt = f'{self._specs.style}' # XTML or str
         selector = get_unique_css_class()
         ikws = self._bg_ikws if isinstance(getattr(self, '_bg_ikws', None), dict) else {}
         if ikws:
@@ -856,13 +883,11 @@ class Slide:
 
     def _mount_user_css(self):
         "Update persistent user CSS mount from slide-managed CSS state."
-        if not hasattr(self._app.widgets, 'htmls'):
-            return
-
         css_text = lambda value: getattr(value, 'value', value) if value else ''
-        overall_css = css_text(self.__class__._overall_css)
+        overall_css = css_text(type(self._specs).style) + css_text(self._yoffset_css(shared=True)) # overall CSS includes shared yoffset CSS if any
         slides_css = '\n'.join(
-            css_text(s._css) for s in getattr(self._app, '_iterable', ()) if getattr(s, '_css', '')
+            css_text(s._specs.style) + css_text(s._yoffset_css()) 
+            for s in self._app[:]
         )
         self._app.widgets.htmls.usercss.value = '\n'.join(x for x in (overall_css, slides_css) if x)
     
@@ -882,10 +907,10 @@ class Slide:
             - Avoid gradient colors for other than `bg1`, as it will be ignored in most places and may lead to bad styling.
         """
         if theme_colors or this is not None:
-            self._css = self._fix_css(this, theme_colors, this_slide=True) # theme colors for this slide only
+            self._specs.style = self._fix_css(this, theme_colors, this_slide=True) # theme colors for this slide only
             self._set_alt_print() # update alternate print content, we still need to dynamicallly set css for animations etc to work
         if overall is not None: # Avoid accidental re-write of overall CSS
-            self.__class__._overall_css = self._fix_css(overall, {}, this_slide=False) # no theme colors for overall CSS
+            type(self._specs).style = self._fix_css(overall, {}, this_slide=False) # no theme colors for overall CSS, set on class
         self._mount_user_css() # update user CSS to even clear old overall CSS if needed
         # See effect of changes
         if not self._app.this: # Otherwise it has side effects
@@ -942,25 +967,25 @@ class Slide:
             </div>'''
         return ''
     
-    def _instance_animation(self,name):
-        if not (name in styles.animations):
-            raise KeyError(f'animation {name!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
-        return styles.animations[name].replace('.SlideBox',f'.{self._app.uid} .SlideBox')
-            
+     
     def set_animation(self, this=None, main = None, page = None):
-        """Set animation of this slide. Provide None if need to stop animation. 
-        Use `main` and `page` to set animation to all slides and pages.
-        For parts and general content animations, see `Slides.css_animations` for details which are more flexible.
-        """
-        self.__class__._animations['main'] = '' if main is None else self._instance_animation(main)
-        self.__class__._animations['page'] = '' if page is None else self._instance_animation(page)
-        self._animation = '' if this is None else self._instance_animation(this)
-        # See effect of changes
+        """Use Slides.transition instead. This will be deprecated soon."""
+        for name in (this, main, page):
+            if name and not name in styles.animations:
+                raise KeyError(f'animation {name!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
+        
+        type(self._specs).anim = main
+        type(self._specs).enim = page
+        self._specs.anim = this
+        self._view_transition()# See effect of changes
+    
+    def _view_transition(self):
         if not self._app.this: # Otherwise it has side effects
             if self._app._current is self:
                 self._update_transition_objs() # force refresh
             else:
                 self._app.navigate_to(self.index) # Go there to see effects
+    
     
     def _waiting_contents(self, info="Updating Slides ..."):
         """DO NOT TRY TO BE SMART HERE! Jupyter Handshake Delay is real!
