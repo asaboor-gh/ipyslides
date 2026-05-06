@@ -78,6 +78,8 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "center": r"text or \%{variable} or use ::: center, ::: align-center blocks", # should after most of the functions
     "stack": r"text separated by || in inline mode, or use ::: columns/::: group block",
     "yoffset": "integer in percent, use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
+    "transition": "slides transition such as zoom, fade etc. Use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
+    "css": "css properties for current slide, use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
 }
 
 def error(name, msg):

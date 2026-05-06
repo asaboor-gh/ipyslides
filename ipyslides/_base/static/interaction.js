@@ -512,12 +512,14 @@ function handleMessage(model, msg, box) {
             if (!elem) return; // safety check
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => { // Double RAF ensures layout is complete
-                    elem.querySelectorAll(':scope [class*="anim-"]:not(._ips-content-animated), :scope .anim-group > *:not(._ips-content-animated)').forEach(el => {
+                    elem.querySelectorAll(
+                        ':scope [class*="anim-"]:not(.anim-group):not(._ips-content-animated), ' +
+                        ':scope .anim-group > *:not(.jp-OutputArea):not(._ips-content-animated), ' +
+                        ':scope .anim-group > .jp-OutputArea > .jp-OutputArea-child:not(._ips-content-animated)'
+                    ).forEach(el => {
                         const style = window.getComputedStyle(el);
                         if (style.display !== 'none' && style.visibility !== 'hidden') {
-                            if (!el.classList.contains("anim-group")) {
-                                el.classList.add('_ips-content-animated'); // triggers animation
-                            } // anim-group itself should not be animated
+                            el.classList.add('_ips-content-animated'); // triggers animation
                         }
                     });
                 });

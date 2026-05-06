@@ -70,7 +70,7 @@ def demo_slides(slides):
     def _(sl):
         slides.write('## Plotting with Matplotlib section`Plotting and DataFrame`')
         with slides.code.context(returns = True) as s:
-            sl.set_css(bg1 = 'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')
+            slides.css(bg1 = 'linear-gradient(to right, #FFDAB9 0%, #F0E68C 100%)')
 
             import numpy as np, matplotlib.pyplot as plt
             plt.rcParams['svg.fonttype'] = 'none' # Global setting, enforce same fonts as presentation
@@ -123,7 +123,7 @@ def demo_slides(slides):
         y = np.random.random((10,))
         _sort = np.argsort(y)
 
-        plot_theme = 'dark_background' if 'Dark' in slides.settings.theme.value else 'default'
+        plot_theme = 'dark_background' if 'Dark' in slides.settings.layout.theme else 'default'
         with plt.style.context(plot_theme):        
             fig,ax = plt.subplots(figsize=(3.4,2.6))
             ax.barh(x,y[_sort],height=0.07,color = plt.colormaps['plasma'](x[_sort]))

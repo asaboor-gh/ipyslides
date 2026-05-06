@@ -59,27 +59,6 @@ def fix_sig(cls):
     return cls
 
 @fix_sig
-class Colors(ConfigTraits):
-    "Set theme colors if theme is set to Custom. Each name will be changed to a CSS vairiable as --[name]-color"
-    fg1 = Unicode('black')
-    fg2 = Unicode('#454545')
-    fg3 = Unicode('#00004d')
-    bg1 = Unicode('white')
-    bg2 = Unicode('whitesmoke')
-    bg3 = Unicode('#e8e8e8')
-    accent  = Unicode('#005090')
-    pointer = Unicode('red')
-
-    def _apply_change(self, change): 
-        if getattr(self.main.theme, '_initiated', False):
-            self.main.theme.value = "Custom"  
-            # switch to custom automatically if colors changed only after theme initiated, 
-            # otherwise it jumps to custom on first init
-            
-        if change and self.main._widgets.theme.value == "Custom":  # Trigger theme update only if custom
-            self.main._update_theme({'owner':self.main._widgets.theme}) # This chnage is important to update layout theme as well
-
-@fix_sig
 class StylePerTheme(ConfigTraits):
     "Pygment code block style for each theme. You mostly need to change for custom and inherit theme."
     jupyter = Unicode('default')
@@ -115,30 +94,6 @@ class Code(ConfigTraits):
         kwargs = {k:v for k,v in self.props.items() if k != 'style_per_theme'}
         kwargs['style'] = getattr(self.style_per_theme, self.main._widgets.theme.value.lower().replace(' ','_'))
         self.main._widgets.htmls.hilite.value = code_css(**kwargs)
-
-@fix_sig
-class Theme(ConfigTraits):
-    "Set theme value. colors and code have their own nested traits."
-    value  = Unicode('Jupyter')
-    colors = InstanceDict(Colors)
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._initiated = True # need this to not apply colors on first init
-
-    def _apply_change(self, change):
-        if change and change['owner'] == "colors":
-            self.value = "Custom"  # switch to custom automatically if colors changed
-            
-        self.main._update_theme({'owner':self.main._widgets.theme}) # otherwise colors don't apply
-
-    @traitlets.validate('value')
-    def _value(self, proposal):
-        themes = self.main._widgets.theme.options
-        if proposal["value"] not in themes:
-            raise ValueError(f"Theme value expect on the followings: {themes!r}")
-        self.main._widgets.theme.value = proposal["value"] # needs a robust update
-        return proposal["value"]  
 
 @fix_sig
 class Fonts(ConfigTraits):
@@ -205,6 +160,7 @@ class Layout(ConfigTraits):
     width    = Int(100)
     aspect   = Float(16/9.001, help="Aspect ratio of slides, width/height. Add a small value to avoid exact 16/9, 16/10 etc. which causes bottom border gap in some browsers.")
     ncol_refs = Int(2)
+    theme    = Unicode('Jupyter')
 
     _reflow = False # internal use only
     _inotes = False # internal use only
@@ -216,7 +172,17 @@ class Layout(ConfigTraits):
         return proposal["value"]
   
     def _apply_change(self, change):
+        if change and change['owner'] == "theme":
+            return self.main._update_theme({'owner':'layout'}) # otherwise colors don't apply to icons
         self.main._update_size(change = None) # will reset theme and send RESCALE message
+    
+    @traitlets.validate('theme')
+    def _validate_theme(self, proposal):
+        themes = self.main._widgets.theme.options
+        if proposal["value"] not in themes:
+            raise ValueError(f"Theme value expect on the followings: {themes!r}")
+        self.main._widgets.theme.value = proposal["value"] # needs a robust update
+        return proposal["value"] 
 
 @fix_sig
 class Toggle(ConfigTraits):
@@ -295,7 +261,6 @@ class Settings:
         self._widgets = _instanceWidgets
         self.__class__._instance = self # After _widgets, _slides to enable access
         self.code   = Code()
-        self.theme  = Theme() # Don't set colors yet
         self.fonts  = Fonts()
         self.footer = Footer()
         self.layout = Layout()
@@ -305,7 +270,7 @@ class Settings:
         self._wslider = self._widgets.sliders.width # Used in multiple places
 
         self._widgets.sliders.fontsize.observe(lambda c: self.fonts(size=c.new), names=["value"])
-        self._widgets.theme.observe(lambda c: self.theme(value=c.new), names=["value"])
+        self._widgets.theme.observe(self._update_theme, names=["value"])
         self._widgets.checks.reflow.observe(self._update_theme, names=["value"]) # set reflow through layout._reflow
         self._widgets.checks.inotes.observe(self._update_theme, names=["value"]) # set inline notes through layout._inotes
         self._widgets.checks.merge.observe(self._set_merge_class, names=["value"])
@@ -402,8 +367,6 @@ class Settings:
 
     @property
     def _colors(self):
-        if self._widgets.theme.value == "Custom" and hasattr(self, 'theme'): # May not be there yet
-            return self.theme.colors.props
         return styles.theme_colors[self._widgets.theme.value]
 
     @property

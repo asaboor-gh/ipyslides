@@ -370,7 +370,7 @@ Variable | Default | Description
 
 **Custom Keyframes**
 ```md-after
-// Define @keyframes in Slides.set_css(...) or any slide/global CSS first.
+// Define @keyframes in Slides.css(...) or in a notebook cell.
 ::: block anim-kf --kf-name=pulsePop --kf-time=900ms --kf-ease=ease-out
     Plays user-defined @keyframes pulsePop with nav/parts animation lifecycle.
 ```

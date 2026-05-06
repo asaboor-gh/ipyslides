@@ -173,9 +173,9 @@ Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML
 
 - **Custom Styling:**
 ```python
-slides.set_css({ # on all slides or slide[index,].set_css() per slide
+slides.css({
     'p': {'font-size':'1.2em', 'line-height':'1.5em'}, # relaxed paragraph
-}, bg1 = '#f0f0f0') # set theme color on this slide
+}, applyto=1, bg1 = '#f0f0f0') # set theme color on slide 1, or 'all' or list of slides
 ```
 
 

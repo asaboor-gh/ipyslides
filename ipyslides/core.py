@@ -112,7 +112,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - `Slides` can be indexed same way as list for sorted final indices. 
         - For indexing slides with given number, use comma as code`Slides[number,] → Slide` 
         - Access many via list as code`Slides[[n1,n2,..]] → SlideGroup` or slice as code`Slides[start:stop:step] → SlideGroup`.
-        - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')` or code`Slides[2:5].set_css(...)`.
+        - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')`.
         - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
           code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
         - Use code`section\`extra:Backup slides\`` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.

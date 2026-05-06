@@ -1,6 +1,6 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'code', 'fa', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
-    'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset']
+    'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css']
 
 __all__ = sorted(_attrs)
 
@@ -163,7 +163,7 @@ _css_docstring = htmlize(textwrap.dedent(_build_css.__doc__) + f"""
 ```python
 props = {json.dumps(_example_props, indent=2)}
 ```
-Output of code`html('style',props)`, code`set_css(props)` etc. functions. Top selector would be different based on where it is called.
+Output of code`Slides.html('style',props)`, code`Slides.css(props)` etc. functions. Top selector would be different based on where it is called.
 """) + code(_styled_css(_example_props).value, "css","CSS").value
 
 def _alt_for_widget(func, widget):
@@ -390,7 +390,7 @@ def _rselove_targets(applyto):
     
     if applyto is None:
         return slides.this, [slides.this._specs]
-    elif applyto == 'all':
+    elif isinstance(applyto, str) and applyto.lower() == 'all':
         return slides._current or slides[0], [type(s._specs) for s in slides[:1]] # gloabal setup
     else:
         if isinstance(applyto, int):
@@ -403,7 +403,6 @@ def _rselove_targets(applyto):
 @slidesready
 def transition(name:str, applyto=None):
     """Set transition animation for the current slide or slides selected by `applyto`. 
-    Use `Slides.css_animations` for available animations and details.
     Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides to apply animation to.
     """
@@ -418,6 +417,9 @@ def transition(name:str, applyto=None):
 def yoffset(value:int, applyto=None):
     """Set vertical offset for the current slide or slides selected by `applyto`. 
     Value should be an integer between 0 and 100, representing percentage of slide height.
+    
+    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
+    if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
     """
     if isinstance(value, str): # from markdown
         if value.strip().isdigit(): 
@@ -434,18 +436,55 @@ def yoffset(value:int, applyto=None):
     slide._mount_user_css()
 
 @slidesready
-def style(props, applyto=None, **theme_colors):
-    # NOTE: Needs work on this, since it can set gloabl colors too, in class with theme colors
-    # if theme_colors or this is not None:
-    #         self._specs.style = self._fix_css(this, theme_colors, this_slide=True) # theme colors for this slide only
-    #         self._set_alt_print() # update alternate print content, we still need to dynamicallly set css for animations etc to work
-    #     if overall is not None: # Avoid accidental re-write of overall CSS
-    #         type(self._specs).style = self._fix_css(overall, {}, this_slide=False) # no theme colors for overall CSS, set on class
-    #     self._mount_user_css() # update user CSS to even clear old overall CSS if needed
-    #     # See effect of changes
-    #     if not self._app.this: # Otherwise it has side effects
-    #         self._app.navigate_to(self.index) # Go 
-    pass
+def css(props: dict=None, applyto=None, **css_vars):
+    """
+    Set CSS on current slide being built or slides selected by `applyto`. 
+    Reset by empty props and variables on slides slected by `applyto`.
+    
+    Under a slide builder (including markdown), if `applyto` is None, it applies to current slide, 
+    if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
+
+    ::: note-tip
+        - See code`Slides.css_syntax` for information on how to write CSS dictionary.
+        - Underscores in CSS property and variable names are replaced with dashes, so `font_size` becomes `font-size` and `my_var` becomes `--my-var`.
+        - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.
+        - You can define custom `@keyframes` in CSS and use them with `anim-kf` class by setting `--kf-name` and optional `--kf-*` controls.
+        - An empty selector `''` is allowed to directly inject CSS string, useful to read a local CSS file while files from web must be downloaded first.
+          Advanced CSS concepts like `@import`, `@layer` may not work as expected due to CSS scoping inside slides. Large files should be added to `overall` CSS only for performance reasons.
+        - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`. These apply to current selected theme.
+        - Avoid gradient colors for other than `bg1`, as it will be ignored in most places and may lead to bad styling.
+    """
+    if props is None: props = {} # for resetting css or independent css variables, we want to allow None as well
+    if isinstance(props, str) and props.strip(): # allow empty string for no props, but not other types of empty values
+        props = {'': props} # from markdown or direct css string
+    
+    if props and not isinstance(props, dict):
+        raise TypeError(f"style props should be a dict of CSS selectors and properties or css string, got {type(props)}") 
+    
+    for k,v in props.items():
+        sels = k.split(',') # can be multiple selectors
+        for s in sels:
+            if not s.strip() and len(sels) > 1: # single empty selector is allowed to directly inject CSS
+                raise KeyError(f"Empty CSS selector found in a compound selector {k!r}, perhaps due to extra comma?")
+            if '<' in s: # avoid extreme selector
+                raise KeyError(f"Trying to access top level with selector {s!r} in {k!r} is restricted!")
+    
+    _colors = ['fg1', 'fg2', 'fg3', 'bg1', 'bg2', 'bg3', 'accent', 'pointer'] 
+    _vars = {}      
+    for k,v in css_vars.items():
+        if not isinstance(v, str):
+            raise TypeError(f"CSS variable values should be strings, got {type(v)} for variable {k!r}")
+        key = (f'--{k}-color' if k in _colors else k).replace('_','-')
+        key = f'--{key}' if not key.startswith('--') else key # allow users to pass with or without --
+        _vars[key] = v
+    
+    slide, spec_targets = _rselove_targets(applyto)
+    for spec in spec_targets:
+        spec.cssprops = props
+        spec.cssvars  = _vars
+    
+    slide._mount_user_css()
+    
             
 def _crop_svg(node, bbox):
     _verify_bbox(bbox) # left, top, right, bottom in 0-1 range
@@ -600,7 +639,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
         if isinstance(children, dict):
             return _styled_css(children)
         elif isinstance(children, str): # This is need internally, no need to tell in docs/error
-            return XTML(f"<style>{children}</style>")
+            return XTML(f"<style>\n{children}\n</style>")
         else:
             raise TypeError(f"'style' tag requires dict with CSS, got {type(children)}")
     

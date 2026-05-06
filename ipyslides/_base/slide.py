@@ -82,9 +82,10 @@ class Specs:
     """Slide configuration specs, can be set as content under slide or outside.
     Should not reset on slide build."""
     yoffset: int = None
+    cssprops = None
+    cssvars = None
     anim: str = None
     enim: str = None # page animation, will be removed
-    style = ''
     
     def __getattr__(self, name):
         # Return None if not set on instance, but has in class
@@ -753,12 +754,31 @@ class Slide:
         if not isinstance(yoffset, int): return '' # no yoffset CSS if not set or '' from markdown
         
         selector = '.SlideArea' + ('' if shared else f'.n{self.number}.n{self.number}') 
-        return self._app.html('style', 
-            f'''.{self._app.uid} {selector} {{
+        return self._app.html('style', textwrap.dedent(f'''
+            .{self._app.uid} {selector} {{
                 align-items: start !important;
                 padding-top: calc({yoffset}% + 8px) !important;
-            }}''' # yoffset by padding top, align-content:start is important to take effect
-        )
+            }}''')) # yoffset by padding top, align-content:start is important to take effect
+    
+    def _style_css(self, shared=False):
+        props = type(self._specs).cssprops if shared else self._specs.cssprops
+        cvars = type(self._specs).cssvars if shared else self._specs.cssvars
+        if not any([props, cvars]):
+            return ''
+        
+        css = ''
+        suffix = f".n{self.number}" if not shared else ''
+        if cvars:
+            # Set CSS variables for theme colors at top level to be used when this slide will be shown
+            css += _build_css((f".{self._app.uid}.SlidesWrapper:has(.ShowSlide{suffix})",), cvars) 
+        
+        # Also, allow theme colors to be used directly per slide during print and export
+        props = {**(cvars or {}), '.jp-OutputArea-output': props} # wrap below output area to avoid messing layout, but colors need to be at Slide Level
+        if props:
+            klass = f".{self._app.uid}.SlidesWrapper .SlideArea{suffix}" # strong selector base
+            css += _build_css((klass,), props)
+        return self._app.html('style', css)
+
         
     @property
     def notes(self): return self._notes
@@ -769,7 +789,12 @@ class Slide:
     @property
     def css(self):
         "Returns CSS for this slide including overall CSS. Used while navigating to this slide."
-        return XTML(f'{type(self._specs).style}\n{self._specs.style}') # Add overall CSS but self one should override it
+        return XTML(textwrap.dedent(f"""
+            {self._yoffset_css(shared=True)}
+            {self._yoffset_css(shared=False)}
+            {self._style_css(shared=True)}
+            {self._style_css(shared=False)}
+        """))
 
     def _update_transition_objs(self, animation=True):
         "Update objects that need to be re-displayed for transition to work properly, such as animation style changes at naviagtion time."
@@ -829,52 +854,10 @@ class Slide:
         else:
             return self._app.code.cast('No source found!\n',language = 'markdown')
     
-    def _fix_css(self,props, colors, this_slide=False):
-        if props is None:
-            props = {} # may be colors only
-        
-        if not isinstance(props,dict):
-            raise TypeError(f"expects dict, got {type(props)}")
-        
-        for k,v in props.items():
-            sels = k.split(',') # can be multiple selectors
-            for s in sels:
-                if not s.strip() and len(sels) > 1: # single empty selector is allowed to directly inject CSS
-                    raise KeyError(f"Empty CSS selector found in a compound selector {k!r}, perhaps due to extra comma?")
-                if '<' in s: # avoid extreme selector
-                    raise KeyError(f"Trying to access top level with selector {s!r} in {k!r} is restricted!")
-        
-        _allowed = ['fg1', 'fg2', 'fg3', 'bg1', 'bg2', 'bg3', 'accent', 'pointer']
-        
-        for key, value in colors.items():
-            if key not in _allowed:
-                raise KeyError(f"Theme color key {key!r} not recognized. Allowed color keys are {_allowed}")
-            if not isinstance(value, str):
-                raise TypeError(f"Theme color value for key {key!r} should be str, got {type(value)}")
-        
-        if props:
-            props = {'.jp-OutputArea-output': props} # wrap below output area to avoid messing layout, but colors need to be at Slide Level
-        
-        css = ''    
-        if this_slide and colors: # do not modify while setting overall CSS or no colors
-            # Set CSS variables for theme colors at top level to be used when this slide will be shown. No need to set dynmaically at navigation time after this trick.
-            tcolors = {f'--{k}-color':v for k,v in colors.items()} # reset to new colors each time
-            css += _build_css((f".{self._app.uid}.SlidesWrapper:has(.ShowSlide.n{self.number})",), tcolors) 
-            # Also, allow theme colors to be used directly per slide during print and export
-            props = {**tcolors, **props} 
-        
-        if not props:
-            return ''
-        
-        klass = f".{self._app.uid}.SlidesWrapper .SlideArea" # strong selector base
-        if this_slide:
-            klass += f".n{self.number}"
-        css += _build_css((klass,), props)
-        return self._app.html('style', css)
-    
+
     def _set_alt_print(self):
         self._alt_print.value = '' # reset first to recieve new content
-        alt = f'{self._specs.style}' # XTML or str
+        alt = ''
         selector = get_unique_css_class()
         ikws = self._bg_ikws if isinstance(getattr(self, '_bg_ikws', None), dict) else {}
         if ikws:
@@ -884,37 +867,22 @@ class Slide:
     def _mount_user_css(self):
         "Update persistent user CSS mount from slide-managed CSS state."
         css_text = lambda value: getattr(value, 'value', value) if value else ''
-        overall_css = css_text(type(self._specs).style) + css_text(self._yoffset_css(shared=True)) # overall CSS includes shared yoffset CSS if any
+        overall_css = css_text(self._yoffset_css(shared=True)) + css_text(self._style_css(shared=True)) # overall CSS includes shared yoffset CSS if any
         slides_css = '\n'.join(
-            css_text(s._specs.style) + css_text(s._yoffset_css()) 
+            css_text(s._yoffset_css()) + css_text(s._style_css())
             for s in self._app[:]
         )
         self._app.widgets.htmls.usercss.value = '\n'.join(x for x in (overall_css, slides_css) if x)
+        if not self._app.this: # Otherwise it has side effects
+            self._app.navigate_to(self.index)
+    
     
     def set_css(self, this: dict=None, overall:dict=None, **theme_colors):
-        """
-        Set CSS on `this` slide or `overall` or both cases. 
-        Each call will reset previous call if props given explicitly, otherwise not.
-
-        ::: note-tip
-            - See code`Slides.css_syntax` for information on how to write CSS dictionary.
-            - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.
-            - You can define custom `@keyframes` in CSS and use them with `anim-kf` class by setting `--kf-name` and optional `--kf-*` controls.
-            - An empty selector `''` is allowed to directly inject CSS string, useful to read a local CSS file while files from web must be downloaded first.
-              Advanced CSS concepts like `@import`, `@layer` may not work as expected due to CSS scoping inside slides. Large files should be added to `overall` CSS only for performance reasons.
-            - You can set theme colors per slide. Accepted color keys are `fg1`, `fg2`, `fg3`, `bg1`, `bg2`, `bg3`, `accent` and `pointer`.
-              This does not affect overall theme colors, for that use `Slides.settings.theme.colors`.
-            - Avoid gradient colors for other than `bg1`, as it will be ignored in most places and may lead to bad styling.
-        """
-        if theme_colors or this is not None:
-            self._specs.style = self._fix_css(this, theme_colors, this_slide=True) # theme colors for this slide only
-            self._set_alt_print() # update alternate print content, we still need to dynamicallly set css for animations etc to work
+        """Use Slides.css instead. This will be deprecated soon."""
+        if this is not None:
+            self._app.css(this, self.number, **theme_colors)
         if overall is not None: # Avoid accidental re-write of overall CSS
-            type(self._specs).style = self._fix_css(overall, {}, this_slide=False) # no theme colors for overall CSS, set on class
-        self._mount_user_css() # update user CSS to even clear old overall CSS if needed
-        # See effect of changes
-        if not self._app.this: # Otherwise it has side effects
-            self._app.navigate_to(self.index) # Go there to see effects automatically
+            self._app.css(this, "all", **theme_colors) 
 
     def _set_css_classes(self, add=None, remove=None):
         "Set CSS classes on this slide separated by space. classes are remove first and add after it."

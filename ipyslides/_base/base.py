@@ -411,8 +411,7 @@ class BaseSlides:
                         - Use slide handle or `Slides[number,]` to apply these methods becuase index can change on new builds.
                         - Use `Slides[start:stop:step]` to apply operations on many slides at once such as code`Slides[2:5].vars.update(...)`.
                 ''')
-                self.doc(self[0], members='yoffset vars set_animation update_display get_source show set_css'.split(), itself = False).display()
-                self.css_syntax.display()
+                self.doc(self[0], members='vars update_display get_source show'.split(), itself = False).display()
             
             self.pause() # incremental display on
             self.write(grp)
@@ -438,6 +437,20 @@ class BaseSlides:
                         self.doc(self.html,'Slides')
                     ]
                 )
+            
+            grp.append(['''
+                ## Dual Usage Functions
+                Some functions such as `Slides.css`, `Slides.yoffset`, and `Slides.transition` can be used
+                both inside and outside slide context through their `applyto` parameter.
+                If `applyto` is `None` (or omitted), they require an active slide context and apply to the current slide.
+                If `applyto` is provided (for example, a slide index, list of indices, or `'all'`), they can be used outside
+                a slide context and apply to the selected slides. They can also used from markdown with syntax like `function[applyto]\`content\``.
+                ''',
+                self.doc(self.transition,'Slides'),
+                self.doc(self.yoffset,'Slides'),
+                self.doc(self.css,'Slides'),
+                 self.css_syntax # need to show docs after CSS function above
+            ])
         
             grp.append(['''
                 ## Adding Speaker Notes
@@ -460,7 +473,7 @@ class BaseSlides:
         
         @self.build_
         def _(s):
-            s.set_css({
+            self.css({ # does not need explicit `applyto` parameter under slide context
                 '.highlight': {'background':'#8984'}
             }, bg1 = 'linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color))')
             self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
