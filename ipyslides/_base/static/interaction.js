@@ -443,11 +443,34 @@ function toggleFS(box) {
     }
 }
 
+function runLinearReveal(model, box, steps, stepMs = 140) {
+    if (!Number.isFinite(steps) || steps <= 0) return;
+
+    // Cancel any in-flight reveal sequence for this view.
+    if (Array.isArray(box._revealTimers)) {
+        box._revealTimers.forEach((t) => clearTimeout(t));
+    }
+    box._revealTimers = [];
+
+    const intervalMs = (Number.isFinite(stepMs) && stepMs > 0) ? stepMs : 140;
+
+    for (let i = 0; i < steps; i++) {
+        const timer = setTimeout(() => {
+            model.set("msg_topy", "NEXT");
+            model.save_changes();
+        }, (i + 1) * intervalMs);
+        box._revealTimers.push(timer);
+    }
+}
+
 function handleMessage(model, msg, box) {
     if (msg === "TFS") {
         toggleFS(box);
     } else if (msg === 'RESCALE') {
         setScale(box, model);
+    } else if (msg.startsWith("REVEAL:")) {
+        const steps = parseInt(msg.split(":")[1], 10) || 0;
+        runLinearReveal(model, box, steps);
     } else if (msg === "SwitchView") {
         let slideNew = box.querySelector(":scope .SlideArea.ShowSlide");
         slideNew.style.visibility = 'visible';

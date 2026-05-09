@@ -404,7 +404,7 @@ class Slide:
         self._frame_idxs = tuple(frames) if len(frames) > 1 else ()
         if self._frame_idxs:
             self._widget.add_class('HasFrames') # make sure class is added
-            self._goto_edited_page() # go to page being edited if any or first frame
+            self._reveal_frames() # shows a quick snaphots how frames (were built)will show up 
         elif hasattr(self, '_frame_idxs'): # from previous run may be
             del self._frame_idxs
         return frames
@@ -681,14 +681,20 @@ class Slide:
         "Jump to last frame"
         return self._reset_indexf(self.nf, self.prev_frame) # go right and swicth back
     
-    def _goto_edited_page(self):
-        "Go to page being edited if any, else first frame."
+    def _reveal_frames(self):
+        "Reveal frames on current page incrementally if any, during update_display to have a quick snaphot how frames are built."
         self.first_frame() # go to first frame by default
-        if self._lre_page > 0: # page being edited
-            for frame in self._fidxs[1:]: # rest of frames
-                if frame.get("page", 0) < self._lre_page:
-                    self.next_frame()
+        step_count = 0
+        if self._lre_page > 0: # page being edited, legacy behavior to be dprecated later
+            step_count = sum(1 for frame in self._fidxs[1:] if frame.get("page", 0) < self._lre_page)
             self._lre_page = 0 # reset at first jump
+        else:
+            # Get to all parts on edit incrementally: NOTE: This behavior would remain after page deprecation
+            step_count = len(self._fidxs[1:])
+
+        # Frontend-only staged reveal for current slide; avoids blocking kernel during batch rebuilds.
+        if step_count > 0 and (self is self._app._current): # only for current slide, do not overload unseen slides in the update_display mode
+            self._app.widgets.iw.msg_tojs = f"REVEAL:{step_count}"
     
     def _set_progress(self):
         if self is not self._app._current: return # avoid wrong indicators

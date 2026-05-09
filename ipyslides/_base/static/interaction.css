@@ -240,7 +240,7 @@
 
 /* These slide directions (with --translate) need overflow hidden to avoid scrollbars during/left over after animation */
 .SlideArea [class*="anim-slide"],
-.SlideArea [class*="anim-slide"].anim-group
+.SlideArea [class*="anim-slide"].anim-group,
 .SlideArea .anim-bounce,
 .SlideArea .anim-group.anim-bounce {
     overflow: hidden;
@@ -314,32 +314,32 @@
 
 /* --- WIPE ANIMATIONS (clip-path reveal) --- */
 .SlideArea .anim-wipe-right:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-right > *,
+.SlideArea .anim-group.anim-wipe-right > *:not(.jp-OutputArea),
 .SlideArea .anim-group.anim-wipe-right > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(0 100% 0 0);
 }
 
 .SlideArea .anim-wipe-left:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-left > *,
+.SlideArea .anim-group.anim-wipe-left > *:not(.jp-OutputArea),
 .SlideArea .anim-group.anim-wipe-left > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(0 0 0 100%);
 }
 
 .SlideArea .anim-wipe-down:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-down > *,
+.SlideArea .anim-group.anim-wipe-down > *:not(.jp-OutputArea),
 .SlideArea .anim-group.anim-wipe-down > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(0 0 100% 0);
 }
 
 .SlideArea .anim-wipe-up:not(.anim-group),
-.SlideArea .anim-group.anim-wipe-up > *,
+.SlideArea .anim-group.anim-wipe-up > *:not(.jp-OutputArea),
 .SlideArea .anim-group.anim-wipe-up > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: inset(100% 0 0 0);
 }
 
 /* --- IRIS ANIMATION (circular reveal with --origin) --- */
 .SlideArea .anim-iris:not(.anim-group),
-.SlideArea .anim-group.anim-iris > *,
+.SlideArea .anim-group.anim-iris > *:not(.jp-OutputArea),
 .SlideArea .anim-group.anim-iris > .jp-OutputArea > .jp-OutputArea-child { 
     clip-path: circle(0% at var(--origin, 50% 50%));
 }
