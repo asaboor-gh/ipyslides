@@ -95,37 +95,7 @@ section .SlideBox {
     /* Extra CSS will come from export here */
     padding: 0 !important;
 }
-section .SlideBox > .Progress { 
-    display: block !important; 
-    margin: 0 !important;
-    height: 2px !important;
-    width: 100% !important;
-    position: absolute !important;
-    left:0 !important;
-    bottom: 0 !important;
-}
-section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non-zero progress in title of print*/
-.SlidesWrapper .Footer { 
-    padding: 0 !important; margin: 0 !important; 
-    position: fixed !important;
-    left:0;
-    width: 100%;
-    bottom: -2px !important; /* something off */
-    overflow: hidden !important;
-}
-.SlidesWrapper .Footer.NavHidden {
-    background: none; /* no important here */
-}
-.SlidesWrapper .Footer > p {
-    font-size: 14px !important;
-    padding: 4px !important;
-    padding-left: 8px !important; 
-    display:block !important;
-    margin:0 !important;
-}
-.SlidesWrapper .Footer.NavHidden > p {
-    display:none !important;
-}
+
 .SlidesWrapper .SlideLogo {
     position: fixed !important;
     line-height: 0 !important; /* suppress bad line-height here */
@@ -136,18 +106,16 @@ section:first-of-type .SlideBox > .Progress {width: 0 !important;}  /* avoid non
     display:none !important;
 }
 
-.SlidesWrapper.Scrolling .Progress,
-.SlidesWrapper.Scrolling .SlideBox > .Number {
+.SlidesWrapper.Scrolling .slide-progress {
     visibility: hidden !important;
     transition: visbility 200ms ease-in;
 }
-.SlidesWrapper .SlideBox > .Number {
-    color:var(--fg2-color);
-    position:absolute;
-    right:6px;
-    bottom:3px;
-    font-size:12px;
-    z-index:5;
+
+@media print {
+    .SlidesWrapper.Scrolling .slide-progress {
+        visibility: visible !important;
+        transition: none !important;
+    }
 }
 
 @media print {

@@ -92,7 +92,7 @@ def layout_css(accent_color, aspect):
                     "color": "var(--accent-color)",
                     "font-size": "0.7em !important",
                 },
-                "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Slide-Number, ^.InView-Title .Progress-Box": {
+                "^.InView-Title .Arrows.Prev-Btn, ^.InView-Last .Arrows.Next-Btn, ^.InView-Title .Progress-Box": {
                     "display": "none !important",
                 },
                 "^.mouse-swipe-enabled": {
@@ -111,18 +111,6 @@ def layout_css(accent_color, aspect):
                         "background": "rgba(0,0,0,0.01)", # slight overlay to indicate swipe mode
                         "z-index": 99999, # above all, also it does not let pointer events pass through
                     },    
-                },
-                ".Slide-Number" : { # slide number
-                    "position": "absolute !important",
-                    "right": "0 !important",
-                    "bottom": "0 !important",
-                    "padding": "0 2px !important",
-                    "font-size": "12px", 
-                    "z-index": "4",  # below matplotlib fullsreen
-                    "cursor": "help",
-                    "^.Menu-Item":{"color": "var(--fg2-color) !important",},
-                    "^:focus,^:active": {"box-shadow": "none !important"},
-                    "@media print": {"display": "none !important",}, # each slide gets its own slide number
                 },
                 ".Progress-Box": {
                     "margin": "0 !important",
@@ -190,7 +178,7 @@ def layout_css(accent_color, aspect):
                     "backdrop-filter": "blur(4px)",
                 },
                 "^.mode-inactive": { # clean up view
-                    ".FooterBox, .Controls, .Slide-Number": {"display": "none !important",},
+                    ".Controls": {"display": "none !important",},
                 },
                 "> .Build-Btn": {"visibility": "hidden !important",}, # hide build button by default
                 "^:has(.SlideArea.Stale) > .Build-Btn": {
@@ -246,7 +234,10 @@ def layout_css(accent_color, aspect):
                 ".export-only, .print-only": {
                     "display": "none !important",
                     "@media print": {"display": "revert !important",},
+                    "^.widget-html, ^.widget-html > .widget-html-content": {
+                        "position": "static !important", # need footer to escape it
                     },
+                },
                 ".widget-inline-hbox": {
                     ".widget-label": {"color": "var(--fg1-color)"},
                     ".widget-readout": {
@@ -364,30 +355,17 @@ def layout_css(accent_color, aspect):
                     "color": "var(--fg1-color) !important"
                 },  # All widgets text color
             },
-            ".FooterBox": {
-                "max-width": "100% !important",
-                "position": "absolute !important",
-                "left": "0 !important",
-                "bottom": "2px !important", # leave space for progressbar
-                "width": "100% !important",
-                "@media print": {"position": "fixed !important",},
-                "^,^ > .Footer": {
-                    "padding": "0px",
-                    "margin": "0px",
-                    "overflow": "hidden",
-                    "max-width": "100%",
+            ".FooterArea": {
+                "overflow": "hidden !important",
+                ".widget-html-content": {
+                    "display": "flex",
+                    "align-items": "center",
+                    "justify-content": "flex-start",
+                    "line-height": "1.5 !important",
                 },
-                ".Footer": {
-                    "overflow": "hidden !important",
-                    ".widget-html-content": {
-                        "display": "flex",
-                        "align-items": "center",
-                        "justify-content": "flex-start",
-                        "line-height": "1.5 !important",
-                    },
-                    "p": {
-                        "font-size": "14px !important",
-                    },
+                "^, .widget-html-content": {
+                    "--text-size": "14px !important",
+                    "position": "static !important", # footer content should escape
                 },
             },
             ".Controls": {

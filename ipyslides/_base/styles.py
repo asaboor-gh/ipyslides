@@ -398,6 +398,49 @@ def style_css(colors, fonts, layout, _root = False):
                 'color':'var(--fg1-color)',
             },
             '.widget-box': {'flex-shrink': 0}, # avoid collapse
+            '.slide-footer': {
+                'box-sizing': 'border-box',
+                'width': '100%',
+                'padding': '0 6px',
+                'color': 'var(--fg2-color, black)',
+                'z-index': '8',
+                'line-height': '1.5',# needs to enforce proper height in print
+                '.footer-text': {
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'gap': '0.5rem',
+                    'width': '100%',
+                    'min-width': '0',
+                    'font-size': '12px !important',
+                    "padding-bottom": "2px !important", # keep space for progreebar
+                },
+                '.footer-text > div:first-child': {
+                    'flex': '1 1 auto',
+                    'min-width': '0',
+                    'overflow': 'hidden',
+                    'text-overflow': 'ellipsis',
+                    'white-space': 'nowrap',
+                },
+                '.footer-text .slide-number': {
+                    'margin-left': 'auto',
+                    'flex': '0 0 auto',
+                    'white-space': 'nowrap',
+                    'text-align': 'right',
+                    'color': 'var(--fg2-color)',
+                    'z-index': '8',
+                },
+                '.slide-progress': {
+                    'position': 'absolute',
+                    'left': '0',
+                    'right': '0',
+                    'bottom': '0',
+                    'height': '2px',
+                },
+                '.footer-text .section': {
+                    'font-style': 'italic',
+                    'color': 'var(--fg3-color)',
+                },
+            },
             'hr': {
                 'margin':'0 !important',
                 'margin-block':'0.2em !important',

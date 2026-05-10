@@ -722,20 +722,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         value = round(unit * ((slide.index or 0) - (slide.nf - fidx - 1)/slide.nf), 4)
         return max(0, min(100, value))
 
-    def _supplemental_index(self, slide, fidx=0):
-        "1-based supplemental frame index across all supplemental slides."
-        extra_start = self._extra_start_index()
-        if extra_start is None or slide.index is None or slide.index < extra_start:
-            return None
-
-        count = 0
-        for s in self._iterable:
-            if s.index is None or s.index < extra_start:
-                continue
-            if s is slide:
-                break
-            count += s.nf
-        return count + (fidx + 1)
 
     def _switch_slide(self, old_index, new_index):
         if inds := [opt.ti for opt in self._toc_widget.options if opt.si == self._sectionindex]:
@@ -761,6 +747,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.iw.msg_tojs = 'SwitchView'
         # do after ShowSlide available on naviagted slide
         self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
+        self.settings.footer._update_footer() # keep running-section footer text in sync
         self._build_if_pending(slide)  # build if pending, should be at end to see loading on current slide
     
     def _build_if_pending(self, slide):
@@ -817,7 +804,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         self._iterable = self._collect_slides()  # would be at least one title slide
         if not self._iterable:
             self.wprogress.max = 0
-            self.widgets.iw._extra_start = None
             self.widgets.iw._main_end = 0
             self.widgets.slidebox.children = []  # Clear older slides
             return None
@@ -832,7 +818,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             s._index = i  # Update index
 
         extra_start = self._extra_start_index()
-        self.widgets.iw._extra_start = extra_start
         self.widgets.iw._main_end = self.wprogress.max if extra_start is None else max(extra_start - 1, 0)
         for s in self._iterable:
             if extra_start is not None and (s.index is not None and s.index >= extra_start):
@@ -842,6 +827,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         self._update_toc()  # Update table of content if any
         self._force_update() # refresh causes lose widgets sometimes
+        self.settings.footer._apply_change(None) # keep footer in sync
 
         if not any(['ShowSlide' in c._dom_classes for c in self.widgets.slidebox.children]):
             self.widgets.slidebox.children[0].add_class('ShowSlide')

@@ -26,9 +26,8 @@ class InteractionWidget(anywidget.AnyWidget):
     _uid = traitlets.Unicode(str(uuid.uuid1()), read_only=True).tag(sync=True) # need for frontend display purporse
     _colors = traitlets.Dict(jupyter_colors).tag(sync=True) # for export
     _parts = traitlets.Dict().tag(sync=True) # parts data for each slide, for js side use
-    _fkws = traitlets.Dict().tag(sync=True) # footer kws for js side use
-    _extra_start = traitlets.Any(default_value=None, allow_none=True).tag(sync=True) # first supplemental slide index
     _main_end = traitlets.Int(default_value=0).tag(sync=True) # last main slide index
+    _fpad = traitlets.Int(16).tag(sync=True) # padding for footer, used in export
     _fsels = traitlets.Unicode(focus_selectors, read_only=True).tag(sync=True) # need for frontend focus management by click
     
     msg_topy = traitlets.Unicode('').tag(sync=True)

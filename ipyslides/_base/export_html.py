@@ -53,11 +53,10 @@ class _HhtmlExporter:
         content = ''
         for item in self.main:
             objs = item.contents # get conce
-            frames, snums = [], []
+            frames = []
             
             if not item._fidxs:
                 frames = [objs]
-                snums = [item._get_snum(0)]
             else:
                 for fi, frame in enumerate(item._fidxs):
                     head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
@@ -93,19 +92,14 @@ class _HhtmlExporter:
                                     frame_objs.append(objs[i])
                 
                     frames.append(frame_objs)
-                    snums.append(item._get_snum(fi))
             
-            for k, (snum, objs) in enumerate(zip(snums, frames)):
+            for k, objs in enumerate(frames):
                 _html = item._speaker_notes(returns=True) # speaker notes at top if any, returns string
                 for out in objs:
                     _html += f'<div class="jp-OutputArea-child"><div class="jp-OutputArea-output" style="width: 100%;">{_fmt_html(out)}</div></div>' 
                     # Important to have each content in similar node structure as notebook content
 
                 _html = f'<div class="jp-OutputArea">{_html}</div>'
-
-                number = ""
-                if item.index > 0 and self.main.settings.footer.numbering:
-                    number = f'<span class="Number">{snum}</span>' 
 
                 sec_uid = item._sec_id if k == 0 else f"{item._sec_id}-{k}"
                 sec_id = f'id="{sec_uid}"'
@@ -117,13 +111,10 @@ class _HhtmlExporter:
                             <div class="{item._css_class} export-only">
                                 {_html}
                             </div>
-                            {number}
-                            {self._get_progress(item,k)}
+                            {self.main.settings.footer._to_html(item, fidx=k)}
                         </div>
                     </section>''')
         
-        navui_class = '' if self.main.settings.footer._print_padding > 16 else 'NavHidden' 
-        content += f'<div class="Footer {navui_class}">{self.main.settings.footer._to_html()}</div>'
         content += self._get_logo() # Both of these fixed
             
         theme_kws = self.main.settings._theme_kws
@@ -145,26 +136,16 @@ class _HhtmlExporter:
             script      = _script, 
             click_btns  = self.main.settings._get_clickers(), 
             css_class   = ' '.join(css_classes),
-            padding_bottom = self.main.settings.footer._print_padding,
+            padding_bottom = self.main.widgets.iw._fpad,
             )
     
-    def _get_progress(self, slide, fidx=0):
-        if not self.main.settings.footer.progress:
-            return ''
-        pv = self.main._progress_value(slide, fidx)
-        if pv is None: return ''
-
-        gradient = f'linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) {pv}%, var(--bg2-color) {pv}%, var(--bg2-color) 100%)'
-        return f'<div class="Progress" style="background: {gradient};"></div>'
-    
     def _get_css(self, slide, sec_uid):
-        "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id, FooterBox → Footer"
+        "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id"
         return (f'{slide._yoffset_css(False)}\n{slide._style_css(False)}').replace( # xtml or str, runtime for colors per slide
             f".{self.main.uid}.SlidesWrapper", f"#{sec_uid}").replace(
             f".{self.main.uid}", f"#{sec_uid}").replace(
-            "ShowSlide", "SlideArea").replace( # ShowSlide is used for runtime display but here it is SlideArea in export
-            ".FooterBox", ".Footer"
-            )
+            "ShowSlide", "SlideArea" # ShowSlide is used for runtime display but here it is SlideArea in export
+        )
             
     def _get_logo(self):
         return f'''<div class="SlideLogo" {_inline_style(self.main.widgets.htmls.logo)}"> 

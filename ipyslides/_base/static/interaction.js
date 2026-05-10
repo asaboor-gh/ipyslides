@@ -1,26 +1,14 @@
 
-function toIntOrNull(value) {
-    const num = Number(value);
-    return Number.isFinite(num) ? Math.trunc(num) : null;
-}
+function applyPrintProgressWidth(slide, numFrame, frameOffset = 0) {
+    const pview = slide.querySelector(':scope .sprogress-view');
+    if (!pview) return;
 
-function formatMainSlideNumber(index, page = undefined) {
-    const base = index === 0 ? '' : `${index}`;
-    return page !== undefined ? `${base}.${page}` : base;
-}
+    const cw = Number.parseFloat(pview.dataset.cw);
+    const uw = Number.parseFloat(pview.dataset.uw);
+    if (!Number.isFinite(cw) || !Number.isFinite(uw)) return;
 
-function updateProgress(show, mainEnd, index, numFrames, fidx, isSupplemental) {
-    if (!show) {
-        return 'transparent';
-    }
-    if (isSupplemental) {
-        return 'none';
-    }
-    let unit = 100/(mainEnd || 1); // avoid zero division when main end is title (0)
-    let pv = Math.round(unit * (index - (numFrames - fidx - 1)/numFrames) * 10000)/10000;
-    pv = Math.max(0, Math.min(100, pv));
-    let gradient = `linear-gradient(to right, var(--accent-color) 0%,  var(--accent-color) ${pv}%, var(--bg2-color) ${pv}%, var(--bg2-color) 100%)`;
-    return gradient;
+    const nextWidth = Math.max(0, Math.min(100, cw + (frameOffset * uw / (numFrame || 1))));
+    pview.style.width = `${nextWidth}%`;
 }
 
 // Function to fix IDs and references in cloned elements, especially for matplotlib SVGs
@@ -222,7 +210,7 @@ function printSlides(box, model) {
 
     window._printOnlyObjs = [];
     const parts = model.get('_parts') || {}; // get part info for all slides
-    const fkws = model.get('_fkws') || {}; // get footer kws
+    const fpad = model.get('_fpad') || 23; // get footer padding
     const frameCounts = slides.map((slide) => {
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         if (slideNum === null || !Array.isArray(parts[slideNum])) {
@@ -230,29 +218,8 @@ function printSlides(box, model) {
         }
         return parts[slideNum].length || 1;
     });
-    const modelExtraStart = toIntOrNull(model.get('_extra_start'));
-    const modelMainEnd = toIntOrNull(model.get('_main_end'));
-    const classExtraStart = slides.findIndex(slide => slide.classList.contains('ExtraSlide'));
-    const supplementalStart = modelExtraStart !== null
-        ? modelExtraStart
-        : (classExtraStart >= 0 ? classExtraStart : null);
-    const mainEnd = modelMainEnd !== null
-        ? modelMainEnd
-        : (supplementalStart === null ? Math.max(slides.length - 1, 0) : Math.max(supplementalStart - 1, 0));
-
-    function supplementalFrameIndex(slideIndex, fidx = 0) {
-        if (supplementalStart === null || slideIndex < supplementalStart) {
-            return null;
-        }
-        let count = 0;
-        for (let i = supplementalStart; i < slideIndex; i++) {
-            count += frameCounts[i] || 1;
-        }
-        return count + fidx + 1;
-    }
-
-    box.style.setProperty('--show-snumber', fkws.snum ? 'block' : 'none'); // show only if numbered
-    box.style.setProperty('--printPadding', fkws.pad + 'px'); // set padding for print mode
+    
+    box.style.setProperty('--printPadding', `${fpad}px`); // set padding for print mode
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];
@@ -262,16 +229,7 @@ function printSlides(box, model) {
         // Extract slide number from class (e.g., 'n25' -> 25)
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = frameCounts[n] || 1;
-        const isSupplemental = supplementalStart !== null && n >= supplementalStart;
 
-        slide.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, mainEnd, n, numFrames, 0, isSupplemental));
-
-        if (isSupplemental) {
-            const sidx = supplementalFrameIndex(n, 0);
-            slide.dataset.snum = sidx !== null ? `S.${sidx}` : '';
-        } else {
-            slide.dataset.snum = formatMainSlideNumber(n);
-        }
         setBgImage(slide);
 
         if (slide.classList.contains('HasFrames') && numFrames > 1) {
@@ -294,21 +252,13 @@ function printSlides(box, model) {
                 clone.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
                 clone.querySelectorAll(':scope .print-collapsed').forEach(el => el.classList.remove('print-collapsed'));
 
-                clone.style.setProperty('--bar-bg-color', updateProgress(fkws.bar, mainEnd, n, numFrames, i, isSupplemental));
                 clone.style.transform = 'translateZ(0) scale(1)';
+                applyPrintProgressWidth(clone, numFrames, i);
 
                 if (frame) {
                     const outRoot = clone.querySelector(':scope .jp-OutputArea');
                     if (!outRoot) { continue; }
                     let outputs = Array.from(outRoot.children);
-                    if (isSupplemental) {
-                        const sidx = supplementalFrameIndex(n, i);
-                        clone.dataset.snum = sidx !== null ? `S.${sidx}` : '';
-                    } else {
-                        clone.dataset.snum = frame.page !== undefined
-                            ? formatMainSlideNumber(n, frame.page)
-                            : formatMainSlideNumber(n);
-                    }
 
                     for (let j = outputs.length - 1; j >= 0; j--) {
                         let inHead = (frame.head !== undefined && frame.head >= 0 && j <= frame.head);
@@ -647,7 +597,8 @@ function handleContextMenu(box, model, event) {
     // get relative coordinates to box in percents
     let rect = box.getBoundingClientRect();
     // Make context menu appear fully inside box
-    let menuRect = box.querySelector(':scope > .CtxMenu').getBoundingClientRect();
+    const menu = box.querySelector(':scope .CtxMenu');
+    const menuRect = menu ? menu.getBoundingClientRect() : { width: 0, height: 0 };
     let wPerc = (menuRect.width / rect.width) * 100;
     let hPerc = (menuRect.height / rect.height) * 100;
     
@@ -710,7 +661,7 @@ function setScale(box, model) {
     if(!scale) { // Only set if there is one, don't set null
         return false; // This will ensure if Notebook is hidden, scale stays same
     }
-    const pad = model.get('_fkws').pad || 23; // padding bottom, default 23px for footer space
+    const pad = model.get('_fpad') || 23; // padding bottom, default 23px for footer space
     box.style.setProperty('--contentScale',scale);
     box.style.setProperty('--paddingBottom',Number(pad/scale) + "px");
 }
@@ -788,12 +739,12 @@ function handleBoxClicks(box, model) {
     // Handle single clicks for navigation and blocking
     box.addEventListener('click', function(event) {
         // Handle footer area click to toggle context menu
-        const ctxMenu = box.querySelector(':scope > .CtxMenu');
+        const ctxMenu = box.querySelector(':scope .CtxMenu');
         const isCtxOpen = ctxMenu && ctxMenu.style.visibility === 'visible';
-        if (isCtxOpen && !event.target.closest('.SlidesWrapper > .CtxMenu')) {
+        if (isCtxOpen && !event.target.closest('.CtxMenu')) {
             model.set("msg_topy", "CCTX"); // close context menu
             model.save_changes(); // after that go on with other checks
-        } else if (event.target.closest('.SlidesWrapper > .FooterBox')) {
+        } else if (event.target.closest('.SlidesWrapper .slide-footer')) {
             handleContextMenu(box, model, event); 
             return; // exit after handling footer click
         }
@@ -1035,7 +986,7 @@ function render({ model, el }) {
 
         // Capture context menu to avoid passing to underlying elements
         box.addEventListener('contextmenu', function(event) {
-            if (event.shiftKey) {return true}; // allow Shift + Right click for normal context menu
+            if (event.shiftKey) { return; } // allow Shift + Right click for normal context menu
             handleContextMenu(box, model, event);
         });
 

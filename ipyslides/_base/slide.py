@@ -404,7 +404,7 @@ class Slide:
         self._frame_idxs = tuple(frames) if len(frames) > 1 else ()
         if self._frame_idxs:
             self._widget.add_class('HasFrames') # make sure class is added
-            self._reveal_frames() # shows a quick snaphots how frames (were built)will show up 
+            self._reveal_frames() # shows a quick snaphots how frames (were built) will show up 
         elif hasattr(self, '_frame_idxs'): # from previous run may be
             del self._frame_idxs
         return frames
@@ -706,17 +706,13 @@ class Slide:
         else:
             self._app.widgets._progbar.layout.display = ''
             self._app.widgets._progbar.children[0].layout.width = f"{value}%"
-        self._app.widgets._snum.description = self._get_snum(self.indexf) # current slide number with page if any
-        self._app.widgets._snum.tooltip = f"{self._app._current}" # hint for current slide number
 
-    def _get_snum(self, fidx):
-        if (sidx := self._app._supplemental_index(self, fidx)) is not None:
-            return f"S.{sidx}"
-            
-        page = "" # default empty
-        if self.nf > 1 and (page := self._fidxs[fidx].get("page","")):
-            page  = f'.{page}'  # add dot before page number if any
-        return f"{self.index or ''}{page}" # empty for zero
+    @property
+    def _disp_num(self):
+        extra_start = self._app._extra_start_index()
+        if extra_start is not None and self.index >= extra_start:
+            return f"S.{self.index - extra_start + 1}" # 1-based supplemental slide number
+        return f"{self.index or ''}" # empty for zero
     
     def _handle_refs(self):
         "Display unused citations at end of slide."
@@ -863,7 +859,7 @@ class Slide:
 
     def _set_alt_print(self):
         self._alt_print.value = '' # reset first to recieve new content
-        alt = ''
+        alt = self._app.settings.footer._to_html(self) # footer
         selector = get_unique_css_class()
         ikws = self._bg_ikws if isinstance(getattr(self, '_bg_ikws', None), dict) else {}
         if ikws:

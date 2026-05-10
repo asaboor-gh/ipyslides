@@ -4,6 +4,7 @@ and then provided to other classes via composition, not inheritance.
 """
 import json
 import traitlets
+from contextlib import suppress
 
 from traitlets import HasTraits, Int, Unicode, Bool, Float, TraitError
 from pathlib import Path
@@ -122,35 +123,62 @@ class Fonts(ConfigTraits):
 class Footer(ConfigTraits):
     "Set footer attributes of slides."
     text = Unicode('IPySlides', help="Set footer text. Can use Markdown")
+    section = Bool(True, help="Show currently running section in footer when available.")
     numbering = Bool(True, help="Show/hide slide numbering in footer.")
     date = Unicode("today", allow_none=True, help="Set date string or use 'today' for current date.")
     controls = Bool(True, help="Show/hide controls like next/prev buttons and clickers in PDF/export mode.")
     progress = Bool(True, help="Show/hide progress bar at bottom of slides.")
-    _print_padding = 23 # internal use only
 
     def _apply_change(self,change):
         # change is None when called as footer(...), so we update all things together
+        self._update_footer() # html content updated
         wgts = self.main._widgets
-        wgts.htmls.footer.value = self._to_html() + self.main._get_clickers()
-        wgts._snum.layout.display = "" if self.numbering else "none" # show/hide slide number
         wgts._progbar.layout.display = "" if self.progress else "none" # show/hide progress bar
-        self._print_padding = 23 if any([self.text, self.date]) else 16 # 16 is same around all sides unless footer needs more
-        wgts.iw._fkws = {"bar": self.progress, "snum": self.numbering, "pad": self._print_padding} # set before sending rescale message
+        wgts.iw._fpad = 23 if any([self.text, self.date, self.section, self.numbering]) else 16 # 16 is same around all sides unless footer needs more
         wgts.controls.layout.visibility = "visible" if self.controls else "hidden"
         wgts.iw.msg_tojs = 'RESCALE' # sets padding etc
 
         if not self.controls:
             self.main._slides.notify("Navigation controls hidden. But keyboard and edge click is still working!")
+        
+        for slide in self.main._slides:
+            slide._set_alt_print() # updates footer on all slides to have correct section
+
+    def _running_section_text(self, slide):
+        "Get running section title via Slides._sectionindex and return stripped text." 
+        for s in self.main._slides[:slide.index+1][::-1]: # revese from here
+            if s._section:
+                return s._section
+        
+        return ''
+
+    def _update_footer(self):
+        "Refresh footer html for runtime changes like running section updates."
+        updated = self._to_html() + self.main._get_clickers()
+        self.main._widgets.htmls.footer.value = updated
 
     
-    def _to_html(self):
-        style = 'white-space:nowrap;display:inline;margin-block:0;padding-left:8px;'
+    def _to_html(self, slide=None,fidx=0):
+        if slide is None:
+            slide = self.main._slides._current
+        style = 'white-space:nowrap;margin-block:0;position:absolute;left:0;bottom:0;width:100%'
         inner = self.text
+        if self.section and (running := self._running_section_text(slide)):
+            inner += ("<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else "") + f"<span class='section'>{running}</span>"
         if self.date:
             inner += (
-                "<span style='white-space:pre'> | </span>" if inner else ""
+                "<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else ""
             ) + f'{today(fg = "var(--fg2-color)") if self.date == "today" else self.date}'
-        return htmlize(f'<p markdown="1" style="{style}">{inner}</p>') 
+        if self.numbering:
+            inner = f'<div class="footer-text"><div>{inner}</div><div class="slide-number">{slide._disp_num}</div></div>' # avoid 0 on title page
+        
+        if self.progress:
+            pv = self.main._slides._progress_value(slide, fidx)
+            unit = 100/(self.main._slides._main_progress_index() or 1) # unit progress value per slide
+            if pv is not None: # supplemental otherwise
+                pbar = f'<div class="sprogress-view" style="width:{pv}%;height:100%;background:var(--accent-color,blue);" data-cw="{pv}" data-uw="{unit}"></div>' # attributes for JS
+                inner += f'<div class="slide-progress print-only" style="background:var(--bg2-color,#aaa4);width:100%;height:2px;">{pbar}</div>'
+        return htmlize(f'<div markdown="1" class="slide-footer" style="{style}">{inner}</div>') 
 
 @fix_sig
 class Layout(ConfigTraits):

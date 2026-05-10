@@ -313,7 +313,7 @@ class _Htmls:
     """
     Instantiate under `Widgets` class only.
     """
-    footer  = HTML(layout=Layout(margin='0')).add_class('Footer') # Zero margin is important
+    footer  = HTML(layout=Layout(margin='0')).add_class('FooterArea') # Zero margin is important
     theme   = HTML()
     usercss = HTML() # Persistent user CSS mount for overall + all per-slide styles
     main    = HTML() 
@@ -356,7 +356,6 @@ class Widgets:
     def __init__(self):
         self._tmp_out = Output(layout=dict(margin='0',width='0',height='0')) # For adding slide's CSS and animations
         self._progbar = ipw.Box([ipw.Box(layout={"width":"0"}).add_class("Progress")],layout=dict(width="100%",height="2px", visibility = "visible")).add_class("Progress-Box") # border not working everywhere
-        self._snum   = Button(disabled=True, layout= Layout(width='auto',height='16px')).add_class("Slide-Number").add_class('Menu-Item')
         self.theme   = ipw.Dropdown(**describe('Theme'),options=[k for k in styles.theme_colors.keys() if k != 'Jupyter']).add_class("ThemeSelect") # Jupyter will be added on demand
         self.buttons = _Buttons() 
         self.sliders = _Sliders()
@@ -378,7 +377,6 @@ class Widgets:
             self.buttons.next
         ]).add_class('Controls') 
 
-        self.footerbox = HBox([self.htmls.footer,]).add_class('FooterBox')   #class is must
         self.panelbox = SidePanel(self)
         self.slidebox = Box([
             # Slides are added here dynamically
@@ -399,10 +397,9 @@ class Widgets:
             ).add_class('SBoxWrapper'), # overflow should be hidden for animation purpose, class added to handle print PDF
             self.controls, # Importnat for unique display
             self.drawer, 
-            self.footerbox,
+            self.htmls.footer,
             self.htmls.logo,# on top of things
             self.buttons.build, # build button for lazy slides
-            self._snum,
             self._ctxmenu, # at top 
             self._progbar # progressbar should come last
             ],layout= Layout(width=f'{self.sliders.width.value}vw', height=f'{int(self.sliders.width.value*9/16)}vw',margin='auto') # 9/16 is default, will change by setting
