@@ -585,7 +585,7 @@ def style_css(colors, fonts, layout, _root = False):
                     "text-align": "center", # not important to allow user override
                 },
             }, # no yoffset on title slide, leave it centered globally, unless user applys yoffset there
-            **({'*:not(.mode-popup-active)': { # avoid effecting popup zoomed content
+            **({'*': { # Reflow content on user request
                 'max-height':'max-content !important',
                 }
             } if layout._reflow else {}), # clean way to reflow all content
@@ -818,7 +818,12 @@ def style_css(colors, fonts, layout, _root = False):
                 'flex-direction':'row',
                 'column-gap':'0.2em',
                 'align-items':'stretch',
-                '> *': {'min-width':'0 !important',}, # avoid overflow due to stubborn elements
+                '> *': {
+                    'min-width':'0 !important', # avoid overflow due to stubborn elements
+                    '^:has(.pinned-item)': {
+                        'min-height':'100% !important', # make full height to avoid absolute pinned items take space, STILL MAY NOT WORK
+                    },
+                }, 
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },
         },

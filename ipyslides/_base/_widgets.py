@@ -17,9 +17,6 @@ jupyter_colors = { # used in styles.py and interaction.js
     'pointer':'--jp-error-color1',
 }
 
-# used to set focusable elements for click-to-focus feature in _layout.py and interaction.js
-focus_selectors = ":is(img, svg, video, canvas, .focus-self, .focus-child > *:not(.no-focus), .plot-container.plotly)"
-
 class InteractionWidget(anywidget.AnyWidget):
     _esm =  Path(__file__).with_name('static') / 'interaction.js'
     _css =  Path(__file__).with_name('static') / 'interaction.css'
@@ -28,7 +25,6 @@ class InteractionWidget(anywidget.AnyWidget):
     _parts = traitlets.Dict().tag(sync=True) # parts data for each slide, for js side use
     _main_end = traitlets.Int(default_value=0).tag(sync=True) # last main slide index
     _fpad = traitlets.Int(16).tag(sync=True) # padding for footer, used in export
-    _fsels = traitlets.Unicode(focus_selectors, read_only=True).tag(sync=True) # need for frontend focus management by click
     
     msg_topy = traitlets.Unicode('').tag(sync=True)
     msg_tojs = traitlets.Unicode('').tag(sync=True)

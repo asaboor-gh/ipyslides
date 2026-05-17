@@ -143,10 +143,7 @@ class CtxMenu(ListWidget):
         if hasattr(self.ws, 'panelbox') and self.ws.panelbox.is_open(): # may not be ready yet
             keys = ['panel']
         elif hasattr(self.ws, 'mainbox') and (klasses := self.ws.mainbox._dom_classes): # may not be ready yet
-            if 'mode-inactive' in klasses: # prefer over fullscreen
-                keys = ['fscreen','laser','draw']
-            elif 'mode-fullscreen' in klasses:
-                keys = ['fscreen','laser','draw','panel','swipe', 'toc','ksc']
+            keys = ['fscreen','laser','draw','panel','swipe', 'toc','ksc']
         
         self.options = [(k, v) for k,v in self._state.items() if not keys or k in keys] 
         self.index = None # reset index after options change to allow re-selection of same item
@@ -395,9 +392,9 @@ class Widgets:
                 self.slidebox , 
             ],layout= Layout(width='100%',max_width='100%',height='100%',overflow='hidden')
             ).add_class('SBoxWrapper'), # overflow should be hidden for animation purpose, class added to handle print PDF
+            self.htmls.footer, # footer below controls
             self.controls, # Importnat for unique display
             self.drawer, 
-            self.htmls.footer,
             self.htmls.logo,# on top of things
             self.buttons.build, # build button for lazy slides
             self._ctxmenu, # at top 

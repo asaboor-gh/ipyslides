@@ -12,8 +12,8 @@ from inspect import Signature, Parameter
 from IPython.display import Image, SVG
 from ipywidgets.widgets.trait_types import InstanceDict
 
-from ..formatters import fix_ipy_image, code_css, htmlize
-from ..utils import html, today, _clipbox_children, get_clips_dir, set_dir
+from ..formatters import code_css, htmlize
+from ..utils import html, today, _clipbox_children, _resolve_img, get_clips_dir, set_dir
 from . import styles, _layout
 from ..dashlab import disabled
 
@@ -260,7 +260,7 @@ class Logo(ConfigTraits):
     def _apply_change(self,change):
         if not self.src: # give as None, '' etc
             self.main._widgets.htmls.logo.value = ''
-        elif (image := self.main._resolve_img(self.src, self.width)):
+        elif (image := _resolve_img(self.src, self.width)):
             self.main._widgets.htmls.logo.value = image 
             kwargs = {k:v for k,v in self.props.items() if k !='src'}
 
@@ -357,24 +357,6 @@ class Settings:
             # Send message to JS to start print
             self._widgets.iw.msg_tojs = 'PRINT'
             del self._printingPDF  # remove flag after use
-
-    def _resolve_img(self, src, width):
-        if src is None: return ''
-        if isinstance(src, Path):
-            src = str(src)  # important for svg checking below
-        
-        if isinstance(src, str):
-            if not src.strip(): return '' # empty string
-            if "<svg" in src and "</svg>" in src:
-                return src.replace('<svg', f'<svg style="width:{width};height:auto" ') # extra space at end
-            else:
-                if src.startswith("clip:"):
-                    src = self._slides.clips_dir / src[5:] # don't strip it
-                try:
-                    return fix_ipy_image(Image(src, width=width), width=width).value
-                except:
-                    return self._resolve_img(SVG(src)._repr_svg_(), width=width)
-        return ''
     
     def _get_clickers(self): # in PDF/export mode
         if len(self._slides) < 5 or not self.footer.controls:

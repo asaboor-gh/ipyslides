@@ -80,6 +80,7 @@ _special_funcs = { # later functions can encapsulate earlier ones
     "yoffset": "integer in percent, use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
     "transition": "slides transition such as zoom, fade etc. Use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
     "css": "css properties for current slide, use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
+    "pin": "pin a markdown text or image file at specific position x,y and width,height. Additional paramters are center,zorder,rotate,blur and other css properties. See `Slides.pin` for details.",
 }
 
 def error(name, msg):

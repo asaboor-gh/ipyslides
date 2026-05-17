@@ -3,58 +3,8 @@
 from ..utils import _build_css
 from ..xmd import get_unique_css_class
 from .icons import Icon, _inline_svg
-from ._widgets import focus_selectors
 from .intro import get_logo
 
-
-_focus_css = { # Matplotlib by plt.show, self focus, child focus, plotly
-    focus_selectors: {
-        "^:hover:not(.mode-popup-active)": { # visual cue on hover to click
-            "box-shadow": "0px 0px 1px 0.5px #8988 !important",
-            "border-radius": "4px !important",
-        },
-        "^.mode-popup-active": {
-            "position": "fixed", # This works because SlideArea has transform to contain it as fixed
-            **{f"{k}backdrop-filter": "blur(100px)" for k in ('', '-webkit-')},
-            "left": "0", # 1px less than slide padding to avoid edges overlap
-            "top": "0",
-            "z-index": 9999,  # above all, including fullscreen button of interactive
-            "width": "100% !important",
-            "height": "100% !important", # leave space for bottom controls
-            "padding": "8px", # same as slide padding 
-            "object-fit": "scale-down !important",
-            "outline": "none !important",
-            "border-radius": "4px !important",
-            "overflow": "scroll !important",  # Specially for dataframes
-            ".vega-embed canvas, > .svg-container": {  # Vega embed canvas and plotly svg-container inside hoverabe
-                "position": "fixed !important",  # Will be extra CSS but who cares
-                "width": "100% !important",
-                "height": "100% !important",  # Ovverider plotly and altair style
-                "border-radius": "4px !important",
-                "object-fit": "scale-down !important",
-            },
-        },
-    },
-    '.focus-child.mpl > svg.mode-popup-active': { # matplot size inches need special treatment
-        "width": "100% !important",
-        "height": "100% !important", 
-        "object-fit": "scale-down !important",
-    },
-    # Nested focus classes should occupy full space because parent is focused too
-    ".focus-self, .focus-child": {
-        "^.mode-popup-active .vega-embed details": {
-            "display": "none !important",
-        },
-        ".focus-self.mode-popup-active, .focus-child.mode-popup-active": {
-            "left": "0px !important",
-            "top": "0px !important",
-            "width": "100% !important",
-            "height": "100% !important",
-            "outline": "none !important",
-            "background": "var(--bg1-altcolor) !important",  # Avoids overlapping with other elements
-        },
-    },  
-}
 
 def layout_css(accent_color, aspect):
     uclass = get_unique_css_class()
@@ -85,6 +35,14 @@ def layout_css(accent_color, aspect):
                 },
                 "^.Voila-Child, ^.mode-fullscreen": {
                     ".Width-Slider, .Warn": {"display": "none !important"},
+                },
+                "^:has(.SBoxWrapper.is-zoomed) .FooterArea": {"display": "none !important",}, # avoid overlapping with zoomed content
+                "> .SBoxWrapper": { # Used to focus on elements by double click
+                    "transition": "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform-origin 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+                    "^.is-zoomed .is-zoom-target": {
+                        "box-shadow": "0px 0px 1px 0.5px #8988 !important",
+                        "border-radius": "4px !important",
+                    },
                 },
                 ".Warn::after": {
                     "display": "block",
@@ -168,7 +126,7 @@ def layout_css(accent_color, aspect):
                     "^, .widget-html-content": {"line-height": "0 !important"},
                     "@media print": {"position": "fixed !important",},
                 }, # other properties are set internally
-                ".popup-close-btn": {
+                ".zoom-reset-btn": {
                     "position": "absolute",
                     "top": "8px",
                     "right": "8px",
@@ -176,9 +134,6 @@ def layout_css(accent_color, aspect):
                     "border": "none",
                     "padding": "4px 8px",
                     "backdrop-filter": "blur(4px)",
-                },
-                "^.mode-inactive": { # clean up view
-                    ".Controls": {"display": "none !important",},
                 },
                 "> .Build-Btn": {"visibility": "hidden !important",}, # hide build button by default
                 "^:has(.SlideArea.Stale) > .Build-Btn": {
@@ -212,7 +167,6 @@ def layout_css(accent_color, aspect):
                         "^.HideSlide": {"visibility": "visible !important",},
                         "^.HideSlide *": {"visibility": "inherit !important",},
                     },
-                    **_focus_css,
                 },
                 ".jp-OutputArea": {
                     "width": "100% !important",
@@ -356,6 +310,7 @@ def layout_css(accent_color, aspect):
                 },  # All widgets text color
             },
             ".FooterArea": {
+                "z-index": "3", # above slide content but below controls and popups
                 "overflow": "hidden !important",
                 ".widget-html-content": {
                     "display": "flex",

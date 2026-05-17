@@ -11,7 +11,7 @@ from ipywidgets import HTML as ipwHTML
 from . import styles
 from ._layout import background_css, get_unique_css_class, loading_skeleton
 from .styles import collapse_node, hide_node
-from ..utils import XTML, html, _styled_css, _build_css
+from ..utils import XTML, html, _resolve_img, _styled_css, _build_css
 from ..xmd import capture_content
 from ..formatters import _Output, widget_from_data, slidebound
 
@@ -276,14 +276,14 @@ class Slide:
         self._widget.clear_output(wait = True) # Clear, but don't go there
         # Need to know how many contents before user provide content
         with capture_content() as cap:
-            # show speaker notes at top if any to grab immediate attention of speaker, will be shown only in PDF.
-            self._speaker_notes(returns=False) # displays directly if any
             display(
                 html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
                 self._alt_print, # alternate print content such as CSS and bg image
                 self._fcss, # frame separator CSS
                 metadata={'skip-export':'export html assign itself'}
             )  # to register section id in DOM
+            # show speaker notes at top (but after background stuff) if any to grab immediate attention of speaker, will be shown only in PDF.
+            self._speaker_notes(returns=False) # displays directly if any
             
         self._offset = len(cap.outputs) # to offset frames later, store for export
                 
@@ -923,7 +923,7 @@ class Slide:
     
     def _get_bg_image(self, selector, ikws=None):
         ikws = ikws if isinstance(ikws, dict) else {}
-        if (image := self._app.settings._resolve_img(ikws.get('src',None), '100%')):
+        if (image := _resolve_img(ikws.get('src',None), '100%')):
             if isinstance(image, str) and ("<svg" in image) and ("</svg>" in image):
                 # Normalize svg to img so cover/contain behavior stays consistent across environments.
                 svg_b64 = base64.b64encode(image.encode('utf-8')).decode('ascii')

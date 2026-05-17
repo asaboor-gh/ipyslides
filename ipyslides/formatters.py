@@ -154,7 +154,7 @@ def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=No
     svg = f'<svg style="{width};height:auto;"' + plot_bytes.getvalue().decode('utf-8').split('<svg')[1]
 
     from .utils import svg as USVG # Avoid circular import
-    return XTML(re.sub(r'fig\-(\d+)', r'fig-\1 mpl', USVG(svg, width=width,crop=crop,caption=caption).value))
+    return USVG(svg, width=width,crop=crop,caption=caption)
     
 def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='png', dpi=300):
     """Convert matplotlib figure to image with base64 encoding.
@@ -198,7 +198,7 @@ def plt2image(plt_fig=None, transparent=True, width=None, caption=None, format='
     metadata = {
         'width': width_str,
         'caption': _fig_caption(caption) if caption else '',
-        'attrs': 'class="focus-child mpl"',
+        'attrs': 'class="focus-child"',
     }
     return IMG({f'image/{fmt}': img_base64}, metadata)
 

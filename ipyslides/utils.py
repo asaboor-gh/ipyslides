@@ -1,6 +1,6 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
     'details', 'set_dir', 'textbox', 'code', 'fa', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
-    'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css']
+    'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
 __all__ = sorted(_attrs)
 
@@ -25,7 +25,7 @@ from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from dashlab.utils import _build_css # This is very light weight and too important dependency
 
 from ._base.icons import Icon as icon # for export and overrides in fa function
-from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, _inline_style, htmlize, _fig_caption, slidebound, slidesready
+from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, fix_ipy_image, _inline_style, htmlize, _fig_caption, slidebound, slidesready
 from .xmd import get_unique_css_class, capture_content, raw, error, warn
 from .source import code
 from .writer import _style_for_widget
@@ -277,6 +277,24 @@ def _clipbox_children():
         rep
     ]
     return children
+
+def _resolve_img(src, width):
+    if src is None: return ''
+    if isinstance(src, Path):
+        src = str(src)  # important for svg checking below
+    
+    if isinstance(src, str):
+        if not src.strip(): return '' # empty string
+        if "<svg" in src and "</svg>" in src:
+            return src.replace('<svg', f'<svg style="width:{width};height:auto" ') # extra space at end
+        else:
+            if src.startswith("clip:"):
+                src = get_clips_dir() / src[5:] # don't strip it
+            try:
+                return fix_ipy_image(Image(src, width=width), width=width).value
+            except:
+                return _resolve_img(SVG(src)._repr_svg_(), width=width)
+    return ''
 
 def details(obj,summary='Click to show content'):
     "Show/Hide Content in collapsed html."
@@ -588,7 +606,57 @@ def styled(obj, css_class=None, **css_props):
         # Same properties in div
         css_props = {"padding": 0, "margin": 0, **css_props}
         return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{htmlize(obj)}</div>')
+
+
+def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, rotate=0, blur=0, css_class=None, **css_props):
+    """Pin an object at a specific position on the slide. Position is given in percentage of slide dimensions if int/float, otherwise any valid CSS unit.
+    `center` will align the center of object to given coordinates instead of top left corner. `zorder` controls layering 
+    of pinned objects, higher zorder means on top. `rotate` and `blur` applies CSS transform and filter to object. 
     
+    `css_class` and `css_props` are applied to pinned object for further customizations.
+    
+    ::: note-warning
+        Beaware that pinning is contained relative to columns and containers with animation classes, use outside of any of those context to align to whole slide.
+    """
+    # Clean up Path/Asset handling
+    if isinstance(obj, (str, Path)):
+        try:
+            obj = _resolve_img(obj, width="100%") # Try to resolve as image first
+        except:
+            pass # does nothing, let object be handled below
+
+    # Type validation with friendly messages (allowing floats for rotation/blur!)
+    for name, prop in [("zorder", zorder), ("blur", blur), ("rotate", rotate)]:
+        if prop and not isinstance(prop, (int, float)):
+            raise TypeError(f"Parameter '{name}' must be a number, got {type(prop).__name__}")
+            
+    # Layering & Filter mapping
+    if zorder: 
+        css_props["z-index"] = int(zorder)
+    if blur: 
+        css_props["filter"] = f"blur({blur}px) {css_props.get('filter', '')}".strip()
+    
+    # Handle Transform Layering Safely
+    transforms = []
+    if center:
+        transforms.append("translate(-50%, -50%)")
+    if rotate:
+        transforms.append(f"rotate({rotate}deg)")
+    if transforms:
+        css_props["transform"] = f"{' '.join(transforms)} {css_props.get('transform', '')}".strip()
+
+    coords = {"left": x, "top": y, "width": width, "height": height}
+    for prop, value in coords.items():
+        if value is not None:
+            if isinstance(value, (int, float)): 
+                value = f"{value}%"
+            css_props[prop] = value
+
+    css_props["position"] = "absolute" # this is what makes it pinned
+    css_class = f'pinned-item {css_class}' if css_class else 'pinned-item' # need some stuff
+    return styled(obj, css_class=css_class, **css_props)    
+
+
 def focus(obj):
     "Wraps a given obj in a parent with 'focus-child' class or add 'focus-self' to widget, whether a widget or html/IPYthon object, to focus/exit on double click."
     if isinstance(obj,ipw.DOMWidget):

@@ -1,3 +1,121 @@
+const zoom = {
+    // State memory hooks
+    activeWrapper: null,
+    activeTarget: null,
+
+    set: function(e) {
+        const wrapper = e.target.closest('.SBoxWrapper');
+        if (!wrapper) return;
+
+        // Toggle Out: If clicking the same wrapper or an already zoomed area
+        if (wrapper.classList.contains('is-zoomed')) {
+            this.reset();
+            return;
+        }
+
+        // Visibility Guard: Prevent lunges into hidden fragment steps
+        if (e.target.closest('[style*="visibility: hidden"]') || getComputedStyle(e.target).visibility === 'hidden') {
+            return; 
+        }
+
+        // Compact Target Resolution to common media and focus classes, with fallback to clicked element
+        const target = e.target.closest('img, table, video, svg, canvas') || e.target.closest('.plot-container.plotly, .focus-self, .focus-child > *:not(.no-focus)') || e.target;
+        target.classList.add('is-zoom-target'); // for potential future use, like adding a highlight or other effects
+
+
+        // Context-Agnostic Viewport Bounds Math
+        const wrapRect = wrapper.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+
+        const wrapW = wrapRect.width, wrapH = wrapRect.height;
+        const targetW = targetRect.width, targetH = targetRect.height;
+
+        const safeInset = 16; // avoid edges hitting container for better user experience
+        const safeMinX = safeInset;
+        const safeMaxX = Math.max(safeMinX + 1, wrapW - safeInset);
+        const safeMinY = safeInset;
+        const safeMaxY = Math.max(safeMinY + 1, wrapH - safeInset);
+
+        const safeWrapW = Math.max(1, safeMaxX - safeMinX);
+        const safeWrapH = Math.max(1, safeMaxY - safeMinY);
+
+        if (wrapW <= 0 || wrapH <= 0 || targetW <= 0 || targetH <= 0) {
+            return;
+        }
+
+        // Fitting Multiplier Calculation (5% margin)
+        const fitZoom = Math.min(safeWrapW / targetW, safeWrapH / targetH) * 0.95;
+        let dynamicZoom = Math.min(4.0, fitZoom);
+        if (dynamicZoom < 1.1) dynamicZoom = Math.min(1.25, Math.max(1.0, fitZoom));
+
+        // Absolute Transform Origin Math
+        const targetLeft = targetRect.left - wrapRect.left;
+        const targetTop = targetRect.top - wrapRect.top;
+        const targetRight = targetLeft + targetW;
+        const targetBottom = targetTop + targetH;
+
+        const targetCenterXRelative = targetLeft + (targetW / 2);
+        const targetCenterYRelative = targetTop + (targetH / 2);
+
+        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+        let originXAbs = targetCenterXRelative;
+        let originYAbs = targetCenterYRelative;
+
+        if (dynamicZoom > 1) {
+            const denom = dynamicZoom - 1;
+
+            const minOriginX = ((dynamicZoom * targetRight) - safeMaxX) / denom;
+            const maxOriginX = ((dynamicZoom * targetLeft) - safeMinX) / denom;
+            if (minOriginX <= maxOriginX) {
+                originXAbs = clamp(targetCenterXRelative, minOriginX, maxOriginX);
+            } else {
+                originXAbs = clamp(targetCenterXRelative, safeMinX, safeMaxX);
+            }
+
+            const minOriginY = ((dynamicZoom * targetBottom) - safeMaxY) / denom;
+            const maxOriginY = ((dynamicZoom * targetTop) - safeMinY) / denom;
+            if (minOriginY <= maxOriginY) {
+                originYAbs = clamp(targetCenterYRelative, minOriginY, maxOriginY);
+            } else {
+                originYAbs = clamp(targetCenterYRelative, safeMinY, safeMaxY);
+            }
+        }
+
+        const originX = clamp((originXAbs / wrapW) * 100, 0, 100);
+        const originY = clamp((originYAbs / wrapH) * 100, 0, 100);
+
+        // Deploy Camera Styles
+        wrapper.style.transformOrigin = `${originX}% ${originY}%`;
+        wrapper.style.transform = `scale(${dynamicZoom})`;
+        wrapper.classList.add('is-zoomed');
+        
+        // Lock both nodes into state memory for future use
+        this.activeWrapper = wrapper;
+        this.activeTarget = target;
+    },
+
+    reset: function() {
+        // Targeted Purge: Clean up the specifically tracked active elements
+        if (this.activeWrapper) {
+            this.activeWrapper.style.transform = '';
+            this.activeWrapper.style.transformOrigin = '';
+            this.activeWrapper.classList.remove('is-zoomed');
+
+            if (this.activeTarget) { 
+                this.activeTarget.classList.remove('is-zoom-target'); 
+            }
+
+            this.activeWrapper = null;
+            this.activeTarget = null;
+            return;
+        }
+
+        this.activeWrapper = null;
+        this.activeTarget = null;
+    }
+};
+
 
 function applyPrintProgressWidth(slide, numFrame, frameOffset = 0) {
     const pview = slide.querySelector(':scope .sprogress-view');
@@ -230,8 +348,6 @@ function printSlides(box, model) {
         const slideNum = parseInt([...slide.classList].find(cls => /^n\d+$/.test(cls))?.slice(1)) || null;
         const numFrames = frameCounts[n] || 1;
 
-        setBgImage(slide);
-
         if (slide.classList.contains('HasFrames') && numFrames > 1) {
             let lastInserted = slide;
             let clone = slide;
@@ -246,7 +362,6 @@ function printSlides(box, model) {
                 }
 
                 const frame = (parts[slideNum] && parts[slideNum][i] !== undefined) ? parts[slideNum][i] : null;
-                setBgImage(clone);
 
                 // Ensure each frame starts from a clean print state.
                 clone.querySelectorAll(':scope .print-invisible').forEach(el => el.classList.remove('print-invisible'));
@@ -339,11 +454,6 @@ function keyboardEvents(box,model) {
         if (e.target !== box){
             return true; // inside componets should work properly, avoid going outside
         }; 
-
-        // Block keyboard navigation for extra safety when in popup focus mode
-        if (box.classList.contains('mode-inactive')) {
-            return; // extra safety
-        }
 
         let key = e.key; // True unicode key
         let message = '';
@@ -443,8 +553,8 @@ function handleMessage(model, msg, box) {
             });
         });
         
+        box.querySelector(':scope .zoom-reset-btn')?.click(); // reset zoom by removing button as well.
         setScale(box, model); // rescale on slide change if left over, useful in VSCode
-        setBgImage(slideNew); // ensure background image is set if not yet
         setMainBgImage(slideNew, box) // set background image if any on current slide
         tldrawLinks(slideNew, model); // fix draw links for new slide
 
@@ -524,40 +634,12 @@ function handleMessage(model, msg, box) {
     } 
 };
 
-
-function pickBackLayer(slide) {
-    const outArea = slide.querySelector(':scope .jp-OutputArea');
-    if (!outArea) return null;
-
-    const targetLayer = outArea.querySelector(':scope .BackLayer.print-only');
-    if (targetLayer) return targetLayer;
-    return null;
-}
-
-function setBgImage(slide) {
-    // Remove all previous BackLayer elements in SlideArea (direct children only)
-    slide.querySelectorAll(':scope > .BackLayer').forEach(bg => bg.remove());
-
-    // Find the new background image in the output area
-    let bgImage = pickBackLayer(slide);
-    if (bgImage) {
-        // Clone the node to avoid moving it from output area
-        let newBackLayer = bgImage.cloneNode(true);
-        slide.insertBefore(newBackLayer, slide.firstChild); // Insert at the back
-        // z-index:-1 paints behind normal-flow content (jp-OutputArea).
-        // isolation:isolate scopes the z-index to this SlideArea stacking context so
-        // the BackLayer is not pushed behind the SlideBox background.
-        newBackLayer.style.zIndex = -1;
-        slide.style.isolation = 'isolate';
-    } else {
-        slide.style.isolation = ''; // reset if no background on this slide
-    }
-}
-
 function setMainBgImage(slide, target) {
-    let bgImage = pickBackLayer(slide);
+    if (!slide || !target) return;
+    let bgImage = slide.querySelector(':scope .BackLayer.print-only');
     let targetBg = target.querySelector(':scope .BackLayer'); // target backlayer
-    if (!targetBg) return;
+    if (!targetBg) return; // but let empty image to clear the bg later
+
     if (bgImage) {
         targetBg.innerHTML = bgImage.innerHTML; // clone content
         // copy classes except print-only, so unique classes are preserved
@@ -687,9 +769,8 @@ function handlePointerSwipe(box, model) {
     // To ensure swipe works , added tocuh-action CSS to SlideBox and all children
     function setState(e, setValue) {
         swiped = false;
-        // Avoid swipe when in inactive mode like popup focus should not trigger slide changes
-        initialX = setValue && !box.classList.contains('mode-inactive') ? e.clientX : null;
-        initialY = setValue && !box.classList.contains('mode-inactive') ? e.clientY : null;
+        initialX = setValue ? e.clientX : null;
+        initialY = setValue ? e.clientY : null;
         if (!setValue) box.classList.remove('mouse-swipe-active'); // reset on end
     }
 
@@ -753,13 +834,6 @@ function handleBoxClicks(box, model) {
         if (event.target.closest(INTERACTIVE_SEL)) {
             event.stopPropagation(); // stop propagation to underlying slides
             return true; // let the click happen
-        } 
-        
-        // Check if in focus mode, do not pass clicks to slides to avoid accidental slide changes
-        if (event.target.closest('.mode-popup-active') || box.classList.contains('mode-inactive')) {
-            event.stopPropagation(); // stop propagation to underlying slides
-            event.preventDefault(); // stop default actions
-            return; // Exit 
         }
     });
 
@@ -769,41 +843,29 @@ function handleBoxClicks(box, model) {
         if (event.target.closest(INTERACTIVE_SEL)) {
             return; // Let interactive elements handle their own double-clicks
         }
-        
+
         // Check if already in focus mode - exit it
-        if (box.classList.contains('mode-inactive')) {
-            const closeBtn = box.querySelector(':scope .popup-close-btn');
-            if (closeBtn) {
-                closeBtn.click(); // Trigger close button
-            }
-            return false; // already in focus mode, exit
+        const closeBtn = box.querySelector(':scope .zoom-reset-btn');
+        if (closeBtn) {
+            closeBtn.click(); // Trigger close button
+            return false; // and exit
         }
 
-        // Check for focusable elements
-        const matchedElem = event.target.closest(model.get("_fsels"));
-        if (matchedElem) { // Focus by JS to be able to have a close button etc
-            event.preventDefault(); 
-            event.stopPropagation();
-            box.blur(); // remove focus from box to avoid keyboard events there
-            matchedElem.classList.add('mode-popup-active');
-            model.set("msg_topy", "mode-inactive");
-            model.save_changes();
-            
-            const btn = document.createElement('button');
-            btn.className = 'popup-close-btn';
-            btn.title = 'Close Popup (Double-click)';
-            btn.innerHTML = '<i class="fa fa-close"></i>';
-            btn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                matchedElem.classList.remove('mode-popup-active');
-                model.set("msg_topy", "!mode-inactive");
-                model.save_changes();
-                box.focus(); // return focus to box
-                btn.remove(); // remove button
-            };
-            box.appendChild(btn);
-        }
+        zoom.set(event); // enter zoom mode with target coordinates
+        
+        // Create and show close button for exiting focus mode    
+        const btn = document.createElement('button');
+        btn.className = 'zoom-reset-btn';
+        btn.title = 'Reset Zoom (Double-click)';
+        btn.innerHTML = '<i class="fa fa-close"></i>';
+        btn.onclick = function(e) {
+            zoom.reset(); // reset focus state to prevent stuck zooms when going back and forth between slides
+            e.preventDefault();
+            e.stopPropagation();
+            box.focus(); // return focus to box
+            btn.remove(); // remove button
+        };
+        box.appendChild(btn);
     });
 }
 
@@ -957,9 +1019,7 @@ function render({ model, el }) {
         };
 
         box.onmouseenter = function(){
-            if (!box.classList.contains('mode-inactive')){
-                box.focus(); // focus only if not in inactive mode
-            }
+            box.focus(); // focus on enter to allow keyboard events
         };
         box.onmouseleave = function(){box.blur();};
         
@@ -1032,8 +1092,6 @@ function render({ model, el }) {
         box.insertBefore(bglayer, box.firstChild); // at back
         bglayer.style.zIndex = 0; // ensure at back further
 
-        // Set background images if any left due to being loaded from python script
-        box.querySelectorAll(':scope .SlideArea').forEach((slide) => {setBgImage(slide);}); // only set which are not yet set
         setMainBgImage(box.querySelector(':scope .ShowSlide'), box) // set background image if any on current slide
         tldrawLinks(box, model); // fix draw links for all slides
         
