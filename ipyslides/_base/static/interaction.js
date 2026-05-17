@@ -569,7 +569,7 @@ function handleMessage(model, msg, box) {
             });
         }
     } else if (msg.includes("NAV:")) {
-        console.log("Navigation message received:", msg);
+        box.querySelector(':scope .zoom-reset-btn')?.click(); // reset zoom by removing button in between parts too
         let slide = box.querySelector(":scope .SlideArea.ShowSlide");
         if (!slide) return;
         const inParts = msg.includes("/PARTS");
