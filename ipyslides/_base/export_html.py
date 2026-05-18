@@ -2,14 +2,16 @@
 Export Slides to static HTML slides. It is used by program itself, 
 not by end user.
 """
-import os
+import os, re
 import textwrap
 from contextlib import suppress
+from pathlib import Path
 
 from .export_template import doc_html
 from . import styles
 from ..writer import _fmt_html
 from ..formatters import _inline_style
+
 
 _script = '''<script>
     let box = document.querySelector('.SlideBox');
@@ -131,13 +133,28 @@ class _HhtmlExporter:
         overall_css = ''.join(f'{s._yoffset_css(True)}\n{s._style_css(True)}' for s in self.main[:1]) # only one time
         return doc_html(
             code_css    = self.main.widgets.htmls.hilite.value.replace(f'.{self.main.uid}',''), # remove id from code here
-            style_css   = self.main.html('style', styles.style_css(**theme_kws, _root=True)).value + overall_css,
+            style_css   = self.main.html('style', styles.style_css(**theme_kws, _root=True) + self._stacking_css()).value + overall_css,
             content     = content, 
             script      = _script, 
             click_btns  = self.main.settings._get_clickers(), 
             css_class   = ' '.join(css_classes),
             padding_bottom = self.main.widgets.iw._fpad,
             )
+
+
+    def _stacking_css(self):
+        """Generate export-only translateZ rules to preserve stacking for nested positioned elements."""
+        live_css = (Path(__file__).with_name('static') / 'interaction.css').read_text(encoding='utf-8')
+        start_css = re.search(
+            r'^\s*/\*\s*:AnimSelStart:\s*\*/\s*(.*?)^\s*/\*\s*:AnimSelEnded:\s*\*/',
+            live_css,
+            re.DOTALL | re.MULTILINE,
+        ).group(1).strip()
+        return ('\n' + textwrap.dedent(f'''
+            /* Export-only stacking parity for animation targets */
+            {start_css}
+                transform: translateZ(0) !important;
+            }}''')) if start_css else ''
     
     def _get_css(self, slide, sec_uid):
         "uclass.SlidesWrapper → sec_id , .SlidesWrapper → sec_id"

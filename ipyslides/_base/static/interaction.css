@@ -106,9 +106,12 @@
 }
 
 /* --- BASE STATE --- */
+/* Comments below are to fetch base selector for export purpuse, do NOT remove or edit!*/
+/* :AnimSelStart: */
 .SlideArea [class*="anim-"]:not(.anim-group),
 .SlideArea .anim-group > *:not(.jp-OutputArea),
 .SlideArea .anim-group > .jp-OutputArea > .jp-OutputArea-child {
+/* :AnimSelEnded: */
     opacity: 0 !important;
     pointer-events: none;
     will-change: transform, opacity, clip-path;

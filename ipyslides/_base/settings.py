@@ -164,7 +164,7 @@ class Footer(ConfigTraits):
         style = 'white-space:nowrap;margin-block:0;position:absolute;left:0;bottom:0;width:100%'
         inner = self.text
         if self.section and (running := self._running_section_text(slide)):
-            inner += ("<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else "") + f"<span class='section'>{running}</span>"
+            inner += ("<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else "") + f"<span class='section' title='Click to open TOC'>{running}</span>"
         if self.date:
             inner += (
                 "<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else ""

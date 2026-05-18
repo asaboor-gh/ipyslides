@@ -171,7 +171,7 @@ class Writer(ipw.HBox):
                 display(*rows[1:]) # Just display rest of rows directly
         elif len(objs) >= 1: # avoid empty write
             self.children = [
-                _Output(layout = ipw.Layout(flex = c['flex'],min_width='0',height='auto'))
+                _Output(layout = ipw.Layout(flex = c['flex'],min_width='0',position='relative')) # make position relative explicitly
                 for c in self._cols
             ]
             for i, (col, out) in enumerate(zip(self._cols, self.children)):
@@ -354,7 +354,7 @@ class Writer(ipw.HBox):
             return rows
 
         for i, col in enumerate(self._cols):
-            flex = f'flex:{col["flex"]};height:auto;min-width:0'
+            flex = f'flex:{col["flex"]};min-width:0;position:relative;'
             col_class = ' '.join(x for x in (
                 col.get('uclass', ''),
                 col.get('col_css_class', ''),

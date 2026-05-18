@@ -106,13 +106,17 @@ section .SlideBox {
     display:none !important;
 }
 
-.SlidesWrapper.Scrolling .slide-progress {
+.SlidesWrapper.Scrolling .slide-progress,
+.SlidesWrapper.Scrolling .slide-footer,
+.SlidesWrapper.Scrolling .click-wrapper {
     visibility: hidden !important;
     transition: visbility 200ms ease-in;
 }
 
 @media print {
-    .SlidesWrapper.Scrolling .slide-progress {
+    .SlidesWrapper.Scrolling .slide-progress,
+    .SlidesWrapper.Scrolling .slide-footer,
+    .SlidesWrapper.Scrolling .click-wrapper {
         visibility: visible !important;
         transition: none !important;
     }

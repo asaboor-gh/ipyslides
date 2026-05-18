@@ -653,7 +653,7 @@ def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, ro
             css_props[prop] = value
 
     css_props["position"] = "absolute" # this is what makes it pinned
-    css_class = f'pinned-item {css_class}' if css_class else 'pinned-item' # need some stuff
+    css_class = f'ips-pinned-item {css_class}' if css_class else 'ips-pinned-item' # need some stuff
     return styled(obj, css_class=css_class, **css_props)    
 
 

@@ -400,6 +400,7 @@ def style_css(colors, fonts, layout, _root = False):
             '.widget-box': {'flex-shrink': 0}, # avoid collapse
             '.slide-footer': {
                 'box-sizing': 'border-box',
+                'user-select': 'none !important', # must avoid on double click or so
                 'width': '100%',
                 'padding': '0 6px',
                 'color': 'var(--fg2-color, black)',
@@ -514,7 +515,7 @@ def style_css(colors, fonts, layout, _root = False):
         },
         
         '.fa::before':  {'margin': '0 4px 0 2px', 'vertical-align': 'middle',}, # for exported font-awsome icons
-        **{f".fa.fa-{k}::before": Icon(k, color=colors['accent']).css for k in Icon.available}, # needed in export too
+        **({f".fa.fa-{k}::before": Icon(k, color=colors['accent']).css for k in Icon.available}), # needed in export too
         '.raw-text': { # Should be same in notebook cell 
             'font-family': 'var(--jp-code-font-family) !important',
             'font-size':'90% !important',
@@ -539,7 +540,7 @@ def style_css(colors, fonts, layout, _root = False):
             }),
         },
         '.SlideArea': {
-            **{f"--{k}-color":v for k,v in colors.items()}, # need for per slide based CSS set by user to not effect all
+            **({f"--{k}-color":v for k,v in colors.items()}), # need for per slide based CSS set by user to not effect all
             'position': 'absolute !important',
             'width':'210mm !important', # A4 width letter page can have a little extra margin, important to have fixed width
             'height': f'{_safe_height(layout.aspect)}mm !important',
@@ -589,6 +590,9 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-height':'max-content !important',
                 }
             } if layout._reflow else {}), # clean way to reflow all content
+            '.jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
+                'overflow': 'visible !important', # avoid clipping of pinned content
+            },
             '.speaker-notes': {
                 **({} if layout._inotes else {'display':'none !important',}), # hide notes if not choosen to include in print
                 'border-radius':'0.2em !important',
@@ -820,10 +824,8 @@ def style_css(colors, fonts, layout, _root = False):
                 'align-items':'stretch',
                 '> *': {
                     'min-width':'0 !important', # avoid overflow due to stubborn elements
-                    '^:has(.pinned-item)': {
-                        'min-height':'100% !important', # make full height to avoid absolute pinned items take space, STILL MAY NOT WORK
-                    },
-                }, 
+                },
+                '> * div:only-child': { 'height':'stretch',}, # if only one child(neset) div, make it full height, this hack is so unconventional
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },
         },

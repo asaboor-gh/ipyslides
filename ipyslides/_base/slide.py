@@ -709,10 +709,11 @@ class Slide:
 
     @property
     def _disp_num(self):
+        prefix = f"{self} → " if not self._contents else "" # if empty slide, give hint of given slide number 
         extra_start = self._app._extra_start_index()
         if extra_start is not None and self.index >= extra_start:
-            return f"S.{self.index - extra_start + 1}" # 1-based supplemental slide number
-        return f"{self.index or ''}" # empty for zero
+            return f"{prefix}S.{self.index - extra_start + 1}" # 1-based supplemental slide number
+        return f"{prefix}{self.index or ''}" # empty for zero
     
     def _handle_refs(self):
         "Display unused citations at end of slide."

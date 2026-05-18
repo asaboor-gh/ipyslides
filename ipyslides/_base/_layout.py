@@ -36,10 +36,14 @@ def layout_css(accent_color, aspect):
                 "^.Voila-Child, ^.mode-fullscreen": {
                     ".Width-Slider, .Warn": {"display": "none !important"},
                 },
-                "^:has(.SBoxWrapper.is-zoomed) .FooterArea": {"display": "none !important",}, # avoid overlapping with zoomed content
+                "^:has(.SBoxWrapper._ips-zoom-active) .FooterArea": {
+                    "visibility": "hidden !important",
+                    "transition": "visibility 0.2s ease-out",
+                }, # avoid overlapping with zoomed content
                 "> .SBoxWrapper": { # Used to focus on elements by double click
+                    "isolation": "isolate", # avoid layout leeks
                     "transition": "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform-origin 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
-                    "^.is-zoomed .is-zoom-target": {
+                    "^._ips-zoom-active ._ips-zoom-target": {
                         "box-shadow": "0px 0px 1px 0.5px #8988 !important",
                         "border-radius": "4px !important",
                     },
@@ -126,15 +130,6 @@ def layout_css(accent_color, aspect):
                     "^, .widget-html-content": {"line-height": "0 !important"},
                     "@media print": {"position": "fixed !important",},
                 }, # other properties are set internally
-                ".zoom-reset-btn": {
-                    "position": "absolute",
-                    "top": "8px",
-                    "right": "8px",
-                    "z-index": "10",  # above focused element
-                    "border": "none",
-                    "padding": "4px 8px",
-                    "backdrop-filter": "blur(4px)",
-                },
                 "> .Build-Btn": {"visibility": "hidden !important",}, # hide build button by default
                 "^:has(.SlideArea.Stale) > .Build-Btn": {
                     "visibility": "visible !important",
@@ -169,8 +164,7 @@ def layout_css(accent_color, aspect):
                     },
                 },
                 ".jp-OutputArea": {
-                    "width": "100% !important",
-                    "height": "auto !important", # This is must for layout
+                    "width": "100% !important", # do not set height to allow full stretch
                     ".jp-OutputPrompt.jp-OutputArea-prompt": {"display": "none !important",},
                     ".jp-OutputArea-output": { # clean reveal after loading skeleton ends
                         "animation": "ips-reveal 0.5s ease-in-out",

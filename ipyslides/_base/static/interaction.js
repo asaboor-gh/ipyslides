@@ -1,26 +1,29 @@
 const zoom = {
-    // State memory hooks
-    activeWrapper: null,
-    activeTarget: null,
+    active: function(slides) {
+        return slides.querySelector(':scope .SBoxWrapper._ips-zoom-active') || null;
+    },
 
-    set: function(e) {
-        const wrapper = e.target.closest('.SBoxWrapper');
+    set: function(e, slides) {
+        const wrapper = slides.querySelector(':scope .SBoxWrapper'); // just below slides
         if (!wrapper) return;
 
         // Toggle Out: If clicking the same wrapper or an already zoomed area
-        if (wrapper.classList.contains('is-zoomed')) {
+        if (wrapper.classList.contains('_ips-zoom-active')) {
             this.reset();
             return;
         }
 
-        // Visibility Guard: Prevent lunges into hidden fragment steps
-        if (e.target.closest('[style*="visibility: hidden"]') || getComputedStyle(e.target).visibility === 'hidden') {
+        // Visibility Guard: Prevent lunges into hidden fragment steps, this is very imprtant!
+        if (e.target.closest('[style*="visibility: hidden"], .FooterArea') || getComputedStyle(e.target).visibility === 'hidden') {
             return; 
         }
 
-        // Compact Target Resolution to common media and focus classes, with fallback to clicked element
-        const target = e.target.closest('img, table, video, svg, canvas') || e.target.closest('.plot-container.plotly, .focus-self, .focus-child > *:not(.no-focus)') || e.target;
-        target.classList.add('is-zoom-target'); // for potential future use, like adding a highlight or other effects
+        // Compact Target Resolution to common media and focus classes, with fallback to clicked element, don't let random tags zoom like span, p
+        const target = e.target.closest('img, table, video, svg, canvas') 
+            || e.target.closest('.plot-container.plotly, .focus-self, .focus-child > *:not(.no-focus)') 
+            || e.target.closest('div');
+        if (!target) return;
+        target.classList.add('_ips-zoom-target'); // for potential future use, like adding a highlight or other effects
 
 
         // Context-Agnostic Viewport Bounds Math
@@ -45,8 +48,8 @@ const zoom = {
 
         // Fitting Multiplier Calculation (5% margin)
         const fitZoom = Math.min(safeWrapW / targetW, safeWrapH / targetH) * 0.95;
-        let dynamicZoom = Math.min(4.0, fitZoom);
-        if (dynamicZoom < 1.1) dynamicZoom = Math.min(1.25, Math.max(1.0, fitZoom));
+        let dynamicZoom = Math.min(10, fitZoom); // cap max zoom to 10x to avoid excessive zooming on tiny elements
+        if (dynamicZoom < 1) dynamicZoom = Math.max(1.0, fitZoom); // only zoom in
 
         // Absolute Transform Origin Math
         const targetLeft = targetRect.left - wrapRect.left;
@@ -88,31 +91,24 @@ const zoom = {
         // Deploy Camera Styles
         wrapper.style.transformOrigin = `${originX}% ${originY}%`;
         wrapper.style.transform = `scale(${dynamicZoom})`;
-        wrapper.classList.add('is-zoomed');
+        wrapper.classList.add('_ips-zoom-active');
         
         // Lock both nodes into state memory for future use
         this.activeWrapper = wrapper;
         this.activeTarget = target;
     },
 
-    reset: function() {
-        // Targeted Purge: Clean up the specifically tracked active elements
-        if (this.activeWrapper) {
-            this.activeWrapper.style.transform = '';
-            this.activeWrapper.style.transformOrigin = '';
-            this.activeWrapper.classList.remove('is-zoomed');
-
-            if (this.activeTarget) { 
-                this.activeTarget.classList.remove('is-zoom-target'); 
+    reset: function(slides) {
+        slides.querySelectorAll(':scope ._ips-zoom-target').forEach(
+            el => el.classList.remove('_ips-zoom-target')
+        ); // clean up zoom target
+        slides.querySelectorAll(':scope ._ips-zoom-active').forEach(
+            el => {
+                el.style.transform = '';
+                el.style.transformOrigin = '';
+                el.classList.remove('_ips-zoom-active');
             }
-
-            this.activeWrapper = null;
-            this.activeTarget = null;
-            return;
-        }
-
-        this.activeWrapper = null;
-        this.activeTarget = null;
+        ); // clean up zoom wrapper and reset styles
     }
 };
 
@@ -553,7 +549,7 @@ function handleMessage(model, msg, box) {
             });
         });
         
-        box.querySelector(':scope .zoom-reset-btn')?.click(); // reset zoom by removing button as well.
+        zoom.reset(box); // reset zoom on navigation
         setScale(box, model); // rescale on slide change if left over, useful in VSCode
         setMainBgImage(slideNew, box) // set background image if any on current slide
         tldrawLinks(slideNew, model); // fix draw links for new slide
@@ -569,7 +565,7 @@ function handleMessage(model, msg, box) {
             });
         }
     } else if (msg.includes("NAV:")) {
-        box.querySelector(':scope .zoom-reset-btn')?.click(); // reset zoom by removing button in between parts too
+        zoom.reset(box); // reset zoom on navigation in parts too, important to not keep zoom on random elements
         let slide = box.querySelector(":scope .SlideArea.ShowSlide");
         if (!slide) return;
         const inParts = msg.includes("/PARTS");
@@ -825,6 +821,9 @@ function handleBoxClicks(box, model) {
         if (isCtxOpen && !event.target.closest('.CtxMenu')) {
             model.set("msg_topy", "CCTX"); // close context menu
             model.save_changes(); // after that go on with other checks
+        } else if (event.target.closest('.SlidesWrapper .slide-footer .section')) {
+            model.set("msg_topy", "menu:toc"); // open TOC panel
+            model.save_changes();
         } else if (event.target.closest('.SlidesWrapper .slide-footer')) {
             handleContextMenu(box, model, event); 
             return; // exit after handling footer click
@@ -839,33 +838,19 @@ function handleBoxClicks(box, model) {
 
     // Handle double-click for entering focus mode
     box.addEventListener('dblclick', function(event) {
+        window.getSelection().removeAllRanges(); // clear text selection on double-click
         // Check for interactive elements - they should handle their own double-clicks (text selection, etc.)
         if (event.target.closest(INTERACTIVE_SEL)) {
             return; // Let interactive elements handle their own double-clicks
         }
 
-        // Check if already in focus mode - exit it
-        const closeBtn = box.querySelector(':scope .zoom-reset-btn');
-        if (closeBtn) {
-            closeBtn.click(); // Trigger close button
-            return false; // and exit
+        if (zoom.active(box)) {
+            zoom.reset(box);
+            return false; // reset and return if already in zoom
         }
-
-        zoom.set(event); // enter zoom mode with target coordinates
         
-        // Create and show close button for exiting focus mode    
-        const btn = document.createElement('button');
-        btn.className = 'zoom-reset-btn';
-        btn.title = 'Reset Zoom (Double-click)';
-        btn.innerHTML = '<i class="fa fa-close"></i>';
-        btn.onclick = function(e) {
-            zoom.reset(); // reset focus state to prevent stuck zooms when going back and forth between slides
-            e.preventDefault();
-            e.stopPropagation();
-            box.focus(); // return focus to box
-            btn.remove(); // remove button
-        };
-        box.appendChild(btn);
+        // enter zoom mode with target coordinates or reset if already in zoom
+        zoom.set(event, box); 
     });
 }
 
