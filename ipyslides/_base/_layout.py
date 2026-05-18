@@ -34,7 +34,7 @@ def layout_css(accent_color, aspect):
                     "outline" : "none !important",
                 },
                 "^.Voila-Child, ^.mode-fullscreen": {
-                    ".Width-Slider, .Warn": {"display": "none !important"},
+                    ".Width-Slider, .Warn, .snumber-hint": {"display": "none !important"},
                 },
                 "^:has(.SBoxWrapper._ips-zoom-active) .FooterArea": {
                     "visibility": "hidden !important",

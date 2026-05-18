@@ -299,6 +299,7 @@ class Slide:
         # after others to take everything into account
         self._reset_frames(offset = self._offset)
         self._app._update_toc()
+        self._app.settings.footer._update_footer() # this is live footer(not print), need to set section and number
         if self is self._app._current: # only on viewed slide, not in background rebuilds
             self._app.run_animation() # inform JS side of reload animation on update/build time without navigation
     
@@ -709,7 +710,7 @@ class Slide:
 
     @property
     def _disp_num(self):
-        prefix = f"{self} → " if not self._contents else "" # if empty slide, give hint of given slide number 
+        prefix = f"<span class='snumber-hint'>{self.number} → </span>" if not self._contents else "" # if empty slide, give hint of given slide number 
         extra_start = self._app._extra_start_index()
         if extra_start is not None and self.index >= extra_start:
             return f"{prefix}S.{self.index - extra_start + 1}" # 1-based supplemental slide number

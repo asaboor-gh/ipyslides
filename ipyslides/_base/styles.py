@@ -429,6 +429,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'text-align': 'right',
                     'color': 'var(--fg2-color)',
                     'z-index': '8',
+                    '.snumber-hint': { 'color': 'hsl(from var(--accent-color) 40 100% l) !important' }, # like build button
                 },
                 '.slide-progress': {
                     'position': 'absolute',
