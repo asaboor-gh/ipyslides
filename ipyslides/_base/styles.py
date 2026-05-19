@@ -402,18 +402,18 @@ def style_css(colors, fonts, layout, _root = False):
                 'box-sizing': 'border-box',
                 'user-select': 'none !important', # must avoid on double click or so
                 'width': '100%',
-                'padding': '0 6px',
                 'color': 'var(--fg2-color, black)',
-                'z-index': '8',
+                'z-index': '5',
                 'line-height': '1.5',# needs to enforce proper height in print
                 '.footer-text': {
                     'display': 'flex',
                     'align-items': 'center',
                     'gap': '0.5rem',
+                    'padding': '0 6px', # not on top continer which has progressbar
                     'width': '100%',
                     'min-width': '0',
                     'font-size': '12px !important',
-                    "padding-bottom": "2px !important", # keep space for progreebar
+                    "padding-bottom": "1px !important", # a little space above progressbar
                 },
                 '.footer-text > div:first-child': {
                     'flex': '1 1 auto',
@@ -432,15 +432,32 @@ def style_css(colors, fonts, layout, _root = False):
                     '.snumber-hint': { 'color': 'hsl(from var(--accent-color) 40 100% l) !important' }, # like build button
                 },
                 '.slide-progress': {
-                    'position': 'absolute',
-                    'left': '0',
-                    'right': '0',
-                    'bottom': '0',
-                    'height': '2px',
-                },
+                    'width': '100% !important',
+                    'height': '2px !important',# that's it, no nned to set absolute position
+                }, # this progressbar is thin and can be lost in print if it were absolute on its own, works fine with the flow of content in footer
                 '.footer-text .section': {
                     'font-style': 'italic',
                     'color': 'var(--fg3-color)',
+                },
+                '.click-wrapper': { # PDF/HTML -only clicker at bottom right
+                    'display': 'inline-flex', # no impportant as in print-only display is none
+                    'flex-direction': 'row !important',
+                    'align-items': 'center !important',
+                    'z-index': '6 !important',
+                    'justify-content': 'flex-end !important', # align to right
+                    '.clicker': {
+                        'display':'inline-block',
+                        'padding':'0 8px !important', # PDF safe
+                        'flex-grow':'1',
+                        'color':'var(--accent-color)',
+                        'text-align':'center',
+                        'text-decoration':'none !important',
+                        'opacity':'0.4',
+                        '^:hover': { # for exported html interactivity
+                            'color':'var(--fg1-color)',
+                            'opacity':'1',
+                        },
+                    },    
                 },
             },
             'hr': {
@@ -591,8 +608,8 @@ def style_css(colors, fonts, layout, _root = False):
                 'max-height':'max-content !important',
                 }
             } if layout._reflow else {}), # clean way to reflow all content
-            '.jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
-                'overflow': 'visible !important', # avoid clipping of pinned content
+            '* .jp-OutputArea:has(.ips-pinned-item), .jp-OutputArea-child:has(.ips-pinned-item)': {
+                'overflow': 'visible !important', # avoid clipping of pinned content, but avoid top Area under slide
             },
             '.speaker-notes': {
                 **({} if layout._inotes else {'display':'none !important',}), # hide notes if not choosen to include in print
@@ -700,7 +717,7 @@ def style_css(colors, fonts, layout, _root = False):
                     'color': 'var(--fg2-color) !important',
                     'opacity': '0.75 !important',
                 },
-                '^:not(.citelink,.slide-link,.link-button)': {
+                '^:not(.citelink,.slide-link,.link-button,.clicker)': {
                     'text-decoration': 'underline !important', 
                 },
                 '^.citelink': {'color': 'var(--fg1-color) !important',},
@@ -826,7 +843,6 @@ def style_css(colors, fonts, layout, _root = False):
                 '> *': {
                     'min-width':'0 !important', # avoid overflow due to stubborn elements
                 },
-                '> * div:only-child': { 'height':'stretch',}, # if only one child(neset) div, make it full height, this hack is so unconventional
                 'table': {'width':'calc(100% - 0.5em)'}, # make table full width inside columns with some padding
             },
         },
@@ -1028,33 +1044,6 @@ def style_css(colors, fonts, layout, _root = False):
             'min-width':'300px',
             'width':'100%',
             'height':'auto',    
-        },
-        '.click-wrapper': { # PDF/HTML -only clicker at bottom right
-            'position': 'absolute !important',
-            '@media print': {'position': 'fixed !important',},
-            'right': '28px !important', # space for slide number
-            'bottom': '2px !important',
-            'width': 'auto !important',
-            'height': '21px !important',
-            'display': 'inline-flex', # no impportant as in print-only display is none
-            'flex-direction': 'row !important',
-            'align-items': 'center !important',
-            'z-index': '6 !important',
-            'justify-content': 'flex-end !important', # align to right
-            '.clicker': {
-                'display':'inline-block',
-                'padding':'0 8px !important', # PDF safe
-                'flex-grow':'1',
-                'color':'var(--accent-color)',
-                'text-align':'center',
-                'font-size':'14px',
-                'text-decoration':'none !important',
-                'opacity':'0.4',
-                '^:hover': { # for exported html interactivity
-                    'color':'var(--fg1-color)',
-                    'opacity':'1',
-                },
-            },    
         },
     })
     

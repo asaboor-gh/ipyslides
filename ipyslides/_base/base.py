@@ -380,6 +380,7 @@ class BaseSlides:
                 ### This is summary of current section
                 Oh we can use inline columns stack`Column A || Column B` here and what not!
                 %{btn}
+                pin[60,50, rotate=15]`::: anim-slide-left block-red | This is pinned content!`
                 ```
             ```''', btn = self.draw_button)
         
@@ -486,7 +487,7 @@ class BaseSlides:
             
             members = sorted((
                 'AnimationSlider alert bokeh2html bullets esc styled fmt code color details doc '
-                'today error focus html iframe image frozen notify plt2html '
+                'today error focus html iframe image frozen notify plt2html pin '
                 'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
             ).split())
             self.doc(self, 'Slides', members = members, itself = False).display()
@@ -602,7 +603,7 @@ class BaseSlides:
             ## Focus on what matters
             - Most of supported elements can be focused by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.
             - You can also enable focus on an object/widget by wrapping it inside \`Slide.focus\` function conveniently.
-            - You can also enable focus by manully adding `focus-self`, `focus-child` classes to an element. To prevent focus under as `focus-child` class, use `no-focus` class.
+            - You can also enable focus by manually adding `focus-self`, `focus-child` classes to an element. 
             
             ::: focus-self block-red
                 ### Focus on Me 😎

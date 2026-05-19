@@ -229,7 +229,7 @@
     .SlideBox .SlideArea .anim-group > .jp-OutputArea > .jp-OutputArea-child {
         opacity: 1 !important;
         visibility: visible !important;
-        transform: none !important;
+        transform: translateZ(0) !important; /* preserve the stacking context */
         transition: none !important;
         animation: none !important;
         filter: none !important;

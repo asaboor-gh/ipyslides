@@ -604,6 +604,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.widgets.iw._main_end = self.wprogress.max if extra_start is None else max(extra_start - 1, 0)
         
         for s in self[:]:
+            self.settings.footer._set_on(s) # update all slides footer to reflect correct sections
             if s._toc_args and s != self.this: 
                 s.update_display()
  

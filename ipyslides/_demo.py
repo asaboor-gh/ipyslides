@@ -286,17 +286,18 @@ def demo_slides(slides):
 
     slides.build(-1, r'''
     ## $ \LaTeX $ in Slides
+    ```columns
     Use `$ $` or `$$ $$` to display latex in Markdown, or embed images of equations
     $ \LaTeX $ needs time to load, so keeping it in view until it loads would help.
     {.info}
                                 
-    --                           
+                        
     ::: note-tip
         Varibale formatting alongwith $ \LaTeX $ alert`\%{var} → %{var}` is seamless.
-    
-    --
+    ```
+
     ::: md-src.collapsed
-        ++
+        ++[isolate]
         ```columns 50 50 anim-group anim-slide-up
         $$ \int_0^1\\frac{1}{1-x^2}dx $$
         {.align-left .text-big .info}
@@ -304,6 +305,8 @@ def demo_slides(slides):
         ::: success
             $$ ax^2 + bx + c = 0 $$
             {.text-huge}
+        ++
+        pin[10,30, rotate=15]`::: anim-bounce info | Hello 👋, I am pinned here!`
         ```
     <md-src/>
     ''', var = "'I was a variable'")

@@ -136,7 +136,6 @@ class _HhtmlExporter:
             style_css   = self.main.html('style', styles.style_css(**theme_kws, _root=True) + self._stacking_css()).value + overall_css,
             content     = content, 
             script      = _script, 
-            click_btns  = self.main.settings._get_clickers(), 
             css_class   = ' '.join(css_classes),
             padding_bottom = self.main.widgets.iw._fpad,
             )

@@ -20,7 +20,7 @@ const zoom = {
 
         // Compact Target Resolution to common media and focus classes, with fallback to clicked element, don't let random tags zoom like span, p
         const target = e.target.closest('img, table, video, svg, canvas') 
-            || e.target.closest('.plot-container.plotly, .focus-self, .focus-child > *:not(.no-focus)') 
+            || e.target.closest('.plot-container.plotly, .focus-self, .focus-child > *') 
             || e.target.closest('div');
         if (!target) return;
         target.classList.add('_ips-zoom-target'); // for potential future use, like adding a highlight or other effects

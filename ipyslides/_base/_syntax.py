@@ -29,7 +29,6 @@ Use any or combination of these styles in markdown blocks or `css_class` argumen
  `raw-text`         | Text will be shown as printed style. {: .raw-text}
  `focus-self`       | Double-click on element to zoom into popup view. Double-click again or navigate slides to exit. {: .focus-self}
  `focus-child`      | Focus on child objects of node with this class. Same double-click to zoom in/out behavior.
- `no-focus `        | Disables focus on object when it is a direct child of 'focus-child'.
 
 Besides these CSS classes, you always have `Slide.set_css`, `Slides.html('style',...)` functions at your disposal.
 '''

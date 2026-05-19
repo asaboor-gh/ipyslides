@@ -20,13 +20,22 @@
 </p>
 
 ---
+## Why IPySlides?
+
+#### The Problem: Static PowerPoint vs. Superficial Notebook Relayouts
+Scientists, engineers, and programmers are trapped between two frustrating extremes. PowerPoint forces you into a dead, non-interactive workflow of pasting static screenshots and endlessly duplicating slides just to reveal a single bullet, equation, or figure element. Conversely, traditional notebook-based presentation tools are nothing more than superficial cell wrappers; they simply relayout your raw notebook cells without providing any native content support, structural design, or layout control. This forces you to awkwardly chop your analysis into dozens of artificial cells just to trigger basic fragments. Moreover, their static exports often break, leaving you without a reliable backup if your live Python kernel is not available.
+
+#### The Solution: An Interactive, Content-Aware Ecosystem
+IPySlides embeds a frame-aware presentation engine directly into your computational workflow, letting you run your full analysis and build high-fidelity slides side-by-side in the same notebook.
+
+By replacing copy-paste duplication and artificial cell chopping with programmatic framing, a single cell acts as a canonical source that natively understands structure, progressing in precise, incremental steps. It keeps execution code, rich outputs, and custom layouts perfectly synchronized while supporting active Jupyter widgets for real-time data manipulation. When it's time to export, it generates a production-grade HTML or crisp PDF backup that accurately mirrors your presentation. 
 
 ## Features
 
 - 📊 Support for plots, widgets, and rich media
 - 🎨 Customizable themes and layouts
 - 📱 Responsive design for various screen sizes
-- 📤 Export to HTML/PDF (limited content type)
+- 📤 Export to HTML/PDF (widgets no more interactive or discarded)
 - 🎯 Frame-by-frame animations
 - 📝 Speaker notes support
 - 🔄 Markdown, citations and settings files synchronization

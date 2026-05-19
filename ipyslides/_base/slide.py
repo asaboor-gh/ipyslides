@@ -6,7 +6,7 @@ from contextlib import contextmanager, suppress
 from functools import wraps
 from IPython.display import display
 from IPython.utils.capture import RichOutput
-from ipywidgets import HTML as ipwHTML
+from ipywidgets import HTML as ipwHTML, VBox
 
 from . import styles
 from ._layout import background_css, get_unique_css_class, loading_skeleton
@@ -107,7 +107,6 @@ class Slide:
         self._app = app
         
         self._specs = Specs() # instance specs that are persistent accross builds 
-        self._bg_ikws = {} # per-slide background image keywords
         self._number = number
         self._index = number if number == 0 else None # First slide should have index ready
         self._sec_id = f"s-{id(self)}" # should there alway wether a section or not
@@ -116,7 +115,8 @@ class Slide:
         self._source = {'text': '', 'language': ''} # Should be set at init once, since markdown needs to compare with previous
         self._set_defaults()
         self.vars = Vars(self) # to access variables info and update them
-        self._alt_print = ipwHTML(layout={'margin':'0'}).add_class('print-only') # alternate print content for this slide which is shown dynamically on slides
+        self._bglayer = ipwHTML(layout={'margin': '0'}).add_class('print-only') # background layer for this slide, persistent
+        self._ftrhtml = ipwHTML(layout={'margin':'0'}).add_class('print-only') # dynamyic footer with sections per slides
     
     def __setattr__(self, name: str, value):
         if not name.startswith('_') and hasattr(self, name):
@@ -208,7 +208,6 @@ class Slide:
             outputs = captured.outputs
             # Clean up delimiters: trailing, empty, adjacent, and around PAGE boundaries
             self._contents = self._cleanup_delimiters(outputs)
-            self._set_alt_print() # rebuild BackLayer HTML from current slide background map
             self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
             self.update_display()    
@@ -276,10 +275,12 @@ class Slide:
         self._widget.clear_output(wait = True) # Clear, but don't go there
         # Need to know how many contents before user provide content
         with capture_content() as cap:
-            display(
-                html('span', '', id = self._sec_id, css_class='Slide-UID'), # span to not occupy space, need to remove from frames later.
-                self._alt_print, # alternate print content such as CSS and bg image
-                self._fcss, # frame separator CSS
+            display(VBox([
+                    html('span', '', id = self._sec_id, css_class='Slide-UID').as_widget(), # span to not occupy space, need to remove from frames later.
+                    self._bglayer, # background image layer
+                    self._ftrhtml, # dynamic footer layer
+                    self._fcss, # frame separator CSS
+                ], layout = dict(margin='0',padding='0')).add_class('print-only').add_class('static-widget'), # static is must
                 metadata={'skip-export':'export html assign itself'}
             )  # to register section id in DOM
             # show speaker notes at top (but after background stuff) if any to grab immediate attention of speaker, will be shown only in PDF.
@@ -710,7 +711,7 @@ class Slide:
 
     @property
     def _disp_num(self):
-        prefix = f"<span class='snumber-hint'>{self.number} → </span>" if not self._contents else "" # if empty slide, give hint of given slide number 
+        prefix = f"<span class='snumber-hint jupyter-only'>{self.number} → </span>" if not self._contents else "" # if empty slide, give hint of given slide number 
         extra_start = self._app._extra_start_index()
         if extra_start is not None and self.index >= extra_start:
             return f"{prefix}S.{self.index - extra_start + 1}" # 1-based supplemental slide number
@@ -857,16 +858,6 @@ class Slide:
             return self._app.code.from_string(**self._source, name = name, height=height, **kwargs)
         else:
             return self._app.code.cast('No source found!\n',language = 'markdown')
-    
-
-    def _set_alt_print(self):
-        self._alt_print.value = '' # reset first to recieve new content
-        alt = self._app.settings.footer._to_html(self) # footer
-        selector = get_unique_css_class()
-        ikws = self._bg_ikws if isinstance(getattr(self, '_bg_ikws', None), dict) else {}
-        if ikws:
-            alt += self._get_bg_image(selector, ikws=ikws)
-        self._alt_print.value = alt
 
     def _mount_user_css(self):
         "Update persistent user CSS mount from slide-managed CSS state."
@@ -920,8 +911,10 @@ class Slide:
     def _set_bg_ikws(self, src=None, **kwargs):
         "Set per-slide background keywords directly; last call wins."
         self._bg_ikws = {} # reset state first to avoid stale values if src is None or invalid
+        self._bglayer.value = '' # reset first to receive new content
         if src is None: return
         self._bg_ikws = {"src": src,"uclass": f"{self._sec_id}-bg", **kwargs}
+        self._bglayer.value = self._get_bg_image(get_unique_css_class(), ikws=self._bg_ikws) 
     
     def _get_bg_image(self, selector, ikws=None):
         ikws = ikws if isinstance(ikws, dict) else {}

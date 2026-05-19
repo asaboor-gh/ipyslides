@@ -142,7 +142,7 @@ class CtxMenu(ListWidget):
         keys = list(self._state) # all keys
         if hasattr(self.ws, 'panelbox') and self.ws.panelbox.is_open(): # may not be ready yet
             keys = ['panel']
-        elif hasattr(self.ws, 'mainbox') and (klasses := self.ws.mainbox._dom_classes): # may not be ready yet
+        elif hasattr(self.ws, 'mainbox') and 'mode-fullscreen' in self.ws.mainbox._dom_classes: # may not be ready yet
             keys = ['fscreen','laser','draw','panel','swipe', 'toc','ksc']
         
         self.options = [(k, v) for k,v in self._state.items() if not keys or k in keys] 

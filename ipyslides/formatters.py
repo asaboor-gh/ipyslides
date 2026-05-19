@@ -128,7 +128,7 @@ def _delim(_type):
     )  # to avoid unwanted output in Jupyter, just leave a comment
 
 def _fig_caption(text): # need here to use in many modules
-    return f'<figcaption class="no-focus">{htmlize(text)}</figcaption>' if text else ''
+    return f'<figcaption>{htmlize(text)}</figcaption>' if text else ''
 
 def plt2html(plt_fig = None,transparent=True,width = None, caption=None, crop=None):
     """Write matplotib figure as HTML string to use in `ipyslide.utils.write`.

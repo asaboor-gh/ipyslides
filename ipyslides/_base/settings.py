@@ -142,7 +142,7 @@ class Footer(ConfigTraits):
             self.main._slides.notify("Navigation controls hidden. But keyboard and edge click is still working!")
         
         for slide in self.main._slides:
-            slide._set_alt_print() # updates footer on all slides to have correct section
+            self._set_on(slide) # update footer per slide for print/export
 
     def _running_section_text(self, slide):
         "Get running section title via Slides._sectionindex and return stripped text." 
@@ -154,8 +154,11 @@ class Footer(ConfigTraits):
 
     def _update_footer(self):
         "Refresh footer html for runtime changes like running section updates."
-        updated = self._to_html() + self.main._get_clickers()
-        self.main._widgets.htmls.footer.value = updated
+        self.main._widgets.htmls.footer.value = self._to_html()
+    
+    def _set_on(self, slide):
+        "Set footer for a slide when a section changes or footer is updated"
+        slide._ftrhtml.value = self._to_html(slide)
 
     
     def _to_html(self, slide=None,fidx=0):
@@ -164,13 +167,18 @@ class Footer(ConfigTraits):
         style = 'white-space:nowrap;margin-block:0;position:absolute;left:0;bottom:0;width:100%'
         inner = self.text
         if self.section and (running := self._running_section_text(slide)):
-            inner += ("<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else "") + f"<span class='section' title='Click to open TOC'>{running}</span>"
+            inner += ("<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else "") + f"<span class='section'>{running}</span>"
         if self.date:
             inner += (
                 "<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else ""
             ) + f'{today(fg = "var(--fg2-color)") if self.date == "today" else self.date}'
+        
+        inner = f'<div class="footer-text"><div>{inner}</div>'
+        if self.controls:
+            inner += self.main._get_clickers(slide) # clickers in footer when controls on, otherwise in separate div for better print layout
         if self.numbering:
-            inner = f'<div class="footer-text"><div>{inner}</div><div class="slide-number">{slide._disp_num}</div></div>' # avoid 0 on title page
+            inner += f'<div class="slide-number">{slide._disp_num}</div>' # avoid 0 on title page
+        inner += '</div>' # complete here
         
         if self.progress:
             pv = self.main._slides._progress_value(slide, fidx)
@@ -358,11 +366,13 @@ class Settings:
             self._widgets.iw.msg_tojs = 'PRINT'
             del self._printingPDF  # remove flag after use
     
-    def _get_clickers(self): # in PDF/export mode
-        if len(self._slides) < 5 or not self.footer.controls:
-            return '' # no clicks for few slides, or when navigation UI is off
+    def _get_clickers(self, slide): # in PDF/export mode
+        if len(self._slides) < 5 or slide.number == 0:
+            return '' # no clicks for few slides or title page
+        extra_start = self._slides._extra_start_index()
+        if extra_start is None: extra_start = len(self._slides) # no extra slides
         
-        items = [getattr(item,'_sec_id','') for item in self._slides]
+        items = [getattr(item,'_sec_id','') for item in self._slides if item.index < extra_start] # only before supplemnetal
         imax = len(items) - 1
         items = [items[int(round(i,0))] for i in [0, imax/4,imax/2, 3*imax/4, imax]]
         labels = '●●●●●'

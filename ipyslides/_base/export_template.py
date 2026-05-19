@@ -1,6 +1,6 @@
 # Template for building HTML from slides 
 
-def doc_html(code_css, style_css, content, script, click_btns, css_class, padding_bottom):
+def doc_html(code_css, style_css, content, script, css_class, padding_bottom):
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,8 +45,6 @@ def doc_html(code_css, style_css, content, script, click_btns, css_class, paddin
 </head>
 <body>
 <div>
-    {click_btns}
-    <!-- Classes below work for both scenerios -->
     <div class="{css_class}">
     {content}
     </div>
@@ -106,17 +104,13 @@ section .SlideBox {
     display:none !important;
 }
 
-.SlidesWrapper.Scrolling .slide-progress,
-.SlidesWrapper.Scrolling .slide-footer,
-.SlidesWrapper.Scrolling .click-wrapper {
+.SlidesWrapper.Scrolling .slide-footer {
     visibility: hidden !important;
     transition: visbility 200ms ease-in;
 }
 
 @media print {
-    .SlidesWrapper.Scrolling .slide-progress,
-    .SlidesWrapper.Scrolling .slide-footer,
-    .SlidesWrapper.Scrolling .click-wrapper {
+    .SlidesWrapper.Scrolling .slide-footer {
         visibility: visible !important;
         transition: none !important;
     }

@@ -616,7 +616,8 @@ def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, ro
     `css_class` and `css_props` are applied to pinned object for further customizations.
     
     ::: note-warning
-        Beaware that pinning is contained relative to columns and containers with animation classes, use outside of any of those context to align to whole slide.
+        - Beaware that pinning is contained relative to columns and containers with animation classes, use outside of any of those context to align to whole slide.
+        - Use animation classes inside the pinned content, otherwise it will conflict with pin's CSS properties and may not work as expected.
     """
     # Clean up Path/Asset handling
     if isinstance(obj, (str, Path)):

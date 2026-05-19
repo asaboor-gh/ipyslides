@@ -48,6 +48,9 @@ def layout_css(accent_color, aspect):
                         "border-radius": "4px !important",
                     },
                 },
+                ".static-widget": {
+                    "position": "static !important", # let objects flow out
+                },
                 ".Warn::after": {
                     "display": "block",
                     "content": "'ℹ️ This warning is not visible in fullscreen/PDF/HTML!'",
