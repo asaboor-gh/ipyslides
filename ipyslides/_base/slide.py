@@ -124,14 +124,13 @@ class Slide:
         self.__dict__[name] = value
     
     def _set_defaults(self):
-        for attr in ['_on_load', '_on_exit']:
+        for attr in ['_on_load', '_on_exit','_is_supp']:
             if hasattr(self, attr):
                 delattr(self, attr) # reset these attributes if any
     
         self._notes = '' # Reset notes
         self._citations = {} # Reset citations
         self._section = None # Reset sec_key
-        self._is_extra = False # mark start of supplemental section via section`extra:...`
         self._indexf = 0 # current frame index
         self._contents = [] # reset content to not be exportable 
         self._has_widgets = False # Update in _build_slide function
@@ -712,9 +711,8 @@ class Slide:
     @property
     def _disp_num(self):
         prefix = f"<span class='snumber-hint jupyter-only'>{self.number} → </span>" if not self._contents else "" # if empty slide, give hint of given slide number 
-        extra_start = self._app._extra_start_index()
-        if extra_start is not None and self.index >= extra_start:
-            return f"{prefix}S.{self.index - extra_start + 1}" # 1-based supplemental slide number
+        if self.index > self._app._lms_idx:
+            return f"{prefix}S.{self.index - self._app._lms_idx}" # 1-based supplemental slide number
         return f"{prefix}{self.index or ''}" # empty for zero
     
     def _handle_refs(self):
@@ -1000,7 +998,9 @@ def _build_slide(app, slide_number):
             break # No need to check other widgets if one exists
     
     this._update_transition_objs() # any animation/CSS etc set during build should be applied immediately
-        
+    this._set_progress() # update progress bar after each build
+    app.settings.footer._update_footer() # update footer after each build
+    
 class SlideGroup:
     """Proxy calls/attributes to multiple Slide instances.
 

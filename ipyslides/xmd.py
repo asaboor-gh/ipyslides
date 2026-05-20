@@ -134,14 +134,14 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
     "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
     # notes`This is a note for current slide`
     all_matches = re.findall(
-        r"notes\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
+        r"(?<![\`\.])\bnotes\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE 
     )
     for match in all_matches:
         slide_instance.notes.insert(match)
         text_chunk = text_chunk.replace(f"notes`{match}`", "", 1)
     
     # @key! for inline citations even in footnote mode, do before others
-    text_chunk = re.sub(r"@(?:[A-Za-z_]\w*)!", lambda m: slide_instance._nocite(m.group()[1:-1]), text_chunk)
+    text_chunk = re.sub(r"(?<![\`\.])\b@(?:[A-Za-z_]\w*)!", lambda m: slide_instance._nocite(m.group()[1:-1]), text_chunk)
     
     # @key -> cite`key` before other stuff
     at_key_pattern = re.compile(r'''
@@ -155,7 +155,7 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
         text_chunk = text_chunk.replace(match, tocite, 1)
 
     # cite`key`
-    all_matches = re.findall(r"cite\`(.*?)\`", text_chunk, flags=re.DOTALL)
+    all_matches = re.findall(r"(?<![\`\.])\bcite\`(.*?)\`", text_chunk, flags=re.DOTALL)
     for match in all_matches:
         if match.endswith('!'):
             xmd_key = ''.join(slide_instance._nocite(key) for key in match[:-1].strip().split(','))  # remove ! at end
@@ -163,23 +163,23 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
             xmd_key = xmd_instance._handle_var(slide_instance._cite(match.strip()))
         text_chunk = text_chunk.replace(f"cite`{match}`", xmd_key, 1)
 
-    # section`This is section title`
+    # section[supplemental]`This is section title`. Note the word boundary to avoid matching section inside ticks or escaps
     all_matches = re.findall(
-        r"section\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
+        r"(?<![\`\.])\bsection(\[.*?\])?\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
     )
-    for match in all_matches:
-        slide_instance.section(match)  # This will be attached to the running slide
-        text_chunk = text_chunk.replace(f"section`{match}`", "", 1)
+    for issup, title in all_matches:
+        slide_instance.section(title,True if issup.strip('[]').strip() else False)  # This will be attached to the running slide
+        text_chunk = text_chunk.replace(f"section{issup}`{title}`", "", 1)
 
 
     # toc[highlight]`This is toc title`, should be after block
-    all_matches = re.findall(r"toc(\[.*?\])?\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
+    all_matches = re.findall(r"(?<![\`\.])\btoc(\[.*?\])?\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
     for hl, title in all_matches:
         slide_instance.this._toc_args = (title, True if hl.strip('[]').strip() else False) # should be fully clear
         text_chunk = text_chunk.replace(f"toc{hl}`{title}`", xmd_instance._handle_var(slide_instance.this._reset_toc()), 1)
 
     # Refs at place of user choice
-    all_matches = re.findall(r"refs\`(.*?)\`", text_chunk, flags=re.DOTALL) # match digit or empty
+    all_matches = re.findall(r"(?<![\`\.])\brefs\`(.*?)\`", text_chunk, flags=re.DOTALL) # match digit or empty
     for match in all_matches:
         ncol, *keys = [v.strip() for v in match.split(',')]
         out = xmd_instance._handle_var(slide_instance.refs(int(ncol) if ncol.isdigit() else None, *keys)) # match is empty or digit and keys
@@ -250,7 +250,7 @@ del TagFixer
 
 class char_esc:
     r"""Utility class for escaping and restoring characters \@,\%,\|, and \` using backslash in text."""
-    _chars = "`@%|/" # Characters to escape
+    _chars = r"`@%|/" # Characters to escape
 
     @classmethod
     def escape(cls, text):

@@ -182,8 +182,8 @@ class Footer(ConfigTraits):
         
         if self.progress:
             pv = self.main._slides._progress_value(slide, fidx)
-            unit = 100/(self.main._slides._main_progress_index() or 1) # unit progress value per slide
             if pv is not None: # supplemental otherwise
+                unit = 100/(self.main._slides._lms_idx or 1) # unit progress value per slide
                 pbar = f'<div class="sprogress-view" style="width:{pv}%;height:100%;background:var(--accent-color,blue);" data-cw="{pv}" data-uw="{unit}"></div>' # attributes for JS
                 inner += f'<div class="slide-progress print-only" style="background:var(--bg2-color,#aaa4);width:100%;height:2px;">{pbar}</div>'
         return htmlize(f'<div markdown="1" class="slide-footer" style="{style}">{inner}</div>') 
@@ -369,10 +369,8 @@ class Settings:
     def _get_clickers(self, slide): # in PDF/export mode
         if len(self._slides) < 5 or slide.number == 0:
             return '' # no clicks for few slides or title page
-        extra_start = self._slides._extra_start_index()
-        if extra_start is None: extra_start = len(self._slides) # no extra slides
         
-        items = [getattr(item,'_sec_id','') for item in self._slides if item.index < extra_start] # only before supplemnetal
+        items = [getattr(item,'_sec_id','') for item in self._slides if item.index <= self._slides._lms_idx] # only before supplemnetal
         imax = len(items) - 1
         items = [items[int(round(i,0))] for i in [0, imax/4,imax/2, 3*imax/4, imax]]
         labels = '●●●●●'

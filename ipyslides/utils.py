@@ -20,7 +20,6 @@ from PIL import Image as pilImage, ImageGrab
 from IPython import get_ipython
 from IPython.display import SVG, IFrame
 from IPython.display import Image, display
-from tomlkit import value
 from dashlab.widgets import AnimationSlider, JupyTimer, ListWidget # For export
 from dashlab.utils import _build_css # This is very light weight and too important dependency
 
