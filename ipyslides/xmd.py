@@ -140,8 +140,8 @@ def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
         slide_instance.notes.insert(match)
         text_chunk = text_chunk.replace(f"notes`{match}`", "", 1)
     
-    # @key! for inline citations even in footnote mode, do before others
-    text_chunk = re.sub(r"(?<![\`\.])\b@(?:[A-Za-z_]\w*)!", lambda m: slide_instance._nocite(m.group()[1:-1]), text_chunk)
+    # @key! for inline citations even in footnote mode, do before others, avoid matching text@key! or `@key!` with negative lookbehind
+    text_chunk = re.sub(r"(?<![\`\w\\])@(?:[A-Za-z_]\w*)!", lambda m: slide_instance._nocite(m.group()[1:-1]), text_chunk)
     
     # @key -> cite`key` before other stuff
     at_key_pattern = re.compile(r'''

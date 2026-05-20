@@ -746,6 +746,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'border-radius':'4px',
                 'border-left': '1px solid var(--fg2-color)',
                 'border-right': '1px solid var(--fg2-color)',
+                'a': {'text-decoration': 'none !important',} # avoid underline there
             },
             '.toc-list.toc-extra' : {
                 'margin-right': '1em',
