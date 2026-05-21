@@ -973,6 +973,8 @@ class Slides(BaseSlides,metaclass=Singleton):
         ::: note
             `Slides.PART` is deprecated and kept as an alias for backward compatibility.
         """
+        # DO NOT FALL FOR GLOBAL PAGE STUFF, THAT WOULD BE A NIGHTMARE TO HANDLE 
+        # AND CANNOT HAVE ITS OWN STATE METADATA, AS WE REMOVED IT EARLIER.
         _type = "PART"
         
         def __init__(self, isolate=False):

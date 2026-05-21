@@ -2,7 +2,7 @@
 Author Notes: Classes in this module should only be instantiated in Slides class or it's parent class
 and then provided to other classes via composition, not inheritance.
 """
-import json
+import json, re
 import traitlets
 from contextlib import suppress
 
@@ -167,11 +167,9 @@ class Footer(ConfigTraits):
         style = 'white-space:nowrap;margin-block:0;position:absolute;left:0;bottom:0;width:100%'
         inner = self.text
         if self.section and (running := self._running_section_text(slide)):
-            inner += ("<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else "") + f"<span class='section'>{running}</span>"
+            inner += (" | " if inner else "") + f"<span class='section'>{running}</span>"
         if self.date:
-            inner += (
-                "<span style='white-space:pre;opacity:0.4;'> \u2502 </span>" if inner else ""
-            ) + f'{today(fg = "var(--fg2-color)") if self.date == "today" else self.date}'
+            inner += (" | " if inner else "") + f'{today(fg = "var(--fg2-color)") if self.date == "today" else self.date}'
         
         inner = f'<div class="footer-text"><div>{inner}</div>'
         if self.controls:
@@ -186,6 +184,8 @@ class Footer(ConfigTraits):
                 unit = 100/(self.main._slides._lms_idx or 1) # unit progress value per slide
                 pbar = f'<div class="sprogress-view" style="width:{pv}%;height:100%;background:var(--accent-color,blue);" data-cw="{pv}" data-uw="{unit}"></div>' # attributes for JS
                 inner += f'<div class="slide-progress print-only" style="background:var(--bg2-color,#aaa4);width:100%;height:2px;">{pbar}</div>'
+        
+        inner = re.sub(r'(?<![\`\\])\s*\|\s*', '<span style="white-space:pre;opacity:0.4;"> \u2502 </span>', inner) # replace | with fancy divider before parsing and preserve space around
         return htmlize(f'<div markdown="1" class="slide-footer" style="{style}">{inner}</div>') 
 
 @fix_sig
