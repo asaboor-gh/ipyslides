@@ -15,7 +15,7 @@ from . import styles
 from ._widgets import InteractionWidget, NotesWidget, LaserPointer
 from .intro import get_logo, how_to_print, instructions, key_combs
 from ..utils import html, htmlize
-from ..dashlab import ListWidget, JupyTimer, TabsWidget
+from ..dashlab import ListWidget, TabsWidget
 from .. import formatters as fmtrs
   
 
@@ -358,7 +358,6 @@ class Widgets:
         self.sliders = _Sliders()
         self.checks  = _Checks()
         self.htmls   = _Htmls()
-        self._timer  = JupyTimer()
         self.drawer  = DrawWidget(self)
         self._ctxmenu= CtxMenu(self, description='Shift + Right Click for Browser Menu')
         self.iw      = InteractionWidget(self)
@@ -384,7 +383,6 @@ class Widgets:
             self.htmls.theme,
             self.htmls.usercss,
             self.iw,
-            self._timer.widget(minimal=True),
             self.panelbox,
             self.htmls.pointer,
             self.htmls.hilite,

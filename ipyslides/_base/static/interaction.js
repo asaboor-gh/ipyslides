@@ -334,6 +334,7 @@ function printSlides(box, model) {
     });
     
     box.style.setProperty('--printPadding', `${fpad}px`); // set padding for print mode
+    zoom.reset(box); // reset any zoom before print to avoid weird scaling 
     
     for (let n = 0; n < slides.length; n++) {
         let slide = slides[n];

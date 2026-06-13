@@ -17,6 +17,7 @@ from .slide import SlideGroup, _build_slide
 from ..formatters import XTML, htmlize, slidebound
 from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_as_snapshots, _stream_chunks
 from ..utils import _css_docstring
+from ..dashlab import FileWatcher
 
 
 class BaseSlides:
@@ -137,10 +138,11 @@ class BaseSlides:
         return SlideGroup(handles)
     
     def _process_citations(self, content):
-        match1, *others = re.findall(r'^```citations.*?^```|^:::\s*citations.*?(?=^:::|\Z|^\S)', content, flags= re.DOTALL | re.MULTILINE)
-        if others:
-            raise ValueError(f"Only a single block of citations is parsed, found {len(others) + 1} blocks\n{(match1, *others)}")
+        matches = re.findall(r'^```citations.*?^```|^:::\s*citations.*?(?=^:::|\Z|^\S)', content, flags= re.DOTALL | re.MULTILINE)
+        if len(matches) > 1:
+            raise ValueError(f"Only a single block of citations is parsed, found {len(matches)} blocks\n{matches}")
         
+        match1 = matches[0] if matches else ''
         content = content.replace(match1, '') # clean up
         if getattr(self,'_bib_md','') != match1:
             self._bib_md = match1 # set for next test
@@ -182,46 +184,36 @@ class BaseSlides:
         
         start = self._fix_slide_number(start_slide_number)
         
-        # NOTE: Background threads and other methods do not work. Do NOT change this way
         # First call itself before declaring other things, so errors can be captured safely
         self._from_markdown(start, resolve_included_files(path.read_text(encoding="utf-8")), synced=True) 
-        self.widgets._timer.clear() # remove previous updates
-        self._mtime = os.stat(path).st_mtime
-        included_files = set()
+        
+        self._watcher = FileWatcher(path, interval=interval)
 
-        def update():
-            if path.is_file():
-                # Track whichever file is last edited from included or itself
-                mtime = max(os.stat(f).st_mtime for f in [path, *included_files] if f.is_file())
-                out_sync = any(['Out-Sync' in s._css_class for s in self.cited_slides]) or False
-                if out_sync or (mtime > self._mtime):  # set by interaction widget
-                    self._mtime = mtime
-                    try: 
-                        content = path.read_text(encoding="utf-8")
-                        # included files will be one step behind in sync, beacuse they are only detectable now
-                        included_files.update(
-                            map(Path, re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL))
-                        ) 
-                        self._from_markdown(start, 
-                            resolve_included_files(content), # add included file text to be detected for changes
-                            synced=True # only one citation block allowed for consistency
-                        ) 
-                        self.notify('x') # need to remove any notification from previous error
-                        self._unregister_postrun_cell() # No cells buttons from inside file code run
-                    except:
-                        e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
-                        self.notify(f"{error('SyncError','something went wrong')}<br/>{error(e,text)}",20)
-            else:
-                self.notify(error("SyncError", f"file {path!r} no longer exists!").value, 20)
+        @self._watcher.on_update
+        def update_target_slides(path):
+            try: 
+                content = path.read_text(encoding="utf-8")
+                # included files will be one step behind in sync, beacuse they are only detectable now
+                self._watcher.assets = re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL)
+                self._from_markdown(start, 
+                    resolve_included_files(content), # add included file text to be detected for changes
+                    synced=True # only one citation block allowed for consistency
+                ) 
+                self.notify('x') # need to remove any notification from previous error
+                self._unregister_postrun_cell() # No cells buttons from inside file code run
+            except:
+                e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
+                self.notify(f"{error('SyncError','something went wrong')}<br/>{error(e,text)}",20)
         
-        self.widgets._timer.run(interval, update, loop = True)
-        print(f"Syncing content from file {path!r}\nYou can use `Slides.unsync()` to stop syncing.")
-        
+        display(self._watcher) # must be displayed to work
+        self._unregister_postrun_cell() # avoid unnessary scroll button after postrun cell here
 
     def unsync(self):
         "Stop syncing markdown file synced with `Slides.sync_with_file` function."
-        if self.widgets._timer._callback[0]:
-            self.widgets._timer.clear()
+        if getattr(self, '_watcher', None):
+            self._watcher.stop()  # stop the file watcher
+            self._watcher.close() # clear the displayed watcher at frontend
+            del self._watcher  # remove reference to the watcher
         else:
             print("There was no markdown file linked to sync!")
     
