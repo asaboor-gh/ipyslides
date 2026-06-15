@@ -117,6 +117,13 @@ class BaseSlides:
         if synced:
             content = self._process_citations(content)
         
+        # included files should be able to trigger updates even if main file not edited yet, so we track them as assets
+        if synced and hasattr(self, '_watcher'):
+            self._watcher.assets = re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL)
+        
+        # Now flatten incuded files, after detecting them as assets above
+        content = resolve_included_files(content)
+        
         chunks = list(_stream_chunks(content, '---'))
         handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
         mdvars  = [{k:v for k,v in md_kws.items() if k in _matched_vars(chunk)} for chunk in chunks] # vars used in each chunk
@@ -183,22 +190,16 @@ class BaseSlides:
             raise ValueError("interval should be integer greater than 100 millieconds.")
         
         start = self._fix_slide_number(start_slide_number)
-        
-        # First call itself before declaring other things, so errors can be captured safely
-        self._from_markdown(start, resolve_included_files(path.read_text(encoding="utf-8")), synced=True) 
-        
         self._watcher = FileWatcher(path, interval=interval)
+        
+        # First call after watcher set, so it can observe included files immediately, 
+        # and errors must be caught before going forward
+        self._from_markdown(start, path.read_text(encoding="utf-8"), synced=True) 
 
         @self._watcher.on_update
         def update_target_slides(path):
             try: 
-                content = path.read_text(encoding="utf-8")
-                # included files will be one step behind in sync, beacuse they are only detectable now
-                self._watcher.assets = re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL)
-                self._from_markdown(start, 
-                    resolve_included_files(content), # add included file text to be detected for changes
-                    synced=True # only one citation block allowed for consistency
-                ) 
+                self._from_markdown(start, path.read_text(encoding="utf-8"), synced=True) 
                 self.notify('x') # need to remove any notification from previous error
                 self._unregister_postrun_cell() # No cells buttons from inside file code run
             except:
