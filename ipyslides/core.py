@@ -1,3 +1,4 @@
+import os, shutil
 import sys, json, re, math, uuid, textwrap, warnings
 from contextlib import contextmanager, suppress
 from collections import namedtuple
@@ -30,6 +31,13 @@ try:  # Handle python IDLE etc.
 except:
     print("Slides only work in IPython Notebook!")
     sys.exit()
+    
+def demo():
+    "Setup and display the demo notebook for IPySlides. Click on the resulting link to open the demo notebook in a new tab."
+    os.makedirs('ipyslides-demo', exist_ok=True)
+    shutil.copy(Path(__file__).parent.with_name('demo.ipynb'), 'ipyslides-demo/demo.ipynb')
+    utils.html('a','Open Demo Notebook:ipyslides-demo/demo.ipynb', href='ipyslides-demo/demo.ipynb', target='_blank').display()
+
 class _Citation:
     "Add citation to the slide with a unique key and value."
 
@@ -957,6 +965,11 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.refresh()  # Refresh all slides
 
         return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
+    
+    def demo(self):
+        "Setup and display the demo notebook for IPySlides. Click on the resulting link to open the demo notebook in a new tab."
+        print("Use top level ipyslides.demo() instead!")
+        return demo()
     
     class pause:
         """Pause delimiter! Use `Slides.pause()` or import `pause` from top level to create a new revealable part in slide.

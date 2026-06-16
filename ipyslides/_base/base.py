@@ -328,12 +328,7 @@ class BaseSlides:
             
             for attr in ('enter', 'exit', 'call'): setattr(type(obj), f'__{attr}__', _raise)
             return obj
-            
-            
-    def demo(self):
-        "Demo slides with a variety of content."
-        from .._demo import demo_slides
-        demo_slides(self) # Do not return anything
+        
         
     def docs(self):
         "Create presentation from docs of IPySlides. Using @build excessively speeds up initial loading."
