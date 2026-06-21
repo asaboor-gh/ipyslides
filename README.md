@@ -45,14 +45,14 @@ By replacing copy-paste duplication and artificial cell chopping with programmat
 
 ## Quick Start
 
-1. **Install:**
+**Install:**
    
 ```bash
 pip install ipyslides        # Basic installation
 pip install ipyslides[extra] # Full features
 ```
 
-2. **Create Slides:**
+**Create Slides:**
    
 ```python
 import ipyslides as isd
@@ -72,7 +72,7 @@ $E = mc^2$
 Welcome to IPySlides!
 ```
 
-3. **Run Examples:**
+**Run Examples:**
    
 ```python
 isd.docs()  # View  and interact with documentation
