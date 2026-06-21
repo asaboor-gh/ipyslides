@@ -98,6 +98,7 @@ key_combs = f"""color['var(--accent-color)']`//fa`info`Swipe left/right on touch
 | {_key('*')}, {_key('/')}                    | <none>                                 | Fast forward/backward by 5 slides |
 | {_key('Home')} / {_key('End')}              | <none>                                          | Jump to first/main-end slide |
 | {_key('E')}                                 | {_icons["code"]}                                  | {key_maps["E"]}        |
+| {_key('B')}                                 | <none>                                            | {key_maps["B"]}        |
 | {_key('Esc')}                               |    <none>                                         | {key_maps["Esc"]}      |
 | {_key('F')}                                 | {_icons["expand"]}, {_icons["compress"]}          | {key_maps["F"]}        |
 | {_key('K')}                                 | {_icons["keyboard"]}                              | {key_maps["K"]}        |

@@ -94,8 +94,8 @@ setup(
     url = URL,
     packages = find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
     package_data= {
-        # all .js, .css files at any package depth
-        '': ['**/*.js','**/*.css'],
+        # all .js, .css files at any package depth, but also notebooks in docs
+        '': ['docs/*.ipynb','**/*.js','**/*.css'],
     },
     
     # entry_points={
