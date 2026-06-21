@@ -57,7 +57,7 @@ import ipyslides as isd
 slides = isd.Slides()
 
 # Add content programmatically
-slides.build(-1, """
+slides.slide(-1, """
 # My First Slide
 - Point 1
 - Point 2

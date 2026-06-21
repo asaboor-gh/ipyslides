@@ -39,6 +39,7 @@ class InteractionWidget(anywidget.AnyWidget):
             'NEXT': self.ws.buttons.next.click,
             'PREV': self.ws.buttons.prev.click,
             'PRINT': self.ws.buttons.print.click,
+            'BUILD': self.ws.buttons.build.click,
             'FIRST': lambda: setattr(self.prog, 'value', 0),
             'LAST': self._jump_last_main,
         }

@@ -217,40 +217,11 @@ class BaseSlides:
             del self._watcher  # remove reference to the watcher
         else:
             print("There was no markdown file linked to sync!")
-    
-    def build_(self, content = None, /, **vars):
-        "Same as `build` but no slide number required inside Python file! Should not close parentheses if used as decorator."
-        if self.inside_jupyter_notebook(self.build_):
-            raise Exception("Notebook-only function executed in another context. Use build without _ in Notebook!")
-        return self.build(self._next_number, content, **vars)
+            
 
 
     class build(ContextDecorator):
-        r"""Build slides with a single unified command in three ways:
-        
-        1. code`slides.build(number, callable)` to create a slide from a `callable(slide)` immediately, e.g. code`lambda s: slides.write(1,2,3)` or as a decorator.
-            - **Lazy Execution**: The slide is created immediately, but the function is executed only when first accessed during navigation. 
-              This defers heavy computations until the user reaches that slide. Future navigation does not trigger re-computation.
-            - Docstring of callable (if any) is parsed as markdown before calling function.
-            - Function must accept a single argument: the slide handle.
-        2. code`with slides.build(number):` creates single slide. Equivalent to code`%%slide number` magic.
-            - Contents displayed by `write` function can be split into incremental parts if `write` is called after `pause()` adjacently.
-        3. code`slides.build(number, str, **vars)` creates many slides with markdown content. Equivalent to code`%%slide number -m` magic in case of one slide.
-            - Multiple slides can be built using triple dashes `---` as separators. Same applies to code`Slides.sync_with_file` too.
-            - Use `++` to separted content into parts for incremental display on ites own line with optionally adding content after one space.
-            - Markdown `columns/group` blocks can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
-            - See `slides.xmd.syntax` for extended markdown usage.
-            - To debug markdown content, use EOF on its own line to keep editing and clearing errors. Same applies to `Slides.sync_with_file` too.
-            - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
-            - If an f-string is provided, variables in f-string are resolved eagerly and never get updated on rebuild including lazy ones provided by `Slides.esc`.
-        
-        
-        ::: note-tip
-            - In all cases, `number` could be used as `-1`.
-            - Use yoffet`integer in percent` in markdown or code`Slides.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
-            - You can use code`build_(...)` (with underscore at end) in python file instead of code`build(-1,...)`.
-            - `**vars` are ignored silently if `build` is used as contextmanager or decorator.
-        """
+        r"Use `Slides.slide` instead for streamlined slide creation consistent with %%slide magic."
         @property
         def _app(self):
             kls = type(self)
@@ -259,6 +230,7 @@ class BaseSlides:
             return kls._slides
         
         def __new__(cls, slide_number, content = None, /, **vars):
+            print("`Slides.build` will be deprecated in future versions. Use `Slides.slide` instead.")
             self = super().__new__(cls) # instance
             self._snumber = self._app._fix_slide_number(slide_number)
 
@@ -279,28 +251,12 @@ class BaseSlides:
         
         def _handle_callable(self, func):  
             s, = self._app.create([self._snumber]) # access or create slide first
-            
-            if s._pending() and hasattr(s, '_build_now'): # lazy build marked earlier, _build_now is set during navigation
-                s._set_css_classes(remove = 'Stale') # lazy slides will be back here to be built
-                del s._build_now, s._build_func # remove markers for building once
-                with _build_slide(self._app, self._snumber): 
-                    s._set_source(self._app.code.from_source(func).raw,'python') # set source code to be accessible
-                    if (doc := getattr(func, '__doc__', None)): self._app.xmd(doc, returns=False)
-                    func(s) # call to build slide now
-            else:
-                # Do some static checks, so it at least valid function
-                uw_func = inspect.unwrap(func) # unwrap to get original function
-                if inspect.isgeneratorfunction(uw_func):
-                    raise TypeError("@build decorator does not support generator functions. Use standard functions only.")
-                
-                if len(inspect.signature(uw_func).parameters) != 1:
-                    raise ValueError("@build decorator function must accept single argument, slide.")
-                
-                s._build_func = func # store for later build
-                s._set_css_classes(add = 'Stale') # mark as stale to build later
-                with _build_slide(self._app, self._snumber): 
-                    pass # make state synced like next_number, resets etc. and restricts nesting
-            
+            with _build_slide(self._app, self._snumber): 
+                self._app.pending(func) 
+                self._app.error("DeprecationWarning",
+                    "Use `Slides.pending` decorator under any slide constructor (e.g. %%slide), @build will be deprecated in future versions."
+                ).display()
+
             return s # return in both cases
 
         def __enter__(self):
@@ -341,7 +297,7 @@ class BaseSlides:
         self.set_citations({'A': 'Citation A', 'B': 'Citation B'})
         self.settings.footer(text=self.get_logo("1em") + "IPySlides Documentation", date=None)
 
-        with self.build(0): # Title page
+        with self.slide(0): # Title page
             self.bg(self.get_logo(),0.25, filter='blur(10px)', contain=True)
             self.write(f'## IPySlides {self.version} Documentation\n### Creating slides with IPySlides')
             self.center(self.fmt('''
@@ -359,7 +315,7 @@ class BaseSlides:
                     Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
                 ''', logo = self.get_logo("4em"))).display()
         
-        self.build(-1, '''
+        self.slide(-1, '''
             ```md-after
                 section`Introduction` 
                 ```columns .block-green
@@ -374,8 +330,7 @@ class BaseSlides:
         
         skipper = self.link('Skip to dynamic content', 'Back to link info', icon='arrow', back_icon='arrowl')
           
-        @self.build(-1)
-        def _(s):
+        def _snapshots(s):
             grp = self.group(snapshots=True) # display separately as snaphots
             grp.append(['# Main App', self.doc(Slides)])
             
@@ -389,7 +344,7 @@ class BaseSlides:
             grp.append([
                 '## Adding Slides section`Adding Slides and Content`',
                 'Besides function below, you can add slides with `%%slide number [-m]` magic as well.\n{.note .info}',
-                self.doc(self.build,'Slides'), 
+                self.doc(self.slide,'Slides'), 
                 self.doc(self.sync_with_file,'Slides'),
             ])
         
@@ -405,11 +360,13 @@ class BaseSlides:
             self.pause() # incremental display on
             self.write(grp)
         
-        with self.build(-1): 
+        with self.slide(-1):
+            self.pending(_snapshots)
+        
+        with self.slide(-1): 
             self.xmd.syntax.display()
             
-        @self.build(-1)
-        def _(s):
+        def _shots2(s):
             grp = self.group(snapshots=True) # display separately as snaphots
             with grp.capture():
                 self.xmd('''
@@ -458,43 +415,48 @@ class BaseSlides:
             self.pause() # incremental display on
             self.write(grp)
         
-        self.build(-1, r'section`//Layout and color["yellow","black"]`Theme` Settings//` toc`### Contents`')
+        with self.slide(-1):
+            self.pending(_shots2)
         
-        @self.build_
-        def _(s):
-            self.css({ # does not need explicit `applyto` parameter under slide context
-                '.highlight': {'background':'#8984'}
-            }, bg1 = 'linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color))')
-            self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
-            self.doc(self.settings,'Slides', members=True,itself = True).display()
+        self.slide(-1, r'section`//Layout and color["yellow","black"]`Theme` Settings//` toc`### Contents`')
+        
+        with self.slide(-1):
+            @self.pending
+            def _(s):
+                self.css({ # does not need explicit `applyto` parameter under slide context
+                    '.highlight': {'background':'#8984'}
+                }, bg1 = 'linear-gradient(45deg, var(--bg3-color), var(--bg2-color), var(--bg3-color))')
+                self.styled('## Layout and Theme Settings', 'info', border='1px solid red').display()
+                self.doc(self.settings,'Slides', members=True,itself = True).display()
                 
-        @self.build(-1)
-        def _(s):
-            self.write('## Useful Functions for Rich Content section`//Useful Functions for alert`Rich Content`//`')
-            self.doc(self.alt,'Slides').display()
-            
-            members = sorted((
-                'AnimationSlider alert bokeh2html bullets esc styled fmt code color details doc '
-                'today error focus html iframe image frozen notify plt2html pin '
-                'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
-            ).split())
-            self.doc(self, 'Slides', members = members, itself = False).display()
+        with self.slide(-1):
+            @self.pending
+            def _(s):
+                self.write('## Useful Functions for Rich Content section`//Useful Functions for alert`Rich Content`//`')
+                self.doc(self.alt,'Slides').display()
 
-        @self.build(-1)
-        def _(s):
-            self.write(r'''
-                ## Citations and Sections
-                Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data)` method.
-                Any key that ends with `!` is displayed inplace. Number of columns in displayed citations are determined by 
-                code`Slides.settings.layout(..., ncol_refs = int)` or locally by code`Slides.refs(ncol)`. @A
-                       
-                Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
-                can be added with alert`toc\`title\``.
-            ''')
-            self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
+                members = sorted((
+                    'AnimationSlider alert bokeh2html bullets esc styled fmt code color details doc '
+                    'today error focus html iframe image frozen notify plt2html pin '
+                    'raw set_dir sig stack table textbox suppress_output suppress_stdout svg vspace'
+                ).split())
+                self.doc(self, 'Slides', members = members, itself = False).display()
+
+        with self.slide(-1):
+            @self.pending
+            def _(s):
+                self.write(r'''
+                    ## Citations and Sections
+                    Use syntax alert`cite\`key\`` / alert`\@key` to add citations which should be already set by code`Slides.set_citations(data)` method.
+                    Any key that ends with `!` is displayed inplace. Number of columns in displayed citations are determined by 
+                    code`Slides.settings.layout(..., ncol_refs = int)` or locally by code`Slides.refs(ncol)`. @A
+
+                    Add sections in slides to separate content by alert`section\`text\``. Corresponding table of contents
+                    can be added with alert`toc\`title\``.
+                ''')
+                self.doc(self, 'Slides', members = ['set_citations'], itself = False).display()
             
-        @self.build(-1)
-        def _(s):
+        def _dy_content(s):
             skipper.target.display() # Set target for skip button
             self.write('## Dynamic Content')
             
@@ -523,8 +485,11 @@ class BaseSlides:
                 [self.doc(self.dl.interact,'ipyslides.dashlab')], 
                 [*cap.outputs, c, self.doc(self.on_load,'Slides')],
             )
+        
+        with self.slide(-1):
+            self.pending(_dy_content)
     
-        self.build(-1, """
+        self.slide(-1, """
         ```md-src.collapsed
         stack[(3,7)]`//
         ## Content Styling
@@ -537,9 +502,10 @@ class BaseSlides:
         <md-src/>
         """, self=self)
         
-        self.build(-1, lambda s: self.css_animations.display())
+        with self.slide(-1):
+            self.pending(lambda s: self.css_animations.display())
         
-        self.build(-1, '''
+        self.slide(-1, '''
         ## Highlighting Code
         [pygments](https://pygments.org/) is used for syntax highlighting cite`A`.
         You can **highlight**{.error} code using `Slides.code` cite`B` or within markdown using named code blocks:
@@ -553,40 +519,42 @@ class BaseSlides:
         ''', self=self)
 
         
-        with self.build(-1):
+        with self.slide(-1):
             self.write('## Loading from File/Exporting to HTML section`Loading from File/Exporting to HTML`')
             self.write('You can parse and view a markdown file. The output you can save by exporting notebook in other formats.\n{.note .info}')
             self.write([self.doc(attr,'Slides') for attr in (self.sync_with_file,self.demo,self.docs,self.export_html)])
         
-        self.build(-1, 'section`Advanced Functionality` toc`### Contents`')
+        self.slide(-1, 'section`Advanced Functionality` toc`### Contents`')
 
-        @self.build_
-        def _(s):
-            self.write("## Adding content on frames incrementally")
-            self.frozen(widget := (code := s.get_source()).as_widget()).display()
-            # frozen in above line get oldest metadata for export
-            def highlight_code(slide): widget.value = code.focus(range(slide.indexf + 1)).value
-            self.on_load(highlight_code)
-        
-            for ws, cols in self.pause.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)]), isolate=True): # isolate to split from previous content
-                cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
-                self.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
+        with self.slide(-1):
+            @self.pending
+            def _(s):
+                self.write("## Adding content on frames incrementally")
+                self.frozen(widget := (code := s.get_source()).as_widget()).display()
+                # frozen in above line get oldest metadata for export
+                def highlight_code(slide): widget.value = code.focus(range(slide.indexf + 1)).value
+                self.on_load(highlight_code)
+
+                for ws, cols in self.pause.iter(zip([None, (2,3),None], [(0,1),(2,3),(4,5,6,7)]), isolate=True): # isolate to split from previous content
+                    cols = [self.html('h1', f"{c}",style="background:var(--bg3-color);margin-block:0.05em !important;") for c in cols]
+                    self.write(*cols, widths=ws, css_class='anim-group anim-wipe-right')
                     
-        @self.build_
-        def _(s):
-            self.write('## Adding User defined Objects/Markdown Extensions')
-            self.write(
-                self.hold(display, self.html('h3','I will be on main slides',css_class='warning'),
-                    metadata = {'text/html': '<h3 class="warning">I will be on exported slides</h3>'}
-                ), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
-                s.get_source(), widths = [1,3]
-            )
-            self.write(r'If you need to serialize your own or third party objects not serialized by this module, you can use `\@Slides.serializer.register` to serialize them to html.\n{.note .info}')
-            self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
-            self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
-            self.doc(self.xmd.extensions,'Slides.xmd.extensions', members = True, itself = False).display()
+        with self.slide(-1):
+            @self.pending
+            def _(s):
+                self.write('## Adding User defined Objects/Markdown Extensions')
+                self.write(
+                    self.hold(display, self.html('h3','I will be on main slides',css_class='warning'),
+                        metadata = {'text/html': '<h3 class="warning">I will be on exported slides</h3>'}
+                    ), # Can also do 'Slides.serilaizer.get_metadata(obj)' if registered
+                    s.get_source(), widths = [1,3]
+                )
+                self.write(r'If you need to serialize your own or third party objects not serialized by this module, you can use `\@Slides.serializer.register` to serialize them to html.\n{.note .info}')
+                self.doc(self.serializer,'Slides.serializer', members = True, itself = False).display()
+                self.write('**You can also extend markdown syntax** using `markdown extensions`, ([See here](https://python-markdown.github.io/extensions/) and others to install, then use as below):')
+                self.doc(self.xmd.extensions,'Slides.xmd.extensions', members = True, itself = False).display()
         
-        with self.build(-1):
+        with self.slide(-1):
             self.write(r'''
             ## Focus on what matters
             - Most of supported elements can be focused by default like images, matplotlib, bokeh, PIL image, altair plotly, dataframe, etc.
@@ -598,25 +566,26 @@ class BaseSlides:
                 Double click to focus on this block. Click at top right button or double click to exit.
             ''')
 
-        @self.build_
-        def _(s):
-            with self.capture_content() as c:
-                with self.code.context():
-                    import ipywidgets as ipw
-                    btn = ipw.Button(description='Chevron-Down Icon',icon='chevrond')    
-                    self.write(btn)
+        with self.slide(-1):
+            @self.pending
+            def _(s):
+                with self.capture_content() as c:
+                    with self.code.context():
+                        import ipywidgets as ipw
+                        btn = ipw.Button(description='Chevron-Down Icon',icon='chevrond')    
+                        self.write(btn)
 
-            group = zip(self.icon.available[::2], self.icon.available[1::2]) # make 4 columns table
-            self.write(['''
-                ## SVG Icons
-                Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
-                besides standard ipywidgets icons.
-                ''', *c.outputs, 'line`200`**Source code of this slide**',self.this.get_source()], 
-                self.table([(f'`{j}`', self.icon(j,color='crimson').svg,f'`{k}`', self.icon(k,color='crimson').svg) for j, k in group],headers=['Name','Icon','Name','Icon']),
-            widths=[3,2])
+                group = zip(self.icon.available[::2], self.icon.available[1::2]) # make 4 columns table
+                self.write(['''
+                    ## SVG Icons
+                    Icons that apprear on buttons inslides (and their rotations) available to use in your slides as well
+                    besides standard ipywidgets icons.
+                    ''', *c.outputs, 'line`200`**Source code of this slide**',self.this.get_source()], 
+                    self.table([(f'`{j}`', self.icon(j,color='crimson').svg,f'`{k}`', self.icon(k,color='crimson').svg) for j, k in group],headers=['Name','Icon','Name','Icon']),
+                widths=[3,2])
                 
             
-        with self.build_():
+        with self.slide(-1):
             self.write("""
                 # Auto Slide Numbering
                 Use alert`-1` as placeholder to update slide number automatically. 
@@ -624,11 +593,14 @@ class BaseSlides:
                 - In Jupyter notebook, this will be updated to current slide number. 
                 - In python file, it stays same.
                 - You need to run cell twice if creating slides inside a for loop while using `-1`.
-                - Additionally, in python file, you can use ` Slides.build_ ` instead of using `-1`.
                        
                 ::: note-warning
                     Some kernels may not support auto slide numbering inside notebook.
             """)
+            
+        with self.slide(-1):
+            self.pending(lambda s: self.write(
+                ['## Presentation Code section[True]`Presentation Code`',self.docs]
+            ))
         
-        self.build(-1, lambda s: self.write(['## Presentation Code section[True]`Presentation Code`',self.docs]))
         self.navigate_to(0) # Go to title, do not return to avoid display shift to this cell

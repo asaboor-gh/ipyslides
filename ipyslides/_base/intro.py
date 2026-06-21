@@ -20,12 +20,12 @@ slides = isd.Slides()
 ```
 ```python
 %%slide 0
-# You can use `with slides.build(0):` contextmanager for it as well.
+# You can use `with slides.slide(0):` contextmanager for it as well.
 ```
 ```python
 %%slide 1
 # slide 1 content
-# You can use `with slides.build(1):` contextmanager for it as well.
+# You can use `with slides.slide(1):` contextmanager for it as well.
 ```
 ```python
 %%slide 2 -m 
@@ -39,7 +39,7 @@ slides = isd.Slides()
 
 
 ```python
-with slides.build(-1):
+with slides.slide(-1):
     print("I will be first item shown!")
     slides.pause()
     print("-1 will pick latest slide number!")
@@ -48,7 +48,7 @@ with slides.build(-1):
 ```
 
 ```python
-slides.build(-1, r'''
+slides.slide(-1, r'''
 Markdown content can create many slides at once here!
 Variables like \%{var} can be provided after content or left to be updated later in notebook.
 This is useful inside python scripts. 
@@ -85,6 +85,7 @@ key_maps = {
     "Esc": "Exit fullscreen",
     "S": "Toggle settings panel",
     "E": "Edit Source Cell/View Variables", 
+    "B": "Build This/First Pending Slide",
     "K": "Show keyboard shortcuts",
 }
 

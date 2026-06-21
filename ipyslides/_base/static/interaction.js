@@ -482,6 +482,8 @@ function keyboardEvents(box,model) {
             message = keyMessage[key];
         } else if (e.ctrlKey && key === 'p') { 
             message = 'PRINT'; // Ctrl + P for print
+        } else if (key === 'b') { // B key for build
+            message = 'BUILD'; // Trigger build for first pending slide
         }
 
         model.set("msg_topy", message);

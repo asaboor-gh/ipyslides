@@ -967,7 +967,7 @@ class Slide:
         with self._widget:
             XTML(loading_skeleton(info)).display()
     
-    def _pending(self): return hasattr(self, '_build_func') # built if no build_func
+    def _pending(self): return hasattr(self, '_src_func') # built if no build_func
 
 @contextmanager
 def _build_slide(app, slide_number):

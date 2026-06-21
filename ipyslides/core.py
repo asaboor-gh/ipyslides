@@ -1,4 +1,4 @@
-import os, shutil
+import os, shutil, inspect
 import sys, json, re, math, uuid, textwrap, warnings
 from contextlib import contextmanager, suppress
 from collections import namedtuple
@@ -469,7 +469,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def clear(self, keep):
         """Clear all slides except first `keep` slides (default 1). Contents are removed to free memory.
-        After clearing, auto slide numbering is reset to `Slides[-1].number + 1` for use in `Slides.build(-1)`.
+        After clearing, auto slide numbering is reset to `Slides[-1].number + 1` for use in `Slides.slide(-1)`.
         """
         if not isinstance(keep, int) or keep < 1:
             raise ValueError("keep should be positive integer > 0 to keep that many slides from start, at least one!")
@@ -479,7 +479,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 slide._citations.clear() # Break circular references
                 slide._widget.outputs = () # clear output to free visual clutter
                 slide._contents = [] # clear contents to free memory
-                if hasattr(slide, '_build_func'): del slide._build_func
+                if hasattr(slide, '_src_func'): del slide._src_func
                 if hasattr(slide, '_scroll_btn'): del slide._scroll_btn
         
         self._slides_dict = {k: s for k, s in self._slides_dict.items() if s.index is not None and s.index < keep}
@@ -734,19 +734,28 @@ class Slides(BaseSlides,metaclass=Singleton):
         # do after ShowSlide available on naviagted slide
         self._send_nav_msg(new_index > old_index or new_index == 0) # There is no other way to animate title slide except on returning back to it
         self.settings.footer._update_footer() # keep running-section footer text in sync
-        self._build_if_pending(slide)  # build if pending, should be at end to see loading on current slide
     
     def _build_if_pending(self, slide):
-        if slide._pending():
-            slide._build_now = True  # mark to build now
-            self.build(slide.number, slide._build_func) 
-            # cleanup is handled in same build class, no worries of multiple builds
-    
+        if not slide._pending(): return  # if slide is not pending, return immediately
+        
+        with _build_slide(self, slide.number): 
+            slide._set_source(self.code.from_source(slide._src_func).raw,'python') # set source code to be accessible
+            if (doc := getattr(slide._src_func, '__doc__', None)):
+                self.xmd(doc, returns=False)
+            slide._src_func(slide) # call to build slide now
+            
+            # clean up after building the slide
+            slide._set_css_classes(remove = 'Stale') # lazy slides will be back here to be built
+            del slide._src_func # remove build function for building once
+        
     def _click_build_if_pending(self, btn):
         "Build first pending slide when user clicks build button."
         with dashlab.disabled(btn): # disable button during build
             if slide := self._next_pending:
+                self.navigate_to(slide.index) # must go there before starting a build to see the slide
                 self._build_if_pending(slide) # build first pending slide
+            else:
+                self.notify('No pending slides to build!') # programatic click by [B] even if button not visible
     
     @property
     def _next_pending(self):
@@ -826,7 +835,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with suppress(AttributeError): # some kernels may not implement changing cell code on fly
             code = self.shell.kernel.get_parent().get('content',{}).get('code','')
             p = r"\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
-            matches = re.findall(rf"(\%\%slide\s+-1)|(build{p})|(sync_with_file{p})", code)
+            matches = re.findall(rf"(\%\%slide\s+-1)|(slide{p})|(build{p})|(sync_with_file{p})", code)
             number = int(self._next_number) # don't use same attribute, that will be updated too
             if matches:
                 if len(matches) > 1:
@@ -858,7 +867,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             - You can add ++ (plus plus) in the content staring on new line to add parts which reveal incrementally.
             - Parts separator (++) just before `columns` creates incremental columns and rows. `++[isolate]` triggers isolation of columns from previous content.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
-            - 
 
         """
         line = line.strip().split()  # VSCode bug to inclue \r in line
@@ -870,7 +878,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             )
 
         slide_number = int(line[0])  # First argument is slide number
-
+        
         if "-m" in line[1:]:            
             frames = list(_stream_chunks(cell, sep='--'))
             with _build_slide(self, slide_number) as s:
@@ -894,6 +902,85 @@ class Slides(BaseSlides,metaclass=Singleton):
             with _build_slide(self, slide_number) as s:
                 s._set_source(cell, "python")  # Update cell source beofore running
                 self._run_cell(cell)  #
+    
+    @contextmanager
+    def _slide_context(self, slide_number):
+        with _build_slide(self, slide_number) as s:
+            with self.code.context(returns=True, depth=4) as code:
+                s._set_source(code.raw, "python")  # set source before running 
+                yield s
+    
+    def slide(self, slide_number, content=None, /, **vars):
+        """Create a slide using contextmanager or markdown content.
+        
+        1. If content is None, returns a context manager for the slide (equivalent to `%%slide`)
+            - Contents displayed by `write` function can be split into incremental parts if `write` is called after `pause()` adjacently.
+            - You can defer the content generation using the `@pending` decorator for faster notebook cell runs and heavy computations
+              until user clicks on the Pending Slides button. Both contextmanager and `%%slide` can benefit from this mechanism.
+        2. If content is a string, it is treated as markdown content for the slide (equivalent to `%%slide -m`)
+            - Use `++` to separted content into parts for incremental display on ites own line with optionally adding content after one space.
+            - Markdown `columns/group` blocks can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
+            - See `slides.xmd.syntax` for extended markdown usage.
+            - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
+            - If an f-string is provided, variables in f-string are resolved eagerly and never get updated on rebuild including lazy ones provided by `Slides.esc`.
+        
+        - In both cases, `slide_number` could be used as `-1`.
+        - Use yoffet`integer in percent` in markdown or code`Slides.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
+        - `**vars` are ignored silently if `build` is used as contextmanager or decorator.
+        """
+        # Only contextmanager and direct markdown build is useful for adding content to slides.
+        # Don't fall for a function decorator, since that restricts %%slide to be lazy,
+        # Instead pending makes it possible to make %%slide and with slide both lazy
+        with self.code.context(returns=True, start=True, depth=3) as caller: # string called code
+            if caller.strip().startswith('@'):
+                raise RuntimeError('slide function cannot be used as a decorator. Use it as a context manager or with markdown content.')
+            if content is not None and caller.strip().startswith('with'):
+                raise RuntimeError('slide function cannot be used as a context manager with content passed. Use either as a context manager or provide markdown content.')
+        
+        snumber = self._fix_slide_number(slide_number)
+        
+        if content is None:
+            return self._slide_context(snumber)  # return the slide context manager if no content is provided
+        elif not isinstance(content, str):
+            raise TypeError(f"content should be a string for markdown slide or None for contextmanager, got {type(content)}")
+        
+        # Markdown slide: parse and display content, DO NOT FALL for multiple slides, need to be same as %%slide -m
+        # using fmt is tempting to delegate vars automatically but it raises error if var not found, 
+        # which is against whole philosophy of rebuild.
+        slide, = self.create([snumber]) # create or access slide handle
+        expected_vars = _matched_vars(content) # only filter required variables
+        slide._md_vars = {k:v for k,v in vars.items() if k in expected_vars}
+        self._slide(f'{snumber} -m', content) 
+        return slide
+    
+    @slidebound
+    def pending(self, func):
+        """Decorator to mark a function as pending for a slide.
+        
+        The function will not be executed immediately but will be deferred until the user clicks the Pending Slides button.
+        The function must accept a single argument, which is the slide handle.
+        This is useful for deferring heavy computations until the user decides to build the slide.
+        
+        Must be used within a slide constructor (e.g., inside a `%%slide` cell or a slide contextmanager) 
+        to mark function as pending for that specific slide.
+        
+        Only single function can be marked as pending, so last one marked will override any previously marked function for that slide.
+        """
+        # Do some static checks, so it at least valid function
+        uw_func = inspect.unwrap(func) # unwrap to get original function
+        if inspect.isgeneratorfunction(uw_func):
+            raise TypeError("@pending decorator does not support generator functions. Use standard functions only.")
+        
+        if len(inspect.signature(uw_func).parameters) != 1:
+            raise ValueError("@pending decorator function must accept single argument, slide.")
+        
+        self.this._src_func = func # store for later build
+        self.this._set_css_classes(add = 'Stale') # mark as stale to build later
+        self.html('center',f"<code>{self.this}</code> is pending!<br>"
+            "Click <code>Pending Slides</code> button at right bottom to build it.",
+            css_class='warning'
+        ).display() # need hint be there
+        
 
     def __xmd(self, line, cell=None):
         r"""Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
