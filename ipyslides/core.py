@@ -6,7 +6,6 @@ from collections.abc import Iterable
 from itertools import zip_longest
 from typing import Union, overload
 from pathlib import Path
-from pkg_resources import resource_filename
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
@@ -35,15 +34,13 @@ except:
     
 def demo():
     "Setup and display the demo notebook for IPySlides. Click on the resulting link to open the demo notebook in a new tab."
-    os.makedirs('ipyslides-demo', exist_ok=True)
-    shutil.copy(Path(resource_filename('ipyslides', 'pkg_nbs/ips-demo.ipynb')), 'ipyslides-demo/demo.ipynb')
-    utils.html('a','Open Demo Notebook:ipyslides-demo/demo.ipynb', href='ipyslides-demo/demo.ipynb', target='_blank').display()
+    shutil.copy(Path(__file__).with_name('pkg_nbs') / 'ips-demo.ipynb', 'ipyslides-demo.ipynb')
+    utils.html('a','Open Demo Notebook:ipyslides-demo.ipynb', href='ipyslides-demo.ipynb', target='_blank').display()
     
 def docs():
     "Open the documentation notebook for IPySlides in a new tab."
-    os.makedirs('ipyslides-docs', exist_ok=True)
-    shutil.copy(Path(resource_filename('ipyslides', 'pkg_nbs/ips-docs.ipynb')), 'ipyslides-docs/docs.ipynb')
-    utils.html('a','Open Documentation Notebook:ipyslides-docs/docs.ipynb', href='ipyslides-docs/docs.ipynb', target='_blank').display()
+    shutil.copy(Path(__file__).with_name('pkg_nbs') / 'ips-docs.ipynb', 'ipyslides-docs.ipynb')
+    utils.html('a','Open Documentation Notebook:ipyslides-docs.ipynb', href='ipyslides-docs.ipynb', target='_blank').display()
 
 class _Citation:
     "Add citation to the slide with a unique key and value."
