@@ -4,7 +4,7 @@ You can import Slides, write, xmd, pause and fmt directly from top level.
 """
 
 
-from .core import Slides, fmt, esc, xmd, write, demo
+from .core import Slides, fmt, esc, xmd, write, demo, docs
 from .__version__ import __version__
 
 PAGE = Slides.PAGE  # legacy page delimiter kept for compatibility
@@ -13,4 +13,4 @@ PART = Slides.PART  # deprecated alias of pause
 
 version = __version__ # add a public attribute
 
-__all__ = ["Slides", "demo", "pause", "fmt", "esc", "write", "xmd"]
+__all__ = ["Slides", "demo", "docs", "pause", "fmt", "esc", "write", "xmd"]
