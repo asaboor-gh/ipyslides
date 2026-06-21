@@ -52,7 +52,7 @@ Sections & TOC
 : alert`section\`content\`` to add a section that will appear in the table of contents.
 Use code`section[True]\`content\`` to mark the beginning of supplemental slides with True parameter in section command.
 Slides in this section remain navigable, use supplemental numbering (`S.1`, `S.2`, ...), and do not advance the main progress bar.
-alert`toc\`Table of content header text\`` to add a table of contents. See `Slides.docs()` for creating a `TOC` accompanied by section summary.
+alert`toc\`Table of content header text\`` to add a table of contents. See `ipyslides.docs()` for creating a `TOC` accompanied by section summary.
 
 Notes
 : alert`notes\`This is slide notes\``  to add notes to current slide.

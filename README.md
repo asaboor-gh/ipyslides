@@ -1,7 +1,7 @@
 # IPySlides
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15482350.svg)](https://doi.org/10.5281/zenodo.15482350)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/ipyslides/HEAD?urlpath=%2Fdoc%2Ftree%2Fipyslides%2Fpkg_nbs%2Fips-demo.ipynb)
 [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/lab/index.html?path=IPySlides.ipynb)
 [![PyPI version](https://badge.fury.io/py/ipyslides.svg)](https://badge.fury.io/py/ipyslides)
 [![Downloads](https://pepy.tech/badge/ipyslides)](https://pepy.tech/project/ipyslides)
@@ -72,14 +72,17 @@ Welcome to IPySlides!
 
 3. **Run Examples:**
 ```python
-slides.docs()  # View documentation
-slides.demo()  # See demo presentation
+isd.docs()  # View  and interact with documentation
+isd.demo()  # See and interact with demo presentation
 ```
 
 **✨ Try it in your browser ✨**
-| Jupyterlite  | Binder |
-|--------------|--------|
-|[![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/lab/index.html?path=IPySlides.ipynb) | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/massgh/ipyslides/HEAD?labpath=demo.ipynb) |
+- [![](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://asaboor-gh.github.io/litepad/lab/index.html?path=IPySlides.ipynb)
+- [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/asaboor-gh/ipyslides/HEAD?urlpath=%2Fdoc%2Ftree%2Fipyslides%2Fpkg_nbs%2Fips-docs.ipynb)
+
+**View Static Notebooks**
+- [Docs](ipyslides/pkg_nbs/ips-docs.ipynb)
+- [Demo](ipyslides/pkg_nbs/ips-demo.ipynb)
 
 ---
 
@@ -167,7 +170,7 @@ Use `slides.export_html` to build static slides that you can print to PDF. Read 
 - **PDF Export**
 Support for direct PDF printing from slides using `Ctrl + P` (use options in side panel to prepare for print) is available, although some IDEs like VSCode may not allow it. Use `Save as PDF` option and enable background graphics if necessary. If issues arise in direct printing, consider exporting to HTML first and printing from there.
 
-Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML slides which you can print to PDF. See [demo.pdf](docs/demo.pdf) for an example exported PDF.
+Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML slides which you can print to PDF. See [demo.pdf](demo.pdf) for an example exported PDF.
 
 ---
 
@@ -231,8 +234,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Documentation
 
 - [Github Pages Documentation](https://asaboor-gh.github.io/ipyslides/)
-- Full documentation: `slides.docs()` same as on github pages.
-- Examples: `slides.demo()`
+- Interactive documentation: `ipyslides.docs()` same as on github pages.
+- Interactice Demo: `ipyslides.demo()`
 - [GitHub Repository](https://github.com/asaboor-gh/ipyslides)
 
 

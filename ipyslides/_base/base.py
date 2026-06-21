@@ -87,7 +87,7 @@ class BaseSlides:
         Use this to e.g. notify during running presentation. func accepts single arguemnet, slide.
         Return value could a cleanup function (which also accepts slide as single argument) executed when slide exits.
         
-        See `Slides.docs()` for few examples.
+        See `ipyslides.docs()` for few examples.
 
         ::: note-warning
             - If you use this to change global state of slides, return a clean up function which accepts slide as argument.

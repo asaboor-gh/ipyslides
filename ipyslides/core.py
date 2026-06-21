@@ -33,14 +33,16 @@ except:
     sys.exit()
     
 def demo():
-    "Setup and display the demo notebook for IPySlides. Click on the resulting link to open the demo notebook in a new tab."
-    shutil.copy(Path(__file__).with_name('pkg_nbs') / 'ips-demo.ipynb', 'ipyslides-demo.ipynb')
-    utils.html('a','Open Demo Notebook:ipyslides-demo.ipynb', href='ipyslides-demo.ipynb', target='_blank').display()
+    "Openthe demo notebook for IPySlides. Click on the resulting link to open the demo notebook in a new tab."
+    demo_dir = utils.get_child_dir('_ipsDemo', create=True) # works even if called from nested notebooks
+    shutil.copy(Path(__file__).with_name('pkg_nbs') / 'ips-demo.ipynb', demo_dir)
+    utils.html('a','Open Demo Notebook', href='_ipsDemo/ips-demo.ipynb', target='_blank').display()
     
 def docs():
-    "Open the documentation notebook for IPySlides in a new tab."
-    shutil.copy(Path(__file__).with_name('pkg_nbs') / 'ips-docs.ipynb', 'ipyslides-docs.ipynb')
-    utils.html('a','Open Documentation Notebook:ipyslides-docs.ipynb', href='ipyslides-docs.ipynb', target='_blank').display()
+    "Open the documentation notebook for IPySlides in a new tab by clicking on the resulting link."
+    docs_dir = utils.get_child_dir('_ipsDocs', create=True) # works even if called from nested notebooks
+    shutil.copy(Path(__file__).with_name('pkg_nbs') / 'ips-docs.ipynb', docs_dir)
+    utils.html('a','Open Documentation Notebook', href='_ipsDocs/ips-docs.ipynb', target='_blank').display()
 
 class _Citation:
     "Add citation to the slide with a unique key and value."
@@ -1058,9 +1060,12 @@ class Slides(BaseSlides,metaclass=Singleton):
         return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
     
     def demo(self):
-        "Setup and display the demo notebook for IPySlides. Click on the resulting link to open the demo notebook in a new tab."
-        print("Use top level ipyslides.demo() instead!")
+        print("DeprecationWarning: Use top level ipyslides.demo() instead!")
         return demo()
+    
+    def docs(self):
+        print("DeprecationWarning: Use top level ipyslides.docs() instead!")
+        return docs()
     
     class pause:
         """Pause delimiter! Use `Slides.pause()` or import `pause` from top level to create a new revealable part in slide.
