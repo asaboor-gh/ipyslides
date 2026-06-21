@@ -93,9 +93,13 @@ setup(
     python_requires = REQUIRES_PYTHON,
     url = URL,
     packages = find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
-    package_data= {
-        # all .js, .css files at any package depth and notebooks related via code access in pkg_nbs directories
-        '': ['**/pkg_nbs/*.ipynb','**/*.js','**/*.css'],
+    package_data={
+        # Explicit package-scoped data patterns are more reliable than recursive globs.
+        'ipyslides': [
+            'pkg_nbs/*.ipynb',
+            '_base/static/*.js',
+            '_base/static/*.css',
+        ],
     },
     
     # entry_points={
