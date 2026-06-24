@@ -45,13 +45,15 @@ By replacing copy-paste duplication and artificial cell chopping with programmat
 
 ## Quick Start
 
-1. **Install:**
+**Install:**
+   
 ```bash
 pip install ipyslides        # Basic installation
 pip install ipyslides[extra] # Full features
 ```
 
-2. **Create Slides:**
+**Create Slides:**
+   
 ```python
 import ipyslides as isd
 slides = isd.Slides()
@@ -70,7 +72,8 @@ $E = mc^2$
 Welcome to IPySlides!
 ```
 
-3. **Run Examples:**
+**Run Examples:**
+   
 ```python
 isd.docs()  # View  and interact with documentation
 isd.demo()  # See and interact with demo presentation
@@ -170,7 +173,7 @@ Use `slides.export_html` to build static slides that you can print to PDF. Read 
 - **PDF Export**
 Support for direct PDF printing from slides using `Ctrl + P` (use options in side panel to prepare for print) is available, although some IDEs like VSCode may not allow it. Use `Save as PDF` option and enable background graphics if necessary. If issues arise in direct printing, consider exporting to HTML first and printing from there.
 
-Navigate to [Documentation](https://asaboor-gh.github.io/ipyslides/) to see HTML slides which you can print to PDF. See [demo.pdf](demo.pdf) for an example exported PDF.
+See [demo.pdf](demo.pdf) for an example exported PDF.
 
 ---
 
