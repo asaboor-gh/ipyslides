@@ -917,7 +917,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 yield s
     
     def slide(self, slide_number, content=None, /, **vars):
-        """Create a slide using contextmanager or markdown content.
+        r"""Create a slide using contextmanager or markdown content.
         
         1. If content is None, returns a context manager for the slide (equivalent to `%%slide`)
             - Contents displayed by `write` function can be split into incremental parts if `write` is called after `pause()` adjacently.
@@ -961,7 +961,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     @slidebound
     def pending(self, func):
-        """Decorator to mark a function as pending for a slide.
+        r"""Decorator to mark a function as pending for a slide.
         
         The function will not be executed immediately but will be deferred until the user clicks the Pending Slides button.
         The function must accept a single argument, which is the slide handle.
@@ -1078,13 +1078,10 @@ class Slides(BaseSlides,metaclass=Singleton):
                     See `write` command for more details.
         - Use code`pause.iter(iterable)` to create multiple parts from iterable automatically.
         - Last empty pause delimiter is ignored.
-        
-        ::: note
-            `Slides.PART` is deprecated and kept as an alias for backward compatibility.
         """
         # DO NOT FALL FOR GLOBAL PAGE STUFF, THAT WOULD BE A NIGHTMARE TO HANDLE 
         # AND CANNOT HAVE ITS OWN STATE METADATA, AS WE REMOVED IT EARLIER.
-        _type = "PART"
+        _type = "PAUSE"
         
         def __init__(self, isolate=False):
             delim = _delim(self._type)
@@ -1095,16 +1092,16 @@ class Slides(BaseSlides,metaclass=Singleton):
         @classmethod
         def _optional_trail(self, trail):
             if trail is True: display(_delim(self._type))
-            elif trail in ("PART", "PAGE"):
-                display(_delim("PART" if trail == "PART" else trail))
+            elif trail in ("PAUSE", "PAGE"):
+                display(_delim("PAUSE" if trail == "PAUSE" else trail))
             elif trail is not False: 
-                raise ValueError(f"trail should be True, False, 'PART' or 'PAGE', got {trail!r}")
+                raise ValueError(f"trail should be True, False, 'PAUSE' or 'PAGE', got {trail!r}")
 
         @classmethod
         def iter(cls, iterable, isolate=False, trail=True):
             """Loop over given iterable by adding a separator before each item.
             If `trail` is True (default), a separator of this type is added at end as well.
-            You can also set `trail` to 'PART' or 'PAGE' to add that type of separator at end instead 
+            You can also set `trail` to 'PAUSE' or 'PAGE' to add that type of separator at end instead 
             or set to False to avoid adding any separator at end, while is useful to avoid incremental 
             behavior in next write command in case of pause delimiter.
             Set `isolate=True` to mark only the first inserted delimiter as isolate.
@@ -1129,26 +1126,3 @@ class Slides(BaseSlides,metaclass=Singleton):
             if empty:
                 utils.html('span','').display() # to preserve empty page, otherwise two adjacent PAGE delimiters are ignored
                 display(_delim(self._type)) # add one more to create empty page
-
-    class PART(pause):
-        "Deprecated alias for `Slides.pause`."
-
-        def __init__(self, *parts, trail=True):
-            warnings.warn(
-                "Slides.PART is deprecated and will be removed in a future release; use Slides.pause instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            super().__init__()
-            write(parts)
-            if parts:
-                type(self)._optional_trail(trail)
-
-        @classmethod
-        def iter(cls, iterable, trail=True):
-            warnings.warn(
-                "Slides.PART.iter is deprecated and will be removed in a future release; use Slides.pause.iter instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return super().iter(iterable, trail=trail)

@@ -217,7 +217,7 @@ class Slide:
     def _cleanup_delimiters(self, outputs):
         """
         Clean up delimiters: remove outputs with only text/plain and no metadata,
-        then remove trailing, empty, adjacent PARTs/PAGEs, PART after/before PAGE.
+        then remove trailing, empty, adjacent PAUSEs/PAGEs, PAUSE after/before PAGE.
         """
         # First pass: skip outputs with only text/plain and no metadata
         filtered = []
@@ -232,7 +232,7 @@ class Slide:
         for out in filtered:
             metadata = getattr(out, 'metadata', None)
             delim = metadata.get("DELIM", None) if metadata and isinstance(metadata, dict) else None
-            delim_list.append(delim if delim in ("PAGE", "PART") else None)
+            delim_list.append(delim if delim in ("PAGE", "PAUSE") else None)
 
         # Remove trailing delimiters
         while delim_list and delim_list[-1] is not None:
@@ -248,10 +248,10 @@ class Slide:
                 prev_delim = None
                 continue
 
-            if delim == "PART":
-                # PART right before PAGE or PART after PART
+            if delim == "PAUSE":
+                # PAUSE right before PAGE or PAUSE after PAUSE
                 next_delim = delim_list[i+1] if i+1 < len(delim_list) else None
-                if next_delim == "PAGE" or prev_delim == "PART":
+                if next_delim == "PAGE" or prev_delim == "PAUSE":
                     prev_delim = delim
                     continue
                 indices.append(i)
@@ -259,7 +259,7 @@ class Slide:
                 continue
 
             if delim == "PAGE":
-                # Allow up PART before PAGE, skip multiple empty PAGEs
+                # Allow up PAUSE before PAGE, skip multiple empty PAGEs
                 if prev_delim == "PAGE":
                     prev_delim = delim
                     continue
@@ -373,7 +373,7 @@ class Slide:
                 page["page"] = ip + 1 # page number within slide to display only if more than one page
             # Parts inside head only take effect on first frame.
             # Also include index 0 when there is no PAGE delimiter at the start,
-            # so a leading PART can trigger column incrementals.
+            # so a leading PAUSE can trigger column incrementals.
             if ip == 0 and page["head"] > -1:
                 start = 0
             elif page["start"] == 0 and contents and not (
@@ -419,23 +419,23 @@ class Slide:
         for index in indxs:
             last_index = index
             meta = ensure_dict(contents[index].metadata)
-            if isinstance(meta, dict) and meta.get("DELIM", "") == "PART":
+            if isinstance(meta, dict) and meta.get("DELIM", "") == "PAUSE":
                 if index == indxs.stop - 1: 
-                    continue  # skip if PART is last in range
+                    continue  # skip if PAUSE is last in range
                 
                 meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 > 0 else {} # can go to PAGE index
                 meta_next = ensure_dict(contents[index + 1].metadata) if index + 1 in indxs else {}
                 
-                # Single column flattened after PART with its ROW delimiters
+                # Single column flattened after PAUSE with its ROW delimiters
                 if ("FLATCOL" in meta_next):
                     for i in range(index, index + meta_next["FLATCOL"]):
                         meta_row = ensure_dict(contents[i].metadata) if i in indxs else {}
                         if meta_row.get("DELIM", "") == "ROW":
-                            meta_row["DELIM"] = "PART"  # change ROW to PART for frame handling
+                            meta_row["DELIM"] = "PAUSE"  # change ROW to PAUSE for frame handling
                    
-                # --- PART before COLUMNS ---
+                # --- PAUSE before COLUMNS ---
                 if "COLUMNS" in meta_next:
-                    # PART before COLUMNS should not create a trigger-only frame.
+                    # PAUSE before COLUMNS should not create a trigger-only frame.
                     # This keeps previous content visible and shows the first column part together.
                     if meta.get("ISOLATE", False) and index > indxs.start:
                         new_frame = {**page, "part": index}
@@ -465,9 +465,9 @@ class Slide:
                     if snapshots_last_rows:
                         _snapshots_persist = {"idx": index + 1, "_snapshots_last_rows": snapshots_last_rows}
 
-                # --- PART after COLUMNS ---
+                # --- PAUSE after COLUMNS ---
                 elif "COLUMNS" in meta_prev:
-                    # If last frame was built by previous columns, skip this PART
+                    # If last frame was built by previous columns, skip this PAUSE
                     if index == indxs.start or (frames and "col" in frames[-1]):
                         continue  # skip adding extra frame after columns parts
                     new_frame = {**page, "part": index}
@@ -475,7 +475,7 @@ class Slide:
                         new_frame["_snapshots_persist"] = _snapshots_persist
                     frames.append(new_frame)
 
-                # --- Regular PART ---
+                # --- Regular PAUSE ---
                 elif index > indxs.start:
                     new_frame = {**page, "part": index}
                     if _snapshots_persist:
@@ -497,7 +497,7 @@ class Slide:
     def _fidxs(self):
         idxs = getattr(self, '_frame_idxs', ())
         if self._app.widgets.checks.merge.value:
-            # Merge PART frames into single PAGE frame for export, PAGE will be depricated later:
+            # Merge PAUSE frames into single PAGE frame for export, PAGE will be depricated later:
             merged_frames = []
             for frame in idxs:
                 frame = {k:v for k,v in frame.items() if k in ('head','start','end', 'page')} # remove part, col, row info
@@ -580,7 +580,7 @@ class Slide:
         end = frame["end"] + 1
         css_rules[f'^:nth-child(n + {end + 1})'] = collapse_node(True)
 
-        # Handle PART incremental frames
+        # Handle PAUSE incremental frames
         if "part" in frame:
             part_end = frame["part"] + 1
             css_rules[f'^:nth-child(n + {start}):nth-child(-n + {part_end})'] = hide_node(False)
@@ -591,7 +591,7 @@ class Slide:
             # Handle column incremental display
             if "col" in frame:
                 col_idx = frame["col"]
-                # Within the PART output (which contains COLUMNS), hide columns after current one
+                # Within the PUSE output (which contains COLUMNS), hide columns after current one
                 col_sel = f'^:nth-child({part_end}) > .jp-OutputArea-output > .columns.writer:first-of-type > div'
                 css_rules[f'{col_sel}:nth-child(n + {col_idx + 2})'] = hide_node(True)
 

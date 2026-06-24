@@ -442,7 +442,7 @@ class XMarkdown(Markdown):
     def _split_parts(self, content, delimited=False):
         "Split content at '++', optionally yielding Delimiter objects."
         def _part_delim():
-            delim = _delim("PART")
+            delim = _delim("PAUSE")
             if opt == 'isolate' and isinstance(getattr(delim, 'metadata', None), dict):
                 delim.metadata['ISOLATE'] = True
             return delim
@@ -1094,7 +1094,7 @@ def _parse_as_snapshots(markdown):
             with snaps.capture():
                 xmd(page, returns=False)
                 
-        _delim("PART").display() # trigger parts
+        _delim("PAUSE").display() # trigger parts
         write(snaps) # will show each page one by one
     return frozen(cap) # return captured content as frozen to be automatically displayed in last line of cell
 

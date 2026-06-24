@@ -189,6 +189,9 @@ class BaseSlides:
         if not isinstance(interval, int) or interval < 100:
             raise ValueError("interval should be integer greater than 100 millieconds.")
         
+        if hasattr(self, '_watcher'):
+            self.unsync() # clear any existing file watcher before setting a new one
+        
         start = self._fix_slide_number(start_slide_number)
         self._watcher = FileWatcher(path, interval=interval)
         
@@ -196,16 +199,19 @@ class BaseSlides:
         # and errors must be caught before going forward
         self._from_markdown(start, path.read_text(encoding="utf-8"), synced=True) 
 
-        @self._watcher.on_update
-        def update_target_slides(path):
+        def update_target_slides(change):
+            value = change["new"]
+            if not value or not hasattr(value, 'path'): return # file deleted or None value
+            
             try: 
-                self._from_markdown(start, path.read_text(encoding="utf-8"), synced=True) 
+                self._from_markdown(start, value.path.read_text(encoding="utf-8"), synced=True) 
                 self.notify('x') # need to remove any notification from previous error
                 self._unregister_postrun_cell() # No cells buttons from inside file code run
             except:
                 e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
                 self.notify(f"{error('SyncError','something went wrong')}<br/>{error(e,text)}",20)
         
+        self._watcher.observe(update_target_slides, "value") # start observing changes to the file
         display(self._watcher) # must be displayed to work
         self._unregister_postrun_cell() # avoid unnessary scroll button after postrun cell here
 
