@@ -61,11 +61,8 @@ class _HhtmlExporter:
                 frames = [objs]
             else:
                 for fi, frame in enumerate(item._fidxs):
-                    head, start, end, part = [frame.get(k, -1) - item._offset for k in ('head','start','end','part')]
+                    start, end, part = [frame.get(k, -1) - item._offset for k in ('start','end','part')]
                     frame_objs = []
-                    
-                    if head >= 0:
-                        frame_objs.extend(objs[:head + 1])
                     
                     if not "part" in frame: # full content in range
                         frame_objs.extend(objs[start:end + 1])

@@ -373,12 +373,11 @@ function printSlides(box, model) {
                     let outputs = Array.from(outRoot.children);
 
                     for (let j = outputs.length - 1; j >= 0; j--) {
-                        let inHead = (frame.head !== undefined && frame.head >= 0 && j <= frame.head);
                         let inContent = (j >= frame.start && j <= frame.end);
                         outputs[j].classList.remove('print-collapsed');
                         outputs[j].classList.remove('print-invisible');
 
-                        if (!inHead && !inContent) {
+                        if (!inContent) {
                             if (outputs[j]) {
                                 i > 0 ? outputs[j].remove() : outputs[j].classList.add('print-collapsed');
                             }

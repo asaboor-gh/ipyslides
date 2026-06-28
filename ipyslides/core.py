@@ -742,7 +742,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.settings.footer._update_footer() # keep running-section footer text in sync
     
     def _build_if_pending(self, slide):
-        if not slide._pending(): return  # if slide is not pending, return immediately
+        if not slide._pending(): return  # if slide is built, return immediately
         
         with _build_slide(self, slide.number): 
             slide._set_source(self.code.from_source(slide._src_func).raw,'python') # set source code to be accessible
@@ -861,7 +861,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         """Capture content of a cell as `slide`.
             ---------------- Cell ----------------
             %%slide 1
-            #python code here
+            #python code here or use `Slides.src` function.
 
         You can use extended markdown to create slides
             ---------------- Cell ----------------
@@ -873,6 +873,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             - You can add ++ (plus plus) in the content staring on new line to add parts which reveal incrementally.
             - Parts separator (++) just before `columns` creates incremental columns and rows. `++[isolate]` triggers isolation of columns from previous content.
             - Use `%%slide -1` to enable auto slide numbering. Other cell code is preserved.
+            - Without '-m' flag, the cell content is treated as Python code and can benifit from `Slides.src` function to set the source for the slide.
 
         """
         line = line.strip().split()  # VSCode bug to inclue \r in line
@@ -885,100 +886,84 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         slide_number = int(line[0])  # First argument is slide number
         
-        if "-m" in line[1:]:            
-            frames = list(_stream_chunks(cell, sep='--'))
-            with _build_slide(self, slide_number) as s:
-                prames = list(_stream_chunks(s._markdown, sep='--'))  
-                # Update source beofore parsing content to make it available for variable testing
-                s._set_source(cell, "markdown") # set source before running to have it available for user
-                vars = _matched_vars(cell) # update has_vars before running to have ready for auto rebuild
-                stored = {**esc._store, **s._esc_vars} # keep previous stored variables, first time come only from esc._store
-                s._has_vars = tuple([v for v in vars if v not in stored]) # esc is encapsulated by design
-                s._esc_vars = {v: stored[v] for v in vars if v in stored} # store for rebuilds internally
-                
-                for page, (frm, prm) in enumerate(zip_longest(frames, prames, fillvalue=''), start=1): # page starts from 1
-                    self.xmd(frm, returns = False) # parse and display content
-                    
-                    if len(frames) > 1: self.PAGE() # add page separator if multiple frames
-                    
-                    if prm != frm: 
-                        s._lre_page = page  # mark least recent edited page for jumping there
-
-        else:  # Run even if already exists as it is user choice in Notebook, unlike markdown which loads from file
-            with _build_slide(self, slide_number) as s:
+        with _build_slide(self, slide_number) as s:
+            if "-m" in line[1:]:
+                self._run_mdsrc(s, cell)
+            else:
                 s._set_source(cell, "python")  # Update cell source beofore running
-                self._run_cell(cell)  #
+                self._run_cell(cell)
+            
+    def _run_mdsrc(self, slide, content, **vars):
+        if not isinstance(content, str):
+            raise TypeError(f"Content must be a markdown string, got {type(content)}")
+        
+        # Update source beofore parsing content to make it available for variable testing
+        slide._set_defaults() # this is must to have single last call of src for markdown slide
+        slide._set_source(content, "markdown") # set source before running to have it available for user
+        cvars = _matched_vars(content) # update has_vars before running to have ready for auto rebuild
+        stored = {**esc._store, **slide._esc_vars} # keep previous stored variables, first time come only from esc._store
+        slide._has_vars = tuple([v for v in cvars if v not in stored]) # esc is encapsulated by design
+        slide._esc_vars = {v: stored[v] for v in cvars if v in stored} # store for rebuilds internally
+        slide._md_vars = {k:v for k,v in vars.items() if k in cvars} # store user given markdown variables
+        # parse and display content after setting source and preparing variables
+        self.xmd(content, returns = False) 
     
     @contextmanager
-    def _slide_context(self, slide_number):
-        with _build_slide(self, slide_number) as s:
+    def slide(self, slide_number, /):  # must be passed as positional argument
+        r"""Create a slide using contextmanager which complements the `%%slide` magic.
+        
+        Slide content under this context manager or `%%slide` can be provided in the following ways.
+        
+        1. Slide can be built from helper functions such as `write` command and other utility functions that generate content for the slide.
+        2. The `Slides.src(content, **vars)` function can be used to build whole slide from markdown content. See documentation of `Slides.src` for usage details.
+        3. The `@Slides.src` decorator can be used to mark a function as the source for the slide, allowing deferred execution when user clicks the Pending Slides button.
+        
+        `slide_number` could be used as `-1` and will be updated in notebook cell automatically to the correct slide number.
+        """
+        # Only contextmanager approach is useful for adding content to slides.
+        # Don't fall for a function decorator, since that restricts %%slide to be lazy,
+        # Instead @src makes it possible to make %%slide and with slide both lazy
+        with self.code.context(returns=True, start=True, depth=4) as caller: # string called code
+            if not caller.lstrip().startswith('with'):
+                raise RuntimeError('slide function must be used as a context manager!')
+            
+        snumber = self._fix_slide_number(slide_number)
+        with _build_slide(self, snumber) as s:
             with self.code.context(returns=True, depth=4) as code:
                 s._set_source(code.raw, "python")  # set source before running 
                 yield s
     
-    def slide(self, slide_number, content=None, /, **vars):
-        r"""Create a slide using contextmanager or markdown content.
+    @slidebound
+    def src(self, func_or_xmd, **vars):
+        r"""Build the whole content of a slide. Must be used within a slide constructor (`%%slide` cell or a slide contextmanager).
         
-        1. If content is None, returns a context manager for the slide (equivalent to `%%slide`)
-            - Contents displayed by `write` function can be split into incremental parts if `write` is called after `pause()` adjacently.
-            - You can defer the content generation using the `@pending` decorator for faster notebook cell runs and heavy computations
-              until user clicks on the Pending Slides button. Both contextmanager and `%%slide` can benefit from this mechanism.
-        2. If content is a string, it is treated as markdown content for the slide (equivalent to `%%slide -m`)
-            - Use `++` to separted content into parts for incremental display on ites own line with optionally adding content after one space.
+        1. If used with a string input, it is treated as markdown source and will be immediately updated.
+            - Use `++` to separte content into parts for incremental display on ites own line with optionally adding content after one space.
             - Markdown `columns/group` blocks can be displayed incrementally if `++` is used (alone on line) before these blocks as a trigger.
             - See `slides.xmd.syntax` for extended markdown usage.
             - Variables such as \%{var} can be provided in `**vars` (or left during build) and later updated in notebook using `rebuild` method on slide handle or overall slides.
             - If an f-string is provided, variables in f-string are resolved eagerly and never get updated on rebuild including lazy ones provided by `Slides.esc`.
+        2. If used with a function input, the function is treated as the source for the slide.
+            - The function must accept a single argument, which is the slide handle.
+            - The function will not be executed immediately but will be deferred until the user clicks the Pending Slides button.
+            - This is useful for deferring heavy computations until the user decides to build the slide.
         
-        - In both cases, `slide_number` could be used as `-1`.
-        - Use yoffet`integer in percent` in markdown or code`Slides.yoffset(integer)` to make all frames align vertically to avoid jumps in increments.
-        - `**vars` are ignored silently if `build` is used as contextmanager or decorator.
+        Only single `src` can exist per slide, so last call will override any previous `src` call.
         """
-        # Only contextmanager and direct markdown build is useful for adding content to slides.
-        # Don't fall for a function decorator, since that restricts %%slide to be lazy,
-        # Instead pending makes it possible to make %%slide and with slide both lazy
-        with self.code.context(returns=True, start=True, depth=3) as caller: # string called code
-            if caller.strip().startswith('@'):
-                raise RuntimeError('slide function cannot be used as a decorator. Use it as a context manager or with markdown content.')
-            if content is not None and caller.strip().startswith('with'):
-                raise RuntimeError('slide function cannot be used as a context manager with content passed. Use either as a context manager or provide markdown content.')
+        if isinstance(func_or_xmd, str): # may be attach with this to build after yield in _build_slide???
+            return self._run_mdsrc(self.this, func_or_xmd, **vars)
         
-        snumber = self._fix_slide_number(slide_number)
+        if not callable(func_or_xmd):
+            raise TypeError("@src decorator requires a function or a string for markdown source.")
         
-        if content is None:
-            return self._slide_context(snumber)  # return the slide context manager if no content is provided
-        elif not isinstance(content, str):
-            raise TypeError(f"content should be a string for markdown slide or None for contextmanager, got {type(content)}")
-        
-        # Markdown slide: parse and display content, DO NOT FALL for multiple slides, need to be same as %%slide -m
-        # using fmt is tempting to delegate vars automatically but it raises error if var not found, 
-        # which is against whole philosophy of rebuild.
-        slide, = self.create([snumber]) # create or access slide handle
-        expected_vars = _matched_vars(content) # only filter required variables
-        slide._md_vars = {k:v for k,v in vars.items() if k in expected_vars}
-        self._slide(f'{snumber} -m', content) 
-        return slide
-    
-    @slidebound
-    def pending(self, func):
-        r"""Decorator to mark a function as pending for a slide.
-        
-        The function will not be executed immediately but will be deferred until the user clicks the Pending Slides button.
-        The function must accept a single argument, which is the slide handle.
-        This is useful for deferring heavy computations until the user decides to build the slide.
-        
-        Must be used within a slide constructor (e.g., inside a `%%slide` cell or a slide contextmanager) 
-        to mark function as pending for that specific slide.
-        
-        Only single function can be marked as pending, so last one marked will override any previously marked function for that slide.
-        """
+        func = func_or_xmd
         # Do some static checks, so it at least valid function
         uw_func = inspect.unwrap(func) # unwrap to get original function
         if inspect.isgeneratorfunction(uw_func):
-            raise TypeError("@pending decorator does not support generator functions. Use standard functions only.")
+            raise TypeError("@src decorator does not support generator functions. Use standard functions only.")
         
         if len(inspect.signature(uw_func).parameters) != 1:
-            raise ValueError("@pending decorator function must accept single argument, slide.")
+            raise ValueError("@src decorator function must accept a single argument, slide.")
         
         self.this._src_func = func # store for later build
         self.this._set_css_classes(add = 'Stale') # mark as stale to build later
@@ -986,7 +971,11 @@ class Slides(BaseSlides,metaclass=Singleton):
             "Click <code>Pending Slides</code> button at right bottom to build it.",
             css_class='warning'
         ).display() # need hint be there
-        
+    
+    @slidebound
+    def pending(self, func):
+        print("Use @src decorator instead! This will be deprecated in future versions.")
+        return self.src(func)
 
     def __xmd(self, line, cell=None):
         r"""Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
@@ -1079,31 +1068,20 @@ class Slides(BaseSlides,metaclass=Singleton):
         - Use code`pause.iter(iterable)` to create multiple parts from iterable automatically.
         - Last empty pause delimiter is ignored.
         """
-        # DO NOT FALL FOR GLOBAL PAGE STUFF, THAT WOULD BE A NIGHTMARE TO HANDLE 
-        # AND CANNOT HAVE ITS OWN STATE METADATA, AS WE REMOVED IT EARLIER.
-        _type = "PAUSE"
+        # DO NOT FALL FOR GLOBAL PAGE STUFF (AS BEFORE), THAT IS TOO COMPLEX TO HANDLE 
+        # AND CANNOT HAVE ITS OWN STATE METADATA, SO IT WAS DEPRECATED. KEEP IT SIMPLE.
         
         def __init__(self, isolate=False):
-            delim = _delim(self._type)
+            delim = _delim("PAUSE")
             if isolate and isinstance(getattr(delim, 'metadata', None), dict):
                 delim.metadata['ISOLATE'] = True
             display(delim)
 
         @classmethod
-        def _optional_trail(self, trail):
-            if trail is True: display(_delim(self._type))
-            elif trail in ("PAUSE", "PAGE"):
-                display(_delim("PAUSE" if trail == "PAUSE" else trail))
-            elif trail is not False: 
-                raise ValueError(f"trail should be True, False, 'PAUSE' or 'PAGE', got {trail!r}")
-
-        @classmethod
         def iter(cls, iterable, isolate=False, trail=True):
             """Loop over given iterable by adding a separator before each item.
-            If `trail` is True (default), a separator of this type is added at end as well.
-            You can also set `trail` to 'PAUSE' or 'PAGE' to add that type of separator at end instead 
-            or set to False to avoid adding any separator at end, while is useful to avoid incremental 
-            behavior in next write command in case of pause delimiter.
+            If `trail` is True (default), a separator is added at end as well.
+            
             Set `isolate=True` to mark only the first inserted delimiter as isolate.
             """
             if not isinstance(iterable, Iterable) or isinstance(iterable, (str, bytes, dict)):
@@ -1112,17 +1090,4 @@ class Slides(BaseSlides,metaclass=Singleton):
                 cls(isolate=bool(isolate) and i == 0) # isolate should affect only the first delimiter
                 yield item
             # This will be only one separator at end if no items were yielded, its like itself called once
-            cls._optional_trail(trail) # put one separator at end if needed, default True
-
-    class PAGE(pause):
-        """Legacy page delimiter kept for backward compatibility.
-
-        Markdown `--` maps to this delimiter internally.
-        """
-        _type = "PAGE"
-    
-        def __init__(self, empty=False):
-            display(_delim(self._type))
-            if empty:
-                utils.html('span','').display() # to preserve empty page, otherwise two adjacent PAGE delimiters are ignored
-                display(_delim(self._type)) # add one more to create empty page
+            if trail: display(_delim("PAUSE"))

@@ -85,7 +85,6 @@ class Specs:
     cssprops = None
     cssvars = None
     anim: str = None
-    enim: str = None # page animation, will be removed
     
     def __getattr__(self, name):
         # Return None if not set on instance, but has in class
@@ -138,7 +137,6 @@ class Slide:
         self._toc_args = () # empty by default
         self._widget.add_class(f"n{self.number}")
         self._fcss = ipwHTML(layout={"margin": "0","padding": "0","heigh": "0"}) # frame separator CSS
-        self._lre_page = 0 # Leaset recently edited page number for quick jump while editing markdown
         self._bg_ikws = {} # rebuild always re-derives background mapping from content
   
     def _set_source(self, text, language):
@@ -205,7 +203,7 @@ class Slide:
                     raise RuntimeError(f'Error in building {self}: {captured.stderr}')
             
             outputs = captured.outputs
-            # Clean up delimiters: trailing, empty, adjacent, and around PAGE boundaries
+            # Clean up delimiters: trailing, empty, adjacent PAUSE delimiters
             self._contents = self._cleanup_delimiters(outputs)
             self._contents.extend(self._handle_refs()) # add at end if any
             self._set_css_classes(remove = 'Out-Sync') # Now synced
@@ -217,7 +215,7 @@ class Slide:
     def _cleanup_delimiters(self, outputs):
         """
         Clean up delimiters: remove outputs with only text/plain and no metadata,
-        then remove trailing, empty, adjacent PAUSEs/PAGEs, PAUSE after/before PAGE.
+        then remove trailing, empty, adjacent PAUSE delimiters.
         """
         # First pass: skip outputs with only text/plain and no metadata
         filtered = []
@@ -227,12 +225,12 @@ class Slide:
                 continue
             filtered.append(out)
 
-        # Build [None, "PAGE", ...] list
+        # Build [None, "PAUSE", ...] list
         delim_list = []
         for out in filtered:
             metadata = getattr(out, 'metadata', None)
             delim = metadata.get("DELIM", None) if metadata and isinstance(metadata, dict) else None
-            delim_list.append(delim if delim in ("PAGE", "PAUSE") else None)
+            delim_list.append(delim if delim in ("PAUSE",) else None) # only PAUSE delimiter are considered
 
         # Remove trailing delimiters
         while delim_list and delim_list[-1] is not None:
@@ -241,31 +239,14 @@ class Slide:
     
         # Now, enumerate and apply rules
         indices = []
-        prev_delim = None
         for i, delim in enumerate(delim_list):
             if delim is None:
                 indices.append(i)
-                prev_delim = None
-                continue
-
-            if delim == "PAUSE":
-                # PAUSE right before PAGE or PAUSE after PAUSE
+            elif delim == "PAUSE":
+                # last PAUSE in adjacent delimiters should be kept, as that may include ISOLATE before COLUMNS
                 next_delim = delim_list[i+1] if i+1 < len(delim_list) else None
-                if next_delim == "PAGE" or prev_delim == "PAUSE":
-                    prev_delim = delim
-                    continue
-                indices.append(i)
-                prev_delim = delim
-                continue
-
-            if delim == "PAGE":
-                # Allow up PAUSE before PAGE, skip multiple empty PAGEs
-                if prev_delim == "PAGE":
-                    prev_delim = delim
-                    continue
-                indices.append(i)
-                prev_delim = delim
-                continue
+                if next_delim != "PAUSE": 
+                    indices.append(i)
 
         return [filtered[i] for i in indices] 
      
@@ -357,43 +338,15 @@ class Slide:
     def _reset_frames(self, offset=0):
         self._widget.remove_class('HasFrames') # reset first
         frames, contents = [], self.contents  # get once
-        pages = [
-            i for i, c in enumerate(contents) 
-            if isinstance(c.metadata, dict) and 
-            c.metadata.get("DELIM","") == "PAGE"
-        ]  # find page delimiters
+        page = {"start": 0, "end": len(contents) - 1} # One legacy page, will be deprecated slowly
         
-        if pages:
-            pages = [{"head": pages[0] - 1, "start": p, "end": (pages[i+1] if (i+1) < len(pages) else len(contents)) - 1} for i, p in enumerate(pages)]
-        else:
-            pages = [{"head": -1, "start": 0, "end": len(contents) - 1}] # One page by default
-        
-        for ip, page in enumerate(pages):
-            if len(pages) > 1:
-                page["page"] = ip + 1 # page number within slide to display only if more than one page
-            # Parts inside head only take effect on first frame.
-            # Also include index 0 when there is no PAGE delimiter at the start,
-            # so a leading PAUSE can trigger column incrementals.
-            if ip == 0 and page["head"] > -1:
-                start = 0
-            elif page["start"] == 0 and contents and not (
-                isinstance(contents[0].metadata, dict)
-                and contents[0].metadata.get("DELIM", "") == "PAGE"
-            ):
-                start = 0
-            else:
-                start = page["start"] + 1
-            if parts := self._resolve_parts(page, contents, range(start, page["end"] + 1)):
-                parts[0]["anim"] = "next" # add animation flag to first part while navigative forward
-                parts[-1]["anim"] = "prev" # add animation flag to last part while navigative backward
-                frames.extend(parts)
-            else:
-                frames.append({**page, "anim": "both"}) # no parts, single frame, animate both ways
+        if parts := self._resolve_parts(page, contents, range(0, page["end"] + 1)):
+            frames.extend(parts)
         
         # Add offeset to all indices to keep metadata available across all frames
         updated_persist = set()
         for i, frame in enumerate(frames):
-            for key in ("head", "start", "part", "end"):
+            for key in ("start", "part", "end"):
                 if key in frame and isinstance(frame[key], int):
                     frames[i][key] += offset
             persist = frame.get("_snapshots_persist")
@@ -423,7 +376,7 @@ class Slide:
                 if index == indxs.stop - 1: 
                     continue  # skip if PAUSE is last in range
                 
-                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 > 0 else {} # can go to PAGE index
+                meta_prev = ensure_dict(contents[index - 1].metadata) if index - 1 > 0 else {} # can go to first index
                 meta_next = ensure_dict(contents[index + 1].metadata) if index + 1 in indxs else {}
                 
                 # Single column flattened after PAUSE with its ROW delimiters
@@ -497,10 +450,10 @@ class Slide:
     def _fidxs(self):
         idxs = getattr(self, '_frame_idxs', ())
         if self._app.widgets.checks.merge.value:
-            # Merge PAUSE frames into single PAGE frame for export, PAGE will be depricated later:
+            # Merge PAUSE frames into a single export frame: NOTE: This may need to respect snapshots later
             merged_frames = []
             for frame in idxs:
-                frame = {k:v for k,v in frame.items() if k in ('head','start','end', 'page')} # remove part, col, row info
+                frame = {k:v for k,v in frame.items() if k in ('start','end')} # remove part, col, row info
                 if not frame in merged_frames: # unique frames only
                     merged_frames.append(frame)
             return tuple(merged_frames) if len(merged_frames) > 1 else () # should not single frame
@@ -515,23 +468,10 @@ class Slide:
         self._set_progress()
         getattr(self._app.widgets.slidebox, 
             'remove_class' if which == 'next' else 'add_class'
-        )('AnimPrev') # set content animation direction always even between parts
+        )('AnimPrev') # set content animation direction between parts
         
-        # Determine if we should animate based on frame position and type
         frame = self._fidxs[self.indexf] if self._fidxs else {}
-        anim = frame.get('anim', None)  # 'next', 'prev', or 'both'
-
-        # Only animate on appropriate edges
-        should_animate = anim == 'both' or anim == which
-        
-        if should_animate:
-            if which == 'prev':
-                self._app.widgets.slidebox.add_class('Prev') # Backwards Animation
-            else:
-                self._app.widgets.slidebox.remove_class('Prev') # remove backwards animation safely
-            self._update_transition_objs()
-        else:
-            self._update_transition_objs(animation=False) # avoid animations between frames
+        self._update_transition_objs(animation=False) # avoid animations between frames
 
         if self.index == self._app.wprogress.max: # This is last slide
             if self.indexf + 1 == self.nf:
@@ -565,18 +505,9 @@ class Slide:
             if not self._fidxs or index >= len(self._fidxs):
                 return ''  # its all parts in single frame, no CSS needed
             frame = self._fidxs[index]  
-
-        # head content visible everywhere
-        head_end = frame.get("head", -1) + 1 # CSS nth-child is 1-indexed
-        if head_end > 0:
-            css_rules[f'^:nth-child(-n + {head_end})'] = hide_node(False)
-        
-        # Collapse nodes between head and start
-        start = frame["start"] + 1
-        if head_end > 0 and start > head_end + 1:
-            css_rules[f'^:nth-child(n + {head_end + 1}):nth-child(-n + {start - 1})'] = collapse_node(True)
         
         # Collapse nodes after end
+        start = frame["start"] + 1
         end = frame["end"] + 1
         css_rules[f'^:nth-child(n + {end + 1})'] = collapse_node(True)
 
@@ -685,14 +616,8 @@ class Slide:
     def _reveal_frames(self):
         "Reveal frames on current page incrementally if any, during update_display to have a quick snaphot how frames are built."
         self.first_frame() # go to first frame by default
-        step_count = 0
-        if self._lre_page > 0: # page being edited, legacy behavior to be dprecated later
-            step_count = sum(1 for frame in self._fidxs[1:] if frame.get("page", 0) < self._lre_page)
-            self._lre_page = 0 # reset at first jump
-        else:
-            # Get to all parts on edit incrementally: NOTE: This behavior would remain after page deprecation
-            step_count = len(self._fidxs[1:])
-
+        step_count = len(self._fidxs[1:]) # Get to all parts on edit incrementally
+        
         # Frontend-only staged reveal for current slide; avoids blocking kernel during batch rebuilds.
         if step_count > 0 and (self is self._app._current): # only for current slide, do not overload unseen slides in the update_display mode
             self._app.widgets.iw.msg_tojs = f"REVEAL:{step_count}"
@@ -746,11 +671,6 @@ class Slide:
         with out:
             display(*self.contents)
         return display(out)
-    
-    @slidebound
-    def yoffset(self, value):
-        "Use Slides.yoffset inseatd, this will be deprecated soon."
-        self._app.yoffset(value) # this slide will be picked automatically. NEED DEPRECATION
     
     def _yoffset_css(self, shared=False):
         yoffset = type(self._specs).yoffset if shared else self._specs.yoffset
@@ -830,7 +750,7 @@ class Slide:
     
     @property
     def animation(self):
-        overall = type(self._specs).enim if self._fidxs else type(self._specs).anim
+        overall = type(self._specs).anim
         return html('style', 
             styles.animations.get(self._specs.anim or overall, '').replace(
                 '.SlideBox',f'.{self._app.uid} .SlideBox'
@@ -867,15 +787,7 @@ class Slide:
         )
         self._app.widgets.htmls.usercss.value = '\n'.join(x for x in (overall_css, slides_css) if x)
         if not self._app.this: # Otherwise it has side effects
-            self._app.navigate_to(self.index)
-    
-    
-    def set_css(self, this: dict=None, overall:dict=None, **theme_colors):
-        """Use Slides.css instead. This will be deprecated soon."""
-        if this is not None:
-            self._app.css(this, self.number, **theme_colors)
-        if overall is not None: # Avoid accidental re-write of overall CSS
-            self._app.css(this, "all", **theme_colors) 
+            self._app.navigate_to(self.index) 
 
     def _set_css_classes(self, add=None, remove=None):
         "Set CSS classes on this slide separated by space. classes are remove first and add after it."
@@ -894,17 +806,7 @@ class Slide:
     @property
     def _css_class(self):
         "Readonly dom classes on this slide separated by space."
-        return ' '.join(self._widget._dom_classes) # don't let things modify on orginal
-    
-    def set_bg_image(self, *args, **kwargs):
-        """Removed legacy API.
-
-        Use content-driven backgrounds with `Slides.bg(...)` in Python or `bg`...`` in markdown.
-        """
-        raise RuntimeError(
-            "set_bg_image is removed. Use Slides.bg(...) while building a slide, "
-            "or markdown bg`...` / bg[... ]`...` syntax."
-        )
+        return ' '.join(self._widget._dom_classes) # don't let things modify on original
 
     def _set_bg_ikws(self, src=None, **kwargs):
         "Set per-slide background keywords directly; last call wins."
@@ -929,18 +831,6 @@ class Slide:
             {image}
             </div>'''
         return ''
-    
-     
-    def set_animation(self, this=None, main = None, page = None):
-        """Use Slides.transition instead. This will be deprecated soon."""
-        for name in (this, main, page):
-            if name and not name in styles.animations:
-                raise KeyError(f'animation {name!r} not found. Use None to remove animation or one of {tuple(styles.animations.keys())}')
-        
-        type(self._specs).anim = main
-        type(self._specs).enim = page
-        self._specs.anim = this
-        self._view_transition()# See effect of changes
     
     def _view_transition(self):
         if not self._app.this: # Otherwise it has side effects
@@ -967,7 +857,7 @@ class Slide:
         with self._widget:
             XTML(loading_skeleton(info)).display()
     
-    def _pending(self): return hasattr(self, '_src_func') # built if no build_func
+    def _pending(self): return hasattr(self, '_src_func') # built if no src func
 
 @contextmanager
 def _build_slide(app, slide_number):
@@ -987,7 +877,7 @@ def _build_slide(app, slide_number):
         app.refresh() # rebuild slides to have index ready
        
     this._waiting_contents(f'Building Slide {this.number} ...') # show loading skeleton
-    if not this._pending(): app.navigate_to(this.index) # avoid naviagting to lazy slides here
+    app.navigate_to(this.index) # go and see the slide being built
     with this._capture(): 
         yield this
         

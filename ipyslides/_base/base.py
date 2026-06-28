@@ -130,12 +130,11 @@ class BaseSlides:
 
         last_updated = None
         for chunk, hdl, mvs in zip(chunks, handles, mdvars):
-            self._next_number = hdl.number + 1 # This is need if markdown does not change, slide number still needs to be updated
+            self._next_number = hdl.number + 1 # If markdown does not change, slide number still needs to be updated for next cell to avoid overwites
             # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            if any(['Out-Sync' in hdl._css_class, chunk != hdl._markdown, mvs != hdl._md_vars]):
-                hdl._md_vars = mvs # set corresponding vars to access while building slide
-                self._slide(f'{hdl.number} -m', chunk)
-                last_updated = hdl # mark as updated for live edit
+            if any([chunk != hdl._markdown, mvs != hdl._md_vars]):
+                with self.slide(hdl.number) as last_updated:
+                    self.src(chunk, **mvs) # builds full markdown slide
                     
             else: # when slide is not built, scroll buttons still need an update to point to correct button
                 self._slides_per_cell.append(hdl)
@@ -258,9 +257,9 @@ class BaseSlides:
         def _handle_callable(self, func):  
             s, = self._app.create([self._snumber]) # access or create slide first
             with _build_slide(self._app, self._snumber): 
-                self._app.pending(func) 
+                self._app.src(func) 
                 self._app.error("DeprecationWarning",
-                    "Use `Slides.pending` decorator under any slide constructor (e.g. %%slide), @build will be deprecated in future versions."
+                    "Use `Slides.src` decorator under any slide constructor (e.g. %%slide), @build will be deprecated in future versions."
                 ).display()
 
             return s # return in both cases

@@ -48,11 +48,12 @@ with slides.slide(-1):
 ```
 
 ```python
-slides.slide(-1, r'''
-Markdown content can create many slides at once here!
-Variables like \%{var} can be provided after content or left to be updated later in notebook.
-This is useful inside python scripts. 
-''',var="I am a variable")
+with slides.slide(-1):
+    slides.src(r'''
+    Markdown content can create many slides at once here!
+    Variables like \%{var} can be provided after content or left to be updated later in notebook.
+    This is useful inside python scripts. 
+    ''',var="I am a variable")
 ```
 
 ```python

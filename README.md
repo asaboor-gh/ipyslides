@@ -59,15 +59,16 @@ import ipyslides as isd
 slides = isd.Slides()
 
 # Add content programmatically
-slides.slide(-1, """
-# My First Slide
-- Point 1
-- Point 2
-$E = mc^2$
-""")
+with slides.slide(-1):
+    slides.src("""
+    # My First Slide
+    - Point 1
+    - Point 2
+    $E = mc^2$
+    """)
 
 # Or use cell magic
-%%slide 0
+%%slide 0 -m
 # Title Slide
 Welcome to IPySlides!
 ```
