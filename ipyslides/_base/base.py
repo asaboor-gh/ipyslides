@@ -3,7 +3,6 @@ import os, re, textwrap
 import traceback
 import inspect
 from pathlib import Path
-from contextlib import ContextDecorator
 
 from IPython.display import display
 
@@ -223,69 +222,3 @@ class BaseSlides:
         else:
             print("There was no markdown file linked to sync!")
             
-
-
-    class build(ContextDecorator):
-        r"Use `Slides.slide` instead for streamlined slide creation consistent with %%slide magic."
-        @property
-        def _app(self):
-            kls = type(self)
-            if getattr(kls, '_slides', None) is None:
-                kls._slides = get_slides_instance()
-            return kls._slides
-        
-        def __new__(cls, slide_number, content = None, /, **vars):
-            print("`Slides.build` will be deprecated in future versions. Use `Slides.slide` instead.")
-            self = super().__new__(cls) # instance
-            self._snumber = self._app._fix_slide_number(slide_number)
-
-            # using fmt is tempting to delegate vars automatically but it raises error if var not found, 
-            # which is against whole philosophy of lazy evaluation and rebuild.
-            # Also, using vars in decorator mode for function docstring is a bad idea as it
-            # will be evaluated only once and never updated on rebuild, also it is not supported by python syntax.
-            if isinstance(content, str):
-                return self._no_further_build(self._app._from_markdown(self._snumber, content, _vars=vars))
-
-            if callable(content):
-                return self._no_further_build(self._handle_callable(content))
-            
-            if content is not None:
-                raise ValueError(f"content should be None, str, or callable. got {type(content)}")
-
-            return self # context manager or decorator path
-        
-        def _handle_callable(self, func):  
-            s, = self._app.create([self._snumber]) # access or create slide first
-            with _build_slide(self._app, self._snumber): 
-                self._app.src(func) 
-                self._app.error("DeprecationWarning",
-                    "Use `Slides.src` decorator under any slide constructor (e.g. %%slide), @build will be deprecated in future versions."
-                ).display()
-
-            return s # return in both cases
-
-        def __enter__(self):
-            "Use as contextmanager to create a slide."
-            code = self._app.code.context(returns=True, depth = 3).__enter__()
-            self._context = _build_slide(self._app, self._snumber)
-            slide = self._context.__enter__()
-            slide._set_source(code.raw, "python")
-            return slide
-
-        def __exit__(self, *args):
-            return self._context.__exit__(*args)
-        
-        def __repr__(self):
-            return f"<ContextDecorator build at {hex(id(self))}>"
-        
-        def __call__(self, func):
-            "Use @build decorator. func accepts slide as argument."
-            self._handle_callable(func) # no need to pollute namespace
-            
-        def _no_further_build(self, obj):
-            "Prevent further use as contextmanager/decorator. This is better than code introspection to test @ or with."
-            def _raise(*args, **kwargs):
-                raise RuntimeError('Already built slide(s) with given content cannot be further used as contextmanager/decorator!')
-            
-            for attr in ('enter', 'exit', 'call'): setattr(type(obj), f'__{attr}__', _raise)
-            return obj

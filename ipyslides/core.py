@@ -1,4 +1,4 @@
-import os, shutil, inspect
+import shutil, inspect
 import sys, json, re, math, uuid, textwrap, warnings
 from contextlib import contextmanager, suppress
 from collections import namedtuple
@@ -898,7 +898,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             raise TypeError(f"Content must be a markdown string, got {type(content)}")
         
         # Update source beofore parsing content to make it available for variable testing
-        slide._set_defaults() # this is must to have single last call of src for markdown slide
+        slide._set_defaults() # this is must to have single last call of src for markdown slide / cleaned up unnecessary previous state like citations
         slide._set_source(content, "markdown") # set source before running to have it available for user
         cvars = _matched_vars(content) # update has_vars before running to have ready for auto rebuild
         stored = {**esc._store, **slide._esc_vars} # keep previous stored variables, first time come only from esc._store
@@ -934,7 +934,7 @@ class Slides(BaseSlides,metaclass=Singleton):
                 yield s
     
     @slidebound
-    def src(self, func_or_xmd, **vars):
+    def src(self, obj: Union[str, callable], **vars):  # type: ignore
         r"""Build the whole content of a slide. Must be used within a slide constructor (`%%slide` cell or a slide contextmanager).
         
         1. If used with a string input, it is treated as markdown source and will be immediately updated.
@@ -948,29 +948,27 @@ class Slides(BaseSlides,metaclass=Singleton):
             - The function will not be executed immediately but will be deferred until the user clicks the Pending Slides button.
             - This is useful for deferring heavy computations until the user decides to build the slide.
         
-        Only single `src` can exist per slide, so last call will override any previous `src` call.
+        Only single `src` can exist per slide, so last call will override any previous `src` call. The decorator call takes precedence 
+        over string calls unless string calls are made inside the function body itself.
         """
-        if isinstance(func_or_xmd, str): # may be attach with this to build after yield in _build_slide???
-            return self._run_mdsrc(self.this, func_or_xmd, **vars)
+        # AVOID fmt HERE, THAT DOES NOT ALLOW LATER REBUILDS
+        if isinstance(obj, str):
+            self.this._src_args = (obj, vars) # this is must to clear other stuff after src as well as to ensure last call
+            return None
         
-        if not callable(func_or_xmd):
-            raise TypeError("@src decorator requires a function or a string for markdown source.")
-        
-        func = func_or_xmd
+        if not callable(obj):
+            raise TypeError("@src decorator requires a function or a string for markdown source. got {}".format(type(obj)))
+
         # Do some static checks, so it at least valid function
-        uw_func = inspect.unwrap(func) # unwrap to get original function
-        if inspect.isgeneratorfunction(uw_func):
+        func = inspect.unwrap(obj) # unwrap to get original function
+        if inspect.isgeneratorfunction(func):
             raise TypeError("@src decorator does not support generator functions. Use standard functions only.")
         
-        if len(inspect.signature(uw_func).parameters) != 1:
+        if len(inspect.signature(func).parameters) != 1:
             raise ValueError("@src decorator function must accept a single argument, slide.")
         
         self.this._src_func = func # store for later build
         self.this._set_css_classes(add = 'Stale') # mark as stale to build later
-        self.html('center',f"<code>{self.this}</code> is pending!<br>"
-            "Click <code>Pending Slides</code> button at right bottom to build it.",
-            css_class='warning'
-        ).display() # need hint be there
     
     @slidebound
     def pending(self, func):

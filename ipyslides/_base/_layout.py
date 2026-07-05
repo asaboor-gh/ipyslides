@@ -142,7 +142,7 @@ def layout_css(accent_color, aspect):
                     "padding":"2px 4px",
                     "border-radius":"4px",
                     "color": "hsl(from var(--accent-color) 40 100% l) !important",
-                    "font-family": "var(--code-font) !important",
+                    "font-family": "var(--jp-code-font-family) !important",
                     "font-size": "10px",
                     "letter-spacing": "1px",
                     "z-index": 5, # above controls 
@@ -160,6 +160,19 @@ def layout_css(accent_color, aspect):
                         "content": "'⛓️‍💥 Rebuild slide to update citations!'",
                         "color":"red",
                     },
+                    "^.Stale::after": { # Pending slide watermark
+                        "content": "'Pending Slide'",
+                        "text-align": "center",
+                        "color": "var(--accent-color) !important",
+                        "opacity": "0.3",
+                        "position": "absolute", 
+                        "top": "50%", 
+                        "left": "50%", 
+                        "transform": "translate(-50%, -50%) rotate(45deg)",
+                        "font-family": "var(--jp-code-font-family) !important",
+                        "font-size": "5em",  # strong water mark
+                        "font-weight": "bold",
+                    }, 
                     "^.HideSlide *": {"visibility": "hidden !important",},
                     "@media print": {
                         "^.HideSlide": {"visibility": "visible !important",},

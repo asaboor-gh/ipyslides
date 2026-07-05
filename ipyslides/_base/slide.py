@@ -858,6 +858,13 @@ class Slide:
             XTML(loading_skeleton(info)).display()
     
     def _pending(self): return hasattr(self, '_src_func') # built if no src func
+    
+    def _exec_src(self):
+        "Execute the pending markdown source for the slide, if any, and release associated resources."
+        if hasattr(self, '_src_args'):
+            xmd, kws = self._src_args
+            self._app._run_mdsrc(self, xmd, **kws) # this resets the defaults
+            del self._src_args  # remove after finalizing to release memory and avoid stale state
 
 @contextmanager
 def _build_slide(app, slide_number):
@@ -880,6 +887,7 @@ def _build_slide(app, slide_number):
     app.navigate_to(this.index) # go and see the slide being built
     with this._capture(): 
         yield this
+        this._exec_src()  # if markdown src was set, a complete overwrite of the slide content is performed
         
     app.widgets.iw.msg_tojs = 'SwitchView' # enforce immediate view cleanup to avoid overlapping slides content
     for content in this._contents:

@@ -303,7 +303,7 @@ class _Buttons:
     next    =  Button(icon='chevron-right',layout= Layout(width='auto',height='auto'),tooltip='Next Slide [>, Space]').add_class('Arrows').add_class('Next-Btn')
     export  =  Button(icon='file',description="Export to HTML File",layout= Layout(width='max-content'))
     print   =  Button(icon='file-pdf',description="Print Slides",layout= Layout(width='max-content'), tooltip='Ctrl + P')
-    build   =  Button(icon='warning',description="Pending Slides",layout= Layout(width='max-content'), tooltip='Click to Build This/First Pending Slide [B]').add_class('Build-Btn')
+    build   =  Button(icon='warning',description="Build Pending Slides",layout= Layout(width='max-content'), tooltip='Click to Build This/First Pending Slide [B]').add_class('Build-Btn')
 
 @dataclass(frozen=True)
 class _Htmls:
