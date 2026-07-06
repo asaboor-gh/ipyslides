@@ -102,6 +102,8 @@ def _points_marker_xtml(marker, index):
             raise RuntimeError(f'Error calling marker function with index {index}: {e}')
         
     return XTML(htmlize(f'<div markdown="1" class="bullet-points-marker">{value}</div>'))
+
+
 class group(UserList):
     """Column-content wrapper that can optionally behave like snapshots.
 

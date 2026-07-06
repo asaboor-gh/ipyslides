@@ -841,7 +841,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with suppress(AttributeError): # some kernels may not implement changing cell code on fly
             code = self.shell.kernel.get_parent().get('content',{}).get('code','')
             p = r"\s*?\(\s*?-\s*?1" # call pattern in any way with space between (, -, 1 and on next line, but minimal matches due to ?
-            matches = re.findall(rf"(\%\%slide\s+-1)|(slide{p})|(build{p})|(sync_with_file{p})", code)
+            matches = re.findall(rf"(\%\%slide\s+-1)|(slide{p})", code)
             number = int(self._next_number) # don't use same attribute, that will be updated too
             if matches:
                 if len(matches) > 1:

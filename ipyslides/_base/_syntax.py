@@ -41,12 +41,12 @@ Extended syntax on top of [Python-Markdown](https://python-markdown.github.io/) 
 **Presentation Structure**{{.text-big}}
 
 Slides and Parts Separators
-: Triple dashes `---` separator is used to split text in slides inside markdown content of `Slides.build` function or markdown file.
-`---` should be on their own lines in main content (not inside block syntax) to be recognized as slide separators.
-Double plus `++` (`pause` in Python) can be used to increment objects in parts on a slide.
+: Double plus `++` (`pause` in Python) can be used to increment objects in parts on a slide.
 A `++` on its own line before `columns` block will make it reveal content incrementally, provided that columns are separated by `+++` or single column only with `++` inside.
 Use `++[isolate]` before a `::: columns/::: group` blocks to isolate previous content from column reveal.
 Note that only `++` allows content on same line after it and following lines.
+Triple dashes `---` separator is used to split text in slides inside markdown content of synced markdown file.
+`---` should be on their own lines in main content (not inside block syntax) to be recognized as slide separators.
 
 Sections & TOC
 : alert`section\`content\`` to add a section that will appear in the table of contents.

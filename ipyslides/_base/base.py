@@ -1,5 +1,5 @@
 "Inherit Slides class from here. It adds useful attributes and methods."
-import os, re, textwrap
+import re, textwrap
 import traceback
 import inspect
 from pathlib import Path
@@ -12,9 +12,8 @@ from .navigation import Navigation
 from .settings import Settings
 from .notes import Notes
 from .export_html import _HhtmlExporter
-from .slide import SlideGroup, _build_slide
 from ..formatters import XTML, htmlize, slidebound
-from ..xmd import error, get_slides_instance, resolve_included_files, _matched_vars, _parse_as_snapshots, _stream_chunks
+from ..xmd import error, resolve_included_files, _parse_as_snapshots, _stream_chunks
 from ..utils import _css_docstring
 from ..dashlab import FileWatcher
 
@@ -103,44 +102,30 @@ class BaseSlides:
         
         self.this._on_load_private(func) # This to make sure if code is correct before adding it to slide
         
-    def _from_markdown(self, start, /, content, synced=False, _vars=None):
-        "Sames as `Slides.build` used as a function."
-        if self.this:
-            raise RuntimeError('Creating new slides under an already running slide context is not allowed!')
-        
+    def _exec_synced_src(self, content):
         if not isinstance(content, str): #check path later or it will throw error
             raise TypeError(f"content expects a makrdown string, got {content!r}")
         
-        md_kws = _vars or {} # given from build function call
-
-        if synced:
-            content = self._process_citations(content)
-        
         # included files should be able to trigger updates even if main file not edited yet, so we track them as assets
-        if synced and hasattr(self, '_watcher'):
-            self._watcher.assets = re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL)
+        if hasattr(self, '_src_watcher'):
+            self._src_watcher.assets = re.findall(r'include\`(.*?)\`',content, flags = re.DOTALL)
         
         # Now flatten incuded files, after detecting them as assets above
         content = resolve_included_files(content)
+        content = self._process_citations(content) # after resolve, enable citations form included files
         
         chunks = list(_stream_chunks(content, '---'))
-        handles = self.create(range(start, start + len(chunks))) # create slides faster or return older
-        mdvars  = [{k:v for k,v in md_kws.items() if k in _matched_vars(chunk)} for chunk in chunks] # vars used in each chunk
-
+        handles = self.create(range(0, len(chunks))) # create slides faster or return older
+        
         last_updated = None
-        for chunk, hdl, mvs in zip(chunks, handles, mdvars):
-            self._next_number = hdl.number + 1 # If markdown does not change, slide number still needs to be updated for next cell to avoid overwites
-            # Must run under this function to create frames with two dashes (--) and update only if things/variables change
-            if any([chunk != hdl._markdown, mvs != hdl._md_vars]):
+        for chunk, hdl in zip(chunks, handles):
+            if chunk != hdl._markdown:
                 with self.slide(hdl.number) as last_updated:
-                    self.src(chunk, **mvs) # builds full markdown slide
-                    
-            else: # when slide is not built, scroll buttons still need an update to point to correct button
-                self._slides_per_cell.append(hdl)
-                
-        if synced and last_updated: self.navigate_to(last_updated.index) # only in sync mode
-        # Return refrence to slides for quick update
-        return SlideGroup(handles)
+                    self.src(chunk, **(hdl._md_vars if isinstance(hdl._md_vars, dict) else {})) # preserve variables if they were updated from python code
+        
+        self._next_number = len(handles) # update next number to avoid overwrites from python on these slides accidentally
+        if last_updated: 
+            self.navigate_to(last_updated.index) # go to last edited slide
     
     def _process_citations(self, content):
         matches = re.findall(r'^```citations.*?^```|^:::\s*citations.*?(?=^:::|\Z|^\S)', content, flags= re.DOTALL | re.MULTILINE)
@@ -156,11 +141,11 @@ class BaseSlides:
             self.set_citations(textwrap.dedent(refs))
         return content
     
-    def sync_with_file(self, start_slide_number, /, path, interval=500):
+    def sync_with_file(self, path, interval=500):
         r"""Auto update slides when content of markdown file changes. You can stop syncing using `Slides.unsync` function.
-        interval is in milliseconds, 500 ms default. Read `Slides.build` docs about content of file.
+        interval is in milliseconds, 500 ms default. Read `Slides.slide` docs about content of file.
         
-        The variables inserted in file content are used from top scope.
+        The variables inserted in file content are used from notebook's global scope.
 
         You can add files inside linked file using include\\`file_path.md\\` syntax, which are also watched for changes.
         This helps modularity of content, and even you can link a citation file in markdown format as shown below. Read more in `Slides.xmd.syntax` about it.
@@ -174,10 +159,17 @@ class BaseSlides:
         ```
         
         ::: note-tip
+            Synced file includes all slides from title slide onwards, you can insert placeholder variables using `\%{variable_name}` 
+            in the content that will receive values from the notebook's global scope as soon as that variable is defined.
+        
+        ::: note-tip
             To debug the linked file or included file, use EOF on its own line to keep editing and clearing errors.
         """
         if not self.inside_jupyter_notebook(self.sync_with_file):
             raise Exception("Notebook-only function executed in another context!")
+        
+        if self.this:
+            raise RuntimeError('Sync file must be called outside of an active slide context!')
         
         path = Path(path) # keep as Path object
         
@@ -187,38 +179,37 @@ class BaseSlides:
         if not isinstance(interval, int) or interval < 100:
             raise ValueError("interval should be integer greater than 100 millieconds.")
         
-        if hasattr(self, '_watcher'):
+        if hasattr(self, '_src_watcher'):
             self.unsync() # clear any existing file watcher before setting a new one
         
-        start = self._fix_slide_number(start_slide_number)
-        self._watcher = FileWatcher(path, interval=interval)
+        self._src_watcher = FileWatcher(path, interval=interval)
         
         # First call after watcher set, so it can observe included files immediately, 
         # and errors must be caught before going forward
-        self._from_markdown(start, path.read_text(encoding="utf-8"), synced=True) 
+        self._exec_synced_src(path.read_text(encoding="utf-8")) 
 
         def update_target_slides(change):
             value = change["new"]
             if not value or not hasattr(value, 'path'): return # file deleted or None value
             
             try: 
-                self._from_markdown(start, value.path.read_text(encoding="utf-8"), synced=True) 
+                self._exec_synced_src(value.path.read_text(encoding="utf-8")) 
                 self.notify('x') # need to remove any notification from previous error
                 self._unregister_postrun_cell() # No cells buttons from inside file code run
             except:
                 e, text = traceback.format_exc(limit=0).split(':',1) # only get last error for notification
                 self.notify(f"{error('SyncError','something went wrong')}<br/>{error(e,text)}",20)
         
-        self._watcher.observe(update_target_slides, "value") # start observing changes to the file
-        display(self._watcher) # must be displayed to work
+        self._src_watcher.observe(update_target_slides, "value") # start observing changes to the file
+        display(self._src_watcher) # must be displayed to work
         self._unregister_postrun_cell() # avoid unnessary scroll button after postrun cell here
 
     def unsync(self):
         "Stop syncing markdown file synced with `Slides.sync_with_file` function."
-        if getattr(self, '_watcher', None):
-            self._watcher.stop()  # stop the file watcher
-            self._watcher.close() # clear the displayed watcher at frontend
-            del self._watcher  # remove reference to the watcher
+        if getattr(self, '_src_watcher', None):
+            self._src_watcher.stop()  # stop the file watcher
+            self._src_watcher.close() # clear the displayed watcher at frontend
+            del self._src_watcher  # remove reference to the watcher
         else:
             print("There was no markdown file linked to sync!")
             

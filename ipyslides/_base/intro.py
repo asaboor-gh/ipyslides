@@ -64,8 +64,8 @@ slides # This displays slides if on the last line of cell, or use code`slides.sh
     - Use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
 
 ::: note-tip
-    - Use `Slides.docs` to see upto date documentation.
-    - Use `Slides.demo` to create example slides.
+    - Use `ipyslides.docs` to see upto date documentation.
+    - Use `ipyslides.demo` to create example slides.
     - Use  `Slides.sync_with_file` to live edit and update slides through a markdown file.
     - Find special syntax to be used in markdown by `Slides.xmd.syntax`.
     - Use `Slides.xmd.extensions` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
@@ -181,18 +181,5 @@ Wrap your plotly figures in `plotly.graph_objects.FigureWidget` for quick render
 import altair as alt
 alt.themes.enable('dark')
 #alt.themes #gives available themes
-```
-
-#### Inherit Slides
-You can customize slides by inheriting from `Slides` class. 
-
-```python
-class WorkSlides(isd.Slides):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.settings(
-            logo=dict(src='<My office logo source file>'),
-            layout=dict(aspect=4/3, center=False),
-        )
 ```
 """
