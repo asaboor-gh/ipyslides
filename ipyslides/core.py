@@ -381,15 +381,6 @@ class Slides(BaseSlides,metaclass=Singleton):
             f"A slide could be accessed by index or slice, got {type(key)},\n"
             "Use `Slides[number,] → Slide` or `Slides[[n1, n2,..]] → tuple[Slide]` to access slides by number they were created with."
         )
-    
-    def __del__(self):
-        for k, v in globals():
-            if isinstance(v, Slides):
-                del globals()[k]
-
-        for k, v in locals():
-            if isinstance(v, Slides):
-                del locals()[k]
 
     def navigate_to(self, index):
         "Programatically Navigate to slide by index, if possible."
@@ -957,7 +948,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             return None
         
         if not callable(obj):
-            raise TypeError("@src decorator requires a function or a string for markdown source. got {}".format(type(obj)))
+            raise TypeError("src used as adecorator requires a function, got {}".format(type(obj)))
 
         # Do some static checks, so it at least valid function
         func = inspect.unwrap(obj) # unwrap to get original function

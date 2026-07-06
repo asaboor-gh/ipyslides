@@ -19,14 +19,16 @@ import ipyslides as isd
 slides = isd.Slides()
 ```
 ```python
-%%slide 0
-# You can use `with slides.slide(0):` contextmanager for it as well.
+%%slide 0 -m
+# Title Slide
+**Welcome to IPySlides**
 ```
+
 ```python
-%%slide 1
-# slide 1 content
-# You can use `with slides.slide(1):` contextmanager for it as well.
+with slides.slide(-1):
+    slides.src("## Auto-numbered slide")
 ```
+
 ```python
 %%slide 2 -m 
 **Markdown here with extended options (see `slides.xmd.syntax` for info). Nested blocks are not supported**
@@ -50,7 +52,7 @@ with slides.slide(-1):
 ```python
 with slides.slide(-1):
     slides.src(r'''
-    Markdown content can create many slides at once here!
+    Markdown sourcecontent here!
     Variables like \%{var} can be provided after content or left to be updated later in notebook.
     This is useful inside python scripts. 
     ''',var="I am a variable")
@@ -61,14 +63,15 @@ slides # This displays slides if on the last line of cell, or use code`slides.sh
 ```
 
 ::: note-info
+    - Use `-m` flag in `%%slide` magic if whole cell is markdown. Alternatively, you can use `slides.src("markdown content")` within a slide context to add markdown content programmatically.
     - Use `-1` in place of a slide number to add numbering automatically in Jupyter Notebook and python file! Other cell code is preserved. You may need to rerun cell if creating slides in a for loop.
 
 ::: note-tip
     - Use `ipyslides.docs` to see upto date documentation.
     - Use `ipyslides.demo` to create example slides.
     - Use  `Slides.sync_with_file` to live edit and update slides through a markdown file.
-    - Find special syntax to be used in markdown by `Slides.xmd.syntax`.
-    - Use `Slides.xmd.extensions` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
+    - Find special syntax to be used in markdown by `slides.xmd.syntax`.
+    - Use `slides.xmd.extensions` to add [markdown extensions](https://python-markdown.github.io/extensions/). Also look at [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
 """
 
 _icons = {key: _Icon(key, color="var(--accent-color)") for key in _Icon.available}
@@ -126,7 +129,7 @@ Use `Save as PDF` option instead of Print PDF in browser to make links work in o
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
 
 For widgets and other objects's snapshots to be available in exported
-slides, use alert`Slides.alt`. You can paste screenshots from system tool 
+slides, use alert`slides.alt`. You can paste screenshots from system tool 
 into Clips GUI in side panel. On Linux, you need alert` xclip ` or alert`wl-paste` installed.
 
 ::: note-tip
@@ -155,7 +158,7 @@ more_instructions = f"""{get_logo('2em', 'IPySlides')}
 
 instructions = f"""{more_instructions}
 #### Custom Theme
-You can override styles of any selected theme using `Slides.css(..., bg1, bg2,...)`.
+You can override styles of any selected theme using `slides.css(..., bg1, bg2,...)`.
           
 For matching plots style with theme, run following code in a cell above slides.
 
