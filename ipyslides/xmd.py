@@ -564,6 +564,7 @@ class XMarkdown(Markdown):
         def repl(m: re.Match): # Remove <p> and </p> tags at start and end, also keep backtick
             return f'`{re.sub("^<p>|</p>$", "", self._parse_nested(m.group(1), returns = True))}`' 
 
+        print("Use func/`content` or func[]/`content` syntax for flexible nested parsing using upto 4 slashes! `//content//` syntax is rigid and will be removed in future versions")
         # match neseted `// //` upto many levels
         for depth in range(4,1,-1): # `////, `///, `// at least two slashes
             op, cl = '/'*depth, '/'*depth
@@ -931,14 +932,22 @@ class XMarkdown(Markdown):
             html_output = re.sub(var_pattern, handle_match, html_output, flags=re.DOTALL)
 
         # Replace inline functions, keep it nested for accessing inner state
-        all_funcs_re = '|'.join(_special_funcs.keys())
-        func_pattern = r"(?<![\`\.])\b({})(\[.*?\])?\`(.*?)\`" # `func and .func avoides, leading space used for readability consumed
+        # Matches ANY valid Python identifier followed by an optional bracket block and backtick
+        func_pattern = r"(?<![\`\.])\b([a-zA-Z\_][a-zA-Z0-9\_]*)(\[.*?\])?{}\`(.*?)\`"
         
-        if re.search(func_pattern.format(all_funcs_re), html_output, flags=re.DOTALL | re.MULTILINE):
+        
+        # Check if there is at least one macro format to process
+        if re.search(func_pattern.format("/*"), html_output, flags=re.DOTALL | re.MULTILINE):
             from . import utils  # Inside function to avoid circular import
-            
+
             def repl_inline_func(m):
                 func, args, content = m.groups()
+                
+                if func not in _special_funcs:
+                    available_list = ", ".join(f"'{f}'" for f in sorted(_special_funcs.keys()))
+                    return self._handle_var(error('NameError',  f"Unrecognized function '{func}'.\n"
+                        f"Available functions are: {available_list}"))
+                    
                 _func = getattr(utils, func)
                 arg0 = char_esc.restore(content, True) if func == "code" else content.strip() # hl needs corrected content
                 
@@ -958,8 +967,10 @@ class XMarkdown(Markdown):
                 return self._handle_var(_out.inline if func == "code" else _out)
             
             with self.active_parser(): # set instance parser to pass variables
-                html_output = re.sub(func_pattern.format(all_funcs_re), repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
-        
+                # Handle Nesting of inline functions by number of slashes before opening backtick
+                for dp in range(4,-1,-1): # from 4 to 0, without nesting too
+                   html_output = re.sub(func_pattern.format("/"*dp), repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE) 
+
         html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
         html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
         return html_output 
