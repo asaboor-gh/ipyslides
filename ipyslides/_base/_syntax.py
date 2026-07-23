@@ -220,6 +220,7 @@ and `*args` and `**kwargs` are optional additional arguments given as Python lit
 - The `::` is used to separate the main argument from additional arguments.
 - For long multiline content, you can use [code: [func\! *args, **kwargs \:\: long multiline content in first arg \/] :: "markdown" /] syntax that enables writing parameters first in header.
 - You can override a registered function by pure html tag by appending ` _ ` to the tag. For example, ` svg_ ` will be html tag that overrides the ` svg ` function.
+- User can register their own functions using [code: xmd.register /] function, which will be listed in [code: xmd.funcs /] and can be used in markdown with same syntax as above.
 
 {esc(xmd.funcs)}
 

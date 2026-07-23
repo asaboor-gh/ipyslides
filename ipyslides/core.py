@@ -67,7 +67,7 @@ class _Citation:
             return f"""<div class = "citation" id="{self._key}">
                 <a href="#{self._key}-back" class="citelink"> 
                     <span style="color:var(--accent-color);">{self._id}. </span>
-                </a>{_value}</div>"""
+                </a><div>{_value}</div></div>"""
         else:
             return self.inline_value # Just error message
 
@@ -503,14 +503,14 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     def _nocite(self, key): # @key! without adding to citations
         if key in self._citations:
-            return self.html('span',self._citations[key].partition("<p>")[-1].rpartition("</p>")[0],
+            return self.html('span',self._citations[key], # citation value is stripped tag inline content
             style = dict(left="initial",top="initial"), css_class = "citetext text-box text-small").value
         return utils.error("KeyError",f"Set value for cited key {key!r} and build slide again!").value
 
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
-        new_citations = {k: self.xmd(v, returns = True) for k, v in d.items()}
+        new_citations = {k: self.xmd.convert(v, strip_tags=True) for k, v in d.items()}
         added = set(new_citations) - set(self._citations)
         removed = set(self._citations) - set(new_citations)
         changed = {k for k in (set(new_citations) & set(self._citations)) if self._citations[k] != new_citations[k]}

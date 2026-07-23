@@ -2,7 +2,7 @@
 
 import textwrap, re, sys, string, builtins, inspect, ast
 from itertools import islice
-from functools import partial
+from functools import partial, wraps
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
@@ -995,7 +995,7 @@ class XMarkdown(Markdown):
         
         func, ctx = _XMD_FUNCS.get(fname, _XMD_FUNCS["anyTag"])
         if 'anyTag' in func.__name__:
-            func = partial(func, fname.strip('_')) # partial function for anyTag with tag name, svg_ goes to svg tag, not svg function
+            func = partial(func, fname.strip('_').lower()) # partial function for anyTag with tag name, svg_ goes to svg tag, not svg function
         
         if ctx == "slide" and not getattr(self._slides, 'this', None): # slide only functions
             return self._handle_var(error('Exception', f"Slide-only function '{match.group(0)}' cannot be used outside a slide context!"))
@@ -1005,7 +1005,7 @@ class XMarkdown(Markdown):
             arg0 = Ps[0].default if Ps[0].default is not inspect.Parameter.empty else "" # most function have empty string as default
         
         try:
-            res = func(arg0, *args, **kwargs)
+            res =  func(*args, **kwargs) if ctx == "user" else func(arg0, *args, **kwargs) # user functions don't take content
         except Exception as e:
             res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
                 f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code></div>")
@@ -1128,7 +1128,52 @@ class _XMDMeta(type):
         )
     
     def __dir__(cls): # tab completion still sucks with meta programming!
-        return sorted(list(super().__dir__()) + ['extensions', 'syntax', 'parse'])
+        return sorted(list(super().__dir__()) + ["convert", "funcs", "extensions", "register", "syntax", "parse"])
+    
+    @staticmethod
+    def register(name: str, adopt_signature: callable=None):
+        r"""Register a user-defined inline function for extended markdown.
+
+        - name (str): The name of the function to register.
+        - adopt_signature (callable, optional): A function whose signature should be adopted by the registered function.
+
+        ```python
+        import matplotlib.pyplot as plt
+        from ipyslides import xmd
+        
+        @xmd.register("plot", plt.plot) # signature will be adopted
+        def _(*args, **kwargs):
+            plt.plot(*args, **kwargs)
+            return slides.plt2html() # convert to html to display in proper place
+        ```
+        
+        ::: code language="markdown"   
+            [plot! [1,2,3], [4,5,6] /]
+            This is a plot from markdown!
+        
+        ::: note
+           User-defined functions do not accept content as first argument, 
+           unlike built-in functions, so all arguments are python literals and call mode is `!` is covenient for them.
+        """
+        if not isinstance(name, str):
+            raise TypeError(f"Expected a string for function name, got {type(name)}")
+        
+        if name in _XMD_FUNCS:
+            _, ctx = _XMD_FUNCS[name]
+            if ctx != "user":
+                raise ValueError(f"Function name '{name}' is already registered by ipyslides. Please choose a different name.")
+        
+        def decorator(func):
+            if not callable(func):
+                raise TypeError(f"Expected a callable function, got {type(func)}")
+            
+            if callable(adopt_signature):
+                func = wraps(adopt_signature)(func)  # Adopt the signature of the provided function
+                
+            _XMD_FUNCS[name] = (func, "user")
+            return func
+        return decorator
+        
     
 class xmd(metaclass=_XMDMeta):
     r"""

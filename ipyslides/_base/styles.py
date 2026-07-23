@@ -805,7 +805,7 @@ def style_css(colors, fonts, layout, _root = False):
                 'display':'flex !important',
                 'flex-direction':'row !important',
                 '> a': {'margin-right':'0.3em !important'},
-                '> p': {'margin':'0 !important'}, # Otherwise it will be huge space
+                '> div': {'margin':'0 !important'}, # Otherwise it will be huge space
             },
             '.footnote *, .footnote li::marker': {
                 'font-size':'0.9em',

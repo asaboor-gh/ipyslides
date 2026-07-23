@@ -454,7 +454,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         - In markdown `columns`/`group` block syntax is similar to `write` command if `+++` separartor is used there.
         - Use `::: group snapshots=True` (and optional `header=...`) in markdown to enable snapshots behavior for that group block.
     
-    ::: tip
+    ::: note-tip
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
         A single column is flattened up to 2 levels, so `[[obj1], row2, [item1, item2]]` will be displayed as 3 rows.
         
