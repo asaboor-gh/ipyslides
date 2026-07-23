@@ -1004,13 +1004,17 @@ class XMarkdown(Markdown):
         if not arg0 and (Ps := list(inspect.signature(func).parameters.values())):
             arg0 = Ps[0].default if Ps[0].default is not inspect.Parameter.empty else "" # most function have empty string as default
         
-        try:
-            res =  func(*args, **kwargs) if ctx == "user" else func(arg0, *args, **kwargs) # user functions don't take content
-        except Exception as e:
-            res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
-                f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code></div>")
-
-        return self._handle_var(res.inline if fname == "code" else res)
+        # make sure inline displays are captured in correct place like matplotlib plots
+        with capture_content() as cap:
+            try:
+                res =  func(*args, **kwargs) if ctx == "user" else func(arg0, *args, **kwargs) # user functions don't take content
+                res.inline if fname == "code" else res # code function returns SourceCode object, not inline
+            except Exception as e:
+                res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
+                    f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code></div>")
+        if cap.outputs:
+            return self._handle_var(cap) + self._handle_var(res)
+        return self._handle_var()
     
     @contextmanager
     def active_parser(self):
@@ -1144,7 +1148,9 @@ class _XMDMeta(type):
         @xmd.register("plot", plt.plot) # signature will be adopted
         def _(*args, **kwargs):
             plt.plot(*args, **kwargs)
-            return slides.plt2html() # convert to html to display in proper place
+            # convert to html to display in proper place even in inline context
+            # plt.show() will display in unexpected place if not in a display context
+            return slides.plt2html() 
         ```
         
         ::: code language="markdown"   
