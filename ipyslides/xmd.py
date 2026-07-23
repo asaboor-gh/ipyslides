@@ -2,7 +2,7 @@
 
 import textwrap, re, sys, string, builtins, inspect, ast
 from itertools import islice
-from functools import partial, wraps
+from functools import partial
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
@@ -1008,13 +1008,13 @@ class XMarkdown(Markdown):
         with capture_content() as cap:
             try:
                 res =  func(*args, **kwargs) if ctx == "user" else func(arg0, *args, **kwargs) # user functions don't take content
-                res.inline if fname == "code" else res # code function returns SourceCode object, not inline
+                res = res.inline if fname == "code" else res # code function returns SourceCode object, not inline
             except Exception as e:
                 res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
                     f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code></div>")
         if cap.outputs:
             return self._handle_var(cap) + self._handle_var(res)
-        return self._handle_var()
+        return self._handle_var(res)
     
     @contextmanager
     def active_parser(self):
@@ -1135,22 +1135,34 @@ class _XMDMeta(type):
         return sorted(list(super().__dir__()) + ["convert", "funcs", "extensions", "register", "syntax", "parse"])
     
     @staticmethod
-    def register(name: str, adopt_signature: callable=None):
+    def register(name: str, func: callable=None):
         r"""Register a user-defined inline function for extended markdown.
 
         - name (str): The name of the function to register.
-        - adopt_signature (callable, optional): A function whose signature should be adopted by the registered function.
+        - func (callable, optional): The function to register or use as a decorator if not provided.
 
         ```python
+        from functools import wraps
         import matplotlib.pyplot as plt
         from ipyslides import xmd
         
-        @xmd.register("plot", plt.plot) # signature will be adopted
+        # Directly register a function with the same signature as plt.plot
+        xmd.register("plot", plt.plot)
+        
+        # Adopt it for modified behavior, e.g., to convert to HTML for proper display in slides
+        @xmd.register("plot") 
+        @wraps(plt.plot) # signature will be adopted, note only *args and *kwargs to avoid conflicts
         def _(*args, **kwargs):
             plt.plot(*args, **kwargs)
             # convert to html to display in proper place even in inline context
             # plt.show() will display in unexpected place if not in a display context
-            return slides.plt2html() 
+            return slides.plt2html()
+        
+        # Or decorate your own pure function 
+        @xmd.register("myfunc")
+        def myfunc(arg1, arg2, kwarg1=True):
+            # Your function implementation here
+            return f"Processed {arg1} and {arg2} with kwarg1={kwarg1}"
         ```
         
         ::: code language="markdown"   
@@ -1172,12 +1184,11 @@ class _XMDMeta(type):
         def decorator(func):
             if not callable(func):
                 raise TypeError(f"Expected a callable function, got {type(func)}")
-            
-            if callable(adopt_signature):
-                func = wraps(adopt_signature)(func)  # Adopt the signature of the provided function
-                
             _XMD_FUNCS[name] = (func, "user")
             return func
+        
+        if func is not None:
+            return decorator(func)
         return decorator
         
     
