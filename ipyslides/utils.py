@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'code', 'fa', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
+    'details', 'set_dir', 'textbox', 'code', 'fa', 'link', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
 __all__ = sorted(_attrs)
@@ -25,7 +25,7 @@ from dashlab.utils import _build_css # This is very light weight and too importa
 
 from ._base.icons import Icon as icon # for export and overrides in fa function
 from .formatters import ipw, XTML, IMG, frozen, get_slides_instance, fix_ipy_image, _inline_style, htmlize, _fig_caption, slidebound, slidesready
-from .xmd import get_unique_css_class, capture_content, raw, error, warn
+from .xmd import xmd, get_unique_css_class, capture_content, raw, error, warn, _internal_xmd_call
 from .source import code
 from .writer import _style_for_widget
 from ._base.styles import animations
@@ -295,9 +295,14 @@ def _resolve_img(src, width):
                 return _resolve_img(SVG(src)._repr_svg_(), width=width)
     return ''
 
-def details(obj,summary='Click to show content'):
-    "Show/Hide Content in collapsed html."
-    return XTML(f"""<details style='max-height:100%;overflow:auto;'><summary>{summary}</summary>{htmlize(obj)}</details>""")
+_internal_xmd_call('code')(code) # Register code class for xmd usage
+
+@_internal_xmd_call('details')
+def details(obj,summary='Click to show content', name=None, **css_props):
+    "Show/Hide Content in collapsed html. Multiple details with same name in a container open exclusively."
+    css_props = {'max-height':'100%','overflow':'auto', **css_props}
+    nodeattr = f'name="{name}"' if name else ''
+    return XTML(f"""<details {nodeattr} {_inline_style(css_props)}><summary>{summary}</summary>{htmlize(obj)}</details>""")
 
 def _check_pil_image(data):
     "Check if data is a PIL Image or numpy array"
@@ -328,7 +333,7 @@ def _crop_image(image, bbox):
     bbox = [int(round(b*x,0)) for b,x in zip(bbox, [w,h,w,h])] # Convert to pixel values to nearest integer
     return image.crop(bbox)
 
-    
+@_internal_xmd_call('image')    
 def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_class=None, **kwargs):
     """Displays PNG/JPEG files or image data etc, `kwrags` are passed to IPython.display.Image. 
     `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
@@ -384,11 +389,12 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
         metadata["style"] = _styled_css({f'.fig-{id(data)}': css_props}).value
     return IMG({k:v for k,v in data.items() if k.startswith('image')}, metadata)
 
+@_internal_xmd_call('bg', slidebound=True)
 @slidebound
 def bg(src=None, opacity=1, filter=None, contain=False):
     """Set background image for the current slide.
 
-    Markdown usage: `bg`src`` or `bg[opacity=0.4,contain=True]`src``.
+    Markdown usage: `[bg: src :: opacity=0.4,contain=True /]`
     """
     if isinstance(src, str) and src.strip().lower() in ('none', 'null'):
         src = None
@@ -417,6 +423,7 @@ def _rselove_targets(applyto):
             raise ValueError(f"No slides selected with applyto={applyto!r}")
         return selected[0], [s._specs for s  in selected] 
 
+@_internal_xmd_call('transition')
 @slidesready
 def transition(name:str, applyto=None):
     """Set transition animation for the current slide or slides selected by `applyto`. 
@@ -429,7 +436,8 @@ def transition(name:str, applyto=None):
     for spec in spec_targets:
         spec.anim = name
     slide._view_transition()
-    
+
+@_internal_xmd_call('yoffset')    
 @slidesready
 def yoffset(value:int, applyto=None):
     """Set vertical offset for the current slide or slides selected by `applyto`. 
@@ -452,6 +460,7 @@ def yoffset(value:int, applyto=None):
         spec.yoffset = value
     slide._mount_user_css()
 
+@_internal_xmd_call('css')
 @slidesready
 def css(props: dict=None, applyto=None, **css_vars):
     """
@@ -516,7 +525,7 @@ def _crop_svg(node, bbox):
     
     return re.sub(r'viewBox\=[\"\'](.*?)[\"\']', crop_viewbox, node ,1, flags=re.DOTALL)
     
-
+@_internal_xmd_call('svg')
 def svg(data=None,width = None,caption=None, crop=None, css_props={}, css_class=None, **kwargs):
     """Display svg file or svg string/bytes with additional customizations. 
     `crop` is a tuple of (left, top, right, bottom) in percentage of image size to crop the image.
@@ -560,7 +569,7 @@ def svg(data=None,width = None,caption=None, crop=None, css_props={}, css_class=
         fig += _styled_css({f'.fig-{id(svg)}': css_props}).value
     return XTML(fig) 
 
-
+@_internal_xmd_call('iframe')
 def iframe(src, width='100%',height='auto',**kwargs):
     "Display `src` in an iframe. `kwrags` are passed to IPython.display.IFrame"
     f = IFrame(src,width,height, **kwargs)
@@ -568,6 +577,7 @@ def iframe(src, width='100%',height='auto',**kwargs):
 
 _patch_display = lambda obj: setattr(obj, 'display', MethodType(XTML.display, obj)) # to be consistent with output displayable
 
+@_internal_xmd_call('styled')
 def styled(obj, css_class=None, **css_props):
     """Add a class to a given object, whether a widget or html/IPYthon object.
     CSS inline style properties should be given with names including '-' replaced with '_' but values should not.
@@ -606,7 +616,7 @@ def styled(obj, css_class=None, **css_props):
         css_props = {"padding": 0, "margin": 0, **css_props}
         return XTML(f'<div class="{klass}" {_inline_style(css_props)}>{htmlize(obj)}</div>')
 
-
+@_internal_xmd_call('pin')
 def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, rotate=0, blur=0, css_class=None, **css_props):
     """Pin an object at a specific position on the slide. Position is given in percentage of slide dimensions if int/float, otherwise any valid CSS unit.
     `center` will align the center of object to given coordinates instead of top left corner. `zorder` controls layering 
@@ -656,7 +666,7 @@ def pin(obj, x=None, y=None, width=None, height=None, center=False, zorder=0, ro
     css_class = f'ips-pinned-item {css_class}' if css_class else 'ips-pinned-item' # need some stuff
     return styled(obj, css_class=css_class, **css_props)    
 
-
+@_internal_xmd_call('focus')
 def focus(obj):
     "Wraps a given obj in a parent with 'focus-child' class or add 'focus-self' to widget, whether a widget or html/IPYthon object, to focus/exit on double click."
     if isinstance(obj,ipw.DOMWidget):
@@ -665,6 +675,7 @@ def focus(obj):
     else:
         return styled(obj, 'focus-child')
 
+@_internal_xmd_call('center')
 def center(obj):
     "Align a given object at center horizontally, whether a widget or html/IPYthon object"
     if isinstance(obj,ipw.DOMWidget):
@@ -674,12 +685,38 @@ def center(obj):
     else:
         return XTML(f'<div class="align-center">{htmlize(obj)}</div>')
     
+@_internal_xmd_call('link')
+def link(target_uid:str, text:str="Jump to Linked Slide", icon:str=None, uid:str=None):
+    r"""Create a link to jump to another slide with a unique `target_uid` either set by `[#target_uid/]` in markdown.
+    
+    - `uid` parameter allows you to make this link a target for other links. 
+    - A pair of links with flipped `target_uid` and `uid` can be used to jump back and forth between two slides.
+    - `icon` parameter allows you to add a font-awesome icon to the link.
+    - This works in markdown as well. In python, you need to display (or pass to write) the output to make it work.
+    """
+    target_uid = target_uid.lstrip('#') # remove any leading # if present
+    if not re.fullmatch(r'[a-zA-Z0-9_-]+', target_uid):
+        raise ValueError(f"target_uid should be a valid slide uid (alphanumeric, underscore, hyphen), got {target_uid!r}")
+    
+    kwargs = {"href": f"#{target_uid}", "css_class": "slide-link"}
+    
+    if uid is not None:
+        uid = uid.lstrip('#') # remove any leading # if present
+        if not re.fullmatch(r'[a-zA-Z0-9_-]+', uid):
+            raise ValueError(f"uid should be a valid slide uid (alphanumeric, underscore, hyphen), got {uid!r}")
+        kwargs["id"] = f"{uid}"
+    text = (f' <i class="fa fa-{icon}"></i>' if icon else '') + f"{text}"   
+    return html('a',text,**kwargs)
+
+_VOID_TAGS = ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr') # self closing tags
+    
 def html(tag, children = None,css_class = None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
-    `tag` can be any valid html tag name. A `tag` that ends with ` / ` will be self closing e.g. ` hr/ ` will be `<hr/>`.  Empty tag gives unwrapped children.
+    `tag` can be any valid html tag name. A self closing tag must not have children e.g. ` hr ` will be `<hr/>`.  Empty tag gives unwrapped children.
+    
     `children` expects:
     
-    - If None, returns node such as code`html('image',alt='Image')` → code['html']`<img alt='Image'></img>` and code`html('image/',alt='Image')` → code['html']`<img alt='Image' />`
+    - If None, returns node for self closing tags such as [code: html('image',alt='Image') /] → [code: <img alt='Image'></img> :: 'html' /].
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
     - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use code`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
@@ -716,8 +753,10 @@ def html(tag, children = None,css_class = None,**node_attrs):
     if css_class:
         attrs = f'class="{css_class}" {attrs}'
     
-    if tag.endswith('/'): # Self closing tag
-        return XTML(f'<{tag[:-1]} {attrs} />' if attrs else f'<{tag[:-1]}/>')
+    if tag in _VOID_TAGS: # Self closing tag
+        if children:
+            raise RuntimeError(f'Parametr `children` should be None for self closing tag {tag!r}')
+        return XTML(f'<{tag} {attrs} />' if attrs else f'<{tag}/>')
     
     if children is None:
         content = ''
@@ -742,34 +781,74 @@ def as_html_widget(obj=''): # should be useable empty
     "Convert supported (almost any) obj to html format and return widget."
     return XTML(htmlize(obj)).as_widget()
 
+# This is only intended to use for general tags in markdown, do not use in python
+@_internal_xmd_call('anyTag')
+def anyTag(tag, content = "",css_class = None,**node_attrs):
+    """Picks up html tag from markdown function calls and returns html node with given text and node attributes 
+    like style, id etc. If an attribute needs '-' in its name, replace it with '_'.
+    
+    The markdown call syntax for registered python functions and html tags is same given by two modes:
+    
+    - `[func\: first small arg like file path or text \:\: *args, **kwargs \/]`.
+    - `[func\! *args, **kwargs \:\: long multiline content in first arg \/]`.
+    - In both modes, `*args` and `**kwargs` are python literals, so proper qoutation marks are required for strings unlike first free content argument.
+    
+    You can override a registered function by pure html tag by appending ` _ ` to the tag. For example,
+    ` svg_ ` will be html tag that overrides the `svg` function."""
+    if not isinstance(content, str):
+        raise TypeError(f"'content' should be a string, got {type(content)}. Use html() for non-string content.")
+    if tag in _VOID_TAGS and content:
+        raise RuntimeError(f'Parametr `content` should be empty for self closing tag {tag!r}')
+    
+    # strips outer <p> tags to avoid double wrapping in <p> when used inside other tags
+    return html(tag, xmd.convert(content, True), css_class=css_class, **node_attrs) 
+
+@_internal_xmd_call('vspace')
 def vspace(em = 1):
     "Returns html node with given height in `em`."
     return html('span',style=f'height:{em}em;display:inline-block;') # span with inline display can be used inside <p>
 
+@_internal_xmd_call('hspace')
 def hspace(em = 1):
-    "Returns html node with given height in `em`."
+    "Returns html node with given width in `em`."
     return html('span',style=f'width:{em}em;display:inline-block;') # span with inline display can be used inside <p>
 
+@_internal_xmd_call('line')
 def line(length=5, color='var(--fg1-color)',width=1,style='solid'):
     """Returns a horizontal line with given length in em and color. `width` is the thickness of line."""
     return f"<span style='display:inline-block;border-bottom:{width}px {style} {color};width:{length}em;max-width:100%;'></span>"
 
+@_internal_xmd_call('sup')
+def sup(text, **css_props):
+    "Returns superscript text with given css properties."
+    return XTML(f"<sup {_inline_style(css_props)}>{text}</sup>")
+
+@_internal_xmd_call('sub')
+def sub(text, **css_props):
+    "Returns subscript text with given css properties."
+    return XTML(f"<sub {_inline_style(css_props)}>{text}</sub>")
+
+@_internal_xmd_call('textbox')
 def textbox(text, **css_props):
     """Formats text in a box for writing e.g. inline refrences. `css_props` are applied to box and ` - ` should be ` _ ` like `font-size` → `font_size`. 
     `text` is not parsed to general markdown i.e. only bold italic etc. applied, so if need markdown, parse it to html before. You can have common CSS for all textboxes using class `text-box`."""
     css_props = {'display':'inline','white-space': 'pre-wrap', **css_props} # very important to apply text styles in order
     return XTML(f'<span class="text-box" {_inline_style(css_props)}>{text}</span>')  # markdown="span" will avoid inner parsing
 
-def alert(text, bold=False, italic=False, **css_props):
+@_internal_xmd_call('alert')
+def alert(text, css_class=None, bold=False, italic=False, **css_props):
     "Alerts text in red color. `css_props` are applied to span element."
     kws = {'color':'#DC143C', 'font-weight': 'bold' if bold else 'normal', 'font-style': 'italic' if italic else 'normal', **css_props}
-    return XTML(f"<span {_inline_style(kws)}>{text}</span>")
-    
+    klass = f"class='{css_class}'" if css_class and isinstance(css_class, str) else ''
+    return XTML(f"<span {klass} {_inline_style(kws)}>{text}</span>")
+
+@_internal_xmd_call('color')    
 def color(text,fg='var(--accent-color, blue)',bg=None, **css_props):
     "Colors text, `fg` and `bg` should be valid CSS colors. `css_props` are applied to span element."
     style_kws = {'color': fg, 'background': bg, 'padding': '0.1em', 'border-radius':'0.1em', **css_props}
     return XTML(f"<span {_inline_style(style_kws)}>{text}</span>")
 
+@_internal_xmd_call('fa')
 def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0, **css_props):
     """Returns FontAwesome icon as html. `name` is the icon name without 'fa-' prefix. 
     You can control `color`, `size` (like '2em', '24px'), `rotation` (0, 90, 180, 270) and other `css_props` applied to icon.
@@ -783,6 +862,7 @@ def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0,
     style_kws = {'color': color, 'font-size': size, 'transform': f'rotate({rotation}deg)' if rotation else '', **css_props}
     return XTML(f'<i class="fa {name}" {_inline_style(style_kws)}></i>')
 
+@_internal_xmd_call('stack')
 def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
     """Stacks given objects in a column or row with given sizes. 
     
@@ -924,6 +1004,7 @@ def doc(obj,prepend_str = None, members = None, itself = True):
     
     return XTML(_full_doc)
 
+@_internal_xmd_call('today')
 def today(fmt = '%b %d, %Y',fg = 'inherit'): # Should be inherit color for markdown flow
     "Returns today's date in given format."
     return color(datetime.datetime.now().strftime(fmt),fg=fg, bg = None)

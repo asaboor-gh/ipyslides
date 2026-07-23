@@ -37,7 +37,7 @@ class TOCWidget(ListWidget):
         self.options = [tss(i, *item) for i, item in enumerate(items)]
     
     def _make_toc(self, obj):
-        return htmlize(f"color['var(--accent-color)']`{obj.ti + 1}.` {obj.sec}") +  f"<p>{obj.si}</p>"
+        return htmlize(f"[color: {obj.ti + 1}. :: 'var(--accent-color)' /] {obj.sec}") +  f"<p>{obj.si}</p>"
     
     @observe('value')
     def _jump_to_section(self, change):

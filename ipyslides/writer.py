@@ -49,6 +49,9 @@ def _fmt_html(output):
     if hasattr(output, 'fmt_html'): # direct return, may be column
         return output.fmt_html()
     
+    if isinstance(output, CapturedIO):
+        return '\n'.join(serializer._export_other_reprs(out) for out in output.outputs)
+    
     return serializer._export_other_reprs(output)
 
 def _style_for_widget(widget, **css_props):
@@ -424,15 +427,15 @@ def write(*objs,widths = None, css_class=None, **css_props):
     Write any object that can be displayed in a cell with some additional features:
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
-    - Use code`group([...], snapshots=True)` to reveal items one-by-one during frame navigation.
-        You can set a static header with code`group([...], header='Header')`; it remains visible while group rows change.
-        You can also build it with code`g = group([], snapshots=True); with g.capture(): ...` and pass `g` as a column.
-    - Display another function to capture its output in order using code`Slides.hold(func,...)`. Only body of the function will be displayed/printed. Return value will be ignored.
+    - Use [code: group([...], snapshots=True) /] to reveal items one-by-one during frame navigation.
+        You can set a static header with [code: group([...], header='Header') /] it remains visible while group rows change.
+        You can also build it with [code: g = group([], snapshots=True); with g.capture(): ... /]; and pass `g` as a column.
+    - Display another function to capture its output in order using [code: Slides.hold(func,...) /];. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh` etc. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
     - Use `Slides.alt` function to display obj/widget on slides and alternative content/screenshot of widgets in exported slides.
-    - code`ipywidgets.[HTML, Output, Box]` and their subclasses will be displayed as code`Slides.alt(html_converter_func, widget)`. The value of exported HTML will be most recent.
+    - [code: ipywidgets.[HTML, Output, Box] /]; and their subclasses will be displayed as [code: Slides.alt(html_converter_func, widget) /]. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.

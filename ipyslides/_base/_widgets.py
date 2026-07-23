@@ -1,6 +1,5 @@
 import uuid
 import traitlets
-import inspect
 import anywidget
 
 from pathlib import Path

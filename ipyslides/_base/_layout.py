@@ -45,7 +45,6 @@ def layout_css(accent_color, aspect):
                     "transition": "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform-origin 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
                     "^._ips-zoom-active ._ips-zoom-target": {
                         "box-shadow": "0px 0px 1px 0.5px #8988 !important",
-                        "border-radius": "4px !important",
                     },
                 },
                 ".static-widget": {

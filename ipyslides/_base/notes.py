@@ -1,30 +1,31 @@
 from ..formatters import slidebound
+from ..xmd import _internal_xmd_call
 
 
 class Notes:
-    "Notes are stored in `Slides` class for consistensy."
+    r"""Add notes to current slide. Content could be any object except javascript and interactive widgets.
+    
+    Note that notes are not shown inside slides during presentation. They can be viewed in popup window by 
+    enabling `Notes Popup` option in settings panel. Notes can also be printed in PDF (after export too) by 
+    enabling `Inline Notes` option in settings panel, useful for sharing slides with notes or for personal reference.
+    
+    ::: note-tip     
+        - In markdown, you can use [alert: [notes\: notes content \/] /].
+        - Place your (extended) projector on top/bottom of laptop screen while presenting 
+          in Jupyter Notebook to allow right/left edges click navigation work smoothly.
+    """
     def __init__(self,_insatanceSlides, _instanceWidgets):
-        "Instance should be inside `Slides` class."
+        "See class docstring for usage."
         self.main = _insatanceSlides
         self.widgets = _instanceWidgets
         self.notes_check = self.widgets.checks.notes
         self.notes_check.observe(self.__open_close_notes, names=['value'])
-        
-    @slidebound("Notes")
-    def insert(self, content):
-        r"""Add notes to current slide. Content could be any object except javascript and interactive widgets.
-        Note that notes are not shown inside slides during presentation. They can be viewed in popup window by 
-        enabling `Notes Popup` option in settings panel. Notes can also be printed in PDF (after export too) by 
-        enabling `Inline Notes` option in settings panel, useful for sharing slides with notes or for personal reference.
-        
-        ::: note-tip     
-            - In markdown, you can use alert`notes\`notes content\``.
-            - Place your (extended) projector on top/bottom of laptop screen while presenting 
-              in Jupyter Notebook to allow right/left edges click navigation work smoothly.
-        """
+    
+    @_internal_xmd_call('notes', True) # register notes for xmd usage, will be overwritten by instance later   
+    @slidebound("notes")
+    def __call__(self, content):
+        "See class docstring for usage."
         self.main.this._notes = self.main.html('',[content]).value
-
-    __call__ = insert # Can be called as function
     
     def display(self):
         def set_value(content):

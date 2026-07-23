@@ -4,12 +4,10 @@ and then provided to other classes via composition, not inheritance.
 """
 import json, re
 import traitlets
-from contextlib import suppress
 
 from traitlets import HasTraits, Int, Unicode, Bool, Float, TraitError
 from pathlib import Path
 from inspect import Signature, Parameter
-from IPython.display import Image, SVG
 from ipywidgets.widgets.trait_types import InstanceDict
 
 from ..formatters import code_css, htmlize

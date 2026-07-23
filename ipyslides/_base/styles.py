@@ -680,6 +680,7 @@ def style_css(colors, fonts, layout, _root = False):
                     },
                 },
             },
+            '.slide-link-target': {"width":"0 !important", "height":"0 !important",}, # avoid taking space, but still need to work
             '.slide-link:not(.citelink), .link-button': {
                 'background': 'var(--bg2-color)',
                 'border-radius': '0.2em',

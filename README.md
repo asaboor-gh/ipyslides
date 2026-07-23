@@ -237,10 +237,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Documentation
 
-- [Github Pages Documentation](https://asaboor-gh.github.io/ipyslides/)
-- Interactive documentation: `ipyslides.docs()` same as on github pages.
-- Interactice Demo: `ipyslides.demo()`
-- [GitHub Repository](https://github.com/asaboor-gh/ipyslides)
+- **Interactive Documentation**: Use `ipyslides.docs()` in any notebook to create and interact with documnetation.
+- **Interactive Demo**: Use `ipyslides.demo()` for demo notebook.
+- [Github Pages](https://asaboor-gh.github.io/ipyslides/)
 
 
 ## Acknowledgements
@@ -252,3 +251,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ---
 
 [Made with ❤️ by Abdul Saboor](https://youtu.be/XZt-lH8Za3Q?si=JuZseqcj1ViJzvp5)
+
+
+

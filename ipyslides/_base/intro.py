@@ -93,7 +93,7 @@ key_maps = {
     "K": "Show keyboard shortcuts",
 }
 
-key_combs = f"""color['var(--accent-color)']`//fa`info`Swipe left/right on touch devices to navigate slides. Opt in mouse swipe from context menu.//`
+key_combs = f"""[color: [fa:info/] Swipe left/right on touch devices to navigate slides. Opt in mouse swipe from context menu. :: 'var(--accent-color)' /]
 
 | Shortcut                                    | Button                                            | Action                 | 
 |:--------------------------------------------|---------------------------------------------------|:-----------------------|
@@ -110,8 +110,8 @@ key_combs = f"""color['var(--accent-color)']`//fa`info`Swipe left/right on touch
 | {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}              | {key_maps["S"]}        |
 | {_key('Ctrl')} + {_key('P')}                |      <none>                                       | {key_maps["P"]}        |
 
-- color['var(--fg3-color)']`{_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation.`
-- color['var(--fg3-color)']`//Double-click on images/plots and focusable elements (see `Slides.css_styles`) to zoom into focused view.//`
+- [color: {_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation. :: 'var(--fg3-color)' /]
+- [color: Double-click on images/plots and focusable elements (see `Slides.css_styles`) to zoom into focused view. :: 'var(--fg3-color)' /]
 """ 
 
 how_to_print = f"""

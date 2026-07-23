@@ -3,9 +3,7 @@ CSS styles and XMarkdown syntax documentation for ipyslides.
 This file contains descriptive text strings explaining available formatting options.
 """
 
-from ..xmd import _md_extensions, _special_funcs
-
-_special_funcs = '\n'.join(rf' -  alert`{k}`\`{v}\`' for k,v in _special_funcs.items())
+from ..xmd import xmd, esc, _md_extensions
 
 css_styles = '''
 Use any or combination of these styles in markdown blocks or `css_class` argument of writing functions:
@@ -49,35 +47,35 @@ Triple dashes `---` separator is used to split text in slides inside markdown co
 `---` should be on their own lines in main content (not inside block syntax) to be recognized as slide separators.
 
 Sections & TOC
-: alert`section\`content\`` to add a section that will appear in the table of contents.
-Use code`section[True]\`content\`` to mark the beginning of supplemental slides with True parameter in section command.
+: [alert: [section\: content \/] /] to add a section that will appear in the table of contents.
+Use [code: section\: content \:\: True \/] /] to mark the beginning of supplemental slides with True parameter in section command.
 Slides in this section remain navigable, use supplemental numbering (`S.1`, `S.2`, ...), and do not advance the main progress bar.
-alert`toc\`Table of content header text\`` to add a table of contents. See `ipyslides.docs()` for creating a `TOC` accompanied by section summary.
+[alert: [toc\: Table of content header text\/] /] to add a table of contents. See `ipyslides.docs()` for creating a `TOC` accompanied by section summary.
 
 Notes
-: alert`notes\`This is slide notes\``  to add notes to current slide.
+: [alert: [notes\: This is slide notes \/] /]; to add notes to current slide.
 
 Backgrounds
-: alert`bg\`image_src_or_path\`` to set background for the current slide.
+: [alert: [bg\: image_src_or_path \/] /] to set background for the current slide.
 If multiple `bg` calls are used in one slide, the last one wins.
-Use alert`bg[opacity=0.4, contain=True, filter='blur(2px)']\`image_src_or_path\`` for options. `contain` must be `True` or `False`.
+Use [alert: [bg\: image_src_or_path \:\: opacity=0.4, contain=True, filter='blur(2px)' \/] /] for options. `contain` must be `True` or `False`.
 
 Including Files
-: alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format.
+: [alert: include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\` /] to include a file in markdown format.
 These files are watched for edits if included in synced markdown file via `Slides.sync_with_file`.
 
 Citations
-: - alert`cite\`key1,key2\`` / alert`\@key1,\@key2` to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
-- You can add alert`refs\`ncol_refs\`` or code` Slides.refs ` to add citations anywhere on slide. If \`ncol_refs\` is not given, it will be picked from layout settings.
-  Using alert`refs\`ncol_refs, key1, key2,...\`` will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
+: - [alert: \@key1,\@key2 /] to add citation to current slide. citations are automatically added in suitable place and should be set once using `Slides.set_citations` function (or see below).
+- You can add [alert: [refs\:ncol_refs\/] /] or [code: Slides.refs /] to add citations anywhere on slide. If ` ncol_refs ` is not given, it will be picked from layout settings.
+  Using [alert: [refs\:ncol_refs \:\: "key1, key2, ..."\/] /] will show only citations for given keys on that place. It is useful on slides with frames to show relevant citations on each frame.
   Unused citations will be added automatically at end of slide.
-- Force citations to be shown inline by appending a !, such as alert`\@key!` or alert`cite\`key1,key2!\``.
-- In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block sytnax:                             
-code["markdown"]`
+- Force citations to be shown inline by appending a !, such as [alert: \@key1! \@key2 /], where `@key2` will be shown in footnote style and `@key1!` will display inline citation in that order.
+- In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block syntax:                             
+[code! "markdown" ::
  ::: citations
     \@key1: Saboor et. al., 2025
     \@key2: A citations can span multiple lines, but key should start on new line
-`
+/]
 
 ++
 
@@ -106,14 +104,14 @@ The general block syntax is `::: type-or-classes [args] attributes`.
     | `::: code [focused lines]`  | Code block with syntax highlighting, parameters are passed to highlight function. |
     | `::: tag or classes` | tags are block level elements such as `p`, `details`, `summary`, `table`, `center`, etc. |
     | `::: columns [widths]` / `::: group` | Create columns with relative widths, e.g. `columns 4 6` for 40% and 60% width. `group` is a single-column display block (no widths or `+++` needed). Use `::: group snapshots=True` (optionally with `header='Header text'`) to reveal rows exclusively for that block. Use `++[isolate]` before the block to isolate previous content from this reveal sequence. |
-    | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `<md-var_name/>`.|
+    | `::: md-[before,after,var_name] [focused lines]` | Parse markdown in the block, with showing source code at before or after or assign a variable name and use as `[md-var_name/]`.|
     | `::: table [col widths]` | Create a table with optional column widths, e.g. `::: table 1 2` for 33% and 66% width. Use `caption-side=top/bottom` to place caption on top/bottom.|
     | `::: citations` | Add citations in the block (only in `sync_with_file` context) instead of `Slides.set_citations`. Use `\@key: value` syntax on its own line to add citations in block. |
     | `::: display css_classes` | Create a block with specific CSS classes forcing display mode, it can break dom flow, but usefull to embed widget variables under blocks. |
 
 ::: details
     ::: summary | Important Notes on `md-` and `code` blocks
-    - Variable created with `md-var_name` can be used anywhere in markdown using `<md-var_name/>` to display source code.
+    - Variable created with `md-var_name` can be used anywhere in markdown using `[md-var_name/]` to display source code.
     - `md-[position or variable]` accepts same parameters as `code` block for syntax highlighting and get deleted on first use.
     - Both `code` and `md-var` blocks support attribute access such as `::: code.collapsed` or `::: md-var.inline` to show selected view. 
     You can also use `::: code 1 3` to focus on specific lines based on index 1 in markdown unlike Python.
@@ -122,7 +120,7 @@ The general block syntax is `::: type-or-classes [args] attributes`.
 **Layouts**{{.text-big}}
 
 Inline Columns
-: Inline columns/rows can be added by using alert`stack\`Column A || Column B\`` sytnax. You can escape pipe `|` with `\|` to use it as text inside stack. See at end how to nest such stacking.
+: Inline columns/rows can be added by using [alert: [stack\: Column A || Column B \/] /] syntax. You can escape pipe `|` with `\\|` to use it as text inside stack. See at the end how to nest such stacking.
 
 Block Columns
 : You can create columns using `::: columns` syntax, or use `::: group` for a single-column display block.
@@ -155,7 +153,7 @@ Use `++[isolate]` before `::: columns` to separate previous content from first c
 **Code Display**{{.text-big}}
 
 Inline Code
-: Inline code can be highlighted using alert`code\`code\`` syntax, e.g. color`code\`print('Hello')\`` → code`print('Hello')`.
+: Inline code can be highlighted using [alert: [code\: code \/] /] syntax, e.g. [alert: [code\: print('Hello') \/] /] → [code: print('Hello') /].
 
 Code Blocks
 : Use standard markdown fenced code blocks or `::: code ` blocks for syntax highlighting.
@@ -163,7 +161,7 @@ Code Blocks
 ```md-src
 ::: columns
     ::: block-green
-        <md-src/>
+        [md-src/]
     +++
     ::: block-red
         ```python
@@ -181,7 +179,7 @@ Code Blocks
     - The \`\`\` code block does act like `::: code ` block and supports same parameters.
     - You can focus on specific lines in code blocks using line numbers (1-based) such as `::: code 2 4 5` to focus on lines 2, 4 and 5 visually. 
     - You can also use `::: code.collapsed` or `::: code.inline` to show collapsed or inline view of code block respectively.
-    <md-src/>
+    [md-src/]
 ```
 
 ++
@@ -191,9 +189,9 @@ Code Blocks
 Variables from Python code can be embedded directly into Markdown.
 
 **Basic Usage**
-: - **Syntax**: Use alert`\%{{variable}}` to display a variable which is lazily resolved and safely escaped from markdown parsing.
-- **Formatting**: Apply formatting using alert`\%{{variable:format_spec}}` or conversions with alert`\%{{variable!conversion}}`. This works like Python's `str.format` method.
-- **Notebook Display**: To render an object as it would appear in a notebook output cell, use alert`\%{{variable:nb}}`. This is useful for complex objects like plots.
+: - **Syntax**: Use [alert: \%{{variable}} /] to display a variable which is lazily resolved and safely escaped from markdown parsing.
+- **Formatting**: Apply formatting using [alert: \%{{variable:format_spec}} /] or conversions with [alert: \%{{variable!conversion}} /]. This works like Python's `str.format` method.
+- **Notebook Display**: To render an object as it would appear in a notebook output cell, use [alert: \%{{variable:nb}} /]. This is useful for complex objects like plots.
 - For custom objects, it's better to use `Slides.serializer` to define their HTML representation, which allows them to be displayed correctly in place with such as `\%{{fig}}`. 
   Using `\%{{fig:nb}}` might show the object at the end of the slide.
 
@@ -201,13 +199,13 @@ Variables from Python code can be embedded directly into Markdown.
 : - **Live Updates**: Variables are automatically updated in your slides when their values change in the notebook if not held inside `Slide[number,].vars` deepest scope.
 - **Scope Resolution**: Variables are resolved from per-slide variables (set by `build` or `Slide.vars.update`), then from the notebook's global scope if a slide is built purely from markdown.
     In functions which take markdown string such as `write`, `html`, variables are taken from notebook's global scope only. Use `fmt` to encapsulate variables from local scopes.
-- **Forcing Updates**: You can force a refresh of variables on a specific slide using code`Slide[number,].vars.update(**kwargs)`. This is also useful for setting unique variable values on different slides.
+- **Forcing Updates**: You can force a refresh of variables on a specific slide using [code: Slide[number,].vars.update(**kwargs) /]. This is also useful for setting unique variable values on different slides.
 - **Attribute/Index Access**: When using expressions like `\%{{var.attr}}` or `\%{{var['key']}}`, the output will only update if the base variable `var` itself is reassigned.
 
 **Important Notes**
 : - Use unique variable names for each slide to prevent unintended updates.
 - Widgets and objects using `:nb` are only displayed correctly in the first level of nested blocks.
-- The alert`\%{{variable:nb}}` formatter can sometimes disrupt the document flow if used inside elements like headings. 
+- The [alert: \%{{variable:nb}} /] formatter can sometimes disrupt the document flow if used inside elements like headings. 
   It's safest to use it on its own line or within a paragraph.
 - Widgets behave same with or without `:nb` format spec. 
 - Formatting is done using `str.format` method, so f-string like literal expressions are not supported.
@@ -216,48 +214,56 @@ Variables from Python code can be embedded directly into Markdown.
 
 **Inline Python Functions**{{.text-big}}
 
-Functions (that can also take extra args [python code as strings] as alert`func[arg1,x=2,y=A]\`arg0\``) include:
+Call pattern for inline functions is [code: [func\: arg0 \:\: *args, **kwargs \/] :: "markdown" /],where `arg0` is the first argument,
+and `*args` and `**kwargs` are optional additional arguments given as Python literals. 
 
-::: block-red
-{_special_funcs}
+- The `::` is used to separate the main argument from additional arguments.
+- For long multiline content, you can use [code: [func\! *args, **kwargs \:\: long multiline content in first arg \/] :: "markdown" /] syntax that enables writing parameters first in header.
+- You can override a registered function by pure html tag by appending ` _ ` to the tag. For example, ` svg_ ` will be html tag that overrides the ` svg ` function.
+
+{esc(xmd.funcs)}
 
 ::: note-info
     You can also use `Slides.esc`/`isd.esc` class to lazily escape variables/expressions/output of functions from being parsed inside f-strings.
     This should be rarely used when your markdown contains a lot of $ \LaTeX $ equations to avoid excessively escaping them with curly braces in favor of few escaped variables.
 
-Upto 4 level nesting is parsed in inline functions using (level + 1) number of alert`/` (at least two) within backticks in functions given below. 
+Inline functions can be nested, thanks to new function call pattern that must end with `\/]` to avoid ambiguity with nested calls.
 ```md-src_var
 ::: columns
-    <md-src_var/>
+    [md-src_var/]
     
-    stack[(6,4),css_class="block-blue"]`////
-        This always parse markdown in `returns=True` mode. ||
-        stack[css_class="info"]`/// B ||
-            color["skyblue"]`//alert`Alerted Text` Colored Text //`
-        ///` 
-    ////`
+    [stack! (6,4), css_class="block-blue" ::
+        This always parse markdown in `returns=True` mode. 
+        ||
+        [stack: 
+            B || [color: [alert: Alerted Text /] Colored Text :: "skyblue" /]
+            :: css_class="info"
+        /]
+    /]
 ```
 
 ++
 **General Syntax**{{.text-big}}
 
-- Use alert`include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\`` to include a file in markdown format.
-- Use alert`fa\`icon_name\`` to add FontAwesome icons, e.g. fa\`arrow-right\` → fa`arrow-right`, fa\["green"\]\`check\` → fa["green"]`check`, fa\["blue"\]\`info-circle\` → fa["blue"]`info-circle` etc.
-- Use syntax \`<link:[unique id here]:origin label>\` and \`<link:[unique id here same as origin]:target [back_label,optional]>\` to jump between slides. See `Slides.link` for more details.
+- To avoid any further markdown parsing, use ` Slides.esc ` while interpolating variables or expressions in f-strings, such as `f"Hello {{esc(var)}}"` or `f"Hello {{esc(func())}}"`.
+- Use [alert: include\`markdown_file.md[optional list slicing to pick lines from file such as [2:5], [10:]]\` /] to include a file in markdown format.
+- Use [alert: [fa\:icon_name\/] /] to add FontAwesome icons, e.g. [fa\:arrow-right\/] → [fa:arrow-right/], [fa\:check \:\: "green" \/] → [fa:check :: "green" /], [fa\:info-circle \:\: "blue" \/] → [fa:info-circle :: "blue" /] etc.
+- Drop a link target in any place using `[#target_id/]` and use `target_id` in `link` commnad or html anchor to jump to that target. Use `Slides.link` for more details.
+- Use syntax `[link\:target_id :: "Jump to slide" \/]` to jump between slides. See `Slides.link` for more details.
 - Cells in markdown table can be spanned to multiple rows/columns by attributes `| cell text \{{: rowspan="2" colspan="1"}}|` inside a cell, should be a space bewteen text and attributes.
-- Escape a backtick with backslash, i.e. alert`\\` → \``, other escape characters include alert`@, %, /, |`. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
-- Use `_\`sub\`` and `^\`sup\``  for subscript and superscript respectively, e.g. H_`2`O, E = mc^`2`.
+- Escape a backtick with backslash, i.e. [alert: \\` → \` /], other escape characters include [alert: @, %, /, |, :, ;, ! /]. In Python >=3.12, you need to make escape strings raw, including the use of $ \LaTeX $ and re module.
+- Use `sub` and `sup` functions for subscript and superscript respectively, e.g. H[sub:2/]O, E = mc[sup:2/];.
 - See `Slides.css_styles` for available CSS classes to use in markdown blocks and other places.
 - See `Slides.css_animations` for available CSS animation classes to use in markdown blocks and other places.
 - Definition list syntax:
 ```md-src.inline
 ::: columns
-    <md-src/> 
+    [md-src/] 
     +++
     Item 1 Header
-    : Item 1 details ^`1`
+    : Item 1 details [sup:1/]
     Item 1 Header
-    : Item 1 details _`2`
+    : Item 1 details [sub:2/]
 ```
 
 **Extending Syntax**{{.text-big}}
@@ -266,7 +272,7 @@ Upto 4 level nesting is parsed in inline functions using (level + 1) number of a
     - You can use `Slides.xmd.extensions` to extend additional syntax using Markdown extensions such as 
         [markdown extensions](https://python-markdown.github.io/extensions/) and 
         [PyMdown-Extensions](https://facelessuser.github.io/pymdown-extensions/).
-    - These markdown extensions are inluded by default code`{_md_extensions}`.
+    - These markdown extensions are inluded by default [code: {_md_extensions} /].
     - You can serialize custom python objects to HTML using `Slides.serializer` function. Having a 
         ` __format__ ` method in your class enables to use {{obj}} syntax in python formatting and \%{{obj}} in extended Markdown.
 '''
@@ -371,7 +377,7 @@ Variable | Default | Description
 ```md-after
 Define `@keyframes` in Slides.css(...) or in a notebook cell.
 ::: block anim-kf --kf-name=pulsePop --kf-time=900ms --kf-ease=ease-out
-    Plays user-defined @keyframes pulsePop with nav/parts animation lifecycle.
+    Plays user-defined `@keyframes` `pulsePop` with nav/parts animation lifecycle.
 ```
 
 **🌟 Power Mode: `anim-group`** (Staggered Animations)

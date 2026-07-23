@@ -960,7 +960,7 @@ function linkSwitchesSlide(model, box) {
                 alert(`Link '${anchor.textContent}' does not point to a valid slide`);
             }
         } else if (!originSlide || !targetSlide) {
-            alert(`Link target not found or it was not set on a slide: '${anchor.textContent}'`);
+            alert(`Link target not found or it was not set on a slide or slide's build is pending: '${anchor.textContent}'`);
         } 
     });
 }

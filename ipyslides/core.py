@@ -1,16 +1,14 @@
 import shutil, inspect
-import sys, json, re, math, uuid, textwrap, warnings
+import sys, json, re, math, textwrap
 from contextlib import contextmanager, suppress
-from collections import namedtuple
 from collections.abc import Iterable
-from itertools import zip_longest
 from typing import Union, overload
 from pathlib import Path
 
 from IPython import get_ipython
 from IPython.display import display, clear_output
 
-from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars, _stream_chunks
+from .xmd import xmd, esc, fmt, get_main_ns, _matched_vars, _internal_xmd_call
 from .writer import hold, write, group
 from .formatters import bokeh2html, plt2html, plt2image, serializer, _delim, slidebound
 from . import formatters
@@ -113,8 +111,8 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     ::: note-tip
         - Use code`Slides.instance()` class method to keep older settings. code`Slides()` apply default settings every time.
-        - Run code`slides.demo()` to see a demo of some features.
-        - Run code`slides.docs()` to see documentation.
+        - Run code`ipyslides.demo()` to see a demo of some features.
+        - Run code`ipyslides.docs()` to see documentation.
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
@@ -129,12 +127,12 @@ class Slides(BaseSlides,metaclass=Singleton):
         - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')`.
         - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
           code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
-        - Use code`section[True]\`Backup slides\`` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.
+        - Use `[section\: Backup slides :: True \/]` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.
     """
 
     @classmethod
     def instance(cls):
-        "Access current instnace without changing the settings."
+        "Access current instance without changing the settings."
         return cls._instance
 
     def __init__(self, extensions=[],**settings):
@@ -147,6 +145,11 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.get_child_dir('.ipyslides-assets', create = True) # It should be present/created to load resources     
         self.settings(**settings)
         xmd.extensions.extend(extensions) # globally once
+        
+        # Registered for xmd usage, we must decorate them as well to be able to raise error before initialization of slides. 
+        # They will be overwritten from instance to reflect proper usage signature
+        for fname in ["notes","section","refs","toc"]:
+            _internal_xmd_call(fname, True)(getattr(self, fname))
  
         self.plt2html   = plt2html
         self.plt2image  = plt2image
@@ -450,7 +453,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with _build_slide(self, 0):
             self.stack([
                 self.styled("""
-                    color['var(--accent-color)']`Replace this with creating a slide with number` alert`0`
+                    [color: Replace this with creating a slide with number [alert: 0 /] :: 'var(--accent-color)' /]
                     
                     ::: note-tip
                         Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
@@ -489,7 +492,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         return '<sup>,</sup>'.join(citeds) 
 
     def _cite_key(self, key):
-        """Use markdown syntax cite`key` to add citations since output has to be inline. 
+        """Use markdown syntax `@key` to add citations. 
         Citations corresponding to keys used can be added by ` Slides.set_citations ` method.
         """
         cited = _Citation(slide=self.this, key=key)
@@ -498,7 +501,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         # Return string otherwise will be on different place, avoid newline here
         return f'<a href="#{key}" class="citelink"><sup id ="{key}-back" style="color:var(--accent-color) !important;">{cited._id}</sup></a>'
     
-    def _nocite(self, key): # @key!, cite`key!` without adding to citations
+    def _nocite(self, key): # @key! without adding to citations
         if key in self._citations:
             return self.html('span',self._citations[key].partition("<p>")[-1].rpartition("</p>")[0],
             style = dict(left="initial",top="initial"), css_class = "citetext text-box text-small").value
@@ -531,8 +534,9 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     def set_citations(self, data):
         r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
-        key should be cited in markdown as cite\`key\` / \@key, optionally comma separated keys.
-        Number of columns in displayed citations are determined by code`Slides.settings.layout(..., ncol_refs=N)` or markdown refs\`N\`/`Slides.refs(N)`.
+        key should be cited in markdown as `@key`, optionally comma separated keys. `@key!` will show citation inline.
+        Number of columns in displayed citations are determined by code`Slides.settings.layout(..., ncol_refs=N)` or 
+        per slide by `[refs\:N\/]` / `Slides.refs(N)`.
 
         ```python
         set_citations({"key1":"value1","key2":"value2"})
@@ -588,11 +592,12 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     
     @slidebound("Section")
+    @_internal_xmd_call("section",True)
     def section(self, text, supplemental = False):
-        """Add section key to presentation that will appear in table of contents. In markdown, use section`content` syntax.
+        """Add section key to presentation that will appear in table of contents.
         Sections can be written as table of contents. First call with supplemental=True will win and following all sections would be in supplemental part.
         """
-        self.this._section = str(text).strip()  # assign before updating toc
+        self.this._section = xmd.convert(str(text).strip(), strip_tags=True)  # assign before updating toc
         # Keep keyboard End/Home boundaries in sync even when rebuilding existing slides.
         if supplemental:
             self.this._is_supp = True # make on slide, not outside to make correct when slide get deleted
@@ -603,51 +608,37 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.settings.footer._set_on(s) # update all slides footer to reflect correct sections
             if s._toc_args and s != self.this: 
                 s.update_display()
- 
+    
+    @_internal_xmd_call("toc", True)
     @slidebound
     def toc(self, title='## Contents {.align-left}', highlight = False):
-        """You can also use markdown syntax to add it like toc`title` or toc[highlight=True]`title` 
-        or toc[True]`title`."""
-        self.this._toc_args = (title, highlight)
-        display(self.this._reset_toc()) # Must to have metadata there
-    
-    @slidebound
-    def refs(self, ncol=None, *keys):
-        r"""Return XTML or None for references with all keys or a subset of keys which were used without `!` at end.
-        Unused keys from all calls to this function will be added at end of slide automatically. 
-        References are set in `Slides.set_citations`. In markdown, use refs\`ncol\` syntax.
+        """Add table of contents to the slide, output must be displayed or passed to `write` command 
+        while in markdown it automatically displays. Automatically updates when sections change.
         """
-        objs = self.this._citations.values() if not keys else [v for k,v in self.this._citations.items() if k in keys]
+        self.this._toc_args = (xmd.convert(str(title).strip(), strip_tags=True), highlight)
+        return self.this._reset_toc()
+    
+    @_internal_xmd_call("refs", True)
+    @slidebound
+    def refs(self, ncol=None, keys=None):
+        r"""Return XTML or None for references with all keys or a subset of keys (comma seperated string without @) which were used without `!` at end.
+        Unused keys from all calls to this function will be added at end of slide automatically. 
+        References are set in `Slides.set_citations`.
+        """
+        if keys is not None:
+            if not isinstance(keys, str):
+                raise TypeError(f"keys should be a comma separated string of keys or None, got {type(keys)}")
+            keys = [k.strip() for k in keys.split(',')]
+            
+        objs = self.this._citations.values() if not keys else [v for k,v in self.this._citations.items() if k in keys] 
         for obj in objs:
             obj._used = True  # mark as used to track unused ones
-        return self.this._build_refs(objs, ncol=ncol)
-
-    def link(self, label, back_label=None, icon=None, back_icon=None):
-        r"""Create a link to jump to another slide. Use `label` for link text 
-        and `back_label` for the  optional text on the target slide if need to jump back.
-
-        - Use `link.origin` to create a link to jump to target slide where `link.target` is placed.
-        - If back_label was provided, `link.target` will be able to jump back to the `link.origin`.
-        - In makdown, you can use created link as variables like `\%{link.origin}` and `\%{link.target}` to display links.
-        - Use similar links in markdown as `<link:[unique id here]:origin label>` and `<link:[unique id here same as origin]:target [back_label,optional]>`.
-        - In markdown, icons can be passed in label as alert`"fa\`arrow\` label text"`.
-        """
-        anchor_id = uuid.uuid4().hex  # Generate unique anchor id
         
-        origin = self.html('a',
-            (f' <i class="fa fa-{icon}"></i>' if icon else '') + label,
-            id=f"origin-{anchor_id}", 
-            href = f"#target-{anchor_id}", 
-            css_class="slide-link"
-        )
-
-        target = self.html('a',
-            (f' <i class="fa fa-{back_icon}"></i>' if back_icon else '') + (back_label or ''), 
-            id=f"target-{anchor_id}", 
-            href = f"#origin-{anchor_id}", 
-            css_class="slide-link"
-        )
-        return namedtuple("Link", ["origin", "target"])(origin, target)
+        # handle markdown input for ncol
+        if isinstance(ncol, str) and ncol.strip().isdigit():
+            ncol = int(ncol.strip())
+        
+        return self.this._build_refs(objs, ncol=ncol)
 
     def show(self):
         "Display Slides."
@@ -960,11 +951,6 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         self.this._src_func = func # store for later build
         self.this._set_css_classes(add = 'Stale') # mark as stale to build later
-    
-    @slidebound
-    def pending(self, func):
-        print("Use @src decorator instead! This will be deprecated in future versions.")
-        return self.src(func)
 
     def __xmd(self, line, cell=None):
         r"""Turns to cell magics `%%xmd` and line magic `%xmd` to display extended markdown.
@@ -1009,7 +995,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         if not tocs:
             children.append(self.html('',
-                [r"No sections found!, create sections with markdown syntax alert`section\`content\``"]
+                [r"No sections found!, create sections with markdown syntax [alert: [section\: content \/] /]"]
             ).as_widget())
         else:
             self._toc_widget.set_toc_items(tocs) # instead of setting options here
@@ -1036,14 +1022,7 @@ class Slides(BaseSlides,metaclass=Singleton):
             self.refresh()  # Refresh all slides
 
         return tuple(filter(lambda s: s.number in slide_numbers, self._slides_dict.values())) 
-    
-    def demo(self):
-        print("DeprecationWarning: Use top level ipyslides.demo() instead!")
-        return demo()
-    
-    def docs(self):
-        print("DeprecationWarning: Use top level ipyslides.docs() instead!")
-        return docs()
+
     
     class pause:
         """Pause delimiter! Use `Slides.pause()` or import `pause` from top level to create a new revealable part in slide.
@@ -1051,7 +1030,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         - Adjacent pause delimiters are ignored, so no empty parts are created in normal flow.
         - A call `pause()` before `write` command adds parts inside columns and rows. 
-            - Use code`pause(isolate=True)` to isolate previous content from a following `write(...columns...)` reveal.
+            - Use [code: pause(isolate=True) /] to isolate previous content from a following `write(...columns...)` reveal.
             - In markdown, use `++[isolate]` before `::: columns` (with `+++` separators) for the same behavior.
                     See `write` command for more details.
         - Use code`pause.iter(iterable)` to create multiple parts from iterable automatically.

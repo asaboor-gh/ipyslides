@@ -1,7 +1,8 @@
 # This package exports xmd and fmt at top level.
 
-import textwrap, re, sys, string, builtins, inspect
+import textwrap, re, sys, string, builtins, inspect, ast
 from itertools import islice
+from functools import partial
 from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
@@ -10,7 +11,7 @@ from typing import Optional, Union
 
 from markdown import Markdown
 from IPython.display import display
-from IPython.utils.capture import capture_output
+from IPython.utils.capture import capture_output, CapturedIO
 from ipywidgets import DOMWidget
 
 from .formatters import (XTML, altformatter, htmlize, get_slides_instance, 
@@ -57,31 +58,15 @@ class Extensions:
             "extension_configs": {**self._configs, **_md_extension_configs}
         }
 
-_special_funcs = { # later functions can encapsulate earlier ones
-    "vspace": "number in units of em",
-    "hspace": "number in units of em",
-    "line": "length in units of em, [color, width and style]",
-    "today": "format_spec like %b-%d-%Y",
-    "fa": "fontawesome icon name, [css_props]",
-    "alert": "text",
-    "color": "text",
-    "code": "inline code highlighter or use ::: code block",
-    "textbox": "text",  # Anything above this can be enclosed in a textbox
-    "image": "path/src or clip:filename",
-    "bg": "path/src or none, [opacity, filter, contain] (last one wins per slide)",
-    "raw": "text, or use ::: raw block",
-    "svg": "path/src",
-    "iframe": "src",
-    "details": "text or use ::: details block",
-    "styled": "style objects with CSS classes and inline styles or use block ::: with css classes and props inline",
-    "focus": "focus on a node of html when clicked or used ::: focus-self/focus-child blocks",
-    "center": r"text or \%{variable} or use ::: center, ::: align-center blocks", # should after most of the functions
-    "stack": r"text separated by || in inline mode, or use ::: columns/::: group block",
-    "yoffset": "integer in percent, use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
-    "transition": "slides transition such as zoom, fade etc. Use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
-    "css": "css properties for current slide, use ['all'] as econd parameter to apply to all slides or list of numbers for specific slides.",
-    "pin": "pin a markdown text or image file at specific position x,y and width,height. Additional paramters are center,zorder,rotate,blur and other css properties. See `Slides.pin` for details.",
-}
+_XMD_FUNCS = {} # will be populated by decorated functions
+
+def _internal_xmd_call(fname, slidebound=False):
+    "Decorator to register a function as an internal xmd function."
+    def decorator(func):
+        nonlocal fname, slidebound
+        _XMD_FUNCS[fname] = (func, "slide" if slidebound else "module") # store function and whether it is slidebound
+        return func
+    return decorator
 
 def error(name, msg):
     "Add error without breaking execution."
@@ -91,6 +76,7 @@ def warn(msg, name="UserWarning"):
     "Show warning message in slides but not in fullscreen mode."
     return XTML(f"<pre class='Error Warn jupyter-only'><b style='color:orange;'>{name}</b><span>: {msg}</span></pre>")
 
+@_internal_xmd_call('raw')
 def raw(text, css_class=None): # css_class is required here to make compatible with utils
     "Keep shape of text as it is (but apply dedent), preserving whitespaces as well. "
     _class = css_class if css_class else ''
@@ -128,63 +114,41 @@ def capture_content(stdout: bool = True, stderr: bool = True, display: bool = Tr
             yield cap # pass capturedIO at top
     finally: # only need finally, errors are automatically thrown
         builtins.print = bprint
+        
+def _resolve_citations(parser, content):
+    "Resolve citations and other minimal stuff that can't nest other functions."
+    slides = get_slides_instance()
+    if not slides or not slides.this: # under building slide
+        return content # no need to resolve anything
 
-
-def resolve_objs_on_slide(xmd_instance, slide_instance, text_chunk):
-    "Resolve objects in text_chunk corrsponding to slide such as cite, notes, etc."
-    # notes`This is a note for current slide`
-    all_matches = re.findall(
-        r"(?<![\`\.])\bnotes\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE 
-    )
-    for match in all_matches:
-        slide_instance.notes.insert(match)
-        text_chunk = text_chunk.replace(f"notes`{match}`", "", 1)
-    
-    # @key! for inline citations even in footnote mode, do before others, avoid matching text@key! or `@key!` with negative lookbehind
-    text_chunk = re.sub(r"(?<![\`\w\\])@(?:[A-Za-z_]\w*)!", lambda m: slide_instance._nocite(m.group()[1:-1]), text_chunk)
-    
-    # @key -> cite`key` before other stuff
-    at_key_pattern = re.compile(r'''
+    AT_KEYS = re.compile(r'''
         (?<!\\) # negative lookbehind: don't match if there's a backslash
         (?<!\w) # Don't match if a word before so example@google.com is safe
         (?<!\`) # Don't match keys inside backticks
-        @(?:[A-Za-z_]\w*)(?:\s*,\s*@(?:[A-Za-z_]\w*))*   # @key, @key4 (citation) or single @key
+        @(?:[A-Za-z_]\w*!?)(?:\s*,\s*@(?:[A-Za-z_]\w*!?))*   # @key, @key2!, @key3 (single or comma-separated)
     ''', re.VERBOSE)
-    for match in at_key_pattern.findall(text_chunk):
-        tocite = f"cite`{match.replace('@','')}`"
-        text_chunk = text_chunk.replace(match, tocite, 1)
+    
+    def sub_cite(match):
+        keys = [k.strip().lstrip('@') for k in match.group().split(',')] # split by comma and remove leading @
+        # group keys types, superscript citations first, then inline
+        sup_keys = ",".join(k for k in keys if not k.endswith('!'))
+        inline_keys = [k for k in keys if k.endswith('!')]
+        
+        # First handle superscript citations in a group
+        res = parser._handle_var(slides._cite(sup_keys)) if sup_keys else ""
+        # Then handle inline citations
+        for key in inline_keys:
+            res += slides._nocite(key[:-1]) # remove ! at end for inline citations
+        return res
+    
+    # replace @key, @key2! etc with citation output
+    content = AT_KEYS.sub(sub_cite, content)  
+    # warn for cite`*keys` usage
+    content = re.sub(r"(?<![\`\.])\bcite\`(.*?)\`;?", 
+        lambda m: warn(f'Use @key, @key2!, @key3 etc. {m.group()} syntax is deprecated.').value, 
+        content, flags=re.DOTALL) 
+    return content
 
-    # cite`key`
-    all_matches = re.findall(r"(?<![\`\.])\bcite\`(.*?)\`", text_chunk, flags=re.DOTALL)
-    for match in all_matches:
-        if match.endswith('!'):
-            xmd_key = ''.join(slide_instance._nocite(key) for key in match[:-1].strip().split(','))  # remove ! at end
-        else:
-            xmd_key = xmd_instance._handle_var(slide_instance._cite(match.strip()))
-        text_chunk = text_chunk.replace(f"cite`{match}`", xmd_key, 1)
-
-    # section[supplemental]`This is section title`. Note the word boundary to avoid matching section inside ticks or escaps
-    all_matches = re.findall(
-        r"(?<![\`\.])\bsection(\[.*?\])?\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE
-    )
-    for issup, title in all_matches:
-        slide_instance.section(title,True if issup.strip('[]').strip() else False)  # This will be attached to the running slide
-        text_chunk = text_chunk.replace(f"section{issup}`{title}`", "", 1)
-
-
-    # toc[highlight]`This is toc title`, should be after block
-    all_matches = re.findall(r"(?<![\`\.])\btoc(\[.*?\])?\`(.*?)\`", text_chunk, flags=re.DOTALL | re.MULTILINE)
-    for hl, title in all_matches:
-        slide_instance.this._toc_args = (title, True if hl.strip('[]').strip() else False) # should be fully clear
-        text_chunk = text_chunk.replace(f"toc{hl}`{title}`", xmd_instance._handle_var(slide_instance.this._reset_toc()), 1)
-
-    # Refs at place of user choice
-    all_matches = re.findall(r"(?<![\`\.])\brefs\`(.*?)\`", text_chunk, flags=re.DOTALL) # match digit or empty
-    for match in all_matches:
-        ncol, *keys = [v.strip() for v in match.split(',')]
-        out = xmd_instance._handle_var(slide_instance.refs(int(ncol) if ncol.isdigit() else None, *keys)) # match is empty or digit and keys
-        text_chunk = text_chunk.replace(f"refs`{match}`", out, 1)
-    return text_chunk
 
 class HtmlFormatter(string.Formatter):
     def format_field(self, value, format_spec):
@@ -249,8 +213,8 @@ tagfixer = TagFixer()
 del TagFixer
 
 class char_esc:
-    r"""Utility class for escaping and restoring characters \@,\%,\|, and \` using backslash in text."""
-    _chars = r"`@%|/" # Characters to escape
+    r"""Utility class for escaping and restoring characters \@,\%,\|,\`,\<,\>,\:, \;, \! using backslash in text."""
+    _chars = r"`@%|/<>:;!" # Characters to escape
 
     @classmethod
     def escape(cls, text):
@@ -284,6 +248,20 @@ class esc:
     def __format__(self, format_spec):
         return f"%{{{self._key}:{format_spec}}}" # return placeholder for later formatting
     
+@_internal_xmd_call('include')
+def include(filepath : str, start:int=None, end=None):
+    "Include a markdown file or snippet from a file. Use `start` and `end` to specify line numbers range."
+    return error('NotImplementedError', 'The include function is not implemented yet. include`file.md[start:end]` syntax for now!').value
+    
+    # # This must get indentation in kwargs
+    # # And need to be single pass to avoid nesting, on next nest it must raise error
+    # # So a separate resolve_included_files function is must to flatten content first
+    # try:
+    #     with open(filepath, "r", encoding="utf-8") as f:
+    #         lines = f.readlines()[slice(start,end)]
+    #         return "".join(lines)
+    # except Exception as e:
+    #     return error('Exception', f'Could not include file or markdown snippet {filepath!r}:\n{e}').value
 
 # This shoul be outside, as needed in other modules
 def resolve_included_files(text_chunk):
@@ -346,7 +324,16 @@ def _mask_html_comments(text):
             s = s.replace(f'<!--_xmd_cmt_{i}_-->', c)
         return s
     return masked, restore
+
 _PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
+
+MACRO_RE = re.compile(
+    r"(?<![\\\x60])"            # not preceded by backslash or backtick
+    r"\[([a-zA-Z_]\w*)([:!])\s*"         # [name: or [name! with optional spaces, must not start with a digit
+    r"((?:(?!\[[a-zA-Z_]\w*[!:])[\s\S])*?)"  # body; stop before a nested macro opener
+    r"\s*/\]",            # closing /] must stay free so sub/sup before text can stay closer
+    flags = re.DOTALL | re.MULTILINE
+)
 
 class XMarkdown(Markdown):
     def __init__(self):
@@ -354,7 +341,6 @@ class XMarkdown(Markdown):
         self._vars = {}
         self._fmt_ns = {} # provided by fmt
         self._returns = True
-        self._slides = get_slides_instance()
         self._nesting_depth = 0 # checks if using _parse in nested manner
     
     @property
@@ -363,6 +349,10 @@ class XMarkdown(Markdown):
             from . import writer # avoid cyclic, but import once
             self._wr_imported = writer
         return self._wr_imported
+    
+    @property
+    def _slides(self):
+        return get_slides_instance() # always get the current slides instance, not cached
     
     @property
     def _running_md_slide(self): # checks if parsing under purely markdown slide
@@ -504,8 +494,18 @@ class XMarkdown(Markdown):
             if typ == "multicol": typ = "columns" # backward-compatible alias
             return typ, prop, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
         return '', '', sizes, '', kwargs, node_attrs
-
     
+    def _parse_args(self, param_str):
+        "Parse inline function arguments and keyword arguments from a string using ast.literal_eval."
+        # Must avoid using eval() for security reasons. ast.literal_eval is safe for literals.
+        if not param_str or not param_str.strip():
+            return (), {}
+
+        call_node = ast.parse(f"dummy({param_str})").body[0].value
+        args = [ast.literal_eval(arg) for arg in call_node.args]
+        kwargs = {kw.arg: ast.literal_eval(kw.value) for kw in call_node.keywords}
+        return tuple(args), kwargs
+
     def _split_blocks_with_dedent(self, text):
         """Split ::: blocks, ending them when dedentation occurs. 
         DON'T TRY TO BE OVERSMART WITH COMPLAEX REGEX AS THIS CODE
@@ -564,8 +564,7 @@ class XMarkdown(Markdown):
         def repl(m: re.Match): # Remove <p> and </p> tags at start and end, also keep backtick
             return f'`{re.sub("^<p>|</p>$", "", self._parse_nested(m.group(1), returns = True))}`' 
 
-        print("Use func/`content` or func[]/`content` syntax for flexible nested parsing using upto 4 slashes! `//content//` syntax is rigid and will be removed in future versions")
-        # match neseted `// //` upto many levels
+        # match neseted `// //` upto many levels, will be deprecated
         for depth in range(4,1,-1): # `////, `///, `// at least two slashes
             op, cl = '/'*depth, '/'*depth
             text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
@@ -812,16 +811,15 @@ class XMarkdown(Markdown):
         text = resolve_included_files(text)
         text = char_esc.escape(text)  # Escape characters before processing
         
-        text = self._resolve_md_vars(text)  # Resolve <md-var/> variables stored during md-var blocks
-        text = self._resolve_nested(text)  # Resolve nested objects in form func`//text//` to func`html_repr`
-        if self._slides and self._slides.this: # under building slide
-            text = resolve_objs_on_slide(
-                self, self._slides, text # escape \@cite_key before resolving objects on slides
-            )  # Resolve objects in xmd related to current slide
-        
-        # Resolve <link:label:origin text> and <link:label:target text?>
+        text = self._resolve_md_vars(text)  # Resolve [md-var/] variables stored during md-var blocks
+        text = self._resolve_nested(text)  # To be deprecated, but still supported for backward compatibility
+        # Reolve link targets as invisible span with id
+        text = re.sub(r"(?<![\`\\])\[\#([\w\-]+)/\](?!\S)", r"<span id='\1' class='slide-link-target'></span>", text)
+        # Resolve (deprecated) <link:label:origin text> and <link:label:target text?>
         text = re.sub(r"<link:([\w\d-]+):origin\s*(.*?)>", r"<a href='#target-\1' id='origin-\1' class='slide-link'>\2</a>", text)
         text = re.sub(r"<link:([\w\d-]+):target\s*(.*?)>", r"<a href='#origin-\1' id='target-\1' class='slide-link'>\2</a>", text)
+        # Resolve citations before variable substitution to avoid conflicts with citation keys
+        text = _resolve_citations(self, text)  
         
         # _resolve_vars internally replace escaped \` and `%{ back to ` and %{ 
         return self._resolve_vars( # reolve vars after conversion, resets escaped characters too
@@ -830,12 +828,13 @@ class XMarkdown(Markdown):
             ))
     
     def _resolve_md_vars(self, text):
-        # Replace <md-var/> variables stored during md-var blocks, 
+        # Replace [md-var/] variables stored during md-var blocks, 
         # but reusing snippets expose internal state, AVOID THAT
-        all_matches = re.findall(r"(?<![`])<md-([\w\d]+)/>", text) # avoid ` before < to not match code syntax
+        text = re.sub(r"(?<![\`\\])\<md-([\w]+)/\>", r"[md-\1/]", text) # update legacy to new syntax
+        all_matches = re.findall(r"(?<![\`\\])\[md-([\w]+)/\](?!\S)", text) # avoid `\ and end must
         for match in all_matches:
             value = esc._store.pop(match, error('NameError', f'Markdown variable {match!r} is not defined or already used!'))
-            text = text.replace(f"<md-{match}/>", self._handle_var(value, f'::: md-{match}'), 1)
+            text = text.replace(f"[md-{match}/]", self._handle_var(value, f'::: md-{match}'), 1)
         return text
     
     def _var_info(self, match_str):
@@ -885,8 +884,13 @@ class XMarkdown(Markdown):
             # Handle nested like center`alert`text`` things before saving next varibale
             self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value) 
         else: # Handles TOC, DOMWidget and Others rich displays
-            key = f"DISPLAYVAR{len(self._vars)}DISPLAYVAR"
-            self._vars[key] = value # Direct value stored
+            values = value.outputs if isinstance(value, CapturedIO) else [value] # if captured, get outputs
+            keys = []
+            for val in values:
+                key = f"DISPLAYVAR{len(self._vars)}DISPLAYVAR"
+                self._vars[key] = val # Direct value stored
+                keys.append(key) 
+            key = '\n'.join(keys) # join all keys for multiple outputs
         
         if ctx: # for better error message
             self._vars[key + '_ctx'] = ctx
@@ -931,49 +935,82 @@ class XMarkdown(Markdown):
 
             html_output = re.sub(var_pattern, handle_match, html_output, flags=re.DOTALL)
 
+        
         # Replace inline functions, keep it nested for accessing inner state
-        # Matches ANY valid Python identifier followed by an optional bracket block and backtick
-        func_pattern = r"(?<![\`\.])\b([a-zA-Z\_][a-zA-Z0-9\_]*)(\[.*?\])?{}\`(.*?)\`"
-        
-        
+        all_func = '|'.join(_XMD_FUNCS) # escape ^ and _ for regex, as they are special characters
+        FUNC_RE = rf"(?<![\`\.])\b({all_func})(\[.*?\])?\`([^\`]*)\`"
         # Check if there is at least one macro format to process
-        if re.search(func_pattern.format("/*"), html_output, flags=re.DOTALL | re.MULTILINE):
-            from . import utils  # Inside function to avoid circular import
-
-            def repl_inline_func(m):
-                func, args, content = m.groups()
-                
-                if func not in _special_funcs:
-                    available_list = ", ".join(f"'{f}'" for f in sorted(_special_funcs.keys()))
-                    return self._handle_var(error('NameError',  f"Unrecognized function '{func}'.\n"
-                        f"Available functions are: {available_list}"))
-                    
-                _func = getattr(utils, func)
-                arg0 = char_esc.restore(content, True) if func == "code" else content.strip() # hl needs corrected content
-                
-                if not args:
-                    try:
-                        _out = (_func(arg0) if arg0 else _func())
-                    except Exception as e:
-                        _out = error('Exception', f"Could not parse '{func}`{content}`': \n{e}")
-                else:
-                    try:
-                        _out = eval(f"utils.{func}({arg0!r},{args[1:-1]})" if arg0 else f"utils.{func}({args[1:-1]})")
-                    except Exception as e:
-                        _out = error('Exception',
-                            f"Could not parse '{func}{args}`{content}`'. Error in arguments: \n{e}\n"
-                            f"Arguments in [] must be valid Python code (e.g., strings in quotes) and are passed to {func}{inspect.signature(_func)}."
-                        )
-                return self._handle_var(_out.inline if func == "code" else _out)
-            
+        if re.search(FUNC_RE, html_output, flags=re.DOTALL | re.MULTILINE):
             with self.active_parser(): # set instance parser to pass variables
-                # Handle Nesting of inline functions by number of slashes before opening backtick
-                for dp in range(4,-1,-1): # from 4 to 0, without nesting too
-                   html_output = re.sub(func_pattern.format("/"*dp), repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE) 
+                html_output = re.sub(FUNC_RE, self.repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
 
+        # These will be deprecated in future alongwith bactick functions
         html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
         html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
+        
+        # New style function call [name: arg0 :: arg1, arg2, ... /] or [name! arg1, arg2 :: long text in arg0 /]
+        # Match only innermost blocks by forbidding nested openers like [other: or [other! inside body.
+        with self.active_parser(): # set instance parser to pass variables
+            depth = 0
+            while MACRO_RE.search(html_output):
+                depth += 1
+                html_output = MACRO_RE.sub(self.repl_py_func, html_output)
+                if depth > 16: # prevent infinite loop
+                    return self._handle_var(error('RecursionError', 
+                        f"Too many nested macros (> 16) in '{html_output}'")
+                    )
         return html_output 
+    
+    def repl_inline_func(self, m):
+        # This will be deprecated
+        func, argvs, content = m.groups()
+        if argvs:
+            argvs = argvs[1:-1] # remove brackets
+        return self._exec_py_func(m, func, content, argvs)
+    
+    def repl_py_func(self, match):
+        fname, mode, content = match.groups()
+        if re.search(r'\s*(?<!\S)::(?!\S)\s*', content): # ensure ::: is not cut
+            content, argvs = re.split(r'\s*(?<!\S)::(?!\S)\s*', content, maxsplit=1) # split at first occurrence of ' :: '
+            if mode == '!':
+                content, argvs = argvs, content # swap parameters for ! mode
+        else:
+            # For ! mode, if no :: present, treat content as argvs and empty content
+            content, argvs = (content, None) if mode == ':' else ("", content) 
+        
+        return self._exec_py_func(match, fname, content, argvs)
+        
+    def _exec_py_func(self, match, fname, content, argvs):
+        if fname == "anyTag":
+            return self._handle_var(error('Exception', f"anyTag function cannot be called directly, use valid html [tag: text :: **node_attributes/] instead!"))
+        
+        # resolve variables in content for certain functions as they take content out of place
+        if fname in ("section", "toc", "notes"):
+            content = self._resolve_vars(content) 
+        
+        try:
+            args, kwargs = self._parse_args(argvs)
+        except Exception as e:
+            return self._handle_var(error('Exception', f"Error parsing arguments for '{match.group(0)}': \n{e}\n"))
+        
+        func, ctx = _XMD_FUNCS.get(fname, _XMD_FUNCS["anyTag"])
+        if 'anyTag' in func.__name__:
+            func = partial(func, fname.strip('_')) # partial function for anyTag with tag name, svg_ goes to svg tag, not svg function
+        
+        if ctx == "slide" and not getattr(self._slides, 'this', None): # slide only functions
+            return self._handle_var(error('Exception', f"Slide-only function '{match.group(0)}' cannot be used outside a slide context!"))
+        
+        arg0 = char_esc.restore(content, True) if fname == "code" else content.strip() # code needs corrected content
+        if not arg0 and (Ps := list(inspect.signature(func).parameters.values())):
+            arg0 = Ps[0].default if Ps[0].default is not inspect.Parameter.empty else "" # most function have empty string as default
+        
+        try:
+            res = func(arg0, *args, **kwargs)
+        except Exception as e:
+            res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
+                f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code></div>")
+
+        return self._handle_var(res.inline if fname == "code" else res)
     
     @contextmanager
     def active_parser(self):
@@ -1059,9 +1096,36 @@ class _XMDMeta(type):
     
     @staticmethod
     def parse(content: Union[str, fmt], returns:bool=False) -> Optional[str]: # This is intended to be there, not redundant
+        "Parse markdown content and return HTML string or display rich output objects."
         if hasattr(XMarkdown, '_active_parser'): # keeps variables and fmt namespace
             return XMarkdown._active_parser(content, returns=returns)
         return XMarkdown()._parse(content, returns=returns)
+    
+    @classmethod
+    def convert(cls, content: Union[str, fmt], strip_tags: bool = False) -> str:
+        "Convert markdown to HTML string. If `strip_tags` is True, the outer <p> tags will be removed if possible."
+        out = cls.parse(content, returns=True) # must return str
+        if strip_tags:
+            out = re.sub(r"^<p>|</p>$", "", out).strip() # remove outer <p> tags if possible
+        return out
+    
+    @property
+    def funcs(self):
+        "List of available inline functions for extended markdown."
+        from .utils import html, doc, details
+        return html("div", 
+            "\n".join([
+                details(doc(value[0]), 
+                    summary=f"{key}: <em style='font-size:0.75em;opacity:0.6;'>{value[1]}</em>", 
+                    name="funcs-accordian", # to open exclusively
+                    background="var(--bg2-color)",
+                    border_radius="0.25em",
+                ).value
+                for key, value in sorted(_XMD_FUNCS.items(), key=lambda x: x[0])
+            ]) + html("style", ".funcs-grid > details[open] {grid-column: 1/-1;}").value,
+            style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5em;", 
+            css_class="funcs-grid",
+        )
     
     def __dir__(cls): # tab completion still sucks with meta programming!
         return sorted(list(super().__dir__()) + ['extensions', 'syntax', 'parse'])
@@ -1082,6 +1146,8 @@ class xmd(metaclass=_XMDMeta):
 
     You can add extra markdown extensions using `Slides.xmd.extensions` or `ipyslides.xmd.extensions`.
     See [markdown extensions](https://python-markdown.github.io/extensions/) for details.
+    
+    If you want to return the stripped paragraph content without outer <p> tags, use `xmd.convert(content, strip_tags=True)`.
     
     **Returns**: A direct call or xmd.parse method returns a string with HTML content if `returns=True` (default), otherwise display rich output objects.
     """
