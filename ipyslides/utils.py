@@ -1,5 +1,5 @@
 _attrs = ['AnimationSlider', 'JupyTimer', 'ListWidget', 'alt', 'alert', 'as_html', 'as_html_widget', 'bullets', 'color', 'error', 'table', 'suppress_output','suppress_stdout','capture_content',
-    'details', 'set_dir', 'textbox', 'code', 'fa', 'link', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
+    'details', 'set_dir', 'textbox', 'code', 'fa', 'gap', 'link', 'hspace', 'vspace', 'center', 'icon', 'image', 'svg','iframe','frozen', 'raw', 'warn', 'bg',
     'focus','html', 'sig','stack', 'styled', 'doc', 'transition', 'today','get_child_dir','get_notebook_dir','is_jupyter_session','inside_jupyter_notebook','yoffset','css','pin']
 
 __all__ = sorted(_attrs)
@@ -394,7 +394,7 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
 def bg(src=None, opacity=1, filter=None, contain=False):
     """Set background image for the current slide.
 
-    Markdown usage: `[bg: src :: opacity=0.4,contain=True /]`
+    Markdown usage: `[bg! "test.png", opacity=0.4,contain=True /]`
     """
     if isinstance(src, str) and src.strip().lower() in ('none', 'null'):
         src = None
@@ -710,16 +710,18 @@ def link(target_uid:str, text:str="Jump to Linked Slide", icon:str=None, uid:str
 
 _VOID_TAGS = ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr') # self closing tags
     
-def html(tag, children = None,css_class = None,**node_attrs):
+def html(tag, children = None,css_class = None, void_attrs=None,**node_attrs):
     """Returns html node with given children and node attributes like style, id etc. If an ttribute needs '-' in its name, replace it with '_'.     
     `tag` can be any valid html tag name. A self closing tag must not have children e.g. ` hr ` will be `<hr/>`.  Empty tag gives unwrapped children.
     
     `children` expects:
     
-    - If None, returns node for self closing tags such as [code: html('image',alt='Image') /] → [code: <img alt='Image'></img> :: 'html' /].
+    - If None, returns node for self closing tags such as [code! :: html('image',alt='Image') /] → [code! 'html' :: <img alt='Image'></img> /].
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
     - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use code`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
+    
+    `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
     
     Example:
     ```python
@@ -737,8 +739,11 @@ def html(tag, children = None,css_class = None,**node_attrs):
     if tag in ['hr', 'hr/']: 
         return XTML(f'<hr/>') # Special case for hr
     
-    if children and tag.endswith('/'):
-        raise RuntimeError(f'Parametr `children` should be None for self closing tag {tag!r}')
+    if void_attrs:
+        if not isinstance(void_attrs, str):
+            raise TypeError(f'void_attrs should be a string of space separated attributes, got {type(void_attrs)}')
+    else:
+        void_attrs = ''
     
     if tag == 'style':
         if isinstance(children, dict):
@@ -750,6 +755,7 @@ def html(tag, children = None,css_class = None,**node_attrs):
     
     node_attrs = {k.replace('_','-'):v for k,v in node_attrs.items()}
     attrs = ' '.join(_inline_style(v) if ('style' in k and isinstance(v, dict)) else f'{k}="{v}"' for k,v in node_attrs.items()) # Join with space is must
+    attrs += (f' {void_attrs}' if void_attrs else '') # these usually come at end
     if css_class:
         attrs = f'class="{css_class}" {attrs}'
     
@@ -783,15 +789,29 @@ def as_html_widget(obj=''): # should be useable empty
 
 # This is only intended to use for general tags in markdown, do not use in python
 @_internal_xmd_call('anyTag')
-def anyTag(tag, content = "",css_class = None,**node_attrs):
+def anyTag(tag, content = "", css_class = None, void_attrs=None, **node_attrs):
     """Picks up html tag from markdown function calls and returns html node with given text and node attributes 
     like style, id etc. If an attribute needs '-' in its name, replace it with '_'.
     
-    The markdown call syntax for registered python functions and html tags is same given by two modes:
+    `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
     
-    - `[func\: first small arg like file path or text \:\: *args, **kwargs \/]`.
-    - `[func\! *args, **kwargs \:\: long multiline content in first arg \/]`.
-    - In both modes, `*args` and `**kwargs` are python literals, so proper qoutation marks are required for strings unlike first free content argument.
+    The markdown call syntax for registered python functions and html tags is same given by:
+    
+    `[func\! *args, **kwargs \:\: long multiline content in first arg or for _ value of a parameter \/]`.
+    
+    Where `*args` and `**kwargs` are python literals, so proper quotation marks are required for strings.
+    
+    The content after `::` does not require quotes and is passed as follows:
+    - If none of the argumnet uses an underscore ` - ` as it's value, then the content parameter will receive the value.
+    - Any arg or kwarg using underscore ` - ` as its value will receive a string value. e.g.
+    - Will throw error if `tag` is self closing tag and content is not empty. e.g. `[img\! src="test.png" :: test content \/]` will throw error.
+    
+    ```markdown   
+    [details! summary = "Open Me" ::
+        This is a test content with multiple lines
+        It must maintain its own indentation and line breaks
+    /]
+    ```
     
     You can override a registered function by pure html tag by appending ` _ ` to the tag. For example,
     ` svg_ ` will be html tag that overrides the `svg` function."""
@@ -801,17 +821,23 @@ def anyTag(tag, content = "",css_class = None,**node_attrs):
         raise RuntimeError(f'Parametr `content` should be empty for self closing tag {tag!r}')
     
     # strips outer <p> tags to avoid double wrapping in <p> when used inside other tags
-    return html(tag, xmd.convert(content, True), css_class=css_class, **node_attrs) 
+    return html(tag, xmd.convert(content, True), css_class=css_class, void_attrs=void_attrs, **node_attrs)
 
-@_internal_xmd_call('vspace')
 def vspace(em = 1):
-    "Returns html node with given height in `em`."
-    return html('span',style=f'height:{em}em;display:inline-block;') # span with inline display can be used inside <p>
+    print(f"vspace is deprecated, use gap('em', h=0, v={em}) instead.")
+    return gap('em', h=0, v=em)
 
-@_internal_xmd_call('hspace')
 def hspace(em = 1):
-    "Returns html node with given width in `em`."
-    return html('span',style=f'width:{em}em;display:inline-block;') # span with inline display can be used inside <p>
+    print(f"hspace is deprecated, use gap('em', h={em}, v=0) instead.")
+    return gap('em', h=em, v=0)
+
+@_internal_xmd_call('gap')
+def gap(h=1, v=1, unit = 'em'):
+    r"""Returns html span node with given horizontal and vertical gap in `unit` (px, em, rem, % etc.). 
+    Useful for creating space between elements in a layout. `h` is horizontal gap and `v` is vertical gap.
+    Markdown usage: `[gap\! v=0.5 \/]`, `[gap\! 2, 0.5, unit="px" \/]` etc.
+    """
+    return html('span',style=f'width:{h}{unit};height:{v}{unit};display:inline-block;') # span with inline display can be used inside <p>
 
 @_internal_xmd_call('line')
 def line(length=5, color='var(--fg1-color)',width=1,style='solid'):

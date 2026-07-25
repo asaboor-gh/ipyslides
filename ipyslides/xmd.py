@@ -57,7 +57,9 @@ class Extensions:
             "extensions": list(set([*self._exts, *_md_extensions])), 
             "extension_configs": {**self._configs, **_md_extension_configs}
         }
-
+        
+# NEVER allow random functions, only xmd.register is gateway for security,
+# as well as scope, like a function inside python script is not in notebook user namespace to access here
 _XMD_FUNCS = {} # will be populated by decorated functions
 
 def _internal_xmd_call(fname, slidebound=False):
@@ -328,9 +330,9 @@ def _mask_html_comments(text):
 _PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
 
 MACRO_RE = re.compile(
-    r"(?<![\\\x60])"            # not preceded by backslash or backtick
-    r"\[([a-zA-Z_]\w*)([:!])\s*"         # [name: or [name! with optional spaces, must not start with a digit
-    r"((?:(?!\[[a-zA-Z_]\w*[!:])[\s\S])*?)"  # body; stop before a nested macro opener
+    r"(?<![\\\`])"            # not preceded by backslash or backtick
+    r"\[([a-zA-Z_]\w*)!\s*"         # [name! with optional spaces, must not start with a digit
+    r"((?:(?!\[[a-zA-Z_]\w*!)[\s\S])*?)"  # body; stop before a nested macro opener
     r"\s*/\]",            # closing /] must stay free so sub/sup before text can stay closer
     flags = re.DOTALL | re.MULTILINE
 )
@@ -495,15 +497,40 @@ class XMarkdown(Markdown):
             return typ, prop, sizes, ' '.join(args[1:]), kwargs, node_attrs # block type, sizes, className, css_props, node_attrs
         return '', '', sizes, '', kwargs, node_attrs
     
-    def _parse_args(self, param_str):
+    def _parse_args(self, param_str, content=None):
         "Parse inline function arguments and keyword arguments from a string using ast.literal_eval."
         # Must avoid using eval() for security reasons. ast.literal_eval is safe for literals.
         if not param_str or not param_str.strip():
-            return (), {}
+            return () if content is None else (content,), {}
+        
+        def validate_(used, content):
+            if used:
+                raise ValueError("Multiple underscore values are not allowed.")
+            if content is None:
+                raise ValueError("Underscore value of an argument requires content to be provided with :: separator.")
+            return True # if valid, return True to indicate underscore is used
 
         call_node = ast.parse(f"dummy({param_str})").body[0].value
-        args = [ast.literal_eval(arg) for arg in call_node.args]
-        kwargs = {kw.arg: ast.literal_eval(kw.value) for kw in call_node.keywords}
+        used_, args, kwargs = False, [], {}
+        
+        for arg in call_node.args:
+            if isinstance(arg, ast.Name) and arg.id == '_':
+                used_ = validate_(used_, content)
+                args.append(content)  # Use the content as the value for the underscore argument
+            else:
+                args.append(ast.literal_eval(arg))
+        
+        for kw in call_node.keywords:
+            if isinstance(kw.value, ast.Name) and kw.value.id == '_':
+                used_ = validate_(used_, content)
+                kwargs[kw.arg] = content  # Use the content as the value for the underscore argument
+            else:
+                kwargs[kw.arg] = ast.literal_eval(kw.value)
+        
+        # If underscore is not used, prepend content to args if content is provided
+        if not used_ and content is not None:
+            args = [content, *args] 
+    
         return tuple(args), kwargs
 
     def _split_blocks_with_dedent(self, text):
@@ -881,7 +908,7 @@ class XMarkdown(Markdown):
         
         if isinstance(value, (str, XTML)): 
             key = f"PrivateXmdVar{len(self._vars)}X" # end X to make sure separate it 
-            # Handle nested like center`alert`text`` things before saving next varibale
+            # Handle nested funcs output before saving next variable
             self._vars[key] = self._resolve_vars(value if isinstance(value, str) else value.value) 
         else: # Handles TOC, DOMWidget and Others rich displays
             values = value.outputs if isinstance(value, CapturedIO) else [value] # if captured, get outputs
@@ -948,8 +975,8 @@ class XMarkdown(Markdown):
         html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
         html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
         
-        # New style function call [name: arg0 :: arg1, arg2, ... /] or [name! arg1, arg2 :: long text in arg0 /]
-        # Match only innermost blocks by forbidding nested openers like [other: or [other! inside body.
+        # New style function call [name! arg1, arg2, _ :: _ will pick this or first arg... /]
+        # Match only innermost blocks by forbidding nested openers like [other! inside body.
         with self.active_parser(): # set instance parser to pass variables
             depth = 0
             while MACRO_RE.search(html_output):
@@ -964,32 +991,35 @@ class XMarkdown(Markdown):
     def repl_inline_func(self, m):
         # This will be deprecated
         func, argvs, content = m.groups()
+        if content and not content.strip(): 
+            content = None # explicit None to avoid passing first parameter
+        
         if argvs:
             argvs = argvs[1:-1] # remove brackets
         return self._exec_py_func(m, func, content, argvs)
     
     def repl_py_func(self, match):
-        fname, mode, content = match.groups()
-        if re.search(r'\s*(?<!\S)::(?!\S)\s*', content): # ensure ::: is not cut
-            content, argvs = re.split(r'\s*(?<!\S)::(?!\S)\s*', content, maxsplit=1) # split at first occurrence of ' :: '
-            if mode == '!':
-                content, argvs = argvs, content # swap parameters for ! mode
-        else:
-            # For ! mode, if no :: present, treat content as argvs and empty content
-            content, argvs = (content, None) if mode == ':' else ("", content) 
-        
+        fname, argvs = match.groups()
+        content = None # defualt is None content
+        if re.search(r'\s*(?<!\S)::(?!\S)', argvs): # ensure ::: is not cut, but also avoid to consume later spacing that hurts indentation
+            argvs, content = re.split(r'\s*(?<!\S)::(?!\S)', argvs, maxsplit=1) # split at first occurrence of ' :: '
+            
         return self._exec_py_func(match, fname, content, argvs)
         
     def _exec_py_func(self, match, fname, content, argvs):
         if fname == "anyTag":
-            return self._handle_var(error('Exception', f"anyTag function cannot be called directly, use valid html [tag: text :: **node_attributes/] instead!"))
+            return self._handle_var(error('Exception', f"anyTag function cannot be called directly, use valid html [tag! **node_attributes :: node content /] instead!"))
         
-        # resolve variables in content for certain functions as they take content out of place
-        if fname in ("section", "toc", "notes"):
-            content = self._resolve_vars(content) 
+        # resolve variables in content for certain functions as they take content out of flow
+        if content is not None:
+            content = textwrap.dedent(content).rstrip() # dedent content for better formatting, but keep leading spaces
+            if fname in ("section", "toc", "notes"):
+                content = self._resolve_vars(content) 
+            elif fname == "code": # code needs corrected content
+                content = char_esc.restore(content, True)
         
         try:
-            args, kwargs = self._parse_args(argvs)
+            args, kwargs = self._parse_args(argvs, content)
         except Exception as e:
             return self._handle_var(error('Exception', f"Error parsing arguments for '{match.group(0)}': \n{e}\n"))
         
@@ -1000,14 +1030,10 @@ class XMarkdown(Markdown):
         if ctx == "slide" and not getattr(self._slides, 'this', None): # slide only functions
             return self._handle_var(error('Exception', f"Slide-only function '{match.group(0)}' cannot be used outside a slide context!"))
         
-        arg0 = char_esc.restore(content, True) if fname == "code" else content.strip() # code needs corrected content
-        if not arg0 and (Ps := list(inspect.signature(func).parameters.values())):
-            arg0 = Ps[0].default if Ps[0].default is not inspect.Parameter.empty else "" # most function have empty string as default
-        
         # make sure inline displays are captured in correct place like matplotlib plots
         with capture_content() as cap:
             try:
-                res =  func(*args, **kwargs) if ctx == "user" else func(arg0, *args, **kwargs) # user functions don't take content
+                res =  func(*args, **kwargs)
                 res = res.inline if fname == "code" else res # code function returns SourceCode object, not inline
             except Exception as e:
                 res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
@@ -1173,6 +1199,9 @@ class _XMDMeta(type):
            User-defined functions do not accept content as first argument, 
            unlike built-in functions, so all arguments are python literals and call mode is `!` is covenient for them.
         """
+        # MUST BE ONLY GATEWAY FOR USER-DEFINED FUNCTIONS FOR SECURITY and SCOPE REASONS.
+        # SCOPE ISSUE: A function in python file is not visible in user namespace
+        # although user may think it is, so register is the only way to make it visible in extended markdown.
         if not isinstance(name, str):
             raise TypeError(f"Expected a string for function name, got {type(name)}")
         

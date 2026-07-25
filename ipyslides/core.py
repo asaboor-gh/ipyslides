@@ -127,7 +127,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')`.
         - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
           code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
-        - Use `[section\: Backup slides :: True \/]` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.
+        - Use `[section\! "Backup slides", True \/]` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.
     """
 
     @classmethod
@@ -453,7 +453,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with _build_slide(self, 0):
             self.stack([
                 self.styled("""
-                    [color: Replace this with creating a slide with number [alert: 0 /] :: 'var(--accent-color)' /]
+                    [color! 'var(--accent-color)' :: Replace this with creating a slide with number [alert! 0 /] /]
                     
                     ::: note-tip
                         Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  
@@ -536,7 +536,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
         key should be cited in markdown as `@key`, optionally comma separated keys. `@key!` will show citation inline.
         Number of columns in displayed citations are determined by code`Slides.settings.layout(..., ncol_refs=N)` or 
-        per slide by `[refs\:N\/]` / `Slides.refs(N)`.
+        per slide by `[refs\! N \/]` / `Slides.refs(N)`.
 
         ```python
         set_citations({"key1":"value1","key2":"value2"})
@@ -995,7 +995,7 @@ class Slides(BaseSlides,metaclass=Singleton):
 
         if not tocs:
             children.append(self.html('',
-                [r"No sections found!, create sections with markdown syntax [alert: [section\: content \/] /]"]
+                [r"No sections found!, create sections with markdown syntax [alert! :: [section\! content \/] /]"]
             ).as_widget())
         else:
             self._toc_widget.set_toc_items(tocs) # instead of setting options here
@@ -1030,7 +1030,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         
         - Adjacent pause delimiters are ignored, so no empty parts are created in normal flow.
         - A call `pause()` before `write` command adds parts inside columns and rows. 
-            - Use [code: pause(isolate=True) /] to isolate previous content from a following `write(...columns...)` reveal.
+            - Use [code! :: pause(isolate=True) /] to isolate previous content from a following `write(...columns...)` reveal.
             - In markdown, use `++[isolate]` before `::: columns` (with `+++` separators) for the same behavior.
                     See `write` command for more details.
         - Use code`pause.iter(iterable)` to create multiple parts from iterable automatically.

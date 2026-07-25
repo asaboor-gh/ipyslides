@@ -184,9 +184,7 @@ See [demo.pdf](demo.pdf) for an example exported PDF.
     - You can extend markdown syntax using `Slides.extender` API. See some good extensions to add from [PyMdown](https://facelessuser.github.io/pymdown-extensions/).
 
 - **Inline Python Function:**
-    - You can register inline functions using `xmd.register` and use already register functions with
-    arguments-first `[func! *args, **kwargs :: optional content for built in functions]` or content-first
-    `[func: text content only for html tags and builtin functions :: *args, **kwargs]` syntax.
+    - You can register inline functions using `xmd.register` and use already register functions with syntax `[func! *args, **kwargs :: optional content that is either first text arg or attached to an _ value in parameters]`.
     - See `xmd.syntax` and `xmd.funcs` for details on inline function.
     - These functions support nesting and can show any IPython content.
 

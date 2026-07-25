@@ -101,7 +101,7 @@ class SourceCode(XTML):
         klass = lambda attr: 'highlight inline' + (' dim' if 'dim' in attr else '')
         return XTML( 
             '<br>'.join(f'<code class="{klass(attr)}" style="white-space:pre-wrap;">' + c 
-                for attr, c in re.findall(r'\<\s*code(.*?)\>(.*?\<\s*\/\s*code\s*\>)', 
+                for attr, c in re.findall(r'\s*\<\s*code(.*?)\>(.*?\<\s*\/\s*code\s*\>)', 
                     self.value, flags=re.DOTALL | re.MULTILINE
         ))) # intended to be one liner, but leave for flexibility
     
