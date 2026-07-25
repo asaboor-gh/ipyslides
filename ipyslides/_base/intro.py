@@ -59,7 +59,7 @@ with slides.slide(-1):
 ```
 
 ```python
-slides # This displays slides if on the last line of cell, or use code`slides.show()`.
+slides # This displays slides if on the last line of cell, or use [code! :: slides.show() /].
 ```
 
 ::: note-info
@@ -129,8 +129,8 @@ Use `Save as PDF` option instead of Print PDF in browser to make links work in o
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
 
 For widgets and other objects's snapshots to be available in exported
-slides, use alert`slides.alt`. You can paste screenshots from system tool 
-into Clips GUI in side panel. On Linux, you need alert` xclip ` or alert`wl-paste` installed.
+slides, use [alert! :: slides.alt /]. You can paste screenshots from system tool
+into Clips GUI in side panel. On Linux, you need [alert! :: xclip /] or [alert! :: wl-paste /] installed.
 
 ::: note-tip
     - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.

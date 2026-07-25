@@ -447,9 +447,9 @@ def write(*objs,widths = None, css_class=None, **css_props):
             
     ::: note
         - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.
-        - `write` is a robust command that can handle most of the cases. If nothing works, code`repr(obj)` will be displayed.
-        - You can avoid code`repr(obj)` by code`Slides.hold(func, ...)` e.g. code`Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
-        - You can use code`display(obj, metadata = {'text/html': 'html repr by user'})` for any object to display object as it is and export its HTML representation in metadata.
+        - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
+        - You can avoid `repr(obj)` by `Slides.hold(func, ...)` e.g. `Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
+        - You can use [code! :: display(obj, metadata = {'text/html': 'html repr by user'}) /] for any object to display object as it is and export its HTML representation in metadata.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
         - In markdown `columns`/`group` block syntax is similar to `write` command if `+++` separartor is used there.
         - Use `::: group snapshots=True` (and optional `header=...`) in markdown to enable snapshots behavior for that group block.
@@ -458,7 +458,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
         A single column is flattened up to 2 levels, so `[[obj1], row2, [item1, item2]]` will be displayed as 3 rows.
         
-        Use code`group([...], snapshots=True)` to reveal rows in isolation for a specific column.
+        Use [code! :: group([...], snapshots=True) /] to reveal rows in isolation for a specific column.
         
         **Incremental display** is triggered only when you place `Slides.pause()` delimiter **before** the `write` command:
         

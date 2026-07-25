@@ -235,8 +235,8 @@ class char_esc:
     
 class esc:
     r"""Lazy escape of variables in markdown using python formatted strings, to be resolved later and safe from markdown parsing.
-    Use as code`xmd(f"This is an escaped variable: {esc(var or expression)}`
-    or code`xmd("This is an escaped variable: {}".format(esc(var or expression))`.
+    Use as [code! :: xmd(f"This is an escaped variable: {esc(var or expression)}") /]
+    or [code! :: xmd("This is an escaped variable: {}".format(esc(var or expression))) /].
     This is in par with \%{var} syntax, but more flexible as it can take any expression. 
     You are advised to use formatting strings rarely, instead use `fmt` class to pick variables 
     and avoid clashes with $ \LaTeX $ syntax.
@@ -1023,6 +1023,10 @@ class XMarkdown(Markdown):
         except Exception as e:
             return self._handle_var(error('Exception', f"Error parsing arguments for '{match.group(0)}': \n{e}\n"))
         
+        # Must to keep check on internal calls
+        if not "anyTag" in _XMD_FUNCS:
+            return self._handle_var(error('Exception', f"ipyslides is partially initialized. Cannot parse {match.group(0)!r}"))
+        
         func, ctx = _XMD_FUNCS.get(fname, _XMD_FUNCS["anyTag"])
         if 'anyTag' in func.__name__:
             func = partial(func, fname.strip('_').lower()) # partial function for anyTag with tag name, svg_ goes to svg tag, not svg function
@@ -1038,6 +1042,7 @@ class XMarkdown(Markdown):
             except Exception as e:
                 res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
                     f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code></div>")
+        
         if cap.outputs:
             return self._handle_var(cap) + self._handle_var(res)
         return self._handle_var(res)

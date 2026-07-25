@@ -94,7 +94,7 @@ class Singleton(type):
 
 class Slides(BaseSlides,metaclass=Singleton):
     """Interactive Slides in IPython Notebook. Only one instance can exist. `settings` 
-    are passed to code`Slides.settings()` if you like to set during initialization. You
+    are passed to [code! :: Slides.settings() /] if you like to set during initialization. You
     can also edit file .ipyslides-assets/settings.json to make settings persistent across sessions
     and load/sync them via GUI in sidepanel.
     
@@ -107,26 +107,26 @@ class Slides(BaseSlides,metaclass=Singleton):
     ```
     ::: note-info
         The traitlets callables under settings returns settings back to enable chaining 
-        without extra typing, like code`Slides.settings.logo().layout()...` .
+        without extra typing, like [code! :: Slides.settings.logo().layout()... /] .
     
     ::: note-tip
-        - Use code`Slides.instance()` class method to keep older settings. code`Slides()` apply default settings every time.
-        - Run code`ipyslides.demo()` to see a demo of some features.
-        - Run code`ipyslides.docs()` to see documentation.
+        - Use [code! :: Slides.instance() /] class method to keep older settings. [code! :: Slides() /] apply default settings every time.
+        - Run [code! :: ipyslides.demo() /] to see a demo of some features.
+        - Run [code! :: ipyslides.docs() /] to see documentation.
         - Instructions in left settings panel are always on your fingertips.
         - Creating slides in a batch using `Slides.create` is much faster than adding them one by one.
         - In JupyterLab, right click on the cell containing slides (outside slides) and select `Create New View for Output` for optimized display.
         - To jump to source cell and back to slides by clicking buttons, set `Windowing mode` in Notebook settings to `defer` or `none`.
-        - See code`Slides.xmd.syntax` for extended markdown syntax, especially variables formatting.
+        - See [code! :: Slides.xmd.syntax /] for extended markdown syntax, especially variables formatting.
         - Inside python scripts or for encapsulation, use `Slides.fmt` to pick variables from local scope.
     
     ::: note-info
         - `Slides` can be indexed same way as list for sorted final indices. 
-        - For indexing slides with given number, use comma as code`Slides[number,] → Slide` 
-        - Access many via list as code`Slides[[n1,n2,..]] → SlideGroup` or slice as code`Slides[start:stop:step] → SlideGroup`.
-        - `SlideGroup` can be used to apply batch operations on many slides at once, e.g. code`Slides[[1,3,5]].vars.update(name='Alice')`.
+        - For indexing slides with given number, use comma as [code! :: Slides[number,] → Slide /] 
+        - Access many via list as [code! :: Slides[[n1,n2,..]] → SlideGroup /] or slice as [code! :: Slides[start:stop:step] → SlideGroup /].
+        - [code! :: SlideGroup /] can be used to apply batch operations on many slides at once, e.g. [code! :: Slides[[1,3,5]].vars.update(name='Alice') /].
         - Use indexing with given number to apply persistent effects such as CSS or acess via attributes such as 
-          code`Slides.s0`, code`Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
+          `Slides.s0`, `Slides.s1` etc. for existing slides, so `Slides.s10 == Slides[10,]` if slide with number 10 exists.
         - Use `[section\! "Backup slides", True \/]` to mark start of supplemental slides. Progress completes before this section and supplemental frames/slides are numbered as `S.1`, `S.2`, ... while remaining navigable.
     """
 
@@ -535,8 +535,8 @@ class Slides(BaseSlides,metaclass=Singleton):
     def set_citations(self, data):
         r"""Set citations from dictionary or string with content like `\@key: citation value` on their own lines, 
         key should be cited in markdown as `@key`, optionally comma separated keys. `@key!` will show citation inline.
-        Number of columns in displayed citations are determined by code`Slides.settings.layout(..., ncol_refs=N)` or 
-        per slide by `[refs\! N \/]` / `Slides.refs(N)`.
+        Number of columns in displayed citations are determined by [code! :: Slides.settings.layout(..., ncol_refs=N) /] or 
+        per slide by [code! :: [refs\! N \/] /] / [code! :: Slides.refs(N) /].
 
         ```python
         set_citations({"key1":"value1","key2":"value2"})
@@ -957,7 +957,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         Can use in place of `write` commnad for strings.
         When using `%xmd`, you can pass variables as \%{var} (slash for escap here) which will substitute HTML representation
         if no other formatting specified.
-        Inline columns are supported with stack`C1 || C2` syntax."""
+        Inline columns are supported with `[stack\! :: C1 || C2 /]` syntax."""
         if cell is None:
             return xmd(line, returns = False)
         else:
@@ -1025,15 +1025,15 @@ class Slides(BaseSlides,metaclass=Singleton):
 
     
     class pause:
-        """Pause delimiter! Use `Slides.pause()` or import `pause` from top level to create a new revealable part in slide.
+        """Pause delimiter! Use [code! :: Slides.pause() /] or import `pause` from top level to create a new revealable part in slide.
         In markdown slides, use two plus signs `++` on its own line, optionally add content right after `++ `.
         
         - Adjacent pause delimiters are ignored, so no empty parts are created in normal flow.
-        - A call `pause()` before `write` command adds parts inside columns and rows. 
+        - A call [code! :: pause() /] before `write` command adds parts inside columns and rows. 
             - Use [code! :: pause(isolate=True) /] to isolate previous content from a following `write(...columns...)` reveal.
             - In markdown, use `++[isolate]` before `::: columns` (with `+++` separators) for the same behavior.
-                    See `write` command for more details.
-        - Use code`pause.iter(iterable)` to create multiple parts from iterable automatically.
+                    See [code! :: write /] command for more details.
+        - Use [code! :: pause.iter(iterable) /] to create multiple parts from iterable automatically.
         - Last empty pause delimiter is ignored.
         """
         # DO NOT FALL FOR GLOBAL PAGE STUFF (AS BEFORE), THAT IS TOO COMPLEX TO HANDLE 

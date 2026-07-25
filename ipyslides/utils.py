@@ -158,13 +158,6 @@ def _styled_css(props : dict):
     props = {k:v for k,v in props.items() if (isinstance(v,dict) or k.lstrip(' ^<'))} # Remove root attrs and top level access
     return XTML(f"<style>{_build_css((f'{klass}',),props)}</style>")
 
-_css_docstring = htmlize(textwrap.dedent(_build_css.__doc__) + f"""                      
-```python
-props = {json.dumps(_example_props, indent=2)}
-```
-Output of code`Slides.html('style',props)`, code`Slides.css(props)` etc. functions. Top selector would be different based on where it is called.
-""") + code(_styled_css(_example_props).value, "css","CSS").value
-
 def _alt_for_widget(func, widget):
     if not isinstance(widget, ipw.DOMWidget):
         raise TypeError(f'widget should be a widget, got {widget!r}')
@@ -350,8 +343,8 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
 
     **Returns** an `IMG` object which can be exported to other formats (if possible):
 
-    - code`IMG.to_pil()` returns code` PIL.Image ` or None.
-    - code`IMG.to_numpy()` returns image data as numpy array for use in plotting libraries or None.
+    - [code! :: IMG.to_pil() /] returns [code! :: PIL.Image /] or None.
+    - [code! :: IMG.to_numpy() /] returns image data as numpy array for use in plotting libraries or None.
     """
     if crop:
         try:
@@ -471,7 +464,7 @@ def css(props: dict=None, applyto=None, **css_vars):
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
 
     ::: note-tip
-        - See code`Slides.css_syntax` for information on how to write CSS dictionary.
+        - See [code! :: Slides.css_syntax /] for information on how to write CSS dictionary.
         - Underscores in CSS property and variable names are replaced with dashes, so `font_size` becomes `font-size` and `my_var` becomes `--my-var`.
         - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.
         - You can define custom `@keyframes` in CSS and use them with `anim-kf` class by setting `--kf-name` and optional `--kf-*` controls.
@@ -719,7 +712,7 @@ def html(tag, children = None,css_class = None, void_attrs=None,**node_attrs):
     - If None, returns node for self closing tags such as [code! :: html('image',alt='Image') /] → [code! 'html' :: <img alt='Image'></img> /].
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
-    - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use code`slides[number,].set_css` otherwise. See `Slides.css_syntax` to learn about requirements of styles in dict.
+    - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use [code! :: slides.css /] otherwise. See [code! :: Slides.css_syntax /] to learn about requirements of styles in dict.
     
     `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
     
@@ -926,7 +919,7 @@ def stack(objs, sizes=None, vertical=False, css_class=None, **css_props):
         for obj, size in zip(objs, sizes)
     ], style = kwargs, css_class=(f'{css_class or ""} {"" if vertical else "columns"}').strip()) 
     
-
+# Don't try this in markdown, standard markdown table is better alongwith ::: table block
 def table(data, headers = None, widths=None, css_class=None, **css_props):
     """Creates a table of given data like DataFrame, but with rich elements. 
     `data` should be a 2D matrix-like. `headers` is a list of column names. `widths` is a list of widths for each column.
@@ -1079,3 +1072,18 @@ def _save_clipboard_image(filename, quality = 95, overwrite = False):
             im.close() # Close image to save mememory
         else:
             raise ValueError('No image on clipboard/file or not supported format.')
+
+# for css_syntax
+_css_info = (f"""
+{textwrap.dedent(_build_css.__doc__)}
+
+::: note-info
+    In the output of [code! :: Slides.html('style',props) /], [code! :: Slides.css(props) /] etc. functions, top selector 
+    would be different if it is called under slide context or not.
+
+[stack! ::
+{code('props = ' + json.dumps(_example_props, indent=2))}
+|| 
+{code(_styled_css(_example_props).value, 'css','CSS')}
+/]
+""").replace('@',r'\@') # @import etc keys to clean up for markdown

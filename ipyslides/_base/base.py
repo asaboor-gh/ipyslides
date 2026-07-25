@@ -14,7 +14,7 @@ from .notes import Notes
 from .export_html import _HhtmlExporter
 from ..formatters import XTML, htmlize, slidebound
 from ..xmd import error, resolve_included_files, _parse_as_snapshots, _stream_chunks
-from ..utils import _css_docstring
+from ..utils import _css_info
 from ..dashlab import FileWatcher
 
 
@@ -57,8 +57,8 @@ class BaseSlides:
 
     @property
     def css_syntax(self):
-        "CSS syntax for use in Slide.set_css, Slides.html('style', ...) etc."
-        return XTML(_css_docstring)
+        "CSS syntax for use in Slide.css, Slides.html('style', ...) etc."
+        return XTML(htmlize(_css_info))
     
     @property
     def css_animations(self):
