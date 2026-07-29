@@ -291,11 +291,12 @@ def _resolve_img(src, width):
 _internal_xmd_call('code')(code) # Register code class for xmd usage
 
 @_internal_xmd_call('details')
-def details(obj,summary='Click to show content', name=None, **css_props):
+def details(obj,summary='Click to show content', name=None, opened=False, **css_props):
     "Show/Hide Content in collapsed html. Multiple details with same name in a container open exclusively."
     css_props = {'max-height':'100%','overflow':'auto', **css_props}
     nodeattr = f'name="{name}"' if name else ''
-    return XTML(f"""<details {nodeattr} {_inline_style(css_props)}><summary>{summary}</summary>{htmlize(obj)}</details>""")
+    isopen = 'open' if opened else ''
+    return XTML(f"""<details {nodeattr} {_inline_style(css_props)} {isopen}><summary>{summary}</summary>{htmlize(obj)}</details>""")
 
 def _check_pil_image(data):
     "Check if data is a PIL Image or numpy array"
@@ -343,8 +344,8 @@ def image(data=None,width='95%',caption=None, crop = None, css_props={}, css_cla
 
     **Returns** an `IMG` object which can be exported to other formats (if possible):
 
-    - [code! :: IMG.to_pil() /] returns [code! :: PIL.Image /] or None.
-    - [code! :: IMG.to_numpy() /] returns image data as numpy array for use in plotting libraries or None.
+    - [code! IMG.to_pil() /] returns [code! PIL.Image /] or None.
+    - [code! IMG.to_numpy() /] returns image data as numpy array for use in plotting libraries or None.
     """
     if crop:
         try:
@@ -464,7 +465,7 @@ def css(props: dict=None, applyto=None, **css_vars):
     if 'all', it applies to all slides, otherwise it should be index or list of indices of slides.
 
     ::: note-tip
-        - See [code! :: Slides.css_syntax /] for information on how to write CSS dictionary.
+        - See [code! Slides.css_syntax /] for information on how to write CSS dictionary.
         - Underscores in CSS property and variable names are replaced with dashes, so `font_size` becomes `font-size` and `my_var` becomes `--my-var`.
         - You can define global/slide level CSS animation variables like `--time`, `--delay` etc. See `Slides.css_animations` for details of various animations usage.
         - You can define custom `@keyframes` in CSS and use them with `anim-kf` class by setting `--kf-name` and optional `--kf-*` controls.
@@ -709,16 +710,16 @@ def html(tag, children = None,css_class = None, void_attrs=None,**node_attrs):
     
     `children` expects:
     
-    - If None, returns node for self closing tags such as [code! :: html('image',alt='Image') /] → [code! 'html' :: <img alt='Image'></img> /].
+    - If None, returns node for self closing tags such as [code! html('image',alt='Image') /] → [code! . 'html' .. <img alt='Image'></img> /].
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
-    - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use [code! :: slides.css /] otherwise. See [code! :: Slides.css_syntax /] to learn about requirements of styles in dict.
+    - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use [code! slides.css /] otherwise. See [code! Slides.css_syntax /] to learn about requirements of styles in dict.
     
     `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
     
     Example:
     ```python
-    html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displas image if last line in notebook's cell.
+    html('img',src='ir_uv.jpg') #Returns IPython.display.HTML("<img src='ir_uv.jpg'></img>") and displays image if last line in notebook's cell.
     ```
     
     ::: note-tip 
@@ -788,19 +789,12 @@ def anyTag(tag, content = "", css_class = None, void_attrs=None, **node_attrs):
     
     `void_attrs` are value-less attributes, such as `disabled`, `checked`, `open` etc. Must be a string of space separated attributes names.
     
-    The markdown call syntax for registered python functions and html tags is same given by:
+    The markdown call syntax for registered python functions and html tags is same, see `slides.xmd.funcs` for details.
     
-    `[func\! *args, **kwargs \:\: long multiline content in first arg or for _ value of a parameter \/]`.
-    
-    Where `*args` and `**kwargs` are python literals, so proper quotation marks are required for strings.
-    
-    The content after `::` does not require quotes and is passed as follows:
-    - If none of the argumnet uses an underscore ` - ` as it's value, then the content parameter will receive the value.
-    - Any arg or kwarg using underscore ` - ` as its value will receive a string value. e.g.
-    - Will throw error if `tag` is self closing tag and content is not empty. e.g. `[img\! src="test.png" :: test content \/]` will throw error.
+    If `tag` is self closing tag and content is not empty. e.g. `[img\! src="test.png" \.. test content \/]` will throw error.
     
     ```markdown   
-    [details! summary = "Open Me" ::
+    [details! . summary = "Open Me" ..
         This is a test content with multiple lines
         It must maintain its own indentation and line breaks
     /]
@@ -1078,10 +1072,10 @@ _css_info = (f"""
 {textwrap.dedent(_build_css.__doc__)}
 
 ::: note-info
-    In the output of [code! :: Slides.html('style',props) /], [code! :: Slides.css(props) /] etc. functions, top selector 
+    In the output of [code! Slides.html('style',props) /], [code! Slides.css(props) /] etc. functions, top selector 
     would be different if it is called under slide context or not.
 
-[stack! ::
+[stack!
 {code('props = ' + json.dumps(_example_props, indent=2))}
 || 
 {code(_styled_css(_example_props).value, 'css','CSS')}

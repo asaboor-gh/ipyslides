@@ -148,7 +148,7 @@ class code:
         """Highlight code (any python object that has a source or str of code) with given language and style. 
 
         - style only works if css_class is given.
-        - If css_class is given and matches any of [code! :: pygments.styles.get_all_styles() /], then style will be applied immediately.
+        - If css_class is given and matches any of [code! pygments.styles.get_all_styles() /], then style will be applied immediately.
         - color is used for text color as some themes dont provide text color. 
         - CSS properties like color and background are applied if css_class is provided.
         - height is max-height of code block, it does not expand more than code itself.

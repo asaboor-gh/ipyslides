@@ -427,15 +427,15 @@ def write(*objs,widths = None, css_class=None, **css_props):
     Write any object that can be displayed in a cell with some additional features:
     
     - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
-    - Use [code! :: group([...], snapshots=True) /] to reveal items one-by-one during frame navigation.
-        You can set a static header with [code! :: group([...], header='Header') /] it remains visible while group rows change.
-        You can also build it with [code! :: g = group([], snapshots=True); with g.capture(): ... /] and pass `g` as a column.
-    - Display another function to capture its output in order using [code! :: Slides.hold(func,...) /]. Only body of the function will be displayed/printed. Return value will be ignored.
+    - Use [code! group([...], snapshots=True) /] to reveal items one-by-one during frame navigation.
+        You can set a static header with [code! group([...], header='Header') /] it remains visible while group rows change.
+        You can also build it with [code! g = group([], snapshots=True); with g.capture(): ... /] and pass `g` as a column.
+    - Display another function to capture its output in order using [code! Slides.hold(func,...) /]. Only body of the function will be displayed/printed. Return value will be ignored.
     - Dispaly IPython widgets such as `ipywidgets` or `ipyvolume` by passing them directly.
     - Display Axes/Figure form libraries such as `matplotlib`, `plotly` `altair`, `bokeh` etc. by passing them directly.
     - Display source code of functions/classes/modules or other languages by passing them directly or using `Slides.code` API.
     - Use `Slides.alt` function to display obj/widget on slides and alternative content/screenshot of widgets in exported slides.
-    - [code! :: ipywidgets.[HTML, Output, Box] /] and their subclasses will be displayed as [code! :: Slides.alt(html_converter_func, widget) /]. The value of exported HTML will be most recent.
+    - [code! ipywidgets.[HTML, Output, Box] /] and their subclasses will be displayed as [code! Slides.alt(html_converter_func, widget) /]. The value of exported HTML will be most recent.
     - Other options include but not limited to:
         - Output of functions in `ipyslides.utils` module that are also linked to `Slides` object.
         - PIL images, SVGs etc.
@@ -449,7 +449,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         - Use `Slides.frozen` to avoid display formatting and markdown parsing over objects in `write` and for some kind of objects in `display` too.
         - `write` is a robust command that can handle most of the cases. If nothing works, `repr(obj)` will be displayed.
         - You can avoid `repr(obj)` by `Slides.hold(func, ...)` e.g. `Slides.hold(plt.show)`. This can also be used to delay display until it is captured in a column.
-        - You can use [code! :: display(obj, metadata = {'text/html': 'html repr by user'}) /] for any object to display object as it is and export its HTML representation in metadata.
+        - You can use [code! display(obj, metadata = {'text/html': 'html repr by user'}) /] for any object to display object as it is and export its HTML representation in metadata.
         - You can add mini columns inside a column by markdown syntax or ` Slides.stack `, but content type is limited in that case.
         - In markdown `columns`/`group` block syntax is similar to `write` command if `+++` separartor is used there.
         - Use `::: group snapshots=True` (and optional `header=...`) in markdown to enable snapshots behavior for that group block.
@@ -458,7 +458,7 @@ def write(*objs,widths = None, css_class=None, **css_props):
         To make a group of rows as single item visually for incremental display purpose, wrap them in a nested list/tuple.
         A single column is flattened up to 2 levels, so `[[obj1], row2, [item1, item2]]` will be displayed as 3 rows.
         
-        Use [code! :: group([...], snapshots=True) /] to reveal rows in isolation for a specific column.
+        Use [code! group([...], snapshots=True) /] to reveal rows in isolation for a specific column.
         
         **Incremental display** is triggered only when you place `Slides.pause()` delimiter **before** the `write` command:
         

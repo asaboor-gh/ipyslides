@@ -1,6 +1,7 @@
 # This package exports xmd and fmt at top level.
 
-import textwrap, re, sys, string, builtins, inspect, ast
+import textwrap, sys, string, builtins, inspect, ast
+import re, secrets # secrets for unique keys
 from itertools import islice
 from functools import partial
 from contextlib import contextmanager
@@ -215,8 +216,8 @@ tagfixer = TagFixer()
 del TagFixer
 
 class char_esc:
-    r"""Utility class for escaping and restoring characters \@,\%,\|,\`,\<,\>,\:, \;, \! using backslash in text."""
-    _chars = r"`@%|/<>:;!" # Characters to escape
+    r"""Utility class for escaping and restoring characters \@,\%,\|,\`,\<,\>,\:, \;, \!, \.,\, using backslash in text."""
+    _chars = r"`@%|/<>:;!.," # Characters to escape
 
     @classmethod
     def escape(cls, text):
@@ -235,8 +236,8 @@ class char_esc:
     
 class esc:
     r"""Lazy escape of variables in markdown using python formatted strings, to be resolved later and safe from markdown parsing.
-    Use as [code! :: xmd(f"This is an escaped variable: {esc(var or expression)}") /]
-    or [code! :: xmd("This is an escaped variable: {}".format(esc(var or expression))) /].
+    Use as [code! xmd(f"This is an escaped variable: {esc(var or expression)}") /]
+    or [code! xmd("This is an escaped variable: {}".format(esc(var or expression))) /].
     This is in par with \%{var} syntax, but more flexible as it can take any expression. 
     You are advised to use formatting strings rarely, instead use `fmt` class to pick variables 
     and avoid clashes with $ \LaTeX $ syntax.
@@ -309,23 +310,38 @@ _extensions = Extensions() # Global instance of Extensions, don't delete class E
 # Internal cache to avoid re-compiling regex for every slide/fragment
 _PATTERN_CACHE = {}
 
-_HTML_COMMENT_RE = re.compile(r'<!--.*?-->', re.DOTALL)
+class cmnt_esc:
+    "Important to escape HTML comment to avoid parsing syntax inside it"
+    _store = {} # stores escaped comments here from formatting.
+    _COMMENT_RE = re.compile(r'<!--.*?-->', re.DOTALL | re.MULTILINE)
+    _TOKEN_RE = re.compile(r"<!-- ESC-[0-9a-f]{16}-CMT -->") # 16 hex digits key
+    
+    @classmethod
+    def _ukey(cls):
+        while True: # avoid collision, though very unlikely
+            key = f'<!-- ESC-{secrets.token_hex(8)}-CMT -->' # keep as comment to avoid issues if can't be replaced
+            if key not in cls._store:
+                return key
+            
+    @classmethod
+    def escape(cls, text):
+        def _mask(m):
+            key = cls._ukey()
+            cls._store[key] = m.group(0)
+            return key
+        
+        return cls._COMMENT_RE.sub(_mask, text)
+    
+    @classmethod
+    def restore(cls, text):
+        def _unmask(m):
+            key = m.group(0)
+            if cls._store.get(key, None) is None:
+                return key  # leave unknown token unchanged
+            return cls._store.pop(key)  # Remove used key from the store to free memory
 
-def _mask_html_comments(text):
-    """Mask HTML comments so their content is not treated as xmd markers (:::, ++, ---, --).
-    Returns (masked_text, restore) where restore(s) replaces placeholders back with originals.
-    Each call is independent — safe to use in generators and nested parsers simultaneously.
-    """
-    comments = []
-    def _mask(m):
-        comments.append(m.group())
-        return f'<!--_xmd_cmt_{len(comments) - 1}_-->'
-    masked = _HTML_COMMENT_RE.sub(_mask, text)
-    def restore(s):
-        for i, c in enumerate(comments):
-            s = s.replace(f'<!--_xmd_cmt_{i}_-->', c)
-        return s
-    return masked, restore
+        return cls._TOKEN_RE.sub(_unmask, text)
+    
 
 _PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILINE) # This is used to split by ++ on its own line,
 
@@ -382,7 +398,7 @@ class XMarkdown(Markdown):
 
         # Mask HTML comments before any splitting so their content (:::, ++, ```) is not treated as markers.
         # Python-Markdown passes <!--...--> through unchanged, so short placeholders survive convert().
-        xmd, _restore_comments = _mask_html_comments(xmd)
+        xmd = cmnt_esc.escape(char_esc.escape(xmd))  # Escape characters as well before processing
 
         if xmd[:3] == "```":  # Could be a block just in start but we need newline to split blocks
             xmd = "\n" + xmd
@@ -426,7 +442,7 @@ class XMarkdown(Markdown):
                     content += out.value
                 else:
                     content += self._wr._fmt_html(out) # Rich content from python execution and Writer
-            return _restore_comments(content)
+            return char_esc.restore(cmnt_esc.restore(content))
         else:
             return display(*outputs)
         
@@ -502,33 +518,24 @@ class XMarkdown(Markdown):
         # Must avoid using eval() for security reasons. ast.literal_eval is safe for literals.
         if not param_str or not param_str.strip():
             return () if content is None else (content,), {}
-        
-        def validate_(used, content):
-            if used:
-                raise ValueError("Multiple underscore values are not allowed.")
-            if content is None:
-                raise ValueError("Underscore value of an argument requires content to be provided with :: separator.")
-            return True # if valid, return True to indicate underscore is used
 
         call_node = ast.parse(f"dummy({param_str})").body[0].value
-        used_, args, kwargs = False, [], {}
+        args, kwargs = [], {}
         
         for arg in call_node.args:
-            if isinstance(arg, ast.Name) and arg.id == '_':
-                used_ = validate_(used_, content)
-                args.append(content)  # Use the content as the value for the underscore argument
-            else:
-                args.append(ast.literal_eval(arg))
+            arg = ast.literal_eval(arg)
+            if isinstance(arg, str):
+                arg = self._resolve_vars(arg)  # Resolve variables in string arguments
+            args.append(arg)
         
         for kw in call_node.keywords:
-            if isinstance(kw.value, ast.Name) and kw.value.id == '_':
-                used_ = validate_(used_, content)
-                kwargs[kw.arg] = content  # Use the content as the value for the underscore argument
-            else:
-                kwargs[kw.arg] = ast.literal_eval(kw.value)
+            karg = ast.literal_eval(kw.value)
+            if isinstance(karg, str):
+                karg = self._resolve_vars(karg)  # Resolve variables in string keyword arguments
+            kwargs[kw.arg] = karg
         
-        # If underscore is not used, prepend content to args if content is provided
-        if not used_ and content is not None:
+        # We are not resolving vars in content yet here
+        if content is not None:
             args = [content, *args] 
     
         return tuple(args), kwargs
@@ -629,6 +636,7 @@ class XMarkdown(Markdown):
             return self._parse_colon_block(header, data)
         else:
             out = XTML() # empty placeholder
+            data = char_esc.restore(cmnt_esc.restore(data)) # restore comments before highlighting
             try:
                 name = " " if typ.lower() == "text" else None
                 out.data = _highlight(data, language=typ, name=name, css_class=_class) # intercept code highlight
@@ -836,8 +844,6 @@ class XMarkdown(Markdown):
         Returns str or list of outputs based on context. To ensure str, use `parse(..., returns=True)`.
         """
         text = resolve_included_files(text)
-        text = char_esc.escape(text)  # Escape characters before processing
-        
         text = self._resolve_md_vars(text)  # Resolve [md-var/] variables stored during md-var blocks
         text = self._resolve_nested(text)  # To be deprecated, but still supported for backward compatibility
         # Reolve link targets as invisible span with id
@@ -900,7 +906,7 @@ class XMarkdown(Markdown):
                 return objs
 
         out = re.sub(r"PrivateXmdVar(\d+)X", lambda m: self._vars.get(m.group(), m.group()), text)
-        return char_esc.restore(out)
+        return char_esc.restore(cmnt_esc.restore(out)) # restore comments and escaped characters
   
     def _handle_var(self, value, ctx=None): # Put a temporary variable that will be replaced at end of other conversions.
         if value is None: # Avoid None values such as coming from refs
@@ -975,7 +981,7 @@ class XMarkdown(Markdown):
         html_output = re.sub(r'(?: )?\^\`([^\`]*?)\`',r'<sup>\1</sup>', html_output) # superscript, leading space for readability consumed
         html_output = re.sub(r'(?: )?\_\`([^\`]*?)\`',r'<sub>\1</sub>', html_output) # subscript
         
-        # New style function call [name! arg1, arg2, _ :: _ will pick this or first arg... /]
+        # New style function call [name! content /]
         # Match only innermost blocks by forbidding nested openers like [other! inside body.
         with self.active_parser(): # set instance parser to pass variables
             depth = 0
@@ -991,24 +997,43 @@ class XMarkdown(Markdown):
     def repl_inline_func(self, m):
         # This will be deprecated
         func, argvs, content = m.groups()
-        if content and not content.strip(): 
+        if content is not None and not content.strip(): 
             content = None # explicit None to avoid passing first parameter
         
         if argvs:
             argvs = argvs[1:-1] # remove brackets
+            if content is None:
+                content = "" # pass empty string if no content, but args are tried
         return self._exec_py_func(m, func, content, argvs)
     
     def repl_py_func(self, match):
         fname, argvs = match.groups()
-        content = None # defualt is None content
-        if re.search(r'\s*(?<!\S)::(?!\S)', argvs): # ensure ::: is not cut, but also avoid to consume later spacing that hurts indentation
-            argvs, content = re.split(r'\s*(?<!\S)::(?!\S)', argvs, maxsplit=1) # split at first occurrence of ' :: '
-            
+        
+        # By default, content None and argvs is empty string, handle [tag! /] empty call
+        content, argvs = None, argvs.rstrip() if isinstance(argvs, str) else "" # avoid losing indenttation, use rstrip
+        
+        if argvs.strip() in ['.','..']: 
+            content, argvs = None if argvs.strip() == '.' else "", "" # handles [tag! . /] -> tag() and [tag! .. /] -> tag("") cases
+        else:
+            # Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
+            SEP_RE = re.compile(r'(?<!\S)\.\.(?!\S)')
+            nsep = len(SEP_RE.findall(argvs))
+            if nsep > 1:
+                return self._handle_var(error('ValueError', f"Too many '..' separators in '{match.group(0)}'. Only one is allowed. Escape dots with backslash if needed."))
+            elif nsep == 1:
+                content, argvs = SEP_RE.split(argvs, maxsplit=1) # [tag! content .. params /] case
+                if content.lstrip().startswith('.'):
+                    argvs, content = content.lstrip().lstrip('.'), argvs # swap if content starts with dot, handles [tag! . params .. content /] case
+            elif argvs.strip(): 
+                content, argvs = argvs, "" # if no .., its content unless starts with dot
+                if content.lstrip().startswith('.'):
+                    content, argvs = None, content.strip().lstrip('.') # swap if content starts with dot, handles [tag! . params /] case without content
+         
         return self._exec_py_func(match, fname, content, argvs)
         
     def _exec_py_func(self, match, fname, content, argvs):
         if fname == "anyTag":
-            return self._handle_var(error('Exception', f"anyTag function cannot be called directly, use valid html [tag! **node_attributes :: node content /] instead!"))
+            return self._handle_var(error('Exception', f"anyTag function cannot be called directly, use valid html [tag! node content .. **node_attributes /] instead!"))
         
         # resolve variables in content for certain functions as they take content out of flow
         if content is not None:
@@ -1016,7 +1041,7 @@ class XMarkdown(Markdown):
             if fname in ("section", "toc", "notes"):
                 content = self._resolve_vars(content) 
             elif fname == "code": # code needs corrected content
-                content = char_esc.restore(content, True)
+                content = char_esc.restore(cmnt_esc.restore(content), True)
         
         try:
             args, kwargs = self._parse_args(argvs, content)
@@ -1041,7 +1066,8 @@ class XMarkdown(Markdown):
                 res = res.inline if fname == "code" else res # code function returns SourceCode object, not inline
             except Exception as e:
                 res = error('Exception', f"Could not parse '{match.group(0)}': \n{e}\n"
-                    f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code></div>")
+                    f"<div class='block-yellow'>⚠️ Function '{fname}' expects arguments <code>{inspect.signature(func)}</code>, "
+                    f"got <code>{args}, {kwargs}</code></div>")
         
         if cap.outputs:
             return self._handle_var(cap) + self._handle_var(res)
@@ -1147,20 +1173,40 @@ class _XMDMeta(type):
     @property
     def funcs(self):
         "List of available inline functions for extended markdown."
-        from .utils import html, doc, details
-        return html("div", 
-            "\n".join([
-                details(doc(value[0]), 
-                    summary=f"{key}: <em style='font-size:0.75em;opacity:0.6;'>{value[1]}</em>", 
-                    name="funcs-accordian", # to open exclusively
-                    background="var(--bg2-color)",
-                    border_radius="0.25em",
-                ).value
-                for key, value in sorted(_XMD_FUNCS.items(), key=lambda x: x[0])
-            ]) + html("style", ".funcs-grid > details[open] {grid-column: 1/-1;}").value,
-            style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5em;", 
-            css_class="funcs-grid",
-        )
+        from .utils import html, doc, details, XTML
+        
+        info = html("", ["""
+        **Inline Python Functions**{.text-big}
+        
+        Call pattern for inline functions is shown in table below. `*args` and `**kwargs` are arguments given as Python literals.
+        The content does not require quotes and must maintain its own indentation and line breaks.
+        
+        |Markdown Call                                | Python Call                        |
+        |:--------------------------------------------|:-----------------------------------|
+        |`[func\! \/] / [func\! \. /]`                | `func()`                           |
+        |`[func\! \.. \/]`                            | `func("")`                         |
+        |`[func\! Content \/]`                        | `func("Content")`                  |
+        |`[func\! Content .. *args, **kwargs \/]`     | `func("Content", *args, **kwargs)` |
+        |`[func\! \. *args, **kwargs \.. Content \/]` | `func("Content", *args, **kwargs)` |
+        |`[func\! \. *args, **kwargs \/]`             |  `func(*args, **kwargs)`           |
+    
+        - You can override a registered function by pure html tag by appending ` _ ` to the tag. For example, ` svg_ ` will be html tag that overrides the ` svg ` function.
+        - User can register their own functions using [code! xmd.register /] function, which will be listed here.
+        """])
+        
+        dtls = html("div", "\n".join([
+            details(doc(value[0]), 
+                summary=f"{key}: <em style='font-size:0.75em;opacity:0.6;'>{value[1]}</em>", 
+                name="funcs-accordian", # to open exclusively
+                background="var(--bg2-color)",
+                border_radius="0.25em",
+            ).value
+            for key, value in sorted(_XMD_FUNCS.items(), key=lambda x: x[0])
+        ]) + html("style", ".funcs-grid > details[open] {grid-column: 1/-1;}").value,
+        style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5em;", 
+        css_class="funcs-grid")
+        
+        return XTML(info.value + dtls.value)
     
     def __dir__(cls): # tab completion still sucks with meta programming!
         return sorted(list(super().__dir__()) + ["convert", "funcs", "extensions", "register", "syntax", "parse"])
@@ -1184,10 +1230,11 @@ class _XMDMeta(type):
         @xmd.register("plot") 
         @wraps(plt.plot) # signature will be adopted, note only *args and *kwargs to avoid conflicts
         def _(*args, **kwargs):
+            caption = kwargs.pop("caption", None) # optional caption
             plt.plot(*args, **kwargs)
             # convert to html to display in proper place even in inline context
             # plt.show() will display in unexpected place if not in a display context
-            return slides.plt2html()
+            return slides.plt2html(caption=caption) # convert to html for proper display in slides
         
         # Or decorate your own pure function 
         @xmd.register("myfunc")
@@ -1197,12 +1244,10 @@ class _XMDMeta(type):
         ```
         
         ::: code language="markdown"   
-            [plot! [1,2,3], [4,5,6] /]
-            This is a plot from markdown!
+            [plot! . [1,2,3], [4,5,6], caption="This is a plot from markdown!" /]
         
         ::: note
-           User-defined functions do not accept content as first argument, 
-           unlike built-in functions, so all arguments are python literals and call mode is `!` is covenient for them.
+           If your registered function does not accept content as first argument, skip `..` in the call and start with `.`, e.g., `[myfunc\! . arg1, arg2, kwarg1=False \/]`.
         """
         # MUST BE ONLY GATEWAY FOR USER-DEFINED FUNCTIONS FOR SECURITY and SCOPE REASONS.
         # SCOPE ISSUE: A function in python file is not visible in user namespace
@@ -1288,7 +1333,7 @@ def _stream_chunks(text, sep='---'):
     text = textwrap.dedent(text)  # content coming from python functions is usually indented, fix for all cases, need --- at start
 
     # Mask HTML comments so --- or -- inside them are not treated as separators.
-    text, _restore = _mask_html_comments(text)
+    text = cmnt_esc.escape(text)
 
     pattern = _PATTERN_CACHE[s]
     last_pos = 0
@@ -1300,11 +1345,11 @@ def _stream_chunks(text, sep='---'):
             in_block = not in_block
         elif not in_block: # It's a separator and we're NOT inside a block
             if (chunk := text[last_pos:match.start()].rstrip()) or first: # need to preseve leading indents, so only rstrip
-                yield _restore(chunk)
+                yield cmnt_esc.restore(chunk)
             last_pos = match.end()
             first = False # only first chunk is special for pages
 
     if final_chunk := text[last_pos:].rstrip():
         if in_block:
             final_chunk += '\n```'  # close unclosed code block in forgiven manner instead of raising error
-        yield _restore(final_chunk)
+        yield cmnt_esc.restore(final_chunk)

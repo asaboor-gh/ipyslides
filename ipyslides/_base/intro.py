@@ -59,7 +59,7 @@ with slides.slide(-1):
 ```
 
 ```python
-slides # This displays slides if on the last line of cell, or use [code! :: slides.show() /].
+slides # This displays slides if on the last line of cell, or use [code! slides.show() /].
 ```
 
 ::: note-info
@@ -93,7 +93,7 @@ key_maps = {
     "K": "Show keyboard shortcuts",
 }
 
-key_combs = f"""[color! 'var(--accent-color)' :: [fa! 'info' /] Swipe left/right on touch devices to navigate slides. Opt in mouse swipe from context menu. /]
+key_combs = f"""[color! . 'var(--accent-color)' .. [fa! info /] Swipe left/right on touch devices to navigate slides. Opt in mouse swipe from context menu. /]
 
 | Shortcut                                    | Button                                            | Action                 | 
 |:--------------------------------------------|---------------------------------------------------|:-----------------------|
@@ -110,8 +110,8 @@ key_combs = f"""[color! 'var(--accent-color)' :: [fa! 'info' /] Swipe left/right
 | {_key('S')}                                 | {_icons["panel"]}, {_icons["close"]}              | {key_maps["S"]}        |
 | {_key('Ctrl')} + {_key('P')}                |      <none>                                       | {key_maps["P"]}        |
 
-- [color! 'var(--fg3-color)' :: {_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation. /]
-- [color! 'var(--fg3-color)' :: Double-click on images/plots and focusable elements (see `Slides.css_styles`) to zoom into focused view. /]
+- [color! . 'var(--fg3-color)' .. {_key('+')}, {_key('-')},{_key('*')}, {_key('/')}, keys enable full numpad-only navigation. /]
+- [color! . 'var(--fg3-color)' .. Double-click on images/plots and focusable elements (see `Slides.css_styles`) to zoom into focused view. /]
 """ 
 
 how_to_print = f"""
@@ -129,8 +129,8 @@ Use `Save as PDF` option instead of Print PDF in browser to make links work in o
 You can also get PDF from exported HTML file. Use `Save as PDF` and enable background graphics when printing to keep links working.
 
 For widgets and other objects's snapshots to be available in exported
-slides, use [alert! :: slides.alt /]. You can paste screenshots from system tool
-into Clips GUI in side panel. On Linux, you need [alert! :: xclip /] or [alert! :: wl-paste /] installed.
+slides, use [alert! slides.alt /]. You can paste screenshots from system tool
+into Clips GUI in side panel. On Linux, you need [alert! xclip /] or [alert! wl-paste /] installed.
 
 ::: note-tip
     - You might want to reflow content for export purpose. Use checkbox in settings panel to enable it.
