@@ -10,7 +10,7 @@ class Notes:
     enabling `Inline Notes` option in settings panel, useful for sharing slides with notes or for personal reference.
     
     ::: note-tip     
-        - In markdown, you can use [alert! [notes\! \.. notes content \/] /].
+        - In markdown, you can use [alert! [notes\! notes content \/] /].
         - Place your (extended) projector on top/bottom of laptop screen while presenting 
           in Jupyter Notebook to allow right/left edges click navigation work smoothly.
     """

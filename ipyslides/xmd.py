@@ -1175,7 +1175,7 @@ class _XMDMeta(type):
         "List of available inline functions for extended markdown."
         from .utils import html, doc, details, XTML
         
-        info = html("", ["""
+        info = html("", [r"""
         **Inline Python Functions**{.text-big}
         
         Call pattern for inline functions is shown in table below. `*args` and `**kwargs` are arguments given as Python literals.
@@ -1192,6 +1192,7 @@ class _XMDMeta(type):
     
         - You can override a registered function by pure html tag by appending ` _ ` to the tag. For example, ` svg_ ` will be html tag that overrides the ` svg ` function.
         - User can register their own functions using [code! xmd.register /] function, which will be listed here.
+        - If you need a literal `.` in start of content, escape it with backslash like `\\.`. If you need a literal `..` in content, escape it with backslash like `\\..`.
         """])
         
         dtls = html("div", "\n".join([
