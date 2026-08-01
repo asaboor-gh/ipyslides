@@ -48,7 +48,7 @@ Triple dashes `---` separator is used to split text in slides inside markdown co
 
 Sections & TOC
 : [alert! [section\! content \/] /] to add a section that will appear in the table of contents.
-Use [code! section\! \. True \.. content \/] /] to mark the beginning of supplemental slides with True parameter in section command.
+Use [code! section\!! True \.. content \/] /] to mark the beginning of supplemental slides with True parameter in section command.
 Slides in this section remain navigable, use supplemental numbering (`S.1`, `S.2`, ...), and do not advance the main progress bar.
 [alert! [toc\! Table of content header text\/] /] to add a table of contents. See `ipyslides.docs()` for creating a `TOC` accompanied by section summary.
 
@@ -71,7 +71,7 @@ Citations
   Unused citations will be added automatically at end of slide.
 - Force citations to be shown inline by appending a !, such as [alert! \@key1! \@key2 /], where `@key2` will be shown in footnote style and `@key1!` will display inline citation in that order.
 - In the synced markdown file (also its included files) through `Slides.sync_with_file`, you can add citations with block syntax:                             
-[code! . "markdown" ..
+[code!! "markdown" ..
  ::: citations
     \@key1: Saboor et. al., 2025
     \@key2: A citations can span multiple lines, but key should start on new line
@@ -223,11 +223,11 @@ Inline functions can be nested, thanks to new function call pattern that must en
 ::: columns
     [md-src_var/]
     
-    [stack! . (6,4), css_class="block-blue" ..
+    [stack!! (6,4), css_class="block-blue" ..
         This always parse markdown in `returns=True` mode. 
         ||
-        [stack! . css_class="info" ..
-            B || [color! . "skyblue" .. [alert! Alerted Text /] Colored Text /]
+        [stack!! css_class="info" ..
+            B || [color!! "skyblue" .. [alert! Alerted Text /] Colored Text /]
         /]
     /]
 ```

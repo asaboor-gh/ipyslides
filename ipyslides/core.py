@@ -453,7 +453,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with _build_slide(self, 0):
             self.stack([
                 self.styled("""
-                    [color! . 'var(--accent-color)' .. Replace this with creating a slide with number [alert! 0 /] /]
+                    [color!! 'var(--accent-color)' .. Replace this with creating a slide with number [alert! 0 /] /]
                     
                     ::: note-tip
                         Right click (or click on footer) to open context menu for accessing settings, table of contents etc.  

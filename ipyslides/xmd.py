@@ -251,9 +251,9 @@ class esc:
     def __format__(self, format_spec):
         return f"%{{{self._key}:{format_spec}}}" # return placeholder for later formatting
     
-@_internal_xmd_call('include')
-def include(filepath : str, start:int=None, end=None):
-    "Include a markdown file or snippet from a file. Use `start` and `end` to specify line numbers range."
+@_internal_xmd_call('load')
+def load(filepath : str, start:int=None, end=None):
+    "Load markdown file content in place. Use `start` and `end` to specify line numbers range."
     return error('NotImplementedError', 'The include function is not implemented yet. include`file.md[start:end]` syntax for now!').value
     
     # # This must get indentation in kwargs
@@ -347,11 +347,15 @@ _PLUS_RE = re.compile(r'^\+\+(?:\[(?P<opt>[^\]\n]+)\])?(?:\s*$|\s)', re.MULTILIN
 
 MACRO_RE = re.compile(
     r"(?<![\\\`])"            # not preceded by backslash or backtick
-    r"\[([a-zA-Z_]\w*)!\s*"         # [name! with optional spaces, must not start with a digit
+    r"\[([a-zA-Z_]\w*)(!{1,2})(?![!])\s*"         # [name! / [name!! but not more !, with optional spaces, must not start with a digit
     r"((?:(?!\[[a-zA-Z_]\w*!)[\s\S])*?)"  # body; stop before a nested macro opener
     r"\s*/\]",            # closing /] must stay free so sub/sup before text can stay closer
     flags = re.DOTALL | re.MULTILINE
 )
+
+def strip_ptags(content):
+    "Strip <p> and </p> tags from the start and end of the content, if present."
+    return re.sub(r"^<p>\s*|\s*</p>$", "", content) # clean up internal spaces as well, but no stripping outside if no p tags
 
 class XMarkdown(Markdown):
     def __init__(self):
@@ -596,7 +600,7 @@ class XMarkdown(Markdown):
 
     def _resolve_nested(self, text_chunk):
         def repl(m: re.Match): # Remove <p> and </p> tags at start and end, also keep backtick
-            return f'`{re.sub("^<p>|</p>$", "", self._parse_nested(m.group(1), returns = True))}`' 
+            return f'`{strip_ptags(self._parse_nested(m.group(1), returns = True))}`'
 
         # match neseted `// //` upto many levels, will be deprecated
         for depth in range(4,1,-1): # `////, `///, `// at least two slashes
@@ -1007,27 +1011,26 @@ class XMarkdown(Markdown):
         return self._exec_py_func(m, func, content, argvs)
     
     def repl_py_func(self, match):
-        fname, argvs = match.groups()
+        fname, bangs, body = match.groups()
+        ParamsFirst = bangs == '!!' # single ! means content first, !! means params first
         
-        # By default, content None and argvs is empty string, handle [tag! /] empty call
-        content, argvs = None, argvs.rstrip() if isinstance(argvs, str) else "" # avoid losing indenttation, use rstrip
+        # By default, content None and argvs is str, handle [tag! /] and [tag!! /] empty call autoamtically
+        content, argvs = None, body.rstrip() if isinstance(body, str) else "" # avoid losing indenttation, use rstrip
         
-        if argvs.strip() in ['.','..']: 
-            content, argvs = None if argvs.strip() == '.' else "", "" # handles [tag! . /] -> tag() and [tag! .. /] -> tag("") cases
+        if argvs.strip() == '..': 
+            content, argvs = "", "" # handles [tag! .. /]  and [tag!! .. /] -> tag("")
         else:
             # Count only standalone ".." tokens (surrounded by whitespace or string boundaries)
             SEP_RE = re.compile(r'(?<!\S)\.\.(?!\S)')
             nsep = len(SEP_RE.findall(argvs))
             if nsep > 1:
-                return self._handle_var(error('ValueError', f"Too many '..' separators in '{match.group(0)}'. Only one is allowed. Escape dots with backslash if needed."))
+                return self._handle_var(error('ValueError', f"Too many '..' separators in '{match.group(0)}'. Only one is allowed. Escape .. with backslash if needed."))
             elif nsep == 1:
-                content, argvs = SEP_RE.split(argvs, maxsplit=1) # [tag! content .. params /] case
-                if content.lstrip().startswith('.'):
-                    argvs, content = content.lstrip().lstrip('.'), argvs # swap if content starts with dot, handles [tag! . params .. content /] case
+                content, argvs = SEP_RE.split(argvs, maxsplit=1) # content .. params case
+                if ParamsFirst:
+                    argvs, content = content, argvs # swap for [tag!! params .. content /] case
             elif argvs.strip(): 
-                content, argvs = argvs, "" # if no .., its content unless starts with dot
-                if content.lstrip().startswith('.'):
-                    content, argvs = None, content.strip().lstrip('.') # swap if content starts with dot, handles [tag! . params /] case without content
+                content, argvs = (None, argvs) if ParamsFirst else (argvs, "") # if no .., its content unless params first (then no content passed)
          
         return self._exec_py_func(match, fname, content, argvs)
         
@@ -1039,14 +1042,9 @@ class XMarkdown(Markdown):
         if content is not None:
             content = textwrap.dedent(content).rstrip() # dedent content for better formatting, but keep leading spaces
             if fname in ("section", "toc", "notes"):
-                content = self._resolve_vars(content) 
+                content = self._resolve_vars(content) # variables are not accesible outside
             elif fname == "code": # code needs corrected content
                 content = char_esc.restore(cmnt_esc.restore(content), True)
-        
-        try:
-            args, kwargs = self._parse_args(argvs, content)
-        except Exception as e:
-            return self._handle_var(error('Exception', f"Error parsing arguments for '{match.group(0)}': \n{e}\n"))
         
         # Must to keep check on internal calls
         if not "anyTag" in _XMD_FUNCS:
@@ -1058,6 +1056,17 @@ class XMarkdown(Markdown):
         
         if ctx == "slide" and not getattr(self._slides, 'this', None): # slide only functions
             return self._handle_var(error('Exception', f"Slide-only function '{match.group(0)}' cannot be used outside a slide context!"))
+        
+        # Give user a cleaned parsed content 
+        if ctx == "user" and isinstance(content,str):
+            content = self._resolve_vars(
+                strip_ptags(super().convert(content))
+            ) # resolve variables in user context functions otherwise they will lose scope
+        
+        try:
+            args, kwargs = self._parse_args(argvs, content)
+        except Exception as e:
+            return self._handle_var(error('Exception', f"Error parsing arguments for '{match.group(0)}': \n{e}\n"))
         
         # make sure inline displays are captured in correct place like matplotlib plots
         with capture_content() as cap:
@@ -1167,7 +1176,7 @@ class _XMDMeta(type):
         "Convert markdown to HTML string. If `strip_tags` is True, the outer <p> tags will be removed if possible."
         out = cls.parse(content, returns=True) # must return str
         if strip_tags:
-            out = re.sub(r"^<p>|</p>$", "", out).strip() # remove outer <p> tags if possible
+            out = strip_ptags(out) # remove outer p tags if possible
         return out
     
     @property
@@ -1181,18 +1190,18 @@ class _XMDMeta(type):
         Call pattern for inline functions is shown in table below. `*args` and `**kwargs` are arguments given as Python literals.
         The content does not require quotes and must maintain its own indentation and line breaks.
         
-        |Markdown Call                                | Python Call                        |
-        |:--------------------------------------------|:-----------------------------------|
-        |`[func\! \/] / [func\! \. /]`                | `func()`                           |
-        |`[func\! \.. \/]`                            | `func("")`                         |
-        |`[func\! Content \/]`                        | `func("Content")`                  |
-        |`[func\! Content .. *args, **kwargs \/]`     | `func("Content", *args, **kwargs)` |
-        |`[func\! \. *args, **kwargs \.. Content \/]` | `func("Content", *args, **kwargs)` |
-        |`[func\! \. *args, **kwargs \/]`             |  `func(*args, **kwargs)`           |
+        | Mode          | Markdown Call                              | Python Call                        |
+        |:--------------|:-------------------------------------------|:-----------------------------------|
+        | Empty Call    | `[func\! \/] / [func\!! /]`                | `func()`                           |
+        | Empty Content | `[func\! \.. \/] / [func\!\! \.. \/]`      | `func("")`                         |
+        | Content Only  | `[func\! Content \/]`                      | `func("Content")`                  |
+        | Content First | `[func\! Content .. *args, **kwargs \/]`   | `func("Content", *args, **kwargs)` |
+        | Params First  | `[func\!! *args, **kwargs \.. Content \/]` | `func("Content", *args, **kwargs)` |
+        | Params Only   | `[func\!! *args, **kwargs \/]`             | `func(*args, **kwargs)`            |
     
         - You can override a registered function by pure html tag by appending ` _ ` to the tag. For example, ` svg_ ` will be html tag that overrides the ` svg ` function.
         - User can register their own functions using [code! xmd.register /] function, which will be listed here.
-        - If you need a literal `.` in start of content, escape it with backslash like `\\.`. If you need a literal `..` in content, escape it with backslash like `\\..`.
+        - If you need a literal `..` in content, escape it with backslash like `\\..`. Similarly, to avoid parsing a function call, escape the first `!` as `\\!` and ending `/` as `\\/`. No need to escape `[` and `]`.
         """])
         
         dtls = html("div", "\n".join([
@@ -1245,10 +1254,11 @@ class _XMDMeta(type):
         ```
         
         ::: code language="markdown"   
-            [plot! . [1,2,3], [4,5,6], caption="This is a plot from markdown!" /]
+            [plot!! [1,2,3], [4,5,6], caption="This is a plot from markdown!" /]
         
         ::: note
-           If your registered function does not accept content as first argument, skip `..` in the call and start with `.`, e.g., `[myfunc\! . arg1, arg2, kwarg1=False \/]`.
+           - If your registered function does not accept content as first argument, skip `..` in the call and start with `!!`, e.g., `[myfunc\!! arg1, arg2, kwarg1=False \/]`.
+           - Content is converted to html string and outer `<p>` tags are stripped before passing to the function, so you can wrap it in tags of your choice.
         """
         # MUST BE ONLY GATEWAY FOR USER-DEFINED FUNCTIONS FOR SECURITY and SCOPE REASONS.
         # SCOPE ISSUE: A function in python file is not visible in user namespace

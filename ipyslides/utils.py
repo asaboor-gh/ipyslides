@@ -710,7 +710,7 @@ def html(tag, children = None,css_class = None, void_attrs=None,**node_attrs):
     
     `children` expects:
     
-    - If None, returns node for self closing tags such as [code! html('image',alt='Image') /] → [code! . 'html' .. <img alt='Image'></img> /].
+    - If None, returns node for self closing tags such as [code! html('image',alt='Image') /] → [code!! 'html' .. <img alt='Image'></img> /].
     - str: A string to be added as node's text content.
     - list/tuple of [objects]: A list of objects that will be parsed and added as child nodes. Widgets are not supported.
     - dict if tag is 'style', this will only be exported to HTML if called under slide builder, use [code! slides.css /] otherwise. See [code! Slides.css_syntax /] to learn about requirements of styles in dict.
@@ -794,7 +794,7 @@ def anyTag(tag, content = "", css_class = None, void_attrs=None, **node_attrs):
     If `tag` is self closing tag and content is not empty. e.g. `[img\! src="test.png" \.. test content \/]` will throw error.
     
     ```markdown   
-    [details! . summary = "Open Me" ..
+    [details!! summary = "Open Me" ..
         This is a test content with multiple lines
         It must maintain its own indentation and line breaks
     /]

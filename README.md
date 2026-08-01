@@ -184,7 +184,7 @@ See [demo.pdf](demo.pdf) for an example exported PDF.
     - You can extend markdown syntax using `Slides.extender` API. See some good extensions to add from [PyMdown](https://facelessuser.github.io/pymdown-extensions/).
 
 - **Inline Python Function:**
-    - You can register inline functions using `xmd.register` and use already register functions with syntax `[func! content .. *args, **kwargs/]`/ `[func! . *args, **kwargs .. content /]`.
+    - You can register inline functions using `xmd.register` and use already register functions with syntax `[func! content .. *args, **kwargs/]`/ `[func!! *args, **kwargs .. content /]`.
     - See `xmd.syntax` and `xmd.funcs` for details on inline function.
     - These functions support nesting and can show any IPython content.
 
@@ -195,7 +195,7 @@ See [demo.pdf](demo.pdf) for an example exported PDF.
 - **Custom Styling:**
 ```python
 slides.css({
-    'p': {'font-size':'1.2em', 'line-height':'1.5em'}, # relaxed paragraph
+    'p': {'font-size':'1.2em', 'line-height':'1.5'}, # relaxed paragraph
 }, applyto=1, bg1 = '#f0f0f0') # set theme color on slide 1, or 'all' or list of slides
 ```
 

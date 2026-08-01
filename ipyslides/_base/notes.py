@@ -25,7 +25,7 @@ class Notes:
     @slidebound("notes")
     def __call__(self, content):
         "See class docstring for usage."
-        self.main.this._notes = self.main.html('',[content]).value
+        self.main.this._notes = self.main.as_html(content).value
     
     def display(self):
         def set_value(content):
