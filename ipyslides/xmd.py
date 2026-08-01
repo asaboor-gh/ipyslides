@@ -254,7 +254,7 @@ class esc:
 @_internal_xmd_call('load')
 def load(filepath : str, start:int=None, end=None):
     "Load markdown file content in place. Use `start` and `end` to specify line numbers range."
-    return error('NotImplementedError', 'The include function is not implemented yet. include`file.md[start:end]` syntax for now!').value
+    return error('NotImplementedError', 'The load function is not implemented yet. include`file.md[start:end]` syntax for now!').value
     
     # # This must get indentation in kwargs
     # # And need to be single pass to avoid nesting, on next nest it must raise error
@@ -599,13 +599,22 @@ class XMarkdown(Markdown):
         return out
 
     def _resolve_nested(self, text_chunk):
-        def repl(m: re.Match): # Remove <p> and </p> tags at start and end, also keep backtick
+        has_syntax = False
+        def repl(m: re.Match):
+            nonlocal has_syntax
+            has_syntax = True
             return f'`{strip_ptags(self._parse_nested(m.group(1), returns = True))}`'
 
         # match neseted `// //` upto many levels, will be deprecated
         for depth in range(4,1,-1): # `////, `///, `// at least two slashes
             op, cl = '/'*depth, '/'*depth
             text_chunk = re.sub(rf"\`{op}(.*?){cl}\`", repl, text_chunk, flags=re.DOTALL | re.MULTILINE)
+        
+        if has_syntax:
+            text_chunk = self._handle_var(warn(
+                "Nested `// //` syntax is being deprecated. New format [func! ... /] automatically support nesting.",
+                "DeprecationWarning"
+            )) + "\n" + text_chunk
         return text_chunk
 
     def _parse_block(self, header, data):
@@ -978,6 +987,13 @@ class XMarkdown(Markdown):
         FUNC_RE = rf"(?<![\`\.])\b({all_func})(\[.*?\])?\`([^\`]*)\`"
         # Check if there is at least one macro format to process
         if re.search(FUNC_RE, html_output, flags=re.DOTALL | re.MULTILINE):
+            # Single inline warning in start instead of clutter everywhere
+            html_output = self._handle_var(warn(
+                'Legacy syntax for func`...` is being deprecated and will be removed in future releases. '
+                'Use [func! ... /] format for flexible automatic nesting, see slides.xmd.funcs for details.',
+                "DeprecationWarning"
+            )) + "\n" + html_output
+            
             with self.active_parser(): # set instance parser to pass variables
                 html_output = re.sub(FUNC_RE, self.repl_inline_func, html_output, flags=re.DOTALL | re.MULTILINE)
 
