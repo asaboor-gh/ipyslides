@@ -160,7 +160,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         self.group      = group
         self.hold       = hold  # Hold display of a function until it is captured in a column of `Slides.write`
         self.xmd        = xmd  # Extended markdown parser
-        self.fmt        = fmt # So important for flexibility
+        self.fmt        = fmt # will be deprecated
         self.esc        = esc # lazy escape for variables in markdown
         self.serializer = serializer  # Serialize IPython objects to HTML
 
@@ -510,7 +510,7 @@ class Slides(BaseSlides,metaclass=Singleton):
     
     def _set_ctns(self, d):
         # Here other formatting does not work for citations
-        new_citations = {k: self.xmd.convert(v, strip_tags=True) for k, v in d.items()}
+        new_citations = {k: xmd(v, True, "") for k, v in d.items()}
         added = set(new_citations) - set(self._citations)
         removed = set(self._citations) - set(new_citations)
         changed = {k for k in (set(new_citations) & set(self._citations)) if self._citations[k] != new_citations[k]}
@@ -597,7 +597,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         """Add section key to presentation that will appear in table of contents.
         Sections can be written as table of contents. First call with supplemental=True will win and following all sections would be in supplemental part.
         """
-        self.this._section = xmd.convert(str(text).strip(), strip_tags=True)  # assign before updating toc
+        self.this._section = xmd(str(text).strip(), True, "")  # assign before updating toc
         # Keep keyboard End/Home boundaries in sync even when rebuilding existing slides.
         if supplemental:
             self.this._is_supp = True # make on slide, not outside to make correct when slide get deleted
@@ -615,7 +615,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         """Add table of contents to the slide, output must be displayed or passed to `write` command 
         while in markdown it automatically displays. Automatically updates when sections change.
         """
-        self.this._toc_args = (xmd.convert(str(title).strip(), strip_tags=True), highlight)
+        self.this._toc_args = (xmd(str(title).strip(), True, ""), highlight)
         return self.this._reset_toc()
     
     @_internal_xmd_call("refs", True)
@@ -729,7 +729,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         with _build_slide(self, slide.number): 
             slide._set_source(self.code.from_source(slide._src_func).raw,'python') # set source code to be accessible
             if (doc := getattr(slide._src_func, '__doc__', None)):
-                self.xmd(doc, returns=False)
+                xmd(doc, returns=False)
             slide._src_func(slide) # call to build slide now
             
             # clean up after building the slide
@@ -888,7 +888,7 @@ class Slides(BaseSlides,metaclass=Singleton):
         slide._esc_vars = {v: stored[v] for v in cvars if v in stored} # store for rebuilds internally
         slide._md_vars = {k:v for k,v in vars.items() if k in cvars} # store user given markdown variables
         # parse and display content after setting source and preparing variables
-        self.xmd(content, returns = False) 
+        xmd(content, returns = False) 
     
     @contextmanager
     def slide(self, slide_number, /):  # must be passed as positional argument

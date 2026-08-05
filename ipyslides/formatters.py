@@ -715,6 +715,9 @@ def _exportable_func(obj):
     mro_str = str(obj.__class__.__mro__)  
     
     # Instead of instance check, we can get mro, same effect without importing modules
+    if re.search('ipyslides.*BoundXMD', mro_str, flags=re.DOTALL): 
+        return lambda obj: obj.parse(returns=True) # direct parse
+    
     if re.search('matplotlib.*Figure', mro_str, flags=re.DOTALL):return lambda obj: plt2html(obj).value # intercept figure before axes
     if module.startswith('matplotlib') and hasattr(obj,'get_figure'): # any axes
         return lambda obj: plt2html(obj.get_figure()).value

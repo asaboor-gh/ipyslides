@@ -13,7 +13,7 @@ from IPython.utils.capture import CapturedIO
 from dashlab.utils import _build_css
 
 from .formatters import ipw, XTML, RichOutput, _Output, serializer, htmlize, _inline_style, toc_from_meta, _delim
-from .xmd import fmt, xmd, capture_content, get_slides_instance
+from .xmd import BoundXMD, xmd, capture_content, get_slides_instance
 
 
 class hold:
@@ -275,12 +275,14 @@ class Writer(ipw.HBox):
                             f"Column {i+1} contains a nested group object. "
                             "Pass group directly as a column argument, not inside column rows."
                         )
-                    if isinstance(c,(fmt, RichOutput, ipw.DOMWidget)):
+                    if isinstance(c,(RichOutput, ipw.DOMWidget)):
                         display(c)
                     elif isinstance(c, CapturedIO):
                         c.show() # Display captured outputs, all of them
                     elif isinstance(c,str):
                         xmd(c, returns = False)
+                    elif isinstance(c, BoundXMD):
+                        c.parse(returns = False) # parse and display extended markdown bounded object
                     elif isinstance(c, hold):
                         c() # If c is hold, call it and it will dispatch whatever is inside, ignore return value
                     elif hasattr(c, '_ipython_display_') and callable(c._ipython_display_):
@@ -426,7 +428,8 @@ def write(*objs,widths = None, css_class=None, **css_props):
          
     Write any object that can be displayed in a cell with some additional features:
     
-    - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc.
+    - Strings will be parsed as as extended markdown that can have citations/python code blocks/Javascript etc. Variables are resolved from notebook scope.
+    - The output of `xmd.gather` can be passed to parse and display content with user given and scoped variables.
     - Use [code! group([...], snapshots=True) /] to reveal items one-by-one during frame navigation.
         You can set a static header with [code! group([...], header='Header') /] it remains visible while group rows change.
         You can also build it with [code! g = group([], snapshots=True); with g.capture(): ... /] and pass `g` as a column.

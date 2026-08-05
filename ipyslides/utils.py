@@ -808,7 +808,7 @@ def anyTag(tag, content = "", css_class = None, void_attrs=None, **node_attrs):
         raise RuntimeError(f'Parametr `content` should be empty for self closing tag {tag!r}')
     
     # strips outer <p> tags to avoid double wrapping in <p> when used inside other tags
-    return html(tag, xmd.convert(content, True), css_class=css_class, void_attrs=void_attrs, **node_attrs)
+    return html(tag, xmd(content, True, ""), css_class=css_class, void_attrs=void_attrs, **node_attrs)
 
 @_internal_xmd_call('gap')
 def gap(h=1, v=1, unit = 'em'):
@@ -826,12 +826,12 @@ def line(length=5, color='var(--fg1-color)',width=1,style='solid'):
 @_internal_xmd_call('sup')
 def sup(text, **css_props):
     "Returns superscript text with given css properties."
-    return XTML(f"<sup {_inline_style(css_props)}>{xmd.convert(text, True)}</sup>")
+    return XTML(f"<sup {_inline_style(css_props)}>{xmd(text, True,'')}</sup>")
 
 @_internal_xmd_call('sub')
 def sub(text, **css_props):
     "Returns subscript text with given css properties."
-    return XTML(f"<sub {_inline_style(css_props)}>{xmd.convert(text, True)}</sub>")
+    return XTML(f"<sub {_inline_style(css_props)}>{xmd(text, True,'')}</sub>")
 
 @_internal_xmd_call('textbox')
 def textbox(text, **css_props):
@@ -845,13 +845,13 @@ def alert(text, css_class=None, bold=False, italic=False, **css_props):
     "Alerts text in red color. `css_props` are applied to span element."
     kws = {'color':'#DC143C', 'font-weight': 'bold' if bold else 'normal', 'font-style': 'italic' if italic else 'normal', **css_props}
     klass = f"class='{css_class}'" if css_class and isinstance(css_class, str) else ''
-    return XTML(f"<span {klass} {_inline_style(kws)}>{xmd.convert(text, True)}</span>")
+    return XTML(f"<span {klass} {_inline_style(kws)}>{xmd(text, True,'')}</span>")
 
 @_internal_xmd_call('color')    
 def color(text,fg='var(--accent-color, blue)',bg=None, **css_props):
     "Colors text, `fg` and `bg` should be valid CSS colors. `css_props` are applied to span element."
     style_kws = {'color': fg, 'background': bg, 'padding': '0.1em', 'border-radius':'0.1em', **css_props}
-    return XTML(f"<span {_inline_style(style_kws)}>{xmd.convert(text, True)}</span>")
+    return XTML(f"<span {_inline_style(style_kws)}>{xmd(text, True,'')}</span>")
 
 @_internal_xmd_call('fa')
 def fa(name: str, color:str = 'currentColor', size:str = '1em',rotation:int = 0, **css_props):

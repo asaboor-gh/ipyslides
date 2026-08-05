@@ -1,4 +1,4 @@
-# This package exports xmd and fmt at top level.
+# This package exports xmd at top level.
 
 import textwrap, sys, string, builtins, inspect, ast
 import re, secrets # secrets for unique keys
@@ -8,7 +8,9 @@ from contextlib import contextmanager
 from html import escape # Builtin library
 from io import StringIO
 from html.parser import HTMLParser
-from typing import Optional, Union
+from typing import Optional, Mapping
+from dataclasses import dataclass, field
+from types import MappingProxyType
 
 from markdown import Markdown
 from IPython.display import display
@@ -239,7 +241,7 @@ class esc:
     Use as [code! xmd(f"This is an escaped variable: {esc(var or expression)}") /]
     or [code! xmd("This is an escaped variable: {}".format(esc(var or expression))) /].
     This is in par with \%{var} syntax, but more flexible as it can take any expression. 
-    You are advised to use formatting strings rarely, instead use `fmt` class to pick variables 
+    You are advised to use formatting strings rarely, instead use `xmd.gather` class to provide variable (also, automatically pick from local scope)
     and avoid clashes with $ \LaTeX $ syntax.
     """
     _store = {} # stores escaped varaibles here from formatting.
@@ -256,7 +258,7 @@ def load(filepath : str, start:int=None, end=None):
     "Load markdown file content in place. Use `start` and `end` to specify line numbers range."
     return error('NotImplementedError', 'The load function is not implemented yet. include`file.md[start:end]` syntax for now!').value
     
-    # # This must get indentation in kwargs
+    # # This must get indentation after return in the top function using it
     # # And need to be single pass to avoid nesting, on next nest it must raise error
     # # So a separate resolve_included_files function is must to flatten content first
     # try:
@@ -361,7 +363,6 @@ class XMarkdown(Markdown):
     def __init__(self):
         super().__init__(**_extensions.active)
         self._vars = {}
-        self._fmt_ns = {} # provided by fmt
         self._returns = True
         self._nesting_depth = 0 # checks if using _parse in nested manner
     
@@ -381,10 +382,11 @@ class XMarkdown(Markdown):
         return self._slides and self._slides.this and self._slides.this._markdown
     
     def user_ns(self):
-        "Top level namespace or set by user inside `Slides.fmt`."
-        if self._fmt_ns: 
-            return self._fmt_ns # always preferred
-        elif self._running_md_slide:
+        "Top level namespace or set by user from `xmd.gather`."
+        if hasattr(BoundXMD, '_bound_vars'):
+            return BoundXMD._bound_vars
+
+        if self._running_md_slide:
             return { 
                 **self._slides._nb_vars, # Top level notebook scope variables
                 **self._slides.this._md_vars, # by Slide
@@ -392,13 +394,14 @@ class XMarkdown(Markdown):
             } # slide specific variables based on scope
         return get_main_ns()  # top scope at end
 
-    def _parse(self, xmd, returns = True): # not intended to be used directly
+    def _parse(self, xmd, returns = True, tag=None): # not intended to be used directly
         """Return a string after fixing markdown and code blocks returns = True
         otherwise displays objects given as vraibales may not give their proper representation.
         """
         self._returns = returns  # Must change here
-        if isinstance(xmd, fmt): # scoped variables picked here
-            xmd, self._fmt_ns = (xmd._xmd, xmd._kws)
+        if not isinstance(xmd, str):
+            issue = error("TypeError",f"Expected a string for markdown content, got {type(xmd).__name__} instead.")
+            return issue.value if returns else display(issue) # return value or display
 
         # Mask HTML comments before any splitting so their content (:::, ++, ```) is not treated as markers.
         # Python-Markdown passes <!--...--> through unchanged, so short placeholders survive convert().
@@ -437,7 +440,6 @@ class XMarkdown(Markdown):
 
         if not self._nesting_depth: # we need to keep these if nested parsing
             self._vars = {} # reset at end to release references
-            self._fmt_ns = {} # reset back at end
 
         if returns:
             content = ""
@@ -446,7 +448,13 @@ class XMarkdown(Markdown):
                     content += out.value
                 else:
                     content += self._wr._fmt_html(out) # Rich content from python execution and Writer
-            return char_esc.restore(cmnt_esc.restore(content))
+            content = char_esc.restore(cmnt_esc.restore(content))
+            
+            if tag is not None:
+                content = strip_ptags(content) # strip <p> tags if tag is specified, for inline content
+                if name:= tag.strip(): # empty tag returns bare content
+                    content = f'<{name}>\n{content}\n</{name}>'
+            return content
         else:
             return display(*outputs)
         
@@ -588,11 +596,11 @@ class XMarkdown(Markdown):
                 blocks.append(("raw", text_chunk)) # keep text as it is
         return blocks       
     
-    def _parse_nested(self, xmd, returns=True):
+    def _parse_nested(self, xmd, returns=True, tag=None):
         old_returns = self._returns
         self._nesting_depth += 1 # increase nesting depth
         try:
-            out = self._parse(textwrap.dedent(xmd), returns=returns) # allows nesting via indent
+            out = self._parse(textwrap.dedent(xmd), returns=returns, tag=tag) # allows nesting via indent
         finally:
             self._returns = old_returns
             self._nesting_depth -= 1 # decrease nesting depth
@@ -603,7 +611,7 @@ class XMarkdown(Markdown):
         def repl(m: re.Match):
             nonlocal has_syntax
             has_syntax = True
-            return f'`{strip_ptags(self._parse_nested(m.group(1), returns = True))}`'
+            return f'`{self._parse_nested(m.group(1), returns = True, tag="")}`' # bare content
 
         # match neseted `// //` upto many levels, will be deprecated
         for depth in range(4,1,-1): # `////, `///, `// at least two slashes
@@ -1117,57 +1125,65 @@ def _matched_vars(text):
     ]
     return tuple(matches)  
 
-class fmt:
-    """Markdown string wrapper that will be parsed with given kwargs lazily. 
-    If markdown contains variables not in kwargs, it will try to resolve them 
-    from local/global namespace and raise error if name is nowhere. Use inside
-    python scripts when creating slides. In notebook, variables are automatically 
-    resolved, although you can still use it there.
-    
-    Being as last expression of notebook cell or using self.parse() will parse markdown content.
-    If you intend to use formatting strings, use `esc` class to lazily escape variables/expressions from being parsed.
+@dataclass(frozen=True)
+class BoundXMD:
+    """Class to store markdown content and user variables (and from caller's scope) for later parsing.
+    Use `parse` method to parse the content with given variables. This class is useful for picking variables
+    without poluting the global namespace as well as inside python scripts where notebook's scope is not available.
     """
-    def __init__(*args, **kwargs):
-        if len(args) != 2:
-            raise ValueError("fmt expects a markdown str as positional argument!")
-        
-        self, xmd = args  # this enables user passing self and xmd into kwargs
-        if not isinstance(xmd, str):
-            raise TypeError(f"xmd expects a string got {type(xmd)}")
-        
-        self._xmd = xmd
-        req_vars = _matched_vars(xmd)
-        self._kws = {k:v for k,v in kwargs.items() if k in req_vars} # remove extras
-
-        missing_keys = set(req_vars) - kwargs.keys()
-
-        # We will fetch missing variables from caller's scope if possible
+    content: str
+    vars: Mapping[str, object] = field(default_factory=dict)
+    _rel_depth: int = 0 # above stack of this class
+    
+    def __post_init__(self):
+        req_vars = _matched_vars(self.content)
+        scoped_vars = { # only pick needed vars if user pass smething like locals
+            k:v for k,v in self.vars.items() if k in req_vars
+        } if isinstance(self.vars, dict) else {}
+        missing_keys = set(req_vars) - scoped_vars.keys() # check for missing keys
         if missing_keys:
-            frame = inspect.currentframe()
+            depth = self._rel_depth + 2 # 1 for __post_init__, 1 for __init__
+            frame = sys._getframe(depth)
             try:
-                c_locals = frame.f_back.f_locals
-                c_globals = frame.f_back.f_globals
-                # Merge kwargs with any missing values from caller
                 for key in missing_keys:
-                    if key in c_locals:
-                        self._kws[key] = c_locals[key]
-                    elif key in c_globals:
-                        self._kws[key] = c_globals[key]
+                    if key in frame.f_locals:
+                        scoped_vars[key] = frame.f_locals[key]
+                    elif key in frame.f_globals:
+                        scoped_vars[key] = frame.f_globals[key]
                     else:
                         raise NameError(f"name {key!r} is not defined")
             finally:
                 del frame  # Prevent reference cycles
+        # Reset final vars to be immutable MappingProxyType
+        object.__setattr__(self, 'vars', MappingProxyType(scoped_vars)) 
+    
+    def parse(self, returns:bool=False, tag:str=None) -> Optional[str]:
+        BoundXMD._bound_vars = self.vars # set bound vars for parsing
+        try:
+            return xmd(self.content, returns=returns, tag=tag)
+        finally:
+            if hasattr(BoundXMD, '_bound_vars'):
+                del BoundXMD._bound_vars # cleanup after parsing
+    
+    def __format__(self, spec):
+        return f'{self.parse(returns=True):{spec}}'
+    
+    def __repr__(self):
+        keys = ', '.join(map(repr, self.vars.keys())) # only show keys for brevity
+        return f"{self.__class__.__name__}(content={self.content!r}, vars=[{keys}])"
 
-    def parse(self,returns=False):
-        "Parse the associated markdown string."
-        return xmd(self if self._kws else self._xmd, returns=returns) # handle empty kwargs silently
+class fmt(BoundXMD):
+    """Use xmd.gather instead of this class. This class is deprecated and will be removed in future releases."""
+    def __init__(self, content: str, **vars):
+        print("⚠️ Warning: `fmt` is deprecated and will be removed in future releases. Use `xmd.gather` instead.")
+        super().__init__(content, vars=vars, _rel_depth=1) # _rel_depth=1 to account for this __init__ call
 
     def _ipython_display_(self): # to be correctly captured in write etc. commands
         with altformatter.reset(): # don't let it be caught in html conversion
             self.parse(returns = False)
         
     def _repr_html_(self): # for functions to consume as html and for export
-        return xmd(self if self._kws else self._xmd, returns=True)
+        return self.parse(returns=True)
 
 class _XMDMeta(type):
     @property
@@ -1179,21 +1195,6 @@ class _XMDMeta(type):
         "Extnded markdown syntax information."
         from ._base._syntax import xmd_syntax # circular import
         return _parse_as_snapshots(xmd_syntax)
-    
-    @staticmethod
-    def parse(content: Union[str, fmt], returns:bool=False) -> Optional[str]: # This is intended to be there, not redundant
-        "Parse markdown content and return HTML string or display rich output objects."
-        if hasattr(XMarkdown, '_active_parser'): # keeps variables and fmt namespace
-            return XMarkdown._active_parser(content, returns=returns)
-        return XMarkdown()._parse(content, returns=returns)
-    
-    @classmethod
-    def convert(cls, content: Union[str, fmt], strip_tags: bool = False) -> str:
-        "Convert markdown to HTML string. If `strip_tags` is True, the outer <p> tags will be removed if possible."
-        out = cls.parse(content, returns=True) # must return str
-        if strip_tags:
-            out = strip_ptags(out) # remove outer p tags if possible
-        return out
     
     @property
     def funcs(self):
@@ -1235,7 +1236,20 @@ class _XMDMeta(type):
         return XTML(info.value + dtls.value)
     
     def __dir__(cls): # tab completion still sucks with meta programming!
-        return sorted(list(super().__dir__()) + ["convert", "funcs", "extensions", "register", "syntax", "parse"])
+        return sorted(list(super().__dir__()) + ["extensions", "funcs", "gather", "register", "syntax"])
+    
+    @staticmethod
+    def gather(content:str, **vars): # export xmd in docs and demo to show this
+        """Gather markdown content and variables for later parsing. This is useful for picking variables without 
+        polluting the global namespace as well as inside python scripts where notebook's scope is not available.
+        
+        - content (str): The markdown content to gather.
+        - vars (dict): The variables to be used in the markdown content.
+        
+        Returns a `BoundXMD` object that can be parsed later using the `parse` method or passed to `write` and utility functions.
+        """
+        
+        return BoundXMD(content, vars=vars, _rel_depth=1) # +1 for this function call
     
     @staticmethod
     def register(name: str, func: callable=None):
@@ -1315,14 +1329,17 @@ class xmd(metaclass=_XMDMeta):
     You can add extra markdown extensions using `Slides.xmd.extensions` or `ipyslides.xmd.extensions`.
     See [markdown extensions](https://python-markdown.github.io/extensions/) for details.
     
-    If you want to return the stripped paragraph content without outer <p> tags, use `xmd.convert(content, strip_tags=True)`.
+    If you want to return the stripped paragraph content without outer <p> tags, use `xmd(content, True, tag="")` or any valid html tag to enclose content.
     
-    **Returns**: A direct call or xmd.parse method returns a string with HTML content if `returns=True` (default), otherwise display rich output objects.
+    Use `xmd.gather(content, **vars)` to gather content and variables for later parsing. This is useful for picking variables 
+    without polluting the global namespace as well as inside python scripts where notebook's scope is not available.
+    
+    **Returns**: A string with HTML content if `returns=True` (default), otherwise display rich output objects.
     """
-    def __new__(cls, content: Union[str, fmt], returns:bool=False) -> Optional[str]:
-        return cls.parse(content, returns=returns) # Call parse method directly
-
-xmd.parse.__doc__ = xmd.__doc__
+    def __new__(cls, content:str, returns:bool=False, tag=None) -> Optional[str]:
+        if hasattr(XMarkdown, '_active_parser'): # keeps variables in scope for nested calls
+            return XMarkdown._active_parser(content, returns=returns, tag=tag)
+        return XMarkdown()._parse(content, returns=returns, tag=tag)
 
 def _parse_as_snapshots(markdown):
     "Parse an implied group without header from markdown content using ++ separator."
